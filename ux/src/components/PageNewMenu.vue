@@ -81,8 +81,8 @@ const { t } = useI18n()
 // METHODS
 
 function create (editor) {
-  window.location.assign('/_edit/new')
-  // pageStore.pageCreate({ editor })
+  // window.location.assign('/_edit/new')
+  pageStore.pageCreate({ editor })
 }
 
 function openFileManager () {

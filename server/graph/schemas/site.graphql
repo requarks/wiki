@@ -69,6 +69,7 @@ type Site {
   locale: String
   localeNamespaces: [String]
   localeNamespacing: Boolean
+  editors: SiteEditors
   theme: SiteTheme
 }
 
@@ -104,6 +105,17 @@ type SiteLocale {
   autoUpdate: Boolean
   namespacing: Boolean
   namespaces: [String]
+}
+
+type SiteEditors {
+  asciidoc: SiteEditor
+  markdown: SiteEditor
+  wysiwyg: SiteEditor
+}
+
+type SiteEditor {
+  isActive: Boolean
+  config: JSON
 }
 
 type SiteTheme {

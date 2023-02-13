@@ -25,7 +25,7 @@ q-page.admin-system
       q-btn.acrylic-btn(
         ref='copySysInfoBtn'
         flat
-        icon='fa-regular fa-clipboard'
+        icon='mdi-clipboard-text-outline'
         label='Copy System Info'
         color='primary'
         @click=''

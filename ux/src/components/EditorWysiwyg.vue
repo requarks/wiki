@@ -8,7 +8,7 @@
         )
       q-btn(
         v-else-if='menuItem.type === `dropdown`'
-        :key='menuItem.key'
+        :key='`ddn-` + menuItem.key'
         flat
         :icon='menuItem.icon'
         padding='xs'
@@ -27,7 +27,7 @@
               q-separator.q-my-sm(v-if='child.type === `divider`')
               q-item(
                 v-else
-                :key='menuItem.key + `-` + child.key'
+                :key='child.key'
                 clickable
                 @click='child.action'
                 :active='child.isActive && child.isActive()'
@@ -43,12 +43,12 @@
                   q-item-label {{child.title}}
       q-btn-group(
         v-else-if='menuItem.type === `btngroup`'
-        :key='menuItem.key'
+        :key='`btngrp-` + menuItem.key'
         flat
         )
         q-btn(
           v-for='child of menuItem.children'
-          :key='menuItem.key + `-` + child.key'
+          :key='child.key'
           flat
           :icon='child.icon'
           padding='xs'
@@ -60,6 +60,7 @@
           )
       q-btn(
         v-else
+        :key='`btn-` + menuItem.key'
         flat
         :icon='menuItem.icon'
         padding='xs'
@@ -69,24 +70,24 @@
         :aria-label='menuItem.title'
         :disabled='menuItem.disabled && menuItem.disabled()'
         )
-    q-space
-    q-btn(
-      size='sm'
-      unelevated
-      color='red'
-      label='Test'
-      @click='snapshot'
-    )
-  q-scroll-area(
-    :thumb-style='thumbStyle'
-    :bar-style='barStyle'
-    style='height: 100%;'
-    )
-    editor-content(:editor='editor')
+    //- q-space
+    //- q-btn(
+    //-   size='sm'
+    //-   unelevated
+    //-   color='red'
+    //-   label='Test'
+    //-   @click='snapshot'
+    //- )
+  //- q-scroll-area(
+  //-   :thumb-style='thumbStyle'
+  //-   :bar-style='barStyle'
+  //-   style='height: 100%;'
+  //-   )
+  editor-content(:editor='editor')
 </template>
 
-<script>
-import { Editor, EditorContent } from '@tiptap/vue-3'
+<script setup>
+import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 // import Collaboration from '@tiptap/extension-collaboration'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
@@ -105,605 +106,636 @@ import TaskItem from '@tiptap/extension-task-item'
 import TextAlign from '@tiptap/extension-text-align'
 import TextStyle from '@tiptap/extension-text-style'
 import Typography from '@tiptap/extension-typography'
+import { lowlight } from 'lowlight/lib/core'
+import { onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
 // import * as Y from 'yjs'
 // import { IndexeddbPersistence } from 'y-indexeddb'
 // import { WebsocketProvider } from 'y-websocket'
 
-export default {
-  components: {
-    EditorContent
-  },
-  data () {
-    return {
-      editor: null,
-      ydoc: null,
-      thumbStyle: {
-        right: '2px',
-        borderRadius: '5px',
-        backgroundColor: '#000',
-        width: '5px',
-        opacity: 0.15
-      },
-      barStyle: {
-        backgroundColor: '#FAFAFA',
-        width: '9px',
-        opacity: 1
-      },
-      menuBar: [
-        {
-          key: 'bold',
-          icon: 'mdi-format-bold',
-          title: 'Bold',
-          action: () => this.editor.chain().focus().toggleBold().run(),
-          isActive: () => this.editor.isActive('bold')
-        },
-        {
-          key: 'italic',
-          icon: 'mdi-format-italic',
-          title: 'Italic',
-          action: () => this.editor.chain().focus().toggleItalic().run(),
-          isActive: () => this.editor.isActive('italic')
-        },
-        {
-          key: 'strikethrough',
-          icon: 'mdi-format-strikethrough',
-          title: 'Strike',
-          action: () => this.editor.chain().focus().toggleStrike().run(),
-          isActive: () => this.editor.isActive('strike')
-        },
-        {
-          key: 'code',
-          icon: 'mdi-code-tags',
-          title: 'Code',
-          action: () => this.editor.chain().focus().toggleCode().run(),
-          isActive: () => this.editor.isActive('code')
-        },
-        {
-          key: 'fontfamily',
-          icon: 'mdi-format-font',
-          title: 'Font Family',
-          type: 'dropdown',
-          isActive: () => this.editor.isActive('fontFamily'),
-          children: [
-            {
-              key: 'fontunset',
-              icon: 'mdi-format-font',
-              title: 'Sans-Serif',
-              action: () => this.editor.chain().focus().unsetFontFamily().run()
-            },
-            {
-              key: 'monospace',
-              icon: 'mdi-format-font',
-              title: 'Monospace',
-              action: () => this.editor.chain().focus().setFontFamily('monospace').run()
-            }
-          ]
-        },
-        {
-          key: 'color',
-          icon: 'mdi-palette',
-          title: 'Text Color',
-          type: 'dropdown',
-          isActive: () => this.editor.isActive('color'),
-          children: [
-            {
-              key: 'blue',
-              icon: 'mdi-palette',
-              title: 'Blue',
-              color: 'blue',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'brown',
-              icon: 'mdi-palette',
-              title: 'Brown',
-              color: 'brown',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'green',
-              icon: 'mdi-palette',
-              title: 'Green',
-              color: 'green',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'orange',
-              icon: 'mdi-palette',
-              title: 'Orange',
-              color: 'orange',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'pink',
-              icon: 'mdi-palette',
-              title: 'Pink',
-              color: 'pink',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'purple',
-              icon: 'mdi-palette',
-              title: 'Purple',
-              color: 'purple',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'red',
-              icon: 'mdi-palette',
-              title: 'Red',
-              color: 'red',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'teal',
-              icon: 'mdi-palette',
-              title: 'Teal',
-              color: 'teal',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'yellow',
-              icon: 'mdi-palette',
-              title: 'Yellow',
-              color: 'yellow',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'remove',
-              icon: 'mdi-water-off',
-              title: 'Default',
-              color: 'grey',
-              action: () => this.editor.chain().focus().unsetHighlight().run()
-            }
-          ]
-        },
-        {
-          key: 'highlight',
-          icon: 'mdi-marker',
-          title: 'Highlight',
-          type: 'dropdown',
-          isActive: () => this.editor.isActive('highlight'),
-          children: [
-            {
-              key: 'yellow',
-              icon: 'mdi-marker',
-              title: 'Yellow',
-              color: 'yellow',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'blue',
-              icon: 'mdi-marker',
-              title: 'Blue',
-              color: 'blue',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'pink',
-              icon: 'mdi-marker',
-              title: 'Pink',
-              color: 'pink',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'green',
-              icon: 'mdi-marker',
-              title: 'Green',
-              color: 'green',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              key: 'orange',
-              icon: 'mdi-marker',
-              title: 'Orange',
-              color: 'orange',
-              action: () => this.editor.chain().focus().toggleHighlight().run()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'remove',
-              icon: 'mdi-marker-cancel',
-              title: 'Remove',
-              color: 'grey',
-              action: () => this.editor.chain().focus().unsetHighlight().run()
-            }
-          ]
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'header',
-          icon: 'mdi-format-header-pound',
-          title: 'Header',
-          type: 'dropdown',
-          isActive: () => this.editor.isActive('heading'),
-          children: [
-            {
-              key: 'h1',
-              icon: 'mdi-format-header-1',
-              title: 'Header 1',
-              action: () => this.editor.chain().focus().toggleHeading({ level: 1 }).run(),
-              isActive: () => this.editor.isActive('heading', { level: 1 })
-            },
-            {
-              key: 'h2',
-              icon: 'mdi-format-header-2',
-              title: 'Header 2',
-              action: () => this.editor.chain().focus().toggleHeading({ level: 2 }).run(),
-              isActive: () => this.editor.isActive('heading', { level: 2 })
-            },
-            {
-              key: 'h3',
-              icon: 'mdi-format-header-3',
-              title: 'Header 3',
-              action: () => this.editor.chain().focus().toggleHeading({ level: 3 }).run(),
-              isActive: () => this.editor.isActive('heading', { level: 3 })
-            },
-            {
-              key: 'h4',
-              icon: 'mdi-format-header-4',
-              title: 'Header 4',
-              action: () => this.editor.chain().focus().toggleHeading({ level: 4 }).run(),
-              isActive: () => this.editor.isActive('heading', { level: 4 })
-            },
-            {
-              key: 'h5',
-              icon: 'mdi-format-header-5',
-              title: 'Header 5',
-              action: () => this.editor.chain().focus().toggleHeading({ level: 5 }).run(),
-              isActive: () => this.editor.isActive('heading', { level: 5 })
-            },
-            {
-              key: 'h6',
-              icon: 'mdi-format-header-6',
-              title: 'Header 6',
-              action: () => this.editor.chain().focus().toggleHeading({ level: 6 }).run(),
-              isActive: () => this.editor.isActive('heading', { level: 6 })
-            }
-          ]
-        },
-        {
-          key: 'paragraph',
-          icon: 'mdi-format-paragraph',
-          title: 'Paragraph',
-          action: () => this.editor.chain().focus().setParagraph().run(),
-          isActive: () => this.editor.isActive('paragraph')
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'align',
-          type: 'btngroup',
-          children: [
-            {
-              key: 'left',
-              icon: 'mdi-format-align-left',
-              title: 'Left Align',
-              action: () => this.editor.chain().focus().setTextAlign('left').run(),
-              isActive: () => this.editor.isActive({ textAlign: 'left' })
-            },
-            {
-              key: 'center',
-              icon: 'mdi-format-align-center',
-              title: 'Center Align',
-              action: () => this.editor.chain().focus().setTextAlign('center').run(),
-              isActive: () => this.editor.isActive({ textAlign: 'center' })
-            },
-            {
-              key: 'right',
-              icon: 'mdi-format-align-right',
-              title: 'Right Align',
-              action: () => this.editor.chain().focus().setTextAlign('right').run(),
-              isActive: () => this.editor.isActive({ textAlign: 'right' })
-            },
-            {
-              key: 'justify',
-              icon: 'mdi-format-align-justify',
-              title: 'Justify Align',
-              action: () => this.editor.chain().focus().setTextAlign('justify').run(),
-              isActive: () => this.editor.isActive({ textAlign: 'justify' })
-            }
-          ]
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'bulletlist',
-          icon: 'mdi-format-list-bulleted',
-          title: 'Bullet List',
-          action: () => this.editor.chain().focus().toggleBulletList().run(),
-          isActive: () => this.editor.isActive('bulletList')
-        },
-        {
-          key: 'orderedlist',
-          icon: 'mdi-format-list-numbered',
-          title: 'Ordered List',
-          action: () => this.editor.chain().focus().toggleOrderedList().run(),
-          isActive: () => this.editor.isActive('orderedList')
-        },
-        {
-          key: 'tasklist',
-          icon: 'mdi-format-list-checkbox',
-          title: 'Task List',
-          action: () => this.editor.chain().focus().toggleTaskList().run(),
-          isActive: () => this.editor.isActive('taskList')
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'codeblock',
-          icon: 'mdi-code-json',
-          title: 'Code Block',
-          action: () => this.editor.chain().focus().toggleCodeBlock().run(),
-          isActive: () => this.editor.isActive('codeBlock')
-        },
-        {
-          key: 'blockquote',
-          icon: 'mdi-format-quote-close',
-          title: 'Blockquote',
-          action: () => this.editor.chain().focus().toggleBlockquote().run(),
-          isActive: () => this.editor.isActive('blockquote')
-        },
-        {
-          key: 'rule',
-          icon: 'mdi-minus',
-          title: 'Horizontal Rule',
-          action: () => this.editor.chain().focus().setHorizontalRule().run()
-        },
-        {
-          key: 'link',
-          icon: 'mdi-link-plus',
-          title: 'Link',
-          action: () => {
-            // TODO: insert link
-          }
-        },
-        {
-          key: 'image',
-          icon: 'mdi-image-plus',
-          title: 'Image',
-          action: () => {
-            // TODO: insert image
-          }
-        },
-        {
-          key: 'table',
-          icon: 'mdi-table-large',
-          title: 'Table',
-          type: 'dropdown',
-          isActive: () => this.editor.isActive('table'),
-          children: [
-            {
-              key: 'insert',
-              icon: 'mdi-table-large-plus',
-              title: 'Insert Table',
-              action: () => this.editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'addcolumnbefore',
-              icon: 'mdi-table-column-plus-before',
-              title: 'Add Column Before',
-              action: () => this.editor.chain().focus().addColumnBefore().run(),
-              disabled: () => !this.editor.can().addColumnBefore()
-            },
-            {
-              key: 'addcolumnafter',
-              icon: 'mdi-table-column-plus-after',
-              title: 'Add Column After',
-              action: () => this.editor.chain().focus().addColumnAfter().run(),
-              disabled: () => !this.editor.can().addColumnAfter()
-            },
-            {
-              key: 'deletecolumn',
-              icon: 'mdi-table-column-remove',
-              title: 'Remove Column',
-              action: () => this.editor.chain().focus().deleteColumn().run(),
-              disabled: () => !this.editor.can().deleteColumn()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'addrowbefore',
-              icon: 'mdi-table-row-plus-before',
-              title: 'Add Row Before',
-              action: () => this.editor.chain().focus().addRowBefore().run(),
-              disabled: () => !this.editor.can().addRowBefore()
-            },
-            {
-              key: 'addrowafter',
-              icon: 'mdi-table-row-plus-after',
-              title: 'Add Row After',
-              action: () => this.editor.chain().focus().addRowAfter().run(),
-              disabled: () => !this.editor.can().addRowAfter()
-            },
-            {
-              key: 'deleterow',
-              icon: 'mdi-table-row-remove',
-              title: 'Remove Row',
-              action: () => this.editor.chain().focus().deleteRow().run(),
-              disabled: () => !this.editor.can().deleteRow()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'merge',
-              icon: 'mdi-table-merge-cells',
-              title: 'Merge Cells',
-              action: () => this.editor.chain().focus().mergeCells().run(),
-              disabled: () => !this.editor.can().mergeCells()
-            },
-            {
-              key: 'split',
-              icon: 'mdi-table-split-cell',
-              title: 'Split Cell',
-              action: () => this.editor.chain().focus().splitCell().run(),
-              disabled: () => !this.editor.can().splitCell()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'toggleHeaderColumn',
-              icon: 'mdi-table-column',
-              title: 'Toggle Header Column',
-              action: () => this.editor.chain().focus().toggleHeaderColumn().run(),
-              disabled: () => !this.editor.can().toggleHeaderColumn()
-            },
-            {
-              key: 'toggleHeaderRow',
-              icon: 'mdi-table-row',
-              title: 'Toggle Header Row',
-              action: () => this.editor.chain().focus().toggleHeaderRow().run(),
-              disabled: () => !this.editor.can().toggleHeaderRow()
-            },
-            {
-              key: 'toggleHeaderCell',
-              icon: 'mdi-crop-square',
-              title: 'Toggle Header Cell',
-              action: () => this.editor.chain().focus().toggleHeaderCell().run(),
-              disabled: () => !this.editor.can().toggleHeaderCell()
-            },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'fix',
-              icon: 'mdi-table-heart',
-              title: 'Fix Table',
-              action: () => this.editor.chain().focus().fixTables().run(),
-              disabled: () => !this.editor.can().fixTables()
-            },
-            {
-              key: 'remove',
-              icon: 'mdi-table-large-remove',
-              title: 'Delete Table',
-              action: () => this.editor.chain().focus().deleteTable().run(),
-              disabled: () => !this.editor.can().deleteTable()
-            }
-          ]
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'pagebreak',
-          icon: 'mdi-format-page-break',
-          title: 'Hard Break',
-          action: () => this.editor.chain().focus().setHardBreak().run()
-        },
-        {
-          key: 'clearformat',
-          icon: 'mdi-format-clear',
-          title: 'Clear Format',
-          action: () => this.editor.chain()
-            .focus()
-            .clearNodes()
-            .unsetAllMarks()
-            .run()
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'undo',
-          icon: 'mdi-undo-variant',
-          title: 'Undo',
-          action: () => this.editor.chain().focus().undo().run(),
-          disabled: () => !this.editor.can().undo()
-        },
-        {
-          key: 'redo',
-          icon: 'mdi-redo-variant',
-          title: 'Redo',
-          action: () => this.editor.chain().focus().redo().run(),
-          disabled: () => !this.editor.can().redo()
-        }
-      ]
-    }
-  },
-  mounted () {
-    if (!import.meta.env.SSR) {
-      this.init()
-    }
-  },
-  beforeUnmount () {
-    this.editor.destroy()
-  },
-  methods: {
-    init () {
-      console.info('BOOP')
-      // this.ydoc = new Y.Doc()
+import { useMeta, useQuasar, setCssVar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 
-      /* eslint-disable no-unused-vars */
-      // const dbProvider = new IndexeddbPersistence('example-document', this.ydoc)
-      // const wsProvider = new WebsocketProvider('ws://127.0.0.1:1234', 'example-document', this.ydoc)
-      /* eslint-enable no-unused-vars */
+import { useEditorStore } from 'src/stores/editor'
 
-      this.editor = new Editor({
-        content: this.$store.get('page/render'),
-        extensions: [
-          StarterKit.configure({
-            codeBlock: false,
-            history: {
-              depth: 500
-            }
-          }),
-          CodeBlockLowlight,
-          Color,
-          // Collaboration.configure({
-          //   document: this.ydoc
-          // }),
-          FontFamily,
-          Highlight.configure({
-            multicolor: true
-          }),
-          Image,
-          Mention.configure({
-            // TODO: suggestions
-          }),
-          Placeholder.configure({
-            placeholder: 'Enter some content here...'
-          }),
-          Table.configure({
-            resizable: true
-          }),
-          TableRow,
-          TableHeader,
-          TableCell,
-          TaskList,
-          TaskItem,
-          TextAlign,
-          TextStyle,
-          Typography
-        ],
-        onUpdate: () => {
-          this.$store.set('page/render', this.editor.getHTML())
-        }
-      })
-    },
-    insertTable () {
-      // this.ql.getModule('table').insertTable(3, 3)
-    },
-    snapshot () {
-      // console.info(Y.encodeStateVector(this.ydoc))
-    }
-  }
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const editorStore = useEditorStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// STATE
+
+const state = reactive({
+  // editor: null,
+  ydoc: null
+})
+
+let editor = null
+
+const thumbStyle = {
+  right: '2px',
+  borderRadius: '5px',
+  backgroundColor: '#000',
+  width: '5px',
+  opacity: 0.15
 }
+const barStyle = {
+  backgroundColor: '#FAFAFA',
+  width: '9px',
+  opacity: 1
+}
+const menuBar = [
+  {
+    key: 'bold',
+    icon: 'mdi-format-bold',
+    title: 'Bold',
+    action: () => editor.value.chain().focus().toggleBold().run(),
+    isActive: () => editor.value.isActive('bold')
+  },
+  {
+    key: 'italic',
+    icon: 'mdi-format-italic',
+    title: 'Italic',
+    action: () => editor.value.chain().focus().toggleItalic().run(),
+    isActive: () => editor.value.isActive('italic')
+  },
+  {
+    key: 'strikethrough',
+    icon: 'mdi-format-strikethrough',
+    title: 'Strike',
+    action: () => editor.value.chain().focus().toggleStrike().run(),
+    isActive: () => editor.value.isActive('strike')
+  },
+  {
+    key: 'code',
+    icon: 'mdi-code-tags',
+    title: 'Code',
+    action: () => editor.value.chain().focus().toggleCode().run(),
+    isActive: () => editor.value.isActive('code')
+  },
+  {
+    key: 'fontfamily',
+    icon: 'mdi-format-font',
+    title: 'Font Family',
+    type: 'dropdown',
+    isActive: () => editor.value.isActive('fontFamily'),
+    children: [
+      {
+        key: 'fontunset',
+        icon: 'mdi-format-font',
+        title: 'Sans-Serif',
+        action: () => editor.value.chain().focus().unsetFontFamily().run()
+      },
+      {
+        key: 'monospace',
+        icon: 'mdi-format-font',
+        title: 'Monospace',
+        action: () => editor.value.chain().focus().setFontFamily('monospace').run()
+      }
+    ]
+  },
+  {
+    key: 'color',
+    icon: 'mdi-palette',
+    title: 'Text Color',
+    type: 'dropdown',
+    isActive: () => editor.value.isActive('color'),
+    children: [
+      {
+        key: 'color-blue',
+        icon: 'mdi-palette',
+        title: 'Blue',
+        color: 'blue',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-brown',
+        icon: 'mdi-palette',
+        title: 'Brown',
+        color: 'brown',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-green',
+        icon: 'mdi-palette',
+        title: 'Green',
+        color: 'green',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-orange',
+        icon: 'mdi-palette',
+        title: 'Orange',
+        color: 'orange',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-pink',
+        icon: 'mdi-palette',
+        title: 'Pink',
+        color: 'pink',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-purple',
+        icon: 'mdi-palette',
+        title: 'Purple',
+        color: 'purple',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-red',
+        icon: 'mdi-palette',
+        title: 'Red',
+        color: 'red',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-teal',
+        icon: 'mdi-palette',
+        title: 'Teal',
+        color: 'teal',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'color-yellow',
+        icon: 'mdi-palette',
+        title: 'Yellow',
+        color: 'yellow',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'color-remove',
+        icon: 'mdi-palette',
+        title: 'Default',
+        color: 'grey',
+        action: () => editor.value.chain().focus().unsetHighlight().run()
+      }
+    ]
+  },
+  {
+    key: 'highlight',
+    icon: 'mdi-marker',
+    title: 'Highlight',
+    type: 'dropdown',
+    isActive: () => editor.value.isActive('highlight'),
+    children: [
+      {
+        key: 'highlight-yellow',
+        icon: 'mdi-marker',
+        title: 'Yellow',
+        color: 'yellow',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'highlight-blue',
+        icon: 'mdi-marker',
+        title: 'Blue',
+        color: 'blue',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'highlight-pink',
+        icon: 'mdi-marker',
+        title: 'Pink',
+        color: 'pink',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'highlight-green',
+        icon: 'mdi-marker',
+        title: 'Green',
+        color: 'green',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        key: 'highlight-orange',
+        icon: 'mdi-marker',
+        title: 'Orange',
+        color: 'orange',
+        action: () => editor.value.chain().focus().toggleHighlight().run()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'highlight-remove',
+        icon: 'mdi-marker-cancel',
+        title: 'Remove',
+        color: 'grey',
+        action: () => editor.value.chain().focus().unsetHighlight().run()
+      }
+    ]
+  },
+  {
+    type: 'divider'
+  },
+  {
+    key: 'header',
+    icon: 'mdi-format-header-pound',
+    title: 'Header',
+    type: 'dropdown',
+    isActive: () => editor.value.isActive('heading'),
+    children: [
+      {
+        key: 'h1',
+        icon: 'mdi-format-header-1',
+        title: 'Header 1',
+        action: () => editor.value.chain().focus().toggleHeading({ level: 1 }).run(),
+        isActive: () => editor.value.isActive('heading', { level: 1 })
+      },
+      {
+        key: 'h2',
+        icon: 'mdi-format-header-2',
+        title: 'Header 2',
+        action: () => editor.value.chain().focus().toggleHeading({ level: 2 }).run(),
+        isActive: () => editor.value.isActive('heading', { level: 2 })
+      },
+      {
+        key: 'h3',
+        icon: 'mdi-format-header-3',
+        title: 'Header 3',
+        action: () => editor.value.chain().focus().toggleHeading({ level: 3 }).run(),
+        isActive: () => editor.value.isActive('heading', { level: 3 })
+      },
+      {
+        key: 'h4',
+        icon: 'mdi-format-header-4',
+        title: 'Header 4',
+        action: () => editor.value.chain().focus().toggleHeading({ level: 4 }).run(),
+        isActive: () => editor.value.isActive('heading', { level: 4 })
+      },
+      {
+        key: 'h5',
+        icon: 'mdi-format-header-5',
+        title: 'Header 5',
+        action: () => editor.value.chain().focus().toggleHeading({ level: 5 }).run(),
+        isActive: () => editor.value.isActive('heading', { level: 5 })
+      },
+      {
+        key: 'h6',
+        icon: 'mdi-format-header-6',
+        title: 'Header 6',
+        action: () => editor.value.chain().focus().toggleHeading({ level: 6 }).run(),
+        isActive: () => editor.value.isActive('heading', { level: 6 })
+      }
+    ]
+  },
+  {
+    key: 'paragraph',
+    icon: 'mdi-format-paragraph',
+    title: 'Paragraph',
+    action: () => editor.value.chain().focus().setParagraph().run(),
+    isActive: () => editor.value.isActive('paragraph')
+  },
+  {
+    type: 'divider'
+  },
+  {
+    key: 'align',
+    type: 'btngroup',
+    children: [
+      {
+        key: 'align-left',
+        icon: 'mdi-format-align-left',
+        title: 'Left Align',
+        action: () => editor.value.chain().focus().setTextAlign('left').run(),
+        isActive: () => editor.value.isActive({ textAlign: 'left' })
+      },
+      {
+        key: 'align-center',
+        icon: 'mdi-format-align-center',
+        title: 'Center Align',
+        action: () => editor.value.chain().focus().setTextAlign('center').run(),
+        isActive: () => editor.value.isActive({ textAlign: 'center' })
+      },
+      {
+        key: 'align-right',
+        icon: 'mdi-format-align-right',
+        title: 'Right Align',
+        action: () => editor.value.chain().focus().setTextAlign('right').run(),
+        isActive: () => editor.value.isActive({ textAlign: 'right' })
+      },
+      {
+        key: 'align-justify',
+        icon: 'mdi-format-align-justify',
+        title: 'Justify Align',
+        action: () => editor.value.chain().focus().setTextAlign('justify').run(),
+        isActive: () => editor.value.isActive({ textAlign: 'justify' })
+      }
+    ]
+  },
+  {
+    type: 'divider'
+  },
+  {
+    key: 'bulletlist',
+    icon: 'mdi-format-list-bulleted',
+    title: 'Bullet List',
+    action: () => editor.value.chain().focus().toggleBulletList().run(),
+    isActive: () => editor.value.isActive('bulletList')
+  },
+  {
+    key: 'orderedlist',
+    icon: 'mdi-format-list-numbered',
+    title: 'Ordered List',
+    action: () => editor.value.chain().focus().toggleOrderedList().run(),
+    isActive: () => editor.value.isActive('orderedList')
+  },
+  {
+    key: 'tasklist',
+    icon: 'mdi-format-list-checks',
+    title: 'Task List',
+    action: () => editor.value.chain().focus().toggleTaskList().run(),
+    isActive: () => editor.value.isActive('taskList')
+  },
+  {
+    type: 'divider'
+  },
+  {
+    key: 'codeblock',
+    icon: 'mdi-code-json',
+    title: 'Code Block',
+    action: () => editor.value.chain().focus().toggleCodeBlock().run(),
+    isActive: () => editor.value.isActive('codeBlock')
+  },
+  {
+    key: 'blockquote',
+    icon: 'mdi-format-quote-open',
+    title: 'Blockquote',
+    action: () => editor.value.chain().focus().toggleBlockquote().run(),
+    isActive: () => editor.value.isActive('blockquote')
+  },
+  {
+    key: 'rule',
+    icon: 'mdi-minus',
+    title: 'Horizontal Rule',
+    action: () => editor.value.chain().focus().setHorizontalRule().run()
+  },
+  {
+    key: 'link',
+    icon: 'mdi-link-variant',
+    title: 'Link',
+    action: () => {
+      // TODO: insert link
+    }
+  },
+  {
+    key: 'image',
+    icon: 'mdi-image-plus',
+    title: 'Image',
+    action: () => {
+      // TODO: insert image
+    }
+  },
+  {
+    key: 'table',
+    icon: 'mdi-table',
+    title: 'Table',
+    type: 'dropdown',
+    isActive: () => editor.value.isActive('table'),
+    children: [
+      {
+        key: 'table-insert',
+        icon: 'mdi-table-large-plus',
+        title: 'Insert Table',
+        action: () => editor.value.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'table-addcolumnbefore',
+        icon: 'mdi-table-column-plus-before',
+        title: 'Add Column Before',
+        action: () => editor.value.chain().focus().addColumnBefore().run(),
+        disabled: () => !editor.value.can().addColumnBefore()
+      },
+      {
+        key: 'table-addcolumnafter',
+        icon: 'mdi-table-column-plus-after',
+        title: 'Add Column After',
+        action: () => editor.value.chain().focus().addColumnAfter().run(),
+        disabled: () => !editor.value.can().addColumnAfter()
+      },
+      {
+        key: 'table-deletecolumn',
+        icon: 'mdi-table-column-remove',
+        title: 'Remove Column',
+        action: () => editor.value.chain().focus().deleteColumn().run(),
+        disabled: () => !editor.value.can().deleteColumn()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'table-addrowbefore',
+        icon: 'mdi-table-row-plus-before',
+        title: 'Add Row Before',
+        action: () => editor.value.chain().focus().addRowBefore().run(),
+        disabled: () => !editor.value.can().addRowBefore()
+      },
+      {
+        key: 'table-addrowafter',
+        icon: 'mdi-table-row-plus-after',
+        title: 'Add Row After',
+        action: () => editor.value.chain().focus().addRowAfter().run(),
+        disabled: () => !editor.value.can().addRowAfter()
+      },
+      {
+        key: 'table-deleterow',
+        icon: 'mdi-table-row-remove',
+        title: 'Remove Row',
+        action: () => editor.value.chain().focus().deleteRow().run(),
+        disabled: () => !editor.value.can().deleteRow()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'table-merge',
+        icon: 'mdi-table-merge-cells',
+        title: 'Merge Cells',
+        action: () => editor.value.chain().focus().mergeCells().run(),
+        disabled: () => !editor.value.can().mergeCells()
+      },
+      {
+        key: 'table-split',
+        icon: 'mdi-table-split-cell',
+        title: 'Split Cell',
+        action: () => editor.value.chain().focus().splitCell().run(),
+        disabled: () => !editor.value.can().splitCell()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'table-toggleHeaderColumn',
+        icon: 'mdi-table-column',
+        title: 'Toggle Header Column',
+        action: () => editor.value.chain().focus().toggleHeaderColumn().run(),
+        disabled: () => !editor.value.can().toggleHeaderColumn()
+      },
+      {
+        key: 'table-toggleHeaderRow',
+        icon: 'mdi-table-row',
+        title: 'Toggle Header Row',
+        action: () => editor.value.chain().focus().toggleHeaderRow().run(),
+        disabled: () => !editor.value.can().toggleHeaderRow()
+      },
+      {
+        key: 'table-toggleHeaderCell',
+        icon: 'mdi-crop-square',
+        title: 'Toggle Header Cell',
+        action: () => editor.value.chain().focus().toggleHeaderCell().run(),
+        disabled: () => !editor.value.can().toggleHeaderCell()
+      },
+      {
+        type: 'divider'
+      },
+      {
+        key: 'table-fix',
+        icon: 'mdi-table-heart',
+        title: 'Fix Table',
+        action: () => editor.value.chain().focus().fixTables().run(),
+        disabled: () => !editor.value.can().fixTables()
+      },
+      {
+        key: 'table-remove',
+        icon: 'mdi-table-large-remove',
+        title: 'Delete Table',
+        action: () => editor.value.chain().focus().deleteTable().run(),
+        disabled: () => !editor.value.can().deleteTable()
+      }
+    ]
+  },
+  {
+    type: 'divider'
+  },
+  {
+    key: 'pagebreak',
+    icon: 'mdi-format-page-break',
+    title: 'Hard Break',
+    action: () => editor.value.chain().focus().setHardBreak().run()
+  },
+  {
+    key: 'clearformat',
+    icon: 'mdi-format-clear',
+    title: 'Clear Format',
+    action: () => editor.value.chain()
+      .focus()
+      .clearNodes()
+      .unsetAllMarks()
+      .run()
+  },
+  {
+    type: 'divider'
+  },
+  {
+    key: 'undo',
+    icon: 'mdi-undo-variant',
+    title: 'Undo',
+    action: () => editor.value.chain().focus().undo().run(),
+    disabled: () => !editor.value.can().undo()
+  },
+  {
+    key: 'redo',
+    icon: 'mdi-redo-variant',
+    title: 'Redo',
+    action: () => editor.value.chain().focus().redo().run(),
+    disabled: () => !editor.value.can().redo()
+  }
+]
+
+// METHODS
+
+function init () {
+  // -> Setup Editor View
+  editorStore.$patch({
+    hideSideNav: false
+  })
+
+  // -> Init Live Collab
+  // this.ydoc = new Y.Doc()
+
+  /* eslint-disable no-unused-vars */
+  // const dbProvider = new IndexeddbPersistence('example-document', this.ydoc)
+  // const wsProvider = new WebsocketProvider('ws://127.0.0.1:1234', 'example-document', this.ydoc)
+  /* eslint-enable no-unused-vars */
+
+  // -> Initialize TipTap
+  editor = useEditor({
+    content: '<p>I’m running Tiptap with Vue.js. 🎉</p>', // editorStore.content,
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+        history: {
+          depth: 500
+        }
+      }),
+      CodeBlockLowlight.configure({
+        lowlight
+      }),
+      Color,
+      // Collaboration.configure({
+      //   document: this.ydoc
+      // }),
+      FontFamily,
+      Highlight.configure({
+        multicolor: true
+      }),
+      Image,
+      Mention.configure({
+        // TODO: suggestions
+      }),
+      Placeholder.configure({
+        placeholder: 'Enter some content here...'
+      }),
+      Table.configure({
+        resizable: true
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      TaskList,
+      TaskItem,
+      TextAlign,
+      TextStyle,
+      Typography
+    ],
+    onUpdate: () => {
+      // this.$store.set('page/render', editor.getHTML())
+    }
+  })
+}
+
+function insertTable () {
+  // this.ql.getModule('table').insertTable(3, 3)
+}
+function snapshot () {
+  // console.info(Y.encodeStateVector(this.ydoc))
+}
+
+// MOUNTED
+
+onMounted(() => {
+  // init()
+})
+
+onBeforeUnmount(() => {
+  editor.value.destroy()
+})
+
+init()
 </script>
 
 <style lang="scss">

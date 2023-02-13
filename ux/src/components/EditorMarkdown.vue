@@ -1,13 +1,396 @@
 <template lang="pug">
-.quill-container
+.editor-markdown
+  .editor-markdown-main
+    .editor-markdown-sidebar X
+    .editor-markdown-editor
+      textarea(ref='cmRef')
+    transition(name='editor-markdown-preview')
+      .editor-markdown-preview(v-if='state.previewShown')
+        .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
+          div(
+            ref='editorPreview'
+            v-html='state.previewHTML'
+            )
 </template>
 
-<script>
+<script setup>
+import { reactive, ref, shallowRef, onBeforeMount, onMounted, watch } from 'vue'
+import { useMeta, useQuasar, setCssVar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 
-export default {
-  data () {
-    return {
+import { useEditorStore } from 'src/stores/editor'
+
+// Code Mirror
+import CodeMirror from 'codemirror'
+import 'codemirror/lib/codemirror.css'
+import '../css/codemirror.scss'
+
+// Language
+import 'codemirror/mode/markdown/markdown.js'
+
+// Addons
+import 'codemirror/addon/selection/active-line.js'
+import 'codemirror/addon/display/fullscreen.js'
+import 'codemirror/addon/display/fullscreen.css'
+import 'codemirror/addon/selection/mark-selection.js'
+import 'codemirror/addon/search/searchcursor.js'
+import 'codemirror/addon/hint/show-hint.js'
+import 'codemirror/addon/fold/foldcode.js'
+import 'codemirror/addon/fold/foldgutter.js'
+import 'codemirror/addon/fold/foldgutter.css'
+
+// QUASAR
+
+const $q = useQuasar()
+
+// STORES
+
+const editorStore = useEditorStore()
+
+// I18N
+
+const { t } = useI18n()
+
+// STATE
+
+const cm = shallowRef(null)
+const cmRef = ref(null)
+
+const state = reactive({
+  previewShown: true,
+  previewHTML: ''
+})
+
+// Platform detection
+const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
+
+// MOUNTED
+
+onMounted(async () => {
+  // -> Setup Editor View
+  editorStore.$patch({
+    hideSideNav: true
+  })
+
+  // -> Initialize CodeMirror
+  cm.value = CodeMirror.fromTextArea(cmRef.value, {
+    tabSize: 2,
+    mode: 'text/markdown',
+    theme: 'wikijs-dark',
+    lineNumbers: true,
+    lineWrapping: true,
+    line: true,
+    styleActiveLine: true,
+    highlightSelectionMatches: {
+      annotateScrollbar: true
+    },
+    viewportMargin: 50,
+    inputStyle: 'contenteditable',
+    allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
+    // direction: siteConfig.rtl ? 'rtl' : 'ltr',
+    foldGutter: true,
+    gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+  })
+
+  cm.value.setValue(state.content)
+  cm.value.on('change', c => {
+    editorStore.$patch({
+      content: c.getValue()
+    })
+    // onCmInput(editorStore.content)
+  })
+
+  cm.value.setSize(null, 'calc(100vh - 150px)')
+
+  // -> Set Keybindings
+  const keyBindings = {
+    'F11' (c) {
+      c.setOption('fullScreen', !c.getOption('fullScreen'))
+    },
+    'Esc' (c) {
+      if (c.getOption('fullScreen')) {
+        c.setOption('fullScreen', false)
+      }
+    },
+    [`${CtrlKey}-S`] (c) {
+      // save()
+      return false
+    },
+    [`${CtrlKey}-B`] (c) {
+      // toggleMarkup({ start: '**' })
+      return false
+    },
+    [`${CtrlKey}-I`] (c) {
+      // toggleMarkup({ start: '*' })
+      return false
+    },
+    [`${CtrlKey}-Alt-Right`] (c) {
+      // let lvl = getHeaderLevel(c)
+      // if (lvl >= 6) { lvl = 5 }
+      // setHeaderLine(lvl + 1)
+      return false
+    },
+    [`${CtrlKey}-Alt-Left`] (c) {
+      // let lvl = getHeaderLevel(c)
+      // if (lvl <= 1) { lvl = 2 }
+      // setHeaderLine(lvl - 1)
+      return false
     }
   }
-}
+  cm.value.setOption('extraKeys', keyBindings)
+  // this.cm.on('inputRead', this.autocomplete)
+
+  // // Handle cursor movement
+  // this.cm.on('cursorActivity', c => {
+  //   this.positionSync(c)
+  //   this.scrollSync(c)
+  // })
+
+  // // Handle special paste
+  // this.cm.on('paste', this.onCmPaste)
+
+  // // Render initial preview
+  // this.processContent(this.$store.get('editor/content'))
+  // this.refresh()
+
+  // this.$root.$on('editorInsert', opts => {
+  //   switch (opts.kind) {
+  //     case 'IMAGE':
+  //       let img = `![${opts.text}](${opts.path})`
+  //       if (opts.align && opts.align !== '') {
+  //         img += `{.align-${opts.align}}`
+  //       }
+  //       this.insertAtCursor({
+  //         content: img
+  //       })
+  //       break
+  //     case 'BINARY':
+  //       this.insertAtCursor({
+  //         content: `[${opts.text}](${opts.path})`
+  //       })
+  //       break
+  //     case 'DIAGRAM':
+  //       const selStartLine = this.cm.getCursor('from').line
+  //       const selEndLine = this.cm.getCursor('to').line + 1
+  //       this.cm.doc.replaceSelection('```diagram\n' + opts.text + '\n```\n', 'start')
+  //       this.processMarkers(selStartLine, selEndLine)
+  //       break
+  //   }
+  // })
+  // // Handle save conflict
+  // this.$root.$on('saveConflict', () => {
+  //   this.toggleModal(`editorModalConflict`)
+  // })
+  // this.$root.$on('overwriteEditorContent', () => {
+  //   this.cm.setValue(this.$store.get('editor/content'))
+  // })
+})
+
+onBeforeMount(() => {
+  // if (editor.value) {
+  // editor.value.destroy()
+  // }
+})
 </script>
+
+<style lang="scss">
+$editor-height: calc(100vh - 112px - 24px);
+$editor-height-mobile: calc(100vh - 112px - 16px);
+
+.editor-markdown {
+  &-main {
+    display: flex;
+    width: 100%;
+  }
+  &-editor {
+    background-color: $dark-6;
+    flex: 1 1 50%;
+    display: block;
+    height: $editor-height;
+    position: relative;
+    // @include until($tablet) {
+    //   height: $editor-height-mobile;
+    // }
+  }
+  &-preview {
+    flex: 1 1 50%;
+    background-color: $grey-2;
+    position: relative;
+    height: $editor-height;
+    overflow: hidden;
+    padding: 1rem;
+    @at-root .theme--dark & {
+      background-color: $grey-9;
+    }
+    // @include until($tablet) {
+    //   display: none;
+    // }
+    &-enter-active, &-leave-active {
+      transition: max-width .5s ease;
+      max-width: 50vw;
+      .editor-code-preview-content {
+        width: 50vw;
+        overflow:hidden;
+      }
+    }
+    &-enter, &-leave-to {
+      max-width: 0;
+    }
+    &-content {
+      height: $editor-height;
+      overflow-y: scroll;
+      padding: 0;
+      width: calc(100% + 17px);
+      // -ms-overflow-style: none;
+      // &::-webkit-scrollbar {
+      //   width: 0px;
+      //   background: transparent;
+      // }
+      // @include until($tablet) {
+      //   height: $editor-height-mobile;
+      // }
+      > div {
+        outline: none;
+      }
+      p.line {
+        overflow-wrap: break-word;
+      }
+      .tabset {
+        background-color: $teal-7;
+        color: $teal-2 !important;
+        padding: 5px 12px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 5px 0 0 0;
+        font-style: italic;
+        &::after {
+          display: none;
+        }
+        &-header {
+          background-color: $teal-5;
+          color: #FFF !important;
+          padding: 5px 12px;
+          font-size: 14px;
+          font-weight: 500;
+          margin-top: 0 !important;
+          &::after {
+            display: none;
+          }
+        }
+        &-content {
+          border-left: 5px solid $teal-5;
+          background-color: $teal-1;
+          padding: 0 15px 15px;
+          overflow: hidden;
+          @at-root .theme--dark & {
+            background-color: rgba($teal-5, .1);
+          }
+        }
+      }
+    }
+  }
+  &-toolbar {
+    background-color: $blue-7;
+    background-image: linear-gradient(to bottom, $blue-7 0%, $blue-8 100%);
+    color: #FFF;
+    .v-toolbar__content {
+      padding-left: 64px;
+      // @include until($tablet) {
+      //   padding-left: 8px;
+      // }
+    }
+  }
+  &-sidebar {
+    background-color: $dark-4;
+    border-right: 1px solid $dark-3;
+    color: #FFF;
+    width: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 24px 0;
+  }
+  &-sysbar {
+    padding-left: 0;
+    &-locale {
+      background-color: rgba(255,255,255,.25);
+      display:inline-flex;
+      padding: 0 12px;
+      height: 24px;
+      width: 63px;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+  // ==========================================
+  // CODE MIRROR
+  // ==========================================
+  .CodeMirror {
+    height: auto;
+    font-family: 'Roboto Mono', monospace;
+    font-size: .9rem;
+    .cm-header-1 {
+      font-size: 1.5rem;
+    }
+    .cm-header-2 {
+      font-size: 1.25rem;
+    }
+    .cm-header-3 {
+      font-size: 1.15rem;
+    }
+    .cm-header-4 {
+      font-size: 1.1rem;
+    }
+    .cm-header-5 {
+      font-size: 1.05rem;
+    }
+    .cm-header-6 {
+      font-size: 1.025rem;
+    }
+  }
+  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+    word-break: break-word;
+  }
+  .CodeMirror-focused .cm-matchhighlight {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
+    background-position: bottom;
+    background-repeat: repeat-x;
+  }
+  .cm-matchhighlight {
+    background-color: $grey-8;
+  }
+  .CodeMirror-selection-highlight-scrollbar {
+    background-color: $green-6;
+  }
+}
+// HINT DROPDOWN
+.CodeMirror-hints {
+  position: absolute;
+  z-index: 10;
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 1px;
+  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
+  border: 1px solid $grey-7;
+  background: $grey-9;
+  font-family: 'Roboto Mono', monospace;
+  font-size: .9rem;
+  max-height: 150px;
+  overflow-y: auto;
+  min-width: 250px;
+  max-width: 80vw;
+}
+.CodeMirror-hint {
+  margin: 0;
+  padding: 0 4px;
+  white-space: pre;
+  color: #FFF;
+  cursor: pointer;
+}
+li.CodeMirror-hint-active {
+  background: $blue-5;
+  color: #FFF;
+}
+</style>

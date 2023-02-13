@@ -34,6 +34,7 @@ npm-debug.log*
 /uploads
 /content
 /temp
+/tmp
 *.sqlite
 
 # IDE exclude

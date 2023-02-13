@@ -85,12 +85,25 @@ defaults:
       maxHits: 100
     maintainerEmail: security@requarks.io
 editors:
-  code:
+  asciidoc:
     contentType: html
+    config: {}
   markdown:
     contentType: markdown
+    config:
+      allowHTML: true
+      linkify: true
+      lineBreaks: true
+      typographer: false
+      underline: false
+      tabWidth: 2
+      latexEngine: katex
+      kroki: true
+      plantuml: true
+      multimdTable: true
   wysiwyg:
     contentType: html
+    config: {}
 groups:
   defaultPermissions:
     - 'read:pages'
@@ -109,18 +122,3 @@ groups:
       path: ''
       locales: []
       sites: []
-reservedPaths:
-  - login
-  - logout
-  - register
-  - verify
-  - favicons
-  - fonts
-  - img
-  - js
-  - svg
-pageExtensions:
-  - md
-  - html
-  - txt
-# ---------------------------------

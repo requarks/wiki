@@ -87,10 +87,10 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-rfid-tag.svg')
             q-item-section {{ t('admin.blocks.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white', disabled)
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-cashbook.svg')
-            q-item-section {{ t('admin.editors.title') }}
+        q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white')
+          q-item-section(avatar)
+            q-icon(name='img:/_assets/icons/fluent-cashbook.svg')
+          q-item-section {{ t('admin.editors.title') }}
         q-item(:to='`/_admin/` + adminStore.currentSiteId + `/locale`', v-ripple, active-class='bg-primary text-white')
           q-item-section(avatar)
             q-icon(name='img:/_assets/icons/fluent-language.svg')

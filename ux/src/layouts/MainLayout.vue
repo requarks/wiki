@@ -2,7 +2,7 @@
 q-layout(view='hHh Lpr lff')
   header-nav
   q-drawer.bg-sidebar(
-    v-model='siteStore.showSideNav'
+    :modelValue='isSidebarShown'
     show-if-above
     :width='255'
     )
@@ -83,11 +83,12 @@ q-layout(view='hHh Lpr lff')
 
 <script setup>
 import { useMeta, useQuasar } from 'quasar'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useSiteStore } from '../stores/site'
+import { useEditorStore } from 'src/stores/editor'
+import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
 
@@ -101,6 +102,7 @@ const $q = useQuasar()
 
 // STORES
 
+const editorStore = useEditorStore()
 const siteStore = useSiteStore()
 
 // ROUTER
@@ -135,6 +137,12 @@ const barStyle = {
   width: '9px',
   opacity: 0.1
 }
+
+// COMPUTED
+
+const isSidebarShown = computed(() => {
+  return siteStore.showSideNav && !(editorStore.isActive && editorStore.hideSideNav)
+})
 
 // METHODS
 

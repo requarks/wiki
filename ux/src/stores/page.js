@@ -174,9 +174,7 @@ export const usePageStore = defineStore('page', {
      * PAGE - CREATE
      */
     pageCreate ({ editor, locale, path }) {
-      // -> Editor View
-      this.editor = editor
-      this.editorMode = 'create'
+      const editorStore = useEditorStore()
 
       // if (['markdown', 'api'].includes(editor)) {
       //   commit('site/SET_SHOW_SIDE_NAV', false, { root: true })
@@ -204,13 +202,19 @@ export const usePageStore = defineStore('page', {
       this.isPublished = false
       this.relations = []
       this.tags = []
-      this.breadcrumbs = []
 
       this.content = ''
       this.render = ''
 
       // -> View Mode
       this.mode = 'edit'
+
+      // -> Editor Mode
+      editorStore.$patch({
+        isActive: true,
+        editor,
+        mode: 'create'
+      })
     },
     /**
      * PAGE SAVE

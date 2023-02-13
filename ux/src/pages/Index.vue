@@ -1,6 +1,8 @@
 <template lang='pug'>
 q-page.column
-  .page-breadcrumbs.q-py-sm.q-px-md.row
+  .page-breadcrumbs.q-py-sm.q-px-md.row(
+    v-if='!editorStore.isActive'
+    )
     .col
       q-breadcrumbs(
         active-color='grey-7'
@@ -36,7 +38,7 @@ q-page.column
     //- PAGE HEADER
     .col.q-pa-md
       .text-h4.page-header-title {{pageStore.title}}
-      .text-subtitle2.page-header-subtitle {{pageStore.description}}
+      .text-subtitle2.page-header-subtitle {{pageStore.description }}
 
     //- PAGE ACTIONS
     .col-auto.q-pa-md.flex.items-center.justify-end
@@ -100,11 +102,16 @@ q-page.column
           label='Edit'
           aria-label='Edit'
           no-caps
-          :href='editUrl'
+          @click='editPage'
         )
   .page-container.row.no-wrap.items-stretch(style='flex: 1 1 100%;')
     .col(style='order: 1;')
+      q-no-ssr(
+        v-if='editorStore.isActive'
+        )
+        component(:is='editorComponents[editorStore.editor]')
       q-scroll-area(
+        v-else
         :thumb-style='thumbStyle'
         :bar-style='barStyle'
         style='height: 100%;'
@@ -344,6 +351,17 @@ const sideDialogs = {
   })
 }
 
+const editorComponents = {
+  markdown: defineAsyncComponent({
+    loader: () => import('../components/EditorMarkdown.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  wysiwyg: defineAsyncComponent({
+    loader: () => import('../components/EditorWysiwyg.vue'),
+    loadingComponent: LoadingGeneric
+  })
+}
+
 // QUASAR
 
 const $q = useQuasar()
@@ -399,10 +417,7 @@ const barStyle = {
 // COMPUTED
 
 const showSidebar = computed(() => {
-  return pageStore.showSidebar && siteStore.showSidebar
-})
-const editorComponent = computed(() => {
-  return pageStore.editor ? `editor-${pageStore.editor}` : null
+  return pageStore.showSidebar && siteStore.showSidebar && !editorStore.isActive
 })
 const relationsLeft = computed(() => {
   return pageStore.relations ? pageStore.relations.filter(r => r.position === 'left') : []
@@ -564,6 +579,13 @@ async function saveChanges () {
   }
   $q.loading.hide()
 }
+
+function editPage () {
+  editorStore.$patch({
+    isActive: true,
+    editor: 'markdown'
+  })
+}
 </script>
 
 <style lang="scss">
@@ -578,6 +600,8 @@ async function saveChanges () {
   }
 }
 .page-header {
+  min-height: 95px;
+
   @at-root .body--light & {
     background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%);
     border-bottom: 1px solid $grey-4;

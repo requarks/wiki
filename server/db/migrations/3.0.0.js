@@ -570,6 +570,31 @@ exports.up = async knex => {
         faviconExt: 'svg',
         loginBg: false
       },
+      editors: {
+        asciidoc: {
+          isActive: true,
+          config: {}
+        },
+        markdown: {
+          isActive: true,
+          config: {
+            allowHTML: true,
+            linkify: true,
+            lineBreaks: true,
+            typographer: false,
+            underline: false,
+            tabWidth: 2,
+            latexEngine: 'katex',
+            kroki: true,
+            plantuml: true,
+            multimdTable: true
+          }
+        },
+        wysiwyg: {
+          isActive: true,
+          config: {}
+        }
+      },
       theme: {
         dark: false,
         colorPrimary: '#1976D2',

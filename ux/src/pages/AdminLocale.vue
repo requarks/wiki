@@ -33,7 +33,7 @@ q-page.admin-locale
         )
       q-btn(
         unelevated
-        icon='fa-solid fa-check'
+        icon='mdi-check'
         :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'

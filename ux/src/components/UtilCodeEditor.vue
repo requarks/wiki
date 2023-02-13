@@ -1,17 +1,23 @@
 <template lang="pug">
-.util-code-editor(
-  ref='editorRef'
-  )
+.util-code-editor
+  textarea(ref='cmRef')
 </template>
 
 <script setup>
 /* eslint no-unused-vars: "off" */
-
-import { keymap, EditorView, lineNumbers } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
-import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { ref, shallowRef, onBeforeMount, onMounted, watch } from 'vue'
+
+// Code Mirror
+import CodeMirror from 'codemirror'
+import 'codemirror/lib/codemirror.css'
+
+// Language
+import 'codemirror/mode/markdown/markdown.js'
+import 'codemirror/mode/htmlmixed/htmlmixed.js'
+import 'codemirror/mode/css/css.js'
+
+// Addons
+import 'codemirror/addon/selection/active-line.js'
 
 // PROPS
 
@@ -38,72 +44,77 @@ const emit = defineEmits([
 
 // STATE
 
-const editor = shallowRef(null)
-const editorRef = ref(null)
+const cm = shallowRef(null)
+const cmRef = ref(null)
 
 // WATCHERS
 
 watch(() => props.modelValue, (newVal) => {
   // Ignore loopback changes while editing
-  if (!editor.value.hasFocus) {
-    editor.value.dispatch({
-      changes: { from: 0, to: editor.value.state.length, insert: newVal }
-    })
+  if (!cm.value.hasFocus()) {
+    cm.value.setValue(newVal)
   }
 })
 
 // MOUNTED
 
 onMounted(async () => {
-  let langModule = null
+  let langMode = null
   switch (props.language) {
     case 'css': {
-      langModule = (await import('@codemirror/lang-css')).css
+      langMode = 'text/css'
       break
     }
     case 'html': {
-      langModule = (await import('@codemirror/lang-html')).html
+      langMode = 'text/html'
       break
     }
     case 'javascript': {
-      langModule = (await import('@codemirror/lang-javascript')).javascript
+      langMode = 'text/javascript'
       break
     }
     case 'json': {
-      langModule = (await import('@codemirror/lang-json')).json
+      langMode = {
+        name: 'javascript',
+        json: true
+      }
       break
     }
     case 'markdown': {
-      langModule = (await import('@codemirror/lang-markdown')).markdown
+      langMode = 'text/markdown'
+      break
+    }
+    default: {
+      langMode = null
       break
     }
   }
-  editor.value = new EditorView({
-    state: EditorState.create({
-      doc: props.modelValue,
-      extensions: [
-        history(),
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
-        lineNumbers(),
-        EditorView.theme({
-          '.cm-content, .cm-gutter': { minHeight: `${props.minHeight}px` }
-        }),
-        ...langModule && [langModule()],
-        syntaxHighlighting(defaultHighlightStyle),
-        EditorView.updateListener.of(v => {
-          if (v.docChanged) {
-            emit('update:modelValue', v.state.doc.toString())
-          }
-        })
-      ]
-    }),
-    parent: editorRef.value
+
+  // -> Initialize CodeMirror
+  cm.value = CodeMirror.fromTextArea(cmRef.value, {
+    tabSize: 2,
+    mode: langMode,
+    theme: 'wikijs-dark',
+    lineNumbers: true,
+    lineWrapping: true,
+    line: true,
+    styleActiveLine: true,
+    viewportMargin: 50,
+    inputStyle: 'contenteditable',
+    direction: 'ltr'
   })
+
+  cm.value.setValue(props.modelValue)
+  cm.value.on('change', c => {
+    emit('update:modelValue', c.getValue())
+  })
+
+  cm.value.setSize(null, `${props.minHeight}px`)
 })
 
 onBeforeMount(() => {
-  if (editor.value) {
-    editor.value.destroy()
+  if (cm.value) {
+    cm.value.destroy()
   }
 })
 </script>

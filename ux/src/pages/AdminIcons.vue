@@ -24,7 +24,7 @@ q-page.admin-icons
         )
       q-btn(
         unelevated
-        icon='fa-solid fa-check'
+        icon='mdi-check'
         :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'
@@ -145,7 +145,6 @@ const packs = [
     key: 'fa',
     label: 'Font Awesome',
     website: 'https://fontawesome.com',
-    isMandatory: true,
     config: {}
   },
   {
@@ -163,7 +162,7 @@ const packs = [
     key: 'mdi',
     label: 'Material Design Icons',
     website: 'https://materialdesignicons.com',
-    config: {}
+    isMandatory: true
   },
   {
     key: 'thm',

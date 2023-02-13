@@ -131,6 +131,8 @@
   "admin.dev.voyager.title": "Voyager",
   "admin.editors.apiDescription": "Document your REST / GraphQL APIs.",
   "admin.editors.apiName": "API Docs Editor",
+  "admin.editors.asciidocDescription": "Use the AsciiDoc syntax to write content. Includes real-time preview.",
+  "admin.editors.asciidocName": "AsciiDoc Editor",
   "admin.editors.blogDescription": "Write a series of posts over time.",
   "admin.editors.blogName": "Blog Editor",
   "admin.editors.channelDescription": "Create discussion channels to collaborate in real-time with your team.",
@@ -1675,5 +1677,6 @@
   "welcome.admin": "Administration Area",
   "welcome.createHome": "Create the homepage",
   "welcome.subtitle": "Let's get started...",
-  "welcome.title": "Welcome to Wiki.js!"
+  "welcome.title": "Welcome to Wiki.js!",
+  "admin.editors.useRenderingPipeline": "Uses the rendering pipeline."
 }

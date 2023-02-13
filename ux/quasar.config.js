@@ -50,7 +50,8 @@ module.exports = configure(function (/* ctx */) {
     extras: [
       // 'ionicons-v4',
       // 'mdi-v5',
-      'fontawesome-v6',
+      'mdi-v7',
+      // 'fontawesome-v6',
       // 'eva-icons',
       // 'themify',
       'line-awesome'
@@ -91,11 +92,17 @@ module.exports = configure(function (/* ctx */) {
         //     /^\/_site\//
         //   ]
         // }
+        viteConf.optimizeDeps.include = [
+          'prosemirror-state',
+          'prosemirror-transform',
+          'prosemirror-model',
+          'prosemirror-view'
+        ]
       },
       // viteVuePluginOptions: {},
 
       vitePlugins: [
-        ['@intlify/vite-plugin-vue-i18n', {
+        ['@intlify/unplugin-vue-i18n/vite', {
           // if you want to use Vue I18n Legacy API, you need to set `compositionOnly: false`
           // compositionOnly: false,
 
@@ -157,7 +164,7 @@ module.exports = configure(function (/* ctx */) {
         }
       },
 
-      iconSet: 'fontawesome-v6', // Quasar icon set
+      iconSet: 'mdi-v7', // Quasar icon set
       lang: 'en-US', // Quasar language pack
 
       // For special cases outside of where the auto-import strategy can have an impact

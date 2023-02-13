@@ -19,61 +19,75 @@ q-page.admin-flags
         icon='las la-redo-alt'
         flat
         color='secondary'
-        :loading='loading > 0'
-        @click='load'
+        :loading='state.loading > 0'
+        @click='refresh'
         )
       q-btn(
         unelevated
-        icon='fa-solid fa-check'
+        icon='mdi-check'
         :label='t(`common.actions.apply`)'
         color='secondary'
         @click='save'
-        :disabled='loading > 0'
+        :disabled='state.loading > 0'
       )
   q-separator(inset)
   .q-pa-md.q-gutter-md
     q-card.shadow-1
       q-list(separator)
-        q-item(v-for='editor of editors', :key='editor.id')
-          blueprint-icon(:icon='editor.icon')
-          q-item-section
-            q-item-label: strong {{t(`admin.editors.` + editor.id + `Name`)}}
-            q-item-label.flex.items-center(caption)
-              span {{t(`admin.editors.` + editor.id + `Description`)}}
-          template(v-if='editor.config')
-            q-item-section(
-              side
-              )
-              q-btn(
-                icon='las la-cog'
-                :label='t(`admin.editors.configuration`)'
-                :color='$q.dark.isActive ? `blue-grey-3` : `blue-grey-8`'
-                outline
-                no-caps
-                padding='xs md'
-              )
-            q-separator.q-ml-md(vertical)
-          q-item-section(side)
-            q-toggle.q-pr-sm(
-              v-model='editor.isActive'
-              :color='editor.isDisabled ? `grey` : `primary`'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :label='t(`admin.sites.isActive`)'
-              :aria-label='t(`admin.sites.isActive`)'
-              :disabled='editor.isDisabled'
-              )
+        template(v-for='editor of editors', :key='editor.id')
+          q-item(v-if='flagsStore.experimental || !editor.isDisabled')
+            blueprint-icon(:icon='editor.icon')
+            q-item-section
+              q-item-label: strong {{t(`admin.editors.` + editor.id + `Name`)}}
+              q-item-label(caption)
+                span {{t(`admin.editors.` + editor.id + `Description`)}}
+              q-item-label(caption, v-if='editor.useRendering')
+                em.text-purple {{ t('admin.editors.useRenderingPipeline') }}
+            template(v-if='editor.hasConfig')
+              q-item-section(
+                side
+                )
+                q-btn(
+                  icon='las la-cog'
+                  :label='t(`admin.editors.configuration`)'
+                  :color='$q.dark.isActive ? `blue-grey-3` : `blue-grey-8`'
+                  outline
+                  no-caps
+                  padding='xs md'
+                  @click='openConfig(editor.id)'
+                )
+              q-separator.q-ml-md(vertical)
+            q-item-section(side)
+              q-toggle.q-pr-sm(
+                v-model='state.config[editor.id]'
+                :color='editor.isDisabled ? `grey` : `primary`'
+                checked-icon='las la-check'
+                unchecked-icon='las la-times'
+                :label='t(`admin.sites.isActive`)'
+                :aria-label='t(`admin.sites.isActive`)'
+                :disabled='editor.isDisabled'
+                )
 </template>
 
 <script setup>
-import { useMeta } from 'quasar'
+import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { defineAsyncComponent, onMounted, reactive, watch } from 'vue'
+import gql from 'graphql-tag'
+import { cloneDeep } from 'lodash-es'
 
+import { useAdminStore } from 'src/stores/admin'
+import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
+
+// QUASAR
+
+const $q = useQuasar()
 
 // STORES
 
+const adminStore = useAdminStore()
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -86,46 +100,146 @@ useMeta({
   title: t('admin.editors.title')
 })
 
-const loading = ref(false)
+const state = reactive({
+  loading: 0,
+  config: {
+    api: false,
+    asciidoc: false,
+    blog: false,
+    channel: false,
+    markdown: false,
+    redirect: true,
+    wysiwyg: false
+  }
+})
 const editors = reactive([
   {
-    id: 'wysiwyg',
-    icon: 'google-presentation',
-    isActive: true
+    id: 'api',
+    icon: 'api',
+    isDisabled: true,
+    useRendering: false
   },
   {
-    id: 'markdown',
-    icon: 'markdown',
-    config: {},
-    isActive: true
-  },
-  {
-    id: 'channel',
-    icon: 'chat',
-    isActive: true
+    id: 'asciidoc',
+    icon: 'asciidoc',
+    hasConfig: true,
+    useRendering: true
   },
   {
     id: 'blog',
     icon: 'typewriter-with-paper',
-    isActive: true,
-    isDisabled: true
+    isDisabled: true,
+    useRendering: true
   },
   {
-    id: 'api',
-    icon: 'api',
-    isActive: true,
-    isDisabled: true
+    id: 'channel',
+    icon: 'chat',
+    isDisabled: true,
+    useRendering: false
+  },
+  {
+    id: 'markdown',
+    icon: 'markdown',
+    hasConfig: true,
+    useRendering: true
   },
   {
     id: 'redirect',
     icon: 'advance',
-    isActive: true
+    isDisabled: true,
+    useRendering: false
+  },
+  {
+    id: 'wysiwyg',
+    icon: 'google-presentation',
+    useRendering: true
   }
 ])
 
-const load = async () => {}
-const save = () => {}
-const refresh = () => {}
+// WATCHERS
+
+watch(() => adminStore.currentSiteId, (newValue) => {
+  $q.loading.show()
+  load()
+})
+
+// METHODS
+
+async function load () {
+  state.loading++
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query getEditorsState (
+          $siteId: UUID!
+        ) {
+        siteById (
+          id: $siteId
+        ) {
+          id
+          editors {
+            asciidoc {
+              isActive
+            }
+            markdown {
+              isActive
+            }
+            wysiwyg  {
+              isActive
+            }
+          }
+        }
+      }`,
+      variables: {
+        siteId: adminStore.currentSiteId
+      },
+      fetchPolicy: 'network-only'
+    })
+    const data = cloneDeep(resp?.data?.siteById?.editors)
+    state.config.asciidoc = data?.asciidoc?.isActive ?? false
+    state.config.markdown = data?.markdown?.isActive ?? false
+    state.config.wysiwyg = data?.wysiwyg?.isActive ?? false
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to fetch editors state.'
+    })
+  }
+  $q.loading.hide()
+  state.loading--
+}
+
+async function save () {}
+
+async function refresh () {
+  await load()
+}
+
+function openConfig (editorId) {
+  switch (editorId) {
+    case 'markdown': {
+      $q.dialog({
+        component: defineAsyncComponent(() => import('../components/EditorMarkdownConfigDialog.vue'))
+      })
+      break
+    }
+    default: {
+      $q.notify({
+        type: 'negative',
+        message: 'Invalid Editor Config Call'
+      })
+    }
+  }
+}
+
+// MOUNTED
+
+onMounted(async () => {
+  $q.loading.show()
+  if (adminStore.currentSiteId) {
+    await load()
+  }
+})
 </script>
 
 <style lang='scss'>
