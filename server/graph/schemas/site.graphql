@@ -32,6 +32,7 @@ type SiteMutation {
     analyticsId: String
     company: String
     contentLicense: String
+    footerOverride: String
     logoUrl: String
     pageExtensions: String
     authAutoLogin: Boolean
@@ -81,6 +82,7 @@ type SiteConfig {
   analyticsId: String
   company: String
   contentLicense: String
+  footerOverride: String
   logoUrl: String
   pageExtensions: String
   authAutoLogin: Boolean

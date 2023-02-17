@@ -160,7 +160,7 @@ module.exports = {
             fNames.old = fMatch[1]
             fNames.new = fMatch[4]
           } else {
-            fNames.old = (fMatch[1] + fMatch[2] + fMatch[4]).replace('//', '/'),
+            fNames.old = (fMatch[1] + fMatch[2] + fMatch[4]).replace('//', '/')
             fNames.new = (fMatch[1] + fMatch[3] + fMatch[4]).replace('//', '/')
           }
           const fPath = path.join(this.repoPath, fNames.new)
