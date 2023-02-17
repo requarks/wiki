@@ -421,7 +421,7 @@ router.get('/*', async (req, res, next) => {
 
   if (isPage) {
     if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-      let query = (!_.isEmpty(req.query)) ? `?${qs.stringify(req.query)}` : ``
+      const query = !_.isEmpty(req.query) ? `?${qs.stringify(req.query)}` : ''
       return res.redirect(`/${pageArgs.locale}/${pageArgs.path}${query}`)
     }
 
