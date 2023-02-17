@@ -149,7 +149,7 @@ module.exports = async () => {
       title: WIKI.config.title,
       theme: WIKI.config.theming.theme,
       darkMode: WIKI.config.theming.darkMode,
-      tocPosition: WIKI.config.theming.tocPosition,
+      tocPosition: WIKI.config.theming.tocPosition || 'left',
       lang: WIKI.config.lang.code,
       rtl: WIKI.config.lang.rtl,
       company: WIKI.config.company,
