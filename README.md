@@ -420,6 +420,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Mads Rosendahl
 - Mark Mansur
 - Matt Gedigian
+- Mike Ditton
 - Nate Figz
 - Patryk
 - Philipp Schürch
