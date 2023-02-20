@@ -218,8 +218,9 @@ async function refresh () {
 function openConfig (editorId) {
   switch (editorId) {
     case 'markdown': {
-      $q.dialog({
-        component: defineAsyncComponent(() => import('../components/EditorMarkdownConfigDialog.vue'))
+      adminStore.$patch({
+        overlayOpts: { },
+        overlay: 'EditorMarkdownConfig'
       })
       break
     }

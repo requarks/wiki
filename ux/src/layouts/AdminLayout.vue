@@ -228,6 +228,7 @@ import { useSiteStore } from 'src/stores/site'
 import AccountMenu from '../components/AccountMenu.vue'
 import FooterNav from 'src/components/FooterNav.vue'
 const overlays = {
+  EditorMarkdownConfig: defineAsyncComponent(() => import('../components/EditorMarkdownConfigOverlay.vue')),
   GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),
   UserEditOverlay: defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
 }
