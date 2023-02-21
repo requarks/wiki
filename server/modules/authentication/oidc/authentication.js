@@ -19,7 +19,8 @@ module.exports = {
         issuer: conf.issuer,
         userInfoURL: conf.userInfoURL,
         callbackURL: conf.callbackURL,
-        passReqToCallback: true
+        passReqToCallback: true,
+        skipUserProfile: conf.skipUserProfile
       }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
         const profile = Object.assign({}, idProfile, uiProfile)
 
