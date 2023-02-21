@@ -969,6 +969,17 @@ module.exports = class Page extends Model {
   }
 
   /**
+    * 
+    * @param {String} title Page title
+    * @returns {Promise} Promise of the Page id and path
+    */
+  static async getPageIDWithTitle(title) {
+    return WIKI.models.pages.query()
+      .column(['pages.id', 'pages.path'])
+      .where({'pages.title': title})
+  }
+
+  /**
    * Fetch an Existing Page from the Database
    *
    * @param {Object} opts Page Properties
