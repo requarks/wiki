@@ -98,6 +98,22 @@ tolerations: []
 
 affinity: {}
 
+extraEnv:
+  env: []
+#    - name: SAMPLE_ENV
+#      value: "sample value"
+#    - name: SAMPLE_ENV_FROM_SECRET
+#      valueFrom:
+#        secretKeyRef:
+#          name: 'secret-name'
+#          key: 'secret-key'
+  secrets: []
+#    - secret-name
+#    - another-secret-name
+  configmaps: []
+#    - configmap-name
+#    - another-configmap-name
+
 volumeMounts: []
 
 volumes: []

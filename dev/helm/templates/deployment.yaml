@@ -39,6 +39,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
           env:
+            {{- with .Values.extraEnv.env }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
             - name: DB_TYPE
               value: postgres
             {{- if (.Values.externalPostgresql).databaseURL }}
@@ -46,7 +49,8 @@ spec:
               value: {{ .Values.externalPostgresql.databaseURL }}
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
-            {{- else }}
+            {{- end }}
+            {{- if .Values.postgresql.enabled}}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
             - name: DB_PORT
@@ -71,6 +75,19 @@ spec:
             {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
+          envFrom:
+            {{- with .Values.extraEnv.configmaps }}
+              {{- range $v := . }}
+            - configMapRef:
+                name: {{ $v }}
+              {{- end }}
+            {{- end }}
+            {{- with .Values.extraEnv.secrets }}
+              {{- range $v := . }}
+            - secretRef:
+                name: {{ $v }}
+              {{- end }}
+            {{- end }}
     {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
