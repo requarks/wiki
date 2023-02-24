@@ -1,0 +1,50 @@
+kind: pipeline
+name: publish to docker hub
+
+trigger:
+  event:
+  - push
+  - tag
+
+steps:
+- name: docker push branch ${DRONE_COMMIT_BRANCH}
+  image: plugins/docker
+  settings:
+    repo: liquidinvestigations/liquid-dokuwiki
+    tags: ${DRONE_COMMIT_BRANCH}
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    dockerfile: dev/build/Dockerfile
+  when:
+    branch:
+      excludes:
+        - dependabot/*
+    event:
+    - push
+
+- name: docker push autotag + latest
+  image: plugins/docker
+  settings:
+    repo: liquidinvestigations/liquid-dokuwiki
+    auto_tag: true
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+    dockerfile: dev/build/Dockerfile
+
+---
+kind: secret
+name: docker_username
+get:
+  path: liquid/ci/drone.docker
+  name: username
+
+---
+kind: secret
+name: docker_password
+get:
+  path: liquid/ci/drone.docker
+  name: password
