@@ -1,8 +1,0 @@
-key: markdownImsize
-title: Image Size
-description: Adds dimensions attributes to images
-author: requarks.io
-icon: mdi-image-size-select-large
-enabledDefault: true
-dependsOn: markdown-core
-props: {}

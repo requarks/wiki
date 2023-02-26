@@ -449,7 +449,7 @@
   "admin.navigation.visibilityMode.all": "Visible to everyone",
   "admin.navigation.visibilityMode.restricted": "Visible to select groups...",
   "admin.pages.title": "Pages",
-  "admin.rendering.subtitle": "Configure the page rendering pipeline",
+  "admin.rendering.subtitle": "Configure the content rendering pipeline",
   "admin.rendering.title": "Rendering",
   "admin.scheduler.active": "Active",
   "admin.scheduler.activeNone": "There are no active jobs at the moment.",

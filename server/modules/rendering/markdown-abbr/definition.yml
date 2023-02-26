@@ -1,8 +1,0 @@
-key: markdownAbbr
-title: Abbreviations
-description: Parse abbreviations into abbr tags
-author: requarks.io
-icon: mdi-contain-start
-enabledDefault: true
-dependsOn: markdown-core
-props: {}
