@@ -209,7 +209,55 @@ async function load () {
   state.loading--
 }
 
-async function save () {}
+async function save () {
+  state.loading++
+  try {
+    const respRaw = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation saveEditorState (
+          $id: UUID!
+          $patch: SiteUpdateInput!
+          ) {
+          updateSite (
+            id: $id,
+            patch: $patch
+            ) {
+            operation {
+              succeeded
+              slug
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        id: adminStore.currentSiteId,
+        patch: {
+          editors: {
+            asciidoc: { isActive: state.config.asciidoc },
+            markdown: { isActive: state.config.markdown },
+            wysiwyg: { isActive: state.config.wysiwyg }
+          }
+        }
+      }
+    })
+    if (respRaw?.data?.updateSite?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.editors.saveSuccess')
+      })
+    } else {
+      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to save site editors config',
+      caption: err.message
+    })
+  }
+  state.loading--
+}
 
 async function refresh () {
   await load()

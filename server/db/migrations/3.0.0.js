@@ -579,15 +579,18 @@ exports.up = async knex => {
           isActive: true,
           config: {
             allowHTML: true,
-            linkify: true,
-            lineBreaks: true,
-            typographer: false,
-            underline: false,
-            tabWidth: 2,
+            kroki: false,
+            krokiServerUrl: 'https://kroki.io',
             latexEngine: 'katex',
-            kroki: true,
-            plantuml: true,
-            multimdTable: true
+            lineBreaks: true,
+            linkify: true,
+            multimdTable: true,
+            plantuml: false,
+            plantumlServerUrl: 'https://www.plantuml.com/plantuml/',
+            quotes: 'english',
+            tabWidth: 2,
+            typographer: false,
+            underline: true
           }
         },
         wysiwyg: {

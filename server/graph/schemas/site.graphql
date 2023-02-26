@@ -186,6 +186,7 @@ input SiteUpdateInput {
   features: SiteFeaturesInput
   defaults: SiteDefaultsInput
   uploads: SiteUploadsInput
+  editors: SiteEditorsInput
   theme: SiteThemeInput
 }
 
@@ -228,6 +229,17 @@ input SiteThemeInput {
   showPrintBtn: Boolean
   baseFont: String
   contentFont: String
+}
+
+input SiteEditorsInput {
+  asciidoc: SiteEditorInput
+  markdown: SiteEditorInput
+  wysiwyg: SiteEditorInput
+}
+
+input SiteEditorInput {
+  isActive: Boolean
+  config: JSON
 }
 
 input SiteUploadsInput {

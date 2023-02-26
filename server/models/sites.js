@@ -107,6 +107,34 @@ module.exports = class Site extends Model {
           baseFont: 'roboto',
           contentFont: 'roboto'
         },
+        editors: {
+          asciidoc: {
+            isActive: true,
+            config: {}
+          },
+          markdown: {
+            isActive: true,
+            config: {
+              allowHTML: true,
+              kroki: false,
+              krokiServerUrl: 'https://kroki.io',
+              latexEngine: 'katex',
+              lineBreaks: true,
+              linkify: true,
+              multimdTable: true,
+              plantuml: false,
+              plantumlServerUrl: 'https://www.plantuml.com/plantuml/',
+              quotes: 'english',
+              tabWidth: 2,
+              typographer: false,
+              underline: true
+            }
+          },
+          wysiwyg: {
+            isActive: true,
+            config: {}
+          }
+        },
         uploads: {
           conflictBehavior: 'overwrite',
           normalizeFilename: true

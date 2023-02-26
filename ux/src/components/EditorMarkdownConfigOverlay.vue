@@ -17,6 +17,16 @@ q-layout(view='hHh lpR fFf', container)
     q-btn-group(push)
       q-btn(
         push
+        color='grey-6'
+        text-color='white'
+        :aria-label='t(`common.actions.refresh`)'
+        icon='las la-redo-alt'
+        @click='load'
+        :loading='state.loading > 0'
+        )
+        q-tooltip(anchor='center left', self='center right') {{t(`common.actions.refresh`)}}
+      q-btn(
+        push
         color='white'
         text-color='grey-7'
         :label='t(`common.actions.cancel`)'
@@ -245,7 +255,9 @@ q-layout(view='hHh lpR fFf', container)
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { reactive, ref } from 'vue'
+import { onMounted, reactive } from 'vue'
+import gql from 'graphql-tag'
+import { cloneDeep } from 'lodash-es'
 
 import { useAdminStore } from '../stores/admin'
 import { useSiteStore } from 'src/stores/site'
@@ -310,7 +322,92 @@ function close () {
   adminStore.$patch({ overlay: '' })
 }
 
-async function save () {
-
+async function load () {
+  state.loading++
+  $q.loading.show()
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query getEditorsState (
+          $siteId: UUID!
+        ) {
+        siteById (
+          id: $siteId
+        ) {
+          id
+          editors {
+            markdown {
+              config
+            }
+          }
+        }
+      }`,
+      variables: {
+        siteId: adminStore.currentSiteId
+      },
+      fetchPolicy: 'network-only'
+    })
+    state.config = cloneDeep(resp?.data?.siteById?.editors?.markdown?.config)
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to fetch markdown editor configuration.'
+    })
+  }
+  $q.loading.hide()
+  state.loading--
 }
+
+async function save () {
+  state.loading++
+  try {
+    const respRaw = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation saveEditorState (
+          $id: UUID!
+          $patch: SiteUpdateInput!
+          ) {
+          updateSite (
+            id: $id,
+            patch: $patch
+            ) {
+            operation {
+              succeeded
+              slug
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        id: adminStore.currentSiteId,
+        patch: {
+          editors: {
+            markdown: { config: state.config }
+          }
+        }
+      }
+    })
+    if (respRaw?.data?.updateSite?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.editors.markdown.saveSuccess')
+      })
+      close()
+    } else {
+      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to save Markdown editor config',
+      caption: err.message
+    })
+  }
+  state.loading--
+}
+
+onMounted(() => {
+  load()
+})
 </script>
