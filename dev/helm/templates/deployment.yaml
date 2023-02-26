@@ -76,7 +76,7 @@ spec:
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
           envFrom:
-            {{- with .Values.extraEnv.configmaps }}
+            {{- with .Values.extraEnv.configMaps }}
               {{- range $v := . }}
             - configMapRef:
                 name: {{ $v }}
