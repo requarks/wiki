@@ -242,6 +242,15 @@ async function save () {
       }
     })
     if (respRaw?.data?.updateSite?.operation?.succeeded) {
+      if (adminStore.currentSiteId === siteStore.id) {
+        siteStore.$patch({
+          editors: {
+            asciidoc: state.config.asciidoc,
+            markdown: state.config.markdown,
+            wysiwyg: state.config.wysiwyg
+          }
+        })
+      }
       $q.notify({
         type: 'positive',
         message: t('admin.editors.saveSuccess')

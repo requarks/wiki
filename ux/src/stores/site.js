@@ -28,6 +28,11 @@ export const useSiteStore = defineStore('site', {
     features: {
       ratingsMode: 'off'
     },
+    editors: {
+      asciidoc: false,
+      markdown: false,
+      wysiwyg: false
+    },
     theme: {
       dark: false,
       injectCSS: '',
@@ -81,6 +86,17 @@ export const useSiteStore = defineStore('site', {
                 features {
                   ratingsMode
                 }
+                editors {
+                  asciidoc {
+                    isActive
+                  }
+                  markdown {
+                    isActive
+                  }
+                  wysiwyg {
+                    isActive
+                  }
+                }
                 theme {
                   dark
                   colorPrimary
@@ -115,6 +131,11 @@ export const useSiteStore = defineStore('site', {
           this.features = {
             ...this.features,
             ...clone(siteInfo.features)
+          }
+          this.editors = {
+            asciidoc: clone(siteInfo.editors.asciidoc.isActive),
+            markdown: clone(siteInfo.editors.markdown.isActive),
+            wysiwyg: clone(siteInfo.editors.wysiwyg.isActive)
           }
           this.theme = {
             ...this.theme,
