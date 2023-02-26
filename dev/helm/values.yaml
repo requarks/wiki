@@ -110,7 +110,7 @@ extraEnv:
   secrets: []
 #    - secret-name
 #    - another-secret-name
-  configmaps: []
+  configMaps: []
 #    - configmap-name
 #    - another-configmap-name
 
