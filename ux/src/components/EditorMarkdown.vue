@@ -1,8 +1,120 @@
 <template lang="pug">
 .editor-markdown
   .editor-markdown-main
-    .editor-markdown-sidebar X
+    .editor-markdown-sidebar
+      //--------------------------------------------------------
+      //- SIDE TOOLBAR
+      //--------------------------------------------------------
+      q-btn(
+        icon='mdi-link-variant-plus'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertLink') }}
+      q-btn(
+        icon='mdi-image-plus-outline'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertAssets') }}
+      q-btn(
+        icon='mdi-code-json'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertCodeBlock') }}
+      q-btn(
+        icon='mdi-table-large-plus'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTable') }}
+      q-btn(
+        icon='mdi-chart-multiline'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertDiagram') }}
+      q-btn(
+        icon='mdi-line-scan'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.horizontalBar') }}
     .editor-markdown-editor
+      //--------------------------------------------------------
+      //- TOP TOOLBAR
+      //--------------------------------------------------------
+      .editor-markdown-toolbar
+        q-btn(
+          icon='mdi-format-bold'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.bold') }}
+        q-btn(
+          icon='mdi-format-italic'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.italic') }}
+        q-btn(
+          icon='mdi-format-strikethrough'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.strikethrough') }}
+        q-btn(
+          icon='mdi-format-header-pound'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.header') }}
+        q-btn(
+          icon='mdi-format-subscript'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.subscript') }}
+        q-btn(
+          icon='mdi-format-superscript'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.superscript') }}
+        q-btn(
+          icon='mdi-alpha-t-box-outline'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.blockquote') }}
+        q-btn(
+          icon='mdi-format-list-bulleted'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.unorderedList') }}
+        q-btn(
+          icon='mdi-format-list-numbered'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.orderedList') }}
+        q-btn(
+          icon='mdi-code-tags'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.inlineCode') }}
+        q-btn(
+          icon='mdi-keyboard-variant'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.keyboardKey') }}
+      //--------------------------------------------------------
+      //- CODEMIRROR
+      //--------------------------------------------------------
       textarea(ref='cmRef')
     transition(name='editor-markdown-preview')
       .editor-markdown-preview(v-if='state.previewShown')
@@ -219,6 +331,8 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     height: $editor-height;
     overflow: hidden;
     padding: 1rem;
+    border-top: 32px solid $grey-3;
+
     @at-root .theme--dark & {
       background-color: $grey-9;
     }
@@ -290,26 +404,20 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     }
   }
   &-toolbar {
-    background-color: $blue-7;
-    background-image: linear-gradient(to bottom, $blue-7 0%, $blue-8 100%);
+    background-color: $primary;
     color: #FFF;
-    .v-toolbar__content {
-      padding-left: 64px;
-      // @include until($tablet) {
-      //   padding-left: 8px;
-      // }
-    }
+    height: 32px;
   }
   &-sidebar {
     background-color: $dark-4;
-    border-right: 1px solid $dark-3;
+    border-top: 32px solid $primary;
     color: #FFF;
     width: 56px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    padding: 24px 0;
+    padding: 12px 0;
   }
   &-sysbar {
     padding-left: 0;

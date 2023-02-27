@@ -1707,5 +1707,6 @@
   "admin.editors.markdown.quotes": "Quotes Style",
   "admin.editors.markdown.quotesHint": "When typographer is enabled. Double + single quotes replacement pairs. e.g. «»„“ for Russian, „“‚‘ for German, etc.",
   "admin.editors.saveSuccess": "Editors state saved successfully.",
-  "admin.editors.markdown.saveSuccess": "Markdown editor configuration saved successfully."
+  "admin.editors.markdown.saveSuccess": "Markdown editor configuration saved successfully.",
+  "editor.markup.insertTable": "Insert Table"
 }

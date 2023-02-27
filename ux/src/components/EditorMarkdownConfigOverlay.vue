@@ -45,7 +45,7 @@ q-layout(view='hHh lpR fFf', container)
         :disabled='state.loading > 0'
       )
   q-page-container
-    q-page.q-pa-md
+    q-page.q-pa-md(style='max-width: 1200px; margin: 0 auto;')
       q-card.shadow-1.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.editors.markdown.general')}}
