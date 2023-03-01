@@ -115,6 +115,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `sideload.enabled`                   | Enable sideloading of locale files from git | `false`                                                    |
 | `sideload.repoURL`                   | Git repository URL containing locale files  | `https://github.com/Requarks/wiki-localization`            |
 | `sideload.env`                       | Environment variables for sideload Container | `{}`                                                      |
+| `NODE_EXTRA_CA_CERTS`                | Trusted certificates path                   | `nil`                                                      |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
 | `postgresql.postgresqlUser`            | Postgres username                           | `postgres`                                                   |
@@ -145,6 +146,39 @@ $ helm install --name my-release -f values.yaml requarks/wiki
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
+
+## Append extra trusted certificates
+
+1. Create ConfigMap with CAs in PEM format.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca
+  namespace: your-wikijs-namespace
+data:
+  certs.pem: |-
+    -----BEGIN CERTIFICATE-----
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    -----END CERTIFICATE-----
+```
+
+2. Mount your CAs from ConfigMap to WikiJS pod and set `NODE_EXTRA_CA_CERTS` variable. Insert the following lines to your WikiJS values.yaml.
+
+```yaml
+volumeMounts:
+  - name: ca
+    mountPath: /cas.pem
+    subPath: certs.pem
+
+volumes:
+  - name: ca
+    configMap:
+      name: ca
+
+NODE_EXTRA_CA_CERTS: "/cas.pem"
+```
 
 ## PostgresSQL
 

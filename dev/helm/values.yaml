@@ -91,7 +91,6 @@ resources: {}
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
-
 nodeSelector: {}
 
 tolerations: []
@@ -112,6 +111,9 @@ sideload:
   env: []
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
+
+# Append extra trusted certificates for node process from extra volume
+#NODE_EXTRA_CA_CERTS: "/path/to/certs.pem"
 
 ## This will override the postgresql chart values
 # externalPostgresql:
