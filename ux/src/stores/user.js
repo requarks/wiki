@@ -3,6 +3,7 @@ import jwtDecode from 'jwt-decode'
 import Cookies from 'js-cookie'
 import gql from 'graphql-tag'
 import { DateTime } from 'luxon'
+import { getAccessibleColor } from 'src/helpers/accessibility'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -15,6 +16,7 @@ export const useUserStore = defineStore('user', {
     dateFormat: 'YYYY-MM-DD',
     timeFormat: '12h',
     appearance: 'site',
+    cvd: 'none',
     permissions: [],
     iat: 0,
     exp: null,
@@ -87,10 +89,14 @@ export const useUserStore = defineStore('user', {
         this.dateFormat = resp.prefs.dateFormat || ''
         this.timeFormat = resp.prefs.timeFormat || '12h'
         this.appearance = resp.prefs.appearance || 'site'
+        this.cvd = resp.prefs.cvd || 'none'
         this.profileLoaded = true
       } catch (err) {
         console.warn(err)
       }
+    },
+    getAccessibleColor (base, hexBase) {
+      return getAccessibleColor(base, hexBase, this.cvd)
     }
   }
 })

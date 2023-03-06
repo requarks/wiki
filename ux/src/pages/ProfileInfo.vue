@@ -134,6 +134,21 @@ q-page.q-py-md(:style-fn='pageStyle')
         toggle-color='primary'
         :options='appearances'
       )
+  .text-header.q-mt-lg {{t('profile.accessibility')}}
+  q-item
+    blueprint-icon(icon='visualy-impaired')
+    q-item-section
+      q-item-label {{t(`profile.cvd`)}}
+      q-item-label(caption) {{t(`profile.cvdHint`)}}
+    q-item-section.col-auto
+      q-btn-toggle(
+        v-model='state.config.cvd'
+        push
+        glossy
+        no-caps
+        toggle-color='primary'
+        :options='cvdChoices'
+      )
   .actions-bar.q-mt-lg
     q-btn(
       icon='las la-check'
@@ -149,7 +164,7 @@ import gql from 'graphql-tag'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive } from 'vue'
 
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
@@ -185,7 +200,8 @@ const state = reactive({
     timezone: '',
     dateFormat: '',
     timeFormat: '12h',
-    appearance: 'site'
+    appearance: 'site',
+    cvd: 'none'
   }
 })
 
@@ -205,6 +221,12 @@ const appearances = [
   { value: 'site', label: t('profile.appearanceDefault') },
   { value: 'light', label: t('profile.appearanceLight') },
   { value: 'dark', label: t('profile.appearanceDark') }
+]
+const cvdChoices = [
+  { value: 'none', label: t('profile.cvdNone') },
+  { value: 'protanopia', label: t('profile.cvdProtanopia') },
+  { value: 'deuteranopia', label: t('profile.cvdDeuteranopia') },
+  { value: 'tritanopia', label: t('profile.cvdTritanopia') }
 ]
 const timezones = Intl.supportedValuesOf('timeZone')
 
@@ -232,6 +254,7 @@ async function save () {
           $dateFormat: String
           $timeFormat: String
           $appearance: UserSiteAppearance
+          $cvd: UserCvdChoices
         ) {
           updateProfile (
             name: $name
@@ -242,6 +265,7 @@ async function save () {
             dateFormat: $dateFormat
             timeFormat: $timeFormat
             appearance: $appearance
+            cvd: $cvd
           ) {
             operation {
               succeeded
@@ -283,5 +307,6 @@ onMounted(() => {
   state.config.dateFormat = userStore.dateFormat || ''
   state.config.timeFormat = userStore.timeFormat || '12h'
   state.config.appearance = userStore.appearance || 'site'
+  state.config.cvd = userStore.cvd || 'none'
 })
 </script>

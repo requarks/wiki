@@ -42,6 +42,10 @@ watch(() => userStore.appearance, (newValue) => {
   }
 })
 
+watch(() => userStore.cvd, () => {
+  applyTheme()
+})
+
 // THEME
 
 function applyTheme () {
@@ -50,11 +54,13 @@ function applyTheme () {
   } else {
     $q.dark.set(userStore.appearance === 'dark')
   }
-  setCssVar('primary', siteStore.theme.colorPrimary)
-  setCssVar('secondary', siteStore.theme.colorSecondary)
-  setCssVar('accent', siteStore.theme.colorAccent)
-  setCssVar('header', siteStore.theme.colorHeader)
-  setCssVar('sidebar', siteStore.theme.colorSidebar)
+  setCssVar('primary', userStore.getAccessibleColor('primary', siteStore.theme.colorPrimary))
+  setCssVar('secondary', userStore.getAccessibleColor('secondary', siteStore.theme.colorSecondary))
+  setCssVar('accent', userStore.getAccessibleColor('accent', siteStore.theme.colorAccent))
+  setCssVar('header', userStore.getAccessibleColor('header', siteStore.theme.colorHeader))
+  setCssVar('sidebar', userStore.getAccessibleColor('sidebar', siteStore.theme.colorSidebar))
+  setCssVar('positive', userStore.getAccessibleColor('positive', '#02C39A'))
+  setCssVar('negative', userStore.getAccessibleColor('negative', '#f03a47'))
 }
 
 // INIT SITE STORE

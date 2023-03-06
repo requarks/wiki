@@ -1708,5 +1708,13 @@
   "admin.editors.markdown.quotesHint": "When typographer is enabled. Double + single quotes replacement pairs. e.g. «»„“ for Russian, „“‚‘ for German, etc.",
   "admin.editors.saveSuccess": "Editors state saved successfully.",
   "admin.editors.markdown.saveSuccess": "Markdown editor configuration saved successfully.",
-  "editor.markup.insertTable": "Insert Table"
+  "editor.markup.insertTable": "Insert Table",
+  "editor.markup.header": "Header",
+  "profile.cvdHint": "Alter the color scheme of certain UI elements to account for certain color vision dificiencies.",
+  "profile.cvd": "Color Vision Deficiency",
+  "profile.cvdNone": "None",
+  "profile.cvdProtanopia": "Protanopia",
+  "profile.cvdTritanopia": "Tritanopia",
+  "profile.cvdDeuteranopia": "Deuteranopia",
+  "profile.accessibility": "Accessibility"
 }

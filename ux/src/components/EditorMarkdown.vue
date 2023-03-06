@@ -41,7 +41,7 @@
         flat
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.horizontalBar') }}
-    .editor-markdown-editor
+    .editor-markdown-mid
       //--------------------------------------------------------
       //- TOP TOOLBAR
       //--------------------------------------------------------
@@ -115,9 +115,11 @@
       //--------------------------------------------------------
       //- CODEMIRROR
       //--------------------------------------------------------
-      textarea(ref='cmRef')
+      .editor-markdown-editor
+        textarea(ref='cmRef')
     transition(name='editor-markdown-preview')
       .editor-markdown-preview(v-if='state.previewShown')
+        .editor-markdown-preview-toolbar Render Preview
         .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
           div(
             ref='editorPreview'
@@ -126,7 +128,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, shallowRef, onBeforeMount, onMounted, watch } from 'vue'
+import { reactive, ref, shallowRef, nextTick, onBeforeMount, onMounted, watch } from 'vue'
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
@@ -169,6 +171,7 @@ const cm = shallowRef(null)
 const cmRef = ref(null)
 
 const state = reactive({
+  content: '',
   previewShown: true,
   previewHTML: ''
 })
@@ -212,7 +215,7 @@ onMounted(async () => {
     // onCmInput(editorStore.content)
   })
 
-  cm.value.setSize(null, 'calc(100vh - 150px)')
+  cm.value.setSize(null, '100%')
 
   // -> Set Keybindings
   const keyBindings = {
@@ -263,7 +266,9 @@ onMounted(async () => {
 
   // // Render initial preview
   // this.processContent(this.$store.get('editor/content'))
-  // this.refresh()
+  nextTick(() => {
+    cm.value.refresh()
+  })
 
   // this.$root.$on('editorInsert', opts => {
   //   switch (opts.kind) {
@@ -306,7 +311,7 @@ onBeforeMount(() => {
 </script>
 
 <style lang="scss">
-$editor-height: calc(100vh - 112px - 24px);
+$editor-height: calc(100vh - 64px - 94px - 2px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
 
 .editor-markdown {
@@ -314,11 +319,16 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     display: flex;
     width: 100%;
   }
-  &-editor {
+  &-mid {
     background-color: $dark-6;
     flex: 1 1 50%;
     display: block;
     height: $editor-height;
+    position: relative;
+  }
+  &-editor {
+    display: block;
+    height: calc(100% - 32px);
     position: relative;
     // @include until($tablet) {
     //   height: $editor-height-mobile;
@@ -330,8 +340,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     position: relative;
     height: $editor-height;
     overflow: hidden;
-    padding: 1rem;
-    border-top: 32px solid $grey-3;
 
     @at-root .theme--dark & {
       background-color: $grey-9;
@@ -350,10 +358,18 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     &-enter, &-leave-to {
       max-width: 0;
     }
+    &-toolbar {
+      background-color: $grey-3;
+      color: $grey-8;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+    }
     &-content {
       height: $editor-height;
       overflow-y: scroll;
-      padding: 0;
+      padding: 1rem;
       width: calc(100% + 17px);
       // -ms-overflow-style: none;
       // &::-webkit-scrollbar {

@@ -27,83 +27,7 @@ q-page.column
         .text-caption.text-accent: strong Unpublished
         q-separator.q-mx-sm(vertical)
       .text-caption.text-grey-6 Last modified on #[strong {{lastModified}}]
-  .page-header.row
-    //- PAGE ICON
-    .col-auto.q-pl-md.flex.items-center
-      q-icon.rounded-borders(
-        :name='pageStore.icon'
-        size='64px'
-        color='primary'
-      )
-    //- PAGE HEADER
-    .col.q-pa-md
-      .text-h4.page-header-title {{pageStore.title}}
-      .text-subtitle2.page-header-subtitle {{pageStore.description }}
-
-    //- PAGE ACTIONS
-    .col-auto.q-pa-md.flex.items-center.justify-end
-      q-btn.q-mr-md(
-        flat
-        dense
-        icon='las la-bell'
-        color='grey'
-        aria-label='Watch Page'
-        )
-        q-tooltip Watch Page
-      q-btn.q-mr-md(
-        flat
-        dense
-        icon='las la-bookmark'
-        color='grey'
-        aria-label='Bookmark Page'
-        )
-        q-tooltip Bookmark Page
-      q-btn.q-mr-md(
-        flat
-        dense
-        icon='las la-share-alt'
-        color='grey'
-        aria-label='Share'
-        )
-        q-tooltip Share
-        social-sharing-menu
-      q-btn.q-mr-md(
-        flat
-        dense
-        icon='las la-print'
-        color='grey'
-        aria-label='Print'
-        )
-        q-tooltip Print
-      template(v-if='editorStore.hasPendingChanges')
-        q-btn.acrylic-btn.q-mr-sm(
-          flat
-          icon='las la-times'
-          color='negative'
-          label='Discard'
-          aria-label='Discard'
-          no-caps
-          @click='discardChanges'
-        )
-        q-btn.acrylic-btn(
-          flat
-          icon='las la-check'
-          color='positive'
-          label='Save Changes'
-          aria-label='Save Changes'
-          no-caps
-          @click='saveChanges'
-        )
-      template(v-else)
-        q-btn.acrylic-btn(
-          flat
-          icon='las la-edit'
-          color='deep-orange-9'
-          label='Edit'
-          aria-label='Edit'
-          no-caps
-          @click='editPage'
-        )
+  page-header
   .page-container.row.no-wrap.items-stretch(style='flex: 1 1 100%;')
     .col(style='order: 1;')
       q-no-ssr(
@@ -336,8 +260,8 @@ import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
 
-import SocialSharingMenu from '../components/SocialSharingMenu.vue'
 import LoadingGeneric from 'src/components/LoadingGeneric.vue'
+import PageHeader from 'src/components/PageHeader.vue'
 import PageTags from '../components/PageTags.vue'
 
 const sideDialogs = {
@@ -427,17 +351,6 @@ const relationsCenter = computed(() => {
 })
 const relationsRight = computed(() => {
   return pageStore.relations ? pageStore.relations.filter(r => r.position === 'right') : []
-})
-const editMode = computed(() => {
-  return pageStore.mode === 'edit'
-})
-const editCreateMode = computed(() => {
-  return pageStore.mode === 'edit' && pageStore.mode === 'create'
-})
-const editUrl = computed(() => {
-  let pagePath = siteStore.useLocales ? `${pageStore.locale}/` : ''
-  pagePath += !pageStore.path ? 'home' : pageStore.path
-  return `/_edit/${pagePath}`
 })
 const lastModified = computed(() => {
   return pageStore.updatedAt ? DateTime.fromISO(pageStore.updatedAt).toLocaleString(DateTime.DATETIME_MED) : 'N/A'
@@ -544,47 +457,6 @@ function refreshTocExpanded (baseToc, lvl) {
   } else {
     return toExpand
   }
-}
-
-async function discardChanges () {
-  $q.loading.show()
-  try {
-    await pageStore.pageLoad({ id: pageStore.id })
-    $q.notify({
-      type: 'positive',
-      message: 'Page has been reverted to the last saved state.'
-    })
-  } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to reload page state.'
-    })
-  }
-  $q.loading.hide()
-}
-
-async function saveChanges () {
-  $q.loading.show()
-  try {
-    await pageStore.pageSave()
-    $q.notify({
-      type: 'positive',
-      message: 'Page saved successfully.'
-    })
-  } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to save page changes.'
-    })
-  }
-  $q.loading.hide()
-}
-
-function editPage () {
-  editorStore.$patch({
-    isActive: true,
-    editor: 'markdown'
-  })
 }
 </script>
 

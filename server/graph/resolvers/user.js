@@ -229,7 +229,8 @@ module.exports = {
             timezone: args.timezone || usr.prefs.timezone,
             dateFormat: args.dateFormat ?? usr.prefs.dateFormat,
             timeFormat: args.timeFormat ?? usr.prefs.timeFormat,
-            appearance: args.appearance || usr.prefs.appearance
+            appearance: args.appearance || usr.prefs.appearance,
+            cvd: args.cvd || usr.prefs.cvd
           }
         })
 

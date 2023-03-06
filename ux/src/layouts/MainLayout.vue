@@ -78,7 +78,7 @@ q-layout(view='hHh Lpr lff')
         size='md'
       )
   main-overlay-dialog
-  footer-nav
+  footer-nav(v-if='!editorStore.isActive')
 </template>
 
 <script setup>
