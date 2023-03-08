@@ -6,6 +6,9 @@ trigger:
   - push
   - tag
 
+concurrency:
+  limit: 1
+
 steps:
 - name: docker push branch ${DRONE_COMMIT_BRANCH}
   image: plugins/docker
