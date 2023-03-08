@@ -32,6 +32,9 @@ RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
 
+# LIQUID INVESTIGATIONS: PG DUMPS
+RUN apk add postgresql-client gettext
+
 WORKDIR /wiki
 
 COPY --chown=node:node --from=assets /wiki/assets ./assets
