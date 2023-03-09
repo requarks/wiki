@@ -3,33 +3,6 @@
     v-list-item(@click='', ref='copyUrlButton')
       v-icon(color='grey', small) mdi-content-copy
       v-list-item-title.px-3 Copy URL
-    v-list-item(:href='`mailto:?subject=` + encodeURIComponent(title) + `&body=` + encodeURIComponent(url) + `%0D%0A%0D%0A` + encodeURIComponent(description)')
-      v-icon(color='grey', small) mdi-email-outline
-      v-list-item-title.px-3 Email
-    v-list-item(@click='openSocialPop(`https://www.facebook.com/sharer/sharer.php?u=` + encodeURIComponent(url) + `&title=` + encodeURIComponent(title) + `&description=` + encodeURIComponent(description))')
-      v-icon(color='grey', small) mdi-facebook
-      v-list-item-title.px-3 Facebook
-    v-list-item(@click='openSocialPop(`https://www.linkedin.com/shareArticle?mini=true&url=` + encodeURIComponent(url) + `&title=` + encodeURIComponent(title) + `&summary=` + encodeURIComponent(description))')
-      v-icon(color='grey', small) mdi-linkedin
-      v-list-item-title.px-3 LinkedIn
-    v-list-item(@click='openSocialPop(`https://www.reddit.com/submit?url=` + encodeURIComponent(url) + `&title=` + encodeURIComponent(title))')
-      v-icon(color='grey', small) mdi-reddit
-      v-list-item-title.px-3 Reddit
-    v-list-item(@click='openSocialPop(`https://t.me/share/url?url=` + encodeURIComponent(url) + `&text=` + encodeURIComponent(title))')
-      v-icon(color='grey', small) mdi-telegram
-      v-list-item-title.px-3 Telegram
-    v-list-item(@click='openSocialPop(`https://twitter.com/intent/tweet?url=` + encodeURIComponent(url) + `&text=` + encodeURIComponent(title))')
-      v-icon(color='grey', small) mdi-twitter
-      v-list-item-title.px-3 Twitter
-    v-list-item(:href='`viber://forward?text=` + encodeURIComponent(url) + ` ` + encodeURIComponent(description)')
-      v-icon(color='grey', small) mdi-phone-in-talk
-      v-list-item-title.px-3 Viber
-    v-list-item(@click='openSocialPop(`http://service.weibo.com/share/share.php?url=` + encodeURIComponent(url) + `&title=` + encodeURIComponent(title))')
-      v-icon(color='grey', small) mdi-sina-weibo
-      v-list-item-title.px-3 Weibo
-    v-list-item(@click='openSocialPop(`https://api.whatsapp.com/send?text=` + encodeURIComponent(title) + `%0D%0A` + encodeURIComponent(url))')
-      v-icon(color='grey', small) mdi-whatsapp
-      v-list-item-title.px-3 Whatsapp
 </template>
 
 <script>
