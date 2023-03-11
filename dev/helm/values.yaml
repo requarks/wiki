@@ -113,6 +113,9 @@ sideload:
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
 
+## Append extra trusted certificates for node process from extra volume via NODE_EXTRA_CA_CERTS variable
+# nodeExtraCaCerts: "/path/to/certs.pem"
+
 ## This will override the postgresql chart values
 # externalPostgresql:
 #   # note: ?sslmode=require => ?ssl=true
