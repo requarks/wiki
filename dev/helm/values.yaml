@@ -102,7 +102,7 @@ volumeMounts: []
 
 volumes: []
 
-# This will allow us to install locales even without internet access using a initContainer & wikjs "sideloading"
+# This will allow us to install locales even without internet access using a initContainer & Wiki.js "sideloading"
 sideload:
   enabled: false
   # Git-Repo containing all locales.json-files you need:
