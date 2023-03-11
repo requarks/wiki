@@ -104,6 +104,15 @@
         aria-label='Print'
         )
         q-tooltip Print
+    q-btn.q-mr-sm.acrylic-btn(
+      v-if='editorStore.isActive'
+      icon='las la-question-circle'
+      flat
+      color='grey'
+      :href='siteStore.docsBase + `/editor/${editorStore.editor}`'
+      target='_blank'
+      type='a'
+      )
     template(v-if='editorStore.isActive || editorStore.hasPendingChanges')
       q-btn.acrylic-btn.q-mr-sm(
         flat

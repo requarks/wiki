@@ -1716,5 +1716,8 @@
   "profile.cvdProtanopia": "Protanopia",
   "profile.cvdTritanopia": "Tritanopia",
   "profile.cvdDeuteranopia": "Deuteranopia",
-  "profile.accessibility": "Accessibility"
+  "profile.accessibility": "Accessibility",
+  "editor.toggleScrollLock": "Toggle Scroll Lock",
+  "editor.togglePreviewPane": "Toggle Preview Pane",
+  "editor.renderPreview": "Render Preview"
 }

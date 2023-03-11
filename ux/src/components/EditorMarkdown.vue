@@ -119,7 +119,21 @@
         textarea(ref='cmRef')
     transition(name='editor-markdown-preview')
       .editor-markdown-preview(v-if='state.previewShown')
-        .editor-markdown-preview-toolbar Render Preview
+        .editor-markdown-preview-toolbar
+          strong: em {{ t('editor.renderPreview') }}
+          q-separator.q-ml-md.q-mr-sm(vertical, inset)
+          q-btn(
+            icon='mdi-arrow-vertical-lock'
+            padding='xs sm'
+            flat
+            )
+            q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.toggleScrollLock') }}
+          q-btn(
+            icon='mdi-eye-off-outline'
+            padding='xs sm'
+            flat
+            )
+            q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
         .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
           div(
             ref='editorPreview'
@@ -421,12 +435,13 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
   &-toolbar {
     background-color: $primary;
+    border-left: 40px solid darken($primary, 5%);
     color: #FFF;
     height: 32px;
   }
   &-sidebar {
     background-color: $dark-4;
-    border-top: 32px solid $primary;
+    border-top: 32px solid darken($primary, 10%);
     color: #FFF;
     width: 56px;
     display: flex;
