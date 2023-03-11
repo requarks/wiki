@@ -147,39 +147,6 @@ $ helm install --name my-release -f values.yaml requarks/wiki
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
-## Append extra trusted certificates
-
-1. Create ConfigMap with CAs in PEM format.
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ca
-  namespace: your-wikijs-namespace
-data:
-  certs.pem: |-
-    -----BEGIN CERTIFICATE-----
-    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    -----END CERTIFICATE-----
-```
-
-2. Mount your CAs from ConfigMap to WikiJS pod and set `nodeExtraCaCerts` helm variable. Insert the following lines to your WikiJS values.yaml.
-
-```yaml
-volumeMounts:
-  - name: ca
-    mountPath: /cas.pem
-    subPath: certs.pem
-
-volumes:
-  - name: ca
-    configMap:
-      name: ca
-
-nodeExtraCaCerts: "/cas.pem"
-```
-
 ## PostgresSQL
 
 By default, PostgreSQL is installed as part of the chart.
@@ -209,3 +176,38 @@ See the [Configuration](#configuration) section to configure the PVC or to disab
 ## Ingress
 
 This chart provides support for Ingress resource. If you have an available Ingress Controller such as Nginx or Traefik you maybe want to set `ingress.enabled` to true and add `ingress.hosts` for the URL. Then, you should be able to access the installation using that address.
+
+## Extra Trusted Certificates
+
+To append extra CA Certificates:
+
+1. Create a ConfigMap with CAs in PEM format, e.g.:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca
+  namespace: your-wikijs-namespace
+data:
+  certs.pem: |-
+    -----BEGIN CERTIFICATE-----
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    -----END CERTIFICATE-----
+```
+
+2. Mount your CAs from the ConfigMap to the Wiki.js pod and set `nodeExtraCaCerts` helm variable. Insert the following lines to your Wiki.js `values.yaml`, e.g.:
+
+```yaml
+volumeMounts:
+  - name: ca
+    mountPath: /cas.pem
+    subPath: certs.pem
+
+volumes:
+  - name: ca
+    configMap:
+      name: ca
+
+nodeExtraCaCerts: "/cas.pem"
+```
