@@ -159,7 +159,33 @@ module.exports = {
           return {
             ...page,
             locale: page.localeCode,
-            editor: page.editorKey
+            editor: page.editorKey,
+            scriptJs: page.extra.js,
+            scriptCss: page.extra.css
+          }
+        } else {
+          throw new WIKI.Error.PageViewForbidden()
+        }
+      } else {
+        throw new WIKI.Error.PageNotFound()
+      }
+    },
+    async singleByPath(obj, args, context, info) {
+      let page = await WIKI.models.pages.getPageFromDb({
+        path: args.path,
+        locale: args.locale,
+      });
+      if (page) {
+        if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
+          path: page.path,
+          locale: page.localeCode
+        })) {
+          return {
+            ...page,
+            locale: page.localeCode,
+            editor: page.editorKey,
+            scriptJs: page.extra.js,
+            scriptCss: page.extra.css
           }
         } else {
           throw new WIKI.Error.PageViewForbidden()

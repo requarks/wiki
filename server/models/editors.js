@@ -101,6 +101,8 @@ module.exports = class Editor extends Model {
         return 'markdown'
       case 'html':
         return 'ckeditor'
+      case 'asciidoc':
+        return 'asciidoc'
       default:
         return 'code'
     }

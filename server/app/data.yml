@@ -44,6 +44,7 @@ defaults:
     title: Wiki.js
     company: ''
     contentLicense: ''
+    footerOverride: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     pageExtensions:
       - md
@@ -59,6 +60,7 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+      tocPosition: 'left'
     auth:
       autoLogin: false
       enforce2FA: false

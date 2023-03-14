@@ -126,6 +126,7 @@ module.exports = {
   async update ({ id, content, user }) {
     const renderedContent = DOMPurify.sanitize(mkdown.render(content))
     await WIKI.models.comments.query().findById(id).patch({
+      content,
       render: renderedContent
     })
     return renderedContent

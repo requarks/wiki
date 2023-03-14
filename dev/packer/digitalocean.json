@@ -78,7 +78,8 @@
         "scripts/013-docker-dns.sh",
         "scripts/014-ufw-docker.sh",
         "scripts/020-application-tag.sh",
-        "scripts/900-cleanup.sh"
+        "scripts/900-cleanup.sh",
+        "scripts/999-img-check.sh"
       ]
     }
   ]
