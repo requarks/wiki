@@ -430,6 +430,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Richeir
 - Sergio Navarro Fernández
 - Shad Narcher
+- ShadowVoyd
 - SmartNET.works
 - Stepan Sokolovskyi
 - Zach Crawford
