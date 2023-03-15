@@ -33,7 +33,8 @@ module.exports = {
         uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
         uploadMaxFiles: WIKI.config.uploads.maxFiles,
         uploadScanSVG: WIKI.config.uploads.scanSVG,
-        uploadForceDownload: WIKI.config.uploads.forceDownload
+        uploadForceDownload: WIKI.config.uploads.forceDownload,
+        uploadAppendTimestampToFilename: WIKI.config.uploads.appendTimestampToFilename
       }
     }
   },
@@ -117,7 +118,8 @@ module.exports = {
           maxFileSize: _.get(args, 'uploadMaxFileSize', WIKI.config.uploads.maxFileSize),
           maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles),
           scanSVG: _.get(args, 'uploadScanSVG', WIKI.config.uploads.scanSVG),
-          forceDownload: _.get(args, 'uploadForceDownload', WIKI.config.uploads.forceDownload)
+          forceDownload: _.get(args, 'uploadForceDownload', WIKI.config.uploads.forceDownload),
+          appendTimestampToFilename: _.get(args, 'uploadAppendTimestampToFilename', WIKI.config.uploads.appendTimestampToFilename)
         }
 
         await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'pageExtensions', 'auth', 'editShortcuts', 'features', 'security', 'uploads'])

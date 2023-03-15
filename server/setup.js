@@ -80,6 +80,9 @@ module.exports = () => {
         tokenExpiration: '30m',
         tokenRenewal: '14d'
       })
+      _.set(WIKI.config, 'upload', {
+        appendTimestampToFilename: false
+      })
       _.set(WIKI.config, 'company', '')
       _.set(WIKI.config, 'features', {
         featurePageRatings: true,

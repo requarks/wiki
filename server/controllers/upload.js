@@ -78,9 +78,11 @@ router.post('/u', (req, res, next) => {
   // Sanitize filename
   fileMeta.originalname = sanitize(fileMeta.originalname.toLowerCase().replace(/[\s,;#]+/g, '_'))
 
-  // Prevent overwriting of pasted images
-  if (fileMeta.originalname === 'image.png') {
-    fileMeta.originalname = 'image_' + Date.now() + '.png'
+  // Append timestamp after the filename
+  if (WIKI.config.uploads.appendTimestampToFilename) {
+    const parts = fileMeta.originalname.split('.')
+    const ext = parts.pop()
+    fileMeta.originalname = `${parts.join('.')}_${Date.now()}.${ext}`
   }
 
   // Check if user can upload at path
