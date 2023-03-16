@@ -33,7 +33,9 @@ RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     chown -R node:node /wiki /logs
 
 # LIQUID INVESTIGATIONS: PG DUMPS
-RUN apk add postgresql-client gettext
+RUN apk add postgresql-client gettext --no-cache
+# LIQUID INVESTIGATIONS: DEV TOOLS
+RUN apk add yarn g++ make cmake python3 --no-cache
 
 WORKDIR /wiki
 
