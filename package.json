@@ -132,7 +132,6 @@
     "node-2fa": "1.1.2",
     "node-cache": "5.1.2",
     "nodemailer": "6.9.1",
-    "nodemon": "2.0.21",
     "objection": "2.2.18",
     "passport": "0.4.1",
     "passport-auth0": "1.4.3",
