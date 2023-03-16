@@ -36,6 +36,7 @@ RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
 RUN apk add postgresql-client gettext --no-cache
 # LIQUID INVESTIGATIONS: DEV TOOLS
 RUN apk add yarn g++ make cmake python3 --no-cache
+RUN npm install nodemon -g
 
 WORKDIR /wiki
 
