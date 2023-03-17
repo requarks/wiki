@@ -39,9 +39,10 @@ module.exports = {
             for (const groupId of _.difference(expectedGroups, currentGroups)) {
               await user.$relatedQuery('groups').relate(groupId)
             }
-            for (const groupId of _.difference(currentGroups, expectedGroups)) {
-              await user.$relatedQuery('groups').unrelate().where('groupId', groupId)
-            }
+            // LIQUID: FIX GROUPS don't remove users from groups that are not in the oauth2 groups
+            //for (const groupId of _.difference(currentGroups, expectedGroups)) {
+            //  await user.$relatedQuery('groups').unrelate().where('groupId', groupId)
+            //}
           }
         }
         cb(null, user)
