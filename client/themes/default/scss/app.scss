@@ -685,7 +685,9 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
-	width: 100%;
+	&:first-child {
+		width: 100%;
+	}
       }
     }
   }
