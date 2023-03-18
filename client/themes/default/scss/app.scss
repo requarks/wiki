@@ -685,6 +685,10 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
+        
+        &:first-child {
+          width: 100%;
+        }
       }
     }
   }
