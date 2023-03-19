@@ -1717,7 +1717,8 @@
   "profile.cvdTritanopia": "Tritanopia",
   "profile.cvdDeuteranopia": "Deuteranopia",
   "profile.accessibility": "Accessibility",
-  "editor.toggleScrollLock": "Toggle Scroll Lock",
+  "editor.toggleScrollSync": "Toggle Scroll Sync",
   "editor.togglePreviewPane": "Toggle Preview Pane",
-  "editor.renderPreview": "Render Preview"
+  "editor.renderPreview": "Render Preview",
+  "editor.tableEditor.title": "Table Editor"
 }

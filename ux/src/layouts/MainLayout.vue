@@ -52,7 +52,7 @@ q-layout(view='hHh Lpr lff')
           q-item-section(side)
             q-icon(name='las la-cat', color='white')
           q-item-section Installation
-    q-bar.bg-blue-9.text-white(dense)
+    q-bar.bg-blue-9.text-white(dense, v-if='flagsStore.experimental')
       q-btn.col(
         icon='las la-dharmachakra'
         label='History'
@@ -88,6 +88,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useEditorStore } from 'src/stores/editor'
+import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 
 // COMPONENTS
@@ -103,6 +104,7 @@ const $q = useQuasar()
 // STORES
 
 const editorStore = useEditorStore()
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // ROUTER

@@ -67,6 +67,7 @@
     "quasar": "2.11.5",
     "slugify": "1.6.5",
     "socket.io-client": "4.5.4",
+    "tabulator-tables": "5.4.4",
     "tippy.js": "6.3.7",
     "uuid": "9.0.0",
     "v-network-graph": "0.8.1",

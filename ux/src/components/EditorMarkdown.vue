@@ -15,6 +15,7 @@
         icon='mdi-image-plus-outline'
         padding='sm sm'
         flat
+        @click='insertAssets'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertAssets') }}
       q-btn(
@@ -27,6 +28,7 @@
         icon='mdi-table-large-plus'
         padding='sm sm'
         flat
+        @click='insertTable'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTable') }}
       q-btn(
@@ -39,8 +41,11 @@
         icon='mdi-line-scan'
         padding='sm sm'
         flat
+        @click='insertHorizontalBar'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.horizontalBar') }}
+      q-space
+      span.editor-markdown-type Markdown
     .editor-markdown-mid
       //--------------------------------------------------------
       //- TOP TOOLBAR
@@ -112,6 +117,14 @@
           flat
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.keyboardKey') }}
+        q-btn(
+          v-if='!state.previewShown'
+          icon='mdi-eye-arrow-right-outline'
+          padding='xs sm'
+          flat
+          @click='state.previewShown = true'
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
       //--------------------------------------------------------
       //- CODEMIRROR
       //--------------------------------------------------------
@@ -126,12 +139,15 @@
             icon='mdi-arrow-vertical-lock'
             padding='xs sm'
             flat
+            @click='state.previewScrollSync = !state.previewScrollSync'
+            :color='state.previewScrollSync ? `primary` : null'
             )
-            q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.toggleScrollLock') }}
+            q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.toggleScrollSync') }}
           q-btn(
             icon='mdi-eye-off-outline'
             padding='xs sm'
             flat
+            @click='state.previewShown = false'
             )
             q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
         .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
@@ -147,6 +163,7 @@ import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
 import { useEditorStore } from 'src/stores/editor'
+import { useSiteStore } from 'src/stores/site'
 
 // Code Mirror
 import CodeMirror from 'codemirror'
@@ -174,6 +191,7 @@ const $q = useQuasar()
 // STORES
 
 const editorStore = useEditorStore()
+const siteStore = useSiteStore()
 
 // I18N
 
@@ -187,11 +205,47 @@ const cmRef = ref(null)
 const state = reactive({
   content: '',
   previewShown: true,
-  previewHTML: ''
+  previewHTML: '',
+  previewScrollSync: false
 })
 
 // Platform detection
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
+
+// METHODS
+
+function insertAssets () {
+  siteStore.$patch({
+    overlay: 'FileManager'
+  })
+}
+
+function insertTable () {
+  siteStore.$patch({
+    overlay: 'TableEditor'
+  })
+}
+
+/**
+ * Insert content at cursor
+ */
+function insertAtCursor ({ content }) {
+  const cursor = cm.value.doc.getCursor('head')
+  cm.value.doc.replaceRange(content, cursor)
+}
+
+/**
+ * Insert content after current line
+ */
+function insertAfter ({ content, newLine }) {
+  const curLine = cm.value.doc.getCursor('to').line
+  const lineLength = cm.value.doc.getLine(curLine).length
+  cm.value.doc.replaceRange(newLine ? `\n${content}\n` : content, { line: curLine, ch: lineLength + 1 })
+}
+
+function insertHorizontalBar () {
+  insertAfter({ content: '---', newLine: true })
+}
 
 // MOUNTED
 
@@ -339,6 +393,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     display: block;
     height: $editor-height;
     position: relative;
+    border-right: 5px solid $primary;
   }
   &-editor {
     display: block;
@@ -347,6 +402,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     // @include until($tablet) {
     //   height: $editor-height-mobile;
     // }
+  }
+  &-type {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    padding-bottom: 1rem;
+    color: rgba(255,255,255, .4);
   }
   &-preview {
     flex: 1 1 50%;

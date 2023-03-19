@@ -10,6 +10,8 @@
       color='primary'
       flat
       )
+      q-badge(color='grey' floating rounded)
+        q-icon(name='las la-pen', size='xs', padding='xs xs')
       q-menu(content-class='shadow-7')
         icon-picker-dialog(v-model='pageStore.icon')
     q-icon.rounded-borders(
