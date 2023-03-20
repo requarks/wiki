@@ -51,7 +51,6 @@ services:
     volumes:
       - ../..:/wiki
       - /wiki/node_modules
-      - /wiki/.git
 
 
 volumes:

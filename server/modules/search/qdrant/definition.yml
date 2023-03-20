@@ -1,28 +1,24 @@
 key: qdrant
-title: Qdrant
-description: Qdrant + Cohere search.
-author: Team
+title: co:here& qdrant Search
+description: AI-Powered cloud sematic search service.
+author: holloway.ai
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://joan.holloway.ai/
 isAvailable: true
 props:
-  cloudClusterUrl:
+  qdrantHostName:
     type: String
-    title: Cloud Cluster Url.
-    hint: The url of your cloud cluster.
+    title: qdrant Host Name
+    hint: Name of your cluster on https://cloud.qdrant.io/
     order: 1
   qdrantApiKey:
     type: String
-    title: Qdrant Cluster Api Key
-    hint: The api key.
+    title: qdrant API Key
+    hint: Either API Key.
     order: 2
   cohereApiKey:
     type: String
-    title: Cohere Api Key
-    hint: The Key of your Cohere Api.
+    title: Cohere API Key
+    hint: Co:here API Key https://dashboard.cohere.ai/api-keys
+    default: wiki
     order: 3
-  dictLanguage:
-    type: String
-    title: Dictionary Language
-    hint: Language to use when creating and querying text search vectors.
-    default: english
-    enum:
-      - english

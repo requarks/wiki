@@ -13,6 +13,9 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash"
   },
+"features": {
+  "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+},
   "extensions": [
 	"EditorConfig.editorconfig",
 	"dbaeumer.vscode-eslint",
