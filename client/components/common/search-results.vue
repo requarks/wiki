@@ -18,7 +18,7 @@
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
         v-list.search-results-items.radius-7.py-0(two-line, dense)
           template(v-for='(item, idx) of results')
-            v-list-item(@click='goToPage(item)', @click.middle="goToPageInNewTab(item)", :key='item.id', :class='idx === cursor ? `highlighted` : ``')
+            v-list-item(@click='goToPage(item); search=``', @click.middle="goToPageInNewTab(item)", :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-item-avatar(tile)
                 img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
@@ -108,7 +108,7 @@ export default {
     },
     results() {
       this.cursor = 0
-    }
+    },
   },
   mounted() {
     this.$root.$on('searchMove', (dir) => {

@@ -1,0 +1,28 @@
+key: qdrant
+title: Qdrant
+description: Qdrant + Cohere search.
+author: Team
+isAvailable: true
+props:
+  cloudClusterUrl:
+    type: String
+    title: Cloud Cluster Url.
+    hint: The url of your cloud cluster.
+    order: 1
+  qdrantApiKey:
+    type: String
+    title: Qdrant Cluster Api Key
+    hint: The api key.
+    order: 2
+  cohereApiKey:
+    type: String
+    title: Cohere Api Key
+    hint: The Key of your Cohere Api.
+    order: 3
+  dictLanguage:
+    type: String
+    title: Dictionary Language
+    hint: Language to use when creating and querying text search vectors.
+    default: english
+    enum:
+      - english

@@ -493,12 +493,13 @@ export default {
   },
   data() {
     return {
+      route: window.location,
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
       pageEditFab: false,
       scrollOpts: {
-        duration: 1500,
+        duration: 1150,
         offset: 0,
         easing: 'easeInOutCubic'
       },
@@ -646,6 +647,24 @@ export default {
 
       window.boot.notify('page-ready')
     })
+
+
+  },
+  watch: {
+    upBtnShown(_, newValue) {
+      if (newValue) {
+        const paragraphs = Array.from(document.querySelectorAll('.text-container p'));
+        const location = String(window.location);
+        const pid = location.substring(location.indexOf('=') + 1, location.indexOf('#'));
+        paragraphs.forEach(p => {
+          if (p.id === pid) {
+            Array.from(p.children).forEach(child => child.classList.add('highlighted-on-select'))
+          } else {
+            Array.from(p.children).forEach(child => child.classList.remove('highlighted-on-select'))
+          };
+        })
+      };
+    }
   },
   methods: {
     goHome () {

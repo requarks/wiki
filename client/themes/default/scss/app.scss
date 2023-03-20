@@ -356,6 +356,18 @@
     }
   }
 
+  .highlighted-on-select {
+    animation-name: fade;
+    animation-duration: 5s
+  }
+  @keyframes fade {
+    from {
+      background-color: #44ba81
+    }
+    to {
+      background-color: transparent
+    }
+  }
   // ---------------------------------
   // ASCIIDOC SPECIFIC
   // ---------------------------------
