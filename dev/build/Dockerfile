@@ -36,7 +36,6 @@ RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
 RUN apk add postgresql-client gettext --no-cache
 # LIQUID INVESTIGATIONS: DEV TOOLS
 RUN apk add yarn g++ make cmake python3 --no-cache
-
 WORKDIR /wiki
 
 COPY --chown=node:node --from=assets /wiki/assets ./assets
@@ -46,6 +45,11 @@ COPY --chown=node:node --from=assets /wiki/server/views ./server/views
 COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./package.json ./package.json
 COPY --chown=node:node ./LICENSE ./LICENSE
+
+# LIQUID INVESTIGATIONS: INSTALL + BUILD AGAIN
+RUN yarn --frozen-lockfile --non-interactive
+RUN yarn build
+
 
 USER node
 
