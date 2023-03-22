@@ -1,11 +1,14 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:16-alpine AS assets
-
-RUN apk add yarn g++ make cmake python3 --no-cache
+FROM node:16-alpine
 
 WORKDIR /wiki
+RUN apk add postgresql-client gettext yarn g++ make cmake python3 bash curl git openssh gnupg sqlite --no-cache && \
+    mkdir -p /wiki && \
+    mkdir -p /logs && \
+    mkdir -p /wiki/data/content && \
+    chown -R node:node /wiki /logs
 
 COPY ./client ./client
 COPY ./dev ./dev
@@ -17,42 +20,6 @@ COPY ./.eslintrc.yml ./.eslintrc.yml
 RUN yarn cache clean
 RUN yarn --frozen-lockfile --non-interactive
 RUN yarn build
-RUN rm -rf /wiki/node_modules
-RUN yarn --production --frozen-lockfile --non-interactive
-
-# ===============
-# --- Release ---
-# ===============
-FROM node:16-alpine
-LABEL maintainer="requarks.io"
-
-RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
-    mkdir -p /wiki && \
-    mkdir -p /logs && \
-    mkdir -p /wiki/data/content && \
-    chown -R node:node /wiki /logs
-
-# LIQUID INVESTIGATIONS: PG DUMPS
-RUN apk add postgresql-client gettext --no-cache
-# LIQUID INVESTIGATIONS: DEV TOOLS
-RUN apk add yarn g++ make cmake python3 --no-cache
-WORKDIR /wiki
-
-COPY --chown=node:node --from=assets /wiki/assets ./assets
-COPY --chown=node:node --from=assets /wiki/node_modules ./node_modules
-COPY --chown=node:node ./server ./server
-COPY --chown=node:node --from=assets /wiki/server/views ./server/views
-COPY --chown=node:node ./dev/build/config.yml ./config.yml
-COPY --chown=node:node ./package.json ./package.json
-COPY --chown=node:node ./LICENSE ./LICENSE
-# LIQUID INVESTIGATIONS: ADD MISSING CODE FOR BUILD
-COPY --chown=node:node --from=assets /wiki/dev ./dev
-COPY --chown=node:node --from=assets /wiki/client ./client
-
-# LIQUID INVESTIGATIONS: INSTALL + BUILD AGAIN
-RUN yarn --frozen-lockfile --non-interactive
-RUN yarn build
-
 
 USER node
 
