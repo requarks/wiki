@@ -45,6 +45,9 @@ COPY --chown=node:node --from=assets /wiki/server/views ./server/views
 COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./package.json ./package.json
 COPY --chown=node:node ./LICENSE ./LICENSE
+# LIQUID INVESTIGATIONS: ADD MISSING CODE FOR BUILD
+COPY --chown=node:node --from=assets /wiki/dev ./dev
+COPY --chown=node:node --from=assets /wiki/client ./client
 
 # LIQUID INVESTIGATIONS: INSTALL + BUILD AGAIN
 RUN yarn --frozen-lockfile --non-interactive
