@@ -21,6 +21,7 @@ const now = Math.round(Date.now() / 1000)
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
 const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
+const DotenvWebpack = require('dotenv-webpack')
 
 process.noDeprecation = true
 
@@ -190,6 +191,7 @@ module.exports = {
     ]
   },
   plugins: [
+    new DotenvWebpack(),
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
