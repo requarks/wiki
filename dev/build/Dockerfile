@@ -10,12 +10,7 @@ RUN apk add postgresql-client gettext yarn g++ make cmake python3 bash curl git 
     mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
 
-COPY ./client ./client
-COPY ./dev ./dev
-COPY ./package.json ./package.json
-COPY ./.babelrc ./.babelrc
-COPY ./.eslintignore ./.eslintignore
-COPY ./.eslintrc.yml ./.eslintrc.yml
+COPY ./ ./
 
 RUN yarn cache clean
 RUN yarn --frozen-lockfile --non-interactive
