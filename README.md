@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="https://static.requarks.io/logo/wikijs-full.svg#gh-light-mode-only" alt="Wiki.js" width="600" /><img src="https://static.requarks.io/logo/wikijs-full-darktheme.svg#gh-dark-mode-only" alt="Wiki.js" width="600" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://static.requarks.io/logo/wikijs-full-darktheme.svg">
+  <img alt="Wiki.js" src="https://static.requarks.io/logo/wikijs-full.svg" width="600">
+</picture>
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat)](https://github.com/requarks/wiki/blob/master/LICENSE)
