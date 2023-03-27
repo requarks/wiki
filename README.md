@@ -194,6 +194,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Oleksandr Koltsov ([@crambo](https://github.com/crambo))
+- Phi Zeroth ([@phizeroth](https://github.com/phizeroth))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Ruizhe Li ([@liruizhe1995](https://github.com/liruizhe1995))
