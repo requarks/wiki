@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="https://static.requarks.io/logo/wikijs-full.svg" alt="Wiki.js" width="600" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://static.requarks.io/logo/wikijs-full-darktheme.svg">
+  <img alt="Wiki.js" src="https://static.requarks.io/logo/wikijs-full.svg" width="600">
+</picture>
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat)](https://github.com/requarks/wiki/blob/master/LICENSE)
@@ -191,6 +194,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Nina Reynolds ([@cutecycle](https://github.com/cutecycle))
 - Noel Cower ([@nilium](https://github.com/nilium))
 - Oleksandr Koltsov ([@crambo](https://github.com/crambo))
+- Phi Zeroth ([@phizeroth](https://github.com/phizeroth))
 - Philipp Schmitt ([@pschmitt](https://github.com/pschmitt))
 - Robert Lanzke ([@winkelement](https://github.com/winkelement))
 - Ruizhe Li ([@liruizhe1995](https://github.com/liruizhe1995))
