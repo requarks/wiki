@@ -65,7 +65,7 @@ props:
   mapGroups:
     type: Boolean
     title: Map Groups
-    hint: Map groups matching names from the groups claim value
+    hint: Map groups (except System Groups) matching names from the groups claim value
     default: false
     order: 10
   groupsClaim:
