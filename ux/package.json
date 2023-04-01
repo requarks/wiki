@@ -1,6 +1,6 @@
 {
-  "name": "ux",
-  "version": "0.0.1",
+  "name": "wiki-ux",
+  "version": "3.0.0",
   "description": "The most powerful and extensible open source Wiki software",
   "productName": "Wiki.js",
   "author": "Nicolas Giard <nick@requarks.io>",
@@ -44,6 +44,7 @@
     "clipboard": "2.0.11",
     "codemirror": "5.65.11",
     "codemirror-asciidoc": "1.0.4",
+    "dependency-graph": "0.11.0",
     "filesize": "10.0.6",
     "filesize-parser": "1.5.0",
     "fuse.js": "6.6.2",
@@ -84,6 +85,7 @@
     "@quasar/app-vite": "1.2.0",
     "@types/lodash": "4.14.191",
     "@volar/vue-language-plugin-pug": "1.0.24",
+    "autoprefixer": "10.4.14",
     "browserlist": "latest",
     "eslint": "8.33.0",
     "eslint-config-standard": "17.0.0",
@@ -93,10 +95,7 @@
     "eslint-plugin-vue": "9.9.0"
   },
   "engines": {
-    "node": "^18",
-    "npm": ">= 6.13.4",
-    "yarn": ">= 1.21.1"
-  },
-  "eslint.packageManager": "yarn",
-  "packageManager": "yarn@3.2.0"
+    "node": ">= 18.0",
+    "npm": ">= 6.13.4"
+  }
 }

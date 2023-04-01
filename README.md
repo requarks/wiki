@@ -43,7 +43,6 @@ The current stable release (2.x) is available at https://js.wiki
 ### Requirements
 
 - Node.js **18.x** or later
-- Yarn
 - PostgreSQL **11** or later
 
 ### Usage
@@ -53,18 +52,18 @@ The current stable release (2.x) is available at https://js.wiki
 1. Edit `config.yml` and fill in the database details. **You need an empty PostgreSQL database.**
 1. Run the following commands to install dependencies and generate the client assets:
     ```sh
-    yarn
-    yarn legacy:build
-    cd ux
-    yarn
-    yarn build
+    cd server
+    npm install
+    cd ../ux
+    npm install
+    npm run build
     cd ..
     ```
 1. Run this command to start the server:
     ```sh
     node server
     ```
-1. In your browser, navigate to `http://localhost:5000` *(or the IP/hostname of the server and the PORT you defined earlier.)*
+1. In your browser, navigate to `http://localhost:3000` *(or the IP/hostname of the server and the PORT you defined earlier.)*
 1. Login using the default administrator user:
     - Email: `admin@example.com`
     - Password: `12345678`
@@ -93,17 +92,13 @@ The current stable release (2.x) is available at https://js.wiki
 1. Two terminals will launch in split-screen mode at the bottom of the screen. **Server** on the left and **UX** on the right.
 1. In the left-side terminal (Server), run the command:
     ```sh
-    yarn legacy:build
+    npm run dev
     ```
 1. In the right-side terminal (UX), run the command:
     ```sh
-    yarn build
+    npm run dev
     ```
-1. Back in the left-side terminal (Server), run the command:
-    ```sh
-    yarn dev
-    ```
-1. Open your browser to `http://localhost:5000`
+1. Open your browser to `http://localhost:3000`
 1. Login using the default administrator user:
     - Email: `admin@example.com`
     - Password: `12345678`
@@ -115,7 +110,7 @@ The current stable release (2.x) is available at https://js.wiki
 From the left-side terminal (Server), run the command:
 
 ```sh
-yarn dev
+npm run dev
 ```
 
 This will launch the server and automatically restart upon modification of any server files.
@@ -124,30 +119,17 @@ Only precompiled client assets are served in this mode. See the sections below o
 
 ### Frontend Development (Quasar/Vue 3)
 
-> Make sure you are running `yarn dev` in the left-side terminal (Server) first! Requests still need to be forwarded to the server, even in SPA mode!
+> Make sure you are running `npm run dev` in the left-side terminal (Server) first! Requests still need to be forwarded to the server, even in SPA mode!
 
 If you wish to modify any frontend content (under `/ux`), you need to start the Quasar Dev Server in the right-side terminal (UX):
 
 ```sh
-yarn dev
+npm run dev
 ```
 
 You can then access the site at `http://localhost:5001`. Notice the port being `5001` rather than `5000`. The app runs in a SPA (single-page application) mode and automatically hot-reload any modified component. Any requests made to the `/graphql` endpoint are automatically forwarded to the server running on port `5000`, which is why both must be running at the same time.
 
-Note that not all sections/features are available from this mode, notably the page editing features which still relies on the old client code (Vuetify/Vue 2). For example, trying to edit a page will simply not work. You must use the normal mode (port 5000) to edit pages as it relies on legacy client code. As more features gets ported / developed for Vue 3, they will become available in the SPA mode.
-
 Any change you make to the frontend will not be reflected on port 5000 until you run the command `yarn build` in the right-side terminal.
-
-### Legacy Frontend Development (Vuetify/Vue 2)
-
-Client code from Wiki.js 2.x is located under `/client`. Some sections still rely on this legacy code (notably the page editing features). Code is gradually being removed from this location and replaced with newer code in `/ux`.
-
-In the unlikely event that you need to modify legacy code and regenerate the old client files, you can do so by running in this command in the left-side terminal (Server):
-```sh
-yarn legacy:build
-```
-
-Then run `yarn dev` to start the server again.
 
 ### pgAdmin
 

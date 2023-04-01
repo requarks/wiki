@@ -1,8 +1,0 @@
-query($locale: String!, $namespace: String!) {
-  localization {
-    translations(locale:$locale, namespace:$namespace) {
-      key
-      value
-    }
-  }
-}

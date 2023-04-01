@@ -66,7 +66,7 @@ module.exports = {
 
     // Load package info
 
-    const packageInfo = require(path.join(WIKI.ROOTPATH, 'package.json'))
+    const packageInfo = require(path.join(WIKI.SERVERPATH, 'package.json'))
 
     // Load DB Password from Docker Secret File
     if (process.env.DB_PASS_FILE) {

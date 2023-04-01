@@ -33,7 +33,7 @@
       "args": [],
       // Set the shell type
       "options": {
-        "cwd": "/workspace"
+        "cwd": "/workspace/server"
       },
       // Mark as a background task to avoid the spinner animation on the terminal tab
       "isBackground": true,

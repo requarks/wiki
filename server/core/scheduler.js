@@ -20,7 +20,7 @@ module.exports = {
     this.maxWorkers = WIKI.config.scheduler.workers === 'auto' ? (os.cpus().length - 1) : WIKI.config.scheduler.workers
     if (this.maxWorkers < 1) { this.maxWorkers = 1 }
     WIKI.logger.info(`Initializing Worker Pool (Limit: ${this.maxWorkers})...`)
-    this.workerPool = new DynamicThreadPool(1, this.maxWorkers, './server/worker.js', {
+    this.workerPool = new DynamicThreadPool(1, this.maxWorkers, path.join(WIKI.SERVERPATH, 'worker.js'), {
       errorHandler: (err) => WIKI.logger.warn(err),
       exitHandler: () => WIKI.logger.debug('A worker has gone offline.'),
       onlineHandler: () => WIKI.logger.debug('New worker is online.')

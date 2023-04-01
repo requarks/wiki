@@ -7,9 +7,15 @@ const path = require('path')
 const { DateTime } = require('luxon')
 const semver = require('semver')
 const nanoid = require('nanoid').customAlphabet('1234567890abcdef', 10)
+const fs = require('fs-extra')
 
 if (!semver.satisfies(process.version, '>=18')) {
   console.error('ERROR: Node.js 18.x or later required!')
+  process.exit(1)
+}
+
+if (fs.pathExistsSync('./package.json')) {
+  console.error('ERROR: Must run server from the parent directory!')
   process.exit(1)
 }
 
