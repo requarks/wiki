@@ -198,7 +198,7 @@
     },
     "ext": "js,json,graphql,gql",
     "watch": [
-      "./"
+      "server"
     ]
   }
 }

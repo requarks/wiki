@@ -10,6 +10,8 @@ import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 import { setCssVar, useQuasar } from 'quasar'
 
+import '@mdi/font/css/materialdesignicons.css'
+
 /* global siteConfig */
 
 // QUASAR

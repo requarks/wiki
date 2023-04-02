@@ -60,6 +60,8 @@ export const useSiteStore = defineStore('site', {
       width: '9px',
       opacity: 1
     },
+    sideDialogShown: false,
+    sideDialogComponent: '',
     docsBase: 'https://next.js.wiki/docs'
   }),
   getters: {

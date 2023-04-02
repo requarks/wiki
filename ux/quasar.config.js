@@ -50,7 +50,7 @@ module.exports = configure(function (/* ctx */) {
     extras: [
       // 'ionicons-v4',
       // 'mdi-v5',
-      'mdi-v7',
+      // 'mdi-v7',
       // 'fontawesome-v6',
       // 'eva-icons',
       // 'themify',

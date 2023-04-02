@@ -13,5 +13,9 @@
   "i18n-ally.localesPaths": [
     "ux/src/i18n/locales"
   ],
-  "i18n-ally.keystyle": "flat"
+  "i18n-ally.keystyle": "flat",
+  "i18n-ally.sortKeys": true,
+  "i18n-ally.enabledFrameworks": [
+    "vue"
+  ]
 }

@@ -26,6 +26,10 @@ const overlays = {
   TableEditor: defineAsyncComponent({
     loader: () => import('./TableEditorOverlay.vue'),
     loadingComponent: LoadingGeneric
+  }),
+  Welcome: defineAsyncComponent({
+    loader: () => import('./WelcomeOverlay.vue'),
+    loadingComponent: LoadingGeneric
   })
 }
 

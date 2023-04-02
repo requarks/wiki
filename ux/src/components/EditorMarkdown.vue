@@ -32,18 +32,36 @@
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTable') }}
       q-btn(
+        icon='mdi-tab-plus'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTabset') }}
+      q-btn(
         icon='mdi-chart-multiline'
         padding='sm sm'
         flat
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertDiagram') }}
       q-btn(
+        icon='mdi-book-plus'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertFootnote') }}
+      q-btn(
+        icon='mdi-cookie-plus'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertEmoji') }}
+      q-btn(
         icon='mdi-line-scan'
         padding='sm sm'
         flat
         @click='insertHorizontalBar'
         )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.horizontalBar') }}
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertHorizontalBar') }}
       q-space
       span.editor-markdown-type Markdown
     .editor-markdown-mid
@@ -55,18 +73,21 @@
           icon='mdi-format-bold'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: `**` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.bold') }}
         q-btn(
           icon='mdi-format-italic'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: `*` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.italic') }}
         q-btn(
           icon='mdi-format-strikethrough'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: `~~` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.strikethrough') }}
         q-btn(
@@ -75,16 +96,28 @@
           flat
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.header') }}
+          q-menu(auto-close)
+            q-list(separator)
+              q-item(
+                v-for='lvl in 6'
+                clickable
+                @click='setHeaderLine(lvl)'
+                )
+                q-item-section(side)
+                  q-icon(:name='`mdi-format-header-` + lvl')
+                q-item-section {{ t('editor.markup.headerLevel', { level: lvl }) }}
         q-btn(
           icon='mdi-format-subscript'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: `~` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.subscript') }}
         q-btn(
           icon='mdi-format-superscript'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: `^` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.superscript') }}
         q-btn(
@@ -92,29 +125,71 @@
           padding='xs sm'
           flat
           )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.blockquote') }}
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.blockquoteAdmonitions') }}
+          q-menu(auto-close)
+            q-list(separator)
+              q-item(clickable, @click='insertBeforeEachLine({ content: `> `})')
+                q-item-section(side)
+                  q-icon(name='mdi-format-quote-close')
+                q-item-section {{ t('editor.markup.blockquote') }}
+              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
+                q-item-section(side)
+                  q-icon(name='mdi-information-box', color='blue-7')
+                q-item-section {{ t('editor.markup.admonitionInfo') }}
+              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
+                q-item-section(side)
+                  q-icon(name='mdi-check-circle', color='positive')
+                q-item-section {{ t('editor.markup.admonitionSuccess') }}
+              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
+                q-item-section(side)
+                  q-icon(name='mdi-alert-box', color='orange')
+                q-item-section {{ t('editor.markup.admonitionWarning') }}
+              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
+                q-item-section(side)
+                  q-icon(name='mdi-close-box', color='negative')
+                q-item-section {{ t('editor.markup.admonitionDanger') }}
         q-btn(
           icon='mdi-format-list-bulleted'
           padding='xs sm'
           flat
+          @click='insertBeforeEachLine({ content: `- `})'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.unorderedList') }}
         q-btn(
           icon='mdi-format-list-numbered'
           padding='xs sm'
           flat
+          @click='insertBeforeEachLine({ content: `1. `})'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.orderedList') }}
+        q-btn(
+          icon='mdi-format-list-checks'
+          padding='xs sm'
+          flat
+          )
+          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.taskList') }}
+          q-menu(auto-close)
+            q-list(separator)
+              q-item(clickable, @click='insertBeforeEachLine({ content: `- [ ] `})')
+                q-item-section(side)
+                  q-icon(name='mdi-checkbox-blank-outline')
+                q-item-section {{ t('editor.markup.taskListUnchecked') }}
+              q-item(clickable, @click='insertBeforeEachLine({ content: `- [x] `})')
+                q-item-section(side)
+                  q-icon(name='mdi-checkbox-outline')
+                q-item-section {{ t('editor.markup.taskListChecked') }}
         q-btn(
           icon='mdi-code-tags'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: "`" })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.inlineCode') }}
         q-btn(
           icon='mdi-keyboard-variant'
           padding='xs sm'
           flat
+          @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.keyboardKey') }}
         q-btn(
@@ -161,6 +236,7 @@
 import { reactive, ref, shallowRef, nextTick, onBeforeMount, onMounted, watch } from 'vue'
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import { get, flatten, last, times, startsWith } from 'lodash-es'
 
 import { useEditorStore } from 'src/stores/editor'
 import { useSiteStore } from 'src/stores/site'
@@ -206,7 +282,7 @@ const state = reactive({
   content: '',
   previewShown: true,
   previewHTML: '',
-  previewScrollSync: false
+  previewScrollSync: true
 })
 
 // Platform detection
@@ -227,6 +303,34 @@ function insertTable () {
 }
 
 /**
+ * Set current line as header
+ */
+function setHeaderLine (lvl) {
+  const curLine = cm.value.doc.getCursor('head').line
+  let lineContent = cm.value.doc.getLine(curLine)
+  const lineLength = lineContent.length
+  if (startsWith(lineContent, '#')) {
+    lineContent = lineContent.replace(/^(#+ )/, '')
+  }
+  lineContent = times(lvl, n => '#').join('') + ' ' + lineContent
+  cm.value.doc.replaceRange(lineContent, { line: curLine, ch: 0 }, { line: curLine, ch: lineLength })
+}
+
+/**
+ * Get the header lever of the current line
+ */
+function getHeaderLevel (cm) {
+  const curLine = cm.doc.getCursor('head').line
+  const lineContent = cm.doc.getLine(curLine)
+  let lvl = 0
+  const result = lineContent.match(/^(#+) /)
+  if (result) {
+    lvl = get(result, '[1]', '').length
+  }
+  return lvl
+}
+
+/**
  * Insert content at cursor
  */
 function insertAtCursor ({ content }) {
@@ -243,8 +347,53 @@ function insertAfter ({ content, newLine }) {
   cm.value.doc.replaceRange(newLine ? `\n${content}\n` : content, { line: curLine, ch: lineLength + 1 })
 }
 
+/**
+ * Insert content before current line
+ */
+function insertBeforeEachLine ({ content, after }) {
+  let lines = []
+  if (!cm.value.doc.somethingSelected()) {
+    lines.push(cm.value.doc.getCursor('head').line)
+  } else {
+    lines = flatten(cm.value.doc.listSelections().map(sl => {
+      const range = Math.abs(sl.anchor.line - sl.head.line) + 1
+      const lowestLine = (sl.anchor.line > sl.head.line) ? sl.head.line : sl.anchor.line
+      return times(range, l => l + lowestLine)
+    }))
+  }
+  lines.forEach(ln => {
+    let lineContent = cm.value.doc.getLine(ln)
+    const lineLength = lineContent.length
+    if (startsWith(lineContent, content)) {
+      lineContent = lineContent.substring(content.length)
+    }
+    cm.value.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
+  })
+  if (after) {
+    const lastLine = last(lines)
+    cm.value.doc.replaceRange(`\n${after}\n`, { line: lastLine, ch: cm.value.doc.getLine(lastLine).length + 1 })
+  }
+}
+
+/**
+ * Insert an Horizontal Bar
+ */
 function insertHorizontalBar () {
   insertAfter({ content: '---', newLine: true })
+}
+
+/**
+ * Toggle Markup at selection
+ */
+function toggleMarkup ({ start, end }) {
+  if (!end) { end = start }
+  if (!cm.value.doc.somethingSelected()) {
+    return $q.notify({
+      type: 'negative',
+      message: t('editor.markup.noSelectionError')
+    })
+  }
+  cm.value.doc.replaceSelections(cm.value.doc.getSelections().map(s => start + s + end))
 }
 
 // MOUNTED
@@ -300,23 +449,23 @@ onMounted(async () => {
       return false
     },
     [`${CtrlKey}-B`] (c) {
-      // toggleMarkup({ start: '**' })
+      toggleMarkup({ start: '**' })
       return false
     },
     [`${CtrlKey}-I`] (c) {
-      // toggleMarkup({ start: '*' })
+      toggleMarkup({ start: '*' })
       return false
     },
     [`${CtrlKey}-Alt-Right`] (c) {
-      // let lvl = getHeaderLevel(c)
-      // if (lvl >= 6) { lvl = 5 }
-      // setHeaderLine(lvl + 1)
+      let lvl = getHeaderLevel(c)
+      if (lvl >= 6) { lvl = 5 }
+      setHeaderLine(lvl + 1)
       return false
     },
     [`${CtrlKey}-Alt-Left`] (c) {
-      // let lvl = getHeaderLevel(c)
-      // if (lvl <= 1) { lvl = 2 }
-      // setHeaderLine(lvl - 1)
+      let lvl = getHeaderLevel(c)
+      if (lvl <= 1) { lvl = 2 }
+      setHeaderLine(lvl - 1)
       return false
     }
   }
@@ -336,6 +485,7 @@ onMounted(async () => {
   // this.processContent(this.$store.get('editor/content'))
   nextTick(() => {
     cm.value.refresh()
+    cm.value.focus()
   })
 
   // this.$root.$on('editorInsert', opts => {
@@ -408,16 +558,19 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     text-orientation: mixed;
     padding-bottom: 1rem;
     color: rgba(255,255,255, .4);
+    font-weight: 500;
   }
   &-preview {
     flex: 1 1 50%;
-    background-color: $grey-2;
     position: relative;
     height: $editor-height;
     overflow: hidden;
 
-    @at-root .theme--dark & {
-      background-color: $grey-9;
+    @at-root .body--light & {
+      background-color: $grey-2;
+    }
+    @at-root .body--dark & {
+      background-color: $dark-4;
     }
     // @include until($tablet) {
     //   display: none;
@@ -434,12 +587,19 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       max-width: 0;
     }
     &-toolbar {
-      background-color: $grey-3;
       color: $grey-8;
       height: 32px;
       display: flex;
       align-items: center;
       padding: 0 1rem;
+
+      @at-root .body--light & {
+        background-color: $grey-3;
+      }
+      @at-root .body--dark & {
+        background-color: $dark-2;
+        color: $grey-6;
+      }
     }
     &-content {
       height: $editor-height;

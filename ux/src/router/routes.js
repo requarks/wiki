@@ -4,8 +4,8 @@ const routes = [
     path: '/',
     component: () => import('../layouts/MainLayout.vue'),
     children: [
-      { path: '', component: () => import('../pages/Index.vue') }
-      // { path: 'n/:editor?', component: () => import('../pages/Index.vue') }
+      { path: '', component: () => import('../pages/Index.vue') },
+      { path: '_create/:editor?', component: () => import('../pages/Index.vue') }
     ]
   },
   {
@@ -60,10 +60,6 @@ const routes = [
       { path: 'webhooks', component: () => import('pages/AdminWebhooks.vue') },
       { path: 'flags', component: () => import('pages/AdminFlags.vue') }
     ]
-  },
-  {
-    path: '/_welcome',
-    component: () => import('pages/Welcome.vue')
   },
   {
     path: '/_error/:action?',

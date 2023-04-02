@@ -149,105 +149,13 @@ q-page.column
               icon='las la-thumbs-up'
               color='secondary'
             )
-    .page-actions.column.items-stretch.order-last
-      q-btn.q-py-md(
-        flat
-        icon='las la-pen-nib'
-        color='deep-orange-9'
-        aria-label='Page Properties'
-        @click='togglePageProperties'
-        )
-        q-tooltip(anchor='center left' self='center right') Page Properties
-      q-btn.q-py-md(
-        flat
-        icon='las la-project-diagram'
-        color='deep-orange-9'
-        aria-label='Page Data'
-        @click='togglePageData'
-        disable
-        v-if='flagsStore.experimental'
-        )
-        q-tooltip(anchor='center left' self='center right') Page Data
-      q-separator.q-my-sm(inset)
-      q-btn.q-py-sm(
-        flat
-        icon='las la-ellipsis-h'
-        color='grey'
-        aria-label='Page Actions'
-        )
-        q-tooltip(anchor='center left' self='center right') Page Actions
-        q-menu(
-          anchor='top left'
-          self='top right'
-          auto-close
-          transition-show='jump-left'
-          )
-          q-list(padding, style='min-width: 225px;')
-            q-item(clickable)
-              q-item-section.items-center(avatar)
-                q-icon(color='deep-orange-9', name='las la-history', size='sm')
-              q-item-section
-                q-item-label View History
-            q-item(clickable)
-              q-item-section.items-center(avatar)
-                q-icon(color='deep-orange-9', name='las la-code', size='sm')
-              q-item-section
-                q-item-label View Source
-            q-item(clickable)
-              q-item-section.items-center(avatar)
-                q-icon(color='deep-orange-9', name='las la-atom', size='sm')
-              q-item-section
-                q-item-label Convert Page
-            q-item(clickable)
-              q-item-section.items-center(avatar)
-                q-icon(color='deep-orange-9', name='las la-magic', size='sm')
-              q-item-section
-                q-item-label Re-render Page
-            q-item(clickable)
-              q-item-section.items-center(avatar)
-                q-icon(color='deep-orange-9', name='las la-sun', size='sm')
-              q-item-section
-                q-item-label View Backlinks
-      q-space
-      q-btn.q-py-sm(
-        flat
-        icon='las la-copy'
-        color='grey'
-        aria-label='Duplicate Page'
-        @click='duplicatePage'
-        )
-        q-tooltip(anchor='center left' self='center right') Duplicate Page
-      q-btn.q-py-sm(
-        flat
-        icon='las la-share'
-        color='grey'
-        aria-label='Rename / Move Page'
-        @click='renamePage'
-        )
-        q-tooltip(anchor='center left' self='center right') Rename / Move Page
-      q-btn.q-py-sm(
-        flat
-        icon='las la-trash'
-        color='grey'
-        aria-label='Delete Page'
-        @click='deletePage'
-        )
-        q-tooltip(anchor='center left' self='center right') Delete Page
+    page-actions-col
 
-  q-dialog(
-    v-model='state.showSideDialog'
-    position='right'
-    full-height
-    transition-show='jump-left'
-    transition-hide='jump-right'
-    class='floating-sidepanel'
-    no-shake
-    )
-    component(:is='sideDialogs[state.sideDialogComponent]')
+  side-dialog
 </template>
 
 <script setup>
-import { useMeta, useQuasar, setCssVar } from 'quasar'
+import { useMeta, useQuasar } from 'quasar'
 import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -261,19 +169,10 @@ import { useSiteStore } from 'src/stores/site'
 // COMPONENTS
 
 import LoadingGeneric from 'src/components/LoadingGeneric.vue'
+import PageActionsCol from 'src/components/PageActionsCol.vue'
 import PageHeader from 'src/components/PageHeader.vue'
-import PageTags from '../components/PageTags.vue'
-
-const sideDialogs = {
-  PageDataDialog: defineAsyncComponent({
-    loader: () => import('../components/PageDataDialog.vue'),
-    loadingComponent: LoadingGeneric
-  }),
-  PagePropertiesDialog: defineAsyncComponent({
-    loader: () => import('../components/PagePropertiesDialog.vue'),
-    loadingComponent: LoadingGeneric
-  })
-}
+import PageTags from 'src/components/PageTags.vue'
+import SideDialog from 'src/components/SideDialog.vue'
 
 const editorComponents = {
   markdown: defineAsyncComponent({
@@ -364,10 +263,14 @@ watch(() => route.path, async (newValue) => {
     await pageStore.pageLoad({ path: newValue })
   } catch (err) {
     if (err.message === 'ERR_PAGE_NOT_FOUND') {
-      $q.notify({
-        type: 'negative',
-        message: 'This page does not exist (yet)!'
-      })
+      if (newValue === '/') {
+        siteStore.overlay = 'Welcome'
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: 'This page does not exist (yet)!'
+        })
+      }
     } else {
       $q.notify({
         type: 'negative',
@@ -381,58 +284,6 @@ watch(() => pageStore.toc, () => { refreshTocExpanded() }, { immediate: true })
 watch(() => pageStore.tocDepth, () => { refreshTocExpanded() })
 
 // METHODS
-
-function togglePageProperties () {
-  state.sideDialogComponent = 'PagePropertiesDialog'
-  state.showSideDialog = true
-}
-
-function togglePageData () {
-  state.sideDialogComponent = 'PageDataDialog'
-  state.showSideDialog = true
-}
-
-function duplicatePage () {
-  $q.dialog({
-    component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
-    componentProps: {
-      mode: 'duplicatePage',
-      folderPath: '',
-      itemId: pageStore.id,
-      itemTitle: pageStore.title,
-      itemFileName: pageStore.path
-    }
-  }).onOk(() => {
-    // TODO: change route to new location
-  })
-}
-
-function renamePage () {
-  $q.dialog({
-    component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
-    componentProps: {
-      mode: 'renamePage',
-      folderPath: '',
-      itemId: pageStore.id,
-      itemTitle: pageStore.title,
-      itemFileName: pageStore.path
-    }
-  }).onOk(() => {
-    // TODO: change route to new location
-  })
-}
-
-function deletePage () {
-  $q.dialog({
-    component: defineAsyncComponent(() => import('../components/PageDeleteDialog.vue')),
-    componentProps: {
-      pageId: pageStore.id,
-      pageName: pageStore.title
-    }
-  }).onOk(() => {
-    router.replace('/')
-  })
-}
 
 function refreshTocExpanded (baseToc, lvl) {
   const toExpand = []
@@ -538,16 +389,6 @@ function refreshTocExpanded (baseToc, lvl) {
     }
   }
 }
-.page-actions {
-  flex: 0 0 56px;
-
-  @at-root .body--light & {
-    background-color: $grey-3;
-  }
-  @at-root .body--dark & {
-    background-color: $dark-4;
-  }
-}
 
 .floating-syncpanel {
   .q-dialog__inner {
@@ -567,59 +408,6 @@ function refreshTocExpanded (baseToc, lvl) {
     padding-right: 16px;
     display: flex;
     align-items: center;
-  }
-}
-
-.floating-sidepanel {
-  .q-dialog__inner {
-    right: 24px;
-
-    .q-card {
-      border-radius: 4px !important;
-      min-width: 450px;
-
-      .q-card__section {
-        border-radius: 0;
-      }
-    }
-  }
-
-  .alt-card {
-    @at-root .body--light & {
-      background-color: $grey-2;
-      border-top: 1px solid $grey-4;
-      box-shadow: inset 0 1px 0 0 #FFF, inset 0 -1px 0 0 #FFF;
-      border-bottom: 1px solid $grey-4;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-4;
-      border-top: 1px solid lighten($dark-3, 8%);
-      box-shadow: inset 0 1px 0 0 $dark-6, inset 0 -1px 0 0 $dark-6;
-      border-bottom: 1px solid lighten($dark-3, 8%);
-    }
-  }
-
-  &-quickaccess {
-    width: 40px;
-    border-radius: 4px !important;
-    background-color: rgba(0,0,0,.75);
-    backdrop-filter: blur(5px);
-    color: #FFF;
-    position: fixed;
-    right: 486px;
-    top: 74px;
-    z-index: -1;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 0 5px 0 rgba(0,0,0,.5) !important;
-
-    @at-root .q-transition--jump-left-enter-active & {
-      display: none !important;
-    }
-
-    @at-root .q-transition--jump-right-leave-active & {
-      display: none !important;
-    }
   }
 }
 

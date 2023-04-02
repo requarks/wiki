@@ -191,7 +191,7 @@ export const usePageStore = defineStore('page', {
       // -> Page Data
       this.id = 0
       this.locale = locale || this.locale
-      if (path) {
+      if (path || path === '') {
         this.path = path
       } else {
         this.path = this.path.length < 2 ? 'new-page' : `${this.path}/new-page`
@@ -199,7 +199,7 @@ export const usePageStore = defineStore('page', {
       this.title = ''
       this.description = ''
       this.icon = 'las la-file-alt'
-      this.isPublished = false
+      this.publishState = 'published'
       this.relations = []
       this.tags = []
 

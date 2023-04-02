@@ -202,6 +202,7 @@ body::-webkit-scrollbar-thumb {
   @at-root .body--dark & {
     background-color: rgba($dark,.7);
   }
+
   backdrop-filter: blur(10px);
 
   > .q-card {
