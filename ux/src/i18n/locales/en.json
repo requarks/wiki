@@ -1732,6 +1732,9 @@
   "tags.selectOneMoreTagsHint": "Select one or more tags on the left.",
   "welcome.admin": "Administration Area",
   "welcome.createHome": "Create the homepage",
+  "welcome.homeDefault.content": "Write some content here...",
+  "welcome.homeDefault.description": "Welcome to my wiki!",
+  "welcome.homeDefault.title": "Home",
   "welcome.subtitle": "Let's get started...",
   "welcome.title": "Welcome to Wiki.js!"
 }

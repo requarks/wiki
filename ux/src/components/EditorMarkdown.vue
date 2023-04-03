@@ -236,9 +236,10 @@
 import { reactive, ref, shallowRef, nextTick, onBeforeMount, onMounted, watch } from 'vue'
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { get, flatten, last, times, startsWith } from 'lodash-es'
+import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
 
 import { useEditorStore } from 'src/stores/editor'
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 // Code Mirror
@@ -260,6 +261,9 @@ import 'codemirror/addon/fold/foldcode.js'
 import 'codemirror/addon/fold/foldgutter.js'
 import 'codemirror/addon/fold/foldgutter.css'
 
+// Markdown Renderer
+import { MarkdownRenderer } from 'src/renderers/markdown'
+
 // QUASAR
 
 const $q = useQuasar()
@@ -267,6 +271,7 @@ const $q = useQuasar()
 // STORES
 
 const editorStore = useEditorStore()
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -279,11 +284,12 @@ const cm = shallowRef(null)
 const cmRef = ref(null)
 
 const state = reactive({
-  content: '',
   previewShown: true,
   previewHTML: '',
   previewScrollSync: true
 })
+
+const md = new MarkdownRenderer({})
 
 // Platform detection
 const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
@@ -396,6 +402,12 @@ function toggleMarkup ({ start, end }) {
   cm.value.doc.replaceSelections(cm.value.doc.getSelections().map(s => start + s + end))
 }
 
+const onCmInput = debounce(processContent, 600)
+
+function processContent (newContent) {
+  state.previewHTML = md.render(newContent)
+}
+
 // MOUNTED
 
 onMounted(async () => {
@@ -424,12 +436,12 @@ onMounted(async () => {
     gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
   })
 
-  cm.value.setValue(state.content)
+  cm.value.setValue(pageStore.content)
   cm.value.on('change', c => {
-    editorStore.$patch({
+    pageStore.$patch({
       content: c.getValue()
     })
-    // onCmInput(editorStore.content)
+    onCmInput(pageStore.content)
   })
 
   cm.value.setSize(null, '100%')

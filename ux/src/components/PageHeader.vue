@@ -199,6 +199,16 @@ const editUrl = computed(() => {
 // METHODS
 
 async function discardChanges () {
+  // Is it the home page in create mode?
+  if (editorStore.mode === 'create' && pageStore.path === '' && pageStore.locale === 'en') {
+    editorStore.$patch({
+      isActive: false,
+      editor: ''
+    })
+    siteStore.overlay = 'Welcome'
+    return
+  }
+
   $q.loading.show()
   try {
     editorStore.$patch({

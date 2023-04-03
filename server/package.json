@@ -8,7 +8,7 @@
   "dev": true,
   "scripts": {
     "start": "cd .. && node server",
-    "dev": "cd .. && nodemon server"
+    "dev": "cd .. && nodemon server --watch server --ext js,json,graphql,gql"
   },
   "repository": {
     "type": "git",

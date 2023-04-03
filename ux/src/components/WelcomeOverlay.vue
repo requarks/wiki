@@ -90,7 +90,14 @@ useMeta({
 
 function createHomePage (editor) {
   siteStore.overlay = ''
-  pageStore.pageCreate({ editor, locale: 'en', path: '' })
+  pageStore.pageCreate({
+    editor,
+    locale: 'en',
+    path: '',
+    title: t('welcome.homeDefault.title'),
+    description: t('welcome.homeDefault.description'),
+    content: t('welcome.homeDefault.content')
+  })
 }
 
 function loadAdmin () {

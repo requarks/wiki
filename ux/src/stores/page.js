@@ -173,7 +173,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - CREATE
      */
-    pageCreate ({ editor, locale, path }) {
+    pageCreate ({ editor, locale, path, title = '', description = '', content = '' }) {
       const editorStore = useEditorStore()
 
       // if (['markdown', 'api'].includes(editor)) {
@@ -196,14 +196,14 @@ export const usePageStore = defineStore('page', {
       } else {
         this.path = this.path.length < 2 ? 'new-page' : `${this.path}/new-page`
       }
-      this.title = ''
-      this.description = ''
+      this.title = title ?? ''
+      this.description = description ?? ''
       this.icon = 'las la-file-alt'
       this.publishState = 'published'
       this.relations = []
       this.tags = []
 
-      this.content = ''
+      this.content = content ?? ''
       this.render = ''
 
       // -> View Mode
