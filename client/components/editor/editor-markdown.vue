@@ -483,7 +483,8 @@ export default {
       let folderID = 0
       for(const folderName of path.split("/").slice(1)){
         let folders = await this.getSubFolder(folderID)
-        let folder = folders.find(folder => folder.slug === folderName)
+        // api case-insensitive for folder name
+        let folder = folders.find(folder => folder.slug.toLowerCase() === folderName.toLowerCase())
         if (!folder) {
           const resp = await this.$apollo.mutate({
             mutation: createAssetFolderMutation,
@@ -499,7 +500,7 @@ export default {
           }
           folders = await this.getSubFolder(folderID)
           console.log("getSubFolder", folders)
-          folder = folders.find(folder => folder.slug === folderName)
+          folder = folders.find(folder => folder.slug.toLowerCase() === folderName.toLowerCase())
         }
         folderID = folder.id
       }
