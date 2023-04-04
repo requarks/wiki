@@ -18,12 +18,7 @@ npm-debug.log*
 
 # Generated assets
 /assets
-/assets-legacy
 /server/views/base.pug
-
-# Webpack
-.webpack-cache
-.fusebox
 
 # Config Files
 /config.yml

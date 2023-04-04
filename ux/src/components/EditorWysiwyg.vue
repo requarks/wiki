@@ -116,6 +116,7 @@ import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
 import { useEditorStore } from 'src/stores/editor'
+import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
 
@@ -124,6 +125,7 @@ const $q = useQuasar()
 // STORES
 
 const editorStore = useEditorStore()
+const siteStore = useSiteStore()
 
 // I18N
 
@@ -494,7 +496,9 @@ const menuBar = [
     icon: 'mdi-image-plus',
     title: 'Image',
     action: () => {
-      // TODO: insert image
+      siteStore.$patch({
+        overlay: 'FileManager'
+      })
     }
   },
   {

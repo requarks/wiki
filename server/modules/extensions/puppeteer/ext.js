@@ -15,7 +15,7 @@ module.exports = {
   isInstallable: true,
   async check () {
     try {
-      this.isInstalled = await fs.pathExists(path.join(process.cwd(), 'node_modules/puppeteer-core/.local-chromium'))
+      this.isInstalled = await fs.pathExists(path.join(WIKI.SERVERPATH, 'node_modules/puppeteer-core/.local-chromium'))
     } catch (err) {
       this.isInstalled = false
     }
@@ -24,7 +24,7 @@ module.exports = {
   async install () {
     try {
       const { stdout, stderr } = await exec('node install.js', {
-        cwd: path.join(process.cwd(), 'node_modules/puppeteer-core'),
+        cwd: path.join(WIKI.SERVERPATH, 'node_modules/puppeteer-core'),
         timeout: 300000,
         windowsHide: true
       })

@@ -494,7 +494,7 @@ onMounted(async () => {
   // this.cm.on('paste', this.onCmPaste)
 
   // // Render initial preview
-  // this.processContent(this.$store.get('editor/content'))
+  processContent(pageStore.content)
   nextTick(() => {
     cm.value.refresh()
     cm.value.focus()

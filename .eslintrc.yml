@@ -14,3 +14,11 @@ globals:
   navigator: false
   window: false
   WIKI: true
+ignorePatterns:
+  - '**/node_modules/**'
+  - '**/*.min.js'
+  - 'assets/**'
+  - 'coverage/**'
+  - 'repo/**'
+  - 'data/**'
+  - 'logs/**'

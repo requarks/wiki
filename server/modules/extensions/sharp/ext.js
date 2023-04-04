@@ -15,17 +15,17 @@ module.exports = {
   isInstalled: false,
   isInstallable: true,
   async check () {
-    this.isInstalled = await fs.pathExists(path.join(process.cwd(), 'node_modules/sharp/wiki_installed.txt'))
+    this.isInstalled = await fs.pathExists(path.join(WIKI.SERVERPATH, 'node_modules/sharp/wiki_installed.txt'))
     return this.isInstalled
   },
   async install () {
     try {
       const { stdout, stderr } = await exec('node install/libvips && node install/dll-copy', {
-        cwd: path.join(process.cwd(), 'node_modules/sharp'),
+        cwd: path.join(WIKI.SERVERPATH, 'node_modules/sharp'),
         timeout: 120000,
         windowsHide: true
       })
-      await fs.ensureFile(path.join(process.cwd(), 'node_modules/sharp/wiki_installed.txt'))
+      await fs.ensureFile(path.join(WIKI.SERVERPATH, 'node_modules/sharp/wiki_installed.txt'))
       this.isInstalled = true
       WIKI.logger.info(stdout)
       WIKI.logger.warn(stderr)

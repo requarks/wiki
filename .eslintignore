@@ -1,8 +1,0 @@
-**/node_modules/**
-**/*.min.js
-assets/**
-client/libs/**
-coverage/**
-repo/**
-data/**
-logs/**
