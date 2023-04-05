@@ -23,3 +23,8 @@ props:
     title: Server ID
     hint: Optional - Your unique server identifier, such that only members are authorized
     order: 3
+  roles:
+    type: String
+    title: Required Roles
+    hint: Optional - Comma-separated list of server role IDs that are required for access (you must hae a Server ID configured to use this.)
+    order: 4
