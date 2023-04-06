@@ -126,6 +126,17 @@
         @click='discardChanges'
       )
       q-btn.acrylic-btn(
+        v-if='editorStore.mode === `create`'
+        flat
+        icon='las la-check'
+        color='positive'
+        label='Create Page'
+        aria-label='Create Page'
+        no-caps
+        @click='createPage'
+      )
+      q-btn.acrylic-btn(
+        v-else
         flat
         icon='las la-check'
         color='positive'
@@ -246,10 +257,49 @@ async function saveChanges () {
   $q.loading.hide()
 }
 
-function editPage () {
+async function createPage () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
+    componentProps: {
+      mode: 'createPage',
+      folderPath: '',
+      itemTitle: pageStore.title,
+      itemFileName: pageStore.path
+    }
+  }).onOk(async ({ path, title }) => {
+    $q.loading.show()
+    try {
+      pageStore.$patch({
+        title,
+        path
+      })
+      await pageStore.pageSave()
+      $q.notify({
+        type: 'positive',
+        message: 'Page created successfully.'
+      })
+      editorStore.$patch({
+        isActive: false
+      })
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to create page.',
+        caption: err.message
+      })
+    }
+    $q.loading.hide()
+  })
+}
+
+async function editPage () {
+  $q.loading.show()
+  await pageStore.pageLoad({ id: pageStore.id, withContent: true })
   editorStore.$patch({
     isActive: true,
-    editor: 'markdown'
+    mode: 'edit',
+    editor: pageStore.editor
   })
+  $q.loading.hide()
 }
 </script>

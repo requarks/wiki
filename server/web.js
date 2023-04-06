@@ -74,17 +74,13 @@ module.exports = async () => {
     index: false,
     maxAge: '7d'
   }))
-  app.use('/_assets-legacy/svg/twemoji', async (req, res, next) => {
+  app.use('/_assets/svg/twemoji', async (req, res, next) => {
     try {
       WIKI.asar.serve('twemoji', req, res, next)
     } catch (err) {
       res.sendStatus(404)
     }
   })
-  app.use('/_assets-legacy', express.static(path.join(WIKI.ROOTPATH, 'assets-legacy'), {
-    index: false,
-    maxAge: '7d'
-  }))
 
   // ----------------------------------------
   // SSL Handlers

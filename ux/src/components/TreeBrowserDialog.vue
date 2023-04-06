@@ -230,7 +230,10 @@ const files = computed(() => {
 // METHODS
 
 async function save () {
-  onDialogOK()
+  onDialogOK({
+    title: state.title,
+    path: state.path
+  })
 }
 
 async function treeLazyLoad (nodeId, { done, fail }) {

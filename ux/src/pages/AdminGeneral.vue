@@ -752,12 +752,7 @@ async function save () {
     })
     await adminStore.fetchSites()
     if (adminStore.currentSiteId === siteStore.id) {
-      siteStore.$patch({
-        title: state.config.title,
-        description: state.config.description,
-        company: state.config.company,
-        contentLicense: state.config.contentLicense
-      })
+      siteStore.loadSite(window.location.hostname)
     }
   } catch (err) {
     $q.notify({

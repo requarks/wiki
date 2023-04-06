@@ -27,6 +27,7 @@ q-header.bg-header.text-white.site-header(
     q-toolbar.gt-sm(
       style='height: 64px;'
       dark
+      v-if='siteStore.features.search'
       )
       q-input(
         dark

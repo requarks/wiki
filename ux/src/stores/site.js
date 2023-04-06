@@ -26,7 +26,9 @@ export const useSiteStore = defineStore('site', {
     showSidebar: true,
     overlay: null,
     features: {
-      ratingsMode: 'off'
+      ratingsMode: 'off',
+      reasonForChange: 'required',
+      search: false
     },
     editors: {
       asciidoc: false,
@@ -87,6 +89,8 @@ export const useSiteStore = defineStore('site', {
                 footerExtra
                 features {
                   ratingsMode
+                  reasonForChange
+                  search
                 }
                 editors {
                   asciidoc {

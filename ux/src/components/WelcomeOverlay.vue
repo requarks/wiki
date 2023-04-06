@@ -93,7 +93,7 @@ function createHomePage (editor) {
   pageStore.pageCreate({
     editor,
     locale: 'en',
-    path: '',
+    path: 'home',
     title: t('welcome.homeDefault.title'),
     description: t('welcome.homeDefault.description'),
     content: t('welcome.homeDefault.content')

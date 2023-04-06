@@ -78,6 +78,34 @@ const gqlQueries = {
       }
     }
     ${pagePropsFragment}
+  `,
+  pageByIdWithContent: gql`
+    query loadPageWithContent (
+      $id: UUID!
+    ) {
+      pageById(
+        id: $id
+      ) {
+        ...PageRead,
+        content
+      }
+    }
+    ${pagePropsFragment}
+  `,
+  pageByPathWithContent: gql`
+    query loadPageWithContent (
+      $siteId: UUID!
+      $path: String!
+    ) {
+      pageByPath(
+        siteId: $siteId
+        path: $path
+      ) {
+        ...PageRead,
+        content
+      }
+    }
+    ${pagePropsFragment}
   `
 }
 
@@ -92,6 +120,7 @@ export const usePageStore = defineStore('page', {
     content: '',
     createdAt: '',
     description: '',
+    editor: '',
     icon: 'las la-file-alt',
     id: '',
     isBrowsable: true,
@@ -140,12 +169,18 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - LOAD
      */
-    async pageLoad ({ path, id }) {
+    async pageLoad ({ path, id, withContent = false }) {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       try {
+        let query
+        if (withContent) {
+          query = id ? gqlQueries.pageByIdWithContent : gqlQueries.pageByPathWithContent
+        } else {
+          query = id ? gqlQueries.pageById : gqlQueries.pageByPath
+        }
         const resp = await APOLLO_CLIENT.query({
-          query: id ? gqlQueries.pageById : gqlQueries.pageByPath,
+          query,
           variables: id ? { id } : { siteId: siteStore.id, path },
           fetchPolicy: 'network-only'
         })
@@ -221,56 +256,157 @@ export const usePageStore = defineStore('page', {
      */
     async pageSave () {
       const editorStore = useEditorStore()
+      const siteStore = useSiteStore()
       try {
-        const resp = await APOLLO_CLIENT.mutate({
-          mutation: gql`
-            mutation savePage (
-              $id: UUID!
-              $patch: PageUpdateInput!
-            ) {
-              updatePage (
-                id: $id
-                patch: $patch
+        if (editorStore.mode === 'create') {
+          const resp = await APOLLO_CLIENT.mutate({
+            mutation: gql`
+              mutation createPage (
+                $allowComments: Boolean
+                $allowContributions: Boolean
+                $allowRatings: Boolean
+                $content: String!
+                $description: String!
+                $editor: String!
+                $icon: String
+                $isBrowsable: Boolean
+                $locale: String!
+                $path: String!
+                $publishState: PagePublishState!
+                $publishEndDate: Date
+                $publishStartDate: Date
+                $relations: [PageRelationInput!]
+                $scriptCss: String
+                $scriptJsLoad: String
+                $scriptJsUnload: String
+                $showSidebar: Boolean
+                $showTags: Boolean
+                $showToc: Boolean
+                $siteId: UUID!
+                $tags: [String!]
+                $title: String!
+                $tocDepth: PageTocDepthInput
               ) {
-                operation {
-                  succeeded
-                  message
+                createPage (
+                  allowComments: $allowComments
+                  allowContributions: $allowContributions
+                  allowRatings: $allowRatings
+                  content: $content
+                  description: $description
+                  editor: $editor
+                  icon: $icon
+                  isBrowsable: $isBrowsable
+                  locale: $locale
+                  path: $path
+                  publishState: $publishState
+                  publishEndDate: $publishEndDate
+                  publishStartDate: $publishStartDate
+                  relations: $relations
+                  scriptCss: $scriptCss
+                  scriptJsLoad: $scriptJsLoad
+                  scriptJsUnload: $scriptJsUnload
+                  showSidebar: $showSidebar
+                  showTags: $showTags
+                  showToc: $showToc
+                  siteId: $siteId
+                  tags: $tags
+                  title: $title
+                  tocDepth: $tocDepth
+                ) {
+                  operation {
+                    succeeded
+                    message
+                  }
                 }
               }
+              `,
+            variables: {
+              ...pick(this, [
+                'allowComments',
+                'allowContributions',
+                'allowRatings',
+                'content',
+                'description',
+                'icon',
+                'isBrowsable',
+                'locale',
+                'password',
+                'path',
+                'publishEndDate',
+                'publishStartDate',
+                'publishState',
+                'relations',
+                'scriptJsLoad',
+                'scriptJsUnload',
+                'scriptCss',
+                'showSidebar',
+                'showTags',
+                'showToc',
+                'tags',
+                'title',
+                'tocDepth'
+              ]),
+              editor: editorStore.editor,
+              siteId: siteStore.id
             }
-            `,
-          variables: {
-            id: this.id,
-            patch: pick(this, [
-              'allowComments',
-              'allowContributions',
-              'allowRatings',
-              // 'content',
-              'description',
-              'icon',
-              'isBrowsable',
-              'locale',
-              'password',
-              'path',
-              'publishEndDate',
-              'publishStartDate',
-              'publishState',
-              'relations',
-              'scriptJsLoad',
-              'scriptJsUnload',
-              'scriptCss',
-              'showSidebar',
-              'showTags',
-              'showToc',
-              'tags',
-              'title',
-              'tocDepth'
-            ])
+          })
+          const result = resp?.data?.createPage?.operation ?? {}
+          if (!result.succeeded) {
+            throw new Error(result.message)
           }
-        })
-        const result = resp?.data?.updatePage?.operation ?? {}
-        if (!result.succeeded) {
-          throw new Error(result.message)
+          this.id = resp.data.createPage.page.id
+          this.editor = editorStore.editor
+        } else {
+          const resp = await APOLLO_CLIENT.mutate({
+            mutation: gql`
+              mutation savePage (
+                $id: UUID!
+                $patch: PageUpdateInput!
+              ) {
+                updatePage (
+                  id: $id
+                  patch: $patch
+                ) {
+                  operation {
+                    succeeded
+                    message
+                  }
+                }
+              }
+              `,
+            variables: {
+              id: this.id,
+              patch: pick(this, [
+                'allowComments',
+                'allowContributions',
+                'allowRatings',
+                'content',
+                'description',
+                'icon',
+                'isBrowsable',
+                'locale',
+                'password',
+                'path',
+                'publishEndDate',
+                'publishStartDate',
+                'publishState',
+                'relations',
+                'scriptJsLoad',
+                'scriptJsUnload',
+                'scriptCss',
+                'showSidebar',
+                'showTags',
+                'showToc',
+                'tags',
+                'title',
+                'tocDepth'
+              ])
+            }
+          })
+          const result = resp?.data?.updatePage?.operation ?? {}
+          if (!result.succeeded) {
+            throw new Error(result.message)
+          }
         }
         // Update editor state timestamps
         const curDate = DateTime.utc()
