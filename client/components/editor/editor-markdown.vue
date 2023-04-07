@@ -438,22 +438,30 @@ export default {
     }, 600),
     async onCmPaste (cm, ev) {
       const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
-      for (let clipItem of clipItems) {
-        if (_.startsWith(clipItem.type, 'image/')) {
+      // In Chromium kernel the paste event will be released after callback return
+      // Since this is an async function, the file must be get before 'await' keyword
+      const files = Array.from(clipItems).filter(item=>_.startsWith(item.type, 'image/')).map(item=>item.getAsFile())
+      // upload all file
+      for (const file of files) {
           // get parent directory
-          const folderPath = '/' + this.path.split('/').slice(0,-1).join('/')
           let folderID = 0
+          let folderPath = "/assets/" + this.locale
           try {
+            if(this.path.includes("/")){
+              // path to lowercase, the wikijs foldre does not support case sensitivity.
+              folderPath += "/" + this.path.toLowerCase().split('/').slice(0,-1).join('/')
+            }
+            // try to get the folder id, create it if does not exists. 
             folderID = await this.createFolder(folderPath)
           } catch (err) {
             this.$store.commit('pushGraphError', err)
             return
           }
-          const file = clipItem.getAsFile()
           const now = new Date()
           // file name format yyyy-MM-dd_random.png
           let filename = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_${parseInt(Math.random() * (10**5))}`
           filename += file.name.slice(file.name.lastIndexOf('.'))
+          // upload file
           const form = new FormData()
           form.append('mediaUpload', JSON.stringify({ 'folderId': folderID }))
           form.append('mediaUpload', file, filename)
@@ -476,7 +484,6 @@ export default {
               icon: 'error'
             })
           }
-        }
       }
     },
     async createFolder(path) {
@@ -484,7 +491,7 @@ export default {
       for(const folderName of path.split("/").slice(1)){
         let folders = await this.getSubFolder(folderID)
         // api case-insensitive for folder name
-        let folder = folders.find(folder => folder.slug.toLowerCase() === folderName.toLowerCase())
+        let folder = folders.find(folder => folder.slug === folderName)
         if (!folder) {
           const resp = await this.$apollo.mutate({
             mutation: createAssetFolderMutation,
@@ -499,8 +506,7 @@ export default {
             throw new Error(message);
           }
           folders = await this.getSubFolder(folderID)
-          console.log("getSubFolder", folders)
-          folder = folders.find(folder => folder.slug.toLowerCase() === folderName.toLowerCase())
+          folder = folders.find(folder => folder.slug === folderName)
         }
         folderID = folder.id
       }
