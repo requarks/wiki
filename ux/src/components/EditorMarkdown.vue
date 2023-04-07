@@ -237,6 +237,7 @@ import { reactive, ref, shallowRef, nextTick, onBeforeMount, onMounted, watch } 
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
+import { DateTime } from 'luxon'
 
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
@@ -438,6 +439,9 @@ onMounted(async () => {
 
   cm.value.setValue(pageStore.content)
   cm.value.on('change', c => {
+    editorStore.$patch({
+      lastChangeTimestamp: DateTime.utc()
+    })
     pageStore.$patch({
       content: c.getValue()
     })

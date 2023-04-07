@@ -283,11 +283,12 @@ module.exports = {
     async uploadUserAvatar (obj, args) {
       try {
         const { filename, mimetype, createReadStream } = await args.image
-        WIKI.logger.debug(`Processing user ${args.id} avatar ${filename} of type ${mimetype}...`)
+        const lowercaseFilename = filename.toLowerCase()
+        WIKI.logger.debug(`Processing user ${args.id} avatar ${lowercaseFilename} of type ${mimetype}...`)
         if (!WIKI.extensions.ext.sharp.isInstalled) {
-          throw new Error('This feature requires the Sharp extension but it is not installed.')
+          throw new Error('This feature requires the Sharp extension but it is not installed. Contact your wiki administrator.')
         }
-        if (!['.png', '.jpg', '.webp', '.gif'].some(s => filename.endsWith(s))) {
+        if (!['.png', '.jpg', '.webp', '.gif'].some(s => lowercaseFilename.endsWith(s))) {
           throw new Error('Invalid File Extension. Must be png, jpg, webp or gif.')
         }
         const destFolder = path.resolve(

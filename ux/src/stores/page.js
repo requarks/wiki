@@ -109,6 +109,73 @@ const gqlQueries = {
   `
 }
 
+const gqlMutations = {
+  createPage: gql`
+    mutation createPage (
+      $allowComments: Boolean
+      $allowContributions: Boolean
+      $allowRatings: Boolean
+      $content: String!
+      $description: String!
+      $editor: String!
+      $icon: String
+      $isBrowsable: Boolean
+      $locale: String!
+      $path: String!
+      $publishState: PagePublishState!
+      $publishEndDate: Date
+      $publishStartDate: Date
+      $relations: [PageRelationInput!]
+      $scriptCss: String
+      $scriptJsLoad: String
+      $scriptJsUnload: String
+      $showSidebar: Boolean
+      $showTags: Boolean
+      $showToc: Boolean
+      $siteId: UUID!
+      $tags: [String!]
+      $title: String!
+      $tocDepth: PageTocDepthInput
+    ) {
+      createPage (
+        allowComments: $allowComments
+        allowContributions: $allowContributions
+        allowRatings: $allowRatings
+        content: $content
+        description: $description
+        editor: $editor
+        icon: $icon
+        isBrowsable: $isBrowsable
+        locale: $locale
+        path: $path
+        publishState: $publishState
+        publishEndDate: $publishEndDate
+        publishStartDate: $publishStartDate
+        relations: $relations
+        scriptCss: $scriptCss
+        scriptJsLoad: $scriptJsLoad
+        scriptJsUnload: $scriptJsUnload
+        showSidebar: $showSidebar
+        showTags: $showTags
+        showToc: $showToc
+        siteId: $siteId
+        tags: $tags
+        title: $title
+        tocDepth: $tocDepth
+      ) {
+        operation {
+          succeeded
+          message
+        }
+        page {
+          ...PageRead
+        }
+      }
+    }
+    ${pagePropsFragment}
+  `
+}
+
 export const usePageStore = defineStore('page', {
   state: () => ({
     allowComments: false,
@@ -211,45 +278,37 @@ export const usePageStore = defineStore('page', {
     pageCreate ({ editor, locale, path, title = '', description = '', content = '' }) {
       const editorStore = useEditorStore()
 
-      // if (['markdown', 'api'].includes(editor)) {
-      //   commit('site/SET_SHOW_SIDE_NAV', false, { root: true })
-      // } else {
-      //   commit('site/SET_SHOW_SIDE_NAV', true, { root: true })
-      // }
-
-      // if (['markdown', 'channel', 'api'].includes(editor)) {
-      //   commit('site/SET_SHOW_SIDEBAR', false, { root: true })
-      // } else {
-      //   commit('site/SET_SHOW_SIDEBAR', true, { root: true })
-      // }
-
-      // -> Page Data
-      this.id = 0
-      this.locale = locale || this.locale
-      if (path || path === '') {
-        this.path = path
-      } else {
-        this.path = this.path.length < 2 ? 'new-page' : `${this.path}/new-page`
-      }
-      this.title = title ?? ''
-      this.description = description ?? ''
-      this.icon = 'las la-file-alt'
-      this.publishState = 'published'
-      this.relations = []
-      this.tags = []
-
-      this.content = content ?? ''
-      this.render = ''
-
-      // -> View Mode
-      this.mode = 'edit'
-
-      // -> Editor Mode
+      // -> Init editor
       editorStore.$patch({
+        originPageId: editorStore.isActive ? editorStore.originPageId : this.id, // Don't replace if already in edit mode
         isActive: true,
-        editor,
-        mode: 'create'
+        mode: 'create',
+        editor
       })
+
+      // -> Default Page Path
+      let newPath = path
+      if (!path && path !== '') {
+        newPath = this.path.length < 2 ? 'new-page' : `${this.path}/new-page`
+      }
+
+      // -> Set Default Page Data
+      this.$patch({
+        id: 0,
+        locale: locale || this.locale,
+        path: newPath,
+        title: title ?? '',
+        description: description ?? '',
+        icon: 'las la-file-alt',
+        publishState: 'published',
+        relations: [],
+        tags: [],
+        content: content ?? '',
+        render: '',
+        mode: 'edit'
+      })
+
+      this.router.push('/_create')
     },
     /**
      * PAGE SAVE
@@ -260,66 +319,7 @@ export const usePageStore = defineStore('page', {
       try {
         if (editorStore.mode === 'create') {
           const resp = await APOLLO_CLIENT.mutate({
-            mutation: gql`
-              mutation createPage (
-                $allowComments: Boolean
-                $allowContributions: Boolean
-                $allowRatings: Boolean
-                $content: String!
-                $description: String!
-                $editor: String!
-                $icon: String
-                $isBrowsable: Boolean
-                $locale: String!
-                $path: String!
-                $publishState: PagePublishState!
-                $publishEndDate: Date
-                $publishStartDate: Date
-                $relations: [PageRelationInput!]
-                $scriptCss: String
-                $scriptJsLoad: String
-                $scriptJsUnload: String
-                $showSidebar: Boolean
-                $showTags: Boolean
-                $showToc: Boolean
-                $siteId: UUID!
-                $tags: [String!]
-                $title: String!
-                $tocDepth: PageTocDepthInput
-              ) {
-                createPage (
-                  allowComments: $allowComments
-                  allowContributions: $allowContributions
-                  allowRatings: $allowRatings
-                  content: $content
-                  description: $description
-                  editor: $editor
-                  icon: $icon
-                  isBrowsable: $isBrowsable
-                  locale: $locale
-                  path: $path
-                  publishState: $publishState
-                  publishEndDate: $publishEndDate
-                  publishStartDate: $publishStartDate
-                  relations: $relations
-                  scriptCss: $scriptCss
-                  scriptJsLoad: $scriptJsLoad
-                  scriptJsUnload: $scriptJsUnload
-                  showSidebar: $showSidebar
-                  showTags: $showTags
-                  showToc: $showToc
-                  siteId: $siteId
-                  tags: $tags
-                  title: $title
-                  tocDepth: $tocDepth
-                ) {
-                  operation {
-                    succeeded
-                    message
-                  }
-                }
-              }
-              `,
+            mutation: gqlMutations.createPage,
             variables: {
               ...pick(this, [
                 'allowComments',
@@ -354,8 +354,18 @@ export const usePageStore = defineStore('page', {
           if (!result.succeeded) {
             throw new Error(result.message)
           }
-          this.id = resp.data.createPage.page.id
-          this.editor = editorStore.editor
+          const pageData = cloneDeep(resp.data.createPage.page ?? {})
+          if (!pageData?.id) {
+            throw new Error('ERR_CREATED_PAGE_NOT_FOUND')
+          }
+          // Update page store
+          this.$patch({
+            ...pageData,
+            relations: pageData.relations.map(r => pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])),
+            tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+          })
+
+          this.router.replace(`/${this.path}`)
         } else {
           const resp = await APOLLO_CLIENT.mutate({
             mutation: gql`
@@ -418,6 +428,11 @@ export const usePageStore = defineStore('page', {
         console.warn(err)
         throw err
       }
+    },
+    async cancelPageEdit () {
+      const editorStore = useEditorStore()
+      await this.pageLoad({ id: editorStore.originPageId ? editorStore.originPageId : this.id })
+      this.router.replace(`/${this.path}`)
     },
     generateToc () {
 

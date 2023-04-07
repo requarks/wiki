@@ -261,6 +261,11 @@ watch(() => route.path, async (newValue) => {
   if (newValue.startsWith('/_')) { return }
   try {
     await pageStore.pageLoad({ path: newValue })
+    if (editorStore.isActive) {
+      editorStore.$patch({
+        isActive: false
+      })
+    }
   } catch (err) {
     if (err.message === 'ERR_PAGE_NOT_FOUND') {
       if (newValue === '/') {

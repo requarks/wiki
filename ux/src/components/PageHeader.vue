@@ -120,8 +120,8 @@
         flat
         icon='las la-times'
         color='negative'
-        label='Discard'
-        aria-label='Discard'
+        :label='editorStore.hasPendingChanges ? t(`common.actions.discard`) : t(`common.actions.close`)'
+        :aria-label='editorStore.hasPendingChanges ? t(`common.actions.discard`) : t(`common.actions.close`)'
         no-caps
         @click='discardChanges'
       )
@@ -142,6 +142,7 @@
         color='positive'
         label='Save Changes'
         aria-label='Save Changes'
+        :disabled='!editorStore.hasPendingChanges'
         no-caps
         @click='saveChanges'
       )
@@ -220,17 +221,21 @@ async function discardChanges () {
     return
   }
 
+  const hadPendingChanges = editorStore.hasPendingChanges
+
   $q.loading.show()
   try {
     editorStore.$patch({
       isActive: false,
       editor: ''
     })
-    await pageStore.pageLoad({ id: pageStore.id })
-    $q.notify({
-      type: 'positive',
-      message: 'Page has been reverted to the last saved state.'
-    })
+    await pageStore.cancelPageEdit()
+    if (hadPendingChanges) {
+      $q.notify({
+        type: 'positive',
+        message: 'Page has been reverted to the last saved state.'
+      })
+    }
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -241,6 +246,24 @@ async function discardChanges () {
 }
 
 async function saveChanges () {
+  if (siteStore.features.reasonForChange !== 'off') {
+    $q.dialog({
+      component: defineAsyncComponent(() => import('../components/PageReasonForChangeDialog.vue')),
+      componentProps: {
+        required: siteStore.features.reasonForChange === 'required'
+      }
+    }).onOk(async ({ reason }) => {
+      editorStore.$patch({
+        reasonForChange: reason
+      })
+      saveChangesCommit()
+    })
+  } else {
+    saveChangesCommit()
+  }
+}
+
+async function saveChangesCommit () {
   $q.loading.show()
   try {
     await pageStore.pageSave()

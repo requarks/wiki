@@ -4,8 +4,8 @@ export const useEditorStore = defineStore('editor', {
   state: () => ({
     isActive: false,
     editor: '',
-    content: '',
-    mode: 'create',
+    originPageId: '',
+    mode: 'edit',
     activeModal: '',
     activeModalData: null,
     hideSideNav: false,
@@ -17,7 +17,8 @@ export const useEditorStore = defineStore('editor', {
     checkoutDateActive: '',
     lastSaveTimestamp: null,
     lastChangeTimestamp: null,
-    editors: {}
+    editors: {},
+    reasonForChange: ''
   }),
   getters: {
     hasPendingChanges: (state) => {
