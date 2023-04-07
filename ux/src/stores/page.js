@@ -126,6 +126,7 @@ const gqlMutations = {
       $publishEndDate: Date
       $publishStartDate: Date
       $relations: [PageRelationInput!]
+      $render: String
       $scriptCss: String
       $scriptJsLoad: String
       $scriptJsUnload: String
@@ -152,6 +153,7 @@ const gqlMutations = {
         publishEndDate: $publishEndDate
         publishStartDate: $publishStartDate
         relations: $relations
+        render: $render
         scriptCss: $scriptCss
         scriptJsLoad: $scriptJsLoad
         scriptJsUnload: $scriptJsUnload
@@ -336,6 +338,7 @@ export const usePageStore = defineStore('page', {
                 'publishStartDate',
                 'publishState',
                 'relations',
+                'render',
                 'scriptJsLoad',
                 'scriptJsUnload',
                 'scriptCss',
@@ -401,6 +404,7 @@ export const usePageStore = defineStore('page', {
                 'publishStartDate',
                 'publishState',
                 'relations',
+                'render',
                 'scriptJsLoad',
                 'scriptJsUnload',
                 'scriptCss',

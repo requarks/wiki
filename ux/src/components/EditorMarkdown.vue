@@ -228,7 +228,7 @@
         .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
           div(
             ref='editorPreview'
-            v-html='state.previewHTML'
+            v-html='pageStore.render'
             )
 </template>
 
@@ -286,7 +286,6 @@ const cmRef = ref(null)
 
 const state = reactive({
   previewShown: true,
-  previewHTML: '',
   previewScrollSync: true
 })
 
@@ -403,10 +402,12 @@ function toggleMarkup ({ start, end }) {
   cm.value.doc.replaceSelections(cm.value.doc.getSelections().map(s => start + s + end))
 }
 
-const onCmInput = debounce(processContent, 600)
+const onCmInput = debounce(processContent, 500)
 
 function processContent (newContent) {
-  state.previewHTML = md.render(newContent)
+  pageStore.$patch({
+    render: md.render(newContent)
+  })
 }
 
 // MOUNTED

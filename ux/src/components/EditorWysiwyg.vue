@@ -114,8 +114,10 @@ import { onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
 
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import { DateTime } from 'luxon'
 
 import { useEditorStore } from 'src/stores/editor'
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
@@ -125,6 +127,7 @@ const $q = useQuasar()
 // STORES
 
 const editorStore = useEditorStore()
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -678,7 +681,7 @@ function init () {
 
   // -> Initialize TipTap
   editor = useEditor({
-    content: '<p>I’m running Tiptap with Vue.js. 🎉</p>', // editorStore.content,
+    content: pageStore.content && pageStore.content.startsWith('{') ? JSON.parse(pageStore.content) : `<p>${pageStore.content}</p>`,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -716,8 +719,14 @@ function init () {
       TextStyle,
       Typography
     ],
-    onUpdate: () => {
-      // this.$store.set('page/render', editor.getHTML())
+    onUpdate: ({ editor }) => {
+      editorStore.$patch({
+        lastChangeTimestamp: DateTime.utc()
+      })
+      pageStore.$patch({
+        content: JSON.stringify(editor.getJSON()),
+        render: editor.getHTML()
+      })
     }
   })
 }

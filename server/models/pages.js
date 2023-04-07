@@ -46,6 +46,7 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
+        render: {type: 'string'},
         siteId: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -321,6 +322,7 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate?.toISO(),
       publishStartDate: opts.publishStartDate?.toISO(),
       relations: opts.relations ?? [],
+      render: opts.render ?? '',
       siteId: opts.siteId,
       title: opts.title,
       toc: '[]',
@@ -445,6 +447,9 @@ module.exports = class Page extends Model {
 
     if ('content' in opts.patch) {
       patch.content = opts.patch.content
+      if ('render' in opts.patch) {
+        patch.render = opts.patch.render
+      }
       historyData.affectedFields.push('content')
     }
 

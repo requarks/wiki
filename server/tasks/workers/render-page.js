@@ -18,7 +18,7 @@ module.exports = async ({ payload }) => {
 
     const pipeline = await WIKI.db.renderers.getRenderingPipeline(page.contentType)
 
-    let output = page.content
+    let output = page.render
 
     if (_.isEmpty(page.content)) {
       WIKI.logger.warn(`Failed to render page ID ${payload.id} because content was empty: [ FAILED ]`)
