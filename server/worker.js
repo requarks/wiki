@@ -1,12 +1,12 @@
-const { ThreadWorker } = require('poolifier')
-const { kebabCase } = require('lodash')
-const path = require('node:path')
+import { ThreadWorker } from 'poolifier'
+import { kebabCase } from 'lodash-es'
+import path from 'node:path'
 
 // ----------------------------------------
 // Init Minimal Core
 // ----------------------------------------
 
-let WIKI = {
+const WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
   ROOTPATH: process.cwd(),
   INSTANCE_ID: 'worker',
@@ -39,9 +39,9 @@ WIKI.logger = require('./core/logger').init()
 // Execute Task
 // ----------------------------------------
 
-module.exports = new ThreadWorker(async (job) => {
+export default new ThreadWorker(async (job) => {
   WIKI.INSTANCE_ID = job.INSTANCE_ID
-  const task = require(`./tasks/workers/${kebabCase(job.task)}.js`)
+  const task = (await import(`./tasks/workers/${kebabCase(job.task)}.mjs`)).task
   await task(job)
   return true
 }, { async: true })
