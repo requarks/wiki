@@ -1,6 +1,6 @@
-const fs = require('fs-extra')
+import fs from 'node:fs/promises'
 
-module.exports = {
+export default {
   async activated () { },
   async deactivated () { },
   async init () { },

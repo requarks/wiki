@@ -1,7 +1,7 @@
-const cmdExists = require('command-exists')
-const os = require('os')
+import cmdExists from 'command-exists'
+import os from 'node:os'
 
-module.exports = {
+export default {
   key: 'pandoc',
   title: 'Pandoc',
   description: 'Convert between markup formats. Required for converting from other formats such as MediaWiki, AsciiDoc, Textile and other wikis.',

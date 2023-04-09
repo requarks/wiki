@@ -6,7 +6,7 @@ const URL = require('url').URL
 
 const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
 
-module.exports = {
+export default {
   async render() {
     const $ = cheerio.load(this.input, {
       decodeEntities: true
@@ -21,7 +21,7 @@ module.exports = {
     // --------------------------------
 
     for (let child of _.reject(this.children, ['step', 'post'])) {
-      const renderer = require(`../${child.key}/renderer.js`)
+      const renderer = require(`../${child.key}/renderer.mjs`)
       await renderer.init($, child.config)
     }
 

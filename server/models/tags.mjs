@@ -73,7 +73,7 @@ export class Tag extends Model {
 
     // Fetch current page tags
 
-    const targetTags = existingTags.filter(t => _.includes(tags, t.tag))
+    const targetTags = existingTags.filter(t => tags.includes(t.tag))
     const currentTags = await page.$relatedQuery('tags')
 
     // Tags to relate

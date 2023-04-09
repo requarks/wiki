@@ -78,7 +78,7 @@ export default {
       const enabledStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
       for (const stg of enabledStrategies) {
         try {
-          const strategy = require(`../modules/authentication/${stg.module}/authentication.js`)
+          const strategy = (await import(`../modules/authentication/${stg.module}/authentication.mjs`)).default
 
           stg.config.callbackURL = `${WIKI.config.host}/login/${stg.id}/callback`
           stg.config.key = stg.id

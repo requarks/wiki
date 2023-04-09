@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import { has } from 'lodash-es'
+import { has, intersection } from 'lodash-es'
 
 /**
  * Navigation model
@@ -59,7 +59,7 @@ export class Navigation extends Model {
 
   static getAuthorizedItems(tree = [], groups = []) {
     return tree.filter(leaf => {
-      return leaf.visibilityMode === 'all' || _.intersection(leaf.visibilityGroups, groups).length > 0
+      return leaf.visibilityMode === 'all' || intersection(leaf.visibilityGroups, groups).length > 0
     })
   }
 }

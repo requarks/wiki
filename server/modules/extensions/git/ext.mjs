@@ -1,6 +1,6 @@
-const cmdExists = require('command-exists')
+import cmdExists from 'command-exists'
 
-module.exports = {
+export default {
   key: 'git',
   title: 'Git',
   description: 'Distributed version control system. Required for the Git storage module.',

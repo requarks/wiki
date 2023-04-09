@@ -24,8 +24,8 @@ export async function task ({ payload }) {
       WIKI.logger.warn(`Failed to render page ID ${payload.id} because content was empty: [ FAILED ]`)
     }
 
-    for (let core of pipeline) {
-      const renderer = require(`../../modules/rendering/${core.key}/renderer.js`)
+    for (const core of pipeline) {
+      const renderer = (await import(`../../modules/rendering/${core.key}/renderer.mjs`)).default
       output = await renderer.render.call({
         config: core.config,
         children: core.children,

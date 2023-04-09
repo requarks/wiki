@@ -81,9 +81,9 @@ export function parseModuleProps (props) {
   return transform(props, (result, value, key) => {
     let defaultValue = ''
     if (isPlainObject(value)) {
-      defaultValue = !isNil(value.default) ? value.default : this.getTypeDefaultValue(value.type)
+      defaultValue = !isNil(value.default) ? value.default : getTypeDefaultValue(value.type)
     } else {
-      defaultValue = this.getTypeDefaultValue(value)
+      defaultValue = getTypeDefaultValue(value)
     }
     set(result, key, {
       default: defaultValue,

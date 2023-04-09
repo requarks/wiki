@@ -1,7 +1,7 @@
 import { Model } from 'objection'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import { capitalize, find, has, hasIn, uniq } from 'lodash-es'
+import { capitalize, find, has, hasIn, remove, uniq } from 'lodash-es'
 import yaml from 'js-yaml'
 
 /**
@@ -68,7 +68,7 @@ export class Storage extends Model {
   static async ensureModule (moduleName) {
     if (!has(WIKI.storage.modules, moduleName)) {
       try {
-        WIKI.storage.modules[moduleName] = require(`../modules/storage/${moduleName}/storage`)
+        WIKI.storage.modules[moduleName] = (await import(`../modules/storage/${moduleName}/storage.mjs`)).default
         WIKI.logger.debug(`Activated storage module ${moduleName}: [ OK ]`)
         return true
       } catch (err) {
@@ -89,7 +89,7 @@ export class Storage extends Model {
     const activeModules = uniq(dbTargets.map(t => t.module))
     try {
       // -> Stop and delete existing jobs
-      // const prevjobs = _.remove(WIKI.scheduler.jobs, job => job.name === 'sync-storage')
+      // const prevjobs = remove(WIKI.scheduler.jobs, job => job.name === 'sync-storage')
       // if (prevjobs.length > 0) {
       //   prevjobs.forEach(job => job.stop())
       // }
@@ -101,7 +101,7 @@ export class Storage extends Model {
 
       // -> Initialize targets
       // for (const target of this.targets) {
-      //   const targetDef = _.find(WIKI.data.storage, ['key', target.key])
+      //   const targetDef = find(WIKI.data.storage, ['key', target.key])
       //   target.fn = require(`../modules/storage/${target.key}/storage`)
       //   target.fn.config = target.config
       //   target.fn.mode = target.mode

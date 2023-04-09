@@ -1,6 +1,6 @@
 /* global WIKI */
 
-import { difference, find, first, flatten, flattenDeep, get, has, isArray, isEmpty, isNil, last, set, toString, truncate, uniq } from 'lodash-es'
+import { difference, find, first, flatten, flattenDeep, get, has, isArray, isEmpty, isNil, isString, last, set, toString, truncate, uniq } from 'lodash-es'
 import tfa from 'node-2fa'
 import jwt from 'jsonwebtoken'
 import { Model } from 'objection'

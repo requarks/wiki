@@ -1,11 +1,13 @@
-const fs = require('fs-extra')
-const os = require('os')
-const path = require('path')
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
-const { pipeline } = require('stream/promises')
+import fse from 'fs-extra'
+import os from 'node:os'
+import path from 'node:path'
+import util from 'node:util'
+import { exec as execSync } from 'node:child_process'
+import { pipeline } from 'node:stream/promises'
 
-module.exports = {
+const exec = util.promisify(execSync)
+
+export default {
   key: 'sharp',
   title: 'Sharp',
   description: 'Process and transform images. Required to generate thumbnails of uploaded images and perform transformations.',
@@ -15,7 +17,7 @@ module.exports = {
   isInstalled: false,
   isInstallable: true,
   async check () {
-    this.isInstalled = await fs.pathExists(path.join(WIKI.SERVERPATH, 'node_modules/sharp/wiki_installed.txt'))
+    this.isInstalled = await fse.pathExists(path.join(WIKI.SERVERPATH, 'node_modules/sharp/wiki_installed.txt'))
     return this.isInstalled
   },
   async install () {
@@ -25,7 +27,7 @@ module.exports = {
         timeout: 120000,
         windowsHide: true
       })
-      await fs.ensureFile(path.join(WIKI.SERVERPATH, 'node_modules/sharp/wiki_installed.txt'))
+      await fse.ensureFile(path.join(WIKI.SERVERPATH, 'node_modules/sharp/wiki_installed.txt'))
       this.isInstalled = true
       WIKI.logger.info(stdout)
       WIKI.logger.warn(stderr)
@@ -36,7 +38,7 @@ module.exports = {
   sharp: null,
   async load () {
     if (!this.sharp) {
-      this.sharp = require('sharp')
+      this.sharp = (await import('sharp')).default
     }
   },
   /**
@@ -57,13 +59,13 @@ module.exports = {
     this.load()
 
     if (inputPath) {
-      inputStream = fs.createReadStream(inputPath)
+      inputStream = fse.createReadStream(inputPath)
     }
     if (!inputStream) {
       throw new Error('Failed to open readable input stream for image resizing.')
     }
     if (outputPath) {
-      outputStream = fs.createWriteStream(outputPath)
+      outputStream = fse.createWriteStream(outputPath)
     }
     if (!outputStream) {
       throw new Error('Failed to open writable output stream for image resizing.')

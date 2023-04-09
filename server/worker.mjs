@@ -1,6 +1,9 @@
 import { ThreadWorker } from 'poolifier'
 import { kebabCase } from 'lodash-es'
 import path from 'node:path'
+import configSvc from './core/config.mjs'
+import logger from './core/logger.mjs'
+import db from './core/db.mjs'
 
 // ----------------------------------------
 // Init Minimal Core
@@ -11,12 +14,11 @@ const WIKI = {
   ROOTPATH: process.cwd(),
   INSTANCE_ID: 'worker',
   SERVERPATH: path.join(process.cwd(), 'server'),
-  Error: require('./helpers/error'),
-  configSvc: require('./core/config'),
+  configSvc,
   ensureDb: async () => {
     if (WIKI.db) { return true }
 
-    WIKI.db = require('./core/db').init(true)
+    WIKI.db = await db.init(true)
 
     try {
       await WIKI.configSvc.loadFromDb()
@@ -32,8 +34,13 @@ const WIKI = {
 }
 global.WIKI = WIKI
 
-WIKI.configSvc.init(true)
-WIKI.logger = require('./core/logger').init()
+await WIKI.configSvc.init(true)
+
+// ----------------------------------------
+// Init Logger
+// ----------------------------------------
+
+WIKI.logger = logger.init()
 
 // ----------------------------------------
 // Execute Task

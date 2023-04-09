@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import { find, get, has, isEmpty, isString, pick } from 'lodash-es'
+import { find, get, has, initial, isEmpty, isString, last, pick } from 'lodash-es'
 import { Type as JSBinType } from 'js-binary'
 import { generateHash, getFileExtension, injectPageMetadata } from '../helpers/page.mjs'
 import path from 'node:path'
@@ -272,7 +272,7 @@ export class Page extends Model {
     }
 
     // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
+    if (!opts.content || opts.content.trim().length < 1) {
       throw new WIKI.Error.PageEmptyContent()
     }
 
@@ -282,7 +282,7 @@ export class Page extends Model {
       locale: opts.locale,
       path: opts.path
     })) {
-      if (!_.isEmpty(opts.scriptCss)) {
+      if (!isEmpty(opts.scriptCss)) {
         scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
       } else {
         scriptCss = ''
@@ -350,8 +350,8 @@ export class Page extends Model {
     const pathParts = page.path.split('/')
     await WIKI.db.tree.addPage({
       id: page.id,
-      parentPath: _.initial(pathParts).join('/'),
-      fileName: _.last(pathParts),
+      parentPath: initial(pathParts).join('/'),
+      fileName: last(pathParts),
       locale: page.localeCode,
       title: page.title,
       meta: {

@@ -1,5 +1,5 @@
 import qs from 'querystring'
-import { fromPairs, get, initial, invert, isEmpty, last } from 'lodash-es'
+import { fromPairs, get, head, initial, invert, isEmpty, last } from 'lodash-es'
 import crypto from 'node:crypto'
 import path from 'node:path'
 
@@ -59,7 +59,7 @@ export function parsePath (rawPath, opts = {}) {
     }
   }
 
-  pathObj.path = _.join(pathParts, '/')
+  pathObj.path = pathParts.join('/')
   return pathObj
 }
 
@@ -102,7 +102,7 @@ export function injectPageMetadata(page) {
  * Check if path is a reserved path
  */
 export function isReservedPath(rawPath) {
-  const firstSection = _.head(rawPath.split('/'))
+  const firstSection = head(rawPath.split('/'))
   if (firstSection.length < 1) {
     return true
   } else if (localeSegmentRegex.test(firstSection)) {
