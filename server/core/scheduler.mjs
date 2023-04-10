@@ -6,7 +6,7 @@ import cronparser from 'cron-parser'
 import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
 import { createDeferred } from '../helpers/common.mjs'
-import { find, remove } from 'lodash-es'
+import { camelCase, find, remove } from 'lodash-es'
 
 export default {
   workerPool: null,
@@ -27,7 +27,7 @@ export default {
     })
     this.tasks = {}
     for (const f of (await fs.readdir(path.join(WIKI.SERVERPATH, 'tasks/simple')))) {
-      const taskName = f.replace('.mjs', '')
+      const taskName = camelCase(f.replace('.mjs', ''))
       this.tasks[taskName] = (await import(path.join(WIKI.SERVERPATH, 'tasks/simple', f))).task
     }
     return this

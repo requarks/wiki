@@ -122,6 +122,7 @@ export default {
     },
     async updateUser (obj, args) {
       try {
+        console.info(args.id)
         await WIKI.db.users.updateUser(args.id, args.patch)
 
         return {

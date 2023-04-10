@@ -642,7 +642,7 @@ export class User extends Model {
    *
    * @param {Object} param0 User ID and fields to update
    */
-  static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
+  static async updateUser (id, { email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
     const usr = await WIKI.db.users.query().findById(id)
     if (usr) {
       let usrData = {}
