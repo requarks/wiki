@@ -18,7 +18,6 @@ npm-debug.log*
 
 # Generated assets
 /assets
-/server/views/base.pug
 
 # Config Files
 /config.yml
