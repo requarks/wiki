@@ -48,6 +48,11 @@ q-header.bg-header.text-white.site-header(
             v-if='state.search.length > 0'
             :color='$q.dark.isActive ? `blue` : `grey-4`'
             )
+          q-badge.q-ml-sm(
+            label='v3 Preview'
+            color='pink'
+            outline
+            )
       q-btn.q-ml-md(
         flat
         round
@@ -131,7 +136,7 @@ const state = reactive({
 // METHODS
 
 function openFileManager () {
-  siteStore.overlay = 'FileManager'
+  siteStore.openFileManager()
 }
 </script>
 

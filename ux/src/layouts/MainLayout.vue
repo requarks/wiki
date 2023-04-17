@@ -149,7 +149,7 @@ const isSidebarShown = computed(() => {
 // METHODS
 
 function openFileManager () {
-  siteStore.overlay = 'FileManager'
+  siteStore.openFileManager()
 }
 
 </script>

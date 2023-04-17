@@ -233,7 +233,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, shallowRef, nextTick, onBeforeMount, onMounted, watch } from 'vue'
+import { reactive, ref, shallowRef, nextTick, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
@@ -297,9 +297,26 @@ const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 // METHODS
 
 function insertAssets () {
-  siteStore.$patch({
-    overlay: 'FileManager'
-  })
+  siteStore.openFileManager({ insertMode: true })
+}
+
+function insertAssetClb (opts) {
+  const assetPath = opts.folderPath ? `${opts.folderPath}/${opts.fileName}` : opts.fileName
+  let content = ''
+  switch (opts.type) {
+    case 'asset': {
+      content = `![${opts.title}](${assetPath})`
+      break
+    }
+    case 'page': {
+      content = `[${opts.title}](${assetPath})`
+      break
+    }
+  }
+  insertAtCursor({ content })
+  setTimeout(() => {
+    cm.value.focus()
+  }, 500)
 }
 
 function insertTable () {
@@ -505,6 +522,8 @@ onMounted(async () => {
     cm.value.focus()
   })
 
+  EVENT_BUS.on('insertAsset', insertAssetClb)
+
   // this.$root.$on('editorInsert', opts => {
   //   switch (opts.kind) {
   //     case 'IMAGE':
@@ -538,7 +557,8 @@ onMounted(async () => {
   // })
 })
 
-onBeforeMount(() => {
+onBeforeUnmount(() => {
+  EVENT_BUS.off('insertAsset', insertAssetClb)
   // if (editor.value) {
   // editor.value.destroy()
   // }

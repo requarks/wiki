@@ -43,7 +43,8 @@ module.exports = {
     __QUASAR_SSR_CLIENT__: 'readonly',
     __QUASAR_SSR_PWA__: 'readonly',
     process: 'readonly',
-    APOLLO_CLIENT: 'readonly'
+    APOLLO_CLIENT: 'readonly',
+    EVENT_BUS: 'readonly'
   },
 
   // add your custom rules here

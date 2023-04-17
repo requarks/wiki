@@ -25,6 +25,7 @@ export const useSiteStore = defineStore('site', {
     showSideNav: true,
     showSidebar: true,
     overlay: null,
+    overlayOpts: {},
     features: {
       ratingsMode: 'off',
       reasonForChange: 'required',
@@ -70,6 +71,14 @@ export const useSiteStore = defineStore('site', {
     overlayIsShown: (state) => Boolean(state.overlay)
   },
   actions: {
+    openFileManager (opts) {
+      this.$patch({
+        overlay: 'FileManager',
+        overlayOpts: {
+          insertMode: opts?.insertMode ?? false
+        }
+      })
+    },
     async loadSite (hostname) {
       try {
         const resp = await APOLLO_CLIENT.query({

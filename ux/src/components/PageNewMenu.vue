@@ -116,7 +116,7 @@ function create (editor) {
 }
 
 function openFileManager () {
-  siteStore.overlay = 'FileManager'
+  siteStore.openFileManager()
 }
 
 function newFolder () {

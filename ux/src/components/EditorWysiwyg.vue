@@ -499,9 +499,7 @@ const menuBar = [
     icon: 'mdi-image-plus',
     title: 'Image',
     action: () => {
-      siteStore.$patch({
-        overlay: 'FileManager'
-      })
+      siteStore.openFileManager({ insertMode: true })
     }
   },
   {

@@ -79,6 +79,16 @@ q-layout.fileman(view='hHh lpR lFr', container)
             )
             label {{item.label}}
             span {{item.value}}
+          template(v-if='insertMode')
+            q-separator.q-my-md
+            q-btn.full-width(
+              @click='insertItem()'
+              :label='t(`common.actions.insert`)'
+              color='primary'
+              icon='las la-plus-circle'
+              push
+              padding='sm'
+              )
   q-page-container
     q-page.fileman-center.column
       //- TOOLBAR -----------------------------------------------------
@@ -223,7 +233,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                 active-class='active'
                 :active='item.id === state.currentFileId'
                 @click.native='selectItem(item)'
-                @dblclick.native='openItem(item)'
+                @dblclick.native='doubleClickItem(item)'
                 )
                 q-item-section.fileman-filelist-icon(avatar)
                   q-icon(:name='item.icon', :size='state.isCompact ? `md` : `xl`')
@@ -242,14 +252,18 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   )
                   q-card.q-pa-sm
                     q-list(dense, style='min-width: 150px;')
+                      q-item(clickable, v-if='item.type !== `folder`', @click='insertItem(item)')
+                        q-item-section(side)
+                          q-icon(name='las la-plus-circle', color='primary')
+                        q-item-section {{ t(`common.actions.insert`) }}
                       q-item(clickable, v-if='item.type === `page`')
                         q-item-section(side)
                           q-icon(name='las la-edit', color='orange')
-                        q-item-section Edit
+                        q-item-section {{ t(`common.actions.edit`) }}
                       q-item(clickable, v-if='item.type !== `folder`', @click='openItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-eye', color='primary')
-                        q-item-section View
+                        q-item-section {{ t(`common.actions.view`) }}
                       template(v-if='item.type === `asset` && item.imageEdit')
                         q-item(clickable)
                           q-item-section(side)
@@ -262,11 +276,11 @@ q-layout.fileman(view='hHh lpR lFr', container)
                       q-item(clickable, v-if='item.type !== `folder`', @click='copyItemURL(item)')
                         q-item-section(side)
                           q-icon(name='las la-clipboard', color='primary')
-                        q-item-section Copy URL
+                        q-item-section {{ t(`common.actions.copyURL`) }}
                       q-item(clickable, v-if='item.type !== `folder`', @click='')
                         q-item-section(side)
                           q-icon(name='las la-download', color='primary')
-                        q-item-section Download
+                        q-item-section {{ t(`common.actions.download`) }}
                       q-item(clickable)
                         q-item-section(side)
                           q-icon(name='las la-copy', color='teal')
@@ -282,7 +296,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                       q-item(clickable, @click='delItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-trash-alt', color='negative')
-                        q-item-section.text-negative Delete
+                        q-item-section.text-negative {{ t(`common.actions.delete`) }}
   q-footer
     q-bar.fileman-path
       small.text-caption.text-grey-7 {{folderPath}}
@@ -298,7 +312,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toRaw, watch } from 'vue'
 import { filesize } from 'filesize'
 import { useQuasar } from 'quasar'
 import { DateTime } from 'luxon'
@@ -376,6 +390,8 @@ const fileIpt = ref(null)
 const treeComp = ref(null)
 
 // COMPUTED
+
+const insertMode = computed(() => siteStore.overlayOpts?.insertMode ?? false)
 
 const folderPath = computed(() => {
   if (!state.currentFolderId) {
@@ -504,6 +520,14 @@ watch(() => state.currentFolderId, async (newValue) => {
 
 function close () {
   siteStore.overlay = null
+}
+
+function insertItem (item) {
+  if (!item) {
+    item = find(state.fileList, ['id', state.currentFileId])
+  }
+  EVENT_BUS.emit('insertAsset', toRaw(item))
+  close()
 }
 
 async function treeLazyLoad (nodeId, isCurrent, { done, fail }) {
@@ -846,6 +870,14 @@ function selectItem (item) {
     treeComp.value.setOpened(item.id)
   } else {
     state.currentFileId = item.id
+  }
+}
+
+function doubleClickItem (item) {
+  if (insertMode.value) {
+    insertItem(item)
+  } else {
+    openItem(item)
   }
 }
 
