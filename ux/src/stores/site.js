@@ -27,6 +27,7 @@ export const useSiteStore = defineStore('site', {
     overlay: null,
     overlayOpts: {},
     features: {
+      profile: false,
       ratingsMode: 'off',
       reasonForChange: 'required',
       search: false
@@ -97,6 +98,7 @@ export const useSiteStore = defineStore('site', {
                 contentLicense
                 footerExtra
                 features {
+                  profile
                   ratingsMode
                   reasonForChange
                   search

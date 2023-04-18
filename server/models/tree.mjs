@@ -244,10 +244,10 @@ export class Tree extends Model {
     }
 
     // Check for collision
-    const existingFolder = await WIKI.db.knex('tree').where({
+    const existingFolder = await WIKI.db.knex('tree').select('id').where({
       siteId: siteId,
       localeCode: locale,
-      folderPath: parentPath,
+      folderPath: encodeTreePath(parentPath),
       fileName: pathName
     }).first()
     if (existingFolder) {
@@ -261,7 +261,7 @@ export class Tree extends Model {
         const parentPathParts = parentPath.split('.')
         for (let i = 1; i <= parentPathParts.length; i++) {
           const ancestor = {
-            folderPath: dropRight(parentPathParts, i).join('.'),
+            folderPath: encodeTreePath(dropRight(parentPathParts, i).join('.')),
             fileName: nth(parentPathParts, i * -1)
           }
           expectedAncestors.push(ancestor)
@@ -296,7 +296,7 @@ export class Tree extends Model {
     // Create folder
     const fullPath = parentPath ? `${decodeTreePath(parentPath)}/${pathName}` : pathName
     const folder = await WIKI.db.knex('tree').insert({
-      folderPath: parentPath,
+      folderPath: encodeTreePath(parentPath),
       fileName: pathName,
       type: 'folder',
       title: title,

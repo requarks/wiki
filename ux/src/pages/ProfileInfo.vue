@@ -1,6 +1,15 @@
 <template lang="pug">
 q-page.q-py-md(:style-fn='pageStyle')
   .text-header {{t('profile.myInfo')}}
+  q-item(v-if='!canEdit')
+    q-item-section
+      q-card.bg-negative.text-white.rounded-borders(flat)
+        q-card-section.items-center(horizontal)
+          q-card-section.col-auto.q-pr-none
+            q-icon(name='las la-ban', size='sm')
+          q-card-section
+            span {{ t('profile.editDisabledTitle') }}
+            .text-caption.text-red-1 {{ t('profile.editDisabledDescription') }}
   q-item
     blueprint-icon(icon='contact')
     q-item-section
@@ -13,6 +22,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         dense
         hide-bottom-space
         :aria-label='t(`profile.displayName`)'
+        :readonly='!canEdit'
         )
   q-separator.q-my-sm(inset)
   q-item
@@ -41,6 +51,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         dense
         hide-bottom-space
         :aria-label='t(`profile.location`)'
+        :readonly='!canEdit'
         )
   q-separator.q-my-sm(inset)
   q-item
@@ -55,6 +66,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         dense
         hide-bottom-space
         :aria-label='t(`profile.jobTitle`)'
+        :readonly='!canEdit'
         )
   q-separator.q-my-sm(inset)
   q-item
@@ -69,6 +81,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         dense
         hide-bottom-space
         :aria-label='t(`profile.pronouns`)'
+        :readonly='!canEdit'
         )
   .text-header.q-mt-lg {{t('profile.preferences')}}
   q-item
@@ -164,7 +177,7 @@ import gql from 'graphql-tag'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
@@ -229,6 +242,8 @@ const cvdChoices = [
   { value: 'tritanopia', label: t('profile.cvdTritanopia') }
 ]
 const timezones = Intl.supportedValuesOf('timeZone')
+
+const canEdit = computed(() => siteStore.features?.profile)
 
 // METHODS
 

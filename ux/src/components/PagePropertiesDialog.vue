@@ -14,6 +14,16 @@ q-card.page-properties-dialog
   q-toolbar.bg-primary.text-white.flex
     .text-subtitle2 {{t('editor.props.pageProperties')}}
     q-space
+    q-btn.q-mr-sm(
+      dense
+      flat
+      rounded
+      color='white'
+      icon='las la-question-circle'
+      :href='siteStore.docsBase + `/editor/properties`'
+      target='_blank'
+      type='a'
+    )
     q-btn(
       icon='las la-times'
       dense

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import { cloneDeep, initial, last, pick, transform } from 'lodash-es'
+import { cloneDeep, dropRight, initial, last, pick, transform } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useSiteStore } from './site'
@@ -291,7 +291,8 @@ export const usePageStore = defineStore('page', {
       // -> Default Page Path
       let newPath = path
       if (!path && path !== '') {
-        newPath = this.path.length < 2 ? 'new-page' : `${this.path}/new-page`
+        const parentPath = dropRight(this.path.split('/'), 1).join('/')
+        newPath = parentPath ? `${parentPath}/new-page` : 'new-page'
       }
 
       // -> Set Default Page Data

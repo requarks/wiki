@@ -236,7 +236,7 @@ async function save () {
   })
 }
 
-async function treeLazyLoad (nodeId, { done, fail }) {
+async function treeLazyLoad (nodeId, isCurrent, { done, fail }) {
   await loadTree({
     parentId: nodeId,
     types: ['folder', 'page']

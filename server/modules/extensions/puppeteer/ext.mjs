@@ -25,16 +25,19 @@ export default {
   },
   async install () {
     try {
-      const { stdout, stderr } = await exec('node install.js', {
-        cwd: path.join(WIKI.SERVERPATH, 'node_modules/puppeteer-core'),
-        timeout: 300000,
-        windowsHide: true
-      })
-      this.isInstalled = true
-      WIKI.logger.info(stdout)
-      WIKI.logger.warn(stderr)
+      // TODO: https://pptr.dev/browsers-api/
+      // const { stdout, stderr } = await exec('node install.js', {
+      //   cwd: path.join(WIKI.SERVERPATH, 'node_modules/puppeteer-core'),
+      //   timeout: 300000,
+      //   windowsHide: true
+      // })
+      // this.isInstalled = true
+      // WIKI.logger.info(stdout)
+      // WIKI.logger.warn(stderr)
+      throw new Error('Not implemented yet.')
     } catch (err) {
       WIKI.logger.error(err)
+      throw err
     }
   }
 }

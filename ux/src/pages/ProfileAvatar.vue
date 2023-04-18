@@ -1,7 +1,7 @@
 <template lang="pug">
 q-page.q-py-md(:style-fn='pageStyle')
   .text-header {{t('profile.avatar')}}
-  .row.q-gutter-lg.q-mt-xl.align-center
+  .row.q-gutter-lg.q-mt-xl
     .col.text-center
       q-avatar.profile-avatar-circ(
         size='180px'
@@ -17,7 +17,7 @@ q-page.q-py-md(:style-fn='pageStyle')
           v-else,
           name='las la-user'
           )
-    .col
+    .col.self-center(v-if='canEdit')
       .text-body1 {{ t('profile.avatarUploadTitle') }}
       .text-caption {{ t('profile.avatarUploadHint') }}
       .q-mt-md
@@ -37,6 +37,8 @@ q-page.q-py-md(:style-fn='pageStyle')
           @click='clearImage'
           :disable='!userStore.hasAvatar'
         )
+    .col.self-center(v-else)
+      .text-caption.text-negative {{ t('profile.avatarUploadDisabled') }}
 
   q-inner-loading(:showing='state.loading > 0')
 </template>
@@ -46,8 +48,9 @@ import gql from 'graphql-tag'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 
+import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 
 // QUASAR
@@ -56,6 +59,7 @@ const $q = useQuasar()
 
 // STORES
 
+const siteStore = useSiteStore()
 const userStore = useUserStore()
 
 // I18N
@@ -74,6 +78,8 @@ const state = reactive({
   loading: 0,
   assetTimestamp: (new Date()).toISOString()
 })
+
+const canEdit = computed(() => siteStore.features?.profile)
 
 // METHODS
 
