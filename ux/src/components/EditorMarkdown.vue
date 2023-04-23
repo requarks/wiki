@@ -201,10 +201,10 @@
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
       //--------------------------------------------------------
-      //- CODEMIRROR
+      //- MONACO EDITOR
       //--------------------------------------------------------
       .editor-markdown-editor
-        textarea(ref='cmRef')
+        div(ref='monacoRef')
     transition(name='editor-markdown-preview')
       .editor-markdown-preview(v-if='state.previewShown')
         .editor-markdown-preview-toolbar
@@ -238,29 +238,13 @@ import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
+import * as monaco from 'monaco-editor'
+import { Position, Range } from 'monaco-editor'
+import { WorkspaceEdit } from '../helpers/monacoTypes'
 
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
-
-// Code Mirror
-import CodeMirror from 'codemirror'
-import 'codemirror/lib/codemirror.css'
-import '../css/codemirror.scss'
-
-// Language
-import 'codemirror/mode/markdown/markdown.js'
-
-// Addons
-import 'codemirror/addon/selection/active-line.js'
-import 'codemirror/addon/display/fullscreen.js'
-import 'codemirror/addon/display/fullscreen.css'
-import 'codemirror/addon/selection/mark-selection.js'
-import 'codemirror/addon/search/searchcursor.js'
-import 'codemirror/addon/hint/show-hint.js'
-import 'codemirror/addon/fold/foldcode.js'
-import 'codemirror/addon/fold/foldgutter.js'
-import 'codemirror/addon/fold/foldgutter.css'
 
 // Markdown Renderer
 import { MarkdownRenderer } from 'src/renderers/markdown'
@@ -281,8 +265,9 @@ const { t } = useI18n()
 
 // STATE
 
+let editor
 const cm = shallowRef(null)
-const cmRef = ref(null)
+const monacoRef = ref(null)
 
 const state = reactive({
   previewShown: true,
@@ -326,8 +311,8 @@ function insertTable () {
 }
 
 /**
- * Set current line as header
- */
+* Set current line as header
+*/
 function setHeaderLine (lvl) {
   const curLine = cm.value.doc.getCursor('head').line
   let lineContent = cm.value.doc.getLine(curLine)
@@ -340,8 +325,8 @@ function setHeaderLine (lvl) {
 }
 
 /**
- * Get the header lever of the current line
- */
+* Get the header lever of the current line
+*/
 function getHeaderLevel (cm) {
   const curLine = cm.doc.getCursor('head').line
   const lineContent = cm.doc.getLine(curLine)
@@ -354,16 +339,16 @@ function getHeaderLevel (cm) {
 }
 
 /**
- * Insert content at cursor
- */
+* Insert content at cursor
+*/
 function insertAtCursor ({ content }) {
   const cursor = cm.value.doc.getCursor('head')
   cm.value.doc.replaceRange(content, cursor)
 }
 
 /**
- * Insert content after current line
- */
+* Insert content after current line
+*/
 function insertAfter ({ content, newLine }) {
   const curLine = cm.value.doc.getCursor('to').line
   const lineLength = cm.value.doc.getLine(curLine).length
@@ -371,8 +356,8 @@ function insertAfter ({ content, newLine }) {
 }
 
 /**
- * Insert content before current line
- */
+* Insert content before current line
+*/
 function insertBeforeEachLine ({ content, after }) {
   let lines = []
   if (!cm.value.doc.somethingSelected()) {
@@ -399,27 +384,40 @@ function insertBeforeEachLine ({ content, after }) {
 }
 
 /**
- * Insert an Horizontal Bar
- */
+* Insert an Horizontal Bar
+*/
 function insertHorizontalBar () {
   insertAfter({ content: '---', newLine: true })
 }
 
 /**
- * Toggle Markup at selection
- */
-function toggleMarkup ({ start, end }) {
+* Toggle Markup at selection
+*/
+async function toggleMarkup ({ start, end }) {
   if (!end) { end = start }
-  if (!cm.value.doc.somethingSelected()) {
+  if (!editor.getSelection()) {
     return $q.notify({
       type: 'negative',
       message: t('editor.markup.noSelectionError')
     })
   }
-  cm.value.doc.replaceSelections(cm.value.doc.getSelections().map(s => start + s + end))
-}
 
-const onCmInput = debounce(processContent, 500)
+  const edits = []
+
+  for (const selection of editor.getSelections()) {
+    const selectedText = editor.getModel().getValueInRange(selection)
+    if (!selectedText) {
+      const word = editor.getModel().getWordAtPosition(selection.getPosition())
+    }
+    if (selectedText.startsWith(start) && selectedText.endsWith(end)) {
+      edits.push({ range: selection, text: selectedText.substring(start.length, selectedText.length - end.length) })
+    } else {
+      edits.push({ range: selection, text: `${start}${selectedText}${end}` })
+    }
+  }
+
+  editor.executeEdits('', edits)
+}
 
 function processContent (newContent) {
   pageStore.$patch({
@@ -435,75 +433,137 @@ onMounted(async () => {
     hideSideNav: true
   })
 
-  // -> Initialize CodeMirror
-  cm.value = CodeMirror.fromTextArea(cmRef.value, {
-    tabSize: 2,
-    mode: 'text/markdown',
-    theme: 'wikijs-dark',
-    lineNumbers: true,
-    lineWrapping: true,
-    line: true,
-    styleActiveLine: true,
-    highlightSelectionMatches: {
-      annotateScrollbar: true
-    },
-    viewportMargin: 50,
-    inputStyle: 'contenteditable',
-    allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
-    // direction: siteConfig.rtl ? 'rtl' : 'ltr',
-    foldGutter: true,
-    gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+  // -> Define Monaco Theme
+  monaco.editor.defineTheme('wikijs', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background': '#070a0d',
+      'editor.lineHighlightBackground': '#0d1117',
+      'editorLineNumber.foreground': '#546e7a',
+      'editorGutter.background': '#1e232a'
+    }
   })
 
-  cm.value.setValue(pageStore.content)
-  cm.value.on('change', c => {
+  // -> Initialize Monaco Editor
+  editor = monaco.editor.create(monacoRef.value, {
+    value: pageStore.content,
+    language: 'markdown',
+    theme: 'wikijs',
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    fontSize: 16,
+    formatOnType: true,
+    lineNumbersMinChars: 3
+  })
+
+  window.edd = editor
+
+  // -> Define Formatting Actions
+  editor.addAction({
+    contextMenuGroupId: 'markdown.extension.editing',
+    contextMenuOrder: 0,
+    id: 'markdown.extension.editing.toggleBold',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB],
+    label: 'Toggle bold',
+    precondition: '',
+    run (ed) {
+      toggleMarkup({ start: '**' })
+    }
+  })
+
+  editor.addAction({
+    contextMenuGroupId: 'markdown.extension.editing',
+    contextMenuOrder: 0,
+    id: 'markdown.extension.editing.toggleItalic',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+    label: 'Toggle italic',
+    precondition: '',
+    run (ed) {
+      toggleMarkup({ start: '*' })
+    }
+  })
+
+  editor.onDidChangeModelContent(debounce(ev => {
     editorStore.$patch({
       lastChangeTimestamp: DateTime.utc()
     })
     pageStore.$patch({
-      content: c.getValue()
+      content: editor.getValue()
     })
-    onCmInput(pageStore.content)
-  })
+    processContent(pageStore.content)
+  }, 500))
 
-  cm.value.setSize(null, '100%')
+  // -> Initialize CodeMirror
+  // cm.value = CodeMirror.fromTextArea(cmRef.value, {
+  //   tabSize: 2,
+  //   mode: 'text/markdown',
+  //   theme: 'wikijs-dark',
+  //   lineNumbers: true,
+  //   lineWrapping: true,
+  //   line: true,
+  //   styleActiveLine: true,
+  //   highlightSelectionMatches: {
+  //     annotateScrollbar: true
+  //   },
+  //   viewportMargin: 50,
+  //   inputStyle: 'contenteditable',
+  //   allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
+  //   // direction: siteConfig.rtl ? 'rtl' : 'ltr',
+  //   foldGutter: true,
+  //   gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
+  // })
+
+  // cm.value.setValue(pageStore.content)
+  // cm.value.on('change', c => {
+  //   editorStore.$patch({
+  //     lastChangeTimestamp: DateTime.utc()
+  //   })
+  //   pageStore.$patch({
+  //     content: c.getValue()
+  //   })
+  //   onCmInput(pageStore.content)
+  // })
+
+  // cm.value.setSize(null, '100%')
 
   // -> Set Keybindings
-  const keyBindings = {
-    'F11' (c) {
-      c.setOption('fullScreen', !c.getOption('fullScreen'))
-    },
-    'Esc' (c) {
-      if (c.getOption('fullScreen')) {
-        c.setOption('fullScreen', false)
-      }
-    },
-    [`${CtrlKey}-S`] (c) {
-      // save()
-      return false
-    },
-    [`${CtrlKey}-B`] (c) {
-      toggleMarkup({ start: '**' })
-      return false
-    },
-    [`${CtrlKey}-I`] (c) {
-      toggleMarkup({ start: '*' })
-      return false
-    },
-    [`${CtrlKey}-Alt-Right`] (c) {
-      let lvl = getHeaderLevel(c)
-      if (lvl >= 6) { lvl = 5 }
-      setHeaderLine(lvl + 1)
-      return false
-    },
-    [`${CtrlKey}-Alt-Left`] (c) {
-      let lvl = getHeaderLevel(c)
-      if (lvl <= 1) { lvl = 2 }
-      setHeaderLine(lvl - 1)
-      return false
-    }
-  }
-  cm.value.setOption('extraKeys', keyBindings)
+  // const keyBindings = {
+  //   'F11' (c) {
+  //     c.setOption('fullScreen', !c.getOption('fullScreen'))
+  //   },
+  //   'Esc' (c) {
+  //     if (c.getOption('fullScreen')) {
+  //       c.setOption('fullScreen', false)
+  //     }
+  //   },
+  //   [`${CtrlKey}-S`] (c) {
+  //     // save()
+  //     return false
+  //   },
+  //   [`${CtrlKey}-B`] (c) {
+  //     toggleMarkup({ start: '**' })
+  //     return false
+  //   },
+  //   [`${CtrlKey}-I`] (c) {
+  //     toggleMarkup({ start: '*' })
+  //     return false
+  //   },
+  //   [`${CtrlKey}-Alt-Right`] (c) {
+  //     let lvl = getHeaderLevel(c)
+  //     if (lvl >= 6) { lvl = 5 }
+  //     setHeaderLine(lvl + 1)
+  //     return false
+  //   },
+  //   [`${CtrlKey}-Alt-Left`] (c) {
+  //     let lvl = getHeaderLevel(c)
+  //     if (lvl <= 1) { lvl = 2 }
+  //     setHeaderLine(lvl - 1)
+  //     return false
+  //   }
+  // }
+  // cm.value.setOption('extraKeys', keyBindings)
   // this.cm.on('inputRead', this.autocomplete)
 
   // // Handle cursor movement
@@ -516,11 +576,11 @@ onMounted(async () => {
   // this.cm.on('paste', this.onCmPaste)
 
   // // Render initial preview
-  processContent(pageStore.content)
-  nextTick(() => {
-    cm.value.refresh()
-    cm.value.focus()
-  })
+  // processContent(pageStore.content)
+  // nextTick(() => {
+  //   cm.value.refresh()
+  //   cm.value.focus()
+  // })
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
 
@@ -589,6 +649,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     // @include until($tablet) {
     //   height: $editor-height-mobile;
     // }
+
+    > div {
+      height: 100%;
+    }
   }
   &-type {
     writing-mode: vertical-rl;
@@ -693,7 +757,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
   &-toolbar {
     background-color: $primary;
-    border-left: 40px solid darken($primary, 5%);
+    border-left: 50px solid darken($primary, 5%);
     color: #FFF;
     height: 32px;
   }

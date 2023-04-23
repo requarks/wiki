@@ -73,6 +73,7 @@
     "markdown-it-sup": "1.0.0",
     "markdown-it-task-lists": "2.1.1",
     "mitt": "3.0.0",
+    "monaco-editor": "0.37.1",
     "pako": "2.1.0",
     "pinia": "2.0.33",
     "prosemirror-commands": "1.5.1",

@@ -39,7 +39,11 @@ module.exports = configure(function (/* ctx */) {
       'apollo',
       'components',
       'eventbus',
-      'i18n'
+      'i18n',
+      {
+        server: false,
+        path: 'monaco'
+      }
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#css
@@ -99,6 +103,15 @@ module.exports = configure(function (/* ctx */) {
           'prosemirror-model',
           'prosemirror-view'
         ]
+
+        viteConf.build.rollupOptions = {
+          external: ['monaco-editor'],
+          output: {
+            globals: {
+              'monaco-editor': 'monaco-editor'
+            }
+          }
+        }
       },
       // viteVuePluginOptions: {},
 
