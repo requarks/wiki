@@ -458,6 +458,53 @@ router.get('/*', async (req, res, next) => {
       _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
       if (page) {
+        // -> Set Page breadcrumbs items
+        page.breadcrumbsItems = [];
+        const splitPath = pageArgs.path.split('/');
+        for (const index in splitPath) {
+          const item = splitPath[index];
+
+          let title = item
+          if (item.match(/[\d+]\_[\d+]/)) {
+            title = item.replace('_', '.')
+          } else {
+            title = title.replace('_', ' ')
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+          }
+
+          let pathForBreadcrumbsPage = '';
+          if (index === '0') {
+            pathForBreadcrumbsPage = `/${pageArgs.locale}/${item}`;
+          } else {
+            if (page.breadcrumbsItems[index - 1]) {
+              pathForBreadcrumbsPage = `${page.breadcrumbsItems[index - 1].path}/${item}`;
+            }
+          }
+
+          const breadcrumbsPageArgs = pageHelper.parsePath(pathForBreadcrumbsPage, { stripExt })
+
+          let pageForBreadcrumbsTitle = title;
+          try {
+            const pageForBreadcrumbs = await WIKI.models.pages.getPage({
+              path: breadcrumbsPageArgs.path,
+              locale: breadcrumbsPageArgs.locale,
+              userId: req.user.id,
+              isPrivate: false
+            });
+            if (pageForBreadcrumbs !== undefined) {
+              pageForBreadcrumbsTitle = pageForBreadcrumbs.title;
+            }
+          } catch (err) {
+            WIKI.logger.error(err)
+            next(err)
+          }
+
+          page.breadcrumbsItems.push({
+            name: pageForBreadcrumbsTitle,
+            path: pathForBreadcrumbsPage
+          })
+        }
+
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
 

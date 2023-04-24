@@ -419,6 +419,10 @@ export default {
       type: Array,
       default: () => ([])
     },
+    breadcrumbsItems: {
+      type: Array,
+      default: () => ([])
+    },
     authorName: {
       type: String,
       default: 'Unknown'
@@ -514,20 +518,7 @@ export default {
       }
     },
     breadcrumbs() {
-      return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
-        if (value.match(/[\d+]\_[\d+]/)) {
-          value = value.replace('_', '.')
-        } else {
-          value = value.replaceAll('_', ' ')
-          value = value.charAt(0).toUpperCase() + value.slice(1);
-        }
-
-        result.push({
-          path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
-          name: value
-        })
-        return result
-      }, []))
+      return [{ path: '/', name: 'Home' }].concat(this.breadcrumbsItems)
     },
     pageUrl () { return window.location.href },
     upBtnPosition () {
