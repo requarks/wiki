@@ -464,13 +464,6 @@ router.get('/*', async (req, res, next) => {
         for (const index in splitPath) {
           const item = splitPath[index];
 
-          let title = item
-          if (item.match(/[\d+]\_[\d+]/)) {
-            title = item.replace('_', '.')
-          } else {
-            title = title.replace('_', ' ')
-            title = title.charAt(0).toUpperCase() + title.slice(1);
-          }
 
           let pathForBreadcrumbsPage = '';
           if (index === '0') {
@@ -479,6 +472,19 @@ router.get('/*', async (req, res, next) => {
             if (page.breadcrumbsItems[index - 1]) {
               pathForBreadcrumbsPage = `${page.breadcrumbsItems[index - 1].path}/${item}`;
             }
+          }
+
+          let title = item
+          if (item.match(/[\d+]\_[\d+]/)) {
+            title = item.replace('_', '.')
+            page.breadcrumbsItems.push({
+              name: title,
+              path: pathForBreadcrumbsPage
+            })
+            continue;
+          } else {
+            title = title.replace('_', ' ')
+            title = title.charAt(0).toUpperCase() + title.slice(1);
           }
 
           const breadcrumbsPageArgs = pageHelper.parsePath(pathForBreadcrumbsPage, { stripExt })
