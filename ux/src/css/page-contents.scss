@@ -61,10 +61,6 @@
     }
   }
 
-  * + h1, * + h2, * + h3 {
-    border-top: 1px solid #DDD;
-  }
-
   h1 {
     font-size: 3em;
     font-weight: 500;
@@ -396,19 +392,7 @@
   }
 
   ul:not(.tabset-tabs):not(.contains-task-list) {
-    list-style: none;
-    > li::before {
-      position: absolute;
-      left: -1.1rem;
-      content: '\25b8';
-      color: mc('grey', '600');
-      width: 1.35rem;
-
-      @at-root .is-rtl & {
-        right: -1.1rem;
-        content: '\25C3';
-      }
-    }
+    list-style: square;
   }
   ol, ul:not(.tabset-tabs) {
     > li {

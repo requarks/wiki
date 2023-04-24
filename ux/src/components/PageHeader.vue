@@ -106,14 +106,21 @@
         aria-label='Print'
         )
         q-tooltip Print
-    q-btn.q-mr-sm.acrylic-btn(
-      v-if='editorStore.isActive'
-      icon='las la-question-circle'
-      flat
-      color='grey'
-      :href='siteStore.docsBase + `/editor/${editorStore.editor}`'
-      target='_blank'
-      type='a'
+    template(v-if='editorStore.isActive')
+      q-btn.q-mr-sm.acrylic-btn(
+        icon='las la-question-circle'
+        flat
+        color='grey'
+        :href='siteStore.docsBase + `/editor/${editorStore.editor}`'
+        target='_blank'
+        type='a'
+      )
+      q-btn.q-mr-sm.acrylic-btn(
+        icon='las la-cog'
+        flat
+        color='grey'
+        :aria-label='t(`editor.settings`)'
+        @click='openEditorSettings'
       )
     template(v-if='editorStore.isActive || editorStore.hasPendingChanges')
       q-btn.acrylic-btn.q-mr-sm(
@@ -209,6 +216,10 @@ const editUrl = computed(() => {
 })
 
 // METHODS
+
+function openEditorSettings () {
+  EVENT_BUS.emit('openEditorSettings')
+}
 
 async function discardChanges () {
   // Is it the home page in create mode?

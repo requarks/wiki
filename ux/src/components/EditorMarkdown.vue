@@ -192,14 +192,6 @@
           @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })'
           )
           q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.keyboardKey') }}
-        q-btn(
-          v-if='!state.previewShown'
-          icon='mdi-eye-arrow-right-outline'
-          padding='xs sm'
-          flat
-          @click='state.previewShown = true'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
       //--------------------------------------------------------
       //- MONACO EDITOR
       //--------------------------------------------------------
@@ -225,7 +217,7 @@
             @click='state.previewShown = false'
             )
             q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
-        .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
+        .editor-markdown-preview-content.page-contents(ref='editorPreviewContainer')
           div(
             ref='editorPreview'
             v-html='pageStore.render'
@@ -240,7 +232,6 @@ import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
-import { WorkspaceEdit } from '../helpers/monacoTypes'
 
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
@@ -298,9 +289,9 @@ function insertAssetClb (opts) {
       break
     }
   }
-  insertAtCursor({ content })
+  insertAtCursor({ content, focus: false })
   setTimeout(() => {
-    cm.value.focus()
+    editor.focus()
   }, 500)
 }
 
@@ -313,15 +304,22 @@ function insertTable () {
 /**
 * Set current line as header
 */
-function setHeaderLine (lvl) {
-  const curLine = cm.value.doc.getCursor('head').line
-  let lineContent = cm.value.doc.getLine(curLine)
+function setHeaderLine (lvl, focus = true) {
+  const curLine = editor.getPosition().lineNumber
+  let lineContent = editor.getModel().getLineContent(curLine)
   const lineLength = lineContent.length
   if (startsWith(lineContent, '#')) {
     lineContent = lineContent.replace(/^(#+ )/, '')
   }
   lineContent = times(lvl, n => '#').join('') + ' ' + lineContent
-  cm.value.doc.replaceRange(lineContent, { line: curLine, ch: 0 }, { line: curLine, ch: lineLength })
+  editor.executeEdits('', [{
+    range: new Range(curLine, 1, curLine, lineLength + 1),
+    text: lineContent,
+    forceMoveMarkers: true
+  }])
+  if (focus) {
+    editor.focus()
+  }
 }
 
 /**
@@ -341,45 +339,68 @@ function getHeaderLevel (cm) {
 /**
 * Insert content at cursor
 */
-function insertAtCursor ({ content }) {
-  const cursor = cm.value.doc.getCursor('head')
-  cm.value.doc.replaceRange(content, cursor)
+function insertAtCursor ({ content, focus = true }) {
+  const cursor = editor.getPosition()
+  editor.executeEdits('', [{
+    range: new Range(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column),
+    text: content,
+    forceMoveMarkers: true
+  }])
+  if (focus) {
+    editor.focus()
+  }
 }
 
 /**
 * Insert content after current line
 */
-function insertAfter ({ content, newLine }) {
-  const curLine = cm.value.doc.getCursor('to').line
-  const lineLength = cm.value.doc.getLine(curLine).length
-  cm.value.doc.replaceRange(newLine ? `\n${content}\n` : content, { line: curLine, ch: lineLength + 1 })
+function insertAfter ({ content, newLine, focus = true }) {
+  const curLine = editor.getPosition().lineNumber
+  editor.executeEdits('', [{
+    range: new Range(curLine + 1, 1, curLine + 1, 1),
+    text: newLine ? `\n${content}\n` : content,
+    forceMoveMarkers: true
+  }])
+  if (focus) {
+    editor.focus()
+  }
 }
 
 /**
 * Insert content before current line
 */
-function insertBeforeEachLine ({ content, after }) {
-  let lines = []
-  if (!cm.value.doc.somethingSelected()) {
-    lines.push(cm.value.doc.getCursor('head').line)
-  } else {
-    lines = flatten(cm.value.doc.listSelections().map(sl => {
-      const range = Math.abs(sl.anchor.line - sl.head.line) + 1
-      const lowestLine = (sl.anchor.line > sl.head.line) ? sl.head.line : sl.anchor.line
-      return times(range, l => l + lowestLine)
-    }))
-  }
-  lines.forEach(ln => {
-    let lineContent = cm.value.doc.getLine(ln)
-    const lineLength = lineContent.length
-    if (startsWith(lineContent, content)) {
-      lineContent = lineContent.substring(content.length)
+function insertBeforeEachLine ({ content, after, focus = true }) {
+  const edits = []
+  for (const selection of editor.getSelections()) {
+    const lineCount = selection.endLineNumber - selection.startLineNumber + 1
+    const lines = times(lineCount, l => l + selection.startLineNumber)
+    for (const line of lines) {
+      let lineContent = editor.getModel().getLineContent(line)
+      const lineLength = lineContent.length
+      if (startsWith(lineContent, content)) {
+        lineContent = lineContent.substring(content.length)
+      }
+      edits.push({
+        range: new Range(line, 1, line, lineLength + 1),
+        text: `${content}${lineContent}`,
+        forceMoveMarkers: true
+      })
     }
-    cm.value.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
-  })
-  if (after) {
-    const lastLine = last(lines)
-    cm.value.doc.replaceRange(`\n${after}\n`, { line: lastLine, ch: cm.value.doc.getLine(lastLine).length + 1 })
+    if (after) {
+      const lastLine = last(lines)
+      const lineLength = editor.getModel().getLineContent(lastLine).length
+      edits.push({
+        range: new Range(lastLine, lineLength + 1, lastLine, lineLength + 1),
+        text: `\n${after}`,
+        forceMoveMarkers: true
+      })
+    }
+  }
+
+  editor.executeEdits('', edits)
+
+  if (focus) {
+    editor.focus()
   }
 }
 
@@ -387,7 +408,7 @@ function insertBeforeEachLine ({ content, after }) {
 * Insert an Horizontal Bar
 */
 function insertHorizontalBar () {
-  insertAfter({ content: '---', newLine: true })
+  insertAfter({ content: '\n---\n', newLine: true })
 }
 
 /**
@@ -442,7 +463,7 @@ onMounted(async () => {
       'editor.background': '#070a0d',
       'editor.lineHighlightBackground': '#0d1117',
       'editorLineNumber.foreground': '#546e7a',
-      'editorGutter.background': '#1e232a'
+      'editorGutter.background': '#0d1117'
     }
   })
 
@@ -455,7 +476,13 @@ onMounted(async () => {
     scrollBeyondLastLine: false,
     fontSize: 16,
     formatOnType: true,
-    lineNumbersMinChars: 3
+    lineNumbersMinChars: 3,
+    tabSize: 2,
+    padding: {
+      top: 10,
+      bottom: 10
+    },
+    wordWrap: 'on'
   })
 
   window.edd = editor
@@ -467,7 +494,7 @@ onMounted(async () => {
     id: 'markdown.extension.editing.toggleBold',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB],
     label: 'Toggle bold',
-    precondition: '',
+    precondition: 'editorHasSelection',
     run (ed) {
       toggleMarkup({ start: '**' })
     }
@@ -479,9 +506,18 @@ onMounted(async () => {
     id: 'markdown.extension.editing.toggleItalic',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
     label: 'Toggle italic',
-    precondition: '',
+    precondition: 'editorHasSelection',
     run (ed) {
       toggleMarkup({ start: '*' })
+    }
+  })
+
+  editor.addAction({
+    id: 'save',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+    label: 'Save',
+    precondition: '',
+    run (ed) {
     }
   })
 
@@ -495,61 +531,10 @@ onMounted(async () => {
     processContent(pageStore.content)
   }, 500))
 
-  // -> Initialize CodeMirror
-  // cm.value = CodeMirror.fromTextArea(cmRef.value, {
-  //   tabSize: 2,
-  //   mode: 'text/markdown',
-  //   theme: 'wikijs-dark',
-  //   lineNumbers: true,
-  //   lineWrapping: true,
-  //   line: true,
-  //   styleActiveLine: true,
-  //   highlightSelectionMatches: {
-  //     annotateScrollbar: true
-  //   },
-  //   viewportMargin: 50,
-  //   inputStyle: 'contenteditable',
-  //   allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
-  //   // direction: siteConfig.rtl ? 'rtl' : 'ltr',
-  //   foldGutter: true,
-  //   gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter']
-  // })
-
-  // cm.value.setValue(pageStore.content)
-  // cm.value.on('change', c => {
-  //   editorStore.$patch({
-  //     lastChangeTimestamp: DateTime.utc()
-  //   })
-  //   pageStore.$patch({
-  //     content: c.getValue()
-  //   })
-  //   onCmInput(pageStore.content)
-  // })
-
-  // cm.value.setSize(null, '100%')
+  editor.focus()
 
   // -> Set Keybindings
   // const keyBindings = {
-  //   'F11' (c) {
-  //     c.setOption('fullScreen', !c.getOption('fullScreen'))
-  //   },
-  //   'Esc' (c) {
-  //     if (c.getOption('fullScreen')) {
-  //       c.setOption('fullScreen', false)
-  //     }
-  //   },
-  //   [`${CtrlKey}-S`] (c) {
-  //     // save()
-  //     return false
-  //   },
-  //   [`${CtrlKey}-B`] (c) {
-  //     toggleMarkup({ start: '**' })
-  //     return false
-  //   },
-  //   [`${CtrlKey}-I`] (c) {
-  //     toggleMarkup({ start: '*' })
-  //     return false
-  //   },
   //   [`${CtrlKey}-Alt-Right`] (c) {
   //     let lvl = getHeaderLevel(c)
   //     if (lvl >= 6) { lvl = 5 }
@@ -563,7 +548,6 @@ onMounted(async () => {
   //     return false
   //   }
   // }
-  // cm.value.setOption('extraKeys', keyBindings)
   // this.cm.on('inputRead', this.autocomplete)
 
   // // Handle cursor movement
@@ -574,13 +558,6 @@ onMounted(async () => {
 
   // // Handle special paste
   // this.cm.on('paste', this.onCmPaste)
-
-  // // Render initial preview
-  // processContent(pageStore.content)
-  // nextTick(() => {
-  //   cm.value.refresh()
-  //   cm.value.focus()
-  // })
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
 
@@ -619,9 +596,9 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
-  // if (editor.value) {
-  // editor.value.destroy()
-  // }
+  if (editor) {
+    editor.dispose()
+  }
 })
 </script>
 
@@ -662,7 +639,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     font-weight: 500;
   }
   &-preview {
-    flex: 1 1 50%;
+    flex: 0 1 50%;
     position: relative;
     height: $editor-height;
     overflow: hidden;
@@ -706,7 +683,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       height: $editor-height;
       overflow-y: scroll;
       padding: 1rem;
-      width: calc(100% + 17px);
+      max-width: calc(50vw - 57px);
       // -ms-overflow-style: none;
       // &::-webkit-scrollbar {
       //   width: 0px;
