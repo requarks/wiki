@@ -428,9 +428,14 @@ async function toggleMarkup ({ start, end }) {
   for (const selection of editor.getSelections()) {
     const selectedText = editor.getModel().getValueInRange(selection)
     if (!selectedText) {
-      const word = editor.getModel().getWordAtPosition(selection.getPosition())
-    }
-    if (selectedText.startsWith(start) && selectedText.endsWith(end)) {
+      const wordObj = editor.getModel().getWordAtPosition(selection.getPosition())
+      const wordRange = new Range(selection.startLineNumber, wordObj.startColumn, selection.endLineNumber, wordObj.endColumn)
+      if (wordObj.word.startsWith(start) && wordObj.word.endsWith(end)) {
+        edits.push({ range: wordRange, text: wordObj.word.substring(start.length, wordObj.word.length - end.length) })
+      } else {
+        edits.push({ range: wordRange, text: `${start}${wordObj.word}${end}` })
+      }
+    } else if (selectedText.startsWith(start) && selectedText.endsWith(end)) {
       edits.push({ range: selection, text: selectedText.substring(start.length, selectedText.length - end.length) })
     } else {
       edits.push({ range: selection, text: `${start}${selectedText}${end}` })
@@ -467,21 +472,26 @@ onMounted(async () => {
     }
   })
 
+  // Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
+  // original https://github.com/microsoft/vscode/blob/3e5c7e2c570a729e664253baceaf443b69e82da6/extensions/markdown-basics/language-configuration.json#L55
+  monaco.languages.setLanguageConfiguration('markdown', {
+    wordPattern: /([*_]{1,2}|~~|`+)?[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+(_+[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+)*\1/gu
+  })
+
   // -> Initialize Monaco Editor
   editor = monaco.editor.create(monacoRef.value, {
-    value: pageStore.content,
-    language: 'markdown',
-    theme: 'wikijs',
     automaticLayout: true,
-    scrollBeyondLastLine: false,
+    cursorBlinking: 'blink',
+    cursorSmoothCaretAnimation: true,
     fontSize: 16,
     formatOnType: true,
+    language: 'markdown',
     lineNumbersMinChars: 3,
+    padding: { top: 10, bottom: 10 },
+    scrollBeyondLastLine: false,
     tabSize: 2,
-    padding: {
-      top: 10,
-      bottom: 10
-    },
+    theme: 'wikijs',
+    value: pageStore.content,
     wordWrap: 'on'
   })
 
@@ -494,7 +504,7 @@ onMounted(async () => {
     id: 'markdown.extension.editing.toggleBold',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB],
     label: 'Toggle bold',
-    precondition: 'editorHasSelection',
+    precondition: '',
     run (ed) {
       toggleMarkup({ start: '**' })
     }
@@ -506,7 +516,7 @@ onMounted(async () => {
     id: 'markdown.extension.editing.toggleItalic',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
     label: 'Toggle italic',
-    precondition: 'editorHasSelection',
+    precondition: '',
     run (ed) {
       toggleMarkup({ start: '*' })
     }
