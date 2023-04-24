@@ -1,5 +1,7 @@
 #!/bin/bash
 
+NEED_PUSH=0
+
 if ! command -v jq &> /dev/null
 then
     echo "'jq' could not be found. Please install this utility"
@@ -8,14 +10,21 @@ fi
 
 if [ -z "$1" ]
 then
-      echo "Version is required, command usage example: ./build.sh '<version>' <image name>"
+      echo "Version is required, command usage example: ./build.sh '<version>' <image name> <need push (0 or 1)>"
       exit
 fi
 
 if [ -z "$2" ]
 then
-      echo "Package name is required, command usage example: ./build.sh '<version>' <image name>"
+      echo "Package name is required, command usage example: ./build.sh '<version>' <image name> <need push (0 or 1)>"
       exit
+fi
+
+if [ -z "$3" ] || [ "$3" != "1" ] || [ "$3" != "0" ]
+then
+      echo "Package will not push to docker registry"
+else
+    NEED_PUSH=$3
 fi
 
 mv package.json pkg-temp.json
@@ -26,7 +35,13 @@ cat package.json
 docker build -f dev/build/Dockerfile -t "$2:$1" .
 docker tag "$2:$1" "$2:latest"
 
-docker push "$2:$1"
-docker push "$2:latest"
+if [ "$NEED_PUSH" == "1" ]
+then
+    echo "Pushing to docker registry"
+#    docker push "$2:$1"
+#    docker push "$2:latest"
+else
+    echo "Skipping push images to docker registry"
+fi
 
 git checkout package.json
