@@ -1,7 +1,10 @@
 <template lang="pug">
   v-dialog(v-model="dialog", :max-width="maxWidth", persistent, transition="dialog-bottom-transition")
     v-card
-      v-card-title(class="text-h6") Image View
+      v-toolbar(flat, dense, dark, color="white")
+        v-spacer
+        v-btn(icon, dark, @click="dialog = false")
+          v-icon(color="black") mdi-close
       v-card-text
         v-img(:src="photoUrl", :alt="photoAlt", height="700px", contain)
       v-card-actions
