@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-dialog(v-model="dialog", :max-width="maxWidth", persistent, transition="dialog-bottom-transition")
+  v-dialog(v-model="dialog", :max-width="maxWidth", transition="dialog-bottom-transition")
     v-card
       v-toolbar(flat, dense, dark, color="white")
         v-spacer
