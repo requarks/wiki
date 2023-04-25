@@ -740,9 +740,10 @@
   // ---------------------------------
 
   img {
-    cursor: pointer;
     max-width: 100%;
-
+    &.modal-open {
+      cursor: pointer;
+    }
     &.align-left {
       float: left;
       margin: 0 1rem 1rem 0;
