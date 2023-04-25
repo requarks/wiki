@@ -249,7 +249,7 @@ export default {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-stats-refresh')
       }
     }
-  }
+  },
 }
 </script>
 
