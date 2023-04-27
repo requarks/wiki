@@ -331,12 +331,15 @@
         :aria-label='$t(`common:actions.returnToTop`)'
         )
         v-icon mdi-arrow-up
+    image-modal(ref="imageModal")
 </template>
 
 <script>
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
+import NavHeader from './nav-header.vue'
+import ImageModal from './image-modal';
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get, sync } from 'vuex-pathify'
@@ -384,6 +387,8 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
+    NavHeader,
+    ImageModal,
     StatusIndicator
   },
   props: {
