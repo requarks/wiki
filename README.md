@@ -430,6 +430,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Mike Ditton
 - Nate Figz
 - Patryk
+- Paul O'Fallon
 - Philipp Schürch
 - Tracey Duffy
 - Quaxim
