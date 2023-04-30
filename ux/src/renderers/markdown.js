@@ -18,7 +18,9 @@ import twemoji from 'twemoji'
 import plantuml from './modules/plantuml'
 import katexHelper from './modules/katex'
 
-import { escape } from 'lodash-es'
+import hljs from 'highlight.js'
+
+import { escape, findLast, times } from 'lodash-es'
 
 export class MarkdownRenderer {
   constructor (conf = {}) {
@@ -33,7 +35,10 @@ export class MarkdownRenderer {
         } else if (['mermaid', 'plantuml'].includes(lang)) {
           return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
         } else {
-          return `<pre class="line-numbers"><code class="language-${lang}">${escape(str)}</code></pre>`
+          const highlighted = lang ? hljs.highlight(str, { language: lang, ignoreIllegals: true }) : hljs.highlightAuto(str)
+          const lineCount = highlighted.value.match(/\n/g).length
+          const lineNums = lineCount > 1 ? `<span aria-hidden="true" class="line-numbers-rows">${times(lineCount, n => '<span></span>').join('')}</span>` : ''
+          return `<pre class="codeblock ${lineCount > 1 && 'line-numbers'}"><code class="language-${lang}">${highlighted.value}${lineNums}</code></pre>`
         }
       }
     })
@@ -91,9 +96,30 @@ export class MarkdownRenderer {
         }
       })
     }
+
+    // Inject line numbers for preview scroll sync
+    this.linesMap = []
+    const injectLineNumbers = (tokens, idx, options, env, slf) => {
+      let line
+      if (tokens[idx].map && tokens[idx].level === 0) {
+        line = tokens[idx].map[0] + 1
+        tokens[idx].attrJoin('class', 'line')
+        tokens[idx].attrSet('data-line', String(line))
+        this.linesMap.push(line)
+      }
+      return slf.renderToken(tokens, idx, options, env, slf)
+    }
+    this.md.renderer.rules.paragraph_open = injectLineNumbers
+    this.md.renderer.rules.heading_open = injectLineNumbers
+    this.md.renderer.rules.blockquote_open = injectLineNumbers
   }
 
   render (src) {
+    this.linesMap = []
     return this.md.render(src)
+  }
+
+  getClosestPreviewLine (line) {
+    return findLast(this.linesMap, n => n <= line)
   }
 }

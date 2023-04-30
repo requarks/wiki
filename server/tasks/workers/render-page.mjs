@@ -1,5 +1,5 @@
 import { get, has, isEmpty, reduce, times, toSafeInteger } from 'lodash-es'
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 
 export async function task ({ payload }) {
   WIKI.logger.info(`Rendering page ${payload.id}...`)
@@ -36,37 +36,37 @@ export async function task ({ payload }) {
     }
 
     // Parse TOC
-    const $ = cheerio.load(output)
-    let isStrict = $('h1').length > 0 // <- Allows for documents using H2 as top level
+    // const $ = cheerio.load(output)
+    // let isStrict = $('h1').length > 0 // <- Allows for documents using H2 as top level
     let toc = { root: [] }
 
-    $('h1,h2,h3,h4,h5,h6').each((idx, el) => {
-      const depth = toSafeInteger(el.name.substring(1)) - (isStrict ? 1 : 2)
-      let leafPathError = false
+    // $('h1,h2,h3,h4,h5,h6').each((idx, el) => {
+    //   const depth = toSafeInteger(el.name.substring(1)) - (isStrict ? 1 : 2)
+    //   let leafPathError = false
 
-      const leafPath = reduce(times(depth), (curPath, curIdx) => {
-        if (has(toc, curPath)) {
-          const lastLeafIdx = _.get(toc, curPath).length - 1
-          if (lastLeafIdx >= 0) {
-            curPath = `${curPath}[${lastLeafIdx}].children`
-          } else {
-            leafPathError = true
-          }
-        }
-        return curPath
-      }, 'root')
+    //   const leafPath = reduce(times(depth), (curPath, curIdx) => {
+    //     if (has(toc, curPath)) {
+    //       const lastLeafIdx = get(toc, curPath).length - 1
+    //       if (lastLeafIdx >= 0) {
+    //         curPath = `${curPath}[${lastLeafIdx}].children`
+    //       } else {
+    //         leafPathError = true
+    //       }
+    //     }
+    //     return curPath
+    //   }, 'root')
 
-      if (leafPathError) { return }
+    //   if (leafPathError) { return }
 
-      const leafSlug = $('.toc-anchor', el).first().attr('href')
-      $('.toc-anchor', el).remove()
+    //   const leafSlug = $('.toc-anchor', el).first().attr('href')
+    //   $('.toc-anchor', el).remove()
 
-      get(toc, leafPath).push({
-        label: $(el).text().trim(),
-        key: leafSlug.substring(1),
-        children: []
-      })
-    })
+    //   get(toc, leafPath).push({
+    //     label: $(el).text().trim(),
+    //     key: leafSlug.substring(1),
+    //     children: []
+    //   })
+    // })
 
     // Save to DB
     await WIKI.db.pages.query()

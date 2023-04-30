@@ -217,7 +217,7 @@
             @click='state.previewShown = false'
             )
             q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
-        .editor-markdown-preview-content.page-contents(ref='editorPreviewContainer')
+        .editor-markdown-preview-content.page-contents(ref='editorPreviewContainerRef')
           div(
             ref='editorPreview'
             v-html='pageStore.render'
@@ -257,8 +257,8 @@ const { t } = useI18n()
 // STATE
 
 let editor
-const cm = shallowRef(null)
 const monacoRef = ref(null)
+const editorPreviewContainerRef = ref(null)
 
 const state = reactive({
   previewShown: true,
@@ -266,9 +266,6 @@ const state = reactive({
 })
 
 const md = new MarkdownRenderer({})
-
-// Platform detection
-const CtrlKey = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl'
 
 // METHODS
 
@@ -325,9 +322,9 @@ function setHeaderLine (lvl, focus = true) {
 /**
 * Get the header lever of the current line
 */
-function getHeaderLevel (cm) {
-  const curLine = cm.doc.getCursor('head').line
-  const lineContent = cm.doc.getLine(curLine)
+function getHeaderLevel () {
+  const curLine = editor.getPosition().lineNumber
+  const lineContent = editor.getModel().getLineContent(curLine)
   let lvl = 0
   const result = lineContent.match(/^(#+) /)
   if (result) {
@@ -356,13 +353,15 @@ function insertAtCursor ({ content, focus = true }) {
 */
 function insertAfter ({ content, newLine, focus = true }) {
   const curLine = editor.getPosition().lineNumber
+  const lineLength = editor.getModel().getLineContent(curLine).length
   editor.executeEdits('', [{
-    range: new Range(curLine + 1, 1, curLine + 1, 1),
-    text: newLine ? `\n${content}\n` : content,
+    range: new Range(curLine, lineLength + 1, curLine, lineLength + 1),
+    text: newLine ? `\n\n${content}\n` : `\n${content}`,
     forceMoveMarkers: true
   }])
   if (focus) {
     editor.focus()
+    editor.revealLineInCenterIfOutsideViewport(editor.getPosition().lineNumber)
   }
 }
 
@@ -408,7 +407,7 @@ function insertBeforeEachLine ({ content, after, focus = true }) {
 * Insert an Horizontal Bar
 */
 function insertHorizontalBar () {
-  insertAfter({ content: '\n---\n', newLine: true })
+  insertAfter({ content: '---', newLine: true })
 }
 
 /**
@@ -482,11 +481,11 @@ onMounted(async () => {
   editor = monaco.editor.create(monacoRef.value, {
     automaticLayout: true,
     cursorBlinking: 'blink',
-    cursorSmoothCaretAnimation: true,
+    // cursorSmoothCaretAnimation: true,
     fontSize: 16,
     formatOnType: true,
     language: 'markdown',
-    lineNumbersMinChars: 3,
+    lineNumbersMinChars: 4,
     padding: { top: 10, bottom: 10 },
     scrollBeyondLastLine: false,
     tabSize: 2,
@@ -495,7 +494,8 @@ onMounted(async () => {
     wordWrap: 'on'
   })
 
-  window.edd = editor
+  // TODO: For debugging, remove at some point...
+  window.edInstance = editor
 
   // -> Define Formatting Actions
   editor.addAction({
@@ -523,6 +523,29 @@ onMounted(async () => {
   })
 
   editor.addAction({
+    id: 'markdown.extension.editing.increaseHeaderLevel',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.RightArrow],
+    label: 'Increase Header Level',
+    precondition: '',
+    run (ed) {
+      let lvl = getHeaderLevel()
+      if (lvl >= 6) { lvl = 5 }
+      setHeaderLine(lvl + 1)
+    }
+  })
+  editor.addAction({
+    id: 'markdown.extension.editing.decreaseHeaderLevel',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.LeftArrow],
+    label: 'Decrease Header Level',
+    precondition: '',
+    run (ed) {
+      let lvl = getHeaderLevel()
+      if (lvl <= 1) { lvl = 2 }
+      setHeaderLine(lvl - 1)
+    }
+  })
+
+  editor.addAction({
     id: 'save',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
     label: 'Save',
@@ -531,6 +554,7 @@ onMounted(async () => {
     }
   })
 
+  // -> Handle content change
   editor.onDidChangeModelContent(debounce(ev => {
     editorStore.$patch({
       lastChangeTimestamp: DateTime.utc()
@@ -541,33 +565,39 @@ onMounted(async () => {
     processContent(pageStore.content)
   }, 500))
 
+  // -> Handle cursor movement
+  editor.onDidChangeCursorPosition(debounce(ev => {
+    if (!state.previewScrollSync || !state.previewShown) { return }
+    const currentLine = editor.getPosition().lineNumber
+    if (currentLine < 3) {
+      editorPreviewContainerRef.value.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      const exactEl = editorPreviewContainerRef.value.querySelector(`[data-line='${currentLine}']`)
+      if (exactEl) {
+        exactEl.scrollIntoView({
+          behavior: 'smooth'
+        })
+      } else {
+        const closestLine = md.getClosestPreviewLine(currentLine)
+        if (closestLine) {
+          const closestEl = editorPreviewContainerRef.value.querySelector(`[data-line='${closestLine}']`)
+          if (closestEl) {
+            closestEl.scrollIntoView({
+              behavior: 'smooth'
+            })
+          }
+        }
+      }
+    }
+  }, 500))
+
+  // -> Post init
+
   editor.focus()
 
-  // -> Set Keybindings
-  // const keyBindings = {
-  //   [`${CtrlKey}-Alt-Right`] (c) {
-  //     let lvl = getHeaderLevel(c)
-  //     if (lvl >= 6) { lvl = 5 }
-  //     setHeaderLine(lvl + 1)
-  //     return false
-  //   },
-  //   [`${CtrlKey}-Alt-Left`] (c) {
-  //     let lvl = getHeaderLevel(c)
-  //     if (lvl <= 1) { lvl = 2 }
-  //     setHeaderLine(lvl - 1)
-  //     return false
-  //   }
-  // }
-  // this.cm.on('inputRead', this.autocomplete)
-
-  // // Handle cursor movement
-  // this.cm.on('cursorActivity', c => {
-  //   this.positionSync(c)
-  //   this.scrollSync(c)
-  // })
-
-  // // Handle special paste
-  // this.cm.on('paste', this.onCmPaste)
+  nextTick(() => {
+    processContent(pageStore.content)
+  })
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
 
@@ -613,7 +643,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-$editor-height: calc(100vh - 64px - 94px - 2px);
+$editor-height: calc(100vh - 64px - 96px);
+$editor-preview-height: calc(100vh - 64px - 96px - 32px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
 
 .editor-markdown {
@@ -658,7 +689,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       background-color: $grey-2;
     }
     @at-root .body--dark & {
-      background-color: $dark-4;
+      background-color: $dark-6;
     }
     // @include until($tablet) {
     //   display: none;
@@ -690,7 +721,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       }
     }
     &-content {
-      height: $editor-height;
+      height: $editor-preview-height;
       overflow-y: scroll;
       padding: 1rem;
       max-width: calc(50vw - 57px);
@@ -744,7 +775,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
   &-toolbar {
     background-color: $primary;
-    border-left: 50px solid darken($primary, 5%);
+    border-left: 60px solid darken($primary, 5%);
     color: #FFF;
     height: 32px;
   }
@@ -759,86 +790,5 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     align-items: center;
     padding: 12px 0;
   }
-  &-sysbar {
-    padding-left: 0;
-    &-locale {
-      background-color: rgba(255,255,255,.25);
-      display:inline-flex;
-      padding: 0 12px;
-      height: 24px;
-      width: 63px;
-      justify-content: center;
-      align-items: center;
-    }
-  }
-  // ==========================================
-  // CODE MIRROR
-  // ==========================================
-  .CodeMirror {
-    height: auto;
-    font-family: 'Roboto Mono', monospace;
-    font-size: .9rem;
-    .cm-header-1 {
-      font-size: 1.5rem;
-    }
-    .cm-header-2 {
-      font-size: 1.25rem;
-    }
-    .cm-header-3 {
-      font-size: 1.15rem;
-    }
-    .cm-header-4 {
-      font-size: 1.1rem;
-    }
-    .cm-header-5 {
-      font-size: 1.05rem;
-    }
-    .cm-header-6 {
-      font-size: 1.025rem;
-    }
-  }
-  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
-    word-break: break-word;
-  }
-  .CodeMirror-focused .cm-matchhighlight {
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVQI12NgYGBgkKzc8x9CMDAwAAAmhwSbidEoSQAAAABJRU5ErkJggg==);
-    background-position: bottom;
-    background-repeat: repeat-x;
-  }
-  .cm-matchhighlight {
-    background-color: $grey-8;
-  }
-  .CodeMirror-selection-highlight-scrollbar {
-    background-color: $green-6;
-  }
-}
-// HINT DROPDOWN
-.CodeMirror-hints {
-  position: absolute;
-  z-index: 10;
-  overflow: hidden;
-  list-style: none;
-  margin: 0;
-  padding: 1px;
-  box-shadow: 2px 3px 5px rgba(0,0,0,.2);
-  border: 1px solid $grey-7;
-  background: $grey-9;
-  font-family: 'Roboto Mono', monospace;
-  font-size: .9rem;
-  max-height: 150px;
-  overflow-y: auto;
-  min-width: 250px;
-  max-width: 80vw;
-}
-.CodeMirror-hint {
-  margin: 0;
-  padding: 0 4px;
-  white-space: pre;
-  color: #FFF;
-  cursor: pointer;
-}
-li.CodeMirror-hint-active {
-  background: $blue-5;
-  color: #FFF;
 }
 </style>

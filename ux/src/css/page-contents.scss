@@ -6,6 +6,10 @@
     margin-top: 0;
   }
 
+  @at-root .body--dark & {
+    color: #FFF;
+  }
+
   // ---------------------------------
   // LINKS
   // ---------------------------------
@@ -59,6 +63,10 @@
         display: block;
       }
     }
+  }
+
+  P + h2 {
+    margin-top: 12px;
   }
 
   h1 {
@@ -406,6 +414,95 @@
   }
 
   // ---------------------------------
+  // CODE
+  // ---------------------------------
+
+  // code {
+  //   background-color: mc('indigo', '50');
+  //   padding: 0 5px;
+  //   color: mc('indigo', '800');
+  //   font-family: 'Roboto Mono', monospace;
+  //   font-weight: normal;
+  //   font-size: 1rem;
+  //   box-shadow: none;
+
+  //   &::before, &::after {
+  //     display: none;
+  //   }
+
+  //   @at-root .theme--dark & {
+  //     background-color: darken(mc('grey', '900'), 5%);
+  //     color: mc('indigo', '100');
+  //   }
+  // }
+
+  pre.codeblock {
+    border: none;
+    border-radius: 5px;
+    box-shadow: initial;
+    background-color: $dark-5;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow: auto;
+
+    @at-root .body--dark & {
+      background-color: $dark-5;
+    }
+
+    > code {
+      background-color: transparent;
+      padding: 0;
+      color: #FFF;
+      box-shadow: initial;
+      display: block;
+      font-size: .85rem;
+      font-family: 'Roboto Mono', monospace;
+
+      &:after, &:before {
+        content: initial;
+        letter-spacing: initial;
+      }
+    }
+
+    &.line-numbers {
+      counter-reset: linenumber;
+      padding-left: 3rem;
+
+      > code {
+        position: relative;
+        white-space: inherit;
+      }
+
+      .line-numbers-rows {
+        position: absolute;
+        pointer-events: none;
+        top: 0;
+        font-size: 100%;
+        left: -3.8em;
+        width: 3em;
+        letter-spacing: -1px;
+        border-right: 1px solid #999;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        user-select: none;
+
+        & > span {
+          display: block;
+          counter-increment: linenumber;
+
+          &:before {
+            content: counter(linenumber);
+            color: #999;
+            display: block;
+            padding-right: .8em;
+            text-align: right;
+          }
+        }
+      }
+    }
+  }
+
+  // ---------------------------------
   // LEGACY
   // ---------------------------------
 
@@ -417,3 +514,5 @@
     padding: 5px;
   }
 }
+
+@import 'highlight.js/styles/atom-one-dark-reasonable.css';
