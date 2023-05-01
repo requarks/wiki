@@ -8,7 +8,7 @@ q-page.admin-dashboard
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.dashboard.subtitle') }}
   .row.q-px-md.q-col-gutter-md
     .col-12.col-sm-6.col-lg-3
-      q-card.shadow-1
+      q-card
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-change-theme.svg')
           div
@@ -21,6 +21,7 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-plus-circle'
             :label='t(`common.actions.new`)'
+            :disable='!userStore.can(`manage:sites`)'
             @click='newSite'
             )
           q-separator.q-mx-sm(vertical)
@@ -29,10 +30,11 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-sitemap'
             :label='t(`common.actions.manage`)'
+            :disable='!userStore.can(`manage:sites`)'
             to='/_admin/sites'
             )
     .col-12.col-sm-6.col-lg-3
-      q-card.shadow-1
+      q-card
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-account.svg')
           div
@@ -45,6 +47,7 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-user-plus'
             :label='t(`common.actions.new`)'
+            :disable='!userStore.can(`manage:users`)'
             @click='newUser'
             )
           q-separator.q-mx-sm(vertical)
@@ -53,10 +56,11 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-users'
             :label='t(`common.actions.manage`)'
+            :disable='!userStore.can(`manage:users`)'
             to='/_admin/users'
             )
     .col-12.col-sm-6.col-lg-3
-      q-card.shadow-1
+      q-card
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-female-working-with-a-laptop.svg')
           div
@@ -69,10 +73,11 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-chart-area'
             :label='t(`admin.analytics.title`)'
+            :disable='!userStore.can(`manage:sites`)'
             :to='`/_admin/` + adminStore.currentSiteId + `/analytics`'
             )
     .col-12.col-sm-6.col-lg-3
-      q-card.shadow-1
+      q-card
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-ssd-animated.svg')
           div
@@ -85,6 +90,7 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-server'
             :label='t(`common.actions.manage`)'
+            :disable='!userStore.can(`manage:sites`)'
             :to='`/_admin/` + adminStore.currentSiteId + `/storage`'
             )
     .col-12
@@ -96,7 +102,7 @@ q-page.admin-dashboard
         i.las.la-check.q-mr-sm
         span.text-weight-medium(v-if='adminStore.isVersionLatest') Your Wiki.js server is running the latest version!
         span.text-weight-medium(v-else) A new version of Wiki.js is available. Please update to the latest version.
-        template(#action)
+        template(#action, v-if='userStore.can(`manage:system`)')
           q-btn(
             flat
             :label='t(`admin.system.checkForUpdates`)'
@@ -109,7 +115,7 @@ q-page.admin-dashboard
             to='/_admin/system'
             )
     .col-12
-      q-card.shadow-1
+      q-card
         q-card-section ---
 
 //- v-container(fluid, grid-list-lg)
@@ -224,6 +230,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { useAdminStore } from '../stores/admin'
+import { useUserStore } from 'src/stores/user'
 
 // COMPONENTS
 
@@ -238,6 +245,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const userStore = useUserStore()
 
 // ROUTER
 

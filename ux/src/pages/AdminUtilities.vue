@@ -17,7 +17,7 @@ q-page.admin-utilities
         )
   q-separator(inset)
   .q-pa-md.q-gutter-md
-    q-card.shadow-1
+    q-card
       q-list(separator)
         q-item
           blueprint-icon(icon='disconnected', :hue-rotate='45')

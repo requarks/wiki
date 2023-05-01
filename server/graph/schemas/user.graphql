@@ -17,6 +17,13 @@ extend type Query {
   ): User
 
   lastLogins: [UserLastLogin]
+
+  userPermissions: [String]
+
+  userPermissionsAtPath(
+    siteId: UUID!
+    path: String!
+  ): [String]
 }
 
 extend type Mutation {

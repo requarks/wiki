@@ -584,50 +584,43 @@ const usersHeaders = [
 
 const permissions = [
   {
-    permission: 'write:users',
-    hint: 'Can create or authorize new users, but not modify existing ones',
+    permission: 'access:admin',
+    hint: 'Can access the administration area.',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:users',
-    hint: 'Can manage all users (but not users with administrative permissions)',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'write:groups',
-    hint: 'Can manage groups and assign CONTENT permissions / page rules',
+    hint: 'Can create / manage users (but not users with administrative permissions)',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:groups',
-    hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
+    hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules',
     warning: true,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:navigation',
-    hint: 'Can manage the site navigation',
+    hint: 'Can manage site navigation',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:theme',
-    hint: 'Can manage and modify themes',
+    hint: 'Can modify site theme settings',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
-    permission: 'manage:api',
-    hint: 'Can generate and revoke API keys',
+    permission: 'manage:sites',
+    hint: 'Can create / manage sites',
     warning: true,
     restrictedForSystem: true,
     disabled: false

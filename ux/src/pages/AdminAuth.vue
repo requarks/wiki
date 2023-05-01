@@ -73,7 +73,7 @@ q-page.admin-mail
                 q-item-label: strong {{str.title}}
                 q-item-label(caption, lines='2') {{str.description}}
     .col
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.storage.contentTypes')}}
           .text-body2.text-grey {{ t('admin.storage.contentTypesHint') }}
@@ -81,7 +81,7 @@ q-page.admin-mail
       //- -----------------------
       //- Configuration
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.storage.config')}}
           q-banner.q-mt-md(

@@ -32,7 +32,7 @@ q-page.admin-flags
       )
   q-separator(inset)
   .q-pa-md.q-gutter-md
-    q-card.shadow-1
+    q-card
       q-list(separator)
         template(v-for='editor of editors', :key='editor.id')
           q-item(v-if='flagsStore.experimental || !editor.isDisabled')

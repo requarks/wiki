@@ -34,7 +34,7 @@ q-page.column
         v-if='editorStore.isActive'
         )
         component(:is='editorComponents[editorStore.editor]')
-      q-scroll-area(
+      q-scroll-area.page-container-scrl(
         v-else
         :thumb-style='thumbStyle'
         :bar-style='barStyle'
@@ -165,6 +165,7 @@ import { useEditorStore } from 'src/stores/editor'
 import { useFlagsStore } from 'src/stores/flags'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
+import { useUserStore } from 'src/stores/user'
 
 // COMPONENTS
 
@@ -195,6 +196,7 @@ const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -269,7 +271,13 @@ watch(() => route.path, async (newValue) => {
   } catch (err) {
     if (err.message === 'ERR_PAGE_NOT_FOUND') {
       if (newValue === '/') {
-        siteStore.overlay = 'Welcome'
+        if (!userStore.authenticated) {
+          router.push('/login')
+        } else if (!userStore.can('write:pages')) {
+          router.replace('/_error/unauthorized')
+        } else {
+          siteStore.overlay = 'Welcome'
+        }
       } else {
         $q.notify({
           type: 'negative',
@@ -369,6 +377,10 @@ function refreshTocExpanded (baseToc, lvl) {
   // @at-root .body--dark & {
   //   border-top: 1px solid $dark-6;
   // }
+
+  .page-container-scrl > .q-scrollarea__container > .q-scrollarea__content {
+    width: 100%;
+  }
 }
 .page-sidebar {
   flex: 0 0 300px;

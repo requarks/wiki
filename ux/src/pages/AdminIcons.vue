@@ -33,7 +33,7 @@ q-page.admin-icons
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
     .col-12
-      q-card.shadow-1
+      q-card
         q-card-section
           q-card.bg-negative.text-white.rounded-borders(flat)
             q-card-section.items-center(horizontal)

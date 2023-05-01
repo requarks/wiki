@@ -24,7 +24,7 @@ q-page.admin-terminal
       )
   q-separator(inset)
   .q-pa-md.q-gutter-md
-    q-card.shadow-1
+    q-card
       q-table(
         :rows='state.instances'
         :columns='instancesHeaders'

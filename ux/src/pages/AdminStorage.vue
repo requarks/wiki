@@ -77,7 +77,7 @@ q-page.admin-storage
           //- -----------------------
           //- Setup
           //- -----------------------
-          q-card.shadow-1.q-pb-sm.q-mb-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`')
+          q-card.q-pb-sm.q-mb-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state !== `configured`')
             q-card-section
               .text-subtitle1 {{t('admin.storage.setup')}}
               .text-body2.text-grey {{ t('admin.storage.setupHint') }}
@@ -167,7 +167,7 @@ q-page.admin-storage
                   @click='setupGitHubStep(`verify`)'
                   :loading='state.setupCfg.loading'
                 )
-          q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state === `configured`')
+          q-card.q-pb-sm.q-mt-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state === `configured`')
             q-card-section
               .text-subtitle1 {{t('admin.storage.setup')}}
               .text-body2.text-grey {{ t('admin.storage.setupConfiguredHint') }}
@@ -189,7 +189,7 @@ q-page.admin-storage
           //- -----------------------
           //- Content Types
           //- -----------------------
-          q-card.shadow-1.q-pb-sm
+          q-card.q-pb-sm
             q-card-section
               .text-subtitle1 {{t('admin.storage.contentTypes')}}
               .text-body2.text-grey {{ t('admin.storage.contentTypesHint') }}
@@ -262,7 +262,7 @@ q-page.admin-storage
           //- -----------------------
           //- Content Delivery
           //- -----------------------
-          q-card.shadow-1.q-pb-sm.q-mt-md
+          q-card.q-pb-sm.q-mt-md
             q-card-section
               .text-subtitle1 {{t('admin.storage.assetDelivery')}}
               .text-body2.text-grey {{ t('admin.storage.assetDeliveryHint') }}
@@ -294,7 +294,7 @@ q-page.admin-storage
           //- -----------------------
           //- Configuration
           //- -----------------------
-          q-card.shadow-1.q-pb-sm.q-mt-md
+          q-card.q-pb-sm.q-mt-md
             q-card-section
               .text-subtitle1 {{t('admin.storage.config')}}
               q-banner.q-mt-md(
@@ -367,7 +367,7 @@ q-page.admin-storage
           //- -----------------------
           //- Sync
           //- -----------------------
-          q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.target.sync && Object.keys(state.target.sync).length > 0')
+          q-card.q-pb-sm.q-mt-md(v-if='state.target.sync && Object.keys(state.target.sync).length > 0')
             q-card-section
               .text-subtitle1 {{t('admin.storage.sync')}}
               q-banner.q-mt-md(
@@ -378,7 +378,7 @@ q-page.admin-storage
           //- -----------------------
           //- Actions
           //- -----------------------
-          q-card.shadow-1.q-pb-sm.q-mt-md
+          q-card.q-pb-sm.q-mt-md
             q-card-section
               .text-subtitle1 {{t('admin.storage.actions')}}
               q-banner.q-mt-md(

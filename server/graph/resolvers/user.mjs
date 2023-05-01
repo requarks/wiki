@@ -85,12 +85,24 @@ export default {
         .whereNotNull('lastLoginAt')
         .orderBy('lastLoginAt', 'desc')
         .limit(10)
+    },
+
+    async userPermissions (obj, args, context) {
+      if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
+        throw new WIKI.Error.AuthRequired()
+      }
+
+      const currentUser = await WIKI.db.users.getById(context.req.user.id)
+      return currentUser.getPermissions()
+    },
+    async userPermissionsAtPath (obj, args, context) {
+      return []
     }
   },
   Mutation: {
     async createUser (obj, args) {
       try {
-        await WIKI.db.users.createNewUser({ ...args, passwordRaw: args.password, isVerified: true })
+        await WIKI.db.users.createNewUser({ ...args, isVerified: true })
 
         return {
           operation: generateSuccess('User created successfully')

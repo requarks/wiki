@@ -27,7 +27,6 @@ q-layout(view='hHh Lpr lff')
         label='Browse'
         aria-label='Browse'
         size='sm'
-        @click='openFileManager'
         )
     q-scroll-area.sidebar-nav(
       :thumb-style='thumbStyle'
@@ -38,21 +37,21 @@ q-layout(view='hHh Lpr lff')
         dense
         dark
         )
-        q-item-label.text-blue-2.text-caption(header) Getting Started
+        q-item-label.text-blue-2.text-caption(header) Header
         q-item(to='/install')
           q-item-section(side)
             q-icon(name='las la-dog', color='white')
-          q-item-section Requirements
+          q-item-section Link 1
         q-item(to='/install')
           q-item-section(side)
             q-icon(name='las la-cat', color='white')
-          q-item-section Installation
+          q-item-section Link 2
         q-separator.q-my-sm(dark)
         q-item(to='/install')
           q-item-section(side)
-            q-icon(name='las la-cat', color='white')
-          q-item-section Installation
-    q-bar.bg-blue-9.text-white(dense, v-if='flagsStore.experimental')
+            q-icon(name='mdi-fruit-grapes', color='white')
+          q-item-section Link 3
+    q-bar.bg-blue-9.text-white(dense, v-if='flagsStore.experimental && userStore.authenticated')
       q-btn.col(
         icon='las la-dharmachakra'
         label='History'
@@ -90,6 +89,7 @@ import { useI18n } from 'vue-i18n'
 import { useEditorStore } from 'src/stores/editor'
 import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
+import { useUserStore } from 'src/stores/user'
 
 // COMPONENTS
 
@@ -106,6 +106,7 @@ const $q = useQuasar()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 

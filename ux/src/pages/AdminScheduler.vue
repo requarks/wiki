@@ -52,7 +52,7 @@ q-page.admin-terminal
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-info-circle', size='sm')
           q-card-section.text-caption {{ t('admin.scheduler.scheduledNone') }}
-      q-card.shadow-1(v-else)
+      q-card(v-else)
         q-table(
           :rows='state.scheduledJobs'
           :columns='scheduledJobsHeaders'
@@ -109,7 +109,7 @@ q-page.admin-terminal
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-info-circle', size='sm')
           q-card-section.text-caption {{ t('admin.scheduler.upcomingNone') }}
-      q-card.shadow-1(v-else)
+      q-card(v-else)
         q-table(
           :rows='state.upcomingJobs'
           :columns='upcomingJobsHeaders'
@@ -167,7 +167,7 @@ q-page.admin-terminal
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-info-circle', size='sm')
           q-card-section.text-caption {{ t('admin.scheduler.' + state.displayMode + 'None') }}
-      q-card.shadow-1(v-else)
+      q-card(v-else)
         q-table(
           :rows='state.jobs'
           :columns='jobsHeaders'

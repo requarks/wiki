@@ -29,8 +29,8 @@ export class Authentication extends Model {
     return ['config', 'domainWhitelist', 'autoEnrollGroups']
   }
 
-  static async getStrategy(key) {
-    return WIKI.db.authentication.query().findOne({ key })
+  static async getStrategy(module) {
+    return WIKI.db.authentication.query().findOne({ module })
   }
 
   static async getStrategies({ enabledOnly = false } = {}) {

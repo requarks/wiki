@@ -39,7 +39,7 @@ export default {
    */
   async preBootWeb() {
     try {
-      WIKI.cache = new NodeCache()
+      WIKI.cache = new NodeCache({ checkperiod: 0 })
       WIKI.scheduler = await scheduler.init()
       WIKI.servers = servers
       WIKI.events = {

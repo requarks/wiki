@@ -25,7 +25,7 @@ q-page.admin-extensions
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
     .col-12
-      q-card.shadow-1
+      q-card
         q-list(separator)
           q-item(
             v-for='(ext, idx) of state.extensions'

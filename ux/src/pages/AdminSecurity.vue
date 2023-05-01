@@ -36,7 +36,7 @@ q-page.admin-mail
       //- -----------------------
       //- Security
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.security.title')}}
         q-item.q-pt-none
@@ -132,7 +132,7 @@ q-page.admin-mail
       //- -----------------------
       //- HSTS
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.security.hsts')}}
         q-item(tag='label', v-ripple)
@@ -172,7 +172,7 @@ q-page.admin-mail
       //- -----------------------
       //- Uploads
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.security.uploads')}}
         q-item.q-pt-none
@@ -226,7 +226,7 @@ q-page.admin-mail
       //- -----------------------
       //- CORS
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.security.cors')}}
         q-item
@@ -279,7 +279,7 @@ q-page.admin-mail
       //- -----------------------
       //- JWT
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.security.jwt')}}
         q-item

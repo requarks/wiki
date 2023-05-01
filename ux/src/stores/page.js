@@ -369,6 +369,10 @@ export const usePageStore = defineStore('page', {
             tocDepth: pick(pageData.tocDepth, ['min', 'max'])
           })
 
+          editorStore.$patch({
+            mode: 'edit'
+          })
+
           this.router.replace(`/${this.path}`)
         } else {
           const resp = await APOLLO_CLIENT.mutate({
@@ -390,32 +394,35 @@ export const usePageStore = defineStore('page', {
               `,
             variables: {
               id: this.id,
-              patch: pick(this, [
-                'allowComments',
-                'allowContributions',
-                'allowRatings',
-                'content',
-                'description',
-                'icon',
-                'isBrowsable',
-                'locale',
-                'password',
-                'path',
-                'publishEndDate',
-                'publishStartDate',
-                'publishState',
-                'relations',
-                'render',
-                'scriptJsLoad',
-                'scriptJsUnload',
-                'scriptCss',
-                'showSidebar',
-                'showTags',
-                'showToc',
-                'tags',
-                'title',
-                'tocDepth'
-              ])
+              patch: {
+                ...pick(this, [
+                  'allowComments',
+                  'allowContributions',
+                  'allowRatings',
+                  'content',
+                  'description',
+                  'icon',
+                  'isBrowsable',
+                  'locale',
+                  'password',
+                  'path',
+                  'publishEndDate',
+                  'publishStartDate',
+                  'publishState',
+                  'relations',
+                  'render',
+                  'scriptJsLoad',
+                  'scriptJsUnload',
+                  'scriptCss',
+                  'showSidebar',
+                  'showTags',
+                  'showToc',
+                  'tags',
+                  'title',
+                  'tocDepth'
+                ]),
+                reasonForChange: editorStore.reasonForChange
+              }
             }
           })
           const result = resp?.data?.updatePage?.operation ?? {}
@@ -427,7 +434,8 @@ export const usePageStore = defineStore('page', {
         const curDate = DateTime.utc()
         editorStore.$patch({
           lastChangeTimestamp: curDate,
-          lastSaveTimestamp: curDate
+          lastSaveTimestamp: curDate,
+          reasonForChange: ''
         })
       } catch (err) {
         console.warn(err)

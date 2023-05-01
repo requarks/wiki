@@ -40,7 +40,7 @@ q-page.admin-groups
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
     .col-12
-      q-card.shadow-1
+      q-card
         q-table(
           :rows='state.groups'
           :columns='headers'

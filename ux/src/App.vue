@@ -9,6 +9,7 @@ import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 import { setCssVar, useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
 
 import '@mdi/font/css/materialdesignicons.css'
 
@@ -23,6 +24,10 @@ const $q = useQuasar()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+
+// I18N
+
+const { t } = useI18n()
 
 // ROUTER
 
@@ -94,14 +99,33 @@ router.beforeEach(async (to, from) => {
     console.info(`Refreshing user ${userStore.id} profile...`)
     await userStore.refreshProfile()
   }
-  // Apply Theme
+  // Page Permissions
+  await userStore.fetchPagePermissions(to.path)
+})
+
+// GLOBAL EVENTS HANDLERS
+
+EVENT_BUS.on('logout', () => {
+  router.push('/')
+  $q.notify({
+    type: 'positive',
+    icon: 'las la-sign-out-alt',
+    message: t('auth.logoutSuccess')
+  })
+})
+EVENT_BUS.on('applyTheme', () => {
   applyTheme()
 })
+
+// LOADER
+
 router.afterEach(() => {
   if (!state.isInitialized) {
     state.isInitialized = true
+    applyTheme()
     document.querySelector('.init-loading').remove()
   }
   siteStore.routerLoading = false
 })
+
 </script>

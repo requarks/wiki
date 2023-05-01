@@ -73,7 +73,8 @@
   //- PAGE ACTIONS
   .col-auto.q-pa-md.flex.items-center.justify-end
     template(v-if='!editorStore.isActive')
-      q-btn.q-mr-md(
+      q-btn.q-ml-md(
+        v-if='userStore.authenticated'
         flat
         dense
         icon='las la-bell'
@@ -81,7 +82,8 @@
         aria-label='Watch Page'
         )
         q-tooltip Watch Page
-      q-btn.q-mr-md(
+      q-btn.q-ml-md(
+        v-if='userStore.authenticated'
         flat
         dense
         icon='las la-bookmark'
@@ -89,7 +91,7 @@
         aria-label='Bookmark Page'
         )
         q-tooltip Bookmark Page
-      q-btn.q-mr-md(
+      q-btn.q-ml-md(
         flat
         dense
         icon='las la-share-alt'
@@ -98,7 +100,7 @@
         )
         q-tooltip Share
         social-sharing-menu
-      q-btn.q-mr-md(
+      q-btn.q-ml-md(
         flat
         dense
         icon='las la-print'
@@ -107,7 +109,7 @@
         )
         q-tooltip Print
     template(v-if='editorStore.isActive')
-      q-btn.q-mr-sm.acrylic-btn(
+      q-btn.q-ml-md.acrylic-btn(
         icon='las la-question-circle'
         flat
         color='grey'
@@ -115,7 +117,7 @@
         target='_blank'
         type='a'
       )
-      q-btn.q-mr-sm.acrylic-btn(
+      q-btn.q-ml-sm.acrylic-btn(
         icon='las la-cog'
         flat
         color='grey'
@@ -123,7 +125,7 @@
         @click='openEditorSettings'
       )
     template(v-if='editorStore.isActive || editorStore.hasPendingChanges')
-      q-btn.acrylic-btn.q-mr-sm(
+      q-btn.acrylic-btn.q-ml-sm(
         flat
         icon='las la-times'
         color='negative'
@@ -132,7 +134,7 @@
         no-caps
         @click='discardChanges'
       )
-      q-btn.acrylic-btn(
+      q-btn.acrylic-btn.q-ml-sm(
         v-if='editorStore.mode === `create`'
         flat
         icon='las la-check'
@@ -142,7 +144,7 @@
         no-caps
         @click='createPage'
       )
-      q-btn.acrylic-btn(
+      q-btn.acrylic-btn.q-ml-sm(
         v-else
         flat
         icon='las la-check'
@@ -153,8 +155,8 @@
         no-caps
         @click='saveChanges'
       )
-    template(v-else)
-      q-btn.acrylic-btn(
+    template(v-else-if='userStore.can(`edit:pages`)')
+      q-btn.acrylic-btn.q-ml-md(
         flat
         icon='las la-edit'
         color='deep-orange-9'
@@ -292,6 +294,31 @@ async function saveChangesCommit () {
 }
 
 async function createPage () {
+  // Handle home page creation flow
+  if (pageStore.path === 'home') {
+    $q.loading.show()
+    try {
+      await pageStore.pageSave()
+      $q.notify({
+        type: 'positive',
+        message: 'Homepage created successfully.'
+      })
+      editorStore.$patch({
+        isActive: false
+      })
+      router.replace('/')
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to create homepage.',
+        caption: err.message
+      })
+    }
+    $q.loading.hide()
+    return
+  }
+
+  // All other pages
   $q.dialog({
     component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
     componentProps: {

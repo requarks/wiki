@@ -36,7 +36,7 @@ q-page.admin-login
       //- -----------------------
       //- Experience
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.login.experience')}}
         q-item
@@ -137,7 +137,7 @@ q-page.admin-login
       //- -----------------------
       //- Providers
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.login.providers')}}
         q-card-section.admin-login-providers.q-pt-none

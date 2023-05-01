@@ -37,7 +37,7 @@ q-page.admin-system
       //- -----------------------
       //- WIKI.JS
       //- -----------------------
-      q-card.q-pb-sm.shadow-1
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 Wiki.js
         q-item
@@ -69,7 +69,7 @@ q-page.admin-system
       //- CLIENT
       //- -----------------------
       q-no-ssr
-        q-card.q-mt-md.q-pb-sm.shadow-1
+        q-card.q-mt-md.q-pb-sm
           q-card-section
             .text-subtitle1 {{t('admin.system.client')}}
           q-item
@@ -116,7 +116,7 @@ q-page.admin-system
       //- -----------------------
       //- ENGINES
       //- -----------------------
-      q-card.q-pb-sm.shadow-1
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.system.engines')}}
         q-item
@@ -146,7 +146,7 @@ q-page.admin-system
       //- -----------------------
       //- HOST INFORMATION
       //- -----------------------
-      q-card.q-mt-md.q-pb-sm.shadow-1
+      q-card.q-mt-md.q-pb-sm
         q-card-section
           .text-subtitle1 {{ t('admin.system.hostInfo') }}
         q-item
@@ -450,6 +450,11 @@ Total RAM: ${state.info.ramTotal}`
     padding: 8px 12px;
     border-radius: 4px;
     font-family: 'Roboto Mono', Consolas, "Liberation Mono", Courier, monospace;
+
+    @at-root .body--dark & {
+      background-color: $dark-4;
+      color: #FFF;
+    }
   }
 }
 </style>

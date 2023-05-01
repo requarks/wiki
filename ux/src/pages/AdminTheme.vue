@@ -36,7 +36,7 @@ q-page.admin-theme
       //- -----------------------
       //- Theme Options
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section.flex.items-center
           .text-subtitle1 {{t('admin.theme.appearance')}}
           q-space
@@ -90,7 +90,7 @@ q-page.admin-theme
       //- -----------------------
       //- Theme Layout
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.theme.layout')}}
         q-item
@@ -170,7 +170,7 @@ q-page.admin-theme
       //- -----------------------
       //- Fonts
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section.flex.items-center
           .text-subtitle1 {{t('admin.theme.fonts')}}
           q-space
@@ -216,7 +216,7 @@ q-page.admin-theme
       //- -----------------------
       //- Code Injection
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.theme.codeInjection')}}
         q-item
@@ -471,12 +471,7 @@ async function save () {
         siteStore.$patch({
           theme: patchTheme
         })
-        $q.dark.set(state.config.dark)
-        setCssVar('primary', state.config.colorPrimary)
-        setCssVar('secondary', state.config.colorSecondary)
-        setCssVar('accent', state.config.colorAccent)
-        setCssVar('header', state.config.colorHeader)
-        setCssVar('sidebar', state.config.colorSidebar)
+        EVENT_BUS.emit('applyTheme')
       }
       $q.notify({
         type: 'positive',

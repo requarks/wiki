@@ -36,7 +36,7 @@ q-page.admin-general
       //- -----------------------
       //- Site Info
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.general.siteInfo')}}
         q-item
@@ -85,7 +85,7 @@ q-page.admin-general
       //- -----------------------
       //- Footer / Copyright
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.general.footerCopyright')}}
         q-item
@@ -135,7 +135,7 @@ q-page.admin-general
       //- -----------------------
       //- FEATURES
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.general.features')}}
         q-item(tag='label')
@@ -227,7 +227,7 @@ q-page.admin-general
       //- -----------------------
       //- URL Handling
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.general.urlHandling')}}
         q-item
@@ -247,7 +247,7 @@ q-page.admin-general
       //- -----------------------
       //- Logo
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.general.logo')}}
         q-item
@@ -333,7 +333,7 @@ q-page.admin-general
       //- -----------------------
       //- Defaults
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.config.defaults')
+      q-card.q-pb-sm.q-mt-md(v-if='state.config.defaults')
         q-card-section
           .text-subtitle1 {{t('admin.general.defaults')}}
         q-item
@@ -409,7 +409,7 @@ q-page.admin-general
       //- -----------------------
       //- Uploads
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.config.uploads')
+      q-card.q-pb-sm.q-mt-md(v-if='state.config.uploads')
         q-card-section
           .text-subtitle1 {{t('admin.general.uploads')}}
         q-item
@@ -449,7 +449,7 @@ q-page.admin-general
       //- -----------------------
       //- SEO
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.config.robots')
+      q-card.q-pb-sm.q-mt-md(v-if='state.config.robots')
         q-card-section
           .text-subtitle1 SEO
         q-item(tag='label')

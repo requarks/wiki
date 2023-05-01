@@ -36,7 +36,7 @@ q-page.admin-mail
       //- -----------------------
       //- Configuration
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.mail.configuration')}}
         q-item
@@ -68,7 +68,7 @@ q-page.admin-mail
       //- -----------------------
       //- SMTP
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.mail.smtp')}}
         q-item
@@ -168,7 +168,7 @@ q-page.admin-mail
       //- -----------------------
       //- DKIM
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.mail.dkim')}}
         q-item.q-pt-none
@@ -237,7 +237,7 @@ q-page.admin-mail
       //- -----------------------
       //- MAIL TEMPLATES
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.mail.templates')}}
         q-list
@@ -271,7 +271,7 @@ q-page.admin-mail
       //- -----------------------
       //- SMTP TEST
       //- -----------------------
-      q-card.shadow-1.q-pb-sm.q-mt-md
+      q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.mail.test')}}
         q-item

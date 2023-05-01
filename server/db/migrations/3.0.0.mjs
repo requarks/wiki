@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import bcrypt from 'bcryptjs-then'
+import bcrypt from 'bcryptjs'
 import crypto from 'node:crypto'
 import { DateTime } from 'luxon'
 import { pem2jwk } from 'pem-jwk'

@@ -49,7 +49,7 @@
     "apollo-server-express": "3.6.7",
     "auto-load": "3.0.4",
     "aws-sdk": "2.1353.0",
-    "bcryptjs-then": "1.0.1",
+    "bcryptjs": "2.4.3",
     "body-parser": "1.20.2",
     "chalk": "5.2.0",
     "cheerio": "1.0.0-rc.12",

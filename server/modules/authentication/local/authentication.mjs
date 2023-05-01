@@ -1,5 +1,5 @@
 /* global WIKI */
-import bcrypt from 'bcryptjs-then'
+import bcrypt from 'bcryptjs'
 
 // ------------------------------------
 // Local Account

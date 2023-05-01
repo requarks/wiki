@@ -1,23 +1,39 @@
 <template lang="pug">
 .page-actions.column.items-stretch.order-last(:class='editorStore.isActive ? `is-editor` : ``')
+  template(v-if='userStore.can(`edit:pages`)')
+    q-btn.q-py-md(
+      flat
+      icon='las la-pen-nib'
+      :color='editorStore.isActive ? `white` : `deep-orange-9`'
+      aria-label='Page Properties'
+      @click='togglePageProperties'
+      )
+      q-tooltip(anchor='center left' self='center right') Page Properties
+    q-btn.q-py-md(
+      v-if='flagsStore.experimental'
+      flat
+      icon='las la-project-diagram'
+      :color='editorStore.isActive ? `white` : `deep-orange-9`'
+      aria-label='Page Data'
+      @click='togglePageData'
+      disable
+      )
+      q-tooltip(anchor='center left' self='center right') Page Data
+    q-separator.q-my-sm(inset)
   q-btn.q-py-md(
     flat
-    icon='las la-pen-nib'
-    :color='editorStore.isActive ? `white` : `deep-orange-9`'
-    aria-label='Page Properties'
-    @click='togglePageProperties'
+    icon='las la-history'
+    :color='editorStore.isActive ? `white` : `grey`'
+    aria-label='Page History'
     )
-    q-tooltip(anchor='center left' self='center right') Page Properties
+    q-tooltip(anchor='center left' self='center right') Page History
   q-btn.q-py-md(
     flat
-    icon='las la-project-diagram'
-    :color='editorStore.isActive ? `white` : `deep-orange-9`'
-    aria-label='Page Data'
-    @click='togglePageData'
-    disable
-    v-if='flagsStore.experimental'
+    icon='las la-code'
+    :color='editorStore.isActive ? `white` : `grey`'
+    aria-label='Page Source'
     )
-    q-tooltip(anchor='center left' self='center right') Page Data
+    q-tooltip(anchor='center left' self='center right') Page Source
   template(v-if='!(editorStore.isActive && editorStore.mode === `create`)')
     q-separator.q-my-sm(inset)
     q-btn.q-py-sm(
@@ -34,22 +50,12 @@
         transition-show='jump-left'
         )
         q-list(padding, style='min-width: 225px;')
-          q-item(clickable)
-            q-item-section.items-center(avatar)
-              q-icon(color='deep-orange-9', name='las la-history', size='sm')
-            q-item-section
-              q-item-label View History
-          q-item(clickable)
-            q-item-section.items-center(avatar)
-              q-icon(color='deep-orange-9', name='las la-code', size='sm')
-            q-item-section
-              q-item-label View Source
-          q-item(clickable)
+          q-item(clickable, v-if='userStore.can(`manage:pages`)')
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-atom', size='sm')
             q-item-section
               q-item-label Convert Page
-          q-item(clickable)
+          q-item(clickable, v-if='userStore.can(`edit:pages`)')
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-magic', size='sm')
             q-item-section
@@ -62,6 +68,7 @@
   q-space
   template(v-if='!(editorStore.isActive && editorStore.mode === `create`)')
     q-btn.q-py-sm(
+      v-if='userStore.can(`create:pages`)'
       flat
       icon='las la-copy'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
@@ -70,6 +77,7 @@
       )
       q-tooltip(anchor='center left' self='center right') Duplicate Page
     q-btn.q-py-sm(
+      v-if='userStore.can(`manage:pages`)'
       flat
       icon='las la-share'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
@@ -78,6 +86,7 @@
       )
       q-tooltip(anchor='center left' self='center right') Rename / Move Page
     q-btn.q-py-sm(
+      v-if='userStore.can(`delete:pages`)'
       flat
       icon='las la-trash'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
@@ -99,6 +108,7 @@ import { useEditorStore } from 'src/stores/editor'
 import { useFlagsStore } from 'src/stores/flags'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
+import { useUserStore } from 'src/stores/user'
 
 // QUASAR
 
@@ -110,6 +120,7 @@ const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 

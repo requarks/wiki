@@ -28,7 +28,7 @@ q-btn.q-ml-md(flat, round, dense, color='grey')
           :label='t(`common.header.logout`)'
           icon='las la-sign-out-alt'
           color='red'
-          href='/logout'
+          @click='userStore.logout()'
           no-caps
           )
   q-tooltip {{ t('common.header.account') }}

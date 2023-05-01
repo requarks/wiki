@@ -33,7 +33,7 @@ q-page.admin-flags
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
     .col-12.col-lg-7
-      q-card.shadow-1.q-py-sm
+      q-card.q-py-sm
         q-item
           q-item-section
             q-card.bg-negative.text-white.rounded-borders(flat)
@@ -84,7 +84,7 @@ q-page.admin-flags
               unchecked-icon='las la-times'
               :aria-label='t(`admin.flags.sqlLog.label`)'
               )
-      q-card.shadow-1.q-py-sm.q-mt-md
+      q-card.q-py-sm.q-mt-md
         q-item
           blueprint-icon(icon='administrative-tools')
           q-item-section

@@ -45,7 +45,7 @@ q-page.admin-locale
       //- -----------------------
       //- Locale Options
       //- -----------------------
-      q-card.shadow-1.q-pb-sm
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.locale.settings')}}
         q-item
@@ -93,7 +93,7 @@ q-page.admin-locale
       //- -----------------------
       //- Namespacing
       //- -----------------------
-      q-card.shadow-1.q-pb-sm(v-if='state.namespacing')
+      q-card.q-pb-sm(v-if='state.namespacing')
         q-card-section
           .text-subtitle1 {{t('admin.locale.activeNamespaces')}}
 

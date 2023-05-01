@@ -91,6 +91,11 @@ body::-webkit-scrollbar-thumb {
   }
 }
 
+.q-field--dark .q-field__control:before {
+  background-color: $dark-5;
+  border-color: rgba(255,255,255,.25);
+}
+
 // ------------------------------------------------------------------
 // ICONS SIZE FIX
 // ------------------------------------------------------------------
@@ -192,6 +197,22 @@ body::-webkit-scrollbar-thumb {
 }
 
 // ------------------------------------------------------------------
+// CARDS
+// ------------------------------------------------------------------
+
+.q-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+
+  &.q-card--dark {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+  }
+
+  .q-separator--dark {
+    background-color: rgba(0,0,0,.7);
+  }
+}
+
+// ------------------------------------------------------------------
 // DROPDOWN MENUS
 // ------------------------------------------------------------------
 
@@ -208,6 +229,10 @@ body::-webkit-scrollbar-thumb {
   > .q-card {
     background-color: transparent !important;
   }
+}
+
+.q-menu--dark {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
 }
 
 // ------------------------------------------------------------------

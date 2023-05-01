@@ -32,7 +32,7 @@ q-layout(view='hHh Lpr lff')
           q-item(
             clickable
             v-ripple
-            href='/logout'
+            @click='userStore.logout()'
             )
             q-item-section(side)
               q-icon(name='las la-sign-out-alt', color='negative')

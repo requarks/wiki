@@ -73,6 +73,7 @@ q-header.bg-header.text-white.site-header(
           size='24px'
         )
       q-btn.q-ml-md(
+        v-if='userStore.can(`write:pages`)'
         flat
         round
         dense
@@ -83,6 +84,7 @@ q-header.bg-header.text-white.site-header(
         q-tooltip Create New Page
         new-menu
       q-btn.q-ml-md(
+        v-if='userStore.can(`browse:fileman`)'
         flat
         round
         dense
@@ -93,6 +95,7 @@ q-header.bg-header.text-white.site-header(
         )
         q-tooltip File Manager
       q-btn.q-ml-md(
+        v-if='userStore.can(`access:admin`)'
         flat
         round
         dense
@@ -102,7 +105,21 @@ q-header.bg-header.text-white.site-header(
         :aria-label='t(`common.header.admin`)'
         )
         q-tooltip {{ t('common.header.admin') }}
-      account-menu
+
+      //- USER BUTTON / DROPDOWN
+      account-menu(v-if='userStore.authenticated')
+      q-btn.q-ml-md(
+        v-else
+        flat
+        rounded
+        icon='las la-sign-in-alt'
+        color='white'
+        :label='$t(`common.actions.login`)'
+        :aria-label='$t(`common.actions.login`)'
+        to='/login'
+        padding='sm'
+        no-caps
+      )
 </template>
 
 <script setup>
@@ -114,6 +131,7 @@ import { useQuasar } from 'quasar'
 import { reactive } from 'vue'
 
 import { useSiteStore } from 'src/stores/site'
+import { useUserStore } from 'src/stores/user'
 
 // QUASAR
 
@@ -122,6 +140,7 @@ const $q = useQuasar()
 // STORES
 
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 

@@ -6,11 +6,10 @@ import jwt from 'jsonwebtoken'
 import { Model } from 'objection'
 import validate from 'validate.js'
 import qr from 'qr-image'
+import bcrypt from 'bcryptjs'
 
 import { Group } from './groups.mjs'
 import { Locale } from './locales.mjs'
-
-const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
 /**
  * Users model
@@ -70,18 +69,12 @@ export class User extends Model {
     await super.$beforeUpdate(opt, context)
 
     this.updatedAt = new Date().toISOString()
-
-    if (!(opt.patch && this.password === undefined)) {
-      await this.generateHash()
-    }
   }
   async $beforeInsert(context) {
     await super.$beforeInsert(context)
 
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
-
-    await this.generateHash()
   }
 
   // ------------------------------------------------
@@ -524,116 +517,104 @@ export class User extends Model {
    *
    * @param {Object} param0 User Fields
    */
-  static async createNewUser ({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
+  static async createNewUser ({ email, password, name, groups, mustChangePassword = false, sendWelcomeEmail = false }) {
     // Input sanitization
-    email = email.toLowerCase()
+    email = email.toLowerCase().trim()
 
     // Input validation
-    let validation = null
-    if (providerKey === 'local') {
-      validation = validate({
-        email,
-        passwordRaw,
-        name
-      }, {
-        email: {
-          email: true,
-          length: {
-            maximum: 255
-          }
-        },
-        passwordRaw: {
-          presence: {
-            allowEmpty: false
-          },
-          length: {
-            minimum: 6
-          }
-        },
-        name: {
-          presence: {
-            allowEmpty: false
-          },
-          length: {
-            minimum: 2,
-            maximum: 255
-          }
+    const validation = validate({
+      email,
+      password,
+      name
+    }, {
+      email: {
+        email: true,
+        length: {
+          maximum: 255
         }
-      }, { format: 'flat' })
-    } else {
-      validation = validate({
-        email,
-        name
-      }, {
-        email: {
-          email: true,
-          length: {
-            maximum: 255
-          }
+      },
+      password: {
+        presence: {
+          allowEmpty: false
         },
-        name: {
-          presence: {
-            allowEmpty: false
-          },
-          length: {
-            minimum: 2,
-            maximum: 255
-          }
+        length: {
+          minimum: 6
         }
-      }, { format: 'flat' })
-    }
+      },
+      name: {
+        presence: {
+          allowEmpty: false
+        },
+        length: {
+          minimum: 2,
+          maximum: 255
+        }
+      }
+    }, { format: 'flat' })
 
     if (validation && validation.length > 0) {
-      throw new WIKI.Error.InputInvalid(validation[0])
+      throw new Error(`ERR_INVALID_INPUT: ${validation[0]}`)
     }
 
     // Check if email already exists
-    const usr = await WIKI.db.users.query().findOne({ email, providerKey })
-    if (!usr) {
-      // Create the account
-      let newUsrData = {
-        providerKey,
-        email,
-        name,
-        locale: 'en',
-        defaultEditor: 'markdown',
-        tfaIsActive: false,
-        isSystem: false,
-        isActive: true,
-        isVerified: true,
-        mustChangePwd: false
-      }
+    const usr = await WIKI.db.users.query().findOne({ email })
+    if (usr) {
+      throw new Error('ERR_ACCOUNT_ALREADY_EXIST')
+    }
 
-      if (providerKey === `local`) {
-        newUsrData.password = passwordRaw
-        newUsrData.mustChangePwd = (mustChangePassword === true)
+    // Create the account
+    const localAuth = await WIKI.db.authentication.getStrategy('local')
+    const newUsr = await WIKI.db.users.query().insert({
+      email,
+      name,
+      auth: {
+        [localAuth.id]: {
+          password: await bcrypt.hash(password, 12),
+          mustChangePwd: mustChangePassword,
+          restrictLogin: false,
+          tfaRequired: false,
+          tfaSecret: ''
+        }
+      },
+      localeCode: 'en',
+      hasAvatar: false,
+      isSystem: false,
+      isActive: true,
+      isVerified: true,
+      meta: {
+        jobTitle: '',
+        location: '',
+        pronouns: ''
+      },
+      prefs: {
+        cvd: 'none',
+        timezone: 'America/New_York',
+        appearance: 'site',
+        dateFormat: 'YYYY-MM-DD',
+        timeFormat: '12h'
       }
+    })
 
-      const newUsr = await WIKI.db.users.query().insert(newUsrData)
+    // Assign to group(s)
+    if (groups.length > 0) {
+      await newUsr.$relatedQuery('groups').relate(groups)
+    }
 
-      // Assign to group(s)
-      if (groups.length > 0) {
-        await newUsr.$relatedQuery('groups').relate(groups)
-      }
-
-      if (sendWelcomeEmail) {
-        // Send welcome email
-        await WIKI.mail.send({
-          template: 'accountWelcome',
-          to: email,
-          subject: `Welcome to the wiki ${WIKI.config.title}`,
-          data: {
-            preheadertext: `You've been invited to the wiki ${WIKI.config.title}`,
-            title: `You've been invited to the wiki ${WIKI.config.title}`,
-            content: `Click the button below to access the wiki.`,
-            buttonLink: `${WIKI.config.host}/login`,
-            buttonText: 'Login'
-          },
-          text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
-        })
-      }
-    } else {
-      throw new WIKI.Error.AuthAccountAlreadyExists()
+    if (sendWelcomeEmail) {
+      // Send welcome email
+      await WIKI.mail.send({
+        template: 'accountWelcome',
+        to: email,
+        subject: `Welcome to the wiki ${WIKI.config.title}`,
+        data: {
+          preheadertext: `You've been invited to the wiki ${WIKI.config.title}`,
+          title: `You've been invited to the wiki ${WIKI.config.title}`,
+          content: `Click the button below to access the wiki.`,
+          buttonLink: `${WIKI.config.host}/login`,
+          buttonText: 'Login'
+        },
+        text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
+      })
     }
   }
 

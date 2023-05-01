@@ -5,6 +5,8 @@ import gql from 'graphql-tag'
 import { DateTime } from 'luxon'
 import { getAccessibleColor } from 'src/helpers/accessibility'
 
+import { useSiteStore } from './site'
+
 export const useUserStore = defineStore('user', {
   state: () => ({
     id: '10000000-0000-4000-8000-000000000001',
@@ -18,6 +20,7 @@ export const useUserStore = defineStore('user', {
     appearance: 'site',
     cvd: 'none',
     permissions: [],
+    pagePermissions: [],
     iat: 0,
     exp: null,
     authenticated: false,
@@ -27,6 +30,9 @@ export const useUserStore = defineStore('user', {
   getters: {},
   actions: {
     async refreshAuth () {
+      if (this.exp && this.exp < DateTime.now()) {
+        return
+      }
       const jwtCookie = Cookies.get('jwt')
       if (jwtCookie) {
         try {
@@ -38,6 +44,7 @@ export const useUserStore = defineStore('user', {
           this.token = jwtCookie
           if (this.exp <= DateTime.utc()) {
             console.info('Token has expired. Attempting renew...')
+            // TODO: Renew token
           } else {
             this.authenticated = true
           }
@@ -69,6 +76,7 @@ export const useUserStore = defineStore('user', {
                   name
                 }
               }
+              userPermissions
             }
           `,
           variables: {
@@ -90,13 +98,71 @@ export const useUserStore = defineStore('user', {
         this.timeFormat = resp.prefs.timeFormat || '12h'
         this.appearance = resp.prefs.appearance || 'site'
         this.cvd = resp.prefs.cvd || 'none'
+        this.permissions = respRaw.data.userPermissions || []
         this.profileLoaded = true
       } catch (err) {
         console.warn(err)
       }
     },
+    logout () {
+      Cookies.remove('jwt', { path: '/' })
+      this.$patch({
+        id: '10000000-0000-4000-8000-000000000001',
+        email: '',
+        name: '',
+        hasAvatar: false,
+        localeCode: '',
+        timezone: '',
+        dateFormat: 'YYYY-MM-DD',
+        timeFormat: '12h',
+        appearance: 'site',
+        cvd: 'none',
+        permissions: [],
+        iat: 0,
+        exp: null,
+        authenticated: false,
+        token: '',
+        profileLoaded: false
+      })
+      EVENT_BUS.emit('logout')
+    },
     getAccessibleColor (base, hexBase) {
       return getAccessibleColor(base, hexBase, this.cvd)
+    },
+    can (permission) {
+      if (this.permissions.includes('manage:system') || this.permissions.includes(permission) || this.pagePermissions.includes(permission)) {
+        return true
+      }
+      return false
+    },
+    async fetchPagePermissions (path) {
+      if (path.startsWith('/_')) {
+        this.pagePermissions = []
+        return
+      }
+      const siteStore = useSiteStore()
+      try {
+        const respRaw = await APOLLO_CLIENT.query({
+          query: gql`
+            query fetchPagePermissions (
+              $siteId: UUID!
+              $path: String!
+            ) {
+              userPermissionsAtPath(
+                siteId: $siteId
+                path: $path
+              )
+            }
+          `,
+          variables: {
+            siteId: siteStore.id,
+            path
+          }
+        })
+        this.pagePermissions = respRaw?.data?.userPermissionsAtPath || []
+      } catch (err) {
+        console.warn(`Failed to fetch page permissions at path ${path}!`)
+      }
     }
   }
 })
