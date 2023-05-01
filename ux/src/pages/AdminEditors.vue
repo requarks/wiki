@@ -11,17 +11,21 @@ q-page.admin-flags
         icon='las la-question-circle'
         flat
         color='grey'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/editors`'
         target='_blank'
         type='a'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-redo-alt'
         flat
         color='secondary'
         :loading='state.loading > 0'
+        :aria-label='t(`common.actions.refresh`)'
         @click='refresh'
         )
+        q-tooltip {{ t(`common.actions.refresh`) }}
       q-btn(
         unelevated
         icon='mdi-check'

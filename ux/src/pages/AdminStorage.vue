@@ -30,10 +30,12 @@ q-page.admin-storage
         icon='las la-question-circle'
         flat
         color='grey'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/storage`'
         target='_blank'
         type='a'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn(
         unelevated
         icon='mdi-check'

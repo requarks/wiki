@@ -89,9 +89,6 @@ type SiteFeatures {
 }
 
 type SiteDefaults {
-  timezone: String
-  dateFormat: String
-  timeFormat: String
   tocDepth: PageTocDepth
 }
 
@@ -206,9 +203,6 @@ input SiteFeaturesInput {
 }
 
 input SiteDefaultsInput {
-  timezone: String
-  dateFormat: String
-  timeFormat: String
   tocDepth: PageTocDepthInput
 }
 

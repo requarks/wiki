@@ -29,17 +29,21 @@ q-page.admin-terminal
         icon='las la-question-circle'
         flat
         color='grey'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/scheduler`'
         target='_blank'
         type='a'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-redo-alt'
         flat
         color='secondary'
         :loading='state.loading > 0'
+        :aria-label='t(`common.actions.refresh`)'
         @click='load'
-      )
+        )
+        q-tooltip {{ t(`common.actions.refresh`) }}
   q-separator(inset)
   .q-pa-md.q-gutter-md
     template(v-if='state.displayMode === `scheduled`')

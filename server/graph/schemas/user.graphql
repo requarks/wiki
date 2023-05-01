@@ -16,6 +16,8 @@ extend type Query {
     id: UUID!
   ): User
 
+  userDefaults: UserDefaults
+
   lastLogins: [UserLastLogin]
 
   userPermissions: [String]
@@ -90,6 +92,12 @@ extend type Mutation {
   clearUserAvatar(
     id: UUID!
   ): DefaultResponse
+
+  updateUserDefaults(
+    timezone: String!
+    dateFormat: String!
+    timeFormat: String!
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -140,6 +148,12 @@ type UserAuth {
   strategyKey: String
   strategyIcon: String
   config: JSON
+}
+
+type UserDefaults {
+  timezone: String
+  dateFormat: String
+  timeFormat: String
 }
 
 type UserTokenResponse {

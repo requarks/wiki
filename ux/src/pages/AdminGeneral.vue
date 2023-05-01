@@ -11,17 +11,21 @@ q-page.admin-general
         icon='las la-question-circle'
         flat
         color='grey'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/sites#general`'
         target='_blank'
         type='a'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-redo-alt'
         flat
         color='secondary'
         :loading='state.loading > 0'
+        :aria-label='t(`common.actions.refresh`)'
         @click='load'
         )
+        q-tooltip {{ t(`common.actions.refresh`) }}
       q-btn(
         unelevated
         icon='mdi-check'
@@ -337,57 +341,6 @@ q-page.admin-general
         q-card-section
           .text-subtitle1 {{t('admin.general.defaults')}}
         q-item
-          blueprint-icon(icon='timezone')
-          q-item-section
-            q-item-label {{t(`admin.general.defaultTimezone`)}}
-            q-item-label(caption) {{t(`admin.general.defaultTimezoneHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.config.defaults.timezone'
-              :options='timezones'
-              option-value='value'
-              option-label='text'
-              emit-value
-              map-options
-              dense
-              options-dense
-              :virtual-scroll-slice-size='1000'
-              :aria-label='t(`admin.general.defaultTimezone`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='calendar')
-          q-item-section
-            q-item-label {{t(`admin.general.defaultDateFormat`)}}
-            q-item-label(caption) {{t(`admin.general.defaultDateFormatHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.config.defaults.dateFormat'
-              emit-value
-              map-options
-              dense
-              :aria-label='t(`admin.general.defaultDateFormat`)'
-              :options='dateFormats'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='clock')
-          q-item-section
-            q-item-label {{t(`admin.general.defaultTimeFormat`)}}
-            q-item-label(caption) {{t(`admin.general.defaultTimeFormatHint`)}}
-          q-item-section.col-auto
-            q-btn-toggle(
-              v-model='state.config.defaults.timeFormat'
-              push
-              glossy
-              no-caps
-              toggle-color='primary'
-              :options='timeFormats'
-            )
-        q-separator.q-my-sm(inset)
-        q-item
           blueprint-icon(icon='depth')
           q-item-section
             q-item-label {{t(`admin.general.defaultTocDepth`)}}
@@ -589,25 +542,11 @@ const reasonForChangeModes = [
   { value: 'optional', label: t('admin.general.reasonForChangeOptional') },
   { value: 'required', label: t('admin.general.reasonForChangeRequired') }
 ]
-const dateFormats = [
-  { value: '', label: t('profile.localeDefault') },
-  { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
-  { value: 'DD.MM.YYYY', label: 'DD.MM.YYYY' },
-  { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
-  { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
-  { value: 'YYYY/MM/DD', label: 'YYYY/MM/DD' }
-]
-const timeFormats = [
-  { value: '12h', label: t('admin.general.defaultTimeFormat12h') },
-  { value: '24h', label: t('admin.general.defaultTimeFormat24h') }
-]
 const uploadConflictBehaviors = [
   { value: 'overwrite', label: t('admin.general.uploadConflictBehaviorOverwrite') },
   { value: 'reject', label: t('admin.general.uploadConflictBehaviorReject') },
   { value: 'new', label: t('admin.general.uploadConflictBehaviorNew') }
 ]
-
-const timezones = Intl.supportedValuesOf('timeZone')
 
 const rulesTitle = [
   val => /^[^<>"]+$/.test(val) || t('admin.general.siteTitleInvalidChars')
@@ -664,9 +603,6 @@ async function load () {
             search
           }
           defaults {
-            timezone
-            dateFormat
-            timeFormat
             tocDepth {
               min
               max
@@ -735,9 +671,6 @@ async function save () {
             search: state.config.features?.search ?? false
           },
           defaults: {
-            timezone: state.config.defaults?.timezone ?? 'America/New_York',
-            dateFormat: state.config.defaults?.dateFormat ?? 'YYYY-MM-DD',
-            timeFormat: state.config.defaults?.timeFormat ?? '12h',
             tocDepth: {
               min: state.config.defaults?.tocDepth?.min ?? 1,
               max: state.config.defaults?.tocDepth?.max ?? 2

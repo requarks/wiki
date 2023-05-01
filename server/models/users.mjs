@@ -588,10 +588,10 @@ export class User extends Model {
       },
       prefs: {
         cvd: 'none',
-        timezone: 'America/New_York',
+        timezone: WIKI.config.userDefaults.timezone || 'America/New_York',
         appearance: 'site',
-        dateFormat: 'YYYY-MM-DD',
-        timeFormat: '12h'
+        dateFormat: WIKI.config.userDefaults.dateFormat || 'YYYY-MM-DD',
+        timeFormat: WIKI.config.userDefaults.timeFormat || '12h'
       }
     })
 

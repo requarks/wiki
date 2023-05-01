@@ -22,6 +22,7 @@ q-page.admin-mail
         :loading='state.loading > 0'
         @click='load'
         )
+        q-tooltip {{ t(`common.actions.refresh`) }}
       q-btn(
         unelevated
         icon='mdi-check'

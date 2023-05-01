@@ -20,16 +20,29 @@ q-page.admin-groups
         flat
         color='grey'
         type='a'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/groups`'
         target='_blank'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-redo-alt'
         flat
         color='secondary'
+        :aria-label='t(`common.actions.refresh`)'
         @click='load'
         :loading='state.loading > 0'
         )
+        q-tooltip {{ t(`common.actions.refresh`) }}
+      q-btn.q-mr-sm(
+        icon='las la-user-cog'
+        unelevated
+        color='secondary'
+        :aria-label='t(`admin.users.defaults`)'
+        @click=''
+        )
+        q-tooltip {{ t(`admin.users.defaults`) }}
+        user-defaults-menu
       q-btn(
         unelevated
         icon='las la-plus'
@@ -117,6 +130,7 @@ import { useAdminStore } from 'src/stores/admin'
 import { useSiteStore } from 'src/stores/site'
 
 import UserCreateDialog from '../components/UserCreateDialog.vue'
+import UserDefaultsMenu from 'src/components/UserDefaultsMenu.vue'
 
 // QUASAR
 

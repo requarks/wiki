@@ -19,17 +19,21 @@ q-page.admin-api
         icon='las la-question-circle'
         flat
         color='grey'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/dev/api`'
         target='_blank'
         type='a'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.acrylic-btn.q-mr-sm(
         icon='las la-redo-alt'
         flat
         color='secondary'
         :loading='state.loading > 0'
+        :aria-label='t(`common.actions.refresh`)'
         @click='refresh'
         )
+        q-tooltip {{ t(`common.actions.refresh`) }}
       q-btn.q-mr-sm(
         unelevated
         icon='las la-power-off'

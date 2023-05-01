@@ -58,9 +58,10 @@ export class Site extends Model {
         footerExtra: '',
         pageExtensions: ['md', 'html', 'txt'],
         defaults: {
-          timezone: 'America/New_York',
-          dateFormat: 'YYYY-MM-DD',
-          timeFormat: '12h'
+          tocDepth: {
+            min: 1,
+            max: 2
+          }
         },
         features: {
           ratings: false,

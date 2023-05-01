@@ -79,6 +79,11 @@ export default {
 
     //   return usr
     // },
+
+    async userDefaults (obj, args, context) {
+      return WIKI.config.userDefaults
+    },
+
     async lastLogins (obj, args, context, info) {
       return WIKI.db.users.query()
         .select('id', 'name', 'lastLoginAt')
@@ -351,6 +356,20 @@ export default {
       } catch (err) {
         WIKI.logger.warn(err)
         return generateError(err)
+      }
+    },
+    /**
+     * UPDATE USER DEFAULTS
+     */
+    async updateUserDefaults (obj, args, context) {
+      WIKI.config.userDefaults = {
+        timezone: args.timezone,
+        dateFormat: args.dateFormat,
+        timeFormat: args.timeFormat
+      }
+      await WIKI.configSvc.saveToDb(['userDefaults'])
+      return {
+        operation: generateSuccess('User defaults saved successfully')
       }
     }
   },

@@ -74,6 +74,10 @@ defaults:
       experimental: false
       authDebug: false
       sqlLog: false
+    userDefaults:
+      timezone: 'America/New_York'
+      dateFormat: 'YYYY-MM-DD'
+      timeFormat: '12h'
     # System defaults
     channel: NEXT
     cors:

@@ -11,10 +11,12 @@ q-page.admin-utilities
         icon='las la-question-circle'
         flat
         color='grey'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/utilities`'
         target='_blank'
         type='a'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
   q-separator(inset)
   .q-pa-md.q-gutter-md
     q-card

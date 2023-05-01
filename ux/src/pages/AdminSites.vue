@@ -12,15 +12,19 @@ q-page.admin-locale
         flat
         color='grey'
         type='a'
+        :aria-label='t(`common.actions.viewDocs`)'
         :href='siteStore.docsBase + `/admin/sites`'
         target='_blank'
         )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-redo-alt'
         flat
         color='secondary'
+        :aria-label='t(`common.actions.refresh`)'
         @click='refresh'
         )
+        q-tooltip {{ t(`common.actions.refresh`) }}
       q-btn(
         unelevated
         icon='las la-plus'
