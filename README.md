@@ -90,13 +90,13 @@ The current stable release (2.x) is available at https://js.wiki
     - Type "Run Task" and press Enter
     - Select the task "Create terminals" and press Enter
 1. Two terminals will launch in split-screen mode at the bottom of the screen. **Server** on the left and **UX** on the right.
-1. In the left-side terminal (Server), run the command:
-    ```sh
-    npm run dev
-    ```
 1. In the right-side terminal (UX), run the command:
     ```sh
-    npm run dev
+    npm run build
+    ```
+1. In the left-side terminal (Server), run the command:
+    ```sh
+    node run start
     ```
 1. Open your browser to `http://localhost:3000`
 1. Login using the default administrator user:
@@ -133,7 +133,7 @@ Any change you make to the frontend will not be reflected on port 5000 until you
 
 ### pgAdmin
 
-A web version of pgAdmin (a PostgreSQL administration tool) is available at `http://localhost:8000`. Use the login `dev` / `123123` to login.
+A web version of pgAdmin (a PostgreSQL administration tool) is available at `http://localhost:8000`. Use the login `dev@js.wiki` / `123123` to login.
 
 The server **dev** should already be available under **Servers**. If that's not the case, add a new one with the following settings:
 
