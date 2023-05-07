@@ -450,7 +450,7 @@ router.get('/*', async (req, res, next) => {
         if (pageArgs.path === 'home' && req.user.id === 2) {
           return res.redirect('/login')
         }
-        if (WIKI.config.auth.autoLogin && req.user.id === 2) {
+        if (WIKI.config.auth.guestLogin && req.user.id === 2) {
           return res.redirect('/login')
         }
         _.set(res.locals, 'pageMeta.title', 'Unauthorized')
