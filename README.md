@@ -166,6 +166,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
+- Emerson-Perna ([@Emerson-Perna](https://github.com/Emerson-Perna))
 - Ernie ([@iamernie](https://github.com/iamernie))
 - Fabio Ferrari ([@devxops](https://github.com/devxops))
 - Finsa S.p.A. ([@finsaspa](https://github.com/finsaspa))
@@ -429,6 +430,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Mike Ditton
 - Nate Figz
 - Patryk
+- Paul O'Fallon
 - Philipp Schürch
 - Tracey Duffy
 - Quaxim
