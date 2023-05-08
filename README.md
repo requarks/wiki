@@ -35,7 +35,6 @@ The current stable release (2.x) is available at https://js.wiki
   - [Usage](#usage-1)
   - [Server Development](#server-development)
   - [Frontend Development (Quasar/Vue 3)](#frontend-development-quasarvue-3)
-  - [Legacy Frontend Development (Vuetify/Vue 2)](#legacy-frontend-development-vuetifyvue-2)
   - [pgAdmin](#pgadmin)
 
 ## Generic Setup
@@ -127,9 +126,9 @@ If you wish to modify any frontend content (under `/ux`), you need to start the 
 npm run dev
 ```
 
-You can then access the site at `http://localhost:5001`. Notice the port being `5001` rather than `5000`. The app runs in a SPA (single-page application) mode and automatically hot-reload any modified component. Any requests made to the `/graphql` endpoint are automatically forwarded to the server running on port `5000`, which is why both must be running at the same time.
+You can then access the site at `http://localhost:3001`. Notice the port being `3001` rather than `3000`. The app runs in a SPA (single-page application) mode and automatically hot-reload any modified component. Any requests made to the `/graphql` endpoint are automatically forwarded to the server running on port `3000`, which is why both must be running at the same time.
 
-Any change you make to the frontend will not be reflected on port 5000 until you run the command `yarn build` in the right-side terminal.
+Any change you make to the frontend will not be reflected on port 3000 until you run the command `yarn build` in the right-side terminal.
 
 ### pgAdmin
 
