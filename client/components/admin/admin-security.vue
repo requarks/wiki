@@ -196,14 +196,14 @@
                     persistent-hint
                     :hint='$t(`admin:security.hideLocalLoginHint`)'
                     )
+                    //- :label='$t(`admin:security.startGuestAuth`)'
+                    //- :hint='$t(`admin:security.startGuestAuthHint`)'
                   v-switch(
                     inset
-                    :label='$t(`admin:security.startGuestAuth`)'
                     color='primary'
                     v-model='config.authGuestLogin'
                     prepend-icon='mdi-login-variant'
                     persistent-hint
-                    :hint='$t(`admin:security.startGuestAuthHint`)'
                     )
                 v-divider.mt-3
                 .overline.grey--text.pa-4 {{$t('admin:security.loginSecurity')}}
