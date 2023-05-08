@@ -213,7 +213,7 @@ q-page.admin-general
               :aria-label='t(`admin.general.allowSearch`)'
               )
         q-separator.q-my-sm(inset)
-        q-item(tag='label')
+        q-item
           blueprint-icon(icon='confusion')
           q-item-section
             q-item-label {{t(`admin.general.reasonForChange`)}}
@@ -227,25 +227,6 @@ q-page.admin-general
               toggle-color='primary'
               :options='reasonForChangeModes'
             )
-
-      //- -----------------------
-      //- URL Handling
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.general.urlHandling')}}
-        q-item
-          blueprint-icon(icon='sort-by-follow-up-date')
-          q-item-section
-            q-item-label {{t(`admin.general.pageExtensions`)}}
-            q-item-label(caption) {{t(`admin.general.pageExtensionsHint`)}}
-          q-item-section
-            q-input(
-              outlined
-              v-model='state.config.pageExtensions'
-              dense
-              :aria-label='t(`admin.general.pageExtensions`)'
-              )
 
     .col-12.col-lg-5
       //- -----------------------
@@ -400,6 +381,39 @@ q-page.admin-general
               )
 
       //- -----------------------
+      //- URL Handling
+      //- -----------------------
+      q-card.q-pb-sm.q-mt-md
+        q-card-section
+          .text-subtitle1 {{t('admin.general.urlHandling')}}
+        q-item
+          blueprint-icon(icon='sort-by-follow-up-date')
+          q-item-section
+            q-item-label {{t(`admin.general.pageExtensions`)}}
+            q-item-label(caption) {{t(`admin.general.pageExtensionsHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.config.pageExtensions'
+              dense
+              :aria-label='t(`admin.general.pageExtensions`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='lowercase')
+          q-item-section
+            q-item-label {{t(`admin.general.pageCasing`)}}
+            q-item-label(caption) {{t(`admin.general.pageCasingHint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.config.pageCasing'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.general.pageCasing`)'
+              )
+
+      //- -----------------------
       //- SEO
       //- -----------------------
       q-card.q-pb-sm.q-mt-md(v-if='state.config.robots')
@@ -491,6 +505,7 @@ const state = reactive({
     contentLicense: '',
     footerExtra: '',
     pageExtensions: '',
+    pageCasing: false,
     logoText: false,
     ratings: {
       index: false,
@@ -583,6 +598,7 @@ async function load () {
           contentLicense
           footerExtra
           pageExtensions
+          pageCasing
           logoText
           sitemap
           uploads {
@@ -652,6 +668,7 @@ async function save () {
           contentLicense: state.config.contentLicense ?? '',
           footerExtra: state.config.footerExtra ?? '',
           pageExtensions: state.config.pageExtensions ?? '',
+          pageCasing: state.config.pageCasing ?? false,
           logoText: state.config.logoText ?? false,
           sitemap: state.config.sitemap ?? false,
           uploads: {

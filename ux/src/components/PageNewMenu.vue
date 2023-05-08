@@ -73,6 +73,7 @@ q-menu.translucent-menu(
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 
+import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 import { useFlagsStore } from 'src/stores/flags'
@@ -100,6 +101,7 @@ const $q = useQuasar()
 
 // STORES
 
+const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
@@ -110,8 +112,10 @@ const { t } = useI18n()
 
 // METHODS
 
-function create (editor) {
-  pageStore.pageCreate({ editor })
+async function create (editor) {
+  $q.loading.show()
+  await pageStore.pageCreate({ editor })
+  $q.loading.hide()
 }
 
 function openFileManager () {

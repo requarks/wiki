@@ -1,10 +1,9 @@
-key: htmlSecurity
 title: Security
 description: Filter and strips potentially dangerous content
 author: requarks.io
 icon: mdi-fire
 enabledDefault: true
-dependsOn: html-core
+dependsOn: core
 step: post
 order: 99999
 props:

@@ -259,7 +259,8 @@ import { onMounted, reactive } from 'vue'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
-import { useAdminStore } from '../stores/admin'
+import { useAdminStore } from 'src/stores/admin'
+import { useEditorStore } from 'src/stores/editor'
 import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
@@ -269,6 +270,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const editorStore = useEditorStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -393,6 +395,7 @@ async function save () {
         type: 'positive',
         message: t('admin.editors.markdown.saveSuccess')
       })
+      editorStore.$patch({ configIsLoaded: false })
       close()
     } else {
       throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')

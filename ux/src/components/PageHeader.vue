@@ -355,12 +355,7 @@ async function createPage () {
 
 async function editPage () {
   $q.loading.show()
-  await pageStore.pageLoad({ id: pageStore.id, withContent: true })
-  editorStore.$patch({
-    isActive: true,
-    mode: 'edit',
-    editor: pageStore.editor
-  })
+  await pageStore.pageEdit()
   $q.loading.hide()
 }
 </script>

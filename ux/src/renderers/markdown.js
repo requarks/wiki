@@ -16,19 +16,36 @@ import underline from './modules/markdown-it-underline'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './modules/plantuml'
+import kroki from './modules/kroki.mjs'
 import katexHelper from './modules/katex'
 
 import hljs from 'highlight.js'
 
 import { escape, findLast, times } from 'lodash-es'
 
+const quoteStyles = {
+  chinese: '””‘’',
+  english: '“”‘’',
+  french: ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'],
+  german: '„“‚‘',
+  greek: '«»‘’',
+  japanese: '「」「」',
+  hungarian: '„”’’',
+  polish: '„”‚‘',
+  portuguese: '«»‘’',
+  russian: '«»„“',
+  spanish: '«»‘’',
+  swedish: '””’’'
+}
+
 export class MarkdownRenderer {
-  constructor (conf = {}) {
+  constructor (config = {}) {
     this.md = new MarkdownIt({
-      html: true,
-      breaks: true,
-      linkify: true,
-      typography: true,
+      html: config.allowHTML,
+      breaks: config.lineBreaks,
+      linkify: config.linkify,
+      typography: config.typographer,
+      quotes: quoteStyles[config.quotes] ?? quoteStyles.english,
       highlight (str, lang) {
         if (lang === 'diagram') {
           return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
@@ -46,23 +63,59 @@ export class MarkdownRenderer {
         allowedAttributes: ['id', 'class', 'target']
       })
       .use(mdDecorate)
-      .use(underline)
       .use(mdEmoji)
       .use(mdTaskLists, { label: false, labelAfter: false })
-      .use(mdExpandTabs)
+      .use(mdExpandTabs, { tabWidth: config.tabWidth })
       .use(mdAbbr)
       .use(mdSup)
       .use(mdSub)
-      .use(mdMultiTable, { multiline: true, rowspan: true, headerless: true })
       .use(mdMark)
       .use(mdFootnote)
       // .use(mdImsize)
 
-    // -> PLANTUML
-    plantuml.init(this.md, {})
+    if (config.underline) {
+      this.md.use(underline)
+    }
 
-    // -> KATEX
+    if (config.mdmultiTable) {
+      this.md.use(mdMultiTable, { multiline: true, rowspan: true, headerless: true })
+    }
+
+    // --------------------------------
+    // PLANTUML
+    // --------------------------------
+
+    if (config.plantuml) {
+      plantuml.init(this.md, { server: config.plantumlServerUrl })
+    }
+
+    // --------------------------------
+    // KROKI
+    // --------------------------------
+
+    if (config.kroki) {
+      kroki.init(this.md, { server: config.krokiServerUrl })
+    }
+
+    // --------------------------------
+    // KATEX
+    // --------------------------------
+
     const macros = {}
+
+    // TODO: Add mhchem (needs esm conversion)
+    // Add \ce, \pu, and \tripledash to the KaTeX macros.
+    // katex.__defineMacro('\\ce', function (context) {
+    //   return chemParse(context.consumeArgs(1)[0], 'ce')
+    // })
+    // katex.__defineMacro('\\pu', function (context) {
+    //   return chemParse(context.consumeArgs(1)[0], 'pu')
+    // })
+
+    //  Needed for \bond for the ~ forms
+    //  Raise by 2.56mu, not 2mu. We're raising a hyphen-minus, U+002D, not
+    //  a mathematical minus, U+2212. So we need that extra 0.56.
+    katex.__defineMacro('\\tripledash', '{\\vphantom{-}\\raisebox{2.56mu}{$\\mkern2mu' + '\\tiny\\text{-}\\mkern1mu\\text{-}\\mkern1mu\\text{-}\\mkern2mu$}}')
     this.md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
     this.md.renderer.rules.katex_inline = (tokens, idx) => {
       try {
@@ -88,7 +141,10 @@ export class MarkdownRenderer {
       }
     }
 
-    // -> TWEMOJI
+    // --------------------------------
+    // TWEMOJI
+    // --------------------------------
+
     this.md.renderer.rules.emoji = (token, idx) => {
       return twemoji.parse(token[idx].content, {
         callback (icon, opts) {
@@ -97,7 +153,10 @@ export class MarkdownRenderer {
       })
     }
 
+    // --------------------------------
     // Inject line numbers for preview scroll sync
+    // --------------------------------
+
     this.linesMap = []
     const injectLineNumbers = (tokens, idx, options, env, slf) => {
       let line

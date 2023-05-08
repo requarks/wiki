@@ -126,7 +126,6 @@ const gqlMutations = {
       $publishEndDate: Date
       $publishStartDate: Date
       $relations: [PageRelationInput!]
-      $render: String
       $scriptCss: String
       $scriptJsLoad: String
       $scriptJsUnload: String
@@ -153,7 +152,6 @@ const gqlMutations = {
         publishEndDate: $publishEndDate
         publishStartDate: $publishStartDate
         relations: $relations
-        render: $render
         scriptCss: $scriptCss
         scriptJsLoad: $scriptJsLoad
         scriptJsUnload: $scriptJsUnload
@@ -277,8 +275,12 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - CREATE
      */
-    pageCreate ({ editor, locale, path, title = '', description = '', content = '' }) {
+    async pageCreate ({ editor, locale, path, title = '', description = '', content = '' }) {
       const editorStore = useEditorStore()
+
+      if (!editorStore.configIsLoaded) {
+        await editorStore.fetchConfigs()
+      }
 
       // -> Init editor
       editorStore.$patch({
@@ -314,6 +316,24 @@ export const usePageStore = defineStore('page', {
       this.router.push('/_create')
     },
     /**
+     * PAGE - EDIT
+     */
+    async pageEdit () {
+      const editorStore = useEditorStore()
+
+      await this.pageLoad({ id: this.id, withContent: true })
+
+      if (!editorStore.configIsLoaded) {
+        await editorStore.fetchConfigs()
+      }
+
+      editorStore.$patch({
+        isActive: true,
+        mode: 'edit',
+        editor: this.editor
+      })
+    },
+    /**
      * PAGE SAVE
      */
     async pageSave () {
@@ -339,7 +359,6 @@ export const usePageStore = defineStore('page', {
                 'publishStartDate',
                 'publishState',
                 'relations',
-                'render',
                 'scriptJsLoad',
                 'scriptJsUnload',
                 'scriptCss',
@@ -410,7 +429,6 @@ export const usePageStore = defineStore('page', {
                   'publishStartDate',
                   'publishState',
                   'relations',
-                  'render',
                   'scriptJsLoad',
                   'scriptJsUnload',
                   'scriptCss',

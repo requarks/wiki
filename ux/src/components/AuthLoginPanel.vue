@@ -500,8 +500,7 @@ async function handleLoginResponse (resp) {
     $q.loading.hide()
   } else {
     $q.loading.show({
-      message: t('auth.loginSuccess'),
-      backgroundColor: 'green'
+      message: t('auth.loginSuccess')
     })
     Cookies.set('jwt', resp.jwt, { expires: 365 })
     setTimeout(() => {

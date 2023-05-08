@@ -1233,8 +1233,6 @@ function generateGraph () {
       state.deliveryPaths.push({ edges: [`${tp.key}_db_in`], color: '#f03a4755' })
     }
   }
-
-  console.info(state.deliveryEdges)
 }
 
 // MOUNTED

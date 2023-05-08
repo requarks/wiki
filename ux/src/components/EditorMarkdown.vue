@@ -257,6 +257,7 @@ const { t } = useI18n()
 // STATE
 
 let editor
+let md
 const monacoRef = ref(null)
 const editorPreviewContainerRef = ref(null)
 
@@ -264,8 +265,6 @@ const state = reactive({
   previewShown: true,
   previewScrollSync: true
 })
-
-const md = new MarkdownRenderer({})
 
 // METHODS
 
@@ -457,6 +456,8 @@ onMounted(async () => {
   editorStore.$patch({
     hideSideNav: true
   })
+
+  md = new MarkdownRenderer(editorStore.editors.markdown)
 
   // -> Define Monaco Theme
   monaco.editor.defineTheme('wikijs', {

@@ -1,9 +1,7 @@
-key: html-core
+key: core
 title: Core
 description: Basic HTML Parser
 author: requarks.io
-input: html
-output: html
 icon: mdi-language-html5
 props:
   absoluteLinks:
@@ -25,5 +23,5 @@ props:
     hint: External links with _blank attribute will have an additional rel attribute.
     order: 3
     enum:
-        - noreferrer
-        - noopener
+      - noreferrer
+      - noopener

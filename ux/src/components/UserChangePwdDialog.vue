@@ -176,11 +176,13 @@ async function save () {
       mutation: gql`
         mutation adminUpdateUserPwd (
           $id: UUID!
-          $patch: UserUpdateInput!
+          $newPassword: String!
+          $mustChangePassword: Boolean
           ) {
-          updateUser (
+          changeUserPassword (
             id: $id
-            patch: $patch
+            newPassword: $newPassword
+            mustChangePassword: $mustChangePassword
             ) {
             operation {
               succeeded
@@ -191,22 +193,20 @@ async function save () {
       `,
       variables: {
         id: props.userId,
-        patch: {
-          newPassword: state.userPassword,
-          mustChangePassword: state.userMustChangePassword
-        }
+        newPassword: state.userPassword,
+        mustChangePassword: state.userMustChangePassword
       }
     })
-    if (resp?.data?.updateUser?.operation?.succeeded) {
+    if (resp?.data?.changeUserPassword?.operation?.succeeded) {
       $q.notify({
         type: 'positive',
-        message: t('admin.users.createSuccess')
+        message: t('admin.users.changePasswordSuccess')
       })
       onDialogOK({
         mustChangePassword: state.userMustChangePassword
       })
     } else {
-      throw new Error(resp?.data?.updateUser?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.changeUserPassword?.operation?.message || 'An unexpected error occured.')
     }
   } catch (err) {
     $q.notify({

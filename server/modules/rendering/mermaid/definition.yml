@@ -1,8 +1,7 @@
-key: htmlMermaid
 title: Mermaid
 description: Generate flowcharts from Mermaid syntax
 author: requarks.io
 icon: mdi-arrow-decision-outline
 enabledDefault: true
-dependsOn: html-core
+dependsOn: core
 props: {}

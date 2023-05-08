@@ -591,7 +591,7 @@ export class User extends Model {
         timezone: WIKI.config.userDefaults.timezone || 'America/New_York',
         appearance: 'site',
         dateFormat: WIKI.config.userDefaults.dateFormat || 'YYYY-MM-DD',
-        timeFormat: WIKI.config.userDefaults.timeFormat || '12h'
+        timeFormat: WIKI.config.userDefaults.timeFormat || '12h'
       }
     })
 
@@ -623,15 +623,12 @@ export class User extends Model {
    *
    * @param {Object} param0 User ID and fields to update
    */
-  static async updateUser (id, { email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
+  static async updateUser (id, { email, name, groups, isVerified, isActive, meta, prefs }) {
     const usr = await WIKI.db.users.query().findById(id)
     if (usr) {
       let usrData = {}
       if (!isEmpty(email) && email !== usr.email) {
-        const dupUsr = await WIKI.db.users.query().select('id').where({
-          email,
-          providerKey: usr.providerKey
-        }).first()
+        const dupUsr = await WIKI.db.users.query().select('id').where({ email }).first()
         if (dupUsr) {
           throw new WIKI.Error.AuthAccountAlreadyExists()
         }
@@ -639,12 +636,6 @@ export class User extends Model {
       }
       if (!isEmpty(name) && name !== usr.name) {
         usrData.name = name.trim()
-      }
-      if (!isEmpty(newPassword)) {
-        if (newPassword.length < 6) {
-          throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
-        }
-        usrData.password = newPassword
       }
       if (isArray(groups)) {
         const usrGroupsRaw = await usr.$relatedQuery('groups')
@@ -660,20 +651,17 @@ export class User extends Model {
           await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
         }
       }
-      if (!isEmpty(location) && location !== usr.location) {
-        usrData.location = location.trim()
+      if (!isNil(isVerified)) {
+        usrData.isVerified = isVerified
       }
-      if (!isEmpty(jobTitle) && jobTitle !== usr.jobTitle) {
-        usrData.jobTitle = jobTitle.trim()
+      if (!isNil(isActive)) {
+        usrData.isVerified = isActive
       }
-      if (!isEmpty(timezone) && timezone !== usr.timezone) {
-        usrData.timezone = timezone
+      if (!isEmpty(meta)) {
+        usrData.meta = meta
       }
-      if (!isNil(dateFormat) && dateFormat !== usr.dateFormat) {
-        usrData.dateFormat = dateFormat
-      }
-      if (!isNil(appearance) && appearance !== usr.appearance) {
-        usrData.appearance = appearance
+      if (!isEmpty(prefs)) {
+        usrData.prefs = prefs
       }
       await WIKI.db.users.query().patch(usrData).findById(id)
     } else {

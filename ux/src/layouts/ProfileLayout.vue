@@ -47,6 +47,7 @@ q-layout(view='hHh Lpr lff')
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
@@ -65,6 +66,11 @@ const $q = useQuasar()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
 
 // I18N
 
@@ -118,6 +124,15 @@ const sidenav = [
     disabled: true
   }
 ]
+
+// WATCHERS
+
+watch(() => route.path, async (newValue) => {
+  if (!newValue.startsWith('/_profile')) { return }
+  if (!userStore.authenticated) {
+    router.replace('/login')
+  }
+}, { immediate: true })
 </script>
 
 <style lang="scss">

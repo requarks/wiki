@@ -85,7 +85,6 @@ extend type Mutation {
     publishEndDate: Date
     publishStartDate: Date
     relations: [PageRelationInput!]
-    render: String
     scriptCss: String
     scriptJsLoad: String
     scriptJsUnload: String
@@ -343,8 +342,8 @@ input PageUpdateInput {
   publishEndDate: Date
   publishStartDate: Date
   publishState: PagePublishState
+  reasonForChange: String
   relations: [PageRelationInput!]
-  render: String
   scriptJsLoad: String
   scriptJsUnload: String
   scriptCss: String

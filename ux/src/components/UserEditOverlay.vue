@@ -215,6 +215,26 @@ q-layout(view='hHh lpR fFf', container)
                       { label: t('profile.appearanceDark'), value: 'dark' }
                     ]`
                   )
+              q-separator.q-my-sm(inset)
+              q-item
+                blueprint-icon(icon='visualy-impaired')
+                q-item-section
+                  q-item-label {{t(`profile.cvd`)}}
+                  q-item-label(caption) {{t(`profile.cvdHint`)}}
+                q-item-section.col-auto
+                  q-btn-toggle(
+                    v-model='state.user.prefs.cvd'
+                    push
+                    glossy
+                    no-caps
+                    toggle-color='primary'
+                    :options=`[
+                      { value: 'none', label: t('profile.cvdNone') },
+                      { value: 'protanopia', label: t('profile.cvdProtanopia') },
+                      { value: 'deuteranopia', label: t('profile.cvdDeuteranopia') },
+                      { value: 'tritanopia', label: t('profile.cvdTritanopia') }
+                    ]`
+                  )
 
           .col-12.col-lg-4
             q-card.shadow-1.q-pb-sm
@@ -230,19 +250,19 @@ q-layout(view='hHh lpR fFf', container)
                 blueprint-icon(icon='calendar-plus', :hue-rotate='-45')
                 q-item-section
                   q-item-label {{t(`common.field.createdOn`)}}
-                  q-item-label: strong {{humanizeDate(state.user.createdAt)}}
+                  q-item-label: strong {{formattedDate(state.user.createdAt)}}
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='summertime', :hue-rotate='-45')
                 q-item-section
                   q-item-label {{t(`common.field.lastUpdated`)}}
-                  q-item-label: strong {{humanizeDate(state.user.updatedAt)}}
+                  q-item-label: strong {{formattedDate(state.user.updatedAt)}}
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='enter', :hue-rotate='-45')
                 q-item-section
                   q-item-label {{t(`admin.users.lastLoginAt`)}}
-                  q-item-label: strong {{humanizeDate(state.user.lastLoginAt)}}
+                  q-item-label: strong {{formattedDate(state.user.lastLoginAt)}}
 
             q-card.shadow-1.q-pb-sm.q-mt-md(v-if='state.user.meta')
               q-card-section
@@ -519,6 +539,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
 import { useFlagsStore } from 'src/stores/flags'
+import { useUserStore } from 'src/stores/user'
 
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
 import UtilCodeEditor from './UtilCodeEditor.vue'
@@ -531,6 +552,7 @@ const $q = useQuasar()
 
 const adminStore = useAdminStore()
 const flagsStore = useFlagsStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -650,7 +672,7 @@ async function fetchUser () {
       },
       fetchPolicy: 'network-only'
     })
-    state.groups = resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-0000-000000000001') ?? []
+    state.groups = resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? []
     if (resp?.data?.userById) {
       state.user = cloneDeep(resp.data.userById)
     } else {
@@ -679,7 +701,7 @@ function checkRoute () {
   }
 }
 
-function humanizeDate (val) {
+function formattedDate (val) {
   if (!val) { return '---' }
   return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_FULL)
 }

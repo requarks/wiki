@@ -68,8 +68,10 @@ extend type Mutation {
     id: UUID!
   ): DefaultResponse
 
-  resetUserPassword(
-    id: Int!
+  changeUserPassword(
+    id: UUID!
+    newPassword: String!
+    mustChangePassword: Boolean
   ): DefaultResponse
 
   updateProfile(
@@ -186,7 +188,6 @@ enum UserCvdChoices {
 input UserUpdateInput {
   email: String
   name: String
-  newPassword: String
   groups: [UUID!]
   isActive: Boolean
   isVerified: Boolean

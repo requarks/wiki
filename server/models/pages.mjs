@@ -327,7 +327,6 @@ export class Page extends Model {
       publishEndDate: opts.publishEndDate?.toISO(),
       publishStartDate: opts.publishStartDate?.toISO(),
       relations: opts.relations ?? [],
-      render: opts.render ?? '',
       siteId: opts.siteId,
       title: opts.title,
       toc: '[]',
@@ -452,9 +451,6 @@ export class Page extends Model {
 
     if ('content' in opts.patch) {
       patch.content = opts.patch.content
-      if ('render' in opts.patch) {
-        patch.render = opts.patch.render
-      }
       historyData.affectedFields.push('content')
     }
 

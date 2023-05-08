@@ -88,9 +88,10 @@ useMeta({
 
 // METHODS
 
-function createHomePage (editor) {
+async function createHomePage (editor) {
+  $q.loading.show()
   siteStore.overlay = ''
-  pageStore.pageCreate({
+  await pageStore.pageCreate({
     editor,
     locale: 'en',
     path: 'home',
@@ -98,6 +99,7 @@ function createHomePage (editor) {
     description: t('welcome.homeDefault.description'),
     content: t('welcome.homeDefault.content')
   })
+  $q.loading.hide()
 }
 
 function loadAdmin () {

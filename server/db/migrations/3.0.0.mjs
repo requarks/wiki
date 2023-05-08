@@ -543,6 +543,7 @@ export async function up (knex) {
       contentLicense: '',
       footerExtra: '',
       pageExtensions: ['md', 'html', 'txt'],
+      pageCasing: true,
       defaults: {
         tocDepth: {
           min: 1,

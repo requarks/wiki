@@ -60,6 +60,7 @@ type Site {
   contentLicense: String
   footerExtra: String
   pageExtensions: String
+  pageCasing: Boolean
   logoText: Boolean
   sitemap: Boolean
   robots: SiteRobots
@@ -177,6 +178,7 @@ input SiteUpdateInput {
   contentLicense: String
   footerExtra: String
   pageExtensions: String
+  pageCasing: Boolean
   logoText: Boolean
   sitemap: Boolean
   robots: SiteRobotsInput

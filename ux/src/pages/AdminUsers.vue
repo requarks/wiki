@@ -89,7 +89,7 @@ q-page.admin-groups
             q-td(:props='props')
               i18n-t.text-caption(keypath='admin.users.createdAt', tag='div')
                 template(#date)
-                  strong {{ humanizeDate(props.value) }}
+                  strong {{ formattedDate(props.value) }}
               i18n-t.text-caption(
                 v-if='props.row.lastLoginAt'
                 keypath='admin.users.lastLoginAt'
@@ -128,6 +128,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
 import { useSiteStore } from 'src/stores/site'
+import { useUserStore } from 'src/stores/user'
 
 import UserCreateDialog from '../components/UserCreateDialog.vue'
 import UserDefaultsMenu from 'src/components/UserDefaultsMenu.vue'
@@ -140,6 +141,7 @@ const $q = useQuasar()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -241,6 +243,9 @@ async function load () {
 
 function humanizeDate (val) {
   return DateTime.fromISO(val).toRelative()
+}
+function formattedDate (val) {
+  return userStore.formatDateTime(t, val)
 }
 
 function checkOverlay () {

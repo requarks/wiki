@@ -14,19 +14,35 @@ export async function task ({ payload }) {
 
     const site = await WIKI.db.sites.query().findById(page.siteId)
 
-    await WIKI.db.renderers.fetchDefinitions()
+    let output = page.content
 
-    const pipeline = await WIKI.db.renderers.getRenderingPipeline(page.contentType)
-
-    let output = page.render
-
-    if (isEmpty(page.content)) {
+    // Empty content?
+    if (isEmpty(output)) {
       WIKI.logger.warn(`Failed to render page ID ${payload.id} because content was empty: [ FAILED ]`)
+      throw new Error(`Failed to render page ID ${payload.id} because content was empty.`)
     }
 
+    // Parse to HTML
+    switch (page.contentType) {
+      case 'asciidoc': {
+        const { render } = await import('../../renderers/asciidoc.mjs')
+        output = await render(output, site.config?.editors?.asciidoc?.config ?? {})
+        break
+      }
+      case 'markdown': {
+        const { render } = await import('../../renderers/markdown.mjs')
+        output = await render(output, site.config?.editors?.markdown?.config ?? {})
+        break
+      }
+    }
+
+    // Render HTML
+    await WIKI.db.renderers.fetchDefinitions()
+    const pipeline = await WIKI.db.renderers.getRenderingPipeline(page.contentType)
+
     for (const core of pipeline) {
-      const renderer = (await import(`../../modules/rendering/${core.key}/renderer.mjs`)).default
-      output = await renderer.render.call({
+      const { render } = (await import(`../../modules/rendering/${core.key}/renderer.mjs`))
+      output = await render.call({
         config: core.config,
         children: core.children,
         page,

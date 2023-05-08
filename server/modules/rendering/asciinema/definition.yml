@@ -1,8 +1,7 @@
-key: htmlAsciinema
 title: Asciinema
 description: Embed asciinema players from compatible links
 author: requarks.io
 icon: mdi-theater
 enabledDefault: false
-dependsOn: html-core
+dependsOn: core
 props: {}

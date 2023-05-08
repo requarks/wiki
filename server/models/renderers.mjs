@@ -99,8 +99,8 @@ export class Renderer extends Model {
       // -> Delete removed Renderers
       for (const renderer of dbRenderers) {
         if (!some(WIKI.data.renderers, ['key', renderer.module])) {
-          await WIKI.db.renderers.query().where('module', renderer.key).del()
-          WIKI.logger.info(`Removed renderer ${renderer.key} because it is no longer present in the modules folder: [ OK ]`)
+          await WIKI.db.renderers.query().where('module', renderer.module).del()
+          WIKI.logger.info(`Removed renderer ${renderer.module} because it is no longer present in the modules folder: [ OK ]`)
         }
       }
     } catch (err) {

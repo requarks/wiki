@@ -27,7 +27,18 @@ export const useUserStore = defineStore('user', {
     token: '',
     profileLoaded: false
   }),
-  getters: {},
+  getters: {
+    preferredDateFormat: (state) => {
+      if (!state.dateFormat) {
+        return 'D'
+      } else {
+        return state.dateFormat.replaceAll('Y', 'y').replaceAll('D', 'd')
+      }
+    },
+    preferredTimeFormat: (state) => {
+      return state.timeFormat === '24h' ? 'T' : 't'
+    }
+  },
   actions: {
     async refreshAuth () {
       if (this.exp && this.exp < DateTime.now()) {
@@ -163,6 +174,9 @@ export const useUserStore = defineStore('user', {
       } catch (err) {
         console.warn(`Failed to fetch page permissions at path ${path}!`)
       }
+    },
+    formatDateTime (t, date) {
+      return (typeof date === 'string' ? DateTime.fromISO(date) : date).toFormat(t('common.datetime', { date: this.preferredDateFormat, time: this.preferredTimeFormat }))
     }
   }
 })

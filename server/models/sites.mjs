@@ -57,6 +57,7 @@ export class Site extends Model {
         contentLicense: '',
         footerExtra: '',
         pageExtensions: ['md', 'html', 'txt'],
+        pageCasing: true,
         defaults: {
           tocDepth: {
             min: 1,

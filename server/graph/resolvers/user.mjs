@@ -1,5 +1,5 @@
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
-import _ from 'lodash-es'
+import _, { isNil } from 'lodash-es'
 import path from 'node:path'
 import fs from 'fs-extra'
 
@@ -139,7 +139,6 @@ export default {
     },
     async updateUser (obj, args) {
       try {
-        console.info(args.id)
         await WIKI.db.users.updateUser(args.id, args.patch)
 
         return {
@@ -210,8 +209,33 @@ export default {
         return generateError(err)
       }
     },
-    resetUserPassword (obj, args) {
-      return false
+    async changeUserPassword (obj, args, context) {
+      try {
+        if (args.newPassword?.length < 6) {
+          throw new Error('ERR_PASSWORD_TOO_SHORT')
+        }
+
+        const usr = await WIKI.db.users.query().findById(args.id)
+        if (!usr) {
+          throw new Error('ERR_USER_NOT_FOUND')
+        }
+        const localAuth = await WIKI.db.authentication.getStrategy('local')
+
+        usr.auth[localAuth.id].password = await bcrypt.hash(args.newPassword, 12)
+        if (!isNil(args.mustChangePassword)) {
+          usr.auth[localAuth.id].mustChangePwd = args.mustChangePassword
+        }
+
+        await WIKI.db.users.query().patch({
+          auth: usr.auth
+        }).findById(args.id)
+
+        return {
+          operation: generateSuccess('User password updated successfully')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
     },
     async updateProfile (obj, args, context) {
       try {
