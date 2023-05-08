@@ -202,7 +202,7 @@
                     inset
                     color='primary'
                     v-model='config.authGuestLogin'
-                    prepend-icon='mdi-login-variant'
+                    prepend-icon='mdi-login'
                     persistent-hint
                     )
                 v-divider.mt-3
