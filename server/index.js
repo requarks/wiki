@@ -6,6 +6,19 @@
 const path = require('path')
 const { nanoid } = require('nanoid')
 const { DateTime } = require('luxon')
+const { gte } = require('semver')
+
+// ----------------------------------------
+// Check Node.js version
+// ----------------------------------------
+if (gte(process.version, '18.0.0')) {
+  console.error('You\'re using an unsupported Node.js version. Please read the requirements.')
+  process.exit(1)
+}
+
+// ----------------------------------------
+// Init WIKI instance
+// ----------------------------------------
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
