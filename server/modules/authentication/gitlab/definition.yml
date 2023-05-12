@@ -27,10 +27,10 @@ props:
   authorizationURL:
     type: String
     title: Authorization URL
-    hint: For self-managed GitLab instances, define an alternate authorization URL (e.g. http://172.28.0.5:8929/oauth/authorize). Leave default to generate from baseUrl.
+    hint: For self-managed GitLab instances, define an alternate authorization URL (e.g. http://example.com/oauth/authorize). Leave empty otherwise.
     order: 4
   tokenURL:
     type: String
     title: Token URL
-    hint: For self-managed GitLab instances, define an alternate token URL (e.g. http://172.28.0.5:8929/oauth/token). Leave default to generate from baseUrl.
+    hint: For self-managed GitLab instances, define an alternate token URL (e.g. http://example.com/oauth/token). Leave empty otherwise.
     order: 5
