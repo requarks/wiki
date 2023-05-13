@@ -398,6 +398,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Arti Zirk
 - Ave
 - Brandon Curtis
+- Damien Hottelier
 - Daniel T. Holtzclaw
 - Dave 'Sri' Seah
 - djagoo
