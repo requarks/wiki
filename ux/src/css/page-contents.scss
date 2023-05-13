@@ -1,6 +1,6 @@
 .page-contents {
   color: #424242;
-  font-size: 14px;
+  font-size: 16px;
 
   > *:first-child {
     margin-top: 0;
@@ -15,7 +15,7 @@
   // ---------------------------------
 
   a {
-    color: $blue;
+    color: $blue-8;
 
     &.is-internal-link.is-invalid-page {
       color: $red-8;
@@ -40,7 +40,7 @@
     }
 
     @at-root .body--dark & {
-      color: $blue-2;
+      color: $blue-4;
     }
   }
 
@@ -51,6 +51,7 @@
   h1, h2, h3, h4, h5, h6 {
     padding: 0;
     margin: 0;
+    font-weight: 400;
     position: relative;
     line-height: normal;
 
@@ -65,14 +66,11 @@
     }
   }
 
-  P + h2 {
-    margin-top: 12px;
-  }
-
   h1 {
     font-size: 3em;
     font-weight: 500;
     padding: 12px 0;
+    // color: var(--q-primary);
   }
   h2 {
     font-size: 2.4em;
@@ -92,6 +90,29 @@
     font-size: 1.25em;
   }
 
+  * + h1 {
+    margin-top: .5em;
+    padding-top: .5em;
+    // border-top: 2px solid var(--q-primary);
+    position: relative;
+
+    &::before {
+      position: absolute;
+      width: 100%;
+      height: 1px;
+      content: ' ';
+      background: linear-gradient(to right, var(--q-primary), transparent);
+      top: 0;
+      left: -16px;
+    }
+  }
+
+  *:not(h1) + h2 {
+    margin-top: .5em;
+    padding-top: .5em;
+    border-top: 1px dotted #CCC;
+  }
+
   .toc-anchor {
     display: none;
     position: absolute;
@@ -107,12 +128,8 @@
   // ---------------------------------
 
   p {
-    padding: 1rem 0 0 0;
-    margin: 0;
-
-    @at-root .page-contents > div > p:first-child {
-      padding-top: 0;
-    }
+    padding: 0;
+    margin: .3em 0 1em 0;
   }
 
   // ---------------------------------
@@ -120,7 +137,7 @@
   // ---------------------------------
 
   blockquote {
-    padding: 0 1rem 1rem 1rem;
+    padding: 1em 1em .3em 1em;
     background-color: $blue-grey-1;
     border-left: 55px solid $blue-grey-5;
     border-radius: .5rem;
@@ -239,21 +256,29 @@
   // ---------------------------------
 
   ol, ul:not(.tabset-tabs) {
-    padding-top: 1rem;
     width: 100%;
+
+    li > p {
+      &:first-child {
+        margin-top: 0;
+      }
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
 
     @at-root .is-rtl & {
       padding-left: 0;
-      padding-right: 1rem;
+      padding-right: 1em;
     }
 
     li > ul, li > ol {
       padding-top: .5rem;
-      padding-left: 1rem;
+      padding-left: 1em;
 
       @at-root .is-rtl & {
         padding-left: 0;
-        padding-right: 1rem;
+        padding-right: 1em;
       }
     }
 
@@ -410,6 +435,58 @@
         vertical-align:top;
         padding-top:0;
       }
+    }
+  }
+
+    // ---------------------------------
+  // TASK LISTS
+  // ---------------------------------
+
+  .contains-task-list {
+    padding-left: 1em;
+  }
+
+  .task-list-item {
+    position: relative;
+    list-style-type: none;
+
+    &-checkbox[disabled] {
+      width: 1.1rem;
+      height: 1.1rem;
+      top: 2px;
+      position: relative;
+      margin-right: .4em;
+      background-color: $dark-5;
+      border-width: 0;
+
+      &::after {
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-family: "Material Design Icons";
+        font-size: 1.25em;
+        font-weight: normal;
+        content: '\F0131';
+        color: $grey-10;
+        display: block;
+        border: none;
+        background-color: #FFF;
+        line-height: 1em;
+        cursor: default;
+
+        @at-root .body--dark & {
+          color: #FFF;
+          background-color: $dark-6;
+        }
+      }
+
+      &[checked]::after  {
+        content: '\F0C52';
+      }
+    }
+
+    .contains-task-list {
+      padding: .5rem 0 0 1.5rem;
     }
   }
 

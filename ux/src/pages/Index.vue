@@ -229,12 +229,12 @@ const state = reactive({
 const thumbStyle = {
   right: '2px',
   borderRadius: '5px',
-  backgroundColor: '#000',
+  backgroundColor: $q.dark.isActive ? '#FFF' : '#000',
   width: '5px',
   opacity: 0.15
 }
 const barStyle = {
-  backgroundColor: '#FAFAFA',
+  backgroundColor: $q.dark.isActive ? '#161b22' : '#FAFAFA',
   width: '9px',
   opacity: 1
 }

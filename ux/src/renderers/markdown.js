@@ -10,9 +10,9 @@ import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
 import mdMultiTable from 'markdown-it-multimd-table'
 import mdFootnote from 'markdown-it-footnote'
-// import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
-import underline from './modules/markdown-it-underline'
+import mdUnderline from './modules/markdown-it-underline'
+import mdImsize from './modules/markdown-it-imsize'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './modules/plantuml'
@@ -52,7 +52,7 @@ export class MarkdownRenderer {
         } else if (['mermaid', 'plantuml'].includes(lang)) {
           return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
         } else {
-          const highlighted = lang ? hljs.highlight(str, { language: lang, ignoreIllegals: true }) : hljs.highlightAuto(str)
+          const highlighted = lang ? hljs.highlight(str, { language: lang, ignoreIllegals: true }) : { value: str }
           const lineCount = highlighted.value.match(/\n/g).length
           const lineNums = lineCount > 1 ? `<span aria-hidden="true" class="line-numbers-rows">${times(lineCount, n => '<span></span>').join('')}</span>` : ''
           return `<pre class="codeblock ${lineCount > 1 && 'line-numbers'}"><code class="language-${lang}">${highlighted.value}${lineNums}</code></pre>`
@@ -71,10 +71,10 @@ export class MarkdownRenderer {
       .use(mdSub)
       .use(mdMark)
       .use(mdFootnote)
-      // .use(mdImsize)
+      .use(mdImsize)
 
     if (config.underline) {
-      this.md.use(underline)
+      this.md.use(mdUnderline)
     }
 
     if (config.mdmultiTable) {

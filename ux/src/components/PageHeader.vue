@@ -116,14 +116,16 @@
         :href='siteStore.docsBase + `/editor/${editorStore.editor}`'
         target='_blank'
         type='a'
-      )
+        )
+        q-tooltip {{ t(`common.actions.viewDocs`) }}
       q-btn.q-ml-sm.acrylic-btn(
         icon='las la-cog'
         flat
         color='grey'
         :aria-label='t(`editor.settings`)'
         @click='openEditorSettings'
-      )
+        )
+        q-tooltip {{ t(`editor.settings`) }}
     template(v-if='editorStore.isActive || editorStore.hasPendingChanges')
       q-btn.acrylic-btn.q-ml-sm(
         flat
@@ -139,8 +141,8 @@
         flat
         icon='las la-check'
         color='positive'
-        label='Create Page'
-        aria-label='Create Page'
+        :label='t(`editor.createPage`)'
+        :aria-label='t(`editor.createPage`)'
         no-caps
         @click='createPage'
       )
@@ -149,19 +151,21 @@
         flat
         icon='las la-check'
         color='positive'
-        label='Save Changes'
-        aria-label='Save Changes'
+        :label='t(`common.actions.saveChanges`)'
+        :aria-label='t(`common.actions.saveChanges`)'
         :disabled='!editorStore.hasPendingChanges'
         no-caps
-        @click='saveChanges'
-      )
+        @click.exact='saveChanges(false)'
+        @click.ctrl.exact='saveChanges(true)'
+        )
+        q-tooltip {{ t(`editor.saveAndCloseTip`) }}
     template(v-else-if='userStore.can(`edit:pages`)')
       q-btn.acrylic-btn.q-ml-md(
         flat
         icon='las la-edit'
         color='deep-orange-9'
-        label='Edit'
-        aria-label='Edit'
+        :label='t(`common.actions.edit`)'
+        :aria-label='t(`common.actions.edit`)'
         no-caps
         @click='editPage'
       )
@@ -258,7 +262,7 @@ async function discardChanges () {
   $q.loading.hide()
 }
 
-async function saveChanges () {
+async function saveChanges (closeAfter = false) {
   if (siteStore.features.reasonForChange !== 'off') {
     $q.dialog({
       component: defineAsyncComponent(() => import('../components/PageReasonForChangeDialog.vue')),
@@ -269,14 +273,14 @@ async function saveChanges () {
       editorStore.$patch({
         reasonForChange: reason
       })
-      saveChangesCommit()
+      saveChangesCommit(closeAfter)
     })
   } else {
-    saveChangesCommit()
+    saveChangesCommit(closeAfter)
   }
 }
 
-async function saveChangesCommit () {
+async function saveChangesCommit (closeAfter = false) {
   $q.loading.show()
   try {
     await pageStore.pageSave()
@@ -284,6 +288,12 @@ async function saveChangesCommit () {
       type: 'positive',
       message: 'Page saved successfully.'
     })
+    if (closeAfter) {
+      editorStore.$patch({
+        isActive: false,
+        editor: ''
+      })
+    }
   } catch (err) {
     $q.notify({
       type: 'negative',
