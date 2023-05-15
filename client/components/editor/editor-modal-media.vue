@@ -150,7 +150,7 @@
               )
             v-divider
             v-card-actions.pa-3
-              .caption.grey--text.text-darken-2 Max {{config.uploadMaxFiles}} files, {{config.uploadMaxFileSize | prettyBytes}} each
+              .caption.grey--text.text-darken-2 Max {{uploadConfig.uploadMaxFiles}} files, {{uploadConfig.uploadMaxFileSize | prettyBytes}} each
               v-spacer
               v-btn.px-4(color='teal', dark, @click='upload') {{$t('common:actions.upload')}}
 
@@ -280,7 +280,7 @@ export default {
       renameAssetLoading: false,
       deleteDialog: false,
       deleteAssetLoading: false,
-      config: {
+      uploadConfig: {
         uploadMaxFileSize: 0,
         uploadMaxFiles: 0
       }
@@ -552,11 +552,11 @@ export default {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-list-refresh')
       }
     },
-    config: {
+    uploadConfig: {
       query: gql`
         {
           site {
-            config {
+            uploadConfig {
               uploadMaxFileSize
               uploadMaxFiles
             }
@@ -564,7 +564,7 @@ export default {
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.site.config,
+      update: (data) => data.site.uploadConfig,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-config-refresh')
       }
