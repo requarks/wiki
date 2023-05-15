@@ -141,7 +141,12 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           <img src="https://avatars.githubusercontent.com/u/114394792?v=4">
         </a>
       </td>
-      <td align="center" valign="middle" colspan="4">
+      <td align="center" valign="middle" width="148">
+        <a href="https://acceleanation.com/" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
+        </a>
+      </td>
+      <td align="center" valign="middle" colspan="3">
         <a href="https://github.com/sponsors/NGPixel" target="_blank">
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
