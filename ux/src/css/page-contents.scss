@@ -15,7 +15,7 @@
   // ---------------------------------
 
   a {
-    color: $blue-8;
+    color: var(--q-primary);
 
     &.is-internal-link.is-invalid-page {
       color: $red-8;
@@ -438,7 +438,7 @@
     }
   }
 
-    // ---------------------------------
+  // ---------------------------------
   // TASK LISTS
   // ---------------------------------
 
@@ -514,22 +514,17 @@
   // }
 
   pre.codeblock {
-    border: none;
+    border: 1px solid rgba(0,0,0,.2);
     border-radius: 5px;
     box-shadow: initial;
-    background-color: $dark-5;
     padding: 1rem;
     margin: 1rem 0;
     overflow: auto;
 
-    @at-root .body--dark & {
-      background-color: $dark-5;
-    }
-
     > code {
-      background-color: transparent;
+      // background-color: transparent;
       padding: 0;
-      color: #FFF;
+      // color: #FFF;
       box-shadow: initial;
       display: block;
       font-size: .85rem;
@@ -591,5 +586,3 @@
     padding: 5px;
   }
 }
-
-@import 'highlight.js/styles/atom-one-dark-reasonable.css';

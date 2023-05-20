@@ -29,7 +29,9 @@ q-page.column
       .text-caption.text-grey-6 Last modified on #[strong {{lastModified}}]
   page-header
   .page-container.row.no-wrap.items-stretch(style='flex: 1 1 100%;')
-    .col(style='order: 1;')
+    .col(
+      :style='siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`'
+      )
       q-no-ssr(
         v-if='editorStore.isActive'
         )
@@ -84,7 +86,7 @@ q-page.column
                     .text-caption {{rel.caption}}
     .page-sidebar(
       v-if='showSidebar'
-      style='order: 2;'
+      :style='siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`'
       )
       template(v-if='pageStore.showToc')
         //- TOC
@@ -242,7 +244,7 @@ const barStyle = {
 // COMPUTED
 
 const showSidebar = computed(() => {
-  return pageStore.showSidebar && siteStore.showSidebar && !editorStore.isActive
+  return pageStore.showSidebar && siteStore.showSidebar && siteStore.theme.tocPosition !== 'off' && !editorStore.isActive
 })
 const relationsLeft = computed(() => {
   return pageStore.relations ? pageStore.relations.filter(r => r.position === 'left') : []

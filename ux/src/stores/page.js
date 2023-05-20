@@ -8,6 +8,7 @@ import { useEditorStore } from './editor'
 
 const pagePropsFragment = gql`
   fragment PageRead on Page {
+    alias
     allowComments
     allowContributions
     allowRatings
@@ -112,6 +113,7 @@ const gqlQueries = {
 const gqlMutations = {
   createPage: gql`
     mutation createPage (
+      $alias: String
       $allowComments: Boolean
       $allowContributions: Boolean
       $allowRatings: Boolean
@@ -138,6 +140,7 @@ const gqlMutations = {
       $tocDepth: PageTocDepthInput
     ) {
       createPage (
+        alias: $alias
         allowComments: $allowComments
         allowContributions: $allowContributions
         allowRatings: $allowRatings
@@ -178,6 +181,7 @@ const gqlMutations = {
 
 export const usePageStore = defineStore('page', {
   state: () => ({
+    alias: '',
     allowComments: false,
     allowContributions: true,
     allowRatings: true,
@@ -273,6 +277,40 @@ export const usePageStore = defineStore('page', {
       }
     },
     /**
+     * PAGE - GET PATH FROM ALIAS
+     */
+    async pageAlias (alias) {
+      const siteStore = useSiteStore()
+      try {
+        const resp = await APOLLO_CLIENT.query({
+          query: gql`
+            query fetchPathFromAlias (
+              $siteId: UUID!
+              $alias: String!
+            ) {
+              pathFromAlias (
+                siteId: $siteId
+                alias: $alias
+              ) {
+                id
+                path
+              }
+            }
+          `,
+          variables: { siteId: siteStore.id, alias },
+          fetchPolicy: 'cache-first'
+        })
+        const pagePath = cloneDeep(resp?.data?.pathFromAlias)
+        if (!pagePath?.id) {
+          throw new Error('ERR_PAGE_NOT_FOUND')
+        }
+        return pagePath.path
+      } catch (err) {
+        console.warn(err)
+        throw err
+      }
+    },
+    /**
      * PAGE - CREATE
      */
     async pageCreate ({ editor, locale, path, title = '', description = '', content = '' }) {
@@ -305,6 +343,7 @@ export const usePageStore = defineStore('page', {
         title: title ?? '',
         description: description ?? '',
         icon: 'las la-file-alt',
+        alias: '',
         publishState: 'published',
         relations: [],
         tags: [],
@@ -345,6 +384,7 @@ export const usePageStore = defineStore('page', {
             mutation: gqlMutations.createPage,
             variables: {
               ...pick(this, [
+                'alias',
                 'allowComments',
                 'allowContributions',
                 'allowRatings',
@@ -415,6 +455,7 @@ export const usePageStore = defineStore('page', {
               id: this.id,
               patch: {
                 ...pick(this, [
+                  'alias',
                   'allowComments',
                   'allowContributions',
                   'allowRatings',

@@ -41,12 +41,6 @@ extend type Query {
     password: String
   ): Page
 
-  tags: [PageTag]!
-
-  searchTags(
-    query: String!
-  ): [String]!
-
   pageTree(
     path: String
     parent: Int
@@ -58,6 +52,17 @@ extend type Query {
   pageLinks(
     locale: String!
   ): [PageLinkItem]
+
+  pathFromAlias(
+    siteId: UUID!
+    alias: String!
+  ): PageAliasPath
+
+  searchTags(
+    query: String!
+  ): [String]!
+
+  tags: [PageTag]!
 
   checkConflicts(
     id: Int!
@@ -71,6 +76,7 @@ extend type Query {
 
 extend type Mutation {
   createPage(
+    alias: String
     allowComments: Boolean
     allowContributions: Boolean
     allowRatings: Boolean
@@ -165,6 +171,7 @@ type PageMigrationResponse {
 }
 
 type Page {
+  alias: String
   allowComments: Boolean
   allowContributions: Boolean
   allowRatings: Boolean
@@ -329,6 +336,7 @@ input PageRelationInput {
 }
 
 input PageUpdateInput {
+  alias: String
   allowComments: Boolean
   allowContributions: Boolean
   allowRatings: Boolean
@@ -353,6 +361,11 @@ input PageUpdateInput {
   tags: [String!]
   title: String
   tocDepth: PageTocDepthInput
+}
+
+type PageAliasPath {
+  id: UUID
+  path: String
 }
 
 type PageTocDepth {

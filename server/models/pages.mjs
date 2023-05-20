@@ -19,6 +19,7 @@ import { Tag } from './tags.mjs'
 import { User } from './users.mjs'
 
 const pageRegex = /^[a-zA0-90-9-_/]*$/
+const aliasRegex = /^[a-zA0-90-9-_]*$/
 
 const frontmatterRegex = {
   html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
@@ -236,7 +237,7 @@ export class Page extends Model {
   static async createPage(opts) {
     // -> Validate site
     if (!WIKI.sites[opts.siteId]) {
-      throw new WIKI.Error.Custom('InvalidSiteId', 'Site ID is invalid.')
+      throw new Error('ERR_INVALID_SITE_ID')
     }
 
     // -> Remove trailing slash
@@ -262,13 +263,31 @@ export class Page extends Model {
       locale: opts.locale,
       path: opts.path
     })) {
-      throw new WIKI.Error.PageDeleteForbidden()
+      throw new Error('ERR_FORBIDDEN')
     }
 
     // -> Check for duplicate
-    const dupCheck = await WIKI.db.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
+    const dupCheck = await WIKI.db.pages.query().findOne({
+      siteId: opts.siteId,
+      localeCode: opts.locale,
+      path: opts.path
+    }).select('id')
     if (dupCheck) {
-      throw new WIKI.Error.PageDuplicateCreate()
+      throw new Error('ERR_PAGE_DUPLICATE_PATH')
+    }
+
+    // -> Check for alias
+    if (opts.alias) {
+      if (!aliasRegex.test(opts.alias)) {
+        throw new Error('ERR_PAGE_INVALID_ALIAS')
+      }
+      const dupAliasCheck = await WIKI.db.pages.query().findOne({
+        siteId: opts.siteId,
+        alias: opts.alias
+      }).select('id')
+      if (dupAliasCheck) {
+        throw new Error('ERR_PAGE_DUPLICATE_ALIAS')
+      }
     }
 
     // -> Check for empty content
@@ -302,6 +321,7 @@ export class Page extends Model {
 
     // -> Create page
     const page = await WIKI.db.pages.query().insert({
+      alias: opts.alias,
       authorId: opts.user.id,
       content: opts.content,
       creatorId: opts.user.id,
@@ -447,6 +467,24 @@ export class Page extends Model {
     if ('icon' in opts.patch) {
       patch.icon = opts.patch.icon.trim()
       historyData.affectedFields.push('icon')
+    }
+
+    if ('alias' in opts.patch) {
+      patch.alias = opts.patch.alias.trim()
+      historyData.affectedFields.push('alias')
+
+      if (patch.alias.length > 255) {
+        throw new Error('ERR_PAGE_ALIAS_TOO_LONG')
+      } else if (!aliasRegex.test(patch.alias)) {
+        throw new Error('ERR_PAGE_INVALID_ALIAS')
+      }
+      const dupAliasCheck = await WIKI.db.pages.query().where({
+        siteId: ogPage.siteId,
+        alias: patch.alias
+      }).andWhereNot('id', ogPage.id).select('id').first()
+      if (dupAliasCheck) {
+        throw new Error('ERR_PAGE_DUPLICATE_ALIAS')
+      }
     }
 
     if ('content' in opts.patch) {

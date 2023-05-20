@@ -19,7 +19,7 @@ export class Locale extends Model {
         nativeName: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'},
-        availability: {type: 'integer'}
+        completeness: {type: 'integer'}
       }
     }
   }

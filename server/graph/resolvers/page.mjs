@@ -187,6 +187,31 @@ export default {
         throw new Error('ERR_PAGE_NOT_FOUND')
       }
     },
+
+    /**
+     * FETCH PATH FROM ALIAS
+     */
+    async pathFromAlias (obj, args, context, info) {
+      const alias = args.alias?.trim()
+      if (!alias) {
+        throw new Error('ERR_ALIAS_MISSING')
+      }
+      if (!WIKI.sites[args.siteId]) {
+        throw new Error('ERR_INVALID_SITE_ID')
+      }
+      const page = await WIKI.db.pages.query().findOne({
+        alias: args.alias,
+        siteId: args.siteId
+      }).select('id', 'path', 'localeCode')
+      if (!page) {
+        throw new Error('ERR_ALIAS_NOT_FOUND')
+      }
+      return {
+        id: page.id,
+        path: WIKI.sites[args.siteId].config.localeNamespacing ? `${page.localeCode}/${page.path}` : page.path
+      }
+    },
+
     /**
      * FETCH TAGS
      */

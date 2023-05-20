@@ -118,6 +118,7 @@ type SiteEditor {
 
 type SiteTheme {
   dark: Boolean
+  codeBlocksTheme: String
   colorPrimary: String
   colorSecondary: String
   colorAccent: String
@@ -210,6 +211,7 @@ input SiteDefaultsInput {
 
 input SiteThemeInput {
   dark: Boolean
+  codeBlocksTheme: String
   colorPrimary: String
   colorSecondary: String
   colorAccent: String

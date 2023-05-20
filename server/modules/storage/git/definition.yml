@@ -1,4 +1,4 @@
-title: Git
+title: Local Git
 icon: '/_assets/icons/ultraviolet-git.svg'
 banner: '/_assets/storage/git.jpg'
 description: Git is a version control system for tracking changes in computer files and coordinating work on those files among multiple people. If using GitHub, use the GitHub module instead!

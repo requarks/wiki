@@ -54,7 +54,7 @@ export async function render (input, config) {
         const highlighted = lang ? hljs.highlight(str, { language: lang, ignoreIllegals: true }) : { value: str }
         const lineCount = highlighted.value.match(/\n/g).length
         const lineNums = lineCount > 1 ? `<span aria-hidden="true" class="line-numbers-rows">${times(lineCount, n => '<span></span>').join('')}</span>` : ''
-        return `<pre class="codeblock ${lineCount > 1 && 'line-numbers'}"><code class="language-${lang}">${highlighted.value}${lineNums}</code></pre>`
+        return `<pre class="codeblock hljs ${lineCount > 1 && 'line-numbers'}"><code class="language-${lang}">${highlighted.value}${lineNums}</code></pre>`
       }
     }
     })

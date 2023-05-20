@@ -168,7 +168,7 @@ export async function up (knex) {
       table.boolean('isRTL').notNullable().defaultTo(false)
       table.string('name').notNullable()
       table.string('nativeName').notNullable()
-      table.integer('availability').notNullable().defaultTo(0)
+      table.integer('completeness').notNullable().defaultTo(0)
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -606,6 +606,7 @@ export async function up (knex) {
       },
       theme: {
         dark: false,
+        codeBlocksTheme: 'github-dark',
         colorPrimary: '#1976D2',
         colorSecondary: '#02C39A',
         colorAccent: '#FF9800',

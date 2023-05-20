@@ -75,7 +75,7 @@ module.exports = configure(function (/* ctx */) {
       vueRouterMode: 'history', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
-      // vueOptionsAPI: true,
+      vueOptionsAPI: false,
 
       rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
@@ -90,28 +90,21 @@ module.exports = configure(function (/* ctx */) {
 
       extendViteConf (viteConf) {
         viteConf.build.assetsDir = '_assets'
-        // viteConf.resolve.alias.vue = '/workspace/ux/node_modules/vue/dist/vue.esm-bundler.js'
-        // viteConf.build.rollupOptions = {
-        //   ...viteConf.build.rollupOptions ?? {},
-        //   external: [
-        //     /^\/_site\//
-        //   ]
-        // }
+        viteConf.build.rollupOptions = {
+          ...viteConf.build.rollupOptions ?? {},
+          output: {
+            manualChunks: {
+              lodash: ['lodash-es', 'lodash'],
+              quasar: ['quasar', 'quasar/src/components']
+            }
+          }
+        }
         viteConf.optimizeDeps.include = [
           'prosemirror-state',
           'prosemirror-transform',
           'prosemirror-model',
           'prosemirror-view'
         ]
-
-        // viteConf.build.rollupOptions = {
-        //   external: ['monaco-editor'],
-        //   output: {
-        //     globals: {
-        //       'monaco-editor': 'monaco-editor'
-        //     }
-        //   }
-        // }
       },
       // viteVuePluginOptions: {},
 
@@ -139,7 +132,8 @@ module.exports = configure(function (/* ctx */) {
       },
       hmr: {
         clientPort: userConfig.dev.hmrClientPort
-      }
+      },
+      vueDevtools: true
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework

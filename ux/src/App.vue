@@ -55,12 +55,15 @@ watch(() => userStore.cvd, () => {
 
 // THEME
 
-function applyTheme () {
+async function applyTheme () {
+  // -> Dark Mode
   if (userStore.appearance === 'site') {
     $q.dark.set(siteStore.theme.dark)
   } else {
     $q.dark.set(userStore.appearance === 'dark')
   }
+
+  // -> CSS Vars
   setCssVar('primary', userStore.getAccessibleColor('primary', siteStore.theme.colorPrimary))
   setCssVar('secondary', userStore.getAccessibleColor('secondary', siteStore.theme.colorSecondary))
   setCssVar('accent', userStore.getAccessibleColor('accent', siteStore.theme.colorAccent))
@@ -68,6 +71,21 @@ function applyTheme () {
   setCssVar('sidebar', userStore.getAccessibleColor('sidebar', siteStore.theme.colorSidebar))
   setCssVar('positive', userStore.getAccessibleColor('positive', '#02C39A'))
   setCssVar('negative', userStore.getAccessibleColor('negative', '#f03a47'))
+
+  // -> Highlight.js Theme
+  if (siteStore.theme.codeBlocksTheme) {
+    const desiredHljsTheme = userStore.cvd !== 'none' ? 'github' : siteStore.theme.codeBlocksTheme
+
+    const hljsStyleEl = document.querySelector('#hljs-theme')
+    if (hljsStyleEl) {
+      hljsStyleEl.remove()
+    }
+
+    const newHljsStyleEl = document.createElement('style')
+    newHljsStyleEl.id = 'hljs-theme'
+    newHljsStyleEl.innerHTML = (await import(`../node_modules/highlight.js/styles/${desiredHljsTheme}.css`)).default
+    document.head.appendChild(newHljsStyleEl)
+  }
 }
 
 // INIT SITE STORE

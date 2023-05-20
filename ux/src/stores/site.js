@@ -47,6 +47,7 @@ export const useSiteStore = defineStore('site', {
       colorAccent: '#f03a47',
       colorHeader: '#000',
       colorSidebar: '#1976D2',
+      codeBlocksTheme: '',
       sidebarPosition: 'left',
       tocPosition: 'right',
       showSharingMenu: true,
@@ -69,7 +70,8 @@ export const useSiteStore = defineStore('site', {
     docsBase: 'https://next.js.wiki/docs'
   }),
   getters: {
-    overlayIsShown: (state) => Boolean(state.overlay)
+    overlayIsShown: (state) => Boolean(state.overlay),
+    sideNavIsDisabled: (state) => Boolean(state.theme.sidebarPosition === 'off')
   },
   actions: {
     openFileManager (opts) {
@@ -121,6 +123,7 @@ export const useSiteStore = defineStore('site', {
                   colorAccent
                   colorHeader
                   colorSidebar
+                  codeBlocksTheme
                   sidebarPosition
                   tocPosition
                   showSharingMenu
@@ -137,27 +140,29 @@ export const useSiteStore = defineStore('site', {
         })
         const siteInfo = resp.data.siteByHostname
         if (siteInfo) {
-          this.id = clone(siteInfo.id)
-          this.hostname = clone(siteInfo.hostname)
-          this.title = clone(siteInfo.title)
-          this.description = clone(siteInfo.description)
-          this.logoText = clone(siteInfo.logoText)
-          this.company = clone(siteInfo.company)
-          this.contentLicense = clone(siteInfo.contentLicense)
-          this.footerExtra = clone(siteInfo.footerExtra)
-          this.features = {
-            ...this.features,
-            ...clone(siteInfo.features)
-          }
-          this.editors = {
-            asciidoc: clone(siteInfo.editors.asciidoc.isActive),
-            markdown: clone(siteInfo.editors.markdown.isActive),
-            wysiwyg: clone(siteInfo.editors.wysiwyg.isActive)
-          }
-          this.theme = {
-            ...this.theme,
-            ...clone(siteInfo.theme)
-          }
+          this.$patch({
+            id: clone(siteInfo.id),
+            hostname: clone(siteInfo.hostname),
+            title: clone(siteInfo.title),
+            description: clone(siteInfo.description),
+            logoText: clone(siteInfo.logoText),
+            company: clone(siteInfo.company),
+            contentLicense: clone(siteInfo.contentLicense),
+            footerExtra: clone(siteInfo.footerExtra),
+            features: {
+              ...this.features,
+              ...clone(siteInfo.features)
+            },
+            editors: {
+              asciidoc: clone(siteInfo.editors.asciidoc.isActive),
+              markdown: clone(siteInfo.editors.markdown.isActive),
+              wysiwyg: clone(siteInfo.editors.wysiwyg.isActive)
+            },
+            theme: {
+              ...this.theme,
+              ...clone(siteInfo.theme)
+            }
+          })
         } else {
           throw new Error('Invalid Site')
         }

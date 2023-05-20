@@ -91,6 +91,7 @@ export class Site extends Model {
         },
         theme: {
           dark: false,
+          codeBlocksTheme: 'github-dark',
           colorPrimary: '#1976D2',
           colorSecondary: '#02C39A',
           colorAccent: '#FF9800',

@@ -1506,7 +1506,6 @@
   "editor.pageRel.title": "Add Page Relation",
   "editor.pageRel.titleEdit": "Edit Page Relation",
   "editor.pageScripts.title": "Page Scripts",
-  "editor.props.alias": "Alias",
   "editor.props.allowComments": "Allow Comments",
   "editor.props.allowCommentsHint": "Enable commenting abilities on this page.",
   "editor.props.allowContributions": "Allow Contributions",

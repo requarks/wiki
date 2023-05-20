@@ -62,6 +62,13 @@ q-card.page-properties-dialog
               name='las la-icons'
               color='primary'
             )
+        q-input(
+          v-model='pageStore.alias'
+          :label='t(`editor.props.alias`)'
+          outlined
+          dense
+          prefix='/a/'
+        )
     q-card-section.alt-card(id='refCardPublishState')
       .text-overline.q-pb-xs.items-center.flex #[q-icon.q-mr-sm(name='las la-power-off', size='xs')] {{t('editor.props.publishState')}}
       q-form.q-gutter-md

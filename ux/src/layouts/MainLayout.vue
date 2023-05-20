@@ -3,8 +3,9 @@ q-layout(view='hHh Lpr lff')
   header-nav
   q-drawer.bg-sidebar(
     :modelValue='isSidebarShown'
-    show-if-above
+    :show-if-above='siteStore.theme.sidebarPosition !== `off`'
     :width='255'
+    :side='siteStore.theme.sidebarPosition === `right` ? `right` : `left`'
     )
     .sidebar-actions.flex.items-stretch
       q-btn.q-px-sm.col(
@@ -144,7 +145,7 @@ const barStyle = {
 // COMPUTED
 
 const isSidebarShown = computed(() => {
-  return siteStore.showSideNav && !(editorStore.isActive && editorStore.hideSideNav)
+  return siteStore.showSideNav && !siteStore.sideNavIsDisabled && !(editorStore.isActive && editorStore.hideSideNav)
 })
 
 // METHODS

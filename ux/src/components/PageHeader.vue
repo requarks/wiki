@@ -92,6 +92,7 @@
         )
         q-tooltip Bookmark Page
       q-btn.q-ml-md(
+        v-if='siteStore.theme.showSharingMenu'
         flat
         dense
         icon='las la-share-alt'
@@ -101,6 +102,7 @@
         q-tooltip Share
         social-sharing-menu
       q-btn.q-ml-md(
+        v-if='siteStore.theme.showPrintBtn'
         flat
         dense
         icon='las la-print'
@@ -297,7 +299,8 @@ async function saveChangesCommit (closeAfter = false) {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save page changes.'
+      message: 'Failed to save page changes.',
+      caption: err.message
     })
   }
   $q.loading.hide()

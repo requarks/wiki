@@ -1,3 +1,4 @@
+import { usePageStore } from 'src/stores/page'
 
 const routes = [
   {
@@ -14,6 +15,19 @@ const routes = [
     children: [
       { path: '', component: () => import('pages/Login.vue') }
     ]
+  },
+  {
+    path: '/a/:alias',
+    component: () => import('../layouts/MainLayout.vue'),
+    beforeEnter: async (to, from) => {
+      const pageStore = usePageStore()
+      try {
+        const pathPath = await pageStore.pageAlias(to.params.alias)
+        return `/${pathPath}`
+      } catch (err) {
+        return '/_error/notfound'
+      }
+    }
   },
   {
     path: '/_profile',
