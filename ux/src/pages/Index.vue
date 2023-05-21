@@ -262,7 +262,24 @@ const lastModified = computed(() => {
 // WATCHERS
 
 watch(() => route.path, async (newValue) => {
+  // -> Enter Create Mode?
+  if (newValue.startsWith('/_create')) {
+    if (!route.params.editor) {
+      $q.notify({
+        type: 'negative',
+        message: 'No editor specified!'
+      })
+      return router.replace('/')
+    }
+    $q.loading.show()
+    await pageStore.pageCreate({ editor: route.params.editor })
+    $q.loading.hide()
+  }
+
+  // -> Moving to a non-page path? Ignore
   if (newValue.startsWith('/_')) { return }
+
+  // -> Load Page
   try {
     await pageStore.pageLoad({ path: newValue })
     if (editorStore.isActive) {

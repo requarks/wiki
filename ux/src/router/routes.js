@@ -2,14 +2,6 @@ import { usePageStore } from 'src/stores/page'
 
 const routes = [
   {
-    path: '/',
-    component: () => import('../layouts/MainLayout.vue'),
-    children: [
-      { path: '', component: () => import('../pages/Index.vue') },
-      { path: '_create/:editor?', component: () => import('../pages/Index.vue') }
-    ]
-  },
-  {
     path: '/login',
     component: () => import('layouts/AuthLayout.vue'),
     children: [
@@ -85,11 +77,14 @@ const routes = [
   // },
 
   // --------------------------------
-  // SYSTEM ROUTES CATCH-ALL FALLBACK
+  // CREATE
   // --------------------------------
   {
-    path: '/_:catchAll(.*)*',
-    redirect: '/_error/notfound'
+    path: '/_create/:editor?',
+    component: () => import('../layouts/MainLayout.vue'),
+    children: [
+      { path: '', component: () => import('../pages/Index.vue') }
+    ]
   },
   // -----------------------
   // STANDARD PAGE CATCH-ALL

@@ -352,7 +352,7 @@ export const usePageStore = defineStore('page', {
         mode: 'edit'
       })
 
-      this.router.push('/_create')
+      this.router.push(`/_create/${editor}`)
     },
     /**
      * PAGE - EDIT

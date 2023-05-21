@@ -108,6 +108,7 @@
         icon='las la-print'
         color='grey'
         aria-label='Print'
+        @click='printPage'
         )
         q-tooltip Print
     template(v-if='editorStore.isActive')
@@ -230,13 +231,19 @@ function openEditorSettings () {
 }
 
 async function discardChanges () {
-  // Is it the home page in create mode?
-  if (editorStore.mode === 'create' && pageStore.path === '' && pageStore.locale === 'en') {
+  // From create mode
+  if (editorStore.mode === 'create') {
     editorStore.$patch({
       isActive: false,
       editor: ''
     })
-    siteStore.overlay = 'Welcome'
+
+    // Is it the home page in create mode?
+    if ((pageStore.path === '' || pageStore.path === 'home') && pageStore.locale === 'en') {
+      siteStore.overlay = 'Welcome'
+    }
+
+    router.replace('/')
     return
   }
 
@@ -370,5 +377,9 @@ async function editPage () {
   $q.loading.show()
   await pageStore.pageEdit()
   $q.loading.hide()
+}
+
+function printPage () {
+  window.print()
 }
 </script>
