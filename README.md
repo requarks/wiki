@@ -399,6 +399,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 
 - Al Romano
 - Alex Balabanov
+- Alex Milanov
 - Alex Zen
 - Arti Zirk
 - Ave
