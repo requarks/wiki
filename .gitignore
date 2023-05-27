@@ -43,4 +43,4 @@ test-results/
 # Localization Resources
 /server/locales/*.json
 !/server/locales/en.json
-!/server/locales/list.json
+/server/locales/metadata.mjs
