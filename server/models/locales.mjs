@@ -47,6 +47,7 @@ export class Locale extends Model {
 
       const dbLocales = await WIKI.db.locales.query().select('code', 'updatedAt')
 
+      let localFilesSkipped = 0
       for (const lang of localesMeta.languages) {
         // -> Build filename
         const langFilenameParts = [lang.language]
@@ -63,26 +64,34 @@ export class Locale extends Model {
 
         // -> Get File version
         const flPath = path.join(WIKI.SERVERPATH, `locales/${langFilename}.json`)
-        const flStat = await stat(flPath)
-        const flUpdatedAt = DateTime.fromJSDate(flStat.mtime)
+        try {
+          const flStat = await stat(flPath)
+          const flUpdatedAt = DateTime.fromJSDate(flStat.mtime)
 
-        // -> Load strings
-        if (!dbLang || DateTime.fromJSDate(dbLang.updatedAt) < flUpdatedAt || force) {
-          WIKI.logger.debug(`Loading locale ${langFilename} into DB...`)
-          const flStrings = JSON.parse(await readFile(flPath, 'utf8'))
-          await WIKI.db.locales.query().insert({
-            code: langFilename,
-            name: lang.name,
-            nativeName: lang.localizedName,
-            language: lang.language,
-            region: lang.region,
-            script: lang.script,
-            isRTL: lang.isRtl,
-            strings: flStrings
-          }).onConflict('code').merge(['strings', 'updatedAt'])
-        } else {
-          WIKI.logger.debug(`Locale ${langFilename} is newer in the DB. Skipping disk version.`)
+          // -> Load strings
+          if (!dbLang || DateTime.fromJSDate(dbLang.updatedAt) < flUpdatedAt || force) {
+            WIKI.logger.debug(`Loading locale ${langFilename} into DB...`)
+            const flStrings = JSON.parse(await readFile(flPath, 'utf8'))
+            await WIKI.db.locales.query().insert({
+              code: langFilename,
+              name: lang.name,
+              nativeName: lang.localizedName,
+              language: lang.language,
+              region: lang.region,
+              script: lang.script,
+              isRTL: lang.isRtl,
+              strings: flStrings
+            }).onConflict('code').merge(['strings', 'updatedAt'])
+          } else {
+            WIKI.logger.debug(`Locale ${langFilename} is newer in the DB. Skipping disk version. [ OK ]`)
+          }
+        } catch (err) {
+          localFilesSkipped++
+          WIKI.logger.debug(`Locale ${langFilename} not found on disk. Missing strings file. [ SKIPPED ]`)
         }
+      }
+      if (localFilesSkipped > 0) {
+        WIKI.logger.info(`${localFilesSkipped} locales were defined in the metadata file but not found on disk. [ SKIPPED ]`)
       }
     } catch (err) {
       WIKI.logger.warn(`Failed to load locales from disk: [ FAILED ]`)
