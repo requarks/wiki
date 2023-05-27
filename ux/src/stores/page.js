@@ -320,6 +320,8 @@ export const usePageStore = defineStore('page', {
         await editorStore.fetchConfigs()
       }
 
+      const noDefaultPath = Boolean(!path && path !== '')
+
       // -> Init editor
       editorStore.$patch({
         originPageId: editorStore.isActive ? editorStore.originPageId : this.id, // Don't replace if already in edit mode
@@ -352,7 +354,9 @@ export const usePageStore = defineStore('page', {
         mode: 'edit'
       })
 
-      this.router.push(`/_create/${editor}`)
+      if (noDefaultPath) {
+        this.router.push(`/_create/${editor}`)
+      }
     },
     /**
      * PAGE - EDIT

@@ -70,6 +70,8 @@ export default {
    * Post-Web Boot Sequence
    */
   async postBootWeb() {
+    await WIKI.db.locales.refreshFromDisk()
+
     await WIKI.db.analytics.refreshProvidersFromDisk()
     await WIKI.db.authentication.refreshStrategiesFromDisk()
     await WIKI.db.commentProviders.refreshProvidersFromDisk()

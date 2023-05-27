@@ -60,7 +60,7 @@ q-page.admin-locale
           q-item-section
             q-select(
               outlined
-              v-model='state.selectedLocale'
+              v-model='state.primary'
               :options='installedLocales'
               option-value='code'
               option-label='name'
@@ -185,9 +185,8 @@ useMeta({
 const state = reactive({
   loading: 0,
   locales: [],
-  selectedLocale: 'en',
-  namespacing: false,
-  namespaces: []
+  primary: 'en',
+  active: []
 })
 
 // COMPUTED
@@ -224,7 +223,7 @@ async function load () {
     query: gql`
       query getLocales ($siteId: UUID!) {
         locales {
-          availability
+          completeness
           code
           createdAt
           isInstalled
@@ -232,15 +231,18 @@ async function load () {
           isRTL
           name
           nativeName
+          region
+          script
           updatedAt
         }
         siteById(
           id: $siteId
         ) {
           id
-          locale
-          localeNamespacing
-          localeNamespaces
+          locales {
+            primary
+            active
+          }
         }
       }
     `,
@@ -250,11 +252,10 @@ async function load () {
     fetchPolicy: 'network-only'
   })
   state.locales = cloneDeep(resp?.data?.locales)
-  state.selectedLocale = cloneDeep(resp?.data?.siteById?.locale)
-  state.namespacing = cloneDeep(resp?.data?.siteById?.localeNamespacing)
-  state.namespaces = cloneDeep(resp?.data?.siteById?.localeNamespaces)
-  if (!state.namespaces.includes(state.selectedLocale)) {
-    state.namespaces.push(state.selectedLocale)
+  state.primary = cloneDeep(resp?.data?.siteById?.locales?.primary)
+  state.active = cloneDeep(resp?.data?.siteById?.locales?.active ?? [])
+  if (!state.active.includes(state.primary)) {
+    state.active.push(state.primary)
   }
   $q.loading.hide()
   state.loading--

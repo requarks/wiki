@@ -32,8 +32,8 @@ q-card.page-properties-dialog
     )
   q-scroll-area(
     ref='scrollArea'
-    :thumb-style='siteStore.thumbStyle'
-    :bar-style='siteStore.barStyle'
+    :thumb-style='siteStore.scrollStyle.thumb'
+    :bar-style='siteStore.scrollStyle.bar'
     style='height: calc(100% - 50px);'
     )
     q-card-section(id='refCardInfo')

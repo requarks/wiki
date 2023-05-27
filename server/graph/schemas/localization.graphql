@@ -4,7 +4,7 @@
 
 extend type Query {
   locales: [LocalizationLocale]
-  translations(locale: String!, namespace: String!): [Translation]
+  localeStrings(locale: String!): JSON
 }
 
 extend type Mutation {
@@ -25,7 +25,7 @@ extend type Mutation {
 # -----------------------------------------------
 
 type LocalizationLocale {
-  availability: Int
+  completeness: Int
   code: String
   createdAt: Date
   installDate: Date
@@ -33,10 +33,7 @@ type LocalizationLocale {
   isRTL: Boolean
   name: String
   nativeName: String
+  region: String
+  script: String
   updatedAt: Date
-}
-
-type Translation {
-  key: String
-  value: String
 }

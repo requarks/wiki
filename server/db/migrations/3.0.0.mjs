@@ -163,11 +163,14 @@ export async function up (knex) {
     })
     // LOCALES -----------------------------
     .createTable('locales', table => {
-      table.string('code', 5).notNullable().primary()
-      table.jsonb('strings')
-      table.boolean('isRTL').notNullable().defaultTo(false)
+      table.string('code', 10).notNullable().primary()
       table.string('name').notNullable()
       table.string('nativeName').notNullable()
+      table.string('language', 2).notNullable().index()
+      table.string('region', 2)
+      table.string('script', 4)
+      table.boolean('isRTL').notNullable().defaultTo(false)
+      table.jsonb('strings')
       table.integer('completeness').notNullable().defaultTo(0)
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
@@ -207,7 +210,7 @@ export async function up (knex) {
     .createTable('pageLinks', table => {
       table.increments('id').primary()
       table.string('path').notNullable()
-      table.string('localeCode', 5).notNullable()
+      table.string('localeCode', 10).notNullable()
     })
     // PAGES -------------------------------
     .createTable('pages', table => {
@@ -284,7 +287,7 @@ export async function up (knex) {
       table.string('fileName').notNullable().index()
       table.string('hash').notNullable().index()
       table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
-      table.string('localeCode', 5).notNullable().defaultTo('en').index()
+      table.string('localeCode', 10).notNullable().defaultTo('en').index()
       table.string('title').notNullable()
       table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
@@ -294,6 +297,13 @@ export async function up (knex) {
     .createTable('userAvatars', table => {
       table.uuid('id').notNullable().primary()
       table.binary('data').notNullable()
+    })
+    // USER EDITOR SETTINGS ----------------
+    .createTable('userEditorSettings', table => {
+      table.uuid('id').notNullable()
+      table.string('editor').notNullable()
+      table.jsonb('config').notNullable().defaultTo('{}')
+      table.primary(['id', 'editor'])
     })
     // USER KEYS ---------------------------
     .createTable('userKeys', table => {
@@ -359,7 +369,7 @@ export async function up (knex) {
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
     })
     .table('pageHistory', table => {
-      table.string('localeCode', 5).references('code').inTable('locales')
+      table.string('localeCode', 10).references('code').inTable('locales')
       table.uuid('authorId').notNullable().references('id').inTable('users')
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
     })
@@ -368,7 +378,7 @@ export async function up (knex) {
       table.index(['path', 'localeCode'])
     })
     .table('pages', table => {
-      table.string('localeCode', 5).references('code').inTable('locales').index()
+      table.string('localeCode', 10).references('code').inTable('locales').index()
       table.uuid('authorId').notNullable().references('id').inTable('users').index()
       table.uuid('creatorId').notNullable().references('id').inTable('users').index()
       table.uuid('ownerId').notNullable().references('id').inTable('users').index()
@@ -386,9 +396,6 @@ export async function up (knex) {
     })
     .table('userKeys', table => {
       table.uuid('userId').notNullable().references('id').inTable('users')
-    })
-    .table('users', table => {
-      table.string('localeCode', 5).references('code').inTable('locales').notNullable().defaultTo('en')
     })
 
   // =====================================
@@ -520,16 +527,6 @@ export async function up (knex) {
     }
   ])
 
-  // -> DEFAULT LOCALE
-
-  await knex('locales').insert({
-    code: 'en',
-    strings: {},
-    isRTL: false,
-    name: 'English',
-    nativeName: 'English'
-  })
-
   // -> DEFAULT SITE
 
   await knex('sites').insert({
@@ -544,6 +541,7 @@ export async function up (knex) {
       footerExtra: '',
       pageExtensions: ['md', 'html', 'txt'],
       pageCasing: true,
+      discoverable: false,
       defaults: {
         tocDepth: {
           min: 1,
@@ -566,9 +564,10 @@ export async function up (knex) {
         follow: true
       },
       authStrategies: [{ id: authModuleId, order: 0, isVisible: true }],
-      locale: 'en',
-      localeNamespacing: false,
-      localeNamespaces: [],
+      locales: {
+        primary: 'en',
+        active: ['en']
+      },
       assets: {
         logo: false,
         logoExt: 'svg',
@@ -700,8 +699,7 @@ export async function up (knex) {
         timeFormat: '12h',
         appearance: 'site',
         cvd: 'none'
-      },
-      localeCode: 'en'
+      }
     },
     {
       id: userGuestId,
@@ -718,8 +716,7 @@ export async function up (knex) {
         timeFormat: '12h',
         appearance: 'site',
         cvd: 'none'
-      },
-      localeCode: 'en'
+      }
     }
   ])
 

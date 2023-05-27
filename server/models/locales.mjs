@@ -1,4 +1,8 @@
 import { Model } from 'objection'
+import { find } from 'lodash-es'
+import { stat, readFile } from 'node:fs/promises'
+import path from 'node:path'
+import { DateTime } from 'luxon'
 
 /**
  * Locales model
@@ -34,6 +38,62 @@ export class Locale extends Model {
   $beforeInsert() {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+  }
+
+  static async refreshFromDisk ({ force = false } = {}) {
+    try {
+      const localesMeta = (await import(`../locales/metadata.mjs`)).default
+      WIKI.logger.info(`Found ${localesMeta.languages.length} locales: [ OK ]`)
+
+      const dbLocales = await WIKI.db.locales.query().select('code', 'updatedAt')
+
+      for (const lang of localesMeta.languages) {
+        // -> Build filename
+        const langFilenameParts = [lang.language]
+        if (lang.region) {
+          langFilenameParts.push(lang.region)
+        }
+        if (lang.script) {
+          langFilenameParts.push(lang.script)
+        }
+        const langFilename = langFilenameParts.join('-')
+
+        // -> Get DB version
+        const dbLang = find(dbLocales, ['code', langFilename])
+
+        // -> Get File version
+        const flPath = path.join(WIKI.SERVERPATH, `locales/${langFilename}.json`)
+        const flStat = await stat(flPath)
+        const flUpdatedAt = DateTime.fromJSDate(flStat.mtime)
+
+        // -> Load strings
+        if (!dbLang || DateTime.fromJSDate(dbLang.updatedAt) < flUpdatedAt || force) {
+          WIKI.logger.debug(`Loading locale ${langFilename} into DB...`)
+          const flStrings = JSON.parse(await readFile(flPath, 'utf8'))
+          await WIKI.db.locales.query().insert({
+            code: langFilename,
+            name: lang.name,
+            nativeName: lang.localizedName,
+            language: lang.language,
+            region: lang.region,
+            script: lang.script,
+            isRTL: lang.isRtl,
+            strings: flStrings
+          }).onConflict('code').merge(['strings', 'updatedAt'])
+        } else {
+          WIKI.logger.debug(`Locale ${langFilename} is newer in the DB. Skipping disk version.`)
+        }
+      }
+    } catch (err) {
+      WIKI.logger.warn(`Failed to load locales from disk: [ FAILED ]`)
+      WIKI.logger.warn(err)
+      return false
+    }
+  }
+
+  static async getStrings (locale) {
+    const { strings } = await WIKI.db.locales.query().findOne('code', locale).column('strings')
+    return strings
   }
 
   static async getNavLocales({ cache = false } = {}) {

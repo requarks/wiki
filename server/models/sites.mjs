@@ -58,6 +58,7 @@ export class Site extends Model {
         footerExtra: '',
         pageExtensions: ['md', 'html', 'txt'],
         pageCasing: true,
+        discoverable: false,
         defaults: {
           tocDepth: {
             min: 1,
@@ -79,9 +80,10 @@ export class Site extends Model {
           index: true,
           follow: true
         },
-        locale: 'en',
-        localeNamespacing: false,
-        localeNamespaces: [],
+        locales: {
+          primary: 'en',
+          active: ['en']
+        },
         assets: {
           logo: false,
           logoExt: 'svg',

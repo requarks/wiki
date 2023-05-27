@@ -1,0 +1,13 @@
+{
+  "upload": {
+    "folder": "server/locales",
+    "files": "en.json",
+    "type": "json"
+  },
+
+  "download": {
+    "folder": "server/locales",
+    "files": "${lang}.json",
+    "metadataFileJs": "metadata.mjs"
+  }
+}

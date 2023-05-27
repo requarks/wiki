@@ -185,6 +185,9 @@
     "eslint-plugin-standard": "4.1.0",
     "nodemon": "2.0.22"
   },
+  "overrides": {
+    "@graphql-tools/utils": "10.0.0"
+  },
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/wikijs",

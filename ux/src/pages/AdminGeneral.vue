@@ -228,6 +228,31 @@ q-page.admin-general
               :options='reasonForChangeModes'
             )
 
+      //- -----------------------
+      //- Defaults
+      //- -----------------------
+      q-card.q-pb-sm.q-mt-md(v-if='state.config.defaults')
+        q-card-section
+          .text-subtitle1 {{t('admin.general.defaults')}}
+        q-item
+          blueprint-icon(icon='depth')
+          q-item-section
+            q-item-label {{t(`admin.general.defaultTocDepth`)}}
+            q-item-label(caption) {{t(`admin.general.defaultTocDepthHint`)}}
+          q-item-section.col-auto.q-pl-sm(style='min-width: 180px;')
+            .text-caption {{t('editor.props.tocMinMaxDepth')}} #[strong (H{{state.config.defaults.tocDepth.min}} &rarr; H{{state.config.defaults.tocDepth.max}})]
+            q-range(
+              v-model='state.config.defaults.tocDepth'
+              :min='1'
+              :max='6'
+              color='primary'
+              :left-label-value='`H` + state.config.defaults.tocDepth.min'
+              :right-label-value='`H` + state.config.defaults.tocDepth.max'
+              snap
+              label
+              markers
+            )
+
     .col-12.col-lg-5
       //- -----------------------
       //- Logo
@@ -316,29 +341,24 @@ q-page.admin-general
                 .text-caption.q-ml-sm Dolor sit amet...
 
       //- -----------------------
-      //- Defaults
+      //- Discovery
       //- -----------------------
-      q-card.q-pb-sm.q-mt-md(v-if='state.config.defaults')
+      q-card.q-pb-sm.q-mt-md
         q-card-section
-          .text-subtitle1 {{t('admin.general.defaults')}}
-        q-item
-          blueprint-icon(icon='depth')
+          .text-subtitle1 {{t('admin.general.discovery')}}
+        q-item(tag='label')
+          blueprint-icon(icon='cellular-network')
           q-item-section
-            q-item-label {{t(`admin.general.defaultTocDepth`)}}
-            q-item-label(caption) {{t(`admin.general.defaultTocDepthHint`)}}
-          q-item-section.col-auto.q-pl-sm(style='min-width: 180px;')
-            .text-caption {{t('editor.props.tocMinMaxDepth')}} #[strong (H{{state.config.defaults.tocDepth.min}} &rarr; H{{state.config.defaults.tocDepth.max}})]
-            q-range(
-              v-model='state.config.defaults.tocDepth'
-              :min='1'
-              :max='6'
+            q-item-label {{t(`admin.general.discoverable`)}}
+            q-item-label(caption) {{t(`admin.general.discoverableHint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.config.discoverable'
               color='primary'
-              :left-label-value='`H` + state.config.defaults.tocDepth.min'
-              :right-label-value='`H` + state.config.defaults.tocDepth.max'
-              snap
-              label
-              markers
-            )
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.general.discoverable`)'
+              )
 
       //- -----------------------
       //- Uploads
@@ -519,6 +539,7 @@ const state = reactive({
       reasonForChange: 'off',
       profile: false
     },
+    discoverable: false,
     defaults: {
       timezone: '',
       dateFormat: '',
@@ -618,6 +639,7 @@ async function load () {
             reasonForChange
             search
           }
+          discoverable
           defaults {
             tocDepth {
               min
@@ -687,6 +709,7 @@ async function save () {
             profile: state.config.features?.profile ?? false,
             search: state.config.features?.search ?? false
           },
+          discoverable: state.config.discoverable ?? false,
           defaults: {
             tocDepth: {
               min: state.config.defaults?.tocDepth?.min ?? 1,

@@ -19,6 +19,10 @@ import { useSiteStore } from '../stores/site'
 import LoadingGeneric from './LoadingGeneric.vue'
 
 const overlays = {
+  EditorMarkdownConfig: defineAsyncComponent({
+    loader: () => import('./EditorMarkdownUserSettingsOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   FileManager: defineAsyncComponent({
     loader: () => import('./FileManager.vue'),
     loadingComponent: LoadingGeneric

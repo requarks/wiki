@@ -21,6 +21,7 @@ npm-debug.log*
 
 # Config Files
 /config.yml
+/localazy.keys.json
 
 # Data directories
 /repo
@@ -40,4 +41,6 @@ test-results/
 .scannerwork
 
 # Localization Resources
-/server/locales/**/*.yml
+/server/locales/*.json
+!/server/locales/en.json
+!/server/locales/list.json

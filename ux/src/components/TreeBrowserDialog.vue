@@ -37,7 +37,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
               q-icon(:name='item.icon', size='sm')
             q-item-section
               q-item-label {{item.title}}
-    .page-save-dialog-path.font-robotomono {{folderPath}}
+    .page-save-dialog-path.font-robotomono {{currentFolderPath}}
     q-list.q-py-sm
       q-item
         blueprint-icon(icon='new-document')
@@ -202,7 +202,7 @@ const barStyle = {
 
 // COMPUTED
 
-const folderPath = computed(() => {
+const currentFolderPath = computed(() => {
   if (!state.currentFolderId) {
     return '/'
   } else {

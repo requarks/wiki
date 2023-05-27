@@ -1,13 +1,12 @@
 extends:
   - requarks
   - plugin:vue/strongly-recommended
-  - plugin:cypress/recommended
 env:
   node: true
   jest: true
 parserOptions:
   parser: babel-eslint
-  ecmaVersion: 2017
+  ecmaVersion: 2020
   allowImportExportEverywhere: true
 globals:
   document: false
@@ -22,3 +21,4 @@ ignorePatterns:
   - 'repo/**'
   - 'data/**'
   - 'logs/**'
+  - 'server/locales/**'

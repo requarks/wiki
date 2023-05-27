@@ -449,6 +449,10 @@ function processContent (newContent) {
   })
 }
 
+function openEditorSettings () {
+  siteStore.$patch({ overlay: 'EditorMarkdownConfig' })
+}
+
 // MOUNTED
 
 onMounted(async () => {
@@ -601,6 +605,7 @@ onMounted(async () => {
   })
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
+  EVENT_BUS.on('openEditorSettings', openEditorSettings)
 
   // this.$root.$on('editorInsert', opts => {
   //   switch (opts.kind) {
@@ -637,6 +642,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
+  EVENT_BUS.off('openEditorSettings', openEditorSettings)
   if (editor) {
     editor.dispose()
   }

@@ -59,9 +59,13 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
     $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Add ngrok source
+# Add ngrok Source
 RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null && \
     echo "deb https://ngrok-agent.s3.amazonaws.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+
+# Add Localazy Source
+RUN curl -sS https://dist.localazy.com/debian/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/localazy.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/localazy.gpg] https://maven.localazy.com/repository/apt/ stable main" | sudo tee /etc/apt/sources.list.d/localazy.list
 
 # Install the packages we need
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -qy \
@@ -73,6 +77,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
     less \
     git \
     gnupg2 \
+    localazy \
     nano \
     netcat \
     ngrok \
@@ -81,17 +86,17 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
     wget
 
 # avoid million NPM install messages
-ENV npm_config_loglevel warn
+ENV npm_config_loglevel=warn
 # allow installing when the main user is root
-ENV npm_config_unsafe_perm true
+ENV npm_config_unsafe_perm=true
 # disable NPM funding messages
-ENV npm_config_fund false
+ENV npm_config_fund=false
 
 # Colorize the bash shell
 RUN sed -i 's/#force_color_prompt=/force_color_prompt=/' /root/.bashrc
 
-# Fetch wait-for utility
-ADD https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for /usr/local/bin/
+# Copy wait-for utility
+COPY wait-for.sh /usr/local/bin/wait-for
 RUN chmod +rx /usr/local/bin/wait-for
 
 # Copy the startup file
@@ -102,3 +107,5 @@ RUN sed -i 's/\r$//' /docker-init.sh && \
 # Create workspace
 RUN mkdir -p /workspace
 WORKDIR /workspace
+
+ENV NODE_ENV=development

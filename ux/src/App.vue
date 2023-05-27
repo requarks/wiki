@@ -10,6 +10,7 @@ import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 import { setCssVar, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import gql from 'graphql-tag'
 
 import '@mdi/font/css/materialdesignicons.css'
 
@@ -27,7 +28,7 @@ const userStore = useUserStore()
 
 // I18N
 
-const { t } = useI18n()
+const i18n = useI18n({ useScope: 'global' })
 
 // ROUTER
 
@@ -88,6 +89,35 @@ async function applyTheme () {
   }
 }
 
+// LOCALE
+
+async function fetchLocaleStrings (locale) {
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query fetchLocaleStrings (
+          $locale: String!
+        ) {
+          localeStrings (
+            locale: $locale
+          )
+        }
+      `,
+      fetchPolicy: 'cache-first',
+      variables: {
+        locale
+      }
+    })
+    return resp?.data?.localeStrings
+  } catch (err) {
+    console.warn(err)
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to load locale strings.'
+    })
+  }
+}
+
 // INIT SITE STORE
 
 if (typeof siteConfig !== 'undefined') {
@@ -110,6 +140,10 @@ router.beforeEach(async (to, from) => {
     await siteStore.loadSite(window.location.hostname)
     console.info(`Using Site ID ${siteStore.id}`)
   }
+  // Locales
+  if (!i18n.availableLocales.includes('en')) {
+    i18n.setLocaleMessage('en', await fetchLocaleStrings('en'))
+  }
   // User Auth
   await userStore.refreshAuth()
   // User Profile
@@ -128,7 +162,7 @@ EVENT_BUS.on('logout', () => {
   $q.notify({
     type: 'positive',
     icon: 'las la-sign-out-alt',
-    message: t('auth.logoutSuccess')
+    message: i18n.t('auth.logoutSuccess')
   })
 })
 EVENT_BUS.on('applyTheme', () => {

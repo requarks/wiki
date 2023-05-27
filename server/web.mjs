@@ -206,7 +206,7 @@ export async function init () {
       id: currentSite.id,
       title: currentSite.config.title,
       darkMode: currentSite.config.theme.dark,
-      lang: currentSite.config.locale,
+      lang: currentSite.config.locales.primary,
       rtl: false, // TODO: handle RTL
       company: currentSite.config.company,
       contentLicense: currentSite.config.contentLicense

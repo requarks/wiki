@@ -11,8 +11,9 @@
     "source.fixAll.eslint": true
   },
   "i18n-ally.localesPaths": [
-    "ux/src/i18n/locales"
+    "server/locales",
   ],
+  "i18n-ally.pathMatcher": "{locale}.json",
   "i18n-ally.keystyle": "flat",
   "i18n-ally.sortKeys": true,
   "i18n-ally.enabledFrameworks": [

@@ -43,7 +43,7 @@
     "@tiptap/starter-kit": "2.0.3",
     "@tiptap/vue-3": "2.0.3",
     "apollo-upload-client": "17.0.0",
-    "browser-fs-access": "0.34.0",
+    "browser-fs-access": "0.34.1",
     "clipboard": "2.0.11",
     "codemirror": "5.65.11",
     "codemirror-asciidoc": "1.0.4",
@@ -89,7 +89,7 @@
     "quasar": "2.12.0",
     "slugify": "1.6.6",
     "socket.io-client": "4.6.1",
-    "tabulator-tables": "5.4.4",
+    "tabulator-tables": "5.5.0",
     "tippy.js": "6.3.7",
     "twemoji": "14.0.2",
     "uuid": "9.0.0",
@@ -112,9 +112,9 @@
     "eslint": "8.41.0",
     "eslint-config-standard": "17.0.0",
     "eslint-plugin-import": "2.27.5",
-    "eslint-plugin-n": "16.0.0",
+    "eslint-plugin-n": "15.7.0",
     "eslint-plugin-promise": "6.1.1",
-    "eslint-plugin-vue": "9.13.0"
+    "eslint-plugin-vue": "9.14.0"
   },
   "engines": {
     "node": ">= 18.0",

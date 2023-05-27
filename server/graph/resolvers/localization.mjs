@@ -5,7 +5,7 @@ export default {
   Query: {
     async locales(obj, args, context, info) {
       let remoteLocales = await WIKI.cache.get('locales')
-      let localLocales = await WIKI.db.locales.query().select('code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt', 'availability')
+      let localLocales = await WIKI.db.locales.query().select('code', 'isRTL', 'name', 'nativeName', 'createdAt', 'updatedAt', 'completeness')
       remoteLocales = remoteLocales || localLocales
       return _.map(remoteLocales, rl => {
         let isInstalled = _.some(localLocales, ['code', rl.code])
@@ -16,8 +16,8 @@ export default {
         }
       })
     },
-    translations (obj, args, context, info) {
-      return WIKI.lang.getByNamespace(args.locale, args.namespace)
+    localeStrings (obj, args, context, info) {
+      return WIKI.db.locales.getStrings(args.locale)
     }
   },
   Mutation: {

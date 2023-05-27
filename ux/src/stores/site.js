@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
 import { clone } from 'lodash-es'
 
+import { useUserStore } from './user'
+
 export const useSiteStore = defineStore('site', {
   state: () => ({
     routerLoading: false,
@@ -53,25 +55,36 @@ export const useSiteStore = defineStore('site', {
       showSharingMenu: true,
       showPrintBtn: true
     },
-    thumbStyle: {
-      right: '2px',
-      borderRadius: '5px',
-      backgroundColor: '#000',
-      width: '5px',
-      opacity: 0.15
-    },
-    barStyle: {
-      backgroundColor: '#FAFAFA',
-      width: '9px',
-      opacity: 1
-    },
     sideDialogShown: false,
     sideDialogComponent: '',
     docsBase: 'https://next.js.wiki/docs'
   }),
   getters: {
     overlayIsShown: (state) => Boolean(state.overlay),
-    sideNavIsDisabled: (state) => Boolean(state.theme.sidebarPosition === 'off')
+    sideNavIsDisabled: (state) => Boolean(state.theme.sidebarPosition === 'off'),
+    scrollStyle: (state) => {
+      const userStore = useUserStore()
+      let isDark = false
+      if (userStore.appearance === 'site') {
+        isDark = state.theme.dark
+      } else if (userStore.appearance === 'dark') {
+        isDark = true
+      }
+      return {
+        thumb: {
+          right: '2px',
+          borderRadius: '5px',
+          backgroundColor: isDark ? '#FFF' : '#000',
+          width: '5px',
+          opacity: isDark ? 0.25 : 0.15
+        },
+        bar: {
+          backgroundColor: isDark ? '#000' : '#FAFAFA',
+          width: '9px',
+          opacity: isDark ? 0.25 : 1
+        }
+      }
+    }
   },
   actions: {
     openFileManager (opts) {

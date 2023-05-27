@@ -65,11 +65,10 @@ type Site {
   sitemap: Boolean
   robots: SiteRobots
   features: SiteFeatures
+  discoverable: Boolean
   defaults: SiteDefaults
   uploads: SiteUploads
-  locale: String
-  localeNamespaces: [String]
-  localeNamespacing: Boolean
+  locales: SiteLocales
   editors: SiteEditors
   theme: SiteTheme
 }
@@ -98,11 +97,9 @@ type SiteUploads {
   normalizeFilename: Boolean
 }
 
-type SiteLocale {
-  locale: String
-  autoUpdate: Boolean
-  namespacing: Boolean
-  namespaces: [String]
+type SiteLocales {
+  primary: String
+  active: [String]
 }
 
 type SiteEditors {
@@ -184,6 +181,7 @@ input SiteUpdateInput {
   sitemap: Boolean
   robots: SiteRobotsInput
   features: SiteFeaturesInput
+  discoverable: Boolean
   defaults: SiteDefaultsInput
   uploads: SiteUploadsInput
   editors: SiteEditorsInput
