@@ -6,9 +6,7 @@ import { useUserStore } from './user'
 
 export const useSiteStore = defineStore('site', {
   state: () => ({
-    routerLoading: false,
     id: null,
-    useLocales: false,
     hostname: '',
     company: '',
     contentLicense: '',
@@ -38,6 +36,10 @@ export const useSiteStore = defineStore('site', {
       asciidoc: false,
       markdown: false,
       wysiwyg: false
+    },
+    locales: {
+      primary: 'en',
+      active: ['en']
     },
     theme: {
       dark: false,
@@ -84,6 +86,9 @@ export const useSiteStore = defineStore('site', {
           opacity: isDark ? 0.25 : 1
         }
       }
+    },
+    useLocales: (state) => {
+      return state.locales?.active?.length > 1
     }
   },
   actions: {
@@ -104,20 +109,9 @@ export const useSiteStore = defineStore('site', {
                 hostname: $hostname
                 exact: false
                 ) {
-                id
-                hostname
-                title
-                description
-                logoText
                 company
                 contentLicense
-                footerExtra
-                features {
-                  profile
-                  ratingsMode
-                  reasonForChange
-                  search
-                }
+                description
                 editors {
                   asciidoc {
                     isActive
@@ -129,6 +123,20 @@ export const useSiteStore = defineStore('site', {
                     isActive
                   }
                 }
+                features {
+                  profile
+                  ratingsMode
+                  reasonForChange
+                  search
+                }
+                footerExtra
+                hostname
+                id
+                locales {
+                  primary
+                  active
+                }
+                logoText
                 theme {
                   dark
                   colorPrimary
@@ -144,6 +152,7 @@ export const useSiteStore = defineStore('site', {
                   baseFont
                   contentFont
                 }
+                title
               }
             }
           `,
@@ -170,6 +179,10 @@ export const useSiteStore = defineStore('site', {
               asciidoc: clone(siteInfo.editors.asciidoc.isActive),
               markdown: clone(siteInfo.editors.markdown.isActive),
               wysiwyg: clone(siteInfo.editors.wysiwyg.isActive)
+            },
+            locales: {
+              primary: clone(siteInfo.locales.primary),
+              active: clone(siteInfo.locales.active)
             },
             theme: {
               ...this.theme,

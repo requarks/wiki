@@ -18,11 +18,25 @@ q-layout.admin(view='hHh Lpr lff')
         q-space
         transition(name='syncing')
           q-spinner-tail(
-            v-show='siteStore.routerLoading'
+            v-show='commonStore.routerLoading'
             color='accent'
             size='24px'
           )
-        q-btn.q-ml-md(flat, dense, icon='las la-times-circle', label='Exit' color='pink', to='/')
+        q-btn.q-ml-md(flat, dense, icon='las la-times-circle', :label='t(`common.actions.exit`)' color='pink', to='/')
+        q-btn.q-ml-md(flat, dense, icon='las la-language', :label='commonStore.locale' color='grey-4')
+          q-menu.translucent-menu(auto-close, anchor='bottom right', self='top right')
+            q-list(separator)
+              q-item(
+                v-for='lang of adminStore.locales'
+                clickable
+                @click='commonStore.setLocale(lang.code)'
+                )
+                q-item-section(side)
+                  q-avatar(rounded, :color='lang.code === commonStore.locale ? `secondary` : `primary`', text-color='white', size='sm')
+                    .text-caption.text-uppercase: strong {{ lang.language }}
+                q-item-section
+                  q-item-label {{ lang.name }}
+                  q-item-label(caption) {{ lang.nativeName }}
         account-menu
   q-drawer.admin-sidebar(v-model='leftDrawerOpen', show-if-above, bordered)
     q-scroll-area.admin-nav(
@@ -108,6 +122,9 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-ssd.svg')
             q-item-section {{ t('admin.storage.title') }}
+            q-item-section(side)
+              //- TODO: Reflect site storage status
+              status-light(:color='true ? `positive` : `warning`', :pulse='false')
           q-item(:to='`/_admin/` + adminStore.currentSiteId + `/theme`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`) || userStore.can(`manage:theme`)')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-paint-roller.svg')
@@ -159,7 +176,7 @@ q-layout.admin(view='hHh Lpr lff')
               q-icon(name='img:/_assets/icons/fluent-message-settings.svg')
             q-item-section {{ t('admin.mail.title') }}
             q-item-section(side)
-              status-light(:color='adminStore.info.isMailConfigured ? `positive` : `warning`')
+              status-light(:color='adminStore.info.isMailConfigured ? `positive` : `warning`', :pulse='!adminStore.info.isMailConfigured')
           q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
@@ -169,7 +186,7 @@ q-layout.admin(view='hHh Lpr lff')
               q-icon(name='img:/_assets/icons/fluent-bot.svg')
             q-item-section {{ t('admin.scheduler.title') }}
             q-item-section(side)
-              status-light(:color='adminStore.info.isSchedulerHealthy ? `positive` : `warning`')
+              status-light(:color='adminStore.info.isSchedulerHealthy ? `positive` : `warning`', :pulse='!adminStore.info.isSchedulerHealthy')
           q-item(to='/_admin/security', v-ripple, active-class='bg-primary text-white')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-protect.svg')
@@ -223,6 +240,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useAdminStore } from 'src/stores/admin'
+import { useCommonStore } from 'src/stores/common'
 import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
@@ -244,6 +262,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const commonStore = useCommonStore()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -266,13 +285,6 @@ useMeta({
 // DATA
 
 const leftDrawerOpen = ref(true)
-const overlayIsShown = ref(false)
-const search = ref('')
-const user = reactive({
-  name: 'John Doe',
-  email: 'test@example.com',
-  picture: null
-})
 const thumbStyle = {
   right: '1px',
   borderRadius: '5px',
@@ -292,6 +304,9 @@ const siteSectionShown = computed(() => {
 const usersSectionShown = computed(() => {
   return userStore.can('manage:groups') || userStore.can('manage:users')
 })
+const overlayIsShown = computed(() => {
+  return Boolean(adminStore.overlay)
+})
 
 // WATCHERS
 
@@ -308,9 +323,6 @@ watch(() => adminStore.sites, (newValue) => {
     })
   }
 })
-watch(() => adminStore.overlay, (newValue) => {
-  overlayIsShown.value = !!newValue
-})
 watch(() => adminStore.currentSiteId, (newValue) => {
   if (newValue && route.params.siteid !== newValue) {
     router.push({ params: { siteid: newValue } })
@@ -325,6 +337,7 @@ onMounted(async () => {
     return
   }
 
+  adminStore.fetchLocales()
   await adminStore.fetchSites()
   if (route.params.siteid) {
     adminStore.$patch({

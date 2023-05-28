@@ -3,10 +3,14 @@ import { ApolloClient, InMemoryCache } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { createUploadLink } from 'apollo-upload-client'
 
-export default boot(({ app, store }) => {
+import { useUserStore } from 'src/stores/user'
+
+export default boot(({ app }) => {
+  const userStore = useUserStore()
+
   // Authentication Link
   const authLink = setContext(async (req, { headers }) => {
-    const token = store.state.value.user.token
+    const token = userStore.token
     return {
       headers: {
         ...headers,

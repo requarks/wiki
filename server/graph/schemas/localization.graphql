@@ -31,6 +31,7 @@ type LocalizationLocale {
   installDate: Date
   isInstalled: Boolean
   isRTL: Boolean
+  language: String
   name: String
   nativeName: String
   region: String

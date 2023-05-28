@@ -68,7 +68,7 @@ q-header.bg-header.text-white.site-header(
       q-space
       transition(name='syncing')
         q-spinner-tail(
-          v-show='siteStore.routerLoading'
+          v-show='commonStore.routerLoading'
           color='accent'
           size='24px'
         )
@@ -130,6 +130,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { reactive } from 'vue'
 
+import { useCommonStore } from 'src/stores/common'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 
@@ -139,6 +140,7 @@ const $q = useQuasar()
 
 // STORES
 
+const commonStore = useCommonStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 

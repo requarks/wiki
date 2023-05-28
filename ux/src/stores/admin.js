@@ -35,24 +35,20 @@ export const useAdminStore = defineStore('admin', {
     }
   },
   actions: {
-    async fetchSites () {
+    async fetchLocales () {
       const resp = await APOLLO_CLIENT.query({
         query: gql`
-          query getSites {
-            sites {
-              id
-              hostname
-              isEnabled
-              title
+          query getAdminLocales {
+            locales {
+              code
+              language
+              name
+              nativeName
             }
           }
-        `,
-        fetchPolicy: 'network-only'
+        `
       })
-      this.sites = cloneDeep(resp?.data?.sites ?? [])
-      if (!this.currentSiteId) {
-        this.currentSiteId = this.sites[0].id
-      }
+      this.locales = cloneDeep(resp?.data?.locales ?? [])
     },
     async fetchInfo () {
       const resp = await APOLLO_CLIENT.query({
@@ -78,6 +74,25 @@ export const useAdminStore = defineStore('admin', {
       this.info.isApiEnabled = clone(resp?.data?.apiState ?? false)
       this.info.isMailConfigured = clone(resp?.data?.systemInfo?.isMailConfigured ?? false)
       this.info.isSchedulerHealthy = clone(resp?.data?.systemInfo?.isSchedulerHealthy ?? false)
+    },
+    async fetchSites () {
+      const resp = await APOLLO_CLIENT.query({
+        query: gql`
+          query getSites {
+            sites {
+              id
+              hostname
+              isEnabled
+              title
+            }
+          }
+        `,
+        fetchPolicy: 'network-only'
+      })
+      this.sites = cloneDeep(resp?.data?.sites ?? [])
+      if (!this.currentSiteId) {
+        this.currentSiteId = this.sites[0].id
+      }
     }
   }
 })

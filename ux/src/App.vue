@@ -5,14 +5,15 @@ router-view
 <script setup>
 import { nextTick, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { setCssVar, useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
+
+import '@mdi/font/css/materialdesignicons.css'
+
+import { useCommonStore } from './stores/common'
 import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
-import { setCssVar, useQuasar } from 'quasar'
-import { useI18n } from 'vue-i18n'
-import gql from 'graphql-tag'
-
-import '@mdi/font/css/materialdesignicons.css'
 
 /* global siteConfig */
 
@@ -22,6 +23,7 @@ const $q = useQuasar()
 
 // STORES
 
+const commonStore = useCommonStore()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -53,6 +55,25 @@ watch(() => userStore.appearance, (newValue) => {
 watch(() => userStore.cvd, () => {
   applyTheme()
 })
+
+watch(() => commonStore.locale, applyLocale)
+
+// LOCALE
+
+async function applyLocale (locale) {
+  if (!i18n.availableLocales.includes(locale)) {
+    try {
+      i18n.setLocaleMessage(locale, await commonStore.fetchLocaleStrings(locale))
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: `Failed to load ${locale} locale strings.`,
+        caption: err.message
+      })
+    }
+  }
+  i18n.locale.value = locale
+}
 
 // THEME
 
@@ -89,35 +110,6 @@ async function applyTheme () {
   }
 }
 
-// LOCALE
-
-async function fetchLocaleStrings (locale) {
-  try {
-    const resp = await APOLLO_CLIENT.query({
-      query: gql`
-        query fetchLocaleStrings (
-          $locale: String!
-        ) {
-          localeStrings (
-            locale: $locale
-          )
-        }
-      `,
-      fetchPolicy: 'cache-first',
-      variables: {
-        locale
-      }
-    })
-    return resp?.data?.localeStrings
-  } catch (err) {
-    console.warn(err)
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to load locale strings.'
-    })
-  }
-}
-
 // INIT SITE STORE
 
 if (typeof siteConfig !== 'undefined') {
@@ -128,30 +120,40 @@ if (typeof siteConfig !== 'undefined') {
   applyTheme()
 }
 
+// ROUTE GUARDS
+
 router.beforeEach(async (to, from) => {
-  siteStore.routerLoading = true
-  // System Flags
+  commonStore.routerLoading = true
+
+  // -> System Flags
   if (!flagsStore.loaded) {
     flagsStore.load()
   }
-  // Site Info
+
+  // -> Site Info
   if (!siteStore.id) {
     console.info('No pre-cached site config. Loading site info...')
     await siteStore.loadSite(window.location.hostname)
     console.info(`Using Site ID ${siteStore.id}`)
   }
-  // Locales
-  if (!i18n.availableLocales.includes('en')) {
-    i18n.setLocaleMessage('en', await fetchLocaleStrings('en'))
+
+  // -> Locale
+  if (!commonStore.desiredLocale || !siteStore.locales.active.includes(commonStore.desiredLocale)) {
+    commonStore.setLocale(siteStore.locales.primary)
+  } else {
+    applyLocale(commonStore.desiredLocale)
   }
-  // User Auth
+
+  // -> User Auth
   await userStore.refreshAuth()
-  // User Profile
+
+  // -> User Profile
   if (userStore.authenticated && !userStore.profileLoaded) {
     console.info(`Refreshing user ${userStore.id} profile...`)
     await userStore.refreshProfile()
   }
-  // Page Permissions
+
+  // -> Page Permissions
   await userStore.fetchPagePermissions(to.path)
 })
 
@@ -177,7 +179,7 @@ router.afterEach(() => {
     applyTheme()
     document.querySelector('.init-loading').remove()
   }
-  siteStore.routerLoading = false
+  commonStore.routerLoading = false
 })
 
 </script>

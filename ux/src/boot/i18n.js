@@ -1,10 +1,14 @@
 import { boot } from 'quasar/wrappers'
 import { createI18n } from 'vue-i18n'
 
+import { useCommonStore } from 'src/stores/common'
+
 export default boot(({ app }) => {
+  const commonStore = useCommonStore()
+
   const i18n = createI18n({
     legacy: false,
-    locale: 'en',
+    locale: commonStore.locale || 'en',
     fallbackLocale: 'en',
     fallbackWarn: false,
     messages: {}
