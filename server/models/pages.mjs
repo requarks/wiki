@@ -477,13 +477,14 @@ export class Page extends Model {
         throw new Error('ERR_PAGE_ALIAS_TOO_LONG')
       } else if (!aliasRegex.test(patch.alias)) {
         throw new Error('ERR_PAGE_INVALID_ALIAS')
-      }
-      const dupAliasCheck = await WIKI.db.pages.query().where({
-        siteId: ogPage.siteId,
-        alias: patch.alias
-      }).andWhereNot('id', ogPage.id).select('id').first()
-      if (dupAliasCheck) {
-        throw new Error('ERR_PAGE_DUPLICATE_ALIAS')
+      } else if (patch.alias.length > 0) {
+        const dupAliasCheck = await WIKI.db.pages.query().where({
+          siteId: ogPage.siteId,
+          alias: patch.alias
+        }).andWhereNot('id', ogPage.id).select('id').first()
+        if (dupAliasCheck) {
+          throw new Error('ERR_PAGE_DUPLICATE_ALIAS')
+        }
       }
     }
 
