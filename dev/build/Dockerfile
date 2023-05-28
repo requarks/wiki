@@ -1,9 +1,9 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:18-alpine AS assets
+FROM node:18 AS assets
 
-RUN apk add g++ make cmake python3 --no-cache
+RUN apt-get update && apt-get install build-essential -y
 
 WORKDIR /wiki
 
