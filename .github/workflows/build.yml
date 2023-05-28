@@ -58,7 +58,7 @@ jobs:
         cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64
         tags: |
-          ghcr.io/requarks/wiki:${{ env.REL_VERSION_STRICT }}
+          ghcr.io/requarks/wiki:${{ env.REL_VERSION }}
 
     - name: Extract compiled files
       run: |
