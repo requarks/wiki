@@ -13,11 +13,11 @@ const path = require('path')
 const yaml = require('js-yaml')
 const fs = require('fs')
 
-module.exports = configure(function (/* ctx */) {
-  const userConfig = {
+module.exports = configure(function (ctx) {
+  const userConfig = ctx.dev ? {
     dev: { port: 3001, hmrClientPort: 3001 },
     ...yaml.load(fs.readFileSync(path.resolve(__dirname, '../config.yml'), 'utf8'))
-  }
+  } : {}
 
   return {
     eslint: {
@@ -123,7 +123,7 @@ module.exports = configure(function (/* ctx */) {
     devServer: {
       // https: true
       open: false, // opens browser window automatically
-      port: userConfig.dev.port,
+      port: userConfig.dev?.port,
       proxy: {
         '/_graphql': `http://127.0.0.1:${userConfig.port}/_graphql`,
         '/_site': `http://127.0.0.1:${userConfig.port}`,
@@ -131,7 +131,7 @@ module.exports = configure(function (/* ctx */) {
         '/_user': `http://127.0.0.1:${userConfig.port}`
       },
       hmr: {
-        clientPort: userConfig.dev.hmrClientPort
+        clientPort: userConfig.dev?.hmrClientPort
       },
       vueDevtools: true
     },

@@ -1,9 +1,9 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:18 AS assets
+FROM node:20 AS assets
 
-RUN apt-get update && apt-get install build-essential -y
+RUN apt-get update && apt-get install -qy build-essential
 
 WORKDIR /wiki
 
@@ -17,11 +17,18 @@ RUN cd ux && \
 # ===============
 # --- Release ---
 # ===============
-FROM node:18-alpine
+FROM node:20
 LABEL maintainer="requarks.io"
 
-RUN apk add bash curl git openssh gnupg --no-cache && \
-    mkdir -p /wiki && \
+RUN apt-get update && apt-get install -qy --no-install-recommends \
+    bash \
+    curl \
+    git \
+    gnupg \
+    openssh-client \
+    pandoc \
+    && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
