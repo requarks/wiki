@@ -11,8 +11,8 @@ COPY ./ux ./ux
 COPY ./dev ./dev
 
 RUN cd ux && \
-    npm ci --audit=false --fund=false
-RUN npm run build
+    npm ci --audit=false --fund=false && \
+    npm run build
 
 # ===============
 # --- Release ---
