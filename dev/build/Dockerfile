@@ -7,12 +7,8 @@ RUN apt-get update && apt-get install build-essential -y
 
 WORKDIR /wiki
 
-COPY ./ux
+COPY ./ux ./ux
 COPY ./dev ./dev
-COPY ./package.json ./package.json
-COPY ./.babelrc ./.babelrc
-COPY ./.eslintignore ./.eslintignore
-COPY ./.eslintrc.yml ./.eslintrc.yml
 
 RUN cd ux && \
     npm ci --audit=false --fund=false
