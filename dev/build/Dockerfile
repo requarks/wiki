@@ -25,7 +25,7 @@ USER node
 
 ENV NODE_ENV=production
 
-RUN cd server && npm ci --omit=dev --audit=false --fund=false
+RUN cd server && npm ci --foreground-scripts --omit=dev --audit=false --fund=false
 
 VOLUME ["/wiki/data/content"]
 
