@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises'
 import http from 'node:http'
 import https from 'node:https'
-import { ApolloServer } from 'apollo-server-express'
+import { ApolloServer } from '@apollo/server'
+import { expressMiddleware } from '@apollo/server/express4'
 import { isEmpty } from 'lodash-es'
 import { Server as IoServer } from 'socket.io'
-import { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } from 'apollo-server-core'
+import { ApolloServerPluginLandingPageLocalDefault, ApolloServerPluginLandingPageProductionDefault } from '@apollo/server/plugin/landingPage/default'
 import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs'
 
 import { initSchema } from '../graph/index.mjs'
@@ -134,10 +135,13 @@ export default {
       schema: graphqlSchema,
       csrfPrevention: true,
       cache: 'bounded',
-      context: ({ req, res }) => ({ req, res }),
       plugins: [
-        process.env.NODE_ENV === 'development' ? ApolloServerPluginLandingPageGraphQLPlayground({
-          footer: false
+        process.env.NODE_ENV === 'development' ? ApolloServerPluginLandingPageLocalDefault({
+          footer: false,
+          embed: {
+            endpointIsEditable: false,
+            runTelemetry: false
+          }
         }) : ApolloServerPluginLandingPageProductionDefault({
           footer: false
         })
@@ -150,7 +154,9 @@ export default {
       maxFileSize: WIKI.config.security.uploadMaxFileSize,
       maxFiles: WIKI.config.security.uploadMaxFiles
     }))
-    this.graph.applyMiddleware({ app: WIKI.app, cors: false, path: '/_graphql' })
+    WIKI.app.use('/_graphql', expressMiddleware(this.graph, {
+      context: ({ req, res }) => ({ req, res })
+    }))
   },
   /**
    * Start Socket.io WebSocket Server
