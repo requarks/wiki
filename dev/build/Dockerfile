@@ -3,6 +3,7 @@ LABEL maintainer="requarks.io"
 
 RUN apt-get update && apt-get install -qy --no-install-recommends \
     bash \
+    build-essential \
     curl \
     git \
     gnupg \
@@ -25,7 +26,10 @@ USER node
 
 ENV NODE_ENV=production
 
-RUN cd server && npm ci --foreground-scripts --omit=dev --audit=false --fund=false
+WORKDIR /wiki/server
+RUN npm ci --foreground-scripts --omit=dev --audit=false --fund=false
+
+WORKDIR /wiki
 
 VOLUME ["/wiki/data/content"]
 
