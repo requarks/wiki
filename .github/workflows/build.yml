@@ -115,7 +115,8 @@ jobs:
       working-directory: win\server
 
     - name: Create Bundle
-      run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
+      shell: pwsh
+      run: Compress-Archive -Path $env:GITHUB_WORKSPACE\win\* -DestinationPath wiki-js-windows.zip
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v3
