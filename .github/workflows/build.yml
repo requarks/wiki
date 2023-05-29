@@ -122,5 +122,5 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build-win
-        path: wiki-js-windows.tar.gz
+        path: wiki-js-windows.zip
 
