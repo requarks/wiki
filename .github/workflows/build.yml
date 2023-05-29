@@ -74,10 +74,10 @@ jobs:
     - name: Prepare build archive
       run: |
         mkdir -p _dist
-        cp assets _dist/assets
-        cp server _dist/server
-        cp LICENSE _dist/LICENSE
-        cp config.sample.yml _dist/config.sample.yml
+        cp ./assets _dist/assets
+        cp ./server _dist/server
+        cp ./LICENSE _dist/LICENSE
+        cp ./config.sample.yml _dist/config.sample.yml
         cd server
         npm ci --omit=dev --audit=false --fund=false
         cd ..
