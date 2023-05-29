@@ -160,8 +160,6 @@
     "sharp": "0.32.1",
     "simple-git": "3.19.0",
     "socket.io": "4.6.1",
-    "ssh2": "1.13.0",
-    "ssh2-promise": "1.0.3",
     "striptags": "3.2.0",
     "tar-fs": "2.1.1",
     "turndown": "7.1.2",
