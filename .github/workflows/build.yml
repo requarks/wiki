@@ -80,7 +80,7 @@ jobs:
         cd server
         npm ci --omit=dev --audit=false --fund=false
         cd ..
-        tar -czf wiki-js.tar.gz --no-recursion -C _dist .
+        find ./_dist/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C ./_dist/ -T -
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v3
