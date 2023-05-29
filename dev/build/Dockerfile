@@ -1,22 +1,3 @@
-# ====================
-# --- Build Assets ---
-# ====================
-FROM node:20 AS assets
-
-RUN apt-get update && apt-get install -qy build-essential
-
-WORKDIR /wiki
-
-COPY ./ux ./ux
-COPY ./dev ./dev
-
-RUN cd ux && \
-    npm ci --audit=false --fund=false && \
-    npm run build
-
-# ===============
-# --- Release ---
-# ===============
 FROM node:20
 LABEL maintainer="requarks.io"
 
@@ -35,7 +16,7 @@ RUN mkdir -p /wiki && \
 
 WORKDIR /wiki
 
-COPY --chown=node:node --from=assets /wiki/assets ./assets
+COPY --chown=node:node ./assets ./assets
 COPY --chown=node:node ./server ./server
 COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./LICENSE ./LICENSE

@@ -15,6 +15,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v2.5.2
+      with:
+        node-version: 20.x
+
     - name: Set Build Variables
       run: |
           echo "REL_VERSION=3.0.0-alpha.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
@@ -32,6 +37,12 @@ jobs:
       uses: localazy/download@v1
       with:
         read_key: ${{ secrets.LOCALAZY_KEY_READ }}
+
+    - name: Build Assets
+      working-directory: ux
+      run: |
+        npm ci --audit=false --fund=false
+        npm run build
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
@@ -56,24 +67,26 @@ jobs:
         push: true
         # cache-from: type=gha
         # cache-to: type=gha,mode=max
-        # platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64,linux/arm64
         tags: |
           ghcr.io/requarks/wiki:${{ env.REL_VERSION }}
 
-    - name: Extract compiled files
+    - name: Prepare build archive
       run: |
         mkdir -p _dist
-        docker create --name wiki ghcr.io/requarks/wiki:$REL_VERSION_STRICT
-        docker cp wiki:/wiki _dist
-        docker rm wiki
-        rm _dist/wiki/config.yml
-        cp ./config.sample.yml _dist/wiki/config.sample.yml
-        find _dist/wiki/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C _dist/wiki/ -T -
+        cp assets _dist/assets
+        cp server _dist/server
+        cp LICENSE _dist/LICENSE
+        cp config.sample.yml _dist/config.sample.yml
+        cd server
+        npm ci --omit=dev --audit=false --fund=false
+        cd ..
+        tar -czf wiki-js.tar.gz --no-recursion -C _dist .
 
-    - name: Upload a Build Artifact
+    - name: Upload Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: drop
+        name: build
         path: wiki-js.tar.gz
 
   windows:
@@ -85,18 +98,18 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v2.5.2
       with:
-        node-version: 18.x
+        node-version: 20.x
 
-    - name: Download a Build Artifact
+    - name: Download Build Artifact
       uses: actions/download-artifact@v3
       with:
-        name: drop
-        path: drop
+        name: build
+        path: build
 
     - name: Extract Build
       run: |
         mkdir -p win
-        tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=server/node_modules
+        tar -xzf $env:GITHUB_WORKSPACE\build\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=server/node_modules
 
     - name: Install Dependencies
       run: npm ci --omit=dev --audit=false --fund=false
@@ -105,9 +118,9 @@ jobs:
     - name: Create Bundle
       run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
 
-    - name: Upload a Build Artifact
+    - name: Upload Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: drop-win
+        name: build-win
         path: wiki-js-windows.tar.gz
 
