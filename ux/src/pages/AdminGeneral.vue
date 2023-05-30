@@ -745,6 +745,9 @@ async function uploadLogo () {
     state.loading++
     try {
       const resp = await APOLLO_CLIENT.mutate({
+        context: {
+          uploadMode: true
+        },
         mutation: gql`
           mutation uploadLogo (
             $id: UUID!
@@ -796,6 +799,9 @@ async function uploadFavicon () {
     state.loading++
     try {
       const resp = await APOLLO_CLIENT.mutate({
+        context: {
+          uploadMode: true
+        },
         mutation: gql`
           mutation uploadFavicon (
             $id: UUID!

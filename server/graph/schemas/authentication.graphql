@@ -58,6 +58,10 @@ extend type Mutation {
     name: String!
   ): AuthenticationRegisterResponse
 
+  refreshToken(
+    token: String!
+  ): AuthenticationTokenResponse @rateLimit(limit: 30, duration: 60)
+
   revokeApiKey(
     id: UUID!
   ): DefaultResponse
@@ -124,6 +128,11 @@ type AuthenticationLoginResponse {
 }
 
 type AuthenticationRegisterResponse {
+  operation: Operation
+  jwt: String
+}
+
+type AuthenticationTokenResponse {
   operation: Operation
   jwt: String
 }

@@ -133,17 +133,18 @@ export default {
     const graphqlSchema = await initSchema()
     this.graph = new ApolloServer({
       schema: graphqlSchema,
+      allowBatchedHttpRequests: true,
       csrfPrevention: true,
       cache: 'bounded',
       plugins: [
-        process.env.NODE_ENV === 'development' ? ApolloServerPluginLandingPageLocalDefault({
+        process.env.NODE_ENV === 'production' ? ApolloServerPluginLandingPageProductionDefault({
+          footer: false
+        }) : ApolloServerPluginLandingPageLocalDefault({
           footer: false,
           embed: {
             endpointIsEditable: false,
             runTelemetry: false
           }
-        }) : ApolloServerPluginLandingPageProductionDefault({
-          footer: false
         })
         // ApolloServerPluginDrainHttpServer({ httpServer: this.http })
         // ...(this.https && ApolloServerPluginDrainHttpServer({ httpServer: this.https }))

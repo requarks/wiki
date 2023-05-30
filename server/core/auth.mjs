@@ -109,7 +109,7 @@ export default {
    * @param {Express Next Callback} next
    */
   authenticate (req, res, next) {
-    WIKI.auth.passport.authenticate('jwt', {session: false}, async (err, user, info) => {
+    WIKI.auth.passport.authenticate('jwt', { session: false }, async (err, user, info) => {
       if (err) { return next() }
       let mustRevalidate = false
       const strategyId = user.pvd
@@ -141,7 +141,7 @@ export default {
       }
 
       // Revalidate and renew token
-      if (mustRevalidate) {
+      if (mustRevalidate && !req.path.startsWith('/_graphql')) {
         const jwtPayload = jwt.decode(extractJWT(req))
         try {
           const newToken = await WIKI.db.users.refreshToken(jwtPayload.id, jwtPayload.pvd)

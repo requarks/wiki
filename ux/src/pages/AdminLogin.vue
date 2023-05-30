@@ -308,6 +308,9 @@ async function uploadBg () {
     state.loading++
     try {
       const resp = await APOLLO_CLIENT.mutate({
+        context: {
+          uploadMode: true
+        },
         mutation: gql`
           mutation uploadLoginBg (
             $id: UUID!

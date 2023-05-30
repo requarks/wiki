@@ -97,6 +97,9 @@ async function uploadImage () {
     state.loading++
     try {
       const resp = await APOLLO_CLIENT.mutate({
+        context: {
+          uploadMode: true
+        },
         mutation: gql`
           mutation uploadUserAvatar (
             $id: UUID!

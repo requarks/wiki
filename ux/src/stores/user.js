@@ -24,7 +24,7 @@ export const useUserStore = defineStore('user', {
     iat: 0,
     exp: null,
     authenticated: false,
-    token: '',
+    token: Cookies.get('jwt'),
     profileLoaded: false
   }),
   getters: {
@@ -40,28 +40,60 @@ export const useUserStore = defineStore('user', {
     }
   },
   actions: {
-    async refreshAuth () {
-      if (this.exp && this.exp < DateTime.now()) {
-        return
-      }
-      const jwtCookie = Cookies.get('jwt')
-      if (jwtCookie) {
-        try {
-          const jwtData = jwtDecode(jwtCookie)
-          this.id = jwtData.id
-          this.email = jwtData.email
-          this.iat = jwtData.iat
-          this.exp = DateTime.fromSeconds(jwtData.exp, { zone: 'utc' })
-          this.token = jwtCookie
-          if (this.exp <= DateTime.utc()) {
-            console.info('Token has expired. Attempting renew...')
-            // TODO: Renew token
-          } else {
-            this.authenticated = true
-          }
-        } catch (err) {
-          console.debug('Invalid JWT. Silent authentication skipped.')
+    isTokenValid () {
+      return this.exp && this.exp > DateTime.now()
+    },
+    loadToken () {
+      if (!this.token) { return }
+      try {
+        const jwtData = jwtDecode(this.token)
+        this.id = jwtData.id
+        this.email = jwtData.email
+        this.iat = jwtData.iat
+        this.exp = DateTime.fromSeconds(jwtData.exp, { zone: 'utc' })
+        if (this.exp > DateTime.utc()) {
+          this.authenticated = true
+        } else {
+          console.info('Token has expired and will be refreshed on next query.')
         }
+      } catch (err) {
+        console.warn('Failed to parse JWT. Invalid or malformed.')
+      }
+    },
+    async refreshToken () {
+      try {
+        const respRaw = await APOLLO_CLIENT.mutate({
+          context: {
+            skipAuth: true
+          },
+          mutation: gql`
+            mutation refreshToken (
+              $token: String!
+            ) {
+              refreshToken(token: $token) {
+                operation {
+                  succeeded
+                  message
+                }
+                jwt
+              }
+            }
+          `,
+          variables: {
+            token: this.token
+          }
+        })
+        const resp = respRaw?.data?.refreshToken ?? {}
+        if (!resp.operation?.succeeded) {
+          throw new Error(resp.operation?.message || 'Failed to refresh token.')
+        }
+        Cookies.set('jwt', resp.jwt, { expires: 365, path: '/', sameSite: 'Lax' })
+        this.token = resp.jwt
+        this.loadToken()
+        return true
+      } catch (err) {
+        console.warn(err)
+        return false
       }
     },
     async refreshProfile () {

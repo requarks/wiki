@@ -386,7 +386,7 @@ export class User extends Model {
   /**
    * Generate a new token for a user
    */
-  static async refreshToken(user, provider) {
+  static async refreshToken (user) {
     if (isString(user)) {
       user = await WIKI.db.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
         builder.select('groups.id', 'permissions')
@@ -411,8 +411,7 @@ export class User extends Model {
       token: jwt.sign({
         id: user.id,
         email: user.email,
-        groups: user.getGroups(),
-        ...provider && { pvd: provider }
+        groups: user.getGroups()
       }, {
         key: WIKI.config.auth.certs.private,
         passphrase: WIKI.config.auth.secret

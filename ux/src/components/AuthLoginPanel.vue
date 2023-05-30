@@ -502,7 +502,7 @@ async function handleLoginResponse (resp) {
     $q.loading.show({
       message: t('auth.loginSuccess')
     })
-    Cookies.set('jwt', resp.jwt, { expires: 365 })
+    Cookies.set('jwt', resp.jwt, { expires: 365, path: '/', sameSite: 'Lax' })
     setTimeout(() => {
       const loginRedirect = Cookies.get('loginRedirect')
       if (loginRedirect === '/' && resp.redirect) {

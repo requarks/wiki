@@ -125,6 +125,11 @@ if (typeof siteConfig !== 'undefined') {
 router.beforeEach(async (to, from) => {
   commonStore.routerLoading = true
 
+  // -> Init Auth Token
+  if (userStore.token && !userStore.authenticated) {
+    userStore.loadToken()
+  }
+
   // -> System Flags
   if (!flagsStore.loaded) {
     flagsStore.load()
@@ -143,9 +148,6 @@ router.beforeEach(async (to, from) => {
   } else {
     applyLocale(commonStore.desiredLocale)
   }
-
-  // -> User Auth
-  await userStore.refreshAuth()
 
   // -> User Profile
   if (userStore.authenticated && !userStore.profileLoaded) {

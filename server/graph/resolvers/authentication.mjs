@@ -1,5 +1,8 @@
 import _ from 'lodash-es'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
+import jwt from 'jsonwebtoken'
+import ms from 'ms'
+import { DateTime } from 'luxon'
 
 export default {
   Query: {
@@ -143,6 +146,37 @@ export default {
         await WIKI.db.users.register({ ...args, verify: true }, context)
         return {
           responseResult: generateSuccess('Registration success')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
+     * Refresh Token
+     */
+    async refreshToken (obj, args, context) {
+      try {
+        let decoded = {}
+        if (!args.token) {
+          throw new Error('ERR_MISSING_TOKEN')
+        }
+        try {
+          decoded = jwt.verify(args.token, WIKI.config.auth.certs.public, {
+            audience: WIKI.config.auth.audience,
+            issuer: 'urn:wiki.js',
+            algorithms: ['RS256'],
+            ignoreExpiration: true
+          })
+        } catch (err) {
+          throw new Error('ERR_INVALID_TOKEN')
+        }
+        if (DateTime.utc().minus(ms(WIKI.config.auth.tokenRenewal)) > DateTime.fromSeconds(decoded.exp)) {
+          throw new Error('ERR_EXPIRED_TOKEN')
+        }
+        const newToken = await WIKI.db.users.refreshToken(decoded.id)
+        return {
+          jwt: newToken.token,
+          operation: generateSuccess('Token refreshed successfully')
         }
       } catch (err) {
         return generateError(err)
