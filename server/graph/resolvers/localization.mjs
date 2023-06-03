@@ -4,17 +4,7 @@ import _ from 'lodash-es'
 export default {
   Query: {
     async locales(obj, args, context, info) {
-      let remoteLocales = await WIKI.cache.get('locales')
-      let localLocales = await WIKI.db.locales.query().select('code', 'isRTL', 'language', 'name', 'nativeName', 'createdAt', 'updatedAt', 'completeness')
-      remoteLocales = remoteLocales || localLocales
-      return _.map(remoteLocales, rl => {
-        let isInstalled = _.some(localLocales, ['code', rl.code])
-        return {
-          ...rl,
-          isInstalled,
-          installDate: isInstalled ? _.find(localLocales, ['code', rl.code]).updatedAt : null
-        }
-      })
+      return WIKI.db.locales.getLocales({ cache: false })
     },
     localeStrings (obj, args, context, info) {
       return WIKI.db.locales.getStrings(args.locale)

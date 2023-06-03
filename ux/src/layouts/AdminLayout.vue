@@ -25,7 +25,7 @@ q-layout.admin(view='hHh Lpr lff')
         q-btn.q-ml-md(flat, dense, icon='las la-times-circle', :label='t(`common.actions.exit`)' color='pink', to='/')
         q-btn.q-ml-md(flat, dense, icon='las la-language', :label='commonStore.locale' color='grey-4')
           q-menu.translucent-menu(auto-close, anchor='bottom right', self='top right')
-            q-list(separator)
+            q-list(separator, padding)
               q-item(
                 v-for='lang of adminStore.locales'
                 clickable
@@ -35,8 +35,8 @@ q-layout.admin(view='hHh Lpr lff')
                   q-avatar(rounded, :color='lang.code === commonStore.locale ? `secondary` : `primary`', text-color='white', size='sm')
                     .text-caption.text-uppercase: strong {{ lang.language }}
                 q-item-section
-                  q-item-label {{ lang.name }}
-                  q-item-label(caption) {{ lang.nativeName }}
+                  q-item-label {{ lang.nativeName }}
+                  q-item-label(caption) {{ lang.name }}
         account-menu
   q-drawer.admin-sidebar(v-model='leftDrawerOpen', show-if-above, bordered)
     q-scroll-area.admin-nav(

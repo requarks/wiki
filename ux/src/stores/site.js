@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import { clone } from 'lodash-es'
+import { clone, sortBy } from 'lodash-es'
 
 import { useUserStore } from './user'
 
@@ -39,7 +39,12 @@ export const useSiteStore = defineStore('site', {
     },
     locales: {
       primary: 'en',
-      active: ['en']
+      active: [{
+        code: 'en',
+        language: 'en',
+        name: 'English',
+        nativeName: 'English'
+      }]
     },
     theme: {
       dark: false,
@@ -134,7 +139,12 @@ export const useSiteStore = defineStore('site', {
                 id
                 locales {
                   primary
-                  active
+                  active {
+                    code
+                    language
+                    name
+                    nativeName
+                  }
                 }
                 logoText
                 theme {
@@ -182,7 +192,7 @@ export const useSiteStore = defineStore('site', {
             },
             locales: {
               primary: clone(siteInfo.locales.primary),
-              active: clone(siteInfo.locales.active)
+              active: sortBy(clone(siteInfo.locales.active), ['nativeName', 'name'])
             },
             theme: {
               ...this.theme,

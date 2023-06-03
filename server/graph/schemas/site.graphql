@@ -99,7 +99,7 @@ type SiteUploads {
 
 type SiteLocales {
   primary: String
-  active: [String]
+  active: [LocalizationLocale]
 }
 
 type SiteEditors {

@@ -14,10 +14,11 @@ q-layout(view='hHh Lpr lff')
         icon='las la-globe'
         color='blue-7'
         text-color='blue-2'
-        label='EN'
-        aria-label='EN'
+        :label='commonStore.locale'
+        :aria-label='commonStore.locale'
         size='sm'
         )
+        locale-selector-menu
       q-separator(vertical)
       q-btn.q-px-sm.col(
         flat
@@ -87,6 +88,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { useCommonStore } from 'src/stores/common'
 import { useEditorStore } from 'src/stores/editor'
 import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
@@ -96,6 +98,7 @@ import { useUserStore } from 'src/stores/user'
 
 import FooterNav from 'src/components/FooterNav.vue'
 import HeaderNav from 'src/components/HeaderNav.vue'
+import LocaleSelectorMenu from 'src/components/LocaleSelectorMenu.vue'
 import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
 
 // QUASAR
@@ -104,6 +107,7 @@ const $q = useQuasar()
 
 // STORES
 
+const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()

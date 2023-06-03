@@ -100,9 +100,24 @@ export class Locale extends Model {
     }
   }
 
+  static async getLocales ({ cache = true } = {}) {
+    if (!WIKI.cache.has('locales') || !cache) {
+      const locales = await WIKI.db.locales.query().select('code', 'isRTL', 'language', 'name', 'nativeName', 'createdAt', 'updatedAt', 'completeness')
+      WIKI.cache.set('locales', locales)
+      for (const locale of locales) {
+        WIKI.cache.set(`locale:${locale.code}`, locale)
+      }
+    }
+    return WIKI.cache.get('locales')
+  }
+
   static async getStrings (locale) {
     const { strings } = await WIKI.db.locales.query().findOne('code', locale).column('strings')
     return strings
+  }
+
+  static async reloadCache () {
+    await WIKI.db.locales.getLocales({ cache: false })
   }
 
   static async getNavLocales({ cache = false } = {}) {

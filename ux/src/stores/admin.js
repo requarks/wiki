@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
-import { clone, cloneDeep } from 'lodash-es'
+import { clone, cloneDeep, sortBy } from 'lodash-es'
 import semverGte from 'semver/functions/gte'
 
 /* global APOLLO_CLIENT */
@@ -48,7 +48,7 @@ export const useAdminStore = defineStore('admin', {
           }
         `
       })
-      this.locales = cloneDeep(resp?.data?.locales ?? [])
+      this.locales = sortBy(cloneDeep(resp?.data?.locales ?? []), ['nativeName', 'name'])
     },
     async fetchInfo () {
       const resp = await APOLLO_CLIENT.query({

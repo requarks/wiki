@@ -143,7 +143,7 @@ router.beforeEach(async (to, from) => {
   }
 
   // -> Locale
-  if (!commonStore.desiredLocale || !siteStore.locales.active.includes(commonStore.desiredLocale)) {
+  if (!commonStore.desiredLocale || !siteStore.locales.active.some(l => l.code === commonStore.desiredLocale)) {
     commonStore.setLocale(siteStore.locales.primary)
   } else {
     applyLocale(commonStore.desiredLocale)

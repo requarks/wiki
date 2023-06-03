@@ -82,6 +82,7 @@ export default {
 
     await WIKI.auth.activateStrategies()
     await WIKI.db.commentProviders.initProvider()
+    await WIKI.db.locales.reloadCache()
     await WIKI.db.sites.reloadCache()
     await WIKI.db.storage.initTargets()
 

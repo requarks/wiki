@@ -28,8 +28,6 @@ type LocalizationLocale {
   completeness: Int
   code: String
   createdAt: Date
-  installDate: Date
-  isInstalled: Boolean
   isRTL: Boolean
   language: String
   name: String

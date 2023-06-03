@@ -323,5 +323,10 @@ export default {
         return generateError(err)
       }
     }
+  },
+  SiteLocales: {
+    async active (obj, args, context) {
+      return obj.active.map(l => WIKI.cache.get(`locale:${l}`))
+    }
   }
 }
