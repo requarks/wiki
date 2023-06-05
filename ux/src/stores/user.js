@@ -40,8 +40,8 @@ export const useUserStore = defineStore('user', {
     }
   },
   actions: {
-    isTokenValid () {
-      return this.exp && this.exp > DateTime.now()
+    isTokenValid (offset) {
+      return this.exp && this.exp > (offset ? DateTime.now().plus(offset) : DateTime.now())
     },
     loadToken () {
       if (!this.token) { return }

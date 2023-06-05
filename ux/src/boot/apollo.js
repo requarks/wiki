@@ -29,7 +29,7 @@ export default boot(({ app }) => {
     }
 
     // -> Refresh Token
-    if (!userStore.isTokenValid()) {
+    if (!userStore.isTokenValid({ minutes: 1 })) {
       if (!fetching) {
         refreshPromise = new Promise((resolve, reject) => {
           (async () => {

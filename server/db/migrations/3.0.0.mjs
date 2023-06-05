@@ -514,7 +514,9 @@ export async function up (knex) {
     {
       key: 'update',
       value: {
-        locales: true
+        lastCheckedAt: null,
+        version: null,
+        versionDate: null
       }
     },
     {

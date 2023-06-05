@@ -7,15 +7,6 @@ q-page.admin-locale
       .text-h5.text-primary.animated.fadeInLeft {{ t('admin.locale.title') }}
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.locale.subtitle') }}
     .col-auto.flex
-      q-btn.q-mr-md(
-        icon='las la-download'
-        :label='t(`admin.locale.downloadNew`)'
-        unelevated
-        color='primary'
-        :disabled='state.loading > 0'
-        @click='installNewLocale'
-      )
-      q-separator.q-mr-md(vertical)
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-question-circle'
         flat
@@ -55,73 +46,65 @@ q-page.admin-locale
         q-item
           blueprint-icon(icon='translation')
           q-item-section
-            q-item-label {{state.namespacing ? t(`admin.locale.base.labelWithNS`) : t(`admin.locale.base.label`)}}
-            q-item-label(caption) {{t(`admin.locale.base.hint`)}}
+            q-item-label {{t(`admin.locale.primary`)}}
+            q-item-label(caption) {{t(`admin.locale.primaryHint`)}}
           q-item-section
             q-select(
               outlined
               v-model='state.primary'
-              :options='installedLocales'
+              :options='state.locales'
               option-value='code'
               option-label='name'
               emit-value
               map-options
               dense
-              :aria-label='t(`admin.locale.base.label`)'
+              :aria-label='t(`admin.locale.primary`)'
               )
         q-separator.q-my-sm(inset)
         q-item(tag='label')
           blueprint-icon(icon='unit')
           q-item-section
-            q-item-label {{t(`admin.locale.namespaces.label`)}}
-            q-item-label(caption) {{t(`admin.locale.namespaces.hint`)}}
+            q-item-label {{t(`admin.locale.forcePrefix`)}}
+            q-item-label(caption) {{t(`admin.locale.forcePrefixHint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='state.namespacing'
+              v-model='state.forcePrefix'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='t(`admin.locale.namespaces.label`)'
+              :aria-label='t(`admin.locale.forcePrefixHint`)'
               )
-        q-item
-          q-item-section
-            q-card.bg-info.text-white.rounded-borders(flat)
-              q-card-section.items-center(horizontal)
-                q-card-section.col-auto.q-pr-none
-                  q-icon(name='las la-info-circle', size='sm')
-                q-card-section
-                  span {{ t('admin.locale.namespacingPrefixWarning.title', { langCode: state.selectedLocale }) }}
-                  .text-caption.text-yellow-1 {{ t('admin.locale.namespacingPrefixWarning.subtitle') }}
 
-    .col-12.col-lg-5
       //- -----------------------
-      //- Namespacing
+      //- Active Locales
       //- -----------------------
-      q-card.q-pb-sm(v-if='state.namespacing')
+      q-card.q-pb-sm.q-mt-md
         q-card-section
-          .text-subtitle1 {{t('admin.locale.activeNamespaces')}}
+          .text-subtitle1 {{t('admin.locale.active')}}
+          .text-caption(:class='$q.dark.isActive ? `text-grey-4` : `text-grey-7`') Select the locales that can be used on this site.
 
         q-item(
-          v-for='(lc, idx) of installedLocales'
+          v-for='(lc, idx) of state.locales'
           :key='lc.code'
           :tag='lc.code !== state.selectedLocale ? `label` : null'
           )
-          blueprint-icon(:text='lc.code')
+          blueprint-icon(:text='lc.language')
           q-item-section
-            q-item-label {{lc.name}}
-            q-item-label(caption) {{lc.nativeName}}
+            q-item-label {{lc.nativeName}}
+            q-item-label(caption) {{lc.name}} ({{lc.code}})
           q-item-section(avatar)
             q-toggle(
-              :disable='lc.code === state.selectedLocale'
-              v-model='state.namespaces'
+              :disable='lc.code === state.primary'
+              v-model='state.active'
               :val='lc.code'
-              color='primary'
+              :color='lc.code === state.primary ? `secondary` : `primary`'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
               :aria-label='lc.name'
               )
 
-      .q-pa-md.text-center.gt-md(v-else)
+    .col-12.col-lg-5
+      .q-pa-md.text-center
         img(src='/_assets/illustrations/undraw_world.svg', style='width: 80%;')
 
         //- q-separator.q-my-sm(inset)
@@ -150,7 +133,7 @@ q-page.admin-locale
 
 <script setup>
 import gql from 'graphql-tag'
-import { cloneDeep, filter } from 'lodash-es'
+import { cloneDeep, sortBy } from 'lodash-es'
 
 import LocaleInstallDialog from '../components/LocaleInstallDialog.vue'
 
@@ -186,13 +169,8 @@ const state = reactive({
   loading: 0,
   locales: [],
   primary: 'en',
+  forcePrefix: false,
   active: []
-})
-
-// COMPUTED
-
-const installedLocales = computed(() => {
-  return filter(state.locales, ['isInstalled', true])
 })
 
 // WATCHERS
@@ -226,9 +204,8 @@ async function load () {
           completeness
           code
           createdAt
-          isInstalled
-          installDate
           isRTL
+          language
           name
           nativeName
           region
@@ -241,7 +218,9 @@ async function load () {
           id
           locales {
             primary
-            active
+            active {
+              code
+            }
           }
         }
       }
@@ -251,9 +230,9 @@ async function load () {
     },
     fetchPolicy: 'network-only'
   })
-  state.locales = cloneDeep(resp?.data?.locales)
+  state.locales = sortBy(cloneDeep(resp?.data?.locales), ['nativeName', 'name'])
   state.primary = cloneDeep(resp?.data?.siteById?.locales?.primary)
-  state.active = cloneDeep(resp?.data?.siteById?.locales?.active ?? [])
+  state.active = cloneDeep(resp?.data?.siteById?.locales?.active ?? []).map(l => l.code)
   if (!state.active.includes(state.primary)) {
     state.active.push(state.primary)
   }
@@ -337,17 +316,10 @@ async function save () {
   })
   const resp = respRaw?.data?.localization?.updateLocale?.responseResult || {}
   if (resp.succeeded) {
-    // Change UI language
-    this.$i18n.locale = state.selectedLocale
-
     $q.notify({
       type: 'positive',
       message: 'Locale settings updated successfully.'
     })
-
-    setTimeout(() => {
-      window.location.reload(true)
-    }, 1000)
   } else {
     $q.notify({
       type: 'negative',
