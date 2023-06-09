@@ -12,6 +12,7 @@
           dense
           full-width
         )
+        <span> ID - {{ this.pageId }} </span>
       template(slot='actions')
         v-btn.mr-3.animated.fadeIn(color='amber', outlined, small, v-if='isConflict', @click='openConflict')
           .overline.amber--text.mr-3 Conflict

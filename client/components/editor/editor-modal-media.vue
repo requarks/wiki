@@ -46,6 +46,9 @@
               template(v-if='folders.length > 0 || currentFolderId > 0')
                 v-btn.is-icon.mx-1(:color='$vuetify.theme.dark ? `grey lighten-1` : `grey darken-2`', outlined, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
                   v-icon mdi-folder-upload
+                v-btn.btn-normalcase.mx-1(depressed,  color='grey darken-2', dark, @click='downFolder({id:folders.find(f => f.name==thePageId).id, name:`${thePageId}`})')
+                  v-icon(left) mdi-folder-download
+                  span.caption(style='text-transform: none;') YEA {{ thePageId }}
                 v-btn.btn-normalcase.mx-1(v-for='folder of folders', :key='folder.id', depressed,  color='grey darken-2', dark, @click='downFolder(folder)')
                   v-icon(left) mdi-folder
                   span.caption(style='text-transform: none;') {{ folder.name }}
@@ -282,6 +285,9 @@ export default {
     }
   },
   computed: {
+    thePageId () {
+      return this.$store.get('page/id')
+    },
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
@@ -436,6 +442,7 @@ export default {
         })
         if (_.get(resp, 'data.assets.createFolder.responseResult.succeeded', false)) {
           await this.$apollo.queries.folders.refetch()
+          console.log(this.folders)
           this.$store.commit('showNotification', {
             message: this.$t('editor:assets.folderCreateSuccess'),
             style: 'success',
