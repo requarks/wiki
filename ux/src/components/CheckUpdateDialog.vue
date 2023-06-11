@@ -7,17 +7,25 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
     q-card-section
       .q-pa-md.text-center
         img(src='/_assets/illustrations/undraw_going_up.svg', style='width: 150px;')
-      q-linear-progress(
-        indeterminate
-        size='lg'
-        rounded
-        )
-      .q-mt-sm.text-center.text-caption Fetching latest version info...
+      template(v-if='state.isLoading')
+        q-linear-progress(
+          indeterminate
+          size='lg'
+          rounded
+          )
+        .q-mt-sm.text-center.text-caption {{ $t('admin.system.fetchingLatestVersionInfo') }}
+      template(v-else)
+        .text-center
+          strong.text-positive(v-if='isLatest') {{ $t('admin.system.runningLatestVersion') }}
+          strong.text-pink(v-else) {{ $t('admin.system.newVersionAvailable') }}
+          .text-body2.q-mt-md Current: #[strong {{ state.current }}]
+          .text-body2 Latest: #[strong {{ state.latest }}]
+          .text-body2 Release Date: #[strong {{ state.latestDate }}]
     q-card-actions.card-actions
       q-space
       q-btn.acrylic-btn(
         flat
-        :label='t(`common.actions.cancel`)'
+        :label='state.isLoading ? t(`common.actions.cancel`) : t(`common.actions.close`)'
         color='grey'
         padding='xs md'
         @click='onDialogCancel'
@@ -37,7 +45,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 import gql from 'graphql-tag'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
+import { DateTime } from 'luxon'
+
+import { useUserStore } from 'src/stores/user'
 
 // EMITS
 
@@ -50,6 +61,10 @@ defineEmits([
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const $q = useQuasar()
 
+// STORES
+
+const userStore = useUserStore()
+
 // I18N
 
 const { t } = useI18n()
@@ -58,44 +73,56 @@ const { t } = useI18n()
 
 const state = reactive({
   isLoading: false,
-  canUpgrade: false
+  canUpgrade: false,
+  current: '',
+  latest: '',
+  latestDate: ''
+})
+
+const isLatest = computed(() => {
+  return true
 })
 
 // METHODS
 
-async function upgrade () {
+async function check () {
   state.isLoading = true
   try {
     const resp = await APOLLO_CLIENT.mutate({
       mutation: gql`
-        mutation deleteHook ($id: UUID!) {
-          deleteHook(id: $id) {
+        mutation checkForUpdates {
+          checkForUpdates {
             operation {
               succeeded
               message
             }
+            current
+            latest
+            latestDate
           }
         }
-      `,
-      variables: {
-        id: 0
-      }
+      `
     })
-    if (resp?.data?.deleteHook?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.webhooks.deleteSuccess')
-      })
-      onDialogOK()
+    if (resp?.data?.checkForUpdates?.operation?.succeeded) {
+      state.current = resp?.data?.checkForUpdates?.current
+      state.latest = resp?.data?.checkForUpdates?.latest
+      state.latestDate = DateTime.fromISO(resp?.data?.checkForUpdates?.latestDate).toFormat(userStore.preferredDateFormat)
     } else {
-      throw new Error(resp?.data?.deleteHook?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.checkForUpdates?.operation?.message || 'An unexpected error occured.')
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
       message: err.message
     })
+    onDialogCancel()
   }
   state.isLoading = false
 }
+
+// MOUNTED
+
+onMounted(() => {
+  check()
+})
 </script>

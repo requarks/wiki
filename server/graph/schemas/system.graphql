@@ -20,6 +20,8 @@ extend type Mutation {
     id: UUID!
   ): DefaultResponse
 
+  checkForUpdates: SystemCheckUpdateResponse
+
   disconnectWS: DefaultResponse
 
   installExtension(
@@ -203,4 +205,11 @@ enum SystemJobState {
   COMPLETED
   FAILED
   INTERRUPTED
+}
+
+type SystemCheckUpdateResponse {
+  operation: Operation
+  current: String
+  latest: String
+  latestDate: String
 }

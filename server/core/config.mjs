@@ -109,7 +109,7 @@ export default {
    */
   async saveToDb(keys, propagate = true) {
     try {
-      for (let key of keys) {
+      for (const key of keys) {
         let value = get(WIKI.config, key, null)
         if (!isPlainObject(value)) {
           value = { v: value }

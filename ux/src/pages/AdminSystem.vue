@@ -60,7 +60,7 @@ q-page.admin-system
           q-item-section
             .row.q-col-gutter-sm
               .col
-                .dark-value(caption) {{ state.info.latestVersion }}
+                .text-caption.dark-value {{ state.info.latestVersion }}
               .col-auto
                 q-btn.acrylic-btn(
                   flat
@@ -200,43 +200,6 @@ q-page.admin-system
             q-item-label(caption) {{t('admin.system.configFileHint')}}
           q-item-section
             q-item-label.dark-value(caption) {{ state.info.configFile }}
-
-  //-                 v-list-item-action-text {{ t('admin.system.published') }} {{ state.info.latestVersionReleaseDate | moment('from') }}
-  //-           v-card-actions(v-if='info.upgradeCapable && !isLatestVersion && info.platform === `docker`', :class='$vuetify.theme.dark ? `grey darken-3-d5` : `indigo lighten-5`')
-  //-             .caption.indigo--text.pl-3(:class='$vuetify.theme.dark ? `text--lighten-4` : ``') Wiki.js can perform the upgrade to the latest version for you.
-  //-             v-spacer
-  //-             v-btn.px-3(
-  //-               color='indigo'
-  //-               dark
-  //-               @click='performUpgrade'
-  //-               )
-  //-               v-icon(left) mdi-upload
-  //-               span Perform Upgrade
-
-  //- v-dialog(
-  //-   v-model='isUpgrading'
-  //-   persistent
-  //-   width='450'
-  //-   )
-  //-   v-card.blue.darken-5(dark)
-  //-     v-card-text.text-center.pa-10
-  //-       self-building-square-spinner(
-  //-         :animation-duration='4000'
-  //-         :size='40'
-  //-         color='#FFF'
-  //-         style='margin: 0 auto;'
-  //-         )
-  //-       .body-2.mt-5.blue--text.text--lighten-4 Your Wiki.js container is being upgraded...
-  //-       .caption.blue--text.text--lighten-2 Please wait
-  //-       v-progress-linear.mt-5(
-  //-         color='blue lighten-2'
-  //-         :value='upgradeProgress'
-  //-         :buffer-value='upgradeProgress'
-  //-         rounded
-  //-         :stream='isUpgradingStarted'
-  //-         query
-  //-         :indeterminate='!isUpgradingStarted'
-  //-       )
 </template>
 
 <script setup>
@@ -309,9 +272,6 @@ const platformLogo = computed(() => {
       return 'washing-machine'
   }
 })
-const isLatestVersion = computed(() => {
-  return state.info.currentVersion === state.info.latestVersion
-})
 const clientBrowser = computed(() => {
   return !import.meta.env.SSR ? navigator.userAgent : ''
 })
@@ -364,50 +324,10 @@ async function load () {
 function checkForUpdates () {
   $q.dialog({
     component: CheckUpdateDialog
+  }).onDismiss(() => {
+    load()
   })
 }
-
-// async function performUpgrade () {
-//   state.isUpgrading = true
-//   state.isUpgradingStarted = false
-//   state.upgradeProgress = 0
-//   this.$store.commit('loadingStart', 'admin-system-upgrade')
-//   try {
-//     const respRaw = await APOLLO_CLIENT.mutate({
-//       mutation: gql`
-//         mutation performUpdate {
-//           system {
-//             performUpgrade {
-//               responseResult {
-//                 succeeded
-//                 errorCode
-//                 slug
-//                 message
-//               }
-//             }
-//           }
-//         }
-//       `
-//     })
-//     const resp = _get(respRaw, 'data.system.performUpgrade.responseResult', {})
-//     if (resp.succeeded) {
-//       this.isUpgradingStarted = true
-//       const progressInterval = setInterval(() => {
-//         this.upgradeProgress += 0.83
-//       }, 500)
-//       setTimeout(() => {
-//         clearInterval(progressInterval)
-//         window.location.reload(true)
-//       }, 60000)
-//     } else {
-//       throw new Error(resp.message)
-//     }
-//   } catch (err) {
-//     this.$store.commit('pushGraphError', err)
-//     this.$store.commit('loadingStop', 'admin-system-upgrade')
-//     this.isUpgrading = false
-//   }
-// }
 
 // MOUNTED
 

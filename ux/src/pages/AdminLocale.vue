@@ -107,28 +107,6 @@ q-page.admin-locale
       .q-pa-md.text-center
         img(src='/_assets/illustrations/undraw_world.svg', style='width: 80%;')
 
-        //- q-separator.q-my-sm(inset)
-        //- q-item
-        //-   blueprint-icon(icon='test-passed')
-        //-   q-item-section
-        //-     q-item-label {{t(`admin.locale.activeNamespaces.label`)}}
-        //-     q-item-label(caption) {{t(`admin.locale.activeNamespaces.hint`)}}
-        //-   q-item-section
-        //-     q-select(
-        //-       outlined
-        //-       :disable='!namespacing'
-        //-       v-model='namespaces'
-        //-       :options='installedLocales'
-        //-       multiple
-        //-       use-chips
-        //-       option-value='code'
-        //-       option-label='name'
-        //-       emit-value
-        //-       map-options
-        //-       dense
-        //-       :aria-label='t(`admin.locale.activeNamespaces.label`)'
-        //-       )
-
 </template>
 
 <script setup>

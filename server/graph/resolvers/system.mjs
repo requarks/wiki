@@ -98,6 +98,25 @@ export default {
         return generateError(err)
       }
     },
+    async checkForUpdates (obj, args, context) {
+      try {
+        const renderJob = await WIKI.scheduler.addJob({
+          task: 'checkVersion',
+          maxRetries: 0,
+          promise: true
+        })
+        await renderJob.promise
+        return {
+          operation: generateSuccess('Checked for latest version successfully.'),
+          current: WIKI.version,
+          latest: WIKI.config.update.version,
+          latestDate: WIKI.config.update.versionDate
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
+      }
+    },
     async disconnectWS (obj, args, context) {
       WIKI.servers.ws.disconnectSockets(true)
       WIKI.logger.info('All active websocket connections have been terminated.')
@@ -205,13 +224,13 @@ export default {
       return _.toSafeInteger(results?.total) === 0
     },
     latestVersion () {
-      return WIKI.system.updates.version
+      return WIKI.config.update.version
     },
     latestVersionReleaseDate () {
-      return DateTime.fromISO(WIKI.system.updates.releaseDate).toJSDate()
+      return DateTime.fromISO(WIKI.config.update.versionDate).toJSDate()
     },
     nodeVersion () {
-      return process.version.substr(1)
+      return process.version.substring(1)
     },
     async operatingSystem () {
       let osLabel = `${os.type()} (${os.platform()}) ${os.release()} ${os.arch()}`
