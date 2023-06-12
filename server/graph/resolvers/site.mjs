@@ -184,8 +184,7 @@ export default {
         const imgBuffer = await fs.readFile(destPath)
         await WIKI.db.knex('assets').insert({
           id: site.config.assets.logo,
-          filename: `_logo.${destFormat}`,
-          hash: '_logo',
+          fileName: `_logo.${destFormat}`,
           fileExt: `.${destFormat}`,
           isSystem: true,
           kind: 'image',
@@ -245,12 +244,11 @@ export default {
         const imgBuffer = await fs.readFile(destPath)
         await WIKI.db.knex('assets').insert({
           id: site.config.assets.favicon,
-          filename: `_favicon.${destFormat}`,
-          hash: '_favicon',
-          ext: `.${destFormat}`,
+          fileName: `_favicon.${destFormat}`,
+          fileExt: `.${destFormat}`,
           isSystem: true,
           kind: 'image',
-          mime: (destFormat === 'svg') ? 'image/svg' : 'image/png',
+          mimeType: (destFormat === 'svg') ? 'image/svg' : 'image/png',
           fileSize: Math.ceil(imgBuffer.byteLength / 1024),
           data: imgBuffer,
           authorId: context.req.user.id,

@@ -49,18 +49,19 @@ q-header.bg-header.text-white.site-header(
             :color='$q.dark.isActive ? `blue` : `grey-4`'
             )
           q-badge.q-ml-sm(
-            label='v3 Preview'
-            color='pink'
+            label='Ctrl+K'
+            color='grey-7'
             outline
+            @click='searchField.focus()'
             )
-      q-btn.q-ml-md(
-        flat
-        round
-        dense
-        icon='las la-tags'
-        color='grey'
-        to='/_tags'
-        )
+      //- q-btn.q-ml-md(
+      //-   flat
+      //-   round
+      //-   dense
+      //-   icon='las la-tags'
+      //-   color='grey'
+      //-   to='/_tags'
+      //-   )
     q-toolbar(
       style='height: 64px;'
       dark
@@ -128,7 +129,7 @@ import NewMenu from './PageNewMenu.vue'
 
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { reactive } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
 import { useCommonStore } from 'src/stores/common'
 import { useSiteStore } from 'src/stores/site'
@@ -154,11 +155,35 @@ const state = reactive({
   search: ''
 })
 
+const searchField = ref(null)
+
 // METHODS
 
 function openFileManager () {
   siteStore.openFileManager()
 }
+
+function handleKeyPress (ev) {
+  if (siteStore.features.search) {
+    if (ev.ctrlKey && ev.key === 'k') {
+      ev.preventDefault()
+      searchField.value.focus()
+    }
+  }
+}
+
+// MOUNTED
+
+onMounted(() => {
+  if (process.env.CLIENT) {
+    window.addEventListener('keydown', handleKeyPress)
+  }
+})
+onBeforeUnmount(() => {
+  if (process.env.CLIENT) {
+    window.removeEventListener('keydown', handleKeyPress)
+  }
+})
 </script>
 
 <style lang="scss">
