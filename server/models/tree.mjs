@@ -1,6 +1,12 @@
 import { Model } from 'objection'
 import { differenceWith, dropRight, last, nth } from 'lodash-es'
-import { decodeTreePath, encodeTreePath, generateHash } from '../helpers/common.mjs'
+import {
+  decodeFolderPath,
+  decodeTreePath,
+  encodeFolderPath,
+  encodeTreePath,
+  generateHash
+} from '../helpers/common.mjs'
 
 import { Locale } from './locales.mjs'
 import { Site } from './sites.mjs'
@@ -87,7 +93,7 @@ export class Tree extends Model {
       const parentPath = encodeTreePath(path)
       const parentPathParts = parentPath.split('.')
       const parentFilter = {
-        folderPath: dropRight(parentPathParts).join('.'),
+        folderPath: encodeFolderPath(dropRight(parentPathParts).join('.')),
         fileName: last(parentPathParts)
       }
       const parent = await WIKI.db.knex('tree').where({
@@ -135,14 +141,14 @@ export class Tree extends Model {
       folderPath: '',
       fileName: ''
     }
-    const folderPath = decodeTreePath(folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName)
+    const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
     const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
 
     WIKI.logger.debug(`Adding page ${fullPath} to tree...`)
 
     const pageEntry = await WIKI.db.knex('tree').insert({
       id,
-      folderPath,
+      folderPath: encodeFolderPath(folderPath),
       fileName,
       type: 'page',
       title: title,
@@ -179,14 +185,13 @@ export class Tree extends Model {
       fileName: ''
     }
     const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
-    const decodedFolderPath = decodeTreePath(folderPath)
-    const fullPath = decodedFolderPath ? `${decodedFolderPath}/${fileName}` : fileName
+    const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
 
     WIKI.logger.debug(`Adding asset ${fullPath} to tree...`)
 
     const assetEntry = await WIKI.db.knex('tree').insert({
       id,
-      folderPath,
+      folderPath: encodeFolderPath(folderPath),
       fileName,
       type: 'asset',
       title: title,
@@ -225,7 +230,7 @@ export class Tree extends Model {
     WIKI.logger.debug(`Creating new folder ${pathName}...`)
     const parentPathParts = parentPath.split('.')
     const parentFilter = {
-      folderPath: dropRight(parentPathParts).join('.'),
+      folderPath: encodeFolderPath(dropRight(parentPathParts).join('.')),
       fileName: last(parentPathParts)
     }
 
@@ -236,7 +241,7 @@ export class Tree extends Model {
       if (!parent) {
         throw new Error('ERR_NONEXISTING_PARENT_ID')
       }
-      parentPath = parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName
+      parentPath = parent.folderPath ? `${decodeFolderPath(parent.folderPath)}.${parent.fileName}` : parent.fileName
     } else if (parentPath) {
       parent = await WIKI.db.knex('tree').where(parentFilter).first()
     } else {
@@ -247,7 +252,7 @@ export class Tree extends Model {
     const existingFolder = await WIKI.db.knex('tree').select('id').where({
       siteId: siteId,
       localeCode: locale,
-      folderPath: encodeTreePath(parentPath),
+      folderPath: encodeFolderPath(parentPath),
       fileName: pathName
     }).first()
     if (existingFolder) {
@@ -261,7 +266,7 @@ export class Tree extends Model {
         const parentPathParts = parentPath.split('.')
         for (let i = 1; i <= parentPathParts.length; i++) {
           const ancestor = {
-            folderPath: encodeTreePath(dropRight(parentPathParts, i).join('.')),
+            folderPath: encodeFolderPath(dropRight(parentPathParts, i).join('.')),
             fileName: nth(parentPathParts, i * -1)
           }
           expectedAncestors.push(ancestor)
@@ -296,7 +301,7 @@ export class Tree extends Model {
     // Create folder
     const fullPath = parentPath ? `${decodeTreePath(parentPath)}/${pathName}` : pathName
     const folder = await WIKI.db.knex('tree').insert({
-      folderPath: encodeTreePath(parentPath),
+      folderPath: encodeFolderPath(parentPath),
       fileName: pathName,
       type: 'folder',
       title: title,
@@ -364,8 +369,8 @@ export class Tree extends Model {
       }
 
       // Build new paths
-      const oldFolderPath = (folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName).replaceAll('-', '_')
-      const newFolderPath = (folder.folderPath ? `${folder.folderPath}.${pathName}` : pathName).replaceAll('-', '_')
+      const oldFolderPath = encodeFolderPath(folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName)
+      const newFolderPath = encodeFolderPath(folder.folderPath ? `${folder.folderPath}.${pathName}` : pathName)
 
       // Update children nodes
       WIKI.logger.debug(`Updating parent path of children nodes from ${oldFolderPath} to ${newFolderPath} ...`)
@@ -377,7 +382,7 @@ export class Tree extends Model {
       })
 
       // Rename the folder itself
-      const fullPath = folder.folderPath ? `${decodeTreePath(folder.folderPath)}/${pathName}` : pathName
+      const fullPath = folder.folderPath ? `${decodeFolderPath(folder.folderPath)}/${pathName}` : pathName
       await WIKI.db.knex('tree').where('id', folder.id).update({
         fileName: pathName,
         title: title,
@@ -408,7 +413,7 @@ export class Tree extends Model {
     WIKI.logger.debug(`Deleting folder ${folder.id} at path ${folderPath}...`)
 
     // Delete all children
-    const deletedNodes = await WIKI.db.knex('tree').where('folderPath', '<@', folderPath).del().returning(['id', 'type'])
+    const deletedNodes = await WIKI.db.knex('tree').where('folderPath', '<@', encodeFolderPath(folderPath)).del().returning(['id', 'type'])
 
     // Delete folders
     const deletedFolders = deletedNodes.filter(n => n.type === 'folder').map(n => n.id)
@@ -439,7 +444,7 @@ export class Tree extends Model {
     if (folder.folderPath) {
       const parentPathParts = folder.folderPath.split('.')
       const parent = await WIKI.db.knex('tree').where({
-        folderPath: dropRight(parentPathParts).join('.'),
+        folderPath: encodeFolderPath(dropRight(parentPathParts).join('.')),
         fileName: last(parentPathParts)
       }).first()
       await WIKI.db.knex('tree').where('id', parent.id).update({

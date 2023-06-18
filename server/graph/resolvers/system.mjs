@@ -202,7 +202,7 @@ export default {
       return WIKI.config.db.host
     },
     dbVersion () {
-      return _.get(WIKI.db, 'knex.client.version', 'Unknown Version')
+      return WIKI.db.VERSION
     },
     hostname () {
       return os.hostname()

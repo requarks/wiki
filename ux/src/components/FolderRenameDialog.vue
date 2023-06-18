@@ -204,6 +204,7 @@ onMounted(async () => {
           }
         }
       `,
+      fetchPolicy: 'network-only',
       variables: {
         id: props.folderId
       }

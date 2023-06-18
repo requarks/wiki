@@ -249,6 +249,11 @@
         border-color: $green-5;
       }
     }
+
+    .codeblock > code {
+      background-color: inherit;
+      color: inherit;
+    }
   }
 
   // ---------------------------------

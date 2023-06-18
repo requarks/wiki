@@ -37,7 +37,7 @@ export function createDeferred () {
  * @returns Decoded tree path
  */
 export function decodeTreePath (str) {
-  return str.replaceAll('_', '-').replaceAll('.', '/')
+  return str?.replaceAll('.', '/')
 }
 
 /**
@@ -47,7 +47,27 @@ export function decodeTreePath (str) {
  * @returns Encoded tree path
  */
 export function encodeTreePath (str) {
-  return str?.toLowerCase()?.replaceAll('-', '_')?.replaceAll('/', '.') || ''
+  return str?.toLowerCase()?.replaceAll('/', '.') || ''
+}
+
+/**
+ * Encode a folder path (to support legacy PostgresSQL ltree)
+ *
+ * @param {string} val String to encode
+ * @returns Encoded folder path
+ */
+export function encodeFolderPath (val) {
+  return WIKI.db.LEGACY ? val?.replaceAll('-', '_') : val
+}
+
+/**
+ * Decode a folder path (to support legacy PostgresSQL ltree)
+ *
+ * @param {string} val String to decode
+ * @returns Decoded folder path
+ */
+export function decodeFolderPath (val) {
+  return WIKI.db.LEGACY ? val?.replaceAll('_', '-') : val
 }
 
 /**

@@ -48,5 +48,6 @@ export async function task (payload) {
   } catch (err) {
     WIKI.logger.error('Fetching latest localization data: [ FAILED ]')
     WIKI.logger.error(err.message)
+    throw err
   }
 }

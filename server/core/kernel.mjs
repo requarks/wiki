@@ -21,7 +21,6 @@ export default {
     WIKI.db = await db.init()
 
     try {
-      await WIKI.db.onReady
       await WIKI.configSvc.loadFromDb()
       await WIKI.configSvc.applyFlags()
     } catch (err) {

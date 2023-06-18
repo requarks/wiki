@@ -1,4 +1,10 @@
 import _ from 'lodash-es'
+import {
+  decodeFolderPath,
+  encodeFolderPath,
+  decodeTreePath,
+  encodeTreePath
+} from '../../helpers/common.mjs'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 
 const typeResolvers = {
@@ -44,12 +50,12 @@ export default {
       if (args.parentId) {
         const parent = await WIKI.db.knex('tree').where('id', args.parentId).first()
         if (parent) {
-          parentPath = (parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName).replaceAll('-', '_')
+          parentPath = (parent.folderPath ? `${decodeFolderPath(parent.folderPath)}.${parent.fileName}` : parent.fileName)
         }
       } else if (args.parentPath) {
-        parentPath = args.parentPath.replaceAll('/', '.').replaceAll('-', '_').toLowerCase()
+        parentPath = encodeTreePath(args.parentPath)
       }
-      const folderPathCondition = parentPath ? `${parentPath}.${depthCondition}` : depthCondition
+      const folderPathCondition = parentPath ? `${encodeFolderPath(parentPath)}.${depthCondition}` : depthCondition
 
       // Fetch Items
       const items = await WIKI.db.knex('tree')
@@ -59,9 +65,14 @@ export default {
           // -> Include ancestors
           if (args.includeAncestors) {
             const parentPathParts = parentPath.split('.')
-            for (let i = 1; i <= parentPathParts.length; i++) {
+            for (let i = 0; i <= parentPathParts.length; i++) {
+              console.info({
+                folderPath: encodeFolderPath(_.dropRight(parentPathParts, i).join('.')),
+                fileName: _.nth(parentPathParts, i * -1),
+                type: 'folder'
+              })
               builder.orWhere({
-                folderPath: _.dropRight(parentPathParts, i).join('.'),
+                folderPath: encodeFolderPath(_.dropRight(parentPathParts, i).join('.')),
                 fileName: _.nth(parentPathParts, i * -1),
                 type: 'folder'
               })
@@ -92,14 +103,14 @@ export default {
         id: item.id,
         depth: item.depth,
         type: item.type,
-        folderPath: item.folderPath.replaceAll('.', '/').replaceAll('_', '-'),
+        folderPath: decodeTreePath(decodeFolderPath(item.folderPath)),
         fileName: item.fileName,
         title: item.title,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         ...(item.type === 'folder') && {
           childrenCount: item.meta?.children || 0,
-          isAncestor: item.folderPath.length < parentPath.length
+          isAncestor: item.folderPath.length < parentPath.length || (parentPath !== '' && item.folderPath === parentPath)
         },
         ...(item.type === 'asset') && {
           fileSize: item.meta?.fileSize || 0,

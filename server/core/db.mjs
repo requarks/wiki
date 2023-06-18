@@ -1,10 +1,12 @@
-import { get, has, isEmpty, isPlainObject } from 'lodash-es'
+import { create, get, has, isEmpty, isPlainObject } from 'lodash-es'
 import path from 'node:path'
 import knex from 'knex'
 import fs from 'node:fs/promises'
 import Objection from 'objection'
 import PGPubSub from 'pg-pubsub'
+import semver from 'semver'
 
+import { createDeferred } from '../helpers/common.mjs'
 import migrationSource from '../db/migrator-source.mjs'
 // const migrateFromLegacy = require('../db/legacy')
 import { setTimeout } from 'node:timers/promises'
@@ -17,12 +19,14 @@ export default {
   knex: null,
   listener: null,
   config: null,
+  VERSION: null,
+  LEGACY: false,
+  onReady: createDeferred(),
+  connectAttempts: 0,
   /**
    * Initialize DB
    */
   async init (workerMode = false) {
-    let self = this
-
     WIKI.logger.info('Checking DB configuration...')
 
     // Fetch DB Config
@@ -101,58 +105,28 @@ export default {
     Objection.Model.knex(this.knex)
 
     // Load DB Models
-
     WIKI.logger.info('Loading DB models...')
     const models = (await import(path.join(WIKI.SERVERPATH, 'models/index.mjs'))).default
 
-    // Set init tasks
-    let conAttempts = 0
-    const initTasks = {
-      // -> Attempt initial connection
-      async connect () {
-        try {
-          WIKI.logger.info('Connecting to database...')
-          await self.knex.raw('SELECT 1 + 1;')
-          WIKI.logger.info('Database Connection Successful [ OK ]')
-        } catch (err) {
-          if (conAttempts < 10) {
-            if (err.code) {
-              WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
-            } else {
-              WIKI.logger.error(`Database Connection Error: ${err.message}`)
-            }
-            WIKI.logger.warn(`Will retry in 3 seconds... [Attempt ${++conAttempts} of 10]`)
-            await setTimeout(3000)
-            await initTasks.connect()
-          } else {
-            throw err
-          }
-        }
-      },
-      // -> Migrate DB Schemas
-      async syncSchemas () {
-        WIKI.logger.info('Ensuring DB schema exists...')
-        await self.knex.raw(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schemas.wiki}`)
-        WIKI.logger.info('Ensuring DB migrations have been applied...')
-        return self.knex.migrate.latest({
-          tableName: 'migrations',
-          migrationSource,
-          schemaName: WIKI.config.db.schemas.wiki
-        })
-      },
-      // -> Migrate DB Schemas from 2.x
-      async migrateFromLegacy () {
-        // return migrateFromLegacy.migrate(self.knex)
-      }
+    // Connect
+    await this.connect()
+
+    // Check DB Version
+    const resVersion = await this.knex.raw('SHOW server_version;')
+    const dbVersion = semver.coerce(resVersion.rows[0].server_version, { loose: true })
+    this.VERSION = dbVersion.version
+    this.LEGACY = dbVersion.major < 16
+    if (dbVersion.major < 11) {
+      WIKI.logger.error('Your PostgreSQL database version is too old and unsupported by Wiki.js. Exiting...')
+      process.exit(1)
     }
+    WIKI.logger.info(`PostgreSQL ${dbVersion.version} [ ${this.LEGACY ? 'LEGACY MODE' : 'OK'} ]`)
 
-    // Perform init tasks
-
-    this.onReady = workerMode ? Promise.resolve() : (async () => {
-      await initTasks.connect()
-      await initTasks.migrateFromLegacy()
-      await initTasks.syncSchemas()
-    })()
+    // Run Migrations
+    if (!workerMode) {
+      await this.migrateFromLegacy()
+      await this.syncSchemas()
+    }
 
     return {
       ...this,
@@ -220,5 +194,47 @@ export default {
       event,
       value
     })
+  },
+  /**
+   * Attempt initial connection
+   */
+  async connect () {
+    try {
+      WIKI.logger.info('Connecting to database...')
+      await this.knex.raw('SELECT 1 + 1;')
+      WIKI.logger.info('Database Connection Successful [ OK ]')
+    } catch (err) {
+      if (this.connectAttempts < 10) {
+        if (err.code) {
+          WIKI.logger.error(`Database Connection Error: ${err.code} ${err.address}:${err.port}`)
+        } else {
+          WIKI.logger.error(`Database Connection Error: ${err.message}`)
+        }
+        WIKI.logger.warn(`Will retry in 3 seconds... [Attempt ${++this.connectAttempts} of 10]`)
+        await setTimeout(3000)
+        await this.connect()
+      } else {
+        throw err
+      }
+    }
+  },
+  /**
+   * Migrate DB Schemas
+   */
+  async syncSchemas () {
+    WIKI.logger.info('Ensuring DB schema exists...')
+    await this.knex.raw(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schemas.wiki}`)
+    WIKI.logger.info('Ensuring DB migrations have been applied...')
+    return this.knex.migrate.latest({
+      tableName: 'migrations',
+      migrationSource,
+      schemaName: WIKI.config.db.schemas.wiki
+    })
+  },
+  /**
+   * Migrate DB Schemas from 2.x
+   */
+  async migrateFromLegacy () {
+    // return migrateFromLegacy.migrate(self.knex)
   }
 }

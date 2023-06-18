@@ -10,11 +10,12 @@ export async function task (payload) {
       version: strictVersion,
       versionDate: resp.published_at
     }
-    await WIKI.config.saveToDb(['update'])
+    await WIKI.configSvc.saveToDb(['update'])
 
     WIKI.logger.info('Checked for latest version: [ COMPLETED ]')
   } catch (err) {
     WIKI.logger.error('Checking for latest version: [ FAILED ]')
     WIKI.logger.error(err.message)
+    throw err
   }
 }

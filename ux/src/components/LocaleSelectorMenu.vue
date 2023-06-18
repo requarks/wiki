@@ -1,7 +1,7 @@
 <template lang="pug">
 q-menu.translucent-menu(
   auto-close
-  anchor='top right'
+  anchor='bottom middle'
   self='top left'
   )
   q-list(padding, style='min-width: 200px;')

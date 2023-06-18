@@ -615,7 +615,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
 
             // -> Set Ancestors / Tree Roots
             if (item.folderPath) {
-              if (!state.treeNodes[parentId].children.includes(item.id)) {
+              if (item.id !== parentId && !state.treeNodes[parentId].children.includes(item.id)) {
                 state.treeNodes[parentId].children.push(item.id)
               }
             } else {
@@ -725,9 +725,20 @@ function renameFolder (folderId) {
     componentProps: {
       folderId
     }
-  }).onOk(() => {
+  }).onOk(async () => {
     treeComp.value.resetLoaded()
-    loadTree({ parentId: folderId, initLoad: true })
+    // // -> Delete current folder and children from cache
+    // const fPath = [state.treeNodes[folderId].folderPath, state.treeNodes[folderId].fileName].filter(p => !!p).join('/')
+    // delete state.treeNodes[folderId]
+    // for (const [nodeId, node] of Object.entries(state.treeNodes)) {
+    //   if (node.folderPath.startsWith(fPath)) {
+    //     delete state.treeNodes[nodeId]
+    //   }
+    // }
+    // -> Reload tree
+    await loadTree({ parentId: folderId, types: ['folder'], initLoad: true }) // Update tree
+    // -> Reload current view (in case current folder is included)
+    await loadTree({ parentId: state.currentFolderId })
   })
 }
 

@@ -13,5 +13,6 @@ export async function task (payload) {
   } catch (err) {
     WIKI.logger.error('Cleaning scheduler job history: [ FAILED ]')
     WIKI.logger.error(err.message)
+    throw err
   }
 }
