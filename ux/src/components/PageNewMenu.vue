@@ -88,12 +88,16 @@ const props = defineProps({
   showNewFolder: {
     type: Boolean,
     default: false
+  },
+  basePath: {
+    type: String,
+    default: null
   }
 })
 
 // EMITS
 
-const emit = defineEmits(['newFolder'])
+const emit = defineEmits(['newFolder', 'newPage'])
 
 // QUASAR
 
@@ -114,7 +118,8 @@ const { t } = useI18n()
 
 async function create (editor) {
   $q.loading.show()
-  await pageStore.pageCreate({ editor })
+  emit('newPage')
+  await pageStore.pageCreate({ editor, basePath: props.basePath })
   $q.loading.hide()
 }
 

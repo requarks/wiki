@@ -23,7 +23,8 @@ export const useEditorStore = defineStore('editor', {
     lastChangeTimestamp: null,
     editors: {},
     configIsLoaded: false,
-    reasonForChange: ''
+    reasonForChange: '',
+    ignoreRouteChange: false
   }),
   getters: {
     hasPendingChanges: (state) => {

@@ -313,14 +313,30 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - CREATE
      */
-    async pageCreate ({ editor, locale, path, title = '', description = '', content = '' }) {
+    async pageCreate ({ editor, locale, path, basePath, title = '', description = '', content = '', fromNavigate = false } = {}) {
       const editorStore = useEditorStore()
 
+      // -> Load editor config
       if (!editorStore.configIsLoaded) {
         await editorStore.fetchConfigs()
       }
 
-      const noDefaultPath = Boolean(!path && path !== '')
+      // -> Path normalization
+      if (path?.startsWith('/')) {
+        path = path.substring(1)
+      }
+      if (basePath?.startsWith('/')) {
+        basePath = basePath.substring(1)
+      }
+      if (basePath?.endsWith('/')) {
+        basePath = basePath.substring(0, basePath.length - 1)
+      }
+
+      // -> Redirect if not at /_create path
+      if (!this.router.currentRoute.value.path.startsWith('/_create/') && !fromNavigate) {
+        editorStore.$patch({ ignoreRouteChange: true })
+        this.router.push(`/_create/${editor}`)
+      }
 
       // -> Init editor
       editorStore.$patch({
@@ -333,7 +349,7 @@ export const usePageStore = defineStore('page', {
       // -> Default Page Path
       let newPath = path
       if (!path && path !== '') {
-        const parentPath = dropRight(this.path.split('/'), 1).join('/')
+        const parentPath = basePath || basePath === '' ? basePath : dropRight(this.path.split('/'), 1).join('/')
         newPath = parentPath ? `${parentPath}/new-page` : 'new-page'
       }
 
@@ -353,18 +369,26 @@ export const usePageStore = defineStore('page', {
         render: '',
         mode: 'edit'
       })
-
-      if (noDefaultPath) {
-        this.router.push(`/_create/${editor}`)
-      }
     },
     /**
      * PAGE - EDIT
      */
-    async pageEdit () {
+    async pageEdit ({ path, id, fromNavigate = false } = {}) {
       const editorStore = useEditorStore()
 
-      await this.pageLoad({ id: this.id, withContent: true })
+      const loadArgs = {
+        withContent: true
+      }
+
+      if (id) {
+        loadArgs.id = id
+      } else if (path) {
+        loadArgs.path = path
+      } else {
+        loadArgs.id = this.id
+      }
+
+      await this.pageLoad(loadArgs)
 
       if (!editorStore.configIsLoaded) {
         await editorStore.fetchConfigs()

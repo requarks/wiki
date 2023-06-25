@@ -262,6 +262,12 @@ const lastModified = computed(() => {
 // WATCHERS
 
 watch(() => route.path, async (newValue) => {
+  // -> Ignore route change (e.g. from page create route fix)
+  if (editorStore.ignoreRouteChange) {
+    editorStore.$patch({ ignoreRouteChange: false })
+    return
+  }
+
   // -> Enter Create Mode?
   if (newValue.startsWith('/_create')) {
     if (!route.params.editor) {
@@ -272,8 +278,27 @@ watch(() => route.path, async (newValue) => {
       return router.replace('/')
     }
     $q.loading.show()
-    await pageStore.pageCreate({ editor: route.params.editor })
+    const pageCreateArgs = { editor: route.params.editor, fromNavigate: true }
+    if (route.query.path) {
+      pageCreateArgs.path = route.query.path
+    }
+    if (route.query.locale) {
+      pageCreateArgs.locale = route.query.locale
+    }
+    await pageStore.pageCreate(pageCreateArgs)
     $q.loading.hide()
+    return
+  }
+
+  // -> Enter Edit Mode?
+  if (newValue.startsWith('/_edit')) {
+    if (!route.params.pagePath) {
+      return router.replace('/')
+    }
+    $q.loading.show()
+    await pageStore.pageEdit({ path: route.params.pagePath, fromNavigate: true })
+    $q.loading.hide()
+    return
   }
 
   // -> Moving to a non-page path? Ignore

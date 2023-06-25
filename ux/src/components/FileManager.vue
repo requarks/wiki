@@ -8,9 +8,11 @@ q-layout.fileman(view='hHh lpR lFr', container)
       q-btn.q-mr-sm.acrylic-btn(
         flat
         color='white'
-        label='EN'
+        :label='commonStore.locale'
+        :aria-label='commonStore.locale'
         style='height: 40px;'
         )
+        locale-selector-menu
       q-input(
         dark
         v-model='state.search'
@@ -18,7 +20,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
         dense
         ref='searchField'
         style='width: 100%;'
-        label='Search folder...'
+        :label='t(`fileman.searchFolder`)'
         :debounce='500'
         )
         template(v-slot:prepend)
@@ -197,6 +199,8 @@ q-layout.fileman(view='hHh lpR lFr', container)
               :hide-asset-btn='true'
               :show-new-folder='true'
               @new-folder='() => newFolder(state.currentFolderId)'
+              @new-page='() => close()'
+              :base-path='folderPath'
               )
           q-btn(
             flat
@@ -252,11 +256,11 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   )
                   q-card.q-pa-sm
                     q-list(dense, style='min-width: 150px;')
-                      q-item(clickable, v-if='item.type !== `folder`', @click='insertItem(item)')
+                      q-item(clickable, v-if='insertMode && item.type !== `folder`', @click='insertItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-plus-circle', color='primary')
                         q-item-section {{ t(`common.actions.insert`) }}
-                      q-item(clickable, v-if='item.type === `page`')
+                      q-item(clickable, v-if='item.type === `page`', @click='editItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-edit', color='orange')
                         q-item-section {{ t(`common.actions.edit`) }}
@@ -277,7 +281,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                         q-item-section(side)
                           q-icon(name='las la-clipboard', color='primary')
                         q-item-section {{ t(`common.actions.copyURL`) }}
-                      q-item(clickable, v-if='item.type !== `folder`', @click='')
+                      q-item(clickable, v-if='item.type !== `folder`', @click='downloadItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-download', color='primary')
                         q-item-section {{ t(`common.actions.download`) }}
@@ -326,12 +330,14 @@ import Tree from './TreeNav.vue'
 
 import fileTypes from '../helpers/fileTypes'
 
+import { useCommonStore } from 'src/stores/common'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 import FolderCreateDialog from 'src/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from 'src/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from 'src/components/FolderRenameDialog.vue'
+import LocaleSelectorMenu from 'src/components/LocaleSelectorMenu.vue'
 
 // QUASAR
 
@@ -339,6 +345,7 @@ const $q = useQuasar()
 
 // STORES
 
+const commonStore = useCommonStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
@@ -939,6 +946,15 @@ async function copyItemURL (item) {
       caption: err.message
     })
   }
+}
+
+async function editItem (item) {
+  router.push(item.folderPath ? `/_edit/${item.folderPath}/${item.fileName}` : `/_edit/${item.fileName}`)
+  close()
+}
+
+function downloadItem (item) {
+
 }
 
 function renameItem (item) {

@@ -114,7 +114,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive } from 'vue'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { cloneDeep, find } from 'lodash-es'
+import { cloneDeep, find, last } from 'lodash-es'
 import gql from 'graphql-tag'
 
 import fileTypes from '../helpers/fileTypes'
@@ -124,6 +124,7 @@ import Tree from 'src/components/TreeNav.vue'
 
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
+import { dropRight } from 'lodash'
 
 // PROPS
 
@@ -351,6 +352,13 @@ function newFolder (parentId) {
 // MOUNTED
 
 onMounted(() => {
+  let fPath = props.folderPath
+  let fName = props.itemFileName
+  if (props.itemFileName?.indexOf('/') >= 0) {
+    const fParts = props.itemFileName.split('/')
+    fPath = dropRight(fParts, 1).join('/')
+    fName = last(fParts)
+  }
   switch (props.mode) {
     case 'pageSave': {
       state.typesToFetch = ['folder', 'page']
@@ -358,12 +366,12 @@ onMounted(() => {
     }
   }
   loadTree({
-    parentPath: props.folderPath,
+    parentPath: fPath,
     types: state.typesToFetch,
     initLoad: true
   })
   state.title = props.itemTitle || ''
-  state.path = props.itemFileName || ''
+  state.path = fName || ''
 })
 
 </script>

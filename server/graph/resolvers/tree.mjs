@@ -66,11 +66,6 @@ export default {
           if (args.includeAncestors) {
             const parentPathParts = parentPath.split('.')
             for (let i = 0; i <= parentPathParts.length; i++) {
-              console.info({
-                folderPath: encodeFolderPath(_.dropRight(parentPathParts, i).join('.')),
-                fileName: _.nth(parentPathParts, i * -1),
-                type: 'folder'
-              })
               builder.orWhere({
                 folderPath: encodeFolderPath(_.dropRight(parentPathParts, i).join('.')),
                 fileName: _.nth(parentPathParts, i * -1),
@@ -110,7 +105,7 @@ export default {
         updatedAt: item.updatedAt,
         ...(item.type === 'folder') && {
           childrenCount: item.meta?.children || 0,
-          isAncestor: item.folderPath.length < parentPath.length || (parentPath !== '' && item.folderPath === parentPath)
+          isAncestor: item.folderPath.length < parentPath.length
         },
         ...(item.type === 'asset') && {
           fileSize: item.meta?.fileSize || 0,
