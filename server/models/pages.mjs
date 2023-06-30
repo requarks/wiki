@@ -18,8 +18,8 @@ import { PageLink } from './pageLinks.mjs'
 import { Tag } from './tags.mjs'
 import { User } from './users.mjs'
 
-const pageRegex = /^[a-zA0-90-9-_/]*$/
-const aliasRegex = /^[a-zA0-90-9-_]*$/
+const pageRegex = /^[a-zA-Z0-9-_/]*$/
+const aliasRegex = /^[a-zA-Z0-9-_]*$/
 
 const frontmatterRegex = {
   html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,

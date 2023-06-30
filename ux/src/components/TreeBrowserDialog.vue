@@ -114,7 +114,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive } from 'vue'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { cloneDeep, find, last } from 'lodash-es'
+import { cloneDeep, find, initial, last } from 'lodash-es'
 import gql from 'graphql-tag'
 
 import fileTypes from '../helpers/fileTypes'
@@ -233,7 +233,7 @@ const files = computed(() => {
 async function save () {
   onDialogOK({
     title: state.title,
-    path: state.path
+    path: currentFolderPath.value.length > 1 ? `${currentFolderPath.value.substring(1)}${state.path}` : state.path
   })
 }
 
@@ -307,10 +307,18 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
               title: item.title,
               children: []
             }
-            if (!item.folderPath) {
-              newTreeRoots.push(item.id)
+            if (item.folderPath) {
+              let folderParentId = parentId
+              if (!folderParentId) {
+                const parentFolderParts = item.folderPath.split('/')
+                const parentFolder = find(items, { folderPath: parentFolderParts.length > 1 ? initial(parentFolderParts).join('/') : '', fileName: last(parentFolderParts) })
+                folderParentId = parentFolder.id
+              }
+              if (item.id !== folderParentId && !state.treeNodes[folderParentId]?.children?.includes(item.id)) {
+                state.treeNodes[folderParentId].children.push(item.id)
+              }
             } else {
-              state.treeNodes[parentId].children.push(item.id)
+              newTreeRoots.push(item.id)
             }
             break
           }

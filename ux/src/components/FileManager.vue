@@ -320,7 +320,7 @@ import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toR
 import { filesize } from 'filesize'
 import { useQuasar } from 'quasar'
 import { DateTime } from 'luxon'
-import { cloneDeep, find } from 'lodash-es'
+import { cloneDeep, dropRight, find, findKey, initial, last, nth } from 'lodash-es'
 import { useRoute, useRouter } from 'vue-router'
 import gql from 'graphql-tag'
 import Fuse from 'fuse.js/dist/fuse.basic.esm'
@@ -622,8 +622,14 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
 
             // -> Set Ancestors / Tree Roots
             if (item.folderPath) {
-              if (item.id !== parentId && !state.treeNodes[parentId].children.includes(item.id)) {
-                state.treeNodes[parentId].children.push(item.id)
+              let folderParentId = parentId
+              if (!folderParentId) {
+                const parentFolderParts = item.folderPath.split('/')
+                const parentFolder = find(items, { folderPath: parentFolderParts.length > 1 ? initial(parentFolderParts).join('/') : '', fileName: last(parentFolderParts) })
+                folderParentId = parentFolder.id
+              }
+              if (item.id !== folderParentId && !state.treeNodes[folderParentId]?.children?.includes(item.id)) {
+                state.treeNodes[folderParentId]?.children?.push(item.id)
               }
             } else {
               newTreeRoots.push(item.id)
@@ -990,8 +996,30 @@ function delItem (item) {
 
 // MOUNTED
 
-onMounted(() => {
-  loadTree({})
+onMounted(async () => {
+  const pathParts = pageStore.path.split('/')
+  const parentPath = initial(pathParts).join('/')
+
+  await loadTree({
+    parentPath,
+    initLoad: true
+  })
+
+  // -> Open tree up to current folder
+  const folderFolderPath = dropRight(pathParts, 2).join('/')
+  const folderFileName = nth(pathParts, -2)
+
+  for (const [id, node] of Object.entries(state.treeNodes)) {
+    if (parentPath.startsWith(node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName)) {
+      treeComp.value.setOpened(id)
+    }
+  }
+
+  // -> Switch to current folder (from page path)
+  const currentNodeId = findKey(state.treeNodes, n => n.folderPath === folderFolderPath && n.fileName === folderFileName)
+  if (currentNodeId) {
+    state.currentFolderId = currentNodeId
+  }
 })
 
 </script>

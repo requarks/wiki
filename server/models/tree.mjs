@@ -132,8 +132,8 @@ export class Tree extends Model {
    */
   static async addPage ({ id, parentId, parentPath, fileName, title, locale, siteId, meta = {} }) {
     const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
-      parentId,
-      parentPath,
+      id: parentId,
+      path: parentPath,
       locale,
       siteId,
       createIfMissing: true
