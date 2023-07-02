@@ -62,7 +62,7 @@ q-page.admin-locale
               )
         q-separator.q-my-sm(inset)
         q-item(tag='label')
-          blueprint-icon(icon='unit')
+          blueprint-icon(icon='close-pane')
           q-item-section
             q-item-label {{t(`admin.locale.forcePrefix`)}}
             q-item-label(caption) {{t(`admin.locale.forcePrefixHint`)}}
@@ -113,8 +113,6 @@ q-page.admin-locale
 import gql from 'graphql-tag'
 import { cloneDeep, sortBy } from 'lodash-es'
 
-import LocaleInstallDialog from '../components/LocaleInstallDialog.vue'
-
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
@@ -164,14 +162,6 @@ watch(() => state.selectedLocale, (newValue) => {
 
 // METHODS
 
-function installNewLocale () {
-  $q.dialog({
-    component: LocaleInstallDialog
-  }).onOk(() => {
-    this.load()
-  })
-}
-
 async function load () {
   state.loading++
   $q.loading.show()
@@ -216,46 +206,6 @@ async function load () {
   }
   $q.loading.hide()
   state.loading--
-}
-
-async function download (lc) {
-  lc.isDownloading = true
-  const respRaw = await APOLLO_CLIENT.mutate({
-    mutation: gql`
-      mutation downloadLocale ($locale: String!) {
-        localization {
-          downloadLocale (locale: $locale) {
-            responseResult {
-              succeeded
-              errorCode
-              slug
-              message
-            }
-          }
-        }
-      }
-    `,
-    variables: {
-      locale: lc.code
-    }
-  })
-  const resp = respRaw?.data?.localization?.downloadLocale?.responseResult || {}
-  if (resp.succeeded) {
-    lc.isDownloading = false
-    lc.isInstalled = true
-    lc.updatedAt = new Date().toISOString()
-    lc.installDate = lc.updatedAt
-    $q.notify({
-      message: `Locale ${lc.name} has been installed successfully.`,
-      type: 'positive'
-    })
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: resp.message
-    })
-  }
-  state.isDownloading = false
 }
 
 async function save () {

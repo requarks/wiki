@@ -8,42 +8,43 @@
 	"workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
 
-	// Set *default* container specific settings.json values on container create.
-	"settings": {
-    "terminal.integrated.defaultProfile.linux": "zsh",
-    "sqltools.connections": [
-      // Default connection to dev DB container
-      {
-          "name": "Local Dev",
-          "server": "db",
-          "port": 5432,
-          "database": "postgres",
-          "username": "postgres",
-          "password": "postgres",
-          "driver": "PostgreSQL",
-          "askForPassword": false,
-          "connectionTimeout": 60
-      }
-    ]
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "sqltools.connections": [
+          // Default connection to dev DB container
+          {
+              "name": "Local Dev",
+              "server": "db",
+              "port": 5432,
+              "database": "postgres",
+              "username": "postgres",
+              "password": "postgres",
+              "driver": "PostgreSQL",
+              "askForPassword": false,
+              "connectionTimeout": 60
+          }
+        ]
+      },
+      "extensions": [
+        "arcanis.vscode-zipfs",
+        "dbaeumer.vscode-eslint",
+        "eamodio.gitlens",
+        "Vue.volar",
+        "oderwat.indent-rainbow",
+        "redhat.vscode-yaml",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "editorconfig.editorconfig",
+        "lokalise.i18n-ally",
+        "mrmlnc.vscode-duplicate",
+        "mtxr.sqltools-driver-pg",
+        "mutantdino.resourcemonitor",
+        "wayou.vscode-todo-highlight",
+        "GraphQL.vscode-graphql"
+      ]
+    }
   },
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-    "arcanis.vscode-zipfs",
-		"dbaeumer.vscode-eslint",
-		"eamodio.gitlens",
-		"Vue.volar",
-		"oderwat.indent-rainbow",
-		"redhat.vscode-yaml",
-		"VisualStudioExptTeam.vscodeintellicode",
-    "editorconfig.editorconfig",
-    "lokalise.i18n-ally",
-    "mrmlnc.vscode-duplicate",
-    "mtxr.sqltools-driver-pg",
-    "mutantdino.resourcemonitor",
-    "wayou.vscode-todo-highlight",
-    "GraphQL.vscode-graphql"
-	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or with the host.

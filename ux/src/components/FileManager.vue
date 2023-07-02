@@ -825,6 +825,9 @@ async function uploadNewFiles () {
           idx++
           state.uploadPercentage = totalFiles > 1 ? Math.round(idx / totalFiles * 100) : 90
           const resp = await APOLLO_CLIENT.mutate({
+            context: {
+              uploadMode: true
+            },
             mutation: gql`
               mutation uploadAssets (
                 $folderId: UUID

@@ -152,7 +152,7 @@ q-layout(view='hHh lpR fFf', container)
           flat
           color='grey'
           type='a'
-          href='https://docs.js.wiki/admin/groups#rules'
+          :href='siteStore.docsBase + `/admin/groups#rules`'
           target='_blank'
           )
         q-btn.acrylic-btn.q-mr-sm(
@@ -221,12 +221,21 @@ q-layout(view='hHh lpR fFf', container)
                     use-chips
                     stack-label
                     )
+                    template(v-slot:selected-item='scope')
+                      q-chip(
+                        square
+                        dense
+                        :tabindex='scope.tabindex'
+                        :color='getRuleModeBgColor(rule.mode)'
+                        text-color='white'
+                        )
+                        span.text-caption {{ scope.opt.title }}
                     template(v-slot:option='{ itemProps, itemEvents, opt, selected, toggleOption }')
                       q-item(v-bind='itemProps', v-on='itemEvents')
                         q-item-section(side)
                           q-toggle(
-                            :value='selected'
-                            @input='toggleOption(opt)'
+                            :model-value='selected'
+                            @update:model-value='toggleOption(opt)'
                             color='primary'
                             checked-icon='las la-check'
                             unchecked-icon='las la-times'
@@ -273,8 +282,8 @@ q-layout(view='hHh lpR fFf', container)
                             q-item-label {{opt.title}}
                           q-item-section(side)
                             q-toggle(
-                              :value='selected'
-                              @input='toggleOption(opt)'
+                              :model-value='selected'
+                              @update:model-value='toggleOption(opt)'
                               color='primary'
                               checked-icon='las la-check'
                               unchecked-icon='las la-times'
@@ -292,7 +301,7 @@ q-layout(view='hHh lpR fFf', container)
                       option-label='name'
                       multiple
                       behavior='dialog'
-                      :display-value='t(`admin.groups.selectedLocales`, rule.locales.length, { count: rule.locales.length, locale: rule.locales.length === 1 ? rule.locales[0].toUpperCase() : `` })'
+                      :display-value='t(`admin.groups.selectedLocales`, { n: rule.locales.length > 0 ? rule.locales[0].toUpperCase() : rule.locales.length }, rule.locales.length)'
                       )
                       template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
                         q-item(v-bind='itemProps')
@@ -350,7 +359,7 @@ q-layout(view='hHh lpR fFf', container)
                     flat
                     color='grey'
                     type='a'
-                    href='https://docs.js.wiki/admin/groups#permissions'
+                    :href='siteStore.docsBase + `/admin/groups#permissions`'
                     target='_blank'
                     )
               template(v-for='(perm, idx) of permissions', :key='perm.permission')
@@ -388,7 +397,7 @@ q-layout(view='hHh lpR fFf', container)
           flat
           color='grey'
           type='a'
-          href='https://docs.js.wiki/admin/groups#users'
+          :href='siteStore.docsBase + `/admin/groups#users`'
           target='_blank'
           )
         q-input.denser.fill-outline.q-mr-sm(
@@ -504,6 +513,7 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from 'src/stores/admin'
+import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
 
@@ -512,6 +522,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const siteStore = useSiteStore()
 
 // ROUTER
 
@@ -693,7 +704,7 @@ const rules = [
   },
   {
     permission: 'read:source',
-    title: 'View Pages Source',
+    title: 'View Page Source',
     hint: 'Can view pages source.',
     warning: false,
     restrictedForSystem: false,
@@ -799,6 +810,14 @@ function getRuleModeColor (mode) {
     DENY: 'text-negative',
     ALLOW: 'text-positive',
     FORCEALLOW: 'text-blue'
+  })[mode]
+}
+
+function getRuleModeBgColor (mode) {
+  return ({
+    DENY: 'negative',
+    ALLOW: 'positive',
+    FORCEALLOW: 'blue'
   })[mode]
 }
 
@@ -913,7 +932,8 @@ function exportRules () {
       message: t('admin.groups.exportRulesNoneError')
     })
   }
-  exportFile('rules.json', JSON.stringify(state.group.rules, null, 2), { mimeType: 'application/json;charset=UTF-8' })
+  const rules = state.group.rules.map(({ __typename, ...r }) => r)
+  exportFile('rules.json', JSON.stringify(rules, null, 2), { mimeType: 'application/json;charset=UTF-8' })
 }
 
 async function importRules () {

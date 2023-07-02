@@ -19,14 +19,14 @@ q-menu.translucent-menu(
       )
       blueprint-icon(icon='markdown')
       q-item-section.q-pr-sm New Markdown Page
-    q-item(
-      clickable
-      @click='create(`asciidoc`)'
-      v-if='siteStore.editors.asciidoc'
-      )
-      blueprint-icon(icon='asciidoc')
-      q-item-section.q-pr-sm New AsciiDoc Page
     template(v-if='flagsStore.experimental')
+      q-item(
+        clickable
+        @click='create(`asciidoc`)'
+        v-if='siteStore.editors.asciidoc'
+        )
+        blueprint-icon(icon='asciidoc')
+        q-item-section.q-pr-sm New AsciiDoc Page
       q-item(
         clickable
         @click='create(`channel`)'
@@ -45,12 +45,12 @@ q-menu.translucent-menu(
         )
         blueprint-icon(icon='api')
         q-item-section.q-pr-sm New API Documentation
-    q-item(
-      clickable
-      @click='create(`redirect`)'
-      )
-      blueprint-icon(icon='advance')
-      q-item-section.q-pr-sm New Redirection
+      q-item(
+        clickable
+        @click='create(`redirect`)'
+        )
+        blueprint-icon(icon='advance')
+        q-item-section.q-pr-sm New Redirection
     template(v-if='props.hideAssetBtn === false')
       q-separator.q-my-sm(inset)
       q-item(

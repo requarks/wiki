@@ -575,7 +575,6 @@ export class User extends Model {
           tfaSecret: ''
         }
       },
-      localeCode: 'en',
       hasAvatar: false,
       isSystem: false,
       isActive: true,

@@ -30,7 +30,7 @@ q-page.admin-terminal
         flat
         color='grey'
         :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/admin/scheduler`'
+        :href='siteStore.docsBase + `/system/scheduler`'
         target='_blank'
         type='a'
         )

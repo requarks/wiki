@@ -149,19 +149,31 @@
         no-caps
         @click='createPage'
       )
-      q-btn.acrylic-btn.q-ml-sm(
+      q-btn-group.q-ml-sm(
         v-else
         flat
-        icon='las la-check'
-        color='positive'
-        :label='t(`common.actions.saveChanges`)'
-        :aria-label='t(`common.actions.saveChanges`)'
-        :disabled='!editorStore.hasPendingChanges'
-        no-caps
-        @click.exact='saveChanges(false)'
-        @click.ctrl.exact='saveChanges(true)'
         )
-        q-tooltip {{ t(`editor.saveAndCloseTip`) }}
+        q-btn.acrylic-btn(
+          flat
+          icon='las la-check'
+          color='positive'
+          :label='t(`common.actions.saveChanges`)'
+          :aria-label='t(`common.actions.saveChanges`)'
+          :disabled='!editorStore.hasPendingChanges'
+          no-caps
+          @click.exact='saveChanges(false)'
+          @click.ctrl.exact='saveChanges(true)'
+          )
+        q-separator(vertical, dark)
+        q-btn.acrylic-btn(
+          flat
+          icon='las la-check-double'
+          color='positive'
+          :aria-label='t(`common.actions.saveAndClose`)'
+          :disabled='!editorStore.hasPendingChanges'
+          @click='saveChanges(true)'
+          )
+          q-tooltip {{ t(`common.actions.saveAndClose`) }}
     template(v-else-if='userStore.can(`edit:pages`)')
       q-btn.acrylic-btn.q-ml-md(
         flat

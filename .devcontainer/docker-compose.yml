@@ -45,6 +45,7 @@ services:
       - PGADMIN_DISABLE_POSTFIX=True
       - PGADMIN_LISTEN_PORT=8000
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_CONFIG_LOGIN_BANNER="Login with dev@js.wiki / 123123"
     network_mode: service:db
     # volumes:
       # - ./pgadmin-servers.json:/pgadmin4/servers.json
