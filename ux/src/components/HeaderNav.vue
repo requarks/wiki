@@ -31,37 +31,34 @@ q-header.bg-header.text-white.site-header(
       )
       q-input(
         dark
-        v-model='state.search'
+        v-model='siteStore.search'
         standout='bg-white text-dark'
         dense
         rounded
         ref='searchField'
         style='width: 100%;'
         label='Search...'
+        @keyup.enter='onSearchEnter'
+        @focus='state.searchKbdShortcutShown = false'
+        @blur='state.searchKbdShortcutShown = true'
         )
         template(v-slot:prepend)
           q-icon(name='las la-search')
         template(v-slot:append)
-          q-icon.cursor-pointer(
-            name='las la-times'
-            @click='state.search=``'
-            v-if='state.search.length > 0'
-            :color='$q.dark.isActive ? `blue` : `grey-4`'
-            )
-          q-badge.q-ml-sm(
+          q-badge.q-mr-sm(
+            v-if='state.searchKbdShortcutShown'
             label='Ctrl+K'
             color='grey-7'
             outline
             @click='searchField.focus()'
             )
-      //- q-btn.q-ml-md(
-      //-   flat
-      //-   round
-      //-   dense
-      //-   icon='las la-tags'
-      //-   color='grey'
-      //-   to='/_tags'
-      //-   )
+          q-icon.cursor-pointer(
+            name='las la-times'
+            size='20px'
+            @click='siteStore.search=``'
+            v-if='siteStore.search.length > 0'
+            color='grey-6'
+            )
     q-toolbar(
       style='height: 64px;'
       dark
@@ -124,16 +121,17 @@ q-header.bg-header.text-white.site-header(
 </template>
 
 <script setup>
-import AccountMenu from './AccountMenu.vue'
-import NewMenu from './PageNewMenu.vue'
-
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 import { useCommonStore } from 'src/stores/common'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
+
+import AccountMenu from 'src/components/AccountMenu.vue'
+import NewMenu from 'src/components/PageNewMenu.vue'
 
 // QUASAR
 
@@ -145,6 +143,11 @@ const commonStore = useCommonStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
 // I18N
 
 const { t } = useI18n()
@@ -152,7 +155,7 @@ const { t } = useI18n()
 // DATA
 
 const state = reactive({
-  search: ''
+  searchKbdShortcutShown: true
 })
 
 const searchField = ref(null)
@@ -172,11 +175,20 @@ function handleKeyPress (ev) {
   }
 }
 
+function onSearchEnter () {
+  if (!route.path.startsWith('/_search')) {
+    router.push({ path: '/_search', query: { q: siteStore.search } })
+  }
+}
+
 // MOUNTED
 
 onMounted(() => {
   if (process.env.CLIENT) {
     window.addEventListener('keydown', handleKeyPress)
+  }
+  if (route.path.startsWith('/_search')) {
+    searchField.value.focus()
   }
 })
 onBeforeUnmount(() => {

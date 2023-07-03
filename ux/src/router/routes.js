@@ -33,6 +33,10 @@ const routes = [
     ]
   },
   {
+    path: '/_search',
+    component: () => import('src/pages/Search.vue')
+  },
+  {
     path: '/_admin',
     component: () => import('layouts/AdminLayout.vue'),
     children: [

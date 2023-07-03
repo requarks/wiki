@@ -15,10 +15,18 @@ extend type Query {
   ): PageVersion
 
   searchPages(
+    siteId: UUID!
     query: String!
     path: String
-    locale: String
-  ): PageSearchResponse!
+    locale: [String]
+    tags: [String]
+    editor: String
+    publishState: PagePublishState
+    orderBy: PageSearchSort
+    orderByDirection: OrderByDirection
+    offset: Int
+    limit: Int
+  ): PageSearchResponse
 
   pages(
     limit: Int
@@ -28,7 +36,7 @@ extend type Query {
     locale: String
     creatorId: Int
     authorId: Int
-  ): [PageListItem!]!
+  ): [PageListItem]
 
   pageById(
     id: UUID!
@@ -261,10 +269,13 @@ type PageSearchResponse {
 }
 
 type PageSearchResult {
-  id: String
+  id: UUID
   title: String
   description: String
+  icon: String
   path: String
+  tags: [String]
+  updatedAt: Date
   locale: String
 }
 
@@ -376,6 +387,12 @@ type PageTocDepth {
 input PageTocDepthInput {
   min: Int!
   max: Int!
+}
+
+enum PageSearchSort {
+  relevancy
+  title
+  updated
 }
 
 enum PageOrderBy {
