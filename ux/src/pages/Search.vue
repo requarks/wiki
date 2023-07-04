@@ -94,9 +94,9 @@ q-layout(view='hHh Lpr lff')
         .text-header.flex
           span {{t('search.results')}}
           q-space
-          span.text-caption #[strong 12] results
+          span.text-caption #[strong {{ state.items }}] results
         q-list(separator, padding)
-          q-item(v-for='item of 12', clickable)
+          q-item(v-for='item of state.items', clickable)
             q-item-section(avatar)
               q-avatar(color='primary' text-color='white' rounded icon='las la-file-alt')
             q-item-section
@@ -169,7 +169,8 @@ const state = reactive({
   filterTags: [],
   filterLocale: ['en'],
   filterEditor: '',
-  filterPublishState: ''
+  filterPublishState: '',
+  items: 25
 })
 
 const editors = computed(() => {
@@ -205,6 +206,13 @@ function pageStyle (offset, height) {
     'min-height': `${height - 100 - offset}px`
   }
 }
+
+// MOUNTED
+
+onMounted(() => {
+  siteStore.searchIsLoading = false
+})
+
 </script>
 
 <style lang="scss">

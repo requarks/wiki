@@ -76,6 +76,9 @@ export default {
         { column: 'waitUntil', order: 'asc', nulls: 'first' },
         { column: 'createdAt', order: 'asc' }
       ])
+    },
+    systemSearch () {
+      return WIKI.config.search
     }
   },
   Mutation: {
@@ -177,6 +180,14 @@ export default {
       await WIKI.configSvc.saveToDb(['flags'])
       return {
         operation: generateSuccess('System Flags applied successfully')
+      }
+    },
+    async updateSystemSearch (obj, args, context) {
+      WIKI.config.search = _.defaultsDeep(_.omit(args, ['__typename']), WIKI.config.search)
+      // TODO: broadcast config update
+      await WIKI.configSvc.saveToDb(['search'])
+      return {
+        operation: generateSuccess('System Search configuration applied successfully')
       }
     },
     async updateSystemSecurity (obj, args, context) {

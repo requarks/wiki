@@ -116,8 +116,8 @@ export default {
     const dbVersion = semver.coerce(resVersion.rows[0].server_version, { loose: true })
     this.VERSION = dbVersion.version
     this.LEGACY = dbVersion.major < 16
-    if (dbVersion.major < 11) {
-      WIKI.logger.error('Your PostgreSQL database version is too old and unsupported by Wiki.js. Exiting...')
+    if (dbVersion.major < 12) {
+      WIKI.logger.error(`Your PostgreSQL database version (${dbVersion.major}) is too old and unsupported by Wiki.js. Requires >= 12. Exiting...`)
       process.exit(1)
     }
     WIKI.logger.info(`PostgreSQL ${dbVersion.version} [ ${this.LEGACY ? 'LEGACY MODE' : 'OK'} ]`)

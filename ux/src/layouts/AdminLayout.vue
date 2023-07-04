@@ -187,6 +187,10 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section {{ t('admin.scheduler.title') }}
             q-item-section(side)
               status-light(:color='adminStore.info.isSchedulerHealthy ? `positive` : `warning`', :pulse='!adminStore.info.isSchedulerHealthy')
+          q-item(to='/_admin/search', v-ripple, active-class='bg-primary text-white')
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-find-and-replace.svg')
+            q-item-section {{ t('admin.search.title') }}
           q-item(to='/_admin/security', v-ripple, active-class='bg-primary text-white')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-protect.svg')

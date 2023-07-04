@@ -43,7 +43,14 @@ q-header.bg-header.text-white.site-header(
         @blur='state.searchKbdShortcutShown = true'
         )
         template(v-slot:prepend)
-          q-icon(name='las la-search')
+          q-circular-progress.q-mr-xs(
+            v-if='siteStore.searchIsLoading'
+            indeterminate
+            rounded
+            color='primary'
+            size='20px'
+            )
+          q-icon(v-else, name='las la-search')
         template(v-slot:append)
           q-badge.q-mr-sm(
             v-if='state.searchKbdShortcutShown'
@@ -176,7 +183,10 @@ function handleKeyPress (ev) {
 }
 
 function onSearchEnter () {
-  if (!route.path.startsWith('/_search')) {
+  if (route.path === '/_search') {
+    router.replace({ path: '/_search', query: { q: siteStore.search } })
+  } else {
+    siteStore.searchIsLoading = true
     router.push({ path: '/_search', query: { q: siteStore.search } })
   }
 }

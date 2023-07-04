@@ -13,6 +13,7 @@ extend type Query {
   ): [SystemJob]
   systemJobsScheduled: [SystemJobScheduled]
   systemJobsUpcoming: [SystemJobUpcoming]
+  systemSearch: SystemSearch
 }
 
 extend type Mutation {
@@ -30,6 +31,11 @@ extend type Mutation {
 
   retryJob(
     id: UUID!
+  ): DefaultResponse
+
+  updateSystemSearch(
+    termHighlighting: Boolean
+    dictOverrides: String
   ): DefaultResponse
 
   updateSystemFlags(
@@ -212,4 +218,9 @@ type SystemCheckUpdateResponse {
   current: String
   latest: String
   latestDate: String
+}
+
+type SystemSearch {
+  termHighlighting: Boolean
+  dictOverrides: String
 }

@@ -63,6 +63,7 @@ const routes = [
       { path: 'mail', component: () => import('pages/AdminMail.vue') },
       { path: 'rendering', component: () => import('pages/AdminRendering.vue') },
       { path: 'scheduler', component: () => import('pages/AdminScheduler.vue') },
+      { path: 'search', component: () => import('pages/AdminSearch.vue') },
       { path: 'security', component: () => import('pages/AdminSecurity.vue') },
       { path: 'system', component: () => import('pages/AdminSystem.vue') },
       { path: 'terminal', component: () => import('pages/AdminTerminal.vue') },

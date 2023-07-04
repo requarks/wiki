@@ -228,6 +228,7 @@ export async function up (knex) {
       table.jsonb('relations').notNullable().defaultTo('[]')
       table.text('content')
       table.text('render')
+      table.specificType('ts', 'tsvector').index('ts_idx', { indexType: 'GIN' })
       table.jsonb('toc')
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
@@ -486,6 +487,13 @@ export async function up (knex) {
         dkimDomainName: '',
         dkimKeySelector: '',
         dkimPrivateKey: ''
+      }
+    },
+    {
+      key: 'search',
+      value: {
+        termHighlighting: true,
+        dictOverrides: []
       }
     },
     {
