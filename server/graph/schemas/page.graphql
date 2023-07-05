@@ -15,16 +15,53 @@ extend type Query {
   ): PageVersion
 
   searchPages(
+    """
+    Site ID to search in (required)
+    """
     siteId: UUID!
+    """
+    Search Query (required)
+    """
     query: String!
+    """
+    The locale to perform the query as. Affects how the query is parsed by the search engine.
+    """
+    queryLocale: String
+    """
+    Only match pages that starts with the provided path.
+    """
     path: String
+    """
+    Only match pages having one of the provided locales.
+    """
     locale: [String]
+    """
+    Only match pages having one of the provided tags.
+    """
     tags: [String]
+    """
+    Only match pages using the provided editor.
+    """
     editor: String
+    """
+    Only match pages is the provided state.
+    """
     publishState: PagePublishState
+    """
+    Result ordering. Defaults to relevancy.
+    """
     orderBy: PageSearchSort
+    """
+    Result ordering direction. Defaults to descending.
+    """
     orderByDirection: OrderByDirection
+    """
+    Result offset. Defaults to 0.
+    """
     offset: Int
+    """
+    Results amount to return. Defaults to 25. Maximum 100.
+    """
     limit: Int
   ): PageSearchResponse
 
@@ -264,19 +301,20 @@ type PageHistoryResult {
 
 type PageSearchResponse {
   results: [PageSearchResult]
-  suggestions: [String]
   totalHits: Int
 }
 
 type PageSearchResult {
-  id: UUID
-  title: String
   description: String
+  highlight: String
   icon: String
-  path: String
-  tags: [String]
-  updatedAt: Date
+  id: UUID
   locale: String
+  path: String
+  relevancy: Float
+  tags: [String]
+  title: String
+  updatedAt: Date
 }
 
 type PageListItem {
@@ -392,7 +430,7 @@ input PageTocDepthInput {
 enum PageSearchSort {
   relevancy
   title
-  updated
+  updatedAt
 }
 
 enum PageOrderBy {

@@ -1,6 +1,7 @@
 import { Model } from 'objection'
 import { find, get, has, initial, isEmpty, isString, last, pick } from 'lodash-es'
 import { Type as JSBinType } from 'js-binary'
+import { getDictNameFromLocale } from '../helpers/common.mjs'
 import { generateHash, getFileExtension, injectPageMetadata } from '../helpers/page.mjs'
 import path from 'node:path'
 import fse from 'fs-extra'
@@ -26,9 +27,6 @@ const frontmatterRegex = {
   legacy: /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
   markdown: /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?(?:\n|\r)*([\w\W]*)*/
 }
-
-const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
-// const htmlEntitiesRegex = /(&#[0-9]{3};)|(&#x[a-zA-Z0-9]{2};)/ig
 
 /**
  * Pages model
@@ -66,18 +64,18 @@ export class Page extends Model {
 
   static get relationMappings() {
     return {
-      tags: {
-        relation: Model.ManyToManyRelation,
-        modelClass: Tag,
-        join: {
-          from: 'pages.id',
-          through: {
-            from: 'pageTags.pageId',
-            to: 'pageTags.tagId'
-          },
-          to: 'tags.id'
-        }
-      },
+      // tags: {
+      //   relation: Model.ManyToManyRelation,
+      //   modelClass: Tag,
+      //   join: {
+      //     from: 'pages.id',
+      //     through: {
+      //       from: 'pageTags.pageId',
+      //       to: 'pageTags.tagId'
+      //     },
+      //     to: 'tags.id'
+      //   }
+      // },
       links: {
         relation: Model.HasManyRelation,
         modelClass: PageLink,
@@ -319,6 +317,12 @@ export class Page extends Model {
       scriptJsUnload = opts.scriptJsUnload || ''
     }
 
+    // -> Get Tags
+    let tags = []
+    if (opts.tags && opts.tags.length > 0) {
+      tags = await WIKI.db.tags.fetchIds({ tags: opts.tags, siteId: opts.siteId })
+    }
+
     // -> Create page
     const page = await WIKI.db.pages.query().insert({
       alias: opts.alias,
@@ -348,6 +352,7 @@ export class Page extends Model {
       publishStartDate: opts.publishStartDate?.toISO(),
       relations: opts.relations ?? [],
       siteId: opts.siteId,
+      tags,
       title: opts.title,
       toc: '[]',
       scripts: JSON.stringify({
@@ -356,11 +361,6 @@ export class Page extends Model {
         css: scriptCss
       })
     }).returning('*')
-
-    // -> Save Tags
-    if (opts.tags && opts.tags.length > 0) {
-      await WIKI.db.tags.associateTags({ tags: opts.tags, page })
-    }
 
     // -> Render page to HTML
     await WIKI.db.pages.renderPage(page)
@@ -387,31 +387,23 @@ export class Page extends Model {
       siteId: page.siteId
     })
 
-    return page
-    // TODO: Handle remaining flow
+    // -> Update search vector
+    WIKI.db.pages.updatePageSearchVector(page.id)
 
-    // -> Rebuild page tree
-    await WIKI.db.pages.rebuildTree()
+    // // -> Add to Storage
+    // if (!opts.skipStorage) {
+    //   await WIKI.db.storage.pageEvent({
+    //     event: 'created',
+    //     page
+    //   })
+    // }
 
-    // -> Add to Search Index
-    const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.created(page)
-
-    // -> Add to Storage
-    if (!opts.skipStorage) {
-      await WIKI.db.storage.pageEvent({
-        event: 'created',
-        page
-      })
-    }
-
-    // -> Reconnect Links
-    await WIKI.db.pages.reconnectLinks({
-      locale: page.localeCode,
-      path: page.path,
-      mode: 'create'
-    })
+    // // -> Reconnect Links
+    // await WIKI.db.pages.reconnectLinks({
+    //   locale: page.localeCode,
+    //   path: page.path,
+    //   mode: 'create'
+    // })
 
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.db.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
@@ -445,6 +437,7 @@ export class Page extends Model {
       action: 'updated',
       affectedFields: []
     }
+    let shouldUpdateSearch = false
 
     // -> Create version snapshot
     await WIKI.db.pageHistory.addVersion(ogPage)
@@ -453,6 +446,7 @@ export class Page extends Model {
     if ('title' in opts.patch) {
       patch.title = opts.patch.title.trim()
       historyData.affectedFields.push('title')
+      shouldUpdateSearch = true
 
       if (patch.title.length < 1) {
         throw new Error('ERR_PAGE_TITLE_MISSING')
@@ -462,6 +456,7 @@ export class Page extends Model {
     if ('description' in opts.patch) {
       patch.description = opts.patch.description.trim()
       historyData.affectedFields.push('description')
+      shouldUpdateSearch = true
     }
 
     if ('icon' in opts.patch) {
@@ -488,9 +483,10 @@ export class Page extends Model {
       }
     }
 
-    if ('content' in opts.patch) {
+    if ('content' in opts.patch && opts.patch.content) {
       patch.content = opts.patch.content
       historyData.affectedFields.push('content')
+      shouldUpdateSearch = true
     }
 
     // -> Publish State
@@ -674,10 +670,10 @@ export class Page extends Model {
       updatedAt: page.updatedAt
     })
 
-    // // -> Update Search Index
-    // const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
-    // page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
-    // await WIKI.data.searchEngine.updated(page)
+    // -> Update search vector
+    if (shouldUpdateSearch) {
+      WIKI.db.pages.updatePageSearchVector(page.id)
+    }
 
     // -> Update on Storage
     // if (!opts.skipStorage) {
@@ -709,6 +705,24 @@ export class Page extends Model {
     page.updatedAt = await WIKI.db.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
     return page
+  }
+
+  /**
+   * Update a page text search vector value
+   *
+   * @param {String} id Page UUID
+   */
+  static async updatePageSearchVector (id) {
+    const page = await WIKI.db.pages.query().findById(id).select('localeCode', 'render')
+    const safeContent = WIKI.db.pages.cleanHTML(page.render)
+    const dictName = getDictNameFromLocale(page.localeCode)
+    return WIKI.db.knex('pages').where('id', id).update({
+      searchContent: safeContent,
+      ts: WIKI.db.knex.raw(`
+        setweight(to_tsvector('${dictName}', coalesce(title,'')), 'A') ||
+        setweight(to_tsvector('${dictName}', coalesce(description,'')), 'B') ||
+        setweight(to_tsvector('${dictName}', coalesce(?,'')), 'C')`, [safeContent])
+    })
   }
 
   /**
@@ -1214,10 +1228,10 @@ export class Page extends Model {
         ])
         .joinRelated('author')
         .joinRelated('creator')
-        .withGraphJoined('tags')
-        .modifyGraph('tags', builder => {
-          builder.select('tag')
-        })
+        // .withGraphJoined('tags')
+        // .modifyGraph('tags', builder => {
+        //   builder.select('tag')
+        // })
         .where(queryModeID ? {
           'pages.id': opts
         } : {
@@ -1346,14 +1360,11 @@ export class Page extends Model {
    * @returns {string} Cleaned Content Text
    */
   static cleanHTML(rawHTML = '') {
-    let data = striptags(rawHTML || '', [], ' ')
+    const data = striptags(rawHTML || '', [], ' ')
       .replace(emojiRegex(), '')
-      // .replace(htmlEntitiesRegex, '')
     return he.decode(data)
-      .replace(punctuationRegex, ' ')
       .replace(/(\r\n|\n|\r)/gm, ' ')
       .replace(/\s\s+/g, ' ')
-      .split(' ').filter(w => w.length > 1).join(' ').toLowerCase()
   }
 
   /**

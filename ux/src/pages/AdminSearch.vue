@@ -56,14 +56,13 @@ q-page.admin-flags
           blueprint-icon.self-start(icon='search')
           q-item-section
             q-item-label {{t(`admin.search.dictOverrides`)}}
-            q-input.q-mt-sm(
-              type='textarea'
-              v-model='state.config.dictOverrides'
-              outlined
-              :aria-label='t(`admin.search.dictOverrides`)'
-              :hint='t(`admin.search.dictOverridesHint`)'
-              input-style='min-height: 200px;'
+            q-no-ssr(:placeholder='t(`common.loading`)')
+              util-code-editor.admin-theme-cm.q-my-sm(
+                v-model='state.config.dictOverrides'
+                language='json'
+                :min-height='250'
               )
+              q-item-label(caption) JSON object of 2 letters locale codes and their PostgreSQL dictionary association. e.g. { "en": "english" }
 
     .col-12.col-lg-5.gt-md
       .q-pa-md.text-center
@@ -79,6 +78,8 @@ import { useI18n } from 'vue-i18n'
 
 import { useSiteStore } from 'src/stores/site'
 import { useFlagsStore } from 'src/stores/flags'
+
+import UtilCodeEditor from 'src/components/UtilCodeEditor.vue'
 
 // QUASAR
 

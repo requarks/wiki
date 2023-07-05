@@ -78,7 +78,10 @@ export default {
       ])
     },
     systemSearch () {
-      return WIKI.config.search
+      return {
+        ...WIKI.config.search,
+        dictOverrides: JSON.stringify(WIKI.config.search.dictOverrides, null, 2)
+      }
     }
   },
   Mutation: {
@@ -183,7 +186,11 @@ export default {
       }
     },
     async updateSystemSearch (obj, args, context) {
-      WIKI.config.search = _.defaultsDeep(_.omit(args, ['__typename']), WIKI.config.search)
+      WIKI.config.search = {
+        ...WIKI.config.search,
+        termHighlighting: args.termHighlighting ?? WIKI.config.search.termHighlighting,
+        dictOverrides: args.dictOverrides ? JSON.parse(args.dictOverrides) : WIKI.config.search.dictOverrides
+      }
       // TODO: broadcast config update
       await WIKI.configSvc.saveToDb(['search'])
       return {

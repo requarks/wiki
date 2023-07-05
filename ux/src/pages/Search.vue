@@ -94,15 +94,19 @@ q-layout(view='hHh Lpr lff')
         .text-header.flex
           span {{t('search.results')}}
           q-space
-          span.text-caption #[strong {{ state.items }}] results
-        q-list(separator, padding)
-          q-item(v-for='item of state.items', clickable)
+          span.text-caption #[strong {{ state.total }}] results
+        q-list(separator)
+          q-item(
+            v-for='item of state.results'
+            clickable
+            :to='`/` + item.path'
+            )
             q-item-section(avatar)
-              q-avatar(color='primary' text-color='white' rounded icon='las la-file-alt')
+              q-avatar(color='primary' text-color='white' rounded :icon='item.icon')
             q-item-section
-              q-item-label Page ABC def {{ item }}
-              q-item-label(caption) Lorem ipsum beep boop foo bar
-              q-item-label(caption) ...Abc def #[span.text-highlight home] efg hig klm...
+              q-item-label {{ item.title }}
+              q-item-label(caption) {{ item.description }}
+              q-item-label.text-highlight(caption, v-html='item.highlight')
             q-item-section(side)
               .flex
                 q-chip(
@@ -114,8 +118,8 @@ q-layout(view='hHh Lpr lff')
                   size='sm'
                   ) tag {{ tag }}
               .flex
-                .text-caption.q-mr-sm.text-grey /beep/boop/hello
-                .text-caption 2023-01-25
+                .text-caption.q-mr-sm.text-grey /{{ item.path }}
+                .text-caption {{ humanizeDate(item.updatedAt) }}
 
       q-inner-loading(:showing='state.loading > 0')
   main-overlay-dialog
@@ -127,6 +131,9 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import gql from 'graphql-tag'
+import { cloneDeep } from 'lodash-es'
+import { DateTime } from 'luxon'
 
 import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
@@ -170,7 +177,8 @@ const state = reactive({
   filterLocale: ['en'],
   filterEditor: '',
   filterPublishState: '',
-  items: 25
+  results: [],
+  total: 0
 })
 
 const editors = computed(() => {
@@ -196,6 +204,7 @@ const publishStates = computed(() => {
 watch(() => route.query, async (newQueryObj) => {
   if (newQueryObj.q) {
     siteStore.search = newQueryObj.q
+    performSearch()
   }
 }, { immediate: true })
 
@@ -207,10 +216,85 @@ function pageStyle (offset, height) {
   }
 }
 
+function humanizeDate (val) {
+  return DateTime.fromISO(val).toFormat(userStore.preferredDateFormat)
+}
+
+async function performSearch () {
+  siteStore.searchIsLoading = true
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query searchPages (
+          $siteId: UUID!
+          $query: String!
+          $path: String
+          $locale: [String]
+          $tags: [String]
+          $editor: String
+          $publishState: PagePublishState
+          $orderBy: PageSearchSort
+          $orderByDirection: OrderByDirection
+          $offset: Int
+          $limit: Int
+        ) {
+          searchPages(
+            siteId: $siteId
+            query: $query
+            path: $path
+            locale: $locale
+            tags: $tags
+            editor: $editor
+            publishState: $publishState
+            orderBy: $orderBy
+            orderByDirection: $orderByDirection
+            offset: $offset
+            limit: $limit
+          ) {
+            results {
+              id
+              path
+              locale
+              title
+              description
+              icon
+              updatedAt
+              relevancy
+              highlight
+            }
+            totalHits
+          }
+        }
+      `,
+      variables: {
+        siteId: siteStore.id,
+        query: siteStore.search
+      },
+      fetchPolicy: 'network-only'
+    })
+    if (!resp?.data?.searchPages) {
+      throw new Error('Unexpected error')
+    }
+    state.results = cloneDeep(resp.data.searchPages.results)
+    state.total = resp.data.searchPages.totalHits
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to perform search query.',
+      caption: err.message
+    })
+  }
+  siteStore.searchIsLoading = false
+}
+
 // MOUNTED
 
 onMounted(() => {
-  siteStore.searchIsLoading = false
+  if (siteStore.search) {
+    // performSearch()
+  } else {
+    siteStore.searchIsLoading = false
+  }
 })
 
 </script>
@@ -298,9 +382,13 @@ onMounted(() => {
   }
 
   .text-highlight {
-    background-color: rgba($yellow-7, .5);
-    padding: 0 3px;
-    border-radius: 3px;
+    font-style: italic;
+
+    > b {
+      background-color: rgba($yellow-7, .5);
+      padding: 0 3px;
+      border-radius: 3px;
+    }
   }
 
   .q-page {

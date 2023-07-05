@@ -228,7 +228,9 @@ export async function up (knex) {
       table.jsonb('relations').notNullable().defaultTo('[]')
       table.text('content')
       table.text('render')
+      table.text('searchContent')
       table.specificType('ts', 'tsvector').index('ts_idx', { indexType: 'GIN' })
+      table.specificType('tags', 'int[]').index('tags_idx', { indexType: 'GIN' })
       table.jsonb('toc')
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
@@ -277,7 +279,6 @@ export async function up (knex) {
     .createTable('tags', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('tag').notNullable()
-      table.jsonb('display').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -334,12 +335,6 @@ export async function up (knex) {
     // =====================================
     // RELATION TABLES
     // =====================================
-    // PAGE TAGS ---------------------------
-    .createTable('pageTags', table => {
-      table.increments('id').primary()
-      table.uuid('pageId').references('id').inTable('pages').onDelete('CASCADE')
-      table.uuid('tagId').references('id').inTable('tags').onDelete('CASCADE')
-    })
     // USER GROUPS -------------------------
     .createTable('userGroups', table => {
       table.increments('id').primary()
@@ -493,7 +488,7 @@ export async function up (knex) {
       key: 'search',
       value: {
         termHighlighting: true,
-        dictOverrides: []
+        dictOverrides: {}
       }
     },
     {

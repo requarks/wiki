@@ -85,9 +85,36 @@ defaults:
       maxAge: 600
       methods: 'GET,POST'
       origin: true
-    search:
-      maxHits: 100
     maintainerEmail: security@requarks.io
+tsDictMappings:
+  ar: arabic
+  hy: armenian
+  eu: basque
+  ca: catalan
+  da: danish
+  nl: dutch
+  en: english
+  fi: finnish
+  fr: french
+  de: german
+  el: greek
+  hi: hindi
+  hu: hungarian
+  id: indonesian
+  ga: irish
+  it: italian
+  lt: lithuanian
+  ne: nepali
+  no: norwegian
+  pt: portuguese
+  ro: romanian
+  ru: russian
+  sr: serbian
+  es: spanish
+  sv: swedish
+  ta: tamil
+  tr: turkish
+  yi: yiddish
 editors:
   asciidoc:
     contentType: html

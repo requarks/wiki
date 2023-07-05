@@ -43,24 +43,61 @@ export default {
      * SEARCH PAGES
      */
     async searchPages (obj, args, context) {
-      if (WIKI.data.searchEngine) {
-        const resp = await WIKI.data.searchEngine.query(args.query, args)
-        return {
-          ...resp,
-          results: _.filter(resp.results, r => {
-            return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
-              path: r.path,
-              locale: r.locale,
-              tags: r.tags // Tags are needed since access permissions can be limited by page tags too
-            })
+      if (!args.siteId) {
+        throw new Error('Missing Site ID')
+      }
+      if (!args.query?.trim()) {
+        throw new Error('Missing Query')
+      }
+      if (args.offset && args.offset < 0) {
+        throw new Error('Invalid offset value.')
+      }
+      if (args.limit && (args.limit < 1 || args.limit > 100)) {
+        throw new Error('Limit must be between 1 and 100.')
+      }
+      try {
+        const dictName = 'english'
+        const results = await WIKI.db.knex
+          .select(
+            'id',
+            'path',
+            'localeCode AS locale',
+            'title',
+            'description',
+            'icon',
+            'updatedAt',
+            WIKI.db.knex.raw('ts_rank_cd(ts, query) AS relevancy'),
+            WIKI.db.knex.raw(`ts_headline(?, "searchContent", query, 'MaxWords=5, MinWords=3, MaxFragments=5') AS highlight`, [dictName]),
+            WIKI.db.knex.raw('count(*) OVER() AS total')
+          )
+          .fromRaw('pages, websearch_to_tsquery(?, ?) query', [dictName, args.query])
+          .where('siteId', args.siteId)
+          .where(builder => {
+            if (args.path) {
+              builder.where('path', 'ILIKE', `${path}%`)
+            }
+            if (args.locale?.length > 0) {
+              builder.whereIn('localeCode', args.locale)
+            }
+            if (args.editor) {
+              builder.where('editor', args.editor)
+            }
+            if (args.publishState) {
+              builder.where('publishState', args.publishState)
+            }
           })
-        }
-      } else {
+          .whereRaw('query @@ ts')
+          .orderBy(args.orderBy || 'relevancy', args.orderByDirection || 'desc')
+          .offset(args.offset || 0)
+          .limit(args.limit || 25)
+
         return {
-          results: [],
-          suggestions: [],
-          totalHits: 0
+          results,
+          totalHits: results?.length > 0 ? results[0].total : 0
         }
+      } catch (err) {
+        WIKI.logger.warn(`Search Query Error: ${err.message}`)
+        throw err
       }
     },
     /**
@@ -645,9 +682,9 @@ export default {
     password (obj) {
       return obj.password ? '********' : ''
     },
-    async tags (obj) {
-      return WIKI.db.pages.relatedQuery('tags').for(obj.id)
-    },
+    // async tags (obj) {
+    //   return WIKI.db.pages.relatedQuery('tags').for(obj.id)
+    // },
     tocDepth (obj) {
       return {
         min: obj.extra?.tocDepth?.min ?? 1,
