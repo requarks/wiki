@@ -30,7 +30,7 @@ q-layout(view='hHh Lpr lff')
           q-input(
             outlined
             dense
-            placeholder='Path starting with...'
+            :placeholder='t(`search.filterPath`)'
             prefix='/'
             v-model='state.params.filterPath'
             )
@@ -39,31 +39,31 @@ q-layout(view='hHh Lpr lff')
           q-input.q-mt-sm(
             outlined
             dense
-            placeholder='Tags'
+            :placeholder='t(`search.filterTags`)'
             )
             template(v-slot:prepend)
               q-icon(name='las la-hashtag', size='xs')
-          q-input.q-mt-sm(
-            outlined
-            dense
-            placeholder='Last updated...'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-calendar', size='xs')
-          q-input.q-mt-sm(
-            outlined
-            dense
-            placeholder='Last edited by...'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-user-edit', size='xs')
+          //- q-input.q-mt-sm(
+          //-   outlined
+          //-   dense
+          //-   placeholder='Last updated...'
+          //-   )
+          //-   template(v-slot:prepend)
+          //-     q-icon(name='las la-calendar', size='xs')
+          //- q-input.q-mt-sm(
+          //-   outlined
+          //-   dense
+          //-   placeholder='Last edited by...'
+          //-   )
+          //-   template(v-slot:prepend)
+          //-     q-icon(name='las la-user-edit', size='xs')
           q-select.q-mt-sm(
             outlined
             v-model='state.params.filterLocale'
             emit-value
             map-options
             dense
-            :aria-label='t(`admin.groups.ruleLocales`)'
+            :aria-label='t(`search.filterLocale`)'
             :options='siteStore.locales.active'
             option-value='code'
             option-label='name'
@@ -85,7 +85,7 @@ q-layout(view='hHh Lpr lff')
             emit-value
             map-options
             dense
-            aria-label='Editor'
+            :aria-label='t(`search.filterEditor`)'
             :options='editors'
             )
             template(v-slot:prepend)
@@ -96,7 +96,7 @@ q-layout(view='hHh Lpr lff')
             emit-value
             map-options
             dense
-            aria-label='Publish State'
+            :aria-label='t(`search.filterPublishState`)'
             :options='publishStates'
             )
             template(v-slot:prepend)
@@ -105,10 +105,19 @@ q-layout(view='hHh Lpr lff')
         .text-header.flex
           span {{t('search.results')}}
           q-space
-          span.text-caption #[strong {{ state.total }}] results
+          transition(name='slide-up', mode='out-in')
+            i18n-t(
+              v-if='!siteStore.searchIsLoading'
+              keypath='search.totalResults'
+              tag='span'
+              class='text-caption'
+              :plural='state.total'
+              )
+              strong {{ state.total }}
         .q-pa-lg(v-if='state.results.length < 1')
-          span(v-if='siteStore.search && siteStore.searchLastQuery') No results found for #[strong "{{ siteStore.searchLastQuery }}"] with the current filters.
-          span(v-else): em Enter a query in the search field above and press Enter.
+          i18n-t(keypath='search.noResults', tag='span', v-if='siteStore.search && siteStore.searchLastQuery')
+            strong {{ siteStore.searchLastQuery }}
+          span(v-else): em {{ t('search.emptyQuery') }}
         q-list(separator)
           q-item(
             v-for='item of state.results'
@@ -209,7 +218,7 @@ const orderByOptions = computed(() => {
 
 const editors = computed(() => {
   return [
-    { label: 'Any editor', value: '' },
+    { label: t('search.editorAny'), value: '' },
     { label: 'AsciiDoc', value: 'asciidoc' },
     { label: 'Markdown', value: 'markdown' },
     { label: 'Visual Editor', value: 'wysiwyg' }
@@ -218,10 +227,10 @@ const editors = computed(() => {
 
 const publishStates = computed(() => {
   return [
-    { label: 'Any publish state', value: '' },
-    { label: 'Draft', value: 'draft' },
-    { label: 'Published', value: 'published' },
-    { label: 'Scheduled', value: 'scheduled' }
+    { label: t('search.publishStateAny'), value: '' },
+    { label: t('search.publishStateDraft'), value: 'draft' },
+    { label: t('search.publishStatePublished'), value: 'published' },
+    { label: t('search.publishStateScheduled'), value: 'scheduled' }
   ]
 })
 

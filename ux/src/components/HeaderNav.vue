@@ -44,7 +44,8 @@ q-header.bg-header.text-white.site-header(
         )
         template(v-slot:prepend)
           q-circular-progress.q-mr-xs(
-            v-if='siteStore.searchIsLoading'
+            v-if='siteStore.searchIsLoading && route.path !== `/_search`'
+            instant-feedback
             indeterminate
             rounded
             color='primary'
