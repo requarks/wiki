@@ -16,6 +16,7 @@ export const useSiteStore = defineStore('site', {
     description: '',
     logoText: true,
     search: '',
+    searchLastQuery: '',
     searchIsLoading: false,
     printView: false,
     pageDataTemplates: [],

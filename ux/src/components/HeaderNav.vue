@@ -59,6 +59,13 @@ q-header.bg-header.text-white.site-header(
             outline
             @click='searchField.focus()'
             )
+          q-badge.q-mr-sm(
+            v-else-if='siteStore.search && siteStore.search !== siteStore.searchLastQuery'
+            label='Press Enter'
+            color='grey-7'
+            outline
+            @click='searchField.focus()'
+            )
           q-icon.cursor-pointer(
             name='las la-times'
             size='20px'

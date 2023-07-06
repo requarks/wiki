@@ -56,25 +56,30 @@ export default {
         throw new Error('Limit must be between 1 and 100.')
       }
       try {
-        const dictName = 'english'
+        const dictName = 'english' // TODO: Use provided locale or fallback on site locale
+        const searchCols = [
+          'id',
+          'path',
+          'localeCode AS locale',
+          'title',
+          'description',
+          'icon',
+          'updatedAt',
+          WIKI.db.knex.raw('ts_rank_cd(ts, query) AS relevancy'),
+          WIKI.db.knex.raw('count(*) OVER() AS total')
+        ]
+
+        if (WIKI.config.search.termHighlighting) {
+          searchCols.push(WIKI.db.knex.raw(`ts_headline(?, "searchContent", query, 'MaxWords=5, MinWords=3, MaxFragments=5') AS highlight`, [dictName]))
+        }
+
         const results = await WIKI.db.knex
-          .select(
-            'id',
-            'path',
-            'localeCode AS locale',
-            'title',
-            'description',
-            'icon',
-            'updatedAt',
-            WIKI.db.knex.raw('ts_rank_cd(ts, query) AS relevancy'),
-            WIKI.db.knex.raw(`ts_headline(?, "searchContent", query, 'MaxWords=5, MinWords=3, MaxFragments=5') AS highlight`, [dictName]),
-            WIKI.db.knex.raw('count(*) OVER() AS total')
-          )
+          .select(searchCols)
           .fromRaw('pages, websearch_to_tsquery(?, ?) query', [dictName, args.query])
           .where('siteId', args.siteId)
           .where(builder => {
             if (args.path) {
-              builder.where('path', 'ILIKE', `${path}%`)
+              builder.where('path', 'ILIKE', `${args.path}%`)
             }
             if (args.locale?.length > 0) {
               builder.whereIn('localeCode', args.locale)
@@ -90,6 +95,15 @@ export default {
           .orderBy(args.orderBy || 'relevancy', args.orderByDirection || 'desc')
           .offset(args.offset || 0)
           .limit(args.limit || 25)
+
+        // -> Remove highlights without matches
+        if (WIKI.config.search.termHighlighting) {
+          for (const r of results) {
+            if (r.highlight?.indexOf('<b>') < 0) {
+              r.highlight = null
+            }
+          }
+        }
 
         return {
           results,

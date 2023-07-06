@@ -62,7 +62,7 @@ q-page.admin-flags
                 language='json'
                 :min-height='250'
               )
-              q-item-label(caption) JSON object of 2 letters locale codes and their PostgreSQL dictionary association. e.g. { "en": "english" }
+              q-item-label(caption) {{ t('admin.search.dictOverridesHint') }}
 
     .col-12.col-lg-5.gt-md
       .q-pa-md.text-center

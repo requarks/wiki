@@ -6,21 +6,25 @@ q-layout(view='hHh Lpr lff')
       .layout-search-sd
         .text-header {{ t('search.sortBy') }}
         q-list(dense, padding)
-          q-item(clickable, active)
+          q-item(
+            v-for='item of orderByOptions'
+            clickable
+            :active='item.value === state.params.orderBy'
+            @click='setOrderBy(item.value)'
+            )
             q-item-section(side)
-              q-icon(name='las la-stream', color='primary')
+              q-icon(:name='item.icon', :color='item.value === state.params.orderBy ? `primary` : ``')
             q-item-section
-              q-item-label Relevance
-            q-item-section(side)
-              q-icon(name='mdi-chevron-double-down', size='sm', color='primary')
-          q-item(clickable)
-            q-item-section(side)
-              q-icon(name='las la-heading')
-            q-item-section Title
-          q-item(clickable)
-            q-item-section(side)
-              q-icon(name='las la-calendar')
-            q-item-section Last Updated
+              q-item-label {{ item.label }}
+            q-item-section(
+              v-if='item.value === state.params.orderBy'
+              side
+              )
+              q-icon(
+                :name='state.params.orderByDirection === `desc` ? `mdi-chevron-double-down` : `mdi-chevron-double-up`'
+                size='sm'
+                color='primary'
+                )
         .text-header {{ t('search.filters') }}
         .q-pa-sm
           q-input(
@@ -28,7 +32,7 @@ q-layout(view='hHh Lpr lff')
             dense
             placeholder='Path starting with...'
             prefix='/'
-            v-model='state.filterPath'
+            v-model='state.params.filterPath'
             )
             template(v-slot:prepend)
               q-icon(name='las la-caret-square-right', size='xs')
@@ -55,7 +59,7 @@ q-layout(view='hHh Lpr lff')
               q-icon(name='las la-user-edit', size='xs')
           q-select.q-mt-sm(
             outlined
-            v-model='state.filterLocale'
+            v-model='state.params.filterLocale'
             emit-value
             map-options
             dense
@@ -63,14 +67,21 @@ q-layout(view='hHh Lpr lff')
             :options='siteStore.locales.active'
             option-value='code'
             option-label='name'
+            options-dense
             multiple
-            :display-value='t(`admin.groups.selectedLocales`, { n: state.filterLocale.length > 0 ? state.filterLocale[0].toUpperCase() : state.filterLocale.length }, state.filterLocale.length)'
+            :display-value='t(`search.filterLocaleDisplay`, { n: state.params.filterLocale.length > 0 ? state.params.filterLocale[0].toUpperCase() : state.params.filterLocale.length }, state.params.filterLocale.length)'
             )
             template(v-slot:prepend)
               q-icon(name='las la-language', size='xs')
+            template(v-slot:option='scope')
+              q-item(v-bind='scope.itemProps')
+                q-item-section(side)
+                  q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)')
+                q-item-section
+                  q-item-label(v-html='scope.opt.name')
           q-select.q-mt-sm(
             outlined
-            v-model='state.filterEditor'
+            v-model='state.params.filterEditor'
             emit-value
             map-options
             dense
@@ -81,7 +92,7 @@ q-layout(view='hHh Lpr lff')
               q-icon(name='las la-pen-nib', size='xs')
           q-select.q-mt-sm(
             outlined
-            v-model='state.filterPublishState'
+            v-model='state.params.filterPublishState'
             emit-value
             map-options
             dense
@@ -95,6 +106,9 @@ q-layout(view='hHh Lpr lff')
           span {{t('search.results')}}
           q-space
           span.text-caption #[strong {{ state.total }}] results
+        .q-pa-lg(v-if='state.results.length < 1')
+          span(v-if='siteStore.search && siteStore.searchLastQuery') No results found for #[strong "{{ siteStore.searchLastQuery }}"] with the current filters.
+          span(v-else): em Enter a query in the search field above and press Enter.
         q-list(separator)
           q-item(
             v-for='item of state.results'
@@ -105,8 +119,8 @@ q-layout(view='hHh Lpr lff')
               q-avatar(color='primary' text-color='white' rounded :icon='item.icon')
             q-item-section
               q-item-label {{ item.title }}
-              q-item-label(caption) {{ item.description }}
-              q-item-label.text-highlight(caption, v-html='item.highlight')
+              q-item-label(v-if='item.description', caption) {{ item.description }}
+              q-item-label.text-highlight(v-if='item.highlight', caption, v-html='item.highlight')
             q-item-section(side)
               .flex
                 q-chip(
@@ -129,10 +143,10 @@ q-layout(view='hHh Lpr lff')
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import gql from 'graphql-tag'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useFlagsStore } from 'src/stores/flags'
@@ -172,13 +186,25 @@ useMeta({
 
 const state = reactive({
   loading: 0,
-  filterPath: '',
-  filterTags: [],
-  filterLocale: ['en'],
-  filterEditor: '',
-  filterPublishState: '',
+  params: {
+    filterPath: '',
+    filterTags: [],
+    filterLocale: [],
+    filterEditor: '',
+    filterPublishState: '',
+    orderBy: 'relevancy',
+    orderByDirection: 'desc'
+  },
   results: [],
   total: 0
+})
+
+const orderByOptions = computed(() => {
+  return [
+    { label: t('search.sortByRelevance'), value: 'relevancy', icon: 'las la-stream' },
+    { label: t('search.sortByTitle'), value: 'title', icon: 'las la-heading' },
+    { label: t('search.sortByLastUpdated'), value: 'updatedAt', icon: 'las la-calendar' }
+  ]
 })
 
 const editors = computed(() => {
@@ -208,6 +234,8 @@ watch(() => route.query, async (newQueryObj) => {
   }
 }, { immediate: true })
 
+watch(() => state.params, debounce(performSearch, 500), { deep: true })
+
 // METHODS
 
 function pageStyle (offset, height) {
@@ -218,6 +246,15 @@ function pageStyle (offset, height) {
 
 function humanizeDate (val) {
   return DateTime.fromISO(val).toFormat(userStore.preferredDateFormat)
+}
+
+function setOrderBy (val) {
+  if (val === state.params.orderBy) {
+    state.params.orderByDirection = state.params.orderByDirection === 'desc' ? 'asc' : 'desc'
+  } else {
+    state.params.orderBy = val
+    state.params.orderByDirection = val === 'title' ? 'asc' : 'desc'
+  }
 }
 
 async function performSearch () {
@@ -268,7 +305,13 @@ async function performSearch () {
       `,
       variables: {
         siteId: siteStore.id,
-        query: siteStore.search
+        query: siteStore.search,
+        path: state.params.filterPath,
+        locale: state.params.filterLocale,
+        editor: state.params.filterEditor,
+        publishState: state.params.filterPublishState || null,
+        orderBy: state.params.orderBy,
+        orderByDirection: state.params.orderByDirection
       },
       fetchPolicy: 'network-only'
     })
@@ -277,6 +320,7 @@ async function performSearch () {
     }
     state.results = cloneDeep(resp.data.searchPages.results)
     state.total = resp.data.searchPages.totalHits
+    siteStore.searchLastQuery = siteStore.search
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -290,11 +334,15 @@ async function performSearch () {
 // MOUNTED
 
 onMounted(() => {
-  if (siteStore.search) {
-    // performSearch()
-  } else {
+  if (!siteStore.search) {
     siteStore.searchIsLoading = false
   }
+})
+
+onUnmounted(() => {
+  siteStore.search = ''
+  siteStore.searchLastQuery = ''
+  siteStore.searchIsLoading = false
 })
 
 </script>
@@ -386,7 +434,6 @@ onMounted(() => {
 
     > b {
       background-color: rgba($yellow-7, .5);
-      padding: 0 3px;
       border-radius: 3px;
     }
   }
