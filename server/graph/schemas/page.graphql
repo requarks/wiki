@@ -65,6 +65,11 @@ extend type Query {
     limit: Int
   ): PageSearchResponse
 
+  searchPagesAutocomplete(
+    siteId: UUID!
+    query: String!
+  ): [String]
+
   pages(
     limit: Int
     orderBy: PageOrderBy
@@ -130,6 +135,7 @@ extend type Mutation {
     editor: String!
     icon: String
     isBrowsable: Boolean
+    isSearchable: Boolean
     locale: String!
     path: String!
     publishState: PagePublishState!
@@ -231,6 +237,7 @@ type Page {
   icon: String
   id: UUID
   isBrowsable: Boolean
+  isSearchable: Boolean
   locale: String
   password: String
   path: String
@@ -393,6 +400,7 @@ input PageUpdateInput {
   description: String
   icon: String
   isBrowsable: Boolean
+  isSearchable: Boolean
   locale: String
   password: String
   path: String

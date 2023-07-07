@@ -6,7 +6,16 @@ q-page.admin-flags
     .col.q-pl-md
       .text-h5.text-primary.animated.fadeInLeft {{ t('admin.search.title') }}
       .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.search.subtitle') }}
-    .col-auto
+    .col-auto.flex
+      q-btn.q-mr-sm.acrylic-btn(
+        flat
+        icon='mdi-database-refresh'
+        :label='t(`admin.searchRebuildIndex`)'
+        color='purple'
+        @click='rebuild'
+        :loading='state.rebuildLoading'
+      )
+      q-separator.q-mr-sm(vertical)
       q-btn.q-mr-sm.acrylic-btn(
         icon='las la-question-circle'
         flat
@@ -62,7 +71,9 @@ q-page.admin-flags
                 language='json'
                 :min-height='250'
               )
-              q-item-label(caption) {{ t('admin.search.dictOverridesHint') }}
+              q-item-label(caption)
+                i18n-t(keypath='admin.search.dictOverridesHint' tag='span')
+                  span { "en": "english" }
 
     .col-12.col-lg-5.gt-md
       .q-pa-md.text-center
@@ -104,6 +115,7 @@ useMeta({
 
 const state = reactive({
   loading: 0,
+  rebuildLoading: false,
   config: {
     termHighlighting: false,
     dictOverrides: ''
@@ -179,6 +191,41 @@ async function save () {
     })
   }
   state.loading--
+}
+
+async function rebuild () {
+  state.rebuildLoading = true
+  try {
+    const respRaw = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation rebuildSearchIndex {
+          rebuildSearchIndex {
+            operation {
+              succeeded
+              slug
+              message
+            }
+          }
+        }
+      `
+    })
+    const resp = respRaw?.data?.rebuildSearchIndex?.operation || {}
+    if (resp.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.search.rebuildInitSuccess')
+      })
+    } else {
+      throw new Error(resp.message)
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to initiate a search index rebuild',
+      caption: err.message
+    })
+  }
+  state.rebuildLoading = false
 }
 
 // MOUNTED

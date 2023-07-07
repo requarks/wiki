@@ -267,6 +267,15 @@ q-card.page-properties-dialog
           )
         div
           q-toggle(
+            v-model='pageStore.isSearchable'
+            dense
+            :label='$t(`editor.props.isSearchable`)'
+            color='primary'
+            checked-icon='las la-check'
+            unchecked-icon='las la-times'
+          )
+        div
+          q-toggle(
             v-model='state.requirePassword'
             @update:model-value='toggleRequirePassword'
             dense

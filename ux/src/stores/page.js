@@ -19,6 +19,7 @@ const pagePropsFragment = gql`
     icon
     id
     isBrowsable
+    isSearchable
     locale
     password
     path
@@ -122,6 +123,7 @@ const gqlMutations = {
       $editor: String!
       $icon: String
       $isBrowsable: Boolean
+      $isSearchable: Boolean
       $locale: String!
       $path: String!
       $publishState: PagePublishState!
@@ -149,6 +151,7 @@ const gqlMutations = {
         editor: $editor
         icon: $icon
         isBrowsable: $isBrowsable
+        isSearchable: $isSearchable
         locale: $locale
         path: $path
         publishState: $publishState
@@ -195,6 +198,7 @@ export const usePageStore = defineStore('page', {
     icon: 'las la-file-alt',
     id: '',
     isBrowsable: true,
+    isSearchable: true,
     locale: 'en',
     password: '',
     path: '',
@@ -367,6 +371,8 @@ export const usePageStore = defineStore('page', {
         tags: [],
         content: content ?? '',
         render: '',
+        isBrowsable: true,
+        isSearchable: true,
         mode: 'edit'
       })
     },
@@ -420,6 +426,7 @@ export const usePageStore = defineStore('page', {
                 'description',
                 'icon',
                 'isBrowsable',
+                'isSearchable',
                 'locale',
                 'password',
                 'path',
@@ -491,6 +498,7 @@ export const usePageStore = defineStore('page', {
                   'description',
                   'icon',
                   'isBrowsable',
+                  'isSearchable',
                   'locale',
                   'password',
                   'path',

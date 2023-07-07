@@ -22,5 +22,6 @@ export async function task ({ payload }) {
   } catch (err) {
     WIKI.logger.error('Purging orphaned upload files: [ FAILED ]')
     WIKI.logger.error(err.message)
+    throw err
   }
 }

@@ -77,6 +77,7 @@ export default {
           .select(searchCols)
           .fromRaw('pages, websearch_to_tsquery(?, ?) query', [dictName, args.query])
           .where('siteId', args.siteId)
+          .where('isSearchableComputed', true)
           .where(builder => {
             if (args.path) {
               builder.where('path', 'ILIKE', `${args.path}%`)

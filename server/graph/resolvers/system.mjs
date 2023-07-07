@@ -141,6 +141,19 @@ export default {
         return generateError(err)
       }
     },
+    async rebuildSearchIndex (obj, args, context) {
+      try {
+        await WIKI.scheduler.addJob({
+          task: 'rebuildSearchIndex',
+          maxRetries: 0
+        })
+        return {
+          operation: generateSuccess('Search index rebuild has been scheduled and will start shortly.')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
     async retryJob (obj, args, context) {
       WIKI.logger.info(`Admin requested rescheduling of job ${args.id}...`)
       try {

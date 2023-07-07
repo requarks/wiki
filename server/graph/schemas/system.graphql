@@ -29,6 +29,8 @@ extend type Mutation {
     key: String!
   ): DefaultResponse
 
+  rebuildSearchIndex: DefaultResponse
+
   retryJob(
     id: UUID!
   ): DefaultResponse

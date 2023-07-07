@@ -12,6 +12,7 @@ export async function up (knex) {
   // =====================================
   await knex.raw('CREATE EXTENSION IF NOT EXISTS ltree;')
   await knex.raw('CREATE EXTENSION IF NOT EXISTS pgcrypto;')
+  await knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm;')
 
   await knex.schema
     // =====================================
@@ -235,6 +236,8 @@ export async function up (knex) {
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
       table.boolean('isBrowsable').notNullable().defaultTo(true)
+      table.boolean('isSearchable').notNullable().defaultTo(true)
+      table.specificType('isSearchableComputed', `boolean GENERATED ALWAYS AS ("publishState" != 'draft' AND "isSearchable") STORED`).index()
       table.string('password')
       table.integer('ratingScore').notNullable().defaultTo(0)
       table.integer('ratingCount').notNullable().defaultTo(0)
@@ -393,6 +396,13 @@ export async function up (knex) {
     .table('userKeys', table => {
       table.uuid('userId').notNullable().references('id').inTable('users')
     })
+    // =====================================
+    // TS WORD SUGGESTION TABLE
+    // =====================================
+    .createTable('autocomplete', table => {
+      table.text('word')
+    })
+    .raw(`CREATE INDEX "autocomplete_idx" ON "autocomplete" USING GIN (word gin_trgm_ops)`)
 
   // =====================================
   // DEFAULT DATA
@@ -518,8 +528,8 @@ export async function up (knex) {
       key: 'update',
       value: {
         lastCheckedAt: null,
-        version: null,
-        versionDate: null
+        version: WIKI.version,
+        versionDate: WIKI.releaseDate
       }
     },
     {
@@ -769,6 +779,11 @@ export async function up (knex) {
     {
       task: 'cleanJobHistory',
       cron: '5 0 * * *',
+      type: 'system'
+    },
+    {
+      task: 'refreshAutocomplete',
+      cron: '0 */3 * * *',
       type: 'system'
     },
     {

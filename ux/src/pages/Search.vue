@@ -21,7 +21,7 @@ q-layout(view='hHh Lpr lff')
               side
               )
               q-icon(
-                :name='state.params.orderByDirection === `desc` ? `mdi-chevron-double-down` : `mdi-chevron-double-up`'
+                :name='state.params.orderByDirection === `desc` ? `mdi-transfer-down` : `mdi-transfer-up`'
                 size='sm'
                 color='primary'
                 )

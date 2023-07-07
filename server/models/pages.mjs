@@ -344,6 +344,7 @@ export class Page extends Model {
       hash: generateHash({ path: opts.path, locale: opts.locale }),
       icon: opts.icon,
       isBrowsable: opts.isBrowsable ?? true,
+      isSearchable: opts.isSearchable ?? true,
       localeCode: opts.locale,
       ownerId: opts.user.id,
       path: opts.path,
@@ -388,7 +389,7 @@ export class Page extends Model {
     })
 
     // -> Update search vector
-    WIKI.db.pages.updatePageSearchVector(page.id)
+    WIKI.db.pages.updatePageSearchVector({ id: page.id })
 
     // // -> Add to Storage
     // if (!opts.skipStorage) {
@@ -507,14 +508,17 @@ export class Page extends Model {
       historyData.affectedFields.push('publishEndDate')
     }
 
-    // -> Page Config
+    // -> Browsable / Searchable Flags
     if ('isBrowsable' in opts.patch) {
-      patch.config = {
-        ...patch.config ?? ogPage.config ?? {},
-        isBrowsable: opts.patch.isBrowsable
-      }
+      patch.isBrowsable = opts.patch.isBrowsable
       historyData.affectedFields.push('isBrowsable')
     }
+    if ('isSearchable' in opts.patch) {
+      patch.isSearchable = opts.patch.isSearchable
+      historyData.affectedFields.push('isSearchable')
+    }
+
+    // -> Page Config
     if ('allowComments' in opts.patch) {
       patch.config = {
         ...patch.config ?? ogPage.config ?? {},
@@ -644,7 +648,7 @@ export class Page extends Model {
 
     // -> Save Tags
     if (opts.patch.tags) {
-      await WIKI.db.tags.associateTags({ tags: opts.patch.tags, page })
+      // await WIKI.db.tags.associateTags({ tags: opts.patch.tags, page })
     }
 
     // -> Render page to HTML
@@ -672,7 +676,7 @@ export class Page extends Model {
 
     // -> Update search vector
     if (shouldUpdateSearch) {
-      WIKI.db.pages.updatePageSearchVector(page.id)
+      WIKI.db.pages.updatePageSearchVector({ id: page.id })
     }
 
     // -> Update on Storage
@@ -710,19 +714,40 @@ export class Page extends Model {
   /**
    * Update a page text search vector value
    *
-   * @param {String} id Page UUID
+   * @param {Object} opts - Options
+   * @param {string} [opts.id] - Page ID to update (fetch from DB)
+   * @param {Object} [opts.page] - Page object to update (use directly)
    */
-  static async updatePageSearchVector (id) {
-    const page = await WIKI.db.pages.query().findById(id).select('localeCode', 'render')
-    const safeContent = WIKI.db.pages.cleanHTML(page.render)
+  static async updatePageSearchVector ({ id, page }) {
+    if (!page) {
+      if (!id) {
+        throw new Error('Must provide either the page ID or the page object.')
+      }
+      page = await WIKI.db.pages.query().findById(id).select('id', 'localeCode', 'render', 'password')
+    }
+    // -> Exclude password-protected content from being indexed
+    const safeContent = page.password ? '' : WIKI.db.pages.cleanHTML(page.render)
     const dictName = getDictNameFromLocale(page.localeCode)
-    return WIKI.db.knex('pages').where('id', id).update({
+    return WIKI.db.knex('pages').where('id', page.id).update({
       searchContent: safeContent,
       ts: WIKI.db.knex.raw(`
         setweight(to_tsvector('${dictName}', coalesce(title,'')), 'A') ||
         setweight(to_tsvector('${dictName}', coalesce(description,'')), 'B') ||
         setweight(to_tsvector('${dictName}', coalesce(?,'')), 'C')`, [safeContent])
     })
+  }
+
+  /**
+   * Refresh Autocomplete Index
+   */
+  static async refreshAutocompleteIndex () {
+    await WIKI.db.knex('autocomplete').truncate()
+    await WIKI.db.knex.raw(`
+      INSERT INTO "autocomplete" (word)
+        SELECT word FROM ts_stat(
+          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "searchContent") FROM "pages" WHERE isSearchableComputed IS TRUE'
+        )
+    `)
   }
 
   /**
