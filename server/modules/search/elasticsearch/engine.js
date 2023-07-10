@@ -19,6 +19,17 @@ module.exports = {
   async init() {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
+      case '8.x':
+        WIKI.logger.info(`Using ElasticSearch 8.X`)
+        const { Client: Client8 } = require('elasticsearch8')
+        this.client = new Client8({
+          nodes: this.config.hosts.split(',').map(_.trim),
+          sniffOnStart: this.config.sniffOnStart,
+          sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          tls: getTlsOptions(this.config),
+          name: 'wiki-js'
+        })
+        break
       case '7.x':
         const { Client: Client7 } = require('elasticsearch7')
         this.client = new Client7({
@@ -54,7 +65,7 @@ module.exports = {
   async createIndex() {
     try {
       const indexExists = await this.client.indices.exists({ index: this.config.indexName })
-      if (!indexExists.body) {
+      if ((!indexExists.body && this.config.apiVersion !== '8.x') || (!indexExists && this.config.apiVersion === '8.x')) {
         WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
         try {
           const idxBody = {
@@ -68,12 +79,34 @@ module.exports = {
               tags: { type: 'text', boost: 8.0 }
             }
           }
+          // 8.x Doesn't support boost in mappings, so we will need to boost at query time.
+          const idxBody8_x = {
+            properties: {
+              suggest: { type: 'completion' },
+              title: { type: 'text' },
+              description: { type: 'text' },
+              content: { type: 'text' },
+              locale: { type: 'keyword' },
+              path: { type: 'text' },
+              tags: { type: 'text' }
+            }
+          }
+
+          let mapping
+          if (this.config.apiVersion !== '8.x') {
+            // ElasticSearch 6.x || 7.x can use the same mapping
+            mapping = idxBody
+          } else {
+            // ElasticSearch 8.x needs to use a different mapping
+            mapping = idxBody8_x
+          }
+
           await this.client.indices.create({
             index: this.config.indexName,
             body: {
               mappings: (this.config.apiVersion === '6.x') ? {
-                _doc: idxBody
-              } : idxBody,
+                _doc: mapping
+              } : mapping,
               settings: {
                 analysis: {
                   analyzer: {
@@ -85,7 +118,9 @@ module.exports = {
               }
             }
           })
+
         } catch (err) {
+          WIKI.logger.error(err)
           WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
         }
       }
