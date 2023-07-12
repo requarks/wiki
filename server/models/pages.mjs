@@ -320,7 +320,7 @@ export class Page extends Model {
     // -> Get Tags
     let tags = []
     if (opts.tags && opts.tags.length > 0) {
-      tags = await WIKI.db.tags.fetchIds({ tags: opts.tags, siteId: opts.siteId })
+      tags = await WIKI.db.tags.processNewTags(opts.tags, opts.siteId)
     }
 
     // -> Create page
@@ -635,6 +635,7 @@ export class Page extends Model {
 
     // -> Tags
     if ('tags' in opts.patch) {
+      patch.tags = await WIKI.db.tags.processNewTags(opts.patch.tags, ogPage.siteId)
       historyData.affectedFields.push('tags')
     }
 
@@ -645,11 +646,6 @@ export class Page extends Model {
       historyData
     }).where('id', ogPage.id)
     let page = await WIKI.db.pages.getPageFromDb(ogPage.id)
-
-    // -> Save Tags
-    if (opts.patch.tags) {
-      // await WIKI.db.tags.associateTags({ tags: opts.patch.tags, page })
-    }
 
     // -> Render page to HTML
     if (opts.patch.content) {
@@ -686,24 +682,6 @@ export class Page extends Model {
     //     page
     //   })
     // }
-
-    // -> Perform move?
-    if ((opts.locale && opts.locale !== page.localeCode) || (opts.path && opts.path !== page.path)) {
-      // -> Check target path access
-      if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-        locale: opts.locale,
-        path: opts.path
-      })) {
-        throw new WIKI.Error.PageMoveForbidden()
-      }
-
-      await WIKI.db.pages.movePage({
-        id: page.id,
-        destinationLocale: opts.locale,
-        destinationPath: opts.path,
-        user: opts.user
-      })
-    }
 
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.db.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
@@ -745,7 +723,7 @@ export class Page extends Model {
     await WIKI.db.knex.raw(`
       INSERT INTO "autocomplete" (word)
         SELECT word FROM ts_stat(
-          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "searchContent") FROM "pages" WHERE isSearchableComputed IS TRUE'
+          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "searchContent") FROM "pages" WHERE "isSearchableComputed" IS TRUE'
         )
     `)
   }

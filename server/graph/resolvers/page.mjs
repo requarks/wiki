@@ -1,6 +1,10 @@
 import _ from 'lodash-es'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 import { parsePath }from '../../helpers/page.mjs'
+import tsquery from 'pg-tsquery'
+
+const tsq = tsquery()
+const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
 
 export default {
   Query: {
@@ -43,11 +47,12 @@ export default {
      * SEARCH PAGES
      */
     async searchPages (obj, args, context) {
+      const q = args.query.trim()
+      const hasQuery = q.length > 0
+
+      // -> Validate parameters
       if (!args.siteId) {
         throw new Error('Missing Site ID')
-      }
-      if (!args.query?.trim()) {
-        throw new Error('Missing Query')
       }
       if (args.offset && args.offset < 0) {
         throw new Error('Invalid offset value.')
@@ -55,8 +60,11 @@ export default {
       if (args.limit && (args.limit < 1 || args.limit > 100)) {
         throw new Error('Limit must be between 1 and 100.')
       }
+
       try {
         const dictName = 'english' // TODO: Use provided locale or fallback on site locale
+
+        // -> Select Columns
         const searchCols = [
           'id',
           'path',
@@ -64,18 +72,26 @@ export default {
           'title',
           'description',
           'icon',
+          'tags',
           'updatedAt',
-          WIKI.db.knex.raw('ts_rank_cd(ts, query) AS relevancy'),
           WIKI.db.knex.raw('count(*) OVER() AS total')
         ]
 
-        if (WIKI.config.search.termHighlighting) {
+        // -> Set relevancy
+        if (hasQuery) {
+          searchCols.push(WIKI.db.knex.raw('ts_rank_cd(ts, query) AS relevancy'))
+        } else {
+          args.orderBy = args.orderBy === 'relevancy' ? 'title' : args.orderBy
+        }
+
+        // -> Add Highlighting if enabled
+        if (WIKI.config.search.termHighlighting && hasQuery) {
           searchCols.push(WIKI.db.knex.raw(`ts_headline(?, "searchContent", query, 'MaxWords=5, MinWords=3, MaxFragments=5') AS highlight`, [dictName]))
         }
 
         const results = await WIKI.db.knex
           .select(searchCols)
-          .fromRaw('pages, websearch_to_tsquery(?, ?) query', [dictName, args.query])
+          .fromRaw(hasQuery ? 'pages, to_tsquery(?, ?) query' : 'pages', hasQuery ? [dictName, tsq(q)] : [])
           .where('siteId', args.siteId)
           .where('isSearchableComputed', true)
           .where(builder => {
@@ -91,14 +107,19 @@ export default {
             if (args.publishState) {
               builder.where('publishState', args.publishState)
             }
+            if (args.tags) {
+              builder.where('tags', '@>', args.tags)
+            }
+            if (hasQuery) {
+              builder.whereRaw('query @@ ts')
+            }
           })
-          .whereRaw('query @@ ts')
           .orderBy(args.orderBy || 'relevancy', args.orderByDirection || 'desc')
           .offset(args.offset || 0)
           .limit(args.limit || 25)
 
         // -> Remove highlights without matches
-        if (WIKI.config.search.termHighlighting) {
+        if (WIKI.config.search.termHighlighting && hasQuery) {
           for (const r of results) {
             if (r.highlight?.indexOf('<b>') < 0) {
               r.highlight = null
@@ -268,50 +289,10 @@ export default {
      * FETCH TAGS
      */
     async tags (obj, args, context, info) {
-      const pages = await WIKI.db.pages.query()
-        .column([
-          'path',
-          { locale: 'localeCode' }
-        ])
-        .withGraphJoined('tags')
-      const allTags = _.filter(pages, r => {
-        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
-          path: r.path,
-          locale: r.locale
-        })
-      }).flatMap(r => r.tags)
-      return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
-    },
-    /**
-     * SEARCH TAGS
-     */
-    async searchTags (obj, args, context, info) {
-      const query = _.trim(args.query)
-      const pages = await WIKI.db.pages.query()
-        .column([
-          'path',
-          { locale: 'localeCode' }
-        ])
-        .withGraphJoined('tags')
-        .modifyGraph('tags', builder => {
-          builder.select('tag')
-        })
-        .modify(queryBuilder => {
-          queryBuilder.andWhere(builderSub => {
-            if (WIKI.config.db.type === 'postgres') {
-              builderSub.where('tags.tag', 'ILIKE', `%${query}%`)
-            } else {
-              builderSub.where('tags.tag', 'LIKE', `%${query}%`)
-            }
-          })
-        })
-      const allTags = _.filter(pages, r => {
-        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
-          path: r.path,
-          locale: r.locale
-        })
-      }).flatMap(r => r.tags).map(t => t.tag)
-      return _.uniq(allTags).slice(0, 5)
+      if (!args.siteId) { throw new Error('Missing Site ID')}
+      const tags = await WIKI.db.knex('tags').where('siteId', args.siteId).orderBy('tag')
+      // TODO: check permissions
+      return tags
     },
     /**
      * FETCH PAGE TREE

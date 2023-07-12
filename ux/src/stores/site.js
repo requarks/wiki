@@ -44,6 +44,8 @@ export const useSiteStore = defineStore('site', {
         nativeName: 'English'
       }]
     },
+    tags: [],
+    tagsLoaded: false,
     theme: {
       dark: false,
       injectCSS: '',
@@ -192,6 +194,8 @@ export const useSiteStore = defineStore('site', {
               primary: clone(siteInfo.locales.primary),
               active: sortBy(clone(siteInfo.locales.active), ['nativeName', 'name'])
             },
+            tags: [],
+            tagsLoaded: false,
             theme: {
               ...this.theme,
               ...clone(siteInfo.theme)
@@ -200,6 +204,33 @@ export const useSiteStore = defineStore('site', {
         } else {
           throw new Error('Invalid Site')
         }
+      } catch (err) {
+        console.warn(err.networkError?.result ?? err.message)
+        throw err
+      }
+    },
+    async fetchTags (forceRefresh = false) {
+      if (this.tagsLoaded && !forceRefresh) { return }
+      try {
+        const resp = await APOLLO_CLIENT.query({
+          query: gql`
+            query getSiteTags ($siteId: UUID!) {
+              tags (
+                siteId: $siteId
+                ) {
+                tag
+                usageCount
+              }
+            }
+          `,
+          variables: {
+            siteId: this.id
+          }
+        })
+        this.$patch({
+          tags: resp.data.tags ?? [],
+          tagsLoaded: true
+        })
       } catch (err) {
         console.warn(err.networkError?.result ?? err.message)
         throw err

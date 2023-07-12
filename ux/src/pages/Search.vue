@@ -3,6 +3,14 @@ q-layout(view='hHh Lpr lff')
   header-nav
   q-page-container.layout-search
     .layout-search-card
+      q-btn.layout-search-back(
+        icon='las la-arrow-circle-left'
+        color='white'
+        flat
+        round
+        @click='goBack'
+        )
+        q-tooltip(anchor='center left', self='center right') {{ t('common.actions.goback') }}
       .layout-search-sd
         .text-header {{ t('search.sortBy') }}
         q-list(dense, padding)
@@ -36,13 +44,30 @@ q-layout(view='hHh Lpr lff')
             )
             template(v-slot:prepend)
               q-icon(name='las la-caret-square-right', size='xs')
-          q-input.q-mt-sm(
+          q-select.q-mt-sm(
             outlined
+            v-model='state.selectedTags'
+            :options='state.filteredTags'
             dense
-            :placeholder='t(`search.filterTags`)'
+            options-dense
+            use-input
+            use-chips
+            multiple
+            hide-dropdown-icon
+            :input-debounce='0'
+            @update:model-value='v => syncTags(v)'
+            @filter='filterTags'
+            :placeholder='state.selectedTags.length < 1 ? t(`search.filterTags`) : ``'
+            :loading='state.loading > 0'
             )
             template(v-slot:prepend)
               q-icon(name='las la-hashtag', size='xs')
+            template(v-slot:option='scope')
+              q-item(v-bind='scope.itemProps')
+                q-item-section(side)
+                  q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)', size='sm')
+                q-item-section
+                  q-item-label(v-html='scope.opt')
           //- q-input.q-mt-sm(
           //-   outlined
           //-   dense
@@ -131,15 +156,15 @@ q-layout(view='hHh Lpr lff')
               q-item-label(v-if='item.description', caption) {{ item.description }}
               q-item-label.text-highlight(v-if='item.highlight', caption, v-html='item.highlight')
             q-item-section(side)
-              .flex
+              .flex.layout-search-itemtags
                 q-chip(
-                  v-for='tag of 3'
+                  v-for='tag of item.tags'
                   square
-                  :color='$q.dark.isActive ? `dark-2` : `grey-3`'
-                  :text-color='$q.dark.isActive ? `grey-4` : `grey-8`'
+                  color='secondary'
+                  text-color='white'
                   icon='las la-hashtag'
                   size='sm'
-                  ) tag {{ tag }}
+                  ) {{ tag }}
               .flex
                 .text-caption.q-mr-sm.text-grey /{{ item.path }}
                 .text-caption {{ humanizeDate(item.updatedAt) }}
@@ -155,7 +180,7 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import gql from 'graphql-tag'
-import { cloneDeep, debounce } from 'lodash-es'
+import { cloneDeep, debounce, difference } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 import { useFlagsStore } from 'src/stores/flags'
@@ -165,6 +190,8 @@ import { useUserStore } from 'src/stores/user'
 import HeaderNav from 'src/components/HeaderNav.vue'
 import FooterNav from 'src/components/FooterNav.vue'
 import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
+
+const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
 
 // QUASAR
 
@@ -197,13 +224,14 @@ const state = reactive({
   loading: 0,
   params: {
     filterPath: '',
-    filterTags: [],
     filterLocale: [],
     filterEditor: '',
     filterPublishState: '',
     orderBy: 'relevancy',
     orderByDirection: 'desc'
   },
+  selectedTags: [],
+  filteredTags: [],
   results: [],
   total: 0
 })
@@ -234,11 +262,14 @@ const publishStates = computed(() => {
   ]
 })
 
+const tags = computed(() => siteStore.tags.map(t => t.tag))
+
 // WATCHERS
 
 watch(() => route.query, async (newQueryObj) => {
   if (newQueryObj.q) {
-    siteStore.search = newQueryObj.q
+    siteStore.search = newQueryObj.q.trim()
+    syncTags()
     performSearch()
   }
 }, { immediate: true })
@@ -266,9 +297,50 @@ function setOrderBy (val) {
   }
 }
 
+function filterTags (val, update) {
+  update(() => {
+    if (val === '') {
+      state.filteredTags = tags.value
+    } else {
+      const tagSearch = val.toLowerCase()
+      state.filteredTags = tags.value.filter(
+        v => v.toLowerCase().indexOf(tagSearch) >= 0
+      )
+    }
+  })
+}
+
+function syncTags (newSelection) {
+  const queryTags = Array.from(siteStore.search.matchAll(tagsInQueryRgx)).map(t => t[0].substring(1))
+  if (!newSelection) {
+    state.selectedTags = queryTags
+  } else {
+    let newQuery = siteStore.search
+    for (const tag of newSelection) {
+      if (!newQuery.includes(`#${tag}`)) {
+        newQuery = `${newQuery} #${tag}`
+      }
+    }
+    for (const tag of difference(queryTags, newSelection)) {
+      newQuery = newQuery.replaceAll(`#${tag}`, '')
+    }
+    newQuery = newQuery.replaceAll('  ', ' ').trim()
+    router.replace({ path: '/_search', query: { q: newQuery } })
+  }
+}
+
 async function performSearch () {
   siteStore.searchIsLoading = true
   try {
+    let q = siteStore.search
+
+    // -> Extract tags
+    const queryTags = Array.from(q.matchAll(tagsInQueryRgx)).map(t => t[0].substring(1))
+    for (const tag of queryTags) {
+      q = q.replaceAll(`#${tag}`, '')
+    }
+    q = q.trim().replaceAll(/\s\s+/g, ' ')
+
     const resp = await APOLLO_CLIENT.query({
       query: gql`
         query searchPages (
@@ -304,6 +376,7 @@ async function performSearch () {
               title
               description
               icon
+              tags
               updatedAt
               relevancy
               highlight
@@ -314,8 +387,9 @@ async function performSearch () {
       `,
       variables: {
         siteId: siteStore.id,
-        query: siteStore.search,
+        query: q,
         path: state.params.filterPath,
+        tags: queryTags,
         locale: state.params.filterLocale,
         editor: state.params.filterEditor,
         publishState: state.params.filterPublishState || null,
@@ -338,6 +412,14 @@ async function performSearch () {
     })
   }
   siteStore.searchIsLoading = false
+}
+
+function goBack () {
+  if (history.length > 0) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 
 // MOUNTED
@@ -386,6 +468,11 @@ onUnmounted(() => {
     top: 64px;
     width: 100%;
     background: linear-gradient(to right, transparent 0%, rgba(255,255,255,.1) 50%, transparent 100%);
+  }
+
+  &-back {
+    position: absolute;
+    left: -50px;
   }
 
   &-card {
@@ -459,6 +546,12 @@ onUnmounted(() => {
     }
     @at-root .body--dark & {
       border-left: 1px solid rgba($dark-6, .75);
+    }
+  }
+
+  &-itemtags {
+    .q-chip:last-child {
+      margin-right: 0;
     }
   }
 }

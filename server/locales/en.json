@@ -1204,6 +1204,7 @@
   "common.actions.fetch": "Fetch",
   "common.actions.filter": "Filter",
   "common.actions.generate": "Generate",
+  "common.actions.goback": "Go Back",
   "common.actions.howItWorks": "How it works",
   "common.actions.insert": "Insert",
   "common.actions.login": "Login",

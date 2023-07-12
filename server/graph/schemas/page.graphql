@@ -108,20 +108,18 @@ extend type Query {
     alias: String!
   ): PageAliasPath
 
-  searchTags(
-    query: String!
-  ): [String]!
-
-  tags: [PageTag]!
+  tags(
+    siteId: UUID!
+  ): [PageTag]
 
   checkConflicts(
     id: Int!
     checkoutDate: Date!
-  ): Boolean!
+  ): Boolean
 
   checkConflictsLatest(
     id: Int!
-  ): PageConflictLatest!
+  ): PageConflictLatest
 }
 
 extend type Mutation {
@@ -253,7 +251,7 @@ type Page {
   showTags: Boolean
   showToc: Boolean
   siteId: UUID
-  tags: [PageTag]
+  tags: [String]
   title: String
   toc: [JSON]
   tocDepth: PageTocDepth
@@ -261,9 +259,10 @@ type Page {
 }
 
 type PageTag {
-  id: Int
+  id: UUID
   tag: String
-  title: String
+  usageCount: Int
+  siteId: UUID
   createdAt: Date
   updatedAt: Date
 }
@@ -401,9 +400,7 @@ input PageUpdateInput {
   icon: String
   isBrowsable: Boolean
   isSearchable: Boolean
-  locale: String
   password: String
-  path: String
   publishEndDate: Date
   publishStartDate: Date
   publishState: PagePublishState

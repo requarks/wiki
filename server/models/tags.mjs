@@ -1,7 +1,7 @@
 import { Model } from 'objection'
-import { concat, differenceBy, some, uniq } from 'lodash-es'
+import { difference, some, uniq } from 'lodash-es'
 
-import { Page } from './pages.mjs'
+const allowedCharsRgx = /^[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+$/
 
 /**
  * Tags model
@@ -15,28 +15,11 @@ export class Tag extends Model {
       required: ['tag'],
 
       properties: {
-        id: {type: 'integer'},
+        id: {type: 'string'},
         tag: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
-      }
-    }
-  }
-
-  static get relationMappings() {
-    return {
-      pages: {
-        relation: Model.ManyToManyRelation,
-        modelClass: Page,
-        join: {
-          from: 'tags.id',
-          through: {
-            from: 'pageTags.tagId',
-            to: 'pageTags.pageId'
-          },
-          to: 'pages.id'
-        }
       }
     }
   }
@@ -49,53 +32,28 @@ export class Tag extends Model {
     this.updatedAt = new Date().toISOString()
   }
 
-  static async associateTags ({ tags, page }) {
-    let existingTags = await WIKI.db.tags.query().column('id', 'tag')
+  static async processNewTags (tags, siteId) {
+    // Validate tags
 
-    // Format tags
+    const normalizedTags = uniq(tags.map(t => t.trim().toLowerCase().replaceAll('#', '')).filter(t => t))
 
-    tags = uniq(tags.map(t => t.trim().toLowerCase()))
+    for (const tag of normalizedTags) {
+      if (!allowedCharsRgx.test(tag)) {
+        throw new Error(`Tag #${tag} has invalid characters. Must consists of letters (no diacritics), numbers, CJK logograms and dashes only.`)
+      }
+    }
+
+    // Fetch existing tags
+
+    const existingTags = await WIKI.db.knex('tags').column('tag').where('siteId', siteId).pluck('tag')
 
     // Create missing tags
 
-    const newTags = tags.filter(t => !some(existingTags, ['tag', t])).map(t => ({ tag: t }))
+    const newTags = difference(normalizedTags, existingTags).map(t => ({ tag: t, usageCount: 1, siteId }))
     if (newTags.length > 0) {
-      if (WIKI.config.db.type === 'postgres') {
-        const createdTags = await WIKI.db.tags.query().insert(newTags)
-        existingTags = concat(existingTags, createdTags)
-      } else {
-        for (const newTag of newTags) {
-          const createdTag = await WIKI.db.tags.query().insert(newTag)
-          existingTags.push(createdTag)
-        }
-      }
+      await WIKI.db.tags.query().insert(newTags)
     }
 
-    // Fetch current page tags
-
-    const targetTags = existingTags.filter(t => tags.includes(t.tag))
-    const currentTags = await page.$relatedQuery('tags')
-
-    // Tags to relate
-
-    const tagsToRelate = differenceBy(targetTags, currentTags, 'id')
-    if (tagsToRelate.length > 0) {
-      if (WIKI.config.db.type === 'postgres') {
-        await page.$relatedQuery('tags').relate(tagsToRelate)
-      } else {
-        for (const tag of tagsToRelate) {
-          await page.$relatedQuery('tags').relate(tag)
-        }
-      }
-    }
-
-    // Tags to unrelate
-
-    const tagsToUnrelate = differenceBy(currentTags, targetTags, 'id')
-    if (tagsToUnrelate.length > 0) {
-      await page.$relatedQuery('tags').unrelate().whereIn('tags.id', tagsToUnrelate.map(t => t.id))
-    }
-
-    page.tags = targetTags
+    return normalizedTags
   }
 }

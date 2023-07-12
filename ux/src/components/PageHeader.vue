@@ -164,16 +164,17 @@
           @click.exact='saveChanges(false)'
           @click.ctrl.exact='saveChanges(true)'
           )
-        q-separator(vertical, dark)
-        q-btn.acrylic-btn(
-          flat
-          icon='las la-check-double'
-          color='positive'
-          :aria-label='t(`common.actions.saveAndClose`)'
-          :disabled='!editorStore.hasPendingChanges'
-          @click='saveChanges(true)'
-          )
-          q-tooltip {{ t(`common.actions.saveAndClose`) }}
+        template(v-if='editorStore.isActive')
+          q-separator(vertical, dark)
+          q-btn.acrylic-btn(
+            flat
+            icon='las la-check-double'
+            color='positive'
+            :aria-label='t(`common.actions.saveAndClose`)'
+            :disabled='!editorStore.hasPendingChanges'
+            @click='saveChanges(true)'
+            )
+            q-tooltip {{ t(`common.actions.saveAndClose`) }}
     template(v-else-if='userStore.can(`edit:pages`)')
       q-btn.acrylic-btn.q-ml-md(
         flat
@@ -221,20 +222,6 @@ const route = useRoute()
 // I18N
 
 const { t } = useI18n()
-
-// COMPUTED
-
-const editMode = computed(() => {
-  return pageStore.mode === 'edit'
-})
-const editCreateMode = computed(() => {
-  return pageStore.mode === 'edit' && pageStore.mode === 'create'
-})
-const editUrl = computed(() => {
-  let pagePath = siteStore.useLocales ? `${pageStore.locale}/` : ''
-  pagePath += !pageStore.path ? 'home' : pageStore.path
-  return `/_edit/${pagePath}`
-})
 
 // METHODS
 

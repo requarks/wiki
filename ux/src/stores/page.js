@@ -41,10 +41,7 @@ const pagePropsFragment = gql`
     showSidebar
     showTags
     showToc
-    tags {
-      tag
-      title
-    }
+    tags
     title
     toc
     tocDepth {
@@ -499,9 +496,7 @@ export const usePageStore = defineStore('page', {
                   'icon',
                   'isBrowsable',
                   'isSearchable',
-                  'locale',
                   'password',
-                  'path',
                   'publishEndDate',
                   'publishStartDate',
                   'publishState',

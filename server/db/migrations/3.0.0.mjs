@@ -231,7 +231,7 @@ export async function up (knex) {
       table.text('render')
       table.text('searchContent')
       table.specificType('ts', 'tsvector').index('ts_idx', { indexType: 'GIN' })
-      table.specificType('tags', 'int[]').index('tags_idx', { indexType: 'GIN' })
+      table.specificType('tags', 'text[]').index('tags_idx', { indexType: 'GIN' })
       table.jsonb('toc')
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
@@ -282,6 +282,7 @@ export async function up (knex) {
     .createTable('tags', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('tag').notNullable()
+      table.integer('usageCount').notNullable().defaultTo(0)
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
     })
@@ -783,7 +784,7 @@ export async function up (knex) {
     },
     {
       task: 'refreshAutocomplete',
-      cron: '0 */3 * * *',
+      cron: '0 */6 * * *',
       type: 'system'
     },
     {

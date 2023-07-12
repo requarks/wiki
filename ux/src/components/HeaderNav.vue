@@ -24,56 +24,7 @@ q-header.bg-header.text-white.site-header(
           style='height: 34px'
           )
       q-toolbar-title.text-h6(v-if='siteStore.logoText') {{siteStore.title}}
-    q-toolbar.gt-sm(
-      style='height: 64px;'
-      dark
-      v-if='siteStore.features.search'
-      )
-      q-input(
-        dark
-        v-model='siteStore.search'
-        standout='bg-white text-dark'
-        dense
-        rounded
-        ref='searchField'
-        style='width: 100%;'
-        label='Search...'
-        @keyup.enter='onSearchEnter'
-        @focus='state.searchKbdShortcutShown = false'
-        @blur='state.searchKbdShortcutShown = true'
-        )
-        template(v-slot:prepend)
-          q-circular-progress.q-mr-xs(
-            v-if='siteStore.searchIsLoading && route.path !== `/_search`'
-            instant-feedback
-            indeterminate
-            rounded
-            color='primary'
-            size='20px'
-            )
-          q-icon(v-else, name='las la-search')
-        template(v-slot:append)
-          q-badge.q-mr-sm(
-            v-if='state.searchKbdShortcutShown'
-            label='Ctrl+K'
-            color='grey-7'
-            outline
-            @click='searchField.focus()'
-            )
-          q-badge.q-mr-sm(
-            v-else-if='siteStore.search && siteStore.search !== siteStore.searchLastQuery'
-            label='Press Enter'
-            color='grey-7'
-            outline
-            @click='searchField.focus()'
-            )
-          q-icon.cursor-pointer(
-            name='las la-times'
-            size='20px'
-            @click='siteStore.search=``'
-            v-if='siteStore.search.length > 0'
-            color='grey-6'
-            )
+    header-search
     q-toolbar(
       style='height: 64px;'
       dark
@@ -138,7 +89,7 @@ q-header.bg-header.text-white.site-header(
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useCommonStore } from 'src/stores/common'
@@ -147,6 +98,7 @@ import { useUserStore } from 'src/stores/user'
 
 import AccountMenu from 'src/components/AccountMenu.vue'
 import NewMenu from 'src/components/PageNewMenu.vue'
+import HeaderSearch from 'src/components/HeaderSearch.vue'
 
 // QUASAR
 
@@ -167,55 +119,9 @@ const route = useRoute()
 
 const { t } = useI18n()
 
-// DATA
-
-const state = reactive({
-  searchKbdShortcutShown: true
-})
-
-const searchField = ref(null)
-
 // METHODS
 
 function openFileManager () {
   siteStore.openFileManager()
 }
-
-function handleKeyPress (ev) {
-  if (siteStore.features.search) {
-    if (ev.ctrlKey && ev.key === 'k') {
-      ev.preventDefault()
-      searchField.value.focus()
-    }
-  }
-}
-
-function onSearchEnter () {
-  if (route.path === '/_search') {
-    router.replace({ path: '/_search', query: { q: siteStore.search } })
-  } else {
-    siteStore.searchIsLoading = true
-    router.push({ path: '/_search', query: { q: siteStore.search } })
-  }
-}
-
-// MOUNTED
-
-onMounted(() => {
-  if (process.env.CLIENT) {
-    window.addEventListener('keydown', handleKeyPress)
-  }
-  if (route.path.startsWith('/_search')) {
-    searchField.value.focus()
-  }
-})
-onBeforeUnmount(() => {
-  if (process.env.CLIENT) {
-    window.removeEventListener('keydown', handleKeyPress)
-  }
-})
 </script>
-
-<style lang="scss">
-
-</style>
