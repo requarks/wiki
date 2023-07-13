@@ -355,7 +355,7 @@ Total RAM: ${state.info.ramTotal}`
   clip.on('error', () => {
     $q.notify({
       type: 'negative',
-      message: 'Failed to copy to system info'
+      message: 'Failed to copy system info'
     })
   })
 })

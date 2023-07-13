@@ -195,6 +195,8 @@
   "admin.flags.authDebug.label": "Auth Debug",
   "admin.flags.experimental.hint": "Enable unstable / unfinished features. DO NOT enable in a production environment!",
   "admin.flags.experimental.label": "Experimental Features",
+  "admin.flags.getTokenHint": "Copy your current authentication token for use in GraphQL API testing.",
+  "admin.flags.getTokenLabel": "Get Current Token",
   "admin.flags.saveSuccess": "Flags have been updated successfully.",
   "admin.flags.sqlLog.hint": "Log all queries made to the database to console.",
   "admin.flags.sqlLog.label": "SQL Query Logging",

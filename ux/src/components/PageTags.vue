@@ -6,7 +6,7 @@
       color='secondary'
       text-color='white'
       dense
-      clickable
+      :clickable='!props.edit'
       :removable='props.edit'
       @remove='removeTag(tag)'
       v-for='tag of pageStore.tags'

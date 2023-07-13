@@ -105,6 +105,22 @@ q-page.admin-flags
               disabled
             )
 
+      q-card.q-py-sm.q-mt-md
+        q-item
+          blueprint-icon(icon='key')
+          q-item-section
+            q-item-label {{t(`admin.flags.getTokenLabel`)}}
+            q-item-label(caption) {{t(`admin.flags.getTokenHint`)}}
+          q-item-section(avatar)
+            q-btn(
+              ref='copyTokenBtn'
+              :label='t(`common.actions.copy`)'
+              unelevated
+              icon='las la-clipboard'
+              color='primary'
+              text-color='white'
+            )
+
     .col-12.col-lg-5.gt-md
       .q-pa-md.text-center
         img(src='/_assets/illustrations/undraw_settings.svg', style='width: 80%;')
@@ -112,13 +128,15 @@ q-page.admin-flags
 
 <script setup>
 import gql from 'graphql-tag'
-import { defineAsyncComponent, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { cloneDeep, omit } from 'lodash-es'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+import ClipboardJS from 'clipboard'
 
 import { useSiteStore } from 'src/stores/site'
 import { useFlagsStore } from 'src/stores/flags'
+import { useUserStore } from 'src/stores/user'
 
 // QUASAR
 
@@ -128,6 +146,7 @@ const $q = useQuasar()
 
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -149,6 +168,10 @@ const state = reactive({
     sqlLog: false
   }
 })
+
+// REFS
+
+const copyTokenBtn = ref(null)
 
 // METHODS
 
@@ -207,6 +230,25 @@ async function save () {
 
 onMounted(async () => {
   load()
+  const clip = new ClipboardJS(copyTokenBtn.value.$el, {
+    text: () => {
+      return userStore.token
+    }
+  })
+
+  clip.on('success', () => {
+    $q.notify({
+      type: 'positive',
+      message: 'Token copied successfully',
+      icon: 'las la-clipboard'
+    })
+  })
+  clip.on('error', () => {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to copy token'
+    })
+  })
 })
 
 </script>

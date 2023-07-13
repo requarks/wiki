@@ -401,7 +401,7 @@ async function performSearch () {
     if (!resp?.data?.searchPages) {
       throw new Error('Unexpected error')
     }
-    state.results = cloneDeep(resp.data.searchPages.results)
+    state.results = cloneDeep(resp.data.searchPages.results).map(r => { r.tags.sort(); return r })
     state.total = resp.data.searchPages.totalHits
     siteStore.searchLastQuery = siteStore.search
   } catch (err) {
