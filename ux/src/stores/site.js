@@ -64,7 +64,8 @@ export const useSiteStore = defineStore('site', {
     },
     sideDialogShown: false,
     sideDialogComponent: '',
-    docsBase: 'https://next.js.wiki/docs'
+    docsBase: 'https://next.js.wiki/docs',
+    nav: {}
   }),
   getters: {
     overlayIsShown: (state) => Boolean(state.overlay),

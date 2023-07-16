@@ -36,6 +36,10 @@ body::-webkit-scrollbar-thumb {
   font-family: 'Roboto Mono', Consolas, "Liberation Mono", Courier, monospace;
 }
 
+.text-wordbreak-all {
+  word-break: break-all;
+}
+
 // ------------------------------------------------------------------
 // THEME COLORS
 // ------------------------------------------------------------------

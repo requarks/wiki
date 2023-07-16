@@ -30,40 +30,27 @@ q-layout(view='hHh Lpr lff')
         aria-label='Browse'
         size='sm'
         )
-    q-scroll-area.sidebar-nav(
-      :thumb-style='thumbStyle'
-      :bar-style='barStyle'
-      )
-      q-list(
-        clickable
-        dense
-        dark
-        )
-        q-item-label.text-blue-2.text-caption(header) Header
-        q-item(to='/install')
-          q-item-section(side)
-            q-icon(name='las la-dog', color='white')
-          q-item-section Link 1
-        q-item(to='/install')
-          q-item-section(side)
-            q-icon(name='las la-cat', color='white')
-          q-item-section Link 2
-        q-separator.q-my-sm(dark)
-        q-item(to='/install')
-          q-item-section(side)
-            q-icon(name='mdi-fruit-grapes', color='white')
-          q-item-section Link 3
-    q-bar.bg-blue-9.text-white(dense, v-if='flagsStore.experimental && userStore.authenticated')
+    nav-sidebar
+    q-bar.bg-blue-9.text-white(dense, v-if='userStore.authenticated')
       q-btn.col(
         icon='las la-dharmachakra'
-        label='History'
+        label='Edit Nav'
         flat
-      )
+        )
+        q-menu(
+          ref='navEditMenu'
+          anchor='top left'
+          self='bottom left'
+          :offset='[0, 10]'
+          )
+          nav-edit-menu(:menu-hide-handler='navEditMenu.hide')
+
       q-separator(vertical)
       q-btn.col(
         icon='las la-bookmark'
         label='Bookmarks'
         flat
+        disabled
       )
   q-page-container
     router-view
@@ -99,6 +86,8 @@ import { useUserStore } from 'src/stores/user'
 import FooterNav from 'src/components/FooterNav.vue'
 import HeaderNav from 'src/components/HeaderNav.vue'
 import LocaleSelectorMenu from 'src/components/LocaleSelectorMenu.vue'
+import NavSidebar from 'src/components/NavSidebar.vue'
+import NavEditMenu from 'src/components/NavEditMenu.vue'
 import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
 
 // QUASAR
@@ -128,35 +117,15 @@ useMeta({
   titleTemplate: title => `${title} - ${siteStore.title}`
 })
 
-// DATA
+// REFS
 
-const leftDrawerOpen = ref(true)
-const search = ref('')
-
-const thumbStyle = {
-  right: '2px',
-  borderRadius: '5px',
-  backgroundColor: '#FFF',
-  width: '5px',
-  opacity: 0.5
-}
-const barStyle = {
-  backgroundColor: '#000',
-  width: '9px',
-  opacity: 0.1
-}
+const navEditMenu = ref(null)
 
 // COMPUTED
 
 const isSidebarShown = computed(() => {
   return siteStore.showSideNav && !siteStore.sideNavIsDisabled && !(editorStore.isActive && editorStore.hideSideNav)
 })
-
-// METHODS
-
-function openFileManager () {
-  siteStore.openFileManager()
-}
 
 </script>
 
@@ -165,10 +134,6 @@ function openFileManager () {
   background: linear-gradient(to bottom, rgba(255,255,255,.1) 0%, rgba(0,0,0, .05) 100%);
   border-bottom: 1px solid rgba(0,0,0,.2);
   height: 38px;
-}
-.sidebar-nav {
-  border-top: 1px solid rgba(255,255,255,.15);
-  height: calc(100% - 38px - 24px);
 }
 
 body.body--dark {
