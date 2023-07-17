@@ -33,6 +33,14 @@ q-layout(view='hHh Lpr lff')
     nav-sidebar
     q-bar.bg-blue-9.text-white(dense, v-if='userStore.authenticated')
       q-btn.col(
+        v-if='isRoot'
+        icon='las la-dharmachakra'
+        label='Edit Nav'
+        flat
+        @click='siteStore.$patch({ overlay: `NavEdit` })'
+        )
+      q-btn.col(
+        v-else
         icon='las la-dharmachakra'
         label='Edit Nav'
         flat
@@ -44,7 +52,6 @@ q-layout(view='hHh Lpr lff')
           :offset='[0, 10]'
           )
           nav-edit-menu(:menu-hide-handler='navEditMenu.hide')
-
       q-separator(vertical)
       q-btn.col(
         icon='las la-bookmark'
@@ -78,6 +85,7 @@ import { useI18n } from 'vue-i18n'
 import { useCommonStore } from 'src/stores/common'
 import { useEditorStore } from 'src/stores/editor'
 import { useFlagsStore } from 'src/stores/flags'
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
 
@@ -99,6 +107,7 @@ const $q = useQuasar()
 const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -125,6 +134,10 @@ const navEditMenu = ref(null)
 
 const isSidebarShown = computed(() => {
   return siteStore.showSideNav && !siteStore.sideNavIsDisabled && !(editorStore.isActive && editorStore.hideSideNav)
+})
+
+const isRoot = computed(() => {
+  return pageStore.path === '' || pageStore.path === 'home'
 })
 
 </script>

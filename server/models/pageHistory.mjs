@@ -69,7 +69,7 @@ export class PageHistory extends Model {
         relation: Model.BelongsToOneRelation,
         modelClass: Locale,
         join: {
-          from: 'pageHistory.localeCode',
+          from: 'pageHistory.locale',
           to: 'locales.code'
         }
       }
@@ -94,7 +94,7 @@ export class PageHistory extends Model {
       editor: opts.editor,
       hash: opts.hash,
       publishState: opts.publishState,
-      localeCode: opts.localeCode,
+      locale: opts.locale,
       path: opts.path,
       publishEndDate: opts.publishEndDate?.toISO(),
       publishStartDate: opts.publishStartDate?.toISO(),
@@ -126,7 +126,7 @@ export class PageHistory extends Model {
         {
           versionId: 'pageHistory.id',
           editor: 'pageHistory.editorKey',
-          locale: 'pageHistory.localeCode',
+          locale: 'pageHistory.locale',
           authorName: 'author.name'
         }
       ])

@@ -89,7 +89,7 @@ module.exports = {
           content,
           name: user.name,
           email: user.email,
-          permalink: `${WIKI.config.host}/${page.localeCode}/${page.path}`,
+          permalink: `${WIKI.config.host}/${page.locale}/${page.path}`,
           permalinkDate: page.updatedAt,
           type: (replyTo > 0) ? 'reply' : 'comment',
           role: userRole

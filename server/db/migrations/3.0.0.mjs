@@ -178,8 +178,9 @@ export async function up (knex) {
     })
     // NAVIGATION ----------------------------
     .createTable('navigation', table => {
-      table.string('key').notNullable().primary()
-      table.jsonb('config')
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('name').notNullable()
+      table.jsonb('items').notNullable().defaultTo('[]')
     })
     // PAGE HISTORY ------------------------
     .createTable('pageHistory', table => {
@@ -187,6 +188,7 @@ export async function up (knex) {
       table.uuid('pageId').notNullable().index()
       table.string('action').defaultTo('updated')
       table.jsonb('affectedFields').notNullable().defaultTo('[]')
+      table.string('locale', 10).notNullable().defaultTo('en')
       table.string('path').notNullable()
       table.string('hash').notNullable()
       table.string('alias')
@@ -211,11 +213,12 @@ export async function up (knex) {
     .createTable('pageLinks', table => {
       table.increments('id').primary()
       table.string('path').notNullable()
-      table.string('localeCode', 10).notNullable()
+      table.string('locale', 10).notNullable()
     })
     // PAGES -------------------------------
     .createTable('pages', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('locale', 10).notNullable()
       table.string('path').notNullable()
       table.string('hash').notNullable()
       table.string('alias')
@@ -293,7 +296,7 @@ export async function up (knex) {
       table.string('fileName').notNullable().index()
       table.string('hash').notNullable().index()
       table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
-      table.string('localeCode', 10).notNullable().defaultTo('en').index()
+      table.string('locale', 10).notNullable().defaultTo('en').index()
       table.string('title').notNullable()
       table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
@@ -369,16 +372,14 @@ export async function up (knex) {
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
     })
     .table('pageHistory', table => {
-      table.string('localeCode', 10).references('code').inTable('locales')
       table.uuid('authorId').notNullable().references('id').inTable('users')
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
     })
     .table('pageLinks', table => {
       table.uuid('pageId').notNullable().references('id').inTable('pages').onDelete('CASCADE')
-      table.index(['path', 'localeCode'])
+      table.index(['path', 'locale'])
     })
     .table('pages', table => {
-      table.string('localeCode', 10).references('code').inTable('locales').index()
       table.uuid('authorId').notNullable().references('id').inTable('users').index()
       table.uuid('creatorId').notNullable().references('id').inTable('users').index()
       table.uuid('ownerId').notNullable().references('id').inTable('users').index()
@@ -392,6 +393,7 @@ export async function up (knex) {
       table.unique(['siteId', 'tag'])
     })
     .table('tree', table => {
+      table.uuid('navigationId').references('id').inTable('navigation').index()
       table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
     .table('userKeys', table => {
@@ -413,6 +415,7 @@ export async function up (knex) {
 
   const groupAdminId = uuid()
   const groupGuestId = '10000000-0000-4000-8000-000000000001'
+  const navDefaultId = uuid()
   const siteId = uuid()
   const authModuleId = uuid()
   const userAdminId = uuid()
@@ -619,6 +622,10 @@ export async function up (knex) {
           config: {}
         }
       },
+      nav: {
+        mode: 'mixed',
+        defaultId: navDefaultId,
+      },
       theme: {
         dark: false,
         codeBlocksTheme: 'github-dark',
@@ -747,6 +754,52 @@ export async function up (knex) {
     }
   ])
 
+  // -> NAVIGATION
+
+  await knex('navigation').insert({
+    id: navDefaultId,
+    name: 'Default',
+    items: JSON.stringify([
+      {
+        id: uuid(),
+        type: 'header',
+        label: 'Sample Header'
+      },
+      {
+        id: uuid(),
+        type: 'link',
+        icon: 'mdi-file-document-outline',
+        label: 'Sample Link 1',
+        target: '/',
+        openInNewWindow: false,
+        children: []
+      },
+      {
+        id: uuid(),
+        type: 'link',
+        icon: 'mdi-book-open-variant',
+        label: 'Sample Link 2',
+        target: '/',
+        openInNewWindow: false,
+        children: []
+      },
+      {
+        id: uuid(),
+        type: 'separator',
+      },
+      {
+        id: uuid(),
+        type: 'link',
+        icon: 'mdi-airballoon',
+        label: 'Sample Link 3',
+        target: '/',
+        openInNewWindow: false,
+        children: []
+      }
+    ]),
+    siteId: siteId
+  })
+
   // -> STORAGE MODULE
 
   await knex('storage').insert({
@@ -782,11 +835,11 @@ export async function up (knex) {
       cron: '5 0 * * *',
       type: 'system'
     },
-    {
-      task: 'refreshAutocomplete',
-      cron: '0 */6 * * *',
-      type: 'system'
-    },
+    // {
+    //   task: 'refreshAutocomplete',
+    //   cron: '0 */6 * * *',
+    //   type: 'system'
+    // },
     {
       task: 'updateLocales',
       cron: '0 0 * * *',

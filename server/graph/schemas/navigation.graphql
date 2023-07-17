@@ -3,8 +3,9 @@
 # ===============================================
 
 extend type Query {
-  navigationTree: [NavigationTree]
-  navigationConfig: NavigationConfig
+  navigationById(
+    id: UUID!
+  ): [NavigationItem]
 }
 
 # -----------------------------------------------
@@ -12,11 +13,10 @@ extend type Query {
 # -----------------------------------------------
 
 extend type Mutation {
-  updateNavigationTree(
-    tree: [NavigationTreeInput]!
-  ): DefaultResponse
-  updateNavigationConfig(
-    mode: NavigationMode!
+  updateNavigation(
+    id: UUID!
+    name: String!
+    items: [JSON]!
   ): DefaultResponse
 }
 
@@ -24,45 +24,12 @@ extend type Mutation {
 # TYPES
 # -----------------------------------------------
 
-type NavigationTree {
-  locale: String
-  items: [NavigationItem]
-}
-
-input NavigationTreeInput {
-  locale: String!
-  items: [NavigationItemInput]!
-}
-
 type NavigationItem {
-  id: String
-  kind: String
+  id: UUID
+  type: String
   label: String
   icon: String
-  targetType: String
   target: String
-  visibilityMode: String
-  visibilityGroups: [Int]
-}
-
-input NavigationItemInput {
-  id: String!
-  kind: String!
-  label: String
-  icon: String
-  targetType: String
-  target: String
-  visibilityMode: String
-  visibilityGroups: [Int]
-}
-
-type NavigationConfig {
-  mode: NavigationMode
-}
-
-enum NavigationMode {
-  NONE
-  TREE
-  MIXED
-  STATIC
+  openInNewWindow: Boolean
+  children: [NavigationItem]
 }

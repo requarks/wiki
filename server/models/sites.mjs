@@ -1,5 +1,6 @@
 import { Model } from 'objection'
 import { defaultsDeep, keyBy } from 'lodash-es'
+import { v4 as uuid } from 'uuid'
 
 /**
  * Site model
@@ -47,7 +48,16 @@ export class Site extends Model {
   }
 
   static async createSite (hostname, config) {
+    const newSiteId = uuid
+
+    const newDefaultNav = await WIKI.db.navigation.query().insertAndFetch({
+      name: 'Default',
+      siteId: newSiteId,
+      items: JSON.stringify([])
+    })
+
     const newSite = await WIKI.db.sites.query().insertAndFetch({
+      id: newSiteId,
       hostname,
       isEnabled: true,
       config: defaultsDeep(config, {
@@ -137,6 +147,10 @@ export class Site extends Model {
             isActive: true,
             config: {}
           }
+        },
+        nav: {
+          mode: 'mixed',
+          defaultId: newDefaultNav.id,
         },
         uploads: {
           conflictBehavior: 'overwrite',

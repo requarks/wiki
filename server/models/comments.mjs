@@ -99,7 +99,7 @@ export class Comment extends Model {
     if (page) {
       if (!WIKI.auth.checkAccess(user, ['write:comments'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.locale
       })) {
         throw new WIKI.Error.CommentPostForbidden()
       }
@@ -136,7 +136,7 @@ export class Comment extends Model {
     if (page) {
       if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.locale
       })) {
         throw new WIKI.Error.CommentManageForbidden()
       }
@@ -169,7 +169,7 @@ export class Comment extends Model {
     if (page) {
       if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.locale
       })) {
         throw new WIKI.Error.CommentManageForbidden()
       }

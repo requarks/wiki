@@ -125,7 +125,7 @@ import { computed, onMounted, reactive } from 'vue'
 // PROPS
 
 const props = defineProps({
-  value: {
+  modelValue: {
     type: String,
     required: true
   }
@@ -133,7 +133,7 @@ const props = defineProps({
 
 // EMITS
 
-const emit = defineEmits(['input'])
+const emit = defineEmits(['update:modelValue'])
 
 // DATA
 
@@ -169,24 +169,24 @@ const iconPackRefWebsite = computed(() => {
 
 function apply () {
   if (state.currentTab === 'img') {
-    emit('input', `img:${state.imgPath}`)
+    emit('update:modelValue', `img:${state.imgPath}`)
   } else {
-    emit('input', state.iconName)
+    emit('update:modelValue', state.iconName)
   }
 }
 
 // MOUNTED
 
 onMounted(() => {
-  if (props.value?.startsWith('img:')) {
+  if (props.modelValue?.startsWith('img:')) {
     state.currentTab = 'img'
-    state.imgPath = props.value.substring(4)
+    state.imgPath = props.modelValue.substring(4)
   } else {
     state.currentTab = 'icon'
     for (const pack of iconPacks) {
       if (props.value?.startsWith(pack.prefix)) {
         state.selPack = pack.value
-        state.selIcon = props.value.substring(pack.prefix.length)
+        state.selIcon = props.modelValue.substring(pack.prefix.length)
         break
       }
     }

@@ -53,14 +53,6 @@ export class User extends Model {
           },
           to: 'groups.id'
         }
-      },
-      locale: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: Locale,
-        join: {
-          from: 'users.localeCode',
-          to: 'locales.code'
-        }
       }
     }
   }
@@ -232,7 +224,7 @@ export class User extends Model {
         email: primaryEmail,
         name: displayName,
         pictureUrl: pictureUrl,
-        localeCode: WIKI.config.lang.code,
+        locale: WIKI.config.lang.code,
         defaultEditor: 'markdown',
         tfaIsActive: false,
         isSystem: false,

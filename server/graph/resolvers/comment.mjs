@@ -32,7 +32,7 @@ export default {
      * Fetch list of comments for a page
      */
     async comments (obj, args, context) {
-      const page = await WIKI.db.pages.query().select('id').findOne({ localeCode: args.locale, path: args.path })
+      const page = await WIKI.db.pages.query().select('id').findOne({ locale: args.locale, path: args.path })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], args)) {
           const comments = await WIKI.db.comments.query().where('pageId', page.id).orderBy('createdAt')
@@ -57,11 +57,11 @@ export default {
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
       }
-      const page = await WIKI.db.pages.query().select('localeCode', 'path').findById(cm.pageId)
+      const page = await WIKI.db.pages.query().select('locale', 'path').findById(cm.pageId)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.locale
         })) {
           return {
             ...cm,

@@ -65,7 +65,10 @@ export const useSiteStore = defineStore('site', {
     sideDialogShown: false,
     sideDialogComponent: '',
     docsBase: 'https://next.js.wiki/docs',
-    nav: {}
+    nav: {
+      currentId: null,
+      items: []
+    }
   }),
   getters: {
     overlayIsShown: (state) => Boolean(state.overlay),
@@ -231,6 +234,44 @@ export const useSiteStore = defineStore('site', {
         this.$patch({
           tags: resp.data.tags ?? [],
           tagsLoaded: true
+        })
+      } catch (err) {
+        console.warn(err.networkError?.result ?? err.message)
+        throw err
+      }
+    },
+    async fetchNavigation (id) {
+      try {
+        const resp = await APOLLO_CLIENT.query({
+          query: gql`
+            query getNavigationItems ($id: UUID!) {
+              navigationById (
+                id: $id
+              ) {
+                id
+                type
+                label
+                icon
+                target
+                openInNewWindow
+                children {
+                  id
+                  type
+                  label
+                  icon
+                  target
+                  openInNewWindow
+                }
+              }
+            }
+          `,
+          variables: { id }
+        })
+        this.$patch({
+          nav: {
+            currentId: id,
+            items: resp?.data?.navigationById ?? []
+          }
         })
       } catch (err) {
         console.warn(err.networkError?.result ?? err.message)

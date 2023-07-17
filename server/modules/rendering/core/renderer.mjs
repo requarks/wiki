@@ -68,12 +68,12 @@ export async function render () {
           // -> Reformat paths
           if (href.indexOf('/') !== 0) {
             if (this.config.absoluteLinks) {
-              href = `/${this.page.localeCode}/${href}`
+              href = `/${this.page.locale}/${href}`
             } else {
-              href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+              href = (this.page.path === 'home') ? `/${this.page.locale}/${href}` : `/${this.page.locale}/${this.page.path}/${href}`
             }
           } else if (href.charAt(3) !== '/') {
-            href = `/${this.page.localeCode}${href}`
+            href = `/${this.page.locale}${href}`
           }
 
           try {
@@ -101,7 +101,7 @@ export async function render () {
         }
         // -> Save internal references
         internalRefs.push({
-          localeCode: pagePath.locale,
+          locale: pagePath.locale,
           path: pagePath.path
         })
 
@@ -127,7 +127,7 @@ export async function render () {
 
   if (internalRefs.length > 0) {
     // -> Find matching pages
-    const results = await WIKI.db.pages.query().column('id', 'path', 'localeCode').where(builder => {
+    const results = await WIKI.db.pages.query().column('id', 'path', 'locale').where(builder => {
       internalRefs.forEach((ref, idx) => {
         if (idx < 1) {
           builder.where(ref)
@@ -148,7 +148,7 @@ export async function render () {
         return
       }
       if (_.some(results, r => {
-        return r.localeCode === hrefObj.locale && r.path === hrefObj.path
+        return r.locale === hrefObj.locale && r.path === hrefObj.path
       })) {
         $(elm).addClass(`is-valid-page`)
       } else {
@@ -158,21 +158,21 @@ export async function render () {
 
     // -> Add missing links
     const missingLinks = _.differenceWith(internalRefs, pastLinks, (nLink, pLink) => {
-      return nLink.localeCode === pLink.localeCode && nLink.path === pLink.path
+      return nLink.locale === pLink.locale && nLink.path === pLink.path
     })
     if (missingLinks.length > 0) {
       if (WIKI.config.db.type === 'postgres') {
         await WIKI.db.pageLinks.query().insert(missingLinks.map(lnk => ({
           pageId: this.page.id,
           path: lnk.path,
-          localeCode: lnk.localeCode
+          locale: lnk.locale
         })))
       } else {
         for (const lnk of missingLinks) {
           await WIKI.db.pageLinks.query().insert({
             pageId: this.page.id,
             path: lnk.path,
-            localeCode: lnk.localeCode
+            locale: lnk.locale
           })
         }
       }
@@ -182,7 +182,7 @@ export async function render () {
   // -> Remove outdated links
   if (pastLinks) {
     const outdatedLinks = _.differenceWith(pastLinks, internalRefs, (nLink, pLink) => {
-      return nLink.localeCode === pLink.localeCode && nLink.path === pLink.path
+      return nLink.locale === pLink.locale && nLink.path === pLink.path
     })
     if (outdatedLinks.length > 0) {
       await WIKI.db.pageLinks.query().delete().whereIn('id', _.map(outdatedLinks, 'id'))

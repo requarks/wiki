@@ -43,14 +43,6 @@ export class Tree extends Model {
 
   static get relationMappings() {
     return {
-      locale: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: Locale,
-        join: {
-          from: 'tree.localeCode',
-          to: 'locales.code'
-        }
-      },
       site: {
         relation: Model.BelongsToOneRelation,
         modelClass: Site,
@@ -99,7 +91,7 @@ export class Tree extends Model {
       const parent = await WIKI.db.knex('tree').where({
         ...parentFilter,
         type: 'folder',
-        localeCode: locale,
+        locale: locale,
         siteId
       }).first()
       if (parent) {
@@ -153,7 +145,7 @@ export class Tree extends Model {
       type: 'page',
       title: title,
       hash: generateHash(fullPath),
-      localeCode: locale,
+      locale: locale,
       siteId,
       meta
     }).returning('*')
@@ -196,7 +188,7 @@ export class Tree extends Model {
       type: 'asset',
       title: title,
       hash: generateHash(fullPath),
-      localeCode: locale,
+      locale: locale,
       siteId,
       meta
     }).returning('*')
@@ -251,7 +243,7 @@ export class Tree extends Model {
     // Check for collision
     const existingFolder = await WIKI.db.knex('tree').select('id').where({
       siteId: siteId,
-      localeCode: locale,
+      locale: locale,
       folderPath: encodeFolderPath(parentPath),
       fileName: pathName
     }).first()
@@ -284,7 +276,7 @@ export class Tree extends Model {
           type: 'folder',
           title: ancestor.fileName,
           hash: generateHash(newAncestorFullPath),
-          localeCode: locale,
+          locale: locale,
           siteId: siteId,
           meta: {
             children: 1
@@ -306,7 +298,7 @@ export class Tree extends Model {
       type: 'folder',
       title: title,
       hash: generateHash(fullPath),
-      localeCode: locale,
+      locale: locale,
       siteId: siteId,
       meta: {
         children: 0

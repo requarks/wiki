@@ -1,23 +1,36 @@
 import { Model } from 'objection'
-import { has, intersection } from 'lodash-es'
+import { has, intersection, templateSettings } from 'lodash-es'
 
 /**
  * Navigation model
  */
 export class Navigation extends Model {
   static get tableName() { return 'navigation' }
-  static get idColumn() { return 'key' }
 
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['key'],
 
       properties: {
-        key: {type: 'string'},
-        config: {type: 'array', items: {type: 'object'}}
+        name: {type: 'string'},
+        items: {type: 'array', items: {type: 'object'}}
       }
     }
+  }
+
+  static async getNav ({ id, cache = false, userGroups = [] }) {
+    const result = await WIKI.db.navigation.query().findById(id).select('items')
+    return result.items.filter(item => {
+      return !item.visibilityGroups?.length || intersection(item.visibilityGroups, userGroups).length > 0
+    }).map(item => {
+      if (!item.children || item.children?.length < 1) { return item }
+      return {
+        ...item,
+        children: item.children.filter(child => {
+          return !child.visibilityGroups?.length || intersection(child.visibilityGroups, userGroups).length > 0
+        })
+      }
+    })
   }
 
   static async getTree({ cache = false, locale = 'en', groups = [], bypassAuth = false } = {}) {

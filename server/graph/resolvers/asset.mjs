@@ -170,7 +170,7 @@ export default {
           folder = {
             folderPath: '',
             fileName: '',
-            localeCode: args.locale,
+            locale: args.locale,
             siteId: args.siteId
           }
         }
@@ -263,7 +263,7 @@ export default {
             parentPath: folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName,
             fileName: formattedFilename,
             title: formattedFilename,
-            locale: folder.localeCode,
+            locale: folder.locale,
             siteId: folder.siteId,
             meta: {
               authorId: asset.authorId,

@@ -21,6 +21,7 @@ const pagePropsFragment = gql`
     isBrowsable
     isSearchable
     locale
+    navigationId
     password
     path
     publishEndDate
@@ -197,6 +198,7 @@ export const usePageStore = defineStore('page', {
     isBrowsable: true,
     isSearchable: true,
     locale: 'en',
+    navigationId: null,
     password: '',
     path: '',
     publishEndDate: '',

@@ -160,7 +160,7 @@ export class Asset extends Model {
       .innerJoin('assets', 'tree.id', 'assets.id')
       .where(id ? { 'tree.id': id } : {
         'tree.hash': generateHash(path),
-        'tree.localeCode': locale,
+        'tree.locale': locale,
         'tree.siteId': siteId
       })
       .first()

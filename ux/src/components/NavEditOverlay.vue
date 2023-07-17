@@ -4,6 +4,12 @@ q-layout(view='hHh lpR fFf', container)
     q-icon(name='img:/_assets/icons/fluent-sidebar-menu.svg', left, size='md')
     span {{t(`navEdit.editMenuItems`)}}
     q-space
+    transition(name='syncing')
+      q-spinner-tail.q-mr-sm(
+        v-show='state.loading > 0'
+        color='accent'
+        size='24px'
+      )
     q-btn.q-mr-sm(
       flat
       rounded
@@ -81,39 +87,65 @@ q-layout(view='hHh lpR fFf', container)
             q-item-section(side)
               q-icon.handle(name='mdi-drag-horizontal', size='sm')
 
-      .q-pa-md
-        q-btn.full-width.acrylic-btn(
+      .q-pa-md.flex
+        q-btn.acrylic-btn(
+          style='flex: 1;'
           flat
           color='positive'
           :label='t(`common.actions.add`)'
           :aria-label='t(`common.actions.add`)'
           icon='las la-plus-circle'
           )
-          q-menu(fit, :offset='[0, 10]')
+          q-menu(fit, :offset='[0, 10]', auto-close)
             q-list(separator)
-              q-item(clickable)
+              q-item(clickable, @click='addItem(`header`)')
                 q-item-section(side)
                   q-icon(name='las la-heading')
                 q-item-section
-                  q-item-label Header
-              q-item(clickable)
+                  q-item-label {{t('navEdit.header')}}
+              q-item(clickable, @click='addItem(`link`)')
                 q-item-section(side)
                   q-icon(name='las la-link')
                 q-item-section
                   q-item-label {{t('navEdit.link')}}
-              q-item(clickable)
+              q-item(clickable, @click='addItem(`separator`)')
                 q-item-section(side)
                   q-icon(name='las la-minus')
                 q-item-section
-                  q-item-label Separator
-              q-item(clickable, style='border-top-width: 5px;')
+                  q-item-label {{t('navEdit.separator')}}
+        q-btn.q-ml-sm.acrylic-btn(
+          flat
+          color='grey'
+          :aria-label='t(`common.actions.add`)'
+          icon='las la-ellipsis-v'
+          padding='xs sm'
+          )
+          q-menu(:offset='[0, 10]' anchor='bottom right' self='top right' auto-close)
+            q-list(separator)
+              q-item(clickable, @click='clearItems', :disable='state.items.length < 1')
                 q-item-section(side)
-                  q-icon(name='mdi-import')
+                  q-icon(name='las la-trash-alt', color='negative')
                 q-item-section
-                  q-item-label Copy from...
+                  q-item-label {{t('navEdit.clearItems')}}
+              //- q-item(clickable)
+              //-   q-item-section(side)
+              //-     q-icon(name='mdi-import')
+              //-   q-item-section
+              //-     q-item-label Copy from...
 
   q-page-container
     q-page.q-pa-md
+      template(v-if='state.items.length < 1')
+        q-card
+          q-card-section
+            q-icon.q-mr-sm(name='las la-arrow-left', size='xs')
+            span {{ t('navEdit.emptyMenuText') }}
+      template(v-else-if='!state.selected')
+        q-card
+          q-card-section
+            q-icon.q-mr-sm(name='las la-arrow-left', size='xs')
+            span {{ t('navEdit.noSelection') }}
+
       template(v-if='state.current.type === `header`')
         q-card.q-pb-sm
           q-card-section
@@ -135,10 +167,11 @@ q-layout(view='hHh lpR fFf', container)
           q-space
           q-btn.acrylic-btn(
             flat
+            icon='las la-trash-alt'
             :label='t(`common.actions.delete`)'
             color='negative'
             padding='xs md'
-            @click=''
+            @click='removeItem(state.current.id)'
           )
 
       template(v-if='state.current.type === `link`')
@@ -175,7 +208,9 @@ q-layout(view='hHh lpR fFf', container)
                   q-icon.cursor-pointer(
                     name='las la-icons'
                     color='primary'
-                  )
+                    )
+                    q-menu(content-class='shadow-7')
+                      icon-picker-dialog(v-model='state.current.icon')
           q-separator.q-my-sm(inset)
           q-item
             blueprint-icon(icon='link')
@@ -219,49 +254,52 @@ q-layout(view='hHh lpR fFf', container)
                 toggle-color='primary'
                 :options='visibilityOptions'
               )
-          q-item(v-if='state.current.visibilityLimited')
-            q-item-section
-            q-item-section
-              q-select(
-                outlined
-                v-model='state.current.visibility'
-                :options='state.groups'
-                option-value='value'
-                option-label='label'
-                emit-value
-                map-options
-                dense
-                options-dense
-                :virtual-scroll-slice-size='1000'
-                :aria-label='t(`admin.general.uploadConflictBehavior`)'
-                )
+          q-item.items-center(v-if='state.current.visibilityLimited')
+            q-space
+            .text-caption.q-mr-md {{ t('navEdit.selectGroups') }}
+            q-select(
+              style='width: 100%; max-width: calc(50% - 34px);'
+              outlined
+              v-model='state.current.visibilityGroups'
+              :options='state.groups'
+              option-value='id'
+              option-label='name'
+              emit-value
+              map-options
+              dense
+              multiple
+              :aria-label='t(`navEdit.selectGroups`)'
+              )
 
-        q-card.q-pa-md.q-mt-md.flex
-          q-btn.acrylic-btn(
-            v-if='state.current.isNested'
-            flat
-            :label='t(`navEdit.unnestItem`)'
-            icon='mdi-format-indent-decrease'
-            color='teal'
-            padding='xs md'
-            @click='state.current.isNested = false'
-          )
-          q-btn.acrylic-btn(
-            v-else
-            flat
-            :label='t(`navEdit.nestItem`)'
-            icon='mdi-format-indent-increase'
-            color='teal'
-            padding='xs md'
-            @click='state.current.isNested = true'
-          )
+        q-card.q-pa-md.q-mt-md.flex.items-start
+          div
+            q-btn.acrylic-btn(
+              v-if='state.current.isNested'
+              flat
+              :label='t(`navEdit.unnestItem`)'
+              icon='mdi-format-indent-decrease'
+              color='teal'
+              padding='xs md'
+              @click='state.current.isNested = false'
+            )
+            q-btn.acrylic-btn(
+              v-else
+              flat
+              :label='t(`navEdit.nestItem`)'
+              icon='mdi-format-indent-increase'
+              color='teal'
+              padding='xs md'
+              @click='state.current.isNested = true'
+            )
+            .text-caption.q-mt-md.text-grey-7 {{ t('navEdit.nestingWarn') }}
           q-space
           q-btn.acrylic-btn(
             flat
+            icon='las la-trash-alt'
             :label='t(`common.actions.delete`)'
             color='negative'
             padding='xs md'
-            @click=''
+            @click='removeItem(state.current.id)'
           )
 
       template(v-if='state.current.type === `separator`')
@@ -272,10 +310,11 @@ q-layout(view='hHh lpR fFf', container)
           q-space
           q-btn.acrylic-btn(
             flat
+            icon='las la-trash-alt'
             :label='t(`common.actions.delete`)'
             color='negative'
             padding='xs md'
-            @click=''
+            @click='removeItem(state.current.id)'
           )
 
 </template>
@@ -284,12 +323,15 @@ q-layout(view='hHh lpR fFf', container)
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { onMounted, reactive, ref } from 'vue'
+import { v4 as uuid } from 'uuid'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
 import { useSiteStore } from 'src/stores/site'
 
 import { Sortable } from 'sortablejs-vue3'
+
+import IconPickerDialog from 'src/components/IconPickerDialog.vue'
 
 // QUASAR
 
@@ -307,66 +349,8 @@ const { t } = useI18n()
 
 const state = reactive({
   loading: 0,
-  selected: '3',
-  items: [
-    {
-      id: '1',
-      type: 'header',
-      label: 'General'
-    },
-    {
-      id: '2',
-      type: 'link',
-      label: 'Dogs',
-      icon: 'las la-dog'
-    },
-    {
-      id: '3',
-      type: 'link',
-      label: 'Cats',
-      icon: 'las la-cat'
-    },
-    {
-      id: '4',
-      type: 'separator'
-    },
-    {
-      id: '5',
-      type: 'header',
-      label: 'User Guide'
-    },
-    {
-      id: '6',
-      type: 'link',
-      label: 'Editing Pages',
-      icon: 'las la-file-alt'
-    },
-    {
-      id: '7',
-      type: 'link',
-      label: 'Permissions',
-      icon: 'las la-key',
-      isNested: true
-    },
-    {
-      id: '8',
-      type: 'link',
-      label: 'Supersuperlongtitleveryveryversupersupersupersupersuper long word',
-      icon: 'las la-key'
-    },
-    {
-      id: '9',
-      type: 'link',
-      label: 'Users',
-      icon: 'las la-users'
-    },
-    {
-      id: '10',
-      type: 'link',
-      label: 'Locales',
-      icon: 'las la-globe'
-    }
-  ],
+  selected: null,
+  items: [],
   current: {
     label: '',
     icon: '',
@@ -409,12 +393,67 @@ function setItem (item) {
   state.current = item
 }
 
+function addItem (type) {
+  const newItem = {
+    id: uuid(),
+    type
+  }
+  switch (type) {
+    case 'header': {
+      newItem.label = t('navEdit.header')
+      break
+    }
+    case 'link': {
+      newItem.label = t('navEdit.link')
+      newItem.icon = 'mdi-text-box-outline'
+      newItem.target = '/'
+      newItem.openInNewWindow = false
+      newItem.visibilityGroups = []
+      newItem.visibilityLimited = false
+      newItem.isNested = false
+      break
+    }
+  }
+  state.items.push(newItem)
+  state.selected = newItem.id
+  state.current = newItem
+}
+
+function removeItem (id) {
+  state.items = state.items.filter(item => item.id !== id)
+  state.selected = null
+  state.current = {}
+}
+
+function clearItems () {
+  state.items = []
+  state.selected = null
+  state.current = {}
+}
+
 function close () {
   siteStore.$patch({ overlay: '' })
 }
 
-onMounted(() => {
+async function loadGroups () {
+  state.loading++
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getGroupsForEditNavMenu {
+        groups {
+          id
+          name
+        }
+      }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.groups = cloneDeep(resp?.data?.groups ?? [])
+  state.loading--
+}
 
+onMounted(() => {
+  loadGroups()
 })
 </script>
 

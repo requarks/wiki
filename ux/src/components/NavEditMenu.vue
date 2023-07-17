@@ -16,19 +16,19 @@ q-card(style='min-width: 350px')
   q-list(padding)
     q-item(tag='label')
       q-item-section(side)
-        q-radio(v-model='state.mode', val='inherit')
+        q-radio(v-model='state.mode', val='inherit', :disable='isRoot')
       q-item-section
         q-item-label Inherit
         q-item-label(caption) Use the menu items and settings from the parent path.
     q-item(tag='label')
       q-item-section(side)
-        q-radio(v-model='state.mode', val='starting')
+        q-radio(v-model='state.mode', val='starting', :disable='isRoot')
       q-item-section
         q-item-label Override Current + Descendants
         q-item-label(caption) Set menu items and settings for this path and all children.
     q-item(tag='label')
       q-item-section(side)
-        q-radio(v-model='state.mode', val='exact')
+        q-radio(v-model='state.mode', val='exact', :disable='isRoot')
       q-item-section
         q-item-label Override Current Only
         q-item-label(caption) Set menu items and settings only for this path.
@@ -50,9 +50,10 @@ q-card(style='min-width: 350px')
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 // PROPS
@@ -66,6 +67,7 @@ const props = defineProps({
 
 // STORES
 
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N

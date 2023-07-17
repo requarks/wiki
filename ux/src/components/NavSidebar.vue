@@ -8,20 +8,22 @@ q-scroll-area.sidebar-nav(
     dense
     dark
     )
-    q-item-label.text-blue-2.text-caption(header) Header
-    q-item(to='/install')
-      q-item-section(side)
-        q-icon(name='las la-dog', color='white')
-      q-item-section Link 1
-    q-item(to='/install')
-      q-item-section(side)
-        q-icon(name='las la-cat', color='white')
-      q-item-section Link 2
-    q-separator.q-my-sm(dark)
-    q-item(to='/install')
-      q-item-section(side)
-        q-icon(name='mdi-fruit-grapes', color='white')
-      q-item-section.text-wordbreak-all Link 3
+    template(v-for='item of siteStore.nav.items')
+      q-item-label.text-blue-2.text-caption.text-wordbreak-all(
+        v-if='item.type === `header`'
+        header
+        ) {{ item.label }}
+      q-item(
+        v-else-if='item.type === `link`'
+        :to='item.target'
+        )
+        q-item-section(side)
+          q-icon(:name='item.icon', color='white')
+        q-item-section.text-wordbreak-all.text-white {{ item.label }}
+      q-separator.q-my-sm(
+        v-else-if='item.type === `separator`'
+        dark
+        )
 </template>
 
 <script setup>
@@ -30,6 +32,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
@@ -38,6 +41,7 @@ const $q = useQuasar()
 
 // STORES
 
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // ROUTER
@@ -63,6 +67,15 @@ const barStyle = {
   width: '9px',
   opacity: 0.1
 }
+
+// WATCHERS
+
+watch(() => pageStore.navigationId, (newValue) => {
+  if (newValue !== siteStore.nav.currentId) {
+    siteStore.fetchNavigation(newValue)
+  }
+}, { immediate: true })
+
 </script>
 
 <style lang="scss">

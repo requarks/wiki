@@ -9,7 +9,7 @@ export async function task ({ payload }) {
 
     let idx = 0
     await pipeline(
-      WIKI.db.knex.select('id', 'title', 'description', 'localeCode', 'render', 'password').from('pages').stream(),
+      WIKI.db.knex.select('id', 'title', 'description', 'locale', 'render', 'password').from('pages').stream(),
       new Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {

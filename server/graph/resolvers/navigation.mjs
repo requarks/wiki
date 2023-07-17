@@ -2,39 +2,22 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 
 export default {
   Query: {
-    async navigationTree (obj, args, context, info) {
-      return WIKI.db.navigation.getTree({ cache: false, locale: 'all', bypassAuth: true })
-    },
-    navigationConfig (obj, args, context, info) {
-      return WIKI.config.nav
+    async navigationById (obj, args, context, info) {
+      return WIKI.db.navigation.getNav({ id: args.id, cache: true, userGroups: context.req.user?.groups })
     }
   },
   Mutation: {
-    async updateNavigationTree (obj, args, context) {
+    async updateNavigation (obj, args, context) {
       try {
-        await WIKI.db.navigation.query().patch({
-          config: args.tree
-        }).where('key', 'site')
-        for (const tree of args.tree) {
-          await WIKI.cache.set(`nav:sidebar:${tree.locale}`, tree.items, 300)
-        }
+        // await WIKI.db.navigation.query().patch({
+        //   config: args.tree
+        // }).where('key', 'site')
+        // for (const tree of args.tree) {
+        //   await WIKI.cache.set(`nav:sidebar:${tree.locale}`, tree.items, 300)
+        // }
 
         return {
           responseResult: generateSuccess('Navigation updated successfully')
-        }
-      } catch (err) {
-        return generateError(err)
-      }
-    },
-    async updateNavigationConfig (obj, args, context) {
-      try {
-        WIKI.config.nav = {
-          mode: args.mode
-        }
-        await WIKI.configSvc.saveToDb(['nav'])
-
-        return {
-          responseResult: generateSuccess('Navigation config updated successfully')
         }
       } catch (err) {
         return generateError(err)

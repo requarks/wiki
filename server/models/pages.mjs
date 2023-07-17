@@ -99,14 +99,6 @@ export class Page extends Model {
           from: 'pages.creatorId',
           to: 'users.id'
         }
-      },
-      locale: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: Locale,
-        join: {
-          from: 'pages.localeCode',
-          to: 'locales.code'
-        }
       }
     }
   }
@@ -267,7 +259,7 @@ export class Page extends Model {
     // -> Check for duplicate
     const dupCheck = await WIKI.db.pages.query().findOne({
       siteId: opts.siteId,
-      localeCode: opts.locale,
+      locale: opts.locale,
       path: opts.path
     }).select('id')
     if (dupCheck) {
@@ -345,7 +337,7 @@ export class Page extends Model {
       icon: opts.icon,
       isBrowsable: opts.isBrowsable ?? true,
       isSearchable: opts.isSearchable ?? true,
-      localeCode: opts.locale,
+      locale: opts.locale,
       ownerId: opts.user.id,
       path: opts.path,
       publishState: opts.publishState,
@@ -372,7 +364,7 @@ export class Page extends Model {
       id: page.id,
       parentPath: initial(pathParts).join('/'),
       fileName: last(pathParts),
-      locale: page.localeCode,
+      locale: page.locale,
       title: page.title,
       meta: {
         authorId: page.authorId,
@@ -401,7 +393,7 @@ export class Page extends Model {
 
     // // -> Reconnect Links
     // await WIKI.db.pages.reconnectLinks({
-    //   locale: page.localeCode,
+    //   locale: page.locale,
     //   path: page.path,
     //   mode: 'create'
     // })
@@ -427,7 +419,7 @@ export class Page extends Model {
 
     // -> Check for page access
     if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-      locale: ogPage.localeCode,
+      locale: ogPage.locale,
       path: ogPage.path
     })) {
       throw new Error('ERR_PAGE_UPDATE_FORBIDDEN')
@@ -596,7 +588,7 @@ export class Page extends Model {
     // -> Format CSS Scripts
     if (opts.patch.scriptCss) {
       if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
-        locale: ogPage.localeCode,
+        locale: ogPage.locale,
         path: ogPage.path
       })) {
         patch.scripts = {
@@ -610,7 +602,7 @@ export class Page extends Model {
     // -> Format JS Scripts
     if (opts.patch.scriptJsLoad) {
       if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-        locale: ogPage.localeCode,
+        locale: ogPage.locale,
         path: ogPage.path
       })) {
         patch.scripts = {
@@ -622,7 +614,7 @@ export class Page extends Model {
     }
     if (opts.patch.scriptJsUnload) {
       if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-        locale: ogPage.localeCode,
+        locale: ogPage.locale,
         path: ogPage.path
       })) {
         patch.scripts = {
@@ -701,11 +693,11 @@ export class Page extends Model {
       if (!id) {
         throw new Error('Must provide either the page ID or the page object.')
       }
-      page = await WIKI.db.pages.query().findById(id).select('id', 'localeCode', 'render', 'password')
+      page = await WIKI.db.pages.query().findById(id).select('id', 'locale', 'render', 'password')
     }
     // -> Exclude password-protected content from being indexed
     const safeContent = page.password ? '' : WIKI.db.pages.cleanHTML(page.render)
-    const dictName = getDictNameFromLocale(page.localeCode)
+    const dictName = getDictNameFromLocale(page.locale)
     return WIKI.db.knex('pages').where('id', page.id).update({
       searchContent: safeContent,
       ts: WIKI.db.knex.raw(`
@@ -747,7 +739,7 @@ export class Page extends Model {
 
     // -> Check for page access
     if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-      locale: ogPage.localeCode,
+      locale: ogPage.locale,
       path: ogPage.path
     })) {
       throw new WIKI.Error.PageUpdateForbidden()
@@ -908,7 +900,7 @@ export class Page extends Model {
     } else {
       page = await WIKI.db.pages.query().findOne({
         path: opts.path,
-        localeCode: opts.locale
+        locale: opts.locale
       })
     }
     if (!page) {
@@ -932,7 +924,7 @@ export class Page extends Model {
 
     // -> Check for source page access
     if (!WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
-      locale: page.localeCode,
+      locale: page.locale,
       path: page.path
     })) {
       throw new WIKI.Error.PageMoveForbidden()
@@ -948,7 +940,7 @@ export class Page extends Model {
     // -> Check for existing page at destination path
     const destPage = await WIKI.db.pages.query().findOne({
       path: opts.destinationPath,
-      localeCode: opts.destinationLocale
+      locale: opts.destinationLocale
     })
     if (destPage) {
       throw new WIKI.Error.PagePathCollision()
@@ -967,7 +959,7 @@ export class Page extends Model {
     const destinationTitle = (page.title === page.path ? opts.destinationPath : page.title)
     await WIKI.db.pages.query().patch({
       path: opts.destinationPath,
-      localeCode: opts.destinationLocale,
+      locale: opts.destinationLocale,
       title: destinationTitle,
       hash: destinationHash
     }).findById(page.id)
@@ -983,7 +975,7 @@ export class Page extends Model {
     await WIKI.data.searchEngine.renamed({
       ...page,
       destinationPath: opts.destinationPath,
-      destinationLocaleCode: opts.destinationLocale,
+      destinationLocale: opts.destinationLocale,
       destinationHash
     })
 
@@ -994,7 +986,7 @@ export class Page extends Model {
         page: {
           ...page,
           destinationPath: opts.destinationPath,
-          destinationLocaleCode: opts.destinationLocale,
+          destinationLocale: opts.destinationLocale,
           destinationHash,
           moveAuthorId: opts.user.id,
           moveAuthorName: opts.user.name,
@@ -1005,7 +997,7 @@ export class Page extends Model {
 
     // -> Reconnect Links : Changing old links to the new path
     await WIKI.db.pages.reconnectLinks({
-      sourceLocale: page.localeCode,
+      sourceLocale: page.locale,
       sourcePath: page.path,
       locale: opts.destinationLocale,
       path: opts.destinationPath,
@@ -1066,7 +1058,7 @@ export class Page extends Model {
 
     // -> Reconnect Links
     await WIKI.db.pages.reconnectLinks({
-      locale: page.localeCode,
+      locale: page.locale,
       path: page.path,
       mode: 'delete'
     })
@@ -1118,7 +1110,7 @@ export class Page extends Model {
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
             'pageLinks.path': opts.path,
-            'pageLinks.localeCode': opts.locale
+            'pageLinks.locale': opts.locale
           })
         })
       affectedHashes = qryHashes.map(h => h.hash)
@@ -1131,7 +1123,7 @@ export class Page extends Model {
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
             'pageLinks.path': opts.path,
-            'pageLinks.localeCode': opts.locale
+            'pageLinks.locale': opts.locale
           })
         })
       const qryHashes = await WIKI.db.pages.query()
@@ -1139,7 +1131,7 @@ export class Page extends Model {
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
             'pageLinks.path': opts.path,
-            'pageLinks.localeCode': opts.locale
+            'pageLinks.locale': opts.locale
           })
         })
       affectedHashes = qryHashes.map(h => h.hash)
@@ -1227,20 +1219,18 @@ export class Page extends Model {
             authorEmail: 'author.email',
             creatorName: 'creator.name',
             creatorEmail: 'creator.email'
-          }
+          },
+          'tree.navigationId'
         ])
         .joinRelated('author')
         .joinRelated('creator')
-        // .withGraphJoined('tags')
-        // .modifyGraph('tags', builder => {
-        //   builder.select('tag')
-        // })
+        .leftJoin('tree', 'pages.id', 'tree.id')
         .where(queryModeID ? {
           'pages.id': opts
         } : {
           'pages.siteId': opts.siteId,
           'pages.path': opts.path,
-          'pages.localeCode': opts.locale
+          'pages.locale': opts.locale
         })
         // .andWhere(builder => {
         //   if (queryModeID) return
@@ -1307,7 +1297,7 @@ export class Page extends Model {
       return {
         ...page,
         path: opts.path,
-        localeCode: opts.locale
+        locale: opts.locale
       }
     } catch (err) {
       if (err.code === 'ENOENT') {
@@ -1346,13 +1336,13 @@ export class Page extends Model {
   static async migrateToLocale({ sourceLocale, targetLocale }) {
     return WIKI.db.pages.query()
       .patch({
-        localeCode: targetLocale
+        locale: targetLocale
       })
       .where({
-        localeCode: sourceLocale
+        locale: sourceLocale
       })
       .whereNotExists(function() {
-        this.select('id').from('pages AS pagesm').where('pagesm.localeCode', targetLocale).andWhereRaw('pagesm.path = pages.path')
+        this.select('id').from('pages AS pagesm').where('pagesm.locale', targetLocale).andWhereRaw('pagesm.path = pages.path')
       })
   }
 

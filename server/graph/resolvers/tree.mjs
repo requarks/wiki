@@ -142,7 +142,7 @@ export default {
         .select(WIKI.db.knex.raw('tree.*, nlevel(tree."folderPath") AS depth'))
         .where({
           siteId: args.siteId,
-          localeCode: args.locale,
+          locale: args.locale,
           folderPath: _.dropRight(parentPathParts).join('.'),
           fileName: _.last(parentPathParts)
         })

@@ -11,12 +11,12 @@ export class PageLink extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['path', 'localeCode'],
+      required: ['path', 'locale'],
 
       properties: {
         id: {type: 'integer'},
         path: {type: 'string'},
-        localeCode: {type: 'string'}
+        locale: {type: 'string'}
       }
     }
   }

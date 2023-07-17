@@ -12,10 +12,10 @@ export default {
      * PAGE HISTORY
      */
     async pageHistoryById (obj, args, context, info) {
-      const page = await WIKI.db.pages.query().select('path', 'localeCode').findById(args.id)
+      const page = await WIKI.db.pages.query().select('path', 'locale').findById(args.id)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.locale
       })) {
         return WIKI.db.pageHistory.getHistory({
           pageId: args.id,
@@ -30,10 +30,10 @@ export default {
      * PAGE VERSION
      */
     async pageVersionById (obj, args, context, info) {
-      const page = await WIKI.db.pages.query().select('path', 'localeCode').findById(args.pageId)
+      const page = await WIKI.db.pages.query().select('path', 'locale').findById(args.pageId)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.locale
       })) {
         return WIKI.db.pageHistory.getVersion({
           pageId: args.pageId,
@@ -68,7 +68,7 @@ export default {
         const searchCols = [
           'id',
           'path',
-          'localeCode AS locale',
+          'locale',
           'title',
           'description',
           'icon',
@@ -99,7 +99,7 @@ export default {
               builder.where('path', 'ILIKE', `${args.path}%`)
             }
             if (args.locale?.length > 0) {
-              builder.whereIn('localeCode', args.locale)
+              builder.whereIn('locale', args.locale)
             }
             if (args.editor) {
               builder.where('editor', args.editor)
@@ -143,7 +143,7 @@ export default {
       let results = await WIKI.db.pages.query().column([
         'pages.id',
         'path',
-        { locale: 'localeCode' },
+        'locale',
         'title',
         'description',
         'isPublished',
@@ -162,7 +162,7 @@ export default {
             queryBuilder.limit(args.limit)
           }
           if (args.locale) {
-            queryBuilder.where('localeCode', args.locale)
+            queryBuilder.where('locale', args.locale)
           }
           if (args.creatorId && args.authorId && args.creatorId > 0 && args.authorId > 0) {
             queryBuilder.where(function () {
@@ -220,15 +220,14 @@ export default {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.locale
         })) {
           return {
             ...page,
             ...page.config,
             scriptCss: page.scripts?.css,
             scriptJsLoad: page.scripts?.jsLoad,
-            scriptJsUnload: page.scripts?.jsUnload,
-            locale: page.localeCode
+            scriptJsUnload: page.scripts?.jsUnload
           }
         } else {
           throw new Error('ERR_FORBIDDEN')
@@ -253,8 +252,7 @@ export default {
           ...page.config,
           scriptCss: page.scripts?.css,
           scriptJsLoad: page.scripts?.jsLoad,
-          scriptJsUnload: page.scripts?.jsUnload,
-          locale: page.localeCode
+          scriptJsUnload: page.scripts?.jsUnload
         }
       } else {
         throw new Error('ERR_PAGE_NOT_FOUND')
@@ -275,13 +273,13 @@ export default {
       const page = await WIKI.db.pages.query().findOne({
         alias: args.alias,
         siteId: args.siteId
-      }).select('id', 'path', 'localeCode')
+      }).select('id', 'path', 'locale')
       if (!page) {
         throw new Error('ERR_ALIAS_NOT_FOUND')
       }
       return {
         id: page.id,
-        path: WIKI.sites[args.siteId].config.localeNamespacing ? `${page.localeCode}/${page.path}` : page.path
+        path: WIKI.sites[args.siteId].config.localeNamespacing ? `${page.locale}/${page.path}` : page.path
       }
     },
 
@@ -305,7 +303,7 @@ export default {
       if (args.path && !args.parent) {
         curPage = await WIKI.db.knex('pageTree').first('parent', 'ancestors').where({
           path: args.path,
-          localeCode: args.locale
+          locale: args.locale
         })
         if (curPage) {
           args.parent = curPage.parent || 0
@@ -315,7 +313,7 @@ export default {
       }
 
       const results = await WIKI.db.knex('pageTree').where(builder => {
-        builder.where('localeCode', args.locale)
+        builder.where('locale', args.locale)
         switch (args.mode) {
           case 'FOLDERS':
             builder.andWhere('isFolder', true)
@@ -336,12 +334,12 @@ export default {
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.localeCode
+          locale: r.locale
         })
       }).map(r => ({
         ...r,
         parent: r.parent || 0,
-        locale: r.localeCode
+        locale: r.locale
       }))
     },
     /**
@@ -352,25 +350,25 @@ export default {
 
       if (WIKI.config.db.type === 'mysql' || WIKI.config.db.type === 'mariadb' || WIKI.config.db.type === 'sqlite') {
         results = await WIKI.db.knex('pages')
-          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.locale' })
           .leftJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
-            'pages.localeCode': args.locale
+            'pages.locale': args.locale
           })
           .unionAll(
             WIKI.db.knex('pageLinks')
-              .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+              .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.locale' })
               .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
               .where({
-                'pages.localeCode': args.locale
+                'pages.locale': args.locale
               })
           )
       } else {
         results = await WIKI.db.knex('pages')
-          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.locale' })
           .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
-            'pages.localeCode': args.locale
+            'pages.locale': args.locale
           })
       }
 
@@ -403,11 +401,11 @@ export default {
      * CHECK FOR EDITING CONFLICT
      */
     async checkConflicts (obj, args, context, info) {
-      let page = await WIKI.db.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
+      let page = await WIKI.db.pages.query().select('path', 'locale', 'updatedAt').findById(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.locale
         })) {
           return page.updatedAt > args.checkoutDate
         } else {
@@ -425,12 +423,12 @@ export default {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.locale
         })) {
           return {
             ...page,
             tags: page.tags.map(t => t.tag),
-            locale: page.localeCode
+            locale: page.locale
           }
         } else {
           throw new WIKI.Error.PageViewForbidden()
@@ -626,14 +624,14 @@ export default {
      */
     async restorePage (obj, args, context) {
       try {
-        const page = await WIKI.db.pages.query().select('path', 'localeCode').findById(args.pageId)
+        const page = await WIKI.db.pages.query().select('path', 'locale').findById(args.pageId)
         if (!page) {
           throw new WIKI.Error.PageNotFound()
         }
 
         if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.locale
         })) {
           throw new WIKI.Error.PageRestoreForbidden()
         }

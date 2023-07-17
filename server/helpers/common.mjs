@@ -122,10 +122,10 @@ export function parseModuleProps (props) {
 }
 
 export function getDictNameFromLocale (locale) {
-  const localeCode = locale.length > 2 ? locale.substring(0, 2) : locale
-  if (localeCode in WIKI.config.search.dictOverrides) {
-    return WIKI.config.search.dictOverrides[localeCode]
+  const loc = locale.length > 2 ? locale.substring(0, 2) : locale
+  if (loc in WIKI.config.search.dictOverrides) {
+    return WIKI.config.search.dictOverrides[loc]
   } else {
-    return WIKI.data.tsDictMappings[localeCode] ?? 'simple'
+    return WIKI.data.tsDictMappings[loc] ?? 'simple'
   }
 }

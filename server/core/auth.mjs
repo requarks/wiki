@@ -188,7 +188,7 @@ export default {
             name: 'API',
             pictureUrl: null,
             timezone: 'America/New_York',
-            localeCode: 'en',
+            locale: 'en',
             permissions: _.get(WIKI.auth.groups, `${user.grp}.permissions`, []),
             groups: [user.grp],
             getPermissions () {
