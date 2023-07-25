@@ -38,6 +38,7 @@ q-layout(view='hHh lpR fFf', container)
         :aria-label='t(`common.actions.save`)'
         icon='las la-check'
         :disabled='state.loading > 0'
+        @click='save'
       )
 
   q-drawer.bg-dark-6(:model-value='true', :width='295', dark)
@@ -50,6 +51,7 @@ q-layout(view='hHh lpR fFf', container)
         :list='state.items'
         item-key='id'
         :options='sortableOptions'
+        @end='updateItemPosition'
         )
         template(#item='{element}')
           .nav-edit-item.nav-edit-item-header(
@@ -163,6 +165,36 @@ q-layout(view='hHh lpR fFf', container)
                 hide-bottom-space
                 :aria-label='t(`navEdit.label`)'
                 )
+          q-item
+            blueprint-icon(icon='user-groups')
+            q-item-section
+              q-item-label {{t(`navEdit.visibility`)}}
+              q-item-label(caption) {{t(`navEdit.visibilityHint`)}}
+            q-item-section(avatar)
+              q-btn-toggle(
+                v-model='state.current.visibilityLimited'
+                push
+                glossy
+                no-caps
+                toggle-color='primary'
+                :options='visibilityOptions'
+              )
+          q-item.items-center(v-if='state.current.visibilityLimited')
+            q-space
+            .text-caption.q-mr-md {{ t('navEdit.selectGroups') }}
+            q-select(
+              style='width: 100%; max-width: calc(50% - 34px);'
+              outlined
+              v-model='state.current.visibilityGroups'
+              :options='state.groups'
+              option-value='id'
+              option-label='name'
+              emit-value
+              map-options
+              dense
+              multiple
+              :aria-label='t(`navEdit.selectGroups`)'
+              )
         q-card.q-pa-md.q-mt-md.flex
           q-space
           q-btn.acrylic-btn(
@@ -303,9 +335,39 @@ q-layout(view='hHh lpR fFf', container)
           )
 
       template(v-if='state.current.type === `separator`')
-        q-card
+        q-card.q-pb-sm
           q-card-section
             .text-subtitle1 {{t('navEdit.separator')}}
+          q-item
+            blueprint-icon(icon='user-groups')
+            q-item-section
+              q-item-label {{t(`navEdit.visibility`)}}
+              q-item-label(caption) {{t(`navEdit.visibilityHint`)}}
+            q-item-section(avatar)
+              q-btn-toggle(
+                v-model='state.current.visibilityLimited'
+                push
+                glossy
+                no-caps
+                toggle-color='primary'
+                :options='visibilityOptions'
+              )
+          q-item.items-center(v-if='state.current.visibilityLimited')
+            q-space
+            .text-caption.q-mr-md {{ t('navEdit.selectGroups') }}
+            q-select(
+              style='width: 100%; max-width: calc(50% - 34px);'
+              outlined
+              v-model='state.current.visibilityGroups'
+              :options='state.groups'
+              option-value='id'
+              option-label='name'
+              emit-value
+              map-options
+              dense
+              multiple
+              :aria-label='t(`navEdit.selectGroups`)'
+              )
         q-card.q-pa-md.q-mt-md.flex
           q-space
           q-btn.acrylic-btn(
@@ -322,11 +384,12 @@ q-layout(view='hHh lpR fFf', container)
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
 import gql from 'graphql-tag'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, last, pick } from 'lodash-es'
 
+import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
 
 import { Sortable } from 'sortablejs-vue3'
@@ -339,6 +402,7 @@ const $q = useQuasar()
 
 // STORES
 
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -356,7 +420,7 @@ const state = reactive({
     icon: '',
     target: '/',
     openInNewWindow: false,
-    visibility: [],
+    visibilityGroups: [],
     visibilityLimited: false,
     isNested: false
   },
@@ -396,7 +460,9 @@ function setItem (item) {
 function addItem (type) {
   const newItem = {
     id: uuid(),
-    type
+    type,
+    visibilityGroups: [],
+    visibilityLimited: false
   }
   switch (type) {
     case 'header': {
@@ -408,8 +474,6 @@ function addItem (type) {
       newItem.icon = 'mdi-text-box-outline'
       newItem.target = '/'
       newItem.openInNewWindow = false
-      newItem.visibilityGroups = []
-      newItem.visibilityLimited = false
       newItem.isNested = false
       break
     }
@@ -429,6 +493,11 @@ function clearItems () {
   state.items = []
   state.selected = null
   state.current = {}
+}
+
+function updateItemPosition (ev) {
+  const item = state.items.splice(ev.oldIndex, 1)[0]
+  state.items.splice(ev.newIndex, 0, item)
 }
 
 function close () {
@@ -452,8 +521,162 @@ async function loadGroups () {
   state.loading--
 }
 
+async function loadMenuItems () {
+  state.loading++
+  $q.loading.show()
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`
+        query getItemsForEditNavMenu (
+          $id: UUID!
+          ) {
+          navigationById (
+            id: $id
+            ) {
+              id
+              type
+              label
+              icon
+              target
+              openInNewWindow
+              visibilityGroups
+              children {
+                id
+                type
+                label
+                icon
+                target
+                openInNewWindow
+                visibilityGroups
+              }
+          }
+        }
+      `,
+      variables: {
+        id: pageStore.isHome ? pageStore.navigationId : pageStore.id
+      },
+      fetchPolicy: 'network-only'
+    })
+    for (const item of cloneDeep(resp?.data?.navigationById ?? [])) {
+      state.items.push({
+        ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow', 'visibilityGroups']),
+        visibilityLimited: item.visibilityGroups?.length > 0
+      })
+      for (const child of (item?.children ?? [])) {
+        state.items.push({
+          ...pick(child, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow', 'visibilityGroups']),
+          visibilityLimited: item.visibilityGroups?.length > 0,
+          isNested: true
+        })
+      }
+    }
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+    close()
+  }
+  $q.loading.hide()
+  state.loading--
+}
+
+function cleanMenuItem (item, isNested = false) {
+  switch (item.type) {
+    case 'header': {
+      return {
+        ...pick(item, ['id', 'type', 'label']),
+        visibilityGroups: item.visibilityLimited ? item.visibilityGroups : []
+      }
+    }
+    case 'link': {
+      return {
+        ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow']),
+        visibilityGroups: item.visibilityLimited ? item.visibilityGroups : [],
+        ...!isNested && { children: [] }
+      }
+    }
+    case 'separator': {
+      return {
+        ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow']),
+        visibilityGroups: item.visibilityLimited ? item.visibilityGroups : []
+      }
+    }
+  }
+}
+
+async function save () {
+  state.loading++
+  $q.loading.show()
+  try {
+    const items = []
+    for (const item of state.items) {
+      if (item.isNested) {
+        if (items.length < 1 || last(items)?.type !== 'link') {
+          throw new Error('One or more nested link items are not under a parent link!')
+        }
+        items[items.length - 1].children.push(cleanMenuItem(item, true))
+      } else {
+        items.push(cleanMenuItem(item))
+      }
+    }
+
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation updateMenuItems (
+          $pageId: UUID!
+          $mode: NavigationMode!
+          $items: [NavigationItemInput!]
+          ) {
+          updateNavigation (
+            pageId: $pageId
+            mode: $mode
+            items: $items
+          ) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        pageId: pageStore.id,
+        mode: siteStore.overlayOpts.mode,
+        items
+      }
+    })
+    if (resp?.data?.updateNavigation?.operation?.succeeded) {
+      $q.notify({
+        type: 'positive',
+        message: t('navEdit.saveSuccess')
+      })
+      siteStore.nav.items = items
+      // -> Clear GraphQL Cache
+      APOLLO_CLIENT.cache.evict('ROOT_QUERY')
+      APOLLO_CLIENT.cache.gc()
+      close()
+    } else {
+      throw new Error(resp?.data?.updateNavigation?.operation?.message || 'Unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  $q.loading.hide()
+  state.loading--
+}
+
 onMounted(() => {
+  loadMenuItems()
   loadGroups()
+})
+
+onBeforeUnmount(() => {
+  siteStore.overlayOpts = {}
 })
 </script>
 

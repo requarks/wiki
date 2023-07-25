@@ -341,7 +341,7 @@ async function createPage () {
   $q.dialog({
     component: defineAsyncComponent(() => import('../components/TreeBrowserDialog.vue')),
     componentProps: {
-      mode: 'createPage',
+      mode: 'savePage',
       folderPath: '',
       itemTitle: pageStore.title,
       itemFileName: pageStore.path

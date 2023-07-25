@@ -64,14 +64,6 @@ export class PageHistory extends Model {
           from: 'pageHistory.authorId',
           to: 'users.id'
         }
-      },
-      locale: {
-        relation: Model.BelongsToOneRelation,
-        modelClass: Locale,
-        join: {
-          from: 'pageHistory.locale',
-          to: 'locales.code'
-        }
       }
     }
   }

@@ -1220,7 +1220,8 @@ export class Page extends Model {
             creatorName: 'creator.name',
             creatorEmail: 'creator.email'
           },
-          'tree.navigationId'
+          'tree.navigationId',
+          'tree.navigationMode'
         ])
         .joinRelated('author')
         .joinRelated('creator')

@@ -79,6 +79,7 @@ type SiteRobots {
 }
 
 type SiteFeatures {
+  browse: Boolean
   ratings: Boolean
   ratingsMode: SitePageRatingMode
   comments: Boolean
@@ -194,6 +195,7 @@ input SiteRobotsInput {
 }
 
 input SiteFeaturesInput {
+  browse: Boolean
   ratings: Boolean
   ratingsMode: SitePageRatingMode
   comments: Boolean

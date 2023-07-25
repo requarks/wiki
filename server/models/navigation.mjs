@@ -20,6 +20,7 @@ export class Navigation extends Model {
 
   static async getNav ({ id, cache = false, userGroups = [] }) {
     const result = await WIKI.db.navigation.query().findById(id).select('items')
+    if (!result) { return [] }
     return result.items.filter(item => {
       return !item.visibilityGroups?.length || intersection(item.visibilityGroups, userGroups).length > 0
     }).map(item => {

@@ -133,6 +133,7 @@ export const useSiteStore = defineStore('site', {
                   }
                 }
                 features {
+                  browse
                   profile
                   ratingsMode
                   reasonForChange

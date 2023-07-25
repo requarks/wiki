@@ -1,8 +1,9 @@
 <template lang="pug">
 q-menu.translucent-menu(
   auto-close
-  anchor='bottom left'
-  self='top left'
+  :anchor='props.anchor'
+  :self='props.self'
+  :offset='props.offset'
   )
   q-list(padding, style='min-width: 200px;')
     q-item(
@@ -24,6 +25,23 @@ import { useQuasar } from 'quasar'
 
 import { useCommonStore } from 'src/stores/common'
 import { useSiteStore } from 'src/stores/site'
+
+// PROPS
+
+const props = defineProps({
+  anchor: {
+    type: String,
+    default: 'bottom left'
+  },
+  self: {
+    type: String,
+    default: 'top left'
+  },
+  offset: {
+    type: Array,
+    default: () => ([0, 0])
+  }
+})
 
 // QUASAR
 

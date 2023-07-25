@@ -3,16 +3,34 @@ q-scroll-area.sidebar-nav(
   :thumb-style='thumbStyle'
   :bar-style='barStyle'
   )
-  q-list(
+  q-list.sidebar-nav-list(
     clickable
     dense
     dark
     )
-    template(v-for='item of siteStore.nav.items')
+    template(v-for='item of siteStore.nav.items', :key='item.id')
       q-item-label.text-blue-2.text-caption.text-wordbreak-all(
         v-if='item.type === `header`'
         header
         ) {{ item.label }}
+      q-expansion-item(
+        v-else-if='item.type === `link` && item.children?.length > 0'
+        :icon='item.icon'
+        :label='item.label'
+        dense
+        )
+        q-list(
+          clickable
+          dense
+          dark
+          )
+          q-item(
+            v-for='itemChild of item.children'
+            :to='itemChild.target'
+            )
+            q-item-section(side)
+              q-icon(:name='itemChild.icon', color='white')
+            q-item-section.text-wordbreak-all.text-white {{ itemChild.label }}
       q-item(
         v-else-if='item.type === `link`'
         :to='item.target'
@@ -20,7 +38,7 @@ q-scroll-area.sidebar-nav(
         q-item-section(side)
           q-icon(:name='item.icon', color='white')
         q-item-section.text-wordbreak-all.text-white {{ item.label }}
-      q-separator.q-my-sm(
+      q-separator(
         v-else-if='item.type === `separator`'
         dark
         )
@@ -71,7 +89,7 @@ const barStyle = {
 // WATCHERS
 
 watch(() => pageStore.navigationId, (newValue) => {
-  if (newValue !== siteStore.nav.currentId) {
+  if (newValue && newValue !== siteStore.nav.currentId) {
     siteStore.fetchNavigation(newValue)
   }
 }, { immediate: true })
@@ -83,9 +101,78 @@ watch(() => pageStore.navigationId, (newValue) => {
   border-top: 1px solid rgba(255,255,255,.15);
   height: calc(100% - 38px - 24px);
 
+  &-list > .q-separator {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+
   .q-list {
     .q-separator + .q-item__label {
-      padding-top: 12px;
+      padding-top: 10px;
+    }
+
+    .q-item__section--avatar {
+      min-width: auto;
+    }
+
+    .q-expansion-item > .q-expansion-item__container {
+      > .q-item {
+        &::before {
+          content: '';
+          display: block;
+          position: absolute;
+          bottom: 0;
+          left: 0px;
+          width: 10px;
+          height: 10px;
+          border-style: solid;
+          border-color: transparent transparent rgba(255,255,255,.25) rgba(255,255,255,.25);
+          transition: all .4s ease;
+        }
+      }
+
+      &::after {
+        content: '';
+        display: block;
+        position: absolute;
+        bottom: -20px;
+        left: 0;
+        width: 10px;
+        height: 10px;
+        border-style: solid;
+        border-color: rgba(255,255,255,.25) transparent transparent rgba(255,255,255,.25);
+        transition: all .4s ease;
+      }
+    }
+
+    .q-expansion-item--collapsed > .q-expansion-item__container {
+      > .q-item {
+        &::before {
+          border-width: 0 0 0 0;
+        }
+      }
+
+      &::after {
+        bottom: 0px;
+        border-width: 0 0 0 0;
+      }
+    }
+
+    .q-expansion-item--expanded > .q-expansion-item__container {
+      > .q-item {
+        &::before {
+          border-width: 0 10px 10px 0;
+        }
+      }
+
+      &::after {
+        bottom: -20px;
+        border-width: 10px 10px 10px 0;
+      }
+    }
+
+    .q-expansion-item__content {
+      border-left: 10px solid rgba(255,255,255,.25);
     }
   }
 }

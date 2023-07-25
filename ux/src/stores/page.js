@@ -22,6 +22,7 @@ const pagePropsFragment = gql`
     isSearchable
     locale
     navigationId
+    navigationMode
     password
     path
     publishEndDate
@@ -199,6 +200,7 @@ export const usePageStore = defineStore('page', {
     isSearchable: true,
     locale: 'en',
     navigationId: null,
+    navigationMode: 'inherit',
     password: '',
     path: '',
     publishEndDate: '',
@@ -237,6 +239,9 @@ export const usePageStore = defineStore('page', {
     },
     folderPath: (state) => {
       return initial(state.path.split('/')).join('/')
+    },
+    isHome: (state) => {
+      return ['', 'home'].includes(state.path)
     }
   },
   actions: {

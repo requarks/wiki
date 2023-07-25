@@ -238,6 +238,7 @@ type Page {
   isSearchable: Boolean
   locale: String
   navigationId: UUID
+  navigationMode: NavigationMode
   password: String
   path: String
   publishEndDate: Date

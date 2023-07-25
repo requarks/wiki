@@ -4,61 +4,99 @@ q-layout(view='hHh Lpr lff')
   q-drawer.bg-sidebar(
     :modelValue='isSidebarShown'
     :show-if-above='siteStore.theme.sidebarPosition !== `off`'
-    :width='255'
+    :width='isSidebarMini ? 56 : 255'
     :side='siteStore.theme.sidebarPosition === `right` ? `right` : `left`'
     )
-    .sidebar-actions.flex.items-stretch
-      q-btn.q-px-sm.col(
+    .sidebar-mini.column.items-stretch(v-if='isSidebarMini')
+      q-btn.q-py-md(
         flat
-        dense
         icon='las la-globe'
-        color='blue-7'
-        text-color='blue-2'
-        :label='commonStore.locale'
-        :aria-label='commonStore.locale'
-        size='sm'
+        color='white'
+        aria-label='Switch Locale'
+        @click=''
         )
-        locale-selector-menu
-      q-separator(vertical)
-      q-btn.q-px-sm.col(
+        locale-selector-menu(anchor='top right' self='top left')
+        q-tooltip(anchor='center right' self='center left') Switch Locale
+      q-btn.q-py-md(
         flat
-        dense
         icon='las la-sitemap'
-        color='blue-7'
-        text-color='blue-2'
-        label='Browse'
+        color='white'
         aria-label='Browse'
+        )
+        q-tooltip(anchor='center right' self='center left') Browse
+      q-separator.q-my-sm(inset, dark)
+      q-btn.q-py-md(
+        flat
+        icon='las la-bookmark'
+        color='white'
+        aria-label='Bookmarks'
+        )
+        q-tooltip(anchor='center right' self='center left') Bookmarks
+      q-space
+      q-btn.q-py-xs(
+        flat
+        icon='las la-dharmachakra'
+        color='white'
+        aria-label='Edit Nav'
         size='sm'
-        )
-    nav-sidebar
-    q-bar.bg-blue-9.text-white(dense, v-if='userStore.authenticated')
-      q-btn.col(
-        v-if='isRoot'
-        icon='las la-dharmachakra'
-        label='Edit Nav'
-        flat
-        @click='siteStore.$patch({ overlay: `NavEdit` })'
-        )
-      q-btn.col(
-        v-else
-        icon='las la-dharmachakra'
-        label='Edit Nav'
-        flat
         )
         q-menu(
-          ref='navEditMenu'
-          anchor='top left'
+          ref='navEditMenuMini'
+          anchor='top right'
           self='bottom left'
-          :offset='[0, 10]'
           )
-          nav-edit-menu(:menu-hide-handler='navEditMenu.hide')
-      q-separator(vertical)
-      q-btn.col(
-        icon='las la-bookmark'
-        label='Bookmarks'
-        flat
-        disabled
-      )
+          nav-edit-menu(
+            :menu-hide-handler='navEditMenuMini.hide'
+            :update-position-handler='navEditMenuMini.updatePosition'
+            )
+        q-tooltip(anchor='center right' self='center left') Edit Nav
+    template(v-else)
+      .sidebar-actions.flex.items-stretch
+        q-btn.q-px-sm.col(
+          flat
+          dense
+          icon='las la-globe'
+          color='blue-7'
+          text-color='blue-2'
+          :label='commonStore.locale'
+          :aria-label='commonStore.locale'
+          size='sm'
+          )
+          locale-selector-menu(:offset="[-5, 5]")
+        q-separator(vertical)
+        q-btn.q-px-sm.col(
+          flat
+          dense
+          icon='las la-sitemap'
+          color='blue-7'
+          text-color='blue-2'
+          label='Browse'
+          aria-label='Browse'
+          size='sm'
+          )
+      nav-sidebar
+      q-bar.bg-blue-9.text-white(dense, v-if='userStore.authenticated')
+        q-btn.col(
+          icon='las la-dharmachakra'
+          label='Edit Nav'
+          flat
+          )
+          q-menu(
+            ref='navEditMenu'
+            anchor='top left'
+            self='bottom left'
+            :offset='[0, 10]'
+            )
+            nav-edit-menu(
+              :menu-hide-handler='navEditMenu.hide'
+              :update-position-handler='navEditMenu.updatePosition'
+              )
+        q-separator(vertical)
+        q-btn.col(
+          icon='las la-bookmark'
+          label='Bookmarks'
+          flat
+        )
   q-page-container
     router-view
     q-page-scroller(
@@ -129,6 +167,7 @@ useMeta({
 // REFS
 
 const navEditMenu = ref(null)
+const navEditMenuMini = ref(null)
 
 // COMPUTED
 
@@ -136,8 +175,8 @@ const isSidebarShown = computed(() => {
   return siteStore.showSideNav && !siteStore.sideNavIsDisabled && !(editorStore.isActive && editorStore.hideSideNav)
 })
 
-const isRoot = computed(() => {
-  return pageStore.path === '' || pageStore.path === 'home'
+const isSidebarMini = computed(() => {
+  return ['hide', 'hideExact'].includes(pageStore.navigationMode) || !pageStore.navigationId
 })
 
 </script>
@@ -147,6 +186,10 @@ const isRoot = computed(() => {
   background: linear-gradient(to bottom, rgba(255,255,255,.1) 0%, rgba(0,0,0, .05) 100%);
   border-bottom: 1px solid rgba(0,0,0,.2);
   height: 38px;
+}
+
+.sidebar-mini {
+  height: 100%;
 }
 
 body.body--dark {

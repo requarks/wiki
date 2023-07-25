@@ -14,10 +14,10 @@ extend type Query {
 
 extend type Mutation {
   updateNavigation(
-    id: UUID!
-    name: String!
-    items: [JSON]!
-  ): DefaultResponse
+    pageId: UUID!
+    mode: NavigationMode!
+    items: [NavigationItemInput!]
+  ): NavigationUpdateResponse
 }
 
 # -----------------------------------------------
@@ -26,10 +26,42 @@ extend type Mutation {
 
 type NavigationItem {
   id: UUID
-  type: String
+  type: NavigationItemType
   label: String
   icon: String
   target: String
   openInNewWindow: Boolean
+  visibilityGroups: [UUID]
   children: [NavigationItem]
+}
+
+input NavigationItemInput {
+  id: UUID!
+  type: NavigationItemType!
+  label: String
+  icon: String
+  target: String
+  openInNewWindow: Boolean
+  visibilityGroups: [UUID!]!
+  children: [NavigationItemInput!]
+}
+
+enum NavigationItemType {
+  header
+  link
+  separator
+}
+
+enum NavigationMode {
+  inherit
+  override
+  overrideExact
+  hide
+  hideExact
+}
+
+type NavigationUpdateResponse {
+  operation: Operation
+  navigationMode: NavigationMode
+  navigationId: UUID
 }

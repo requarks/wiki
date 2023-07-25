@@ -48,16 +48,7 @@ export class Site extends Model {
   }
 
   static async createSite (hostname, config) {
-    const newSiteId = uuid
-
-    const newDefaultNav = await WIKI.db.navigation.query().insertAndFetch({
-      name: 'Default',
-      siteId: newSiteId,
-      items: JSON.stringify([])
-    })
-
     const newSite = await WIKI.db.sites.query().insertAndFetch({
-      id: newSiteId,
       hostname,
       isEnabled: true,
       config: defaultsDeep(config, {
@@ -76,6 +67,7 @@ export class Site extends Model {
           }
         },
         features: {
+          browse: true,
           ratings: false,
           ratingsMode: 'off',
           comments: false,
@@ -148,15 +140,19 @@ export class Site extends Model {
             config: {}
           }
         },
-        nav: {
-          mode: 'mixed',
-          defaultId: newDefaultNav.id,
-        },
         uploads: {
           conflictBehavior: 'overwrite',
           normalizeFilename: true
         }
       })
+    })
+
+    WIKI.logger.debug(`Creating new root navigation for site ${newSite.id}`)
+
+    await WIKI.db.navigation.query().insert({
+      id: newSite.id,
+      siteId: newSite.id,
+      items: JSON.stringify([])
     })
 
     WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)

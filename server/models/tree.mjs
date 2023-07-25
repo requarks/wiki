@@ -147,7 +147,8 @@ export class Tree extends Model {
       hash: generateHash(fullPath),
       locale: locale,
       siteId,
-      meta
+      meta,
+      navigationId: siteId,
     }).returning('*')
 
     return pageEntry[0]
@@ -245,7 +246,8 @@ export class Tree extends Model {
       siteId: siteId,
       locale: locale,
       folderPath: encodeFolderPath(parentPath),
-      fileName: pathName
+      fileName: pathName,
+      type: 'folder'
     }).first()
     if (existingFolder) {
       throw new Error('ERR_FOLDER_ALREADY_EXISTS')
@@ -354,7 +356,8 @@ export class Tree extends Model {
         .andWhere({
           siteId: folder.siteId,
           folderPath: folder.folderPath,
-          fileName: pathName
+          fileName: pathName,
+          type: 'folder'
         }).first()
       if (existingFolder) {
         throw new Error('ERR_FOLDER_ALREADY_EXISTS')

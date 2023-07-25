@@ -143,6 +143,20 @@ q-page.admin-general
         q-card-section
           .text-subtitle1 {{t('admin.general.features')}}
         q-item(tag='label')
+          blueprint-icon(icon='tree-structure')
+          q-item-section
+            q-item-label {{t(`admin.general.allowBrowse`)}}
+            q-item-label(caption) {{t(`admin.general.allowBrowseHint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.config.features.browse'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.general.allowBrowse`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
           blueprint-icon(icon='discussion-forum')
           q-item-section
             q-item-label {{t(`admin.general.allowComments`)}}
@@ -631,6 +645,7 @@ async function load () {
             follow
           }
           features {
+            browse
             comments
             contributions
             profile
@@ -702,6 +717,7 @@ async function save () {
             follow: state.config.robots?.follow ?? false
           },
           features: {
+            browse: state.config.features?.browse ?? false,
             comments: state.config.features?.comments ?? false,
             ratings: (state.config.features?.ratings || 'off') !== 'off',
             ratingsMode: state.config.features?.ratingsMode ?? 'off',

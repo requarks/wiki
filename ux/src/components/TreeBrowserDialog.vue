@@ -1,9 +1,15 @@
 <template lang="pug">
 q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card.page-save-dialog(style='width: 860px; max-width: 90vw;')
-    q-card-section.card-header
+    q-card-section.card-header(v-if='props.mode === `savePage`')
       q-icon(name='img:/_assets/icons/fluent-save-as.svg', left, size='sm')
       span {{t('pageSaveDialog.title')}}
+    q-card-section.card-header(v-else-if='props.mode === `duplicatePage`')
+      q-icon(name='img:/_assets/icons/color-documents.svg', left, size='sm')
+      span {{t('pageDuplicateDialog.title')}}
+    q-card-section.card-header(v-else-if='props.mode === `renamePage`')
+      q-icon(name='img:/_assets/icons/fluent-rename.svg', left, size='sm')
+      span {{t('pageRenameDialog.title')}}
     .row.page-save-dialog-browser
       .col-4
         q-scroll-area(
@@ -30,8 +36,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             clickable
             active-class='active'
             :active='item.id === state.currentFileId'
-            @click.native='state.currentFileId = item.id'
-            @dblclick.native='openItem(item)'
+            @click.native='selectItem(item)'
             )
             q-item-section(side)
               q-icon(:name='item.icon', size='sm')
@@ -47,6 +52,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             label='Page Title'
             dense
             outlined
+            autofocus
+            @focus='state.currentFileId = null'
           )
       q-item
         blueprint-icon(icon='file-submodule')
@@ -56,6 +63,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             label='Path Name'
             dense
             outlined
+            @focus='state.pathDirty = true; state.currentFileId = null'
           )
     q-card-actions.card-actions.q-px-md
       q-btn.acrylic-btn(
@@ -112,10 +120,11 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { cloneDeep, find, initial, last } from 'lodash-es'
 import gql from 'graphql-tag'
+import slugify from 'slugify'
 
 import fileTypes from '../helpers/fileTypes'
 
@@ -132,7 +141,7 @@ const props = defineProps({
   mode: {
     type: String,
     required: false,
-    default: 'pageSave'
+    default: 'savePage'
   },
   itemId: {
     type: String,
@@ -187,7 +196,8 @@ const state = reactive({
   fileList: [],
   title: '',
   path: '',
-  typesToFetch: []
+  typesToFetch: [],
+  pathDirty: false
 })
 
 const thumbStyle = {
@@ -228,6 +238,17 @@ const files = computed(() => {
   })
 })
 
+// WATCHERS
+
+watch(() => state.title, (newValue) => {
+  if (state.pathDirty && !state.path) {
+    state.pathDirty = false
+  }
+  if (!state.pathDirty) {
+    state.path = slugify(newValue, { lower: true, strict: true })
+  }
+})
+
 // METHODS
 
 async function save () {
@@ -247,6 +268,7 @@ async function treeLazyLoad (nodeId, isCurrent, { done, fail }) {
 
 async function loadTree ({ parentId = null, parentPath = null, types, initLoad = false }) {
   try {
+    state.fileList = []
     const resp = await APOLLO_CLIENT.query({
       query: gql`
         query loadTree (
@@ -322,6 +344,18 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
             }
             break
           }
+          case 'TreeItemPage': {
+            state.fileList.push({
+              id: item.id,
+              type: 'page',
+              title: item.title,
+              pageType: 'markdown',
+              updatedAt: '2022-11-24T18:27:00Z',
+              folderPath: item.folderPath,
+              fileName: item.fileName
+            })
+            break
+          }
         }
       }
       if (newTreeRoots.length > 0) {
@@ -344,6 +378,12 @@ function treeContextAction (nodeId, action) {
       break
     }
   }
+}
+
+function selectItem (item) {
+  state.currentFileId = item.id
+  state.title = item.title
+  state.path = item.fileName
 }
 
 function newFolder (parentId) {

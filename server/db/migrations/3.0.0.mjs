@@ -179,7 +179,6 @@ export async function up (knex) {
     // NAVIGATION ----------------------------
     .createTable('navigation', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
-      table.string('name').notNullable()
       table.jsonb('items').notNullable().defaultTo('[]')
     })
     // PAGE HISTORY ------------------------
@@ -298,6 +297,8 @@ export async function up (knex) {
       table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
       table.string('locale', 10).notNullable().defaultTo('en').index()
       table.string('title').notNullable()
+      table.enum('navigationMode', ['inherit', 'override', 'overrideExact', 'hide', 'hideExact']).notNullable().defaultTo('inherit').index()
+      table.uuid('navigationId').index()
       table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())
@@ -393,7 +394,6 @@ export async function up (knex) {
       table.unique(['siteId', 'tag'])
     })
     .table('tree', table => {
-      table.uuid('navigationId').references('id').inTable('navigation').index()
       table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
     .table('userKeys', table => {
@@ -415,7 +415,6 @@ export async function up (knex) {
 
   const groupAdminId = uuid()
   const groupGuestId = '10000000-0000-4000-8000-000000000001'
-  const navDefaultId = uuid()
   const siteId = uuid()
   const authModuleId = uuid()
   const userAdminId = uuid()
@@ -568,6 +567,7 @@ export async function up (knex) {
         }
       },
       features: {
+        browse: true,
         ratings: false,
         ratingsMode: 'off',
         comments: false,
@@ -621,10 +621,6 @@ export async function up (knex) {
           isActive: true,
           config: {}
         }
-      },
-      nav: {
-        mode: 'mixed',
-        defaultId: navDefaultId,
       },
       theme: {
         dark: false,
@@ -757,13 +753,13 @@ export async function up (knex) {
   // -> NAVIGATION
 
   await knex('navigation').insert({
-    id: navDefaultId,
-    name: 'Default',
+    id: siteId,
     items: JSON.stringify([
       {
         id: uuid(),
         type: 'header',
-        label: 'Sample Header'
+        label: 'Sample Header',
+        visibilityGroups: []
       },
       {
         id: uuid(),
@@ -772,6 +768,7 @@ export async function up (knex) {
         label: 'Sample Link 1',
         target: '/',
         openInNewWindow: false,
+        visibilityGroups: [],
         children: []
       },
       {
@@ -781,11 +778,13 @@ export async function up (knex) {
         label: 'Sample Link 2',
         target: '/',
         openInNewWindow: false,
+        visibilityGroups: [],
         children: []
       },
       {
         id: uuid(),
         type: 'separator',
+        visibilityGroups: []
       },
       {
         id: uuid(),
@@ -794,6 +793,7 @@ export async function up (knex) {
         label: 'Sample Link 3',
         target: '/',
         openInNewWindow: false,
+        visibilityGroups: [],
         children: []
       }
     ]),

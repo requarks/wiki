@@ -114,7 +114,7 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-bunch-of-keys.svg')
             q-item-section {{ t('admin.login.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/navigation`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`) || userStore.can(`manage:navigation`)')
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/navigation`', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental && (userStore.can(`manage:sites`) || userStore.can(`manage:navigation`))')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-tree-structure.svg')
             q-item-section {{ t('admin.navigation.title') }}
