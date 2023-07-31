@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import path from 'path'
+import path from 'node:path'
 import fse from 'fs-extra'
 import { startsWith } from 'lodash-es'
 import { generateHash } from '../helpers/common.mjs'
@@ -166,24 +166,24 @@ export class Asset extends Model {
       .first()
   }
 
-  static async getAsset({ path, locale, siteId }, res) {
+  static async getAsset({ pathArgs, siteId }, res) {
     try {
-      const fileInfo = '' // assetHelper.getPathInfo(assetPath)
-      const fileHash = '' // assetHelper.generateHash(assetPath)
-      const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
+      const fileInfo = path.parse(pathArgs.path.toLowerCase())
+      const fileHash = generateHash(pathArgs.path)
+      const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${siteId}/${fileHash}.dat`)
 
       // Force unsafe extensions to download
-      if (WIKI.config.uploads.forceDownload && !['.png', '.apng', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(fileInfo.ext)) {
+      if (WIKI.config.security.forceAssetDownload && !['.png', '.apng', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(fileInfo.ext)) {
         res.set('Content-disposition', 'attachment; filename=' + encodeURIComponent(fileInfo.base))
       }
 
-      if (await WIKI.db.assets.getAssetFromCache(assetPath, cachePath, res)) {
+      if (await WIKI.db.assets.getAssetFromCache({ cachePath, extName: fileInfo.ext }, res)) {
         return
       }
-      if (await WIKI.db.assets.getAssetFromStorage(assetPath, res)) {
-        return
-      }
-      await WIKI.db.assets.getAssetFromDb(assetPath, fileHash, cachePath, res)
+      // if (await WIKI.db.assets.getAssetFromStorage(assetPath, res)) {
+      //   return
+      // }
+      await WIKI.db.assets.getAssetFromDb({ pathArgs, fileHash, cachePath, siteId }, res)
     } catch (err) {
       if (err.code === `ECONNABORTED` || err.code === `EPIPE`) {
         return
@@ -193,13 +193,13 @@ export class Asset extends Model {
     }
   }
 
-  static async getAssetFromCache(assetPath, cachePath, res) {
+  static async getAssetFromCache({ cachePath, extName }, res) {
     try {
       await fse.access(cachePath, fse.constants.R_OK)
     } catch (err) {
       return false
     }
-    res.type(path.extname(assetPath))
+    res.type(extName)
     await new Promise(resolve => res.sendFile(cachePath, { dotfiles: 'deny' }, resolve))
     return true
   }
@@ -219,11 +219,14 @@ export class Asset extends Model {
     return false
   }
 
-  static async getAssetFromDb(assetPath, fileHash, cachePath, res) {
-    const asset = await WIKI.db.assets.query().where('hash', fileHash).first()
+  static async getAssetFromDb({ pathArgs, fileHash, cachePath, siteId }, res) {
+    const asset = await WIKI.db.knex('tree').where({
+      siteId,
+      hash: fileHash
+    }).first()
     if (asset) {
-      const assetData = await WIKI.db.knex('assetData').where('id', asset.id).first()
-      res.type(asset.ext)
+      const assetData = await WIKI.db.knex('assets').where('id', asset.id).first()
+      res.type(assetData.fileExt)
       res.send(assetData.data)
       await fse.outputFile(cachePath, assetData.data)
     } else {

@@ -19,6 +19,50 @@
       disable
       )
       q-tooltip(anchor='center left' self='center right') Page Data
+    q-btn.q-py-md(
+      v-if='editorStore.isActive'
+      flat
+      color='white'
+      :text-color='hasPendingAssets ? `white` : `deep-orange-3`'
+      aria-label='Pending Asset Uploads'
+      )
+      q-icon(name='mdi-image-sync-outline')
+        q-badge.page-actions-pending-badge(
+          v-if='hasPendingAssets'
+          color='white'
+          text-color='orange-9'
+          rounded
+          floating
+          )
+          strong {{ editorStore.pendingAssets.length * 1 }}
+      q-tooltip(anchor='center left' self='center right') Pending Asset Uploads
+      q-menu(
+        ref='menuPendingAssets'
+        anchor='top left'
+        self='top right'
+        :offset='[10, 0]'
+        )
+        q-card(style='width: 450px;')
+          q-card-section.card-header
+            q-icon(name='img:/_assets/icons/color-data-pending.svg', left, size='sm')
+            span Pending Asset Uploads
+          q-card-section(v-if='!hasPendingAssets') There are no assets pending uploads.
+          q-list(v-else, separator)
+            q-item(v-for='item of editorStore.pendingAssets')
+              q-item-section(side)
+                q-icon(name='las la-file-image')
+              q-item-section {{ item.file.name }}
+              q-item-section(side)
+                q-btn.acrylic-btn(
+                  color='negative'
+                  round
+                  icon='las la-times'
+                  size='xs'
+                  flat
+                  @click='removePendingAsset(item)'
+                  )
+          q-card-section.card-actions
+            em.text-caption Assets that are pasted or dropped onto this page will be held here until the page is saved.
     q-separator.q-my-sm(inset)
   q-btn.q-py-md(
     flat
@@ -131,6 +175,14 @@ const route = useRoute()
 
 const { t } = useI18n()
 
+// REFS
+
+const menuPendingAssets = ref(null)
+
+// COMPUTED
+
+const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
+
 // METHODS
 
 function togglePageProperties () {
@@ -188,6 +240,14 @@ function deletePage () {
     router.replace('/')
   })
 }
+
+function removePendingAsset (item) {
+  URL.revokeObjectURL(item.blobUrl)
+  editorStore.pendingAssets = editorStore.pendingAssets.filter(a => a.id !== item.id)
+  if (editorStore.pendingAssets.length < 1) {
+    menuPendingAssets.value.hide()
+  }
+}
 </script>
 
 <style lang="scss">
@@ -216,6 +276,22 @@ function deletePage () {
     padding: 1.75rem 1rem 1.75rem 0;
     color: $deep-orange-3;
     font-weight: 500;
+  }
+
+  &-pending-badge {
+    animation: pageActionsBadgePulsate 2s ease infinite;
+  }
+}
+
+@keyframes pageActionsBadgePulsate {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(3px, -3px);
+  }
+  100% {
+    transform: translate(0, 0);
   }
 }
 </style>

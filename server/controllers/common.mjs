@@ -1,5 +1,5 @@
 import express from 'express'
-// import pageHelper from '../helpers/page.mjs'
+import { parsePath } from '../helpers/page.mjs'
 // import CleanCSS from 'clean-css'
 import path from 'node:path'
 
@@ -526,8 +526,22 @@ export default function () {
   //   }
   // })
 
-  router.get('/*', (req, res, next) => {
-    res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
+  router.get('/*', async (req, res, next) => {
+    const site = await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
+
+    if (!site) {
+      throw new Error('INVALID_SITE')
+    }
+
+    const stripExt = site.config.pageExtensions.some(ext => req.path.endsWith(`.${ext}`))
+    const pathArgs = parsePath(req.path, { stripExt })
+    const isPage = (stripExt || pathArgs.path.indexOf('.') === -1)
+
+    if (isPage) {
+      res.sendFile(path.join(WIKI.ROOTPATH, 'assets/index.html'))
+    } else {
+      await WIKI.db.assets.getAsset({ pathArgs, siteId: site.id }, res)
+    }
   })
 
   return router

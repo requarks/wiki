@@ -66,7 +66,7 @@ The current stable release (2.x) is available at https://js.wiki
     ```
 1. In the left-side terminal (Server), run the command:
     ```sh
-    node run start
+    npm run start
     ```
 1. Open your browser to `http://localhost:3000`
 1. Login using the default administrator user:

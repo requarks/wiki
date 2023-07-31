@@ -63,6 +63,7 @@ q-card.page-properties-dialog
               color='primary'
             )
         q-input(
+          v-if='pageStore.path !== `home`'
           v-model='pageStore.alias'
           :label='t(`editor.props.alias`)'
           outlined

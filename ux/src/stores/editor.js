@@ -24,7 +24,8 @@ export const useEditorStore = defineStore('editor', {
     editors: {},
     configIsLoaded: false,
     reasonForChange: '',
-    ignoreRouteChange: false
+    ignoreRouteChange: false,
+    pendingAssets: []
   }),
   getters: {
     hasPendingChanges: (state) => {

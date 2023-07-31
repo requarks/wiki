@@ -15,8 +15,31 @@
         icon='mdi-image-plus-outline'
         padding='sm sm'
         flat
-        @click='insertAssets'
         )
+        q-menu(anchor='top right' self='top left')
+          q-list(separator, auto-close)
+            q-item(
+              clickable
+              @click='insertAssets'
+              )
+              q-item-section(side)
+                q-icon(name='las la-folder-open', color='positive')
+              q-item-section
+                q-item-label From File Manager...
+            q-item(
+              clickable
+              )
+              q-item-section(side)
+                q-icon(name='las la-clipboard', color='brown')
+              q-item-section
+                q-item-label From Clipboard...
+            q-item(
+              clickable
+              )
+              q-item-section(side)
+                q-icon(name='las la-cloud-download-alt', color='blue')
+              q-item-section
+                q-item-label From Remote URL...
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertAssets') }}
       q-btn(
         icon='mdi-code-json'
@@ -232,6 +255,7 @@ import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
+import { v4 as uuid } from 'uuid'
 
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
@@ -595,6 +619,28 @@ onMounted(async () => {
       }
     }
   }, 500))
+
+  // -> Handle asset drop
+  editor.getContainerDomNode().addEventListener('drop', ev => {
+    ev.preventDefault()
+    for (const file of ev.dataTransfer.files) {
+      const blobUrl = URL.createObjectURL(file)
+      editorStore.pendingAssets.push({
+        id: uuid(),
+        file,
+        blobUrl
+      })
+      if (file.type.startsWith('image')) {
+        insertAtCursor({
+          content: `![${file.name}](${blobUrl})`
+        })
+      } else {
+        insertAtCursor({
+          content: `[${file.name}](${blobUrl})`
+        })
+      }
+    }
+  })
 
   // -> Post init
 
