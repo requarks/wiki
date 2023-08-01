@@ -289,6 +289,7 @@ async function saveChanges (closeAfter = false) {
 }
 
 async function saveChangesCommit (closeAfter = false) {
+  await processPendingAssets()
   $q.loading.show()
   try {
     await pageStore.pageSave()
@@ -315,6 +316,7 @@ async function saveChangesCommit (closeAfter = false) {
 async function createPage () {
   // Handle home page creation flow
   if (pageStore.path === 'home') {
+    await processPendingAssets()
     $q.loading.show()
     try {
       await pageStore.pageSave()
@@ -347,6 +349,8 @@ async function createPage () {
       itemFileName: pageStore.path
     }
   }).onOk(async ({ path, title }) => {
+    await processPendingAssets()
+
     $q.loading.show()
     try {
       pageStore.$patch({
@@ -370,6 +374,17 @@ async function createPage () {
     }
     $q.loading.hide()
   })
+}
+
+async function processPendingAssets () {
+  if (editorStore.pendingAssets?.length > 0) {
+    return new Promise((resolve, reject) => {
+      $q.dialog({
+        component: defineAsyncComponent(() => import('../components/UploadPendingAssetsDialog.vue')),
+        persistent: true
+      }).onOk(resolve).onCancel(reject)
+    })
+  }
 }
 
 async function editPage () {

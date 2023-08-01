@@ -51,7 +51,7 @@
             q-item(v-for='item of editorStore.pendingAssets')
               q-item-section(side)
                 q-icon(name='las la-file-image')
-              q-item-section {{ item.file.name }}
+              q-item-section {{ item.fileName }}
               q-item-section(side)
                 q-btn.acrylic-btn(
                   color='negative'

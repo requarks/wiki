@@ -28,6 +28,8 @@
                 q-item-label From File Manager...
             q-item(
               clickable
+              @click='getAssetFromClipboard'
+              v-close-popup
               )
               q-item-section(side)
                 q-icon(name='las la-clipboard', color='brown')
@@ -251,11 +253,10 @@
 import { reactive, ref, shallowRef, nextTick, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { get, flatten, last, times, startsWith, debounce } from 'lodash-es'
+import { find, get, last, times, startsWith, debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
-import { v4 as uuid } from 'uuid'
 
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
@@ -477,6 +478,43 @@ function openEditorSettings () {
   siteStore.$patch({ overlay: 'EditorMarkdownConfig' })
 }
 
+async function getAssetFromClipboard () {
+  try {
+    const permission = await navigator.permissions.query({
+      name: 'clipboard-read'
+    })
+    if (permission.state === 'denied') {
+      throw new Error('Not allowed to read clipboard.')
+    }
+    const clipboardContents = await navigator.clipboard.read()
+    let hasValidItem = false
+    for (const item of clipboardContents) {
+      const imageType = find(item.types, t => t.startsWith('image/'))
+      if (imageType) {
+        hasValidItem = true
+        const blob = await item.getType(imageType)
+        const blobUrl = editorStore.addPendingAsset(blob)
+        insertAtCursor({
+          content: `![](${blobUrl})`
+        })
+      }
+    }
+    if (!hasValidItem) {
+      throw new Error('No supported content found in the Clipboard.')
+    }
+  } catch (err) {
+    return $q.notify({
+      type: 'negative',
+      message: 'Unable to copy from Clipboard',
+      caption: err.message
+    })
+  }
+}
+
+function reloadEditorContent () {
+  editor.getModel().setValue(pageStore.content)
+}
+
 // MOUNTED
 
 onMounted(async () => {
@@ -624,12 +662,7 @@ onMounted(async () => {
   editor.getContainerDomNode().addEventListener('drop', ev => {
     ev.preventDefault()
     for (const file of ev.dataTransfer.files) {
-      const blobUrl = URL.createObjectURL(file)
-      editorStore.pendingAssets.push({
-        id: uuid(),
-        file,
-        blobUrl
-      })
+      const blobUrl = editorStore.addPendingAsset(file)
       if (file.type.startsWith('image')) {
         insertAtCursor({
           content: `![${file.name}](${blobUrl})`
@@ -652,6 +685,7 @@ onMounted(async () => {
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('openEditorSettings', openEditorSettings)
+  EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
 
   // this.$root.$on('editorInsert', opts => {
   //   switch (opts.kind) {
@@ -689,6 +723,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('openEditorSettings', openEditorSettings)
+  EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   if (editor) {
     editor.dispose()
   }
