@@ -27,7 +27,7 @@ q-page.admin-mail
       )
   q-separator(inset)
   .row.q-pa-md.q-col-gutter-md
-    .col-auto
+    .col-12.col-lg-auto
       q-card.rounded-borders.bg-dark
         q-list(
           style='min-width: 350px;'
@@ -35,8 +35,8 @@ q-page.admin-mail
           dark
           )
           q-item(
-            v-for='str of combinedActiveStrategies'
-            :key='str.key'
+            v-for='str of state.activeStrategies'
+            :key='str.id'
             active-class='bg-primary text-white'
             :active='state.selectedStrategy === str.id'
             @click='state.selectedStrategy = str.id'
@@ -77,20 +77,124 @@ q-page.admin-mail
     .col
       q-card.q-pb-sm
         q-card-section
-          .text-subtitle1 {{t('admin.storage.contentTypes')}}
-          .text-body2.text-grey {{ t('admin.storage.contentTypesHint') }}
+          .text-subtitle1 {{t('admin.auth.info')}}
+        q-item
+          blueprint-icon(icon='information')
+          q-item-section
+            q-item-label {{t(`admin.auth.infoName`)}}
+            q-item-label(caption) {{t(`admin.auth.infoNameHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.strategy.displayName'
+              dense
+              hide-bottom-space
+              :aria-label='t(`admin.auth.infoName`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='shutdown')
+          q-item-section
+            q-item-label {{t(`admin.auth.enabled`)}}
+            q-item-label(caption) {{t(`admin.auth.enabledHint`)}}
+            q-item-label.text-deep-orange(v-if='state.strategy.strategy.key === `local`', caption) {{t(`admin.auth.enabledForced`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.strategy.isEnabled'
+              :disable='state.strategy.strategy.key === `local`'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.auth.enabled`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item(tag='label')
+          blueprint-icon(icon='register')
+          q-item-section
+            q-item-label {{t(`admin.auth.selfRegistration`)}}
+            q-item-label(caption) {{t(`admin.auth.selfRegistrationHint`)}}
+          q-item-section(avatar)
+            q-toggle(
+              v-model='state.strategy.selfRegistration'
+              color='primary'
+              checked-icon='las la-check'
+              unchecked-icon='las la-times'
+              :aria-label='t(`admin.auth.selfRegistration`)'
+              )
+        template(v-if='state.strategy.selfRegistration')
+          q-separator.q-my-sm(inset)
+          q-item
+            blueprint-icon(icon='team')
+            q-item-section
+              q-item-label {{t(`admin.auth.autoEnrollGroups`)}}
+              q-item-label(caption) {{t(`admin.auth.autoEnrollGroupsHint`)}}
+            q-item-section
+              q-select(
+                outlined
+                :options='state.groups'
+                v-model='state.strategy.autoEnrollGroups'
+                multiple
+                map-options
+                emit-value
+                option-value='id'
+                option-label='name'
+                options-dense
+                dense
+                hide-bottom-space
+                :aria-label='t(`admin.users.groups`)'
+                :loading='state.loadingGroups'
+                )
+                template(v-slot:selected)
+                  .text-caption(v-if='state.strategy.autoEnrollGroups?.length > 1')
+                    i18n-t(keypath='admin.users.groupsSelected')
+                      template(#count)
+                        strong {{ state.strategy.autoEnrollGroups?.length }}
+                  .text-caption(v-else-if='state.strategy.autoEnrollGroups?.length === 1')
+                    i18n-t(keypath='admin.users.groupSelected')
+                      template(#group)
+                        strong {{ selectedGroupName }}
+                  span(v-else)
+                template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
+                  q-item(
+                    v-bind='itemProps'
+                    )
+                    q-item-section(side)
+                      q-checkbox(
+                        size='sm'
+                        :model-value='selected'
+                        @update:model-value='toggleOption(opt)'
+                        )
+                    q-item-section
+                      q-item-label {{opt.name}}
+
+          q-separator.q-my-sm(inset)
+          q-item
+            blueprint-icon(icon='private')
+            q-item-section
+              q-item-label {{t(`admin.auth.domainsWhitelist`)}}
+              q-item-label(caption) {{t(`admin.auth.domainsWhitelistHint`)}}
+            q-item-section
+              q-input(
+                outlined
+                v-model='state.strategy.domainWhitelist'
+                dense
+                hide-bottom-space
+                :aria-label='t(`admin.auth.domainsWhitelist`)'
+                prefix='/'
+                suffix='/'
+                )
 
       //- -----------------------
       //- Configuration
       //- -----------------------
       q-card.q-pb-sm.q-mt-md
         q-card-section
-          .text-subtitle1 {{t('admin.storage.config')}}
+          .text-subtitle1 {{t('admin.auth.strategyConfiguration')}}
           q-banner.q-mt-md(
             v-if='!state.strategy.config || Object.keys(state.strategy.config).length < 1'
             rounded
             :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
-            ) {{t('admin.storage.noConfigOption')}}
+            ) {{t('admin.auth.noConfigOption')}}
         template(
           v-for='(cfg, cfgKey, idx) in state.strategy.config'
           )
@@ -148,228 +252,62 @@ q-page.admin-mail
                   outlined
                   v-model='cfg.value'
                   dense
-                  :type='cfg.multiline ? `textarea` : `input`'
+                  :type='cfg.multiline ? `textarea` : (cfg.sensitive ? `password` : `input`)'
                   :aria-label='cfg.title'
                   :disable='cfg.readOnly'
                   )
 
-    .col-auto(v-if='state.selectedStrategy && state.strategy')
+      //- -----------------------
+      //- References
+      //- -----------------------
+      q-card.q-pb-sm.q-mt-md(v-if='strategyRefs.length > 0')
+        q-card-section
+          .text-subtitle1 {{t('admin.auth.configReference')}}
+        q-item(v-for='strRef of strategyRefs', :key='strRef.key')
+          blueprint-icon(:icon='strRef.icon', :hue-rotate='-45')
+          q-item-section
+            q-item-label {{strRef.title}}
+            q-item-label(caption) {{strRef.hint}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='strRef.value'
+              dense
+              :aria-label='strRef.title'
+              readonly
+            )
       //- -----------------------
       //- Infobox
       //- -----------------------
-      q-card.rounded-borders.q-pb-md(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{state.strategy.strategy.title}}
-          q-img.q-mt-sm.rounded-borders(
+      q-card.q-mt-md
+        q-card-section.text-center
+          q-img.rounded-borders(
             :src='state.strategy.strategy.logo'
             fit='contain'
             no-spinner
-            style='height: 100px;'
+            style='height: 100px; max-width: 300px;'
           )
-          .text-body2.q-mt-md {{state.strategy.strategy.description}}
-        q-separator.q-mb-sm(inset)
-        q-item
-          q-item-section
-            q-item-label.text-grey {{t(`admin.auth.vendor`)}}
-            q-item-label {{state.strategy.strategy.vendor}}
-        q-separator.q-my-sm(inset)
-        q-item
-          q-item-section
-            q-item-label.text-grey {{t(`admin.auth.vendorWebsite`)}}
-            q-item-label: a(:href='state.strategy.strategy.website', target='_blank', rel='noreferrer') {{state.strategy.strategy.website}}
+          .text-subtitle2.q-mt-sm {{state.strategy.strategy.title}}
+          .text-caption.q-mt-sm {{state.strategy.strategy.description}}
+          .text-caption.q-mt-sm: strong {{state.strategy.strategy.vendor}}
+          .text-caption: a(:href='state.strategy.strategy.website', target='_blank', rel='noreferrer') {{state.strategy.strategy.website}}
 
-      //- -----------------------
-      //- Status
-      //- -----------------------
-      q-card.rounded-borders.q-pb-md.q-mt-md(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{t(`admin.auth.status`)}}
-        q-item(tag='label')
-          q-item-section
-            q-item-label {{t(`admin.auth.enabled`)}}
-            q-item-label(caption) {{t(`admin.auth.enabledHint`)}}
-            q-item-label.text-deep-orange(v-if='state.strategy.strategy.key === `local`', caption) {{t(`admin.auth.enabledForced`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.strategy.isEnabled'
-              :disable='state.strategy.strategy.key === `local`'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.auth.enabled`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          q-item-section
-            q-btn.acrylic-btn(
-              icon='las la-trash-alt'
-              flat
-              color='negative'
-              :disable='state.strategy.strategy.key === `local`'
-              label='Delete Strategy'
-              )
-
-    //- v-flex(xs12, lg9)
-    //-   v-card.animated.fadeInUp.wait-p2s
-    //-     v-toolbar(color='primary', dense, flat, dark)
-    //-       .subtitle-1 {{strategy.displayName}} #[em ({{strategy.strategy.title}})]
-    //-       v-spacer
-    //-       v-btn(small, outlined, dark, color='white', :disabled='strategy.key === `local`', @click='deleteStrategy()')
-    //-         v-icon(left) mdi-close
-    //-         span {{$t('common.actions.delete')}}
-    //-     v-card-info(color='blue')
-    //-       div
-    //-         span {{strategy.strategy.description}}
-    //-         .caption: a(:href='strategy.strategy.website') {{strategy.strategy.website}}
-    //-       v-spacer
-    //-       .admin-providerlogo
-    //-         img(:src='strategy.strategy.logo', :alt='strategy.strategy.title')
-    //-     v-card-text
-    //-       .row
-    //-         .col-8
-    //-           v-text-field(
-    //-             outlined
-    //-             :label='$t(`admin.auth.displayName`)'
-    //-             v-model='strategy.displayName'
-    //-             prepend-icon='mdi-format-title'
-    //-             :hint='$t(`admin.auth.displayNameHint`)'
-    //-             persistent-hint
-    //-             )
-    //-         .col-4
-    //-           v-switch.mt-1(
-    //-             :label='$t(`admin.auth.strategyIsEnabled`)'
-    //-             v-model='strategy.isEnabled'
-    //-             color='primary'
-    //-             prepend-icon='mdi-power'
-    //-             :hint='$t(`admin.auth.strategyIsEnabledHint`)'
-    //-             persistent-hint
-    //-             inset
-    //-             :disabled='strategy.key === `local`'
-    //-             )
-    //-       template(v-if='strategy.config && Object.keys(strategy.config).length > 0')
-    //-         v-divider
-    //-         .overline.my-5 {{$t('admin.auth.strategyConfiguration')}}
-    //-         .pr-3
-    //-           template(v-for='cfg in strategy.config')
-    //-             v-select.mb-3(
-    //-               v-if='cfg.value.type === "string" && cfg.value.enum'
-    //-               outlined
-    //-               :items='cfg.value.enum'
-    //-               :key='cfg.key'
-    //-               :label='cfg.value.title'
-    //-               v-model='cfg.value.value'
-    //-               prepend-icon='mdi-cog-box'
-    //-               :hint='cfg.value.hint ? cfg.value.hint : ""'
-    //-               persistent-hint
-    //-               :class='cfg.value.hint ? "mb-2" : ""'
-    //-               :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
-    //-             )
-    //-             v-switch.mb-6(
-    //-               v-else-if='cfg.value.type === "boolean"'
-    //-               :key='cfg.key'
-    //-               :label='cfg.value.title'
-    //-               v-model='cfg.value.value'
-    //-               color='primary'
-    //-               prepend-icon='mdi-cog-box'
-    //-               :hint='cfg.value.hint ? cfg.value.hint : ""'
-    //-               persistent-hint
-    //-               inset
-    //-               )
-    //-             v-textarea.mb-3(
-    //-               v-else-if='cfg.value.type === "string" && cfg.value.multiline'
-    //-               outlined
-    //-               :key='cfg.key'
-    //-               :label='cfg.value.title'
-    //-               v-model='cfg.value.value'
-    //-               prepend-icon='mdi-cog-box'
-    //-               :hint='cfg.value.hint ? cfg.value.hint : ""'
-    //-               persistent-hint
-    //-               :class='cfg.value.hint ? "mb-2" : ""'
-    //-               )
-    //-             v-text-field.mb-3(
-    //-               v-else
-    //-               outlined
-    //-               :key='cfg.key'
-    //-               :label='cfg.value.title'
-    //-               v-model='cfg.value.value'
-    //-               prepend-icon='mdi-cog-box'
-    //-               :hint='cfg.value.hint ? cfg.value.hint : ""'
-    //-               persistent-hint
-    //-               :class='cfg.value.hint ? "mb-2" : ""'
-    //-               :style='cfg.value.maxWidth > 0 ? `max-width:` + cfg.value.maxWidth + `px;` : ``'
-    //-               )
-    //-       v-divider
-    //-       .overline.my-5 {{$t('admin.auth.registration')}}
-    //-       .pr-3
-    //-         v-switch.ml-3(
-    //-           v-model='strategy.selfRegistration'
-    //-           :label='$t(`admin.auth.selfRegistration`)'
-    //-           color='primary'
-    //-           :hint='$t(`admin.auth.selfRegistrationHint`)'
-    //-           persistent-hint
-    //-           inset
-    //-         )
-    //-         v-combobox.ml-3.mt-5(
-    //-           :label='$t(`admin.auth.domainsWhitelist`)'
-    //-           v-model='strategy.domainWhitelist'
-    //-           prepend-icon='mdi-email-check-outline'
-    //-           outlined
-    //-           :disabled='!strategy.selfRegistration'
-    //-           :hint='$t(`admin.auth.domainsWhitelistHint`)'
-    //-           persistent-hint
-    //-           small-chips
-    //-           deletable-chips
-    //-           clearable
-    //-           multiple
-    //-           chips
-    //-           )
-    //-         v-autocomplete.mt-3.ml-3(
-    //-           outlined
-    //-           :disabled='!strategy.selfRegistration'
-    //-           :items='groups'
-    //-           item-text='name'
-    //-           item-value='id'
-    //-           :label='$t(`admin.auth.autoEnrollGroups`)'
-    //-           v-model='strategy.autoEnrollGroups'
-    //-           prepend-icon='mdi-account-group'
-    //-           :hint='$t(`admin.auth.autoEnrollGroupsHint`)'
-    //-           small-chips
-    //-           persistent-hint
-    //-           deletable-chips
-    //-           clearable
-    //-           multiple
-    //-           chips
-    //-           )
-
-    //-   v-card.mt-4.wiki-form.animated.fadeInUp.wait-p4s(v-if='selectedStrategy !== `local`')
-    //-     v-toolbar(color='primary', dense, flat, dark)
-    //-       .subtitle-1 {{$t('admin.auth.configReference')}}
-    //-     v-card-text
-    //-       .body-2 {{$t('admin.auth.configReferenceSubtitle')}}
-    //-       v-alert.mt-3.radius-7(v-if='host.length < 8', color='red', outlined, :value='true', icon='mdi-alert')
-    //-         i18next(path='admin.auth.siteUrlNotSetup', tag='span')
-    //-           strong(place='siteUrl') {{$t('admin.general.siteUrl')}}
-    //-           strong(place='general') {{$t('admin.general.title')}}
-    //-       .pa-3.mt-3.radius-7.grey(v-else, :class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-3`')
-    //-         .body-2: strong {{$t('admin.auth.allowedWebOrigins')}}
-    //-         .body-2 {{host}}
-    //-         v-divider.my-3
-    //-         .body-2: strong {{$t('admin.auth.callbackUrl')}}
-    //-         .body-2 {{host}}/login/{{strategy.key}}/callback
-    //-         v-divider.my-3
-    //-         .body-2: strong {{$t('admin.auth.loginUrl')}}
-    //-         .body-2 {{host}}/login
-    //-         v-divider.my-3
-    //-         .body-2: strong {{$t('admin.auth.logoutUrl')}}
-    //-         .body-2 {{host}}
-    //-         v-divider.my-3
-    //-         .body-2: strong {{$t('admin.auth.tokenEndpointAuthMethod')}}
-    //-         .body-2 HTTP-POST
+      .flex.q-mt-md
+        .text-caption.text-grey ID: {{ state.strategy.id }}
+        q-space
+        q-btn.acrylic-btn(
+          icon='las la-trash-alt'
+          flat
+          color='negative'
+          :disable='state.strategy.strategy.key === `local`'
+          label='Delete Strategy'
+          @click='deleteStrategy(state.strategy.id)'
+          )
 </template>
 
 <script setup>
 import gql from 'graphql-tag'
-import { find, reject, transform } from 'lodash-es'
+import { cloneDeep, find, reject, transform } from 'lodash-es'
 import { v4 as uuid } from 'uuid'
 
 import { useI18n } from 'vue-i18n'
@@ -402,6 +340,7 @@ useMeta({
 
 const state = reactive({
   loading: 0,
+  loadingGroups: true,
   groups: [],
   strategies: [],
   activeStrategies: [],
@@ -417,31 +356,51 @@ const state = reactive({
 const availableStrategies = computed(() => {
   return state.strategies.filter(str => str.key !== 'local')
 })
-
-const combinedActiveStrategies = computed(() => {
-  return state.activeStrategies.map(str => ({
-    ...str,
-    strategy: find(state.strategies, ['key', str.strategy?.key]) || {}
-  }))
+const selectedGroupName = computed(() => {
+  return state.groups.filter(g => g.id === state.strategy?.autoEnrollGroups?.[0])[0]?.name
+})
+const strategyRefs = computed(() => {
+  if (!state.selectedStrategy) { return [] }
+  const str = find(state.strategies, ['key', state.strategy?.strategy.key])
+  if (!str || !str.refs) { return [] }
+  return Object.entries(str.refs).map(([k, v]) => {
+    return {
+      ...v,
+      key: k,
+      value: v.value.replaceAll('{host}', window.location.origin).replaceAll('{id}', state.selectedStrategy)
+    }
+  }) ?? []
 })
 
 // WATCHERS
 
 watch(() => state.selectedStrategy, (newValue, oldValue) => {
-  const str = find(combinedActiveStrategies.value, ['id', newValue]) || {}
-  str.config = transform(str.strategy.props, (cfg, v, k) => {
-    cfg[k] = {
-      ...v,
-      value: str.config[k]
-    }
-  }, {})
-  state.strategy = str
+  state.strategy = find(state.activeStrategies, ['id', newValue]) || {}
 })
 watch(() => state.activeStrategies, (newValue, oldValue) => {
   state.selectedStrategy = newValue[0]?.id
 })
 
 // METHODS
+
+async function loadGroups () {
+  state.loading++
+  state.loadingGroups = true
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getGroupsForAdminAuth {
+        groups {
+          id
+          name
+        }
+      }
+    `,
+    fetchPolicy: 'network-only'
+  })
+  state.groups = cloneDeep(resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? [])
+  state.loadingGroups = false
+  state.loading--
+}
 
 async function load () {
   state.loading++
@@ -452,6 +411,7 @@ async function load () {
         authStrategies {
           key
           props
+          refs
           title
           description
           isAvailable
@@ -480,7 +440,33 @@ async function load () {
     fetchPolicy: 'network-only'
   })
   state.strategies = resp?.data?.authStrategies || []
-  state.activeStrategies = resp?.data?.authActiveStrategies || []
+  state.activeStrategies = (cloneDeep(resp?.data?.authActiveStrategies) || []).map(a => {
+    const str = cloneDeep(find(state.strategies, ['key', a.strategy.key])) || {}
+    a.strategy = str
+    a.config = transform(str.props, (r, v, k) => {
+      r[k] = {
+        ...v,
+        value: a.config?.[k],
+        ...v.enum && {
+          enum: v.enum.map(o => {
+            if (o.indexOf('|') > 0) {
+              const oParsed = o.split('|')
+              return {
+                value: oParsed[0],
+                label: oParsed[1]
+              }
+            } else {
+              return {
+                value: o,
+                label: o
+              }
+            }
+          })
+        }
+      }
+    }, {})
+    return a
+  })
   $q.loading.hide()
   state.loading--
 }
@@ -493,15 +479,32 @@ function configIfCheck (ifs) {
 function addStrategy (str) {
   const newStr = {
     id: uuid(),
-    strategy: {
-      key: str.key
-    },
-    config: transform(str.props, (cfg, v, k) => {
-      cfg[k] = v.default
+    strategy: str,
+    config: transform(str.props, (r, v, k) => {
+      r[k] = {
+        ...v,
+        value: v.default,
+        ...v.enum && {
+          enum: v.enum.map(o => {
+            if (o.indexOf('|') > 0) {
+              const oParsed = o.split('|')
+              return {
+                value: oParsed[0],
+                label: oParsed[1]
+              }
+            } else {
+              return {
+                value: o,
+                label: o
+              }
+            }
+          })
+        }
+      }
     }, {}),
-    isEnabled: false,
+    isEnabled: true,
     displayName: str.title,
-    selfRegistration: false,
+    selfRegistration: true,
     domainWhitelist: [],
     autoEnrollGroups: []
   }
@@ -660,5 +663,6 @@ async function save () {
 
 onMounted(() => {
   load()
+  loadGroups()
 })
 </script>

@@ -40,7 +40,16 @@ export default {
      * Fetch active authentication strategies
      */
     async authActiveStrategies (obj, args, context) {
-      return WIKI.db.authentication.getStrategies({ enabledOnly: args.enabledOnly })
+      const strategies = await WIKI.db.authentication.getStrategies({ enabledOnly: args.enabledOnly })
+      return strategies.map(a => {
+        const str = _.find(WIKI.data.authentication, ['key', a.module]) || {}
+        return {
+          ...a,
+          config: _.transform(str.props, (r, v, k) => {
+            r[k] = v.sensitive ? a.config[k] : '********'
+          }, {})
+        }
+      })
     },
     /**
      * Fetch site authentication strategies

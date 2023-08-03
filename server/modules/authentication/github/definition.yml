@@ -18,6 +18,7 @@ props:
     type: String
     title: Client Secret
     hint: Application Client Secret
+    sensitive: true
     order: 2
   useEnterprise:
     type: Boolean
@@ -31,10 +32,20 @@ props:
     hint: GitHub Enterprise Only - Domain of your installation (e.g. github.company.com). Leave blank otherwise.
     default: ''
     order: 4
+    if:
+      - { key: 'useEnterprise', eq: true }
   enterpriseUserEndpoint:
     type: String
     title: GitHub Enterprise User Endpoint
     hint: GitHub Enterprise Only - Endpoint to fetch user details (e.g. https://api.github.com/user). Leave blank otherwise.
     default: 'https://api.github.com/user'
     order: 5
+    if:
+      - { key: 'useEnterprise', eq: true }
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on GitHub.
+    icon: back
+    value: '{host}/login/{id}/callback'
 

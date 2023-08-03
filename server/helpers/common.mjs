@@ -115,7 +115,8 @@ export function parseModuleProps (props) {
       multiline: value.multiline || false,
       sensitive: value.sensitive || false,
       icon: value.icon || 'rename',
-      order: value.order || 100
+      order: value.order || 100,
+      if: value.if ?? []
     })
     return result
   }, {})

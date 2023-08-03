@@ -22,9 +22,16 @@ props:
     type: String
     title: Client Secret
     hint: Application Client Secret
+    sensitive: true
     order: 2
   siteURL:
     type: String
     title: Rocket.chat Site URL
     hint: The base URL of your Rocket.chat site (e.g. https://example.rocket.chat)
     order: 3
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on Rocket.chat.
+    icon: back
+    value: '{host}/login/{id}/callback'

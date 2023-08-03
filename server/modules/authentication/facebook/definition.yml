@@ -20,4 +20,11 @@ props:
     type: String
     title: App Secret
     hint: Application Secret
+    sensitive: true
     order: 2
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on Facebook.
+    icon: back
+    value: '{host}/login/{id}/callback'

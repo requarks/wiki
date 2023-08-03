@@ -28,6 +28,7 @@ props:
     type: String
     title: Client Secret
     hint: Application Client Secret
+    sensitive: true
     order: 4
   authorizationURL:
     type: String
@@ -54,4 +55,9 @@ props:
     title: Logout Endpoint URL
     hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/logout
     order: 9
-
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on Keycloak.
+    icon: back
+    value: '{host}/login/{id}/callback'

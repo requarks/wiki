@@ -18,6 +18,7 @@ props:
     type: String
     title: Client Secret
     hint: Application Client Secret
+    sensitive: true
     order: 2
   authorizationURL:
     type: String
@@ -71,3 +72,9 @@ props:
     title: Pass access token via GET query string to User Info Endpoint
     hint: (optional) Pass the access token in an `access_token` parameter attached to the GET query string of the User Info Endpoint URL. Otherwise the access token will be passed in the Authorization header.
     order: 11
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on the oauth2 server.
+    icon: back
+    value: '{host}/login/{id}/callback'

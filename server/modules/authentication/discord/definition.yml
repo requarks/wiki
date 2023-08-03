@@ -18,9 +18,16 @@ props:
     type: String
     title: Client Secret
     hint: Application Client Secret
+    sensitive: true
     order: 2
   guildId:
     type: String
     title: Server ID
     hint: Optional - Your unique server identifier, such that only members are authorized
     order: 3
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on Discord.
+    icon: back
+    value: '{host}/login/{id}/callback'

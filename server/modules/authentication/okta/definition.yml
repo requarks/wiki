@@ -29,6 +29,7 @@ props:
     type: String
     hint: 40 chars alphanumeric string with a hyphen(s)
     maxWidth: 600
+    sensitive: true
     order: 3
   idp:
     title: Identity Provider ID (idp)
@@ -36,3 +37,9 @@ props:
     hint: (Optional) - 20 chars alphanumeric string
     maxWidth: 400
     order: 4
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on Okta.
+    icon: back
+    value: '{host}/login/{id}/callback'

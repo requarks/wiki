@@ -18,4 +18,11 @@ props:
     type: String
     title: App Secret
     hint: Application Client Secret
+    sensitive: true
     order: 2
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on Dropbox.
+    icon: back
+    value: '{host}/login/{id}/callback'

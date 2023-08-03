@@ -22,6 +22,7 @@ props:
     type: String
     title: Client Secret
     hint: Application Client Secret
+    sensitive: true
     order: 2
   authorizationURL:
     type: String
@@ -55,3 +56,9 @@ props:
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
     order: 8
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: The callback endpoint to input on OIDC server.
+    icon: back
+    value: '{host}/login/{id}/callback'

@@ -29,6 +29,7 @@ props:
     type: String
     hint: The password of the account used above for binding.
     maxWidth: 600
+    sensitive: true
     order: 3
   searchBase:
     title: Search Base

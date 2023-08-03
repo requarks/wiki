@@ -86,6 +86,7 @@ extend type Mutation {
 type AuthenticationStrategy {
   key: String
   props: JSON
+  refs: JSON
   title: String
   description: String
   isAvailable: Boolean

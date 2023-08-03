@@ -414,6 +414,7 @@ export async function up (knex) {
   // -> GENERATE IDS
 
   const groupAdminId = uuid()
+  const groupUserId = uuid()
   const groupGuestId = '10000000-0000-4000-8000-000000000001'
   const siteId = uuid()
   const authModuleId = uuid()
@@ -659,6 +660,24 @@ export async function up (knex) {
       isSystem: true
     },
     {
+      id: groupUserId,
+      name: 'Users',
+      permissions: JSON.stringify(['read:pages', 'read:assets', 'read:comments']),
+      rules: JSON.stringify([
+        {
+          id: uuid(),
+          name: 'Default Rule',
+          roles: ['read:pages', 'read:assets', 'read:comments'],
+          match: 'START',
+          mode: 'ALLOW',
+          path: '',
+          locales: [],
+          sites: []
+        }
+      ]),
+      isSystem: true
+    },
+    {
       id: groupGuestId,
       name: 'Guests',
       permissions: JSON.stringify(['read:pages', 'read:assets', 'read:comments']),
@@ -743,6 +762,10 @@ export async function up (knex) {
     {
       userId: userAdminId,
       groupId: groupAdminId
+    },
+    {
+      userId: userAdminId,
+      groupId: groupUserId
     },
     {
       userId: userGuestId,
