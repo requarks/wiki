@@ -1,0 +1,40 @@
+version: "3"
+services:
+
+  db:
+    image: yugabytedb/yugabyte
+    command: yugabyted start --ysql_port=5432 --background=false --tserver_flags="ysql_colocate_database_by_default=false,ysql_sequence_cache_minval=1,yb_enable_read_committed_isolation=true,enable_deadlock_detection=true,enable_wait_queues=true"
+    healthcheck:
+      test: postgres/bin/pg_isready -h db -p 5432 -d $$YSQL_DB
+      start_period: 30s
+    ports:
+      - "15433:15433"
+    environment:
+      YSQL_DB: wiki
+      YSQL_PASSWORD: wikijsrocks
+      YSQL_USER: wikijs
+    #logging:
+    #  driver: "none"
+    restart: unless-stopped
+    volumes:
+      - db-data:/root/var/data
+
+  wiki:
+    image: requarks/wiki:2
+    depends_on:
+      db:
+       condition: service_healthy
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: wikijsrocks
+      DB_NAME: wiki
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+      - "443:3443"
+
+volumes:
+  db-data:
