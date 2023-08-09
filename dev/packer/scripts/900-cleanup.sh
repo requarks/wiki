@@ -8,14 +8,17 @@ if [[ ! -d /tmp ]]; then
 fi
 chmod 1777 /tmp
 
+export DEBIAN_FRONTEND=noninteractive
 apt-get -y update
-apt-get -y upgrade
+apt-get -o Dpkg::Options::="--force-confold" upgrade -q -y --force-yes
+apt-get purge droplet-agent
+rm -rf /opt/digitalocean
+apt-get -y autoremove
+apt-get -y autoclean
 rm -rf /tmp/* /var/tmp/*
 history -c
 cat /dev/null > /root/.bash_history
 unset HISTFILE
-apt-get -y autoremove
-apt-get -y autoclean
 find /var/log -mtime -1 -type f -exec truncate -s 0 {} \;
 rm -rf /var/log/*.gz /var/log/*.[0-9] /var/log/*-????????
 rm -rf /var/lib/cloud/instances/*

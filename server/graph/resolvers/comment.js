@@ -40,9 +40,13 @@ module.exports = {
      * Fetch list of comments for a page
      */
     async list (obj, args, context) {
-      const page = await WIKI.models.pages.query().select('id').findOne({ localeCode: args.locale, path: args.path })
+      const page = await WIKI.models.pages.query().select('pages.id').findOne({ localeCode: args.locale, path: args.path })
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag')
+        })
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], args)) {
+        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], { tags: page.tags, ...args })) {
           const comments = await WIKI.models.comments.query().where('pageId', page.id).orderBy('createdAt')
           return comments.map(c => ({
             ...c,
@@ -66,10 +70,15 @@ module.exports = {
         throw new WIKI.Error.CommentNotFound()
       }
       const page = await WIKI.models.pages.query().select('localeCode', 'path').findById(cm.pageId)
+        .withGraphJoined('tags')
+        .modifyGraph('tags', builder => {
+          builder.select('tag')
+        })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          tags: page.tags
         })) {
           return {
             ...cm,

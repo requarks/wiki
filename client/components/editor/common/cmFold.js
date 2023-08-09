@@ -7,7 +7,13 @@ const maxDepth = 100
 const codeBlockStartMatch = /^`{3}[a-zA-Z0-9]+$/
 const codeBlockEndMatch = /^`{3}$/
 
-CodeMirror.registerHelper('fold', 'markdown', function (cm, start) {
+export default {
+  register(lang) {
+    CodeMirror.registerHelper('fold', lang, foldHandler)
+  }
+}
+
+function foldHandler (cm, start) {
   const firstLine = cm.getLine(start.line)
   const lastLineNo = cm.lastLine()
   let end
@@ -59,4 +65,4 @@ CodeMirror.registerHelper('fold', 'markdown', function (cm, start) {
     from: CodeMirror.Pos(start.line, firstLine.length),
     to: CodeMirror.Pos(end, cm.getLine(end).length)
   }
-})
+}

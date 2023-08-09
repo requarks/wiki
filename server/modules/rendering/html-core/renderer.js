@@ -244,6 +244,16 @@ module.exports = {
     })
 
     // --------------------------------
+    // Wrap root table nodes
+    // --------------------------------
+
+    $('body').contents().toArray().forEach(item => {
+      if (item && item.name === 'table' && item.parent.name === 'body') {
+        $(item).wrap('<div class="table-container"></div>')
+      }
+    })
+
+    // --------------------------------
     // Escape mustache expresions
     // --------------------------------
 

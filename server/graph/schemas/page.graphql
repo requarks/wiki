@@ -46,6 +46,11 @@ type PageQuery {
     id: Int!
   ): Page @auth(requires: ["read:pages", "manage:system"])
 
+  singleByPath(
+    path: String!
+    locale: String!
+  ): Page @auth(requires: ["read:pages", "manage:system"])
+
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
   searchTags(

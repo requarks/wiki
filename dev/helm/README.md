@@ -115,6 +115,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `sideload.enabled`                   | Enable sideloading of locale files from git | `false`                                                    |
 | `sideload.repoURL`                   | Git repository URL containing locale files  | `https://github.com/Requarks/wiki-localization`            |
 | `sideload.env`                       | Environment variables for sideload Container | `{}`                                                      |
+| `nodeExtraCaCerts`                   | Trusted certificates path                   | `nil`                                                      |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
 | `postgresql.postgresqlUser`            | Postgres username                           | `postgres`                                                   |
@@ -175,3 +176,38 @@ See the [Configuration](#configuration) section to configure the PVC or to disab
 ## Ingress
 
 This chart provides support for Ingress resource. If you have an available Ingress Controller such as Nginx or Traefik you maybe want to set `ingress.enabled` to true and add `ingress.hosts` for the URL. Then, you should be able to access the installation using that address.
+
+## Extra Trusted Certificates
+
+To append extra CA Certificates:
+
+1. Create a ConfigMap with CAs in PEM format, e.g.:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca
+  namespace: your-wikijs-namespace
+data:
+  certs.pem: |-
+    -----BEGIN CERTIFICATE-----
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    -----END CERTIFICATE-----
+```
+
+2. Mount your CAs from the ConfigMap to the Wiki.js pod and set `nodeExtraCaCerts` helm variable. Insert the following lines to your Wiki.js `values.yaml`, e.g.:
+
+```yaml
+volumeMounts:
+  - name: ca
+    mountPath: /cas.pem
+    subPath: certs.pem
+
+volumes:
+  - name: ca
+    configMap:
+      name: ca
+
+nodeExtraCaCerts: "/cas.pem"
+```

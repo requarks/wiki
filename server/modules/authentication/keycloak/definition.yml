@@ -7,6 +7,10 @@ color: blue-grey darken-2
 website: https://www.keycloak.org/
 useForm: false
 isAvailable: true
+scopes:
+  - openid
+  - profile
+  - email
 props:
   host:
     type: String
