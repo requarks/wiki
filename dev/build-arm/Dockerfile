@@ -8,6 +8,7 @@ RUN apk add yarn g++ make cmake python3 --no-cache
 WORKDIR /wiki
 
 COPY ./package.json ./package.json
+COPY ./patches ./patches
 
 RUN yarn --production --frozen-lockfile --non-interactive --network-timeout 100000
 RUN yarn patch-package

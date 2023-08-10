@@ -9,6 +9,7 @@ WORKDIR /wiki
 
 COPY ./client ./client
 COPY ./dev ./dev
+COPY ./patches ./patches
 COPY ./package.json ./package.json
 COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
