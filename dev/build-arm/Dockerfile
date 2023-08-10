@@ -10,6 +10,7 @@ WORKDIR /wiki
 COPY ./package.json ./package.json
 
 RUN yarn --production --frozen-lockfile --non-interactive --network-timeout 100000
+RUN yarn patch-package
 
 # ===============
 # --- Release ---

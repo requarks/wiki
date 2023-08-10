@@ -19,6 +19,7 @@ RUN yarn --frozen-lockfile --non-interactive
 RUN yarn build
 RUN rm -rf /wiki/node_modules
 RUN yarn --production --frozen-lockfile --non-interactive
+RUN yarn patch-package
 
 # ===============
 # --- Release ---
