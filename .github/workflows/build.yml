@@ -206,7 +206,9 @@ jobs:
         tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=node_modules
 
     - name: Install Dependencies
-      run: yarn --production --frozen-lockfile --non-interactive
+      run: |
+        yarn --production --frozen-lockfile --non-interactive
+        yarn patch-package
       working-directory: win
 
     - name: Create Bundle
