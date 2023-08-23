@@ -187,11 +187,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - MaFarine ([@MaFarine](https://github.com/MaFarine))
 - Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
+- Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
         
 </td><td>
 <img width="441" height="1" />
-        
-- Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
+
 - Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
@@ -215,6 +215,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
 - chaee ([@chaee](https://github.com/chaee))
+- lwileczek ([@lwileczek](https://github.com/lwileczek))
 - magicpotato ([@fortheday](https://github.com/fortheday))
 - motoacs ([@motoacs](https://github.com/motoacs))
 - muzian666 ([@muzian666](https://github.com/muzian666))
