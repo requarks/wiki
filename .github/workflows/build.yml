@@ -204,7 +204,7 @@ jobs:
       run: |
         mkdir -p win
         tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win
-        copy win\node_modules\extract-files\package.json patch-extractfile.json
+        Copy-Item win\node_modules\extract-files\package.json patch-extractfile.json -Force
         Remove-Item -Path win\node_modules -Force -Recurse
 
     - name: Install Dependencies
@@ -215,7 +215,7 @@ jobs:
 
     - name: Fix patched packages
       run: |
-        copy /y patch-extractfile.json win\node_modules\extract-files\package.json
+        Copy-Item patch-extractfile.json win\node_modules\extract-files\package.json -Force
 
     - name: Create Bundle
       run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
