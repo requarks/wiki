@@ -205,7 +205,7 @@ jobs:
         mkdir -p win
         tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win
         copy win\node_modules\extract-files\package.json patch-extractfile.json
-        rmdir /s /q win\node_modules
+        Remove-Item -Path win\node_modules -Force -Recurse
 
     - name: Install Dependencies
       run: |
