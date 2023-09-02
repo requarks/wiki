@@ -34,12 +34,7 @@ export class Authentication extends Model {
   }
 
   static async getStrategies({ enabledOnly = false } = {}) {
-    const strategies = await WIKI.db.authentication.query().where(enabledOnly ? { isEnabled: true } : {})
-    return strategies.map(str => ({
-      ...str,
-      domainWhitelist: get(str.domainWhitelist, 'v', []),
-      autoEnrollGroups: get(str.autoEnrollGroups, 'v', [])
-    }))
+    return WIKI.db.authentication.query().where(enabledOnly ? { isEnabled: true } : {})
   }
 
   static async refreshStrategiesFromDisk() {

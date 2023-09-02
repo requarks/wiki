@@ -2,7 +2,7 @@
 # Wiki.js - CONFIGURATION                                             #
 #######################################################################
 # Full documentation + examples:
-# https://js.wiki/docs/install
+# https://next.js.wiki/docs/install
 
 # ---------------------------------------------------------------------
 # Port the server should listen to
@@ -13,7 +13,7 @@ port: 3000
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
-# PostgreSQL 11 or later required
+# PostgreSQL 12 or later required
 
 db:
   host: localhost
@@ -21,9 +21,7 @@ db:
   user: postgres
   pass: postgres
   db: postgres
-  schemas:
-    wiki: wiki
-    scheduler: scheduler
+  schema: wiki
   ssl: false
 
   # Optional

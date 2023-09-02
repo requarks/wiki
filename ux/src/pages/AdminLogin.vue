@@ -145,30 +145,30 @@ q-page.admin-login
         q-card-section
           .text-subtitle1 {{t('admin.login.providers')}}
         q-card-section.admin-login-providers.q-pt-none
-          draggable(
-            class='q-list rounded-borders'
+          sortable(
+            class='q-list'
             :list='state.providers'
-            :animation='150'
-            handle='.handle'
-            @end='dragStarted = false'
             item-key='id'
+            :options='sortableOptions'
+            @end='updateAuthPosition'
             )
             template(#item='{element}')
               q-item
                 q-item-section(side)
-                  q-icon.handle(name='las la-bars')
-                blueprint-icon(:icon='element.icon')
+                  q-icon.handle(name='mdi-drag-horizontal')
+                q-item-section(side)
+                  q-icon(:name='`img:` + element.activeStrategy.strategy.icon')
                 q-item-section
-                  q-item-label {{element.label}}
-                  q-item-label(caption) {{element.provider}}
+                  q-item-label {{element.activeStrategy.displayName}}
+                  q-item-label(caption) {{element.activeStrategy.strategy.title}}
                 q-item-section(side)
                   q-toggle(
-                    v-model='element.isActive'
+                    v-model='element.isVisible'
                     color='primary'
                     checked-icon='las la-check'
                     unchecked-icon='las la-times'
                     label='Visible'
-                    :aria-label='element.label'
+                    :aria-label='element.activeStrategy.displayName'
                   )
         q-item.q-pt-none
           q-item-section
@@ -183,7 +183,7 @@ q-page.admin-login
 <script setup>
 import { cloneDeep } from 'lodash-es'
 import gql from 'graphql-tag'
-import draggable from 'vuedraggable'
+import { Sortable } from 'sortablejs-vue3'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
@@ -224,11 +224,18 @@ const state = reactive({
     welcomeRedirect: '/',
     logoutRedirect: '/'
   },
-  providers: [
-    { id: 'local', label: 'Local Authentication', provider: 'Username-Password', icon: 'database', isActive: true },
-    { id: 'google', label: 'Google', provider: 'Google', icon: 'google', isActive: true },
-    { id: 'slack', label: 'Slack', provider: 'Slack', icon: 'slack', isActive: false }
-  ]
+  providers: []
+})
+
+const sortableOptions = {
+  handle: '.handle',
+  animation: 150
+}
+
+// WATCHERS
+
+watch(() => adminStore.currentSiteId, (newValue) => {
+  load()
 })
 
 // METHODS
@@ -236,24 +243,34 @@ const state = reactive({
 async function load () {
   state.loading++
   $q.loading.show()
-  // const resp = await APOLLO_CLIENT.query({
-  //   query: gql`
-  //     query getSite (
-  //       $id: UUID!
-  //     ) {
-  //       siteById(
-  //         id: $id
-  //       ) {
-  //         id
-  //       }
-  //     }
-  //   `,
-  //   variables: {
-  //     id: adminStore.currentSiteId
-  //   },
-  //   fetchPolicy: 'network-only'
-  // })
-  // this.config = cloneDeep(resp?.data?.siteById)
+  const resp = await APOLLO_CLIENT.query({
+    query: gql`
+      query getSiteAuthStrategies (
+        $siteId: UUID!
+      ) {
+        authSiteStrategies(
+          siteId: $siteId
+          visibleOnly: false
+        ) {
+          id
+          activeStrategy {
+            displayName
+            strategy {
+              key
+              title
+              icon
+            }
+          }
+          isVisible
+        }
+      }
+    `,
+    variables: {
+      siteId: adminStore.currentSiteId
+    },
+    fetchPolicy: 'network-only'
+  })
+  state.providers = cloneDeep(resp?.data?.authSiteStrategies)
   $q.loading.hide()
   state.loading--
 }
@@ -298,6 +315,11 @@ async function save () {
     })
   }
   state.loading--
+}
+
+function updateAuthPosition (ev) {
+  const item = state.providers.splice(ev.oldIndex, 1)[0]
+  state.providers.splice(ev.newIndex, 0, item)
 }
 
 async function uploadBg () {

@@ -461,7 +461,6 @@ async function fetchStrategies (showAll = false) {
             }
             selfRegistration
           }
-          order
         }
       }
     `,

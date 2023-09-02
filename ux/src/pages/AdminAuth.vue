@@ -171,15 +171,15 @@ q-page.admin-mail
           q-item
             blueprint-icon(icon='private')
             q-item-section
-              q-item-label {{t(`admin.auth.domainsWhitelist`)}}
-              q-item-label(caption) {{t(`admin.auth.domainsWhitelistHint`)}}
+              q-item-label {{t(`admin.auth.allowedEmailRegex`)}}
+              q-item-label(caption) {{t(`admin.auth.allowedEmailRegexHint`)}}
             q-item-section
               q-input(
                 outlined
-                v-model='state.strategy.domainWhitelist'
+                v-model='state.strategy.allowedEmailRegex'
                 dense
                 hide-bottom-space
-                :aria-label='t(`admin.auth.domainsWhitelist`)'
+                :aria-label='t(`admin.auth.allowedEmailRegex`)'
                 prefix='/'
                 suffix='/'
                 )
@@ -193,8 +193,8 @@ q-page.admin-mail
           q-banner.q-mt-md(
             v-if='!state.strategy.config || Object.keys(state.strategy.config).length < 1'
             rounded
-            :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`'
-            ) {{t('admin.auth.noConfigOption')}}
+            :class='$q.dark.isActive ? `bg-dark-4 text-grey-5` : `bg-grey-2 text-grey-7`'
+            ): em {{t('admin.auth.noConfigOption')}}
         template(
           v-for='(cfg, cfgKey, idx) in state.strategy.config'
           )
@@ -213,7 +213,7 @@ q-page.admin-mail
                   color='primary'
                   checked-icon='las la-check'
                   unchecked-icon='las la-times'
-                  :aria-label='t(`admin.general.allowComments`)'
+                  :aria-label='cfg.title'
                   :disable='cfg.readOnly'
                   )
             q-item(v-else)
@@ -432,7 +432,7 @@ async function load () {
           isEnabled
           config
           selfRegistration
-          domainWhitelist
+          allowedEmailRegex
           autoEnrollGroups
         }
       }
@@ -505,7 +505,7 @@ function addStrategy (str) {
     isEnabled: true,
     displayName: str.title,
     selfRegistration: true,
-    domainWhitelist: [],
+    allowedEmailRegex: '',
     autoEnrollGroups: []
   }
   state.activeStrategies = [...state.activeStrategies, newStr]

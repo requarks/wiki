@@ -86,7 +86,7 @@ export default {
       useNullAsDefault: true,
       asyncStackTraces: WIKI.IS_DEBUG,
       connection: this.config,
-      searchPath: [WIKI.config.db.schemas.wiki],
+      searchPath: [WIKI.config.db.schema],
       pool: {
         ...workerMode ? { min: 0, max: 1 } : WIKI.config.pool,
         async afterCreate(conn, done) {
@@ -223,12 +223,12 @@ export default {
    */
   async syncSchemas () {
     WIKI.logger.info('Ensuring DB schema exists...')
-    await this.knex.raw(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schemas.wiki}`)
+    await this.knex.raw(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schema}`)
     WIKI.logger.info('Ensuring DB migrations have been applied...')
     return this.knex.migrate.latest({
       tableName: 'migrations',
       migrationSource,
-      schemaName: WIKI.config.db.schemas.wiki
+      schemaName: WIKI.config.db.schema
     })
   },
   /**

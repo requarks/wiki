@@ -57,7 +57,7 @@ export default {
     async authSiteStrategies (obj, args, context, info) {
       const site = await WIKI.db.sites.query().findById(args.siteId)
       const activeStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
-      return activeStrategies.map(str => {
+      const siteStrategies = _.sortBy(activeStrategies.map(str => {
         const siteAuth = _.find(site.config.authStrategies, ['id', str.id]) || {}
         return {
           id: str.id,
@@ -65,7 +65,8 @@ export default {
           order: siteAuth.order ?? 0,
           isVisible: siteAuth.isVisible ?? false
         }
-      })
+      }), ['order'])
+      return args.visibleOnly ? siteStrategies.filter(s => s.isVisible) : siteStrategies
     }
   },
   Mutation: {
@@ -196,6 +197,10 @@ export default {
      */
     async setApiState (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         WIKI.config.api.isEnabled = args.enabled
         await WIKI.configSvc.saveToDb(['api'])
         return {
@@ -210,6 +215,10 @@ export default {
      */
     async revokeApiKey (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.apiKeys.query().findById(args.id).patch({
           isRevoked: true
         })
@@ -227,11 +236,14 @@ export default {
      */
     async updateAuthStrategies (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         const previousStrategies = await WIKI.db.authentication.getStrategies()
         for (const str of args.strategies) {
           const newStr = {
             displayName: str.displayName,
-            order: str.order,
             isEnabled: str.isEnabled,
             config: _.reduce(str.config, (result, value, key) => {
               _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
@@ -280,6 +292,10 @@ export default {
      */
     async regenerateCertificates (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.auth.regenerateCertificates()
         return {
           responseResult: generateSuccess('Certificates have been regenerated successfully.')
@@ -293,6 +309,10 @@ export default {
      */
     async resetGuestUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.auth.resetGuestUser()
         return {
           responseResult: generateSuccess('Guest user has been reset successfully.')
@@ -302,7 +322,28 @@ export default {
       }
     }
   },
+  // ------------------------------------------------------------------
+  // TYPE: AuthenticationActiveStrategy
+  // ------------------------------------------------------------------
   AuthenticationActiveStrategy: {
+    config (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+      return obj.config ?? {}
+    },
+    allowedEmailRegex (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+      return obj.allowedEmailRegex ?? ''
+    },
+    autoEnrollGroups (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+      return obj.autoEnrollGroups ?? []
+    },
     strategy (obj, args, context) {
       return _.find(WIKI.data.authentication, ['key', obj.module])
     }

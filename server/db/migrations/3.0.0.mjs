@@ -67,8 +67,8 @@ export async function up (knex) {
       table.string('displayName').notNullable().defaultTo('')
       table.jsonb('config').notNullable().defaultTo('{}')
       table.boolean('selfRegistration').notNullable().defaultTo(false)
-      table.jsonb('domainWhitelist').notNullable().defaultTo('[]')
-      table.jsonb('autoEnrollGroups').notNullable().defaultTo('[]')
+      table.string('allowedEmailRegex')
+      table.specificType('autoEnrollGroups', 'uuid[]')
     })
     .createTable('commentProviders', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))

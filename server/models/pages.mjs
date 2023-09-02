@@ -1045,15 +1045,12 @@ export class Page extends Model {
     await WIKI.db.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Delete from Search Index
-    await WIKI.data.searchEngine.deleted(page)
-
     // -> Delete from Storage
     if (!opts.skipStorage) {
-      await WIKI.db.storage.pageEvent({
-        event: 'deleted',
-        page
-      })
+      // await WIKI.db.storage.pageEvent({
+      //   event: 'deleted',
+      //   page
+      // })
     }
 
     // -> Reconnect Links
@@ -1076,6 +1073,8 @@ export class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async reconnectLinks (opts) {
+    return
+    // TODO: fix this
     const pageHref = `/${opts.locale}/${opts.path}`
     let replaceArgs = {
       from: '',
@@ -1140,20 +1139,6 @@ export class Page extends Model {
       await WIKI.db.pages.deletePageFromCache(hash)
       WIKI.events.outbound.emit('deletePageFromCache', hash)
     }
-  }
-
-  /**
-   * Rebuild page tree for new/updated/deleted page
-   *
-   * @returns {Promise} Promise with no value
-   */
-  static async rebuildTree() {
-    const rebuildJob = await WIKI.scheduler.registerJob({
-      name: 'rebuild-tree',
-      immediate: true,
-      worker: true
-    })
-    return rebuildJob.finished
   }
 
   /**

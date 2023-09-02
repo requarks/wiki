@@ -483,7 +483,7 @@ export default {
           user: context.req.user
         })
         return {
-          responseResult: generateSuccess('Page has been converted.')
+          operation: generateSuccess('Page has been converted.')
         }
       } catch (err) {
         return generateError(err)
@@ -499,7 +499,7 @@ export default {
           user: context.req.user
         })
         return {
-          responseResult: generateSuccess('Page has been moved.')
+          operation: generateSuccess('Page has been moved.')
         }
       } catch (err) {
         return generateError(err)
@@ -515,7 +515,7 @@ export default {
           user: context.req.user
         })
         return {
-          responseResult: generateSuccess('Page has been deleted.')
+          operation: generateSuccess('Page has been deleted.')
         }
       } catch (err) {
         return generateError(err)
@@ -534,7 +534,7 @@ export default {
           throw new Error('This tag does not exist.')
         }
         return {
-          responseResult: generateSuccess('Tag has been deleted.')
+          operation: generateSuccess('Tag has been deleted.')
         }
       } catch (err) {
         return generateError(err)
@@ -555,7 +555,7 @@ export default {
           throw new Error('This tag does not exist.')
         }
         return {
-          responseResult: generateSuccess('Tag has been updated successfully.')
+          operation: generateSuccess('Tag has been updated successfully.')
         }
       } catch (err) {
         return generateError(err)
@@ -569,7 +569,7 @@ export default {
         await WIKI.db.pages.flushCache()
         WIKI.events.outbound.emit('flushCache')
         return {
-          responseResult: generateSuccess('Pages Cache has been flushed successfully.')
+          operation: generateSuccess('Pages Cache has been flushed successfully.')
         }
       } catch (err) {
         return generateError(err)
@@ -582,7 +582,7 @@ export default {
       try {
         const count = await WIKI.db.pages.migrateToLocale(args)
         return {
-          responseResult: generateSuccess('Migrated content to target locale successfully.'),
+          operation: generateSuccess('Migrated content to target locale successfully.'),
           count
         }
       } catch (err) {
@@ -596,7 +596,7 @@ export default {
       try {
         await WIKI.db.pages.rebuildTree()
         return {
-          responseResult: generateSuccess('Page tree rebuilt successfully.')
+          operation: generateSuccess('Page tree rebuilt successfully.')
         }
       } catch (err) {
         return generateError(err)
@@ -613,7 +613,7 @@ export default {
         }
         await WIKI.db.pages.renderPage(page)
         return {
-          responseResult: generateSuccess('Page rendered successfully.')
+          operation: generateSuccess('Page rendered successfully.')
         }
       } catch (err) {
         return generateError(err)
@@ -649,7 +649,7 @@ export default {
         })
 
         return {
-          responseResult: generateSuccess('Page version restored successfully.')
+          operation: generateSuccess('Page version restored successfully.')
         }
       } catch (err) {
         return generateError(err)
@@ -662,7 +662,7 @@ export default {
       try {
         await WIKI.db.pageHistory.purge(args.olderThan)
         return {
-          responseResult: generateSuccess('Page history purged successfully.')
+          operation: generateSuccess('Page history purged successfully.')
         }
       } catch (err) {
         return generateError(err)

@@ -106,14 +106,13 @@ type AuthenticationActiveStrategy {
   isEnabled: Boolean
   config: JSON
   selfRegistration: Boolean
-  domainWhitelist: [String]
-  autoEnrollGroups: [Int]
+  allowedEmailRegex: String
+  autoEnrollGroups: [UUID]
 }
 
 type AuthenticationSiteStrategy {
   id: UUID
   activeStrategy: AuthenticationActiveStrategy
-  order: Int
   isVisible: Boolean
 }
 
@@ -146,8 +145,8 @@ input AuthenticationStrategyInput {
   order: Int!
   isEnabled: Boolean!
   selfRegistration: Boolean!
-  domainWhitelist: [String]!
-  autoEnrollGroups: [Int]!
+  allowedEmailRegex: String!
+  autoEnrollGroups: [UUID]!
 }
 
 type AuthenticationApiKey {

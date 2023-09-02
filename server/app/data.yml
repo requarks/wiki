@@ -16,9 +16,7 @@ defaults:
       ssl: false
       sslOptions:
         auto: true
-      schemas:
-        wiki: wiki
-        scheduler: scheduler
+      schema: wiki
     ssl:
       enabled: false
     pool:
