@@ -428,6 +428,7 @@ export class Page extends Model {
     const patch = {}
     const historyData = {
       action: 'updated',
+      reason: opts.reasonForChange,
       affectedFields: []
     }
     let shouldUpdateSearch = false

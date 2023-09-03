@@ -394,7 +394,7 @@ onMounted(async () => {
 .admin-overlay {
   > .q-dialog__backdrop {
     background-color: rgba(0,0,0,.6);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px) saturate(180%);
   }
   > .q-dialog__inner {
     padding: 24px 64px;

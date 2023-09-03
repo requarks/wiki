@@ -76,6 +76,7 @@
     icon='las la-code'
     :color='editorStore.isActive ? `white` : `grey`'
     aria-label='Page Source'
+    @click='viewPageSource'
     )
     q-tooltip(anchor='center left' self='center right') Page Source
   template(v-if='!(editorStore.isActive && editorStore.mode === `create`)')
@@ -87,7 +88,7 @@
       aria-label='Page Actions'
       )
       q-tooltip(anchor='center left' self='center right') Page Actions
-      q-menu(
+      q-menu.translucent-menu(
         anchor='top left'
         self='top right'
         auto-close
@@ -197,6 +198,10 @@ function togglePageData () {
     sideDialogComponent: 'PageDataDialog',
     sideDialogShown: true
   })
+}
+
+function viewPageSource () {
+  siteStore.$patch({ overlay: 'PageSource', overlayOpts: { } })
 }
 
 function duplicatePage () {

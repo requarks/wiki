@@ -186,6 +186,7 @@ export async function up (knex) {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.uuid('pageId').notNullable().index()
       table.string('action').defaultTo('updated')
+      table.string('reason')
       table.jsonb('affectedFields').notNullable().defaultTo('[]')
       table.string('locale', 10).notNullable().defaultTo('en')
       table.string('path').notNullable()

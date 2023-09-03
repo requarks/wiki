@@ -199,7 +199,7 @@ body.body--dark {
 .main-overlay {
   > .q-dialog__backdrop {
     background-color: rgba(0,0,0,.6);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px) saturate(180%);
   }
   > .q-dialog__inner {
     padding: 24px 64px;
@@ -216,7 +216,7 @@ body.body--dark {
         background-image: linear-gradient(to bottom, $dark-4 10px, $dark-4 11px, $dark-3);
       }
       border-radius: 6px;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.5);
+      box-shadow: 0 0 30px 0 rgba(0,0,0,.3);
     }
   }
 }

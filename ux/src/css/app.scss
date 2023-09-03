@@ -228,7 +228,7 @@ body::-webkit-scrollbar-thumb {
     background-color: rgba($dark,.7);
   }
 
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px) saturate(180%);
 
   > .q-card {
     background-color: transparent !important;

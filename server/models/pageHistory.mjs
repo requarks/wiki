@@ -77,21 +77,30 @@ export class PageHistory extends Model {
    */
   static async addVersion(opts) {
     await WIKI.db.pageHistory.query().insert({
-      pageId: opts.id,
-      siteId: opts.siteId,
+      action: opts.historyData?.action ?? 'updated',
+      affectedFields: JSON.stringify(opts.historyData?.affectedFields ?? []),
+      alias: opts.alias,
+      config: JSON.stringify(opts.config ?? {}),
       authorId: opts.authorId,
       content: opts.content,
       contentType: opts.contentType,
       description: opts.description,
       editor: opts.editor,
       hash: opts.hash,
-      publishState: opts.publishState,
+      icon: opts.icon,
       locale: opts.locale,
+      pageId: opts.id,
       path: opts.path,
       publishEndDate: opts.publishEndDate?.toISO(),
       publishStartDate: opts.publishStartDate?.toISO(),
+      publishState: opts.publishState,
+      reason: opts.historyData?.reason,
+      relations: JSON.stringify(opts.relations ?? []),
+      render: opts.render,
+      scripts: JSON.stringify(opts.scripts ?? {}),
+      siteId: opts.siteId,
       title: opts.title,
-      action: opts.action || 'updated',
+      toc: JSON.stringify(opts.toc ?? []),
       versionDate: opts.versionDate
     })
   }
