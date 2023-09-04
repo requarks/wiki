@@ -247,7 +247,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                 q-item-section.fileman-filelist-side(side, v-if='item.side')
                   .text-caption {{item.side}}
                 //- RIGHT-CLICK MENU
-                q-menu(
+                q-menu.translucent-menu(
                   touch-position
                   context-menu
                   auto-close
@@ -264,6 +264,10 @@ q-layout.fileman(view='hHh lpR lFr', container)
                         q-item-section(side)
                           q-icon(name='las la-edit', color='orange')
                         q-item-section {{ t(`common.actions.edit`) }}
+                      q-item(clickable, v-if='item.type === `page`', @click='rerenderPage(item)')
+                        q-item-section(side)
+                          q-icon(name='las la-magic', color='orange')
+                        q-item-section {{ t(`common.actions.rerender`) }}
                       q-item(clickable, v-if='item.type !== `folder`', @click='openItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-eye', color='primary')
@@ -785,6 +789,15 @@ function reloadFolder (folderId) {
 
 // PAGE METHODS
 // --------------------------------------
+
+function rerenderPage (item) {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('src/components/RerenderPageDialog.vue')),
+    componentProps: {
+      id: item.id
+    }
+  })
+}
 
 function delPage (pageId, pageName) {
   $q.dialog({

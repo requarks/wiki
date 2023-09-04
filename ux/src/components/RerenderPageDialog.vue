@@ -12,6 +12,15 @@ import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive } from 'vue'
 import { usePageStore } from 'src/stores/page'
 
+// PROPS
+
+const props = defineProps({
+  id: {
+    type: String,
+    required: true
+  }
+})
+
 // EMITS
 
 defineEmits([
@@ -52,7 +61,7 @@ async function rerenderPage () {
         }
       `,
       variables: {
-        id: pageStore.id
+        id: props.id
       }
     })
     if (resp?.data?.rerenderPage?.operation?.succeeded) {

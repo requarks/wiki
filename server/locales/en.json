@@ -1230,6 +1230,7 @@
   "common.actions.properties": "Properties",
   "common.actions.refresh": "Refresh",
   "common.actions.rename": "Rename",
+  "common.actions.rerender": "Rerender",
   "common.actions.returnToTop": "Return to top",
   "common.actions.save": "Save",
   "common.actions.saveAndClose": "Save and Close",

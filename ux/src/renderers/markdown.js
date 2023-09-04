@@ -10,6 +10,7 @@ import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
 import mdMultiTable from 'markdown-it-multimd-table'
 import mdFootnote from 'markdown-it-footnote'
+import mdMdc from 'markdown-it-mdc'
 import katex from 'katex'
 import mdUnderline from './modules/markdown-it-underline'
 import mdImsize from './modules/markdown-it-imsize'
@@ -72,6 +73,7 @@ export class MarkdownRenderer {
       .use(mdMark)
       .use(mdFootnote)
       .use(mdImsize)
+      .use(mdMdc)
 
     if (config.underline) {
       this.md.use(mdUnderline)
