@@ -1798,6 +1798,8 @@
   "profile.title": "Profile",
   "profile.uploadNewAvatar": "Upload New Image",
   "profile.viewPublicProfile": "View Public Profile",
+  "renderPageDialog.loading": "Rendering page...",
+  "renderPageDialog.success": "Page rerendered successfully.",
   "search.editorAny": "Any editor",
   "search.emptyQuery": "Enter a query in the search field above and press Enter.",
   "search.filterEditor": "Editor",

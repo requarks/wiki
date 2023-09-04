@@ -603,9 +603,9 @@ export default {
       }
     },
     /**
-     * RENDER PAGE
+     * RERENDER PAGE
      */
-    async renderPage (obj, args, context) {
+    async rerenderPage (obj, args, context) {
       try {
         const page = await WIKI.db.pages.query().findById(args.id)
         if (!page) {
@@ -613,7 +613,7 @@ export default {
         }
         await WIKI.db.pages.renderPage(page)
         return {
-          operation: generateSuccess('Page rendered successfully.')
+          operation: generateSuccess('Page rerendered successfully.')
         }
       } catch (err) {
         return generateError(err)

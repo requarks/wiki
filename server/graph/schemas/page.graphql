@@ -191,8 +191,8 @@ extend type Mutation {
 
   rebuildPageTree: DefaultResponse
 
-  renderPage(
-    id: Int!
+  rerenderPage(
+    id: UUID!
   ): DefaultResponse
 
   restorePage(

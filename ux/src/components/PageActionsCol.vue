@@ -100,11 +100,11 @@
               q-icon(color='deep-orange-9', name='las la-atom', size='sm')
             q-item-section
               q-item-label Convert Page
-          q-item(clickable, v-if='userStore.can(`edit:pages`)')
+          q-item(clickable, v-if='userStore.can(`edit:pages`)', @click='rerenderPage')
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-magic', size='sm')
             q-item-section
-              q-item-label Re-render Page
+              q-item-label Rerender Page
           q-item(clickable)
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-sun', size='sm')
@@ -202,6 +202,17 @@ function togglePageData () {
 
 function viewPageSource () {
   siteStore.$patch({ overlay: 'PageSource', overlayOpts: { } })
+}
+
+function rerenderPage () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('../components/RerenderPageDialog.vue')),
+    componentProps: {
+      id: pageStore.id
+    }
+  }).onOk(() => {
+    pageStore.pageLoad({ id: pageStore.id })
+  })
 }
 
 function duplicatePage () {
