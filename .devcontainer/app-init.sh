@@ -16,6 +16,9 @@ cd server
 npm install
 cd ../ux
 npm install
+cd ../blocks
+npm install
+npm run build
 cd ..
 
 echo "Ready!"

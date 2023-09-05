@@ -18,6 +18,7 @@ RUN mkdir -p /wiki && \
 WORKDIR /wiki
 
 COPY --chown=node:node ./assets ./assets
+COPY --chown=node:node ./blocks/dist ./blocks/dist
 COPY --chown=node:node ./server ./server
 COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./LICENSE ./LICENSE

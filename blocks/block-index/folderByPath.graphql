@@ -1,0 +1,6 @@
+query folderByPath($siteId: UUID!, $locale: String!, $path: String!) {
+  folderByPath(siteId: $siteId, locale: $locale, path: $path) {
+    id
+    title
+  }
+}

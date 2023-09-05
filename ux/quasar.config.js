@@ -126,6 +126,7 @@ module.exports = configure(function (ctx) {
       port: userConfig.dev?.port,
       proxy: {
         '/_graphql': `http://127.0.0.1:${userConfig.port}/_graphql`,
+        '/_blocks': `http://127.0.0.1:${userConfig.port}`,
         '/_site': `http://127.0.0.1:${userConfig.port}`,
         '/_thumb': `http://127.0.0.1:${userConfig.port}`,
         '/_user': `http://127.0.0.1:${userConfig.port}`

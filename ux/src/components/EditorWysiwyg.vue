@@ -106,7 +106,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import TextAlign from '@tiptap/extension-text-align'
 import TextStyle from '@tiptap/extension-text-style'
 import Typography from '@tiptap/extension-typography'
-import { lowlight } from 'lowlight/lib/core'
+import { common, createLowlight } from 'lowlight'
 import { onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
 // import * as Y from 'yjs'
 // import { IndexeddbPersistence } from 'y-indexeddb'
@@ -119,6 +119,8 @@ import { DateTime } from 'luxon'
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
+
+const lowlight = createLowlight(common)
 
 // QUASAR
 
