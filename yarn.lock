@@ -7618,11 +7618,6 @@ cssstyle@^2.2.0:
   dependencies:
     cssom "~0.3.6"
 
-csv-to-markdown-table@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/csv-to-markdown-table/-/csv-to-markdown-table-1.3.1.tgz#a102137dd060726d94802e2bfa5c2d6992311cc6"
-  integrity sha512-ocr1MXWLFrc7la7fE4/2876XsBc9ajCeYZnXJrszSdyyIWMSVOYTg/Ol9W1xku8SZxBNsFhNECNmiZqo6OPsEg==
-
 cuint@0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cuint/-/cuint-0.2.2.tgz#408086d409550c2631155619e9fa7bcadc3b991b"
@@ -13195,13 +13190,13 @@ markdown-it-multimd-table@4.0.3:
   dependencies:
     markdown-it "^11.0.0"
 
-markdown-it-pivot-table@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/markdown-it-pivot-table/-/markdown-it-pivot-table-1.0.1.tgz#bdab793d59160b7c4fa0dffcff4b75b42aac246a"
-  integrity sha512-oqpwXfqtupZnDfZOL3S3Pmf+nr01Qhg3f97CIbURwcPDsrNTxOHn+kXANv1oe1ZEczQ8bEHe0Xw+1q+EKDmgEQ==
+markdown-it-pivot-table@1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/markdown-it-pivot-table/-/markdown-it-pivot-table-1.0.5.tgz#53a9f5032d3ef1e5e9f7a8f94495b8ce113a6ac8"
+  integrity sha512-LJzfG7BuyW6STQ1pFpnoNHPlf3qfVqWVUqV9zJWwENCyEH0aSgGqnE5bcfZ5rc4aG9z1XTu7d4kppxhQBqlRag==
   dependencies:
-    csv-to-markdown-table "^1.3.1"
     group-by "^0.0.1"
+    nd-table "^1.2.2"
     string-math "^1.2.2"
 
 markdown-it-sub@1.0.0:
@@ -13867,6 +13862,11 @@ ncp@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ncp/-/ncp-2.0.0.tgz#195a21d6c46e361d2fb1281ba38b91e9df7bdbb3"
   integrity sha1-GVoh1sRuNh0vsSgbo4uR6d9727M=
+
+nd-table@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/nd-table/-/nd-table-1.2.2.tgz#9bfcf424fdd865544b27dd6761a8ab65810e3168"
+  integrity sha512-T/ALZyo4g15iRJ9TK7mo9Ny0CQvYcDGSZ8k9/6/CpGIisfITm91skQzXYas2ALyhIafxV4bmcL2gzCFh1cJCpQ==
 
 needle@^2.2.1:
   version "2.4.0"
