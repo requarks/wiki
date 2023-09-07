@@ -187,11 +187,19 @@ module.exports = {
           }
         }
       },
+      // -> Create DB Schema if different than the default 'public'
+      async createDefaultSchema () {
+        if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
+          await self.knex.raw(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schema};`)
+        }
+      },
       // -> Migrate DB Schemas
       async syncSchemas () {
         return self.knex.migrate.latest({
           tableName: 'migrations',
-          migrationSource
+          migrationSource,
+          schemaName: (WIKI.config.db.schema && WIKI.config.db.schema !== 'public')
+                          ? WIKI.config.db.schema : undefined
         })
       },
       // -> Migrate DB Schemas from beta
@@ -202,6 +210,7 @@ module.exports = {
 
     let initTasksQueue = (WIKI.IS_MASTER) ? [
       initTasks.connect,
+      initTasks.createDefaultSchema,
       initTasks.migrateFromBeta,
       initTasks.syncSchemas
     ] : [
