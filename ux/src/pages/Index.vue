@@ -43,7 +43,7 @@ q-page.column
         style='height: 100%;'
         )
         .q-pa-md
-          .page-contents(v-html='pageStore.render')
+          .page-contents(ref='pageContents', v-html='pageStore.render')
           template(v-if='pageStore.relations && pageStore.relations.length > 0')
             q-separator.q-my-lg
             .row.align-center
@@ -158,11 +158,12 @@ q-page.column
 
 <script setup>
 import { useMeta, useQuasar } from 'quasar'
-import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 
+import { useCommonStore } from 'src/stores/common'
 import { useEditorStore } from 'src/stores/editor'
 import { useFlagsStore } from 'src/stores/flags'
 import { usePageStore } from 'src/stores/page'
@@ -194,6 +195,7 @@ const $q = useQuasar()
 
 // STORES
 
+const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
@@ -240,6 +242,8 @@ const barStyle = {
   width: '9px',
   opacity: 1
 }
+
+const pageContents = ref(null)
 
 // COMPUTED
 
@@ -312,6 +316,12 @@ watch(() => route.path, async (newValue) => {
         isActive: false
       })
     }
+    // -> Load Blocks
+    nextTick(() => {
+      for (const block of pageContents.value.querySelectorAll(':not(:defined)')) {
+        commonStore.loadBlocks([block.tagName.toLowerCase()])
+      }
+    })
   } catch (err) {
     if (err.message === 'ERR_PAGE_NOT_FOUND') {
       if (newValue === '/') {

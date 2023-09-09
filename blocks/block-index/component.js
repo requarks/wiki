@@ -1,70 +1,109 @@
 import { LitElement, html, css } from 'lit'
-import folderByPath from './folderByPath.graphql'
+import treeQuery from './folderByPath.graphql'
 
 /**
- * An example element.
- *
- * @fires count-changed - Indicates when the count changes
- * @slot - This element has a slot
- * @csspart button - The button
+ * Block Index
  */
 export class BlockIndexElement extends LitElement {
   static get styles() {
     return css`
       :host {
         display: block;
-        border: solid 1px gray;
-        padding: 16px;
-        max-width: 800px;
+        margin-bottom: 16px;
       }
-    `;
+      :host-context(body.body--dark) {
+        background-color: #F00;
+      }
+
+      ul {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+
+      li {
+        background-color: #fafafa;
+        background-image: linear-gradient(180deg,#fff,#fafafa);
+        border-right: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+        border-left: 5px solid #e0e0e0;
+        box-shadow: 0 3px 8px 0 rgba(116,129,141,.1);
+        padding: 0;
+        border-radius: 5px;
+        font-weight: 500;
+      }
+      li:hover {
+        background-image: linear-gradient(180deg,#fff,#f6fbfe);
+        border-left-color: #2196f3;
+        cursor: pointer;
+      }
+      li + li {
+        margin-top: .5rem;
+      }
+      li a {
+        display: block;
+        color: #1976d2;
+        padding: 1rem;
+        text-decoration: none;
+      }
+    `
   }
 
   static get properties() {
     return {
       /**
-       * The name to say "Hello" to.
+       * The base path to fetch pages from
        * @type {string}
        */
-      name: {type: String},
+      path: {type: String},
 
       /**
-       * The number of times the button has been clicked.
+       * A comma-separated list of tags to filter with
+       * @type {string}
+       */
+      tags: {type: String},
+
+      /**
+       * The maximum number of items to fetch
        * @type {number}
        */
-      count: {type: Number},
-    };
+      limit: {type: Number}
+    }
   }
 
   constructor() {
-    super();
-    this.name = 'World';
-    this.count = 0;
+    super()
+    this.pages = []
+  }
+
+  async connectedCallback() {
+    super.connectedCallback()
+    const resp = await APOLLO_CLIENT.query({
+      query: treeQuery,
+      variables: {
+        siteId: WIKI_STORES.site.id,
+        locale: 'en',
+        parentPath: ''
+      }
+    })
+    this.pages = resp.data.tree
+    this.requestUpdate()
   }
 
   render() {
     return html`
-      <h1>${this.sayHello(this.name)}!</h1>
-      <button @click=${this._onClick} part="button">
-        Click Count: ${this.count}
-      </button>
+      <ul>
+        ${this.pages.map(p =>
+          html`<li><a href="#">${p.title}</a></li>`
+        )}
+      </ul>
       <slot></slot>
-    `;
+    `
   }
 
-  _onClick() {
-    this.count++;
-    this.dispatchEvent(new CustomEvent('count-changed'));
-  }
-
-  /**
-   * Formats a greeting
-   * @param name {string} The name to say "Hello" to
-   * @returns {string} A greeting directed at `name`
-   */
-  sayHello(name) {
-    return `Hello, ${name}`;
-  }
+  // createRenderRoot() {
+  //   return this;
+  // }
 }
 
-window.customElements.define('block-index', BlockIndexElement);
+window.customElements.define('block-index', BlockIndexElement)

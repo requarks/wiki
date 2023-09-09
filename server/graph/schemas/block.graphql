@@ -1,0 +1,40 @@
+# ===============================================
+# BLOCKS
+# ===============================================
+
+extend type Query {
+  blocks(
+    siteId: UUID!
+  ): [Block]
+}
+
+extend type Mutation {
+  setBlocksState(
+    siteId: UUID!
+    states: [BlockStateInput]!
+  ): DefaultResponse
+
+  deleteBlock(
+    id: UUID!
+  ): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type Block {
+  id: UUID
+  block: String
+  name: String
+  description: String
+  icon: String
+  isEnabled: Boolean
+  isCustom: Boolean
+  config: JSON
+}
+
+input BlockStateInput {
+  id: UUID!
+  isEnabled: Boolean!
+}

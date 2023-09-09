@@ -38,6 +38,7 @@ module.exports = configure(function (ctx) {
     boot: [
       'apollo',
       'components',
+      'externals',
       'eventbus',
       'i18n',
       {

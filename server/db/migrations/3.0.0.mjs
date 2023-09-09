@@ -70,6 +70,17 @@ export async function up (knex) {
       table.string('allowedEmailRegex')
       table.specificType('autoEnrollGroups', 'uuid[]')
     })
+    .createTable('blocks', table => {
+      table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
+      table.string('block').notNullable()
+      table.string('name').notNullable()
+      table.string('description').notNullable()
+      table.string('icon')
+      table.boolean('isEnabled').notNullable().defaultTo(false)
+      table.boolean('isCustom').notNullable().defaultTo(false)
+      table.json('config').notNullable()
+    })
+    // COMMENT PROVIDERS -------------------
     .createTable('commentProviders', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
       table.string('module').notNullable()
@@ -362,6 +373,9 @@ export async function up (knex) {
     .table('assets', table => {
       table.uuid('authorId').notNullable().references('id').inTable('users')
       table.uuid('siteId').notNullable().references('id').inTable('sites').index()
+    })
+    .table('blocks', table => {
+      table.uuid('siteId').notNullable().references('id').inTable('sites')
     })
     .table('commentProviders', table => {
       table.uuid('siteId').notNullable().references('id').inTable('sites')
@@ -773,6 +787,19 @@ export async function up (knex) {
       groupId: groupGuestId
     }
   ])
+
+  // -> BLOCKS
+
+  await knex('blocks').insert({
+    block: 'index',
+    name: 'Index',
+    description: 'Show a list of pages matching a path or set of tags.',
+    icon: 'rules',
+    isCustom: false,
+    isEnabled: true,
+    config: {},
+    siteId: siteId
+  })
 
   // -> NAVIGATION
 

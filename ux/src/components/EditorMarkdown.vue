@@ -258,6 +258,7 @@ import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
 
+import { useCommonStore } from 'src/stores/common'
 import { useEditorStore } from 'src/stores/editor'
 import { usePageStore } from 'src/stores/page'
 import { useSiteStore } from 'src/stores/site'
@@ -271,6 +272,7 @@ const $q = useQuasar()
 
 // STORES
 
+const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
@@ -471,6 +473,11 @@ async function toggleMarkup ({ start, end }) {
 function processContent (newContent) {
   pageStore.$patch({
     render: md.render(newContent)
+  })
+  nextTick(() => {
+    for (const block of editorPreviewContainerRef.value.querySelectorAll(':not(:defined)')) {
+      commonStore.loadBlocks([block.tagName.toLowerCase()])
+    }
   })
 }
 

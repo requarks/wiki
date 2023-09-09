@@ -1,5 +1,13 @@
-query folderByPath($siteId: UUID!, $locale: String!, $path: String!) {
-  folderByPath(siteId: $siteId, locale: $locale, path: $path) {
+query blockIndexFetchPages (
+  $siteId: UUID!
+  $locale: String!
+  $parentPath: String!
+  ) {
+  tree(
+    siteId: $siteId,
+    locale: $locale,
+    parentPath: $parentPath
+    ) {
     id
     title
   }

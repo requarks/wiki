@@ -2,6 +2,7 @@ import { Analytics } from './analytics.mjs'
 import { ApiKey } from './apiKeys.mjs'
 import { Asset } from './assets.mjs'
 import { Authentication } from './authentication.mjs'
+import { Block } from './blocks.mjs'
 import { CommentProvider } from './commentProviders.mjs'
 import { Comment } from './comments.mjs'
 import { Group } from './groups.mjs'
@@ -25,6 +26,7 @@ export default {
   apiKeys: ApiKey,
   assets: Asset,
   authentication: Authentication,
+  blocks: Block,
   commentProviders: CommentProvider,
   comments: Comment,
   groups: Group,

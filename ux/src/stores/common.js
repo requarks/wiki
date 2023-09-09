@@ -1,11 +1,13 @@
 import { defineStore } from 'pinia'
 import gql from 'graphql-tag'
+import { difference } from 'lodash-es'
 
 export const useCommonStore = defineStore('common', {
   state: () => ({
     routerLoading: false,
     locale: localStorage.getItem('locale') || 'en',
-    desiredLocale: localStorage.getItem('locale')
+    desiredLocale: localStorage.getItem('locale'),
+    blocksLoaded: []
   }),
   getters: {},
   actions: {
@@ -38,6 +40,17 @@ export const useCommonStore = defineStore('common', {
         desiredLocale: locale
       })
       localStorage.setItem('locale', locale)
+    },
+    async loadBlocks (blocks = []) {
+      const toLoad = difference(blocks, this.blocksLoaded)
+      for (const block of toLoad) {
+        try {
+          await import(/* @vite-ignore */ `/_blocks/${block}.js`)
+          this.blocksLoaded.push(block)
+        } catch (err) {
+          console.warn(`Failed to load ${block}: ${err.message}`)
+        }
+      }
     }
   }
 })

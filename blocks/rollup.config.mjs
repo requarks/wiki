@@ -21,7 +21,7 @@ export default {
     })
   ),
   output: {
-    dir: 'dist',
+    dir: 'compiled',
     format: 'es',
     globals: {
       APOLLO_CLIENT: 'APOLLO_CLIENT'
@@ -31,9 +31,8 @@ export default {
     resolve(),
     graphql(),
     terser({
-      ecma: 2017,
-      module: true,
-      warnings: true
+      ecma: 2019,
+      module: true
     }),
     summary()
   ]

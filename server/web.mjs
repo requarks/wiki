@@ -120,7 +120,7 @@ export async function init () {
   // Blocks
   // ----------------------------------------
 
-  app.use('/_blocks', express.static(path.join(WIKI.ROOTPATH, 'blocks/dist'), {
+  app.use('/_blocks', express.static(path.join(WIKI.ROOTPATH, 'blocks/compiled'), {
     index: false,
     maxAge: '7d'
   }))
