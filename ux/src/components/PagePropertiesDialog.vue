@@ -61,7 +61,10 @@ q-card.page-properties-dialog
             q-icon.cursor-pointer(
               name='las la-icons'
               color='primary'
-            )
+              )
+              q-menu(content-class='shadow-7')
+                .q-pa-lg: em [ TODO: Icon Picker Dialog ]
+                // icon-picker-dialog(v-model='pageStore.icon')
         q-input(
           v-if='pageStore.path !== `home`'
           v-model='pageStore.alias'

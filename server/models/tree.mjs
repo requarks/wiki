@@ -120,9 +120,10 @@ export class Tree extends Model {
    * @param {string} args.title - Title of the page to add
    * @param {string} args.locale - Locale code of the page to add
    * @param {string} args.siteId - UUID of the site in which the page will be added
+   * @param {string[]} [args.tags] - Tags of the assets
    * @param {Object} [args.meta] - Extra metadata
    */
-  static async addPage ({ id, parentId, parentPath, fileName, title, locale, siteId, meta = {} }) {
+  static async addPage ({ id, parentId, parentPath, fileName, title, locale, siteId, tags = [], meta = {} }) {
     const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
       id: parentId,
       path: parentPath,
@@ -147,6 +148,7 @@ export class Tree extends Model {
       hash: generateHash(fullPath),
       locale: locale,
       siteId,
+      tags,
       meta,
       navigationId: siteId,
     }).returning('*')
@@ -164,9 +166,10 @@ export class Tree extends Model {
    * @param {string} args.title - Title of the asset to add
    * @param {string} args.locale - Locale code of the asset to add
    * @param {string} args.siteId - UUID of the site in which the asset will be added
+   * @param {string[]} [args.tags] - Tags of the assets
    * @param {Object} [args.meta] - Extra metadata
    */
-  static async addAsset ({ id, parentId, parentPath, fileName, title, locale, siteId, meta = {} }) {
+  static async addAsset ({ id, parentId, parentPath, fileName, title, locale, siteId, tags = [], meta = {} }) {
     const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
       id: parentId,
       path: parentPath,
@@ -191,6 +194,7 @@ export class Tree extends Model {
       hash: generateHash(fullPath),
       locale: locale,
       siteId,
+      tags,
       meta
     }).returning('*')
 

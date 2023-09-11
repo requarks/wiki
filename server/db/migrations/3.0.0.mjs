@@ -244,8 +244,8 @@ export async function up (knex) {
       table.text('content')
       table.text('render')
       table.text('searchContent')
-      table.specificType('ts', 'tsvector').index('ts_idx', { indexType: 'GIN' })
-      table.specificType('tags', 'text[]').index('tags_idx', { indexType: 'GIN' })
+      table.specificType('ts', 'tsvector').index('pages_ts_idx', { indexType: 'GIN' })
+      table.specificType('tags', 'text[]').index('pages_tags_idx', { indexType: 'GIN' })
       table.jsonb('toc')
       table.string('editor').notNullable()
       table.string('contentType').notNullable()
@@ -303,7 +303,7 @@ export async function up (knex) {
     // TREE --------------------------------
     .createTable('tree', table => {
       table.uuid('id').notNullable().primary().defaultTo(knex.raw('gen_random_uuid()'))
-      table.specificType('folderPath', 'ltree').index().index('tree_folderpath_gist_index', { indexType: 'GIST' })
+      table.specificType('folderPath', 'ltree').index().index('tree_folderpath_gist_idx', { indexType: 'GIST' })
       table.string('fileName').notNullable().index()
       table.string('hash').notNullable().index()
       table.enu('type', ['folder', 'page', 'asset']).notNullable().index()
@@ -311,6 +311,7 @@ export async function up (knex) {
       table.string('title').notNullable()
       table.enum('navigationMode', ['inherit', 'override', 'overrideExact', 'hide', 'hideExact']).notNullable().defaultTo('inherit').index()
       table.uuid('navigationId').index()
+      table.specificType('tags', 'text[]').index('tree_tags_idx', { indexType: 'GIN' })
       table.jsonb('meta').notNullable().defaultTo('{}')
       table.timestamp('createdAt').notNullable().defaultTo(knex.fn.now())
       table.timestamp('updatedAt').notNullable().defaultTo(knex.fn.now())

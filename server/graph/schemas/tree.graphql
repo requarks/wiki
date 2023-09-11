@@ -13,6 +13,7 @@ extend type Query {
     parentPath: String
     locale: String
     types: [TreeItemType]
+    tags: [String]
     limit: Int
     offset: Int
     orderBy: TreeOrderBy

@@ -57,7 +57,7 @@ q-layout(view='hHh Lpr lff')
           dense
           icon='las la-globe'
           color='blue-7'
-          text-color='blue-2'
+          text-color='custom-color'
           :label='commonStore.locale'
           :aria-label='commonStore.locale'
           size='sm'
@@ -69,13 +69,16 @@ q-layout(view='hHh Lpr lff')
           dense
           icon='las la-sitemap'
           color='blue-7'
-          text-color='blue-2'
+          text-color='custom-color'
           label='Browse'
           aria-label='Browse'
           size='sm'
           )
       nav-sidebar
-      q-bar.bg-blue-9.text-white(dense, v-if='userStore.authenticated')
+      q-bar.sidebar-footerbtns.text-white(
+        v-if='userStore.authenticated'
+        dense
+        )
         q-btn.col(
           icon='las la-dharmachakra'
           label='Edit Nav'
@@ -186,10 +189,18 @@ const isSidebarMini = computed(() => {
   background: linear-gradient(to bottom, rgba(255,255,255,.1) 0%, rgba(0,0,0, .05) 100%);
   border-bottom: 1px solid rgba(0,0,0,.2);
   height: 38px;
+
+  .q-btn {
+    color: rgba(255,255,255,.8);
+  }
 }
 
 .sidebar-mini {
   height: 100%;
+}
+
+.sidebar-footerbtns {
+  background-color: rgba(255,255,255,.1);
 }
 
 body.body--dark {

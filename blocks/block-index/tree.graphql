@@ -1,0 +1,27 @@
+query blockIndexFetchPages (
+  $siteId: UUID!
+  $locale: String
+  $parentPath: String
+  $tags: [String]
+  $limit: Int
+  $orderBy: TreeOrderBy
+  $orderByDirection: OrderByDirection
+  $depth: Int
+  ) {
+  tree(
+    siteId: $siteId
+    locale: $locale
+    parentPath: $parentPath
+    tags: $tags
+    limit: $limit
+    types: [page]
+    orderBy: $orderBy
+    orderByDirection: $orderByDirection
+    depth: $depth
+    ) {
+    id
+    folderPath
+    fileName
+    title
+  }
+}

@@ -366,6 +366,7 @@ export class Page extends Model {
       fileName: last(pathParts),
       locale: page.locale,
       title: page.title,
+      tags,
       meta: {
         authorId: page.authorId,
         contentType: page.contentType,
@@ -649,6 +650,7 @@ export class Page extends Model {
     // -> Update tree
     await WIKI.db.knex('tree').where('id', page.id).update({
       title: page.title,
+      tags: page.tags,
       meta: {
         authorId: page.authorId,
         contentType: page.contentType,

@@ -1,5 +1,5 @@
 <template lang='pug'>
-q-btn.q-ml-md(flat, round, dense, color='grey')
+q-btn.account-avbtn.q-ml-md(flat, round, dense, color='custom-color')
   q-icon(
     v-if='!userStore.authenticated || !userStore.hasAvatar'
     name='las la-user-circle'
@@ -49,5 +49,7 @@ const { t } = useI18n()
 </script>
 
 <style lang="scss">
-
+.account-avbtn {
+  color: rgba(255,255,255,.6);
+}
 </style>

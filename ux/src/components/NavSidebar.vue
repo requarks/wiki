@@ -9,7 +9,7 @@ q-scroll-area.sidebar-nav(
     dark
     )
     template(v-for='item of siteStore.nav.items', :key='item.id')
-      q-item-label.text-blue-2.text-caption.text-wordbreak-all(
+      q-item-label.sidebar-nav-header.text-caption.text-wordbreak-all(
         v-if='item.type === `header`'
         header
         ) {{ item.label }}
@@ -174,6 +174,10 @@ watch(() => pageStore.navigationId, (newValue) => {
     .q-expansion-item__content {
       border-left: 10px solid rgba(255,255,255,.25);
     }
+  }
+
+  &-header {
+    color: rgba(255,255,255,.75) !important;
   }
 }
 </style>

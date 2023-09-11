@@ -90,22 +90,24 @@ module.exports = configure(function (ctx) {
       distDir: '../assets',
 
       extendViteConf (viteConf) {
-        viteConf.build.assetsDir = '_assets'
-        viteConf.build.rollupOptions = {
-          ...viteConf.build.rollupOptions ?? {},
-          output: {
-            manualChunks: {
-              lodash: ['lodash-es', 'lodash'],
-              quasar: ['quasar', 'quasar/src/components']
+        if (ctx.prod) {
+          viteConf.build.assetsDir = '_assets'
+          viteConf.build.rollupOptions = {
+            ...viteConf.build.rollupOptions ?? {},
+            output: {
+              manualChunks: {
+                lodash: ['lodash-es', 'lodash'],
+                quasar: ['quasar', 'quasar/src/components']
+              }
             }
           }
+          viteConf.optimizeDeps.include = [
+            'prosemirror-state',
+            'prosemirror-transform',
+            'prosemirror-model',
+            'prosemirror-view'
+          ]
         }
-        viteConf.optimizeDeps.include = [
-          'prosemirror-state',
-          'prosemirror-transform',
-          'prosemirror-model',
-          'prosemirror-view'
-        ]
       },
       // viteVuePluginOptions: {},
 

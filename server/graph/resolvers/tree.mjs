@@ -80,6 +80,11 @@ export default {
               type: 'folder'
             })
           }
+
+          // -> Filter by tags
+          if (args.tags && args.tags.length > 0) {
+            builder.where('tags', '@>', args.tags)
+          }
         })
         .andWhere(builder => {
           // -> Limit to specific types
@@ -101,6 +106,7 @@ export default {
         folderPath: decodeTreePath(decodeFolderPath(item.folderPath)),
         fileName: item.fileName,
         title: item.title,
+        tags: item.tags ?? [],
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         ...(item.type === 'folder') && {

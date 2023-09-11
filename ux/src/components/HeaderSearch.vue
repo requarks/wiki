@@ -28,10 +28,10 @@ q-toolbar(
         )
       q-icon(v-else, name='las la-search')
     template(v-slot:append)
-      q-badge.q-mr-sm(
+      q-badge.search-kbdbadge.q-mr-sm(
         v-if='!state.searchIsFocused'
         label='Ctrl+K'
-        color='grey-7'
+        color='custom-color'
         outline
         @click='searchField.focus()'
         )
@@ -220,5 +220,9 @@ onBeforeUnmount(() => {
     font-weight: 700;
     border-radius: 4px;
   }
+}
+
+.search-kbdbadge {
+  color: rgba(255,255,255,.5);
 }
 </style>

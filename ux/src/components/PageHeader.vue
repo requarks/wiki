@@ -13,7 +13,8 @@
       q-badge(color='grey' floating rounded)
         q-icon(name='las la-pen', size='xs', padding='xs xs')
       q-menu(content-class='shadow-7')
-        icon-picker-dialog(v-model='pageStore.icon')
+        .q-pa-lg: em [ TODO: Icon Picker Dialog ]
+        // icon-picker-dialog(v-model='pageStore.icon')
     q-icon.rounded-borders(
       v-else
       :name='pageStore.icon'
