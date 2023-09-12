@@ -31,6 +31,13 @@ module.exports = {
         kind: a.kind.toUpperCase()
       }))
     },
+    async allFolders(obj, args, context) {
+      const results = await WIKI.models.assetFolders.query();
+      return results.filter(folder => {        
+        const path = folder.slug;
+        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path });
+      });
+    },
     async folders(obj, args, context) {
       const results = await WIKI.models.assetFolders.query().where({
         parentId: args.parentFolderId === 0 ? null : args.parentFolderId
@@ -71,6 +78,37 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+    // new one
+    async createFolderWithId(obj, args, context) {
+        try {
+          const folderSlug = sanitize(args.slug).toLowerCase();
+          const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId;
+          const result = await WIKI.models.assetFolders.query().where({
+            parentId: parentFolderId,
+            slug: folderSlug
+          }).first();
+          if (!result) {
+            const newFolder = await WIKI.models.assetFolders.query().insert({
+              slug: folderSlug,
+              name: folderSlug,
+              parentId: parentFolderId
+            });
+  
+            return {
+              folderId: newFolder.id,
+              parentId: newFolder.parentId,
+              response: graphHelper.generateSuccess('Asset Folder has been created successfully.')
+            };
+          } else {
+            throw new WIKI.Error.AssetFolderExists();
+          }
+        } catch (err) {
+          return {
+            folderId: null,
+            response: graphHelper.generateError(err)
+          };
+        }
+      },
     /**
      * Rename an Asset
      */
