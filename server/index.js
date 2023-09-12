@@ -23,9 +23,9 @@ if (gte(process.version, '21.0.0')) {
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',
   IS_MASTER: true,
-  ROOTPATH: process.cwd(),
+  ROOTPATH: path.join(__dirname, '..'),
   INSTANCE_ID: nanoid(10),
-  SERVERPATH: path.join(process.cwd(), 'server'),
+  SERVERPATH: path.join(__dirname),
   Error: require('./helpers/error'),
   configSvc: require('./core/config'),
   kernel: require('./core/kernel'),
