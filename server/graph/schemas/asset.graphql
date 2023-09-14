@@ -42,8 +42,8 @@ createFolder(
     parentFolderId: Int!
     slug: String!
     name: String
-  ): FolderCreationResponse @auth(requires: ["manage:system", "write:assets"])   
-  
+  ): FolderCreationResponse @auth(requires: ["manage:system", "write:assets"])
+
   # DefaultResponse @auth(requires: ["manage:system", "write:assets"])
 
   renameAsset(
@@ -54,6 +54,11 @@ createFolder(
   deleteAsset(
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+
+  deleteFolder(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+
 
   flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -89,7 +94,7 @@ enum AssetKind {
   ALL
 }
 
-type FolderCreationResponse {  
+type FolderCreationResponse {
   folderId: Int
   response: DefaultResponse
   parentId: Int
