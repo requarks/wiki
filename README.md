@@ -215,6 +215,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - ameyrakheja ([@ameyrakheja](https://github.com/ameyrakheja))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
+- cesar ([@cesarnr21](https://github.com/cesarnr21))
 - chaee ([@chaee](https://github.com/chaee))
 - lwileczek ([@lwileczek](https://github.com/lwileczek))
 - magicpotato ([@fortheday](https://github.com/fortheday))
