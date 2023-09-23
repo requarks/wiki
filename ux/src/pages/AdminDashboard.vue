@@ -36,6 +36,32 @@ q-page.admin-dashboard
     .col-12.col-sm-6.col-lg-3
       q-card
         q-card-section.admin-dashboard-card
+          img(src='/_assets/icons/fluent-people.svg')
+          div
+            strong {{ t('admin.groups.title') }}
+            small.text-positive {{adminStore.info.groupsTotal}}
+        q-separator
+        q-card-actions(align='right')
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-plus-circle'
+            :label='t(`common.actions.new`)'
+            :disable='!userStore.can(`manage:users`)'
+            @click='newGroup'
+            )
+          q-separator.q-mx-sm(vertical)
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-users'
+            :label='t(`common.actions.manage`)'
+            :disable='!userStore.can(`manage:users`)'
+            to='/_admin/groups'
+            )
+    .col-12.col-sm-6.col-lg-3
+      q-card
+        q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-account.svg')
           div
             strong {{ t('admin.users.title') }}
@@ -54,7 +80,7 @@ q-page.admin-dashboard
           q-btn(
             flat
             color='primary'
-            icon='las la-users'
+            icon='las la-user-friends'
             :label='t(`common.actions.manage`)'
             :disable='!userStore.can(`manage:users`)'
             to='/_admin/users'
@@ -75,23 +101,6 @@ q-page.admin-dashboard
             :label='t(`admin.analytics.title`)'
             :disable='!userStore.can(`manage:sites`)'
             :to='`/_admin/` + adminStore.currentSiteId + `/analytics`'
-            )
-    .col-12.col-sm-6.col-lg-3
-      q-card
-        q-card-section.admin-dashboard-card
-          img(src='/_assets/icons/fluent-ssd-animated.svg')
-          div
-            strong {{ t('admin.storage.title') }}
-            small.text-positive Operational
-        q-separator
-        q-card-actions(align='right')
-          q-btn(
-            flat
-            color='primary'
-            icon='las la-server'
-            :label='t(`common.actions.manage`)'
-            :disable='!userStore.can(`manage:sites`)'
-            :to='`/_admin/` + adminStore.currentSiteId + `/storage`'
             )
     .col-12
       q-banner.bg-positive.text-white(
@@ -234,9 +243,10 @@ import { useUserStore } from 'src/stores/user'
 
 // COMPONENTS
 
-import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
-import SiteCreateDialog from '../components/SiteCreateDialog.vue'
-import UserCreateDialog from '../components/UserCreateDialog.vue'
+import CheckUpdateDialog from 'src/components/CheckUpdateDialog.vue'
+import SiteCreateDialog from 'src/components/SiteCreateDialog.vue'
+import UserCreateDialog from 'src/components/UserCreateDialog.vue'
+import GroupCreateDialog from 'src/components/GroupCreateDialog.vue'
 
 // QUASAR
 
@@ -275,6 +285,13 @@ function newUser () {
     component: UserCreateDialog
   }).onOk(() => {
     router.push('/_admin/users')
+  })
+}
+function newGroup () {
+  $q.dialog({
+    component: GroupCreateDialog
+  }).onOk(() => {
+    router.push('/_admin/groups')
   })
 }
 function checkForUpdates () {

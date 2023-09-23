@@ -63,6 +63,12 @@
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTabset') }}
       q-btn(
+        icon='mdi-toy-brick-plus'
+        padding='sm sm'
+        flat
+        )
+        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertBlock') }}
+      q-btn(
         icon='mdi-chart-multiline'
         padding='sm sm'
         flat

@@ -33,21 +33,21 @@ q-layout(view='hHh lpR fFf', container)
       )
   q-drawer.bg-dark-6(:model-value='true', :width='250', dark)
     q-list(padding, v-show='!state.isLoading')
-      q-item(
-        v-for='sc of sections'
-        :key='`section-` + sc.key'
-        clickable
-        :to='{ params: { section: sc.key } }'
-        active-class='bg-primary text-white'
-        :disabled='sc.disabled'
-        )
-        q-item-section(side)
-          q-icon(:name='sc.icon', color='white')
-        q-item-section {{sc.text}}
-        q-item-section(side, v-if='sc.usersTotal')
-          q-badge(color='dark-3', :label='state.usersTotal')
-        q-item-section(side, v-if='sc.rulesTotal && state.group.rules')
-          q-badge(color='dark-3', :label='state.group.rules.length')
+      template(v-for='sc of sections', :key='`section-` + sc.key')
+        q-item(
+          v-if='!(isGuestGroup && sc.excludeGuests)'
+          clickable
+          :to='{ params: { section: sc.key } }'
+          active-class='bg-primary text-white'
+          :disabled='sc.disabled'
+          )
+          q-item-section(side)
+            q-icon(:name='sc.icon', color='white')
+          q-item-section {{sc.text}}
+          q-item-section(side, v-if='sc.usersTotal')
+            q-badge(color='dark-3', :label='state.usersTotal')
+          q-item-section(side, v-if='sc.rulesTotal && state.group.rules')
+            q-badge(color='dark-3', :label='state.group.rules.length')
   q-page-container
     q-page(v-if='state.isLoading')
     //- -----------------------------------------------------------------------
@@ -73,9 +73,10 @@ q-layout(view='hHh lpR fFf', container)
                     :rules='groupNameValidation'
                     hide-bottom-space
                     :aria-label='t(`admin.groups.name`)'
+                    :disable='isGuestGroup'
                     )
 
-            q-card.shadow-1.q-pb-sm.q-mt-md
+            q-card.shadow-1.q-pb-sm.q-mt-md(v-if='!isGuestGroup')
               q-card-section
                 .text-subtitle1 {{t('admin.groups.authBehaviors')}}
               q-item
@@ -551,8 +552,8 @@ const state = reactive({
 const sections = [
   { key: 'overview', text: t('admin.groups.overview'), icon: 'las la-users' },
   { key: 'rules', text: t('admin.groups.rules'), icon: 'las la-file-invoice', rulesTotal: true },
-  { key: 'permissions', text: t('admin.groups.permissions'), icon: 'las la-list-alt' },
-  { key: 'users', text: t('admin.groups.users'), icon: 'las la-user', usersTotal: true }
+  { key: 'permissions', text: t('admin.groups.permissions'), icon: 'las la-list-alt', excludeGuests: true },
+  { key: 'users', text: t('admin.groups.users'), icon: 'las la-user', usersTotal: true, excludeGuests: true }
 ]
 
 const usersHeaders = [
@@ -779,6 +780,10 @@ const groupNameValidation = [
 const usersTotalPages = computed(() => {
   if (state.usersTotal < 1) { return 0 }
   return Math.ceil(state.usersTotal / state.usersPageSize)
+})
+
+const isGuestGroup = computed(() => {
+  return adminStore.overlayOpts.id === '10000000-0000-4000-8000-000000000001'
 })
 
 // WATCHERS

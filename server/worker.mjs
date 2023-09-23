@@ -51,4 +51,4 @@ export default new ThreadWorker(async (job) => {
   const task = (await import(`./tasks/workers/${kebabCase(job.task)}.mjs`)).task
   await task(job)
   return true
-}, { async: true })
+})

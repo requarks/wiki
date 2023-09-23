@@ -113,6 +113,7 @@ type TreeItemPage implements TreeItem {
   editor: String
   pageType: String
   title: String
+  description: String
   updatedAt: Date
 }
 

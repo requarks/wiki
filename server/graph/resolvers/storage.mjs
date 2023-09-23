@@ -164,7 +164,7 @@ export default {
         }
         // await WIKI.db.storage.initTargets()
         return {
-          status: generateSuccess('Storage targets updated successfully')
+          operation: generateSuccess('Storage targets updated successfully')
         }
       } catch (err) {
         return generateError(err)
@@ -186,7 +186,7 @@ export default {
         const result = await WIKI.storage.modules[md.key].setup(args.targetId, args.state)
 
         return {
-          status: generateSuccess('Storage target setup step succeeded'),
+          operation: generateSuccess('Storage target setup step succeeded'),
           state: result
         }
       } catch (err) {
@@ -209,7 +209,7 @@ export default {
         await WIKI.storage.modules[md.key].setupDestroy(args.targetId)
 
         return {
-          status: generateSuccess('Storage target setup configuration destroyed succesfully.')
+          operation: generateSuccess('Storage target setup configuration destroyed succesfully.')
         }
       } catch (err) {
         return generateError(err)
@@ -219,7 +219,7 @@ export default {
       try {
         await WIKI.db.storage.executeAction(args.targetKey, args.handler)
         return {
-          status: generateSuccess('Action completed.')
+          operation: generateSuccess('Action completed.')
         }
       } catch (err) {
         return generateError(err)

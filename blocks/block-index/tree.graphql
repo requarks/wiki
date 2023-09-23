@@ -23,5 +23,8 @@ query blockIndexFetchPages (
     folderPath
     fileName
     title
+    ...on TreeItemPage {
+      description
+    }
   }
 }

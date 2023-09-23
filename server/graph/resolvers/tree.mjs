@@ -117,6 +117,9 @@ export default {
           fileSize: item.meta?.fileSize || 0,
           fileExt: item.meta?.fileExt || '',
           mimeType: item.meta?.mimeType || ''
+        },
+        ...(item.type === 'page') && {
+          description: item.meta?.description || ''
         }
       }))
     },

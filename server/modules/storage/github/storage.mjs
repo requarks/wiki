@@ -1,6 +1,6 @@
-const { Octokit, App } = require('octokit')
+import { Octokit, App } from 'octokit'
 
-module.exports = {
+export default {
   async activated () { },
   async deactivated () { },
   async init () { },

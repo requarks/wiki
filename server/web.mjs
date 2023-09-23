@@ -1,4 +1,3 @@
-import bodyParser from 'body-parser'
 import compression from 'compression'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
@@ -151,7 +150,7 @@ export async function init () {
   // GraphQL Server
   // ----------------------------------------
 
-  app.use(bodyParser.json({ limit: WIKI.config.bodyParserLimit || '1mb' }))
+  app.use(express.json({ limit: WIKI.config.bodyParserLimit || '5mb' }))
   await WIKI.servers.startGraphQL()
 
   // ----------------------------------------
@@ -175,7 +174,7 @@ export async function init () {
   app.set('views', path.join(WIKI.SERVERPATH, 'views'))
   app.set('view engine', 'pug')
 
-  app.use(bodyParser.urlencoded({ extended: false, limit: '1mb' }))
+  app.use(express.urlencoded({ extended: false, limit: '1mb' }))
 
   // ----------------------------------------
   // View accessible data

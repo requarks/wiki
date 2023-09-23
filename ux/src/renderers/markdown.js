@@ -60,6 +60,7 @@ export class MarkdownRenderer {
         }
       }
     })
+      .use(mdMdc)
       .use(mdAttrs, {
         allowedAttributes: ['id', 'class', 'target']
       })
@@ -73,7 +74,6 @@ export class MarkdownRenderer {
       .use(mdMark)
       .use(mdFootnote)
       .use(mdImsize)
-      .use(mdMdc)
 
     if (config.underline) {
       this.md.use(mdUnderline)

@@ -169,7 +169,7 @@ q-page.admin-storage
                   @click='setupGitHubStep(`verify`)'
                   :loading='state.setupCfg.loading'
                 )
-          q-card.q-pb-sm.q-mt-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state === `configured`')
+          q-card.q-pb-sm.q-mb-md(v-if='state.target.setup && state.target.setup.handler && state.target.setup.state === `configured`')
             q-card-section
               .text-subtitle1 {{t('admin.storage.setup')}}
               .text-body2.text-grey {{ t('admin.storage.setupConfiguredHint') }}
@@ -839,7 +839,7 @@ async function save ({ silent }) {
             siteId: $siteId
             targets: $targets
           ) {
-            status {
+            operation {
               succeeded
               message
             }
@@ -861,7 +861,7 @@ async function save ({ silent }) {
         }))
       }
     })
-    if (resp?.data?.updateStorageTargets?.status?.succeeded) {
+    if (resp?.data?.updateStorageTargets?.operation?.succeeded) {
       saveSuccess = true
       if (!silent) {
         $q.notify({
@@ -870,7 +870,7 @@ async function save ({ silent }) {
         })
       }
     } else {
-      throw new Error(resp?.data?.updateStorageTargets?.status?.message || 'Unexpected error')
+      throw new Error(resp?.data?.updateStorageTargets?.operation?.message || 'Unexpected error')
     }
   } catch (err) {
     $q.notify({
@@ -970,7 +970,7 @@ async function setupDestroy () {
             destroyStorageTargetSetup(
               targetId: $targetId
             ) {
-              status {
+              operation {
                 succeeded
                 message
               }
@@ -981,7 +981,7 @@ async function setupDestroy () {
           targetId: state.selectedTarget
         }
       })
-      if (resp?.data?.destroyStorageTargetSetup?.status?.succeeded) {
+      if (resp?.data?.destroyStorageTargetSetup?.operation?.succeeded) {
         state.target.setup.state = 'notconfigured'
         setTimeout(() => {
           $q.loading.hide()
@@ -991,7 +991,7 @@ async function setupDestroy () {
           })
         }, 2000)
       } else {
-        throw new Error(resp?.data?.destroyStorageTargetSetup?.status?.message || 'Unexpected error')
+        throw new Error(resp?.data?.destroyStorageTargetSetup?.operation?.message || 'Unexpected error')
       }
     } catch (err) {
       $q.notify({
@@ -1085,7 +1085,7 @@ async function setupGitHubStep (step, code) {
             targetId: $targetId
             state: $state
           ) {
-            status {
+            operation {
               succeeded
               message
             }
@@ -1094,14 +1094,14 @@ async function setupGitHubStep (step, code) {
         }
       `,
       variables: {
-        targetId: this.selectedTarget,
+        targetId: state.selectedTarget,
         state: {
           step,
           ...code && { code }
         }
       }
     })
-    if (resp?.data?.setupStorageTarget?.status?.succeeded) {
+    if (resp?.data?.setupStorageTarget?.operation?.succeeded) {
       switch (resp.data.setupStorageTarget.state?.nextStep) {
         case 'installApp': {
           router.replace({ query: null })
@@ -1121,8 +1121,8 @@ async function setupGitHubStep (step, code) {
           break
         }
         case 'completed': {
-          this.target.isEnabled = true
-          this.target.setup.state = 'configured'
+          state.target.isEnabled = true
+          state.target.setup.state = 'configured'
           setTimeout(() => {
             $q.loading.hide()
             $q.notify({
@@ -1137,7 +1137,7 @@ async function setupGitHubStep (step, code) {
         }
       }
     } else {
-      throw new Error(resp?.data?.setupStorageTarget?.status?.message || 'Unexpected error')
+      throw new Error(resp?.data?.setupStorageTarget?.operation?.message || 'Unexpected error')
     }
   } catch (err) {
     $q.loading.hide()
