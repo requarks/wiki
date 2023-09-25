@@ -6,12 +6,12 @@
 
 const DiscordStrategy = require('passport-discord').Strategy
 const _ = require('lodash')
-const DiscordOauth2 = require('discord-oauth2')
+const DiscordOauth2 = require('./node_modules/discord-oauth2/index.js') //I don't remember why I 
 
-// Checks for the existence of all of the configured role IDs in the member's guild IDs.
+// Checks for the existence of all of the required role IDs in the member's guild role IDs.
 function hasRoles(memberRoles, authRoles) {
-  if (memberRoles.every(value => {
-    return authRoles.includes(value)
+  if (authRoles.every(value => {
+    return memberRoles.includes(value)
   })) {
     return true
   } else {
@@ -34,7 +34,7 @@ module.exports = {
           if (conf.roles) {
             const discord = new DiscordOauth2()
             const memberRoles = await discord.getGuildMember(accessToken, conf.guildId)
-            if (!hasRoles(memberRoles.roles, conf.roles)) {
+            if (!hasRoles(memberRoles.roles, conf.roles.split())) {
               throw new WIKI.Error.AuthLoginFailed()
             }
           } else if (conf.guildId && !_.some(profile.guilds, { id: conf.guildId })) {

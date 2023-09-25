@@ -1,0 +1,19 @@
+{
+  "name": "wikijs-discord-oauth2",
+  "version": "1.0.0",
+  "description": "Supports using Discord as a SSO source, and allows the administrator to configure discord groups that are required for authentication.",
+  "main": "authentication.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "wikijs",
+    "discord",
+    "sso"
+  ],
+  "author": "Tom Dakan",
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "discord-oauth2": "^2.11.0"
+  }
+}
