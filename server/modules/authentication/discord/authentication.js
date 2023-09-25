@@ -21,6 +21,7 @@ function hasRoles(memberRoles, authRoles) {
 
 module.exports = {
   init (passport, conf) {
+    const discord = new DiscordOauth2()
     passport.use(conf.key,
       new DiscordStrategy({
         clientID: conf.clientId,
@@ -32,7 +33,6 @@ module.exports = {
       }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           if (conf.roles) {
-            const discord = new DiscordOauth2()
             const memberRoles = await discord.getGuildMember(accessToken, conf.guildId)
             const authRoles = conf.roles.split();
             const { roles } = await discord.getGuildMember(accessToken, conf.guildId);
