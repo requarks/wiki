@@ -47,4 +47,3 @@ test-results/
 
 # Localization Resources
 /server/locales/**/*.yml
-yarn.lock
