@@ -5,8 +5,8 @@
 // ------------------------------------
 
 const DiscordStrategy = require('passport-discord').Strategy
+const DiscordOauth2 = require('./node_modules/discord-oauth2/index.js')
 const _ = require('lodash')
-const DiscordOauth2 = require('./node_modules/discord-oauth2/index.js') //I don't remember why I 
 
 // Checks for the existence of all of the required role IDs in the member's guild role IDs.
 function hasRoles(memberRoles, authRoles) {
