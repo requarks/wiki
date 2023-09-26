@@ -23,7 +23,6 @@ module.exports = {
       }, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           if (conf.roles) {
-            const memberRoles = await discord.getGuildMember(accessToken, conf.guildId)
             const authRoles = conf.roles.split();
             const { roles } = await discord.getGuildMember(accessToken, conf.guildId);
             if (authRoles.every(role => roles.includes(role))
