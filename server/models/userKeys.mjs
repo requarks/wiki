@@ -66,14 +66,14 @@ export class UserKey extends Model {
         await WIKI.db.userKeys.query().deleteById(res.id)
       }
       if (DateTime.utc() > DateTime.fromISO(res.validUntil)) {
-        throw new WIKI.Error.AuthValidationTokenInvalid()
+        throw new Error('ERR_EXPIRED_VALIDATION_TOKEN')
       }
       return {
         ...res.meta,
         user: res.user
       }
     } else {
-      throw new WIKI.Error.AuthValidationTokenInvalid()
+      throw new Error('ERR_INVALID_VALIDATION_TOKEN')
     }
   }
 

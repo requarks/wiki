@@ -283,42 +283,42 @@ export default {
         return generateError(err)
       }
     },
-    async changePassword (obj, args, context) {
-      try {
-        if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
-          throw new WIKI.Error.AuthRequired()
-        }
-        const usr = await WIKI.db.users.query().findById(context.req.user.id)
-        if (!usr.isActive) {
-          throw new WIKI.Error.AuthAccountBanned()
-        }
-        if (!usr.isVerified) {
-          throw new WIKI.Error.AuthAccountNotVerified()
-        }
-        if (usr.providerKey !== 'local') {
-          throw new WIKI.Error.AuthProviderInvalid()
-        }
-        try {
-          await usr.verifyPassword(args.current)
-        } catch (err) {
-          throw new WIKI.Error.AuthPasswordInvalid()
-        }
+    // async changePassword (obj, args, context) {
+    //   try {
+    //     if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
+    //       throw new WIKI.Error.AuthRequired()
+    //     }
+    //     const usr = await WIKI.db.users.query().findById(context.req.user.id)
+    //     if (!usr.isActive) {
+    //       throw new WIKI.Error.AuthAccountBanned()
+    //     }
+    //     if (!usr.isVerified) {
+    //       throw new WIKI.Error.AuthAccountNotVerified()
+    //     }
+    //     if (usr.providerKey !== 'local') {
+    //       throw new WIKI.Error.AuthProviderInvalid()
+    //     }
+    //     try {
+    //       await usr.verifyPassword(args.current)
+    //     } catch (err) {
+    //       throw new WIKI.Error.AuthPasswordInvalid()
+    //     }
 
-        await WIKI.db.users.updateUser({
-          id: usr.id,
-          newPassword: args.new
-        })
+    //     await WIKI.db.users.updateUser({
+    //       id: usr.id,
+    //       newPassword: args.new
+    //     })
 
-        const newToken = await WIKI.db.users.refreshToken(usr)
+    //     const newToken = await WIKI.db.users.refreshToken(usr)
 
-        return {
-          responseResult: generateSuccess('Password changed successfully'),
-          jwt: newToken.token
-        }
-      } catch (err) {
-        return generateError(err)
-      }
-    },
+    //     return {
+    //       responseResult: generateSuccess('Password changed successfully'),
+    //       jwt: newToken.token
+    //     }
+    //   } catch (err) {
+    //     return generateError(err)
+    //   }
+    // },
     /**
      * UPLOAD USER AVATAR
      */

@@ -325,7 +325,10 @@ export class User extends Model {
         try {
           const tfaToken = await WIKI.db.userKeys.generateToken({
             kind: 'tfa',
-            userId: user.id
+            userId: user.id,
+            meta: {
+              strategyId
+            }
           })
           return {
             nextAction: 'provideTfa',
@@ -341,7 +344,10 @@ export class User extends Model {
           const tfaQRImage = await user.generateTFA(strategyId, siteId)
           const tfaToken = await WIKI.db.userKeys.generateToken({
             kind: 'tfaSetup',
-            userId: user.id
+            userId: user.id,
+            meta: {
+              strategyId
+            }
           })
           return {
             nextAction: 'setupTfa',
@@ -361,7 +367,10 @@ export class User extends Model {
       try {
         const pwdChangeToken = await WIKI.db.userKeys.generateToken({
           kind: 'changePwd',
-          userId: user.id
+          userId: user.id,
+          meta: {
+            strategyId
+          }
         })
 
         return {
@@ -435,11 +444,16 @@ export class User extends Model {
    */
   static async loginTFA ({ strategyId, siteId, securityCode, continuationToken, setup }, context) {
     if (securityCode.length === 6 && continuationToken.length > 1) {
-      const { user } = await WIKI.db.userKeys.validateToken({
+      const { user, strategyId: expectedStrategyId } = await WIKI.db.userKeys.validateToken({
         kind: setup ? 'tfaSetup' : 'tfa',
         token: continuationToken,
         skipDelete: setup
       })
+
+      if (strategyId !== expectedStrategyId) {
+        throw new Error('ERR_UNEXPECTED_STRATEGY_ID')
+      }
+
       if (user) {
         if (user.verifyTFA(strategyId, securityCode)) {
           if (setup) {
@@ -447,40 +461,39 @@ export class User extends Model {
           }
           return WIKI.db.users.afterLoginChecks(user, strategyId, context, { siteId, skipTFA: true })
         } else {
-          throw new WIKI.Error.AuthTFAFailed()
+          throw new Error('ERR_INCORRECT_TFA_TOKEN')
         }
       }
     }
-    throw new WIKI.Error.AuthTFAInvalid()
+    throw new Error('ERR_INVALID_TFA_REQUEST')
   }
 
   /**
    * Change Password from a Mandatory Password Change after Login
    */
-  static async loginChangePassword ({ continuationToken, newPassword }, context) {
-    if (!newPassword || newPassword.length < 6) {
-      throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
+  static async loginChangePassword ({ strategyId, siteId, continuationToken, newPassword }, context) {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('ERR_PASSWORD_TOO_SHORT')
     }
-    const usr = await WIKI.db.userKeys.validateToken({
+    const { user, strategyId: expectedStrategyId } = await WIKI.db.userKeys.validateToken({
       kind: 'changePwd',
       token: continuationToken
     })
 
-    if (usr) {
-      await WIKI.db.users.query().patch({
-        password: newPassword,
-        mustChangePwd: false
-      }).findById(usr.id)
+    if (strategyId !== expectedStrategyId) {
+      throw new Error('ERR_UNEXPECTED_STRATEGY_ID')
+    }
 
-      return new Promise((resolve, reject) => {
-        context.req.logIn(usr, { session: false }, async err => {
-          if (err) { return reject(err) }
-          const jwtToken = await WIKI.db.users.refreshToken(usr)
-          resolve({ jwt: jwtToken.token })
-        })
+    if (user) {
+      user.auth[strategyId].password = await bcrypt.hash(newPassword, 12),
+      user.auth[strategyId].mustChangePwd = false
+      await user.$query().patch({
+        auth: user.auth
       })
+
+      return WIKI.db.users.afterLoginChecks(user, strategyId, context, { siteId, skipChangePwd: true, skipTFA: true })
     } else {
-      throw new WIKI.Error.UserNotFound()
+      throw new Error('ERR_INVALID_USER')
     }
   }
 

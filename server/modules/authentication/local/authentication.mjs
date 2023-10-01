@@ -21,18 +21,20 @@ export default {
           if (user) {
             const authStrategyData = user.auth[strategyId]
             if (!authStrategyData) {
-              throw new WIKI.Error.AuthLoginFailed()
+              throw new Error('ERR_INVALID_STRATEGY_ID')
             } else if (await bcrypt.compare(uPassword, authStrategyData.password) !== true) {
-              throw new WIKI.Error.AuthLoginFailed()
+              throw new Error('ERR_AUTH_FAILED')
             } else if (!user.isActive) {
-              throw new WIKI.Error.AuthAccountBanned()
+              throw new Error('ERR_INACTIVE_USER')
+            } else if (authStrategyData.restrictLogin) {
+              throw new Error('ERR_LOGIN_RESTRICTED')
             } else if (!user.isVerified) {
-              throw new WIKI.Error.AuthAccountNotVerified()
+              throw new Error('ERR_USER_NOT_VERIFIED')
             } else {
               done(null, user)
             }
           } else {
-            throw new WIKI.Error.AuthLoginFailed()
+            throw new Error('ERR_AUTH_FAILED')
           }
         } catch (err) {
           done(err, null)

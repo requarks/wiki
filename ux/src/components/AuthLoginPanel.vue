@@ -620,6 +620,11 @@ async function forgotPassword () {
     if (!isFormValid) {
       throw new Error(t('auth.errors.forgotPassword'))
     }
+    // TODO: Implement forgot password
+    $q.notify({
+      type: 'negative',
+      message: 'Not implemented yet.'
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -695,17 +700,13 @@ async function changePwd () {
     const resp = await APOLLO_CLIENT.mutate({
       mutation: gql`
         mutation (
-          $userId: UUID!
           $continuationToken: String
-          $currentPassword: String
           $newPassword: String!
           $strategyId: UUID!
           $siteId: UUID
         ) {
           changePassword (
-            userId: $userId
             continuationToken: $continuationToken
-            currentPassword: $currentPassword
             newPassword: $newPassword
             strategyId: $strategyId
             siteId: $siteId
@@ -715,9 +716,7 @@ async function changePwd () {
               message
             }
             jwt
-            mustChangePwd
-            mustProvideTFA
-            mustSetupTFA
+            nextAction
             continuationToken
             redirect
             tfaQRImage
@@ -725,19 +724,21 @@ async function changePwd () {
         }
       `,
       variables: {
-        userId: userStore.id,
         continuationToken: state.continuationToken,
-        currentPassword: state.password,
         newPassword: state.newPassword,
         strategyId: state.selectedStrategyId,
         siteId: siteStore.id
       }
     })
-    if (resp.data?.login?.operation?.succeeded) {
+    if (resp.data?.changePassword?.operation?.succeeded) {
       state.password = ''
-      await handleLoginResponse(resp.data.login)
+      $q.notify({
+        type: 'positive',
+        message: t('auth.changePwd.success')
+      })
+      await handleLoginResponse(resp.data.changePassword)
     } else {
-      throw new Error(resp.data?.login?.operation?.message || t('auth.errors.loginError'))
+      throw new Error(resp.data?.changePassword?.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
     $q.notify({
@@ -855,6 +856,10 @@ async function finishSetupTFA () {
     if (resp.data?.loginTFA?.operation?.succeeded) {
       state.continuationToken = ''
       state.securityCode = ''
+      $q.notify({
+        type: 'positive',
+        message: t('auth.tfaSetupSuccess')
+      })
       await handleLoginResponse(resp.data.loginTFA)
     } else {
       throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
