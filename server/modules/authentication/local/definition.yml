@@ -10,4 +10,16 @@ website: 'https://js.wiki'
 isAvailable: true
 useForm: true
 usernameType: email
-props: {}
+props:
+  enforceTfa:
+    type: Boolean
+    title: Enforce Two-Factor Authentication
+    hint: Users will be required to setup 2FA the first time they login and cannot be disabled by the user.
+    icon: pin-pad
+    default: false
+  emailValidation:
+    type: Boolean
+    title: Email Validation
+    hint: Send a verification email to the user with a validation link when registering (if registration is enabled).
+    icon: received
+    default: true

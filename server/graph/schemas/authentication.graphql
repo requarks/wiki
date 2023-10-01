@@ -30,14 +30,16 @@ extend type Mutation {
     username: String!
     password: String!
     strategyId: UUID!
-    siteId: UUID
-  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+    siteId: UUID!
+  ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
   loginTFA(
     continuationToken: String!
     securityCode: String!
+    strategyId: UUID!
+    siteId: UUID!
     setup: Boolean
-  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+  ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
   changePassword(
     userId: UUID
@@ -46,7 +48,7 @@ extend type Mutation {
     newPassword: String!
     strategyId: UUID!
     siteId: UUID
-  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+  ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
   forgotPassword(
     email: String!
@@ -56,7 +58,7 @@ extend type Mutation {
     email: String!
     password: String!
     name: String!
-  ): AuthenticationRegisterResponse
+  ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
   refreshToken(
     token: String!
@@ -105,7 +107,7 @@ type AuthenticationActiveStrategy {
   displayName: String
   isEnabled: Boolean
   config: JSON
-  selfRegistration: Boolean
+  registration: Boolean
   allowedEmailRegex: String
   autoEnrollGroups: [UUID]
 }
@@ -116,20 +118,13 @@ type AuthenticationSiteStrategy {
   isVisible: Boolean
 }
 
-type AuthenticationLoginResponse {
+type AuthenticationAuthResponse {
   operation: Operation
   jwt: String
-  mustChangePwd: Boolean
-  mustProvideTFA: Boolean
-  mustSetupTFA: Boolean
+  nextAction: AuthenticationNextAction
   continuationToken: String
   redirect: String
   tfaQRImage: String
-}
-
-type AuthenticationRegisterResponse {
-  operation: Operation
-  jwt: String
 }
 
 type AuthenticationTokenResponse {
@@ -140,11 +135,11 @@ type AuthenticationTokenResponse {
 input AuthenticationStrategyInput {
   key: String!
   strategyKey: String!
-  config: [KeyValuePairInput]
+  config: JSON!
   displayName: String!
   order: Int!
   isEnabled: Boolean!
-  selfRegistration: Boolean!
+  registration: Boolean!
   allowedEmailRegex: String!
   autoEnrollGroups: [UUID]!
 }
@@ -162,4 +157,11 @@ type AuthenticationApiKey {
 type AuthenticationCreateApiKeyResponse {
   operation: Operation
   key: String
+}
+
+enum AuthenticationNextAction {
+  changePassword
+  setupTfa
+  provideTfa
+  redirect
 }

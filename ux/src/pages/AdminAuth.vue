@@ -111,17 +111,17 @@ q-page.admin-mail
         q-item(tag='label')
           blueprint-icon(icon='register')
           q-item-section
-            q-item-label {{t(`admin.auth.selfRegistration`)}}
-            q-item-label(caption) {{t(`admin.auth.selfRegistrationHint`)}}
+            q-item-label {{t(`admin.auth.registration`)}}
+            q-item-label(caption) {{state.strategy.strategy.key === `local` ? t(`admin.auth.registrationLocalHint`) : t(`admin.auth.registrationHint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='state.strategy.selfRegistration'
+              v-model='state.strategy.registration'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='t(`admin.auth.selfRegistration`)'
+              :aria-label='t(`admin.auth.registration`)'
               )
-        template(v-if='state.strategy.selfRegistration')
+        template(v-if='state.strategy.registration')
           q-separator.q-my-sm(inset)
           q-item
             blueprint-icon(icon='team')
@@ -431,7 +431,7 @@ async function load () {
           displayName
           isEnabled
           config
-          selfRegistration
+          registration
           allowedEmailRegex
           autoEnrollGroups
         }
@@ -504,7 +504,7 @@ function addStrategy (str) {
     }, {}),
     isEnabled: true,
     displayName: str.title,
-    selfRegistration: true,
+    registration: true,
     allowedEmailRegex: '',
     autoEnrollGroups: []
   }

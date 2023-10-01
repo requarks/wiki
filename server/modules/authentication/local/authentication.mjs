@@ -8,8 +8,8 @@ import bcrypt from 'bcryptjs'
 import { Strategy } from 'passport-local'
 
 export default {
-  init (passport, conf) {
-    passport.use(conf.key,
+  init (passport, strategyId, conf) {
+    passport.use(strategyId,
       new Strategy({
         usernameField: 'email',
         passwordField: 'password'
@@ -19,7 +19,7 @@ export default {
             email: uEmail.toLowerCase()
           })
           if (user) {
-            const authStrategyData = user.auth[conf.key]
+            const authStrategyData = user.auth[strategyId]
             if (!authStrategyData) {
               throw new WIKI.Error.AuthLoginFailed()
             } else if (await bcrypt.compare(uPassword, authStrategyData.password) !== true) {

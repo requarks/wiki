@@ -66,8 +66,8 @@ export async function up (knex) {
       table.boolean('isEnabled').notNullable().defaultTo(false)
       table.string('displayName').notNullable().defaultTo('')
       table.jsonb('config').notNullable().defaultTo('{}')
-      table.boolean('selfRegistration').notNullable().defaultTo(false)
-      table.string('allowedEmailRegex')
+      table.boolean('registration').notNullable().defaultTo(false)
+      table.string('allowedEmailRegex').notNullable().defaultTo('')
       table.specificType('autoEnrollGroups', 'uuid[]')
     })
     .createTable('blocks', table => {
@@ -430,10 +430,10 @@ export async function up (knex) {
   // -> GENERATE IDS
 
   const groupAdminId = uuid()
-  const groupUserId = uuid()
-  const groupGuestId = '10000000-0000-4000-8000-000000000001'
+  const groupUserId = WIKI.data.systemIds.usersGroupId
+  const groupGuestId = WIKI.data.systemIds.guestsGroupId
   const siteId = uuid()
-  const authModuleId = uuid()
+  const authModuleId = WIKI.data.systemIds.localAuthId
   const userAdminId = uuid()
   const userGuestId = uuid()
 
@@ -719,7 +719,11 @@ export async function up (knex) {
     id: authModuleId,
     module: 'local',
     isEnabled: true,
-    displayName: 'Local Authentication'
+    displayName: 'Local Authentication',
+    config: JSON.stringify({
+      emailValidation: true,
+      enforceTfa: false
+    })
   })
 
   // -> USERS
@@ -734,6 +738,7 @@ export async function up (knex) {
           mustChangePwd: false, // TODO: Revert to true (below) once change password flow is implemented
           // mustChangePwd: !process.env.ADMIN_PASS,
           restrictLogin: false,
+          tfaIsActive: false,
           tfaRequired: false,
           tfaSecret: ''
         }

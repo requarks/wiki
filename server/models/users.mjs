@@ -9,7 +9,6 @@ import qr from 'qr-image'
 import bcrypt from 'bcryptjs'
 
 import { Group } from './groups.mjs'
-import { Locale } from './locales.mjs'
 
 /**
  * Users model
@@ -73,35 +72,39 @@ export class User extends Model {
   // Instance Methods
   // ------------------------------------------------
 
-  async generateTFA() {
-    let tfaInfo = tfa.generateSecret({
-      name: WIKI.config.title,
+  async generateTFA(strategyId, siteId) {
+    WIKI.logger.debug(`Generating new TFA secret for user ${this.id}...`)
+    const site = WIKI.sites[siteId] ?? WIKI.sites[0] ?? { config: { title: 'Wiki' }}
+    const tfaInfo = tfa.generateSecret({
+      name: site.config.title,
       account: this.email
     })
-    await WIKI.db.users.query().findById(this.id).patch({
-      tfaIsActive: false,
-      tfaSecret: tfaInfo.secret
+    this.auth[strategyId].tfaSecret = tfaInfo.secret
+    this.auth[strategyId].tfaIsActive = false
+    await this.$query().patch({
+      auth: this.auth
     })
-    const safeTitle = WIKI.config.title.replace(/[\s-.,=!@#$%?&*()+[\]{}/\\;<>]/g, '')
+    const safeTitle = site.config.title.replace(/[\s-.,=!@#$%?&*()+[\]{}/\\;<>]/g, '')
     return qr.imageSync(`otpauth://totp/${safeTitle}:${this.email}?secret=${tfaInfo.secret}`, { type: 'svg' })
   }
 
-  async enableTFA() {
-    return WIKI.db.users.query().findById(this.id).patch({
-      tfaIsActive: true
+  async enableTFA(strategyId) {
+    this.auth[strategyId].tfaIsActive = true
+    return this.$query().patch({
+      auth: this.auth
     })
   }
 
-  async disableTFA() {
-    return this.$query.patch({
+  async disableTFA(strategyId) {
+    this.auth[strategyId].tfaIsActive = false
+    return this.$query().patch({
       tfaIsActive: false,
       tfaSecret: ''
     })
   }
 
-  verifyTFA(code) {
-    let result = tfa.verifyToken(this.tfaSecret, code)
-    return (result && has(result, 'delta') && result.delta === 0)
+  verifyTFA(strategyId, code) {
+    return tfa.verifyToken(this.auth[strategyId].tfaSecret, code)?.delta === 0
   }
 
   getPermissions () {
@@ -250,9 +253,9 @@ export class User extends Model {
   /**
    * Login a user
    */
-  static async login (opts, context) {
-    if (has(WIKI.auth.strategies, opts.strategy)) {
-      const selStrategy = get(WIKI.auth.strategies, opts.strategy)
+  static async login ({ strategyId, siteId, username, password }, context) {
+    if (has(WIKI.auth.strategies, strategyId)) {
+      const selStrategy = WIKI.auth.strategies[strategyId]
       if (!selStrategy.isEnabled) {
         throw new WIKI.Error.AuthProviderInvalid()
       }
@@ -261,9 +264,9 @@ export class User extends Model {
 
       // Inject form user/pass
       if (strInfo.useForm) {
-        set(context.req, 'body.email', opts.username)
-        set(context.req, 'body.password', opts.password)
-        set(context.req.params, 'strategy', opts.strategy)
+        set(context.req, 'body.email', username)
+        set(context.req, 'body.password', password)
+        set(context.req.params, 'strategy', strategyId)
       }
 
       // Authenticate
@@ -277,6 +280,7 @@ export class User extends Model {
 
           try {
             const resp = await WIKI.db.users.afterLoginChecks(user, selStrategy.id, context, {
+              siteId,
               skipTFA: !strInfo.useForm,
               skipChangePwd: !strInfo.useForm
             })
@@ -294,7 +298,12 @@ export class User extends Model {
   /**
    * Perform post-login checks
    */
-  static async afterLoginChecks (user, strategyId, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
+  static async afterLoginChecks (user, strategyId, context, { siteId, skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false, siteId: null }) {
+    const str = WIKI.auth.strategies[strategyId]
+    if (!str) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+
     // Get redirect target
     user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
     let redirect = '/'
@@ -312,14 +321,14 @@ export class User extends Model {
 
     // Is 2FA required?
     if (!skipTFA) {
-      if (authStr.tfaRequired && authStr.tfaSecret) {
+      if (authStr.tfaIsActive && authStr.tfaSecret) {
         try {
           const tfaToken = await WIKI.db.userKeys.generateToken({
             kind: 'tfa',
             userId: user.id
           })
           return {
-            mustProvideTFA: true,
+            nextAction: 'provideTfa',
             continuationToken: tfaToken,
             redirect
           }
@@ -327,15 +336,15 @@ export class User extends Model {
           WIKI.logger.warn(errc)
           throw new WIKI.Error.AuthGenericError()
         }
-      } else if (WIKI.config.auth.enforce2FA || (authStr.tfaIsActive && !authStr.tfaSecret)) {
+      } else if (str.config?.enforceTfa || authStr.tfaRequired) {
         try {
-          const tfaQRImage = await user.generateTFA()
+          const tfaQRImage = await user.generateTFA(strategyId, siteId)
           const tfaToken = await WIKI.db.userKeys.generateToken({
             kind: 'tfaSetup',
             userId: user.id
           })
           return {
-            mustSetupTFA: true,
+            nextAction: 'setupTfa',
             continuationToken: tfaToken,
             tfaQRImage,
             redirect
@@ -356,7 +365,7 @@ export class User extends Model {
         })
 
         return {
-          mustChangePwd: true,
+          nextAction: 'changePassword',
           continuationToken: pwdChangeToken,
           redirect
         }
@@ -370,7 +379,11 @@ export class User extends Model {
       context.req.login(user, { session: false }, async errc => {
         if (errc) { return reject(errc) }
         const jwtToken = await WIKI.db.users.refreshToken(user, strategyId)
-        resolve({ jwt: jwtToken.token, redirect })
+        resolve({
+          nextAction: 'redirect',
+          jwt: jwtToken.token,
+          redirect
+        })
       })
     })
   }
@@ -420,19 +433,19 @@ export class User extends Model {
   /**
    * Verify a TFA login
    */
-  static async loginTFA ({ securityCode, continuationToken, setup }, context) {
+  static async loginTFA ({ strategyId, siteId, securityCode, continuationToken, setup }, context) {
     if (securityCode.length === 6 && continuationToken.length > 1) {
-      const user = await WIKI.db.userKeys.validateToken({
+      const { user } = await WIKI.db.userKeys.validateToken({
         kind: setup ? 'tfaSetup' : 'tfa',
         token: continuationToken,
         skipDelete: setup
       })
       if (user) {
-        if (user.verifyTFA(securityCode)) {
+        if (user.verifyTFA(strategyId, securityCode)) {
           if (setup) {
-            await user.enableTFA()
+            await user.enableTFA(strategyId)
           }
-          return WIKI.db.users.afterLoginChecks(user, context, { skipTFA: true })
+          return WIKI.db.users.afterLoginChecks(user, strategyId, context, { siteId, skipTFA: true })
         } else {
           throw new WIKI.Error.AuthTFAFailed()
         }
@@ -508,7 +521,14 @@ export class User extends Model {
    *
    * @param {Object} param0 User Fields
    */
-  static async createNewUser ({ email, password, name, groups, mustChangePassword = false, sendWelcomeEmail = false }) {
+  static async createNewUser ({ email, password, name, groups, userInitiated = false, mustChangePassword = false, sendWelcomeEmail = false }) {
+    const localAuth = await WIKI.db.authentication.getStrategy('local')
+
+    // Check if self-registration is enabled
+    if (userInitiated && !localAuth.registration) {
+      throw new Error('ERR_REGISTRATION_DISABLED')
+    }
+
     // Input sanitization
     email = email.toLowerCase().trim()
 
@@ -547,14 +567,23 @@ export class User extends Model {
       throw new Error(`ERR_INVALID_INPUT: ${validation[0]}`)
     }
 
+    // Check if email address is allowed
+    if (userInitiated && localAuth.allowedEmailRegex) {
+      const emailCheckRgx = new RegExp(localAuth.allowedEmailRegex, 'i')
+      if (!emailCheckRgx.test(email)) {
+        throw new Error('ERR_EMAIL_ADDRESS_NOT_ALLOWED')
+      }
+    }
+
     // Check if email already exists
     const usr = await WIKI.db.users.query().findOne({ email })
     if (usr) {
       throw new Error('ERR_ACCOUNT_ALREADY_EXIST')
     }
 
+    WIKI.logger.debug(`Creating new user account for ${email}...`)
+
     // Create the account
-    const localAuth = await WIKI.db.authentication.getStrategy('local')
     const newUsr = await WIKI.db.users.query().insert({
       email,
       name,
@@ -583,14 +612,41 @@ export class User extends Model {
         dateFormat: WIKI.config.userDefaults.dateFormat || 'YYYY-MM-DD',
         timeFormat: WIKI.config.userDefaults.timeFormat || '12h'
       }
-    })
+    }).returning('*')
 
     // Assign to group(s)
-    if (groups.length > 0) {
-      await newUsr.$relatedQuery('groups').relate(groups)
+    const groupsToEnroll = [WIKI.data.systemIds.usersGroupId]
+    if (groups?.length > 0) {
+      groupsToEnroll.push(...groups)
     }
+    if (userInitiated && localAuth.autoEnrollGroups?.length > 0) {
+      groupsToEnroll.push(...localAuth.autoEnrollGroups)
+    }
+    await newUsr.$relatedQuery('groups').relate(uniq(groupsToEnroll))
 
-    if (sendWelcomeEmail) {
+    // Verification Email
+    if (userInitiated && localAuth.config?.emailValidation) {
+      // Create verification token
+      const verificationToken = await WIKI.db.userKeys.generateToken({
+        kind: 'verify',
+        userId: newUsr.id
+      })
+
+      // Send verification email
+      await WIKI.mail.send({
+        template: 'accountVerify',
+        to: email,
+        subject: 'Verify your account',
+        data: {
+          preheadertext: 'Verify your account in order to gain access to the wiki.',
+          title: 'Verify your account',
+          content: 'Click the button below in order to verify your account and gain access to the wiki.',
+          buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
+          buttonText: 'Verify'
+        },
+        text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
+      })
+    } else if (sendWelcomeEmail) {
       // Send welcome email
       await WIKI.mail.send({
         template: 'accountWelcome',
@@ -606,6 +662,10 @@ export class User extends Model {
         text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
       })
     }
+
+    WIKI.logger.debug(`Created new user account for ${email} successfully.`)
+
+    return newUsr
   }
 
   /**
@@ -677,113 +737,6 @@ export class User extends Model {
       await WIKI.db.users.query().deleteById(id)
     } else {
       throw new WIKI.Error.UserNotFound()
-    }
-  }
-
-  /**
-   * Register a new user (client-side registration)
-   *
-   * @param {Object} param0 User fields
-   * @param {Object} context GraphQL Context
-   */
-  static async register ({ email, password, name, verify = false, bypassChecks = false }, context) {
-    const localStrg = await WIKI.db.authentication.getStrategy('local')
-    // Check if self-registration is enabled
-    if (localStrg.selfRegistration || bypassChecks) {
-      // Input sanitization
-      email = email.toLowerCase()
-
-      // Input validation
-      const validation = validate({
-        email,
-        password,
-        name
-      }, {
-        email: {
-          email: true,
-          length: {
-            maximum: 255
-          }
-        },
-        password: {
-          presence: {
-            allowEmpty: false
-          },
-          length: {
-            minimum: 6
-          }
-        },
-        name: {
-          presence: {
-            allowEmpty: false
-          },
-          length: {
-            minimum: 2,
-            maximum: 255
-          }
-        }
-      }, { format: 'flat' })
-      if (validation && validation.length > 0) {
-        throw new WIKI.Error.InputInvalid(validation[0])
-      }
-
-      // Check if email domain is whitelisted
-      if (get(localStrg, 'domainWhitelist.v', []).length > 0 && !bypassChecks) {
-        const emailDomain = last(email.split('@'))
-        if (!localStrg.domainWhitelist.v.includes(emailDomain)) {
-          throw new WIKI.Error.AuthRegistrationDomainUnauthorized()
-        }
-      }
-      // Check if email already exists
-      const usr = await WIKI.db.users.query().findOne({ email, providerKey: 'local' })
-      if (!usr) {
-        // Create the account
-        const newUsr = await WIKI.db.users.query().insert({
-          provider: 'local',
-          email,
-          name,
-          password,
-          locale: 'en',
-          defaultEditor: 'markdown',
-          tfaIsActive: false,
-          isSystem: false,
-          isActive: true,
-          isVerified: false
-        })
-
-        // Assign to group(s)
-        if (get(localStrg, 'autoEnrollGroups.v', []).length > 0) {
-          await newUsr.$relatedQuery('groups').relate(localStrg.autoEnrollGroups.v)
-        }
-
-        if (verify) {
-          // Create verification token
-          const verificationToken = await WIKI.db.userKeys.generateToken({
-            kind: 'verify',
-            userId: newUsr.id
-          })
-
-          // Send verification email
-          await WIKI.mail.send({
-            template: 'accountVerify',
-            to: email,
-            subject: 'Verify your account',
-            data: {
-              preheadertext: 'Verify your account in order to gain access to the wiki.',
-              title: 'Verify your account',
-              content: 'Click the button below in order to verify your account and gain access to the wiki.',
-              buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
-              buttonText: 'Verify'
-            },
-            text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
-          })
-        }
-        return true
-      } else {
-        throw new WIKI.Error.AuthAccountAlreadyExists()
-      }
-    } else {
-      throw new WIKI.Error.AuthRegistrationDisabled()
     }
   }
 

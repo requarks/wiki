@@ -53,7 +53,8 @@
       )
     template(v-if='selectedStrategy.activeStrategy?.strategy?.key === `local`')
       q-separator.q-my-md
-      q-btn.acrylic-btn.full-width(
+      q-btn.acrylic-btn.full-width.q-mb-sm(
+        v-if='selectedStrategy.activeStrategy.registration'
         flat
         color='primary'
         :label='t(`auth.switchToRegister.link`)'
@@ -61,7 +62,7 @@
         icon='las la-user-plus'
         @click='switchTo(`register`)'
       )
-      q-btn.acrylic-btn.full-width.q-mt-sm(
+      q-btn.acrylic-btn.full-width(
         flat
         color='primary'
         :label='t(`auth.forgotPasswordLink`)'
@@ -248,17 +249,15 @@
   //- -----------------------------------------------------
   template(v-else-if='state.screen === `tfa`')
     p {{t('auth.tfa.subtitle')}}
-    .auth-login-tfa
-      v-otp-input(
-        ref='tfaIpt'
-        :num-inputs='6'
-        :should-auto-focus='true'
-        input-classes='otp-input'
-        input-type='number'
-        separator=''
-        @on-change='v => state.securityCode = v'
-        @on-complete='verifyTFA'
-        )
+    v-otp-input(
+      v-model:value='state.securityCode'
+      :num-inputs='6'
+      :should-auto-focus='true'
+      input-classes='otp-input'
+      input-type='number'
+      separator=''
+      @on-complete='verifyTFA'
+      )
     q-btn.full-width.q-mt-md(
       push
       color='primary'
@@ -271,7 +270,27 @@
   //- TFA SETUP SCREEN
   //- -----------------------------------------------------
   template(v-else-if='state.screen === `tfasetup`')
-    p TODO - TFA Setup not available yet.
+    p {{t('auth.tfaSetupTitle')}}
+    p {{t('auth.tfaSetupInstrFirst')}}
+    div(style='justify-content: center; display: flex;')
+      div(v-html='state.tfaQRImage', style='width: 200px;')
+    p.q-mt-sm {{t('auth.tfaSetupInstrSecond')}}
+    v-otp-input(
+      v-model:value='state.securityCode'
+      :num-inputs='6'
+      :should-auto-focus='true'
+      input-classes='otp-input'
+      input-type='number'
+      separator=''
+    )
+    q-btn.full-width.q-mt-md(
+      push
+      color='primary'
+      :label='t(`auth.tfa.verifyToken`)'
+      no-caps
+      icon='las la-sign-in-alt'
+      @click='finishSetupTFA'
+    )
 </template>
 
 <script setup>
@@ -459,7 +478,7 @@ async function fetchStrategies (showAll = false) {
               useForm
               usernameType
             }
-            selfRegistration
+            registration
           }
         }
       }
@@ -475,47 +494,60 @@ async function fetchStrategies (showAll = false) {
 
 async function handleLoginResponse (resp) {
   state.continuationToken = resp.continuationToken
-  if (resp.mustChangePwd === true) {
-    state.screen = 'changePwd'
-    nextTick(() => {
-      if (state.continuationToken) {
-        changePwdNewPwdIpt.value.focus()
-      } else {
-        changePwdCurrentIpt.value.focus()
-      }
-    })
-    $q.loading.hide()
-  } else if (resp.mustProvideTFA === true) {
-    state.securityCode = ''
-    state.screen = 'tfa'
-    $q.loading.hide()
-  } else if (resp.mustSetupTFA === true) {
-    state.securityCode = ''
-    state.screen = 'tfasetup'
-    state.tfaQRImage = resp.tfaQRImage
-    nextTick(() => {
-      this.$refs.iptTFASetup.focus()
-    })
-    $q.loading.hide()
-  } else {
-    $q.loading.show({
-      message: t('auth.loginSuccess')
-    })
-    Cookies.set('jwt', resp.jwt, { expires: 365, path: '/', sameSite: 'Lax' })
-    setTimeout(() => {
-      const loginRedirect = Cookies.get('loginRedirect')
-      if (loginRedirect === '/' && resp.redirect) {
-        Cookies.remove('loginRedirect')
-        window.location.replace(resp.redirect)
-      } else if (loginRedirect) {
-        Cookies.remove('loginRedirect')
-        window.location.replace(loginRedirect)
-      } else if (resp.redirect) {
-        window.location.replace(resp.redirect)
-      } else {
-        window.location.replace('/')
-      }
-    }, 1000)
+  switch (resp.nextAction) {
+    case 'changePassword': {
+      state.screen = 'changePwd'
+      nextTick(() => {
+        if (state.continuationToken) {
+          changePwdNewPwdIpt.value.focus()
+        } else {
+          changePwdCurrentIpt.value.focus()
+        }
+      })
+      $q.loading.hide()
+      break
+    }
+    case 'provideTfa': {
+      state.securityCode = ''
+      state.screen = 'tfa'
+      $q.loading.hide()
+      break
+    }
+    case 'setupTfa': {
+      state.securityCode = ''
+      state.screen = 'tfasetup'
+      state.tfaQRImage = resp.tfaQRImage
+      $q.loading.hide()
+      break
+    }
+    case 'redirect': {
+      $q.loading.show({
+        message: t('auth.loginSuccess')
+      })
+      Cookies.set('jwt', resp.jwt, { expires: 365, path: '/', sameSite: 'Lax' })
+      setTimeout(() => {
+        const loginRedirect = Cookies.get('loginRedirect')
+        if (loginRedirect === '/' && resp.redirect) {
+          Cookies.remove('loginRedirect')
+          window.location.replace(resp.redirect)
+        } else if (loginRedirect) {
+          Cookies.remove('loginRedirect')
+          window.location.replace(loginRedirect)
+        } else if (resp.redirect) {
+          window.location.replace(resp.redirect)
+        } else {
+          window.location.replace('/')
+        }
+      }, 1000)
+      break
+    }
+    default: {
+      $q.loading.hide()
+      $q.notify({
+        type: 'negative',
+        message: 'Unexpected Authentication Response'
+      })
+    }
   }
 }
 
@@ -537,7 +569,7 @@ async function login () {
           $username: String!
           $password: String!
           $strategyId: UUID!
-          $siteId: UUID
+          $siteId: UUID!
           ) {
           login(
             username: $username
@@ -550,9 +582,7 @@ async function login () {
               message
             }
             jwt
-            mustChangePwd
-            mustProvideTFA
-            mustSetupTFA
+            nextAction
             continuationToken
             redirect
             tfaQRImage
@@ -606,6 +636,44 @@ async function register () {
     const isFormValid = await registerForm.value.validate(true)
     if (!isFormValid) {
       throw new Error(t('auth.errors.register'))
+    }
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation(
+          $email: String!
+          $password: String!
+          $name: String!
+          ) {
+          register(
+            email: $email
+            password: $password
+            name: $name
+            ) {
+            operation {
+              succeeded
+              message
+            }
+            jwt
+            nextAction
+            continuationToken
+            redirect
+            tfaQRImage
+          }
+        }
+      `,
+      variables: {
+        email: state.newEmail,
+        password: state.newPassword,
+        name: state.newName
+      }
+    })
+    if (resp.data?.register?.operation?.succeeded) {
+      state.password = ''
+      state.newPassword = ''
+      state.newPasswordVerify = ''
+      await handleLoginResponse(resp.data.register)
+    } else {
+      throw new Error(resp.data?.register?.operation?.message || t('auth.errors.registerError'))
     }
   } catch (err) {
     $q.notify({
@@ -693,21 +761,23 @@ async function verifyTFA () {
     const resp = await APOLLO_CLIENT.mutate({
       mutation: gql`
         mutation(
-          continuationToken: String!
-          securityCode: String!
+          $continuationToken: String!
+          $securityCode: String!
+          $strategyId: UUID!
+          $siteId: UUID!
           ) {
           loginTFA(
             continuationToken: $continuationToken
             securityCode: $securityCode
+            strategyId: $strategyId
+            siteId: $siteId
             ) {
             operation {
               succeeded
               message
             }
             jwt
-            mustChangePwd
-            mustProvideTFA
-            mustSetupTFA
+            nextAction
             continuationToken
             redirect
             tfaQRImage
@@ -716,10 +786,73 @@ async function verifyTFA () {
       `,
       variables: {
         continuationToken: state.continuationToken,
-        securityCode: state.securityCode
+        securityCode: state.securityCode,
+        strategyId: state.selectedStrategyId,
+        siteId: siteStore.id
       }
     })
-    if (resp.data?.login?.operation?.succeeded) {
+    if (resp.data?.loginTFA?.operation?.succeeded) {
+      state.continuationToken = ''
+      state.securityCode = ''
+      await handleLoginResponse(resp.data.loginTFA)
+    } else {
+      throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
+    }
+  } catch (err) {
+    $q.loading.hide()
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+}
+
+/**
+ * FINISH TFA SETUP
+ */
+async function finishSetupTFA () {
+  $q.loading.show({
+    message: t('auth.tfaSetupVerifying')
+  })
+  try {
+    if (!/^[0-9]{6}$/.test(state.securityCode)) {
+      throw new Error(t('auth.errors.tfaMissing'))
+    }
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation(
+          $continuationToken: String!
+          $securityCode: String!
+          $strategyId: UUID!
+          $siteId: UUID!
+          ) {
+          loginTFA(
+            continuationToken: $continuationToken
+            securityCode: $securityCode
+            strategyId: $strategyId
+            siteId: $siteId
+            setup: true
+            ) {
+            operation {
+              succeeded
+              message
+            }
+            jwt
+            nextAction
+            continuationToken
+            redirect
+            tfaQRImage
+          }
+        }
+      `,
+      variables: {
+        continuationToken: state.continuationToken,
+        securityCode: state.securityCode,
+        strategyId: state.selectedStrategyId,
+        siteId: siteStore.id
+      }
+    })
+    if (resp.data?.loginTFA?.operation?.succeeded) {
       state.continuationToken = ''
       state.securityCode = ''
       await handleLoginResponse(resp.data.loginTFA)
@@ -744,11 +877,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss">
-.auth-login-tfa {
-  > div {
-    justify-content: center;
-  }
-
+.auth-login {
   .otp-input {
     width: 100%;
     height: 48px;

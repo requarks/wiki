@@ -46,7 +46,7 @@ export default {
         return {
           ...a,
           config: _.transform(str.props, (r, v, k) => {
-            r[k] = v.sensitive ? a.config[k] : '********'
+            r[k] = v.sensitive ? '********' : a.config[k]
           }, {})
         }
       })
@@ -102,7 +102,7 @@ export default {
         if (args.strategy === 'ldap' && WIKI.config.flags.ldapdebug) {
           WIKI.logger.warn('LDAP LOGIN ERROR (c1): ', err)
         }
-        console.error(err)
+        WIKI.logger.debug(err)
 
         return generateError(err)
       }
@@ -115,9 +115,10 @@ export default {
         const authResult = await WIKI.db.users.loginTFA(args, context)
         return {
           ...authResult,
-          responseResult: generateSuccess('TFA success')
+          operation: generateSuccess('TFA success')
         }
       } catch (err) {
+        WIKI.logger.debug(err)
         return generateError(err)
       }
     },
@@ -129,9 +130,10 @@ export default {
         const authResult = await WIKI.db.users.loginChangePassword(args, context)
         return {
           ...authResult,
-          responseResult: generateSuccess('Password changed successfully')
+          operation: generateSuccess('Password changed successfully')
         }
       } catch (err) {
+        WIKI.logger.debug(err)
         return generateError(err)
       }
     },
@@ -142,7 +144,7 @@ export default {
       try {
         await WIKI.db.users.loginForgotPassword(args, context)
         return {
-          responseResult: generateSuccess('Password reset request processed.')
+          operation: generateSuccess('Password reset request processed.')
         }
       } catch (err) {
         return generateError(err)
@@ -153,9 +155,11 @@ export default {
      */
     async register (obj, args, context) {
       try {
-        await WIKI.db.users.register({ ...args, verify: true }, context)
+        const usr = await WIKI.db.users.createNewUser({ ...args, userInitiated: true })
+        const authResult = await WIKI.db.users.afterLoginChecks(usr, WIKI.data.systemIds.localAuthId, context)
         return {
-          responseResult: generateSuccess('Registration success')
+          ...authResult,
+          operation: generateSuccess('Registration success')
         }
       } catch (err) {
         return generateError(err)
