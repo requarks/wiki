@@ -498,6 +498,42 @@ export class User extends Model {
   }
 
   /**
+   * Change Password from Profile
+   */
+  static async changePassword ({ strategyId, siteId, currentPassword, newPassword }, context) {
+    const userId = context.req.user?.id
+    if (!userId) {
+      throw new Error('ERR_USER_NOT_AUTHENTICATED')
+    }
+
+    const user = await WIKI.db.users.query().findById(userId)
+    if (!user) {
+      throw new Error('ERR_USER_NOT_FOUND')
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('ERR_PASSWORD_TOO_SHORT')
+    }
+
+    if (!user.auth[strategyId]?.password) {
+      throw new Error('ERR_UNEXPECTED_STRATEGY_ID')
+    }
+
+    if (await bcrypt.compare(currentPassword, user.auth[strategyId].password) !== true) {
+      throw new Error('ERR_INCORRECT_CURRENT_PASSWORD')
+    }
+
+    user.auth[strategyId].password = await bcrypt.hash(newPassword, 12)
+    user.auth[strategyId].mustChangePwd = false
+
+    await user.$query().patch({
+      auth: user.auth
+    })
+
+    return true
+  }
+
+  /**
    * Send a password reset request
    */
   static async loginForgotPassword ({ email }, context) {
@@ -686,14 +722,14 @@ export class User extends Model {
    *
    * @param {Object} param0 User ID and fields to update
    */
-  static async updateUser (id, { email, name, groups, isVerified, isActive, meta, prefs }) {
+  static async updateUser (id, { email, name, groups, auth, isVerified, isActive, meta, prefs }) {
     const usr = await WIKI.db.users.query().findById(id)
     if (usr) {
       let usrData = {}
       if (!isEmpty(email) && email !== usr.email) {
         const dupUsr = await WIKI.db.users.query().select('id').where({ email }).first()
         if (dupUsr) {
-          throw new WIKI.Error.AuthAccountAlreadyExists()
+          throw new Error('ERR_DUPLICATE_ACCOUNT_EMAIL')
         }
         usrData.email = email.toLowerCase()
       }
@@ -713,6 +749,18 @@ export class User extends Model {
         for (const grp of remUsrGroups) {
           await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
         }
+      }
+      if (!isNil(auth?.tfaRequired)) {
+        usr.auth[WIKI.data.systemIds.localAuthId].tfaRequired = auth.tfaRequired
+        usrData.auth = usr.auth
+      }
+      if (!isNil(auth?.mustChangePwd)) {
+        usr.auth[WIKI.data.systemIds.localAuthId].mustChangePwd = auth.mustChangePwd
+        usrData.auth = usr.auth
+      }
+      if (!isNil(auth?.restrictLogin)) {
+        usr.auth[WIKI.data.systemIds.localAuthId].restrictLogin = auth.restrictLogin
+        usrData.auth = usr.auth
       }
       if (!isNil(isVerified)) {
         usrData.isVerified = isVerified

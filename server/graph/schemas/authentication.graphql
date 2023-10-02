@@ -42,12 +42,11 @@ extend type Mutation {
   ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
   changePassword(
-    userId: UUID
     continuationToken: String
     currentPassword: String
     newPassword: String!
     strategyId: UUID!
-    siteId: UUID
+    siteId: UUID!
   ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
   forgotPassword(

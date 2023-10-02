@@ -127,10 +127,17 @@ export default {
      */
     async changePassword (obj, args, context) {
       try {
-        const authResult = await WIKI.db.users.loginChangePassword(args, context)
-        return {
-          ...authResult,
-          operation: generateSuccess('Password changed successfully')
+        if (args.continuationToken) {
+          const authResult = await WIKI.db.users.loginChangePassword(args, context)
+          return {
+            ...authResult,
+            operation: generateSuccess('Password set successfully')
+          }
+        } else {
+          await WIKI.db.users.changePassword(args, context)
+          return {
+            operation: generateSuccess('Password changed successfully')
+          }
         }
       } catch (err) {
         WIKI.logger.debug(err)

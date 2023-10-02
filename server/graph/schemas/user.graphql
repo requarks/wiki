@@ -189,8 +189,15 @@ input UserUpdateInput {
   email: String
   name: String
   groups: [UUID!]
+  auth: UserAuthUpdateInput
   isActive: Boolean
   isVerified: Boolean
   meta: JSON
   prefs: JSON
+}
+
+input UserAuthUpdateInput {
+  tfaRequired: Boolean
+  mustChangePwd: Boolean
+  restrictLogin: Boolean
 }

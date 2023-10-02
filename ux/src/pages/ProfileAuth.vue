@@ -25,8 +25,8 @@ q-page.q-py-md(:style-fn='pageStyle')
             q-btn(
               icon='las la-fingerprint'
               unelevated
-              :label='t(`profile.authModifyTfa`)'
-              color='primary'
+              :label='t(`profile.authDisableTfa`)'
+              color='negative'
               @click=''
             )
           q-item-section(v-else, side)
@@ -43,7 +43,7 @@ q-page.q-py-md(:style-fn='pageStyle')
               unelevated
               :label='t(`profile.authChangePassword`)'
               color='primary'
-              @click=''
+              @click='changePassword(auth.authId)'
             )
 
   q-inner-loading(:showing='state.loading > 0')
@@ -56,6 +56,8 @@ import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
 import { useUserStore } from 'src/stores/user'
+
+import ChangePwdDialog from 'src/components/ChangePwdDialog.vue'
 
 // QUASAR
 
@@ -126,6 +128,15 @@ async function fetchAuthMethods () {
     })
   }
   state.loading--
+}
+
+function changePassword (strategyId) {
+  $q.dialog({
+    component: ChangePwdDialog,
+    componentProps: {
+      strategyId
+    }
+  })
 }
 
 // MOUNTED

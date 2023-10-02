@@ -703,7 +703,7 @@ async function changePwd () {
           $continuationToken: String
           $newPassword: String!
           $strategyId: UUID!
-          $siteId: UUID
+          $siteId: UUID!
         ) {
           changePassword (
             continuationToken: $continuationToken

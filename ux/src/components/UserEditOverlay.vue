@@ -744,7 +744,12 @@ async function save (patch, { silent, keepOpen } = { silent: false, keepOpen: fa
       isActive: state.user.isActive,
       meta: state.user.meta,
       prefs: state.user.prefs,
-      groups: state.user.groups.map(gr => gr.id)
+      groups: state.user.groups.map(gr => gr.id),
+      auth: {
+        tfaRequired: localAuth.value.isTfaRequired,
+        mustChangePwd: localAuth.value.mustChangePwd,
+        restrictLogin: localAuth.value.restrictLogin
+      }
     }
   }
   try {
@@ -816,7 +821,7 @@ function invalidateTFA () {
       label: t('common.actions.confirm')
     }
   }).onOk(() => {
-    localAuth.value.tfaSecret = ''
+    // TODO: invalidate user 2FA
     $q.notify({
       type: 'positive',
       message: t('admin.users.tfaInvalidateSuccess')

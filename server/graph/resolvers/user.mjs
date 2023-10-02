@@ -41,7 +41,7 @@ export default {
       const usr = await WIKI.db.users.query().findById(args.id)
 
       if (!usr) {
-        throw new Error('Invalid User')
+        throw new Error('ERR_INVALID_USER')
       }
 
       // const str = _.get(WIKI.auth.strategies, usr.providerKey)
@@ -51,10 +51,11 @@ export default {
 
       usr.auth = _.mapValues(usr.auth, (auth, providerKey) => {
         if (auth.password) {
-          auth.password = '***'
+          auth.password = 'redacted'
         }
-        auth.module = providerKey === '00910749-8ab6-498a-9be0-f4ca28ea5e52' ? 'google' : 'local'
-        auth._moduleName = providerKey === '00910749-8ab6-498a-9be0-f4ca28ea5e52' ? 'Google' : 'Local'
+        if (auth.tfaSecret) {
+          auth.tfaSecret = 'redacted'
+        }
         return auth
       })
 
@@ -211,7 +212,7 @@ export default {
     },
     async changeUserPassword (obj, args, context) {
       try {
-        if (args.newPassword?.length < 6) {
+        if (args.newPassword?.length < 8) {
           throw new Error('ERR_PASSWORD_TOO_SHORT')
         }
 
