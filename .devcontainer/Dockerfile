@@ -51,6 +51,9 @@ RUN apt-get update \
     # Clean up
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /root/.gnupg /tmp/library-scripts
 
+# Enable PNPM
+RUN sudo corepack enable \
+    && corepack prepare pnpm@latest --activate
 
 EXPOSE 3000
 

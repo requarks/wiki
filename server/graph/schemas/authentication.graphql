@@ -41,6 +41,10 @@ extend type Mutation {
     setup: Boolean
   ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
+  deactivateTFA(
+    strategyId: UUID!
+  ): DefaultResponse
+
   changePassword(
     continuationToken: String
     currentPassword: String

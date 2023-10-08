@@ -27,7 +27,8 @@ q-page.q-py-md(:style-fn='pageStyle')
               unelevated
               :label='t(`profile.authDisableTfa`)'
               color='negative'
-              @click=''
+              @click='disableTfa(auth.authId)'
+              :disable='auth.config.isTfaRequired'
             )
           q-item-section(v-else, side)
             q-btn(
@@ -35,7 +36,7 @@ q-page.q-py-md(:style-fn='pageStyle')
               unelevated
               :label='t(`profile.authSetTfa`)'
               color='primary'
-              @click=''
+              @click='setupTfa(auth.authId)'
             )
           q-item-section(side)
             q-btn(
@@ -58,6 +59,7 @@ import { onMounted, reactive } from 'vue'
 import { useUserStore } from 'src/stores/user'
 
 import ChangePwdDialog from 'src/components/ChangePwdDialog.vue'
+import SetupTfaDialog from 'src/components/SetupTfaDialog.vue'
 
 // QUASAR
 
@@ -137,6 +139,62 @@ function changePassword (strategyId) {
       strategyId
     }
   })
+}
+
+function disableTfa (strategyId) {
+  $q.dialog({
+    title: t('common.actions.confirm'),
+    message: t('profile.authDisableTfaConfirm'),
+    cancel: true
+  }).onOk(async () => {
+    $q.loading.show()
+    try {
+      const resp = await APOLLO_CLIENT.mutate({
+        mutation: gql`
+          mutation deactivateTfa (
+            $strategyId: UUID!
+          ) {
+            deactivateTFA(
+              strategyId: $strategyId
+            ) {
+              operation {
+                succeeded
+                message
+              }
+            }
+          }
+        `,
+        variables: {
+          strategyId
+        }
+      })
+      if (resp?.data?.deactivateTFA?.operation?.succeeded) {
+        $q.notify({
+          type: 'positive',
+          message: t('profile.authDisableTfaSuccess')
+        })
+      } else {
+        throw new Error(resp?.data?.deactivateTFA?.operation?.message)
+      }
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: t('profile.authDisableTfaFailed'),
+        caption: err.message ?? 'An unexpected error occured.'
+      })
+    }
+    await fetchAuthMethods()
+    $q.loading.hide()
+  })
+}
+
+function setupTfa (strategyId) {
+  // $q.dialog({
+  //   component: SetupTfaDialog,
+  //   componentProps: {
+  //     strategyId
+  //   }
+  // })
 }
 
 // MOUNTED

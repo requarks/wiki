@@ -412,8 +412,8 @@ export default {
           strategyIcon: authModule.icon,
           config: authStrategy.module === 'local' ? {
             isPasswordSet: value.password?.length > 0,
-            isTfaSetup: value.tfaSecret?.length > 0,
-            isTfaRequired: value.tfaRequired ?? false,
+            isTfaSetup: value.tfaIsActive && value.tfaSecret?.length > 0,
+            isTfaRequired: (value.tfaRequired || authStrategy.config.enforceTfa) ?? false,
             mustChangePwd: value.mustChangePwd ?? false,
             restrictLogin: value.restrictLogin ?? false
           } : value

@@ -11,14 +11,14 @@
   "author": "Nicolas Giard",
   "license": "AGPL-3.0",
   "dependencies": {
-    "lit": "^2.8.0"
+    "lit": "2.8.0"
   },
   "devDependencies": {
-    "@rollup/plugin-graphql": "^2.0.3",
-    "@rollup/plugin-node-resolve": "^15.2.1",
-    "@rollup/plugin-terser": "^0.4.3",
-    "glob": "^10.3.4",
-    "rollup": "^2.79.1",
-    "rollup-plugin-summary": "^2.0.0"
+    "@rollup/plugin-graphql": "2.0.4",
+    "@rollup/plugin-node-resolve": "15.2.2",
+    "@rollup/plugin-terser": "0.4.4",
+    "glob": "10.3.10",
+    "rollup": "3.29.4",
+    "rollup-plugin-summary": "2.0.0"
   }
 }

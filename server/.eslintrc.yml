@@ -1,9 +1,7 @@
 extends:
   - requarks
-  - plugin:vue/strongly-recommended
 env:
   node: true
-  jest: true
 parserOptions:
   parser: babel-eslint
   ecmaVersion: 2020
@@ -16,9 +14,8 @@ globals:
 ignorePatterns:
   - '**/node_modules/**'
   - '**/*.min.js'
-  - 'assets/**'
   - 'coverage/**'
   - 'repo/**'
   - 'data/**'
   - 'logs/**'
-  - 'server/locales/**'
+  - 'locales/**'

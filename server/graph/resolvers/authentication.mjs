@@ -123,6 +123,48 @@ export default {
       }
     },
     /**
+     * Deactivate 2FA
+     */
+    async deactivateTFA (obj, args, context) {
+      try {
+        const userId = context.req.user?.id
+        if (!userId) {
+          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+        }
+
+        const usr = await WIKI.db.users.query().findById(userId)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        }
+
+        const str = WIKI.auth.strategies[args.strategyId]
+        if (!str) {
+          throw new Error('ERR_INVALID_STRATEGY')
+        }
+
+        if (!usr.auth[args.strategyId]) {
+          throw new Error('ERR_INVALID_STRATEGY')
+        }
+
+        if (!usr.auth[args.strategyId].tfaIsActive) {
+          throw new Error('ERR_TFA_NOT_ACTIVE')
+        }
+
+        usr.auth[args.strategyId].tfaIsActive = false
+        usr.auth[args.strategyId].tfaSecret = null
+
+        await usr.$query().patch({
+          auth: usr.auth
+        })
+
+        return {
+          operation: generateSuccess('TFA deactivated successfully.')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
      * Perform Password Change
      */
     async changePassword (obj, args, context) {

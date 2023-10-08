@@ -62,11 +62,11 @@ The current stable release (2.x) is available at https://js.wiki
 1. Two terminals will launch in split-screen mode at the bottom of the screen. **Server** on the left and **UX** on the right.
 1. In the right-side terminal (UX), run the command:
     ```sh
-    npm run build
+    pnpm build
     ```
 1. In the left-side terminal (Server), run the command:
     ```sh
-    npm run start
+    pnpm start
     ```
 1. Open your browser to `http://localhost:3000`
 1. Login using the default administrator user:
@@ -80,7 +80,7 @@ The current stable release (2.x) is available at https://js.wiki
 From the left-side terminal (Server), run the command:
 
 ```sh
-npm run dev
+pnpm dev
 ```
 
 This will launch the server and automatically restart upon modification of any server files.
@@ -94,7 +94,7 @@ Only precompiled client assets are served in this mode. See the sections below o
 If you wish to modify any frontend content (under `/ux`), you need to start the Quasar Dev Server in the right-side terminal (UX):
 
 ```sh
-npm run dev
+pnpm dev
 ```
 
 You can then access the site at `http://localhost:3001`. Notice the port being `3001` rather than `3000`. The app runs in a SPA (single-page application) mode and automatically hot-reload any modified component. Any requests made to the `/graphql` endpoint are automatically forwarded to the server running on port `3000`, which is why both must be running at the same time.
@@ -117,8 +117,9 @@ The server **dev** should already be available under **Servers**. If that's not 
 
 ### Requirements
 
+- PostgreSQL **11** or later *(**16** or later recommended)*
 - Node.js **18.x** or later
-- PostgreSQL **11** or later
+- [pnpm](https://pnpm.io/installation#using-corepack)
 
 ### Usage
 
@@ -128,10 +129,13 @@ The server **dev** should already be available under **Servers**. If that's not 
 1. Run the following commands to install dependencies and generate the client assets:
     ```sh
     cd server
-    npm install
+    pnpm install
     cd ../ux
-    npm install
-    npm run build
+    pnpm install
+    pnpm build
+    cd ../blocks
+    pnpm install
+    pnpm build
     cd ..
     ```
 1. Run this command to start the server:

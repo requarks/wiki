@@ -9,16 +9,14 @@ git config oh-my-zsh.hide-info 1
 echo "Waiting for DB container to come online..."
 /usr/local/bin/wait-for localhost:5432 -- echo "DB ready"
 
-npm install -g npm-check-updates
-
 echo "Installing dependencies..."
 cd server
-npm install
+pnpm install
 cd ../ux
-npm install
+pnpm install
 cd ../blocks
-npm install
-npm run build
+pnpm install
+pnpm build
 cd ..
 
 echo "Ready!"
