@@ -74,7 +74,7 @@ export class User extends Model {
 
   async generateTFA(strategyId, siteId) {
     WIKI.logger.debug(`Generating new TFA secret for user ${this.id}...`)
-    const site = WIKI.sites[siteId] ?? WIKI.sites[0] ?? { config: { title: 'Wiki' }}
+    const site = WIKI.sites[siteId] ?? WIKI.sites[0] ?? { config: { title: 'Wiki' } }
     const tfaInfo = tfa.generateSecret({
       name: site.config.title,
       account: this.email
@@ -485,7 +485,7 @@ export class User extends Model {
     }
 
     if (user) {
-      user.auth[strategyId].password = await bcrypt.hash(newPassword, 12),
+      user.auth[strategyId].password = await bcrypt.hash(newPassword, 12)
       user.auth[strategyId].mustChangePwd = false
       await user.$query().patch({
         auth: user.auth

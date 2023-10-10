@@ -98,6 +98,7 @@ q-page.admin-locale
                 icon='las la-trash'
                 color='negative'
                 @click='deleteSite(site)'
+                :aria-label='t(`common.actions.delete`)'
                 )
 </template>
 

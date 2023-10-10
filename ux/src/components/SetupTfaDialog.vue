@@ -1,96 +1,56 @@
 <template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 650px;')
+q-dialog(ref='dialogRef', @hide='onDialogHide', persistent)
+  q-card.setup2fadialog(style='min-width: 450px;')
     q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-password-reset.svg', left, size='sm')
-      span {{t(`admin.users.changePassword`)}}
-    q-form.q-py-sm(ref='changeUserPwdForm', @submit='save')
-      q-item
-        blueprint-icon(icon='lock')
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.currentPassword'
-            dense
-            :rules='currentPasswordValidation'
-            hide-bottom-space
-            :label='t(`auth.changePwd.currentPassword`)'
-            :aria-label='t(`auth.changePwd.currentPassword`)'
-            lazy-rules='ondemand'
-            autofocus
-            )
-      q-item
-        blueprint-icon(icon='password')
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.newPassword'
-            dense
-            :rules='newPasswordValidation'
-            hide-bottom-space
-            :label='t(`auth.changePwd.newPassword`)'
-            :aria-label='t(`auth.changePwd.newPassword`)'
-            lazy-rules='ondemand'
-            autofocus
-            )
-            template(#append)
-              .flex.items-center
-                q-badge(
-                  :color='passwordStrength.color'
-                  :label='passwordStrength.label'
-                )
-                q-separator.q-mx-sm(vertical)
-                q-btn(
-                  flat
-                  dense
-                  padding='none xs'
-                  color='brown'
-                  @click='randomizePassword'
-                  )
-                  q-icon(name='las la-dice-d6')
-                  .q-pl-xs.text-caption: strong Generate
-      q-item
-        blueprint-icon(icon='good-pincode')
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.verifyPassword'
-            dense
-            :rules='verifyPasswordValidation'
-            hide-bottom-space
-            :label='t(`auth.changePwd.newPasswordVerify`)'
-            :aria-label='t(`auth.changePwd.newPasswordVerify`)'
-            lazy-rules='ondemand'
-            autofocus
-            )
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.update`)'
-        color='primary'
-        padding='xs md'
-        @click='save'
-        :loading='state.isLoading'
-        )
+      q-icon(name='img:/_assets/icons/fluent-fingerprint.svg', left, size='sm')
+      span {{t(`profile.authSetTfa`)}}
+    template(v-if='!state.isInit')
+      q-linear-progress(query, color='positive')
+      q-card-section.text-center.text-grey {{t(`profile.authSetTfaLoading`)}}
+    template(v-else)
+      q-card-section.text-center
+        p {{t('auth.tfaSetupInstrFirst')}}
+        div(style='justify-content: center; display: flex;')
+          div(v-html='state.tfaQRImage', style='width: 200px;')
+        p.q-mt-sm {{t('auth.tfaSetupInstrSecond')}}
+        .flex.justify-center
+          v-otp-input(
+            v-model:value='state.securityCode'
+            :num-inputs='6'
+            :should-auto-focus='true'
+            input-classes='otp-input'
+            input-type='number'
+            separator=''
+          )
+        q-inner-loading(:showing='state.isLoading')
+      q-card-actions.card-actions
+        q-space
+        q-btn.acrylic-btn(
+          flat
+          :label='t(`common.actions.cancel`)'
+          color='grey'
+          padding='xs md'
+          @click='onDialogCancel'
+          )
+        q-btn(
+          unelevated
+          :label='t(`auth.tfa.verifyToken`)'
+          color='primary'
+          padding='xs md'
+          @click='save'
+          :loading='state.isLoading'
+          )
 </template>
 
 <script setup>
 import gql from 'graphql-tag'
-import zxcvbn from 'zxcvbn'
-import { sampleSize } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { computed, reactive, ref } from 'vue'
+import { onMounted, reactive } from 'vue'
 
 import { useSiteStore } from 'src/stores/site'
+
+import VOtpInput from 'vue3-otp-input'
 
 // PROPS
 
@@ -123,96 +83,78 @@ const { t } = useI18n()
 // DATA
 
 const state = reactive({
-  currentPassword: '',
-  newPassword: '',
-  verifyPassword: '',
-  isLoading: false
+  isInit: false,
+  isLoading: false,
+  securityCode: '',
+  tfaQRImage: '',
+  continuationToken: ''
 })
-
-// REFS
-
-const changeUserPwdForm = ref(null)
-
-// COMPUTED
-
-const passwordStrength = computed(() => {
-  if (state.newPassword.length < 8) {
-    return {
-      color: 'negative',
-      label: t('admin.users.pwdStrengthWeak')
-    }
-  } else {
-    switch (zxcvbn(state.newPassword).score) {
-      case 1:
-        return {
-          color: 'deep-orange-7',
-          label: t('admin.users.pwdStrengthPoor')
-        }
-      case 2:
-        return {
-          color: 'purple-7',
-          label: t('admin.users.pwdStrengthMedium')
-        }
-      case 3:
-        return {
-          color: 'blue-7',
-          label: t('admin.users.pwdStrengthGood')
-        }
-      case 4:
-        return {
-          color: 'green-7',
-          label: t('admin.users.pwdStrengthStrong')
-        }
-      default:
-        return {
-          color: 'negative',
-          label: t('admin.users.pwdStrengthWeak')
-        }
-    }
-  }
-})
-
-// VALIDATION RULES
-
-const currentPasswordValidation = [
-  val => val.length > 0 || t('auth.errors.missingPassword')
-]
-const newPasswordValidation = [
-  val => val.length > 0 || t('auth.errors.missingPassword'),
-  val => val.length >= 8 || t('auth.errors.passwordTooShort')
-]
-const verifyPasswordValidation = [
-  val => val.length > 0 || t('auth.errors.missingVerifyPassword'),
-  val => val === state.newPassword || t('auth.errors.passwordsNotMatch')
-]
 
 // METHODS
 
-function randomizePassword () {
-  const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
-  state.newPassword = sampleSize(pwdChars, 16).join('')
+async function load () {
+  state.isInit = false
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation setupTfa (
+          $strategyId: UUID!
+          $siteId: UUID!
+          ) {
+            setupTFA (
+              strategyId: $strategyId
+              siteId: $siteId
+            ) {
+            operation {
+              succeeded
+              message
+            }
+            continuationToken
+            tfaQRImage
+          }
+        }
+      `,
+      variables: {
+        strategyId: props.strategyId,
+        siteId: siteStore.id
+      }
+    })
+    if (resp?.data?.setupTFA?.operation?.succeeded) {
+      state.continuationToken = resp.data.setupTFA.continuationToken
+      state.tfaQRImage = resp.data.setupTFA.tfaQRImage
+      state.isInit = true
+    } else {
+      throw new Error(resp?.data?.setupTFA?.operation?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+    onDialogCancel()
+  }
 }
 
 async function save () {
   state.isLoading = true
   try {
-    const isFormValid = await changeUserPwdForm.value.validate(true)
-    if (!isFormValid) {
-      throw new Error(t('auth.errors.fields'))
+    if (!/^[0-9]{6}$/.test(state.securityCode)) {
+      throw new Error(t('auth.errors.tfaMissing'))
     }
     const resp = await APOLLO_CLIENT.mutate({
       mutation: gql`
-        mutation changePwd (
-          $currentPassword: String
-          $newPassword: String!
+        mutation(
+          $continuationToken: String!
+          $securityCode: String!
           $strategyId: UUID!
           $siteId: UUID!
           ) {
-          changePassword (
-            currentPassword: $currentPassword
-            newPassword: $newPassword
+          loginTFA(
+            continuationToken: $continuationToken
+            securityCode: $securityCode
             strategyId: $strategyId
             siteId: $siteId
+            setup: true
             ) {
             operation {
               succeeded
@@ -222,20 +164,23 @@ async function save () {
         }
       `,
       variables: {
-        currentPassword: state.currentPassword,
-        newPassword: state.newPassword,
+        continuationToken: state.continuationToken,
+        securityCode: state.securityCode,
         strategyId: props.strategyId,
         siteId: siteStore.id
       }
     })
-    if (resp?.data?.changePassword?.operation?.succeeded) {
+    if (resp.data?.loginTFA?.operation?.succeeded) {
+      state.continuationToken = ''
+      state.securityCode = ''
       $q.notify({
         type: 'positive',
-        message: t('auth.changePwd.success')
+        message: t('auth.tfaSetupSuccess')
       })
+      state.isLoading = false
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.changePassword?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
     $q.notify({
@@ -245,4 +190,46 @@ async function save () {
   }
   state.isLoading = false
 }
+
+onMounted(() => {
+  load()
+})
 </script>
+
+<style lang="scss">
+.setup2fadialog {
+  .otp-input {
+    width: 100%;
+    height: 48px;
+    padding: 5px;
+    margin: 0 5px 7px;
+    font-size: 20px;
+    border-radius: 6px;
+    text-align: center;
+
+    @at-root .body--light & {
+      border: 2px solid rgba(0, 0, 0, 0.2);
+    }
+
+    @at-root .body--dark & {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    &:focus-visible {
+      outline-color: $primary;
+    }
+
+    /* Background colour of an input field with value */
+    &.is-complete {
+      border-color: $positive;
+      border-width: 2px;
+    }
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+}
+</style>

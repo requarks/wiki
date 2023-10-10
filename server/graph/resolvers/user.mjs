@@ -2,6 +2,7 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 import _, { isNil } from 'lodash-es'
 import path from 'node:path'
 import fs from 'fs-extra'
+import { DateTime } from 'luxon'
 
 export default {
   Query: {
@@ -58,6 +59,13 @@ export default {
         }
         return auth
       })
+
+      usr.passkeys = usr.passkeys.authenticators?.map(a => ({
+        id: a.id,
+        createdAt: DateTime.fromISO(a.createdAt).toJSDate(),
+        name: a.name,
+        siteHostname: a.rpID
+      })) ?? []
 
       return usr
     },

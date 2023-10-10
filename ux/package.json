@@ -17,6 +17,7 @@
     "@lezer/common": "1.1.0",
     "@mdi/font": "7.3.67",
     "@quasar/extras": "1.16.7",
+    "@simplewebauthn/browser": "8.3.1",
     "@tiptap/core": "2.1.11",
     "@tiptap/extension-code-block": "2.1.11",
     "@tiptap/extension-code-block-lowlight": "2.1.11",

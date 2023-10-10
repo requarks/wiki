@@ -132,6 +132,7 @@ type User {
   name: String
   email: String
   auth: [UserAuth]
+  passkeys: [UserPasskey]
   hasAvatar: Boolean
   isSystem: Boolean
   isActive: Boolean
@@ -150,6 +151,13 @@ type UserAuth {
   strategyKey: String
   strategyIcon: String
   config: JSON
+}
+
+type UserPasskey {
+  id: UUID
+  name: String
+  createdAt: Date
+  siteHostname: String
 }
 
 type UserDefaults {

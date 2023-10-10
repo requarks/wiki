@@ -17,6 +17,9 @@ dependencies:
   '@quasar/extras':
     specifier: 1.16.7
     version: 1.16.7
+  '@simplewebauthn/browser':
+    specifier: 8.3.1
+    version: 8.3.1
   '@tiptap/core':
     specifier: 2.1.11
     version: 2.1.11(@tiptap/pm@2.1.11)
@@ -708,6 +711,16 @@ packages:
       estree-walker: 2.0.2
       picomatch: 2.3.1
     dev: true
+
+  /@simplewebauthn/browser@8.3.1:
+    resolution: {integrity: sha512-bMW7oOkxX4ydRAkkPtJ1do2k9yOoIGc/hZYebcuEOVdJoC6wwVpu97mYY7Mz8B9hLlcaR5WFgBsLl5tSJVzm8A==}
+    dependencies:
+      '@simplewebauthn/typescript-types': 8.0.0
+    dev: false
+
+  /@simplewebauthn/typescript-types@8.0.0:
+    resolution: {integrity: sha512-d7Izb2H+LZJteXMkS8DmpAarD6mZdpIOu/av/yH4/u/3Pd6DKFLyBM3j8BMmUvUqpzvJvHARNrRfQYto58mtTQ==}
+    dev: false
 
   /@socket.io/component-emitter@3.1.0:
     resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}

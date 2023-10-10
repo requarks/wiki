@@ -344,6 +344,7 @@ export async function up (knex) {
       table.string('name').notNullable()
       table.jsonb('auth').notNullable().defaultTo('{}')
       table.jsonb('meta').notNullable().defaultTo('{}')
+      table.jsonb('passkeys').notNullable().defaultTo('{}')
       table.jsonb('prefs').notNullable().defaultTo('{}')
       table.boolean('hasAvatar').notNullable().defaultTo(false)
       table.boolean('isSystem').notNullable().defaultTo(false)

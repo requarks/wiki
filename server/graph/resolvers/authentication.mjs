@@ -3,6 +3,8 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import { DateTime } from 'luxon'
+import { v4 as uuid } from 'uuid'
+import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server'
 
 export default {
   Query: {
@@ -123,6 +125,52 @@ export default {
       }
     },
     /**
+     * Setup TFA
+     */
+    async setupTFA (obj, args, context) {
+      try {
+        const userId = context.req.user?.id
+        if (!userId) {
+          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+        }
+
+        const usr = await WIKI.db.users.query().findById(userId)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        }
+
+        const str = WIKI.auth.strategies[args.strategyId]
+        if (!str) {
+          throw new Error('ERR_INVALID_STRATEGY')
+        }
+
+        if (!usr.auth[args.strategyId]) {
+          throw new Error('ERR_INVALID_STRATEGY')
+        }
+
+        if (usr.auth[args.strategyId].tfaIsActive) {
+          throw new Error('ERR_TFA_ALREADY_ACTIVE')
+        }
+
+        const tfaQRImage = await usr.generateTFA(args.strategyId, args.siteId)
+        const tfaToken = await WIKI.db.userKeys.generateToken({
+          kind: 'tfaSetup',
+          userId: usr.id,
+          meta: {
+            strategyId: args.strategyId
+          }
+        })
+
+        return {
+          operation: generateSuccess('TFA setup started'),
+          continuationToken: tfaToken,
+          tfaQRImage
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
      * Deactivate 2FA
      */
     async deactivateTFA (obj, args, context) {
@@ -159,6 +207,158 @@ export default {
 
         return {
           operation: generateSuccess('TFA deactivated successfully.')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
+     * Setup Passkey
+     */
+    async setupPasskey (obj, args, context) {
+      try {
+        const userId = context.req.user?.id
+        if (!userId) {
+          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+        }
+
+        const usr = await WIKI.db.users.query().findById(userId)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        }
+
+        const site = WIKI.sites[args.siteId]
+        if (!site) {
+          throw new Error('ERR_INVALID_SITE')
+        } else if (site.hostname === '*') {
+          WIKI.logger.warn('Cannot use passkeys with a wildcard site hostname. Enter a valid hostname under the Administration Area > General.')
+          throw new Error('ERR_PK_HOSTNAME_MISSING')
+        }
+
+        const options = await generateRegistrationOptions({
+          rpName: site.config.title,
+          rpId: site.hostname,
+          userID: usr.id,
+          userName: usr.email,
+          userDisplayName: usr.name,
+          attestationType: 'none',
+          authenticatorSelection: {
+            residentKey: 'required',
+            userVerification: 'preferred'
+          },
+          excludeCredentials: usr.passkeys.authenticators?.map(authenticator => ({
+            id: new Uint8Array(authenticator.credentialID),
+            type: 'public-key',
+            transports: authenticator.transports
+          })) ?? []
+        })
+
+        usr.passkeys.reg = {
+          challenge: options.challenge,
+          rpId: site.hostname,
+          siteId: site.id
+        }
+
+        await usr.$query().patch({
+          passkeys: usr.passkeys
+        })
+
+        return {
+          operation: generateSuccess('Passkey registration options generated successfully.'),
+          registrationOptions: options
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
+     * Finalize Passkey Registration
+     */
+    async finalizePasskey (obj, args, context) {
+      try {
+        const userId = context.req.user?.id
+        if (!userId) {
+          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+        }
+
+        const usr = await WIKI.db.users.query().findById(userId)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        } else if (!usr.passkeys?.reg) {
+          throw new Error('ERR_PASSKEY_NOT_SETUP')
+        }
+
+        if (!args.name || args.name.trim().length < 1 || args.name.length > 255) {
+          throw new Error('ERR_PK_NAME_MISSING_OR_INVALID')
+        }
+
+        const verification = await verifyRegistrationResponse({
+          response: args.registrationResponse,
+          expectedChallenge: usr.passkeys.reg.challenge,
+          expectedOrigin: `https://${usr.passkeys.reg.rpId}`,
+          expectedRPID: usr.passkeys.reg.rpId,
+          requireUserVerification: true
+        })
+
+        if (!verification.verified) {
+          throw new Error('ERR_PK_VERIFICATION_FAILED')
+        }
+
+        if (!usr.passkeys.authenticators) {
+          usr.passkeys.authenticators = []
+        }
+        usr.passkeys.authenticators.push({
+          ...verification.registrationInfo,
+          id: uuid(),
+          createdAt: new Date(),
+          name: args.name,
+          siteId: usr.passkeys.reg.siteId,
+          transports: args.registrationResponse.response.transports
+        })
+
+        delete usr.passkeys.reg
+
+        await usr.$query().patch({
+          passkeys: JSON.stringify(usr.passkeys, (k, v) => {
+            if (v instanceof Uint8Array) {
+              return Array.apply([], v)
+            }
+            return v
+          })
+        })
+
+        return {
+          operation: generateSuccess('Passkey registered successfully.')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
+     * Deactivate a passkey
+     */
+    async deactivatePasskey (obj, args, context) {
+      try {
+        const userId = context.req.user?.id
+        if (!userId) {
+          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+        }
+
+        const usr = await WIKI.db.users.query().findById(userId)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        } else if (!usr.passkeys?.authenticators) {
+          throw new Error('ERR_PASSKEY_NOT_SETUP')
+        }
+
+        usr.passkeys.authenticators = usr.passkeys.authenticators.filter(a => a.id !== args.id)
+
+        await usr.$query().patch({
+          passkeys: usr.passkeys
+        })
+
+        return {
+          operation: generateSuccess('Passkey deactivated successfully.')
         }
       } catch (err) {
         return generateError(err)

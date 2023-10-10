@@ -41,8 +41,26 @@ extend type Mutation {
     setup: Boolean
   ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
 
+  setupTFA(
+    strategyId: UUID!
+    siteId: UUID!
+  ): AuthenticationSetupTFAResponse
+
   deactivateTFA(
     strategyId: UUID!
+  ): DefaultResponse
+
+  setupPasskey(
+    siteId: UUID!
+  ): AuthenticationSetupPasskeyResponse
+
+  finalizePasskey(
+    registrationResponse: JSON!
+    name: String!
+  ): DefaultResponse
+
+  deactivatePasskey(
+    id: UUID!
   ): DefaultResponse
 
   changePassword(
@@ -133,6 +151,17 @@ type AuthenticationAuthResponse {
 type AuthenticationTokenResponse {
   operation: Operation
   jwt: String
+}
+
+type AuthenticationSetupTFAResponse {
+  operation: Operation
+  continuationToken: String
+  tfaQRImage: String
+}
+
+type AuthenticationSetupPasskeyResponse {
+  operation: Operation
+  registrationOptions: JSON
 }
 
 input AuthenticationStrategyInput {
