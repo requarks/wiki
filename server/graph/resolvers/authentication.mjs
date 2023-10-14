@@ -3,8 +3,13 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import { DateTime } from 'luxon'
-import { v4 as uuid } from 'uuid'
-import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server'
+import base64 from '@hexagon/base64'
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse
+} from '@simplewebauthn/server'
 
 export default {
   Query: {
@@ -309,7 +314,7 @@ export default {
         }
         usr.passkeys.authenticators.push({
           ...verification.registrationInfo,
-          id: uuid(),
+          id: base64.fromArrayBuffer(verification.registrationInfo.credentialID, true),
           createdAt: new Date(),
           name: args.name,
           siteId: usr.passkeys.reg.siteId,
@@ -359,6 +364,117 @@ export default {
 
         return {
           operation: generateSuccess('Passkey deactivated successfully.')
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
+     * Login via passkey - Generate challenge
+     */
+    async authenticatePasskeyGenerate (obj, args, context) {
+      try {
+        const site = WIKI.sites[args.siteId]
+        if (!site) {
+          throw new Error('ERR_INVALID_SITE')
+        } else if (site.hostname === '*') {
+          WIKI.logger.warn('Cannot use passkeys with a wildcard site hostname. Enter a valid hostname under the Administration Area > General.')
+          throw new Error('ERR_PK_HOSTNAME_MISSING')
+        }
+
+        const usr = await WIKI.db.users.query().findOne({ email: args.email })
+        if (!usr || !usr.passkeys?.authenticators) {
+          // Fake success response to prevent email leaking
+          WIKI.logger.debug(`Cannot generate passkey challenge for ${args.email}... (non-existing or missing passkeys setup)`)
+          return {
+            operation: generateSuccess('Passkey challenge generated.'),
+            authOptions: await generateAuthenticationOptions({
+              allowCredentials: [{
+                id: new Uint8Array(Array(30).map(v => _.random(0, 254))),
+                type: 'public-key',
+                transports: ['internal']
+              }],
+              userVerification: 'preferred',
+              rpId: site.hostname
+            })
+          }
+        }
+
+        const options = await generateAuthenticationOptions({
+          allowCredentials: usr.passkeys.authenticators.map(authenticator => ({
+            id: new Uint8Array(authenticator.credentialID),
+            type: 'public-key',
+            transports: authenticator.transports
+          })),
+          userVerification: 'preferred',
+          rpId: site.hostname
+        })
+
+        usr.passkeys.login = {
+          challenge: options.challenge,
+          rpId: site.hostname,
+          siteId: site.id
+        }
+
+        await usr.$query().patch({
+          passkeys: usr.passkeys
+        })
+
+        return {
+          operation: generateSuccess('Passkey challenge generated.'),
+          authOptions: options
+        }
+      } catch (err) {
+        return generateError(err)
+      }
+    },
+    /**
+     * Login via passkey - Verify challenge
+     */
+    async authenticatePasskeyVerify (obj, args, context) {
+      try {
+        if (!args.authResponse?.response?.userHandle) {
+          throw new Error('ERR_INVALID_PASSKEY_RESPONSE')
+        }
+        const usr = await WIKI.db.users.query().findById(args.authResponse.response.userHandle)
+        if (!usr) {
+          WIKI.logger.debug(`Passkey Login Failure: Cannot find user ${args.authResponse.response.userHandle}`)
+          throw new Error('ERR_LOGIN_FAILED')
+        } else if (!usr.passkeys?.login) {
+          WIKI.logger.debug(`Passkey Login Failure: Missing login auth generation step for user ${args.authResponse.response.userHandle}`)
+          throw new Error('ERR_LOGIN_FAILED')
+        } else if (!usr.passkeys.authenticators?.some(a => a.id === args.authResponse.id)) {
+          WIKI.logger.debug(`Passkey Login Failure: Authenticator provided is not registered for user ${args.authResponse.response.userHandle}`)
+          throw new Error('ERR_LOGIN_FAILED')
+        }
+
+        const verification = await verifyAuthenticationResponse({
+          response: args.authResponse,
+          expectedChallenge: usr.passkeys.login.challenge,
+          expectedOrigin: `https://${usr.passkeys.login.rpId}`,
+          expectedRPID: usr.passkeys.login.rpId,
+          requireUserVerification: true,
+          authenticator: _.find(usr.passkeys.authenticators, ['id', args.authResponse.id])
+        })
+
+        if (!verification.verified) {
+          WIKI.logger.debug(`Passkey Login Failure: Challenge verification failed for user ${args.authResponse.response.userHandle}`)
+          throw new Error('ERR_LOGIN_FAILED')
+        }
+
+        delete usr.passkeys.login
+
+        await usr.$query().patch({
+          passkeys: usr.passkeys
+        })
+
+        const jwtToken = await WIKI.db.users.refreshToken(usr)
+
+        return {
+          operation: generateSuccess('Passkey challenge accepted.'),
+          nextAction: 'redirect',
+          jwt: jwtToken.token,
+          redirect: '/'
         }
       } catch (err) {
         return generateError(err)

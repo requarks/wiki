@@ -127,13 +127,15 @@ module.exports = configure(function (ctx) {
       // https: true
       open: false, // opens browser window automatically
       port: userConfig.dev?.port,
-      proxy: {
-        '/_graphql': `http://127.0.0.1:${userConfig.port}/_graphql`,
-        '/_blocks': `http://127.0.0.1:${userConfig.port}`,
-        '/_site': `http://127.0.0.1:${userConfig.port}`,
-        '/_thumb': `http://127.0.0.1:${userConfig.port}`,
-        '/_user': `http://127.0.0.1:${userConfig.port}`
-      },
+      proxy: ['_graphql', '_blocks', '_site', '_thumb', '_user'].reduce((result, key) => {
+        result[`/${key}`] = {
+          target: {
+            host: '127.0.0.1',
+            port: userConfig.port
+          }
+        }
+        return result
+      }, {}),
       hmr: {
         clientPort: userConfig.dev?.hmrClientPort
       },

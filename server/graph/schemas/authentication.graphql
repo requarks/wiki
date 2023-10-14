@@ -63,6 +63,15 @@ extend type Mutation {
     id: UUID!
   ): DefaultResponse
 
+  authenticatePasskeyGenerate(
+    email: String!
+    siteId: UUID!
+  ): AuthenticationPasskeyResponse @rateLimit(limit: 5, duration: 60)
+
+  authenticatePasskeyVerify(
+    authResponse: JSON!
+  ): AuthenticationAuthResponse @rateLimit(limit: 5, duration: 60)
+
   changePassword(
     continuationToken: String
     currentPassword: String
@@ -162,6 +171,11 @@ type AuthenticationSetupTFAResponse {
 type AuthenticationSetupPasskeyResponse {
   operation: Operation
   registrationOptions: JSON
+}
+
+type AuthenticationPasskeyResponse {
+  operation: Operation
+  authOptions: JSON
 }
 
 input AuthenticationStrategyInput {

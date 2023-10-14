@@ -1180,6 +1180,8 @@
   "auth.nameTooLong": "Name is too long.",
   "auth.nameTooShort": "Name is too short.",
   "auth.orLoginUsingStrategy": "or login using...",
+  "auth.passkeys.signin": "Log In with a Passkey",
+  "auth.passkeys.signinHint": "Enter your email address to login with a passkey:",
   "auth.passwordNotMatch": "Both passwords do not match.",
   "auth.passwordTooShort": "Password is too short.",
   "auth.pleaseWait": "Please wait",

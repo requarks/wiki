@@ -51,6 +51,16 @@
         no-caps
         icon='las la-sign-in-alt'
       )
+    template(v-if='canUsePasskeys')
+      q-separator.q-my-md
+      q-btn.acrylic-btn.full-width(
+        flat
+        color='primary'
+        :label='t(`auth.passkeys.signin`)'
+        no-caps
+        icon='las la-key'
+        @click='switchTo(`passkey`)'
+      )
     template(v-if='selectedStrategy.activeStrategy?.strategy?.key === `local`')
       q-separator.q-my-md
       q-btn.acrylic-btn.full-width.q-mb-sm(
@@ -70,6 +80,40 @@
         icon='las la-life-ring'
         @click='switchTo(`forgot`)'
       )
+
+  //- -----------------------------------------------------
+  //- PASSKEY LOGIN SCREEN
+  //- -----------------------------------------------------
+  template(v-else-if='state.screen === `passkey`')
+    p {{t('auth.passkeys.signinHint')}}
+    q-form(ref='passkeyForm', @submit='loginWithPasskey')
+      q-input(
+        ref='passkeyEmailIpt'
+        v-model='state.username'
+        outlined
+        hide-bottom-space
+        :label='t(`auth.fields.email`)'
+        autocomplete='webauthn'
+        )
+        template(#prepend)
+          i.las.la-envelope
+      q-btn.full-width.q-mt-sm(
+        type='submit'
+        push
+        color='primary'
+        :label='t(`auth.actions.login`)'
+        no-caps
+        icon='las la-key'
+      )
+    q-separator.q-my-md
+    q-btn.acrylic-btn.full-width(
+      flat
+      color='primary'
+      :label='t(`auth.forgotPasswordCancel`)'
+      no-caps
+      icon='las la-arrow-circle-left'
+      @click='switchTo(`login`)'
+    )
 
   //- -----------------------------------------------------
   //- FORGOT PASSWORD SCREEN
@@ -298,10 +342,14 @@ import gql from 'graphql-tag'
 import { find } from 'lodash-es'
 import Cookies from 'js-cookie'
 import zxcvbn from 'zxcvbn'
-
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import {
+  browserSupportsWebAuthn,
+  browserSupportsWebAuthnAutofill,
+  startAuthentication
+} from '@simplewebauthn/browser'
 
 import { useSiteStore } from 'src/stores/site'
 import { useUserStore } from 'src/stores/user'
@@ -343,6 +391,7 @@ const state = reactive({
 // REFS
 
 const loginEmailIpt = ref(null)
+const passkeyEmailIpt = ref(null)
 const forgotEmailIpt = ref(null)
 const registerNameIpt = ref(null)
 const changePwdCurrentIpt = ref(null)
@@ -395,6 +444,10 @@ const passwordStrength = computed(() => {
   }
 })
 
+const canUsePasskeys = computed(() => {
+  return browserSupportsWebAuthn()
+})
+
 // VALIDATION RULES
 
 const loginUsernameValidation = [
@@ -433,6 +486,13 @@ function switchTo (screen) {
       state.screen = 'login'
       nextTick(() => {
         loginEmailIpt.value.focus()
+      })
+      break
+    }
+    case 'passkey': {
+      state.screen = 'passkey'
+      nextTick(() => {
+        passkeyEmailIpt.value.focus()
       })
       break
     }
@@ -598,9 +658,84 @@ async function login () {
     })
     if (resp.data?.login?.operation?.succeeded) {
       state.password = ''
-      await handleLoginResponse(resp.data.login)
+      handleLoginResponse(resp.data.login)
     } else {
       throw new Error(resp.data?.login?.operation?.message || t('auth.errors.loginError'))
+    }
+  } catch (err) {
+    $q.loading.hide()
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+}
+
+/**
+ * LOGIN WITH PASSKEY
+ */
+async function loginWithPasskey () {
+  $q.loading.show({
+    message: t('auth.signingIn')
+  })
+  try {
+    const respGen = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation authenticatePasskeyGenerate (
+          $email: String!
+          $siteId: UUID!
+          ) {
+          authenticatePasskeyGenerate (
+            email: $email
+            siteId: $siteId
+            ) {
+            operation {
+              succeeded
+              message
+            }
+            authOptions
+          }
+        }
+      `,
+      variables: {
+        email: state.username,
+        siteId: siteStore.id
+      }
+    })
+    if (respGen.data?.authenticatePasskeyGenerate?.operation?.succeeded) {
+      const authResp = await startAuthentication(respGen.data.authenticatePasskeyGenerate.authOptions, await browserSupportsWebAuthnAutofill())
+
+      const respVerif = await APOLLO_CLIENT.mutate({
+        mutation: gql`
+          mutation authenticatePasskeyVerify (
+            $authResponse: JSON!
+            ) {
+            authenticatePasskeyVerify (
+              authResponse: $authResponse
+              ) {
+              operation {
+                succeeded
+                message
+              }
+              jwt
+              nextAction
+              continuationToken
+              redirect
+              tfaQRImage
+            }
+          }
+        `,
+        variables: {
+          authResponse: authResp
+        }
+      })
+      if (respVerif.data?.authenticatePasskeyVerify?.operation?.succeeded) {
+        handleLoginResponse(respVerif.data.authenticatePasskeyVerify)
+      } else {
+        throw new Error(respVerif.data?.authenticatePasskeyVerify?.operation?.message || t('auth.errors.loginError'))
+      }
+    } else {
+      throw new Error(respGen.data?.authenticatePasskeyGenerate?.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
     $q.loading.hide()

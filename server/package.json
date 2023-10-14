@@ -41,6 +41,7 @@
     "@exlinc/keycloak-passport": "1.0.2",
     "@graphql-tools/schema": "10.0.0",
     "@graphql-tools/utils": "10.0.6",
+    "@hexagon/base64": "1.1.28",
     "@joplin/turndown-plugin-gfm": "1.0.50",
     "@node-saml/passport-saml": "4.0.4",
     "@root/csr": "0.8.1",

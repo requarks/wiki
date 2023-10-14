@@ -154,7 +154,7 @@ type UserAuth {
 }
 
 type UserPasskey {
-  id: UUID
+  id: String
   name: String
   createdAt: Date
   siteHostname: String
