@@ -3,6 +3,7 @@ import _, { isNil } from 'lodash-es'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { DateTime } from 'luxon'
+import bcrypt from 'bcryptjs'
 
 export default {
   Query: {
@@ -10,6 +11,10 @@ export default {
      * FETCH ALL USERS
      */
     async users (obj, args, context, info) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       // -> Sanitize limit
       let limit = args.pageSize ?? 20
       if (limit < 1 || limit > 1000) {
@@ -39,6 +44,12 @@ export default {
      * FETCH A SINGLE USER
      */
     async userById (obj, args, context, info) {
+      if (!context.req.isAuthenticated || context.req.user.id !== args.id) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+      }
+
       const usr = await WIKI.db.users.query().findById(args.id)
 
       if (!usr) {
@@ -69,31 +80,20 @@ export default {
 
       return usr
     },
-    // async profile (obj, args, context, info) {
-    //   if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
-    //     throw new WIKI.Error.AuthRequired()
-    //   }
-    //   const usr = await WIKI.db.users.query().findById(context.req.user.id)
-    //   if (!usr.isActive) {
-    //     throw new WIKI.Error.AuthAccountBanned()
-    //   }
-
-    //   const providerInfo = _.get(WIKI.auth.strategies, usr.providerKey, {})
-
-    //   usr.providerName = providerInfo.displayName || 'Unknown'
-    //   usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
-    //   usr.password = ''
-    //   usr.providerId = ''
-    //   usr.tfaSecret = ''
-
-    //   return usr
-    // },
 
     async userDefaults (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.config.userDefaults
     },
 
     async lastLogins (obj, args, context, info) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:dashboard', 'read:users', 'write:users', 'manage:users'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.db.users.query()
         .select('id', 'name', 'lastLoginAt')
         .whereNotNull('lastLoginAt')
@@ -114,8 +114,12 @@ export default {
     }
   },
   Mutation: {
-    async createUser (obj, args) {
+    async createUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:users', 'manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.users.createNewUser({ ...args, isVerified: true })
 
         return {
@@ -125,8 +129,12 @@ export default {
         return generateError(err)
       }
     },
-    async deleteUser (obj, args) {
+    async deleteUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
         }
@@ -146,8 +154,12 @@ export default {
         }
       }
     },
-    async updateUser (obj, args) {
+    async updateUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.users.updateUser(args.id, args.patch)
 
         return {
@@ -157,8 +169,12 @@ export default {
         return generateError(err)
       }
     },
-    async verifyUser (obj, args) {
+    async verifyUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.users.query().patch({ isVerified: true }).findById(args.id)
 
         return {
@@ -168,8 +184,12 @@ export default {
         return generateError(err)
       }
     },
-    async activateUser (obj, args) {
+    async activateUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.users.query().patch({ isActive: true }).findById(args.id)
 
         return {
@@ -179,8 +199,12 @@ export default {
         return generateError(err)
       }
     },
-    async deactivateUser (obj, args) {
+    async deactivateUser (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         if (args.id <= 2) {
           throw new Error('Cannot deactivate system accounts.')
         }
@@ -196,8 +220,12 @@ export default {
         return generateError(err)
       }
     },
-    async enableUserTFA (obj, args) {
+    async enableUserTFA (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
 
         return {
@@ -207,8 +235,12 @@ export default {
         return generateError(err)
       }
     },
-    async disableUserTFA (obj, args) {
+    async disableUserTFA (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
 
         return {
@@ -220,13 +252,17 @@ export default {
     },
     async changeUserPassword (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         if (args.newPassword?.length < 8) {
           throw new Error('ERR_PASSWORD_TOO_SHORT')
         }
 
         const usr = await WIKI.db.users.query().findById(args.id)
         if (!usr) {
-          throw new Error('ERR_USER_NOT_FOUND')
+          throw new Error('ERR_INVALID_USER')
         }
         const localAuth = await WIKI.db.authentication.getStrategy('local')
 
@@ -249,22 +285,22 @@ export default {
     async updateProfile (obj, args, context) {
       try {
         if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
-          throw new WIKI.Error.AuthRequired()
+          throw new Error('ERR_NOT_AUTHENTICATED')
         }
         const usr = await WIKI.db.users.query().findById(context.req.user.id)
         if (!usr.isActive) {
-          throw new WIKI.Error.AuthAccountBanned()
+          throw new Error('ERR_INACTIVE_USER')
         }
         if (!usr.isVerified) {
-          throw new WIKI.Error.AuthAccountNotVerified()
+          throw new Error('ERR_USER_NOT_VERIFIED')
         }
 
         if (args.dateFormat && !['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'].includes(args.dateFormat)) {
-          throw new WIKI.Error.InputInvalid()
+          throw new Error('ERR_INVALID_INPUT')
         }
 
         if (args.appearance && !['site', 'light', 'dark'].includes(args.appearance)) {
-          throw new WIKI.Error.InputInvalid()
+          throw new Error('ERR_INVALID_INPUT')
         }
 
         await WIKI.db.users.query().findById(usr.id).patch({
@@ -292,47 +328,19 @@ export default {
         return generateError(err)
       }
     },
-    // async changePassword (obj, args, context) {
-    //   try {
-    //     if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
-    //       throw new WIKI.Error.AuthRequired()
-    //     }
-    //     const usr = await WIKI.db.users.query().findById(context.req.user.id)
-    //     if (!usr.isActive) {
-    //       throw new WIKI.Error.AuthAccountBanned()
-    //     }
-    //     if (!usr.isVerified) {
-    //       throw new WIKI.Error.AuthAccountNotVerified()
-    //     }
-    //     if (usr.providerKey !== 'local') {
-    //       throw new WIKI.Error.AuthProviderInvalid()
-    //     }
-    //     try {
-    //       await usr.verifyPassword(args.current)
-    //     } catch (err) {
-    //       throw new WIKI.Error.AuthPasswordInvalid()
-    //     }
-
-    //     await WIKI.db.users.updateUser({
-    //       id: usr.id,
-    //       newPassword: args.new
-    //     })
-
-    //     const newToken = await WIKI.db.users.refreshToken(usr)
-
-    //     return {
-    //       responseResult: generateSuccess('Password changed successfully'),
-    //       jwt: newToken.token
-    //     }
-    //   } catch (err) {
-    //     return generateError(err)
-    //   }
-    // },
     /**
      * UPLOAD USER AVATAR
      */
-    async uploadUserAvatar (obj, args) {
+    async uploadUserAvatar (obj, args, context) {
       try {
+        if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
+          throw new Error('ERR_NOT_AUTHENTICATED')
+        }
+        const usr = await WIKI.db.users.query().findById(context.req.user.id)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        }
+
         const { filename, mimetype, createReadStream } = await args.image
         const lowercaseFilename = filename.toLowerCase()
         WIKI.logger.debug(`Processing user ${args.id} avatar ${lowercaseFilename} of type ${mimetype}...`)
@@ -358,7 +366,7 @@ export default {
           height: 180
         })
         // -> Set avatar flag for this user in the DB
-        await WIKI.db.users.query().findById(args.id).patch({ hasAvatar: true })
+        usr.$query().patch({ hasAvatar: true })
         // -> Save image data to DB
         const imgBuffer = await fs.readFile(destPath)
         await WIKI.db.knex('userAvatars').insert({
@@ -377,10 +385,18 @@ export default {
     /**
      * CLEAR USER AVATAR
      */
-    async clearUserAvatar (obj, args) {
+    async clearUserAvatar (obj, args, context) {
       try {
+        if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
+          throw new Error('ERR_NOT_AUTHENTICATED')
+        }
+        const usr = await WIKI.db.users.query().findById(context.req.user.id)
+        if (!usr) {
+          throw new Error('ERR_INVALID_USER')
+        }
+
         WIKI.logger.debug(`Clearing user ${args.id} avatar...`)
-        await WIKI.db.users.query().findById(args.id).patch({ hasAvatar: false })
+        usr.$query.patch({ hasAvatar: false })
         await WIKI.db.knex('userAvatars').where({ id: args.id }).del()
         WIKI.logger.debug(`Cleared user ${args.id} avatar successfully.`)
         return {
@@ -395,19 +411,27 @@ export default {
      * UPDATE USER DEFAULTS
      */
     async updateUserDefaults (obj, args, context) {
-      WIKI.config.userDefaults = {
-        timezone: args.timezone,
-        dateFormat: args.dateFormat,
-        timeFormat: args.timeFormat
-      }
-      await WIKI.configSvc.saveToDb(['userDefaults'])
-      return {
-        operation: generateSuccess('User defaults saved successfully')
+      try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.config.userDefaults = {
+          timezone: args.timezone,
+          dateFormat: args.dateFormat,
+          timeFormat: args.timeFormat
+        }
+        await WIKI.configSvc.saveToDb(['userDefaults'])
+        return {
+          operation: generateSuccess('User defaults saved successfully')
+        }
+      } catch (err) {
+        return generateError(err)
       }
     }
   },
   User: {
-    async auth (usr) {
+    async auth (usr, args, context) {
       const authStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
       return _.transform(usr.auth, (result, value, key) => {
         const authStrategy = _.find(authStrategies, ['id', key])
@@ -432,14 +456,4 @@ export default {
       return usr.$relatedQuery('groups')
     }
   }
-  // UserProfile: {
-  //   async groups (usr) {
-  //     const usrGroups = await usr.$relatedQuery('groups')
-  //     return usrGroups.map(g => g.name)
-  //   },
-  //   async pagesTotal (usr) {
-  //     const result = await WIKI.db.pages.query().count('* as total').where('creatorId', usr.id).first()
-  //     return _.toSafeInteger(result.total)
-  //   }
-  // }
 }

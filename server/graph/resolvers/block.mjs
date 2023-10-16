@@ -11,6 +11,9 @@ export default {
   Mutation: {
     async setBlocksState(obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:blocks'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
         // TODO: update blocks state
         return {
           operation: generateSuccess('Blocks state updated successfully')

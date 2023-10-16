@@ -49,8 +49,12 @@ export default {
     /**
      * CREATE SITE
      */
-    async createSite (obj, args) {
+    async createSite (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:sites', 'manage:sites'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         // -> Validate inputs
         if (!args.hostname || args.hostname.length < 1 || !/^(\\*)|([a-z0-9\-.:]+)$/.test(args.hostname)) {
           throw new WIKI.Error.Custom('SiteCreateInvalidHostname', 'Invalid Site Hostname')
@@ -83,8 +87,12 @@ export default {
     /**
      * UPDATE SITE
      */
-    async updateSite (obj, args) {
+    async updateSite (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:sites'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         // -> Load site
         const site = await WIKI.db.sites.query().findById(args.id)
         if (!site) {
@@ -127,8 +135,12 @@ export default {
     /**
      * DELETE SITE
      */
-    async deleteSite (obj, args) {
+    async deleteSite (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:sites'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         // -> Ensure site isn't last one
         const sitesCount = await WIKI.db.sites.query().count('id').first()
         if (sitesCount?.count && _.toNumber(sitesCount?.count) <= 1) {
@@ -149,6 +161,10 @@ export default {
      */
     async uploadSiteLogo (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:sites'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         const { filename, mimetype, createReadStream } = await args.image
         WIKI.logger.info(`Processing site logo ${filename} of type ${mimetype}...`)
         if (!WIKI.extensions.ext.sharp.isInstalled) {
@@ -208,6 +224,10 @@ export default {
      */
     async uploadSiteFavicon (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:sites'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         const { filename, mimetype, createReadStream } = await args.image
         WIKI.logger.info(`Processing site favicon ${filename} of type ${mimetype}...`)
         if (!WIKI.extensions.ext.sharp.isInstalled) {
@@ -268,6 +288,10 @@ export default {
      */
     async uploadSiteLoginBg (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:sites'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         const { filename, mimetype, createReadStream } = await args.image
         WIKI.logger.info(`Processing site login bg ${filename} of type ${mimetype}...`)
         if (!WIKI.extensions.ext.sharp.isInstalled) {

@@ -7,19 +7,6 @@ extend type Query {
   localeStrings(locale: String!): JSON
 }
 
-extend type Mutation {
-  downloadLocale(
-    locale: String!
-  ): DefaultResponse
-
-  updateLocale(
-    locale: String!
-    autoUpdate: Boolean!
-    namespacing: Boolean!
-    namespaces: [String]!
-  ): DefaultResponse
-}
-
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------

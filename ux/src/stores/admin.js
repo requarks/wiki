@@ -13,6 +13,7 @@ export const useAdminStore = defineStore('admin', {
       latestVersion: 'n/a',
       groupsTotal: 0,
       pagesTotal: 0,
+      tagsTotal: 0,
       usersTotal: 0,
       loginsPastDay: 0,
       isApiEnabled: false,
@@ -57,7 +58,9 @@ export const useAdminStore = defineStore('admin', {
             apiState
             systemInfo {
               groupsTotal
+              tagsTotal
               usersTotal
+              loginsPastDay
               currentVersion
               latestVersion
               isMailConfigured
@@ -68,7 +71,9 @@ export const useAdminStore = defineStore('admin', {
         fetchPolicy: 'network-only'
       })
       this.info.groupsTotal = clone(resp?.data?.systemInfo?.groupsTotal ?? 0)
+      this.info.tagsTotal = clone(resp?.data?.systemInfo?.tagsTotal ?? 0)
       this.info.usersTotal = clone(resp?.data?.systemInfo?.usersTotal ?? 0)
+      this.info.loginsPastDay = clone(resp?.data?.systemInfo?.loginsPastDay ?? 0)
       this.info.currentVersion = clone(resp?.data?.systemInfo?.currentVersion ?? 'n/a')
       this.info.latestVersion = clone(resp?.data?.systemInfo?.latestVersion ?? 'n/a')
       this.info.isApiEnabled = clone(resp?.data?.apiState ?? false)

@@ -1,6 +1,6 @@
 import _ from 'lodash-es'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
-import { parsePath }from '../../helpers/page.mjs'
+import { parsePath } from '../../helpers/page.mjs'
 import tsquery from 'pg-tsquery'
 
 const tsq = tsquery()
@@ -247,12 +247,19 @@ export default {
         siteId: args.siteId
       })
       if (page) {
-        return {
-          ...page,
-          ...page.config,
-          scriptCss: page.scripts?.css,
-          scriptJsLoad: page.scripts?.jsLoad,
-          scriptJsUnload: page.scripts?.jsUnload
+        if (WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: page.path,
+          locale: page.locale
+        })) {
+          return {
+            ...page,
+            ...page.config,
+            scriptCss: page.scripts?.css,
+            scriptJsLoad: page.scripts?.jsLoad,
+            scriptJsUnload: page.scripts?.jsUnload
+          }
+        } else {
+          throw new Error('ERR_FORBIDDEN')
         }
       } else {
         throw new Error('ERR_PAGE_NOT_FOUND')
@@ -265,17 +272,17 @@ export default {
     async pathFromAlias (obj, args, context, info) {
       const alias = args.alias?.trim()
       if (!alias) {
-        throw new Error('ERR_ALIAS_MISSING')
+        throw new Error('ERR_PAGE_ALIAS_MISSING')
       }
       if (!WIKI.sites[args.siteId]) {
-        throw new Error('ERR_INVALID_SITE_ID')
+        throw new Error('ERR_INVALID_SITE')
       }
       const page = await WIKI.db.pages.query().findOne({
         alias: args.alias,
         siteId: args.siteId
       }).select('id', 'path', 'locale')
       if (!page) {
-        throw new Error('ERR_ALIAS_NOT_FOUND')
+        throw new Error('ERR_PAGE_ALIAS_NOT_FOUND')
       }
       return {
         id: page.id,
@@ -287,7 +294,7 @@ export default {
      * FETCH TAGS
      */
     async tags (obj, args, context, info) {
-      if (!args.siteId) { throw new Error('Missing Site ID')}
+      if (!args.siteId) { throw new Error('Missing Site ID') }
       const tags = await WIKI.db.knex('tags').where('siteId', args.siteId).orderBy('tag')
       // TODO: check permissions
       return tags
@@ -670,19 +677,29 @@ export default {
     }
   },
   Page: {
-    icon (obj) {
-      return obj.icon || 'las la-file-alt'
+    icon (page) {
+      return page.icon || 'las la-file-alt'
     },
-    password (obj) {
-      return obj.password ? '********' : ''
+    password (page) {
+      return page.password ? '********' : ''
     },
-    // async tags (obj) {
-    //   return WIKI.db.pages.relatedQuery('tags').for(obj.id)
+    content (page, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:source', 'write:pages', 'manage:pages'], {
+        path: page.path,
+        locale: page.locale
+      })) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
+      return page.content
+    },
+    // async tags (page) {
+    //   return WIKI.db.pages.relatedQuery('tags').for(page.id)
     // },
-    tocDepth (obj) {
+    tocDepth (page) {
       return {
-        min: obj.extra?.tocDepth?.min ?? 1,
-        max: obj.extra?.tocDepth?.max ?? 2
+        min: page.extra?.tocDepth?.min ?? 1,
+        max: page.extra?.tocDepth?.max ?? 2
       }
     }
     // comments(pg) {

@@ -133,7 +133,7 @@ export default {
         .first()
 
       if (!folder) {
-        throw new Error('ERR_FOLDER_NOT_EXIST')
+        throw new Error('ERR_INVALID_FOLDER')
       }
 
       return {
@@ -158,7 +158,7 @@ export default {
         .first()
 
       if (!folder) {
-        throw new Error('ERR_FOLDER_NOT_EXIST')
+        throw new Error('ERR_INVALID_FOLDER')
       }
 
       return {

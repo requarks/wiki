@@ -125,6 +125,10 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section(side)
               //- TODO: Reflect site storage status
               status-light(:color='true ? `positive` : `warning`', :pulse='false')
+          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/tags`', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental && (userStore.can(`manage:sites`))')
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-tag.svg')
+            q-item-section {{ t('admin.tags.title') }}
           q-item(:to='`/_admin/` + adminStore.currentSiteId + `/theme`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`) || userStore.can(`manage:theme`)')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-paint-roller.svg')

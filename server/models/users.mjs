@@ -451,7 +451,7 @@ export class User extends Model {
       })
 
       if (strategyId !== expectedStrategyId) {
-        throw new Error('ERR_UNEXPECTED_STRATEGY_ID')
+        throw new Error('ERR_INVALID_STRATEGY')
       }
 
       if (user) {
@@ -461,11 +461,11 @@ export class User extends Model {
           }
           return WIKI.db.users.afterLoginChecks(user, strategyId, context, { siteId, skipTFA: true })
         } else {
-          throw new Error('ERR_INCORRECT_TFA_TOKEN')
+          throw new Error('ERR_TFA_INCORRECT_TOKEN')
         }
       }
     }
-    throw new Error('ERR_INVALID_TFA_REQUEST')
+    throw new Error('ERR_TFA_INVALID_REQUEST')
   }
 
   /**
@@ -481,7 +481,7 @@ export class User extends Model {
     })
 
     if (strategyId !== expectedStrategyId) {
-      throw new Error('ERR_UNEXPECTED_STRATEGY_ID')
+      throw new Error('ERR_INVALID_STRATEGY')
     }
 
     if (user) {
@@ -503,12 +503,12 @@ export class User extends Model {
   static async changePassword ({ strategyId, siteId, currentPassword, newPassword }, context) {
     const userId = context.req.user?.id
     if (!userId) {
-      throw new Error('ERR_USER_NOT_AUTHENTICATED')
+      throw new Error('ERR_NOT_AUTHENTICATED')
     }
 
     const user = await WIKI.db.users.query().findById(userId)
     if (!user) {
-      throw new Error('ERR_USER_NOT_FOUND')
+      throw new Error('ERR_INVALID_USER')
     }
 
     if (!newPassword || newPassword.length < 8) {
@@ -516,7 +516,7 @@ export class User extends Model {
     }
 
     if (!user.auth[strategyId]?.password) {
-      throw new Error('ERR_UNEXPECTED_STRATEGY_ID')
+      throw new Error('ERR_INVALID_STRATEGY')
     }
 
     if (await bcrypt.compare(currentPassword, user.auth[strategyId].password) !== true) {
@@ -627,7 +627,7 @@ export class User extends Model {
     // Check if email already exists
     const usr = await WIKI.db.users.query().findOne({ email })
     if (usr) {
-      throw new Error('ERR_ACCOUNT_ALREADY_EXIST')
+      throw new Error('ERR_DUPLICATE_ACCOUNT_EMAIL')
     }
 
     WIKI.logger.debug(`Creating new user account for ${email}...`)

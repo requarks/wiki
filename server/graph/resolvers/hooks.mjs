@@ -3,10 +3,18 @@ import _ from 'lodash-es'
 
 export default {
   Query: {
-    async hooks () {
+    async hooks (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:webhooks', 'write:webhooks', 'manage:webhooks'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.db.hooks.query().orderBy('name')
     },
-    async hookById (obj, args) {
+    async hookById (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:webhooks', 'write:webhooks', 'manage:webhooks'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.db.hooks.query().findById(args.id)
     }
   },
@@ -14,8 +22,12 @@ export default {
     /**
      * CREATE HOOK
      */
-    async createHook (obj, args) {
+    async createHook (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:webhooks', 'manage:webhooks'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         // -> Validate inputs
         if (!args.name || args.name.length < 1) {
           throw new WIKI.Error.Custom('HookCreateInvalidName', 'Invalid Hook Name')
@@ -41,8 +53,12 @@ export default {
     /**
      * UPDATE HOOK
      */
-    async updateHook (obj, args) {
+    async updateHook (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:webhooks'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         // -> Load hook
         const hook = await WIKI.db.hooks.query().findById(args.id)
         if (!hook) {
@@ -72,8 +88,12 @@ export default {
     /**
      * DELETE HOOK
      */
-    async deleteHook (obj, args) {
+    async deleteHook (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:webhooks'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.hooks.deleteHook(args.id)
         WIKI.logger.debug(`Hook ${args.id} deleted successfully.`)
         return {

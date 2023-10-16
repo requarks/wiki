@@ -21,9 +21,9 @@ export default {
           if (user) {
             const authStrategyData = user.auth[strategyId]
             if (!authStrategyData) {
-              throw new Error('ERR_INVALID_STRATEGY_ID')
+              throw new Error('ERR_INVALID_STRATEGY')
             } else if (await bcrypt.compare(uPassword, authStrategyData.password) !== true) {
-              throw new Error('ERR_AUTH_FAILED')
+              throw new Error('ERR_LOGIN_FAILED')
             } else if (!user.isActive) {
               throw new Error('ERR_INACTIVE_USER')
             } else if (authStrategyData.restrictLogin) {
@@ -34,7 +34,7 @@ export default {
               done(null, user)
             }
           } else {
-            throw new Error('ERR_AUTH_FAILED')
+            throw new Error('ERR_LOGIN_FAILED')
           }
         } catch (err) {
           done(err, null)

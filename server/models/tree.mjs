@@ -77,7 +77,7 @@ export class Tree extends Model {
     if (id) {
       const parent = await WIKI.db.knex('tree').where('id', id).first()
       if (!parent) {
-        throw new Error('ERR_NONEXISTING_FOLDER_ID')
+        throw new Error('ERR_INVALID_FOLDER')
       }
       return parent
     } else {
@@ -105,7 +105,7 @@ export class Tree extends Model {
           siteId
         })
       } else {
-        throw new Error('ERR_NONEXISTING_FOLDER_PATH')
+        throw new Error('ERR_INVALID_FOLDER')
       }
     }
   }
@@ -150,7 +150,7 @@ export class Tree extends Model {
       siteId,
       tags,
       meta,
-      navigationId: siteId,
+      navigationId: siteId
     }).returning('*')
 
     return pageEntry[0]
@@ -215,12 +215,12 @@ export class Tree extends Model {
   static async createFolder ({ parentId, parentPath, pathName, title, locale, siteId }) {
     // Validate path name
     if (!rePathName.test(pathName)) {
-      throw new Error('ERR_INVALID_PATH_NAME')
+      throw new Error('ERR_INVALID_PATH')
     }
 
     // Validate title
     if (!reTitle.test(title)) {
-      throw new Error('ERR_INVALID_TITLE')
+      throw new Error('ERR_FOLDER_TITLE_INVALID')
     }
 
     parentPath = encodeTreePath(parentPath)
@@ -236,7 +236,7 @@ export class Tree extends Model {
     if (parentId) {
       parent = await WIKI.db.knex('tree').where('id', parentId).first()
       if (!parent) {
-        throw new Error('ERR_NONEXISTING_PARENT_ID')
+        throw new Error('ERR_FOLDER_PARENT_INVALID')
       }
       parentPath = parent.folderPath ? `${decodeFolderPath(parent.folderPath)}.${parent.fileName}` : parent.fileName
     } else if (parentPath) {
@@ -254,7 +254,7 @@ export class Tree extends Model {
       type: 'folder'
     }).first()
     if (existingFolder) {
-      throw new Error('ERR_FOLDER_ALREADY_EXISTS')
+      throw new Error('ERR_FOLDER_DUPLICATE')
     }
 
     // Ensure all ancestors exist
@@ -338,17 +338,17 @@ export class Tree extends Model {
     // Get folder
     const folder = await WIKI.db.knex('tree').where('id', folderId).first()
     if (!folder) {
-      throw new Error('ERR_NONEXISTING_FOLDER_ID')
+      throw new Error('ERR_INVALID_FOLDER')
     }
 
     // Validate path name
     if (!rePathName.test(pathName)) {
-      throw new Error('ERR_INVALID_PATH_NAME')
+      throw new Error('ERR_INVALID_PATH')
     }
 
     // Validate title
     if (!reTitle.test(title)) {
-      throw new Error('ERR_INVALID_TITLE')
+      throw new Error('ERR_FOLDER_TITLE_INVALID')
     }
 
     WIKI.logger.debug(`Renaming folder ${folder.id} path to ${pathName}...`)
@@ -364,7 +364,7 @@ export class Tree extends Model {
           type: 'folder'
         }).first()
       if (existingFolder) {
-        throw new Error('ERR_FOLDER_ALREADY_EXISTS')
+        throw new Error('ERR_FOLDER_DUPLICATE')
       }
 
       // Build new paths
@@ -406,7 +406,7 @@ export class Tree extends Model {
     // Get folder
     const folder = await WIKI.db.knex('tree').where('id', folderId).first()
     if (!folder) {
-      throw new Error('ERR_NONEXISTING_FOLDER_ID')
+      throw new Error('ERR_INVALID_FOLDER')
     }
     const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
     WIKI.logger.debug(`Deleting folder ${folder.id} at path ${folderPath}...`)

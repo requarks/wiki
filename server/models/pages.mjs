@@ -227,7 +227,7 @@ export class Page extends Model {
   static async createPage(opts) {
     // -> Validate site
     if (!WIKI.sites[opts.siteId]) {
-      throw new Error('ERR_INVALID_SITE_ID')
+      throw new Error('ERR_INVALID_SITE')
     }
 
     // -> Remove trailing slash

@@ -39,7 +39,7 @@ q-page.admin-dashboard
           img(src='/_assets/icons/fluent-people.svg')
           div
             strong {{ t('admin.groups.title') }}
-            small.text-positive {{adminStore.info.groupsTotal}}
+            span {{adminStore.info.groupsTotal}}
         q-separator
         q-card-actions(align='right')
           q-btn(
@@ -88,6 +88,23 @@ q-page.admin-dashboard
     .col-12.col-sm-6.col-lg-3
       q-card
         q-card-section.admin-dashboard-card
+          img(src='/_assets/icons/fluent-tag.svg')
+          div
+            strong {{ t('admin.tags.title') }}
+            span {{adminStore.info.tagsTotal}}
+        q-separator
+        q-card-actions(align='right')
+          q-btn(
+            flat
+            color='primary'
+            icon='las la-tags'
+            :label='t(`common.actions.manage`)'
+            :disable='!userStore.can(`manage:sites`)'
+            :to='`/_admin/` + adminStore.currentSiteId + `/tags`'
+            )
+    .col-12.col-sm-6.col-lg-3
+      q-card
+        q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-female-working-with-a-laptop.svg')
           div
             strong Logins
@@ -102,6 +119,10 @@ q-page.admin-dashboard
             :disable='!userStore.can(`manage:sites`)'
             :to='`/_admin/` + adminStore.currentSiteId + `/analytics`'
             )
+    .col-12.col-lg-9
+      q-card
+        q-card-section ---
+
     .col-12
       q-banner.bg-positive.text-white(
         :class='adminStore.isVersionLatest ? `bg-positive` : `bg-warning`'
@@ -123,9 +144,6 @@ q-page.admin-dashboard
             :label='t(`admin.system.title`)'
             to='/_admin/system'
             )
-    .col-12
-      q-card
-        q-card-section ---
 
 //- v-container(fluid, grid-list-lg)
 //-   v-layout(row, wrap)

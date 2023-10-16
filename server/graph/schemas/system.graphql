@@ -86,6 +86,7 @@ type SystemInfo {
   isSchedulerHealthy: Boolean
   latestVersion: String
   latestVersionReleaseDate: Date
+  loginsPastDay: Int
   nodeVersion: String
   operatingSystem: String
   pagesTotal: Int

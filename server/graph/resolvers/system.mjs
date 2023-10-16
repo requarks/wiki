@@ -12,18 +12,44 @@ const getos = util.promisify(getosSync)
 
 export default {
   Query: {
+    /**
+     * System Flags
+     */
     systemFlags () {
       return WIKI.config.flags
     },
-    async systemInfo () { return {} },
-    async systemExtensions () {
+    /**
+     * System Info
+     */
+    async systemInfo (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:dashboard', 'manage:sites'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
+      return {}
+    },
+    /**
+     * System Extensions
+     */
+    async systemExtensions (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const exts = Object.values(WIKI.extensions.ext).map(ext => _.pick(ext, ['key', 'title', 'description', 'isInstalled', 'isInstallable']))
       for (const ext of exts) {
         ext.isCompatible = await WIKI.extensions.ext[ext.key].isCompatible()
       }
       return exts
     },
-    async systemInstances () {
+    /**
+     * List System Instances
+     */
+    async systemInstances (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const instRaw = await WIKI.db.knex('pg_stat_activity')
         .select([
           'usename',
@@ -56,10 +82,24 @@ export default {
       }
       return _.values(insts)
     },
-    systemSecurity () {
+    /**
+     * System Security Settings
+     */
+    systemSecurity (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.config.security
     },
-    async systemJobs (obj, args) {
+    /**
+     * List System Jobs
+     */
+    async systemJobs (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const results = args.states?.length > 0 ?
         await WIKI.db.knex('jobHistory').whereIn('state', args.states.map(s => s.toLowerCase())).orderBy('startedAt', 'desc') :
         await WIKI.db.knex('jobHistory').orderBy('startedAt', 'desc')
@@ -68,16 +108,37 @@ export default {
         state: r.state.toUpperCase()
       }))
     },
-    async systemJobsScheduled (obj, args) {
+    /**
+     * List Scheduled Jobs
+     */
+    async systemJobsScheduled (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.db.knex('jobSchedule').orderBy('task')
     },
-    async systemJobsUpcoming (obj, args) {
+    /**
+     * List Upcoming Jobs
+     */
+    async systemJobsUpcoming (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.db.knex('jobs').orderBy([
         { column: 'waitUntil', order: 'asc', nulls: 'first' },
         { column: 'createdAt', order: 'asc' }
       ])
     },
-    systemSearch () {
+    /**
+     * Search Settings
+     */
+    systemSearch (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return {
         ...WIKI.config.search,
         dictOverrides: JSON.stringify(WIKI.config.search.dictOverrides, null, 2)
@@ -86,8 +147,13 @@ export default {
   },
   Mutation: {
     async cancelJob (obj, args, context) {
-      WIKI.logger.info(`Admin requested cancelling job ${args.id}...`)
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.logger.info(`Admin requested cancelling job ${args.id}...`)
+
         const result = await WIKI.db.knex('jobs')
           .where('id', args.id)
           .del()
@@ -100,12 +166,18 @@ export default {
           operation: generateSuccess('Cancelled job successfully.')
         }
       } catch (err) {
-        WIKI.logger.warn(err)
+        if (err.message !== 'ERR_FORBIDDEN') {
+          WIKI.logger.warn(err)
+        }
         return generateError(err)
       }
     },
     async checkForUpdates (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:dashboard', 'manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         const renderJob = await WIKI.scheduler.addJob({
           task: 'checkVersion',
           maxRetries: 0,
@@ -119,15 +191,28 @@ export default {
           latestDate: WIKI.config.update.versionDate
         }
       } catch (err) {
-        WIKI.logger.warn(err)
+        if (err.message !== 'ERR_FORBIDDEN') {
+          WIKI.logger.warn(err)
+        }
         return generateError(err)
       }
     },
     async disconnectWS (obj, args, context) {
-      WIKI.servers.ws.disconnectSockets(true)
-      WIKI.logger.info('All active websocket connections have been terminated.')
-      return {
-        operation: generateSuccess('All websocket connections closed successfully.')
+      try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.servers.ws.disconnectSockets(true)
+        WIKI.logger.info('All active websocket connections have been terminated.')
+        return {
+          operation: generateSuccess('All websocket connections closed successfully.')
+        }
+      } catch (err) {
+        if (err.message !== 'ERR_FORBIDDEN') {
+          WIKI.logger.warn(err)
+        }
+        return generateError(err)
       }
     },
     async installExtension (obj, args, context) {
@@ -143,6 +228,10 @@ export default {
     },
     async rebuildSearchIndex (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.scheduler.addJob({
           task: 'rebuildSearchIndex',
           maxRetries: 0
@@ -155,8 +244,13 @@ export default {
       }
     },
     async retryJob (obj, args, context) {
-      WIKI.logger.info(`Admin requested rescheduling of job ${args.id}...`)
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.logger.info(`Admin requested rescheduling of job ${args.id}...`)
+
         const job = await WIKI.db.knex('jobHistory')
           .where('id', args.id)
           .first()
@@ -188,34 +282,61 @@ export default {
       }
     },
     async updateSystemFlags (obj, args, context) {
-      WIKI.config.flags = {
-        ...WIKI.config.flags,
-        ...args.flags
-      }
-      await WIKI.configSvc.applyFlags()
-      await WIKI.configSvc.saveToDb(['flags'])
-      return {
-        operation: generateSuccess('System Flags applied successfully')
+      try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.config.flags = {
+          ...WIKI.config.flags,
+          ...args.flags
+        }
+        await WIKI.configSvc.applyFlags()
+        await WIKI.configSvc.saveToDb(['flags'])
+        return {
+          operation: generateSuccess('System Flags applied successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
       }
     },
     async updateSystemSearch (obj, args, context) {
-      WIKI.config.search = {
-        ...WIKI.config.search,
-        termHighlighting: args.termHighlighting ?? WIKI.config.search.termHighlighting,
-        dictOverrides: args.dictOverrides ? JSON.parse(args.dictOverrides) : WIKI.config.search.dictOverrides
-      }
-      // TODO: broadcast config update
-      await WIKI.configSvc.saveToDb(['search'])
-      return {
-        operation: generateSuccess('System Search configuration applied successfully')
+      try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.config.search = {
+          ...WIKI.config.search,
+          termHighlighting: args.termHighlighting ?? WIKI.config.search.termHighlighting,
+          dictOverrides: args.dictOverrides ? JSON.parse(args.dictOverrides) : WIKI.config.search.dictOverrides
+        }
+        // TODO: broadcast config update
+        await WIKI.configSvc.saveToDb(['search'])
+        return {
+          operation: generateSuccess('System Search configuration applied successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
       }
     },
     async updateSystemSecurity (obj, args, context) {
-      WIKI.config.security = _.defaultsDeep(_.omit(args, ['__typename']), WIKI.config.security)
-      // TODO: broadcast config update
-      await WIKI.configSvc.saveToDb(['security'])
-      return {
-        operation: generateSuccess('System Security configuration applied successfully')
+      try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.config.security = _.defaultsDeep(_.omit(args, ['__typename']), WIKI.config.security)
+        // TODO: broadcast config update
+        await WIKI.configSvc.saveToDb(['security'])
+        return {
+          operation: generateSuccess('System Security configuration applied successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
       }
     }
   },
@@ -310,12 +431,16 @@ export default {
       const total = await WIKI.db.pages.query().count('* as total').first()
       return _.toSafeInteger(total.total)
     },
+    async tagsTotal () {
+      const total = await WIKI.db.tags.query().count('* as total').first()
+      return _.toSafeInteger(total.total)
+    },
     async usersTotal () {
       const total = await WIKI.db.users.query().count('* as total').first()
       return _.toSafeInteger(total.total)
     },
-    async tagsTotal () {
-      const total = await WIKI.db.tags.query().count('* as total').first()
+    async loginsPastDay () {
+      const total = await WIKI.db.users.query().count('* as total').whereRaw('"lastLoginAt" >= NOW() - INTERVAL \'1 DAY\'').first()
       return _.toSafeInteger(total.total)
     }
   }

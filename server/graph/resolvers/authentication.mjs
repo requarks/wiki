@@ -17,6 +17,10 @@ export default {
      * List of API Keys
      */
     async apiKeys (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:api', 'manage:api'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const keys = await WIKI.db.apiKeys.query().orderBy(['isRevoked', 'name'])
       return keys.map(k => ({
         id: k.id,
@@ -31,7 +35,11 @@ export default {
     /**
      * Current API State
      */
-    apiState () {
+    apiState (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:api', 'manage:api', 'read:dashboard'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.config.api.isEnabled
     },
     /**
@@ -82,6 +90,10 @@ export default {
      */
     async createApiKey (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:api'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         const key = await WIKI.db.apiKeys.createNewKey(args)
         await WIKI.auth.reloadApiKeys()
         WIKI.events.outbound.emit('reloadApiKeys')
@@ -136,7 +148,7 @@ export default {
       try {
         const userId = context.req.user?.id
         if (!userId) {
-          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+          throw new Error('ERR_NOT_AUTHENTICATED')
         }
 
         const usr = await WIKI.db.users.query().findById(userId)
@@ -182,7 +194,7 @@ export default {
       try {
         const userId = context.req.user?.id
         if (!userId) {
-          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+          throw new Error('ERR_NOT_AUTHENTICATED')
         }
 
         const usr = await WIKI.db.users.query().findById(userId)
@@ -224,7 +236,7 @@ export default {
       try {
         const userId = context.req.user?.id
         if (!userId) {
-          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+          throw new Error('ERR_NOT_AUTHENTICATED')
         }
 
         const usr = await WIKI.db.users.query().findById(userId)
@@ -283,7 +295,7 @@ export default {
       try {
         const userId = context.req.user?.id
         if (!userId) {
-          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+          throw new Error('ERR_NOT_AUTHENTICATED')
         }
 
         const usr = await WIKI.db.users.query().findById(userId)
@@ -346,7 +358,7 @@ export default {
       try {
         const userId = context.req.user?.id
         if (!userId) {
-          throw new Error('ERR_USER_NOT_AUTHENTICATED')
+          throw new Error('ERR_NOT_AUTHENTICATED')
         }
 
         const usr = await WIKI.db.users.query().findById(userId)
@@ -584,7 +596,7 @@ export default {
      */
     async revokeApiKey (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:api'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 

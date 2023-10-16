@@ -105,6 +105,8 @@ export default {
    * @param {Express Next Callback} next
    */
   authenticate (req, res, next) {
+    req.isAuthenticated = false
+
     WIKI.auth.passport.authenticate('jwt', { session: false }, async (err, user, info) => {
       if (err) { return next() }
       let mustRevalidate = false
@@ -170,6 +172,7 @@ export default {
           WIKI.auth.guest.cacheExpiration = DateTime.utc().plus({ minutes: 1 })
         }
         req.user = WIKI.auth.guest
+        req.isAuthenticated = false
         return next()
       }
 
@@ -203,6 +206,7 @@ export default {
       // JWT is valid
       req.logIn(user, { session: false }, (errc) => {
         if (errc) { return next(errc) }
+        req.isAuthenticated = true
         next()
       })
     })(req, res, next)
@@ -223,7 +227,7 @@ export default {
       return true
     }
 
-    // Check Global Permissions
+    // Check Permissions
     if (_.intersection(userPermissions, permissions).length < 1) {
       return false
     }

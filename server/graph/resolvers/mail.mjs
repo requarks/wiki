@@ -3,7 +3,11 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 
 export default {
   Query: {
-    async mailConfig(obj, args, context, info) {
+    async mailConfig(obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return {
         ...WIKI.config.mail,
         pass: WIKI.config.mail.pass.length > 0 ? '********' : ''
@@ -13,6 +17,10 @@ export default {
   Mutation: {
     async sendMailTest(obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         if (_.isEmpty(args.recipientEmail) || args.recipientEmail.length < 6) {
           throw new WIKI.Error.MailInvalidRecipient()
         }
@@ -36,6 +44,10 @@ export default {
     },
     async updateMailConfig(obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         WIKI.config.mail = {
           senderName: args.senderName,
           senderEmail: args.senderEmail,
