@@ -81,11 +81,6 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
   <tbody>
     <tr>
       <td align="center" valign="middle" width="444">
-        <a href="https://www.hostwiki.com/" target="_blank">
-          <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
-        </a>
-      </td>
-      <td align="center" valign="middle" width="444">
         <a href="https://www.stellarhosted.com/" target="_blank">
           <img src="https://cdn.js.wiki/images/sponsors/stellarhosted.png">
         </a>
@@ -99,6 +94,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 <table>
   <tbody>
     <tr>
+      <td align="center" valign="middle" width="148">
+        <a href="https://acceleanation.com/" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
+        </a>
+      </td>
       <td align="center" valign="middle" width="148">
         <a href="https://github.com/alexksso" target="_blank">
           Alexander Casassovici<br />(@alexksso)
@@ -120,6 +120,13 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
+        <a href="https://www.hostwiki.com/" target="_blank">
+          <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" width="148">
         <a href="https://github.com/JayDaley" target="_blank">
           Jay Daley<br />(@JayDaley)
         </a>
@@ -129,8 +136,6 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           Oleksii<br />(@idokka)
         </a>
       </td>
-    </tr>
-    <tr>
       <td align="center" valign="middle" width="148">
         <a href="https://www.openhost-network.com/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114218287?s=200&v=4">
@@ -141,12 +146,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           <img src="https://avatars.githubusercontent.com/u/114394792?v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
-        <a href="https://acceleanation.com/" target="_blank">
-          <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
-        </a>
-      </td>
-      <td align="center" valign="middle" colspan="3">
+      <td align="center" valign="middle" colspan="2">
         <a href="https://github.com/sponsors/NGPixel" target="_blank">
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
