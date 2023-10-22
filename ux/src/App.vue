@@ -3,7 +3,7 @@ router-view
 </template>
 
 <script setup>
-import { nextTick, onMounted, reactive, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { setCssVar, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'

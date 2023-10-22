@@ -46,13 +46,13 @@ jobs:
     - name: Build Assets
       working-directory: ux
       run: |
-        pnpm install --frozen-lockfile
+        pnpm install
         pnpm build
 
     - name: Build Blocks
       working-directory: blocks
       run: |
-        pnpm install --frozen-lockfile
+        pnpm install
         pnpm build
 
     - name: Login to GitHub Container Registry
