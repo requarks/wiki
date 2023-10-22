@@ -111,6 +111,11 @@ jobs:
       with:
         node-version: 20.x
 
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@latest --activate
+
     - name: Download Build Artifact
       uses: actions/download-artifact@v3
       with:
