@@ -90,8 +90,6 @@ module.exports = configure(function (ctx) {
       distDir: '../assets',
 
       extendViteConf (viteConf) {
-        viteConf.resolve.preserveSymlinks = true
-
         if (ctx.prod) {
           viteConf.build.assetsDir = '_assets'
           viteConf.build.rollupOptions = {

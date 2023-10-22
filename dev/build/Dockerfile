@@ -14,6 +14,8 @@ RUN mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
+RUN corepack enable && \
+    corepack prepare pnpm@latest --activate
 
 WORKDIR /wiki
 
@@ -28,7 +30,7 @@ USER node
 ENV NODE_ENV=production
 
 WORKDIR /wiki/server
-RUN npm ci --foreground-scripts --omit=dev --audit=false --fund=false
+RUN pnpm install --prod --frozen-lockfile
 
 WORKDIR /wiki
 
