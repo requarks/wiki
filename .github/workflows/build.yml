@@ -20,6 +20,11 @@ jobs:
       with:
         node-version: 20.x
 
+    - name: Enable pnpm
+      run: |
+        corepack enable
+        corepack prepare pnpm@latest --activate
+
     - name: Set Build Variables
       run: |
           echo "REL_VERSION=3.0.0-alpha.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
@@ -41,14 +46,14 @@ jobs:
     - name: Build Assets
       working-directory: ux
       run: |
-        npm ci --audit=false --fund=false
-        npm run build
+        pnpm install --frozen-lockfile
+        pnpm build
 
     - name: Build Blocks
       working-directory: blocks
       run: |
-        npm ci --audit=false --fund=false
-        npm run build
+        pnpm install --frozen-lockfile
+        pnpm build
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
@@ -85,7 +90,7 @@ jobs:
         cp LICENSE _dist/LICENSE
         cp config.sample.yml _dist/config.sample.yml
         cd _dist/server
-        npm ci --omit=dev --audit=false --fund=false
+        pnpm install --prod --frozen-lockfile
         cd -
         find ./_dist/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C ./_dist/ -T -
 
@@ -118,7 +123,7 @@ jobs:
         tar -xzf $env:GITHUB_WORKSPACE\build\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=server/node_modules
 
     - name: Install Dependencies
-      run: npm ci --omit=dev --audit=false --fund=false
+      run: pnpm install --prod --frozen-lockfile
       working-directory: win\server
 
     - name: Create Bundle

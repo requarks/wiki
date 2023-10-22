@@ -69,6 +69,7 @@
     icon='las la-history'
     :color='editorStore.isActive ? `white` : `grey`'
     aria-label='Page History'
+    @click='notImplemented'
     )
     q-tooltip(anchor='center left' self='center right') Page History
   q-btn.q-py-md(
@@ -263,6 +264,13 @@ function removePendingAsset (item) {
   if (editorStore.pendingAssets.length < 1) {
     menuPendingAssets.value.hide()
   }
+}
+
+function notImplemented () {
+  $q.notify({
+    type: 'negative',
+    message: 'Not implemented'
+  })
 }
 </script>
 

@@ -114,7 +114,7 @@ function loadAdmin () {
     background: #FFF radial-gradient(ellipse, #FFF, #DDD);
     color: $grey-9;
     height: 100vh;
-    border: 10px solid #EEE;
+    border: 1px solid #EEE;
     border-radius: 25px !important;
 
     &-bg {

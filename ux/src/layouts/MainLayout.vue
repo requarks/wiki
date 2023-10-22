@@ -22,6 +22,7 @@ q-layout(view='hHh Lpr lff')
         icon='las la-sitemap'
         color='white'
         aria-label='Browse'
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') Browse
       q-separator.q-my-sm(inset, dark)
@@ -30,6 +31,7 @@ q-layout(view='hHh Lpr lff')
         icon='las la-bookmark'
         color='white'
         aria-label='Bookmarks'
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') Bookmarks
       q-space
@@ -73,6 +75,7 @@ q-layout(view='hHh Lpr lff')
           label='Browse'
           aria-label='Browse'
           size='sm'
+          @click='notImplemented'
           )
       nav-sidebar
       q-bar.sidebar-footerbtns.text-white(
@@ -99,6 +102,7 @@ q-layout(view='hHh Lpr lff')
           icon='las la-bookmark'
           label='Bookmarks'
           flat
+          @click='notImplemented'
         )
   q-page-container
     router-view
@@ -181,6 +185,15 @@ const isSidebarShown = computed(() => {
 const isSidebarMini = computed(() => {
   return ['hide', 'hideExact'].includes(pageStore.navigationMode) || !pageStore.navigationId
 })
+
+// METHODS
+
+function notImplemented () {
+  $q.notify({
+    type: 'negative',
+    message: 'Not implemented'
+  })
+}
 
 </script>
 

@@ -81,6 +81,7 @@
         icon='las la-bell'
         color='grey'
         aria-label='Watch Page'
+        @click='notImplemented'
         )
         q-tooltip Watch Page
       q-btn.q-ml-md(
@@ -90,6 +91,7 @@
         icon='las la-bookmark'
         color='grey'
         aria-label='Bookmark Page'
+        @click='notImplemented'
         )
         q-tooltip Bookmark Page
       q-btn.q-ml-md(
@@ -396,5 +398,12 @@ async function editPage () {
 
 function printPage () {
   window.print()
+}
+
+function notImplemented () {
+  $q.notify({
+    type: 'negative',
+    message: 'Not implemented'
+  })
 }
 </script>
