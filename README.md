@@ -400,6 +400,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 <table><tbody><tr><td>
 <img width="441" height="1" />
 
+- Aeternum
 - Al Romano
 - Alex Balabanov
 - Alex Milanov
@@ -424,11 +425,11 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ian
 - Imari Childress
 - Iskander Callos
-- Josh Stewart
   
 </td><td>
 <img width="441" height="1" />
 
+- Josh Stewart
 - Justin Dunsworth
 - Keir
 - Loïc CRAMPON
