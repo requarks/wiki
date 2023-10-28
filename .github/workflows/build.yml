@@ -294,14 +294,16 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Parse REL_VERSION_STRICT
+      uses: madhead/semver-utils@latest
+      id: version
+      with:
+        version: ${{ env.REL_VERSION_STRICT }}
+
     - name: Create and Push Manifests
       run: |
-        echo "Fetching semver tool..."
-        curl -LJO https://static.requarks.io/semver
-        chmod +x semver
-
-        MAJOR=`./semver get major $REL_VERSION_STRICT`
-        MINOR=`./semver get minor $REL_VERSION_STRICT`
+        MAJOR=${{ steps.version.outputs.major }}
+        MINOR=${{ steps.version.outputs.minor }}
         MAJORMINOR="$MAJOR.$MINOR"
 
         echo "Using major $MAJOR and minor $MINOR..."
