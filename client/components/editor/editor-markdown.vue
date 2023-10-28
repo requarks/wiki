@@ -139,10 +139,11 @@
               v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, @click='toggleHelp').mx-0
                 v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
             span {{$t('editor:markup.markdownFormattingHelp')}}
-      .editor-markdown-editor
+      .editor-markdown-editor(v-bind:style="{ flex: editorFlexStyle }")
         textarea(ref='cm')
+      .editor-markdown-resizable(@mousedown.prevent="onMouseDown")
       transition(name='editor-markdown-preview')
-        .editor-markdown-preview(v-if='previewShown')
+        .editor-markdown-preview(v-if='previewShown', v-bind:style="{ flex: previewFlexStyle }")
           .editor-markdown-preview-content.contents(ref='editorPreviewContainer')
             div(
               ref='editorPreview'
@@ -387,7 +388,8 @@ export default {
       previewHTML: '',
       helpShown: false,
       spellModeActive: false,
-      insertLinkDialog: false
+      insertLinkDialog: false,
+      flexBasisEditor: 0.5
     }
   },
   computed: {
@@ -396,6 +398,12 @@ export default {
     },
     isModalShown() {
       return this.helpShown || this.activeModal !== ''
+    },
+    editorFlexStyle() {
+      return `1 1 ${this.flexBasisEditor * 100}%`
+    },
+    previewFlexStyle() {
+      return `1 1 ${(1 - this.flexBasisEditor) * 100}%`
     },
     locale: get('page/locale'),
     path: get('page/path'),
@@ -448,6 +456,28 @@ export default {
       //     reader.readAsDataURL(file)
       //   }
       // }
+    },
+    onMouseDown ({ target: resizer, pageX: initialPageX, pageY: initialPageY }) {
+      if (resizer.className && resizer.className.match('editor-markdown-resizable')) {
+        const self = this
+        const editor = resizer.previousElementSibling
+        const sidebar = editor.previousElementSibling
+        const preview = resizer.nextElementSibling
+        const { addEventListener, removeEventListener } = window
+        const onMouseMove = function({ pageX }) {
+          const ratio = Number(((pageX - sidebar.offsetWidth) / (editor.offsetWidth + preview.offsetWidth)).toFixed(1))
+          // const ratio = Number(((pageX - sidebar.offsetWidth) / (editor.offsetWidth + preview.offsetWidth) * 5).toFixed(1)) / 5
+          if (ratio >= 0.10 && ratio <= 0.90) {
+            self.flexBasisEditor = ratio
+          }
+        }
+        const onMouseUp = function() {
+          removeEventListener('mousemove', onMouseMove)
+          removeEventListener('mouseup', onMouseUp)
+        }
+        addEventListener('mousemove', onMouseMove)
+        addEventListener('mouseup', onMouseUp)
+      }
     },
     processContent (newContent) {
       linesMap = []
@@ -873,7 +903,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
   &-editor {
     background-color: darken(mc('grey', '900'), 4.5%);
-    flex: 1 1 50%;
     display: block;
     height: $editor-height;
     position: relative;
@@ -884,7 +913,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-preview {
-    flex: 1 1 50%;
     background-color: mc('grey', '100');
     position: relative;
     height: $editor-height;
@@ -901,10 +929,10 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
     &-enter-active, &-leave-active {
       transition: max-width .5s ease;
-      max-width: 50vw;
+      max-width: 100vw;
 
       .editor-code-preview-content {
-        width: 50vw;
+        width: 100vw;
         overflow:hidden;
       }
     }
@@ -1024,6 +1052,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       justify-content: center;
       align-items: center;
     }
+  }
+
+  &-resizable {
+    width: 8px;
+    cursor: col-resize;
+    background: #f5f5f5;
   }
 
   // ==========================================
