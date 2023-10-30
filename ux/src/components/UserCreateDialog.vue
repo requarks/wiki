@@ -134,6 +134,24 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             unchecked-icon='las la-times'
             :aria-label='t(`admin.users.sendWelcomeEmail`)'
             )
+      q-item(v-if='state.userSendWelcomeEmail')
+        blueprint-icon(icon='web-design')
+        q-item-section
+          q-select(
+            outlined
+            :options='adminStore.sites'
+            v-model='state.userSendWelcomeEmailFromSiteId'
+            multiple
+            map-options
+            emit-value
+            option-value='id'
+            option-label='title'
+            options-dense
+            dense
+            hide-bottom-space
+            :label='t(`admin.users.sendWelcomeEmailFromSiteId`)'
+            :aria-label='t(`admin.users.sendWelcomeEmailFromSiteId`)'
+            )
     q-card-actions.card-actions
       q-checkbox(
         v-model='state.keepOpened'
@@ -167,6 +185,8 @@ import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref } from 'vue'
 
+import { useAdminStore } from 'src/stores/admin'
+
 // EMITS
 
 defineEmits([
@@ -177,6 +197,10 @@ defineEmits([
 
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const $q = useQuasar()
+
+// STORES
+
+const adminStore = useAdminStore()
 
 // I18N
 
@@ -191,6 +215,7 @@ const state = reactive({
   userGroups: [],
   userMustChangePassword: false,
   userSendWelcomeEmail: false,
+  userSendWelcomeEmailFromSiteId: null,
   keepOpened: false,
   groups: [],
   loadingGroups: false,
@@ -299,6 +324,9 @@ async function create () {
     if (!isFormValid) {
       throw new Error(t('admin.users.createInvalidData'))
     }
+    if (state.userSendWelcomeEmail && !state.userSendWelcomeEmailFromSiteId) {
+      throw new Error(t('admin.users.createSendEmailMissingSiteId'))
+    }
     const resp = await APOLLO_CLIENT.mutate({
       mutation: gql`
         mutation createUser (
@@ -308,6 +336,7 @@ async function create () {
           $groups: [UUID]!
           $mustChangePassword: Boolean!
           $sendWelcomeEmail: Boolean!
+          $sendWelcomeEmailFromSiteId: UUID
           ) {
           createUser (
             name: $name
@@ -316,6 +345,7 @@ async function create () {
             groups: $groups
             mustChangePassword: $mustChangePassword
             sendWelcomeEmail: $sendWelcomeEmail
+            sendWelcomeEmailFromSiteId: $sendWelcomeEmailFromSiteId
             ) {
             operation {
               succeeded
@@ -330,7 +360,8 @@ async function create () {
         password: state.userPassword,
         groups: state.userGroups,
         mustChangePassword: state.userMustChangePassword,
-        sendWelcomeEmail: state.userSendWelcomeEmail
+        sendWelcomeEmail: state.userSendWelcomeEmail,
+        sendWelcomeEmailFromSiteId: state.userSendWelcomeEmailFromSiteId
       }
     })
     if (resp?.data?.createUser?.operation?.succeeded) {
@@ -360,5 +391,8 @@ async function create () {
 
 // MOUNTED
 
-onMounted(loadGroups)
+onMounted(() => {
+  state.userSendWelcomeEmailFromSiteId = adminStore.currentSiteId
+  loadGroups()
+})
 </script>

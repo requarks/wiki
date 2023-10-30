@@ -570,7 +570,7 @@ export class User extends Model {
    *
    * @param {Object} param0 User Fields
    */
-  static async createNewUser ({ email, password, name, groups, userInitiated = false, mustChangePassword = false, sendWelcomeEmail = false }) {
+  static async createNewUser ({ email, password, name, groups, userInitiated = false, mustChangePassword = false, sendWelcomeEmail = false, sendWelcomeEmailFromSiteId }) {
     const localAuth = await WIKI.db.authentication.getStrategy('local')
 
     // Check if self-registration is enabled
@@ -630,6 +630,11 @@ export class User extends Model {
       throw new Error('ERR_DUPLICATE_ACCOUNT_EMAIL')
     }
 
+    // Check if site ID is provided when send welcome email is enabled
+    if (sendWelcomeEmail && !sendWelcomeEmailFromSiteId) {
+      throw new Error('ERR_INVALID_SITE')
+    }
+
     WIKI.logger.debug(`Creating new user account for ${email}...`)
 
     // Create the account
@@ -681,35 +686,48 @@ export class User extends Model {
         userId: newUsr.id
       })
 
+      // TODO: Handle multilingual text
       // Send verification email
       await WIKI.mail.send({
-        template: 'accountVerify',
+        template: 'UserVerify',
         to: email,
         subject: 'Verify your account',
         data: {
           preheadertext: 'Verify your account in order to gain access to the wiki.',
           title: 'Verify your account',
           content: 'Click the button below in order to verify your account and gain access to the wiki.',
-          buttonLink: `${WIKI.config.host}/verify/${verificationToken}`,
+          buttonLink: `${WIKI.config.mail.defaultBaseURL}/verify/${verificationToken}`,
           buttonText: 'Verify'
         },
-        text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.host}/verify/${verificationToken}`
+        text: `You must open the following link in your browser to verify your account and gain access to the wiki: ${WIKI.config.mail.defaultBaseURL}/verify/${verificationToken}`
       })
     } else if (sendWelcomeEmail) {
-      // Send welcome email
-      await WIKI.mail.send({
-        template: 'accountWelcome',
-        to: email,
-        subject: `Welcome to the wiki ${WIKI.config.title}`,
-        data: {
-          preheadertext: `You've been invited to the wiki ${WIKI.config.title}`,
-          title: `You've been invited to the wiki ${WIKI.config.title}`,
-          content: `Click the button below to access the wiki.`,
-          buttonLink: `${WIKI.config.host}/login`,
-          buttonText: 'Login'
-        },
-        text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
-      })
+      // TODO: Handle multilingual text
+      const site = WIKI.sites[sendWelcomeEmailFromSiteId]
+      if (site) {
+        const siteUrl = site.hostname === '*' ? WIKI.config.mail.defaultBaseURL : `https://${site.hostname}`
+        // Send welcome email
+        await WIKI.mail.send({
+          template: 'UserWelcome',
+          to: email,
+          subject: `Welcome to the wiki ${site.config.title}`,
+          data: {
+            siteTitle: site.config.title,
+            preview: `You've been invited to the wiki ${site.config.title}`,
+            title: `You've been invited to the wiki ${site.config.title}`,
+            content: `Click the button below to access the wiki.`,
+            email,
+            password,
+            buttonLink: `${siteUrl}/login`,
+            buttonText: 'Login',
+            logo: `${siteUrl}/_site/logo`
+          },
+          text: `You've been invited to the wiki ${site.config.title}: ${siteUrl}/login`
+        })
+      } else {
+        WIKI.logger.warn('An invalid site ID was provided when creating user. No welcome email was sent.')
+        throw new Error('ERR_INVALID_SITE')
+      }
     }
 
     WIKI.logger.debug(`Created new user account for ${email} successfully.`)

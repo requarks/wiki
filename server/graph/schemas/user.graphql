@@ -36,6 +36,7 @@ extend type Mutation {
     groups: [UUID]!
     mustChangePassword: Boolean!
     sendWelcomeEmail: Boolean!
+    sendWelcomeEmailFromSiteId: UUID
   ): UserResponse
 
   updateUser(
