@@ -260,6 +260,7 @@ import FooterNav from 'src/components/FooterNav.vue'
 const overlays = {
   EditorMarkdownConfig: defineAsyncComponent(() => import('../components/EditorMarkdownConfigOverlay.vue')),
   GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),
+  MailTemplateEditorOverlay: defineAsyncComponent(() => import('../components/MailTemplateEditorOverlay.vue')),
   UserEditOverlay: defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
 }
 

@@ -8,7 +8,6 @@ import {
   generateHash
 } from '../helpers/common.mjs'
 
-import { Locale } from './locales.mjs'
 import { Site } from './sites.mjs'
 
 const rePathName = /^[a-z0-9-]+$/

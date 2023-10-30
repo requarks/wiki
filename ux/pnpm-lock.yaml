@@ -95,6 +95,9 @@ dependencies:
   '@tiptap/vue-3':
     specifier: 2.1.12
     version: 2.1.12(@tiptap/core@2.1.12)(@tiptap/pm@2.1.12)(vue@3.3.6)
+  '@vue/repl':
+    specifier: 2.6.1
+    version: 2.6.1
   apollo-upload-client:
     specifier: 17.0.0
     version: 17.0.0(@apollo/client@3.8.6)(graphql@16.6.0)
@@ -202,7 +205,7 @@ dependencies:
     version: 2.1.0
   pinia:
     specifier: 2.1.7
-    version: 2.1.7(vue@3.3.6)
+    version: 2.1.7(typescript@5.2.2)(vue@3.3.6)
   prosemirror-commands:
     specifier: 1.5.2
     version: 1.5.2
@@ -251,6 +254,9 @@ dependencies:
   twemoji:
     specifier: 14.0.2
     version: 14.0.2
+  typescript:
+    specifier: 5.2.2
+    version: 5.2.2
   uuid:
     specifier: 9.0.1
     version: 9.0.1
@@ -259,7 +265,7 @@ dependencies:
     version: 0.9.10(vue@3.3.6)
   vue:
     specifier: 3.3.6
-    version: 3.3.6
+    version: 3.3.6(typescript@5.2.2)
   vue-i18n:
     specifier: 9.5.0
     version: 9.5.0(vue@3.3.6)
@@ -617,7 +623,7 @@ packages:
       lodash: 4.17.21
       minimist: 1.2.8
       open: 8.4.2
-      pinia: 2.1.7(vue@3.3.6)
+      pinia: 2.1.7(typescript@5.2.2)(vue@3.3.6)
       quasar: 2.13.0
       register-service-worker: 1.7.2
       rollup-plugin-visualizer: 5.9.2
@@ -626,7 +632,7 @@ packages:
       serialize-javascript: 6.0.1
       table: 6.8.1
       vite: 2.9.16(sass@1.32.12)
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
       vue-router: 4.2.5(vue@3.3.6)
       webpack-merge: 5.9.0
     transitivePeerDependencies:
@@ -659,7 +665,7 @@ packages:
       '@vitejs/plugin-vue': 2.3.4(vite@2.9.16)(vue@3.3.6)
       quasar: 2.13.0
       vite: 2.9.16(sass@1.32.12)
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: true
 
   /@remirror/core-constants@2.0.2:
@@ -1126,7 +1132,7 @@ packages:
       '@tiptap/extension-bubble-menu': 2.1.12(@tiptap/core@2.1.12)(@tiptap/pm@2.1.12)
       '@tiptap/extension-floating-menu': 2.1.12(@tiptap/core@2.1.12)(@tiptap/pm@2.1.12)
       '@tiptap/pm': 2.1.12
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: false
 
   /@types/body-parser@1.19.3:
@@ -1291,7 +1297,7 @@ packages:
       vue: ^3.2.25
     dependencies:
       vite: 2.9.16(sass@1.32.12)
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: true
 
   /@volar/language-core@1.10.4:
@@ -1429,6 +1435,10 @@ packages:
     dependencies:
       '@vue/shared': 3.3.6
 
+  /@vue/repl@2.6.1:
+    resolution: {integrity: sha512-Ju7ndfKF02eyLMe/9FAWyvtWwarcLK8+A9DBBSGIIdysiCw5CBLKfPE+amUyaSV0riZZtxREQVEOKLh81xDb8g==}
+    dev: false
+
   /@vue/runtime-core@3.3.6:
     resolution: {integrity: sha512-qp7HTP1iw1UW2ZGJ8L3zpqlngrBKvLsDAcq5lA6JvEXHmpoEmjKju7ahM9W2p/h51h0OT5F2fGlP/gMhHOmbUA==}
     dependencies:
@@ -1449,7 +1459,7 @@ packages:
     dependencies:
       '@vue/compiler-ssr': 3.3.6
       '@vue/shared': 3.3.6
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
 
   /@vue/shared@3.3.4:
     resolution: {integrity: sha512-7OjdcV8vQ74eiz1TZLzZP4JwqM5fA94K6yntPS5Z25r9HDuGNzaGdgvwKYq6S+MxwF0TFRwe50fIR/MYnakdkQ==}
@@ -4231,7 +4241,7 @@ packages:
     engines: {node: '>=8.6'}
     dev: true
 
-  /pinia@2.1.7(vue@3.3.6):
+  /pinia@2.1.7(typescript@5.2.2)(vue@3.3.6):
     resolution: {integrity: sha512-+C2AHFtcFqjPih0zpYuvof37SFxMQ7OEG2zV9jRI12i9BOy3YQVAHwdKtyyc8pDcDyIc33WCIsZaCFWU7WWxGQ==}
     peerDependencies:
       '@vue/composition-api': ^1.4.0
@@ -4244,7 +4254,8 @@ packages:
         optional: true
     dependencies:
       '@vue/devtools-api': 6.5.1
-      vue: 3.3.6
+      typescript: 5.2.2
+      vue: 3.3.6(typescript@5.2.2)
       vue-demi: 0.14.6(vue@3.3.6)
 
   /pkg-types@1.0.3:
@@ -4927,7 +4938,7 @@ packages:
       vue: ^3.2.25
     dependencies:
       sortablejs: 1.15.0
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: false
 
   /sortablejs@1.14.0:
@@ -5223,6 +5234,11 @@ packages:
       is-typed-array: 1.1.12
     dev: true
 
+  /typescript@5.2.2:
+    resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   /uc.micro@1.0.6:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
     dev: false
@@ -5317,7 +5333,7 @@ packages:
       '@dash14/svg-pan-zoom': 3.6.9
       lodash-es: 4.17.21
       mitt: 3.0.1
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: false
 
   /vary@1.1.2:
@@ -5426,7 +5442,7 @@ packages:
       '@vue/composition-api':
         optional: true
     dependencies:
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
 
   /vue-eslint-parser@9.3.1(eslint@8.52.0):
     resolution: {integrity: sha512-Clr85iD2XFZ3lJ52/ppmUDG/spxQu6+MAeHXjjyI4I1NUYZ9xmenQp4N0oaHJhrA8OOxltCVxMRfANGa70vU0g==}
@@ -5455,7 +5471,7 @@ packages:
       '@intlify/core-base': 9.5.0
       '@intlify/shared': 9.5.0
       '@vue/devtools-api': 6.5.0
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
 
   /vue-router@4.2.5(vue@3.3.6):
     resolution: {integrity: sha512-DIUpKcyg4+PTQKfFPX88UWhlagBEBEfJ5A8XDXRJLUnZOvcpMF8o/dnL90vpVkGaPbjvXazV/rC1qBKrZlFugw==}
@@ -5463,7 +5479,7 @@ packages:
       vue: ^3.2.0
     dependencies:
       '@vue/devtools-api': 6.5.0
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
 
   /vue3-otp-input@0.4.1(vue@3.3.6):
     resolution: {integrity: sha512-wVl9i3DcWlO0C7fBI9V+RIP3crm/1tY72fuhvb3YM2JfbLoYofB96aPl5AgFhA0Cse5bQEMYtIvOeiqW3rfbAw==}
@@ -5471,10 +5487,10 @@ packages:
     peerDependencies:
       vue: ^3.0.*
     dependencies:
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: false
 
-  /vue@3.3.6:
+  /vue@3.3.6(typescript@5.2.2):
     resolution: {integrity: sha512-jJIDETeWJnoY+gfn4ZtMPMS5KtbP4ax+CT4dcQFhTnWEk8xMupFyQ0JxL28nvT/M4+p4a0ptxaV2WY0LiIxvRg==}
     peerDependencies:
       typescript: '*'
@@ -5487,6 +5503,7 @@ packages:
       '@vue/runtime-dom': 3.3.6
       '@vue/server-renderer': 3.3.6(vue@3.3.6)
       '@vue/shared': 3.3.6
+      typescript: 5.2.2
 
   /vuedraggable@4.1.0(vue@3.3.6):
     resolution: {integrity: sha512-FU5HCWBmsf20GpP3eudURW3WdWTKIbEIQxh9/8GE806hydR9qZqRRxRE3RjqX7PkuLuMQG/A7n3cfj9rCEchww==}
@@ -5494,7 +5511,7 @@ packages:
       vue: ^3.0.1
     dependencies:
       sortablejs: 1.14.0
-      vue: 3.3.6
+      vue: 3.3.6(typescript@5.2.2)
     dev: false
 
   /w3c-keyname@2.2.8:

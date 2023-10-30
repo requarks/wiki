@@ -1,5 +1,6 @@
 import _ from 'lodash-es'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
+import { withoutTrailingSlash } from 'ufo'
 
 export default {
   Query: {
@@ -22,17 +23,15 @@ export default {
         }
 
         if (_.isEmpty(args.recipientEmail) || args.recipientEmail.length < 6) {
-          throw new WIKI.Error.MailInvalidRecipient()
+          throw new Error('ERR_MAIL_INVALID_RECIPIENT')
         }
 
         await WIKI.mail.send({
-          template: 'test',
+          template: 'Test',
           to: args.recipientEmail,
           subject: 'A test email from your wiki',
           text: 'This is a test email sent from your wiki.',
-          data: {
-            preheadertext: 'This is a test email sent from your wiki.'
-          }
+          data: {}
         })
 
         return {
@@ -51,6 +50,7 @@ export default {
         WIKI.config.mail = {
           senderName: args.senderName,
           senderEmail: args.senderEmail,
+          defaultBaseURL: withoutTrailingSlash(args.defaultBaseURL),
           host: args.host,
           port: args.port,
           name: args.name,

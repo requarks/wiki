@@ -69,6 +69,19 @@ q-page.admin-mail
               dense
               :aria-label='t(`admin.mail.senderEmail`)'
               )
+        q-separator.q-my-sm(inset)
+        q-item
+          blueprint-icon(icon='dns')
+          q-item-section
+            q-item-label {{t(`admin.mail.defaultBaseURL`)}}
+            q-item-label(caption) {{t(`admin.general.defaultBaseURLHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.config.defaultBaseURL'
+              dense
+              :aria-label='t(`admin.mail.defaultBaseURL`)'
+              )
       //- -----------------------
       //- SMTP
       //- -----------------------
@@ -100,20 +113,6 @@ q-page.admin-mail
               v-model='state.config.port'
               dense
               :aria-label='t(`admin.mail.smtpPort`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='server')
-          q-item-section
-            q-item-label {{t(`admin.mail.smtpName`)}}
-            q-item-label(caption) {{t(`admin.mail.smtpNameHint`)}}
-          q-item-section
-            q-input(
-              outlined
-              v-model='state.config.name'
-              dense
-              hide-bottom-space
-              :aria-label='t(`admin.mail.smtpName`)'
               )
         q-separator.q-my-sm(inset)
         q-item(tag='label')
@@ -168,6 +167,20 @@ q-page.admin-mail
               v-model='state.config.pass'
               dense
               :aria-label='t(`admin.mail.smtpPwd`)'
+              )
+        q-separator.q-my-sm(inset)
+        q-item
+          blueprint-icon(icon='server')
+          q-item-section
+            q-item-label {{t(`admin.mail.smtpName`)}}
+            q-item-label(caption) {{t(`admin.mail.smtpNameHint`)}}
+          q-item-section
+            q-input(
+              outlined
+              v-model='state.config.name'
+              dense
+              hide-bottom-space
+              :aria-label='t(`admin.mail.smtpName`)'
               )
       //- -----------------------
       //- DKIM
@@ -241,7 +254,7 @@ q-page.admin-mail
       //- -----------------------
       //- MAIL TEMPLATES
       //- -----------------------
-      q-card.q-pb-sm
+      q-card.q-pb-sm.q-mb-md(v-if='flagStore.experimental')
         q-card-section
           .text-subtitle1 {{t('admin.mail.templates')}}
         q-list
@@ -255,7 +268,7 @@ q-page.admin-mail
                 no-caps
                 icon='las la-edit'
                 color='primary'
-                @click=''
+                @click='editTemplate(`welcome`)'
                 :label='t(`common.actions.edit`)'
               )
           q-separator(inset)
@@ -269,13 +282,13 @@ q-page.admin-mail
                 no-caps
                 icon='las la-edit'
                 color='primary'
-                @click=''
+                @click='editTemplate(`pwdreset`)'
                 :label='t(`common.actions.edit`)'
               )
       //- -----------------------
       //- SMTP TEST
       //- -----------------------
-      q-card.q-pb-sm.q-mt-md
+      q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{t('admin.mail.test')}}
         q-item
@@ -310,6 +323,7 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from 'src/stores/admin'
+import { useFlagsStore } from 'src/stores/flags'
 import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
@@ -319,6 +333,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const flagStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -337,6 +352,7 @@ const state = reactive({
   config: {
     senderName: '',
     senderEmail: '',
+    defaultBaseURL: '',
     host: '',
     port: 0,
     secure: false,
@@ -363,6 +379,7 @@ async function load () {
           mailConfig {
             senderName
             senderEmail
+            defaultBaseURL
             host
             port
             secure
@@ -403,6 +420,7 @@ async function save () {
         mutation saveMailConfig (
           $senderName: String!
           $senderEmail: String!
+          $defaultBaseURL: String!
           $host: String!
           $port: Int!
           $name: String!
@@ -418,6 +436,7 @@ async function save () {
           updateMailConfig (
             senderName: $senderName
             senderEmail: $senderEmail
+            defaultBaseURL: $defaultBaseURL
             host: $host
             port: $port
             name: $name
@@ -441,6 +460,7 @@ async function save () {
       variables: {
         senderName: state.config.senderName || '',
         senderEmail: state.config.senderEmail || '',
+        defaultBaseURL: state.config.defaultBaseURL || '',
         host: state.config.host || '',
         port: toSafeInteger(state.config.port) || 0,
         name: state.config.name || '',
@@ -466,6 +486,13 @@ async function save () {
     })
   }
   state.loading--
+}
+
+function editTemplate (tmplId) {
+  adminStore.$patch({
+    overlayOpts: { id: tmplId },
+    overlay: 'MailTemplateEditorOverlay'
+  })
 }
 
 async function sendTest () {

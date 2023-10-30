@@ -14,6 +14,7 @@ extend type Mutation {
   updateMailConfig(
     senderName: String!
     senderEmail: String!
+    defaultBaseURL: String!
     host: String!
     port: Int!
     name: String!
@@ -35,6 +36,7 @@ extend type Mutation {
 type MailConfig {
   senderName: String
   senderEmail: String
+  defaultBaseURL: String
   host: String
   port: Int
   name: String

@@ -502,6 +502,7 @@ export async function up (knex) {
       value: {
         senderName: '',
         senderEmail: '',
+        defaultBaseURL: 'https://wiki.example.com',
         host: '',
         port: 465,
         name: '',

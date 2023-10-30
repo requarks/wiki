@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import { has, intersection, templateSettings } from 'lodash-es'
+import { has, intersection } from 'lodash-es'
 
 /**
  * Navigation model

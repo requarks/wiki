@@ -1,9 +1,10 @@
 import nodemailer from 'nodemailer'
-import { get, has, kebabCase, set, template } from 'lodash-es'
-import fs from 'node:fs/promises'
+import { get } from 'lodash-es'
 import path from 'node:path'
+import { config } from '@vue-email/compiler'
 
 export default {
+  vueEmail: null,
   transport: null,
   templates: {},
   init() {
@@ -37,6 +38,12 @@ export default {
         }
       }
       this.transport = nodemailer.createTransport(conf)
+      this.vueEmail = config(path.join(WIKI.SERVERPATH, 'templates/mail'), {
+        verbose: false,
+        options: {
+          baseUrl: WIKI.config.mail.defaultBaseURL
+        }
+      })
     } else {
       WIKI.logger.warn('Mail is not setup! Please set the configuration in the administration area!')
       this.transport = null
@@ -46,34 +53,27 @@ export default {
   async send(opts) {
     if (!this.transport) {
       WIKI.logger.warn('Cannot send email because mail is not setup in the administration area!')
-      throw new WIKI.Error.MailNotConfigured()
+      throw new Error('ERR_MAIL_NOT_CONFIGURED')
     }
-    await this.loadTemplate(opts.template)
     return this.transport.sendMail({
       headers: {
         'x-mailer': 'Wiki.js'
       },
       from: `"${WIKI.config.mail.senderName}" <${WIKI.config.mail.senderEmail}>`,
       to: opts.to,
-      subject: `${opts.subject} - ${WIKI.config.title}`,
+      subject: opts.subject,
       text: opts.text,
-      html: get(this.templates, opts.template)({
-        logo: (WIKI.config.logoUrl.startsWith('http') ? '' : WIKI.config.host) + WIKI.config.logoUrl,
-        siteTitle: WIKI.config.title,
-        copyright: WIKI.config.company.length > 0 ? WIKI.config.company : 'Powered by Wiki.js',
-        ...opts.data
-      })
+      html: await this.loadTemplate(opts.template, opts.data)
     })
   },
-  async loadTemplate(key) {
-    if (has(this.templates, key)) { return }
-    const keyKebab = kebabCase(key)
+  async loadTemplate(key, opts = {}) {
     try {
-      const rawTmpl = await fs.readFile(path.join(WIKI.SERVERPATH, `templates/${keyKebab}.html`), 'utf8')
-      set(this.templates, key, template(rawTmpl))
+      return this.vueEmail.render(`${key}.vue`, {
+        props: opts
+      })
     } catch (err) {
       WIKI.logger.warn(err)
-      throw new WIKI.Error.MailTemplateFailed()
+      throw new Error('ERR_MAIL_RENDER_FAILED')
     }
   }
 }
