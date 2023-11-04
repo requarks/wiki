@@ -50,7 +50,7 @@ jobs:
       working-directory: ux
       run: |
         pnpm install --frozen-lockfile --shamefully-hoist
-        pnpm build
+        NODE_OPTIONS=--max-old-space-size=8192 pnpm build
 
     - name: Build Blocks
       working-directory: blocks
