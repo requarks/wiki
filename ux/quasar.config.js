@@ -95,11 +95,23 @@ module.exports = configure(function (ctx) {
           viteConf.build.rollupOptions = {
             ...viteConf.build.rollupOptions ?? {},
             output: {
-              manualChunks: {
-                lodash: ['lodash-es', 'lodash'],
-                quasar: ['quasar', 'quasar/src/components']
+              manualChunks (id) {
+                if (id.includes('lodash')) {
+                  return 'lodash'
+                } else if (id.includes('quasar')) {
+                  return 'quasar'
+                } else if (id.includes('pages/Admin')) {
+                  return 'admin'
+                } else if (id.includes('pages/Profile')) {
+                  return 'profile'
+                }
               }
             }
+          }
+          viteConf.build.chunkSizeWarningLimit = 5000
+          viteConf.build.dynamicImportVarsOptions = {
+            warnOnError: true,
+            include: ['!/_blocks/**']
           }
           viteConf.optimizeDeps.include = [
             'prosemirror-state',
