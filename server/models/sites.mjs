@@ -152,7 +152,7 @@ export class Site extends Model {
     await WIKI.db.navigation.query().insert({
       id: newSite.id,
       siteId: newSite.id,
-      items: JSON.stringify([])
+      items: []
     })
 
     WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)
