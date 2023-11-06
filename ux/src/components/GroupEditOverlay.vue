@@ -597,49 +597,49 @@ const usersHeaders = [
 const permissions = [
   {
     permission: 'access:admin',
-    hint: 'Can access the administration area.',
+    hint: t('admin.groups.permissions.adminHint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:users',
-    hint: 'Can create / manage users (but not users with administrative permissions)',
+    hint: t('admin.groups.permissions.userHint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:groups',
-    hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules',
+    hint: t('admin.groups.permissions.groupHint'),
     warning: true,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:navigation',
-    hint: 'Can manage site navigation',
+    hint: $t('admin.groups.permissions.navigationHint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:theme',
-    hint: 'Can modify site theme settings',
+    hint: t('admin.groups.permissions.themeHint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:sites',
-    hint: 'Can create / manage sites',
+    hint: $t('admin.groups.permissions.sitesHint'),
     warning: true,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:system',
-    hint: 'Can manage and access everything. Root administrator.',
+    hint: t('admin.groups.permissions.systemHint'),
     warning: true,
     restrictedForSystem: true,
     disabled: true
@@ -649,120 +649,120 @@ const permissions = [
 const rules = [
   {
     permission: 'read:pages',
-    title: 'Read Pages',
-    hint: 'Can view and search pages.',
+    title: t('admin.groups.rules.read.pages.title'),
+    hint: t('admin.groups.rules.read.pages.hint'),
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'write:pages',
-    title: 'Write Pages',
-    hint: 'Can create and edit pages.',
+    title: t('admin.groups.rules.write.pages.title'),
+    hint: t('admin.groups.rules.write.pages.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'review:pages',
-    title: 'Review Pages',
-    hint: 'Can review and approve edits submitted by users.',
+    title: t('admin.groups.rules.review.pages.title'),
+    hint: t('admin.groups.rules.review.pages.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:pages',
-    title: 'Manage Pages',
-    hint: 'Can move existing pages to other locations the user has write access to.',
+    title: t('admin.groups.rules.manage.pages.title'),
+    hint: t('admin.groups.rules.manage.pages.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'delete:pages',
-    title: 'Delete Pages',
-    hint: 'Can delete existing pages.',
+    title: t('admin.groups.rules.delete.pages.title'),
+    hint: t('admin.groups.rules.delete.pages.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'write:styles',
-    title: 'Use CSS',
-    hint: 'Can insert CSS styles in pages.',
+    title: t('admin.groups.rules.write.styles.title'),
+    hint: t('admin.groups.rules.write.styles.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'write:scripts',
-    title: 'Use JavaScript',
-    hint: 'Can insert JavaScript in pages.',
+    title: t('admin.groups.rules.write.scripts.title'),
+    hint: t('admin.groups.rules.write.scripts.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'read:source',
-    title: 'View Page Source',
-    hint: 'Can view pages source.',
+    title: t('admin.groups.rules.read.source.title'),
+    hint: t('admin.groups.rules.read.source.hint'),
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'read:history',
-    title: 'View Page History',
-    hint: 'Can view previous versions of pages.',
+    title: t('admin.groups.rules.read.history.title'),
+    hint: t('admin.groups.rules.read.history.hint'),
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'read:assets',
-    title: 'View Assets',
-    hint: 'Can view / use assets (such as images and files) in pages.',
+    title: t('admin.groups.rules.read.assets.title'),
+    hint: t('admin.groups.rules.read.assets.hint'),
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'write:assets',
-    title: 'Upload Assets',
-    hint: 'Can upload new assets (such as images and files).',
+    title: t('admin.groups.rules.write.assets.title'),
+    hint: t('admin.groups.rules.write.assets.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:assets',
-    title: 'Manage Assets',
-    hint: 'Can edit and delete existing assets (such as images and files).',
+    title: t('admin.groups.rules.manage.assets.title'),
+    hint: t('admin.groups.rules.manage.assets.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'read:comments',
-    title: 'Read Comments',
-    hint: 'Can view page comments.',
+    title: t('admin.groups.rules.read.comments.title'),
+    hint: t('admin.groups.rules.read.comments.hint'),
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'write:comments',
-    title: 'Write Comments',
-    hint: 'Can post new comments on pages.',
+    title: t('admin.groups.rules.write.comments.title'),
+    hint: t('admin.groups.rules.write.comments.hint'),
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'manage:comments',
-    title: 'Manage Comments',
-    hint: 'Can edit and delete existing page comments.',
+    title: t('admin.groups.rules.manage.comments.title'),
+    hint: t('admin.groups.rules.manage.comments.hint'),
     warning: false,
     restrictedForSystem: true,
     disabled: false
