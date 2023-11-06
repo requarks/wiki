@@ -351,7 +351,7 @@
   "admin.groups.ruleDeny": "Deny",
   "admin.groups.ruleForceAllow": "Force Allow",
   "admin.groups.ruleLocales": "Locale(s)",
-  "admin.groups.ruleMatch": "Rules",
+  "admin.groups.ruleMatch": "Match",
   "admin.groups.ruleMatchEnd": "Path Ends With...",
   "admin.groups.ruleMatchExact": "Path Is Exactly...",
   "admin.groups.ruleMatchRegex": "Path Matches Regex...",
