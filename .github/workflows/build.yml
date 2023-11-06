@@ -13,10 +13,10 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup Node.js environment
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 20.x
 
@@ -27,12 +27,15 @@ jobs:
 
     - name: Set Build Variables
       run: |
-          echo "REL_VERSION=3.0.0-alpha.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        echo "REL_VERSION=3.0.0-alpha.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
 
     - name: Disable DEV Flag + Set Version
       working-directory: server
       run: |
-        sudo apt-get install jq -y
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> /home/runner/.bashrc
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        brew install jq
         mv package.json pkg-temp.json
         jq --arg vs "$REL_VERSION_STRICT" -r '. + {dev:false, version:$vs}' pkg-temp.json > package.json
         rm pkg-temp.json
@@ -47,7 +50,7 @@ jobs:
       working-directory: ux
       run: |
         pnpm install --frozen-lockfile --shamefully-hoist
-        pnpm build
+        NODE_OPTIONS=--max-old-space-size=8192 pnpm build
 
     - name: Build Blocks
       working-directory: blocks
