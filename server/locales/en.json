@@ -550,7 +550,6 @@
   "admin.pages.title": "Pages",
   "admin.rendering.subtitle": "Configure the content rendering pipeline",
   "admin.rendering.title": "Rendering",
-  "admin.rules.ruleMatch": "",
   "admin.scheduler.active": "Active",
   "admin.scheduler.activeNone": "There are no active jobs at the moment.",
   "admin.scheduler.attempt": "Attempt",
