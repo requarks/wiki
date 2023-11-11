@@ -56,6 +56,7 @@ export const useAdminStore = defineStore('admin', {
         query: gql`
           query getAdminInfo {
             apiState
+            metricsState
             systemInfo {
               groupsTotal
               tagsTotal
@@ -77,6 +78,7 @@ export const useAdminStore = defineStore('admin', {
       this.info.currentVersion = clone(resp?.data?.systemInfo?.currentVersion ?? 'n/a')
       this.info.latestVersion = clone(resp?.data?.systemInfo?.latestVersion ?? 'n/a')
       this.info.isApiEnabled = clone(resp?.data?.apiState ?? false)
+      this.info.isMetricsEnabled = clone(resp?.data?.metricsState ?? false)
       this.info.isMailConfigured = clone(resp?.data?.systemInfo?.isMailConfigured ?? false)
       this.info.isSchedulerHealthy = clone(resp?.data?.systemInfo?.isSchedulerHealthy ?? false)
     },

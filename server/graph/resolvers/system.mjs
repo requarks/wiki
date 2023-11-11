@@ -13,6 +13,12 @@ const getos = util.promisify(getosSync)
 export default {
   Query: {
     /**
+     * Metrics Endpoint State
+     */
+    metricsState () {
+      return WIKI.config.metrics?.isEnabled ?? false
+    },
+    /**
      * System Flags
      */
     systemFlags () {
@@ -278,6 +284,24 @@ export default {
         }
       } catch (err) {
         WIKI.logger.warn(err)
+        return generateError(err)
+      }
+    },
+    /**
+     * Set Metrics endpoint state
+     */
+    async setMetricsState (obj, args, context) {
+      try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
+        WIKI.config.metrics.isEnabled = args.enabled
+        await WIKI.configSvc.saveToDb(['metrics'])
+        return {
+          operation: generateSuccess('Metrics endpoint state changed successfully')
+        }
+      } catch (err) {
         return generateError(err)
       }
     },

@@ -7,6 +7,7 @@ import db from './db.mjs'
 import extensions from './extensions.mjs'
 import scheduler from './scheduler.mjs'
 import servers from './servers.mjs'
+import metrics from './metrics.mjs'
 
 let isShuttingDown = false
 
@@ -47,6 +48,7 @@ export default {
       }
       WIKI.extensions = extensions
       WIKI.asar = asar
+      WIKI.metrics = await metrics.init()
     } catch (err) {
       WIKI.logger.error(err)
       process.exit(1)

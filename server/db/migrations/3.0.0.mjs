@@ -458,6 +458,12 @@ export async function up (knex) {
 
   await knex('settings').insert([
     {
+      key: 'api',
+      value: {
+        isEnabled: false
+      }
+    },
+    {
       key: 'auth',
       value: {
         audience: 'urn:wiki.js',
@@ -514,6 +520,12 @@ export async function up (knex) {
         dkimDomainName: '',
         dkimKeySelector: '',
         dkimPrivateKey: ''
+      }
+    },
+    {
+      key: 'metrics',
+      value: {
+        isEnabled: false
       }
     },
     {

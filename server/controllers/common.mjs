@@ -434,6 +434,21 @@ export default function () {
     return res.sendStatus(404)
   })
 
+  /**
+   * Metrics (Prometheus)
+   */
+  router.get('/metrics', async (req, res, next) => {
+    if (!WIKI.auth.checkAccess(req.user, ['read:metrics'])) {
+      return res.sendStatus(403)
+    }
+
+    if (WIKI.config.metrics.isEnabled) {
+      WIKI.metrics.render(res)
+    } else {
+      next()
+    }
+  })
+
   // /**
   //  * View document / asset
   //  */

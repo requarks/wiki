@@ -41,6 +41,8 @@ defaults:
       host: ''
       secure: true
       verifySSL: true
+    metrics:
+      isEnabled: false
     auth:
       autoLogin: false
       enforce2FA: false

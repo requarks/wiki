@@ -344,6 +344,9 @@ dependencies:
   poolifier:
     specifier: 2.7.5
     version: 2.7.5
+  prom-client:
+    specifier: 15.0.0
+    version: 15.0.0
   punycode:
     specifier: 2.3.0
     version: 2.3.0
@@ -2251,6 +2254,10 @@ packages:
   /binary-extensions@2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
+
+  /bintrees@1.0.2:
+    resolution: {integrity: sha512-VOMgTMwjAaUG580SXn3LacVgjurrbMme7ZZNYGSSV7mmtY6QQRh0Eg3pwIcntQ77DErK1L0NxkbetjcoXzVwKw==}
+    dev: false
 
   /bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
@@ -6138,6 +6145,14 @@ packages:
     engines: {node: '>=0.4.0'}
     dev: false
 
+  /prom-client@15.0.0:
+    resolution: {integrity: sha512-UocpgIrKyA2TKLVZDSfm8rGkL13C19YrQBAiG3xo3aDFWcHedxRxI3z+cIcucoxpSO0h5lff5iv/SXoxyeopeA==}
+    engines: {node: ^16 || ^18 || >=20}
+    dependencies:
+      '@opentelemetry/api': 1.6.0
+      tdigest: 0.1.2
+    dev: false
+
   /promised-retry@0.5.0:
     resolution: {integrity: sha512-jbYvN6UGE+/3E1g0JmgDPchUc+4VI4cBaPjdr2Lso22xfFqut2warEf6IhWuhPJKbJYVOQAyCt2Jx+01ORCItg==}
     engines: {node: ^14.17.0 || >=16.0.0}
@@ -6965,6 +6980,12 @@ packages:
   /tarn@3.0.2:
     resolution: {integrity: sha512-51LAVKUSZSVfI05vjPESNc5vwqqZpbXCsU+/+wxlOrUjk2SnFTt97v9ZgQrD4YmxYW1Px6w2KjaDitCfkvgxMQ==}
     engines: {node: '>=8.0.0'}
+    dev: false
+
+  /tdigest@0.1.2:
+    resolution: {integrity: sha512-+G0LLgjjo9BZX2MfdvPfH+MKLCrxlXSYec5DaPYP1fe6Iyhf0/fSmJ0bFiZ1F8BT6cGXl2LpltQptzjXKWEkKA==}
+    dependencies:
+      bintrees: 1.0.2
     dev: false
 
   /text-table@0.2.0:

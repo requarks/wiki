@@ -181,6 +181,12 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section {{ t('admin.mail.title') }}
             q-item-section(side)
               status-light(:color='adminStore.info.isMailConfigured ? `positive` : `warning`', :pulse='!adminStore.info.isMailConfigured')
+          q-item(to='/_admin/metrics', v-ripple, active-class='bg-primary text-white')
+            q-item-section(avatar)
+              q-icon(name='img:/_assets/icons/fluent-graph.svg')
+            q-item-section {{ t('admin.metrics.title') }}
+            q-item-section(side)
+              status-light(:color='adminStore.info.isMetricsEnabled ? `positive` : `negative`')
           q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')

@@ -3,6 +3,7 @@
 # ===============================================
 
 extend type Query {
+  metricsState: Boolean
   systemExtensions: [SystemExtension]
   systemFlags: JSON
   systemInfo: SystemInfo
@@ -33,6 +34,10 @@ extend type Mutation {
 
   retryJob(
     id: UUID!
+  ): DefaultResponse
+
+  setMetricsState(
+    enabled: Boolean!
   ): DefaultResponse
 
   updateSystemSearch(

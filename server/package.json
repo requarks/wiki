@@ -149,6 +149,7 @@
     "pg-query-stream": "4.5.3",
     "pg-tsquery": "8.4.1",
     "poolifier": "2.7.5",
+    "prom-client": "15.0.0",
     "punycode": "2.3.0",
     "puppeteer-core": "21.4.0",
     "qr-image": "3.2.0",
