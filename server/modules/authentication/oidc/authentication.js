@@ -20,7 +20,8 @@ module.exports = {
         userInfoURL: conf.userInfoURL,
         callbackURL: conf.callbackURL,
         passReqToCallback: true,
-        skipUserProfile: conf.skipUserProfile
+        skipUserProfile: conf.skipUserProfile,
+        acrValues: conf.acrValues
       }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
         const profile = Object.assign({}, idProfile, uiProfile)
 

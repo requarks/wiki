@@ -80,3 +80,8 @@ props:
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
     order: 12
+  acrValues:
+    type: String
+    title: ACR Values
+    hint: (optional) Authentication Context Class Reference
+    order: 13

@@ -20,8 +20,7 @@
           v-card.grey.radius-7(flat, :class='$vuetify.theme.dark ? `darken-4` : `lighten-4`')
             v-card-text
               pre
-                code
-                  slot
+                slot
 
     nav-footer
     notify
