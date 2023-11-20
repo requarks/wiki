@@ -165,7 +165,7 @@ props:
   mapGroups:
     type: Boolean
     title: Map Groups
-    hint: Map groups matching names from the users LDAP/Active Directory groups. User Groups Field Mapping must also be defined for this to work. Note this will remove any groups the user has that doesn't match an LDAP/Active Directory group.
+    hint: Map groups matching names from the provider user groups. User Groups Field Mapping must also be defined for this to work. Note this will remove any groups the user has that doesn't match any group from the provider.
     default: false
     order: 44
   mappingGroups:
