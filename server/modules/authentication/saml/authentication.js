@@ -57,8 +57,8 @@ module.exports = {
             }
           })
 
-          // map users LDAP groups to wiki groups with the same name, and remove any groups that don't match LDAP
-          // Code stolen from the LDAP implementation with a slight variation on the field we extract the value from
+          // map users provider groups to wiki groups with the same name, and remove any groups that don't match
+          // Code copied from the LDAP implementation with a slight variation on the field we extract the value from
           // In SAML v2 groups come in profile.attributes and can be 1 string or an array of strings
           if (conf.mapGroups) {
             const maybeArrayOfGroups = _.get(profile.attributes, conf.mappingGroups)
