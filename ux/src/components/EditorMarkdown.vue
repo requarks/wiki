@@ -9,6 +9,7 @@
         icon='mdi-link-variant-plus'
         padding='sm sm'
         flat
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertLink') }}
       q-btn(
@@ -37,6 +38,8 @@
                 q-item-label From Clipboard...
             q-item(
               clickable
+              @click='notImplemented'
+              v-close-popup
               )
               q-item-section(side)
                 q-icon(name='las la-cloud-download-alt', color='blue')
@@ -47,6 +50,7 @@
         icon='mdi-code-json'
         padding='sm sm'
         flat
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertCodeBlock') }}
       q-btn(
@@ -60,29 +64,34 @@
         icon='mdi-tab-plus'
         padding='sm sm'
         flat
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTabset') }}
       q-btn(
         icon='mdi-toy-brick-plus'
         padding='sm sm'
         flat
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertBlock') }}
       q-btn(
         icon='mdi-chart-multiline'
         padding='sm sm'
         flat
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertDiagram') }}
       q-btn(
         icon='mdi-book-plus'
         padding='sm sm'
         flat
+        @click='notImplemented'
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertFootnote') }}
       q-btn(
         icon='mdi-cookie-plus'
         padding='sm sm'
+        @click='notImplemented'
         flat
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertEmoji') }}
@@ -741,6 +750,13 @@ onBeforeUnmount(() => {
     editor.dispose()
   }
 })
+
+function notImplemented () {
+  $q.notify({
+    type: 'negative',
+    message: 'Not implemented'
+  })
+}
 </script>
 
 <style lang="scss">

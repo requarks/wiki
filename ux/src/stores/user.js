@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import jwtDecode from 'jwt-decode'
+import { jwtDecode } from 'jwt-decode'
 import Cookies from 'js-cookie'
 import gql from 'graphql-tag'
 import { DateTime } from 'luxon'

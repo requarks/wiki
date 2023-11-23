@@ -89,6 +89,18 @@ export default {
       return WIKI.config.userDefaults
     },
 
+    async userEditorSettings (obj, args, context) {
+      if (!context.req.user || context.req.user.id === WIKI.auth.guest.id) {
+        throw new WIKI.Error.AuthRequired()
+      }
+
+      const config = await WIKI.db.knex('userEditorSettings').first('config').where({
+        id: context.req.user.id,
+        editor: args.editor
+      })
+      return config ?? {}
+    },
+
     async lastLogins (obj, args, context, info) {
       if (!WIKI.auth.checkAccess(context.req.user, ['read:dashboard', 'read:users', 'write:users', 'manage:users'])) {
         throw new Error('ERR_FORBIDDEN')

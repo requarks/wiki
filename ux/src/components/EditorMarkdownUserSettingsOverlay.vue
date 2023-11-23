@@ -50,22 +50,22 @@ q-layout(view='hHh lpR fFf', container)
         q-item(tag='label')
           blueprint-icon(icon='enter-key')
           q-item-section
-            q-item-label {{t(`editor.settings.previewShown`)}}
-            q-item-label(caption) {{t(`editor.settings.previewShownHint`)}}
+            q-item-label {{t(`editor.settings.markdownPreviewShown`)}}
+            q-item-label(caption) {{t(`editor.settings.markdownPreviewShownHint`)}}
           q-item-section(avatar)
             q-toggle(
               v-model='state.config.previewShown'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
-              :aria-label='t(`editor.settings.previewShown`)'
+              :aria-label='t(`editor.settings.markdownPreviewShown`)'
               )
         q-separator.q-my-sm(inset)
         q-item
           blueprint-icon(icon='width')
           q-item-section
-            q-item-label {{t(`editor.settings.fontSize`)}}
-            q-item-label(caption) {{t(`editor.settings.fontSizeHint`)}}
+            q-item-label {{t(`editor.settings.markdownFontSize`)}}
+            q-item-label(caption) {{t(`editor.settings.markdownFontSizeHint`)}}
           q-item-section(side)
             q-input(
               type='number'
@@ -75,7 +75,7 @@ q-layout(view='hHh lpR fFf', container)
               outlined
               v-model='state.config.fontSize'
               dense
-              :aria-label='t(`editor.settings.fontSize`)'
+              :aria-label='t(`editor.settings.markdownFontSize`)'
               )
 
       q-inner-loading(:showing='state.loading > 0')
@@ -129,14 +129,15 @@ async function load () {
   try {
     const resp = await APOLLO_CLIENT.query({
       query: gql`
-        query loadEditorUserSettings (
-          $editor: String!
-        ) {
-        editorUserSettings (editor: "markdown")
-      }`,
+        query loadEditorUserSettings {
+          userEditorSettings (editor: "markdown")
+        }
+      `,
       fetchPolicy: 'network-only'
     })
-    state.config = cloneDeep(resp?.data?.editorUserSettings)
+    const respConf = cloneDeep(resp?.data?.userEditorSettings)
+    state.config.previewShown = respConf.previewShown ?? true
+    state.config.fontSize = respConf.fontSize ?? 16
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -155,7 +156,7 @@ async function save () {
         mutation saveEditorUserSettings (
           $config: JSON!
           ) {
-          saveEditorUserSettings (
+          saveUserEditorSettings (
             editor: "markdown"
             config: $config
             ) {
@@ -171,14 +172,14 @@ async function save () {
         config: state.config
       }
     })
-    if (respRaw?.data?.saveEditorUserSettings?.operation?.succeeded) {
+    if (respRaw?.data?.saveUserEditorSettings?.operation?.succeeded) {
       $q.notify({
         type: 'positive',
         message: t('admin.editors.markdown.saveSuccess')
       })
       close()
     } else {
-      throw new Error(respRaw?.data?.saveEditorUserSettings?.operation?.message || 'An unexpected error occured.')
+      throw new Error(respRaw?.data?.saveUserEditorSettings?.operation?.message || 'An unexpected error occured.')
     }
   } catch (err) {
     $q.notify({

@@ -18,6 +18,10 @@ extend type Query {
 
   userDefaults: UserDefaults
 
+  userEditorSettings(
+    editor: String!
+  ): JSON
+
   lastLogins: [UserLastLogin]
 
   userPermissions: [String]

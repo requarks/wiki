@@ -8,7 +8,7 @@ q-menu.translucent-menu(
     q-item(
       clickable
       @click='create(`wysiwyg`)'
-      v-if='siteStore.editors.wysiwyg'
+      v-if='siteStore.editors.wysiwyg && flagsStore.experimental'
       )
       blueprint-icon(icon='google-presentation')
       q-item-section.q-pr-sm New Page

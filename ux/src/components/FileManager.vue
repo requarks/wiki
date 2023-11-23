@@ -327,7 +327,7 @@ import { DateTime } from 'luxon'
 import { cloneDeep, dropRight, find, findKey, initial, last, nth } from 'lodash-es'
 import { useRoute, useRouter } from 'vue-router'
 import gql from 'graphql-tag'
-import Fuse from 'fuse.js/dist/fuse.basic.esm'
+import Fuse from 'fuse.js/basic'
 
 import NewMenu from './PageNewMenu.vue'
 import Tree from './TreeNav.vue'

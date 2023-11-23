@@ -98,8 +98,8 @@ module.exports = configure(function (ctx) {
               manualChunks (id) {
                 if (id.includes('lodash')) {
                   return 'lodash'
-                } else if (id.includes('quasar')) {
-                  return 'quasar'
+                // } else if (id.includes('quasar')) {
+                //   return 'quasar'
                 } else if (id.includes('pages/Admin')) {
                   return 'admin'
                 } else if (id.includes('pages/Profile')) {
@@ -132,6 +132,7 @@ module.exports = configure(function (ctx) {
           include: path.resolve(__dirname, './src/i18n/locales/**')
         }]
       ]
+      // sourcemap: true
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
