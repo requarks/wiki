@@ -53,7 +53,14 @@ export default {
             },
             {
               permission: 'write:pages',
-              hint: 'Can create / edit pages, as specified in the Page Rules',
+              hint: 'Can create pages, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
+              permission: 'edit:pages',
+              hint: 'Can edit pages, as specified in the Page Rules',
               warning: false,
               restrictedForSystem: true,
               disabled: false

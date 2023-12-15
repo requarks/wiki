@@ -5,6 +5,7 @@ const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
 const qs = require('querystring')
+const axios = require('axios')
 
 /* global WIKI */
 
@@ -140,7 +141,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
 
   if (page) {
     // -> EDIT MODE
-    if (!(effectivePermissions.pages.write || effectivePermissions.pages.manage)) {
+    if (!(effectivePermissions.pages.edit || effectivePermissions.pages.manage)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.render('unauthorized', { action: 'edit' })
     }
@@ -164,7 +165,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     page.content = Buffer.from(page.content).toString('base64')
   } else {
     // -> CREATE MODE
-    if (!effectivePermissions.pages.write) {
+    if (!effectivePermissions.pages.edit) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
       return res.render('unauthorized', { action: 'create' })
     }
@@ -390,9 +391,53 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 /**
  * Tags
  */
-router.get(['/t', '/t/*'], (req, res, next) => {
-  _.set(res.locals, 'pageMeta.title', 'Tags')
-  res.render('tags')
+router.get(['/t', '/t/*'], async (req, res, next) => {
+  try {
+    const token = req.cookies['jwt']
+    if (token) {
+      _.set(res.locals, 'pageMeta.title', 'Tags')
+      res.render('tags')
+    } else {
+      const stg = await WIKI.models.authentication.getStrategyKey('custom')
+      const response = await axios.post(stg.config.authURL, {
+        'token': req.query.token ?? ''
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        validateStatus: function (status) {
+          return status < 505 // Resolve only if the status code is less than 500
+        }
+      })
+      if (response.status === 200 && response.data && response.data.name && response.data.email) {
+        const authResult = await WIKI.models.users.login({
+          strategy: stg.key,
+          token: req.query.token
+        }, { req, res })
+        res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
+        const parsedUrl = new URL(req.url, 'https://wiki.innovative247.com')
+        const queryParams = new URLSearchParams(parsedUrl.search)
+        queryParams.delete('token')
+        let modifiedUrl = parsedUrl.pathname
+        if (queryParams.toString()) {
+          modifiedUrl = modifiedUrl + '?' + queryParams.toString()
+        }
+        res.redirect(modifiedUrl)
+      } else {
+        const parsedUrl = new URL(req.url, 'https://wiki.innovative247.com')
+        const queryParams = new URLSearchParams(parsedUrl.search)
+        queryParams.delete('token')
+        let modifiedUrl = parsedUrl.pathname
+        if (queryParams.toString()) {
+          modifiedUrl = modifiedUrl + '?' + queryParams.toString()
+        }
+        res.cookie('redirectUrl', modifiedUrl)
+        res.redirect('/login')
+      }
+    }
+  } catch (error) {
+    next(error, null) // An error occurred
+  }
 })
 
 /**
@@ -415,10 +460,15 @@ router.get('/_userav/:uid', async (req, res, next) => {
  * View document / asset
  */
 router.get('/*', async (req, res, next) => {
+  if (!req.cookies.jwt) {
+    res.redirect('/login')
+  }
   const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
   const pageArgs = pageHelper.parsePath(req.path, { stripExt })
   const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
-
+  if (req.cookies.redirectUrl) {
+    res.redirect(req.cookies.redirectUrl)
+  }
   if (isPage) {
     if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
       const query = !_.isEmpty(req.query) ? `?${qs.stringify(req.query)}` : ''

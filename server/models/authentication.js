@@ -34,6 +34,10 @@ module.exports = class Authentication extends Model {
     return WIKI.models.authentication.query().findOne({ key })
   }
 
+  static async getStrategyKey(strategyKey) {
+    return WIKI.models.authentication.query().findOne({ strategyKey })
+  }
+
   static async getStrategies() {
     const strategies = await WIKI.models.authentication.query().orderBy('order')
     return strategies.map(str => ({

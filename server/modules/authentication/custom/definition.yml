@@ -1,0 +1,13 @@
+key: custom
+title: Innovative247 Support User Authentication
+description: Login using your credentials for https://support.innovative247.com
+author: Jake Williams
+logo: https://support.innovative247.com/images/innovative-logo.svg
+color: indigo lighten-2
+website: https://support.innovative247.com
+isAvailable: true
+useForm: true
+usernameType: email
+props:
+  authURL: 
+    type: String

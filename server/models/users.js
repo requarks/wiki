@@ -306,6 +306,10 @@ module.exports = class User extends Model {
         _.set(context.req.params, 'strategy', opts.strategy)
       }
 
+      if (opts.token) {
+        _.set(context.req, 'body.token', opts.token)
+      }
+
       // Authenticate
       return new Promise((resolve, reject) => {
         WIKI.auth.passport.authenticate(selStrategy.key, {

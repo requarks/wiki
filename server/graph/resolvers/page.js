@@ -173,8 +173,8 @@ module.exports = {
     async singleByPath(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb({
         path: args.path,
-        locale: args.locale,
-      });
+        locale: args.locale
+      })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
@@ -354,7 +354,7 @@ module.exports = {
     async checkConflicts (obj, args, context, info) {
       let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
+        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'edit:pages', 'manage:pages'], {
           path: page.path,
           locale: page.localeCode
         })) {
@@ -372,7 +372,7 @@ module.exports = {
     async conflictLatest (obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
+        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'edit:pages', 'manage:pages'], {
           path: page.path,
           locale: page.localeCode
         })) {
@@ -580,7 +580,7 @@ module.exports = {
           throw new WIKI.Error.PageNotFound()
         }
 
-        if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:pages', 'edit:pages'], {
           path: page.path,
           locale: page.localeCode
         })) {

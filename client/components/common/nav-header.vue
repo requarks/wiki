@@ -140,7 +140,7 @@
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
-                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
+                v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasEditPagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
@@ -150,10 +150,10 @@
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
-                v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
+                v-list-item.pl-4(@click='pageConvert', v-if='hasEditPagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-lightning-bolt
                   v-list-item-title.body-2 {{$t('common:header.convert')}}
-                v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
+                v-list-item.pl-4(@click='pageDuplicate', v-if='hasEditPagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
@@ -333,13 +333,14 @@ export default {
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
+    hasEditPagesPermission: get('page/effectivePermissions@pages.edit'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
-      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
-        this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
+      return this.hasAdminPermission || this.hasManagePagesPermission ||
+        this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission || this.hasEditPagesPermission
     }
   },
   created () {

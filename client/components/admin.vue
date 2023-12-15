@@ -11,7 +11,7 @@
           v-list-item(to='/dashboard', color='primary')
             v-list-item-avatar(size='24', tile): v-icon mdi-view-dashboard-variant
             v-list-item-title {{ $t('admin:dashboard.title') }}
-          template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
+          template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `edit:pages`, `manage:pages`, `delete:pages`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
             v-list-item(to='/general', color='primary', v-if='hasPermission(`manage:system`)')
@@ -23,7 +23,7 @@
             v-list-item(to='/navigation', color='primary', v-if='hasPermission([`manage:system`, `manage:navigation`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-near-me
               v-list-item-title {{ $t('admin:navigation.title') }}
-            v-list-item(to='/pages', color='primary', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
+            v-list-item(to='/pages', color='primary', v-if='hasPermission([`manage:system`, `write:pages`, `edit:pages`, `manage:pages`, `delete:pages`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-file-document-outline
               v-list-item-title {{ $t('admin:pages.title') }}
               v-list-item-action(style='min-width:auto;')

@@ -165,7 +165,7 @@ module.exports = {
                   const pageRules = _.map(usr.rights, r => {
                     let roles = ['read:pages', 'read:assets', 'read:comments', 'write:comments']
                     if (r.role === `write`) {
-                      roles = _.concat(roles, ['write:pages', 'manage:pages', 'read:source', 'read:history', 'write:assets', 'manage:assets'])
+                      roles = _.concat(roles, ['write:pages', 'edit:pages', 'manage:pages', 'read:source', 'read:history', 'write:assets', 'manage:assets'])
                     }
                     return {
                       id: nanoid(),

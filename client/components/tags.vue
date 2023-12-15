@@ -228,6 +228,9 @@ export default {
     }
   },
   watch: {
+    innerSearch(newValue, oldValue) {
+      this.rebuildURL()
+    },
     locale (newValue, oldValue) {
       this.rebuildURL()
     },
@@ -266,6 +269,9 @@ export default {
       this.orderByDirection = this.$route.query.dir === 'asc' ? 0 : 1
       this.pagination.sortDesc = [this.orderByDirection === 1]
     }
+    if (this.$route.query.search) {
+      this.innerSearch = this.$route.query.search
+    }
   },
   methods: {
     toggleTag (tag) {
@@ -285,6 +291,9 @@ export default {
       }
       if (this.locale !== `any`) {
         _.set(urlObj, 'query.lang', this.locale)
+      }
+      if (this.innerSearch !== ``) {
+        _.set(urlObj, 'query.search', this.innerSearch)
       }
       if (this.orderBy !== `TITLE`) {
         _.set(urlObj, 'query.sort', this.orderBy.toLowerCase())

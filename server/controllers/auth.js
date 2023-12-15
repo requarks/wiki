@@ -23,27 +23,51 @@ const bruteforce = new ExpressBrute(new BruteKnex({
  * Login form
  */
 router.get('/login', async (req, res, next) => {
-  _.set(res.locals, 'pageMeta.title', 'Login')
-
-  if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
-    const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
-    res.render('legacy/login', {
-      err: false,
-      formStrategies,
-      socialStrategies
-    })
-  } else {
-    // -> Bypass Login
-    if (WIKI.config.auth.autoLogin && !req.query.all) {
-      const stg = await WIKI.models.authentication.query().orderBy('order').first()
-      const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
-      if (!stgInfo.useForm) {
-        return res.redirect(`/login/${stg.key}`)
+  try {
+    _.set(res.locals, 'pageMeta.title', 'Login')
+    if (req.query.token) {
+      const stg = await WIKI.models.authentication.getStrategyKey('custom')
+      const authResult = await WIKI.models.users.login({
+        strategy: stg.key,
+        token: req.query.token
+      }, { req, res })
+      res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
+      const loginRedirect = req.cookies['loginRedirect']
+      if (loginRedirect === '/' && authResult.redirect) {
+        res.clearCookie('loginRedirect')
+        res.redirect(authResult.redirect)
+      } else if (loginRedirect) {
+        res.clearCookie('loginRedirect')
+        res.redirect(loginRedirect)
+      } else if (authResult.redirect) {
+        res.redirect(authResult.redirect)
+      } else {
+        res.redirect('/')
+      }
+    } else {
+      if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
+        const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
+        res.render('legacy/login', {
+          err: false,
+          formStrategies,
+          socialStrategies
+        })
+      } else {
+        // -> Bypass Login
+        if (WIKI.config.auth.autoLogin && !req.query.all) {
+          const stg = await WIKI.models.authentication.query().orderBy('order').first()
+          const stgInfo = _.find(WIKI.data.authentication, ['key', stg.strategyKey])
+          if (!stgInfo.useForm) {
+            return res.redirect(`/login/${stg.key}`)
+          }
+        }
+        // -> Show Login
+        const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
+        res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal })
       }
     }
-    // -> Show Login
-    const bgUrl = !_.isEmpty(WIKI.config.auth.loginBgUrl) ? WIKI.config.auth.loginBgUrl : '/_assets/img/splash/1.jpg'
-    res.render('login', { bgUrl, hideLocal: WIKI.config.auth.hideLocal })
+  } catch (error) {
+    next(error, null) // An error occurred
   }
 })
 
@@ -125,6 +149,7 @@ router.get('/logout', async (req, res) => {
   const redirURL = await WIKI.models.users.logout({ req, res })
   req.logout()
   res.clearCookie('jwt')
+  res.clearCookie('redirectUrl')
   res.redirect(redirURL)
 })
 

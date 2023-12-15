@@ -10,3 +10,10 @@ block body
             
       if error.stack
         pre: code #{error.stack}
+
+      block scripts
+        script.
+          // JavaScript function to redirect to '/' after 4000 milliseconds
+          setTimeout(function() {
+            window.location.href = '/';
+          }, 4000);

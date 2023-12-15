@@ -72,11 +72,11 @@ type PageQuery {
   checkConflicts(
     id: Int!
     checkoutDate: Date!
-  ): Boolean! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): Boolean! @auth(requires: ["write:pages", "edit:pages", "manage:pages", "manage:system"])
 
   conflictLatest(
     id: Int!
-  ): PageConflictLatest! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): PageConflictLatest! @auth(requires: ["write:pages", "edit:pages", "manage:pages", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -98,7 +98,7 @@ type PageMutation {
     scriptJs: String
     tags: [String]!
     title: String!
-  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): PageResponse @auth(requires: ["write:pages", "edit:pages", "manage:pages", "manage:system"])
 
   update(
     id: Int!
@@ -115,12 +115,12 @@ type PageMutation {
     scriptJs: String
     tags: [String]
     title: String
-  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): PageResponse @auth(requires: ["write:pages", "edit:pages", "manage:pages", "manage:system"])
 
   convert(
     id: Int!
     editor: String!
-  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): DefaultResponse @auth(requires: ["write:pages", "edit:pages", "manage:pages", "manage:system"])
 
   move(
     id: Int!
@@ -158,7 +158,7 @@ type PageMutation {
   restore(
     pageId: Int!
     versionId: Int!
-  ): DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+  ): DefaultResponse @auth(requires: ["write:pages", "edit:pages", "manage:pages", "manage:system"])
 
   purgeHistory (
     olderThan: String!
@@ -185,28 +185,28 @@ type Page {
   hash: String!
   title: String!
   description: String!
-  isPrivate: Boolean! @auth(requires: ["write:pages", "manage:system"])
-  isPublished: Boolean! @auth(requires: ["write:pages", "manage:system"])
-  privateNS: String @auth(requires: ["write:pages", "manage:system"])
-  publishStartDate: Date! @auth(requires: ["write:pages", "manage:system"])
-  publishEndDate: Date! @auth(requires: ["write:pages", "manage:system"])
+  isPrivate: Boolean! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  isPublished: Boolean! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  privateNS: String @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  publishStartDate: Date! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  publishEndDate: Date! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
   tags: [PageTag]!
-  content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
+  content: String! @auth(requires: ["read:source", "write:pages", "edit:pages", "manage:system"])
   render: String
   toc: String
   contentType: String!
   createdAt: Date!
   updatedAt: Date!
-  editor: String! @auth(requires: ["write:pages", "manage:system"])
+  editor: String! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
   locale: String!
   scriptCss: String
   scriptJs: String
-  authorId: Int! @auth(requires: ["write:pages", "manage:system"])
-  authorName: String! @auth(requires: ["write:pages", "manage:system"])
-  authorEmail: String! @auth(requires: ["write:pages", "manage:system"])
-  creatorId: Int! @auth(requires: ["write:pages", "manage:system"])
-  creatorName: String! @auth(requires: ["write:pages", "manage:system"])
-  creatorEmail: String! @auth(requires: ["write:pages", "manage:system"])
+  authorId: Int! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  authorName: String! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  authorEmail: String! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  creatorId: Int! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  creatorName: String! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
+  creatorEmail: String! @auth(requires: ["write:pages", "edit:pages", "manage:system"])
 }
 
 type PageTag {
