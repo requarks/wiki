@@ -21,7 +21,7 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
         passReqToCallback: true
-      }, async (req, accessToken, refreshToken, profile, cb) => {
+      }, async (req, accessToken, refreshToken, results, profile, cb) => {
         let displayName = profile.username
         if (_.isString(profile.fullName) && profile.fullName.length > 0) {
           displayName = profile.fullName
@@ -36,6 +36,7 @@ module.exports = {
               picture: ''
             }
           })
+          req.session.keycloak_id_token = results.id_token
           cb(null, user)
         } catch (err) {
           cb(err, null)
@@ -43,11 +44,22 @@ module.exports = {
       })
     )
   },
-  logout (conf) {
+  logout (conf, context) {
     if (!conf.logoutUpstream) {
       return '/'
     } else if (conf.logoutURL && conf.logoutURL.length > 5) {
-      return `${conf.logoutURL}?redirect_uri=${encodeURIComponent(WIKI.config.host)}`
+      const idToken = context.req.session.keycloak_id_token
+      const redirURL = encodeURIComponent(WIKI.config.host)
+      if (conf.logoutUpstreamRedirectLegacy) {
+        // keycloak < 18
+        return `${conf.logoutURL}?redirect_uri=${redirURL}`
+      } else if (idToken) {
+        // keycloak 18+
+        return `${conf.logoutURL}?post_logout_redirect_uri=${redirURL}&id_token_hint=${idToken}`
+      } else {
+        // fall back to no redirect if keycloak_id_token isn't available
+        return conf.logoutURL
+      }
     } else {
       WIKI.logger.warn('Keycloak logout URL is not configured!')
       return '/'

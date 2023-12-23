@@ -192,7 +192,7 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v3.6.0
       with:
-        node-version: 16.x
+        node-version: 18.x
 
     - name: Download a Build Artifact
       uses: actions/download-artifact@v3.0.2
@@ -203,11 +203,19 @@ jobs:
     - name: Extract Build
       run: |
         mkdir -p win
-        tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=node_modules
+        tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win
+        Copy-Item win\node_modules\extract-files\package.json patch-extractfile.json -Force
+        Remove-Item -Path win\node_modules -Force -Recurse
 
     - name: Install Dependencies
-      run: yarn --production --frozen-lockfile --non-interactive
+      run: |
+        yarn --production --frozen-lockfile --non-interactive
+        yarn patch-package
       working-directory: win
+
+    - name: Fix patched packages
+      run: |
+        Copy-Item patch-extractfile.json win\node_modules\extract-files\package.json -Force
 
     - name: Create Bundle
       run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
