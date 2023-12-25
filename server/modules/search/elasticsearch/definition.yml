@@ -15,7 +15,7 @@ props:
       - '8.x'
       - '7.x'
       - '6.x'
-    default: '6.x'
+    default: '7.x'
   hosts:
     type: String
     title: Host(s)

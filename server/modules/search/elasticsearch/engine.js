@@ -20,7 +20,7 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
       case '8.x':
-        WIKI.logger.info(`Using ElasticSearch 8.X`)
+        WIKI.logger.info(`Using ElasticSearch 8.X`) // TODO Remove this line
         const { Client: Client8 } = require('elasticsearch8')
         this.client = new Client8({
           nodes: this.config.hosts.split(',').map(_.trim),
@@ -65,6 +65,7 @@ module.exports = {
   async createIndex() {
     try {
       const indexExists = await this.client.indices.exists({ index: this.config.indexName })
+      // 6.x / 7.x return indexExists.body, while 8.x only returns indexExists so we need uniqe conditionals
       if ((!indexExists.body && this.config.apiVersion !== '8.x') || (!indexExists && this.config.apiVersion === '8.x')) {
         WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
         try {
@@ -126,6 +127,7 @@ module.exports = {
       }
     } catch (err) {
       WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Index Check Error: `, _.get(err, 'meta.body.error', err))
+      WIKI.logger.error(err)
     }
   },
   /**
@@ -217,7 +219,6 @@ module.exports = {
   async created(page) {
     await this.client.index({
       index: this.config.indexName,
-      type: '_doc',
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -239,7 +240,6 @@ module.exports = {
   async updated(page) {
     await this.client.index({
       index: this.config.indexName,
-      type: '_doc',
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -261,7 +261,6 @@ module.exports = {
   async deleted(page) {
     await this.client.delete({
       index: this.config.indexName,
-      type: '_doc',
       id: page.hash,
       refresh: true
     })
@@ -274,13 +273,11 @@ module.exports = {
   async renamed(page) {
     await this.client.delete({
       index: this.config.indexName,
-      type: '_doc',
       id: page.hash,
       refresh: true
     })
     await this.client.index({
       index: this.config.indexName,
-      type: '_doc',
       id: page.destinationHash,
       body: {
         suggest: this.buildSuggest(page),
@@ -349,7 +346,6 @@ module.exports = {
             result.push({
               index: {
                 _index: this.config.indexName,
-                _type: '_doc',
                 _id: doc.id
               }
             })
