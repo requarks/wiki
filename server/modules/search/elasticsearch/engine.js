@@ -20,7 +20,6 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
       case '8.x':
-        WIKI.logger.info(`Using ElasticSearch 8.X`) // TODO Remove this line
         const { Client: Client8 } = require('elasticsearch8')
         this.client = new Client8({
           nodes: this.config.hosts.split(',').map(_.trim),
@@ -105,7 +104,7 @@ module.exports = {
           await this.client.indices.create({
             index: this.config.indexName,
             body: {
-              mappings: (this.config.apiVersion === '6.x') ? {
+              mappings: (this.config.apiVersion !== '8.x') ? {
                 _doc: mapping
               } : mapping,
               settings: {
@@ -121,13 +120,11 @@ module.exports = {
           })
 
         } catch (err) {
-          WIKI.logger.error(err)
           WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
         }
       }
     } catch (err) {
       WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Index Check Error: `, _.get(err, 'meta.body.error', err))
-      WIKI.logger.error(err)
     }
   },
   /**
@@ -219,6 +216,7 @@ module.exports = {
   async created(page) {
     await this.client.index({
       index: this.config.indexName,
+      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -240,6 +238,7 @@ module.exports = {
   async updated(page) {
     await this.client.index({
       index: this.config.indexName,
+      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -261,6 +260,7 @@ module.exports = {
   async deleted(page) {
     await this.client.delete({
       index: this.config.indexName,
+      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
       id: page.hash,
       refresh: true
     })
@@ -273,11 +273,13 @@ module.exports = {
   async renamed(page) {
     await this.client.delete({
       index: this.config.indexName,
+      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
       id: page.hash,
       refresh: true
     })
     await this.client.index({
       index: this.config.indexName,
+      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
       id: page.destinationHash,
       body: {
         suggest: this.buildSuggest(page),
@@ -346,7 +348,8 @@ module.exports = {
             result.push({
               index: {
                 _index: this.config.indexName,
-                _id: doc.id
+                _id: doc.id,
+                ...(this.config.apiVersion !== '8.x' && {_type: '_doc'})
               }
             })
             doc.safeContent = WIKI.models.pages.cleanHTML(doc.render)
