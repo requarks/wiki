@@ -64,7 +64,7 @@ export const useSiteStore = defineStore('site', {
     },
     sideDialogShown: false,
     sideDialogComponent: '',
-    docsBase: 'https://next.js.wiki/docs',
+    docsBase: 'https://beta.js.wiki/docs',
     nav: {
       currentId: null,
       items: []

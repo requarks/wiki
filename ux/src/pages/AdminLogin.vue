@@ -177,7 +177,6 @@ q-page.admin-login
                 q-card-section.col-auto.q-pr-none
                   q-icon(name='las la-info-circle', size='sm')
                 q-card-section.text-caption {{ t('admin.login.providersVisbleWarning') }}
-
 </template>
 
 <script setup>

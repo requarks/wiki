@@ -8,6 +8,7 @@ q-menu.translucent-menu(
   q-list(padding, style='min-width: 200px;')
     q-item(
       v-for='lang of siteStore.locales.active'
+      :key='lang.code'
       clickable
       @click='commonStore.setLocale(lang.code)'
       )

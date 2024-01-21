@@ -390,7 +390,7 @@ function refreshTocExpanded (baseToc, lvl) {
   }
 }
 .page-header {
-  min-height: 95px;
+  height: 95px;
 
   @at-root .body--light & {
     background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%);

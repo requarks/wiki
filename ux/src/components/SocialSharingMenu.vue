@@ -7,7 +7,7 @@ q-menu(
   @before-hide='menuHidden'
   )
   q-list(dense, padding)
-    q-item(clickable, @click='', ref='copyUrlButton')
+    q-item(clickable, ref='copyUrlButton')
       q-item-section.items-center(avatar)
         q-icon(color='grey', name='las la-clipboard', size='sm')
       q-item-section.q-pr-md Copy URL

@@ -32,7 +32,6 @@ q-page.admin-system
         icon='mdi-clipboard-text-outline'
         label='Copy System Info'
         color='primary'
-        @click=''
         :disabled='state.loading > 0'
       )
   q-separator(inset)

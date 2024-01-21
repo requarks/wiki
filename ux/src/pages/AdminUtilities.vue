@@ -44,7 +44,6 @@ q-page.admin-utilities
               flat
               icon='las la-arrow-circle-right'
               color='primary'
-              @click=''
               :label='t(`common.actions.proceed`)'
             )
         q-item
@@ -57,7 +56,6 @@ q-page.admin-utilities
               flat
               icon='las la-arrow-circle-right'
               color='primary'
-              @click=''
               :label='t(`common.actions.proceed`)'
             )
         q-item
@@ -70,7 +68,6 @@ q-page.admin-utilities
               flat
               icon='las la-arrow-circle-right'
               color='primary'
-              @click=''
               :label='t(`common.actions.proceed`)'
             )
         q-item
@@ -83,7 +80,6 @@ q-page.admin-utilities
               flat
               icon='las la-arrow-circle-right'
               color='primary'
-              @click=''
               :label='t(`common.actions.proceed`)'
             )
         q-item
@@ -108,7 +104,6 @@ q-page.admin-utilities
               flat
               icon='las la-arrow-circle-right'
               color='primary'
-              @click=''
               :label='t(`common.actions.proceed`)'
             )
         q-item
@@ -121,7 +116,6 @@ q-page.admin-utilities
               flat
               icon='las la-arrow-circle-right'
               color='primary'
-              @click=''
               :label='t(`common.actions.proceed`)'
             )
 </template>

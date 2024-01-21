@@ -13,7 +13,6 @@ q-layout(view='hHh Lpr lff')
         icon='las la-globe'
         color='white'
         aria-label='Switch Locale'
-        @click=''
         )
         locale-selector-menu(anchor='top right' self='top left')
         q-tooltip(anchor='center right' self='center left') Switch Locale

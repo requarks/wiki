@@ -1,5 +1,6 @@
+<!-- eslint-disable -->
 <template lang="pug">
-q-card.icon-picker(flat, style='width: 400px;')
+q-card.icon-picker(flat, style='width: 400px')
   q-tabs.text-primary(
     v-model='state.currentTab'
     no-caps
@@ -43,7 +44,8 @@ q-card.icon-picker(flat, style='width: 400px;')
               )
             q-item-section
               q-item-label {{scope.opt.name}}
-              q-item-label(caption): strong(:class='scope.selected ? `text-white` : `text-primary`') {{scope.opt.subset}}
+              q-item-label(caption)
+                strong(:class='scope.selected ? `text-white` : `text-primary`') {{scope.opt.subset}}
             q-item-section(side, v-if='scope.opt.subset')
               q-chip(
                 color='primary'

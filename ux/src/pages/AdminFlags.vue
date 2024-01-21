@@ -101,7 +101,6 @@ q-page.admin-flags
               icon='las la-code'
               color='primary'
               text-color='white'
-              @click=''
               disabled
             )
 

@@ -38,7 +38,8 @@
         q-item-section(side)
           q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)', size='sm')
         q-item-section
-          q-item-label(v-html='scope.opt')
+          q-item-label
+            span(v-html='scope.opt')
 </template>
 
 <script setup>

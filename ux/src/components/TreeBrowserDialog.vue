@@ -1,15 +1,15 @@
-<template lang="pug">
+<template lang='pug'>
 q-dialog(ref='dialogRef', @hide='onDialogHide')
   q-card.page-save-dialog(style='width: 860px; max-width: 90vw;')
     q-card-section.card-header(v-if='props.mode === `savePage`')
       q-icon(name='img:/_assets/icons/fluent-save-as.svg', left, size='sm')
-      span {{t('pageSaveDialog.title')}}
+      span {{ t('pageSaveDialog.title') }}
     q-card-section.card-header(v-else-if='props.mode === `duplicatePage`')
       q-icon(name='img:/_assets/icons/color-documents.svg', left, size='sm')
-      span {{t('pageDuplicateDialog.title')}}
+      span {{ t('pageDuplicateDialog.title') }}
     q-card-section.card-header(v-else-if='props.mode === `renamePage`')
       q-icon(name='img:/_assets/icons/fluent-rename.svg', left, size='sm')
-      span {{t('pageRenameDialog.title')}}
+      span {{ t('pageRenameDialog.title') }}
     .row.page-save-dialog-browser
       .col-4
         q-scroll-area(
@@ -36,13 +36,13 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             clickable
             active-class='active'
             :active='item.id === state.currentFileId'
-            @click.native='selectItem(item)'
+            @click='selectItem(item)'
             )
             q-item-section(side)
               q-icon(:name='item.icon', size='sm')
             q-item-section
               q-item-label {{item.title}}
-    .page-save-dialog-path.font-robotomono {{currentFolderPath}}
+    .page-save-dialog-path.font-robotomono {{ currentFolderPath }}
     q-list.q-py-sm
       q-item
         blueprint-icon(icon='new-document')

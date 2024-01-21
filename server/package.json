@@ -85,6 +85,7 @@
     "graphql-rate-limit-directive": "2.0.4",
     "graphql-tools": "9.0.0",
     "graphql-upload": "16.0.2",
+    "gray-matter": "4.0.3",
     "he": "1.2.0",
     "highlight.js": "11.9.0",
     "image-size": "1.0.2",

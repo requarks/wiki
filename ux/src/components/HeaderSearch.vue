@@ -66,6 +66,7 @@ q-toolbar(
       .flex.q-mb-md
         q-chip(
           v-for='tag of popularTags'
+          :key='tag'
           square
           color='grey-8'
           text-color='white'

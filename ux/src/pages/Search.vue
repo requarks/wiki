@@ -67,7 +67,8 @@ q-layout(view='hHh Lpr lff')
                 q-item-section(side)
                   q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)', size='sm')
                 q-item-section
-                  q-item-label(v-html='scope.opt')
+                  q-item-label
+                    span(v-html='scope.opt')
           //- q-input.q-mt-sm(
           //-   outlined
           //-   dense
@@ -103,7 +104,8 @@ q-layout(view='hHh Lpr lff')
                 q-item-section(side)
                   q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)')
                 q-item-section
-                  q-item-label(v-html='scope.opt.name')
+                  q-item-label
+                    span(v-html='scope.opt.name')
           q-select.q-mt-sm(
             outlined
             v-model='state.params.filterEditor'
@@ -154,7 +156,8 @@ q-layout(view='hHh Lpr lff')
             q-item-section
               q-item-label {{ item.title }}
               q-item-label(v-if='item.description', caption) {{ item.description }}
-              q-item-label.text-highlight(v-if='item.highlight', caption, v-html='item.highlight')
+              q-item-label.text-highlight(v-if='item.highlight', caption)
+                span(v-html='item.highlight')
             q-item-section(side)
               .flex.layout-search-itemtags
                 q-chip(

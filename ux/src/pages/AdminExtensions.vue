@@ -32,7 +32,7 @@ q-page.admin-extensions
       q-card
         q-list(separator)
           q-item(
-            v-for='(ext, idx) of state.extensions'
+            v-for='ext of state.extensions'
             :key='`ext-` + ext.key'
             )
             blueprint-icon(icon='module')

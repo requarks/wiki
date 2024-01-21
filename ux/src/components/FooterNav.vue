@@ -5,6 +5,7 @@ q-footer.site-footer
       v-if='hasSiteFooter'
       :keypath='isCopyright ? `common.footerCopyright` : `common.footerLicense`'
       tag='span'
+      scope='global'
       )
       template(#company)
         strong {{siteStore.company}}
@@ -15,6 +16,7 @@ q-footer.site-footer
     i18n-t(
       :keypath='props.generic ? `common.footerGeneric` : `common.footerPoweredBy`'
       tag='span'
+      scope='global'
       )
       template(#link)
         a(href='https://js.wiki', target='_blank', ref='noopener noreferrer'): strong Wiki.js

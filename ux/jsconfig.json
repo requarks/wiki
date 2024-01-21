@@ -40,7 +40,7 @@
   "vueCompilerOptions": {
     "target": 3,
     "plugins": [
-      "@volar/vue-language-plugin-pug"
+      "@vue/language-plugin-pug"
     ]
   }
 }

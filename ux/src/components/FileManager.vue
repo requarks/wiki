@@ -1,9 +1,9 @@
-<template lang="pug">
+<template lang='pug'>
 q-layout.fileman(view='hHh lpR lFr', container)
   q-header.card-header
     q-toolbar(dark)
       q-icon(name='img:/_assets/icons/fluent-folder.svg', left, size='md')
-      span {{t(`fileman.title`)}}
+      span {{ t(`fileman.title`) }}
     q-toolbar(dark)
       q-btn.q-mr-sm.acrylic-btn(
         flat
@@ -23,9 +23,9 @@ q-layout.fileman(view='hHh lpR lFr', container)
         :label='t(`fileman.searchFolder`)'
         :debounce='500'
         )
-        template(v-slot:prepend)
+        template(#prepend)
           q-icon(name='las la-search')
-        template(v-slot:append)
+        template(#append)
           q-icon.cursor-pointer(
             name='las la-times'
             @click='state.search=``'
@@ -78,9 +78,10 @@ q-layout.fileman(view='hHh lpR lFr', container)
           )
           .fileman-details-row(
             v-for='item of currentFileDetails.items'
+            :key='item.id'
             )
-            label {{item.label}}
-            span {{item.value}}
+            label {{ item.label }}
+            span {{ item.value }}
           template(v-if='insertMode')
             q-separator.q-my-md
             q-btn.full-width(
@@ -97,7 +98,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
       q-toolbar.fileman-toolbar
         template(v-if='state.isUploading')
           .fileman-progressbar
-            div(:style='`width: ` + state.uploadPercentage + `%`') {{state.uploadPercentage}}%
+            div(:style='`width: ` + state.uploadPercentage + `%`') {{ state.uploadPercentage }}%
           q-btn.acrylic-btn.q-ml-sm(
             flat
             dense
@@ -117,9 +118,8 @@ q-layout.fileman(view='hHh lpR lFr', container)
             color='grey'
             :aria-label='t(`fileman.viewOptions`)'
             icon='las la-th-list'
-            @click=''
             )
-            q-tooltip(anchor='bottom middle', self='top middle') {{t(`fileman.viewOptions`)}}
+            q-tooltip(anchor='bottom middle', self='top middle') {{ t(`fileman.viewOptions`) }}
             q-menu(
               transition-show='jump-down'
               transition-hide='jump-up'
@@ -128,7 +128,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
               )
               q-card.q-pa-sm
                 .text-center
-                  small.text-grey {{t(`fileman.viewOptions`)}}
+                  small.text-grey {{ t(`fileman.viewOptions`) }}
                 q-list(dense)
                   q-separator.q-my-sm
                   q-item(clickable)
@@ -183,7 +183,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
             icon='las la-redo-alt'
             @click='reloadFolder(state.currentFolderId)'
             )
-            q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.refresh`)}}
+            q-tooltip(anchor='bottom middle', self='top middle') {{ t(`common.actions.refresh`) }}
           q-separator.q-mr-sm(inset, vertical)
           q-btn.q-mr-sm(
             flat
@@ -193,7 +193,6 @@ q-layout.fileman(view='hHh lpR lFr', container)
             :label='t(`common.actions.new`)'
             :aria-label='t(`common.actions.new`)'
             icon='las la-plus-circle'
-            @click=''
             )
             new-menu(
               :hide-asset-btn='true'
@@ -236,16 +235,16 @@ q-layout.fileman(view='hHh lpR lFr', container)
                 clickable
                 active-class='active'
                 :active='item.id === state.currentFileId'
-                @click.native='selectItem(item)'
-                @dblclick.native='doubleClickItem(item)'
+                @click='selectItem(item)'
+                @dblclick='doubleClickItem(item)'
                 )
                 q-item-section.fileman-filelist-icon(avatar)
                   q-icon(:name='item.icon', :size='state.isCompact ? `md` : `xl`')
                 q-item-section.fileman-filelist-label
-                  q-item-label {{usePathTitle ? item.fileName : item.title}}
-                  q-item-label(caption, v-if='!state.isCompact') {{item.caption}}
+                  q-item-label {{ usePathTitle ? item.fileName : item.title }}
+                  q-item-label(caption, v-if='!state.isCompact') {{ item.caption }}
                 q-item-section.fileman-filelist-side(side, v-if='item.side')
-                  .text-caption {{item.side}}
+                  .text-caption {{ item.side }}
                 //- RIGHT-CLICK MENU
                 q-menu.translucent-menu(
                   touch-position
@@ -341,6 +340,7 @@ import { useSiteStore } from 'src/stores/site'
 import FolderCreateDialog from 'src/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from 'src/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from 'src/components/FolderRenameDialog.vue'
+import AssetRenameDialog from 'src/components/AssetRenameDialog.vue'
 import LocaleSelectorMenu from 'src/components/LocaleSelectorMenu.vue'
 
 // QUASAR
@@ -787,6 +787,7 @@ function reloadFolder (folderId) {
   treeComp.value.resetLoaded()
 }
 
+// --------------------------------------
 // PAGE METHODS
 // --------------------------------------
 
@@ -805,6 +806,34 @@ function delPage (pageId, pageName) {
     componentProps: {
       pageId,
       pageName
+    }
+  }).onOk(() => {
+    loadTree(state.currentFolderId, null)
+  })
+}
+
+// --------------------------------------
+// ASSET METHODS
+// --------------------------------------
+
+function renameAsset (assetId) {
+  $q.dialog({
+    component: AssetRenameDialog,
+    componentProps: {
+      assetId
+    }
+  }).onOk(async () => {
+    // -> Reload current view
+    await loadTree({ parentId: state.currentFolderId })
+  })
+}
+
+function delAsset (assetId, assetName) {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('src/components/AssetDeleteDialog.vue')),
+    componentProps: {
+      assetId,
+      assetName
     }
   }).onOk(() => {
     loadTree(state.currentFolderId, null)
@@ -991,7 +1020,7 @@ function renameItem (item) {
       break
     }
     case 'asset': {
-      // TODO: Rename asset
+      renameAsset(item.id)
       break
     }
   }
@@ -999,6 +1028,10 @@ function renameItem (item) {
 
 function delItem (item) {
   switch (item.type) {
+    case 'asset': {
+      delAsset(item.id, item.title)
+      break
+    }
     case 'folder': {
       delFolder(item.id, true)
       break

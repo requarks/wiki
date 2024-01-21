@@ -54,7 +54,7 @@ q-page.admin-api
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-info-circle', size='sm')
           q-card-section
-            i18n-t(tag='span', keypath='admin.metrics.endpoint')
+            i18n-t(tag='span', keypath='admin.metrics.endpoint', scope='global')
               template(#endpoint)
                 strong.font-robotomono /metrics
             .text-caption {{ t('admin.metrics.endpointWarning') }}
@@ -66,7 +66,7 @@ q-page.admin-api
           q-card-section.col-auto.q-pr-none
             q-icon(name='las la-key', size='sm')
           q-card-section
-            i18n-t(tag='span', keypath='admin.metrics.auth')
+            i18n-t(tag='span', keypath='admin.metrics.auth', scope='global')
               template(#headerName)
                 strong.font-robotomono Authorization
               template(#tokenType)

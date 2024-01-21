@@ -39,7 +39,6 @@ q-page.admin-groups
         unelevated
         color='secondary'
         :aria-label='t(`admin.users.defaults`)'
-        @click=''
         )
         q-tooltip {{ t(`admin.users.defaults`) }}
         user-defaults-menu

@@ -48,7 +48,10 @@
             span Pending Asset Uploads
           q-card-section(v-if='!hasPendingAssets') There are no assets pending uploads.
           q-list(v-else, separator)
-            q-item(v-for='item of editorStore.pendingAssets')
+            q-item(
+              v-for='item of editorStore.pendingAssets'
+              :key='item.id'
+              )
               q-item-section(side)
                 q-icon(name='las la-file-image')
               q-item-section {{ item.fileName }}

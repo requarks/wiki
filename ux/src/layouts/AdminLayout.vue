@@ -28,6 +28,7 @@ q-layout.admin(view='hHh Lpr lff')
             q-list(separator, padding)
               q-item(
                 v-for='lang of adminStore.locales'
+                :key='lang.code'
                 clickable
                 @click='commonStore.setLocale(lang.code)'
                 )

@@ -27,6 +27,7 @@ q-scroll-area.sidebar-nav(
           q-item(
             v-for='itemChild of item.children'
             :to='itemChild.target'
+            :key='itemChild.id'
             )
             q-item-section(side)
               q-icon(:name='itemChild.icon', color='white')

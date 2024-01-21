@@ -65,7 +65,7 @@ q-page.admin-theme
               unchecked-icon='las la-times'
               :aria-label='t(`admin.theme.darkMode`)'
               )
-        template(v-for='(cl, idx) of colorKeys', :key='cl')
+        template(v-for='cl of colorKeys', :key='cl')
           q-separator.q-my-sm(inset)
           q-item
             blueprint-icon(icon='fill-color')

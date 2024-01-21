@@ -84,7 +84,7 @@ q-page.admin-locale
           .text-caption(:class='$q.dark.isActive ? `text-grey-4` : `text-grey-7`') Select the locales that can be used on this site.
 
         q-item(
-          v-for='(lc, idx) of state.locales'
+          v-for='lc of state.locales'
           :key='lc.code'
           :tag='lc.code !== state.selectedLocale ? `label` : null'
           )

@@ -1,6 +1,7 @@
 import _ from 'lodash-es'
 import sanitize from 'sanitize-filename'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
+import { decodeFolderPath, decodeTreePath, generateHash } from '../../helpers/common.mjs'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { v4 as uuid } from 'uuid'
@@ -9,7 +10,12 @@ import { pipeline } from 'node:stream/promises'
 export default {
   Query: {
     async assetById(obj, args, context) {
-      return null
+      const asset = await WIKI.db.assets.query().findById(args.id)
+      if (asset) {
+        return asset
+      } else {
+        throw new Error('ERR_ASSET_NOT_FOUND')
+      }
     }
   },
   Mutation: {
@@ -18,75 +24,75 @@ export default {
      */
     async renameAsset(obj, args, context) {
       try {
-        const filename = sanitize(args.filename).toLowerCase()
+        const filename = sanitize(args.fileName).toLowerCase()
 
         const asset = await WIKI.db.assets.query().findById(args.id)
-        if (asset) {
+        const treeItem = await WIKI.db.tree.query().findById(args.id)
+        if (asset && treeItem) {
           // Check for extension mismatch
-          if (!_.endsWith(filename, asset.ext)) {
-            throw new WIKI.Error.AssetRenameInvalidExt()
+          if (!_.endsWith(filename, asset.fileExt)) {
+            throw new Error('ERR_ASSET_EXT_MISMATCH')
           }
 
           // Check for non-dot files changing to dotfile
-          if (asset.ext.length > 0 && filename.length - asset.ext.length < 1) {
-            throw new WIKI.Error.AssetRenameInvalid()
+          if (asset.fileExt.length > 0 && filename.length - asset.fileExt.length < 1) {
+            throw new Error('ERR_ASSET_INVALID_DOTFILE')
           }
 
           // Check for collision
-          const assetCollision = await WIKI.db.assets.query().where({
-            filename,
-            folderId: asset.folderId
+          const assetCollision = await WIKI.db.tree.query().where({
+            folderPath: treeItem.folderPath,
+            fileName: filename
           }).first()
           if (assetCollision) {
-            throw new WIKI.Error.AssetRenameCollision()
-          }
-
-          // Get asset folder path
-          let hierarchy = []
-          if (asset.folderId) {
-            hierarchy = await WIKI.db.assetFolders.getHierarchy(asset.folderId)
+            throw new Error('ERR_ASSET_ALREADY_EXISTS')
           }
 
           // Check source asset permissions
-          const assetSourcePath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${asset.filename}` : asset.filename
+          const assetSourcePath = (treeItem.folderPath) ? decodeTreePath(decodeFolderPath(treeItem.folderPath)) + `/${treeItem.fileName}` : treeItem.fileName
           if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath })) {
-            throw new WIKI.Error.AssetRenameForbidden()
+            throw new Error('ERR_FORBIDDEN')
           }
 
           // Check target asset permissions
-          const assetTargetPath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${filename}` : filename
+          const assetTargetPath = (treeItem.folderPath) ? decodeTreePath(decodeFolderPath(treeItem.folderPath)) + `/${filename}` : filename
           if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath })) {
-            throw new WIKI.Error.AssetRenameTargetForbidden()
+            throw new Error('ERR_TARGET_FORBIDDEN')
           }
 
           // Update filename + hash
-          const fileHash = '' // assetHelper.generateHash(assetTargetPath)
+          const itemHash = generateHash(assetTargetPath)
           await WIKI.db.assets.query().patch({
-            filename: filename,
-            hash: fileHash
-          }).findById(args.id)
+            fileName: filename
+          }).findById(asset.id)
 
-          // Delete old asset cache
-          await asset.deleteAssetCache()
+          await WIKI.db.tree.query().patch({
+            fileName: filename,
+            title: filename,
+            hash: itemHash
+          }).findById(treeItem.id)
 
-          // Rename in Storage
-          await WIKI.db.storage.assetEvent({
-            event: 'renamed',
-            asset: {
-              ...asset,
-              path: assetSourcePath,
-              destinationPath: assetTargetPath,
-              moveAuthorId: context.req.user.id,
-              moveAuthorName: context.req.user.name,
-              moveAuthorEmail: context.req.user.email
-            }
-          })
+          // TODO: Delete old asset cache
+          WIKI.events.outbound.emit('purgeItemCache', itemHash)
+
+          // TODO: Rename in Storage
+          // await WIKI.db.storage.assetEvent({
+          //   event: 'renamed',
+          //   asset: {
+          //     ...asset,
+          //     path: assetSourcePath,
+          //     destinationPath: assetTargetPath,
+          //     moveAuthorId: context.req.user.id,
+          //     moveAuthorName: context.req.user.name,
+          //     moveAuthorEmail: context.req.user.email
+          //   }
+          // })
 
           return {
-            responseResult: generateSuccess('Asset has been renamed successfully.')
+            operation: generateSuccess('Asset has been renamed successfully.')
           }
         } else {
-          throw new WIKI.Error.AssetInvalid()
+          throw new Error('ERR_INVALID_ASSET')
         }
       } catch (err) {
         return generateError(err)
@@ -97,35 +103,38 @@ export default {
      */
     async deleteAsset(obj, args, context) {
       try {
-        const asset = await WIKI.db.assets.query().findById(args.id)
-        if (asset) {
+        const treeItem = await WIKI.db.tree.query().findById(args.id)
+        if (treeItem) {
           // Check permissions
-          const assetPath = await asset.getAssetPath()
+          const assetPath = (treeItem.folderPath) ? decodeTreePath(decodeFolderPath(treeItem.folderPath)) + `/${treeItem.fileName}` : treeItem.fileName
           if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath })) {
-            throw new WIKI.Error.AssetDeleteForbidden()
+            throw new Error('ERR_FORBIDDEN')
           }
 
-          await WIKI.db.knex('assetData').where('id', args.id).del()
-          await WIKI.db.assets.query().deleteById(args.id)
-          await asset.deleteAssetCache()
+          // Delete from DB
+          await WIKI.db.assets.query().deleteById(treeItem.id)
+          await WIKI.db.tree.query().deleteById(treeItem.id)
 
-          // Delete from Storage
-          await WIKI.db.storage.assetEvent({
-            event: 'deleted',
-            asset: {
-              ...asset,
-              path: assetPath,
-              authorId: context.req.user.id,
-              authorName: context.req.user.name,
-              authorEmail: context.req.user.email
-            }
-          })
+          // TODO: Delete asset cache
+          WIKI.events.outbound.emit('purgeItemCache', treeItem.hash)
+
+          // TODO: Delete from Storage
+          // await WIKI.db.storage.assetEvent({
+          //   event: 'deleted',
+          //   asset: {
+          //     ...asset,
+          //     path: assetPath,
+          //     authorId: context.req.user.id,
+          //     authorName: context.req.user.name,
+          //     authorEmail: context.req.user.email
+          //   }
+          // })
 
           return {
-            responseResult: generateSuccess('Asset has been deleted successfully.')
+            operation: generateSuccess('Asset has been deleted successfully.')
           }
         } else {
-          throw new WIKI.Error.AssetInvalid()
+          throw new Error('ERR_INVALID_ASSET')
         }
       } catch (err) {
         return generateError(err)
@@ -373,7 +382,7 @@ export default {
       try {
         await WIKI.db.assets.flushTempUploads()
         return {
-          responseResult: generateSuccess('Temporary Uploads have been flushed successfully.')
+          operation: generateSuccess('Temporary Uploads have been flushed successfully.')
         }
       } catch (err) {
         return generateError(err)

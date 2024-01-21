@@ -13,19 +13,16 @@ import CleanCSS from 'clean-css'
 import TurndownService from 'turndown'
 import { gfm as turndownPluginGfm } from '@joplin/turndown-plugin-gfm'
 import cheerio from 'cheerio'
+import matter from 'gray-matter'
 
-import { Locale } from './locales.mjs'
 import { PageLink } from './pageLinks.mjs'
-import { Tag } from './tags.mjs'
 import { User } from './users.mjs'
 
 const pageRegex = /^[a-zA-Z0-9-_/]*$/
 const aliasRegex = /^[a-zA-Z0-9-_]*$/
 
 const frontmatterRegex = {
-  html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
-  legacy: /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
-  markdown: /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?(?:\n|\r)*([\w\W]*)*/
+  html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/
 }
 
 /**
@@ -178,30 +175,20 @@ export class Page extends Model {
    * @returns {Object} Parsed Page Metadata with Raw Content
    */
   static parseMetadata (raw, contentType) {
-    let result
     try {
       switch (contentType) {
-        case 'markdown':
-          result = frontmatterRegex.markdown.exec(raw)
-          if (result[2]) {
+        case 'markdown': {
+          const result = matter(raw)
+          if (!result?.isEmpty) {
             return {
-              ...yaml.safeLoad(result[2]),
-              content: result[3]
-            }
-          } else {
-            // Attempt legacy v1 format
-            result = frontmatterRegex.legacy.exec(raw)
-            if (result[2]) {
-              return {
-                title: result[2],
-                description: result[4],
-                content: result[5]
-              }
+              content: result.content,
+              ...result.data
             }
           }
           break
-        case 'html':
-          result = frontmatterRegex.html.exec(raw)
+        }
+        case 'html': {
+          const result = frontmatterRegex.html.exec(raw)
           if (result[2]) {
             return {
               ...yaml.safeLoad(result[2]),
@@ -209,6 +196,7 @@ export class Page extends Model {
             }
           }
           break
+        }
       }
     } catch (err) {
       WIKI.logger.warn('Failed to parse page metadata. Invalid syntax.')

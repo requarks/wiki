@@ -64,11 +64,11 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             )
             template(v-slot:selected)
               .text-caption(v-if='state.keyGroups.length > 1')
-                i18n-t(keypath='admin.api.groupsSelected')
+                i18n-t(keypath='admin.api.groupsSelected', scope='global')
                   template(#count)
                     strong {{ state.keyGroups.length }}
               .text-caption(v-else-if='state.keyGroups.length === 1')
-                i18n-t(keypath='admin.api.groupSelected')
+                i18n-t(keypath='admin.api.groupSelected', scope='global')
                   template(#group)
                     strong {{ selectedGroupName }}
               span(v-else)

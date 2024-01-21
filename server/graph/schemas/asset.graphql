@@ -5,13 +5,13 @@
 extend type Query {
   assetById(
     id: UUID!
-  ): [AssetItem]
+  ): AssetItem
 }
 
 extend type Mutation {
   renameAsset(
     id: UUID!
-    filename: String!
+    fileName: String!
   ): DefaultResponse
 
   deleteAsset(
@@ -39,7 +39,7 @@ extend type Mutation {
 
 type AssetItem {
   id: UUID
-  filename: String
+  fileName: String
   ext: String
   kind: AssetKind
   mime: String
