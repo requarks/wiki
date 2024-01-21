@@ -1,8 +1,8 @@
-<template lang="pug">
+<template lang='pug'>
 q-layout(view='hHh lpR fFf', container)
   q-header.card-header.q-px-md.q-py-sm
     q-icon(name='img:/_assets/icons/fluent-template.svg', left, size='md')
-    span {{t(`admin.mail.templateEditor`)}}
+    span {{ t(`admin.mail.templateEditor`) }}
     q-space
     q-btn.q-mr-sm(
       flat
@@ -31,7 +31,6 @@ q-layout(view='hHh lpR fFf', container)
         :label='t(`common.actions.save`)'
         :aria-label='t(`common.actions.save`)'
         icon='las la-check'
-        @click=''
         :disabled='state.loading > 0'
       )
   q-page-container
@@ -40,7 +39,7 @@ q-layout(view='hHh lpR fFf', container)
       //- MONACO EDITOR
       //--------------------------------------------------------
       .mail-template-editor
-        repl(:editor='Monaco' :store='store' :showTsConfig='false' theme='dark' :autoResize='true' :ssr='false' :showCompileOutput='false')
+        repl(:editor='Monaco' :store='store' :show-ts-config='false' theme='dark' :auto-resize='true' :ssr='false' :show-compile-output='false')
 
       q-inner-loading(:showing='state.loading > 0')
         q-spinner(color='accent', size='lg')
