@@ -8,6 +8,7 @@ revisionHistoryLimit: 10
 image:
   repository: requarks/wiki
   imagePullPolicy: IfNotPresent
+  tag: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -112,6 +113,34 @@ sideload:
   env: []
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
+
+sqlite:
+  enabled: false
+
+  persistence:
+    # -- set to true to use pvc
+    enabled: false
+
+    storagePath: /var/lib/sqlite
+
+    # -- specify an existing `PersistentVolumeClaim` to use
+    existingClaim: ""
+
+    # -- Annotations for the `PersitentVolumeClaim`
+    annotations: {}
+
+    accessModes:
+      - ReadWriteOnce
+
+    size: "500Mi"
+
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
 
 ## Append extra trusted certificates for node process from extra volume via NODE_EXTRA_CA_CERTS variable
 # nodeExtraCaCerts: "/path/to/certs.pem"

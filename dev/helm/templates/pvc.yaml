@@ -1,0 +1,27 @@
+{{- if and .Values.sqlite.enabled .Values.sqlite.persistence.enabled -}}
+{{- if not .Values.sqlite.persistence.existingClaim -}}
+apiVersion: "v1"
+kind: "PersistentVolumeClaim"
+metadata:
+{{- if .Values.sqlite.persistence.annotations }}
+  annotations:
+{{ toYaml .Values.sqlite.persistence.annotations | indent 4 }}
+{{- end }}
+  name: {{ include "wiki.fullname" . }}
+  labels:
+    {{- include "wiki.labels" . | nindent 4 }}
+spec:
+  accessModes:
+{{ toYaml .Values.sqlite.persistence.accessModes | indent 4 }}
+{{- if .Values.sqlite.persistence.storageClass }}
+{{- if (eq "-" .Values.sqlite.persistence.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.sqlite.persistence.storageClass }}"
+{{- end }}
+{{- end }}
+  resources:
+    requests:
+      storage: "{{ .Values.sqlite.persistence.size }}"
+{{- end -}}
+{{- end -}}

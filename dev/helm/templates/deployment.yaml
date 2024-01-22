@@ -43,14 +43,15 @@ spec:
             - name: NODE_EXTRA_CA_CERTS
               value: {{ .Values.nodeExtraCaCerts }}
             {{- end }}
-            - name: DB_TYPE
-              value: postgres
             {{- if (.Values.externalPostgresql).databaseURL }}
             - name: DATABASE_URL
               value: {{ .Values.externalPostgresql.databaseURL }}
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
-            {{- else }}
+            {{- end }}
+            {{- if .Values.postgresql.enabled }}
+            - name: DB_TYPE
+              value: postgres
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
             - name: DB_PORT
@@ -73,12 +74,20 @@ spec:
                 {{- end }}
                   key: {{ template "wiki.postgresql.secretKey" . }}
             {{- end }}
+            {{- if .Values.sqlite.enabled }}
+            - name: DB_TYPE
+              value: sqlite
+            - name: DB_FILEPATH
+              value: {{ .Values.sqlite.persistence.storagePath }}/db.sqlite
+            {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
-    {{- with .Values.volumeMounts }}
           volumeMounts:
+            - name: sqlite-vol
+              mountPath: {{ .Values.sqlite.persistence.storagePath }}
+          {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
-    {{- end }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 3000
@@ -95,15 +104,22 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{- with .Values.affinity }}
+      {{- with .Values.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.volumes }}
+      {{- end }}
       volumes:
+        - name: sqlite-vol
+          {{- if .Values.sqlite.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.sqlite.persistence.existingClaim }}{{ .Values.sqlite.persistence.existingClaim }}{{- else }}{{ template "wiki.fullname" . }}{{- end }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
