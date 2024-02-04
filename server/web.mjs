@@ -172,7 +172,6 @@ export async function init () {
   // ----------------------------------------
 
   app.set('views', path.join(WIKI.SERVERPATH, 'views'))
-  app.set('view engine', 'pug')
 
   app.use(express.urlencoded({ extended: false, limit: '1mb' }))
 

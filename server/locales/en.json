@@ -1643,7 +1643,7 @@
   "fileman.aiFileType": "Adobe Illustrator Document",
   "fileman.aifFileType": "AIF Audio File",
   "fileman.apkFileType": "Android Package",
-  "fileman.assetDelete": "Delete Asset",
+  "fileman.assetDelete": "Confirm Delete Asset",
   "fileman.assetDeleteConfirm": "Are you sure you want to delete {name}?",
   "fileman.assetDeleteId": "Asset ID {id}",
   "fileman.assetDeleteSuccess": "Asset deleted successfully.",

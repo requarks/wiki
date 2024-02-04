@@ -8,9 +8,9 @@ q-layout.admin(view='hHh Lpr lff')
             img(src='/_assets/logo-wikijs.svg')
         q-toolbar-title.text-h6 Wiki.js
       q-toolbar.gt-sm.justify-center(style='height: 64px;', dark)
-        .text-overline.text-uppercase.text-grey {{t('admin.adminArea')}}
+        .text-overline.text-uppercase.text-grey {{ t('admin.adminArea') }}
         q-badge.q-ml-sm(
-          label='v3 Preview'
+          label='beta'
           color='pink'
           outline
           )

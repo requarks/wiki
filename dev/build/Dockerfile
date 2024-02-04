@@ -32,6 +32,9 @@ ENV NODE_ENV=production
 WORKDIR /wiki/server
 RUN pnpm install --prod --frozen-lockfile
 
+# Set extensions as installed
+RUN touch node_modules/sharp/wiki_installed.txt
+
 WORKDIR /wiki
 
 VOLUME ["/wiki/data/content"]

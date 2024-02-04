@@ -6,8 +6,8 @@ import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 
 import { useUserStore } from 'src/stores/user'
 
-export default boot(({ app }) => {
-  const userStore = useUserStore()
+export default boot(({ app, store }) => {
+  const userStore = useUserStore(store)
 
   const defaultLinkOptions = {
     uri: '/_graphql',

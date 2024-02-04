@@ -22,7 +22,7 @@ export default {
   },
   async install () {
     try {
-      const { stdout, stderr } = await exec('node install/libvips && node install/dll-copy', {
+      const { stdout, stderr } = await exec('node install/check', {
         cwd: path.join(WIKI.SERVERPATH, 'node_modules/sharp'),
         timeout: 120000,
         windowsHide: true

@@ -808,7 +808,8 @@ function delPage (pageId, pageName) {
       pageName
     }
   }).onOk(() => {
-    loadTree(state.currentFolderId, null)
+    // -> Reload current view
+    loadTree({ parentId: state.currentFolderId })
   })
 }
 
@@ -835,8 +836,9 @@ function delAsset (assetId, assetName) {
       assetId,
       assetName
     }
-  }).onOk(() => {
-    loadTree(state.currentFolderId, null)
+  }).onOk(async () => {
+    // -> Reload current view
+    await loadTree({ parentId: state.currentFolderId })
   })
 }
 

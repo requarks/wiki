@@ -3,8 +3,8 @@ import { createI18n } from 'vue-i18n'
 
 import { useCommonStore } from 'src/stores/common'
 
-export default boot(({ app }) => {
-  const commonStore = useCommonStore()
+export default boot(({ app, store }) => {
+  const commonStore = useCommonStore(store)
 
   const i18n = createI18n({
     legacy: false,
