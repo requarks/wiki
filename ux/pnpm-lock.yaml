@@ -180,8 +180,8 @@ dependencies:
     specifier: 4.0.0
     version: 4.0.0
   markdown-it-mdc:
-    specifier: 0.2.1
-    version: 0.2.1(@types/markdown-it@13.0.7)(markdown-it@14.0.0)
+    specifier: 0.2.2
+    version: 0.2.2(@types/markdown-it@13.0.7)(markdown-it@14.0.0)
   markdown-it-multimd-table:
     specifier: 4.2.3
     version: 4.2.3
@@ -3899,8 +3899,8 @@ packages:
     resolution: {integrity: sha512-YLhzaOsU9THO/cal0lUjfMjrqSMPjjyjChYM7oyj4DnyaXEzA8gnW6cVJeyCrCVeyesrY2PlEdUYJSPFYL4Nkg==}
     dev: false
 
-  /markdown-it-mdc@0.2.1(@types/markdown-it@13.0.7)(markdown-it@14.0.0):
-    resolution: {integrity: sha512-yUQKSlXXqS94VamsBPdmxAt5nXqSQ062NV9KTSXVR3RD9u+yFP/e+N13L7ebfRJRYRCXhANQF5z6N4/nIZ757g==}
+  /markdown-it-mdc@0.2.2(@types/markdown-it@13.0.7)(markdown-it@14.0.0):
+    resolution: {integrity: sha512-80JZ1L6OsA+2uYnVvLW2sCoFx9htY07QSQJsb6PND8oqXrQk/LS4rRIrtY2MmuktNDXBDJr9os+B5dCFLZR6Zw==}
     peerDependencies:
       '@types/markdown-it': '*'
       markdown-it: ^14.0.0

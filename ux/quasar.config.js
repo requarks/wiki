@@ -109,16 +109,16 @@ module.exports = configure(function (ctx) {
             }
           }
           viteConf.build.chunkSizeWarningLimit = 5000
-          viteConf.build.dynamicImportVarsOptions = {
-            warnOnError: true,
-            include: ['!/_blocks/**']
-          }
           viteConf.optimizeDeps.include = [
             'prosemirror-state',
             'prosemirror-transform',
             'prosemirror-model',
             'prosemirror-view'
           ]
+        }
+        viteConf.build.dynamicImportVarsOptions = {
+          warnOnError: true,
+          include: ['!/_blocks/**']
         }
       },
       // viteVuePluginOptions: {},

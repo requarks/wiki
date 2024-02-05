@@ -4,8 +4,8 @@
   .welcome-content
     .welcome-logo
       img(src='/_assets/logo-wikijs.svg')
-    .welcome-title {{t('welcome.title')}}
-    .welcome-subtitle {{t('welcome.subtitle')}}
+    .welcome-title {{ t('welcome.title') }}
+    .welcome-subtitle {{ t('welcome.subtitle') }}
     .welcome-actions
       q-btn(
         push
@@ -23,7 +23,7 @@
             q-item(
               clickable
               @click='createHomePage(`wysiwyg`)'
-              v-if='siteStore.editors.wysiwyg'
+              v-if='flagsStore.experimental && siteStore.editors.wysiwyg'
               )
               blueprint-icon(icon='google-presentation')
               q-item-section.q-pr-sm Using the Visual Editor
@@ -39,7 +39,7 @@
             q-item(
               clickable
               @click='createHomePage(`asciidoc`)'
-              v-if='siteStore.editors.asciidoc'
+              v-if='flagsStore.experimental && siteStore.editors.asciidoc'
               )
               blueprint-icon(icon='asciidoc')
               q-item-section.q-pr-sm Using the AsciiDoc Editor
@@ -60,8 +60,9 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useMeta, useQuasar } from 'quasar'
 
-import { useSiteStore } from 'src/stores/site'
+import { useFlagsStore } from 'src/stores/flags'
 import { usePageStore } from 'src/stores/page'
+import { useSiteStore } from 'src/stores/site'
 
 // QUASAR
 
@@ -69,6 +70,7 @@ const $q = useQuasar()
 
 // STORES
 
+const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
