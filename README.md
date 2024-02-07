@@ -167,6 +167,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - Cole Manning ([@RVRX](https://github.com/RVRX))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- Daniel Horner ([@danhorner](https://github.com/danhorner))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
