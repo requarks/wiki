@@ -10,7 +10,7 @@ extend type Query {
     orderByDirection: OrderByDirection
     # Filter by name / email
     filter: String
-  ): [UserMinimal]
+  ): UserResults
 
   userById(
     id: UUID!
@@ -120,6 +120,11 @@ type UserLastLogin {
   id: UUID
   name: String
   lastLoginAt: Date
+}
+
+type UserResults {
+  users: [UserMinimal]
+  total: Int
 }
 
 type UserMinimal {

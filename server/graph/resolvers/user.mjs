@@ -28,7 +28,8 @@ export default {
       }
 
       // -> Fetch Users
-      return WIKI.db.users.query()
+      const total = await WIKI.db.users.query().count('id').first()
+      const users = await WIKI.db.users.query()
         .select('id', 'email', 'name', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
         .where(builder => {
           if (args.filter) {
@@ -39,6 +40,11 @@ export default {
         .orderBy(args.orderBy ?? 'name', args.orderByDirection ?? 'asc')
         .offset((offset - 1) * limit)
         .limit(limit)
+
+      return {
+        users,
+        total: total.count
+      }
     },
     /**
      * FETCH A SINGLE USER

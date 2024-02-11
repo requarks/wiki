@@ -64,13 +64,13 @@ q-page.admin-groups
           :rows-per-page-options='[0]'
           :loading='state.loading > 0'
           )
-          template(v-slot:body-cell-id='props')
+          template(#body-cell-id='props')
             q-td(:props='props')
               q-icon(name='las la-user', color='primary', size='sm')
-          template(v-slot:body-cell-name='props')
+          template(#body-cell-name='props')
             q-td(:props='props')
               .flex.items-center
-                strong {{props.value}}
+                strong {{ props.value }}
                 q-icon.q-ml-sm(
                   v-if='props.row.isSystem'
                   name='las la-lock'
@@ -81,10 +81,10 @@ q-page.admin-groups
                   name='las la-ban'
                   color='pink'
                   )
-          template(v-slot:body-cell-email='props')
+          template(#body-cell-email='props')
             q-td(:props='props')
               em {{ props.value }}
-          template(v-slot:body-cell-date='props')
+          template(#body-cell-date='props')
             q-td(:props='props')
               i18n-t.text-caption(keypath='admin.users.createdAt', tag='div')
                 template(#date)
@@ -96,7 +96,7 @@ q-page.admin-groups
                 )
                 template(#date)
                   strong {{ humanizeDate(props.row.lastLoginAt) }}
-          template(v-slot:body-cell-edit='props')
+          template(#body-cell-edit='props')
             q-td(:props='props')
               q-btn.acrylic-btn.q-mr-sm(
                 v-if='!props.row.isSystem'
@@ -114,11 +114,19 @@ q-page.admin-groups
                 color='negative'
                 @click='deleteUser(props.row)'
                 )
+      .flex.flex-center.q-mt-lg(v-if='state.totalPages > 1')
+        q-pagination(
+          v-model='state.currentPage'
+          :max='state.totalPages'
+          :max-pages='9'
+          boundary-numbers
+          direction-links
+        )
 </template>
 
 <script setup>
 import gql from 'graphql-tag'
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep, debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
@@ -162,7 +170,10 @@ useMeta({
 const state = reactive({
   users: [],
   loading: 0,
-  search: ''
+  search: '',
+  currentPage: 1,
+  pageSize: 20,
+  totalPages: 15
 })
 
 const headers = [
@@ -214,28 +225,52 @@ watch(() => adminStore.overlay, (newValue, oldValue) => {
 
 watch(() => route.params.id, checkOverlay)
 
+watch(() => state.search, debounce(() => {
+  load({ page: 1 })
+}, 400))
+watch(() => state.currentPage, (newValue) => {
+  load({ page: newValue })
+})
+
 // METHODS
 
-async function load () {
+async function load ({ page } = {}) {
   state.loading++
   $q.loading.show()
   const resp = await APOLLO_CLIENT.query({
     query: gql`
-      query getUsers {
-        users {
-          id
-          name
-          email
-          isSystem
-          isActive
-          createdAt
-          lastLoginAt
+      query getUsers(
+        $page: Int
+        $pageSize: Int
+        $filter: String
+      ) {
+        users(
+          page: $page
+          pageSize: $pageSize
+          filter: $filter
+        ) {
+          total
+          users {
+            id
+            name
+            email
+            isSystem
+            isActive
+            createdAt
+            lastLoginAt
+          }
         }
       }
     `,
-    fetchPolicy: 'network-only'
+    fetchPolicy: 'network-only',
+    variables: {
+      page: page ?? state.currentPage ?? 1,
+      pageSize: state.pageSize ?? 20,
+      filter: state.search ?? ''
+    }
   })
-  state.users = cloneDeep(resp?.data?.users)
+  state.totalPages = Math.ceil((resp?.data?.users?.total || 1) / state.pageSize)
+  state.users = cloneDeep(resp?.data?.users?.users)
   $q.loading.hide()
   state.loading--
 }
@@ -281,7 +316,7 @@ function deleteUser (usr) {
 
 onMounted(() => {
   checkOverlay()
-  load()
+  load({ page: 1 })
 })
 
 // BEFORE UNMOUNT
