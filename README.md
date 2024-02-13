@@ -13,8 +13,7 @@
 [![Build + Publish](https://github.com/Requarks/wiki/actions/workflows/build.yml/badge.svg)](https://github.com/Requarks/wiki/actions/workflows/build.yml)
 [![Huntr](https://img.shields.io/badge/security%20bounty-disclose-brightgreen.svg?style=flat&logo=cachet&logoColor=white)](https://huntr.dev/bounties/disclose)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ngpixel?logo=github&color=ea4aaa)](https://github.com/users/NGPixel/sponsorship)
-[![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/wikijs?label=backers&color=218bff&logo=opencollective&logoColor=white)](https://opencollective.com/wikijs)
-[![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp&logoColor=white)](https://blog.js.wiki/subscribe)  
+[![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/wikijs?label=backers&color=218bff&logo=opencollective&logoColor=white)](https://opencollective.com/wikijs)  
 [![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 [![Follow on Twitter](https://img.shields.io/badge/twitter-%40requarks-blue.svg?style=flat&logo=twitter&logoColor=white)](https://twitter.com/requarks)
 [![Follow on Telegram](https://img.shields.io/badge/telegram-%40wiki__js-blue.svg?style=flat&logo=telegram)](https://t.me/wiki_js)
@@ -81,8 +80,8 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
   <tbody>
     <tr>
       <td align="center" valign="middle" width="444">
-        <a href="https://www.hostwiki.com/" target="_blank">
-          <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
+        <a href="https://www.stellarhosted.com/" target="_blank">
+          <img src="https://cdn.js.wiki/images/sponsors/stellarhosted.png">
         </a>
       </td>
     </tr>
@@ -94,6 +93,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 <table>
   <tbody>
     <tr>
+      <td align="center" valign="middle" width="148">
+        <a href="https://acceleanation.com/" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
+        </a>
+      </td>
       <td align="center" valign="middle" width="148">
         <a href="https://github.com/alexksso" target="_blank">
           Alexander Casassovici<br />(@alexksso)
@@ -115,6 +119,13 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
+        <a href="https://www.hostwiki.com/" target="_blank">
+          <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle" width="148">
         <a href="https://github.com/JayDaley" target="_blank">
           Jay Daley<br />(@JayDaley)
         </a>
@@ -124,8 +135,6 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           Oleksii<br />(@idokka)
         </a>
       </td>
-    </tr>
-    <tr>
       <td align="center" valign="middle" width="148">
         <a href="https://www.openhost-network.com/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114218287?s=200&v=4">
@@ -134,16 +143,6 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
       <td align="center" valign="middle" width="148">
         <a href="https://www.prevo.ch/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114394792?v=4">
-        </a>
-      </td>
-      <td align="center" valign="middle" width="148">
-        <a href="https://acceleanation.com/" target="_blank">
-          <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
-        </a>
-      </td>
-      <td align="center" valign="middle" width="148">
-        <a href="https://www.stellarhosted.com/" target="_blank">
-          <img src="https://cdn.js.wiki/images/sponsors/stellarhosted.png">
         </a>
       </td>
       <td align="center" valign="middle" colspan="2">
@@ -168,6 +167,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - Cole Manning ([@RVRX](https://github.com/RVRX))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- Daniel Horner ([@danhorner](https://github.com/danhorner))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
@@ -215,6 +215,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - ameyrakheja ([@ameyrakheja](https://github.com/ameyrakheja))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
 - aytaa ([@aytaa](https://github.com/aytaa))
+- cesar ([@cesarnr21](https://github.com/cesarnr21))
 - chaee ([@chaee](https://github.com/chaee))
 - lwileczek ([@lwileczek](https://github.com/lwileczek))
 - magicpotato ([@fortheday](https://github.com/fortheday))
@@ -399,6 +400,7 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 <table><tbody><tr><td>
 <img width="441" height="1" />
 
+- Aeternum
 - Al Romano
 - Alex Balabanov
 - Alex Milanov
@@ -423,11 +425,11 @@ Thank you to all our patrons! 🙏 [[Become a patron](https://www.patreon.com/re
 - Ian
 - Imari Childress
 - Iskander Callos
-- Josh Stewart
   
 </td><td>
 <img width="441" height="1" />
 
+- Josh Stewart
 - Justin Dunsworth
 - Keir
 - Loïc CRAMPON
