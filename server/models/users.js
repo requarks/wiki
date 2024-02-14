@@ -225,6 +225,18 @@ module.exports = class User extends Model {
       })
     }
 
+    // Parse jobTitle
+    let jobTitle = "";
+    if (_.isString(profile.jobTitle) && profile.jobTitle.length > 0) {
+      jobTitle = profile.jobTitle;
+    }
+
+    // Parse location
+    let location = "";
+    if (_.isString(profile.location) && profile.location.length > 0) {
+      location = profile.location;
+    }
+
     // Update existing user
     if (user) {
       if (!user.isActive) {
@@ -264,6 +276,8 @@ module.exports = class User extends Model {
         email: primaryEmail,
         name: displayName,
         pictureUrl: pictureUrl,
+        jobTitle: jobTitle,
+        location: location,
         localeCode: WIKI.config.lang.code,
         defaultEditor: 'markdown',
         tfaIsActive: false,
