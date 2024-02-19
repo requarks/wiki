@@ -37,6 +37,9 @@
     "node": ">=10.12"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudsearch": "3.515.0",
+    "@aws-sdk/client-cloudsearch-domain": "3.515.0",
+    "@aws-sdk/client-s3": "3.515.0",
     "@azure/storage-blob": "12.12.0",
     "@exlinc/keycloak-passport": "1.0.2",
     "@joplin/turndown-plugin-gfm": "1.0.45",
@@ -51,7 +54,6 @@
     "apollo-server-express": "2.25.2",
     "asciidoctor": "2.2.6",
     "auto-load": "3.0.4",
-    "aws-sdk": "2.1309.0",
     "azure-search-client": "3.1.5",
     "bcryptjs-then": "1.0.1",
     "bluebird": "3.7.2",
