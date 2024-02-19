@@ -1,4 +1,4 @@
-const S3 = require('aws-sdk/clients/s3')
+const { S3 } = require('@aws-sdk/client-s3');
 const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)

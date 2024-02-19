@@ -1,5 +1,8 @@
 const _ = require('lodash')
-const AWS = require('aws-sdk')
+
+const { CloudSearch } = require('@aws-sdk/client-cloudsearch');
+const { CloudSearchDomain } = require('@aws-sdk/client-cloudsearch-domain');
+
 const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
@@ -18,17 +21,33 @@ module.exports = {
    */
   async init() {
     WIKI.logger.info(`(SEARCH/AWS) Initializing...`)
-    this.client = new AWS.CloudSearch({
+    this.client = new CloudSearch({
+      // The key apiVersion is no longer supported in v3, and can be removed.
+      // @deprecated The client uses the "latest" apiVersion.
       apiVersion: '2013-01-01',
-      accessKeyId: this.config.accessKeyId,
-      secretAccessKey: this.config.secretAccessKey,
+
+      credentials: {
+        accessKeyId: this.config.accessKeyId,
+        secretAccessKey: this.config.secretAccessKey
+      },
+
       region: this.config.region
     })
-    this.clientDomain = new AWS.CloudSearchDomain({
+    this.clientDomain = new CloudSearchDomain({
+      // The key apiVersion is no longer supported in v3, and can be removed.
+      // @deprecated The client uses the "latest" apiVersion.
       apiVersion: '2013-01-01',
+
+      // The transformation for endpoint is not implemented.
+      // Refer to UPGRADING.md on aws-sdk-js-v3 for changes needed.
+      // Please create/upvote feature request on aws-sdk-js-codemod for endpoint.
       endpoint: this.config.endpoint,
-      accessKeyId: this.config.accessKeyId,
-      secretAccessKey: this.config.secretAccessKey,
+
+      credentials: {
+        accessKeyId: this.config.accessKeyId,
+        secretAccessKey: this.config.secretAccessKey
+      },
+
       region: this.config.region
     })
 
