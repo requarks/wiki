@@ -22,32 +22,18 @@ module.exports = {
   async init() {
     WIKI.logger.info(`(SEARCH/AWS) Initializing...`)
     this.client = new CloudSearch({
-      // The key apiVersion is no longer supported in v3, and can be removed.
-      // @deprecated The client uses the "latest" apiVersion.
-      apiVersion: '2013-01-01',
-
       credentials: {
         accessKeyId: this.config.accessKeyId,
         secretAccessKey: this.config.secretAccessKey
       },
-
       region: this.config.region
     })
     this.clientDomain = new CloudSearchDomain({
-      // The key apiVersion is no longer supported in v3, and can be removed.
-      // @deprecated The client uses the "latest" apiVersion.
-      apiVersion: '2013-01-01',
-
-      // The transformation for endpoint is not implemented.
-      // Refer to UPGRADING.md on aws-sdk-js-v3 for changes needed.
-      // Please create/upvote feature request on aws-sdk-js-codemod for endpoint.
       endpoint: this.config.endpoint,
-
       credentials: {
         accessKeyId: this.config.accessKeyId,
         secretAccessKey: this.config.secretAccessKey
       },
-
       region: this.config.region
     })
 
@@ -57,7 +43,7 @@ module.exports = {
     const schemes = await this.client.describeAnalysisSchemes({
       DomainName: this.config.domain,
       AnalysisSchemeNames: ['default_anlscheme']
-    }).promise()
+    })
     if (_.get(schemes, 'AnalysisSchemes', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Analysis Scheme...`)
       await this.client.defineAnalysisScheme({
@@ -66,14 +52,14 @@ module.exports = {
           AnalysisSchemeLanguage: this.config.AnalysisSchemeLang,
           AnalysisSchemeName: 'default_anlscheme'
         }
-      }).promise()
+      })
       rebuildIndex = true
     }
 
     // -> Define Index Fields
     const fields = await this.client.describeIndexFields({
       DomainName: this.config.domain
-    }).promise()
+    })
     if (_.get(fields, 'IndexFields', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Index Fields...`)
       await this.client.defineIndexField({
@@ -82,21 +68,21 @@ module.exports = {
           IndexFieldName: 'id',
           IndexFieldType: 'literal'
         }
-      }).promise()
+      })
       await this.client.defineIndexField({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'path',
           IndexFieldType: 'literal'
         }
-      }).promise()
+      })
       await this.client.defineIndexField({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'locale',
           IndexFieldType: 'literal'
         }
-      }).promise()
+      })
       await this.client.defineIndexField({
         DomainName: this.config.domain,
         IndexField: {
@@ -107,7 +93,7 @@ module.exports = {
             AnalysisScheme: 'default_anlscheme'
           }
         }
-      }).promise()
+      })
       await this.client.defineIndexField({
         DomainName: this.config.domain,
         IndexField: {
@@ -118,7 +104,7 @@ module.exports = {
             AnalysisScheme: 'default_anlscheme'
           }
         }
-      }).promise()
+      })
       await this.client.defineIndexField({
         DomainName: this.config.domain,
         IndexField: {
@@ -129,7 +115,7 @@ module.exports = {
             AnalysisScheme: 'default_anlscheme'
           }
         }
-      }).promise()
+      })
       rebuildIndex = true
     }
 
@@ -137,7 +123,7 @@ module.exports = {
     const suggesters = await this.client.describeSuggesters({
       DomainName: this.config.domain,
       SuggesterNames: ['default_suggester']
-    }).promise()
+    })
     if (_.get(suggesters, 'Suggesters', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Suggester...`)
       await this.client.defineSuggester({
@@ -149,7 +135,7 @@ module.exports = {
             FuzzyMatching: 'high'
           }
         }
-      }).promise()
+      })
       rebuildIndex = true
     }
 
@@ -158,7 +144,7 @@ module.exports = {
       WIKI.logger.info(`(SEARCH/AWS) Requesting Index Rebuild...`)
       await this.client.indexDocuments({
         DomainName: this.config.domain
-      }).promise()
+      })
     }
 
     WIKI.logger.info(`(SEARCH/AWS) Initialization completed.`)
@@ -176,13 +162,13 @@ module.exports = {
         query: q,
         partial: true,
         size: 50
-      }).promise()
+      })
       if (results.hits.found < 5) {
         const suggestResults = await this.clientDomain.suggest({
           query: q,
           suggester: 'default_suggester',
           size: 5
-        }).promise()
+        })
         suggestions = suggestResults.suggest.suggestions.map(s => s.suggestion)
       }
       return {
@@ -222,7 +208,7 @@ module.exports = {
           }
         }
       ])
-    }).promise()
+    })
   },
   /**
    * UPDATE
@@ -245,7 +231,7 @@ module.exports = {
           }
         }
       ])
-    }).promise()
+    })
   },
   /**
    * DELETE
@@ -261,7 +247,7 @@ module.exports = {
           id: page.hash
         }
       ])
-    }).promise()
+    })
   },
   /**
    * RENAME
@@ -277,7 +263,7 @@ module.exports = {
           id: page.hash
         }
       ])
-    }).promise()
+    })
     await this.clientDomain.uploadDocuments({
       contentType: 'application/json',
       documents: JSON.stringify([
@@ -293,7 +279,7 @@ module.exports = {
           }
         }
       ])
-    }).promise()
+    })
   },
   /**
    * REBUILD INDEX
@@ -359,7 +345,7 @@ module.exports = {
               content: WIKI.models.pages.cleanHTML(doc.render)
             }
           })))
-        }).promise()
+        })
       } catch (err) {
         WIKI.logger.warn('(SEARCH/AWS) Failed to send batch to AWS CloudSearch: ', err)
       }
@@ -382,7 +368,7 @@ module.exports = {
     WIKI.logger.info(`(SEARCH/AWS) Requesting Index Rebuild...`)
     await this.client.indexDocuments({
       DomainName: this.config.domain
-    }).promise()
+    })
 
     WIKI.logger.info(`(SEARCH/AWS) Index rebuilt successfully.`)
   }
