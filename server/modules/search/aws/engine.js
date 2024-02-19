@@ -1,8 +1,6 @@
 const _ = require('lodash')
-
 const { CloudSearch } = require('@aws-sdk/client-cloudsearch');
 const { CloudSearchDomain } = require('@aws-sdk/client-cloudsearch-domain');
-
 const stream = require('stream')
 const Promise = require('bluebird')
 const pipeline = Promise.promisify(stream.pipeline)
