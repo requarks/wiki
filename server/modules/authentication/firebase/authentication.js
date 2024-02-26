@@ -11,7 +11,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('firebase',
+    passport.use(conf.key,
       new FirebaseStrategy({
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,

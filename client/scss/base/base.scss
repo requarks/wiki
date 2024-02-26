@@ -30,6 +30,12 @@ html {
   }
 }
 
+@media only screen and (min-width:960px) {
+  .v-application .v-footer {
+    padding-left: 272px
+  }
+}
+
 #root .v-application {
   .overline {
     line-height: 1rem;

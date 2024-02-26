@@ -40,7 +40,7 @@ module.exports = {
       }
     }
 
-    passport.use('google', strategy)
+    passport.use(conf.key, strategy)
   },
   logout (conf) {
     return '/'

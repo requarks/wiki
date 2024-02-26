@@ -60,7 +60,7 @@ const init = {
   },
   async reload() {
     console.warn(chalk.yellow('--- Gracefully stopping server...'))
-    await global.WIKI.kernel.shutdown()
+    await global.WIKI.kernel.shutdown(true)
 
     console.warn(chalk.yellow('--- Purging node modules cache...'))
 

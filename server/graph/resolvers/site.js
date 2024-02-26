@@ -17,8 +17,11 @@ module.exports = {
         title: WIKI.config.title,
         company: WIKI.config.company,
         contentLicense: WIKI.config.contentLicense,
+        footerOverride: WIKI.config.footerOverride,
         logoUrl: WIKI.config.logoUrl,
+        pageExtensions: WIKI.config.pageExtensions.join(', '),
         ...WIKI.config.seo,
+        ...WIKI.config.editShortcuts,
         ...WIKI.config.features,
         ...WIKI.config.security,
         authAutoLogin: WIKI.config.auth.autoLogin,
@@ -29,14 +32,16 @@ module.exports = {
         authJwtExpiration: WIKI.config.auth.tokenExpiration,
         authJwtRenewablePeriod: WIKI.config.auth.tokenRenewal,
         uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
-        uploadMaxFiles: WIKI.config.uploads.maxFiles
+        uploadMaxFiles: WIKI.config.uploads.maxFiles,
+        uploadScanSVG: WIKI.config.uploads.scanSVG,
+        uploadForceDownload: WIKI.config.uploads.forceDownload
       }
     }
   },
   SiteMutation: {
     async updateConfig(obj, args, context) {
       try {
-        if (args.host) {
+        if (args.hasOwnProperty('host')) {
           let siteHost = _.trim(args.host)
           if (siteHost.endsWith('/')) {
             siteHost = siteHost.slice(0, -1)
@@ -44,20 +49,28 @@ module.exports = {
           WIKI.config.host = siteHost
         }
 
-        if (args.title) {
+        if (args.hasOwnProperty('title')) {
           WIKI.config.title = _.trim(args.title)
         }
 
-        if (args.company) {
+        if (args.hasOwnProperty('company')) {
           WIKI.config.company = _.trim(args.company)
         }
 
-        if (args.contentLicense) {
+        if (args.hasOwnProperty('contentLicense')) {
           WIKI.config.contentLicense = args.contentLicense
         }
 
-        if (args.logoUrl) {
+        if (args.hasOwnProperty('footerOverride')) {
+          WIKI.config.footerOverride = args.footerOverride
+        }
+
+        if (args.hasOwnProperty('logoUrl')) {
           WIKI.config.logoUrl = _.trim(args.logoUrl)
+        }
+
+        if (args.hasOwnProperty('pageExtensions')) {
+          WIKI.config.pageExtensions = _.trim(args.pageExtensions).split(',').map(p => p.trim().toLowerCase()).filter(p => p !== '')
         }
 
         WIKI.config.seo = {
@@ -75,6 +88,16 @@ module.exports = {
           audience: _.get(args, 'authJwtAudience', WIKI.config.auth.audience),
           tokenExpiration: _.get(args, 'authJwtExpiration', WIKI.config.auth.tokenExpiration),
           tokenRenewal: _.get(args, 'authJwtRenewablePeriod', WIKI.config.auth.tokenRenewal)
+        }
+
+        WIKI.config.editShortcuts = {
+          editFab: _.get(args, 'editFab', WIKI.config.editShortcuts.editFab),
+          editMenuBar: _.get(args, 'editMenuBar', WIKI.config.editShortcuts.editMenuBar),
+          editMenuBtn: _.get(args, 'editMenuBtn', WIKI.config.editShortcuts.editMenuBtn),
+          editMenuExternalBtn: _.get(args, 'editMenuExternalBtn', WIKI.config.editShortcuts.editMenuExternalBtn),
+          editMenuExternalName: _.get(args, 'editMenuExternalName', WIKI.config.editShortcuts.editMenuExternalName),
+          editMenuExternalIcon: _.get(args, 'editMenuExternalIcon', WIKI.config.editShortcuts.editMenuExternalIcon),
+          editMenuExternalUrl: _.get(args, 'editMenuExternalUrl', WIKI.config.editShortcuts.editMenuExternalUrl)
         }
 
         WIKI.config.features = {
@@ -97,10 +120,12 @@ module.exports = {
 
         WIKI.config.uploads = {
           maxFileSize: _.get(args, 'uploadMaxFileSize', WIKI.config.uploads.maxFileSize),
-          maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles)
+          maxFiles: _.get(args, 'uploadMaxFiles', WIKI.config.uploads.maxFiles),
+          scanSVG: _.get(args, 'uploadScanSVG', WIKI.config.uploads.scanSVG),
+          forceDownload: _.get(args, 'uploadForceDownload', WIKI.config.uploads.forceDownload)
         }
 
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'auth', 'features', 'security', 'uploads'])
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'footerOverride', 'seo', 'logoUrl', 'pageExtensions', 'auth', 'editShortcuts', 'features', 'security', 'uploads'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

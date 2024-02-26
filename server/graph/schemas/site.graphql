@@ -32,7 +32,9 @@ type SiteMutation {
     analyticsId: String
     company: String
     contentLicense: String
+    footerOverride: String
     logoUrl: String
+    pageExtensions: String
     authAutoLogin: Boolean
     authEnforce2FA: Boolean
     authHideLocal: Boolean
@@ -40,6 +42,13 @@ type SiteMutation {
     authJwtAudience: String
     authJwtExpiration: String
     authJwtRenewablePeriod: String
+    editFab: Boolean
+    editMenuBar: Boolean
+    editMenuBtn: Boolean
+    editMenuExternalBtn: Boolean
+    editMenuExternalName: String
+    editMenuExternalIcon: String
+    editMenuExternalUrl: String
     featurePageRatings: Boolean
     featurePageComments: Boolean
     featurePersonalWikis: Boolean
@@ -54,6 +63,8 @@ type SiteMutation {
     securityCSPDirectives: String
     uploadMaxFileSize: Int
     uploadMaxFiles: Int
+    uploadScanSVG: Boolean
+    uploadForceDownload: Boolean
 
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -63,15 +74,17 @@ type SiteMutation {
 # -----------------------------------------------
 
 type SiteConfig {
-  host: String!
-  title: String!
-  description: String!
-  robots: [String]!
-  analyticsService: String!
-  analyticsId: String!
-  company: String!
-  contentLicense: String!
-  logoUrl: String!
+  host: String
+  title: String
+  description: String
+  robots: [String]
+  analyticsService: String
+  analyticsId: String
+  company: String
+  contentLicense: String
+  footerOverride: String
+  logoUrl: String
+  pageExtensions: String
   authAutoLogin: Boolean
   authEnforce2FA: Boolean
   authHideLocal: Boolean
@@ -79,18 +92,27 @@ type SiteConfig {
   authJwtAudience: String
   authJwtExpiration: String
   authJwtRenewablePeriod: String
-  featurePageRatings: Boolean!
-  featurePageComments: Boolean!
-  featurePersonalWikis: Boolean!
-  securityOpenRedirect: Boolean!
-  securityIframe: Boolean!
-  securityReferrerPolicy: Boolean!
-  securityTrustProxy: Boolean!
-  securitySRI: Boolean!
-  securityHSTS: Boolean!
-  securityHSTSDuration: Int!
-  securityCSP: Boolean!
-  securityCSPDirectives: String!
-  uploadMaxFileSize: Int!
-  uploadMaxFiles: Int!
+  editFab: Boolean
+  editMenuBar: Boolean
+  editMenuBtn: Boolean
+  editMenuExternalBtn: Boolean
+  editMenuExternalName: String
+  editMenuExternalIcon: String
+  editMenuExternalUrl: String
+  featurePageRatings: Boolean
+  featurePageComments: Boolean
+  featurePersonalWikis: Boolean
+  securityOpenRedirect: Boolean
+  securityIframe: Boolean
+  securityReferrerPolicy: Boolean
+  securityTrustProxy: Boolean
+  securitySRI: Boolean
+  securityHSTS: Boolean
+  securityHSTSDuration: Int
+  securityCSP: Boolean
+  securityCSPDirectives: String
+  uploadMaxFileSize: Int
+  uploadMaxFiles: Int
+  uploadScanSVG: Boolean
+  uploadForceDownload: Boolean
 }

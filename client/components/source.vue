@@ -20,8 +20,7 @@
           v-card.grey.radius-7(flat, :class='$vuetify.theme.dark ? `darken-4` : `lighten-4`')
             v-card-text
               pre
-                code
-                  slot
+                slot
 
     nav-footer
     notify
@@ -67,7 +66,7 @@ export default {
     this.$store.commit('page/SET_MODE', 'source')
 
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions',JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
   },
   methods: {
@@ -86,6 +85,7 @@ export default {
 .source {
   pre > code {
     box-shadow: none;
+    background-color: transparent;
     color: mc('grey', '800');
     font-family: 'Roboto Mono', sans-serif;
     font-weight: 400;

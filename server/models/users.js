@@ -308,7 +308,7 @@ module.exports = class User extends Model {
 
       // Authenticate
       return new Promise((resolve, reject) => {
-        WIKI.auth.passport.authenticate(selStrategy.strategyKey, {
+        WIKI.auth.passport.authenticate(selStrategy.key, {
           session: !strInfo.useForm,
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
@@ -346,7 +346,6 @@ module.exports = class User extends Model {
         }
       }
     }
-    console.info(redirect)
 
     // Is 2FA required?
     if (!skipTFA) {
@@ -867,7 +866,7 @@ module.exports = class User extends Model {
     }
     const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
     const provider = _.find(WIKI.auth.strategies, ['key', usr.providerKey])
-    return provider.logout ? provider.logout(provider.config) : '/'
+    return provider.logout ? provider.logout(provider.config, context) : '/'
   }
 
   static async getGuestUser () {

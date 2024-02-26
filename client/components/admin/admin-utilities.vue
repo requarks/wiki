@@ -37,6 +37,7 @@ export default {
     UtilityAuth: () => import(/* webpackChunkName: "admin" */ './admin-utilities-auth.vue'),
     UtilityContent: () => import(/* webpackChunkName: "admin" */ './admin-utilities-content.vue'),
     UtilityCache: () => import(/* webpackChunkName: "admin" */ './admin-utilities-cache.vue'),
+    UtilityExport: () => import(/* webpackChunkName: "admin" */ './admin-utilities-export.vue'),
     UtilityImportv1: () => import(/* webpackChunkName: "admin" */ './admin-utilities-importv1.vue'),
     UtilityTelemetry: () => import(/* webpackChunkName: "admin" */ './admin-utilities-telemetry.vue')
   },
@@ -54,6 +55,12 @@ export default {
           key: 'UtilityContent',
           icon: 'mdi-content-duplicate',
           i18nKey: 'content',
+          isAvailable: true
+        },
+        {
+          key: 'UtilityExport',
+          icon: 'mdi-database-export',
+          i18nKey: 'export',
           isAvailable: true
         },
         {

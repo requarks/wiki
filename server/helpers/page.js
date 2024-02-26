@@ -10,6 +10,7 @@ const unsafeCharsRegex = /[\x00-\x1f\x80-\x9f\\"|<>:*?]/
 
 const contentToExt = {
   markdown: 'md',
+  asciidoc: 'adoc',
   html: 'html'
 }
 const extToContent = _.invert(contentToExt)
@@ -34,6 +35,8 @@ module.exports = {
     if (_.startsWith(rawPath, '/')) { rawPath = rawPath.substring(1) }
     rawPath = rawPath.replace(unsafeCharsRegex, '')
     if (rawPath === '') { rawPath = 'home' }
+
+    rawPath = rawPath.replace(/\\/g, '').replace(/\/\//g, '').replace(/\.\.+/ig, '')
 
     // Extract Info
     let pathParts = _.filter(_.split(rawPath, '/'), p => {

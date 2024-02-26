@@ -184,7 +184,7 @@
                 v-list-item-title Netlify
                 v-list-item-subtitle Deploy modern static websites with Netlify. Get CDN, Continuous deployment, 1-click HTTPS, and all the services you need.
               v-list-item-action
-                v-btn(icon, href='https://wwwnetlify.com', target='_blank')
+                v-btn(icon, href='https://www.netlify.com', target='_blank')
                   v-icon(color='grey') mdi-earth
 
 </template>

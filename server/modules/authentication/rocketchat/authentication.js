@@ -23,7 +23,7 @@ module.exports = {
           cb(null, {
             id: usr._id,
             displayName: _.isEmpty(usr.name) ? usr.username : usr.name,
-            email: usr.email,
+            email: usr.emails[0].address,
             picture: usr.avatarUrl
           })
         } catch (err) {
@@ -33,7 +33,7 @@ module.exports = {
       })
     }
 
-    passport.use('rocketchat',
+    passport.use(conf.key,
       new OAuth2Strategy({
         authorizationURL: `${siteURL}/oauth/authorize`,
         tokenURL: `${siteURL}/oauth/token`,

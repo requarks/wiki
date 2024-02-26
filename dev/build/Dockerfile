@@ -1,14 +1,15 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:14-alpine AS assets
+FROM node:18-alpine AS assets
 
-RUN apk add yarn g++ make python --no-cache
+RUN apk add yarn g++ make cmake python3 --no-cache
 
 WORKDIR /wiki
 
 COPY ./client ./client
 COPY ./dev ./dev
+COPY ./patches ./patches
 COPY ./package.json ./package.json
 COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
@@ -19,11 +20,12 @@ RUN yarn --frozen-lockfile --non-interactive
 RUN yarn build
 RUN rm -rf /wiki/node_modules
 RUN yarn --production --frozen-lockfile --non-interactive
+RUN yarn patch-package
 
 # ===============
 # --- Release ---
 # ===============
-FROM node:14-alpine
+FROM node:18-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \

@@ -37,20 +37,51 @@ props:
     title: User Info Endpoint URL
     hint: User Info Endpoint URL
     order: 5
+  skipUserProfile:
+    type: Boolean
+    default: false
+    title: Skip User Profile
+    hint: Skips call to the OIDC UserInfo endpoint
+    order: 6
   issuer:
     type: String
     title: Issuer
     hint: Issuer URL
-    order: 6
+    order: 7
   emailClaim:
     type: String
     title: Email Claim
     hint: Field containing the email address
     default: email
     maxWidth: 500
-    order: 7
+    order: 8
+  displayNameClaim:
+    type: String
+    title: Display Name Claim
+    hint: Field containing the user display name
+    default: displayName
+    maxWidth: 500
+    order: 9
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Map groups matching names from the groups claim value
+    default: false
+    order: 10
+  groupsClaim:
+    type: String
+    title: Groups Claim
+    hint: Field containing the group names
+    default: groups
+    maxWidth: 500
+    order: 11
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 8
+    order: 12
+  acrValues:
+    type: String
+    title: ACR Values
+    hint: (optional) Authentication Context Class Reference
+    order: 13

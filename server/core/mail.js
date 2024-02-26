@@ -13,6 +13,7 @@ module.exports = {
       let conf = {
         host: WIKI.config.mail.host,
         port: WIKI.config.mail.port,
+        name: WIKI.config.mail.name,
         secure: WIKI.config.mail.secure,
         tls: {
           rejectUnauthorized: !(WIKI.config.mail.verifySSL === false)
@@ -51,6 +52,9 @@ module.exports = {
     }
     await this.loadTemplate(opts.template)
     return this.transport.sendMail({
+      headers: {
+        'x-mailer': 'Wiki.js'
+      },
       from: `"${WIKI.config.mail.senderName}" <${WIKI.config.mail.senderEmail}>`,
       to: opts.to,
       subject: `${opts.subject} - ${WIKI.config.title}`,

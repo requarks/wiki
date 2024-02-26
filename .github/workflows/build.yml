@@ -1,0 +1,414 @@
+name: Build + Publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+env:
+  BASE_DEV_VERSION: 2.5.0
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set Build Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION=$GITHUB_REF_NAME" >> $GITHUB_ENV
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION=v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+
+    - name: Disable DEV Flag + Set Version
+      run: |
+        sudo apt-get install jq -y
+        mv package.json pkg-temp.json
+        jq --arg vs "$REL_VERSION_STRICT" -r '. + {dev:false, version:$vs}' pkg-temp.json > package.json
+        rm pkg-temp.json
+        cat package.json
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2.1.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2.1.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v4.0.0
+      with:
+        context: .
+        file: dev/build/Dockerfile
+        push: true
+        tags: |
+          requarks/wiki:canary
+          requarks/wiki:canary-${{ env.REL_VERSION_STRICT }}
+          ghcr.io/requarks/wiki:canary
+          ghcr.io/requarks/wiki:canary-${{ env.REL_VERSION_STRICT }}
+
+    - name: Extract compiled files
+      run: |
+        mkdir -p _dist
+        docker create --name wiki ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT
+        docker cp wiki:/wiki _dist
+        docker rm wiki
+        rm _dist/wiki/config.yml
+        cp ./config.sample.yml _dist/wiki/config.sample.yml
+        find _dist/wiki/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C _dist/wiki/ -T -
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: drop
+        path: wiki-js.tar.gz
+
+  cypress:
+    name: Run Cypress Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    strategy:
+      matrix:
+        dbtype: [postgres, mysql, mariadb, mssql, sqlite]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set Test Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+
+    - name: Run Tests
+      env:
+        MATRIXENV: ${{ matrix.dbtype }}
+        CYPRESS_KEY: ${{ secrets.CYPRESS_KEY }}
+      run: |
+        chmod u+x dev/cypress/ci-setup.sh
+        dev/cypress/ci-setup.sh
+        docker run --name cypress --ipc=host --shm-size 1G -v $GITHUB_WORKSPACE:/e2e -w /e2e cypress/included:4.9.0 --record --key "$CYPRESS_KEY" --headless --group "$MATRIXENV" --ci-build-id "$REL_VERSION_STRICT-run$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT" --tag "$REL_VERSION_STRICT" --config baseUrl=http://172.17.0.1:3000
+
+  arm:
+    name: ARM Build
+    runs-on: ubuntu-latest
+    needs: [cypress]
+    permissions:
+      packages: write
+
+    strategy:
+      matrix:
+        include:
+          - platform: linux/arm64
+            docker: arm64
+          - platform: linux/arm/v7
+            docker: armv7
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set Version Variables
+      run: |
+        if [[ "$GITHUB_REF" =~ ^refs/tags/v* ]]; then
+          echo "Using TAG mode: $GITHUB_REF_NAME"
+          echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+        else
+          echo "Using BRANCH mode: v$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER"
+          echo "REL_VERSION_STRICT=$BASE_DEV_VERSION-dev.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+        fi
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2.1.0
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2.4.0
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2.1.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2.1.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v3.0.2
+      with:
+        name: drop
+        path: drop
+
+    - name: Extract Build
+      run: |
+        mkdir -p build
+        tar -xzf $GITHUB_WORKSPACE/drop/wiki-js.tar.gz -C $GITHUB_WORKSPACE/build --exclude=node_modules
+
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v4.0.0
+      with:
+        context: .
+        file: dev/build-arm/Dockerfile
+        platforms: ${{ matrix.platform }}
+        provenance: false
+        push: true
+        tags: |
+          requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
+          ghcr.io/requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
+
+  windows:
+    name: Windows Build
+    runs-on: windows-latest
+    needs: [cypress]
+
+    steps:
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v3.6.0
+      with:
+        node-version: 18.x
+
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v3.0.2
+      with:
+        name: drop
+        path: drop
+
+    - name: Extract Build
+      run: |
+        mkdir -p win
+        tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win
+        Copy-Item win\node_modules\extract-files\package.json patch-extractfile.json -Force
+        Remove-Item -Path win\node_modules -Force -Recurse
+
+    - name: Install Dependencies
+      run: |
+        yarn --production --frozen-lockfile --non-interactive
+        yarn patch-package
+      working-directory: win
+
+    - name: Fix patched packages
+      run: |
+        Copy-Item patch-extractfile.json win\node_modules\extract-files\package.json -Force
+
+    - name: Create Bundle
+      run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: drop-win
+        path: wiki-js-windows.tar.gz
+
+  beta:
+    name: Publish Beta Images
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, arm, windows]
+    permissions:
+      packages: write
+
+    steps:
+    - name: Set Version Variables
+      run: |
+        echo "Using TAG mode: $GITHUB_REF_NAME"
+        echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2.1.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2.1.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create and Push Manifests
+      run: |
+        echo "Creating the manifests..."
+
+        docker manifest create requarks/wiki:beta-$REL_VERSION_STRICT requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+
+        echo "Pushing the manifests..."
+
+        docker manifest push -p requarks/wiki:beta-$REL_VERSION_STRICT
+        docker manifest push -p ghcr.io/requarks/wiki:beta-$REL_VERSION_STRICT
+
+  release:
+    name: Publish Release Images
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: prod
+    needs: [beta]
+    permissions:
+      packages: write
+      contents: write
+
+    steps:
+    - name: Set Version Variables
+      run: |
+        echo "Using TAG mode: $GITHUB_REF_NAME"
+        echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2.1.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2.1.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create and Push Manifests
+      run: |
+        echo "Fetching semver tool..."
+        curl -LJO https://static.requarks.io/semver
+        chmod +x semver
+
+        MAJOR=`./semver get major $REL_VERSION_STRICT`
+        MINOR=`./semver get minor $REL_VERSION_STRICT`
+        MAJORMINOR="$MAJOR.$MINOR"
+
+        echo "Using major $MAJOR and minor $MINOR..."
+        echo "Creating the manifests..."
+
+        docker manifest create requarks/wiki:$REL_VERSION_STRICT requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:$MAJOR requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:$MAJORMINOR requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create requarks/wiki:latest requarks/wiki:canary-$REL_VERSION_STRICT requarks/wiki:canary-arm64-$REL_VERSION_STRICT requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$MAJOR ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:$MAJORMINOR ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+        docker manifest create ghcr.io/requarks/wiki:latest ghcr.io/requarks/wiki:canary-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-arm64-$REL_VERSION_STRICT ghcr.io/requarks/wiki:canary-armv7-$REL_VERSION_STRICT
+
+        echo "Pushing the manifests..."
+
+        docker manifest push -p requarks/wiki:$REL_VERSION_STRICT
+        docker manifest push -p requarks/wiki:$MAJOR
+        docker manifest push -p requarks/wiki:$MAJORMINOR
+        docker manifest push -p requarks/wiki:latest
+        docker manifest push -p ghcr.io/requarks/wiki:$REL_VERSION_STRICT
+        docker manifest push -p ghcr.io/requarks/wiki:$MAJOR
+        docker manifest push -p ghcr.io/requarks/wiki:$MAJORMINOR
+        docker manifest push -p ghcr.io/requarks/wiki:latest
+
+    - name: Download Linux Build
+      uses: actions/download-artifact@v3.0.2
+      with:
+        name: drop
+        path: drop
+
+    - name: Download Windows Build
+      uses: actions/download-artifact@v3.0.2
+      with:
+        name: drop-win
+        path: drop-win
+
+    - name: Generate Changelog
+      id: changelog
+      uses: Requarks/changelog-action@v1
+      with:
+        token: ${{ github.token }}
+        tag: ${{ github.ref_name }}
+        writeToFile: false
+
+    - name: Update GitHub Release
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        allowUpdates: true
+        draft: false
+        makeLatest: true
+        name: ${{ github.ref_name }}
+        body: ${{ steps.changelog.outputs.changes }}
+        token: ${{ github.token }}
+        artifacts: 'drop/wiki-js.tar.gz,drop-win/wiki-js-windows.tar.gz'
+
+    - name: Notify Slack Releases Channel
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "text": "Wiki.js ${{ github.ref_name }} has been released."
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+    - name: Notify Telegram Channel
+      uses: appleboy/telegram-action@v0.1.1
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
+        disable_web_page_preview: true
+        message: |
+          Wiki.js *${{ github.ref_name }}* has been released!
+          See [release notes](https://github.com/requarks/wiki/releases) for details.
+
+    - name: Notify Discord Channel
+      uses: sebastianpopp/discord-action@v1.0
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        message: Wiki.js ${{ github.ref_name }} has been released! See https://github.com/requarks/wiki/releases for details.
+
+  build-do-image:
+    name: Build DigitalOcean Image
+    runs-on: ubuntu-latest
+    needs: [release]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set Version Variables
+      run: |
+        echo "Using TAG mode: $GITHUB_REF_NAME"
+        echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+
+    - name: Install Packer
+      run: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+        sudo apt-get update && sudo apt-get install packer
+
+    - name: Build Droplet Image
+      env:
+        DIGITALOCEAN_API_TOKEN: ${{ secrets.DO_TOKEN }}
+        WIKI_APP_VERSION: ${{ env.REL_VERSION_STRICT }}
+      working-directory: dev/packer
+      run: |
+        packer build digitalocean.json

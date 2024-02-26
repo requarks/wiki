@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 module.exports = {
   init (passport, conf) {
-    passport.use('okta',
+    passport.use(conf.key,
       new OktaStrategy({
         audience: conf.audience,
         clientID: conf.clientId,

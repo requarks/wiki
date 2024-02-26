@@ -20,6 +20,7 @@ props:
       - fra1.digitaloceanspaces.com
       - nyc3.digitaloceanspaces.com
       - sfo2.digitaloceanspaces.com
+      - sfo3.digitaloceanspaces.com
       - sgp1.digitaloceanspaces.com
     order: 1
   bucket:

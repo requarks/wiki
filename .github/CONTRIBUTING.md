@@ -13,7 +13,7 @@ We welcome any type of contribution, not only code. You can help with
 
 ## Your First Contribution
 
-Working on your first Pull Request? You can learn how from this *free* series, [How to Contribute to an Open Source Project on GitHub](https://egghead.io/series/how-to-contribute-to-an-open-source-project-on-github).
+Working on your first Pull Request? You can learn how from this *free* course, [How to Contribute to an Open Source Project on GitHub](https://egghead.io/courses/how-to-contribute-to-an-open-source-project-on-github).
 
 ## Submitting code
 
@@ -28,7 +28,7 @@ It is also always helpful to have some context for your pull request. What was t
 
 Use the feature request board to submit new ideas and vote on which ideas should be integrated first.
 
-:triangular_flag_on_post: [https://wiki.js.org/feedback/](https://wiki.js.org/feedback/)
+:triangular_flag_on_post: [https://js.wiki/feedback/](https://js.wiki/feedback/)
 
 *Do not use GitHub issues to submit new feature ideas, as it will closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
 
@@ -39,8 +39,8 @@ Anyone can file an expense. If the expense makes sense for the development of th
 
 ## Questions
 
-If you have any questions, create an [issue](issue) (protip: do a quick search first to see if someone else didn't ask the same question before!).
-You can also reach us at hello@wikijs.opencollective.com.
+If you have any questions, create an [issue](https://github.com/Requarks/wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
+You can also reach us at <hello@wikijs.opencollective.com>.
 
 ## Credits
 

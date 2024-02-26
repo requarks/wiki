@@ -1,0 +1,20 @@
+key: asciidocCore
+title: Core
+description: Basic Asciidoc Parser
+author: dzruyk (Based on asciidoctor.js renderer)
+input: asciidoc
+output: html
+icon: mdi-sitemap
+enabledDefault: true
+props:
+  safeMode:
+    type: String
+    default: server
+    title: Safe Mode
+    hint: Sets the safe mode to use when parsing content to HTML.
+    order: 1
+    enum:
+      - unsafe
+      - safe
+      - server
+      - secure

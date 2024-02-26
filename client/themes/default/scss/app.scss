@@ -77,6 +77,10 @@
     & + h2, & + h3, & + h4, & + h5, & + h6 {
       margin-top: 8px;
     }
+
+    & + hr.footnotes-sep {
+      display: none;
+    }
   }
 
   h1 {
@@ -224,6 +228,19 @@
     margin: 0 1px -4px;
   }
 
+  .text-huge {
+    font-size: 1.8em;
+  }
+  .text-big {
+    font-size: 1.4em;
+  }
+  .text-small {
+    font-size: .85em;
+  }
+  .text-tiny {
+    font-size: .7em;
+  }
+
   blockquote {
     padding: 0 1rem 1rem 1rem;
     background-color: mc('blue-grey', '50');
@@ -265,7 +282,7 @@
         content: "\F02FC";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('blue', '50');
         color: mc('blue', '800');
       }
@@ -285,7 +302,7 @@
         content: "\F0026";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('orange', '50');
         color: mc('orange', '800');
       }
@@ -306,7 +323,7 @@
         content: "\F0159";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('red', '50');
         color: mc('red', '800');
       }
@@ -326,7 +343,7 @@
         content: "\F0E1E";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('green', '50');
         color: mc('green', '800');
       }
@@ -339,6 +356,148 @@
     }
   }
 
+  // ---------------------------------
+  // ASCIIDOC SPECIFIC
+  // ---------------------------------
+
+  .admonitionblock {
+    margin: 1rem 0;
+    position: relative;
+
+    table {
+      border: none;
+      background-color: transparent;
+      width: 100%;
+    }
+
+    td.icon {
+      border-bottom-left-radius: 7px;
+      border-top-left-radius: 7px;
+      text-align: center;
+      width: 56px;
+
+      &::before {
+        display: inline-block;
+        font: normal normal normal 24px/1 "Material Design Icons", sans-serif !important;
+      }
+    }
+
+    td.content {
+      border-bottom-right-radius: 7px;
+      border-top-right-radius: 7px;
+    }
+
+    &.note {
+      td.icon {
+        background-color: mc('blue', '300');
+        color: mc('blue', '50');
+        &::before {
+          content: "\F02FC";
+        }
+      }
+      td.content {
+        color: darken(mc('blue', '900'), 10%);
+        background-color: mc('blue', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('blue', '900');
+          color: mc('blue', '50');
+        }
+      }
+    }
+    &.tip {
+      td.icon {
+        background-color: mc('green', '300');
+        color: mc('green', '50');
+        &::before {
+          content: "\F0335";
+        }
+      }
+      td.content {
+        color: darken(mc('green', '900'), 10%);
+        background-color: mc('green', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('green', '900');
+          color: mc('green', '50');
+        }
+      }
+    }
+    &.warning {
+      background-color: transparent !important;
+
+      td.icon {
+        background-color: mc('orange', '300');
+        color: #FFF;
+        &::before {
+          content: "\F0026";
+        }
+      }
+      td.content {
+        color: darken(mc('orange', '900'), 10%);
+        background-color: mc('orange', '50');
+
+        @at-root .theme--dark & {
+          background-color: darken(mc('orange', '900'), 5%);
+          color: mc('orange', '100');
+        }
+      }
+    }
+    &.caution {
+      td.icon {
+        background-color: mc('purple', '300');
+        color: mc('purple', '50');
+        &::before {
+          content: "\f0238";
+        }
+      }
+      td.content {
+        color: darken(mc('purple', '900'), 10%);
+        background-color: mc('purple', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('purple', '900');
+          color: mc('purple', '100');
+        }
+      }
+    }
+    &.important {
+      td.icon {
+        background-color: mc('red', '300');
+        color: mc('red', '50');
+        &::before {
+          content: "\F0159";
+        }
+      }
+      td.content {
+        color: darken(mc('red', '900'), 10%);
+        background-color: mc('red', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('red', '900');
+          color: mc('red', '100');
+        }
+      }
+    }
+  }
+
+  .exampleblock {
+    > .title {
+      font-style: italic;
+      font-size: 1rem !important;
+      color: #7a2717;
+
+      @at-root .theme--dark & {
+        color: mc('brown', '300');
+      }
+    }
+    > .content {
+      border: 1px solid mc('grey', '200');
+      border-radius: 7px;
+      margin-bottom: 12px;
+      padding: 16px;
+    }
+  }
   // ---------------------------------
   // LISTS
   // ---------------------------------
@@ -504,7 +663,7 @@
     }
   }
 
-  ul:not(.tabset-tabs) {
+  ul:not(.tabset-tabs):not(.contains-task-list) {
     list-style: none;
     > li::before {
       position: absolute;
@@ -526,6 +685,27 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
+        
+        &:first-child {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  dl {
+    dt {
+      margin-top: 0.3em;
+      margin-bottom: 0.3em;
+      font-weight: bold;
+    }
+
+    dd {
+      margin-left: 1.125em;
+      margin-bottom: 0.75em;
+
+      > p {
+        padding: 0;
       }
     }
   }
@@ -583,6 +763,7 @@
 
   .diagram {
     margin-top: 1rem;
+    overflow: auto;
     svg:first-child {
       direction: ltr;
     }
@@ -592,21 +773,25 @@
   // TASK LISTS
   // ---------------------------------
 
+  .contains-task-list {
+    padding-left: 0;
+  }
+
   .task-list-item {
     position: relative;
     list-style-type: none;
 
     &-checkbox[disabled] {
-      display: none;
+      width: 1.1rem;
+      height: 1.1rem;
+      top: 2px;
+      position: relative;
+      margin-right: 2px;
 
-      & + label {
-        padding-left: 1.5rem;
-      }
-
-      & + label::before {
+      &::after {
         position: absolute;
         left: 0;
-        top: 2px;
+        top: 0;
         content: ' ';
         display: block;
         width: 1.1rem;
@@ -625,7 +810,7 @@
         }
       }
 
-      &[checked] + label::before  {
+      &[checked]::after  {
         content: '✓';
       }
     }
@@ -640,13 +825,40 @@
   // ---------------------------------
 
   table {
-    margin: .5rem 1.75rem;
+    margin: .5rem 0;
     border-spacing: 0;
+    border-radius: 5px;
+    border: 1px solid mc('grey', '300');
+
+    @at-root .theme--dark & {
+      border-color: mc('grey', '600');
+    }
+
+    &.dense {
+      td, th {
+        font-size: .85rem;
+        padding: .5rem;
+      }
+    }
 
     th {
       padding: .75rem;
       border-bottom: 2px solid mc('grey', '500');
       color: mc('grey', '600');
+      background-color: mc('grey', '100');
+
+      @at-root .theme--dark & {
+        background-color: darken(mc('grey', '900'), 8%);
+        border-bottom-color: mc('grey', '600');
+        color: mc('grey', '500');
+      }
+
+      &:first-child {
+        border-top-left-radius: 7px;
+      }
+      &:last-child {
+        border-top-right-radius: 7px;
+      }
     }
 
     td {
@@ -655,7 +867,56 @@
 
     tr {
       td {
-        border-bottom: 1px solid mc('grey', '200');
+        border-bottom: 1px solid mc('grey', '300');
+        border-right: 1px solid mc('grey', '100');
+
+        @at-root .theme--dark & {
+          border-bottom-color: mc('grey', '700');
+          border-right-color: mc('grey', '800');
+        }
+
+        &:nth-child(even) {
+          background-color: mc('grey', '50');
+
+          @at-root .theme--dark & {
+            background-color: darken(mc('grey', '900'), 4%);
+          }
+        }
+
+        &:last-child {
+          border-right: none;
+        }
+      }
+
+      &:nth-child(even) {
+        td {
+          background-color: mc('grey', '50');
+
+          @at-root .theme--dark & {
+            background-color: darken(mc('grey', '800'), 8%);
+          }
+
+          &:nth-child(even) {
+            background-color: mc('grey', '100');
+
+            @at-root .theme--dark & {
+              background-color: darken(mc('grey', '800'), 10%);
+            }
+          }
+        }
+      }
+
+      &:last-child {
+        td {
+          border-bottom: none;
+
+          &:first-child {
+            border-bottom-left-radius: 7px;
+          }
+          &:last-child {
+            border-bottom-right-radius: 7px;
+          }
+        }
       }
     }
   }
@@ -677,6 +938,7 @@
         border: 1px solid mc('blue-grey', '100');
         box-shadow: inset -1px -1px 0 0 #FFF, inset 1px 0 0 #FFF;
         padding: .5rem .75rem;
+        border-radius: 0 !important;
 
         @at-root .theme--dark & {
           border-color: mc('grey', '700');
@@ -711,6 +973,12 @@
         }
       }
     }
+  }
+
+  // -> Add horizontal scrollbar when table is too wide
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
   }
 
   // ---------------------------------
@@ -800,26 +1068,38 @@
       padding-left: 0;
     }
 
-    summary {
+    > summary {
       border-radius: 7px;
       background-color: mc('grey', '50');
       cursor: pointer;
-      height: 40px;
-      display: flex;
+      display: list-item;
       align-items: center;
-      padding: 0 1rem;
+      padding: 0.4rem 1rem;
       transition: background-color .4s ease;
 
       &:focus {
         outline: none;
         background-color: mc('grey', '100');
       }
+
+      > h1, h2, h3, h4, h5, h6 {
+        width: 95%;
+        display: inline-block;
+
+        &:first-child {
+          margin-top: 0;
+        }
+
+        &:only-child::after {
+          display: none;
+        }
+      }
     }
 
     &[open] {
       padding: 1rem;
 
-      summary {
+      > summary {
         background-color: mc('grey', '100');
         border-bottom: 1px solid mc('grey', '300');
         border-bottom-left-radius: 0;
@@ -832,12 +1112,12 @@
       background-color: mc('grey', '900');
       border-color: mc('grey', '700');
 
-      summary {
+      > summary {
         background-color: mc('grey', '900');
         border-color: mc('grey', '700');
       }
 
-      &[open] summary {
+      &[open] > summary {
         background-color: lighten(mc('grey', '900'), 5%);
       }
     }
@@ -1000,6 +1280,10 @@
   }
 
   .comments-container {
+    display: none;
+  }
+
+  .page-edit-shortcuts {
     display: none;
   }
 }

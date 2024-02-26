@@ -49,15 +49,50 @@
             status-indicator.ml-3(negative, pulse)
         v-divider
       v-container.grey.pa-0(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
-        v-row(no-gutters, align-content='center', style='height: 90px;')
-          v-col.page-col-content.is-page-header(offset-xl='2', offset-lg='3', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
-            .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
-            .caption.grey--text.text--darken-1 {{description}}
+        v-row.page-header-section(no-gutters, align-content='center', style='height: 90px;')
+          v-col.page-col-content.is-page-header(
+            :offset-xl='tocPosition === `left` ? 2 : 0'
+            :offset-lg='tocPosition === `left` ? 3 : 0'
+            :xl='tocPosition === `right` ? 10 : false'
+            :lg='tocPosition === `right` ? 9 : false'
+            style='margin-top: auto; margin-bottom: auto;'
+            :class='$vuetify.rtl ? `pr-4` : `pl-4`'
+            )
+            .page-header-headings
+              .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
+              .caption.grey--text.text--darken-1 {{description}}
+            .page-edit-shortcuts(
+              v-if='editShortcutsObj.editMenuBar'
+              :class='tocPosition === `right` ? `is-right` : ``'
+              )
+              v-btn(
+                v-if='editShortcutsObj.editMenuBtn'
+                @click='pageEdit'
+                depressed
+                small
+                )
+                v-icon.mr-2(small) mdi-pencil
+                span.text-none {{$t(`common:actions.edit`)}}
+              v-btn(
+                v-if='editShortcutsObj.editMenuExternalBtn'
+                :href='editMenuExternalUrl'
+                target='_blank'
+                depressed
+                small
+                )
+                v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
+                span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
       v-divider
       v-container.pl-5.pt-4(fluid, grid-list-xl)
         v-layout(row)
-          v-flex.page-col-sd(lg3, xl2, v-if='$vuetify.breakpoint.lgAndUp')
-            v-card.mb-5(v-if='tocDecoded.length')
+          v-flex.page-col-sd(
+            v-if='tocPosition !== `off` && $vuetify.breakpoint.lgAndUp'
+            :order-xs1='tocPosition !== `right`'
+            :order-xs2='tocPosition === `right`'
+            lg3
+            xl2
+            )
+            v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in tocDecoded')
@@ -71,7 +106,7 @@
                       v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            v-card.mb-5(v-if='tags.length > 0')
+            v-card.page-tags-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
                 v-chip.mr-1.mb-1(
@@ -91,7 +126,7 @@
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
-            v-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
+            v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
                   span {{$t('common:comments.sdTitle')}}
@@ -127,7 +162,7 @@
                         v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-1` : `blue-grey darken-2`', dense) mdi-comment-plus
                     span {{$t('common:comments.newComment')}}
 
-            v-card.mb-5
+            v-card.page-author-card.mb-5
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span {{$t('common:page.lastEditedBy')}}
@@ -144,8 +179,8 @@
                         )
                         v-icon(color='indigo', dense) mdi-history
                     span {{$t('common:header.history')}}
-                .body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
-                .caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
+                .page-author-card-name.body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
+                .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
             //-   .pa-5
@@ -160,13 +195,13 @@
             //-       )
             //-       .caption.grey--text 5 votes
 
-            v-card(flat)
+            v-card.page-shortcuts-card(flat)
               v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
                 v-spacer
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on', :aria-label='$t(`common:page.bookmark`)'): v-icon(color='grey') mdi-bookmark
-                  span {{$t('common:page.bookmark')}}
+                //- v-tooltip(bottom)
+                //-   template(v-slot:activator='{ on }')
+                //-     v-btn(icon, tile, v-on='on', :aria-label='$t(`common:page.bookmark`)'): v-icon(color='grey') mdi-bookmark
+                //-   span {{$t('common:page.bookmark')}}
                 v-menu(offset-y, bottom, min-width='300')
                   template(v-slot:activator='{ on: menu }')
                     v-tooltip(bottom)
@@ -185,8 +220,14 @@
                   span {{$t('common:page.printFormat')}}
                 v-spacer
 
-          v-flex.page-col-content(xs12, lg9, xl10)
-            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions')
+          v-flex.page-col-content(
+            xs12
+            :lg9='tocPosition !== `off`'
+            :xl10='tocPosition !== `off`'
+            :order-xs1='tocPosition === `right`'
+            :order-xs2='tocPosition !== `right`'
+            )
+            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions && editShortcutsObj.editFab')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
                   v-model='pageEditFab'
@@ -440,6 +481,14 @@ export default {
     commentsExternal: {
       type: Boolean,
       default: false
+    },
+    editShortcuts: {
+      type: String,
+      default: ''
+    },
+    filename: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -478,6 +527,7 @@ export default {
     isAuthenticated: get('user/authenticated'),
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/effectivePermissions@comments'),
+    editShortcutsObj: get('page/editShortcuts'),
     rating: {
       get () {
         return 3.5
@@ -509,6 +559,7 @@ export default {
     tocDecoded () {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     },
+    tocPosition: get('site/tocPosition'),
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
@@ -519,7 +570,14 @@ export default {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
-    printView: sync('site/printView')
+    printView: sync('site/printView'),
+    editMenuExternalUrl () {
+      if (this.editShortcutsObj.editMenuBar && this.editShortcutsObj.editMenuExternalBtn) {
+        return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
+      } else {
+        return ''
+      }
+    }
   },
   created() {
     this.$store.set('page/authorId', this.authorId)
@@ -536,6 +594,9 @@ export default {
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
       this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+    }
+    if (this.editShortcuts) {
+      this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
     }
 
     this.$store.set('page/mode', 'view')
@@ -582,6 +643,8 @@ export default {
           this.$vuetify.goTo(decodeURIComponent(ev.currentTarget.hash), this.scrollOpts)
         }
       })
+
+      window.boot.notify('page-ready')
     })
   },
   methods: {
@@ -674,6 +737,56 @@ export default {
 
 .page-col-sd::-webkit-scrollbar {
   display: none;
+}
+
+.page-header-section {
+  position: relative;
+
+  > .is-page-header {
+    position: relative;
+  }
+
+  .page-header-headings {
+    min-height: 52px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .page-edit-shortcuts {
+    position: absolute;
+    bottom: -33px;
+    right: 10px;
+
+    .v-btn {
+      border-right: 1px solid #DDD !important;
+      border-bottom: 1px solid #DDD !important;
+      border-radius: 0;
+      color: #777;
+      background-color: #FFF !important;
+
+      @at-root .theme--dark & {
+        background-color: #222 !important;
+        border-right-color: #444 !important;
+        border-bottom-color: #444 !important;
+        color: #CCC;
+      }
+
+      .v-icon {
+        color: mc('blue', '700');
+      }
+
+      &:first-child {
+        border-top-left-radius: 5px;
+        border-bottom-left-radius: 5px;
+      }
+
+      &:last-child {
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+    }
+  }
 }
 
 </style>

@@ -50,7 +50,7 @@ module.exports = {
       }
 
       // -> Strip host from local links
-      if (isHostSet && href.indexOf(WIKI.config.host) === 0) {
+      if (isHostSet && href.indexOf(`${WIKI.config.host}/`) === 0) {
         href = href.replace(WIKI.config.host, '')
       }
 
@@ -201,10 +201,11 @@ module.exports = {
 
     let headers = []
     $('h1,h2,h3,h4,h5,h6').each((i, elm) => {
-      if ($(elm).attr('id')) {
-        return
-      }
       let headerSlug = uslug($(elm).text())
+      // -> If custom ID is defined, try to use that instead
+      if ($(elm).attr('id')) {
+        headerSlug = $(elm).attr('id')
+      }
 
       // -> Cannot start with a number (CSS selector limitation)
       if (headerSlug.match(/^\d/)) {
@@ -233,12 +234,22 @@ module.exports = {
     })
 
     // --------------------------------
-    // Wrap root text nodes
+    // Wrap non-empty root text nodes
     // --------------------------------
 
     $('body').contents().toArray().forEach(item => {
-      if (item && item.type === 'text' && item.parent.name === 'body') {
+      if (item && item.type === 'text' && item.parent.name === 'body' && item.data !== `\n` && item.data !== `\r`) {
         $(item).wrap('<div></div>')
+      }
+    })
+
+    // --------------------------------
+    // Wrap root table nodes
+    // --------------------------------
+
+    $('body').contents().toArray().forEach(item => {
+      if (item && item.name === 'table' && item.parent.name === 'body') {
+        $(item).wrap('<div class="table-container"></div>')
       }
     })
 

@@ -24,8 +24,10 @@ defaults:
       min: 1
     bindIP: 0.0.0.0
     logLevel: info
+    logFormat: default
     offline: false
     ha: false
+    bodyParserLimit: 5mb
     # DB defaults
     api:
       isEnabled: false
@@ -42,7 +44,12 @@ defaults:
     title: Wiki.js
     company: ''
     contentLicense: ''
+    footerOverride: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    pageExtensions:
+      - md
+      - html
+      - txt
     mail:
       host: ''
       secure: true
@@ -53,6 +60,7 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+      tocPosition: 'left'
     auth:
       autoLogin: false
       enforce2FA: false
@@ -61,6 +69,14 @@ defaults:
       audience: 'urn:wiki.js'
       tokenExpiration: '30m'
       tokenRenewal: '14d'
+    editShortcuts:
+      editFab: true
+      editMenuBar: false
+      editMenuBtn: true
+      editMenuExternalBtn: true
+      editMenuExternalName: 'GitHub'
+      editMenuExternalIcon: 'mdi-github'
+      editMenuExternalUrl: 'https://github.com/org/repo/blob/main/{filename}'
     features:
       featurePageRatings: true
       featurePageComments: true
@@ -69,7 +85,7 @@ defaults:
       securityOpenRedirect: true
       securityIframe: true
       securityReferrerPolicy: true
-      securityTrustProxy: true
+      securityTrustProxy: false
       securitySRI: true
       securityHSTS: false
       securityHSTSDuration: 300
@@ -80,6 +96,8 @@ defaults:
     uploads:
       maxFileSize: 5242880
       maxFiles: 10
+      scanSVG: true
+      forceDownload: true
     flags:
       ldapdebug: false
       sqllog: false
@@ -148,8 +166,4 @@ reservedPaths:
   - img
   - js
   - svg
-pageExtensions:
-  - md
-  - html
-  - txt
 # ---------------------------------

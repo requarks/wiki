@@ -14,7 +14,7 @@
       .search-results-none(v-else-if='!searchIsLoading && (!results || results.length < 1)')
         img(src='/_assets/svg/icon-no-results.svg', alt='No Results')
         .subheading {{$t('common:header.searchNoResult')}}
-      template(v-if='results && results.length > 0')
+      template(v-if='search && search.length >= 2 && results && results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
         v-list.search-results-items.radius-7.py-0(two-line, dense)
           template(v-for='(item, idx) of results')
@@ -101,12 +101,13 @@ export default {
     search(newValue, oldValue) {
       this.cursor = 0
       if (!newValue || (newValue && newValue.length < 2)) {
-        this.response.results = []
-        this.response.suggestions = []
         this.searchIsLoading = false
       } else {
         this.searchIsLoading = true
       }
+    },
+    results() {
+      this.cursor = 0
     }
   },
   mounted() {
@@ -154,6 +155,9 @@ export default {
       throttle: 1000,
       skip() {
         return !this.search || this.search.length < 2
+      },
+      result() {
+        this.pagination = 1
       },
       update: (data) => _.get(data, 'pages.search', {}),
       watchLoading (isLoading) {
