@@ -23,19 +23,35 @@ module.exports = {
         keyString = keyString.substring(44);
       }
     }
+	
+	// If a client secret was passed, then we use code flow! 
+	// If not, just use the same value previous version of wiki.js!
+	// Same for response mode. We want query respondeMode to avoid depending on cookies!
+	let respType = conf.clientSecret ? 'code' : 'id_token'
+	let respMode = conf.clientSecret ? 'query' : 'form_post'
+	let issuerList;
+	
+	if(conf.issuerList){
+		// List of issuers.
+		// Expect each line containing the issuer definition!
+		issuerList = conf.issuerList.split('\n');
+	}
+	
     passport.use(conf.key,
       new OIDCStrategy({
         identityMetadata: conf.entryPoint,
         clientID: conf.clientId,
         redirectUrl: conf.callbackURL,
-        responseType: 'id_token',
-        responseMode: 'form_post',
+        responseType: respType,
+        responseMode: respMode,
         scope: ['profile', 'email', 'openid'],
-        allowHttpForRedirectUrl: WIKI.IS_DEBUG,
+        allowHttpForRedirectUrl: (WIKI.IS_DEBUG || conf.allowHttp),
         passReqToCallback: true,
         cookieSameSite: keyArray.length > 0,
         useCookieInsteadOfSession: keyArray.length > 0,
         cookieEncryptionKeys: keyArray
+		,clientSecret: conf.clientSecret
+		,issuer: issuerList
       }, async (req, iss, sub, profile, cb) => {
         const usrEmail = _.get(profile, '_json.email', null) || _.get(profile, '_json.preferred_username')
         try {
