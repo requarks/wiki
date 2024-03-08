@@ -137,7 +137,7 @@ module.exports = {
           description: r._source.description
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-        totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+        totalHits: _.get(results, 'body.hits.hits', []).map(r => r.length)
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
