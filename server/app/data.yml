@@ -63,6 +63,7 @@ defaults:
       tocPosition: 'left'
     auth:
       autoLogin: false
+      guestLogin: false
       enforce2FA: false
       hideLocal: false
       loginBgUrl: ''
