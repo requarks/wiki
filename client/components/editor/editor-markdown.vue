@@ -828,6 +828,9 @@ export default {
           if (opts.align && opts.align !== '') {
             img += `{.align-${opts.align}}`
           }
+          if (opts.className && opts.className !== '') {
+            img += `{.${opts.className}}`
+          }
           this.insertAtCursor({
             content: img
           })
