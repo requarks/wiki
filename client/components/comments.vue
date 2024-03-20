@@ -514,6 +514,11 @@ export default {
     right: 16px;
     opacity: 0;
     transition: opacity .4s ease;
+
+    @at-root .is-rtl & {
+      right: unset;
+      left: 16px;
+    }
   }
 
   &-content {
