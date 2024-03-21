@@ -5,6 +5,7 @@ const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
 const qs = require('querystring')
+const { SitemapStream, streamToPromise } = require('sitemap')
 
 /* global WIKI */
 
@@ -21,6 +22,91 @@ router.get('/robots.txt', (req, res, next) => {
     res.status(200).end()
   }
 })
+
+/**
+ * sitemap.xml
+ */
+// TODO: toggle off before the feature is ready
+if(WIKI.config.seo.sitemap.enabled) {
+  WIKI.logger.info(`Experimental feature sitemap is enabled`)
+  router.get('/sitemap.xml', async (req, res
+  
+    ) => {
+    const host = WIKI.config.host
+    const {enabled, cacheExpireTime} = WIKI.config.seo.sitemap
+    !enabled && res.status(404).end()
+
+    try {
+  
+      res.header('Content-Type', 'application/xml');
+  
+      // TODO: if we have a cached entry send it
+      // if (sitemap) {
+      //   res.send(sitemap)
+      //   return
+      // }
+  
+      const smStream = new SitemapStream({ hostname: host})
+  
+      /**
+         * [
+    Page {
+      id: 1,
+      path: 'home',
+      hash: 'b29b5d2ce62e55412776ab98f05631e0aa96597b',
+      title: 'Untitled Page',
+      description: '',
+      isPrivate: 0,
+      isPublished: 1,
+      privateNS: null,
+      publishStartDate: '',
+      publishEndDate: '',
+      content: '# Header\nYour content here',
+      render: '<h1 class="toc-header" id="header"><a href="#header" class="toc-anchor">¶</a> Header</h1>\n' +
+        '<p>Your content here</p>\n',
+      toc: '[{"title":"Header","anchor":"#header","children":[]}]',
+      contentType: 'markdown',
+      createdAt: '2023-10-12T16:07:42.594Z',
+      updatedAt: '2023-10-12T16:07:44.791Z',
+      editorKey: 'markdown',
+      localeCode: 'en',
+      authorId: 1,
+      creatorId: 1,
+      extra: { js: '', css: '' }
+    }
+  ]
+         */
+      const pages = await WIKI.models.pages.query()
+      .where('isPublished', 1)
+      .where('isPrivate', 0)
+      .orderBy('updatedAt', 'desc')
+      
+      for (const page of pages) {
+        // TODO: 
+        /**
+         * TypeError: user.getGlobalPermissions is not a function
+            at Object.checkAccess (/home/xxx/workspace/wiki/server/core/auth.js:218:72)
+            at /home/xxx/workspace/wiki/server/controllers/common.js:92:22
+         */
+        // if (!WIKI.auth.checkAccess(WIKI.auth.guest, ['read:pages'], page)) continue
+  
+        smStream.write({ 
+          url: `/${page.localeCode}/${page.path}`, 
+          lastmod: page.updatedAt
+          })
+      }
+  
+      smStream.end();
+      smStream.pipe(res).on('error', (e) => { throw e })
+    } catch (e) {
+      console.error(e)
+      res.status(500).end()
+    }
+  
+  })
+}
+
+
 
 /**
  * Health Endpoint
