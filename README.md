@@ -13,8 +13,7 @@
 [![Build + Publish](https://github.com/Requarks/wiki/actions/workflows/build.yml/badge.svg)](https://github.com/Requarks/wiki/actions/workflows/build.yml)
 [![Huntr](https://img.shields.io/badge/security%20bounty-disclose-brightgreen.svg?style=flat&logo=cachet&logoColor=white)](https://huntr.dev/bounties/disclose)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ngpixel?logo=github&color=ea4aaa)](https://github.com/users/NGPixel/sponsorship)
-[![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/wikijs?label=backers&color=218bff&logo=opencollective&logoColor=white)](https://opencollective.com/wikijs)
-[![Subscribe to Newsletter](https://img.shields.io/badge/newsletter-subscribe-yellow.svg?style=flat&logo=mailchimp&logoColor=white)](https://blog.js.wiki/subscribe)  
+[![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/wikijs?label=backers&color=218bff&logo=opencollective&logoColor=white)](https://opencollective.com/wikijs)  
 [![Chat on Slack](https://img.shields.io/badge/slack-requarks-CC2B5E.svg?style=flat&logo=slack)](https://wiki.requarks.io/slack)
 [![Follow on Twitter](https://img.shields.io/badge/twitter-%40requarks-blue.svg?style=flat&logo=twitter&logoColor=white)](https://twitter.com/requarks)
 [![Follow on Telegram](https://img.shields.io/badge/telegram-%40wiki__js-blue.svg?style=flat&logo=telegram)](https://t.me/wiki_js)
@@ -146,7 +145,12 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
           <img src="https://avatars.githubusercontent.com/u/114394792?v=4">
         </a>
       </td>
-      <td align="center" valign="middle" colspan="2">
+      <td align="center" valign="middle" width="148">
+        <a href="http://www.taicep.org/" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/160072306?v=4">
+        </a>
+      </td>
+      <td align="center" valign="middle" colspan="1">
         <a href="https://github.com/sponsors/NGPixel" target="_blank">
           <img src="https://static.requarks.io/sponsors/become-148x72.png">
         </a>
@@ -168,6 +172,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Cloud Data Hosting LLC ([@CloudDataHostingLLC](https://github.com/CloudDataHostingLLC))
 - Cole Manning ([@RVRX](https://github.com/RVRX))
 - CrazyMarvin ([@CrazyMarvin](https://github.com/CrazyMarvin))
+- Daniel Horner ([@danhorner](https://github.com/danhorner))
 - David Christian Holin ([@SirGibihm](https://github.com/SirGibihm))
 - Dragan Espenschied ([@despens](https://github.com/despens))
 - Elijah Zobenko ([@he110](https://github.com/he110))
@@ -188,11 +193,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Marcilio Leite Neto ([@marclneto](https://github.com/marclneto))
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
+- Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
         
 </td><td>
 <img width="441" height="1" />
 
-- Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
 - Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nick Halase ([@nhalase](https://github.com/nhalase))
@@ -211,6 +216,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Tyler Denman ([@tylerguy](https://github.com/tylerguy))
 - Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
 - VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
+- YazMogg35 ([@YazMogg35](https://github.com/YazMogg35))
 - Yu Yongwoo ([@uyu423](https://github.com/uyu423))
 - ameyrakheja ([@ameyrakheja](https://github.com/ameyrakheja))
 - aniketpanjwani ([@aniketpanjwani](https://github.com/aniketpanjwani))
