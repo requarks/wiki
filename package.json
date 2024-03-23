@@ -75,6 +75,7 @@
     "dotize": "0.3.0",
     "elasticsearch6": "npm:@elastic/elasticsearch@6",
     "elasticsearch7": "npm:@elastic/elasticsearch@7",
+    "elasticsearch8": "npm:@elastic/elasticsearch@8",
     "emoji-regex": "10.2.1",
     "eventemitter2": "6.4.9",
     "express": "4.18.2",
