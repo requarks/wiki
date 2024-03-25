@@ -44,6 +44,19 @@ function foldHandler (cm, start) {
       end++
       nextNextLine = cm.getLine(end + 1)
     }
+
+    // -> Collapsable
+  } else if (cm.getLine(start.line).startsWith('<markdown collapsable')) {
+    end = start.line
+    let nextNextLine = cm.getLine(end + 1)
+    while (end < lastLineNo) {
+      if (nextNextLine.includes('</markdown>')) {
+        end++
+        break
+      }
+      end++
+      nextNextLine = cm.getLine(end + 1)
+    }
   } else {
     // -> HEADER
 

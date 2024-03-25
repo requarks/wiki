@@ -433,21 +433,29 @@ export default {
       this.processContent(newContent)
     }, 600),
     onCmPaste (cm, ev) {
-      // const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
-      // for (let clipItem of clipItems) {
-      //   if (_.startsWith(clipItem.type, 'image/')) {
-      //     const file = clipItem.getAsFile()
-      //     const reader = new FileReader()
-      //     reader.onload = evt => {
-      //       this.$store.commit(`loadingStart`, 'editor-paste-image')
-      //       this.insertAfter({
-      //         content: `![${file.name}](${evt.target.result})`,
-      //         newLine: true
-      //       })
-      //     }
-      //     reader.readAsDataURL(file)
-      //   }
-      // }
+      const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
+      for (let clipItem of clipItems) {
+        if (_.startsWith(clipItem.type, 'image/')) {
+          const file = clipItem.getAsFile()
+          console.log(file)
+          const reader = new FileReader()
+          reader.onload = evt => {
+            this.insertAfter({
+              content: `<markdown collapsable title="${file.name}" type="Image">`,
+              newLine: true
+            })
+            this.insertAfter({
+              content: `<img src="${evt.target.result}">`,
+              newLine: false
+            })
+            this.insertAfter({
+              content: `</markdown>`,
+              newLine: true
+            })
+          }
+          reader.readAsDataURL(file)
+        }
+      }
     },
     processContent (newContent) {
       linesMap = []
@@ -664,6 +672,8 @@ export default {
     processMarkers (from, to) {
       let found = null
       let foundStart = 0
+      let markerTitle = ''
+      let markerType = ''
       this.cm.doc.getAllMarks().forEach(mk => {
         if (mk.__kind) {
           mk.clear()
@@ -671,47 +681,84 @@ export default {
       })
       this.cm.eachLine(from, to, ln => {
         const line = ln.lineNo()
-        if (ln.text.startsWith('```diagram')) {
-          found = 'diagram'
-          foundStart = line
-        } else if (ln.text === '```' && found) {
-          switch (found) {
-            // ------------------------------
-            // -> DIAGRAM
-            // ------------------------------
-            case 'diagram': {
-              if (line - foundStart !== 2) {
-                return
-              }
-              this.addMarker({
-                kind: 'diagram',
-                from: { line: foundStart, ch: 3 },
-                to: { line: foundStart, ch: 10 },
-                text: 'Edit Diagram',
-                action: ((start, end) => {
-                  return (ev) => {
-                    this.cm.doc.setSelection({ line: start, ch: 0 }, { line: end, ch: 3 })
-                    try {
-                      const raw = this.cm.doc.getLine(end - 1)
-                      this.$store.set('editor/activeModalData', Buffer.from(raw, 'base64').toString())
-                      this.toggleModal(`editorModalDrawio`)
-                    } catch (err) {
-                      return this.$store.commit('showNotification', {
-                        message: 'Failed to process diagram data.',
-                        style: 'warning',
-                        icon: 'warning'
-                      })
-                    }
-                  }
-                })(foundStart, line)
-              })
-              if (ln.height > 0) {
-                this.cm.foldCode(foundStart)
-              }
-              break
+        if (found == null) {
+          if (ln.text.startsWith('```diagram')) {
+            found = 'diagram'
+            foundStart = line
+            markerTitle = 'Edit Diagram'
+            markerType = ''
+          } else if (ln.text.startsWith('<markdown collapsable')) {
+            found = 'collapsable'
+            foundStart = line
+            markerTitle = ''
+            markerType = '<markdown>'
+            let match = ln.text.match(/title="([^"]*)"/)
+            if (match) {
+              markerTitle = match[1]
+            }
+            match = ln.text.match(/type="([^"]*)"/)
+            if (match) {
+              markerType = match[1]
             }
           }
-          found = null
+        } else if (found === 'diagram') {
+          if (ln.text === '```' && found) {
+            switch (found) {
+              // ------------------------------
+              // -> DIAGRAM
+              // ------------------------------
+              case 'diagram': {
+                if (line - foundStart !== 2) {
+                  return
+                }
+                this.addMarker({
+                  kind: 'diagram',
+                  from: { line: foundStart, ch: 3 },
+                  to: { line: foundStart, ch: 10 },
+                  text: markerTitle,
+                  action: ((start, end) => {
+                    return (ev) => {
+                      this.cm.doc.setSelection({ line: start, ch: 0 }, { line: end, ch: 3 })
+                      try {
+                        const raw = this.cm.doc.getLine(end - 1)
+                        this.$store.set('editor/activeModalData', Buffer.from(raw, 'base64').toString())
+                        this.toggleModal(`editorModalDrawio`)
+                      } catch (err) {
+                        return this.$store.commit('showNotification', {
+                          message: 'Failed to process diagram data.',
+                          style: 'warning',
+                          icon: 'warning'
+                        })
+                      }
+                    }
+                  })(foundStart, line)
+                })
+                if (ln.height > 0) {
+                  this.cm.foldCode(foundStart)
+                }
+                break
+              }
+            }
+            found = null
+          }
+        } else if (found === 'collapsable') {
+          if (ln.text.includes('</markdown>')) {
+            switch (found) {
+              case 'collapsable': {
+                this.addMarker({
+                  kind: 'diagram',
+                  from: { line: foundStart, ch: 0 },
+                  to: { line: foundStart, ch: 120 },
+                  text: markerType + ' ' + markerTitle
+                })
+                if (ln.height > 0) {
+                  this.cm.foldCode(foundStart)
+                }
+                break
+              }
+            }
+            found = null
+          }
         }
       })
     },
