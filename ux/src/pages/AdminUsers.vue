@@ -133,12 +133,12 @@ import { useMeta, useQuasar } from 'quasar'
 import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useAdminStore } from '@/stores/admin'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import UserCreateDialog from '../components/UserCreateDialog.vue'
-import UserDefaultsMenu from 'src/components/UserDefaultsMenu.vue'
+import UserDefaultsMenu from '@/components/UserDefaultsMenu.vue'
 
 // QUASAR
 

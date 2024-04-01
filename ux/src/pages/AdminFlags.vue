@@ -133,9 +133,9 @@ import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import ClipboardJS from 'clipboard'
 
-import { useSiteStore } from 'src/stores/site'
-import { useFlagsStore } from 'src/stores/flags'
-import { useUserStore } from 'src/stores/user'
+import { useSiteStore } from '@/stores/site'
+import { useFlagsStore } from '@/stores/flags'
+import { useUserStore } from '@/stores/user'
 
 // QUASAR
 

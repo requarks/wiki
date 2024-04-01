@@ -17,22 +17,22 @@ import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useEditorStore } from 'src/stores/editor'
-import { useFlagsStore } from 'src/stores/flags'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { useEditorStore } from '@/stores/editor'
+import { useFlagsStore } from '@/stores/flags'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // COMPONENTS
 
-import LoadingGeneric from 'src/components/LoadingGeneric.vue'
+import LoadingGeneric from '@/components/LoadingGeneric.vue'
 
 const sideDialogs = {
   PageDataDialog: defineAsyncComponent({
-    loader: () => import('src/components/PageDataDialog.vue'),
+    loader: () => import('@/components/PageDataDialog.vue'),
     loadingComponent: LoadingGeneric
   }),
   PagePropertiesDialog: defineAsyncComponent({
-    loader: () => import('src/components/PagePropertiesDialog.vue'),
+    loader: () => import('@/components/PagePropertiesDialog.vue'),
     loadingComponent: LoadingGeneric
   })
 }

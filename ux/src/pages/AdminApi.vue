@@ -107,8 +107,8 @@ import { DateTime } from 'luxon'
 import ApiKeyCreateDialog from '../components/ApiKeyCreateDialog.vue'
 import ApiKeyRevokeDialog from '../components/ApiKeyRevokeDialog.vue'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

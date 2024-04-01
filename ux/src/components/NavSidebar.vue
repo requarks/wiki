@@ -51,8 +51,8 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

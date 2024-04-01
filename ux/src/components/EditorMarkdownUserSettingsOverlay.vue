@@ -89,9 +89,9 @@ import { onMounted, reactive } from 'vue'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
-import { useEditorStore } from 'src/stores/editor'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useEditorStore } from '@/stores/editor'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 // QUASAR
 

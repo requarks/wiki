@@ -109,7 +109,7 @@ import { nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAdminStore } from '../stores/admin'
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // COMPONENTS
 

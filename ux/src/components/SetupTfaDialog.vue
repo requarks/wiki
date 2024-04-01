@@ -48,7 +48,7 @@ import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 import VOtpInput from 'vue3-otp-input'
 

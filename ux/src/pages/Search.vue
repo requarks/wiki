@@ -186,13 +186,13 @@ import gql from 'graphql-tag'
 import { cloneDeep, debounce, difference } from 'lodash-es'
 import { DateTime } from 'luxon'
 
-import { useFlagsStore } from 'src/stores/flags'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
-import HeaderNav from 'src/components/HeaderNav.vue'
-import FooterNav from 'src/components/FooterNav.vue'
-import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
+import HeaderNav from '@/components/HeaderNav.vue'
+import FooterNav from '@/components/FooterNav.vue'
+import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 
 const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
 

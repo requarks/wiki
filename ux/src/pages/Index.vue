@@ -163,20 +163,20 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 
-import { useCommonStore } from 'src/stores/common'
-import { useEditorStore } from 'src/stores/editor'
-import { useFlagsStore } from 'src/stores/flags'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useCommonStore } from '@/stores/common'
+import { useEditorStore } from '@/stores/editor'
+import { useFlagsStore } from '@/stores/flags'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 // COMPONENTS
 
-import LoadingGeneric from 'src/components/LoadingGeneric.vue'
-import PageActionsCol from 'src/components/PageActionsCol.vue'
-import PageHeader from 'src/components/PageHeader.vue'
-import PageTags from 'src/components/PageTags.vue'
-import SideDialog from 'src/components/SideDialog.vue'
+import LoadingGeneric from '@/components/LoadingGeneric.vue'
+import PageActionsCol from '@/components/PageActionsCol.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import PageTags from '@/components/PageTags.vue'
+import SideDialog from '@/components/SideDialog.vue'
 
 const editorComponents = {
   markdown: defineAsyncComponent({

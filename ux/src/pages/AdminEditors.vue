@@ -80,9 +80,9 @@ import { defineAsyncComponent, onMounted, reactive, watch } from 'vue'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useFlagsStore } from 'src/stores/flags'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

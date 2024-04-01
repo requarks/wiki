@@ -63,7 +63,7 @@ import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { reactive, ref, watch } from 'vue'
 import slugify from 'slugify'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

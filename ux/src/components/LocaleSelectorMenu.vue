@@ -24,8 +24,8 @@ q-menu.translucent-menu(
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 
-import { useCommonStore } from 'src/stores/common'
-import { useSiteStore } from 'src/stores/site'
+import { useCommonStore } from '@/stores/common'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

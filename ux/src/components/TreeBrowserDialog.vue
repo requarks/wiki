@@ -128,11 +128,11 @@ import slugify from 'slugify'
 
 import fileTypes from '../helpers/fileTypes'
 
-import FolderCreateDialog from 'src/components/FolderCreateDialog.vue'
-import Tree from 'src/components/TreeNav.vue'
+import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
+import Tree from '@/components/TreeNav.vue'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 import { dropRight } from 'lodash'
 
 // PROPS

@@ -35,7 +35,7 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
-import { useUserStore } from 'src/stores/user'
+import { useUserStore } from '@/stores/user'
 
 // QUASAR
 

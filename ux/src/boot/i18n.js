@@ -1,9 +1,7 @@
-import { boot } from 'quasar/wrappers'
 import { createI18n } from 'vue-i18n'
+import { useCommonStore } from '@/stores/common'
 
-import { useCommonStore } from 'src/stores/common'
-
-export default boot(({ app, store }) => {
+export function initializeI18n (app, store) {
   const commonStore = useCommonStore(store)
 
   const i18n = createI18n({
@@ -16,4 +14,4 @@ export default boot(({ app, store }) => {
 
   // Set i18n instance on app
   app.use(i18n)
-})
+}

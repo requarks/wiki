@@ -49,7 +49,7 @@ import { Tabulator } from 'tabulator-tables'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 import 'tabulator-tables/dist/css/tabulator.css'
 

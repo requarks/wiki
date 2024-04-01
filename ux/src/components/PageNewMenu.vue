@@ -73,10 +73,10 @@ q-menu.translucent-menu(
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 
-import { useEditorStore } from 'src/stores/editor'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
-import { useFlagsStore } from 'src/stores/flags'
+import { useEditorStore } from '@/stores/editor'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+import { useFlagsStore } from '@/stores/flags'
 
 // PROPS
 

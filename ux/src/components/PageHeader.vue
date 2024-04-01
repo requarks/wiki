@@ -196,14 +196,14 @@ import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useEditorStore } from 'src/stores/editor'
-import { useFlagsStore } from 'src/stores/flags'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useEditorStore } from '@/stores/editor'
+import { useFlagsStore } from '@/stores/flags'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
-import IconPickerDialog from 'src/components/IconPickerDialog.vue'
-import SocialSharingMenu from 'src/components/SocialSharingMenu.vue'
+import IconPickerDialog from '@/components/IconPickerDialog.vue'
+import SocialSharingMenu from '@/components/SocialSharingMenu.vue'
 
 // QUASAR
 

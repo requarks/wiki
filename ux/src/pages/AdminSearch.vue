@@ -87,10 +87,10 @@ import { cloneDeep, omit } from 'lodash-es'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
-import { useSiteStore } from 'src/stores/site'
-import { useFlagsStore } from 'src/stores/flags'
+import { useSiteStore } from '@/stores/site'
+import { useFlagsStore } from '@/stores/flags'
 
-import UtilCodeEditor from 'src/components/UtilCodeEditor.vue'
+import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
 
 // QUASAR
 

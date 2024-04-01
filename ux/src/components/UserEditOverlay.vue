@@ -537,9 +537,9 @@ import { useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useFlagsStore } from 'src/stores/flags'
-import { useUserStore } from 'src/stores/user'
+import { useAdminStore } from '@/stores/admin'
+import { useFlagsStore } from '@/stores/flags'
+import { useUserStore } from '@/stores/user'
 
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
 import UtilCodeEditor from './UtilCodeEditor.vue'

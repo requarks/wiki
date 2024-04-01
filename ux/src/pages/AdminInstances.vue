@@ -83,7 +83,7 @@ import { useI18n } from 'vue-i18n'
 import gql from 'graphql-tag'
 import { DateTime, Duration, Interval } from 'luxon'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

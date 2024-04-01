@@ -126,21 +126,21 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useCommonStore } from 'src/stores/common'
-import { useEditorStore } from 'src/stores/editor'
-import { useFlagsStore } from 'src/stores/flags'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useCommonStore } from '@/stores/common'
+import { useEditorStore } from '@/stores/editor'
+import { useFlagsStore } from '@/stores/flags'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 // COMPONENTS
 
-import FooterNav from 'src/components/FooterNav.vue'
-import HeaderNav from 'src/components/HeaderNav.vue'
-import LocaleSelectorMenu from 'src/components/LocaleSelectorMenu.vue'
-import NavSidebar from 'src/components/NavSidebar.vue'
-import NavEditMenu from 'src/components/NavEditMenu.vue'
-import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
+import FooterNav from '@/components/FooterNav.vue'
+import HeaderNav from '@/components/HeaderNav.vue'
+import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
+import NavSidebar from '@/components/NavSidebar.vue'
+import NavEditMenu from '@/components/NavEditMenu.vue'
+import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 
 // QUASAR
 

@@ -1,7 +1,6 @@
-import { boot } from 'quasar/wrappers'
 import mitt from 'mitt'
 
-export default boot(({ app }) => {
+export function initializeEventBus () {
   const emitter = mitt()
 
   if (import.meta.env.SSR) {
@@ -9,4 +8,4 @@ export default boot(({ app }) => {
   } else {
     window.EVENT_BUS = emitter
   }
-})
+}

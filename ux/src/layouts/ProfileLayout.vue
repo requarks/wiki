@@ -49,13 +49,13 @@ import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useFlagsStore } from 'src/stores/flags'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
-import HeaderNav from 'src/components/HeaderNav.vue'
-import FooterNav from 'src/components/FooterNav.vue'
-import MainOverlayDialog from 'src/components/MainOverlayDialog.vue'
+import HeaderNav from '@/components/HeaderNav.vue'
+import FooterNav from '@/components/FooterNav.vue'
+import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 
 // QUASAR
 

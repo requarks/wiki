@@ -21,9 +21,9 @@ import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive } from 'vue'
 
-import { useEditorStore } from 'src/stores/editor'
-import { useSiteStore } from 'src/stores/site'
-import { usePageStore } from 'src/stores/page'
+import { useEditorStore } from '@/stores/editor'
+import { useSiteStore } from '@/stores/site'
+import { usePageStore } from '@/stores/page'
 
 // EMITS
 

@@ -103,8 +103,8 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

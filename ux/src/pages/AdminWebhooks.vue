@@ -103,10 +103,10 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
-import WebhookEditDialog from 'src/components/WebhookEditDialog.vue'
-import WebhookDeleteDialog from 'src/components/WebhookDeleteDialog.vue'
+import WebhookEditDialog from '@/components/WebhookEditDialog.vue'
+import WebhookDeleteDialog from '@/components/WebhookDeleteDialog.vue'
 
 // QUASAR
 

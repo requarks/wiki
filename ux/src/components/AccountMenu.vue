@@ -37,7 +37,7 @@ q-btn.account-avbtn.q-ml-md(flat, round, dense, color='custom-color')
 <script setup>
 import { useI18n } from 'vue-i18n'
 
-import { useUserStore } from 'src/stores/user'
+import { useUserStore } from '@/stores/user'
 
 // STORES
 

@@ -96,15 +96,15 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
-import { localizeError } from 'src/helpers/localization'
+import { localizeError } from '@/helpers/localization'
 import { DateTime } from 'luxon'
 
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
-import ChangePwdDialog from 'src/components/ChangePwdDialog.vue'
-import SetupTfaDialog from 'src/components/SetupTfaDialog.vue'
-import PasskeyCreateDialog from 'src/components/PasskeyCreateDialog.vue'
+import ChangePwdDialog from '@/components/ChangePwdDialog.vue'
+import SetupTfaDialog from '@/components/SetupTfaDialog.vue'
+import PasskeyCreateDialog from '@/components/PasskeyCreateDialog.vue'
 
 // QUASAR
 

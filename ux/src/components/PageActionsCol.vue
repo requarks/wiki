@@ -153,11 +153,11 @@ import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useEditorStore } from 'src/stores/editor'
-import { useFlagsStore } from 'src/stores/flags'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useEditorStore } from '@/stores/editor'
+import { useFlagsStore } from '@/stores/flags'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 // QUASAR
 

@@ -46,8 +46,8 @@ import { useI18n } from 'vue-i18n'
 
 import UtilCodeEditor from './UtilCodeEditor.vue'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

@@ -185,7 +185,7 @@ import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref } from 'vue'
 
-import { useAdminStore } from 'src/stores/admin'
+import { useAdminStore } from '@/stores/admin'
 
 // EMITS
 

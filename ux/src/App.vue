@@ -1,4 +1,4 @@
-<template lang="pug">
+<template lang='pug'>
 router-view
 </template>
 
@@ -8,12 +8,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { setCssVar, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
-import '@mdi/font/css/materialdesignicons.css'
-
 import { useCommonStore } from './stores/common'
-import { useFlagsStore } from 'src/stores/flags'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 /* global siteConfig */
 
@@ -105,7 +103,7 @@ async function applyTheme () {
 
     const newHljsStyleEl = document.createElement('style')
     newHljsStyleEl.id = 'hljs-theme'
-    newHljsStyleEl.innerHTML = (await import(`../node_modules/highlight.js/styles/${desiredHljsTheme}.css`)).default
+    // newHljsStyleEl.innerHTML = (await import(`../node_modules/highlight.js/styles/${desiredHljsTheme}.css`)).default
     document.head.appendChild(newHljsStyleEl)
   }
 }

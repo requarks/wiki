@@ -600,8 +600,8 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useSiteStore } from '@/stores/site'
 
 import GithubSetupInstallDialog from '../components/GithubSetupInstallDialog.vue'
 

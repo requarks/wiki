@@ -1,9 +1,8 @@
-import { boot } from 'quasar/wrappers'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
-export default boot(({ router, store }) => {
+export function initializeExternals (router, store) {
   if (import.meta.env.SSR) {
     global.WIKI_STATE = {
       page: usePageStore(store),
@@ -19,4 +18,4 @@ export default boot(({ router, store }) => {
     }
     window.WIKI_ROUTER = router
   }
-})
+}

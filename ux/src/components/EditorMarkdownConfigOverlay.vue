@@ -259,9 +259,9 @@ import { onMounted, reactive } from 'vue'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useEditorStore } from 'src/stores/editor'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useEditorStore } from '@/stores/editor'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

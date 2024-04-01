@@ -1,10 +1,10 @@
-<template lang="pug">
+<template lang='pug'>
 q-layout(view='hHh lpR fFf', container)
   q-header.card-header.q-px-md.q-py-sm
     q-icon(name='img:/_assets/icons/fluent-people.svg', left, size='md')
     div
-      span {{t(`admin.groups.edit`)}}
-      .text-caption {{state.group.name}}
+      span {{ t(`admin.groups.edit`) }}
+      .text-caption {{ state.group.name }}
     q-space
     q-btn-group(push)
       q-btn(
@@ -15,7 +15,7 @@ q-layout(view='hHh lpR fFf', container)
         icon='las la-redo-alt'
         @click='refresh'
         )
-        q-tooltip(anchor='center left', self='center right') {{t(`common.actions.refresh`)}}
+        q-tooltip(anchor='center left', self='center right') {{ t(`common.actions.refresh`) }}
       q-btn(
         push
         color='white'
@@ -43,7 +43,7 @@ q-layout(view='hHh lpR fFf', container)
           )
           q-item-section(side)
             q-icon(:name='sc.icon', color='white')
-          q-item-section {{sc.text}}
+          q-item-section {{ sc.text }}
           q-item-section(side, v-if='sc.usersTotal')
             q-badge(color='dark-3', :label='state.usersTotal')
           q-item-section(side, v-if='sc.rulesTotal && state.group.rules')
@@ -59,12 +59,12 @@ q-layout(view='hHh lpR fFf', container)
           .col-12.col-lg-8
             q-card.shadow-1.q-pb-sm
               q-card-section
-                .text-subtitle1 {{t('admin.groups.general')}}
+                .text-subtitle1 {{ t('admin.groups.general') }}
               q-item
                 blueprint-icon(icon='team')
                 q-item-section
-                  q-item-label {{t(`admin.groups.name`)}}
-                  q-item-label(caption) {{t(`admin.groups.nameHint`)}}
+                  q-item-label {{ t(`admin.groups.name`) }}
+                  q-item-label(caption) {{ t(`admin.groups.nameHint`) }}
                 q-item-section
                   q-input(
                     outlined
@@ -78,12 +78,12 @@ q-layout(view='hHh lpR fFf', container)
 
             q-card.shadow-1.q-pb-sm.q-mt-md(v-if='!isGuestGroup')
               q-card-section
-                .text-subtitle1 {{t('admin.groups.authBehaviors')}}
+                .text-subtitle1 {{ t('admin.groups.authBehaviors') }}
               q-item
                 blueprint-icon(icon='double-right')
                 q-item-section
-                  q-item-label {{t(`admin.groups.redirectOnLogin`)}}
-                  q-item-label(caption) {{t(`admin.groups.redirectOnLoginHint`)}}
+                  q-item-label {{ t(`admin.groups.redirectOnLogin`) }}
+                  q-item-label(caption) {{ t(`admin.groups.redirectOnLoginHint`) }}
                 q-item-section
                   q-input(
                     outlined
@@ -95,8 +95,8 @@ q-layout(view='hHh lpR fFf', container)
               q-item
                 blueprint-icon(icon='chevron-right')
                 q-item-section
-                  q-item-label {{t(`admin.groups.redirectOnFirstLogin`)}}
-                  q-item-label(caption) {{t(`admin.groups.redirectOnFirstLoginHint`)}}
+                  q-item-label {{ t(`admin.groups.redirectOnFirstLogin`) }}
+                  q-item-label(caption) {{ t(`admin.groups.redirectOnFirstLoginHint`) }}
                 q-item-section
                   q-input(
                     outlined
@@ -108,8 +108,8 @@ q-layout(view='hHh lpR fFf', container)
               q-item
                 blueprint-icon(icon='exit')
                 q-item-section
-                  q-item-label {{t(`admin.groups.redirectOnLogout`)}}
-                  q-item-label(caption) {{t(`admin.groups.redirectOnLogoutHint`)}}
+                  q-item-label {{ t(`admin.groups.redirectOnLogout`) }}
+                  q-item-label(caption) {{ t(`admin.groups.redirectOnLogoutHint`) }}
                 q-item-section
                   q-input(
                     outlined
@@ -121,23 +121,23 @@ q-layout(view='hHh lpR fFf', container)
           .col-12.col-lg-4
             q-card.shadow-1.q-pb-sm
               q-card-section
-                .text-subtitle1 {{t('admin.groups.info')}}
+                .text-subtitle1 {{ t('admin.groups.info') }}
               q-item
                 blueprint-icon(icon='team', :hue-rotate='-45')
                 q-item-section
-                  q-item-label {{t(`common.field.id`)}}
+                  q-item-label {{ t(`common.field.id`) }}
                   q-item-label: strong {{state.group.id}}
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='calendar-plus', :hue-rotate='-45')
                 q-item-section
-                  q-item-label {{t(`common.field.createdOn`)}}
+                  q-item-label {{ t(`common.field.createdOn`) }}
                   q-item-label: strong {{humanizeDate(state.group.createdAt)}}
               q-separator.q-my-sm(inset)
               q-item
                 blueprint-icon(icon='summertime', :hue-rotate='-45')
                 q-item-section
-                  q-item-label {{t(`common.field.lastUpdated`)}}
+                  q-item-label {{ t(`common.field.lastUpdated`) }}
                   q-item-label: strong {{humanizeDate(state.group.updatedAt)}}
     //- -----------------------------------------------------------------------
     //- RULES
@@ -146,7 +146,7 @@ q-layout(view='hHh lpR fFf', container)
       q-toolbar.q-pl-md(
         :class='$q.dark.isActive ? `bg-dark-3` : `bg-white`'
         )
-        .text-subtitle1 {{t('admin.groups.rules')}}
+        .text-subtitle1 {{ t('admin.groups.rules') }}
         q-space
         q-btn.acrylic-btn.q-mr-sm(
           icon='las la-question-circle'
@@ -162,14 +162,14 @@ q-layout(view='hHh lpR fFf', container)
           icon='las la-file-export'
           @click='exportRules'
           )
-          q-tooltip {{t('admin.groups.exportRules')}}
+          q-tooltip {{ t('admin.groups.exportRules') }}
         q-btn.acrylic-btn.q-mr-sm(
           flat
           color='indigo'
           icon='las la-file-import'
           @click='importRules'
           )
-          q-tooltip {{t('admin.groups.importRules')}}
+          q-tooltip {{ t('admin.groups.importRules') }}
         q-btn(
           unelevated
           color='primary'
@@ -183,11 +183,11 @@ q-layout(view='hHh lpR fFf', container)
           v-if='!state.group.rules || state.group.rules.length < 1'
           rounded
           :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`'
-          ) {{t('admin.groups.rulesNone')}}
+          ) {{ t('admin.groups.rulesNone') }}
         q-card.shadow-1.q-pb-sm(v-else)
           q-card-section
             .admin-groups-rule(
-              v-for='(rule, idx) of state.group.rules'
+              v-for='rule of state.group.rules'
               :key='rule.id'
               )
               .admin-groups-rule-icon(:class='getRuleModeColor(rule.mode)')
@@ -197,7 +197,7 @@ q-layout(view='hHh lpR fFf', container)
                   @click='rule.mode = getNextRuleMode(rule.mode)'
                 )
               .admin-groups-rule-name
-                .admin-groups-rule-name-text: strong(:class='getRuleModeColor(rule.mode)') {{getRuleModeName(rule.mode)}}
+                .admin-groups-rule-name-text: strong(:class='getRuleModeColor(rule.mode)') {{ getRuleModeName(rule.mode) }}
                 q-separator.q-ml-sm.q-mr-xs(vertical)
                 input(
                   type='text'
@@ -222,7 +222,7 @@ q-layout(view='hHh lpR fFf', container)
                     use-chips
                     stack-label
                     )
-                    template(v-slot:selected-item='scope')
+                    template(#selected-item='scope')
                       q-chip(
                         square
                         dense
@@ -231,7 +231,7 @@ q-layout(view='hHh lpR fFf', container)
                         text-color='white'
                         )
                         span.text-caption {{ scope.opt.title }}
-                    template(v-slot:option='{ itemProps, itemEvents, opt, selected, toggleOption }')
+                    template(#option='{ itemProps, itemEvents, opt, selected, toggleOption }')
                       q-item(v-bind='itemProps', v-on='itemEvents')
                         q-item-section(side)
                           q-toggle(
@@ -250,7 +250,7 @@ q-layout(view='hHh lpR fFf', container)
                         //-     dense
                         //-   ) {{opt.permission}}
                         q-item-section
-                          q-item-label {{opt.title}}
+                          q-item-label {{ opt.title }}
                           q-item-label(caption) {{opt.hint}}
                   q-btn.acrylic-btn.q-ml-md(
                     flat
@@ -277,10 +277,10 @@ q-layout(view='hHh lpR fFf', container)
                       behavior='dialog'
                       :display-value='t(`admin.groups.selectedSites`, rule.sites.length, { count: rule.sites.length })'
                       )
-                      template(v-slot:option='{ itemProps, itemEvents, opt, selected, toggleOption }')
+                      template(#option='{ itemProps, itemEvents, opt, selected, toggleOption }')
                         q-item(v-bind='itemProps', v-on='itemEvents')
                           q-item-section
-                            q-item-label {{opt.title}}
+                            q-item-label {{ opt.title }}
                           q-item-section(side)
                             q-toggle(
                               :model-value='selected'
@@ -304,10 +304,10 @@ q-layout(view='hHh lpR fFf', container)
                       behavior='dialog'
                       :display-value='t(`admin.groups.selectedLocales`, { n: rule.locales.length > 0 ? rule.locales[0].toUpperCase() : rule.locales.length }, rule.locales.length)'
                       )
-                      template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
+                      template(#option='{ itemProps, opt, selected, toggleOption }')
                         q-item(v-bind='itemProps')
                           q-item-section
-                            q-item-label {{opt.name}}
+                            q-item-label {{ opt.name }}
                           q-item-section(side)
                             q-toggle(
                               :model-value='selected'
@@ -353,7 +353,7 @@ q-layout(view='hHh lpR fFf', container)
             q-card.shadow-1.q-pb-sm
               .flex.justify-between
                 q-card-section
-                  .text-subtitle1 {{t(`admin.groups.permissions`)}}
+                  .text-subtitle1 {{ t(`admin.groups.permissions`) }}
                 q-card-section
                   q-btn.acrylic-btn(
                     icon='las la-question-circle'
@@ -372,8 +372,8 @@ q-layout(view='hHh lpR fFf', container)
                       size='sm'
                       )
                   q-item-section
-                    q-item-label {{perm.permission}}
-                    q-item-label(caption) {{perm.hint}}
+                    q-item-label {{ perm.permission }}
+                    q-item-label(caption) {{ perm.hint }}
                   q-item-section(avatar)
                     q-toggle(
                       v-model='state.group.permissions'
@@ -391,7 +391,7 @@ q-layout(view='hHh lpR fFf', container)
       q-toolbar(
         :class='$q.dark.isActive ? `bg-dark-3` : `bg-white`'
         )
-        .text-subtitle1 {{t('admin.groups.users')}}
+        .text-subtitle1 {{ t('admin.groups.users') }}
         q-space
         q-btn.acrylic-btn.q-mr-sm(
           icon='las la-question-circle'
@@ -428,7 +428,7 @@ q-layout(view='hHh lpR fFf', container)
           v-if='!state.users || state.users.length < 1'
           rounded
           :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`'
-          ) {{t('admin.groups.usersNone')}}
+          ) {{ t('admin.groups.usersNone') }}
         q-card.shadow-1
           q-table(
             :rows='state.users'
@@ -440,13 +440,13 @@ q-layout(view='hHh lpR fFf', container)
             :rows-per-page-options='[0]'
             :loading='state.isLoadingUsers'
             )
-            template(v-slot:body-cell-id='props')
+            template(#body-cell-id='props')
               q-td(:props='props')
                 q-icon(name='las la-user', color='primary', size='sm')
-            template(v-slot:body-cell-name='props')
+            template(#body-cell-name='props')
               q-td(:props='props')
                 .flex.items-center
-                  strong {{props.value}}
+                  strong {{ props.value }}
                   q-icon.q-ml-sm(
                     v-if='props.row.isSystem'
                     name='las la-lock'
@@ -457,10 +457,10 @@ q-layout(view='hHh lpR fFf', container)
                     name='las la-ban'
                     color='pink'
                     )
-            template(v-slot:body-cell-email='props')
+            template(#body-cell-email='props')
               q-td(:props='props')
                 em {{ props.value }}
-            template(v-slot:body-cell-date='props')
+            template(#body-cell-date='props')
               q-td(:props='props')
                 i18n-t.text-caption(keypath='admin.users.createdAt', tag='div')
                   template(#date)
@@ -472,7 +472,7 @@ q-layout(view='hHh lpR fFf', container)
                   )
                   template(#date)
                     strong {{ humanizeDate(props.row.lastLoginAt) }}
-            template(v-slot:body-cell-edit='props')
+            template(#body-cell-edit='props')
               q-td(:props='props')
                 q-btn.acrylic-btn.q-mr-sm(
                   v-if='!props.row.isSystem'
@@ -513,8 +513,8 @@ import { exportFile, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

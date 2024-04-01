@@ -85,8 +85,8 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import gql from 'graphql-tag'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

@@ -351,8 +351,8 @@ import {
   startAuthentication
 } from '@simplewebauthn/browser'
 
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import VOtpInput from 'vue3-otp-input'
 

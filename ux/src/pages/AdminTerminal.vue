@@ -58,7 +58,7 @@ import { io } from 'socket.io-client'
 import { Terminal } from 'xterm'
 import 'xterm/css/xterm.css'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

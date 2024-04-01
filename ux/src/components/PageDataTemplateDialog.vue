@@ -166,8 +166,8 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

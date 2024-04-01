@@ -55,9 +55,9 @@ import { Repl, ReplStore, File } from '@vue/repl'
 import Monaco from '@vue/repl/monaco-editor'
 import '@vue/repl/style.css'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useEditorStore } from 'src/stores/editor'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useEditorStore } from '@/stores/editor'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

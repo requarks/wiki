@@ -309,9 +309,9 @@ import { useI18n } from 'vue-i18n'
 import { setCssVar, useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useFlagsStore } from 'src/stores/flags'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
 
 import UtilCodeEditor from '../components/UtilCodeEditor.vue'
 

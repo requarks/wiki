@@ -254,16 +254,16 @@ import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useCommonStore } from 'src/stores/common'
-import { useFlagsStore } from 'src/stores/flags'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useAdminStore } from '@/stores/admin'
+import { useCommonStore } from '@/stores/common'
+import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 // COMPONENTS
 
 import AccountMenu from '../components/AccountMenu.vue'
-import FooterNav from 'src/components/FooterNav.vue'
+import FooterNav from '@/components/FooterNav.vue'
 const overlays = {
   EditorMarkdownConfig: defineAsyncComponent(() => import('../components/EditorMarkdownConfigOverlay.vue')),
   GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),

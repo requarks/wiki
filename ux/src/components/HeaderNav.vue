@@ -92,13 +92,13 @@ import { useQuasar } from 'quasar'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useCommonStore } from 'src/stores/common'
-import { useSiteStore } from 'src/stores/site'
-import { useUserStore } from 'src/stores/user'
+import { useCommonStore } from '@/stores/common'
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
-import AccountMenu from 'src/components/AccountMenu.vue'
-import NewMenu from 'src/components/PageNewMenu.vue'
-import HeaderSearch from 'src/components/HeaderSearch.vue'
+import AccountMenu from '@/components/AccountMenu.vue'
+import NewMenu from '@/components/PageNewMenu.vue'
+import HeaderSearch from '@/components/HeaderSearch.vue'
 
 // QUASAR
 

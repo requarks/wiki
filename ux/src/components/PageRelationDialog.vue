@@ -121,8 +121,8 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import IconPickerDialog from './IconPickerDialog.vue'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

@@ -273,13 +273,13 @@ import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
 
-import { useCommonStore } from 'src/stores/common'
-import { useEditorStore } from 'src/stores/editor'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { useCommonStore } from '@/stores/common'
+import { useEditorStore } from '@/stores/editor'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // Markdown Renderer
-import { MarkdownRenderer } from 'src/renderers/markdown'
+import { MarkdownRenderer } from '@/renderers/markdown'
 
 // QUASAR
 

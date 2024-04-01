@@ -390,12 +390,12 @@ import { v4 as uuid } from 'uuid'
 import gql from 'graphql-tag'
 import { cloneDeep, last, pick } from 'lodash-es'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 import { Sortable } from 'sortablejs-vue3'
 
-import IconPickerDialog from 'src/components/IconPickerDialog.vue'
+import IconPickerDialog from '@/components/IconPickerDialog.vue'
 
 // QUASAR
 

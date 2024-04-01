@@ -60,9 +60,9 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useMeta, useQuasar } from 'quasar'
 
-import { useFlagsStore } from 'src/stores/flags'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { useFlagsStore } from '@/stores/flags'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

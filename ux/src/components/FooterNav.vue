@@ -28,7 +28,7 @@ q-footer.site-footer
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 

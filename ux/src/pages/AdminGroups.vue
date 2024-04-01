@@ -103,8 +103,8 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { useAdminStore } from 'src/stores/admin'
-import { useSiteStore } from 'src/stores/site'
+import { useAdminStore } from '@/stores/admin'
+import { useSiteStore } from '@/stores/site'
 
 import GroupCreateDialog from '../components/GroupCreateDialog.vue'
 import GroupDeleteDialog from '../components/GroupDeleteDialog.vue'

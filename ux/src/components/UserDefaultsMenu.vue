@@ -86,8 +86,8 @@ import { onMounted, reactive, ref } from 'vue'
 import gql from 'graphql-tag'
 import { cloneDeep } from 'lodash-es'
 
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

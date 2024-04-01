@@ -321,9 +321,9 @@ import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
 import PageTags from './PageTags.vue'
 
-import { useEditorStore } from 'src/stores/editor'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { useEditorStore } from '@/stores/editor'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 

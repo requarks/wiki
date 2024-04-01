@@ -48,7 +48,7 @@ import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive } from 'vue'
 import { DateTime } from 'luxon'
 
-import { useUserStore } from 'src/stores/user'
+import { useUserStore } from '@/stores/user'
 
 // EMITS
 

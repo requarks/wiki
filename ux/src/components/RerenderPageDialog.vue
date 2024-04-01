@@ -10,7 +10,7 @@ import gql from 'graphql-tag'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive } from 'vue'
-import { usePageStore } from 'src/stores/page'
+import { usePageStore } from '@/stores/page'
 
 // PROPS
 

@@ -152,14 +152,14 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { useAdminStore } from '../stores/admin'
-import { useUserStore } from 'src/stores/user'
+import { useUserStore } from '@/stores/user'
 
 // COMPONENTS
 
-import CheckUpdateDialog from 'src/components/CheckUpdateDialog.vue'
-import SiteCreateDialog from 'src/components/SiteCreateDialog.vue'
-import UserCreateDialog from 'src/components/UserCreateDialog.vue'
-import GroupCreateDialog from 'src/components/GroupCreateDialog.vue'
+import CheckUpdateDialog from '@/components/CheckUpdateDialog.vue'
+import SiteCreateDialog from '@/components/SiteCreateDialog.vue'
+import UserCreateDialog from '@/components/UserCreateDialog.vue'
+import GroupCreateDialog from '@/components/GroupCreateDialog.vue'
 
 // QUASAR
 

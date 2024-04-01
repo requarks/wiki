@@ -116,9 +116,9 @@ import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { DateTime } from 'luxon'
 
-import { useEditorStore } from 'src/stores/editor'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { useEditorStore } from '@/stores/editor'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 const lowlight = createLowlight(common)
 

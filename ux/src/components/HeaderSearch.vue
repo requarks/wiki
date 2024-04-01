@@ -89,7 +89,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { orderBy } from 'lodash-es'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 
@@ -172,7 +172,7 @@ function addTag (tag) {
 // MOUNTED
 
 onMounted(() => {
-  if (process.env.CLIENT) {
+  if (!import.meta.env.SSR) {
     window.addEventListener('keydown', handleKeyPress)
   }
   if (route.path.startsWith('/_search')) {
@@ -180,7 +180,7 @@ onMounted(() => {
   }
 })
 onBeforeUnmount(() => {
-  if (process.env.CLIENT) {
+  if (!import.meta.env.SSR) {
     window.removeEventListener('keydown', handleKeyPress)
   }
 })

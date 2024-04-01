@@ -209,7 +209,7 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ClipboardJS from 'clipboard'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
 

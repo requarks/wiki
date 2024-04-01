@@ -331,17 +331,17 @@ import Fuse from 'fuse.js/basic'
 import NewMenu from './PageNewMenu.vue'
 import Tree from './TreeNav.vue'
 
-import fileTypes from '../helpers/fileTypes'
+import fileTypes from '@/helpers/fileTypes'
 
-import { useCommonStore } from 'src/stores/common'
-import { usePageStore } from 'src/stores/page'
-import { useSiteStore } from 'src/stores/site'
+import { useCommonStore } from '@/stores/common'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
-import FolderCreateDialog from 'src/components/FolderCreateDialog.vue'
-import FolderDeleteDialog from 'src/components/FolderDeleteDialog.vue'
-import FolderRenameDialog from 'src/components/FolderRenameDialog.vue'
-import AssetRenameDialog from 'src/components/AssetRenameDialog.vue'
-import LocaleSelectorMenu from 'src/components/LocaleSelectorMenu.vue'
+import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
+import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
+import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
+import AssetRenameDialog from '@/components/AssetRenameDialog.vue'
+import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 
 // QUASAR
 
@@ -793,7 +793,7 @@ function reloadFolder (folderId) {
 
 function rerenderPage (item) {
   $q.dialog({
-    component: defineAsyncComponent(() => import('src/components/RerenderPageDialog.vue')),
+    component: defineAsyncComponent(() => import('@/components/RerenderPageDialog.vue')),
     componentProps: {
       id: item.id
     }
@@ -802,7 +802,7 @@ function rerenderPage (item) {
 
 function delPage (pageId, pageName) {
   $q.dialog({
-    component: defineAsyncComponent(() => import('src/components/PageDeleteDialog.vue')),
+    component: defineAsyncComponent(() => import('@/components/PageDeleteDialog.vue')),
     componentProps: {
       pageId,
       pageName
@@ -831,7 +831,7 @@ function renameAsset (assetId) {
 
 function delAsset (assetId, assetName) {
   $q.dialog({
-    component: defineAsyncComponent(() => import('src/components/AssetDeleteDialog.vue')),
+    component: defineAsyncComponent(() => import('@/components/AssetDeleteDialog.vue')),
     componentProps: {
       assetId,
       assetName

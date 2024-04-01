@@ -1,12 +1,11 @@
-import { boot } from 'quasar/wrappers'
 import { ApolloClient, HttpLink, InMemoryCache, from, split } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { BatchHttpLink } from '@apollo/client/link/batch-http'
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 
-import { useUserStore } from 'src/stores/user'
+import { useUserStore } from '@/stores/user'
 
-export default boot(({ app, store }) => {
+export function initializeApollo (store) {
   const userStore = useUserStore(store)
 
   const defaultLinkOptions = {
@@ -102,4 +101,4 @@ export default boot(({ app, store }) => {
   } else {
     window.APOLLO_CLIENT = client
   }
-})
+}

@@ -19,9 +19,9 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
-import AuthLoginPanel from 'src/components/AuthLoginPanel.vue'
+import AuthLoginPanel from '@/components/AuthLoginPanel.vue'
 
-import { useSiteStore } from 'src/stores/site'
+import { useSiteStore } from '@/stores/site'
 
 // QUASAR
 
