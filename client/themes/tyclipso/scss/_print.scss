@@ -1,0 +1,80 @@
+@page {
+  size: A4 portrait;
+  margin: 1.25cm;
+}
+
+@media print {
+  .v-main__wrap > header,
+  .v-footer {
+    display: none !important;
+  }
+
+  #root .v-application .container.container.container {
+    background: none !important;
+  }
+
+  .v-application .is-page-header.is-page-header  {
+    .headline, .headline.grey--text.text--lighten-2, .caption, .caption.grey--text.text--darken-1 {
+      color: #1a1a1a !important;
+    }
+  }
+
+  .contents {
+    h1, h2, h3, h4, h5, h6, p {
+      color: black !important;
+    }
+
+    h1:not(:first-child) {
+      break-before: page !important;
+    }
+
+    h1 {
+      font-weight: 100 !important;
+    }
+
+    h3 {
+      font-size: 1.2rem !important;
+    }
+
+    h1, h2 {
+      break-after: avoid-page !important;
+    }
+
+    @at-root .v-main.v-main & h1 + h2 {
+      margin-top: 0.5em !important;
+    }
+
+    h2:after,
+    h3:after {
+      display: none !important;
+    }
+
+    ul, ol {
+      break-before: avoid-page !important;
+    }
+
+    blockquote {
+      break-inside: avoid-page !important;
+      border-color: #dddddd !important;
+      background-color: #f0f0f0 !important;
+
+      &,
+      & p {
+        color: #333333 !important;
+      }
+
+      &:before {
+        color: #555555 !important;
+      }
+    }
+
+    img {
+      width: auto !important;
+      max-height: 12.5cm !important;
+    }
+
+    a {
+      color: #0d47a1 !important;
+    }
+  }
+}
