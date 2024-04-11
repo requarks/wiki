@@ -2,7 +2,7 @@
   v-footer.justify-center(:color='bgColor', inset)
     .caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`')
       template(v-if='footerOverride')
-        span {{footerOverride}} |&nbsp;
+        span(v-html='footerOverrideRender + ` |&nbsp;`')
       template(v-else-if='company && company.length > 0 && contentLicense !== ``')
         span(v-if='contentLicense === `alr`') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
         span(v-else) {{ $t('common:footer.license', { company: company, license: $t('common:license.' + contentLicense), interpolation: { escapeValue: false } }) }} |&nbsp;
@@ -11,6 +11,13 @@
 
 <script>
 import { get } from 'vuex-pathify'
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt({
+  html: false,
+  breaks: false,
+  linkify: true
+})
 
 export default {
   props: {
@@ -32,6 +39,10 @@ export default {
     company: get('site/company'),
     contentLicense: get('site/contentLicense'),
     footerOverride: get('site/footerOverride'),
+    footerOverrideRender () {
+      if (!this.footerOverride) { return '' }
+      return md.renderInline(this.footerOverride)
+    },
     bgColor() {
       if (!this.$vuetify.theme.dark) {
         return this.color

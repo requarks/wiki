@@ -1,0 +1,8 @@
+key: markdownPivotTable
+title: Pivot Table
+description: Add pivot table support
+author: jaeseopark
+icon: mdi-table
+enabledDefault: false
+dependsOn: markdownCore
+props: {}

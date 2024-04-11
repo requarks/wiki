@@ -88,6 +88,7 @@
                       :label='$t(`admin:general.footerOverride`)'
                       v-model='config.footerOverride'
                       prepend-icon='mdi-page-layout-footer'
+                      append-icon='mdi-language-markdown'
                       persistent-hint
                       :hint='$t(`admin:general.footerOverrideHint`)'
                       )
