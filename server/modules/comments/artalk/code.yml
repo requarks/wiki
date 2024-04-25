@@ -6,7 +6,7 @@ head: |
 body: |
   <script>
     window.onload = function() {
-      let artalk = Artalk.init({
+      Artalk.init({
         el:        '#artalk-container',
         pageKey:   '{{pageId}}',
         pageTitle: '',
