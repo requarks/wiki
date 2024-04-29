@@ -211,6 +211,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Ruizhe Li ([@liruizhe1995](https://github.com/liruizhe1995))
 - Sam Martin ([@ABitMoreDepth](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
+- Simon Ott ([@ottsimon](https://github.com/ottsimon))
 - Stephan Kristyn ([@stevek-pro](https://github.com/stevek-pro))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
 - Tyler Denman ([@tylerguy](https://github.com/tylerguy))
