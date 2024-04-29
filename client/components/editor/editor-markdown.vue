@@ -124,44 +124,19 @@
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, color='teal')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, disabled, @click='toggleModal(`editorModalBlocks`)').mx-0
-              v-icon(:color='activeModal === `editorModalBlocks` ? `teal` : ``') mdi-view-dashboard-outline
-          span {{$t('editor:markup.insertBlock')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-code-braces
-          span {{$t('editor:markup.insertCodeBlock')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-movie
-          span {{$t('editor:markup.insertVideoAudio')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p6s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-function-variant
-          span {{$t('editor:markup.insertMathExpression')}}
-        v-tooltip(right, color='teal')
-          template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p7s(icon, tile, v-on='on', dark, disabled).mx-0
-              v-icon mdi-table-plus
-          span {{$t('editor:markup.tableHelper')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(right, color='teal')
             template(v-slot:activator='{ on }')
-              v-btn.mt-3.animated.fadeInLeft.wait-p8s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
+              v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
                 v-icon mdi-arrow-expand-all
             span {{$t('editor:markup.distractionFreeMode')}}
           v-tooltip(right, color='teal')
             template(v-slot:activator='{ on }')
-              v-btn.mt-3.animated.fadeInLeft.wait-p9s(icon, tile, v-on='on', dark, @click='toggleHelp').mx-0
+              v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, @click='toggleHelp').mx-0
                 v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
             span {{$t('editor:markup.markdownFormattingHelp')}}
       .editor-markdown-editor
@@ -220,12 +195,12 @@ import 'codemirror/addon/hint/show-hint.js'
 import 'codemirror/addon/fold/foldcode.js'
 import 'codemirror/addon/fold/foldgutter.js'
 import 'codemirror/addon/fold/foldgutter.css'
-import './markdown/fold'
 
 // Markdown-it
 import MarkdownIt from 'markdown-it'
 import mdAttrs from 'markdown-it-attrs'
-import mdEmoji from 'markdown-it-emoji'
+import mdDecorate from 'markdown-it-decorate'
+import { full as mdEmoji } from 'markdown-it-emoji'
 import mdTaskLists from 'markdown-it-task-lists'
 import mdExpandTabs from 'markdown-it-expand-tabs'
 import mdAbbr from 'markdown-it-abbr'
@@ -250,6 +225,7 @@ import mermaid from 'mermaid'
 // Helpers
 import katexHelper from './common/katex'
 import tabsetHelper from './markdown/tabset'
+import cmFold from './common/cmFold'
 
 // ========================================
 // INIT
@@ -288,6 +264,7 @@ const md = new MarkdownIt({
   .use(mdAttrs, {
     allowedAttributes: ['id', 'class', 'target']
   })
+  .use(mdDecorate)
   .use(underline)
   .use(mdEmoji)
   .use(mdTaskLists, { label: false, labelAfter: false })
@@ -335,6 +312,7 @@ md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
 md.renderer.rules.blockquote_open = injectLineNumbers
 
+cmFold.register('markdown')
 // ========================================
 // PLANTUML
 // ========================================
@@ -346,11 +324,12 @@ plantuml.init(md, {})
 // KATEX
 // ========================================
 
+const macros = {}
 md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
 md.renderer.rules.katex_inline = (tokens, idx) => {
   try {
     return katex.renderToString(tokens[idx].content, {
-      displayMode: false
+      displayMode: false, macros
     })
   } catch (err) {
     console.warn(err)
@@ -363,7 +342,7 @@ md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
 md.renderer.rules.katex_block = (tokens, idx) => {
   try {
     return `<p>` + katex.renderToString(tokens[idx].content, {
-      displayMode: true
+      displayMode: true, macros
     }) + `</p>`
   } catch (err) {
     console.warn(err)

@@ -6,6 +6,11 @@
 const path = require('path')
 const { nanoid } = require('nanoid')
 const { DateTime } = require('luxon')
+const { gte } = require('semver')
+
+// ----------------------------------------
+// Init WIKI instance
+// ----------------------------------------
 
 let WIKI = {
   IS_DEBUG: process.env.NODE_ENV === 'development',

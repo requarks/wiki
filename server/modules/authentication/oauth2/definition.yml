@@ -54,19 +54,38 @@ props:
     default: email
     maxWidth: 500
     order: 8
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Map groups matching names from the groups claim value
+    default: false
+    order: 9
+  groupsClaim:
+    type: String
+    title: Groups Claim
+    hint: Field containing the group names
+    default: groups
+    maxWidth: 500
+    order: 10
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 9
+    order: 11
   scope:
     type: String
     title: Scope
     hint: (optional) Application Client permission scopes.
-    order: 10
+    order: 12
   useQueryStringForAccessToken:
     type: Boolean
     default: false
     title: Pass access token via GET query string to User Info Endpoint
     hint: (optional) Pass the access token in an `access_token` parameter attached to the GET query string of the User Info Endpoint URL. Otherwise the access token will be passed in the Authorization header.
-    order: 11
+    order: 13
+  enableCSRFProtection:
+    type: Boolean
+    default: true
+    title: Enable CSRF protection
+    hint: Pass a nonce state parameter during authentication to protect against CSRF attacks.
+    order: 14

@@ -61,6 +61,7 @@ service:
   # type: LoadBalancer
   # httpsPort: 443
   # annotations: {}
+  # loadBalancerIP: 172.16.0.1
 
 ingress:
   enabled: true
@@ -101,7 +102,7 @@ volumeMounts: []
 
 volumes: []
 
-# This will allow us to install locales even without internet access using a initContainer & wikjs "sideloading"
+# This will allow us to install locales even without internet access using a initContainer & Wiki.js "sideloading"
 sideload:
   enabled: false
   # Git-Repo containing all locales.json-files you need:
@@ -111,6 +112,9 @@ sideload:
   env: []
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
+
+## Append extra trusted certificates for node process from extra volume via NODE_EXTRA_CA_CERTS variable
+# nodeExtraCaCerts: "/path/to/certs.pem"
 
 ## This will override the postgresql chart values
 # externalPostgresql:

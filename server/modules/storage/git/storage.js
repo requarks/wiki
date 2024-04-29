@@ -1,5 +1,5 @@
 const path = require('path')
-const sgit = require('simple-git/promise')
+const sgit = require('simple-git')
 const fs = require('fs-extra')
 const _ = require('lodash')
 const stream = require('stream')
@@ -30,7 +30,7 @@ module.exports = {
     WIKI.logger.info('(STORAGE/GIT) Initializing...')
     this.repoPath = path.resolve(WIKI.ROOTPATH, this.config.localRepoPath)
     await fs.ensureDir(this.repoPath)
-    this.git = sgit(this.repoPath)
+    this.git = sgit(this.repoPath, { maxConcurrentProcesses: 1 })
 
     // Set custom binary path
     if (!_.isEmpty(this.config.gitBinaryPath)) {
@@ -45,9 +45,10 @@ module.exports = {
       await this.git.init()
     }
 
-    // Disable quotePath
+    // Disable quotePath, color output
     // Link https://git-scm.com/docs/git-config#Documentation/git-config.txt-corequotePath
     await this.git.raw(['config', '--local', 'core.quotepath', false])
+    await this.git.raw(['config', '--local', 'color.ui', false])
 
     // Set default author
     await this.git.raw(['config', '--local', 'user.email', this.config.defaultEmail])
@@ -118,7 +119,7 @@ module.exports = {
    * SYNC
    */
   async sync() {
-    const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
+    const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch, '--']), 'latest', {})
 
     const rootUser = await WIKI.models.users.getRootUser()
 
@@ -140,15 +141,29 @@ module.exports = {
 
     // Process Changes
     if (_.includes(['sync', 'pull'], this.mode)) {
-      const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch]), 'latest', {})
+      const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch, '--']), 'latest', {})
 
       const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
       if (_.get(diff, 'files', []).length > 0) {
         let filesToProcess = []
+        const filePattern = /(.*?)(?:{(.*?))? => (?:(.*?)})?(.*)/
         for (const f of diff.files) {
-          const fMoved = f.file.split(' => ')
-          const fName = fMoved.length === 2 ? fMoved[1] : fMoved[0]
-          const fPath = path.join(this.repoPath, fName)
+          const fMatch = f.file.match(filePattern)
+          const fNames = {
+            old: null,
+            new: null
+          }
+          if (!fMatch) {
+            fNames.old = f.file
+            fNames.new = f.file
+          } else if (!fMatch[2] && !fMatch[3]) {
+            fNames.old = fMatch[1]
+            fNames.new = fMatch[4]
+          } else {
+            fNames.old = (fMatch[1] + fMatch[2] + fMatch[4]).replace('//', '/')
+            fNames.new = (fMatch[1] + fMatch[3] + fMatch[4]).replace('//', '/')
+          }
+          const fPath = path.join(this.repoPath, fNames.new)
           let fStats = { size: 0 }
           try {
             fStats = await fs.stat(fPath)
@@ -165,8 +180,8 @@ module.exports = {
               path: fPath,
               stats: fStats
             },
-            oldPath: fMoved[0],
-            relPath: fName
+            oldPath: fNames.old,
+            relPath: fNames.new
           })
         }
         await this.processFiles(filesToProcess, rootUser)

@@ -1,5 +1,6 @@
 const md = require('markdown-it')
 const mdAttrs = require('markdown-it-attrs')
+const mdDecorate = require('markdown-it-decorate')
 const _ = require('lodash')
 const underline = require('./underline')
 
@@ -42,6 +43,7 @@ module.exports = {
     mkdown.use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']
     })
+    mkdown.use(mdDecorate)
 
     for (let child of this.children) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
