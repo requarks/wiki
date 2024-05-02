@@ -37,7 +37,7 @@ module.exports = {
         useCookieInsteadOfSession: keyArray.length > 0,
         cookieEncryptionKeys: keyArray
       }, async (req, iss, sub, profile, cb) => {
-        const emails = _.get(profile, '_json.emails', null);
+        const emails = _.get(profile, '_json.emails', [])
         const id = _.get(profile, '_json.sub', null);
 
         const usrEmail = _.get(profile, '_json.email', null) || _.get(profile, '_json.preferred_username') || emails[0]
