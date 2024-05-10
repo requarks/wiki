@@ -68,17 +68,18 @@ ingress:
   className: nginx
   annotations:
     # kubernetes.io/ingress.class: nginx
-    #kubernetes.io/tls-acme: "true"
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/issuer: letsencrypt-dev
   hosts:
     - host: capwiki.corp.capgemini.com
       paths:
         - path: "/"
           pathType: Prefix
 
-  tls: []
-  #  - secretName: capwikidevtls
-   #   hosts:
-   #   - capwiki.corp.capgemini.com
+  tls:
+    - secretName: capwikidevtls
+      hosts:
+      - capwiki.corp.capgemini.com
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
