@@ -13,6 +13,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+containerPort: 3000
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
