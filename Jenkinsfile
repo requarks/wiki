@@ -17,7 +17,7 @@ pipeline {
     }
 
     parameters {
-            gitParameter branchFilter: 'origin/(.*)', defaultValue: 'master', name: 'BRANCH', type: 'PT_BRANCH'
+            gitParameter branchFilter: 'origin/(.*)', defaultValue: 'main', name: 'BRANCH', type: 'PT_BRANCH'
             string(name: 'VERSION', defaultValue: 'latest', description: 'Specify the version for the images.')
         }
 
