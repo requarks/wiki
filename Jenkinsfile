@@ -1,3 +1,10 @@
+def app_name = "wiki-js"
+def ssh_credential_id = "deployment_keys"
+def deploy_user = "aguser"
+def target_dir = "/home/$deploy_user/$app_name"
+def host = "10.44.100.93"
+def deployment = "prod"
+
 pipeline {
     agent {
         label 'build_slave_agtool'
