@@ -1,10 +1,3 @@
-def app_name = "wiki-js"
-def ssh_credential_id = "deployment_keys"
-def deploy_user = "aguser"
-def target_dir = "/home/$deploy_user/$app_name"
-def host = "10.44.100.93"
-def deployment = "prod"
-
 pipeline {
     agent {
         label 'build_slave_agtool'
@@ -16,7 +9,7 @@ pipeline {
         REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
     }
 
-    parameters {
+		parameters {
             gitParameter branchFilter: 'origin/(.*)', defaultValue: 'main', name: 'BRANCH', type: 'PT_BRANCH'
             string(name: 'VERSION', defaultValue: 'latest', description: 'Specify the version for the images.')
         }
@@ -30,12 +23,7 @@ pipeline {
         }
 
     stages {
-        stage('Git checkout stage') {
-            steps {
-                git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
-            }
-        }
-        stages {
+
                 stage('Git checkout stage') {
                     steps {
                         git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
@@ -66,7 +54,7 @@ pipeline {
                                     """
                                 }
                             }
-                        }
+                }
 
 
                 stage('Deploy') {
@@ -85,8 +73,10 @@ pipeline {
                                     """
                                 }
                             }
-                        }
-                    }
+                }
+
+     }
+
     post {
         always {
             cleanWs()
@@ -99,53 +89,3 @@ pipeline {
         }
     }
 }
-// pipeline {
-//     agent {
-//         label 'slave-0'
-//     }
-//
-//     environment {
-//         BRANCH = "${params.BRANCH}"
-//         CREDENTIALS_ID = 'production_line_service_account'
-//         REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
-//     }
-//
-//     stages {
-//         stage('Git checkout stage') {
-//             steps {
-//                 git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
-//             }
-//         }
-//         stage('Build Docker Image') {
-//             steps {
-//                 echo 'Build Docker Image: DONE'
-//             }
-//         }
-//         stage('Code Quality') {
-//                     steps {
-//                         sh 'npm run lint'
-//                     }
-//                 }
-//         stage('Run Tests') {
-//             steps {
-//                 echo 'Run Tests: DONE'
-//             }
-//         }
-//         stage('Deploy') {
-//             steps {
-//                 echo 'Deploy: DONE'
-//             }
-//         }
-//     }
-//     post {
-//         always {
-//             cleanWs()
-//         }
-//         success {
-//             echo 'Pipeline completed successfully.'
-//         }
-//         failure {
-//             echo 'Pipeline failed.'
-//         }
-//     }
-// }
