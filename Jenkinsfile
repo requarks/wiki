@@ -6,7 +6,7 @@ pipeline {
     environment {
         BRANCH = "${params.BRANCH}"
         VERSION = "${params.VERSION}"
-        CREDENTIALS_ID = 'production_line_service_account'
+        CREDENTIALS_ID = 'svc-de-svcderetro/******'
         REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
     }
 
