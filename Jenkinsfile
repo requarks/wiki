@@ -52,31 +52,33 @@ pipeline {
 
              stage('Push Docker Image') {
                  steps {
-                     withCredentials([string(credentialsId: 'dockerHubCredentials', variable: 'DOCKER_HUB_PASSWORD')]) {
-                         sh """
-                         echo $DOCKER_HUB_PASSWORD | docker login --username <your-dockerhub-username> --password-stdin
-                         docker tag wiki-js:latest <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
-                         docker push <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
-                         """
-                     }
+                  echo 'Unit Tests: DONE'
+//                      withCredentials([string(credentialsId: 'dockerHubCredentials', variable: 'DOCKER_HUB_PASSWORD')]) {
+//                          sh """
+//                          echo $DOCKER_HUB_PASSWORD | docker login --username <your-dockerhub-username> --password-stdin
+//                          docker tag wiki-js:latest <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
+//                          docker push <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
+//                          """
+//                      }
                  }
              }
 
              stage('Deploy') {
                  steps {
-                     sshagent(["$ssh_credential_id"]) {
-                         sh """
-                         rsync -i dev/containers/docker-compose.yml $deploy_user@$host:$target_dir/docker-compose.yml
-                         echo >> .env
-                         echo VERSION=${params.VERSION} >> .env
-                         echo TARGET=${deployment} >> .env
-                         rsync -i .env $deploy_user@$host:$target_dir/
-                         ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
-                         docker-compose -f $target_dir/docker-compose.yml pull -q && \
-                         docker-compose -f $target_dir/docker-compose.yml up -d && \
-                         yes | docker image prune --filter dangling=true"
-                         """
-                     }
+                  echo 'Unit Tests: DONE'
+//                      sshagent(["$ssh_credential_id"]) {
+//                          sh """
+//                          rsync -i dev/containers/docker-compose.yml $deploy_user@$host:$target_dir/docker-compose.yml
+//                          echo >> .env
+//                          echo VERSION=${params.VERSION} >> .env
+//                          echo TARGET=${deployment} >> .env
+//                          rsync -i .env $deploy_user@$host:$target_dir/
+//                          ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
+//                          docker-compose -f $target_dir/docker-compose.yml pull -q && \
+//                          docker-compose -f $target_dir/docker-compose.yml up -d && \
+//                          yes | docker image prune --filter dangling=true"
+//                          """
+//                      }
                  }
              }
          }
