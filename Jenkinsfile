@@ -63,25 +63,23 @@ pipeline {
                  }
              }
 
-             stage('Deploy') {
-                 steps {
-                  echo 'Unit Tests: DONE'
-//                      sshagent(["$ssh_credential_id"]) {
-//                          sh """
-//                          rsync -i dev/containers/docker-compose.yml $deploy_user@$host:$target_dir/docker-compose.yml
-//                          echo >> .env
-//                          echo VERSION=${params.VERSION} >> .env
-//                          echo TARGET=${deployment} >> .env
-//                          rsync -i .env $deploy_user@$host:$target_dir/
-//                          ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
-//                          docker-compose -f $target_dir/docker-compose.yml pull -q && \
-//                          docker-compose -f $target_dir/docker-compose.yml up -d && \
-//                          yes | docker image prune --filter dangling=true"
-//                          """
-//                      }
+             stage('Deploy to Kubernetes') {
+                         steps {
+                             container('helm') {
+                                 sh 'helm version'
+                                 sh 'helm list -n jenkins'
+                                 sh 'helm lint dev/helm'
+                                 sh """
+                                 helm upgrade --install --namespace jenkins ${app_name} \
+                                 --set image.repository=<your-dockerhub-username>/wiki-js \
+                                 --set image.tag=${params.VERSION}-${deployment} \
+                                 dev/helm
+                                 """
+                                 sh "helm list | grep ${app_name}"
+                             }
+                         }
+                     }
                  }
-             }
-         }
 
     post {
         always {
