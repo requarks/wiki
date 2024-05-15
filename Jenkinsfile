@@ -1,3 +1,10 @@
+def app_name = "wiki-js"
+def ssh_credential_id = "deployment_keys"
+def deploy_user = "aguser"
+def target_dir = "/home/$deploy_user/$app_name"
+def host = "10.44.100.93"
+def deployment = "prod"
+
 pipeline {
     agent {
         label 'build_slave_agtool'
@@ -22,60 +29,57 @@ pipeline {
             gitLabConnection('PT-Support-Gitlab')
         }
 
-    stages {
+     stages {
+             stage('Git checkout stage') {
+                 steps {
+                     git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
+                 }
+             }
 
-                stage('Git checkout stage') {
-                    steps {
-                        git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
-                    }
-                }
+             stage('Build Docker Image') {
+                 steps {
+                     dir('dev/containers') {
+                         sh 'docker-compose build'
+                     }
+                 }
+             }
 
-                stage('Build Docker Image') {
-                    steps {
-                        dir('dev/build') {
-                            sh 'docker build -t wiki-js:latest -f Dockerfile .'
-                        }
-                    }
-                }
+             stage('Run Tests') {
+                 steps {
+                     sh 'docker-compose run --rm wiki-js yarn test'
+                 }
+             }
 
-                stage('Run Tests') {
-                    steps {
-                        sh 'docker run --rm wiki-js:latest yarn test'
-                    }
-                }
+             stage('Push Docker Image') {
+                 steps {
+                     withCredentials([string(credentialsId: 'dockerHubCredentials', variable: 'DOCKER_HUB_PASSWORD')]) {
+                         sh """
+                         echo $DOCKER_HUB_PASSWORD | docker login --username <your-dockerhub-username> --password-stdin
+                         docker tag wiki-js:latest <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
+                         docker push <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
+                         """
+                     }
+                 }
+             }
 
-                stage('Push Docker Image') {
-                            steps {
-                                withCredentials([string(credentialsId: 'dockerHubCredentials', variable: 'DOCKER_HUB_PASSWORD')]) {
-                                    sh """
-                                    echo $DOCKER_HUB_PASSWORD | docker login --username <your-dockerhub-username> --password-stdin
-                                    docker tag wiki-js:latest <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
-                                    docker push <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
-                                    """
-                                }
-                            }
-                }
-
-
-                stage('Deploy') {
-                            steps {
-                                sshagent(["$ssh_credential_id"]) {
-                                    sh """
-                                    rsync -i dev/build/config.yml $deploy_user@$host:$target_dir/config.yml
-                                    echo >> .env
-                                    echo VERSION=${params.VERSION} >> .env
-                                    echo TARGET=${deployment} >> .env
-                                    rsync -i .env $deploy_user@$host:$target_dir/
-                                    ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
-                                    docker-compose -f $target_dir/config.yml pull -q && \
-                                    docker-compose -f $target_dir/config.yml up -d && \
-                                    yes | docker image prune --filter dangling=true"
-                                    """
-                                }
-                            }
-                }
-
-     }
+             stage('Deploy') {
+                 steps {
+                     sshagent(["$ssh_credential_id"]) {
+                         sh """
+                         rsync -i dev/containers/docker-compose.yml $deploy_user@$host:$target_dir/docker-compose.yml
+                         echo >> .env
+                         echo VERSION=${params.VERSION} >> .env
+                         echo TARGET=${deployment} >> .env
+                         rsync -i .env $deploy_user@$host:$target_dir/
+                         ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
+                         docker-compose -f $target_dir/docker-compose.yml pull -q && \
+                         docker-compose -f $target_dir/docker-compose.yml up -d && \
+                         yes | docker image prune --filter dangling=true"
+                         """
+                     }
+                 }
+             }
+         }
 
     post {
         always {
