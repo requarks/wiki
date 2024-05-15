@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'jenkins-slave-0'
+        label 'build_slave_agtool'
     }
 
     environment {
