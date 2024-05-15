@@ -3,10 +3,16 @@ pipeline {
         label 'slave-0'
     }
 
+    environment {
+        BRANCH = "${params.BRANCH}"
+        CREDENTIALS_ID = 'production_line_service_account'
+        REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
+    }
+
     stages {
         stage('Git checkout stage') {
             steps {
-                git branch: 'jenkins-setup', credentialsId: 'production_line_service_account', url: 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
+                git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
             }
         }
         stage('Build Docker Image') {
@@ -31,6 +37,12 @@ pipeline {
     post {
         always {
             cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
