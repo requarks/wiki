@@ -1,8 +1,4 @@
 def app_name = "wiki-js"
-def ssh_credential_id = "deployment_keys"
-def deploy_user = "aguser"
-def target_dir = "/home/$deploy_user/$app_name"
-def host = "10.44.100.93"
 def deployment = "prod"
 
 pipeline {
@@ -65,16 +61,17 @@ pipeline {
 
              stage('Deploy to Kubernetes') {
                          steps {
-                             container('helm') {
+                             script {
+                                 def helmCommand = """
+                                     helm upgrade --install --namespace jenkins ${app_name} \
+                                     --set image.repository=requarks/wiki \
+                                     --set image.tag=${params.VERSION}-${deployment} \
+                                     dev/helm
+                                 """
                                  sh 'helm version'
                                  sh 'helm list -n jenkins'
                                  sh 'helm lint dev/helm'
-                                 sh """
-                                 helm upgrade --install --namespace jenkins ${app_name} \
-                                 --set image.repository=<your-dockerhub-username>/wiki-js \
-                                 --set image.tag=${params.VERSION}-${deployment} \
-                                 dev/helm
-                                 """
+                                 sh helmCommand
                                  sh "helm list | grep ${app_name}"
                              }
                          }
