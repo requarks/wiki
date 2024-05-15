@@ -28,24 +28,18 @@ pipeline {
                 git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
             }
         }
-        stage("Compile") {
+        stages {
+                stage('Git checkout stage') {
                     steps {
-                        dir('frontend') {
-                            sh "npm install"
-                            sh "npm run build:${deployment}"
-                        }
-
-                        dir('backend') {
-                            sh "npm install"
-                            sh "npm run build:${deployment}"
-                            sh "npm ci --only=production && npm cache clean --force"
-                        }
+                        git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
                     }
                 }
 
                 stage('Build Docker Image') {
                     steps {
-                        sh 'docker build -t wiki-js:latest .'
+                        dir('dev/build') {
+                            sh 'docker build -t wiki-js:latest -f Dockerfile .'
+                        }
                     }
                 }
 
@@ -56,35 +50,36 @@ pipeline {
                 }
 
                 stage('Push Docker Image') {
-                    steps {
-                        withCredentials([string(credentialsId: 'dockerHubCredentials', variable: 'DOCKER_HUB_PASSWORD')]) {
-                            sh """
-                            echo $DOCKER_HUB_PASSWORD | docker login --username <your-dockerhub-username> --password-stdin
-                            docker tag wiki-js:latest <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
-                            docker push <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
-                            """
+                            steps {
+                                withCredentials([string(credentialsId: 'dockerHubCredentials', variable: 'DOCKER_HUB_PASSWORD')]) {
+                                    sh """
+                                    echo $DOCKER_HUB_PASSWORD | docker login --username <your-dockerhub-username> --password-stdin
+                                    docker tag wiki-js:latest <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
+                                    docker push <your-dockerhub-username>/wiki-js:${params.VERSION}-${deployment}
+                                    """
+                                }
+                            }
                         }
-                    }
-                }
+
 
                 stage('Deploy') {
-                    steps {
-                        sshagent(["$ssh_credential_id"]) {
-                            sh """
-                            rsync -i docker-compose.${deployment}.yml $deploy_user@$host:$target_dir/compose.yml
-                            echo >> .env
-                            echo VERSION=${params.VERSION} >> .env
-                            echo TARGET=${deployment} >> .env
-                            rsync -i .env $deploy_user@$host:$target_dir/
-                            ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
-                            docker-compose -f $target_dir/compose.yml pull -q && \
-                            docker-compose -f $target_dir/compose.yml up -d && \
-                            yes | docker image prune --filter dangling=true"
-                            """
+                            steps {
+                                sshagent(["$ssh_credential_id"]) {
+                                    sh """
+                                    rsync -i dev/build/config.yml $deploy_user@$host:$target_dir/config.yml
+                                    echo >> .env
+                                    echo VERSION=${params.VERSION} >> .env
+                                    echo TARGET=${deployment} >> .env
+                                    rsync -i .env $deploy_user@$host:$target_dir/
+                                    ssh -o StrictHostKeyChecking=accept-new $deploy_user@$host "cd $target_dir && \
+                                    docker-compose -f $target_dir/config.yml pull -q && \
+                                    docker-compose -f $target_dir/config.yml up -d && \
+                                    yes | docker image prune --filter dangling=true"
+                                    """
+                                }
+                            }
                         }
                     }
-                }
-            }
     post {
         always {
             cleanWs()
