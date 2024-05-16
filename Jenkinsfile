@@ -3,7 +3,7 @@ def deployment = "prod"
 
 pipeline {
     agent {
-        label 'build_slave_agtool' // Corrected label for the Jenkins agent
+        label 'Jenkins_slave_for_PL'
     }
 
     environment {
