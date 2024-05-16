@@ -66,16 +66,16 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Check if Helm is installed, if not then install it locally
+                    // Install Helm if not present
                     sh """
                     if ! type helm >/dev/null 2>&1; then
-                      echo 'Installing Helm locally...'
-                      HELM_INSTALL_DIR=\$HOME/bin
-                      mkdir -p \$HELM_INSTALL_DIR
-                      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-                      chmod 700 get_helm.sh
-                      DESIRED_VERSION=v3.15.0 FORCE_INSTALL_DIR=\$HELM_INSTALL_DIR ./get_helm.sh
-                      export PATH=\$HELM_INSTALL_DIR:\$PATH
+                        echo 'Manually installing Helm...'
+                        HELM_VERSION='v3.15.0'
+                        HELM_INSTALL_DIR=\$HOME/bin
+                        mkdir -p \$HELM_INSTALL_DIR
+                        curl -fsSL https://get.helm.sh/helm-\${HELM_VERSION}-linux-amd64.tar.gz | tar -xzO linux-amd64/helm > \${HELM_INSTALL_DIR}/helm
+                        chmod +x \${HELM_INSTALL_DIR}/helm
+                        export PATH=\${HELM_INSTALL_DIR}:\$PATH
                     fi
                     """
                     // Verify Helm installation
@@ -99,6 +99,7 @@ pipeline {
                 }
             }
         }
+
 
     }
 
