@@ -66,13 +66,31 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
+                    // Install Helm if not present
+                    sh """
+                    if ! type helm >/dev/null 2>&1; then
+                      echo 'Installing Helm...'
+                      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+                      chmod 700 get_helm.sh
+                      ./get_helm.sh
+                    else
+                      echo 'Helm is already installed.'
+                    fi
+                    """
+                    // Verify Helm installation
+                    sh 'helm version'
+
+                    // Configure Helm (if necessary, e.g., add repositories or update dependencies)
+                    sh 'helm repo add stable https://charts.helm.sh/stable'
+                    sh 'helm repo update'
+
+                    // Deploy using Helm
                     def helmCommand = """
                         helm upgrade --install --namespace jenkins ${app_name} \
                         --set image.repository=${DOCKER_REGISTRY}/tpo-bu-germany/${app_name} \
                         --set image.tag=${params.VERSION}-${deployment} \
                         dev/helm
                     """
-                    sh 'helm version'
                     sh 'helm list -n jenkins'
                     sh 'helm lint dev/helm'
                     sh helmCommand
@@ -80,6 +98,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
