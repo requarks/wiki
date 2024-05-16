@@ -66,7 +66,6 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Check if Helm is installed, if not then install it locally
                     sh """
                     if ! type helm >/dev/null 2>&1; then
                       echo 'Installing Helm locally...'
@@ -78,14 +77,11 @@ pipeline {
                       export PATH=\$HELM_INSTALL_DIR:\$PATH
                     fi
                     """
-                    // Verify Helm installation
                     sh 'helm version'
 
-                    // Configure Helm (if necessary, e.g., add repositories or update dependencies)
                     sh 'helm repo add stable https://charts.helm.sh/stable'
                     sh 'helm repo update'
 
-                    // Deploy using Helm
                     def helmCommand = """
                         helm upgrade --install --namespace jenkins ${app_name} \
                         --set image.repository=${DOCKER_REGISTRY}/tpo-bu-germany/${app_name} \
