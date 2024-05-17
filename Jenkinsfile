@@ -45,7 +45,7 @@ pipeline {
         stage('Compile') {
             steps {
                 dir('client') {
-                    sh 'npm install'
+                    sh 'npm install --force'
                     sh "npm run build:${deployment}"
                 }
                 dir('dev') {
@@ -55,16 +55,15 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+       /* stage('Run Tests') {
             steps {
                 echo 'Unit Tests: DONE'
             }
-        }
+        }*/
 
-       /**
-       *  @TODO Need to adjust Dockerfile in dev/build
-        *docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
-        *
+       /*
+         @TODO Need to adjust Dockerfile in dev/build
+         docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
        */
         stage('Build images') {
             steps {
@@ -99,6 +98,7 @@ pipeline {
                          *     --set image.repository=${IMAGE}
                         *
                         **/
+
                         sh """
                             microk8s status
                             microk8s helm version
@@ -106,11 +106,11 @@ pipeline {
                             microk8s helm lint
                             microk8s helm list | grep ${app_name}"
                         """
-                    }
                 }
             }
         }
     }
+}
     post {
             always {
                 cleanWs()
