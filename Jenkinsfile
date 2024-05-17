@@ -89,7 +89,7 @@ pipeline {
         stage('Deploy to Kubernetes on remote vm via SSH') {
             steps {
                 script {
-                    sshagent(${SSH_CREDENTIALS_ID}) {
+                    sshagent(${ SSH_CREDENTIALS_ID }) {
                         sh 'rsync -i . $username@$remote_host:/home/$username'
                         sh 'ssh -o StrictHostKeyChecking=accept-new  $username@$remote_host'
                         /**
@@ -110,8 +110,8 @@ pipeline {
                 }
             }
         }
-
-        post {
+    }
+    post {
             always {
                 cleanWs()
             }
@@ -121,6 +121,5 @@ pipeline {
             failure {
                 echo 'Pipeline failed.'
             }
-        }
     }
 }
