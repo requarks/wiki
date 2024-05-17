@@ -13,6 +13,7 @@ module.exports = {
       const closeChar = closeMarker.charCodeAt(0)
       const imageFormat = opts.imageFormat || 'svg'
       const server = opts.server || 'https://plantuml.requarks.io'
+      const renderSvgAsObject = opts.renderSvgAsObject || false
 
       md.block.ruler.before('fence', 'uml_diagram', (state, startLine, endLine, silent) => {
         let nextLine
@@ -114,16 +115,27 @@ module.exports = {
 
         var zippedCode = encode64(pako.deflate('@startuml\n' + contents + '\n@enduml', { to: 'string' }))
 
-        token = state.push('uml_diagram', 'img', 0)
-        // alt is constructed from children. No point in populating it here.
-        token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram'] ]
-        token.block = true
-        token.children = altToken
-        token.info = params
-        token.map = [ startLine, nextLine ]
-        token.markup = markup
-
-        state.line = nextLine + (autoClosed ? 1 : 0)
+        if (renderSvgAsObject && imageFormat === 'svg') {
+          token = state.push('uml_diagram', 'object', 0)
+          // alt is constructed from children. No point in populating it here.
+          token.attrs = [['data', `${server}/${imageFormat}/${zippedCode}`], ['alt', ''], ['type', 'image/svg+xml'], ['class', 'uml-diagram']]
+          token.block = true
+          token.children = []
+          token.info = params
+          token.map = [startLine, nextLine]
+          token.markup = markup
+          state.line = nextLine + (autoClosed ? 1 : 0)
+        } else {
+          token = state.push('uml_diagram', 'img', 0)
+          // alt is constructed from children. No point in populating it here.
+          token.attrs = [['src', `${server}/${imageFormat}/${zippedCode}`], ['alt', ''], ['class', 'uml-diagram']]
+          token.block = true
+          token.children = altToken
+          token.info = params
+          token.map = [startLine, nextLine]
+          token.markup = markup
+          state.line = nextLine + (autoClosed ? 1 : 0)
+        }
 
         return true
       }, {
@@ -134,7 +146,8 @@ module.exports = {
       openMarker: conf.openMarker,
       closeMarker: conf.closeMarker,
       imageFormat: conf.imageFormat,
-      server: conf.server
+      server: conf.server,
+      renderSvgAsObject: conf.renderSvgAsObject
     })
   }
 }
