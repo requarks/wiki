@@ -10,7 +10,7 @@ def app = ''
 
 pipeline {
     agent {
-        label 'jenkins-slave-0'
+        label 'build_slave_agtool'
     }
 
     environment {
@@ -57,8 +57,8 @@ pipeline {
         stage('Build images') {
             steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'production_line_service_account') {
-                        app = docker.build("${IMAGE}", '-f ./dev/build/Dockerfile ./dockerfiles')
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
+                        app = docker.build("${IMAGE}", "-f ./dev/build/Dockerfile ./dockerfiles")
                     }
                 }
             }
