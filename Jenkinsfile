@@ -10,7 +10,7 @@ def app = ''
 
 pipeline {
     agent {
-        label 'build_slave_mar'
+        label 'jenkins-slave-0'
     }
 
     environment {
