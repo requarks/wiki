@@ -58,7 +58,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        app = docker.build("${IMAGE}", "-f ./dev/build/Dockerfile ./dev")
+                        app = docker.build("${IMAGE}", "-f ./Dockerfile ./")
                     }
                 }
             }
