@@ -42,18 +42,7 @@ pipeline {
             }
         }
 
-        stage('Compile') {
-            steps {
-                dir('client') {
-                    sh 'npm install --force'
-                    sh "npm run build:${deployment}"
-                }
-                dir('dev') {
-                    sh 'npm install'
-                    sh "npm run build:${deployment}"
-                }
-            }
-        }
+  
 
        /* stage('Run Tests') {
             steps {
