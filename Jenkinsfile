@@ -1,17 +1,25 @@
-def app_name = "wiki-js"
-def deployment = "prod"
+def app_name = 'mar'
+def deployment = 'dev'
+/**
+* replace remote_user with "maruser"
+*/
+def username = 'hgurudu'
+def target_dir = "/home/$username/$app_name"
+def remote_host = '10.44.100.255'
+def app = ''
 
 pipeline {
     agent {
-        label 'build_slave_agtool'
+        label 'build_slave_mar'
     }
 
     environment {
         BRANCH = "${params.BRANCH}"
         CREDENTIALS_ID = 'production_line_service_account'
         REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
-        DOCKER_REGISTRY = 'docker-registry-plindia.pl.s2-eu.capgemini.com'
-        IMAGE_NAME = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
+        DOCKER_REGISTRY = 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
+        IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
+        SSH_CREDENTIALS_ID = 'mar_deployment_keys'
     }
 
     parameters {
@@ -34,10 +42,15 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Compile') {
             steps {
-                dir('dev/containers') {
-                    sh 'docker-compose build'
+                dir('client') {
+                    sh 'npm install'
+                    sh "npm run build:${deployment}"
+                }
+                dir('dev') {
+                    sh 'npm install'
+                    sh "npm run build:${deployment}"
                 }
             }
         }
@@ -48,51 +61,66 @@ pipeline {
             }
         }
 
-
-        stage('Deploy to Kubernetes') {
+       /**
+       *  @TODO Need to adjust Dockerfile in dev/build
+        *docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
+        *
+       */
+        stage('Build images') {
             steps {
                 script {
-                    sh """
-                    if ! type helm >/dev/null 2>&1; then
-                      echo 'Installing Helm locally...'
-                      HELM_INSTALL_DIR=\$HOME/bin
-                      mkdir -p \$HELM_INSTALL_DIR
-                      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-                      chmod 700 get_helm.sh
-                      DESIRED_VERSION=v3.15.0 FORCE_INSTALL_DIR=\$HELM_INSTALL_DIR ./get_helm.sh
-                      export PATH=\$HELM_INSTALL_DIR:\$PATH
-                    fi
-                    """
-                    sh 'helm version'
-
-                    sh 'helm repo add stable https://charts.helm.sh/stable'
-                    sh 'helm repo update'
-
-                    def helmCommand = """
-                        helm upgrade --install --namespace jenkins ${app_name} \
-                        --set image.repository=${DOCKER_REGISTRY}/tpo-bu-germany/${app_name} \
-                        --set image.tag=${params.VERSION}-${deployment} \
-                        dev/helm
-                    """
-                    sh 'helm list -n jenkins'
-                    sh 'helm lint dev/helm'
-                    sh helmCommand
-                    sh "helm list | grep ${app_name}"
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'production_line_service_account') {
+                        app = docker.build("${IMAGE}", '-f ./dev/build/Dockerfile ./dockerfiles')
+                    }
                 }
             }
         }
 
-    }
+        stage('Push images') {
+            steps {
+                script {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'production_line_service_account') {
+                        app.push()
+                    }
+                }
+            }
+        }
 
-    post {
-        always {
-            cleanWs()
+        stage('Deploy to Kubernetes on remote vm via SSH') {
+            steps {
+                script {
+                    sshagent(${SSH_CREDENTIALS_ID}) {
+                        sh 'rsync -i . $username@$remote_host:/home/$username'
+                        sh 'ssh -o StrictHostKeyChecking=accept-new  $username@$remote_host'
+                        /**
+                         * @TODO To add
+                         * helm upgrade install chart and send pass built image as param
+                         *    helm upgrade --install
+                         *     --set image.repository=${IMAGE}
+                        *
+                        **/
+                        sh """
+                            microk8s status
+                            microk8s helm version
+                            cd mar/dev/helm
+                            microk8s helm lint
+                            microk8s helm list | grep ${app_name}"
+                        """
+                    }
+                }
+            }
         }
-        success {
-            echo 'Pipeline completed successfully.'
-        }
-        failure {
-            echo 'Pipeline failed.'
+
+        post {
+            always {
+                cleanWs()
+            }
+            success {
+                echo 'Pipeline completed successfully.'
+            }
+            failure {
+                echo 'Pipeline failed.'
+            }
         }
     }
 }
