@@ -1,9 +1,11 @@
 def app_name = 'mar'
 def deployment = 'dev'
+def ssh_credential_id = "capwiki_deployment_keys"
+
 /**
 * replace remote_user with "maruser"
 */
-def username = 'hgurudu'
+def username = 'capwiki'
 def target_dir = "/home/$username/$app_name"
 def remote_host = '10.44.100.255'
 def app = ''
@@ -19,7 +21,6 @@ pipeline {
         REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
         DOCKER_REGISTRY = 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
         IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
-        SSH_CREDENTIALS_ID = 'mar_deployment_keys'
     }
 
     parameters {
@@ -77,9 +78,10 @@ pipeline {
         stage('Deploy to Kubernetes on remote vm via SSH') {
             steps {
                 script {
-                    sshagent(${ SSH_CREDENTIALS_ID }) {
+                    sshagent(["$ssh_credential_id"]) {
                         sh 'rsync -i . $username@$remote_host:/home/$username'
-                        sh 'ssh -o StrictHostKeyChecking=accept-new  $username@$remote_host'
+                        sh 'ssh -o StrictHostKeyChecking=no $username@$remote_host'
+                        echo 'in ssh agent'
                         /**
                          * @TODO To add
                          * helm upgrade install chart and send pass built image as param
@@ -87,14 +89,6 @@ pipeline {
                          *     --set image.repository=${IMAGE}
                         *
                         **/
-
-                        sh """
-                            microk8s status
-                            microk8s helm version
-                            cd mar/dev/helm
-                            microk8s helm lint
-                            microk8s helm list | grep ${app_name}"
-                        """
                 }
             }
         }
