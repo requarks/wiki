@@ -79,9 +79,10 @@ pipeline {
             steps {
                 script {
                     sshagent(["$ssh_credential_id"]) {
-                        sh 'rsync -i . $username@$remote_host:/home/$username'
-                        sh 'ssh -o StrictHostKeyChecking=no $username@$remote_host'
+                       /* sh 'ssh -o StrictHostKeyChecking=no $username@$remote_host'*/
                         echo 'in ssh agent'
+                        sh 'ssh -o StrictHostKeyChecking=no  $username@$remote_host \"cd $target_dir &&  microk8s status  && microk8s helm version"'
+                       
                         /**
                          * @TODO To add
                          * helm upgrade install chart and send pass built image as param
