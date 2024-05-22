@@ -1,25 +1,25 @@
-def app_name = 'mar'
-def deployment = 'dev'
+def app_name = "mar"
+def deployment = "dev"
 def ssh_credential_id = "capwiki_deployment_keys"
 
 /**
 * replace remote_user with "maruser"
 */
-def username = 'capwiki'
+def username = "capwiki"
 def target_dir = "/home/$username/$app_name"
-def remote_host = '10.44.100.255'
-def app = ''
+def remote_host = "10.44.100.255"
+def app = ""
 
 pipeline {
     agent {
-        label 'build_slave_agtool'
+        label "build_slave_agtool"
     }
 
     environment {
         BRANCH = "${params.BRANCH}"
-        CREDENTIALS_ID = 'production_line_service_account'
-        REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
-        DOCKER_REGISTRY = 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
+        CREDENTIALS_ID = "production_line_service_account"
+        REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
+        DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
         IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
     }
 
