@@ -83,16 +83,20 @@ pipeline {
                           ls
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '    
                    
-                          if [ -d $target_dir ]; then   
-                            if [ ! -d $target_dir/helm ]; then
-                              # If the directory doesn't exist, create it
-                              mkdir -p $target_dir/helm
-                            fi
-                            
-                            rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm   
-                            pwd
-                            cd ./helm                               
-                            ls                 
+                          if [ -d $target_dir ]; then
+                             
+                              # Inner if condition
+                              if [ ! -d $target_dir/helm ]; then
+                                  # If the directory doesn't exist then create it
+                                  mkdir -p $target_dir/helm
+                                  rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm   
+                                  pwd
+                                  cd ./helm                               
+                                  ls 
+                              else
+                                  echo "helm directory not found"
+                              fi
+                                       
                             microk8s status
                             microk8s helm version
                           fi  
