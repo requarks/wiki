@@ -82,8 +82,10 @@ pipeline {
                         echo "in ssh agent"
                       
                         sh '''
-                          ssh -o StrictHostKeyChecking=no capwiki@10.44.100.255 '
+                          ssh -o StrictHostKeyChecking=accept-new capwiki@10.44.100.255 '
+                          cd mar
                           pwd
+                     
                           if [ -d $target_dir ]; then
                             echo "Directory exists ${target_dir}"
                             microk8s status
