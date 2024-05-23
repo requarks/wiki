@@ -79,18 +79,16 @@ pipeline {
             steps {
                 script {
                     sshagent(["$ssh_credential_id"]) {
-                        echo "in ssh agent"
-                      
+                   
                         sh '''
-                          ssh -o StrictHostKeyChecking=accept-new capwiki@10.44.100.255 '
-                          pwd
-                          if [ -d $target_dir ]; then
-                            echo ${target_dir}
-                            pwd
+                          echo "in ssh agent ${target_dir}"
+                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} <<EOF
+                          
+                          if [ -d $target_dir ]; then                          
                             microk8s status
                             microk8s helm version
                           fi  
-                          '
+                          EOF
                         '''
                         /**
                          * @TODO To add
