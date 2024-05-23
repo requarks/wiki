@@ -79,14 +79,14 @@ pipeline {
                     sshagent(["${ssh_credential_id}"]) {
                    
                         sh '''
-                          echo "in ssh agent ${target_dir}"
-                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} <<EOF
+                          echo 'in ssh agent ${target_dir}'
+                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '
                           
                           if [ -d $target_dir ]; then                          
                             microk8s status
                             microk8s helm version
                           fi  
-                          EOF
+                          '
                         '''
                         /**
                          * @TODO To add
