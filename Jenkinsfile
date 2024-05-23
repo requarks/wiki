@@ -83,7 +83,7 @@ pipeline {
                         echo "in ssh agent"
                       
                         sh '''
-                          ssh -o StrictHostKeyChecking=no $deploy_user@$remote_host '
+                          ssh -o StrictHostKeyChecking=no capwiki@10.44.100.255 '
                           echo "in sh  multi block"
                           pwd
                           if [ -d $target_dir ]; then
