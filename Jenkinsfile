@@ -12,7 +12,7 @@ def app = ''
 
 pipeline {
     agent {
-        label 'Jenkins_slave_for_PL'
+        label 'build_slave_agtool'
     }
 
     environment {
