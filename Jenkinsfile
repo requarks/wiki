@@ -81,9 +81,13 @@ pipeline {
                         sh '''
                           echo 'in ssh agent ${target_dir}'
                           ls
+                          rsync -avz -e ${target_dir}/dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '
                           
-                          if [ -d $target_dir ]; then                          
+                          if [ -d $target_dir ]; then   
+                            ls
+                            cd ./helm    
+                            pwd                 
                             microk8s status
                             microk8s helm version
                           fi  
