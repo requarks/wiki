@@ -83,9 +83,9 @@ pipeline {
                           pwd
                           
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '  
-
+                          ls  
                           if [ -d $target_dir ]; then
-                            rsync -avzi dev/helm  ${deploy_user}@${remote_host}:${target_dir}/helm 
+                            rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
                             cd ${target_dir}/helm                               
                             pwd           
                             microk8s status
