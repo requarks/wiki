@@ -81,7 +81,7 @@ pipeline {
                     sshagent(["$ssh_credential_id"]) {
                         echo "in ssh agent"
                       
-                        sh """
+                        sh '''
                           ssh -o StrictHostKeyChecking=no capwiki@10.44.100.255 '
                           pwd
                           if [ -d $target_dir ]; then
@@ -90,7 +90,7 @@ pipeline {
                             microk8s helm version
                           fi  
                           '
-                        """
+                        '''
                         /**
                          * @TODO To add
                          * helm upgrade install chart and send pass built image as param
