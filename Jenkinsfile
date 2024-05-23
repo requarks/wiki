@@ -87,7 +87,6 @@ pipeline {
                             if [ ! -d $target_dir/helm ]; then
                               # If the directory doesn't exist, create it
                               mkdir -p $target_dir/helm
-                              echo "Directory '$REMOTE_DIR' created."
                             fi
                             
                             rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm   
