@@ -82,14 +82,14 @@ pipeline {
                         echo "in ssh agent"
                       
                         sh """
-                          ssh -o StrictHostKeyChecking=no capwiki@10.44.100.255 "
+                          ssh -o StrictHostKeyChecking=no capwiki@10.44.100.255 '
                           pwd
                           if [ -d $target_dir ]; then
                             echo "Directory exists ${target_dir}"
                             microk8s status
                             microk8s helm version
                           fi  
-                          "
+                          '
                         """
                         /**
                          * @TODO To add
