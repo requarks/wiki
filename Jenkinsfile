@@ -81,7 +81,7 @@ pipeline {
                         sh '''
                           echo 'in ssh agent ${target_dir}'
                           ls
-                          rsync -avz -e ${target_dir}/dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm
+                          rsync -avz -e dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '
                           
                           if [ -d $target_dir ]; then   
