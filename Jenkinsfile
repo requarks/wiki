@@ -84,15 +84,13 @@ pipeline {
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '    
                    
                           if [ -d $target_dir ]; then
-                             
                               # Inner if condition
                               if [ ! -d $target_dir/helm ]; then
-                                  # If the directory doesn't exist then create it
                                   mkdir -p $target_dir/helm
                                   rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm   
                                   pwd
                                   cd ./helm                               
-                                  ls 
+                                  ls
                               else
                                   echo "helm directory not found"
                               fi
