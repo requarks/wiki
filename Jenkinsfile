@@ -78,16 +78,16 @@ pipeline {
                 script {
                     sshagent(["${ssh_credential_id}"]) {
                    
-                        sh '''
+                        sh """
                           echo 'in ssh agent ${target_dir}'
-                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '
+                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} <<EOF
                           
                           if [ -d $target_dir ]; then                          
                             microk8s status
                             microk8s helm version
                           fi  
-                          '
-                        '''
+                        EOF
+                        """
                         /**
                          * @TODO To add
                          * helm upgrade install chart and send pass built image as param
