@@ -80,17 +80,19 @@ pipeline {
                 script {
                     sshagent(["$ssh_credential_id"]) {
                        /* sh 'ssh -o StrictHostKeyChecking=no $deploy_user@$remote_host'*/
-                        echo "in ssh agent user ${deploy_user}"
+                        echo "in ssh agent"
                       
-                        sh """
-                        ssh -tt -o StrictHostKeyChecking=no $deploy_user@$remote_host
-                        pwd
-                        if [ -d $target_dir ]; then
-                          echo 'Directory exists'
-                          microk8s status
-                          microk8s helm version
-                        fi  
-                        """
+                        sh '''
+                          ssh -o StrictHostKeyChecking=no $deploy_user@$remote_host '
+                          echo "in sh  multi block"
+                          pwd
+                          if [ -d $target_dir ]; then
+                            echo 'Directory exists'
+                            microk8s status
+                            microk8s helm version
+                          fi  
+                          '
+                        '''
                         /**
                          * @TODO To add
                          * helm upgrade install chart and send pass built image as param
