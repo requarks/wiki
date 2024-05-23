@@ -81,7 +81,7 @@ pipeline {
                     sshagent(["$ssh_credential_id"]) {
                        /* sh 'ssh -o StrictHostKeyChecking=no $username@$remote_host'*/
                         echo 'in ssh agent'
-                        sh 'ssh -o StrictHostKeyChecking=no  $username@$remote_host \"cd $target_dir &&  microk8s status  && microk8s helm version"'
+                        sh 'ssh -o StrictHostKeyChecking=no  ${username}@${remote_host} \"cd $target_dir &&  microk8s status  && microk8s helm version"'
                        
                         /**
                          * @TODO To add
