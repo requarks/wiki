@@ -86,7 +86,7 @@ pipeline {
                           if [ -d $target_dir ]; then
                               # Inner if condition
                               if [ ! -d $target_dir/helm ]; then
-                                  mkdir -p ${target_dir}/helm
+                                  mkdir helm
                                   rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm   
                                   pwd
                                   cd ./helm                               
