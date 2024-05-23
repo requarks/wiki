@@ -5,8 +5,8 @@ def ssh_credential_id = "capwiki_deployment_keys"
 /**
 * replace remote_user with "maruser"
 */
-def username = "capwiki"
-def target_dir = "/home/$username/$app_name"
+def deploy_user = "capwiki"
+def target_dir = "/home/$deploy_user/$app_name"
 def remote_host = "10.44.100.255"
 def app = ""
 
@@ -79,10 +79,10 @@ pipeline {
             steps {
                 script {
                     sshagent(["$ssh_credential_id"]) {
-                       /* sh 'ssh -o StrictHostKeyChecking=no $username@$remote_host'*/
-                        echo 'in ssh agent'
-                        sh 'ssh -o StrictHostKeyChecking=no  ${username}@${remote_host} \"cd $target_dir &&  microk8s status  && microk8s helm version"'
-                       
+                       /* sh 'ssh -o StrictHostKeyChecking=no $deploy_user@$remote_host'*/
+                        echo "in ssh agent"
+                        sh "ssh -o StrictHostKeyChecking=no  $deploy_user@$remote_host \"cd $target_dir &&  microk8s status  && microk8s helm version \""
+                        
                         /**
                          * @TODO To add
                          * helm upgrade install chart and send pass built image as param
