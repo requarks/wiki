@@ -89,7 +89,7 @@ pipeline {
                           if [ -d $target_dir ]; then
                             microk8s status
                             microk8s helm version
-                            cd ${target_dir}/mar/helm                               
+                            cd ./${target_dir}/mar/helm                               
                             pwd
                             microk8s helm list           
                             
