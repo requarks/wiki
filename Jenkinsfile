@@ -83,11 +83,10 @@ pipeline {
                       
                         sh '''
                           ssh -o StrictHostKeyChecking=accept-new capwiki@10.44.100.255 '
-                          cd mar
                           pwd
-                     
                           if [ -d $target_dir ]; then
-                            echo "Directory exists ${target_dir}"
+                            echo ${target_dir}
+                            pwd
                             microk8s status
                             microk8s helm version
                           fi  
