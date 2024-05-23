@@ -1,14 +1,5 @@
-def app_name = "mar"
-def deployment = "dev"
-def ssh_credential_id = "capwiki_deployment_keys"
 
-/**
-* replace remote_user with "maruser"
-*/
-def deploy_user = "capwiki"
-def target_dir = "/home/$deploy_user/$app_name"
-def remote_host = "10.44.100.255"
-def app = ""
+
 
 pipeline {
     agent {
@@ -21,6 +12,13 @@ pipeline {
         REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
         DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
         IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
+        app_name = "mar"
+        deployment = "dev"
+        ssh_credential_id = "capwiki_deployment_keys"
+        deploy_user = "capwiki"
+        target_dir = "/home/$deploy_user/$app_name"
+        remote_host = "10.44.100.255"
+        image = ""
     }
 
     parameters {
@@ -78,7 +76,7 @@ pipeline {
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
-                    sshagent(["$ssh_credential_id"]) {
+                    sshagent(["${ssh_credential_id}"]) {
                    
                         sh '''
                           echo "in ssh agent ${target_dir}"
