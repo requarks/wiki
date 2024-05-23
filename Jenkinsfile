@@ -83,7 +83,7 @@ pipeline {
                         echo "in ssh agent user ${deploy_user}"
                       
                         sh """
-                        ssh -o StrictHostKeyChecking=no $deploy_user@$remote_host
+                        ssh -tt -o StrictHostKeyChecking=no $deploy_user@$remote_host
                         pwd
                         if [ -d $target_dir ]; then
                           echo 'Directory exists'
