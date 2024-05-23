@@ -81,13 +81,19 @@ pipeline {
                         sh '''
                           echo 'in ssh agent ${target_dir}'
                           ls
-                          rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm
-                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '
-                          
+                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '    
+                   
                           if [ -d $target_dir ]; then   
-                            ls
-                            cd ./helm    
-                            pwd                 
+                            if [ ! -d $target_dir/helm ]; then
+                              # If the directory doesn't exist, create it
+                              mkdir -p $target_dir/helm
+                              echo "Directory '$REMOTE_DIR' created."
+                            fi
+                            
+                            rsync -i -z dev/helm ${deploy_user}@${remote_host}:${target_dir}/helm   
+                            pwd
+                            cd ./helm                               
+                            ls                 
                             microk8s status
                             microk8s helm version
                           fi  
