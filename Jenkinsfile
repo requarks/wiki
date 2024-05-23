@@ -81,24 +81,24 @@ pipeline {
                         sh '''
                           echo 'in ssh agent ${target_dir}'
                           pwd
-                          ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*"
+                          # to remove existing helm charts diretory
+                          ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*" 
+                          # to copy helm charts diretory into remote vm
                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
 
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '  
-                          ls  
-                          if [ -d $target_dir ]; then
+                            ls  
                             microk8s status
                             microk8s helm version
                             cd ./${target_dir}/mar/helm                               
                             pwd
                             microk8s helm list           
                             
-                          fi  
                           '
                         '''
                         /**
                          * @TODO To add
-                         * helm upgrade install chart and send pass built image as param
+                         * microk8s helm upgrade install chart and send pass built image as param
                          *    helm upgrade --install
                          *     --set image.repository=${IMAGE}
                         *
