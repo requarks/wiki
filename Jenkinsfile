@@ -85,7 +85,7 @@ pipeline {
                         sh """
                         ssh -o StrictHostKeyChecking=no $deploy_user@$remote_host
                         pwd
-                        if [ -d $target_di ]; then
+                        if [ -d $target_dir ]; then
                           echo 'Directory exists'
                           microk8s status
                           microk8s helm version
