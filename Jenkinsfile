@@ -7,18 +7,19 @@ pipeline {
     }
 
     environment {
-        BRANCH = "${params.BRANCH}"
-        CREDENTIALS_ID = "production_line_service_account"
-        REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
-        DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
-        IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
         app_name = "mar"
         deployment = "dev"
         ssh_credential_id = "capwiki_deployment_keys"
         deploy_user = "capwiki"
         target_dir = "/home/$deploy_user/$app_name"
         remote_host = "10.44.100.255"
-        image = ""
+        image = "
+        BRANCH = "${params.BRANCH}"
+        CREDENTIALS_ID = "production_line_service_account"
+        REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
+        DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
+        IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
+      "
     }
 
     parameters {
@@ -53,17 +54,18 @@ pipeline {
          @TODO Need to adjust Dockerfile in dev/build
          docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
        */
-   /*     stage("Build images") {
+        stage("Build images") {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
+                        app = docker.build("${IMAGE}", "./dev/build")
+                        ls ~/.docker
                         cat ~/.docker/config.json
-                        app = docker.build("${IMAGE}", "-f ./Dockerfile ./")
                     }
                 }
             }
         }
-
+/*
         stage("Push images") {
             steps {
                 script {
@@ -95,17 +97,13 @@ pipeline {
                             cd ./${target_dir}/mar/helm                               
                             pwd
                             microk8s helm list
+                            /*
+                             set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
+                             */
                             microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=requarks/wiki:{imageVersion}
                             microk8s helm history wiki
                           '
                         '''
-                        /**
-                         * @TODO To add
-                         * microk8s helm upgrade install chart and send pass built image as param
-                         *    helm upgrade --install
-                         *     --set image.repository=${IMAGE}
-                        *
-                        **/
                 }
             }
         }
