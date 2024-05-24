@@ -6,8 +6,8 @@ replicaCount: 1
 revisionHistoryLimit: 10
 
 image:
-  repository: requarks/wiki
-  imagePullPolicy: IfNotPresent
+  repository: ""
+  imagePullPolicy: Always
 
 imagePullSecrets: []
 nameOverride: ""
