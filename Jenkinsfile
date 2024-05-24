@@ -6,10 +6,9 @@ pipeline {
         label "build_slave_agtool"
     }
 
-    // project_name = "mar"
-   // app_name = "capwiki"
     environment {
-        app_name = "mar"
+        project_name = "mar"
+        app_name = "capwiki"
         deployment = "dev"
         ssh_credential_id = "capwiki_deployment_keys"
         deploy_user = "capwiki"
@@ -100,8 +99,11 @@ pipeline {
                              set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
                              requarks/wiki:{imageVersion}
                              */
+                             docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
+                                microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/tpo-bu-germany/mar:latest-dev
+                             }
                         
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar
+                           
                             microk8s helm history wiki
                           '
                         '''
