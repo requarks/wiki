@@ -57,7 +57,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        appimage = docker.build("${IMAGE}", "./dev/build")
+                        appimage = docker.build("${IMAGE}")
                         ls ~/.docker
                         cat ~/.docker/config.json
                     }
