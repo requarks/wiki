@@ -58,10 +58,10 @@ pipeline {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
                         // Read the Docker config.json file ${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json
-                         sh '''
-                            echo "Listing contents of the home directory on the Jenkins agent:"
-                            ls -R "${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp"
-                        '''
+                      
+                           sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
+                           sh 'ls -alR "${env.HOME}/workspace/TPO BU Germany/MAR-Project"'
+                    
                        
                       /*
                         def configFile = readFile("${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json")
