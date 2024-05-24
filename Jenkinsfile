@@ -101,8 +101,8 @@ pipeline {
                              requarks/wiki:{imageVersion}
                              */
                         
-                            microk8s helm upgrade --install capwiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar
-                            microk8s helm history capwiki
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar
+                            microk8s helm history wiki
                           '
                         '''
                 }
