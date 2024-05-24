@@ -85,11 +85,12 @@ pipeline {
                 }
             }
         }
-
+*/
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
                     def imageVersion = 2.4
+                    /*
                     sshagent(["${ssh_credential_id}"]) {
                    
                         sh '''
@@ -115,10 +116,11 @@ pipeline {
                           '
                         '''
                 }
+                */
             }
         }
     }
-  */  
+   
 }
     post {
             always {
