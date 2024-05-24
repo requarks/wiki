@@ -76,7 +76,6 @@ pipeline {
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
-                    def imageVersion = 2.4
                     
                     sshagent(["${ssh_credential_id}"]) {
                    
@@ -99,8 +98,10 @@ pipeline {
                              set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
                              requarks/wiki:{imageVersion}
                              */
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=${DOCKER_REGISTRY}/{IMAGE}
-                            microk8s helm history wiki
+                            echo "${DOCKER_REGISTRY}/{IMAGE}"
+                            echo appimage
+                           /* microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/
+                            microk8s helm history wiki*/
                           '
                         '''
                 }
