@@ -60,7 +60,8 @@ pipeline {
                         // Read the Docker config.json file ${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json
                            sh 'echo home directory ${env.HOME}'
                            sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
-                           sh 'ls -alR "$env.HOME/workspace/TPO BU Germany/MAR-Project"' 
+                           sh 'pwd'
+                           sh 'ls -alR home/agtool/workspace/TPO BU Germany/MAR-Project' 
 
                            /* // Use the find command to search for config.json file under the workspace directory
                             def configFile = sh(script: 'find ${env.HOME}/workspace -name "config.json" -type f | head -n 1', returnStdout: true).trim()
