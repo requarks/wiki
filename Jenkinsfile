@@ -64,13 +64,16 @@ pipeline {
                            /*sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
                            sh 'ls -alR /home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp' */
 
+                            /*
                             // Define the directory path with spaces
                            def subdirectory = "/home/agtool/workspace/TPO BU Germany/MAR-Project/"
                             // Use the 'cd' command to change the directory
                             sh "cd \"$subdirectory\""
                             sh 'pwd'
+                            */
+
                             // Use the find command to search for config.json file under the workspace directory
-                            def configFile = sh(script: 'find MAR-Project -name "config.json" -type f | head -n 1', returnStdout: true).trim()
+                            def configFile = sh(script: 'find /home/agtool/workspace/TPO BU Germany/MAR-Project/ -name "config.json" -type f | head -n 1', returnStdout: true).trim()
 
                             // Check if configFile variable is empty
                             if (configFile) {
