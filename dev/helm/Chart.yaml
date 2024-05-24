@@ -1,5 +1,5 @@
 apiVersion: v2
-name: wiki
+name: capwiki
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 version: 2.2.0
@@ -8,7 +8,7 @@ version: 2.2.0
 AppVersion: latest
 description: The most powerful and extensible open source Wiki software.
 keywords:
-  - wiki
+  - capwiki
   - documentation
   - knowledge base
   - docs
