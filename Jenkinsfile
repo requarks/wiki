@@ -57,38 +57,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-
-                        // Read the Docker config.json file ${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json
-                           sh 'pwd'
-                       
-                           /*sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
-                           sh 'ls -alR /home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp' */
-
-                            
-                            // Define the directory path with spaces
-                           def subdirectory = "/home/agtool/workspace/TPO BU Germany/MAR-Project/"
-                            // Use the 'cd' command to change the directory
-                            sh "cd \"$subdirectory\""
-                            sh 'pwd'
-                            
-
-                            // Use the find command to search for config.json file under the workspace directory
-                            def configFile = sh(script: 'find . -name "config.json" -type f | head -n 1', returnStdout: true).trim()
-
-                            // Check if configFile variable is empty
-                            if (configFile) {
-                                echo "Config file found at: ${configFile}"
-                            } else {
-                                echo "Config file not found"
-                            }
-                    
-                       
-                      /*
-                        def configFile = readFile("${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json")
-                        echo "Home ${env.HOME} Docker configFile1.json content: ${configFile}"*/
-                      
-                        /*appimage = docker.build("${IMAGE}")*/
-                        
+                        appimage = docker.build("${IMAGE}")  
                     }
                 }
             }
@@ -130,7 +99,7 @@ pipeline {
                              set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
                              requarks/wiki:{imageVersion}
                              */
-                           /* microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=${DOCKER_REGISTRY}/{IMAGE}*/
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=${DOCKER_REGISTRY}/{IMAGE}
                             microk8s helm history wiki
                           '
                         '''
