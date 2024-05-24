@@ -26,7 +26,6 @@ RUN yarn patch-package
 # --- Release ---
 # ===============
 FROM node:18-alpine
-LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \
@@ -42,7 +41,7 @@ COPY --chown=node:node ./server ./server
 COPY --chown=node:node --from=assets /wiki/server/views ./server/views
 COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./package.json ./package.json
-COPY --chown=node:node ./LICENSE ./LICENSE
+
 
 USER node
 
