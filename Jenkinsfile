@@ -60,7 +60,7 @@ pipeline {
                         // Read the Docker config.json file
                          sh '''
                             echo "Listing contents of the home directory on the Jenkins agent:"
-                            ls -al ${env.HOME}
+                            ls ${env.HOME}
                         '''
                         def configFile1 = readFile("${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json")
                         echo "Home ${env.HOME} Docker configFile1.json content: ${configFile1}"
@@ -85,7 +85,7 @@ pipeline {
                 }
             }
         }
-*/
+
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
@@ -118,6 +118,7 @@ pipeline {
             }
         }
     }
+  */  
 }
     post {
             always {
