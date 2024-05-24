@@ -13,7 +13,7 @@ pipeline {
         deploy_user = "capwiki"
         target_dir = "/home/$deploy_user/$app_name"
         remote_host = "10.44.100.255"
-        image = "
+        appimage = ""
         BRANCH = "${params.BRANCH}"
         CREDENTIALS_ID = "production_line_service_account"
         REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
@@ -58,7 +58,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        app = docker.build("${IMAGE}", "./dev/build")
+                        appimage = docker.build("${IMAGE}", "./dev/build")
                         ls ~/.docker
                         cat ~/.docker/config.json
                     }
@@ -70,7 +70,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        app.push()
+                        appimage.push()
                     }
                 }
             }
