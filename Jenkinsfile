@@ -95,10 +95,8 @@ pipeline {
                             pwd
                             microk8s helm list
                              
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/tpo-bu-germany/mar:latest-dev
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/tpo-bu-germany/mar,image.tag=latest-dev 
                              
-                        
-                           
                             microk8s helm history wiki
                           '
                         '''
