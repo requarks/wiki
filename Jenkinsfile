@@ -60,9 +60,7 @@ pipeline {
                         // Read the Docker config.json file ${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json
                          sh '''
                             echo "Listing contents of the home directory on the Jenkins agent:"
-                             def homeDirectoryContents = sh(script: 'cd "${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp"', returnStdout: true).trim()
-                             echo "Listing contents of the home directory on the Jenkins agent:"
-                             echo homeDirectoryContents
+                            ls -R "${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp"
                         '''
                        
                       /*
