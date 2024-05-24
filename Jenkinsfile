@@ -58,12 +58,15 @@ pipeline {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
                         // Read the Docker config.json file
-                        
-                       /* def configFile1 = readFile(/home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json")
+                         sh '''
+                            echo "Listing contents of the home directory on the Jenkins agent:"
+                            ls -al ${env.HOME}
+                        '''
+                        def configFile1 = readFile("${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json")
                         echo "Home ${env.HOME} Docker configFile1.json content: ${configFile1}"*/
 
-                        def configFile = readFile("${env.HOME}/.docker/config.json")
-                        echo "Home ${env.HOME} Docker configFile.json content: ${configFile}"
+                        /*def configFile = readFile("${env.HOME}/.docker/config.json")
+                        echo "Home ${env.HOME} Docker configFile.json content: ${configFile}"*/
 
                       
                         /*appimage = docker.build("${IMAGE}")*/
@@ -107,7 +110,7 @@ pipeline {
                             /*
                              set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
                              */
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=requarks/wiki:{imageVersion}
+                           /* microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=requarks/wiki:{imageVersion}*/
                             microk8s helm history wiki
                           '
                         '''
