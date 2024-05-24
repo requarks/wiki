@@ -93,7 +93,7 @@ pipeline {
                 }
             }
         }
-/*
+
         stage("Push images") {
             steps {
                 script {
@@ -103,7 +103,7 @@ pipeline {
                 }
             }
         }
-*/
+
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
@@ -128,8 +128,9 @@ pipeline {
                             microk8s helm list
                             /*
                              set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
+                             requarks/wiki:{imageVersion}
                              */
-                           /* microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=requarks/wiki:{imageVersion}*/
+                           /* microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=${DOCKER_REGISTRY}/{IMAGE}*/
                             microk8s helm history wiki
                           '
                         '''
