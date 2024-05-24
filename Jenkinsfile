@@ -90,16 +90,16 @@ pipeline {
             steps {
                 script {
                     def imageVersion = 2.4
-                    /*
+                    
                     sshagent(["${ssh_credential_id}"]) {
                    
                         sh '''
                           echo 'in ssh agent ${target_dir}'
                           pwd
                           # to remove existing helm charts diretory
-                          ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*" 
+                          #ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*" 
                           # to copy helm charts diretory into remote vm
-                          rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
+                          #rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
                            
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '  
                             ls  
@@ -116,7 +116,7 @@ pipeline {
                           '
                         '''
                 }
-                */
+                
             }
         }
     }
