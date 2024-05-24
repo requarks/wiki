@@ -62,9 +62,10 @@ pipeline {
                            sh 'pwd'
                        
                            sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
-                           sh 'ls -alR /home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp' 
+                           sh 'ls -alR /home/agtool/workspace/' 
 
-                           /* // Use the find command to search for config.json file under the workspace directory
+                           /* //TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp
+                              // Use the find command to search for config.json file under the workspace directory
                             def configFile = sh(script: 'find ${env.HOME}/workspace -name "config.json" -type f | head -n 1', returnStdout: true).trim()
 
                             // Check if configFile variable is empty
