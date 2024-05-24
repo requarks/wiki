@@ -6,12 +6,14 @@ pipeline {
         label "build_slave_agtool"
     }
 
+    #project_name = "mar"
+    #app_name = "capwiki"
     environment {
         app_name = "mar"
         deployment = "dev"
         ssh_credential_id = "capwiki_deployment_keys"
         deploy_user = "capwiki"
-        target_dir = "/home/$deploy_user/$app_name"
+        target_dir = "/home/$deploy_user/$project_name"
         remote_host = "10.44.100.255"
         appimage = ""
         BRANCH = "${params.BRANCH}"
@@ -41,7 +43,7 @@ pipeline {
             }
         }
 
-  
+   
 
        /* stage("Run Tests") {
             steps {
@@ -98,10 +100,9 @@ pipeline {
                              set below image.repository=${DOCKER_REGISTRY}/{IMAGE}
                              requarks/wiki:{imageVersion}
                              */
-                            echo "${DOCKER_REGISTRY}/{IMAGE}"
-                            echo appimage
-                           /* microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/
-                            microk8s helm history wiki*/
+                        
+                            microk8s helm upgrade --install capwiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar
+                            microk8s helm history capwiki
                           '
                         '''
                 }
