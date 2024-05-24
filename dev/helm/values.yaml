@@ -10,8 +10,7 @@ image:
     tag: ""
     imagePullPolicy: Always
 
-imagePullSecrets: 
-- name: capwiki-nexus-registry
+imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
