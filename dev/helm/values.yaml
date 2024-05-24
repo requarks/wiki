@@ -6,10 +6,12 @@ replicaCount: 1
 revisionHistoryLimit: 10
 
 image:
-  repository: ""
-  imagePullPolicy: Always
+    repository: ""
+    tag: ""
+    imagePullPolicy: Always
 
-imagePullSecrets: []
+imagePullSecrets: 
+- name: capwiki-nexus-registry
 nameOverride: ""
 fullnameOverride: ""
 
