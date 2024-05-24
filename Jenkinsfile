@@ -61,8 +61,8 @@ pipeline {
                         // Read the Docker config.json file ${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json
                            sh 'pwd'
                        
-                           sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
-                           sh 'ls -alR /home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp' 
+                           /*sh 'echo "Listing contents of the home directory on the Jenkins agent:"'
+                           sh 'ls -alR /home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp' */
 
                             // Define the directory path with spaces
                            def subdirectory = "/home/agtool/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/"
