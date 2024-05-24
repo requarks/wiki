@@ -53,10 +53,11 @@ pipeline {
          @TODO Need to adjust Dockerfile in dev/build
          docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
        */
-     /*   stage("Build images") {
+   /*     stage("Build images") {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
+                        cat ~/.docker/config.json
                         app = docker.build("${IMAGE}", "-f ./Dockerfile ./")
                     }
                 }
@@ -76,6 +77,7 @@ pipeline {
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
+                    def imageVersion = 2.4
                     sshagent(["${ssh_credential_id}"]) {
                    
                         sh '''
@@ -85,15 +87,16 @@ pipeline {
                           ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*" 
                           # to copy helm charts diretory into remote vm
                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
-
+                           
                           ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '  
                             ls  
                             microk8s status
                             microk8s helm version
                             cd ./${target_dir}/mar/helm                               
                             pwd
-                            microk8s helm list           
-                            
+                            microk8s helm list
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=requarks/wiki:{imageVersion}
+                            microk8s helm history wiki
                           '
                         '''
                         /**
