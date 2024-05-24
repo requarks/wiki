@@ -63,7 +63,7 @@ pipeline {
                             ls -al ${env.HOME}
                         '''
                         def configFile1 = readFile("${env.HOME}/workspace/TPO BU Germany/MAR-Project/MAR-Pipeline@2@tmp/a29f3d38-1ccb-4de5-beeb-517c4b65ce51/config.json")
-                        echo "Home ${env.HOME} Docker configFile1.json content: ${configFile1}"*/
+                        echo "Home ${env.HOME} Docker configFile1.json content: ${configFile1}"
 
                         /*def configFile = readFile("${env.HOME}/.docker/config.json")
                         echo "Home ${env.HOME} Docker configFile.json content: ${configFile}"*/
