@@ -5,10 +5,9 @@ pipeline {
     agent {
         label "build_slave_agtool"
     }
-
+     // project_name = "mar"
     environment {
-        project_name = "mar"
-        app_name = "capwiki"
+        app_name = "mar"
         deployment = "dev"
         ssh_credential_id = "capwiki_deployment_keys"
         deploy_user = "capwiki"
@@ -54,7 +53,7 @@ pipeline {
          @TODO Need to adjust Dockerfile in dev/build
          docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
        */
-        stage("Build images") {
+      /*  stage("Build images") {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -73,7 +72,7 @@ pipeline {
                 }
             }
         }
-
+*/
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
