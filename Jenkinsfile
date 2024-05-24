@@ -6,8 +6,8 @@ pipeline {
         label "build_slave_agtool"
     }
 
-    # project_name = "mar"
-    # app_name = "capwiki"
+    // project_name = "mar"
+   // app_name = "capwiki"
     environment {
         app_name = "mar"
         deployment = "dev"
