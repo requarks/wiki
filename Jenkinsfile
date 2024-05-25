@@ -5,9 +5,10 @@ pipeline {
     agent {
         label "build_slave_agtool"
     }
-     // project_name = "mar"
+     
     environment {
-        app_name = "mar"
+        project_name = "mar"
+        app_name = "capwiki"
         deployment = "dev"
         ssh_credential_id = "capwiki_deployment_keys"
         deploy_user = "capwiki"
@@ -18,7 +19,8 @@ pipeline {
         CREDENTIALS_ID = "production_line_service_account"
         REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
         DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
-        IMAGE = "${DOCKER_REGISTRY}/tpo-bu-germany/${app_name}:${params.VERSION}-${deployment}"
+        BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        IMAGE = "${DOCKER_REGISTRY}/${project_name}/${app_name}:${params.VERSION}-${deployment}"
     }
 
     parameters {
@@ -95,7 +97,7 @@ pipeline {
                             pwd
                             microk8s helm list
                              
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/tpo-bu-germany/mar,image.tag=latest-dev 
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
                              
                             microk8s helm history wiki
                           '
