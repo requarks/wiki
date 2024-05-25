@@ -43,19 +43,14 @@ pipeline {
             }
         }
 
-   
-
        /* stage("Run Tests") {
             steps {
                 echo "Unit Tests: DONE"
             }
         }*/
 
-       /*
-         @TODO Need to adjust Dockerfile in dev/build
-         docker.build("my-image:${env.BUILD_ID}", "-f ${dockerfile} ./dockerfiles")
-       */
-      /*  stage("Build images") {
+       
+        stage("Build images") {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -74,7 +69,7 @@ pipeline {
                 }
             }
         }
-*/
+
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
