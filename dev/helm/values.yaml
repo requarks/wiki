@@ -10,9 +10,10 @@ image:
     tag: ""
     imagePullPolicy: Always
 
-imagePullSecrets: []
+imagePullSecrets: 
+  - name: capwiki-nexus-registry
 nameOverride: ""
-fullnameOverride: ""
+fullnameOverride: capwiki
 
 serviceAccount:
   # Specifies whether a service account should be created
