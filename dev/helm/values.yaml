@@ -182,4 +182,4 @@ postgresql:
     accessMode: ReadWriteOnce
     ## Persistent Volume Storage Size.
     ##
-    size: 8Gi
+    size: 6Gi
