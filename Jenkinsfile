@@ -109,13 +109,13 @@ pipeline {
                           status=""
                           count=1
                           
-                          while [  $status != "Running" && $count -lt 5 ]; do
+                          while [ $status != "Running" && $count -lt 5 ]; do
                             status=$(microk8s kubectl get pod ${podName} -o jsonpath="{status.phase}")
                             sleep 10
                             ((count++))
                           done
 
-                          if[  $status != "Running" ]; then
+                          if [ $status != "Running" ]; then
                            echo "Pod ${podName} is not Running"
                            microk8s kubectl logs --tail=20 ${podName} 
                            exit 1
