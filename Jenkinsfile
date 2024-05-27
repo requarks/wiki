@@ -67,6 +67,8 @@ pipeline {
             }
         }
 */
+
+// test
         stage("Deploy to Kubernetes on remote vm via SSH") {
                     steps {
                         script {
