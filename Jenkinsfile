@@ -1,4 +1,18 @@
 
+  def deployToKubernetes(){
+              return """
+                          ls
+                          microk8s status
+                          microk8s helm version
+                          cd ./${TARGET_DIR}/mar/helm
+                          pwd
+                          microk8s helm list
+
+
+                          microk8s helm history wiki
+                      """
+  }
+
 pipeline {
     agent {
         label "build_slave_agtool"
@@ -93,21 +107,6 @@ pipeline {
             }
         }
     }
-
-    
-        def deployToKubernetes(){
-             return """
-                        ls
-                        microk8s status
-                        microk8s helm version
-                        cd ./${TARGET_DIR}/mar/helm
-                        pwd
-                        microk8s helm list
-
-
-                        microk8s helm history wiki
-                     """
-        }
    
 }
     post {
