@@ -7,7 +7,7 @@ pipeline {
         PROJECT_NAME = "mar"
         APP_NAME = "capwiki"
         DEPLOYMENT = "dev"
-        SSH_CREDENTIAL_ID = "capwiki_DEPLOYMENT_keys"
+        SSH_CREDENTIAL_ID = "capwiki_deployment_keys"
         DEPLOY_USER = "capwiki"
         TARGET_DIR = "/home/$DEPLOY_USER/$PROJECT_NAME"
         REMOTE_HOST = "10.44.100.255"
