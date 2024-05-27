@@ -1,26 +1,25 @@
 
-
-
 pipeline {
     agent {
         label "build_slave_agtool"
     }
      
     environment {
-        project_name = "mar"
-        app_name = "capwiki"
-        deployment = "dev"
-        ssh_credential_id = "capwiki_deployment_keys"
-        deploy_user = "capwiki"
-        target_dir = "/home/$deploy_user/$project_name"
-        remote_host = "10.44.100.255"
-        appimage = ""
+        PROJECT_NAME = "mar"
+        APP_NAME = "capwiki"
+        DEPLOYMENT = "dev"
+        SSH_CREDENTIAL_ID = "capwiki_DEPLOYMENT_keys"
+        DEPLOY_USER = "capwiki"
+        TARGET_DIR = "/home/$DEPLOY_USER/$PROJECT_NAME"
+        REMOTE_HOST = "10.44.100.255"
+        APP_IMAGE = ""
         BRANCH = "${params.BRANCH}"
         CREDENTIALS_ID = "production_line_service_account"
         REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
         DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
-        IMAGE = "${DOCKER_REGISTRY}/${project_name}/${app_name}:${params.VERSION}-${deployment}"
+        IMAGE = "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}:${params.VERSION}-${DEPLOYMENT}"
+        APP_URL = "https://capwiki.corp.capgemini.com"
     }
 
     parameters {
@@ -54,7 +53,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        appimage = docker.build("${IMAGE}")  
+                        APP_IMAGE = docker.build("${IMAGE}")  
                     }
                 }
             }
@@ -64,7 +63,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        appimage.push()
+                        APP_IMAGE.push()
                     }
                 }
             }
@@ -73,35 +72,42 @@ pipeline {
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
-                    
-                    sshagent(["${ssh_credential_id}"]) {
+                  // microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
+
+                    sshagent(["${SSH_CREDENTIAL_ID}"]) {
                    
-                        sh '''
-                          echo 'in ssh agent ${target_dir}'
+                        sh """
+                          echo "in ssh agent ${TARGET_DIR}"
                           pwd
                           # to remove existing helm charts diretory
-                          ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*" 
+                          ssh ${DEPLOY_USER}@${REMOTE_HOST} "rm -rf ${TARGET_DIR}/helm/*" 
                           # to copy helm charts diretory into remote vm
-                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
+                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${DEPLOY_USER}@${REMOTE_HOST}:${TARGET_DIR}
                            
-                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '  
-                            ls  
-                            microk8s status
-                            microk8s helm version
-                            cd ./${target_dir}/mar/helm                               
-                            pwd
-                            microk8s helm list
-                             
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
-                             
-                            microk8s helm history wiki
-                          '
-                        '''
+                          ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} << 'EOF'
+                           {$deployToKubernetes()}
+                           EOF
+                        """
                 }
                 
             }
         }
     }
+
+    
+        def deployToKubernetes(){
+             return """
+                        ls
+                        microk8s status
+                        microk8s helm version
+                        cd ./${TARGET_DIR}/mar/helm
+                        pwd
+                        microk8s helm list
+
+
+                        microk8s helm history wiki
+                     """
+        }
    
 }
     post {
