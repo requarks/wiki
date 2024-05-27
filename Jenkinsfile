@@ -117,7 +117,7 @@ pipeline {
 
                           if[[ $status != "Running" ]]; then
                            echo "Pod ${podName} is not Running"
-                           microk8s kubectl logs ${podName} 
+                           microk8s kubectl logs --tail=20 ${podName} 
                            exit 1
                           fi
                         '
