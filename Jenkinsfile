@@ -119,7 +119,7 @@ pipeline {
                            echo "Pod ${podName} is not Running"
                            microk8s kubectl logs --tail=20 ${podName} 
                            exit 1
-                           else
+                          else
                               echo "Pod ${podName} is Running"
                               exit 0
                           fi
@@ -136,7 +136,7 @@ pipeline {
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                          curl --silent --show-error --connect-timeout 10 --max-time 20 --write-out 'HTTPSTATUS:%{http_code}' ${APP_URL} 2>&1 | tee curl_output.log
+                          curl --silent --show-error --connect-timeout 10 --max-time 20 --write-out 'HTTPSTATUS:%{http_code}' $APP_URL 2>&1 | tee curl_output.log
                           connectedTo=$(grep 'Connected to' curl_output.log)
                           httpStatus=$(grep 'HTTPSTATUS:' curl_output.log | sed 's/HTTPSTATUS://')
                           certificateInfo=$(grep 'SSL certificate verify ok' curl_output.log || echo 'Certificate verification failed.')
