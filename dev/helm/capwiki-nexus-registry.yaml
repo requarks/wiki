@@ -1,4 +1,3 @@
-{{- if not (lookup "v1" "Secret" .Release.Namespace .Release.Name) }}
 apiVersion: v1
 data:
   .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJkb2NrZXItcmVnaXN0cnktcHQtc3VwcG9ydC1zaGFyZWQucGwuczItZXUuY2FwZ2VtaW5pLmNvbSI6IHsKCQkJImF1dGgiOiAiWTJGd2QybHJhVHBqWVhCM2FXdHBNakF5TkE9PSIKCQl9Cgl9Cn0=
@@ -10,4 +9,3 @@ metadata:
   resourceVersion: "3066661"
   uid: 9ff197af-d17b-491a-89dc-91f852131aa1
 type: kubernetes.io/dockerconfigjson
-{{- end }}
