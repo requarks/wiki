@@ -49,7 +49,7 @@ pipeline {
         }*/
 
        
-       stage("Build images") {
+      /* stage("Build images") {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -67,7 +67,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
