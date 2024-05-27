@@ -1,18 +1,3 @@
-
-  def deployToKubernetes(){
-              return """
-                          ls
-                          microk8s status
-                          microk8s helm version
-                          cd ./${TARGET_DIR}/mar/helm
-                          pwd
-                          microk8s helm list
-
-
-                          microk8s helm history wiki
-                      """
-  }
-
 pipeline {
     agent {
         label "build_slave_agtool"
@@ -90,23 +75,34 @@ pipeline {
 
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                    
-                        sh """
-                          echo "in ssh agent ${TARGET_DIR}"
+                         sh '''
+                          echo 'in ssh agent ${target_dir}'
                           pwd
                           # to remove existing helm charts diretory
-                          ssh ${DEPLOY_USER}@${REMOTE_HOST} "rm -rf ${TARGET_DIR}/helm/*" 
+                          ssh ${deploy_user}@${remote_host} "rm -rf ${target_dir}/helm/*" 
                           # to copy helm charts diretory into remote vm
-                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${DEPLOY_USER}@${REMOTE_HOST}:${TARGET_DIR}
+                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${deploy_user}@${remote_host}:${target_dir}
                            
-                          ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} << 'EOF'
-                           {$deployToKubernetes()}
-                           EOF
-                        """
+                          ssh -o StrictHostKeyChecking=accept-new ${deploy_user}@${remote_host} '  
+                            ls  
+                            microk8s status
+                            microk8s helm version
+                            cd ./${target_dir}/mar/helm                               
+                            pwd
+                            microk8s helm list
+                             
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
+                             
+                            microk8s helm history wiki
+                          '
+
                 }
                 
             }
         }
     }
+
+    
    
 }
     post {
