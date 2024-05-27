@@ -68,35 +68,35 @@ pipeline {
         }
 */
         stage("Deploy to Kubernetes on remote vm via SSH") {
-            steps {
-                script {
+                    steps {
+                        script {
 
-                    sshagent(["${SSH_CREDENTIAL_ID}"]) {
-                        sh '''
-                          echo 'in ssh agent ${TARGET_DIR}'
-                          pwd
-                          # to remove existing helm charts diretory
-                          ssh ${DEPLOY_USER}@${REMOTE_HOST} "rm -rf ${TARGET_DIR}/helm/*"
-                          # to copy helm charts diretory into remote vm
-                           rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${DEPLOY_USER}@${REMOTE_HOST}:${TARGET_DIR}
+                            sshagent(["${SSH_CREDENTIAL_ID}"]) {
+                                sh '''
+                                  echo 'in ssh agent ${TARGET_DIR}'
+                                  pwd
+                                  # to remove existing helm charts diretory
+                                  ssh ${DEPLOY_USER}@${REMOTE_HOST} "rm -rf ${TARGET_DIR}/helm/*"
+                                  # to copy helm charts diretory into remote vm
+                                   rsync -avzi -e "ssh -o StrictHostKeyChecking=accept-new" dev/helm  ${DEPLOY_USER}@${REMOTE_HOST}:${TARGET_DIR}
 
-                          ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                            ls
-                            microk8s status
-                            microk8s helm version
-                            cd ./${TARGET_DIR}/mar/helm
-                            pwd
-                            microk8s helm list
+                                  ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
+                                    ls
+                                    microk8s status
+                                    microk8s helm version
+                                    cd ${TARGET_DIR}/helm  # Changed line to correct the path
+                                    pwd
+                                    microk8s helm list
 
-                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
+                                    microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=${params.VERSION}-${DEPLOYMENT}  # Changed to use the correct image tag
 
-                            microk8s helm history wiki
-                          '
-                        '''
+                                    microk8s helm history wiki
+                                  '
+                                '''
+                            }
+                        }
                     }
                 }
-            }
-        }
 
         stage("Wait and check for Pod to be Running") {
             steps {
@@ -109,7 +109,7 @@ pipeline {
                           echo "Waiting for pod ${podName} to be running..."
                           status=""
                           count=1
-                          
+
                           while [ $status != "Running" && $count -lt 5 ]; do
                             status=$(microk8s kubectl get pod ${podName} -o jsonpath="{status.phase}")
                             sleep 10
@@ -118,7 +118,7 @@ pipeline {
 
                           if [ $status != "Running" ]; then
                            echo "Pod ${podName} is not Running"
-                           microk8s kubectl logs --tail=20 ${podName} 
+                           microk8s kubectl logs --tail=20 ${podName}
                            exit 1
                           else
                               echo "Pod ${podName} is Running"
