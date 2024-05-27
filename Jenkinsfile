@@ -66,11 +66,10 @@ pipeline {
                 }
             }
         }
-
+*/
         stage("Deploy to Kubernetes on remote vm via SSH") {
             steps {
                 script {
-                  // microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
 
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
@@ -89,6 +88,8 @@ pipeline {
                             pwd
                             microk8s helm list
 
+                            microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
+
                             microk8s helm history wiki
                           '
                         '''
@@ -96,7 +97,7 @@ pipeline {
                 }
             }
         }
-*/
+
         stage("Wait and check for Pod to be Running") {
             steps {
                 script {
