@@ -216,7 +216,7 @@ pipeline {
                         if [ "$today_epoch" -ge "$expire_one_month_before_epoch" ]; then
                             echo "Certificate is going to expire in One month i.e on ${expire_date}, please renew and install it on the server"
                         else
-                            echo "HTTPS SSL Certificate is Valid till $ expire_date"
+                            echo "HTTPS SSL Certificate is Valid till ${formatted_expire_date}"
                         fi
                       ' 
                     '''
