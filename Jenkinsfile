@@ -88,7 +88,7 @@ pipeline {
                                  exit 1
                               fi
                               
-                              nodeName=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+                              nodeName=$(k3s kubectl get nodes -o jsonpath=\'{.items[*].metadata.name}\')
                               echo "Check nodes readiness ${nodeName}"
                              
                             nodeStatus=$(kubectl get nodes | grep -i ready)
