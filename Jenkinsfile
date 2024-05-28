@@ -191,7 +191,7 @@ pipeline {
                         curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "subject:|start date:|expire date:"
 
                         # Extract the expiry date from the output of curl
-                        expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | sed 's/.*expire date: //')
+                        expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | cut -d: -f2-)
 
                         # Get today's date
                         today=$(date +%Y-%m-%d)
