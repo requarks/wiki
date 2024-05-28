@@ -174,13 +174,13 @@ pipeline {
                 script {
                     sh '''
                         echo "Check http status"
-                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | awk '/^HTTP/{print $2}')
-
+                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 \| awk \'/^HTTP/{print \$2}\')
+                        echo "Status code: ${httpStatus}"
                         # Check if the status code is 200
                         if [ "$http_status" == "200" ]; then
                            echo "Application URL is working. Status code: ${httpStatus}"
                         else
-                            echo "HTTP status code is not 200, ${http_status}, Application URL is not working"
+                            echo "HTTP status code is ${http_status}, Application URL is not working"
                         fi
 
                         echo "Check SSL Server certificate expiry date"
