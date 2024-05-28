@@ -107,9 +107,9 @@ pipeline {
                                     pwd
                                      helm list
 
-                                     helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
+                                     helm upgrade --install capwiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
 
-                                     helm history wiki
+                                     helm history capwiki
                                   '
                                 '''
                             }
