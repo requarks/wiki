@@ -87,7 +87,20 @@ pipeline {
                                  echo "kubelet service is not active and running. Deployment cannot proceed."
                                  exit 1
                               fi
+                              
+                              nodeName=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+                              echo "Check nodes readiness ${nodeName}"
                              
+                              nodeStatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
+                            echo "node status is  ${nodeStatus}"  
+        
+                            if [ -n "$nodeStatus" ]; then
+                                echo "Node(s) are ready."
+                                exit 0
+                            else
+                                echo "No nodes are ready. Deployment cannot proceed."
+                                exit 1
+                            fi
                             '
                         '''
                     }
