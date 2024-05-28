@@ -75,6 +75,7 @@ pipeline {
                     // Active: active (running) since Tue 2024-05-28 00:21:58 CEST; 1h 37min ago
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
+                        echo "verify cluster health"
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
                               echo "Check kubelet Status"
                               kubeletStatus=$(systemctl status k3s | grep -i Active)
