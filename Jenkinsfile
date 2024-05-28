@@ -153,7 +153,6 @@ pipeline {
                             echo "pod status is ${status}"
                             sleep 10
                             count=$((count + 1))
-                            echo "count value is ${count}"
                           done
 
                           if echo "$status" | grep -q "running"; then
