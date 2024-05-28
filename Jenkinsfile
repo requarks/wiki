@@ -87,7 +87,7 @@ pipeline {
                                  exit 1
                               fi
 
-                              nodeName=$(k3s kubectl get nodes -o jsonpath=\'{.items[*].metadata.name}\')
+                              nodeName=$(kubectl get nodes -o jsonpath=\'{.items[*].metadata.name}\')
                               echo "Check nodes readiness ${nodeName}"
 
                               nodeStatus=$(kubectl get nodes | grep -i ready)
@@ -142,7 +142,7 @@ pipeline {
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                          podName=$(k3s kubectl get pods -l app.kubernetes.io/name=capwiki -o jsonpath="{.items[0].metadata.name}")
+                          podName=$(kubectl get pods -l app.kubernetes.io/name=capwiki -o jsonpath="{.items[0].metadata.name}")
 
                           echo "Waiting for pod ${podName} to be running..."
                           status=""
@@ -159,7 +159,7 @@ pipeline {
                               echo "Pod ${podName} is Running"
                           else
                               echo "Pod ${podName} is not Running"
-                              k3s kubectl logs --tail=20 ${podName}
+                               kubectl logs --tail=20 ${podName}
                               exit 1
                           fi
                         '
@@ -174,8 +174,8 @@ pipeline {
                 script {
                     sh '''
                         echo "Check http status"
-                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | awk \'/^HTTP/{print \$2}\')
-                        echo "Status code: ${httpStatus}"
+                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | grep -i 'HTTP' | cut -d' ' -f2')
+
                         # Check if the status code is 200
                         if [ "$http_status" == "200" ]; then
                            echo "Application URL is working. Status code: ${httpStatus}"
