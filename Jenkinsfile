@@ -67,7 +67,7 @@ pipeline {
             }
         }
 */
-/*
+
         stage('Verify Kubernetes cluster health') {
             steps {
                 script {
@@ -96,7 +96,7 @@ pipeline {
                 }
             }
       }
-  */
+  /*
         stage('Deploy to Kubernetes on remote vm via SSH') {
                     steps {
                         script {
@@ -126,7 +126,7 @@ pipeline {
                         }
                     }
         }
-
+*/
         stage('Wait and check for Pod to be Running') {
             steps {
                 script {
