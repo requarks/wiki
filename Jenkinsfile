@@ -67,20 +67,30 @@ pipeline {
             }
         }
 */
-
-      /*  stage('Verify Kubernetes cluster health') {
+/*
+        stage('Verify Kubernetes cluster health') {
             steps {
                 script {
+                    //  k3s-master-01   True
+                    // Active: active (running) since Tue 2024-05-28 00:21:58 CEST; 1h 37min ago
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                              // Check nodes readiness
-                              nodestatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
-                               //  k3s-master-01   True
-                               // check  k3s.service or Verify Kubelet Status
-                               systemctl status k3s | grep -i Active
-                        // Active: active (running) since Tue 2024-05-28 00:21:58 CEST; 1h 37min ago
-                        '
+                              echo "Check nodes readiness"
+                              nodeStatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
+                               echo "node status is  ${nodeStatus}"  
+                               echo "verify Kubelet Status"
+                               kubeletStatus=$(systemctl status k3s | grep -i Active)
+                              echo "kubeletStatus is  ${kubeletStatus}"
+
+                              if [ $kubelet_status == *"active (running)"* ]; then
+                                echo "kubelet service is active and running."
+                                exit 0
+                              else
+                                 echo "kubelet service is not active and running. Deployment cannot proceed."
+                                 exit 1
+                              fi
+                            '
                         '''
                     }
                 }
@@ -120,20 +130,21 @@ pipeline {
         stage('Wait and check for Pod to be Running') {
             steps {
                 script {
-                    //kubectl get pods --all-namespaces -o jsonpath='{range .items[*].status.ContainerStatuses[0]}{.containerID}{"\n"}{end}' | cut -d/ -f3
+                    //kubectl get pods --all-namespaces -o jsonpath='{.items[*].status.ContainerStatuses[0].state}'
                     // k3s kubectl get pods --field-selector=status.phase=Running | grep {podName}
                     //capwiki-6587f8cf78-mkxsw   1/1     Running   0          84m
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                          podName=$( k3s kubectl get pods -l app.kubernetes.io/name=capwiki -o jsonpath="{.items[0].metadata.name}")
+                          podName=$(k3s kubectl get pods -l app.kubernetes.io/name=capwiki -o jsonpath="{.items[0].metadata.name}")
 
                           echo "Waiting for pod ${podName} to be running..."
                           status=""
                           count=1
 
                           while [ $status != "Running" && $count -lt 5 ]; do
-                            status=$( k3s kubectl get pod ${podName} -o jsonpath="{status.phase}")
+                            status=$(kubectl get  pod ${podName} -o jsonpath='{.status.containerStatuses[0].state}' | grep -i running)
+                            echo "pod status is ${status}"
                             sleep 10
                             ((count++))
                           done
@@ -143,7 +154,7 @@ pipeline {
                               exit 0
                           else
                               echo "Pod ${podName} is not Running"
-                               k3s kubectl logs --tail=20 ${podName}
+                              k3s kubectl logs --tail=20 ${podName}
                               exit 1
                           fi
                         '
