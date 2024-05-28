@@ -203,11 +203,11 @@ pipeline {
                           echo "today date: ${today}"
 
                         # Subtract one month from the expiry date
-                        expire_epoch=$(date -d "$formatted_expire_date - 1 month" +%Y-%m-%d)
-                        echo "expiry epoch: ${expire_epoch}"
+                        expire_one_month_before=$(date -d "$formatted_expire_date - 1 month" +%Y-%m-%d)
+                        echo "expire_one_month_before: ${expire_one_month_before}"
 
                         # Convert the one month before date to seconds since epoch
-                        expire_one_month_before_epoch=$(date -d "$expire_epoch" +%s)
+                        expire_one_month_before_epoch=$(date -d "$expire_one_month_before" +%s)
 
                         # Convert today's date to seconds since epoch
                         today_epoch=$(date -d "$today" +%s)
