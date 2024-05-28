@@ -174,8 +174,11 @@ pipeline {
                 script {
                     sh '''
                         echo "Check http status"
-                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | grep -i HTTP)
-                         echo "Status code: ${httpStatus}"
+                        http_response=$(curl -I https://capwiki.corp.capgemini.com 2>&1)
+                        http_status=$(echo "$http_response" | grep -i '^HTTP' | cut -d' ' -f2)
+                    
+                        echo "Status code: $http_status"
+
                         # Check if the status code is 200
                         if [ "$http_status" == "200" ]; then
                            echo "Application URL is working. Status code: ${httpStatus}"
