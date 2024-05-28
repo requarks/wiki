@@ -80,7 +80,7 @@ pipeline {
                               echo "Check kubelet Status"
                              kubeletStatus=$(systemctl status k3s | grep -i "Active: active (running)")
  
-                              if [[ -n "$kubeletStatus" ]]; then
+                              if [ -n "$kubeletStatus" ]; then
                                 echo "kubelet service is active and running."
                                 exit 0
                               else
