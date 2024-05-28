@@ -192,12 +192,15 @@ pipeline {
 
                         # Extract the expiry date from the output of curl
                         expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | cut -d: -f2- | xargs)
+                         echo "expiry date: ${expire_date}"
 
                         # Get today's date
                         today=$(date +%Y-%m-%d)
+                          echo "today date: ${today}"
 
                         # Subtract one month from the expiry date
                         expire_epoch=$(date -d "$expire_date - 1 month" +%Y-%m-%d)
+                        echo "expiry epoch: ${expire_epoch}"
 
                         # Convert the one month before date to seconds since epoch
                         expire_one_month_before_epoch=$(date -d "$expire_epoch" +%s)
