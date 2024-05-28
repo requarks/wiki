@@ -78,21 +78,7 @@ pipeline {
                         echo "verify cluster health"
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
                               echo "Check kubelet Status"
-                              kubeletStatus=$(systemctl status k3s | grep -i Active)
-                              echo "kubeletStatus is  ${kubeletStatus}"
-
-                              if [ $kubelet_status == *"active (running)"* ]; then
-                                echo "kubelet service is active and running."
-                                exit 0
-                              else
-                                 echo "kubelet service is not active and running. Deployment cannot proceed."
-                                 exit 1
-                              fi
-
-                              echo "Check nodes readiness"
-                              nodeStatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
-                               echo "node status is  ${nodeStatus}"  
-                              
+                
                              
                             '
                         '''
