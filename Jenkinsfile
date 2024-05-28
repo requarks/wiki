@@ -191,7 +191,7 @@ pipeline {
                         curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "subject:|start date:|expire date:"
 
                         # Extract the expiry date from the output of curl
-                        expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | awk '{print $4, $5, $6, $7}')
+                        expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | sed 's/*  expire date: //')
 
                         # Get today's date
                         today=$(date +%Y-%m-%d)
@@ -207,9 +207,9 @@ pipeline {
 
                         # Check if the certificate has expired one month before the expiry date
                         if [ "$today_epoch" -ge "$expire_one_month_before_epoch" ]; then
-                            echo "Certificate is going to expire in One month i.e on ${expire_date}, please renew and install it on server"
+                            echo "Certificate is going to expire in One month i.e on ${expire_date}, please renew and install it on the server"
                         else
-                            echo "HTTPS SSL Certificate is valid"
+                            echo "HTTPS SSL Certificate is Valid till $ expire_date"
                         fi
                       ' 
                     '''
