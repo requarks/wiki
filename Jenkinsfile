@@ -151,7 +151,7 @@ pipeline {
                           status=""
                           count=1
 
-                          while [ "$status" != "Running" && $count -lt 5 ]; do
+                          while [ "$status" != "Running" && "$count" -lt 5 ]; do
                             status=$(kubectl get  pod ${podName} -o jsonpath=\'{.status.containerStatuses[0].state}\' | grep -i running)
                             echo "pod status is ${status}"
                             sleep 10
