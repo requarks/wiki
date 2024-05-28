@@ -82,7 +82,6 @@ pipeline {
  
                               if [ -n "$kubeletStatus" ]; then
                                 echo "kubelet service is active and running."
-                                exit 0
                               else
                                  echo "kubelet service is not active and running. Deployment cannot proceed."
                                  exit 1
@@ -96,7 +95,6 @@ pipeline {
         
                             if [ -n "$nodeStatus" ]; then
                                 echo "Node(s) are ready."
-                                exit 0
                             else
                                 echo "No nodes are ready. Deployment cannot proceed."
                                 exit 1
