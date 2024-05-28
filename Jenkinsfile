@@ -76,11 +76,8 @@ pipeline {
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                              echo "Check nodes readiness"
-                              nodeStatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
-                               echo "node status is  ${nodeStatus}"  
-                               echo "verify Kubelet Status"
-                               kubeletStatus=$(systemctl status k3s | grep -i Active)
+                              echo "Check kubelet Status"
+                              kubeletStatus=$(systemctl status k3s | grep -i Active)
                               echo "kubeletStatus is  ${kubeletStatus}"
 
                               if [ $kubelet_status == *"active (running)"* ]; then
@@ -90,6 +87,12 @@ pipeline {
                                  echo "kubelet service is not active and running. Deployment cannot proceed."
                                  exit 1
                               fi
+
+                              echo "Check nodes readiness"
+                              nodeStatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
+                               echo "node status is  ${nodeStatus}"  
+                              
+                             
                             '
                         '''
                     }
