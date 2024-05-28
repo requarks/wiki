@@ -91,7 +91,7 @@ pipeline {
                               nodeName=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
                               echo "Check nodes readiness ${nodeName}"
                              
-                              nodeStatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
+                            nodeStatus=$(kubectl get nodes | grep -i ready)
                             echo "node status is  ${nodeStatus}"  
         
                             if [ -n "$nodeStatus" ]; then
