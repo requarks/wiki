@@ -90,15 +90,15 @@ pipeline {
                               nodeName=$(k3s kubectl get nodes -o jsonpath=\'{.items[*].metadata.name}\')
                               echo "Check nodes readiness ${nodeName}"
                              
-                            nodeStatus=$(kubectl get nodes | grep -i ready)
-                            echo "node status is  ${nodeStatus}"  
-        
-                            if [ -n "$nodeStatus" ]; then
-                                echo "Node(s) are ready."
-                            else
-                                echo "No nodes are ready. Deployment cannot proceed."
-                                exit 1
-                            fi
+                              nodeStatus=$(kubectl get nodes | grep -i ready)
+                              echo "node status is  ${nodeStatus}"  
+          
+                              if [ -n "$nodeStatus" ]; then
+                                  echo "Node(s) are ready."
+                              else
+                                  echo "No nodes are ready. Deployment cannot proceed."
+                                  exit 1
+                              fi
                             '
                         '''
                     }
@@ -151,16 +151,15 @@ pipeline {
                           status=""
                           count=1
 
-                          while [ $status != "Running" && $count -lt 5 ]; do
-                            status=$(kubectl get  pod ${podName} -o jsonpath='{.status.containerStatuses[0].state}' | grep -i running)
+                          while [ "$status" != "Running" && $count -lt 5 ]; do
+                            status=$(kubectl get  pod ${podName} -o jsonpath=\'{.status.containerStatuses[0].state}\' | grep -i running)
                             echo "pod status is ${status}"
                             sleep 10
                             ((count++))
                           done
 
-                          if [ $status == "Running" ]; then
+                          if [ "$status" == "Running" ]; then
                               echo "Pod ${podName} is Running"
-                              exit 0
                           else
                               echo "Pod ${podName} is not Running"
                               k3s kubectl logs --tail=20 ${podName}
