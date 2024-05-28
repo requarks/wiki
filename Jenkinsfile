@@ -172,7 +172,9 @@ pipeline {
         stage('Verify Application URL') {
             steps {
                 script {
+                    sshagent(["${SSH_CREDENTIAL_ID}"]) {
                     sh '''
+                      ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
                         echo "Check http status"
                         http_response=$(curl -I https://capwiki.corp.capgemini.com 2>&1)
                         http_status=$(echo "$http_response" | grep -i '^HTTP')
@@ -212,7 +214,9 @@ pipeline {
                         else
                             echo "HTTPS SSL Certificate is valid"
                         fi
+                      ' 
                     '''
+                    }  
                 }
             }
         }
