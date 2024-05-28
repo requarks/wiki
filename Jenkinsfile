@@ -139,9 +139,6 @@ pipeline {
         stage('Wait and check for Pod to be Running') {
             steps {
                 script {
-                    //kubectl get pods --all-namespaces -o jsonpath='{.items[*].status.ContainerStatuses[0].state}'
-                    // k3s kubectl get pods --field-selector=status.phase=Running | grep {podName}
-                    //capwiki-6587f8cf78-mkxsw   1/1     Running   0          84m
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
@@ -153,9 +150,9 @@ pipeline {
 
                            while [ -z "$status" ] && [ $count -lt 5 ]; do
                             status=$(kubectl get  pod ${podName} -o jsonpath=\'{.status.containerStatuses[0].state}\' | grep -i running)
-                            echo "pod status is ${status}"
+                           // echo "pod status is ${status}"
                             sleep 10
-                            ((count++))
+                            count=$((count + 1))
                           done
 
                           if echo "$status" | grep -q "running"; then
