@@ -174,7 +174,7 @@ pipeline {
                 script {
                     sh '''
                         echo "Check http status"
-                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 \| awk \'/^HTTP/{print \$2}\')
+                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | awk \'/^HTTP/{print \$2}\')
                         echo "Status code: ${httpStatus}"
                         # Check if the status code is 200
                         if [ "$http_status" == "200" ]; then
