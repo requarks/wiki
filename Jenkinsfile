@@ -175,8 +175,9 @@ pipeline {
                     sh '''
                         echo "Check http status"
                         http_response=$(curl -I https://capwiki.corp.capgemini.com 2>&1)
-                        http_status=$(echo "$http_response" | grep -i '^HTTP' | cut -d' ' -f2)
+                        http_status=$(echo "$http_response" | grep -i '^HTTP')
                     
+                        echo "http response : $http_response"
                         echo "Status code: $http_status"
 
                         # Check if the status code is 200
