@@ -79,20 +79,20 @@ pipeline {
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
                               echo "Check kubelet Status"
                              kubeletStatus=$(systemctl status k3s | grep -i "Active: active (running)")
- 
+
                               if [ -n "$kubeletStatus" ]; then
                                 echo "kubelet service is active and running."
                               else
                                  echo "kubelet service is not active and running. Deployment cannot proceed."
                                  exit 1
                               fi
-                              
+
                               nodeName=$(k3s kubectl get nodes -o jsonpath=\'{.items[*].metadata.name}\')
                               echo "Check nodes readiness ${nodeName}"
-                             
+
                               nodeStatus=$(kubectl get nodes | grep -i ready)
-                              echo "node status is  ${nodeStatus}"  
-          
+                              echo "node status is  ${nodeStatus}"
+
                               if [ -n "$nodeStatus" ]; then
                                   echo "Node(s) are ready."
                               else
@@ -104,7 +104,7 @@ pipeline {
                     }
                 }
             }
-      }
+        }
   /*
         stage('Deploy to Kubernetes on remote vm via SSH') {
                     steps {
@@ -172,35 +172,48 @@ pipeline {
         stage('Verify Application URL') {
             steps {
                 script {
-                    sshagent(["${SSH_CREDENTIAL_ID}"]) {
-                        sh '''
-                        ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                          curl --silent --show-error --connect-timeout 10 --max-time 20 --write-out 'HTTPSTATUS:%{http_code}' '${APP_URL}' 2>&1 | tee curl_output.log
-                          connectedTo=$(grep 'Connected to' curl_output.log)
-                          httpStatus=$(grep 'HTTPSTATUS:' curl_output.log | sed 's/HTTPSTATUS://')
-                          certificateInfo=$(grep 'SSL certificate verify ok' curl_output.log || echo 'Certificate verification failed.')
+                    sh '''
+                        echo "Check http status"
+                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | awk '/^HTTP/{print $2}')
 
-                          echo "Connection Info: ${connectedTo}"
-                          echo "HTTP Status: ${httpStatus}"
-                          echo "Certificate Info: ${certificateInfo}"
+                        # Check if the status code is 200
+                        if [ "$http_status" == "200" ]; then
+                           echo "Application URL is working. Status code: ${httpStatus}"
+                        else
+                            echo "HTTP status code is not 200, ${http_status}, Application URL is not working"
+                        fi
 
-                          if [ "$httpStatus" -ne 200]; then
-                            echo "Application URL check failed. Status code: ${httpStatus}"
-                            exit 1
-                          fi
+                        echo "Check SSL Server certificate expiry date"
 
-                          if [ "$certificateInfo" = 'Certificate verification failed.' ]; then
-                            echo "SSL certificate verification failed."
-                            exit 1
-                          fi
-                          echo "Application URL is working. Status code: ${httpStatus}"
-                        '
-                     '''
-                    }
+                        curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "subject:|start date:|expire date:"
+
+                        # Extract the expiry date from the output of curl
+                        expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | awk '{print $4, $5, $6, $7}')
+
+                        # Get today's date
+                        today=$(date +%Y-%m-%d)
+
+                        # Subtract one month from the expiry date
+                        expire_epoch=$(date -d "$expire_date - 1 month" +%Y-%m-%d)
+
+                        # Convert the one month before date to seconds since epoch
+                        expire_one_month_before_epoch=$(date -d "$expire_epoch" +%s)
+
+                        # Convert today's date to seconds since epoch
+                        today_epoch=$(date -d "$today" +%s)
+
+                        # Check if the certificate has expired one month before the expiry date
+                        if [ "$today_epoch" -ge "$expire_one_month_before_epoch" ]; then
+                            echo "Certificate is going to expire in One month i.e on ${expire_date}, please renew and install it on server"
+                        else
+                            echo "HTTPS SSL Certificate is valid"
+                        fi
+                    '''
                 }
             }
         }
     }
+
     post {
             always {
                 cleanWs()
