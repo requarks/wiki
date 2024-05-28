@@ -1,53 +1,53 @@
 pipeline {
     agent {
-        label "build_slave_agtool"
+        label 'build_slave_agtool'
     }
 
     environment {
-        PROJECT_NAME = "mar"
-        APP_NAME = "capwiki"
-        DEPLOYMENT = "dev"
-        SSH_CREDENTIAL_ID = "capwiki_deployment_keys"
-        DEPLOY_USER = "capwiki"
+        PROJECT_NAME = 'mar'
+        APP_NAME = 'capwiki'
+        DEPLOYMENT = 'dev'
+        SSH_CREDENTIAL_ID = 'capwiki_deployment_keys'
+        DEPLOY_USER = 'capwiki'
         TARGET_DIR = "/home/$DEPLOY_USER/$PROJECT_NAME"
-        REMOTE_HOST = "10.44.100.255"
-        APP_IMAGE = ""
+        REMOTE_HOST = '10.44.100.255'
+        APP_IMAGE = ''
         BRANCH = "${params.BRANCH}"
-        CREDENTIALS_ID = "production_line_service_account"
-        REPO_URL = "https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git"
-        DOCKER_REGISTRY = "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com"
+        CREDENTIALS_ID = 'production_line_service_account'
+        REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
+        DOCKER_REGISTRY = 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
         IMAGE = "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}:${params.VERSION}-${DEPLOYMENT}"
-        APP_URL = "https://capwiki.corp.capgemini.com"
+        APP_URL = 'https://capwiki.corp.capgemini.com'
     }
 
     parameters {
-        gitParameter branchFilter: "origin/(.*)", defaultValue: "main", name: "BRANCH", type: "PT_BRANCH"
-        string(name: "VERSION", defaultValue: "latest", description: "Specify the version for the images.")
+        gitParameter branchFilter: 'origin/(.*)', defaultValue: 'main', name: 'BRANCH', type: 'PT_BRANCH'
+        string(name: 'VERSION', defaultValue: 'latest', description: 'Specify the version for the images.')
     }
 
     tools {
-        nodejs "nodejs-18.13.0"
+        nodejs 'nodejs-18.13.0'
     }
 
     options {
-        gitLabConnection("PT-Support-Gitlab")
+        gitLabConnection('PT-Support-Gitlab')
     }
 
     stages {
-        stage("Git checkout stage") {
+        stage('Git checkout stage') {
             steps {
                 git branch: "${BRANCH}", credentialsId: "${CREDENTIALS_ID}", url: "${REPO_URL}"
             }
         }
 
-       /* stage("Run Tests") {
+       /* stage('Run Tests') {
             steps {
                 echo "Unit Tests: DONE"
             }
         }*/
 
-      /* stage("Build images") {
+      /* stage('Build images') {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -57,7 +57,7 @@ pipeline {
             }
       }
 
-        stage("Push images") {
+        stage('Push images') {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -68,11 +68,28 @@ pipeline {
         }
 */
 
-// test
-        stage("Deploy to Kubernetes on remote vm via SSH") {
+      /*  stage('Verify Kubernetes cluster health') {
+            steps {
+                script {
+                    sshagent(["${SSH_CREDENTIAL_ID}"]) {
+                        sh '''
+                        ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
+                              // Check nodes readiness
+                              nodestatus=$(kubectl get nodes -o jsonpath='{range .items[*]} {.metadata.name} {" "} {.status.conditions[?(@.type=="Ready")].status}' | grep -i true)
+                               //  k3s-master-01   True
+                               // check  k3s.service or Verify Kubelet Status
+                               systemctl status k3s | grep -i Active
+                        // Active: active (running) since Tue 2024-05-28 00:21:58 CEST; 1h 37min ago
+                        '
+                        '''
+                    }
+                }
+            }
+      }
+  */
+        stage('Deploy to Kubernetes on remote vm via SSH') {
                     steps {
                         script {
-
                             sshagent(["${SSH_CREDENTIAL_ID}"]) {
                                 sh '''
                                   echo 'in ssh agent ${TARGET_DIR}'
@@ -84,47 +101,50 @@ pipeline {
 
                                   ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
                                     ls
-                                    microk8s status
-                                    microk8s helm version
+                                     k3s --version
+                                     helm version
                                     cd ./${TARGET_DIR}/mar/helm
                                     pwd
-                                    microk8s helm list
+                                     helm list
 
-                                    microk8s helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
+                                     helm upgrade --install wiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
 
-                                    microk8s helm history wiki
+                                     helm history wiki
                                   '
                                 '''
                             }
                         }
                     }
-                }
+        }
 
-        stage("Wait and check for Pod to be Running") {
+        stage('Wait and check for Pod to be Running') {
             steps {
                 script {
+                    //kubectl get pods --all-namespaces -o jsonpath='{range .items[*].status.ContainerStatuses[0]}{.containerID}{"\n"}{end}' | cut -d/ -f3
+                    // k3s kubectl get pods --field-selector=status.phase=Running | grep {podName}
+                    //capwiki-6587f8cf78-mkxsw   1/1     Running   0          84m
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
                         sh '''
                         ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
-                          podName=$(microk8s kubectl get pods -l app.kubernetes.io/name=capwiki -o jsonpath="{.items[0].metadata.name}")
+                          podName=$( k3s kubectl get pods -l app.kubernetes.io/name=capwiki -o jsonpath="{.items[0].metadata.name}")
 
                           echo "Waiting for pod ${podName} to be running..."
                           status=""
                           count=1
 
                           while [ $status != "Running" && $count -lt 5 ]; do
-                            status=$(microk8s kubectl get pod ${podName} -o jsonpath="{status.phase}")
+                            status=$( k3s kubectl get pod ${podName} -o jsonpath="{status.phase}")
                             sleep 10
                             ((count++))
                           done
 
-                          if [ $status != "Running" ]; then
-                           echo "Pod ${podName} is not Running"
-                           microk8s kubectl logs --tail=20 ${podName}
-                           exit 1
-                          else
+                          if [ $status == "Running" ]; then
                               echo "Pod ${podName} is Running"
                               exit 0
+                          else
+                              echo "Pod ${podName} is not Running"
+                               k3s kubectl logs --tail=20 ${podName}
+                              exit 1
                           fi
                         '
                      '''
@@ -133,7 +153,7 @@ pipeline {
             }
         }
 
-        stage("Verify Application URL") {
+        stage('Verify Application URL') {
             steps {
                 script {
                     sshagent(["${SSH_CREDENTIAL_ID}"]) {
@@ -170,10 +190,10 @@ pipeline {
                 cleanWs()
             }
             success {
-                echo "Pipeline completed successfully."
+                echo 'Pipeline completed successfully.'
             }
             failure {
-                echo "Pipeline failed."
+                echo 'Pipeline failed.'
             }
     }
 }
