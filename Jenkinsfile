@@ -176,14 +176,11 @@ pipeline {
                     sh '''
                       ssh -o StrictHostKeyChecking=accept-new ${DEPLOY_USER}@${REMOTE_HOST} '
                         echo "Check http status"
-                        http_response=$(curl -I https://capwiki.corp.capgemini.com 2>&1)
-                        http_status=$(echo "$http_response" | grep -i '^HTTP')
-                    
-                        echo "http response : $http_response"
+                        http_status=$(curl -I https://capwiki.corp.capgemini.com 2>&1 | grep -i 'HTTP')
                         echo "Status code: $http_status"
 
                         # Check if the status code is 200
-                        if [ "$http_status" == "200" ]; then
+                        if echo "$http_status" | grep "200"; then
                            echo "Application URL is working. Status code: ${httpStatus}"
                         else
                             echo "HTTP status code is ${http_status}, Application URL is not working"
