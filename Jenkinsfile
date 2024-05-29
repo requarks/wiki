@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'Jenkins_slave_for_PL'
+        label 'build_slave_agtool'
     }
 
     environment {
@@ -50,7 +50,6 @@ pipeline {
       stage('Build images') {
             steps {
                 script {
-                  echo "Check disk usage on jenkins build agent"
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
                         APP_IMAGE = docker.build("${IMAGE}")
                     }
