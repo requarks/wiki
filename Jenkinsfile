@@ -195,8 +195,8 @@ pipeline {
                          echo "expiry date: $expire_date"
                          
                         # Current date plus 30 days in seconds since epoch
-                        today_epoch_30=$(date -d 'now + 30 days' +%s)
-                        echo "today_epoch: $today_epoch_30"
+                        today_epoch_30=$(date -d "now + 30 days" +%s)
+                        echo "today_epoch_30: today_epoch_30"
 
                         # Convert the expiry date to seconds since epoch
                         expire_epoch=$(date -d "$expire_date" +%s)
@@ -204,9 +204,9 @@ pipeline {
                         
                         # Check if the certificate has expired one month before the expiry date
                         if [ "$today_epoch_30" -ge "$expire_epoch" ]; then
-                            echo "Certificate is going to expire in One month i.e on $formatted_expire_date, please renew and install it on the server"
+                            echo "Certificate is going to expire in One month i.e on $expire_date, please renew and install it on the server"
                         else
-                            echo "HTTPS SSL Certificate is Valid till $formatted_expire_date"
+                            echo "HTTPS SSL Certificate is Valid till $expire_date"
                         fi
                       ' 
                     '''
