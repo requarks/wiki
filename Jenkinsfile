@@ -196,7 +196,7 @@ pipeline {
                          
                         # Current date plus 30 days in seconds since epoch
                         today_epoch_30=$(date -d "now + 30 days" +%s)
-                        echo "today_epoch_30: today_epoch_30"
+                        echo "today_epoch_30: $today_epoch_30"
 
                         # Convert the expiry date to seconds since epoch
                         expire_epoch=$(date -d "$expire_date" +%s)
