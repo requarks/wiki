@@ -202,7 +202,7 @@ pipeline {
                         today=$(date +%Y-%m-%d)   
 
                         # Current date plus 30 days in seconds since epoch
-                        today_epoch_30=$(date -d '$today + 30 days' +%s)
+                        today_epoch_30=$(date -d "$today + 30 days" +%s)
                         echo "today_epoch: $today_epoch_30"
 
                         # Convert the one month before date to seconds since epoch
