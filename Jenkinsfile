@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'build_slave_agtool'
+        label 'Jenkins_slave_for_PL'
     }
 
     environment {
@@ -51,7 +51,6 @@ pipeline {
             steps {
                 script {
                   echo "Check disk usage on jenkins build agent"
-                    sh "df -h"
                     sh "sudo du -sh /var/lib/docker"
                     sh "sudo cat /etc/docker/daemon.json"
                    
