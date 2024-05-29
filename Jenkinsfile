@@ -47,7 +47,7 @@ pipeline {
             }
         }*/
 
-      /* stage('Build images') {
+       stage('Build images') {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -66,7 +66,7 @@ pipeline {
                 }
             }
         }
-*/
+
 
         stage('Verify Kubernetes cluster health') {
             steps {
@@ -105,7 +105,7 @@ pipeline {
                 }
             }
         }
-  /*
+  
         stage('Deploy to Kubernetes on remote vm via SSH') {
                     steps {
                         script {
@@ -135,7 +135,7 @@ pipeline {
                         }
                     }
         }
-*/
+
         stage('Wait and check for Pod to be Running') {
             steps {
                 script {
