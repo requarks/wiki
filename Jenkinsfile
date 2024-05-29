@@ -17,7 +17,7 @@ pipeline {
         REPO_URL = 'https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git'
         DOCKER_REGISTRY = 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
-        IMAGE = "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}:${params.VERSION}-${DEPLOYMENT}"
+        IMAGE = "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}:${BUILD_NUMBER}-${DEPLOYMENT}"
         APP_URL = 'https://capwiki.corp.capgemini.com'
     }
 
@@ -47,7 +47,7 @@ pipeline {
             }
         }*/
 
-   /*    stage('Build images') {
+      stage('Build images') {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -56,7 +56,7 @@ pipeline {
                 }
             }
       }
-
+  /*
         stage('Push images') {
             steps {
                 script {
@@ -66,7 +66,7 @@ pipeline {
                 }
             }
         }
- */
+ 
 
         stage('Verify Kubernetes cluster health') {
             steps {
@@ -218,6 +218,7 @@ pipeline {
                 }
             }
         }
+      */  
     }
 
     post {
