@@ -194,6 +194,7 @@ pipeline {
                         expire_date=$(curl -v https://capwiki.corp.capgemini.com 2>&1 | grep -E "expire date:" | cut -d: -f2- | xargs)
                          echo "expiry date: $expire_date"
                          
+                         
                         # Current date plus 30 days in seconds since epoch
                         today_epoch_30=$(date -d 'now + 30 days' +%s)
                         echo "today_epoch_30: $today_epoch_30"
