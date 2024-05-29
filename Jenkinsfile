@@ -47,7 +47,7 @@ pipeline {
             }
         }*/
 
-       stage('Build images') {
+   /*    stage('Build images') {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
@@ -66,7 +66,7 @@ pipeline {
                 }
             }
         }
-
+ */
 
         stage('Verify Kubernetes cluster health') {
             steps {
@@ -125,7 +125,7 @@ pipeline {
                                     cd ./${TARGET_DIR}/mar/helm
                                     pwd
                                      helm list
-
+                                    
                                      helm upgrade --install capwiki . -f values.yaml --set image.repository=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki,image.tag=latest-dev
 
                                      helm history capwiki
