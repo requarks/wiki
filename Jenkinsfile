@@ -51,11 +51,6 @@ pipeline {
             steps {
                 script {
                   echo "Check disk usage on jenkins build agent"
-                    sh "sudo du -sh /var/lib/docker"
-                    sh "sudo cat /etc/docker/daemon.json"
-                   
-                    // docker rmi --force $(docker images -q 'imagename' | uniq)
-
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
                         APP_IMAGE = docker.build("${IMAGE}")
                     }
