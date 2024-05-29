@@ -197,9 +197,13 @@ pipeline {
                       # Convert the expiry date to the format YYYY-MM-DD
                        formatted_expire_date=$(date -d "$expire_date" +%Y-%m-%d)
                        echo "Formatted expiry date: $formatted_expire_date"
+                       
+                        # Get today's date
+                        today=$(date +%Y-%m-%d)   
 
                         # Current date plus 30 days in seconds since epoch
-                        today_epoch_30=$(date -d 'now + 30 days' +%s)
+                        today_epoch_30=$(date -d '$today + 30 days' +%s)
+                        echo "today_epoch: $today_epoch_30"
 
                         # Convert the one month before date to seconds since epoch
                         expire_epoch=$(date -d "$formatted_expire_date" +%s)
