@@ -56,7 +56,7 @@ pipeline {
                 }
             }
       }
-  /*
+  
         stage('Push images') {
             steps {
                 script {
@@ -67,7 +67,7 @@ pipeline {
             }
         }
  
-
+/*
         stage('Verify Kubernetes cluster health') {
             steps {
                 script {
