@@ -2,6 +2,7 @@ const qs = require('querystring')
 const _ = require('lodash')
 const crypto = require('crypto')
 const path = require('path')
+const emojiReverseData = require('./emoji-data/emoji-reverse-lookup')
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
@@ -149,5 +150,11 @@ module.exports = {
       }
     }
     return meta
+  },
+  getEmojiCode (twemojiCode) {
+    return emojiReverseData[twemojiCode]
+  },
+  emojiCodeAvailable (twemojiCode) {
+    return twemojiCode in emojiReverseData
   }
 }

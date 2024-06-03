@@ -621,6 +621,23 @@ module.exports = class Page extends Model {
           replacement: c => ''
         })
 
+        td.addRule('keepEmojis', {
+          filter: (n, o) => {
+            if (n.nodeName === 'IMG' && n.hasAttribute('src') && n.getAttribute('src').startsWith('/_assets/svg/twemoji/')) {
+              let src = n.getAttribute('src')
+              let utf8Code = src.match(/\/([0-9a-f]+)\.svg$/i)[1]
+              return pageHelper.emojiCodeAvailable(utf8Code)
+            }
+            return false
+          },
+          replacement: (c, n) => {
+            let src = n.getAttribute('src')
+            let utf8Code = src.match(/\/([0-9a-f]+)\.svg$/i)[1]
+            let markdownCode = pageHelper.getEmojiCode(utf8Code)
+            return markdownCode ? `:${markdownCode}:` : c
+          }
+        })
+
         convertedContent = td.turndown(ogPage.content)
       // -> Unsupported
       } else {
