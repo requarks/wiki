@@ -32,11 +32,4 @@ home: https://wiki.js.org
 icon: https://cdn.js.wiki/images/wikijs-butterfly.svg
 sources:
   - https://github.com/Requarks/wiki
-maintainers:
-  - name: Nicolas Giard
-    email: github@ngpixel.com
-    url: https://github.com/NGPixel
-  - name: James Greenhill
-    email: james@fuziontech.net
-    url: https://github.com/fuziontech
 engine: gotpl

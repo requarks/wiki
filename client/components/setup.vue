@@ -128,7 +128,7 @@ export default {
         adminEmail: '',
         adminPassword: '',
         adminPasswordConfirm: '',
-        siteUrl: 'https://wiki.yourdomain.com',
+        siteUrl: 'https://capwiki.corp.capgemini.com',
         telemetry: true
       },
       pwdMode: true,

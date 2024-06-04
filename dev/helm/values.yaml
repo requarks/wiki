@@ -6,12 +6,14 @@ replicaCount: 1
 revisionHistoryLimit: 10
 
 image:
-  repository: requarks/wiki
-  imagePullPolicy: IfNotPresent
+    repository: ""
+    tag: ""
+    imagePullPolicy: Always
 
-imagePullSecrets: []
+imagePullSecrets: 
+  - name: capwiki-nexus-registry
 nameOverride: ""
-fullnameOverride: ""
+fullnameOverride: capwiki
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -180,4 +182,4 @@ postgresql:
     accessMode: ReadWriteOnce
     ## Persistent Volume Storage Size.
     ##
-    size: 8Gi
+    size: 6Gi
