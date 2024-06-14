@@ -194,11 +194,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
 - Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
+- Mitchell Rowton ([@mrowton](https://github.com/mrowton))
         
 </td><td>
 <img width="441" height="1" />
 
-- Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nick Halase ([@nhalase](https://github.com/nhalase))
 - Nick Price ([@DominoTree](https://github.com/DominoTree))
@@ -214,6 +214,7 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Simon Ott ([@ottsimon](https://github.com/ottsimon))
 - Stephan Kristyn ([@stevek-pro](https://github.com/stevek-pro))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
+- Tim Elmer ([@tim-elmer](https://github.com/tim-elmer))
 - Tyler Denman ([@tylerguy](https://github.com/tylerguy))
 - Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
 - VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
