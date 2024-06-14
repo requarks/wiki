@@ -51,7 +51,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "production_line_service_account") {
-                        APP_IMAGE = docker.build("${IMAGE}")
+                        APP_IMAGE = docker.build("${IMAGE}", "--no-cache -f Dockerfile .")
                     }
                 }
             }
