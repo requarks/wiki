@@ -1266,6 +1266,7 @@
     .prismjs{
       box-shadow: none;
       background-color: #FFF;
+      white-space: pre-wrap;
 
       @at-root .theme--dark & {
         background-color: #FFF;
