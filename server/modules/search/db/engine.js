@@ -39,10 +39,12 @@ module.exports = {
             builderSub.where('title', 'ILIKE', `%${q}%`)
             builderSub.orWhere('description', 'ILIKE', `%${q}%`)
             builderSub.orWhere('path', 'ILIKE', `%${q.toLowerCase()}%`)
+            builderSub.orWhere('content', 'ILIKE', `%${q}%`)
           } else {
             builderSub.where('title', 'LIKE', `%${q}%`)
             builderSub.orWhere('description', 'LIKE', `%${q}%`)
             builderSub.orWhere('path', 'LIKE', `%${q.toLowerCase()}%`)
+            builderSub.orWhere('content', 'LIKE', `%${q}%`)
           }
         })
       })
