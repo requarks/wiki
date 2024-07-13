@@ -10,6 +10,7 @@ import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse
 } from '@simplewebauthn/server'
+import { isoBase64URL } from '@simplewebauthn/server/helpers'
 
 export default {
   Query: {
@@ -264,7 +265,7 @@ export default {
             userVerification: 'preferred'
           },
           excludeCredentials: usr.passkeys.authenticators?.map(authenticator => ({
-            id: new Uint8Array(authenticator.credentialID),
+            id: isoBase64URL.fromBuffer(new Uint8Array(authenticator.credentialID)),
             type: 'public-key',
             transports: authenticator.transports
           })) ?? []

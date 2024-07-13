@@ -50,8 +50,8 @@ q-page.admin-flags
         q-item(v-for='block of state.blocks', :key='block.id')
           blueprint-icon(:icon='block.isCustom ? `plugin` : block.icon')
           q-item-section
-            q-item-label: strong {{block.name}}
-            q-item-label(caption) {{ block.description}}
+            q-item-label: strong {{ block.name }}
+            q-item-label(caption) {{ block.description }}
             q-item-label.flex.items-center(caption)
               q-chip.q-ma-none(square, dense, :color='$q.dark.isActive ? `pink-8` : `pink-1`', :text-color='$q.dark.isActive ? `white` : `pink-9`'): span.text-caption &lt;block-{{ block.block }}&gt;
               q-separator.q-mx-sm.q-my-xs(vertical)
@@ -79,6 +79,7 @@ q-page.admin-flags
               unchecked-icon='las la-times'
               :label='t(`admin.blocks.isEnabled`)'
               :aria-label='t(`admin.blocks.isEnabled`)'
+              disable
               )
 </template>
 

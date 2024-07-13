@@ -45,14 +45,15 @@ q-page.admin-mail
             q-item-section(side)
               q-icon(:name='`img:` + str.strategy.icon')
             q-item-section
-              q-item-label {{str.displayName}}
-              q-item-label(caption) {{str.strategy.title}}
+              q-item-label {{ str.displayName }}
+              q-item-label(caption) {{ str.strategy.title }}
             q-item-section(side)
               status-light(:color='str.isEnabled ? `positive` : `negative`', :pulse='str.isEnabled')
       q-btn.q-mt-sm.full-width(
         color='primary'
         icon='las la-plus'
         :label='t(`admin.auth.addStrategy`)'
+        v-if='flagsStore.experimental'
         )
         q-menu(auto-close, fit, max-width='300px')
           q-list(separator)
@@ -72,17 +73,17 @@ q-page.admin-mail
                     :name='`img:` + str.icon'
                   )
               q-item-section
-                q-item-label: strong {{str.title}}
+                q-item-label: strong {{ str.title }}
                 q-item-label(caption, lines='2') {{str.description}}
     .col
       q-card.q-pb-sm
         q-card-section
-          .text-subtitle1 {{t('admin.auth.info')}}
+          .text-subtitle1 {{ t('admin.auth.info') }}
         q-item
           blueprint-icon(icon='information')
           q-item-section
-            q-item-label {{t(`admin.auth.infoName`)}}
-            q-item-label(caption) {{t(`admin.auth.infoNameHint`)}}
+            q-item-label {{ t(`admin.auth.infoName`) }}
+            q-item-label(caption) {{ t(`admin.auth.infoNameHint`) }}
           q-item-section
             q-input(
               outlined
@@ -95,9 +96,9 @@ q-page.admin-mail
         q-item(tag='label')
           blueprint-icon(icon='shutdown')
           q-item-section
-            q-item-label {{t(`admin.auth.enabled`)}}
-            q-item-label(caption) {{t(`admin.auth.enabledHint`)}}
-            q-item-label.text-deep-orange(v-if='state.strategy.strategy.key === `local`', caption) {{t(`admin.auth.enabledForced`)}}
+            q-item-label {{ t(`admin.auth.enabled`) }}
+            q-item-label(caption) {{ t(`admin.auth.enabledHint`) }}
+            q-item-label.text-deep-orange(v-if='state.strategy.strategy.key === `local`', caption) {{ t(`admin.auth.enabledForced`) }}
           q-item-section(avatar)
             q-toggle(
               v-model='state.strategy.isEnabled'
@@ -111,8 +112,8 @@ q-page.admin-mail
         q-item(tag='label')
           blueprint-icon(icon='register')
           q-item-section
-            q-item-label {{t(`admin.auth.registration`)}}
-            q-item-label(caption) {{state.strategy.strategy.key === `local` ? t(`admin.auth.registrationLocalHint`) : t(`admin.auth.registrationHint`)}}
+            q-item-label {{ t(`admin.auth.registration`) }}
+            q-item-label(caption) {{ state.strategy.strategy.key === `local` ? t(`admin.auth.registrationLocalHint`) : t(`admin.auth.registrationHint`) }}
           q-item-section(avatar)
             q-toggle(
               v-model='state.strategy.registration'
@@ -126,8 +127,8 @@ q-page.admin-mail
           q-item
             blueprint-icon(icon='team')
             q-item-section
-              q-item-label {{t(`admin.auth.autoEnrollGroups`)}}
-              q-item-label(caption) {{t(`admin.auth.autoEnrollGroupsHint`)}}
+              q-item-label {{ t(`admin.auth.autoEnrollGroups`) }}
+              q-item-label(caption) {{ t(`admin.auth.autoEnrollGroupsHint`) }}
             q-item-section
               q-select(
                 outlined
@@ -144,7 +145,7 @@ q-page.admin-mail
                 :aria-label='t(`admin.users.groups`)'
                 :loading='state.loadingGroups'
                 )
-                template(v-slot:selected)
+                template(#selected)
                   .text-caption(v-if='state.strategy.autoEnrollGroups?.length > 1')
                     i18n-t(keypath='admin.users.groupsSelected')
                       template(#count)
@@ -154,7 +155,7 @@ q-page.admin-mail
                       template(#group)
                         strong {{ selectedGroupName }}
                   span(v-else)
-                template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
+                template(#option='{ itemProps, opt, selected, toggleOption }')
                   q-item(
                     v-bind='itemProps'
                     )
@@ -171,8 +172,8 @@ q-page.admin-mail
           q-item
             blueprint-icon(icon='private')
             q-item-section
-              q-item-label {{t(`admin.auth.allowedEmailRegex`)}}
-              q-item-label(caption) {{t(`admin.auth.allowedEmailRegexHint`)}}
+              q-item-label {{ t(`admin.auth.allowedEmailRegex`) }}
+              q-item-label(caption) {{ t(`admin.auth.allowedEmailRegexHint`) }}
             q-item-section
               q-input(
                 outlined
@@ -189,12 +190,12 @@ q-page.admin-mail
       //- -----------------------
       q-card.q-pb-sm.q-mt-md
         q-card-section
-          .text-subtitle1 {{t('admin.auth.strategyConfiguration')}}
+          .text-subtitle1 {{ t('admin.auth.strategyConfiguration') }}
           q-banner.q-mt-md(
             v-if='!state.strategy.config || Object.keys(state.strategy.config).length < 1'
             rounded
             :class='$q.dark.isActive ? `bg-dark-4 text-grey-5` : `bg-grey-2 text-grey-7`'
-            ): em {{t('admin.auth.noConfigOption')}}
+            ): em {{ t('admin.auth.noConfigOption') }}
         template(
           v-for='(cfg, cfgKey, idx) in state.strategy.config'
           )
@@ -205,8 +206,8 @@ q-page.admin-mail
             q-item(v-if='cfg.type === `boolean`', tag='label')
               blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
               q-item-section
-                q-item-label {{cfg.title}}
-                q-item-label(caption) {{cfg.hint}}
+                q-item-label {{ cfg.title }}
+                q-item-label(caption) {{ cfg.hint }}
               q-item-section(avatar)
                 q-toggle(
                   v-model='cfg.value'
@@ -219,8 +220,8 @@ q-page.admin-mail
             q-item(v-else)
               blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
               q-item-section
-                q-item-label {{cfg.title}}
-                q-item-label(caption) {{cfg.hint}}
+                q-item-label {{ cfg.title }}
+                q-item-label(caption) {{ cfg.hint }}
               q-item-section(
                 :style='cfg.type === `number` ? `flex: 0 0 150px;` : ``'
                 :class='{ "col-auto": cfg.enum && cfg.enumDisplay === `buttons` }'
@@ -262,12 +263,12 @@ q-page.admin-mail
       //- -----------------------
       q-card.q-pb-sm.q-mt-md(v-if='strategyRefs.length > 0')
         q-card-section
-          .text-subtitle1 {{t('admin.auth.configReference')}}
+          .text-subtitle1 {{ t('admin.auth.configReference') }}
         q-item(v-for='strRef of strategyRefs', :key='strRef.key')
           blueprint-icon(:icon='strRef.icon', :hue-rotate='-45')
           q-item-section
-            q-item-label {{strRef.title}}
-            q-item-label(caption) {{strRef.hint}}
+            q-item-label {{ strRef.title }}
+            q-item-label(caption) {{ strRef.hint }}
           q-item-section
             q-input(
               outlined
@@ -287,9 +288,9 @@ q-page.admin-mail
             no-spinner
             style='height: 100px; max-width: 300px;'
           )
-          .text-subtitle2.q-mt-sm {{state.strategy.strategy.title}}
-          .text-caption.q-mt-sm {{state.strategy.strategy.description}}
-          .text-caption.q-mt-sm: strong {{state.strategy.strategy.vendor}}
+          .text-subtitle2.q-mt-sm {{ state.strategy.strategy.title }}
+          .text-caption.q-mt-sm {{ state.strategy.strategy.description }}
+          .text-caption.q-mt-sm: strong {{ state.strategy.strategy.vendor }}
           .text-caption: a(:href='state.strategy.strategy.website', target='_blank', rel='noreferrer') {{state.strategy.strategy.website}}
 
       .flex.q-mt-md
@@ -315,6 +316,7 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch, nextTick } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
+import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
 // QUASAR
@@ -324,6 +326,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N

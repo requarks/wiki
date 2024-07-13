@@ -55,8 +55,8 @@ import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { io } from 'socket.io-client'
-import { Terminal } from 'xterm'
-import 'xterm/css/xterm.css'
+import { Terminal } from '@xterm/xterm'
+import '@xterm/xterm/css/xterm.css'
 
 import { useSiteStore } from '@/stores/site'
 

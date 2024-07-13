@@ -10,6 +10,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
 
     steps:
@@ -76,10 +77,7 @@ jobs:
       with:
         context: .
         file: dev/build/Dockerfile
-        provenance: true
         push: true
-        # cache-from: type=gha
-        # cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64
         tags: |
           ghcr.io/requarks/wiki:3.0.0-alpha

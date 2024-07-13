@@ -1,7 +1,7 @@
 # Based of https://github.com/microsoft/vscode-dev-containers/blob/main/containers/javascript-node/.devcontainer/base.Dockerfile
 
 # [Choice] Node.js version (use -bullseye variants on local arm64/Apple Silicon): 16, 14, 12, 16-bullseye, 14-bullseye, 12-bullseye, 16-buster, 14-buster, 12-buster
-ARG VARIANT=18-bullseye
+ARG VARIANT=20-bullseye
 FROM node:${VARIANT}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -62,9 +62,9 @@ RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian \
     $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Add ngrok Source
-RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc > /dev/null && \
-    echo "deb https://ngrok-agent.s3.amazonaws.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+# Add cloudflared Source
+RUN curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
 
 # Add Localazy Source
 RUN curl -sS https://dist.localazy.com/debian/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/localazy.gpg && \
@@ -74,6 +74,7 @@ RUN curl -sS https://dist.localazy.com/debian/pubkey.gpg | sudo gpg --dearmor -o
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -qy \
     bash \
     build-essential \
+    cloudflared \
     curl \
     docker-ce-cli \
     jq \
@@ -83,7 +84,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && apt-get install -
     localazy \
     nano \
     netcat \
-    ngrok \
     pandoc \
     unzip \
     wget

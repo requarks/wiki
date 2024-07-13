@@ -22,8 +22,6 @@ export function parsePath (rawPath, opts = {}) {
     // TODO: use site base lang
     locale: 'en', // WIKI.config.lang.code,
     path: 'home',
-    private: false,
-    privateNS: '',
     explicitLocale: false
   }
 
@@ -40,7 +38,7 @@ export function parsePath (rawPath, opts = {}) {
     p = p.trim()
     return !isEmpty(p) && p !== '..' && p !== '.'
   })
-  if (pathParts[0].startsWith('_')) {
+  if (pathParts.length > 1 && pathParts[0].startsWith('_')) {
     pathParts.shift()
   }
   if (localeSegmentRegex.test(pathParts[0])) {

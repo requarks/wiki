@@ -117,8 +117,8 @@ The server **dev** should already be available under **Servers**. If that's not 
 
 ### Requirements
 
-- PostgreSQL **11** or later *(**16** or later recommended)*
-- Node.js **18.x** or later
+- PostgreSQL **12** or later *(**16** or later recommended)*
+- Node.js **20.x** or later
 - [pnpm](https://pnpm.io/installation#using-corepack)
 
 ### Usage

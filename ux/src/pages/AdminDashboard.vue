@@ -85,30 +85,30 @@ q-page.admin-dashboard
             :disable='!userStore.can(`manage:users`)'
             to='/_admin/users'
             )
-    .col-12.col-sm-6.col-lg-3
-      q-card
-        q-card-section.admin-dashboard-card
-          img(src='/_assets/icons/fluent-tag.svg')
-          div
-            strong {{ t('admin.tags.title') }}
-            span {{adminStore.info.tagsTotal}}
-        q-separator
-        q-card-actions(align='right')
-          q-btn(
-            flat
-            color='primary'
-            icon='las la-tags'
-            :label='t(`common.actions.manage`)'
-            :disable='!userStore.can(`manage:sites`)'
-            :to='`/_admin/` + adminStore.currentSiteId + `/tags`'
-            )
+    //- .col-12.col-sm-6.col-lg-3
+    //-   q-card
+    //-     q-card-section.admin-dashboard-card
+    //-       img(src='/_assets/icons/fluent-tag.svg')
+    //-       div
+    //-         strong {{ t('admin.tags.title') }}
+    //-         span {{adminStore.info.tagsTotal}}
+    //-     q-separator
+    //-     q-card-actions(align='right')
+    //-       q-btn(
+    //-         flat
+    //-         color='primary'
+    //-         icon='las la-tags'
+    //-         :label='t(`common.actions.manage`)'
+    //-         :disable='!userStore.can(`manage:sites`)'
+    //-         :to='`/_admin/` + adminStore.currentSiteId + `/tags`'
+    //-         )
     .col-12.col-sm-6.col-lg-3
       q-card
         q-card-section.admin-dashboard-card
           img(src='/_assets/icons/fluent-female-working-with-a-laptop.svg')
           div
             strong Logins
-            small {{adminStore.info.loginsPastDay}} #[i / past 24h]
+            small {{ adminStore.info.loginsPastDay }} #[i / past 24h]
         q-separator
         q-card-actions(align='right')
           q-btn(
@@ -116,12 +116,12 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-chart-area'
             :label='t(`admin.analytics.title`)'
-            :disable='!userStore.can(`manage:sites`)'
+            :disable='!userStore.can(`manage:sites`) || flagsStore.experimental'
             :to='`/_admin/` + adminStore.currentSiteId + `/analytics`'
             )
-    .col-12.col-lg-9
-      q-card
-        q-card-section ---
+    //- .col-12.col-lg-9
+    //-   q-card
+    //-     q-card-section ---
 
     .col-12
       q-banner.bg-positive.text-white(
@@ -152,6 +152,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { useAdminStore } from '../stores/admin'
+import { useFlagsStore } from '@/stores/flags'
 import { useUserStore } from '@/stores/user'
 
 // COMPONENTS
@@ -168,6 +169,7 @@ const $q = useQuasar()
 // STORES
 
 const adminStore = useAdminStore()
+const flagsStore = useFlagsStore()
 const userStore = useUserStore()
 
 // ROUTER

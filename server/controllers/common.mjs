@@ -438,11 +438,10 @@ export default function () {
    * Metrics (Prometheus)
    */
   router.get('/metrics', async (req, res, next) => {
-    if (!WIKI.auth.checkAccess(req.user, ['read:metrics'])) {
-      return res.sendStatus(403)
-    }
-
     if (WIKI.config.metrics.isEnabled) {
+      if (!WIKI.auth.checkAccess(req.user, ['read:metrics'])) {
+        return res.sendStatus(403)
+      }
       WIKI.metrics.render(res)
     } else {
       next()
