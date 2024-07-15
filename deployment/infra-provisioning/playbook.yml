@@ -1,7 +1,18 @@
 ---
-- name: Apply common configuration to all hosts
-  hosts: "{{ lookup('env', 'ENV') }}"
+- name: Install Docker on all machines
+  hosts: all
   become: true
   roles:
-    - role: common
-      tasks_from: install_docker.yml
+    - role: install-docker
+
+- name: Configure users on all machines
+  hosts: all
+  become: true
+  roles:
+    - role: user-provisioning
+
+- name: Configure cron jobs
+  hosts: prod
+  become: true
+  roles:
+    - role: cron

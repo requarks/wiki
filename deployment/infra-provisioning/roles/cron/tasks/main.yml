@@ -1,0 +1,40 @@
+---
+- name: Create the backup-commands script file
+  ansible.builtin.copy:
+    dest: /home/{{ username }}/backup-commands.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      SERVICE=${1:-wiki}
+      SERVICE_DB=${2:-${SERVICE}-db}
+      DB_USER=${3:-postgres}
+      DATABASE=${4:-wiki}
+      TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+      BACKUP_DIR=~/backup/${SERVICE}
+      BACKUP_OUT=${TIMESTAMP}_${SERVICE}.bck.dump
+
+      mkdir -p ${BACKUP_DIR}
+
+      docker exec ${SERVICE_DB} pg_dump -U ${DB_USER} ${DATABASE} -F c > ${BACKUP_DIR}/${BACKUP_OUT}
+
+      echo "Saved back-up of ${SERVICE} to ${BACKUP_DIR}/${BACKUP_OUT}"
+    mode: '0755'
+    owner: "{{ username }}"
+    group: "{{ username }}"
+
+- name: Ensure the cron job for backup-commands.sh is present
+  ansible.builtin.cron:
+    name: "Run backup-commands.sh every day at 2 AM"
+    minute: "0"
+    hour: "2"
+    job: "/home/{{ username }}/backup-commands.sh"
+    user: "{{ username }}"
+
+- name: Ensure the cron job to delete old files is present
+  ansible.builtin.cron:
+    name: "Delete database backups older than 1 month"
+    minute: "0"
+    hour: "0"
+    job: "find {{ target_directory }} -type f -mtime +{{ retention_period_days }} -exec rm -f {} \\;"
+    user: "{{ username }}"
