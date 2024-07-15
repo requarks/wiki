@@ -47,3 +47,9 @@ test-results/
 
 # Localization Resources
 /server/locales/**/*.yml
+
+
+**/secrets/*
+deployment/data/*
+deployment/env/local/secrets/*
+**/local/certs/*

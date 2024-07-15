@@ -1,0 +1,4 @@
+# Development environment
+[dev]
+dev-machine-1 ansible_host=de-muc-mar1.apps.ce.capgemini.com ansible_user=gdamen
+dev-machine-2 ansible_host=de-muc-mar2.apps.ce.capgemini.com ansible_user=gdamen

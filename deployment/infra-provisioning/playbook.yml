@@ -1,0 +1,7 @@
+---
+- name: Apply common configuration to all hosts
+  hosts: "{{ lookup('env', 'ENV') }}"
+  become: true
+  roles:
+    - role: common
+      tasks_from: install_docker.yml

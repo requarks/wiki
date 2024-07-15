@@ -1,0 +1,20 @@
+port: 3000
+bindIP: 0.0.0.0
+db:
+  type: $(DB_TYPE)
+  host: '$(DB_HOST)'
+  port: $(DB_PORT)
+  user: '$(DB_USER)'
+  pass: '$(DB_PASS)'
+  db: $(DB_NAME)
+  storage: $(DB_FILEPATH)
+  ssl: $(DB_SSL)
+ssl:
+  enabled: $(SSL_ACTIVE)
+  port: 3443
+  provider: letsencrypt
+  domain: $(LETSENCRYPT_DOMAIN)
+  subscriberEmail: $(LETSENCRYPT_EMAIL)
+logLevel: $(LOG_LEVEL:info)
+logFormat: $(LOG_FORMAT:default)
+ha: $(HA_ACTIVE)
