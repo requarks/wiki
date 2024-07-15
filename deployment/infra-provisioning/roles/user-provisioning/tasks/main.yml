@@ -1,0 +1,31 @@
+---
+- name: Ensure the user exists
+  user:
+    name: "{{ username }}"
+    shell: /bin/bash
+    createhome: yes
+
+- name: Create .ssh directory
+  file:
+    path: "/home/{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0700'
+
+- name: Add authorized keys
+  authorized_key:
+    user: "{{ username }}"
+    key: "{{ item }}"
+  with_items: "{{ ssh_public_keys }}"
+
+- name: Add an existing user to the new group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop:
+    - gdamen
+    - hgurudu
+    - pebauer
+    - deployer
