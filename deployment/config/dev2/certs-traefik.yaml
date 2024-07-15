@@ -1,0 +1,9 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /etc/certs/dev2.crt
+        keyFile: /etc/certs/dev2-capwiki.corp.capgemini.key
+  certificates:
+    - certFile: /etc/certs/dev2.crt
+      keyFile: /etc/certs/dev2-capwiki.corp.capgemini.key

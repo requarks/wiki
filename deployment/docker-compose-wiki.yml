@@ -1,0 +1,147 @@
+services:
+  traefik:
+    image: "traefik:${TRAEFIK_VERSION}"
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--providers.file.directory=/etc/traefik/"
+      - "--providers.file.watch=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${BASE_PATH}/traefik/config/${ENVIRONMENT}/certs-traefik.yaml:/etc/traefik/dynamic/certs-traefik.yaml
+      - ${BASE_PATH}/traefik/certs/${ENVIRONMENT}:/etc/
+    labels:
+      - traefik.enable=true
+    networks:
+      - traefik
+
+  wiki:
+    container_name: wiki
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        ENV: ${ENVIRONMENT}
+    depends_on:
+      - wiki-db
+    environment:
+      WIKI_ADMIN_EMAIL: mar-project-team.de@capgemini.com
+      DB_TYPE: postgres
+      DB_HOST: wiki-db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASSWORD}
+      DB_NAME: wiki
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
+      #NODE_TLS_REJECT_UNAUTHORIZED: 0 #Do not use in production
+    restart: unless-stopped
+    volumes:
+      - ${BASE_PATH}/wiki-js/config/${ENVIRONMENT}/wiki-js.config.yml:/wiki/config.yml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wiki.rule=Host(`${WIKI_DNS}`) && PathPrefix(`/`)"
+      - "traefik.http.routers.wiki.entrypoints=websecure"
+      - "traefik.http.routers.wiki.tls=true"
+    networks:
+      - traefik
+
+  wiki-db:
+    image: postgres:${WIKI_DB_VERSION}
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    container_name: wiki-db
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    restart: unless-stopped
+    volumes:
+      - ${BASE_PATH}/wiki-js/data/${ENVIRONMENT}:/var/lib/postgresql/data
+    networks:
+      - traefik
+
+  keycloak:
+    image: bitnami/keycloak:${KEYCLOAK_VERSION}
+    profiles:
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    container_name: keycloak
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      KEYCLOAK_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+      KEYCLOAK_HTTP_RELATIVE_PATH: ${KEYCLOAK_HTTP_RELATIVE_PATH}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KEYCLOAK_DATABASE_VENDOR:	postgresql
+      KEYCLOAK_DATABASE_HOST:	${KEYCLOAK_DATABASE_HOST}
+      KEYCLOAK_DATABASE_PORT:	${KEYCLOAK_DATABASE_PORT}
+      KEYCLOAK_DATABASE_USER:	${KEYCLOAK_POSTGRES_USER}
+      KEYCLOAK_DATABASE_PASSWORD:	${KEYCLOAK_POSTGRES_PASSWORD}
+      KEYCLOAK_DATABASE_NAME:	${KEYCLOAK_POSTGRES_DB}
+      KEYCLOAK_DATABASE_SCHEMA:	public
+      KEYCLOAK_LOGLEVEL: INFO
+      ROOT_LOGLEVEL: INFO
+      KC_PROXY: edge
+      KC_PROXY_ADDRESS_FORWARDING: 'true'
+      KC_HTTP_ENABLED: 'true'
+    depends_on:
+        - keycloak-db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`${WIKI_DNS}`) && PathPrefix(`/auth`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls=true"
+    networks:
+        - traefik
+
+  keycloak-db:
+    image: postgres:${WIKI_DB_VERSION}
+    profiles:
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: ${KEYCLOAK_POSTGRES_DB}
+      POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+    restart: unless-stopped
+    volumes:
+      - ${BASE_PATH}/keycloak/data/${ENVIRONMENT}:/var/lib/postgresql/data
+    networks:
+      - traefik
+
+networks:
+  traefik:
