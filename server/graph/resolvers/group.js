@@ -71,8 +71,20 @@ module.exports = {
         throw new gql.GraphQLError('User is already assigned to group.')
       }
 
-      // Assign user to group
-      await grp.$relatedQuery('users').relate(usr.id)
+      // Check for unique ID conflict
+      const maxId = await WIKI.models.knex('userGroups').max('id as maxId').first()
+      const newId = maxId.maxId + 1
+      const idConflict = await WIKI.models.knex('userGroups').where({ id: newId }).first()
+      if (idConflict) {
+        throw new gql.GraphQLError('ID conflict detected while assigning user to group.')
+      }
+
+      // Assign user to group with unique ID
+      await WIKI.models.knex('userGroups').insert({
+        id: newId,
+        userId: args.userId,
+        groupId: args.groupId
+      })
 
       // Revoke tokens for this user
       WIKI.auth.revokeUserTokens({ id: usr.id, kind: 'u' })
