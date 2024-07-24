@@ -1,5 +1,14 @@
+x-logging-defaults: &logging_defaults
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "10"
+      compress: "true"
+
 services:
   traefik:
+    << : *logging_defaults
     image: "traefik:${TRAEFIK_VERSION}"
     profiles:
       - "prod"
@@ -28,11 +37,14 @@ services:
       - ${BASE_PATH}/traefik/config/${ENVIRONMENT}/certs-traefik.yaml:/etc/traefik/dynamic/certs-traefik.yaml
       - ${BASE_PATH}/traefik/certs/${ENVIRONMENT}:/etc/
     labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
       - traefik.enable=true
     networks:
       - traefik
 
   wiki:
+    << : *logging_defaults
     container_name: wiki
     profiles:
       - "prod"
@@ -45,6 +57,7 @@ services:
       dockerfile: Dockerfile
       args:
         ENV: ${ENVIRONMENT}
+        CERT_FILE: ${CERT_FILE:-keycloak-host-full-chain-cert.pem}
     depends_on:
       - wiki-db
     environment:
@@ -55,12 +68,14 @@ services:
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASSWORD}
       DB_NAME: wiki
-      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/${CERT_FILE:-keycloak-host-full-chain-cert.pem}
       #NODE_TLS_REJECT_UNAUTHORIZED: 0 #Do not use in production
     restart: unless-stopped
     volumes:
       - ${BASE_PATH}/wiki-js/config/${ENVIRONMENT}/wiki-js.config.yml:/wiki/config.yml
     labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
       - "traefik.enable=true"
       - "traefik.http.routers.wiki.rule=Host(`${WIKI_DNS}`) && PathPrefix(`/`)"
       - "traefik.http.routers.wiki.entrypoints=websecure"
@@ -69,6 +84,7 @@ services:
       - traefik
 
   wiki-db:
+    << : *logging_defaults
     image: postgres:${WIKI_DB_VERSION}
     profiles:
       - "prod"
@@ -81,13 +97,163 @@ services:
       POSTGRES_DB: wiki
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
     restart: unless-stopped
     volumes:
       - ${BASE_PATH}/wiki-js/data/${ENVIRONMENT}:/var/lib/postgresql/data
     networks:
       - traefik
 
+  grafana:
+    << : *logging_defaults
+    image: grafana/grafana:${GRAFANA_VERSION}
+    container_name: grafana
+    user: root
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    volumes:
+      - ${BASE_PATH}/grafana/config/${ENVIRONMENT}:/etc/grafana
+    environment:
+      # - GF_AUTH_ANONYMOUS_ENABLED=true
+      # - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SERVER_DOMAIN=${WIKI_DNS}
+      - GF_SERVER_ROOT_URL=https://${WIKI_DNS}/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=Fu9pHcUBn188XlmMK6Mz
+      
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`${WIKI_DNS}`) && PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+    restart: unless-stopped
+    networks:
+      - traefik
+
+  cadvisor:
+    << : *logging_defaults
+    image: gcr.io/cadvisor/cadvisor:${CADVISOR_VERSION}
+    container_name: cadvisor
+    volumes:
+      - "/:/rootfs"
+      - "/var/run:/var/run"
+      - "/sys:/sys"
+      - "/var/lib/docker/:/var/lib/docker"
+      - "/dev/disk/:/dev/disk"
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
+    privileged: true
+    devices:
+      - "/dev/kmsg"
+    networks:
+      - traefik
+
+  prometheus:
+    << : *logging_defaults
+    image: prom/prometheus:${PROMETHEUS_VERSION}
+    container_name: prometheus
+    user: root
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    volumes:
+      - ${BASE_PATH}/prometheus/config/${ENVIRONMENT}:/etc/prometheus
+      - ${BASE_PATH}/prometheus/data/${ENVIRONMENT}:/prometheus
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  node-exporter:
+    << : *logging_defaults
+    image: quay.io/prometheus/node-exporter:${NODE_EXPORTER_VERSION}
+    container_name: node-exporter
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    command:
+      - '--path.rootfs=/host'
+    # network_mode: host
+    pid: host
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - traefik
+
+  loki:
+    image: grafana/loki:${LOKI_VERSION}
+    container_name: loki
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yaml
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
+    volumes:
+      - ${BASE_PATH}/loki/config/${ENVIRONMENT}:/etc/loki
+    networks:
+      - traefik
+
+  promtail:
+    image: grafana/promtail:${PROMTAIL_VERSION}
+    container_name: promtail
+    profiles:
+      - "prod"
+      - "local"
+      - "staging"
+      - "dev1"
+      - "dev2"
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
+    volumes:
+      - ${BASE_PATH}/promtail/config/${ENVIRONMENT}:/etc/promtail
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - /var/log:/var/log
+    command: -config.file=/etc/promtail/promtail-config.yml -config.expand-env=true
+    networks:
+      - traefik
+
   keycloak:
+    << : *logging_defaults
     image: bitnami/keycloak:${KEYCLOAK_VERSION}
     profiles:
       - "local"
@@ -118,6 +284,8 @@ services:
     depends_on:
         - keycloak-db
     labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
       - "traefik.enable=true"
       - "traefik.http.routers.keycloak.rule=Host(`${WIKI_DNS}`) && PathPrefix(`/auth`)"
       - "traefik.http.routers.keycloak.entrypoints=websecure"
@@ -126,6 +294,7 @@ services:
         - traefik
 
   keycloak-db:
+    << : *logging_defaults
     image: postgres:${WIKI_DB_VERSION}
     profiles:
       - "local"
@@ -137,6 +306,9 @@ services:
       POSTGRES_DB: ${KEYCLOAK_POSTGRES_DB}
       POSTGRES_USER: ${KEYCLOAK_POSTGRES_USER}
       POSTGRES_PASSWORD: ${KEYCLOAK_POSTGRES_PASSWORD}
+    labels:
+      - "logging=promtail"
+      - "logging_jobname=containerlogs"
     restart: unless-stopped
     volumes:
       - ${BASE_PATH}/keycloak/data/${ENVIRONMENT}:/var/lib/postgresql/data
