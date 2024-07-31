@@ -127,7 +127,7 @@ services:
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=Fu9pHcUBn188XlmMK6Mz
-      
+
     labels:
       - "logging=promtail"
       - "logging_jobname=containerlogs"
@@ -227,6 +227,7 @@ services:
       - "logging_jobname=containerlogs"
     volumes:
       - ${BASE_PATH}/loki/config/${ENVIRONMENT}:/etc/loki
+      - ${BASE_PATH}/loki/data/${ENVIRONMENT}:/tmp/loki
     networks:
       - traefik
 

@@ -1,0 +1,19 @@
+{
+    "apiVersion": 1,
+    "contactPoints": [
+        {
+            "orgId": 1,
+            "name": "Teams",
+            "receivers": [
+                {
+                    "uid": "cdsluf36coao1c",
+                    "type": "teams",
+                    "settings": {
+                        "url": ""
+                    },
+                    "disableResolveMessage": false
+                }
+            ]
+        }
+    ]
+}
