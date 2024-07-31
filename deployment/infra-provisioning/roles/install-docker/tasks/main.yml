@@ -1,7 +1,7 @@
 ---
-- name: Ensure apt is up to date
-  apt:
-    update_cache: yes
+- name: Add Docker's official GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
 
 - name: Install required packages
   apt:
@@ -12,9 +12,9 @@
       - gnupg-agent
       - software-properties-common
 
-- name: Add Docker's official GPG key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+- name: Ensure apt is up to date
+  apt:
+    update_cache: yes
 
 - name: Add Docker's APT repository
   apt_repository:
