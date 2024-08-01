@@ -30,6 +30,8 @@ block body
       comments-enabled=config.features.featurePageComments
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       comments-external=comments.codeTemplate
+      edit-shortcuts=Buffer.from(JSON.stringify(config.editShortcuts)).toString('base64')
+      filename=pageFilename
       )
       template(slot='contents')
         div!= page.render

@@ -52,7 +52,8 @@ module.exports = {
                   strings: lcObj,
                   isRTL: locale.isRTL,
                   name: locale.name,
-                  nativeName: locale.nativeName
+                  nativeName: locale.nativeName,
+                  availability: locale.availability || 0
                 }).where('code', locale.code)
               } else {
                 await WIKI.models.locales.query().insert({
@@ -60,7 +61,8 @@ module.exports = {
                   strings: lcObj,
                   isRTL: locale.isRTL,
                   name: locale.name,
-                  nativeName: locale.nativeName
+                  nativeName: locale.nativeName,
+                  availability: locale.availability || 0
                 })
               }
               importedLocales++

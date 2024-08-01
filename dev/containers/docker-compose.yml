@@ -5,7 +5,7 @@ version: "3"
 services:
   db:
     container_name: wiki-db
-    image: postgres:9-alpine
+    image: postgres:15-alpine
     environment:
       POSTGRES_DB: wiki
       POSTGRES_PASSWORD: wikijsrocks

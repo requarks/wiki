@@ -18,7 +18,8 @@ module.exports = {
       userInfoURL: conf.userInfoURL,
       callbackURL: conf.callbackURL,
       passReqToCallback: true,
-      scope: conf.scope
+      scope: conf.scope,
+      state: conf.enableCSRFProtection
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
         const user = await WIKI.models.users.processProfile({
@@ -30,6 +31,19 @@ module.exports = {
             email: _.get(profile, conf.emailClaim)
           }
         })
+        if (conf.mapGroups) {
+          const groups = _.get(profile, conf.groupsClaim)
+          if (groups && _.isArray(groups)) {
+            const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
+            const expectedGroups = Object.values(WIKI.auth.groups).filter(g => groups.includes(g.name)).map(g => g.id)
+            for (const groupId of _.difference(expectedGroups, currentGroups)) {
+              await user.$relatedQuery('groups').relate(groupId)
+            }
+            for (const groupId of _.difference(currentGroups, expectedGroups)) {
+              await user.$relatedQuery('groups').unrelate().where('groupId', groupId)
+            }
+          }
+        }
         cb(null, user)
       } catch (err) {
         cb(err, null)

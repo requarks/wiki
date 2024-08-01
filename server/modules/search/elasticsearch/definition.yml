@@ -20,28 +20,37 @@ props:
     title: Host(s)
     hint: Comma-separated list of Elasticsearch hosts to connect to, including the port, username and password if necessary. (e.g. http://localhost:9200, https://user:pass@es1.example.com:9200)
     order: 2
+  verifyTLSCertificate:
+    title: Verify TLS Certificate
+    type: Boolean
+    default: true
+    order: 3
+  tlsCertPath:
+    title: TLS Certificate Path
+    type: String
+    hint: Absolute path to the TLS certificate on the server.
+    order: 4
   indexName:
     type: String
     title: Index Name
     hint: The index name to use during creation
     default: wiki
-    order: 3
+    order: 5
   analyzer:
     type: String
     title: Analyzer
     hint: 'The token analyzer in elasticsearch'
     default: simple
-    order: 4
+    order: 6
   sniffOnStart:
     type: Boolean
     title: Sniff on start
     hint: 'Should Wiki.js attempt to detect the rest of the cluster on first connect? (Default: off)'
     default: false
-    order: 5
+    order: 7
   sniffInterval:
     type: Number
     title: Sniff Interval
     hint: '0 = disabled, Interval in seconds to check for updated list of nodes in cluster. (Default: 0)'
     default: 0
-    order: 6
-
+    order: 8

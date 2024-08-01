@@ -46,7 +46,16 @@ const state = {
       manage: false
     }
   },
-  commentsCount: 0
+  commentsCount: 0,
+  editShortcuts: {
+    editFab: false,
+    editMenuBar: false,
+    editMenuBtn: false,
+    editMenuExternalBtn: false,
+    editMenuExternalName: '',
+    editMenuExternalIcon: '',
+    editMenuExternalUrl: ''
+  }
 }
 
 export default {

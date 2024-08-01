@@ -64,6 +64,15 @@
                     :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
                   )
                   .text-caption {{$t('admin:theme.tocHeadingLevelsHint')}}
+                  v-select(
+                    :items='tocPositions'
+                    outlined
+                    prepend-icon='mdi-border-vertical'
+                    v-model='config.tocPosition'
+                    label='Table of Contents Position'
+                    persistent-hint
+                    hint='Select whether the table of contents is shown on the left, right or not at all.'
+                    )
             v-flex(lg6 xs12)
 
               v-card.animated.fadeInUp.wait-p2s
@@ -129,6 +138,7 @@ export default {
           max: 2
         },
         iconset: '',
+        tocPosition: 'left',
         injectCSS: '',
         injectHead: '',
         injectBody: ''
@@ -170,6 +180,13 @@ export default {
           width: 100
         }
       ]
+    },
+    tocPositions () {
+      return [
+        { text: 'Left (default)', value: 'left' },
+        { text: 'Right', value: 'right' },
+        { text: 'Hidden', value: 'off' }
+      ]
     }
   },
   watch: {
@@ -196,6 +213,7 @@ export default {
             iconset: this.config.iconset,
             darkMode: this.darkMode,
             tocDepth: this.config.tocDepth,
+            tocPosition: this.config.tocPosition,
             injectCSS: this.config.injectCSS,
             injectHead: this.config.injectHead,
             injectBody: this.config.injectBody

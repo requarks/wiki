@@ -103,6 +103,7 @@ module.exports = () => {
         senderEmail: '',
         host: '',
         port: 465,
+        name: '',
         secure: true,
         verifySSL: true,
         user: '',

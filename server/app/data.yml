@@ -44,7 +44,12 @@ defaults:
     title: Wiki.js
     company: ''
     contentLicense: ''
+    footerOverride: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    pageExtensions:
+      - md
+      - html
+      - txt
     mail:
       host: ''
       secure: true
@@ -58,6 +63,7 @@ defaults:
       tocDepth:
         min: 1
         max: 2
+      tocPosition: 'left'
     auth:
       autoLogin: false
       enforce2FA: false
@@ -66,6 +72,14 @@ defaults:
       audience: 'urn:wiki.js'
       tokenExpiration: '30m'
       tokenRenewal: '14d'
+    editShortcuts:
+      editFab: true
+      editMenuBar: false
+      editMenuBtn: true
+      editMenuExternalBtn: true
+      editMenuExternalName: 'GitHub'
+      editMenuExternalIcon: 'mdi-github'
+      editMenuExternalUrl: 'https://github.com/org/repo/blob/main/{filename}'
     features:
       featurePageRatings: true
       featurePageComments: true
@@ -74,7 +88,7 @@ defaults:
       securityOpenRedirect: true
       securityIframe: true
       securityReferrerPolicy: true
-      securityTrustProxy: true
+      securityTrustProxy: false
       securitySRI: true
       securityHSTS: false
       securityHSTSDuration: 300
@@ -155,8 +169,4 @@ reservedPaths:
   - img
   - js
   - svg
-pageExtensions:
-  - md
-  - html
-  - txt
 # ---------------------------------

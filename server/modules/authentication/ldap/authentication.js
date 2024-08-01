@@ -19,6 +19,13 @@ module.exports = {
           searchBase: conf.searchBase,
           searchFilter: conf.searchFilter,
           tlsOptions: getTlsOptions(conf),
+          ...conf.mapGroups && {
+            groupSearchBase: conf.groupSearchBase,
+            groupSearchFilter: conf.groupSearchFilter,
+            groupSearchScope: conf.groupSearchScope,
+            groupDnProperty: conf.groupDnProperty,
+            groupSearchAttributes: [conf.groupNameField]
+          },
           includeRaw: true
         },
         usernameField: 'email',
@@ -40,6 +47,21 @@ module.exports = {
               picture: _.get(profile, `_raw.${conf.mappingPicture}`, '')
             }
           })
+          // map users LDAP groups to wiki groups with the same name, and remove any groups that don't match LDAP
+          if (conf.mapGroups) {
+            const ldapGroups = _.get(profile, '_groups')
+            if (ldapGroups && _.isArray(ldapGroups)) {
+              const groups = ldapGroups.map(g => g[conf.groupNameField])
+              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
+              const expectedGroups = Object.values(WIKI.auth.groups).filter(g => groups.includes(g.name)).map(g => g.id)
+              for (const groupId of _.difference(expectedGroups, currentGroups)) {
+                await user.$relatedQuery('groups').relate(groupId)
+              }
+              for (const groupId of _.difference(currentGroups, expectedGroups)) {
+                await user.$relatedQuery('groups').unrelate().where('groupId', groupId)
+              }
+            }
+          }
           cb(null, user)
         } catch (err) {
           if (WIKI.config.flags.ldapdebug) {
@@ -59,7 +81,7 @@ function getTlsOptions(conf) {
 
   if (!conf.tlsCertPath) {
     return {
-      rejectUnauthorized: conf.verifyTLSCertificate,
+      rejectUnauthorized: conf.verifyTLSCertificate
     }
   }
 

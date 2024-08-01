@@ -1,0 +1,17 @@
+main: |
+  <div id="artalk-container"></div>
+head: |
+  <link href="{{server}}/dist/Artalk.css" rel="stylesheet">
+  <script src="{{server}}/dist/Artalk.js"></script>
+body: |
+  <script>
+    window.onload = function() {
+      Artalk.init({
+        el:        '#artalk-container',
+        pageKey:   '{{pageId}}',
+        pageTitle: '',
+        server:    '{{server}}',
+        site:      '{{siteName}}',
+      });
+    };
+  </script>

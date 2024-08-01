@@ -4,6 +4,7 @@ const pageHelper = require('../helpers/page')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
+const qs = require('querystring')
 
 /* global WIKI */
 
@@ -419,13 +420,14 @@ router.get('/_userav/:uid', async (req, res, next) => {
  * View document / asset
  */
 router.get('/*', async (req, res, next) => {
-  const stripExt = _.some(WIKI.data.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
+  const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
   const pageArgs = pageHelper.parsePath(req.path, { stripExt })
   const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
 
   if (isPage) {
     if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-      return res.redirect(`/${pageArgs.locale}/${pageArgs.path}`)
+      const query = !_.isEmpty(req.query) ? `?${qs.stringify(req.query)}` : ''
+      return res.redirect(`/${pageArgs.locale}/${pageArgs.path}${query}`)
     }
 
     req.i18n.changeLanguage(pageArgs.locale)
@@ -553,6 +555,10 @@ router.get('/*', async (req, res, next) => {
             })
           }
 
+          // -> Page Filename (for edit on external repo button)
+          let pageFilename = WIKI.config.lang.namespacing ? `${pageArgs.locale}/${page.path}` : page.path
+          pageFilename += page.contentType === 'markdown' ? '.md' : '.html'
+
           // -> Render view
           res.render('page', {
             page,
@@ -560,7 +566,8 @@ router.get('/*', async (req, res, next) => {
             tocOptions,
             injectCode,
             comments: commentTmpl,
-            effectivePermissions
+            effectivePermissions,
+            pageFilename
           })
         }
       } else if (pageArgs.path === 'home') {

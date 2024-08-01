@@ -25,6 +25,7 @@ module.exports = {
         iconset: WIKI.config.theming.iconset,
         darkMode: WIKI.config.theming.darkMode,
         tocDepth: WIKI.config.theming.tocDepth,
+        tocPosition: WIKI.config.theming.tocPosition || 'left',
         injectCSS: new CleanCSS({ format: 'beautify' }).minify(WIKI.config.theming.injectCSS).styles,
         injectHead: WIKI.config.theming.injectHead,
         injectBody: WIKI.config.theming.injectBody
@@ -46,6 +47,7 @@ module.exports = {
           iconset: args.iconset,
           darkMode: args.darkMode,
           tocDepth: args.tocDepth,
+          tocPosition: args.tocPosition || 'left',
           injectCSS: args.injectCSS || '',
           injectHead: args.injectHead || '',
           injectBody: args.injectBody || ''

@@ -32,6 +32,18 @@ readinessProbe:
     path: /healthz
     port: http
 
+startupProbe:
+  initialDelaySeconds: 15
+  periodSeconds: 5
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 60
+  httpGet:
+    path: /healthz
+    port: http
+
+podAnnotations: {}
+
 podSecurityContext: {}
   # fsGroup: 2000
 
@@ -51,6 +63,7 @@ service:
   # type: LoadBalancer
   # httpsPort: 443
   # annotations: {}
+  # loadBalancerIP: 172.16.0.1
 
 ingress:
   enabled: true
@@ -91,7 +104,7 @@ volumeMounts: []
 
 volumes: []
 
-# This will allow us to install locales even without internet access using a initContainer & wikjs "sideloading"
+# This will allow us to install locales even without internet access using a initContainer & Wiki.js "sideloading"
 sideload:
   enabled: false
   # Git-Repo containing all locales.json-files you need:
@@ -101,6 +114,16 @@ sideload:
   env: []
   #  - name: HTTPS_PROXY
   #    value: http://my.proxy.com:3128
+
+## Append extra trusted certificates for node process from extra volume via NODE_EXTRA_CA_CERTS variable
+# nodeExtraCaCerts: "/path/to/certs.pem"
+
+## This will override the postgresql chart values
+# externalPostgresql:
+#   # note: ?sslmode=require => ?ssl=true
+#   databaseURL: postgresql://postgres:postgres@postgres:5432/wiki?ssl=true
+#   # For self signed CAs, like DigitalOcean
+#   NODE_TLS_REJECT_UNAUTHORIZED: "0"
 
 ## Configuration values for the postgresql dependency.
 ## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md

@@ -32,7 +32,9 @@ type SiteMutation {
     analyticsId: String
     company: String
     contentLicense: String
+    footerOverride: String
     logoUrl: String
+    pageExtensions: String
     authAutoLogin: Boolean
     authEnforce2FA: Boolean
     authHideLocal: Boolean
@@ -40,6 +42,13 @@ type SiteMutation {
     authJwtAudience: String
     authJwtExpiration: String
     authJwtRenewablePeriod: String
+    editFab: Boolean
+    editMenuBar: Boolean
+    editMenuBtn: Boolean
+    editMenuExternalBtn: Boolean
+    editMenuExternalName: String
+    editMenuExternalIcon: String
+    editMenuExternalUrl: String
     featurePageRatings: Boolean
     featurePageComments: Boolean
     featurePersonalWikis: Boolean
@@ -73,7 +82,9 @@ type SiteConfig {
   analyticsId: String
   company: String
   contentLicense: String
+  footerOverride: String
   logoUrl: String
+  pageExtensions: String
   authAutoLogin: Boolean
   authEnforce2FA: Boolean
   authHideLocal: Boolean
@@ -81,6 +92,13 @@ type SiteConfig {
   authJwtAudience: String
   authJwtExpiration: String
   authJwtRenewablePeriod: String
+  editFab: Boolean
+  editMenuBar: Boolean
+  editMenuBtn: Boolean
+  editMenuExternalBtn: Boolean
+  editMenuExternalName: String
+  editMenuExternalIcon: String
+  editMenuExternalUrl: String
   featurePageRatings: Boolean
   featurePageComments: Boolean
   featurePersonalWikis: Boolean

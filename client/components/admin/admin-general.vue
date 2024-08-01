@@ -82,6 +82,15 @@
                       :return-object='false'
                       :hint='$t(`admin:general.contentLicenseHint`)'
                       persistent-hint
+                    )
+                    v-text-field.mt-3(
+                      outlined
+                      :label='$t(`admin:general.footerOverride`)'
+                      v-model='config.footerOverride'
+                      prepend-icon='mdi-page-layout-footer'
+                      append-icon='mdi-language-markdown'
+                      persistent-hint
+                      :hint='$t(`admin:general.footerOverrideHint`)'
                       )
                   v-divider
                   .overline.grey--text.pa-4 SEO
@@ -144,7 +153,7 @@
                   //-   )
 
                   //- v-divider.mt-3
-                  v-switch(
+                  v-switch.mt-0(
                     inset
                     label='Comments'
                     color='indigo'
@@ -163,6 +172,89 @@
                   //-   hint='Allow users to have their own personal wiki.'
                   //-   disabled
                   //-   )
+
+              v-card.mt-5.animated.fadeInUp.wait-p6s
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 URL Handling
+                v-card-text
+                  v-text-field(
+                    outlined
+                    :label='$t(`admin:general.pageExtensions`)'
+                    v-model='config.pageExtensions'
+                    prepend-icon='mdi-format-text-wrapping-overflow'
+                    :hint='$t(`admin:general.pageExtensionsHint`)'
+                    persistent-hint
+                    )
+
+              v-card.mt-5.animated.fadeInUp.wait-p7s
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 {{$t('admin:general.editShortcuts')}}
+                v-card-text
+                  v-switch.mt-0(
+                    inset
+                    :label='$t(`admin:general.editFab`)'
+                    color='primary'
+                    v-model='config.editFab'
+                    persistent-hint
+                    :hint='$t(`admin:general.editFabHint`)'
+                    )
+                v-divider
+                .overline.grey--text.pa-4 {{$t('admin:general.editMenuBar')}}
+                .px-3.pb-3
+                  v-switch.mt-0.ml-1(
+                    inset
+                    :label='$t(`admin:general.displayEditMenuBar`)'
+                    color='primary'
+                    v-model='config.editMenuBar'
+                    persistent-hint
+                    :hint='$t(`admin:general.displayEditMenuBarHint`)'
+                    )
+                  v-switch.mt-4.ml-1(
+                    v-if='config.editMenuBar'
+                    inset
+                    :label='$t(`admin:general.displayEditMenuBtn`)'
+                    color='primary'
+                    v-model='config.editMenuBtn'
+                    persistent-hint
+                    :hint='$t(`admin:general.displayEditMenuBtnHint`)'
+                    )
+                  v-switch.mt-4.ml-1(
+                    v-if='config.editMenuBar'
+                    inset
+                    :label='$t(`admin:general.displayEditMenuExternalBtn`)'
+                    color='primary'
+                    v-model='config.editMenuExternalBtn'
+                    persistent-hint
+                    :hint='$t(`admin:general.displayEditMenuExternalBtnHint`)'
+                    )
+                template(v-if='config.editMenuBar && config.editMenuExternalBtn')
+                  v-divider
+                  .overline.grey--text.pa-4 External Edit Button
+                  .px-3.pb-3
+                    v-text-field(
+                      outlined
+                      :label='$t(`admin:general.editMenuExternalName`)'
+                      v-model='config.editMenuExternalName'
+                      prepend-icon='mdi-format-title'
+                      :hint='$t(`admin:general.editMenuExternalNameHint`)'
+                      persistent-hint
+                      )
+                    v-text-field.mt-3(
+                      outlined
+                      :label='$t(`admin:general.editMenuExternalIcon`)'
+                      v-model='config.editMenuExternalIcon'
+                      prepend-icon='mdi-dice-5'
+                      :hint='$t(`admin:general.editMenuExternalIconHint`)'
+                      persistent-hint
+                      )
+                    v-text-field.mt-3(
+                      outlined
+                      :label='$t(`admin:general.editMenuExternalUrl`)'
+                      v-model='config.editMenuExternalUrl'
+                      prepend-icon='mdi-near-me'
+                      :hint='$t(`admin:general.editMenuExternalUrlHint`)'
+                      persistent-hint
+                      )
 
     component(:is='activeModal')
 
@@ -197,12 +289,21 @@ export default {
         analyticsId: '',
         company: '',
         contentLicense: '',
+        footerOverride: '',
         logoUrl: '',
         featureAnalytics: false,
         featurePageRatings: false,
         featurePageComments: false,
         featurePersonalWikis: false,
-        featureTinyPNG: false
+        featureTinyPNG: false,
+        pageExtensions: '',
+        editFab: false,
+        editMenuBar: false,
+        editMenuBtn: false,
+        editMenuExternalBtn: false,
+        editMenuExternalName: '',
+        editMenuExternalIcon: '',
+        editMenuExternalUrl: ''
       },
       metaRobots: [
         { text: 'Index', value: 'index' },
@@ -217,6 +318,7 @@ export default {
     logoUrl: sync('site/logoUrl'),
     company: sync('site/company'),
     contentLicense: sync('site/contentLicense'),
+    footerOverride: sync('site/footerOverride'),
     activeModal: sync('editor/activeModal'),
     contentLicenses () {
       return [
@@ -247,33 +349,51 @@ export default {
         await this.$apollo.mutate({
           mutation: gql`
             mutation (
-              $host: String!
-              $title: String!
-              $description: String!
-              $robots: [String]!
-              $analyticsService: String!
-              $analyticsId: String!
-              $company: String!
-              $contentLicense: String!
-              $logoUrl: String!
-              $featurePageRatings: Boolean!
-              $featurePageComments: Boolean!
-              $featurePersonalWikis: Boolean!
+              $host: String
+              $title: String
+              $description: String
+              $robots: [String]
+              $analyticsService: String
+              $analyticsId: String
+              $company: String
+              $contentLicense: String
+              $footerOverride: String
+              $logoUrl: String
+              $pageExtensions: String
+              $featurePageRatings: Boolean
+              $featurePageComments: Boolean
+              $featurePersonalWikis: Boolean
+              $editFab: Boolean
+              $editMenuBar: Boolean
+              $editMenuBtn: Boolean
+              $editMenuExternalBtn: Boolean
+              $editMenuExternalName: String
+              $editMenuExternalIcon: String
+              $editMenuExternalUrl: String
             ) {
               site {
                 updateConfig(
-                  host: $host,
-                  title: $title,
-                  description: $description,
-                  robots: $robots,
-                  analyticsService: $analyticsService,
-                  analyticsId: $analyticsId,
-                  company: $company,
-                  contentLicense: $contentLicense,
-                  logoUrl: $logoUrl,
-                  featurePageRatings: $featurePageRatings,
-                  featurePageComments: $featurePageComments,
+                  host: $host
+                  title: $title
+                  description: $description
+                  robots: $robots
+                  analyticsService: $analyticsService
+                  analyticsId: $analyticsId
+                  company: $company
+                  contentLicense: $contentLicense
+                  footerOverride: $footerOverride
+                  logoUrl: $logoUrl
+                  pageExtensions: $pageExtensions
+                  featurePageRatings: $featurePageRatings
+                  featurePageComments: $featurePageComments
                   featurePersonalWikis: $featurePersonalWikis
+                  editFab: $editFab
+                  editMenuBar: $editMenuBar
+                  editMenuBtn: $editMenuBtn
+                  editMenuExternalBtn: $editMenuExternalBtn
+                  editMenuExternalName: $editMenuExternalName
+                  editMenuExternalIcon: $editMenuExternalIcon
+                  editMenuExternalUrl: $editMenuExternalUrl
                 ) {
                   responseResult {
                     succeeded
@@ -294,10 +414,19 @@ export default {
             analyticsId: _.get(this.config, 'analyticsId', ''),
             company: _.get(this.config, 'company', ''),
             contentLicense: _.get(this.config, 'contentLicense', ''),
+            footerOverride: _.get(this.config, 'footerOverride', ''),
             logoUrl: _.get(this.config, 'logoUrl', ''),
+            pageExtensions: _.get(this.config, 'pageExtensions', ''),
             featurePageRatings: _.get(this.config, 'featurePageRatings', false),
             featurePageComments: _.get(this.config, 'featurePageComments', false),
-            featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false)
+            featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false),
+            editFab: _.get(this.config, 'editFab', false),
+            editMenuBar: _.get(this.config, 'editMenuBar', false),
+            editMenuBtn: _.get(this.config, 'editMenuBtn', false),
+            editMenuExternalBtn: _.get(this.config, 'editMenuExternalBtn', false),
+            editMenuExternalName: _.get(this.config, 'editMenuExternalName', ''),
+            editMenuExternalIcon: _.get(this.config, 'editMenuExternalIcon', ''),
+            editMenuExternalUrl: _.get(this.config, 'editMenuExternalUrl', '')
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
@@ -311,6 +440,7 @@ export default {
         this.siteTitle = this.config.title
         this.company = this.config.company
         this.contentLicense = this.config.contentLicense
+        this.footerOverride = this.config.footerOverride
         this.logoUrl = this.config.logoUrl
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -346,10 +476,19 @@ export default {
               analyticsId
               company
               contentLicense
+              footerOverride
               logoUrl
+              pageExtensions
               featurePageRatings
               featurePageComments
               featurePersonalWikis
+              editFab
+              editMenuBar
+              editMenuBtn
+              editMenuExternalBtn
+              editMenuExternalName
+              editMenuExternalIcon
+              editMenuExternalUrl
             }
           }
         }

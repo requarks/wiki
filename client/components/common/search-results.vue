@@ -105,6 +105,9 @@ export default {
       } else {
         this.searchIsLoading = true
       }
+    },
+    results() {
+      this.cursor = 0
     }
   },
   mounted() {
@@ -152,6 +155,9 @@ export default {
       throttle: 1000,
       skip() {
         return !this.search || this.search.length < 2
+      },
+      result() {
+        this.pagination = 1
       },
       update: (data) => _.get(data, 'pages.search', {}),
       watchLoading (isLoading) {

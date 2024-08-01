@@ -19,7 +19,7 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set Build Variables
       run: |
@@ -42,20 +42,20 @@ jobs:
         cat package.json
 
     - name: Login to DockerHub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push Docker images
-      uses: docker/build-push-action@v2.9.0
+      uses: docker/build-push-action@v5
       with:
         context: .
         file: dev/build/Dockerfile
@@ -77,7 +77,7 @@ jobs:
         find _dist/wiki/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C _dist/wiki/ -T -
 
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.3.1
+      uses: actions/upload-artifact@v4
       with:
         name: drop
         path: wiki-js.tar.gz
@@ -92,7 +92,7 @@ jobs:
         dbtype: [postgres, mysql, mariadb, mssql, sqlite]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set Test Variables
       run: |
@@ -129,7 +129,7 @@ jobs:
             docker: armv7
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set Version Variables
       run: |
@@ -142,26 +142,26 @@ jobs:
         fi
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v3
 
     - name: Login to DockerHub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download a Build Artifact
-      uses: actions/download-artifact@v2.1.0
+      uses: actions/download-artifact@v4
       with:
         name: drop
         path: drop
@@ -172,11 +172,12 @@ jobs:
         tar -xzf $GITHUB_WORKSPACE/drop/wiki-js.tar.gz -C $GITHUB_WORKSPACE/build --exclude=node_modules
 
     - name: Build and push Docker images
-      uses: docker/build-push-action@v2.9.0
+      uses: docker/build-push-action@v5
       with:
         context: .
         file: dev/build-arm/Dockerfile
         platforms: ${{ matrix.platform }}
+        provenance: false
         push: true
         tags: |
           requarks/wiki:canary-${{ matrix.docker }}-${{ env.REL_VERSION_STRICT }}
@@ -189,12 +190,12 @@ jobs:
 
     steps:
     - name: Setup Node.js environment
-      uses: actions/setup-node@v2.5.1
+      uses: actions/setup-node@v4
       with:
-        node-version: 12.x
+        node-version: 18.x
 
     - name: Download a Build Artifact
-      uses: actions/download-artifact@v2.1.0
+      uses: actions/download-artifact@v4
       with:
         name: drop
         path: drop
@@ -202,17 +203,25 @@ jobs:
     - name: Extract Build
       run: |
         mkdir -p win
-        tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=node_modules
+        tar -xzf $env:GITHUB_WORKSPACE\drop\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win
+        Copy-Item win\node_modules\extract-files\package.json patch-extractfile.json -Force
+        Remove-Item -Path win\node_modules -Force -Recurse
 
     - name: Install Dependencies
-      run: yarn --production --frozen-lockfile --non-interactive
+      run: |
+        yarn --production --frozen-lockfile --non-interactive
+        yarn patch-package
       working-directory: win
+
+    - name: Fix patched packages
+      run: |
+        Copy-Item patch-extractfile.json win\node_modules\extract-files\package.json -Force
 
     - name: Create Bundle
       run: tar -czf wiki-js-windows.tar.gz -C $env:GITHUB_WORKSPACE\win .
 
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.3.1
+      uses: actions/upload-artifact@v4
       with:
         name: drop-win
         path: wiki-js-windows.tar.gz
@@ -232,13 +241,13 @@ jobs:
         echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
 
     - name: Login to DockerHub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
@@ -273,13 +282,13 @@ jobs:
         echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
 
     - name: Login to DockerHub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
@@ -319,13 +328,13 @@ jobs:
         docker manifest push -p ghcr.io/requarks/wiki:latest
 
     - name: Download Linux Build
-      uses: actions/download-artifact@v2.1.0
+      uses: actions/download-artifact@v4
       with:
         name: drop
         path: drop
 
     - name: Download Windows Build
-      uses: actions/download-artifact@v2.1.0
+      uses: actions/download-artifact@v4
       with:
         name: drop-win
         path: drop-win
@@ -339,17 +348,18 @@ jobs:
         writeToFile: false
 
     - name: Update GitHub Release
-      uses: ncipollo/release-action@v1
+      uses: ncipollo/release-action@v1.12.0
       with:
         allowUpdates: true
         draft: false
+        makeLatest: true
         name: ${{ github.ref_name }}
         body: ${{ steps.changelog.outputs.changes }}
         token: ${{ github.token }}
         artifacts: 'drop/wiki-js.tar.gz,drop-win/wiki-js-windows.tar.gz'
-        
+
     - name: Notify Slack Releases Channel
-      uses: slackapi/slack-github-action@v1.18.0
+      uses: slackapi/slack-github-action@v1.26.0
       with:
         payload: |
           {
@@ -359,29 +369,46 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
-  build-do-image:
-    name: Build DigitalOcean Image
-    runs-on: ubuntu-latest
-    needs: [release]
+    - name: Notify Telegram Channel
+      uses: appleboy/telegram-action@v0.1.1
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
+        disable_web_page_preview: true
+        message: |
+          Wiki.js *${{ github.ref_name }}* has been released!
+          See [release notes](https://github.com/requarks/wiki/releases) for details.
 
-    steps:
-    - uses: actions/checkout@v2
+    - name: Notify Discord Channel
+      uses: sebastianpopp/discord-action@v2.0
+      with:
+        webhook: ${{ secrets.DISCORD_WEBHOOK }}
+        message: Wiki.js ${{ github.ref_name }} has been released! See https://github.com/requarks/wiki/releases for details.
 
-    - name: Set Version Variables
-      run: |
-        echo "Using TAG mode: $GITHUB_REF_NAME"
-        echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+  # build-do-image:
+  #   name: Build DigitalOcean Image
+  #   runs-on: ubuntu-latest
+  #   needs: [release]
 
-    - name: Install Packer
-      run: |
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-        sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-        sudo apt-get update && sudo apt-get install packer
+  #   steps:
+  #   - uses: actions/checkout@v4
 
-    - name: Build Droplet Image
-      env:
-        DIGITALOCEAN_API_TOKEN: ${{ secrets.DO_TOKEN }}
-        WIKI_APP_VERSION: ${{ env.REL_VERSION_STRICT }}
-      working-directory: dev/packer
-      run: |
-        packer build digitalocean.json
+  #   - name: Set Version Variables
+  #     run: |
+  #       echo "Using TAG mode: $GITHUB_REF_NAME"
+  #       echo "REL_VERSION_STRICT=${GITHUB_REF_NAME#?}" >> $GITHUB_ENV
+
+  #   - name: Install Packer
+  #     run: |
+  #       curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+  #       sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+  #       sudo apt-get update && sudo apt-get install packer
+
+  #   - name: Build Droplet Image
+  #     env:
+  #       DIGITALOCEAN_API_TOKEN: ${{ secrets.DO_TOKEN }}
+  #       WIKI_APP_VERSION: ${{ env.REL_VERSION_STRICT }}
+  #     working-directory: dev/packer
+  #     run: |
+  #       packer build digitalocean.json

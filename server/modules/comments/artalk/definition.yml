@@ -1,0 +1,23 @@
+key: artalk
+title: Artalk
+description: A light-weight self-hosted comment system.
+author: CDN18
+logo: https://static.requarks.io/logo/artalk.png
+website: https://artalk.js.org
+codeTemplate: true
+isAvailable: true
+props:
+  server:
+    type: String
+    title: Artalk Backend URL
+    default: ''
+    hint: 'Publicly accessible URL of your Artalk instance. It should start with http/https and omit the trailing slash. (e.g. https://artalk.example.com)'
+    maxWidth: 650
+    order: 1
+  siteName:
+    type: String
+    title: Site Name
+    default: ''
+    hint: 'The name of this site configured in the artalk backend. Leave empty to use default site.'
+    maxWidth: 450
+    order: 2
