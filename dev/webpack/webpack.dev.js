@@ -17,6 +17,10 @@ const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
 const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
 
+const { CKEditorTranslationsPlugin } = require( '@ckeditor/ckeditor5-dev-translations' );
+const CKEditorWebpackPlugin = require( '@ckeditor/ckeditor5-dev-webpack-plugin' );
+const { bundler, styles } = require( '@ckeditor/ckeditor5-dev-utils' );
+
 process.noDeprecation = true
 
 fs.emptyDirSync(path.join(process.cwd(), 'assets'))
@@ -61,7 +65,35 @@ module.exports = {
         ]
       },
       {
-        test: /\.css$/,
+        test: /ckeditor5-[^/\\]+[/\\]theme[/\\].+\.css$/,
+        use: [
+          {
+            loader: 'style-loader',
+            options: {
+                injectType: 'singletonStyleTag',
+                attributes: {
+                    'data-cke': true
+                }
+            }
+        },
+        'css-loader',
+        {
+            loader: 'postcss-loader',
+            options: styles.getPostCssConfig( {
+                    themeImporter: {
+                        themePath: require.resolve( '@ckeditor/ckeditor5-theme-lark' )
+                    },
+                    minify: true
+                } )
+        }
+        ]
+      },
+      {
+        test: /^(?!.*ckeditor).*\.css$/,
+        exclude: [
+          /ckeditor5-[^/\\]+[/\\]theme[/\\].+\.css$/,
+          path.join( __dirname, 'node_modules', '@ckeditor' ),
+        ],
         use: [
           'style-loader',
           'css-loader',
@@ -145,9 +177,18 @@ module.exports = {
         ]
       },
       {
+        test: /ckeditor5-[^/\\]+[/\\]theme[/\\]icons[/\\][^/\\]+\.svg$/,
+        use: [ 'raw-loader' ]
+      },
+      {
+        test: /ckeditor5-svg[/\\][^/\\]+\.svg$/,
+        use: [ 'raw-loader' ]
+      },
+      {
         test: /\.svg$/,
         exclude: [
-          path.join(process.cwd(), 'node_modules/grapesjs')
+          /ckeditor5-[^/\\]+[/\\]theme[/\\]icons[/\\][^/\\]+\.svg$/,
+          /ckeditor5-svg[/\\][^/\\]+\.svg$/
         ],
         use: [
           {
@@ -229,7 +270,23 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
     new webpack.WatchIgnorePlugin([
       /node_modules/
-    ])
+    ]),
+    new CKEditorWebpackPlugin({
+			// UI language. Language codes follow the https://en.wikipedia.org/wiki/ISO_639-1 format.
+			// When changing the built-in language, remember to also change it in the editor's configuration (client/components/editor/ckeditor/ckeditor.js).
+			language: 'en',
+			additionalLanguages: 'all',
+      buildAllTranslationsToSeparateFiles: true,
+		}),
+		new webpack.BannerPlugin( {
+			banner: bundler.getLicenseBanner(),
+			raw: true
+		}),
+    new CKEditorTranslationsPlugin( {
+      // See https://ckeditor.com/docs/ckeditor5/latest/features/ui-language.html
+      language: 'en',
+      buildAllTranslationsToSeparateFiles: true,
+  })
   ],
   optimization: {
     namedModules: true,
