@@ -28,6 +28,7 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
       - "--providers.file.directory=/etc/traefik/"
       - "--providers.file.watch=true"
+      - "--log.level=ERROR"
     ports:
       - "80:80"
       - "8080:8080"
@@ -40,6 +41,7 @@ services:
       - "logging=promtail"
       - "logging_jobname=containerlogs"
       - traefik.enable=true
+    restart: unless-stopped  
     networks:
       - traefik
 
@@ -155,6 +157,7 @@ services:
     privileged: true
     devices:
       - "/dev/kmsg"
+    restart: unless-stopped  
     networks:
       - traefik
 
