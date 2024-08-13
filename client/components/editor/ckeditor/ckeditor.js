@@ -66,177 +66,177 @@ export default class DecoupledEditor extends DecoupledEditorBase {}
 /* global WIKI */
 
 class LinkToPage extends Plugin {
-	init() {
-		const editor = this.editor;
+  init() {
+    const editor = this.editor;
 
-		editor.ui.componentFactory.add( 'linkToPage', locale => {
-			const view = new ButtonView( locale );
+    editor.ui.componentFactory.add( 'linkToPage', locale => {
+      const view = new ButtonView( locale );
 
-			view.set( {
-				label: 'Insert Link to Page',
-				icon: linkToPageIcon,
-				tooltip: true
-			} );
+      view.set( {
+        label: 'Insert Link to Page',
+        icon: linkToPageIcon,
+        tooltip: true
+      } );
 
-			view.on( 'execute', () => {
-				WIKI.$emit( 'editorLinkToPage' );
-			} );
+      view.on( 'execute', () => {
+        WIKI.$emit( 'editorLinkToPage' );
+      } );
 
-			return view;
-		} );
-	}
+      return view;
+    } );
+  }
 }
 
 class InsertAsset extends Plugin {
-	init() {
-		const editor = this.editor;
+  init() {
+    const editor = this.editor;
 
-		editor.ui.componentFactory.add( 'insertAsset', locale => {
-			const view = new ButtonView( locale );
+    editor.ui.componentFactory.add( 'insertAsset', locale => {
+      const view = new ButtonView( locale );
 
-			view.set( {
-				label: 'Insert Assets',
-				icon: imageIcon,
-				tooltip: true
-			} );
+      view.set( {
+        label: 'Insert Assets',
+        icon: imageIcon,
+        tooltip: true
+      } );
 
-			view.on( 'execute', () => {
-				WIKI.$store.set( 'editor/activeModal', 'editorModalMedia' );
-			} );
+      view.on( 'execute', () => {
+        WIKI.$store.set( 'editor/activeModal', 'editorModalMedia' );
+      } );
 
-			return view;
-		} );
-	}
+      return view;
+    } );
+  }
 }
 
 // Plugins to include in the build.
 DecoupledEditor.builtinPlugins = [
-	Alignment,
-	Autoformat,
-	BlockQuote,
-	Bold,
-	CKFinder,
-	Code,
-	CodeBlock,
-	Essentials,
-	FontFamily,
-	FontSize,
-	Heading,
-	Highlight,
-	HorizontalLine,
-	Image,
-	ImageCaption,
-	ImageResize,
-	ImageStyle,
-	ImageToolbar,
-	ImageUpload,
-	// Indent,
-	// IndentBlock,
-	InsertAsset,
-	Italic,
-	Link,
-	LinkToPage,
-	List,
-	MediaEmbed,
-	Mention,
-	Paragraph,
-	PasteFromOffice,
-	RemoveFormat,
-	SpecialCharacters,
-	SpecialCharactersArrows,
-	SpecialCharactersCurrency,
-	SpecialCharactersEssentials,
-	SpecialCharactersLatin,
-	SpecialCharactersMathematical,
-	SpecialCharactersText,
-	Strikethrough,
-	Subscript,
-	Superscript,
-	Table,
-	TableCellProperties,
-	TableProperties,
-	TableToolbar,
-	TextTransformation,
-	TodoList,
-	Underline,
-	UploadAdapter,
-	WordCount
+  Alignment,
+  Autoformat,
+  BlockQuote,
+  Bold,
+  CKFinder,
+  Code,
+  CodeBlock,
+  Essentials,
+  FontFamily,
+  FontSize,
+  Heading,
+  Highlight,
+  HorizontalLine,
+  Image,
+  ImageCaption,
+  ImageResize,
+  ImageStyle,
+  ImageToolbar,
+  ImageUpload,
+  // Indent,
+  // IndentBlock,
+  InsertAsset,
+  Italic,
+  Link,
+  LinkToPage,
+  List,
+  MediaEmbed,
+  Mention,
+  Paragraph,
+  PasteFromOffice,
+  RemoveFormat,
+  SpecialCharacters,
+  SpecialCharactersArrows,
+  SpecialCharactersCurrency,
+  SpecialCharactersEssentials,
+  SpecialCharactersLatin,
+  SpecialCharactersMathematical,
+  SpecialCharactersText,
+  Strikethrough,
+  Subscript,
+  Superscript,
+  Table,
+  TableCellProperties,
+  TableProperties,
+  TableToolbar,
+  TextTransformation,
+  TodoList,
+  Underline,
+  UploadAdapter,
+  WordCount
 ];
 
 // Editor configuration.
 DecoupledEditor.defaultConfig = {
-	toolbar: {
-		items: [
-			'heading',
-			'|',
-			'fontsize',
-			'fontfamily',
-			'|',
-			'bold',
-			'italic',
-			'underline',
-			'strikethrough',
-			'subscript',
-			'superscript',
-			'highlight',
-			'|',
-			'alignment',
-			'|',
-			'numberedList',
-			'bulletedList',
-			'todoList',
-			'|',
-			'specialCharacters',
-			'linkToPage',
-			'link',
-			'blockquote',
-			'insertAsset',
-			'insertTable',
-			'code',
-			'codeBlock',
-			'mediaEmbed',
-			'horizontalLine',
-			'|',
-			'removeFormat',
-			'|',
-			'undo',
-			'redo'
-		]
-	},
-	heading: {
-		options: [
-			{ model: 'paragraph', title: 'Paragraph', class: '' },
-			{ model: 'heading1', view: 'h1', title: 'Heading 1', class: '' },
-			{ model: 'heading2', view: 'h2', title: 'Heading 2', class: '' },
-			{ model: 'heading3', view: 'h3', title: 'Heading 3', class: '' },
-			{ model: 'heading4', view: 'h4', title: 'Heading 4', class: '' },
-			{ model: 'heading5', view: 'h5', title: 'Heading 5', class: '' },
-			{ model: 'heading6', view: 'h6', title: 'Heading 6', class: '' }
-		]
-	},
-	image: {
-		styles: [
-			'full',
-			'alignLeft',
-			'alignRight'
-		],
-		toolbar: [
-			'imageStyle:alignLeft',
-			'imageStyle:full',
-			'imageStyle:alignRight',
-			'|',
-			'imageTextAlternative'
-		]
-	},
-	table: {
-		contentToolbar: [
-			'tableColumn',
-			'tableRow',
-			'mergeTableCells',
-			'tableCellProperties',
-			'tableProperties'
-		]
-	},
-	// This value must be kept in sync with the language defined in webpack.config.js.
-	language: 'en'
+  toolbar: {
+    items: [
+      'heading',
+      '|',
+      'fontsize',
+      'fontfamily',
+      '|',
+      'bold',
+      'italic',
+      'underline',
+      'strikethrough',
+      'subscript',
+      'superscript',
+      'highlight',
+      '|',
+      'alignment',
+      '|',
+      'numberedList',
+      'bulletedList',
+      'todoList',
+      '|',
+      'specialCharacters',
+      'linkToPage',
+      'link',
+      'blockquote',
+      'insertAsset',
+      'insertTable',
+      'code',
+      'codeBlock',
+      'mediaEmbed',
+      'horizontalLine',
+      '|',
+      'removeFormat',
+      '|',
+      'undo',
+      'redo'
+    ]
+  },
+  heading: {
+    options: [
+      { model: 'paragraph', title: 'Paragraph', class: '' },
+      { model: 'heading1', view: 'h1', title: 'Heading 1', class: '' },
+      { model: 'heading2', view: 'h2', title: 'Heading 2', class: '' },
+      { model: 'heading3', view: 'h3', title: 'Heading 3', class: '' },
+      { model: 'heading4', view: 'h4', title: 'Heading 4', class: '' },
+      { model: 'heading5', view: 'h5', title: 'Heading 5', class: '' },
+      { model: 'heading6', view: 'h6', title: 'Heading 6', class: '' }
+    ]
+  },
+  image: {
+    styles: [
+      'full',
+      'alignLeft',
+      'alignRight'
+    ],
+    toolbar: [
+      'imageStyle:alignLeft',
+      'imageStyle:full',
+      'imageStyle:alignRight',
+      '|',
+      'imageTextAlternative'
+    ]
+  },
+  table: {
+    contentToolbar: [
+      'tableColumn',
+      'tableRow',
+      'mergeTableCells',
+      'tableCellProperties',
+      'tableProperties'
+    ]
+  },
+  // This value must be kept in sync with the language defined in webpack.dev.js and webpack.prod.js.
+  language: 'en'
 };

@@ -187,6 +187,7 @@ module.exports = {
       {
         test: /\.svg$/,
         exclude: [
+          path.join(process.cwd(), 'node_modules/grapesjs'),
           /ckeditor5-[^/\\]+[/\\]theme[/\\]icons[/\\][^/\\]+\.svg$/,
           /ckeditor5-svg[/\\][^/\\]+\.svg$/
         ],
