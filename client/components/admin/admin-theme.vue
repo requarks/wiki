@@ -55,15 +55,6 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t(`admin:theme.options`)}}
                 v-card-text
-                  v-range-slider(
-                    prepend-icon='mdi-menu-open'
-                    :label='$t(`admin:theme.tocHeadingLevels`)'
-                    v-model='tocRange'
-                    :min='1'
-                    :max='6'
-                    :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
-                  )
-                  .text-caption {{$t('admin:theme.tocHeadingLevelsHint')}}
                   v-select(
                     :items='tocPositions'
                     outlined
@@ -73,6 +64,15 @@
                     persistent-hint
                     hint='Select whether the table of contents is shown on the left, right or not at all.'
                     )
+                  v-range-slider(
+                    prepend-icon='mdi-menu-open'
+                    label='Heading Levels in ToC'
+                    v-model='tocRange'
+                    :min='1'
+                    :max='6'
+                    :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
+                    hint='Select which levels of the toc are displayed.'
+                  )
             v-flex(lg6 xs12)
 
               v-card.animated.fadeInUp.wait-p2s

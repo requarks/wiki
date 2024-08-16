@@ -92,7 +92,7 @@ v-dialog(
               )
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
-            .overline {{$t('editor:props.tocTitle')}}
+            .overline.pb-5 {{$t('editor:props.tocTitle')}}
             v-switch(
               :label='$t(`editor:props.tocUseDefault`)'
               v-model='useDefaultTocDepth'
