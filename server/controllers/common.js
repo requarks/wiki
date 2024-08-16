@@ -513,10 +513,11 @@ router.get('/*', async (req, res, next) => {
         }
 
         // -> Set TOC display options
-        const tocOptions = _.get(page, 'tocOptions.useDefault', true) ? {
-          min: page.tocOptions.min,
-          max: page.tocOptions.max
-        } : WIKI.config.theming.tocDepth
+        const tocOptions = _.get(page, 'tocOptions.useDefault', true) ?
+          WIKI.config.theming.tocDepth : {
+            min: page.tocOptions.min,
+            max: page.tocOptions.max
+          }
 
         if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
           // -> Convert page TOC
