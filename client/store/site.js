@@ -5,7 +5,9 @@ import { make } from 'vuex-pathify'
 const state = {
   company: siteConfig.company,
   contentLicense: siteConfig.contentLicense,
+  footerOverride: siteConfig.footerOverride,
   dark: siteConfig.darkMode,
+  tocPosition: siteConfig.tocPosition,
   mascot: true,
   title: siteConfig.title,
   logoUrl: siteConfig.logoUrl,

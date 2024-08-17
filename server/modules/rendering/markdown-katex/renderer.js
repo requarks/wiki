@@ -24,12 +24,13 @@ katex.__defineMacro('\\tripledash', '{\\vphantom{-}\\raisebox{2.56mu}{$\\mkern2m
 
 module.exports = {
   init (mdinst, conf) {
+    const macros = {}
     if (conf.useInline) {
       mdinst.inline.ruler.after('escape', 'katex_inline', katexInline)
       mdinst.renderer.rules.katex_inline = (tokens, idx) => {
         try {
           return katex.renderToString(tokens[idx].content, {
-            displayMode: false
+            displayMode: false, macros
           })
         } catch (err) {
           WIKI.logger.warn(err)
@@ -44,7 +45,7 @@ module.exports = {
       mdinst.renderer.rules.katex_block = (tokens, idx) => {
         try {
           return `<p>` + katex.renderToString(tokens[idx].content, {
-            displayMode: true
+            displayMode: true, macros
           }) + `</p>`
         } catch (err) {
           WIKI.logger.warn(err)

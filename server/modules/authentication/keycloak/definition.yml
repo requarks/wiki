@@ -7,6 +7,10 @@ color: blue-grey darken-2
 website: https://www.keycloak.org/
 useForm: false
 isAvailable: true
+scopes:
+  - openid
+  - profile
+  - email
 props:
   host:
     type: String
@@ -53,4 +57,9 @@ props:
     title: Logout Endpoint URL
     hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/logout
     order: 9
+  logoutUpstreamRedirectLegacy:
+    type: Boolean
+    title: Legacy Logout Redirect
+    hint: Pass the legacy 'redirect_uri' parameter to the logout endpoint. Leave disabled for Keycloak 18 and above.
+    order: 10
 

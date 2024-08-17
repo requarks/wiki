@@ -265,7 +265,7 @@ export default {
         securityOpenRedirect: true,
         securityIframe: true,
         securityReferrerPolicy: true,
-        securityTrustProxy: true,
+        securityTrustProxy: false,
         securitySRI: true,
         securityHSTS: false,
         securityHSTSDuration: 0,

@@ -6,6 +6,37 @@ logo: https://static.requarks.io/logo/cas.svg
 color: green darken-2
 website: https://apereo.github.io/cas/
 useForm: false
+isAvailable: true
 props:
-  ssoBaseURL: String
-  serverBaseURL: String
+  baseUrl:
+    type: String
+    title: Base URL
+    hint: 'Base-URL of your WikiJS (for example: https://wiki.example.com)'
+    order: 1
+  casUrl:
+    type: String
+    title: URL to the CAS Server
+    hint: 'Base-URL of the CAS server, including context path. (for example: https://login.company.com/cas)'
+    order: 2
+  casVersion:
+    type: String
+    title: CAS Version
+    hint: 'The version of CAS to use'
+    order: 3
+    enum:
+      - CAS3.0
+      - CAS1.0
+    default: 'CAS3.0'
+  emailAttribute:
+    type: String
+    title: Attribute key which contains the users email
+    default: email
+    order: 4
+  displayNameAttribute:
+    type: String
+    title: Attribute key which contains the users display name (leave empty if there is none)
+    order: 5
+  uniqueIdAttribute:
+    type: String
+    title: Attribute key which contains the unique identifier of a user. (if empty, username will be used)
+    order: 6

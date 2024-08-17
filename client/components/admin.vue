@@ -65,15 +65,6 @@
             v-list-item(to='/comments')
               v-list-item-avatar(size='24', tile): v-icon mdi-comment-text-outline
               v-list-item-title {{ $t('admin:comments.title') }}
-            v-list-item(to='/editor', disabled)
-              v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-playlist-edit
-              v-list-item-title {{ $t('admin:editor.title') }}
-            v-list-item(to='/extensions')
-              v-list-item-avatar(size='24', tile): v-icon mdi-chip
-              v-list-item-title {{ $t('admin:extensions.title') }}
-            v-list-item(to='/logging', disabled)
-              v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-script-text-outline
-              v-list-item-title {{ $t('admin:logging.title') }}
             v-list-item(to='/rendering', color='primary')
               v-list-item-avatar(size='24', tile): v-icon mdi-cogs
               v-list-item-title {{ $t('admin:rendering.title') }}
@@ -104,9 +95,6 @@
             v-list-item(to='/utilities', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-wrench-outline
               v-list-item-title {{ $t('admin:utilities.title') }}
-            v-list-item(to='/webhooks', v-if='hasPermission(`manage:system`)', disabled)
-              v-list-item-avatar(size='24', tile): v-icon(color='grey lighten-2') mdi-webhook
-              v-list-item-title {{ $t('admin:webhooks.title') }}
             v-list-group(
               to='/dev'
               no-action

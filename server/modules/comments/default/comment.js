@@ -1,5 +1,5 @@
 const md = require('markdown-it')
-const mdEmoji = require('markdown-it-emoji')
+const { full: mdEmoji } = require('markdown-it-emoji')
 const { JSDOM } = require('jsdom')
 const createDOMPurify = require('dompurify')
 const _ = require('lodash')
@@ -126,6 +126,7 @@ module.exports = {
   async update ({ id, content, user }) {
     const renderedContent = DOMPurify.sanitize(mkdown.render(content))
     await WIKI.models.comments.query().findById(id).patch({
+      content,
       render: renderedContent
     })
     return renderedContent

@@ -90,7 +90,10 @@ module.exports = {
         if (process.env.UPGRADE_COMPANION) {
           await request({
             method: 'POST',
-            uri: 'http://wiki-update-companion/upgrade'
+            uri: 'http://wiki-update-companion/upgrade',
+            qs: {
+              ...process.env.UPGRADE_COMPANION_REF && { container: process.env.UPGRADE_COMPANION_REF }
+            }
           })
           return {
             responseResult: graphHelper.generateSuccess('Upgrade has started.')

@@ -41,4 +41,4 @@ props:
 actions:
   - handler: exportAll
     label: Export All
-    hint: Output all content from the DB to Azure Blog Storage, overwriting any existing data. If you enabled Azure Blog Storage after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
+    hint: Output all content from the DB to Azure Blob Storage, overwriting any existing data. If you enabled Azure Blob Storage after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.

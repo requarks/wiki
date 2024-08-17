@@ -10,7 +10,7 @@ const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
 
 module.exports = {
   async render() {
-    const $ = cheerio.load(this.input, {
+    let $ = cheerio.load(this.input, {
       decodeEntities: true
     })
 
@@ -244,26 +244,13 @@ module.exports = {
     })
 
     // --------------------------------
-    // Escape mustache expresions
+    // Wrap root table nodes
     // --------------------------------
 
-    function iterateMustacheNode (node) {
-      const list = $(node).contents().toArray()
-      list.forEach(item => {
-        if (item && item.type === 'text') {
-          const rawText = $(item).text().replace(/\r?\n|\r/g, '')
-          if (mustacheRegExp.test(rawText)) {
-            $(item).parent().attr('v-pre', true)
-          }
-        } else {
-          iterateMustacheNode(item)
-        }
-      })
-    }
-    iterateMustacheNode($.root())
-
-    $('pre').each((idx, elm) => {
-      $(elm).attr('v-pre', true)
+    $('body').contents().toArray().forEach(item => {
+      if (item && item.name === 'table' && item.parent.name === 'body') {
+        $(item).wrap('<div class="table-container"></div>')
+      }
     })
 
     // --------------------------------
@@ -277,7 +264,37 @@ module.exports = {
       output = await renderer.init(output, child.config)
     }
 
-    return output
+    // --------------------------------
+    // Escape mustache expresions
+    // --------------------------------
+
+    $ = cheerio.load(output, {
+      decodeEntities: true
+    })
+
+    function iterateMustacheNode (node) {
+      $(node).contents().each((idx, item) => {
+        if (item && item.type === 'text') {
+          const rawText = $(item).text().replace(/\r?\n|\r/g, '')
+          if (mustacheRegExp.test(rawText)) {
+            if (!item.parent || item.parent.name === 'body') {
+              $(item).wrap($('<p>').attr('v-pre', true))
+            } else {
+              $(item).parent().attr('v-pre', true)
+            }
+          }
+        } else {
+          iterateMustacheNode(item)
+        }
+      })
+    }
+    iterateMustacheNode($.root())
+
+    $('pre').each((idx, elm) => {
+      $(elm).attr('v-pre', true)
+    })
+
+    return decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
   }
 }
 
