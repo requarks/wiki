@@ -1,20 +1,15 @@
 <template lang="pug">
   .page-toc-item
     template(v-if='level >= min')
-      v-list-item(@click='click(item.anchor)', v-if='(item.children.length === 0 && max > level) || max > level',
-        :key='item.anchor', :class='isNestedLevel ? `pl-9` : `pl-6`')
-        v-icon.pl-0(small, color='grey lighten-1') {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+      v-list-item(@click='click(item.anchor)', v-if='max > level', :key='item.anchor', :class='[isNestedLevel ? "pl-9" : "pl-6"]')
+        v-icon.pl-0(small, color='grey lighten-1', v-if='item.children.length > 0') {{ $vuetify.rtl ? `mdi-menu-up` : `mdi-menu-up` }}
         v-list-item-title.pl-4(v-bind:class='titleClasses') {{item.title}}
-      v-list-group(sub-group, v-else, v-bind:class='{"pl-3": isNestedLevel}')
+      v-list-group(v-else, sub-group, v-bind:class='{"pl-6": isNestedLevel}')
         template(v-slot:activator)
           v-list-item.pl-0(@click='click(item.anchor)', :key='item.anchor')
             v-list-item-title(v-bind:class='titleClasses') {{item.title}}
-        template(v-if='item.children.length !== 0', v-for='subItem in item.children')
-          page-toc-item(:item='subItem', :level='level + 1', :min='min', :max='max')
-      template(v-if='max > level', v-for='subItem in item.children')
-        page-toc-item(:item='subItem', :level='level + 1', :min='min', :max='max')
-    template(v-else, v-for='subItem in item.children')
-      page-toc-item(:item='subItem', :level='level + 1', :min='min', :max='max')
+        page-toc-item(v-if='item.children.length > 0', v-for='subItem in item.children', :key='subItem.anchor', :item='subItem', :level='level + 1', :min='min', :max='max')
+    page-toc-item(v-show='max > level && item.children.length > 0', v-for='subItem in item.children', :key='subItem.anchor', :item='subItem', :level='level + 1', :min='min', :max='max')
 </template>
 
 <script>
