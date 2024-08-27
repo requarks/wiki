@@ -59,7 +59,9 @@ import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
 
 import imageIcon from '@ckeditor/ckeditor5-core/theme/icons/image.svg';
+import pencilIcon from '@ckeditor/ckeditor5-core/theme/icons/pencil.svg';
 import linkToPageIcon from '../../../static/ckeditor5-svg/link-to-page.svg';
+import diagramIcon from '../../../static/ckeditor5-svg/diagram.svg';
 
 export default class DecoupledEditor extends DecoupledEditorBase {}
 
@@ -109,6 +111,51 @@ class InsertAsset extends Plugin {
   }
 }
 
+class InsertDiagram extends Plugin {
+  init() {
+    const editor = this.editor;
+
+    editor.ui.componentFactory.add('insertDiagram', locale => {
+      const button = new ButtonView( locale );
+
+      button.set( {
+        label: 'Insert diagram',
+        icon: diagramIcon,
+        tooltip: true
+    } );
+
+    button.on( 'execute', () => {
+      WIKI.$emit('insertDiagram');
+  } );
+
+    return button;
+    } );
+  }
+}
+
+class EditDiagram extends Plugin {
+  init() {
+    const editor = this.editor;
+    const htmlCollection = document.getElementsByClassName("image ck-widget_selected");
+
+    editor.ui.componentFactory.add('editDiagram', locale => {
+      const button = new ButtonView( locale );
+
+                button.set( {
+                  label: 'Edit diagram',
+                  icon: pencilIcon,
+                  tooltip: true
+                } );
+
+      button.on( 'execute', () => {
+        WIKI.$emit('editDiagram');
+      } );
+
+      return button;
+    } );
+  }
+}
+
 // Plugins to include in the build.
 DecoupledEditor.builtinPlugins = [
   Alignment,
@@ -118,6 +165,7 @@ DecoupledEditor.builtinPlugins = [
   CKFinder,
   Code,
   CodeBlock,
+  EditDiagram,
   Essentials,
   FontFamily,
   FontSize,
@@ -133,6 +181,7 @@ DecoupledEditor.builtinPlugins = [
   // Indent,
   // IndentBlock,
   InsertAsset,
+  InsertDiagram,
   Italic,
   Link,
   LinkToPage,
@@ -192,6 +241,7 @@ DecoupledEditor.defaultConfig = {
       'blockquote',
       'insertAsset',
       'insertTable',
+      'insertDiagram',
       'code',
       'codeBlock',
       'mediaEmbed',
@@ -225,7 +275,9 @@ DecoupledEditor.defaultConfig = {
       'imageStyle:full',
       'imageStyle:alignRight',
       '|',
-      'imageTextAlternative'
+      'imageTextAlternative',
+      '|',
+      'editDiagram'
     ]
   },
   table: {
