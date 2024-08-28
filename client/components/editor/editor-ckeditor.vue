@@ -172,7 +172,6 @@ export default {
       this.editor.setData(this.$store.get('editor/content'))
     })
 
-    // Open Draw.io
     this.$root.$on('insertDiagram', () => {
       this.insertDiagram()
     })
