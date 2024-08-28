@@ -136,7 +136,6 @@ class InsertDiagram extends Plugin {
 class EditDiagram extends Plugin {
   init() {
     const editor = this.editor;
-    const htmlCollection = document.getElementsByClassName("image ck-widget_selected");
 
     editor.ui.componentFactory.add('editDiagram', locale => {
       const button = new ButtonView( locale );
