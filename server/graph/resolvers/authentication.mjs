@@ -46,7 +46,11 @@ export default {
     /**
      * Fetch authentication strategies
      */
-    async authStrategies () {
+    async authStrategies (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       return WIKI.data.authentication.map(stg => ({
         ...stg,
         isAvailable: stg.isAvailable === true
@@ -56,6 +60,10 @@ export default {
      * Fetch active authentication strategies
      */
     async authActiveStrategies (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const strategies = await WIKI.db.authentication.getStrategies({ enabledOnly: args.enabledOnly })
       return strategies.map(a => {
         const str = _.find(WIKI.data.authentication, ['key', a.module]) || {}

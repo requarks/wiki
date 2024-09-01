@@ -2,7 +2,7 @@
 q-layout(view='hHh Lpr lff')
   header-nav
   q-drawer.bg-sidebar(
-    :modelValue='isSidebarShown'
+    :model-value='isSidebarShown'
     :show-if-above='siteStore.theme.sidebarPosition !== `off`'
     :width='isSidebarMini ? 56 : 255'
     :side='siteStore.theme.sidebarPosition === `right` ? `right` : `left`'
@@ -63,7 +63,7 @@ q-layout(view='hHh Lpr lff')
           :aria-label='commonStore.locale'
           size='sm'
           )
-          locale-selector-menu(:offset="[-5, 5]")
+          locale-selector-menu(:offset='[-5, 5]')
         q-separator(vertical)
         q-btn.q-px-sm.col(
           flat
@@ -232,14 +232,15 @@ body.body--dark {
     }
 
     > .q-layout-container {
+      border-radius: 6px;
+      box-shadow: 0 0 30px 0 rgba(0,0,0,.3);
+
       @at-root .body--light & {
         background-image: linear-gradient(to bottom, $dark-5 10px, $grey-3 11px, $grey-4);
       }
       @at-root .body--dark & {
         background-image: linear-gradient(to bottom, $dark-4 10px, $dark-4 11px, $dark-3);
       }
-      border-radius: 6px;
-      box-shadow: 0 0 30px 0 rgba(0,0,0,.3);
     }
   }
 }

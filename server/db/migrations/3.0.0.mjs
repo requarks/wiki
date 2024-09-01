@@ -475,6 +475,7 @@ export async function up (knex) {
           private: certs.privateKey
         },
         secret,
+        rootAdminGroupId: groupAdminId,
         rootAdminUserId: userAdminId,
         guestUserId: userGuestId
       }

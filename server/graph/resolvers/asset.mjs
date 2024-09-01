@@ -10,6 +10,7 @@ import { pipeline } from 'node:stream/promises'
 export default {
   Query: {
     async assetById(obj, args, context) {
+      // FIXME: Perm
       const asset = await WIKI.db.assets.query().findById(args.id)
       if (asset) {
         return asset
@@ -145,6 +146,7 @@ export default {
      */
     async uploadAssets(obj, args, context) {
       try {
+        // FIXME: Perm
         // -> Get Folder
         let folder = {}
         if (args.folderId || args.folderPath) {
@@ -380,6 +382,10 @@ export default {
      */
     async flushTempUploads(obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.db.assets.flushTempUploads()
         return {
           operation: generateSuccess('Temporary Uploads have been flushed successfully.')

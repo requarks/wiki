@@ -188,7 +188,7 @@ q-layout.admin(view='hHh Lpr lff')
             q-item-section {{ t('admin.metrics.title') }}
             q-item-section(side)
               status-light(:color='adminStore.info.isMetricsEnabled ? `positive` : `negative`')
-          q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white')
+          q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white', v-if='flagsStore.experimental')
             q-item-section(avatar)
               q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
             q-item-section {{ t('admin.rendering.title') }}
@@ -416,14 +416,15 @@ onMounted(async () => {
     }
 
     > .q-layout-container {
+      border-radius: 6px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.5);
+
       @at-root .body--light & {
         background-image: linear-gradient(to bottom, $dark-5 10px, $grey-3 11px, $grey-4);
       }
       @at-root .body--dark & {
         background-image: linear-gradient(to bottom, $dark-4 10px, $dark-4 11px, $dark-3);
       }
-      border-radius: 6px;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.5);
     }
   }
 }

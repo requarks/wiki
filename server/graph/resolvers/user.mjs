@@ -11,7 +11,7 @@ export default {
      * FETCH ALL USERS
      */
     async users (obj, args, context, info) {
-      if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users'])) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users', 'manage:groups'])) {
         throw new Error('ERR_FORBIDDEN')
       }
 
@@ -51,7 +51,7 @@ export default {
      */
     async userById (obj, args, context, info) {
       if (!context.req.isAuthenticated || context.req.user.id !== args.id) {
-        if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
       }
@@ -88,7 +88,7 @@ export default {
     },
 
     async userDefaults (obj, args, context) {
-      if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users'])) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:users', 'write:users', 'manage:users', 'manage:groups'])) {
         throw new Error('ERR_FORBIDDEN')
       }
 
@@ -134,7 +134,7 @@ export default {
   Mutation: {
     async createUser (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['write:users', 'manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:users', 'manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -149,7 +149,7 @@ export default {
     },
     async deleteUser (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -174,7 +174,7 @@ export default {
     },
     async updateUser (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -189,7 +189,7 @@ export default {
     },
     async verifyUser (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -204,7 +204,7 @@ export default {
     },
     async activateUser (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -219,7 +219,7 @@ export default {
     },
     async deactivateUser (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -240,7 +240,7 @@ export default {
     },
     async enableUserTFA (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -255,7 +255,7 @@ export default {
     },
     async disableUserTFA (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -270,7 +270,7 @@ export default {
     },
     async changeUserPassword (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
@@ -430,7 +430,7 @@ export default {
      */
     async updateUserDefaults (obj, args, context) {
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:users', 'manage:groups'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 

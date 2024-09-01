@@ -4,6 +4,10 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 export default {
   Query: {
     async analyticsProviders(obj, args, context, info) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       let providers = await WIKI.db.analytics.getProviders(args.isEnabled)
       providers = providers.map(stg => {
         const providerInfo = find(WIKI.data.analytics, ['key', stg.key]) || {}
@@ -28,6 +32,10 @@ export default {
   Mutation: {
     async updateAnalyticsProviders(obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         for (let str of args.providers) {
           await WIKI.db.analytics.query().patch({
             isEnabled: str.isEnabled,

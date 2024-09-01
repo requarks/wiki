@@ -1,5 +1,3 @@
-/* global WIKI */
-
 import express from 'express'
 import ExpressBrute from 'express-brute'
 import BruteKnex from '../helpers/brute-knex.mjs'

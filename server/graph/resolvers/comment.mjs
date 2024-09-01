@@ -7,6 +7,10 @@ export default {
      * Fetch list of Comments Providers
      */
     async commentsProviders(obj, args, context, info) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const providers = await WIKI.db.commentProviders.getProviders()
       return providers.map(provider => {
         const providerInfo = _.find(WIKI.data.commentProviders, ['key', provider.key]) || {}
@@ -137,6 +141,10 @@ export default {
      */
     async updateCommentsProviders(obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         for (let provider of args.providers) {
           await WIKI.db.commentProviders.query().patch({
             isEnabled: provider.isEnabled,

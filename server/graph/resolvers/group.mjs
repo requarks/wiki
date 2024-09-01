@@ -1,4 +1,4 @@
-import { generateError, generateSuccess } from '../../helpers/graph.mjs'
+import { generateSuccess } from '../../helpers/graph.mjs'
 import safeRegex from 'safe-regex'
 import _ from 'lodash-es'
 import { v4 as uuid } from 'uuid'
@@ -8,7 +8,10 @@ export default {
     /**
      * FETCH ALL GROUPS
      */
-    async groups () {
+    async groups (obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:groups', 'manage:users', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
       return WIKI.db.groups.query().select(
         'groups.*',
         WIKI.db.groups.relatedQuery('users').count().as('userCount')
@@ -17,7 +20,10 @@ export default {
     /**
      * FETCH A SINGLE GROUP
      */
-    async groupById(obj, args) {
+    async groupById(obj, args, context) {
+      if (!WIKI.auth.checkAccess(context.req.user, ['manage:groups', 'manage:users', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
       return WIKI.db.groups.query().findById(args.id)
     }
   },
@@ -26,8 +32,12 @@ export default {
      * ASSIGN USER TO GROUP
      */
     async assignUserToGroup (obj, args, { req }) {
+      if (!WIKI.auth.checkAccess(req.user, ['manage:groups', 'manage:users', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       // Check for guest user
-      if (args.userId === 2) {
+      if (args.userId === WIKI.config.auth.guestUserId) {
         throw new Error('Cannot assign the Guest user to a group.')
       }
 
@@ -78,6 +88,10 @@ export default {
      * CREATE NEW GROUP
      */
     async createGroup (obj, args, { req }) {
+      if (!WIKI.auth.checkAccess(req.user, ['manage:groups', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       const group = await WIKI.db.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
@@ -97,8 +111,12 @@ export default {
     /**
      * DELETE GROUP
      */
-    async deleteGroup (obj, args) {
-      if (args.id === 1 || args.id === 2) {
+    async deleteGroup (obj, args, { req }) {
+      if (!WIKI.auth.checkAccess(req.user, ['manage:groups', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
+      if (args.id === WIKI.data.systemIds.guestsGroupId || args.id === WIKI.data.systemIds.usersGroupId || args.id === WIKI.config.auth.rootAdminGroupId) {
         throw new Error('Cannot delete this group.')
       }
 
@@ -117,11 +135,15 @@ export default {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUserFromGroup (obj, args) {
+    async unassignUserFromGroup (obj, args, { req }) {
+      if (!WIKI.auth.checkAccess(req.user, ['manage:groups', 'manage:users', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       if (args.userId === 2) {
         throw new Error('Cannot unassign Guest user')
       }
-      if (args.userId === 1 && args.groupId === 1) {
+      if (args.userId === WIKI.config.auth.guestUserId && args.groupId === WIKI.data.systemIds.guestsGroupId) {
         throw new Error('Cannot unassign Administrator user from Administrators group.')
       }
       const grp = await WIKI.db.groups.query().findById(args.groupId)
@@ -145,6 +167,10 @@ export default {
      * UPDATE GROUP
      */
     async updateGroup (obj, args, { req }) {
+      if (!WIKI.auth.checkAccess(req.user, ['manage:groups', 'manage:system'])) {
+        throw new Error('ERR_FORBIDDEN')
+      }
+
       // Check for unsafe regex page rules
       if (_.some(args.pageRules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)
