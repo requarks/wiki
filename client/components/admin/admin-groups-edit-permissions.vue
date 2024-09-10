@@ -145,33 +145,12 @@ export default {
           ]
         },
         {
-          category: 'Users',
+          category: 'Sites',
           items: [
             {
-              permission: 'write:users',
-              hint: 'Can create or authorize new users, but not modify existing ones',
+              permission: 'manage:sites',
+              hint: 'Can manage the groups of one or more sites, add & remove users from the site(s)',
               warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:users',
-              hint: 'Can manage all users (but not users with administrative permissions)',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'write:groups',
-              hint: 'Can manage groups and assign CONTENT permissions / page rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:groups',
-              hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
-              warning: true,
               restrictedForSystem: true,
               disabled: false
             }
