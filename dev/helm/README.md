@@ -115,6 +115,9 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `sideload.enabled`                   | Enable sideloading of locale files from git | `false`                                                    |
 | `sideload.repoURL`                   | Git repository URL containing locale files  | `https://github.com/Requarks/wiki-localization`            |
 | `sideload.env`                       | Environment variables for sideload Container | `{}`                                                      |
+| `sideload.securityContext`           | security context for sideload Container     | `nil`                                                      |
+| `sideload.resources.limits`          | resource limits for sideload Container      | `nil`                                                      |
+| `sideload.resources.requests`        | resource requests for sideload Container    | `nil`                                                      |
 | `nodeExtraCaCerts`                   | Trusted certificates path                   | `nil`                                                      |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
