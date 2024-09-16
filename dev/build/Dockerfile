@@ -1,7 +1,7 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:18-alpine AS assets
+FROM node:20-alpine AS assets
 
 RUN apk add yarn g++ make cmake python3 --no-cache
 
@@ -25,7 +25,7 @@ RUN yarn patch-package
 # ===============
 # --- Release ---
 # ===============
-FROM node:18-alpine
+FROM node:20-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
