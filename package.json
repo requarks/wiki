@@ -11,7 +11,7 @@
     "build": "set NODE_OPTIONS=--openssl-legacy-provider && webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "set NODE_OPTIONS=--openssl-legacy-provider && webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
-    "jest" : "jest",
+    "jest": "jest",
     "cypress:open": "cypress open",
     "postinstall": "patch-package"
   },
