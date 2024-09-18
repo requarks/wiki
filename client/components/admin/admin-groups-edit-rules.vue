@@ -61,12 +61,13 @@
               )
               v-icon(v-if='rule.deny') mdi-cancel
               v-icon(v-else) mdi-check-circle
-            //- Roles
+            //- Sites
             v-select.ml-1(
               solo
-              :items='roles'
-              v-model='rule.roles'
-              placeholder='Select Role(s)...'
+              :items='sites'
+              v-model='rule.sites'
+
+              placeholder='Select Site(s)...'
               hide-details
               multiple
               chips
@@ -80,7 +81,7 @@
               )
               template(slot='selection', slot-scope='{ item, index }')
                 v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value }}
-                v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} more
+                v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.sites.length - 2 }} more
               template(slot='item', slot-scope='props')
                 v-list-item-action(style='min-width: 30px;')
                   v-checkbox(
@@ -196,118 +197,149 @@
 </template>
 
 <script>
-import _ from 'lodash'
-import { customAlphabet } from 'nanoid/non-secure'
+import _ from "lodash";
+import { customAlphabet } from "nanoid/non-secure";
 
 /* global siteLangs */
 
-const nanoid = customAlphabet('1234567890abcdef', 10)
+const nanoid = customAlphabet("1234567890abcdef", 10);
 
 export default {
   props: {
     value: {
       type: Object,
-      default: () => ({})
-    }
+      default: () => ({}),
+    },
   },
   data() {
     return {
-      roles: [
-        { text: 'Read Pages', value: 'read:pages', icon: 'mdi-file-eye-outline' },
-        { text: 'Create + Edit Pages', value: 'write:pages', icon: 'mdi-file-plus-outline' },
-        { text: 'Rename / Move Pages', value: 'manage:pages', icon: 'mdi-file-document-edit-outline' },
-        { text: 'Delete Pages', value: 'delete:pages', icon: 'mdi-file-remove-outline' },
-        { text: 'View Pages Source', value: 'read:source', icon: 'mdi-code-tags' },
-        { text: 'View Pages History', value: 'read:history', icon: 'mdi-history' },
-        { text: 'Read / Use Assets', value: 'read:assets', icon: 'mdi-image-search-outline' },
-        { text: 'Upload Assets', value: 'write:assets', icon: 'mdi-image-plus' },
-        { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'mdi-image-size-select-large' },
-        { text: 'Edit Scripts', value: 'write:scripts', icon: 'mdi-language-javascript' },
-        { text: 'Edit Styles', value: 'write:styles', icon: 'mdi-language-css3' },
-        { text: 'Read Comments', value: 'read:comments', icon: 'mdi-comment-search-outline' },
-        { text: 'Create Comments', value: 'write:comments', icon: 'mdi-comment-plus-outline' },
-        { text: 'Edit + Delete Comments', value: 'manage:comments', icon: 'mdi-comment-remove-outline' }
-      ],
+      sites: [],
       matches: [
-        { text: 'Path Starts With...', value: 'START', icon: '/...' },
-        { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
-        { text: 'Path Ends With...', value: 'END', icon: '.../' },
-        { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
-        { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
-      ]
-    }
+        { text: "Path Starts With...", value: "START", icon: "/..." },
+        { text: "Path is Exactly...", value: "EXACT", icon: "=" },
+        { text: "Path Ends With...", value: "END", icon: ".../" },
+        { text: "Path Matches Regex...", value: "REGEX", icon: "$.*" },
+        { text: "Tag Matches...", value: "TAG", icon: "T" },
+      ],
+    };
+  },
+  mounted() {
+    this.fetchSites();
   },
   computed: {
     group: {
-      get() { return this.value },
-      set(val) { this.$set('input', val) }
+      get() {
+        return this.value;
+      },
+      set(val) {
+        this.$emit("input", val);
+      },
     },
-    locales() { return siteLangs }
+    locales() {
+      return siteLangs;
+    },
   },
   methods: {
     addRule(group) {
       this.group.pageRules.push({
         id: nanoid(),
-        path: '',
-        roles: [],
-        match: 'START',
+        path: "",
+        match: "START",
         deny: false,
-        locales: []
-      })
+        locales: [],
+        sites: [],
+      });
     },
     removeRule(ruleId) {
-      this.group.pageRules.splice(_.findIndex(this.group.pageRules, ['id', ruleId]), 1)
+      this.group.pageRules.splice(
+        _.findIndex(this.group.pageRules, ["id", ruleId]),
+        1
+      );
     },
     comingSoon() {
-      this.$store.commit('showNotification', {
-        style: 'indigo',
+      this.$store.commit("showNotification", {
+        style: "indigo",
         message: `Coming soon...`,
-        icon: 'directions_boat'
-      })
+        icon: "directions_boat",
+      });
     },
-    dude (stuff) {
-      console.info(stuff)
-    }
-  }
-}
+    dude(stuff) {
+      console.info(stuff);
+    },
+    fetchSites() {
+      this.$store
+        .dispatch("admin/fetchSites", { apolloClient: this.$apollo })
+        .then((response) => {
+          const sitesData = response?.data?.pages?.list;
+
+          if (sitesData && Array.isArray(sitesData)) {
+            this.sites = sitesData.map((site) => ({
+              text: `${site.path} - ${site.id} - ${site.title}`,
+              value: site.id,
+              path: site.path,
+              title: site.title,
+            }));
+          } else if (sitesData) {
+            this.sites = Object.values(sitesData).map((site) => ({
+              text: `${site.path} - ${site.id} - ${site.title}`,
+              value: site.id,
+              path: site.path,
+              title: site.title,
+            }));
+          } else {
+            console.error("Fetched sites are not in array format.");
+            this.sites = [];
+          }
+
+          console.log("hallO", this.sites); // Überprüfe, ob die Daten richtig geladen sind
+        })
+        .catch((error) => {
+          console.error(error);
+          this.sites = [];
+        });
+    },
+  },
+};
 </script>
 
 <style lang="scss">
 .rules {
-  background-color: mc('blue-grey', '50');
+  background-color: mc("blue-grey", "50");
   border-radius: 4px;
   padding: 1rem;
   position: relative;
 
   @at-root .v-application.theme--dark & {
-    background-color: mc('grey', '800');
+    background-color: mc("grey", "800");
   }
 }
 
 .rule {
   display: flex;
-  background-color: mc('blue-grey', '100');
+  background-color: mc("blue-grey", "100");
   border-radius: 4px;
-  padding: .5rem;
+  padding: 0.5rem;
   align-items: center;
 
-  &-enter-active, &-leave-active {
-    transition: all .5s ease;
+  &-enter-active,
+  &-leave-active {
+    transition: all 0.5s ease;
   }
-  &-enter, &-leave-to {
+  &-enter,
+  &-leave-to {
     opacity: 0;
   }
 
   @at-root .v-application.theme--dark & {
-    background-color: mc('grey', '700');
+    background-color: mc("grey", "700");
   }
 
   & + .rule {
-    margin-top: .5rem;
+    margin-top: 0.5rem;
     position: relative;
 
     &::before {
-      content: '+';
+      content: "+";
       position: absolute;
       width: 2rem;
       height: 2rem;
@@ -316,21 +348,21 @@ export default {
       justify-content: center;
       align-items: center;
       font-weight: 600;
-      color: mc('blue-grey', '700');
+      color: mc("blue-grey", "700");
       font-size: 1.25rem;
-      background-color: mc('blue-grey', '50');
+      background-color: mc("blue-grey", "50");
       left: -2rem;
       top: -1.3rem;
 
       @at-root .v-application.theme--dark & {
-        background-color: mc('grey', '800');
-        color: mc('grey', '600');
+        background-color: mc("grey", "800");
+        color: mc("grey", "600");
       }
     }
   }
 
   .input-group + * {
-    margin-left: .5rem;
+    margin-left: 0.5rem;
   }
 }
 </style>

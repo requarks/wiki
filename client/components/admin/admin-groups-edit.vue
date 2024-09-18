@@ -33,7 +33,7 @@
               span Permissions
               v-icon mdi-lock-pattern
             v-tab(key='rules')
-              span Page Rules
+              span Rules
               v-icon mdi-file-lock
             v-tab(key='users')
               span Users
