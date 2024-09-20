@@ -215,11 +215,11 @@ export default {
     return {
       sites: [],
       matches: [
-        { text: "Path Starts With...", value: "START", icon: "/..." },
-        { text: "Path is Exactly...", value: "EXACT", icon: "=" },
-        { text: "Path Ends With...", value: "END", icon: ".../" },
-        { text: "Path Matches Regex...", value: "REGEX", icon: "$.*" },
-        { text: "Tag Matches...", value: "TAG", icon: "T" },
+        { text: 'Path Starts With...', value: 'START', icon: '/...' },
+        { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
+        { text: 'Path Ends With...', value: 'END', icon: '.../' },
+        { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
+        { text: 'Tag Matches...', value: 'TAG', icon: 'T' },
       ],
     };
   },
@@ -232,7 +232,7 @@ export default {
         return this.value;
       },
       set(val) {
-        this.$emit("input", val);
+        this.$emit('input', val);
       },
     },
     locales() {
@@ -243,8 +243,8 @@ export default {
     addRule(group) {
       this.group.pageRules.push({
         id: nanoid(),
-        path: "",
-        match: "START",
+        path: '',
+        match: 'START',
         deny: false,
         locales: [],
         sites: [],
@@ -252,15 +252,15 @@ export default {
     },
     removeRule(ruleId) {
       this.group.pageRules.splice(
-        _.findIndex(this.group.pageRules, ["id", ruleId]),
+        _.findIndex(this.group.pageRules, ['id', ruleId]),
         1
       );
     },
     comingSoon() {
-      this.$store.commit("showNotification", {
-        style: "indigo",
+      this.$store.commit('showNotification', {
+        style: 'indigo',
         message: `Coming soon...`,
-        icon: "directions_boat",
+        icon: 'directions_boat',
       });
     },
     dude(stuff) {
@@ -268,7 +268,7 @@ export default {
     },
     fetchSites() {
       this.$store
-        .dispatch("admin/fetchSites", { apolloClient: this.$apollo })
+        .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
         .then((response) => {
           const sitesData = response?.data?.pages?.list;
 
@@ -339,7 +339,7 @@ export default {
     position: relative;
 
     &::before {
-      content: "+";
+      content: '+';
       position: absolute;
       width: 2rem;
       height: 2rem;
@@ -348,9 +348,9 @@ export default {
       justify-content: center;
       align-items: center;
       font-weight: 600;
-      color: mc("blue-grey", "700");
+      color: mc('blue-grey', '700');
       font-size: 1.25rem;
-      background-color: mc("blue-grey", "50");
+      background-color: mc('blue-grey', '50');
       left: -2rem;
       top: -1.3rem;
 
