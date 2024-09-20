@@ -197,12 +197,12 @@
 </template>
 
 <script>
-import _ from "lodash";
-import { customAlphabet } from "nanoid/non-secure";
+import _ from 'lodash'
+import { customAlphabet } from 'nanoid/non-secure'
 
 /* global siteLangs */
 
-const nanoid = customAlphabet("1234567890abcdef", 10);
+const nanoid = customAlphabet('1234567890abcdef', 10)
 
 export default {
   props: {
@@ -304,19 +304,19 @@ export default {
 
 <style lang="scss">
 .rules {
-  background-color: mc("blue-grey", "50");
+  background-color: mc('blue-grey', '50');
   border-radius: 4px;
   padding: 1rem;
   position: relative;
 
   @at-root .v-application.theme--dark & {
-    background-color: mc("grey", "800");
+    background-color: mc('grey', '800');
   }
 }
 
 .rule {
   display: flex;
-  background-color: mc("blue-grey", "100");
+  background-color: mc('blue-grey', '100');
   border-radius: 4px;
   padding: 0.5rem;
   align-items: center;
@@ -331,7 +331,7 @@ export default {
   }
 
   @at-root .v-application.theme--dark & {
-    background-color: mc("grey", "700");
+    background-color: mc('grey', '700');
   }
 
   & + .rule {
@@ -355,8 +355,8 @@ export default {
       top: -1.3rem;
 
       @at-root .v-application.theme--dark & {
-        background-color: mc("grey", "800");
-        color: mc("grey", "600");
+        background-color: mc('grey', '800');
+        color: mc('grey', '600');
       }
     }
   }
