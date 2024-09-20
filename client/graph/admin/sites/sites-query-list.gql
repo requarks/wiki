@@ -4,5 +4,6 @@ query Sites {
         path
         isEnabled
         name
+        createdAt
     }
 }
