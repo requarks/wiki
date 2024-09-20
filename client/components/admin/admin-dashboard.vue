@@ -11,6 +11,17 @@
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
             v-icon.dashboard-icon mdi-file-document-outline
+            .overline {{$t('admin:dashboard.sites')}}
+            animated-number.display-1(
+              :value='info.pagesTotal'
+              :duration='2000'
+              :formatValue='round'
+              easing='easeOutQuint'
+              )
+      v-flex(xs12 md6 lg4 xl3 d-flex)
+        v-card.primary.dashboard-card.animated.fadeInUp(dark)
+          v-card-text
+            v-icon.dashboard-icon mdi-file-document-outline
             .overline {{$t('admin:dashboard.pages')}}
             animated-number.display-1(
               :value='info.pagesTotal'

@@ -14,6 +14,12 @@
           template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
+            v-list-item(to='/sites', color='primary', v-if='hasPermission(`manage:system`)')
+              v-list-item-avatar(size='24', tile): v-icon mdi-widgets
+              v-list-item-title {{ $t('admin:sites.title') }}
+              v-list-item-action(style='min-width:auto;')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
+                  .caption.grey--text {{ info.pagesTotal }}
             v-list-item(to='/general', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-widgets
               v-list-item-title {{ $t('admin:general.title') }}
@@ -145,6 +151,8 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-dashboard.vue') },
+    { path: '/sites', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-sites.vue') },
+    { path: '/sites/id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-sites-edit.vue') },
     { path: '/general', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-general.vue') },
     { path: '/locale', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-locale.vue') },
     { path: '/navigation', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-navigation.vue') },

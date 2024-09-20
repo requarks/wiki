@@ -1,0 +1,10 @@
+query {
+  sites{
+    list {
+      id
+      name
+      path
+      createdAt
+    }
+  }
+}
