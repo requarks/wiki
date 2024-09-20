@@ -1,0 +1,18 @@
+mutation ($name: String!, $path: String!) {
+  groups {
+    create(name: $name, path:$path) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+      site {
+        id
+        name
+        path
+        createdAt
+      }
+    }
+  }
+}
