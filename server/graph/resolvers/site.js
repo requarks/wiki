@@ -14,7 +14,8 @@ module.exports = {
         id: s.id,
         name: s.name,
         path: s.path,
-        isEnabled: s.isEnabled
+        isEnabled: s.isEnabled,
+        createdAt: s.createdAt,
       }))
     },
     async siteById(obj, args) {
@@ -52,6 +53,7 @@ module.exports = {
      */
     async createSite(obj, args, context) {
       try {
+        // TODO: Update ACL
         // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
         //   throw new Error('ERR_FORBIDDEN')
         // }

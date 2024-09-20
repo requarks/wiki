@@ -103,6 +103,7 @@ type Site {
   path: String
   isEnabled: Boolean
   name: String
+  createdAt: Date
 }
 
 type SiteCreateResponse {

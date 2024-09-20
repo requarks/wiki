@@ -16,7 +16,8 @@ module.exports = class Site extends Model {
         id: { type: 'string' },
         name: { type: 'string' },
         path: { type: 'string' },
-        isEnabled: { type: 'boolean', default: false }
+        isEnabled: { type: 'boolean', default: false },
+        createdAt: { type: 'string' }
       }
     }
   }
