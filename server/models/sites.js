@@ -27,7 +27,7 @@ module.exports = class Site extends Model {
 
   static async getSiteByPath({ path, forceReload = false }) {
     if (forceReload) {
-      await WIKI.db.sites.reloadCache()
+      await WIKI.models.sites.reloadCache()
     }
     const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['first_site']
     if (siteId) {
@@ -38,7 +38,7 @@ module.exports = class Site extends Model {
 
   static async reloadCache() {
     WIKI.logger.info('Reloading site configurations...')
-    const sites = await WIKI.db.sites.query().orderBy('id')
+    const sites = await WIKI.models.sites.query().orderBy('id')
     WIKI.sites = keyBy(sites, 'id')
     WIKI.sitesMappings = {}
     for (const site of sites) {
@@ -48,7 +48,7 @@ module.exports = class Site extends Model {
   }
 
   static async createSite(name, path) {
-    const newSite = await WIKI.db.sites.query().insertAndFetch({
+    const newSite = await WIKI.models.sites.query().insertAndFetch({
       name,
       isEnabled: true,
       path,
@@ -59,11 +59,11 @@ module.exports = class Site extends Model {
   }
 
   static async updateSite(id, patch) {
-    return WIKI.db.sites.query().findById(id).patch(patch)
+    return WIKI.models.sites.query().findById(id).patch(patch)
   }
 
   static async deleteSite(id) {
-    await WIKI.db.storage.query().delete().where('siteId', id)
-    return WIKI.db.sites.query().deleteById(id)
+    await WIKI.models.storage.query().delete().where('siteId', id)
+    return WIKI.models.sites.query().deleteById(id)
   }
 }
