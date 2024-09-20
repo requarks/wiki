@@ -16,7 +16,8 @@ module.exports = class Site extends Model {
         id: { type: 'string' },
         name: { type: 'string' },
         path: { type: 'string' },
-        isEnabled: { type: 'boolean', default: false }
+        isEnabled: { type: 'boolean', default: false },
+        createdAt: { type: 'string' }
       }
     }
   }
@@ -63,7 +64,7 @@ module.exports = class Site extends Model {
   }
 
   static async deleteSite(id) {
-    await WIKI.models.storage.query().delete().where('siteId', id)
+    // await WIKI.models.storage.query().delete().where('siteId', id)
     return WIKI.models.sites.query().deleteById(id)
   }
 }
