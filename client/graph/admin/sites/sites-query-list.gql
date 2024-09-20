@@ -1,10 +1,8 @@
-query {
-  sites{
-    list {
-      id
-      name
-      path
-      createdAt
+query Sites {
+    sites {
+        id
+        path
+        isEnabled
+        name
     }
-  }
 }

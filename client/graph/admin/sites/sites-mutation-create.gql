@@ -1,9 +1,7 @@
-mutation ($name: String!, $path: String!) {
-  groups {
-    create(name: $name, path:$path) {
-      responseResult {
-        succeeded
-        errorCode
+mutation CreateSite ($name: String!, $path: String!) {
+    createSite(name: $name, path: $path) {
+      operation {
+        succeeded        
         slug
         message
       }
@@ -11,8 +9,8 @@ mutation ($name: String!, $path: String!) {
         id
         name
         path
-        createdAt
+        isEnabled
       }
     }
   }
-}
+

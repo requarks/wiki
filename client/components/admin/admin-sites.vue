@@ -8,7 +8,6 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft Sites
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage Sites
           v-spacer
-          v-btn.animated.fadeInDown.wait-p2s.mx-3(color='grey', outlined, @click='$router.push("/sites/id" )')
           v-btn.animated.fadeInDown.wait-p2s.mx-3(color='grey', outlined, @click='refresh', icon)
             v-icon mdi-refresh
           v-dialog(v-model='newSiteDialog', max-width='500')
@@ -33,7 +32,7 @@
                 v-text-field.md2(
                   outlined
                   prepend-icon='mdi-account-Site'
-                  v-model='newSiteName'
+                  v-model='newSitePath'
                   label='Path'
                   counter='255'
                   @keyup.enter='createSite'
@@ -58,11 +57,10 @@
           )
             template(slot='item', slot-scope='props')
               tr.is-clickable(:active='props.selected', @click='$router.push("/sites/" + props.item.id)')
-                td {{ props.item.id }}
-                td: strong {{ props.item.name }}
+                td {{ props.item.name }}
+                td: strong {{ props.item.path }}
                 td {{ props.item.userCount }}
                 td {{ props.item.createdAt | moment('calendar') }}
-                td {{ props.item.updatedAt | moment('calendar') }}
                 td
                   v-tooltip(left, v-if='props.item.isSystem')
                     template(v-slot:activator='{ on }')
@@ -85,6 +83,7 @@ export default {
     return {
       newSiteDialog: false,
       newSiteName: '',
+      newSitePath: '',
       selectedSite: {},
       pagination: 1,
       pageCount: 0,
@@ -121,7 +120,7 @@ export default {
       if (_.trim(this.newSiteName).length < 1) {
         this.$store.commit('showNotification', {
           style: 'red',
-          message: 'Enter a site name.',
+          message: 'Enter a site name and a path',
           icon: 'warning'
         })
         return
@@ -131,17 +130,19 @@ export default {
         await this.$apollo.mutate({
           mutation: createSiteMutation,
           variables: {
-            name: this.newSiteName
+            name: this.newSiteName,
+            path: this.newSitePath
           },
           update (store, resp) {
-            const data = _.get(resp, 'data.sites.create', { responseResult: {} })
-            if (data.responseResult.succeeded === true) {
+            const data = _.get(resp, 'data.createSite', { operation: {} })
+            console.log('Mutation response:', resp)
+            if (data.operation.succeeded === true) {
               const apolloData = store.readQuery({ query: sitesQuery })
               data.site.userCount = 0
               apolloData.sites.list.push(data.site)
               store.writeQuery({ query: sitesQuery, data: apolloData })
             } else {
-              throw new Error(data.responseResult.message)
+              throw new Error(data.operation.message)
             }
           },
           watchLoading (isLoading) {
@@ -149,6 +150,7 @@ export default {
           }
         })
         this.newSiteName = ''
+        this.newSitePath = ''
         this.$store.commit('showNotification', {
           style: 'success',
           message: `Site has been created successfully.`,
@@ -163,7 +165,7 @@ export default {
     sites: {
       query: sitesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.sites.list,
+      update: (data) => { console.log('Received data from GraphQL query:', data); return data.sites} ,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-sites-refresh')
