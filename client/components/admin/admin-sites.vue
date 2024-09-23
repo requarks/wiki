@@ -117,7 +117,7 @@ export default {
       })
     },
     async createSite() {
-      if (_.trim(this.newSiteName).length < 1) {
+      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
         this.$store.commit('showNotification', {
           style: 'red',
           message: 'Enter a site name and a path',

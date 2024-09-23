@@ -1,0 +1,8 @@
+query SiteById($id: String!) {
+    siteById(id: $id) {
+        id
+        path
+        isEnabled
+        name
+    }
+}

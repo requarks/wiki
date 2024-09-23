@@ -1,0 +1,10 @@
+mutation DeleteSite ($id: String!) {
+    deleteSite(id: $id) {
+        responseResult {
+            succeeded
+            errorCode
+            slug
+            message
+        }
+    }
+}
