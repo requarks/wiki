@@ -120,6 +120,7 @@
 import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
+import sitesCount from 'gql/admin/sites/sites-query-count.gql'
 import gql from 'graphql-tag'
 import semverLte from 'semver/functions/lte'
 
@@ -215,13 +216,8 @@ export default {
       }
     },
     sitesTotal: {
-      query: gql`
-        query SiteCount {
-          siteCount {
-            count
-          }
-        }
-      `,
+      query: sitesCount,
+      fetchPolicy: 'network-only',
       update: (data) => data.siteCount.count || 0,
       watchLoading(isLoading) {
         this.sitesTotalLoading = isLoading;

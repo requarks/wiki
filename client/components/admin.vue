@@ -136,7 +136,7 @@
 import _ from 'lodash'
 import VueRouter from 'vue-router'
 import { get, sync } from 'vuex-pathify'
-import gql from 'graphql-tag'
+import sitesCount from 'gql/admin/sites/sites-query-count.gql'
 import statsQuery from 'gql/admin/dashboard/dashboard-query-stats.gql'
 
 import adminStore from '../store/admin'
@@ -247,13 +247,7 @@ export default {
       }
     },
     sitesTotal: {
-      query: gql`
-        query SiteCount {
-          siteCount {
-            count
-          }
-        }
-      `,
+      query: sitesCount,
       fetchPolicy: 'network-only',
       update: (data) => data.siteCount.count || 0,
       watchLoading(isLoading) {
