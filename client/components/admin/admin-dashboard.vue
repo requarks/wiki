@@ -13,7 +13,7 @@
             v-icon.dashboard-icon mdi-file-document-outline
             .overline {{$t('admin:dashboard.sites')}}
             animated-number.display-1(
-              :value='info.pagesTotal'
+              :value='sitesTotal'
               :duration='2000'
               :formatValue='round'
               easing='easeOutQuint'
@@ -141,7 +141,8 @@ export default {
       lastLoginsHeaders: [
         { text: 'User', value: 'displayName' },
         { text: 'Last Login', value: 'lastLoginAt', width: 250 }
-      ]
+      ],
+      sitesTotal: 0,
     }
   },
   computed: {
@@ -211,6 +212,20 @@ export default {
       watchLoading (isLoading) {
         this.lastLoginsLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-lastlogins')
+      }
+    },
+    sitesTotal: {
+      query: gql`
+        query SiteCount {
+          siteCount {
+            count
+          }
+        }
+      `,
+      update: (data) => data.siteCount.count || 0,
+      watchLoading(isLoading) {
+        this.sitesTotalLoading = isLoading;
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal');
       }
     }
   }
