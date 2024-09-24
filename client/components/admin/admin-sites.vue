@@ -139,7 +139,7 @@ export default {
             if (data.operation.succeeded === true) {
               const apolloData = store.readQuery({ query: sitesQuery })
               data.site.userCount = 0
-              apolloData.sites.list.push(data.site)
+              apolloData.sites.push(data.site)
               store.writeQuery({ query: sitesQuery, data: apolloData })
             } else {
               throw new Error(data.operation.message)
