@@ -15,6 +15,8 @@ extend type Query {
     path: String!
     exact: Boolean!
   ): Site
+
+  siteCount: SiteCount
 }
 
 extend type Mutation {
@@ -115,6 +117,10 @@ input SiteUpdateInput {
   isEnabled: Boolean
   name: String
   path: String
+}
+
+type SiteCount {
+  count: Int
 }
 
 type Operation {

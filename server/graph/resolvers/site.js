@@ -44,7 +44,13 @@ module.exports = {
         path: site.path,
         isEnabled: site.isEnabled
       } : null
-    }
+    },
+    async siteCount(obj, args) {
+      const result = await WIKI.models.sites.query().count('* as count')
+      return result ? {
+        count: result[0].count
+      } : 0
+    },
   },
   Mutation: {
     async site() { return {} },
