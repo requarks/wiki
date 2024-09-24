@@ -16,10 +16,10 @@
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
             v-list-item(to='/sites', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-widgets
-              v-list-item-title {{ $t('admin:sites.title') }}
+              v-list-item-title {{ $t('admin:Sites') }}
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
-                  .caption.grey--text {{ info.sitesTotal }}
+                  .caption.grey--text {{ sitesTotal }}
             v-list-item(to='/general', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-widgets
               v-list-item-title {{ $t('admin:general.title') }}
@@ -136,7 +136,7 @@
 import _ from 'lodash'
 import VueRouter from 'vue-router'
 import { get, sync } from 'vuex-pathify'
-
+import gql from 'graphql-tag'
 import statsQuery from 'gql/admin/dashboard/dashboard-query-stats.gql'
 
 import adminStore from '../store/admin'
@@ -211,7 +211,8 @@ export default {
             background: '#999'
           }
         }
-      }
+      },
+      sitesTotal: 0
     }
   },
   computed: {
@@ -243,6 +244,21 @@ export default {
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-stats-refresh')
+      }
+    },
+    sitesTotal: {
+      query: gql`
+        query SiteCount {
+          siteCount {
+            count
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => data.siteCount.count || 0,
+      watchLoading(isLoading) {
+        this.sitesTotalLoading = isLoading;
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal');
       }
     }
   }

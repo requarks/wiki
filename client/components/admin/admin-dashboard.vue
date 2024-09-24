@@ -11,7 +11,7 @@
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
             v-icon.dashboard-icon mdi-file-document-outline
-            .overline {{$t('admin:dashboard.sites')}}
+            .overline {{$t('sites')}}
             animated-number.display-1(
               :value='sitesTotal'
               :duration='2000'
