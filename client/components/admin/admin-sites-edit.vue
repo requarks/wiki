@@ -103,8 +103,7 @@ export default {
       }
     },
     async deleteSite() {
-      this.loading = true
-      this.$store.commit(`loadingStart`, 'site-delete')
+      this.deleteSiteDialog = false
       try {
         const resp = await this.$apollo.mutate({
           mutation: deleteSiteMutation,
@@ -112,20 +111,15 @@ export default {
             id: this.site.id
           }
         })
-        if (_.get(resp, 'data.sites.delete.responseResult.succeeded', false)) {
-          this.$store.commit('showNotification', {
-            style: 'green',
-            message: `Site deleted successfully.`,
-            icon: 'check'
-          })
-          this.$router.replace('/sites')
-        } else {
-          throw new Error(_.get(resp, 'data.sites.delete.responseResult.message', this.$t('common:error.unexpected')))
-        }
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `Site ${this.name} has been deleted.`,
+          icon: 'delete'
+        })
+        this.$router.replace('/sites')
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
-      this.$store.commit(`loadingStop`, 'site-delete')
     },
     async refresh() {
       return this.$apollo.queries.site.refetch()
