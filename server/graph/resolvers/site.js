@@ -23,8 +23,8 @@ module.exports = {
       return site ? {
         ...site.config,
         id: site.id,
-        name: s.name,
-        path: s.path,
+        name: site.name,
+        path: site.path,
         isEnabled: site.isEnabled
       } : null
     },
@@ -109,7 +109,8 @@ module.exports = {
         // -> Update site
         await WIKI.models.sites.updateSite(args.id, {
           isEnabled: args.patch.isEnabled ?? site.isEnabled,
-          name: args.patch.name ?? site.name
+          name: args.patch.name ?? site.name,
+          path: args.patch.path ?? site.path
         })
 
         return {
