@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/_assets/svg/icon-people.svg', alt='Sites', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/sitemap-outline.svg', alt='Sites', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Sites
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage Sites
@@ -59,13 +59,8 @@
               tr.is-clickable(:active='props.selected', @click='$router.push("/sites/" + props.item.id)')
                 td {{ props.item.name }}
                 td: strong {{ props.item.path }}
-                td {{ props.item.userCount }}
                 td {{ props.item.createdAt | moment('calendar') }}
-                td
-                  v-tooltip(left, v-if='props.item.isSystem')
-                    template(v-slot:activator='{ on }')
-                      v-icon(v-on='on') mdi-lock-outline
-                    span System Site
+
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outline) No sites to display.
           .text-xs-center.py-2(v-if='pageCount > 1')
@@ -117,10 +112,18 @@ export default {
       })
     },
     async createSite() {
-      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
+      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1)  {
         this.$store.commit('showNotification', {
           style: 'red',
           message: 'Enter a site name and a path',
+          icon: 'warning'
+        })
+        return
+      }
+      if (/[/\\.\s]/.test(this.newSitePath)) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Path cannot contain spaces, dots, "/", or "\\" characters',
           icon: 'warning'
         })
         return
@@ -132,13 +135,13 @@ export default {
           variables: {
             name: this.newSiteName,
             path: this.newSitePath
+
           },
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { operation: {} })
             console.log('Mutation response:', resp)
             if (data.operation.succeeded === true) {
               const apolloData = store.readQuery({ query: sitesQuery })
-              data.site.userCount = 0
               apolloData.sites.push(data.site)
               store.writeQuery({ query: sitesQuery, data: apolloData })
             } else {
