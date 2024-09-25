@@ -112,10 +112,18 @@ export default {
       })
     },
     async createSite() {
-      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
+      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1)  {
         this.$store.commit('showNotification', {
           style: 'red',
           message: 'Enter a site name and a path',
+          icon: 'warning'
+        })
+        return
+      }
+      if (/[/\\.\s]/.test(this.newSitePath)) {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Path cannot contain spaces, dots, "/", or "\\" characters',
           icon: 'warning'
         })
         return
@@ -127,13 +135,13 @@ export default {
           variables: {
             name: this.newSiteName,
             path: this.newSitePath
+
           },
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { operation: {} })
             console.log('Mutation response:', resp)
             if (data.operation.succeeded === true) {
               const apolloData = store.readQuery({ query: sitesQuery })
-              data.site.userCount = 0
               apolloData.sites.push(data.site)
               store.writeQuery({ query: sitesQuery, data: apolloData })
             } else {

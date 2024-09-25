@@ -115,7 +115,7 @@ export default {
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `Site ${this.name} has been deleted.`,
+          message: `Site ${this.site.name} has been deleted.`,
           icon: 'delete'
         })
         this.$router.replace('/sites')
