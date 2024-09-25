@@ -116,7 +116,6 @@ type SiteCreateResponse {
 input SiteUpdateInput {
   isEnabled: Boolean
   name: String
-  path: String
 }
 
 type SiteCount {

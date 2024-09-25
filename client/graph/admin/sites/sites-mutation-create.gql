@@ -10,6 +10,7 @@ mutation CreateSite ($name: String!, $path: String!) {
         name
         path
         isEnabled
+        createdAt
       }
     }
   }

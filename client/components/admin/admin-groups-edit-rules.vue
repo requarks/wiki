@@ -49,9 +49,9 @@
               v-list-item-title Export Rules
       v-card-text(:class='$vuetify.theme.dark ? `grey darken-4-l5` : `white`')
         .rules
-          .caption(v-if='group.pageRules.length === 0')
+          .caption(v-if='group.rules.length === 0')
             em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
-          .rule(v-for='rule of group.pageRules', :key='rule.id')
+          .rule(v-for='rule of group.rules', :key='rule.id')
             v-btn.ma-0.radius-4.rule-deny-btn(
               solo
               :color='rule.deny ? "red" : "green"'
@@ -208,8 +208,8 @@ export default {
   props: {
     value: {
       type: Object,
-      default: () => ({}),
-    },
+      default: () => ({})
+    }
   },
   data() {
     return {
@@ -219,87 +219,87 @@ export default {
         { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
         { text: 'Path Ends With...', value: 'END', icon: '.../' },
         { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
-        { text: 'Tag Matches...', value: 'TAG', icon: 'T' },
-      ],
-    };
+        { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
+      ]
+    }
   },
   mounted() {
-    this.fetchSites();
+    this.fetchSites()
   },
   computed: {
     group: {
       get() {
-        return this.value;
+        return this.value
       },
       set(val) {
-        this.$emit('input', val);
-      },
+        this.$emit('input', val)
+      }
     },
     locales() {
-      return siteLangs;
-    },
+      return siteLangs
+    }
   },
   methods: {
     addRule(group) {
-      this.group.pageRules.push({
+      this.group.rules.push({
         id: nanoid(),
         path: '',
         match: 'START',
         deny: false,
         locales: [],
-        sites: [],
-      });
+        sites: []
+      })
     },
     removeRule(ruleId) {
       this.group.pageRules.splice(
-        _.findIndex(this.group.pageRules, ['id', ruleId]),
+        _.findIndex(this.group.rules, ['id', ruleId]),
         1
-      );
+      )
     },
     comingSoon() {
       this.$store.commit('showNotification', {
         style: 'indigo',
         message: `Coming soon...`,
-        icon: 'directions_boat',
-      });
+        icon: 'directions_boat'
+      })
     },
     dude(stuff) {
-      console.info(stuff);
+      console.info(stuff)
     },
     fetchSites() {
       this.$store
         .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
         .then((response) => {
-          const sitesData = response?.data?.pages?.list;
+          const sitesData = response?.data?.pages?.list
 
           if (sitesData && Array.isArray(sitesData)) {
             this.sites = sitesData.map((site) => ({
               text: `${site.path} - ${site.id} - ${site.title}`,
               value: site.id,
               path: site.path,
-              title: site.title,
-            }));
+              title: site.title
+            }))
           } else if (sitesData) {
             this.sites = Object.values(sitesData).map((site) => ({
               text: `${site.path} - ${site.id} - ${site.title}`,
               value: site.id,
               path: site.path,
-              title: site.title,
-            }));
+              title: site.title
+            }))
           } else {
-            console.error("Fetched sites are not in array format.");
-            this.sites = [];
+            console.error('Fetched sites are not in array format.')
+            this.sites = []
           }
 
-          console.log("hallO", this.sites); // Überprüfe, ob die Daten richtig geladen sind
+          console.log('hallO', this.sites) // Überprüfe, ob die Daten richtig geladen sind
         })
         .catch((error) => {
-          console.error(error);
-          this.sites = [];
-        });
-    },
-  },
-};
+          console.error(error)
+          this.sites = []
+        })
+    }
+  }
+}
 </script>
 
 <style lang="scss">

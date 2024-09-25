@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async (pageId) => {
+module.exports = async ({ pageId, siteId }) => {
   WIKI.logger.info(`Rebuilding page tree...`)
 
   try {
@@ -10,7 +10,11 @@ module.exports = async (pageId) => {
     await WIKI.configSvc.loadFromDb()
     await WIKI.configSvc.applyFlags()
 
-    const pages = await WIKI.models.pages.query().select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS').orderBy(['localeCode', 'path'])
+    const pages = await WIKI.models.pages
+      .query()
+      .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS')
+      .where('siteId', 'IS', siteId)
+      .orderBy(['localeCode', 'path'])
     let tree = []
     let pik = 0
 
@@ -41,7 +45,8 @@ module.exports = async (pageId) => {
             privateNS: !isFolder ? page.privateNS : null,
             parent: parentId,
             pageId: isFolder ? null : page.id,
-            ancestors: JSON.stringify(ancestors)
+            ancestors: JSON.stringify(ancestors),
+            siteId
           })
           parentId = pik
         } else if (isFolder && !found.isFolder) {
@@ -54,7 +59,8 @@ module.exports = async (pageId) => {
       }
     }
 
-    await WIKI.models.knex.table('pageTree').truncate()
+    await WIKI.models.knex.table('pageTree').where('siteId', 'IS', siteId).del()
+
     if (tree.length > 0) {
       // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)
       if ((WIKI.config.db.type !== 'sqlite')) {

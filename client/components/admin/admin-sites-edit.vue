@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/_assets/svg/icon-social-group.svg', alt='Edit Site', style='width: 80px;')
+          img(src='/_assets/svg/sitemap-outline.svg', alt='Edit Site', style='width: 80px;')
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Site
             .subtitle-1.grey--text {{site.name}}
@@ -34,10 +34,9 @@
                     label='Site Name'
                     hide-details
                     prepend-icon='mdi-account-group'
-                    style='max-width: 600px;'
+                    :counter='255'
+                    style='max-width: 600px; margin-left: 15px; padding-bottom: 10px;'
                   )
-
-                  v-divider
                   v-card-text
                     v-text-field(
                       outlined
@@ -47,11 +46,15 @@
                       prepend-icon='mdi-arrow-top-left-thick'
                       style='max-width: 600px;'
                       :counter='255'
+                      :disabled='true'
                     )
 
-                    v-radio-group(v-model="site.isEnabled")
-                      v-radio(label="Enabled" :value="true")
-                      v-radio(label="Disabled" :value="false")
+                  v-switch.mt-0.ml-1(
+                    inset
+                    :label='$t(`Enabled or Disable Site`)'
+                    color='primary'
+                    v-model='site.isEnabled'
+                    )
                                        
       
 </template>
@@ -86,7 +89,6 @@ export default {
           variables: {
             id: this.site.id,
             name: this.site.name,
-            path: this.site.path,
             isEnabled: this.site.isEnabled
           },
           watchLoading (isLoading) {
@@ -113,7 +115,7 @@ export default {
         })
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `Site ${this.name} has been deleted.`,
+          message: `Site ${this.site.name} has been deleted.`,
           icon: 'delete'
         })
         this.$router.replace('/sites')
