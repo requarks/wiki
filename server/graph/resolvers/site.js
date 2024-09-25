@@ -15,7 +15,7 @@ module.exports = {
         name: s.name,
         path: s.path,
         isEnabled: s.isEnabled,
-        createdAt: s.createdAt,
+        createdAt: s.createdAt
       }))
     },
     async siteById(obj, args) {
@@ -50,7 +50,7 @@ module.exports = {
       return result ? {
         count: result[0].count
       } : 0
-    },
+    }
   },
   Mutation: {
     async site() { return {} },
