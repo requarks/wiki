@@ -149,7 +149,9 @@ type PageMutation {
     targetLocale: String!
   ): PageMigrationResponse @auth(requires: ["manage:system"])
 
-  rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
+  rebuildTree(
+    siteId: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 
   render(
     id: Int!
