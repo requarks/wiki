@@ -85,7 +85,8 @@ module.exports = {
         'privateNS',
         'contentType',
         'createdAt',
-        'updatedAt'
+        'updatedAt',
+        'siteId'
       ])
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
@@ -395,8 +396,15 @@ module.exports = {
      */
     async create(obj, args, context) {
       try {
+        const defaultSiteId = await WIKI.models.sites.getSiteIdByPath({ path: 'default', forceReload: true })
+
+        if (!defaultSiteId) {
+          throw new Error('Failed to insert default site and retrieve ID')
+        }
+
         const page = await WIKI.models.pages.createPage({
           ...args,
+          siteId: defaultSiteId,
           user: context.req.user
         })
         return {
@@ -545,7 +553,7 @@ module.exports = {
      */
     async rebuildTree(obj, args, context) {
       try {
-        await WIKI.models.pages.rebuildTree()
+        await WIKI.models.pages.rebuildTree({siteId: args.siteId})
         return {
           responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
         }
