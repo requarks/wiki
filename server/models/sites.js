@@ -1,3 +1,5 @@
+/* global WIKI */
+
 const Model = require('objection').Model
 const { keyBy } = require('lodash')
 
@@ -33,6 +35,18 @@ module.exports = class Site extends Model {
     const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['first_site']
     if (siteId) {
       return WIKI.sites[siteId]
+    }
+    return null
+  }
+
+  static async getSiteIdByPath({ path, forceReload = false }) {
+    if (forceReload) {
+      await WIKI.models.sites.reloadCache()
+    }
+    console.log(WIKI.sitesMappings)
+    const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['first_site']
+    if (siteId) {
+      return siteId
     }
     return null
   }
