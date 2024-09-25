@@ -30,7 +30,7 @@ module.exports = class Site extends Model {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()
     }
-    const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['first_site']
+    const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['default']
     if (siteId) {
       return WIKI.sites[siteId]
     }
