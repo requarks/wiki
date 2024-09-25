@@ -46,6 +46,7 @@
                       prepend-icon='mdi-arrow-top-left-thick'
                       style='max-width: 600px;'
                       :counter='255'
+                      :disabled='true'
                     )
 
                   v-switch.mt-0.ml-1(
@@ -88,7 +89,6 @@ export default {
           variables: {
             id: this.site.id,
             name: this.site.name,
-            path: this.site.path,
             isEnabled: this.site.isEnabled
           },
           watchLoading (isLoading) {
