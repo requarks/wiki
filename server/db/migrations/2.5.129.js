@@ -1,5 +1,3 @@
-/* global WIKI */
-
 exports.up = knex => {
   return knex.schema
     .createTable('sites', table => {

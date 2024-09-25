@@ -1,9 +1,4 @@
-/* global WIKI */
-
 exports.up = async knex => {
-  // TODO: SiteId cannot be null at the inception.
-  //       Consider adding a default site and refer it here with an UPDATE ... SET ... IF NOT NULL
-
   return knex.schema
     .table('assetFolders', table => {
       table.uuid('siteId').references('id').inTable('sites').index()
