@@ -1,0 +1,9 @@
+query Sites {
+    sites {
+        id
+        path
+        isEnabled
+        name
+        createdAt
+    }
+}

@@ -14,6 +14,12 @@
           template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
+            v-list-item(to='/sites', color='primary', v-if='hasPermission(`manage:system`)')
+              v-list-item-avatar(size='24', tile): v-icon mdi-widgets
+              v-list-item-title {{ $t('admin:Sites') }}
+              v-list-item-action(style='min-width:auto;')
+                v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
+                  .caption.grey--text {{ sitesTotal }}
             v-list-item(to='/general', color='primary', v-if='hasPermission(`manage:system`)')
               v-list-item-avatar(size='24', tile): v-icon mdi-widgets
               v-list-item-title {{ $t('admin:general.title') }}
@@ -130,7 +136,7 @@
 import _ from 'lodash'
 import VueRouter from 'vue-router'
 import { get, sync } from 'vuex-pathify'
-
+import sitesCount from 'gql/admin/sites/sites-query-count.gql'
 import statsQuery from 'gql/admin/dashboard/dashboard-query-stats.gql'
 
 import adminStore from '../store/admin'
@@ -145,6 +151,8 @@ const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-dashboard.vue') },
+    { path: '/sites', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-sites.vue') },
+    { path: '/sites/:id', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-sites-edit.vue') },
     { path: '/general', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-general.vue') },
     { path: '/locale', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-locale.vue') },
     { path: '/navigation', component: () => import(/* webpackChunkName: "admin" */ './admin/admin-navigation.vue') },
@@ -203,7 +211,8 @@ export default {
             background: '#999'
           }
         }
-      }
+      },
+      sitesTotal: 0
     }
   },
   computed: {
@@ -235,6 +244,15 @@ export default {
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-stats-refresh')
+      }
+    },
+    sitesTotal: {
+      query: sitesCount,
+      fetchPolicy: 'network-only',
+      update: (data) => data.siteCount.count || 0,
+      watchLoading(isLoading) {
+        this.sitesTotalLoading = isLoading;
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal');
       }
     }
   }

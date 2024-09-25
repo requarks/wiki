@@ -45,7 +45,8 @@ router.get(['/a', '/a/*'], (req, res, next) => {
     'manage:groups',
     'manage:navigation',
     'manage:theme',
-    'manage:api'
+    'manage:api',
+    'manage:sites'
   ])) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.status(403).render('unauthorized', { action: 'view' })

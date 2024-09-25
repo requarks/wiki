@@ -4,10 +4,37 @@
 
 extend type Query {
   site: SiteQuery
+
+  sites: [Site]
+
+  siteById (
+    id: String! # was UUID!
+  ): Site
+
+  siteByPath (
+    path: String!
+    exact: Boolean!
+  ): Site
+
+  siteCount: SiteCount
 }
 
 extend type Mutation {
   site: SiteMutation
+
+  createSite (
+    name: String!
+    path: String!
+  ): SiteCreateResponse
+
+  updateSite (
+    id: String! # was UUID!
+    patch: SiteUpdateInput!
+  ): DefaultResponse
+
+  deleteSite (
+    id: String! # was UUID!
+  ): DefaultResponse
 }
 
 # -----------------------------------------------
@@ -72,6 +99,35 @@ type SiteMutation {
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
+
+type Site {
+  id: String # was UUID
+  path: String
+  isEnabled: Boolean
+  name: String
+  createdAt: Date
+}
+
+type SiteCreateResponse {
+  operation: Operation
+  site: Site
+}
+
+input SiteUpdateInput {
+  isEnabled: Boolean
+  name: String
+  path: String
+}
+
+type SiteCount {
+  count: Int
+}
+
+type Operation {
+  succeeded: Boolean
+  slug: String
+  message: String
+}
 
 type SiteConfig {
   host: String
