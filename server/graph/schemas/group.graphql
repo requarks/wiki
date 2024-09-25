@@ -39,7 +39,7 @@ type GroupMutation {
     name: String!
     redirectOnLogin: String!
     permissions: [String]!
-    pageRules: [PageRuleInput]!
+    pageRules: [RuleInput]!
   ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   delete(
@@ -90,24 +90,24 @@ type Group {
 type Rule {
   id: String!
   deny: Boolean!
-  match: PageRuleMatch!
+  match: RuleMatch!
   roles: [String]!
   path: String!
   locales: [String]!
   sites: [String]!
 }
 
-input PageRuleInput {
+input RuleInput {
   id: String!
   deny: Boolean!
-  match: PageRuleMatch!
+  match: RuleMatch!
   roles: [String]!
   path: String!
   locales: [String]!
   sites: [String]!
 }
 
-enum PageRuleMatch {
+enum RuleMatch {
   START
   EXACT
   END
