@@ -1,6 +1,6 @@
 import { make } from 'vuex-pathify'
 import { gql } from "@apollo/client/core";
-import pagesQuery from 'gql/admin/pages/pages-query-list.gql'
+import sitesQuery from 'gql/admin/sites/sites-query-list.gql'
 
 const state = {
   info: {
@@ -27,13 +27,12 @@ export default {
       async fetchSites({ commit }, { apolloClient }) {
         try {
           const response = await apolloClient.query({
-            query: pagesQuery,
+            query: sitesQuery,
             fetchPolicy: 'network-only'
           });
-  
-          console.log(response.data);
-          console.log("Fetched Sites:", response.data.pages.list); 
-          const sites = response.data.pages.list;
+
+          console.log("Fetched Sites:", response.data); 
+          const sites = response.data;
   
           commit("SET_SITES", sites);
           return response;
