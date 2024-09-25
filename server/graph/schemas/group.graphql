@@ -39,7 +39,7 @@ type GroupMutation {
     name: String!
     redirectOnLogin: String!
     permissions: [String]!
-    pageRules: [RuleInput]!
+    rules: [RuleInput]!
   ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   delete(
@@ -81,7 +81,7 @@ type Group {
   isSystem: Boolean!
   redirectOnLogin: String
   permissions: [String]!
-  pageRules: [Rule]
+  rules: [Rule]
   users: [UserMinimal]
   createdAt: Date!
   updatedAt: Date!
