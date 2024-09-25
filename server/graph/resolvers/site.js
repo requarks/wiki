@@ -131,22 +131,22 @@ module.exports = {
      * DELETE SITE
      */
     async deleteSite(obj, args, context) {
-      const getPages = async (siteId) => {
+      const getPagesBySiteId = async (siteId) => {
         const pageIds = await WIKI.models.pages.query()
-          .select('id') // Select only the ID field
-          .where('siteId', 'IS', siteId) // Use your desired filterName
-          .fetchAll()
-        return pageIds
+          .select('id')
+          .where('siteId', '=', siteId)
+        return pageIds.map(p => p.id)
       }
 
-      const deletePage = async (pageId) => {
-        try {
-          await WIKI.models.pages.deletePage({ id: pageId })
-          return true
-        } catch (err) {
-          return false
-        }
-      }
+      // const deletePage = async (pageId) => {
+      //   try {
+      //     await WIKI.models.pages.deletePage({ id: pageId })
+      //     return true
+      //   } catch (err) {
+      //     WIKI.logger.warn(err)
+      //     return generateError(err)
+      //   }
+      // }
 
       try {
         // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
@@ -159,11 +159,11 @@ module.exports = {
           throw new WIKI.Error.Custom('SiteDeleteLastSite', 'Cannot delete the last site. At least 1 site must exists at all times.')
         }
 
-        const remainingPages = await getPages()
+        const remainingPages = await getPagesBySiteId(args.id)
 
-        for (const page of remainingPages) {
-          deletePage(page)
-        }
+        // for (const pageId of remainingPages) {
+        //   await deletePage(pageId)
+        // }
 
         // -> Delete site
         await WIKI.models.sites.deleteSite(args.id)
