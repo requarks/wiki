@@ -270,28 +270,26 @@ export default {
       this.$store
         .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
         .then((response) => {
-          const sitesData = response?.data?.pages?.list
+          const sitesData = response?.data?.sites
 
           if (sitesData && Array.isArray(sitesData)) {
             this.sites = sitesData.map((site) => ({
-              text: `${site.path} - ${site.id} - ${site.title}`,
+              text: `${site.path} - ${site.id} - ${site.name}`,
               value: site.id,
               path: site.path,
-              title: site.title
+              title: site.name,
             }))
           } else if (sitesData) {
             this.sites = Object.values(sitesData).map((site) => ({
-              text: `${site.path} - ${site.id} - ${site.title}`,
+              text: `${site.path} - ${site.id} - ${site.name}`,
               value: site.id,
               path: site.path,
-              title: site.title
+              title: site.name,
             }))
           } else {
             console.error('Fetched sites are not in array format.')
             this.sites = []
           }
-
-          console.log('hallO', this.sites) // Überprüfe, ob die Daten richtig geladen sind
         })
         .catch((error) => {
           console.error(error)
