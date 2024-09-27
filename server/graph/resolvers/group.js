@@ -89,7 +89,7 @@ module.exports = {
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-        pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules),
+        rules: JSON.stringify(WIKI.data.groups.defaultPageRules),
         isSystem: false
       })
       await WIKI.auth.reloadGroups()
@@ -151,7 +151,7 @@ module.exports = {
      */
     async update (obj, args, { req }) {
       // Check for unsafe regex page rules
-      if (_.some(args.pageRules, pr => {
+      if (_.some(args.rules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)
       })) {
         throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
@@ -186,7 +186,7 @@ module.exports = {
         name: args.name,
         redirectOnLogin: args.redirectOnLogin,
         permissions: JSON.stringify(args.permissions),
-        pageRules: JSON.stringify(args.pageRules)
+        rules: JSON.stringify(args.rules)
       }).where('id', args.id)
 
       // Revoke tokens for this group

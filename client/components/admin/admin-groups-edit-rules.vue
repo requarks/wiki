@@ -251,7 +251,7 @@ export default {
       })
     },
     removeRule(ruleId) {
-      this.group.pageRules.splice(
+      this.group.rules.splice(
         _.findIndex(this.group.rules, ['id', ruleId]),
         1
       )
