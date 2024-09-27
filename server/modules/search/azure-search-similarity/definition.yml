@@ -1,0 +1,45 @@
+key: azure-search-similarity
+title: Azure Search with Similarity Search
+description: AI-Powered cloud search service with vectorisation for embedding.
+author: UIC Digital
+logo: https://static.requarks.io/logo/azure.svg
+website: https://azure.microsoft.com/services/search/
+isAvailable: true
+props:
+  endpoint:
+    type: String
+    title: Azure Search Endpoint
+    hint: The endpoint of the Azure Search Service. Found under Properties.
+    order: 1
+  adminKey:
+    type: String
+    title: Admin API Key
+    hint: Either the primary or secondary admin key. Found under Keys.
+    order: 2
+  indexName:
+    type: String
+    title: Index Name
+    hint: 'Name to use when creating the index. (default: wiki)'
+    default: wiki
+    order: 3
+  embeddingModelAPIVersion:
+    type: String
+    title: Embedding Model API Version
+    hint: 'API version of the embedding model to use for vectorisation'
+    default: 2024-02-01
+    order: 4
+  embeddingModelKey:
+    type: String
+    title: Embedding Model Key
+    hint: 'Key of the embedding model to use for vectorisation'
+    order: 5
+  embeddingModelEndpoint:
+    type: String
+    title: Embedding Model Endpoint
+    hint: 'Endpoint of the embedding model to use for vectorisation'
+    order: 6
+  embeddingModelDeploymentName:
+    type: String
+    title: Embedding Model Deployment Name
+    hint: 'Deployment name of the embedding model to use for vectorisation'
+    order: 7

@@ -47,7 +47,7 @@ services:
     depends_on:
       - db
     ports:
-      - "3000:3000"
+      - "3500:3000"
     volumes:
       - ../..:/wiki
       - /wiki/node_modules

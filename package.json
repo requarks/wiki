@@ -4,7 +4,7 @@
   "releaseDate": "2019-01-01T01:01:01.000Z",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
-  "dev": true,
+  "dev": false,
   "scripts": {
     "start": "node server",
     "dev": "NODE_OPTIONS=--openssl-legacy-provider node dev",
@@ -37,6 +37,7 @@
     "node": ">=10.12"
   },
   "dependencies": {
+    "@azure/search-documents": "^12.0.0",
     "@azure/storage-blob": "12.12.0",
     "@exlinc/keycloak-passport": "1.0.2",
     "@joplin/turndown-plugin-gfm": "1.0.45",
@@ -335,7 +336,6 @@
     "zxcvbn": "4.4.2"
   },
   "resolutions": {
-    "apollo-server-express/**/graphql-tools": "4.0.8",
     "graphql": "15.3.0"
   },
   "browserslist": [
