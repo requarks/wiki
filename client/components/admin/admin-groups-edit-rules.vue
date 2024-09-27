@@ -80,7 +80,7 @@
               dense
               )
               template(slot='selection', slot-scope='{ item, index }')
-                v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.value }}
+                v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.title, item.path }}
                 v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.sites.length - 2 }} more
               template(slot='item', slot-scope='props')
                 v-list-item-action(style='min-width: 30px;')
@@ -275,17 +275,17 @@ export default {
 
           if (sitesData && Array.isArray(sitesData)) {
             this.sites = sitesData.map((site) => ({
-              text: `${site.path} - ${site.id} - ${site.name}`,
-              value: site.id,
-              path: site.path,
+              text: `${site.name} - ${site.path}`,
               title: site.name,
+              value: site.id,
+              path: site.path
             }))
           } else if (sitesData) {
             this.sites = Object.values(sitesData).map((site) => ({
-              text: `${site.path} - ${site.id} - ${site.name}`,
-              value: site.id,
-              path: site.path,
+              text: `${site.name} - ${site.path}`,
               title: site.name,
+              value: site.id,
+              path: site.path
             }))
           } else {
             console.error('Fetched sites are not in array format.')
