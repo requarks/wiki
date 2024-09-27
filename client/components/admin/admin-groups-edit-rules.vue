@@ -244,6 +244,7 @@ export default {
       this.group.rules.push({
         id: nanoid(),
         path: '',
+        roles: [],
         match: 'START',
         deny: false,
         locales: [],
