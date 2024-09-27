@@ -186,7 +186,6 @@ export default {
               warning: true,
               restrictedForSystem: true,
               disabled: true
-
             }
           ]
         }

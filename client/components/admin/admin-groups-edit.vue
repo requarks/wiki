@@ -118,8 +118,7 @@ export default {
         permissions: [],
         rules: [],
         users: [],
-        redirectOnLogin: '/',
-        sites: []
+        redirectOnLogin: '/'
       },
       deleteGroupDialog: false,
       tab: null,
