@@ -18,28 +18,28 @@ export default {
   state,
   mutations: {
     ...make.mutations(state),
-  SET_SITES(state, sites) {
-    state.sites = sites;
+    SET_SITES(state, sites) {
+      state.sites = sites
+    }
   },
-},
 
   actions: {
-      async fetchSites({ commit }, { apolloClient }) {
-        try {
-          const response = await apolloClient.query({
-            query: sitesQuery,
-            fetchPolicy: 'network-only'
-          });
+    async fetchSites({ commit }, { apolloClient }) {
+      try {
+        const response = await apolloClient.query({
+          query: sitesQuery,
+          fetchPolicy: 'network-only'
+        })
 
-          console.log("Fetched Sites:", response.data); 
-          const sites = response.data;
-  
-          commit("SET_SITES", sites);
-          return response;
-        } catch (error) {
-          console.error("Error fetching sites:", error);
-          throw error;
-        }
-      },
-  },
-};
+        console.log('Fetched Sites:', response.data)
+        const sites = response.data
+
+        commit('SET_SITES', sites)
+        return response
+      } catch (error) {
+        console.error('Error fetching sites:', error)
+        throw error
+      }
+    }
+  }
+}
