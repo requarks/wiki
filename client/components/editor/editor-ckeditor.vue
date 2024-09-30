@@ -17,8 +17,7 @@
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
-import DecoupledEditor from '@requarks/ckeditor5'
-// import DecoupledEditor from '../../../../wiki-ckeditor5/build/ckeditor'
+import DecoupledEditor from './ckeditor/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
 
@@ -37,6 +36,7 @@ export default {
   data() {
     return {
       editor: null,
+      isDiagramEdit: false,
       stats: {
         characters: 0,
         words: 0
@@ -60,6 +60,48 @@ export default {
     },
     insertLinkHandler ({ locale, path }) {
       this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
+    },
+    insertDiagram() {
+      this.isDiagramEdit = false
+      this.toggleModal('editorModalDrawio')
+    },
+    editDiagram(diagram) {
+      this.isDiagramEdit = true
+      this.$store.set('editor/activeModalData', diagram);
+      this.toggleModal('editorModalDrawio');
+    },
+    toggleModal(modalKey) {
+      this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
+    },
+    getSelectedWidget() {
+      return document.getElementsByClassName('image ck-widget_selected').item(0);
+    },
+    getSelectedDiagram() {
+      const selection = this.getSelectedWidget();
+      return selection.getElementsByTagName('img').item(0).getAttribute('src');
+    },
+    getDiagramCaption() {
+      const selection = this.getSelectedWidget();
+      return selection.getElementsByTagName('figcaption').item(0).firstChild.data;
+    },
+    setDiagramCaption(caption) {
+      const selection = this.getSelectedWidget();
+
+      const userAgent = navigator.userAgent
+      const chromeRE = /Chrome\/(\d{3})\.\d/
+      const chromeMatch = chromeRE.exec(userAgent)
+      const firefoxRE = /Firefox\/(\d{3})\.\d/
+      const firefoxMatch = firefoxRE.exec(userAgent)
+
+      if ( (firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
+        ( chromeMatch && Number(chromeMatch[1]) >= 124) ) {
+        // The caption is sanatized by the ckEditor
+        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption);
+      }
+      else if ( chromeMatch && Number(chromeMatch[1]) < 124) {
+        // setHTMLUnsafe is not available for earlier browser versions
+        selection.getElementsByTagName('figcaption').item(0).setHTML(caption);
+      }
     }
   },
   async mounted () {
@@ -69,17 +111,6 @@ export default {
       language: this.locale,
       placeholder: 'Type the page content here',
       disableNativeSpellChecker: false,
-      // TODO: Mention autocomplete
-      //
-      // mention: {
-      //   feeds: [
-      //     {
-      //       marker: '@',
-      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
-      //       minimumCharacters: 1
-      //     }
-      //   ]
-      // },
       wordCount: {
         onUpdate: stats => {
           this.stats = {
@@ -112,9 +143,19 @@ export default {
           })
           break
         case 'DIAGRAM':
+          let caption = ''
+          if(this.isDiagramEdit) {
+            caption = this.getDiagramCaption()
+            this.editor.execute('delete')
+          }
+
           this.editor.execute('imageInsert', {
             source: `data:image/svg+xml;base64,${opts.text}`
           })
+
+          if(this.isDiagramEdit && caption) {
+            this.setDiagramCaption(caption)
+          }
           break
       }
     })
@@ -129,6 +170,14 @@ export default {
     })
     this.$root.$on('overwriteEditorContent', () => {
       this.editor.setData(this.$store.get('editor/content'))
+    })
+
+    this.$root.$on('insertDiagram', () => {
+      this.insertDiagram()
+    })
+    this.$root.$on('editDiagram', () => {
+      const selectedImg = this.getSelectedDiagram()
+      this.editDiagram(selectedImg)
     })
   },
   beforeDestroy () {
