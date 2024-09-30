@@ -55,7 +55,7 @@ services:
       - "dev1"
       - "dev2"
     build:
-      context: ./
+      context: ../
       dockerfile: Dockerfile
       args:
         ENV: ${ENVIRONMENT}

@@ -6,11 +6,11 @@ set -e
 
 # only sources if local deployment is true checks whether file exists and sources it
 if [ -z "$1" ]; then
-  echo "Usage: $0 {--local|--dev1|--dev2|--staging|--prod} [VAR1=value1 VAR2=value2 ...]"
+  echo "Usage: $0 {--local|--dev1 |--prod} [VAR1=value1 VAR2=value2 ...]"
   exit 1
 fi
 
-export DEPLOYMENT_HOME=~/wiki.js/mar/deployment
+export DEPLOYMENT_HOME=~/mar/deployment
 
 confirm_deployment() {
     read -p "Are you sure you want to deploy to production? (yes/no): " choice
@@ -146,4 +146,6 @@ else
       --env-file ${ENV_PATH}/.env.loki \
       --env-file ${ENV_PATH}/.env.promtail \
       --profile ${ENVIRONMENT} up -d --build
+    # to build docker image for  wiki with no cache (if previous cmnd buit with cache), so that latest changes will be deployed
+    #docker compose  -f ${DOCKER_COMPOSE_FILE}  --env-file ${ENV_PATH}/.env.wiki --profile ${ENVIRONMENT} build  --no-cache wiki 
 fi

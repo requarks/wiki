@@ -11,7 +11,7 @@ fi
 # Set the environment file based on the flag
 case "$1" in
   --dev1)
-    FILE="./env/dev1/.env.deploy"
+    FILE="../env/dev1/.env.deploy"
     ;;
   --dev2)
     FILE="./env/dev2/.env.deploy"
@@ -20,7 +20,7 @@ case "$1" in
     FILE="./env/staging/.env.deploy"
     ;;
   --prod)
-    FILE="./env/prod/.env.deploy"
+    FILE="../env/prod/.env.deploy"
     ;;
   *)
     echo "Invalid environment: $1"

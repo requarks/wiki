@@ -2,11 +2,12 @@
 
 set -e
 
-SERVICE=${1:-db}
+
+SERVICE=${1:-wiki}
 SERVICE_DB=${2:-${SERVICE}-db}
 DB_USER=${3:-postgres}
-DATABASE=${4:-postgres}
-BACKUP_FILE=${5:-backup.dump}
+DATABASE=${4:-wiki}
+BACKUP_FILE=20240927_114042_wiki.bck.dump #name of backup dump file
 
 docker stop ${SERVICE}
 
