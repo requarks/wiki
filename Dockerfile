@@ -43,6 +43,14 @@ COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./package.json ./package.json
 COPY --chown=node:node ./LICENSE ./LICENSE
 
+USER root
+
+ARG ENV
+ARG CERT_FILE
+
+ADD ./deployment/config/${ENV}/certs/${CERT_FILE} /usr/local/share/ca-certificates/${CERT_FILE}
+RUN chmod 644 /usr/local/share/ca-certificates/${CERT_FILE} && update-ca-certificates
+
 
 USER node
 
