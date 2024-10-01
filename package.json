@@ -265,7 +265,7 @@
     "canvas-confetti": "1.3.1",
     "cash-dom": "8.1.3",
     "chart.js": "2.9.4",
-    "clean-webpack-plugin": "3.0.0",
+    "clean-webpack-plugin": "^4.0.0",
     "clipboard": "2.0.11",
     "codemirror": "5.58.2",
     "codemirror-asciidoc": "1.0.4",
