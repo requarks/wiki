@@ -4350,7 +4350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/webpack@npm:^4.4.31, @types/webpack@npm:^4.41.8":
+"@types/webpack@npm:^4.41.8":
   version: 4.41.39
   resolution: "@types/webpack@npm:4.41.39"
   dependencies:
@@ -7750,15 +7750,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clean-webpack-plugin@npm:3.0.0":
-  version: 3.0.0
-  resolution: "clean-webpack-plugin@npm:3.0.0"
+"clean-webpack-plugin@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "clean-webpack-plugin@npm:4.0.0"
   dependencies:
-    "@types/webpack": "npm:^4.4.31"
     del: "npm:^4.1.1"
   peerDependencies:
-    webpack: "*"
-  checksum: 10c0/780c87d3730544c56c779f5e422eee3c438446e3120724f5c4d1aab88dca5eedd7a1890c49785c19b048e77c519cf21a17f9c8550a97514ef88fed1d02dbe243
+    webpack: ">=4.0.0 <6.0.0"
+  checksum: 10c0/55fe230dddb9fdf2b3cbffa7fab4e47570c84d524f9ae81a3fa1f58ec4077349e9aabf6a2b5bcf4915f1e4205d2dd6b945e633146fccb21dd59989260527615f
   languageName: node
   linkType: hard
 
@@ -25427,7 +25426,7 @@ __metadata:
     chokidar: "npm:3.5.3"
     chromium-pickle-js: "npm:0.2.0"
     clean-css: "npm:5.3.2"
-    clean-webpack-plugin: "npm:3.0.0"
+    clean-webpack-plugin: "npm:^4.0.0"
     clipboard: "npm:2.0.11"
     codemirror: "npm:5.58.2"
     codemirror-asciidoc: "npm:1.0.4"
