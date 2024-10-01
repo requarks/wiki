@@ -59,10 +59,9 @@ module.exports = {
      */
     async createSite(obj, args, context) {
       try {
-        // TODO: Update ACL
-        // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
-        //   throw new Error('ERR_FORBIDDEN')
-        // }
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
 
         WIKI.logger.info(`Creating site ${args.name} (${args.path})...`)
 
@@ -103,9 +102,9 @@ module.exports = {
      */
     async updateSite(obj, args, context) {
       try {
-        // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
-        //   throw new Error('ERR_FORBIDDEN')
-        // }
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
 
         // -> Load site
         const site = await WIKI.models.sites.query().findById(args.id)
@@ -148,9 +147,9 @@ module.exports = {
       // }
 
       try {
-        // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
-        //   throw new Error('ERR_FORBIDDEN')
-        // }
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
 
         // -> Ensure site isn't last one
         const sitesCount = await WIKI.models.sites.query().count('id').first()
