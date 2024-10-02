@@ -76,18 +76,20 @@ module.exports = {
     async list (obj, args, context, info) {
       let results = await WIKI.models.pages.query().column([
         'pages.id',
-        'path',
+        'pages.path',
         { locale: 'localeCode' },
-        'title',
-        'description',
-        'isPublished',
-        'isPrivate',
-        'privateNS',
-        'contentType',
-        'createdAt',
-        'updatedAt',
-        'siteId'
+        'pages.title',
+        'pages.description',
+        'pages.isPublished',
+        'pages.isPrivate',
+        'pages.privateNS',
+        'pages.contentType',
+        'pages.createdAt',
+        'pages.updatedAt',
+        'pages.siteId',
+        'sites.name as siteName'
       ])
+        .leftJoin('sites', 'pages.siteId', 'sites.id')
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
           builder.select('tag')

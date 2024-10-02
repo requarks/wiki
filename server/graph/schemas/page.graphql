@@ -283,6 +283,8 @@ type PageListItem {
   createdAt: Date!
   updatedAt: Date!
   tags: [String]
+  siteId: String
+  siteName: String
 }
 
 type PageTreeItem {
