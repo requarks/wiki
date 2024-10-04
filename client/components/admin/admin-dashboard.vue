@@ -11,6 +11,17 @@
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
             v-icon.dashboard-icon mdi-file-document-outline
+            .overline {{$t('sites')}}
+            animated-number.display-1(
+              :value='sitesTotal'
+              :duration='2000'
+              :formatValue='round'
+              easing='easeOutQuint'
+              )
+      v-flex(xs12 md6 lg4 xl3 d-flex)
+        v-card.primary.dashboard-card.animated.fadeInUp(dark)
+          v-card-text
+            v-icon.dashboard-icon mdi-file-document-outline
             .overline {{$t('admin:dashboard.pages')}}
             animated-number.display-1(
               :value='info.pagesTotal'
@@ -109,6 +120,7 @@
 import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
+import sitesCount from 'gql/admin/sites/sites-query-count.gql'
 import gql from 'graphql-tag'
 import semverLte from 'semver/functions/lte'
 
@@ -130,7 +142,8 @@ export default {
       lastLoginsHeaders: [
         { text: 'User', value: 'displayName' },
         { text: 'Last Login', value: 'lastLoginAt', width: 250 }
-      ]
+      ],
+      sitesTotal: 0,
     }
   },
   computed: {
@@ -200,6 +213,15 @@ export default {
       watchLoading (isLoading) {
         this.lastLoginsLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-lastlogins')
+      }
+    },
+    sitesTotal: {
+      query: sitesCount,
+      fetchPolicy: 'network-only',
+      update: (data) => data.siteCount.count || 0,
+      watchLoading(isLoading) {
+        this.sitesTotalLoading = isLoading;
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal');
       }
     }
   }

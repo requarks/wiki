@@ -7,11 +7,11 @@
   "dev": true,
   "scripts": {
     "start": "node server",
-    "dev": "set NODE_OPTIONS=--openssl-legacy-provider && node dev",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider && webpack --profile --config dev/webpack/webpack.prod.js",
-    "watch": "set NODE_OPTIONS=--openssl-legacy-provider && webpack --config dev/webpack/webpack.dev.js",
+    "dev": "NODE_OPTIONS=--openssl-legacy-provider node dev",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider webpack --profile --config dev/webpack/webpack.prod.js",
+    "watch": "NODE_OPTIONS=--openssl-legacy-provider webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
-    "jest" : "jest",
+    "jest": "jest",
     "cypress:open": "cypress open",
     "postinstall": "patch-package"
   },
@@ -367,7 +367,6 @@
     "zxcvbn": "4.4.2"
   },
   "resolutions": {
-    "apollo-server-express/**/graphql-tools": "4.0.8",
     "graphql": "15.3.0"
   },
   "browserslist": [

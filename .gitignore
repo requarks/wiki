@@ -28,6 +28,7 @@ server/views/setup.pug
 
 # Config Files
 /config.yml
+/.env
 
 # Data directories
 /repo
@@ -40,6 +41,7 @@ server/views/setup.pug
 # IDE exclude
 .idea
 *.sublime-*
+.vscode
 
 # Test results
 test-results/
@@ -53,3 +55,5 @@ test-results/
 deployment/data/*
 deployment/env/local/secrets/*
 **/local/certs/*
+
+

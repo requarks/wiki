@@ -1,14 +1,179 @@
 const graphHelper = require('../../helpers/graph')
+const { generateError, generateSuccess } = require('../../helpers/graph')
 const _ = require('lodash')
 
 /* global WIKI */
 
 module.exports = {
   Query: {
-    async site() { return {} }
+    async site() { return {} },
+    async sites() {
+      const sites = await WIKI.models.sites.query().orderBy('name')
+      return sites.map(s => ({
+        ...s.config,
+        id: s.id,
+        name: s.name,
+        path: s.path,
+        isEnabled: s.isEnabled,
+        createdAt: s.createdAt
+      }))
+    },
+    async siteById(obj, args) {
+      const site = await WIKI.models.sites.query().findById(args.id)
+      return site ? {
+        ...site.config,
+        id: site.id,
+        name: site.name,
+        path: site.path,
+        isEnabled: site.isEnabled
+      } : null
+    },
+    async siteByPath(obj, args) {
+      let site = await WIKI.models.sites.query().where({
+        path: args.path
+      }).first()
+      if (!site && !args.exact) {
+        site = await WIKI.models.sites.query().where({
+          path: '*'
+        }).first()
+      }
+      return site ? {
+        ...site.config,
+        id: site.id,
+        name: site.name,
+        path: site.path,
+        isEnabled: site.isEnabled
+      } : null
+    },
+    async siteCount(obj, args) {
+      const result = await WIKI.models.sites.query().count('* as count')
+      return result ? {
+        count: result[0].count
+      } : 0
+    }
   },
   Mutation: {
-    async site() { return {} }
+    async site() { return {} },
+    /**
+     * CREATE SITE
+     */
+    async createSite(obj, args, context) {
+      try {
+        // TODO: Update ACL
+        // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        //   throw new Error('ERR_FORBIDDEN')
+        // }
+
+        WIKI.logger.info(`Creating site ${args.name} (${args.path})...`)
+
+        // -> Validate inputs
+        if (!args.path || args.path.length < 1 || !/^(\\*)|([a-z0-9\-.:]+)$/.test(args.path)) {
+          throw new WIKI.Error.Custom('SiteCreateInvalidPath', 'Invalid Site Path')
+        }
+        if (!args.name || args.name.length < 1 || !/^[^<>"]+$/.test(args.name)) {
+          throw new WIKI.Error.Custom('SiteCreateInvalidName', 'Invalid Site Name')
+        }
+        // -> Check for duplicate path
+        const site = await WIKI.models.sites.query().where({
+          path: args.path
+        }).first()
+
+        if (site) {
+          throw new WIKI.Error.SiteAlreadyExists('A site with the same path already exists! Cannot have 2 sites with the same path.')
+        }
+
+        // -> Create site
+        const newSite = await WIKI.models.sites.createSite(args.name, args.path)
+
+        // TODO: call server / models / pages.js: createPage function and initiate it wit label Home and path equal to site.path
+
+        WIKI.logger.info(`Created site ${args.name} (${args.path}).`)
+
+        return {
+          operation: generateSuccess('Site created successfully'),
+          site: newSite
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
+      }
+    },
+    /**
+     * UPDATE SITE
+     */
+    async updateSite(obj, args, context) {
+      try {
+        // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        //   throw new Error('ERR_FORBIDDEN')
+        // }
+
+        // -> Load site
+        const site = await WIKI.models.sites.query().findById(args.id)
+        if (!site) {
+          throw new WIKI.Error.Custom('SiteInvalidId', 'Invalid Site ID')
+        }
+        // -> Update site
+        await WIKI.models.sites.updateSite(args.id, {
+          isEnabled: args.patch.isEnabled ?? site.isEnabled,
+          name: args.patch.name ?? site.name
+        })
+
+        return {
+          operation: generateSuccess('Site updated successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
+      }
+    },
+    /**
+     * DELETE SITE
+     */
+    async deleteSite(obj, args, context) {
+      const getPagesBySiteId = async (siteId) => {
+        const pageIds = await WIKI.models.pages.query()
+          .select('id')
+          .where('siteId', '=', siteId)
+        return pageIds.map(p => p.id)
+      }
+
+      // const deletePage = async (pageId) => {
+      //   try {
+      //     await WIKI.models.pages.deletePage({ id: pageId })
+      //     return true
+      //   } catch (err) {
+      //     WIKI.logger.warn(err)
+      //     return generateError(err)
+      //   }
+      // }
+
+      try {
+        // if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        //   throw new Error('ERR_FORBIDDEN')
+        // }
+
+        // -> Ensure site isn't last one
+        const sitesCount = await WIKI.models.sites.query().count('id').first()
+        if (sitesCount?.count && _.toNumber(sitesCount?.count) <= 1) {
+          throw new WIKI.Error.Custom('SiteDeleteLastSite', 'Cannot delete the last site. At least 1 site must exists at all times.')
+        }
+
+        const remainingPages = await getPagesBySiteId(args.id)
+
+        // for (const pageId of remainingPages) {
+        //   await deletePage(pageId)
+        // }
+
+        // -> Delete site
+        await WIKI.models.sites.deleteSite(args.id)
+        return {
+          operation: generateSuccess('Site deleted successfully')
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return generateError(err)
+      }
+    }
   },
   SiteQuery: {
     async config(obj, args, context, info) {

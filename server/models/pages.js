@@ -47,6 +47,7 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
+        siteId: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -315,7 +316,8 @@ module.exports = class Page extends Model {
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
-      })
+      }),
+      siteId: opts.siteId
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -333,7 +335,7 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.renderPage(page)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.models.pages.rebuildTree(opts.siteId)
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -736,7 +738,7 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.models.pages.rebuildTree(opts.siteId)
 
     // -> Rename in Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -815,7 +817,7 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.models.pages.rebuildTree(opts.siteId)
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
@@ -919,12 +921,12 @@ module.exports = class Page extends Model {
    *
    * @returns {Promise} Promise with no value
    */
-  static async rebuildTree() {
+  static async rebuildTree(siteId) {
     const rebuildJob = await WIKI.scheduler.registerJob({
       name: 'rebuild-tree',
       immediate: true,
       worker: true
-    })
+    }, siteId)
     return rebuildJob.finished
   }
 

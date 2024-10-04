@@ -209,6 +209,10 @@ module.exports = {
     message: 'An unexpected error occured during search operation.',
     code: 4001
   }),
+  SiteAlreadyExists: CustomError('SiteAlreadyExists', {
+    message: 'Site already exists.',
+    code: 1012
+  }),
   SystemGenericError: CustomError('SystemGenericError', {
     message: 'An unexpected error occured.',
     code: 7001

@@ -49,9 +49,9 @@
               v-list-item-title Export Rules
       v-card-text(:class='$vuetify.theme.dark ? `grey darken-4-l5` : `white`')
         .rules
-          .caption(v-if='group.pageRules.length === 0')
+          .caption(v-if='group.rules.length === 0')
             em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
-          .rule(v-for='rule of group.pageRules', :key='rule.id')
+          .rule(v-for='rule of group.rules', :key='rule.id')
             v-btn.ma-0.radius-4.rule-deny-btn(
               solo
               :color='rule.deny ? "red" : "green"'
@@ -246,7 +246,7 @@ export default {
   },
   methods: {
     addRule(group) {
-      this.group.pageRules.push({
+      this.group.rules.push({
         id: nanoid(),
         path: '',
         roles: [],
@@ -256,7 +256,7 @@ export default {
       })
     },
     removeRule(ruleId) {
-      this.group.pageRules.splice(_.findIndex(this.group.pageRules, ['id', ruleId]), 1)
+      this.group.rules.splice(_.findIndex(this.group.rules, ['id', ruleId]), 1)
     },
     comingSoon() {
       this.$store.commit('showNotification', {

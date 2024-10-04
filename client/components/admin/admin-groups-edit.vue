@@ -116,9 +116,10 @@ export default {
         name: '',
         isSystem: false,
         permissions: [],
-        pageRules: [],
+        rules: [],
         users: [],
-        redirectOnLogin: '/'
+        redirectOnLogin: '/',
+        sites: []
       },
       deleteGroupDialog: false,
       tab: null,
@@ -142,7 +143,7 @@ export default {
               $name: String!
               $redirectOnLogin: String!
               $permissions: [String]!
-              $pageRules: [PageRuleInput]!
+              $rules: [RuleInput]!
             ) {
               groups {
                 update(
@@ -150,7 +151,7 @@ export default {
                   name: $name
                   redirectOnLogin: $redirectOnLogin
                   permissions: $permissions
-                  pageRules: $pageRules
+                  rules: $rules
                 ) {
                   responseResult {
                     succeeded
@@ -167,7 +168,7 @@ export default {
             name: this.group.name,
             redirectOnLogin: this.group.redirectOnLogin,
             permissions: this.group.permissions,
-            pageRules: this.group.pageRules
+            rules: this.group.rules
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-update')
@@ -232,13 +233,14 @@ export default {
               redirectOnLogin
               isSystem
               permissions
-              pageRules {
+              rules {
                 id
                 path
                 roles
                 match
                 deny
                 locales
+                sites
               }
               users {
                 id
