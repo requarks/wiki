@@ -15,7 +15,7 @@
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
             v-list-item(to='/sites', color='primary', v-if='hasPermission(`manage:system`)')
-              v-list-item-avatar(size='24', tile): v-icon mdi-widgets
+              v-list-item-avatar(size='24', tile): v-icon mdi-sitemap
               v-list-item-title {{ $t('admin:Sites') }}
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')

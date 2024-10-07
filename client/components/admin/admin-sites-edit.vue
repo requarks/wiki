@@ -3,7 +3,7 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img(src='/_assets/svg/sitemap-outline.svg', alt='Edit Site', style='width: 80px;')
+          v-icon(size=80) mdi-sitemap
           .admin-header-title
             .headline.blue--text.text--darken-2 Edit Site
             .subtitle-1.grey--text {{site.name}}
@@ -51,7 +51,7 @@
 
                   v-switch.mt-0.ml-1(
                     inset
-                    :label='$t(`Enabled or Disable Site`)'
+                    :label='$t(`Enabled Site`)'
                     color='primary'
                     v-model='site.isEnabled'
                     )
