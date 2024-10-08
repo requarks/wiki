@@ -102,11 +102,12 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
 /**
  * Create/Edit document
  */
-router.get(['/e', '/e/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
+  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
+  const site = await getSite(req.params[0].sitePath)
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/e/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/e/${site.sitePath}/${pageArgs.locale}/${pageArgs.path}`)
   }
 
   req.i18n.changeLanguage(pageArgs.locale)
@@ -125,7 +126,8 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
-    isPrivate: false
+    isPrivate: false,
+    siteId: site.id
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
@@ -412,18 +414,31 @@ router.get('/_userav/:uid', async (req, res, next) => {
   return res.sendStatus(404)
 })
 
-/**
- * View document / asset
- */
-router.get('/*', async (req, res, next) => {
+const getSite = async (sitePath) => {
+  return {
+    id: 'b722970a-e813-4b6a-8563-87ffc77827e5',
+    name: 'Default Site',
+    path: 'default'
+  }
+}
+
+const GUEST_ACCOUNT_ID = 2 // yes, it's hardcoded
+
+const renderPage = async (req, res, next) => {
   const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt })
-  const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
+  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt })
+  const isPage = (stripExt || pageArgs.path.indexOf('.') === -1) || (req.params.sitePath && !req.params[0])
 
   if (isPage) {
+    const site = await getSite(req.params.sitePath || 'default')
+
+    if (pageArgs.path === 'undefined') {
+      pageArgs.path = 'home'
+    }
+
     if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
       const query = !_.isEmpty(req.query) ? `?${qs.stringify(req.query)}` : ''
-      return res.redirect(`/${pageArgs.locale}/${pageArgs.path}${query}`)
+      return res.redirect(`/${site.path}/${pageArgs.locale}/${pageArgs.path}${query}`)
     }
 
     req.i18n.changeLanguage(pageArgs.locale)
@@ -434,8 +449,10 @@ router.get('/*', async (req, res, next) => {
         path: pageArgs.path,
         locale: pageArgs.locale,
         userId: req.user.id,
-        isPrivate: false
+        isPrivate: false,
+        siteId: site.id
       })
+
       pageArgs.tags = _.get(page, 'tags', [])
 
       // -> Effective Permissions
@@ -443,7 +460,7 @@ router.get('/*', async (req, res, next) => {
 
       // -> Check User Access
       if (!effectivePermissions.pages.read) {
-        if (req.user.id === 2) {
+        if (req.user.id === GUEST_ACCOUNT_ID) {
           res.cookie('loginRedirect', req.path, {
             maxAge: 15 * 60 * 1000
           })
@@ -481,14 +498,19 @@ router.get('/*', async (req, res, next) => {
 
         // -> Build sidebar navigation
         let sdi = 1
-        const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({
-          i: `sdi-${sdi++}`,
-          k: n.kind,
-          l: n.label,
-          c: n.icon,
-          y: n.targetType,
-          t: n.target
+        const sidebar = (await WIKI.models.navigation.getTree({
+          cache: true,
+          locale: pageArgs.locale,
+          groups: req.user.groups
         }))
+          .map(n => ({
+            i: `sdi-${sdi++}`,
+            k: n.kind,
+            l: n.label,
+            c: n.icon,
+            y: n.targetType,
+            t: n.target
+          }))
 
         // -> Build theme code injection
         const injectCode = {
@@ -574,12 +596,22 @@ router.get('/*', async (req, res, next) => {
       next(err)
     }
   } else {
+    console.log(`Fetching assets ${req.path}`) // TODO: Make sure fetching assets does not deserve another route
+
     if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs)) {
       return res.sendStatus(403)
     }
 
     await WIKI.models.assets.getAsset(pageArgs.path, res)
   }
-})
+}
+
+/**
+ * View document / asset
+ */
+
+router.get('/:sitePath/*', renderPage)
+router.get('/:sitePath', renderPage)
+router.get('/*', renderPage)
 
 module.exports = router

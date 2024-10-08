@@ -1002,13 +1002,19 @@ module.exports = class Page extends Model {
           'pages.authorId',
           'pages.creatorId',
           'pages.extra',
+          'pages.siteId',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
             creatorName: 'creator.name',
             creatorEmail: 'creator.email'
+          },
+          {
+            siteName: 'sites.name',
+            sitePath: 'sites.path'
           }
         ])
+        .leftJoin('sites', 'pages.siteId', 'sites.id')
         .joinRelated('author')
         .joinRelated('creator')
         .withGraphJoined('tags')
@@ -1020,6 +1026,9 @@ module.exports = class Page extends Model {
         } : {
           'pages.path': opts.path,
           'pages.localeCode': opts.locale
+        })
+        .andWhere({
+          siteId: opts.siteId
         })
         // .andWhere(builder => {
         //   if (queryModeID) return

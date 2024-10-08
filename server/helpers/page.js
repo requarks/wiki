@@ -66,6 +66,76 @@ module.exports = {
     return pathObj
   },
   /**
+   * Parse raw url path and make it safe
+   */
+  parsePathWithSite (rawPath, opts = {}) {
+    const DEFAULT_PATH = 'home'
+    const DEFAULT_SITE = 'default'
+
+    let pathObj = {
+      locale: WIKI.config.lang.code,
+      path: DEFAULT_PATH,
+      private: false,
+      privateNS: '',
+      explicitLocale: false,
+      sitePrefix: DEFAULT_SITE
+    }
+
+    const PATH_POSITIONS = {
+      SITE: 0,
+      LOCALE: 1
+    }
+
+    // Clean Path
+    rawPath = _.trim(qs.unescape(rawPath))
+    if (_.startsWith(rawPath, '/')) { rawPath = rawPath.substring(1) }
+    rawPath = rawPath.replace(unsafeCharsRegex, '')
+    if (rawPath === '') { rawPath = 'home' }
+
+    rawPath = rawPath.replace(/\\/g, '').replace(/\/\//g, '').replace(/\.\.+/ig, '')
+
+    // Extract Info
+    let pathParts = _.filter(_.split(rawPath, '/'), p => {
+      p = _.trim(p)
+      return !_.isEmpty(p) && p !== '..' && p !== '.'
+    })
+
+    if (pathParts.length >= 1 && pathParts[PATH_POSITIONS.SITE]) {
+      console.log(`Found site ${pathParts[PATH_POSITIONS.SITE]} in path`)
+      pathObj.sitePrefix = pathParts[PATH_POSITIONS.SITE]
+      pathParts.shift()
+
+      console.log(pathParts)
+
+      if (pathParts.length === 0) {
+        console.log('Setting path to home')
+        pathParts.push(DEFAULT_PATH)
+      }
+    }
+
+    if (pathParts[PATH_POSITIONS.LOCALE] && pathParts[PATH_POSITIONS.LOCALE].length === 1) {
+      pathParts.shift()
+    }
+    if (localeSegmentRegex.test(pathParts[PATH_POSITIONS.LOCALE])) {
+      pathObj.locale = pathParts[PATH_POSITIONS.LOCALE]
+      pathObj.explicitLocale = true
+      pathParts.shift()
+    }
+
+    // Strip extension
+    if (opts.stripExt && pathParts.length > 0) {
+      const lastPart = _.last(pathParts)
+      if (lastPart.indexOf('.') > 0) {
+        pathParts.pop()
+        const lastPartMeta = path.parse(lastPart)
+        pathParts.push(lastPartMeta.name)
+      }
+    }
+
+    pathObj.path = _.join(pathParts, '/')
+    return pathObj
+  },
+  /**
    * Generate unique hash from page
    */
   generateHash(opts) {
