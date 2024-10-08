@@ -415,11 +415,7 @@ router.get('/_userav/:uid', async (req, res, next) => {
 })
 
 const getSite = async (sitePath) => {
-  return {
-    id: 'b722970a-e813-4b6a-8563-87ffc77827e5',
-    name: 'Default Site',
-    path: 'default'
-  }
+  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
 }
 
 const GUEST_ACCOUNT_ID = 2 // yes, it's hardcoded
