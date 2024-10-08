@@ -10,6 +10,12 @@ const qs = require('querystring')
 
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
 
+const getSite = async (sitePath) => {
+  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
+}
+
+const GUEST_ACCOUNT_ID = 2 // yes, it's hardcoded
+
 /**
  * Robots.txt
  */
@@ -165,6 +171,7 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
     page.mode = 'update'
     page.isPublished = (page.isPublished === true || page.isPublished === 1) ? 'true' : 'false'
     page.content = Buffer.from(page.content).toString('base64')
+    page.siteId = site.id
   } else {
     // -> CREATE MODE
     if (!effectivePermissions.pages.write) {
@@ -185,7 +192,8 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
       extra: {
         css: '',
         js: ''
-      }
+      },
+      siteId: site.id
     }
 
     // -> From Template
@@ -414,11 +422,6 @@ router.get('/_userav/:uid', async (req, res, next) => {
   return res.sendStatus(404)
 })
 
-const getSite = async (sitePath) => {
-  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
-}
-
-const GUEST_ACCOUNT_ID = 2 // yes, it's hardcoded
 
 const renderPage = async (req, res, next) => {
   const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
