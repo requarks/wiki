@@ -227,9 +227,9 @@ export default {
 
     this.$store.set('page/mode', 'edit')
 
-    // this.$store.set('page/siteId', this.siteId)
-    // this.$store.set('page/siteName', this.siteName)
-    // this.$store.set('page/sitePath', this.sitePath)
+    this.$store.set('page/siteId', this.siteId)
+    this.$store.set('page/siteName', this.siteName)
+    this.$store.set('page/sitePath', this.sitePath)
 
     this.setCurrentSavedState()
 
@@ -310,6 +310,7 @@ export default {
                 $scriptJs: String
                 $tags: [String]!
                 $title: String!
+                $siteId: String!
               ) {
                 pages {
                   create(
@@ -326,6 +327,7 @@ export default {
                     scriptJs: $scriptJs
                     tags: $tags
                     title: $title
+                    siteId: $siteId
                   ) {
                     responseResult {
                       succeeded
@@ -355,7 +357,7 @@ export default {
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
-              sitePath: get('page/sitePath')
+              siteId: this.$store.get('page/siteId')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -415,6 +417,7 @@ export default {
                 $scriptJs: String
                 $tags: [String]
                 $title: String
+                $siteId: String!
               ) {
                 pages {
                   update(
@@ -432,6 +435,7 @@ export default {
                     scriptJs: $scriptJs
                     tags: $tags
                     title: $title
+                    siteId: $siteId
                   ) {
                     responseResult {
                       succeeded
@@ -461,7 +465,7 @@ export default {
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
-              sitePath: get('page/sitePath')
+              siteId: this.$store.get('page/siteId')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
@@ -529,7 +533,7 @@ export default {
         if (this.$store.get('editor/mode') === 'create') {
           window.location.assign(`/`)
         } else {
-          window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+          window.location.assign(`/default/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`) // TODO: Update routing
         }
       }, 500)
     },
