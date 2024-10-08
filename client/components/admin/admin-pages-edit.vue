@@ -8,7 +8,7 @@
             .headline.blue--text.text--darken-2.animated.fadeInLeft Page Details
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s
               v-chip.ml-0.mr-2(label, small).caption ID {{page.id}}
-              span /{{page.locale}}/{{page.path}}
+              span /default/{{page.locale}}/{{page.path}}
           v-spacer
           template(v-if='page.isPublished')
             status-indicator.mr-3(positive, pulse)
@@ -31,11 +31,11 @@
                 span Actions
                 v-icon(right) mdi-chevron-down
             v-list(dense, nav)
-              v-list-item(:href='`/` + page.locale + `/` + page.path')
+              v-list-item(:href='`/` + `default` + `/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-text-subject
                 v-list-item-title View
-              v-list-item(:href='`/e/` + page.locale + `/` + page.path')
+              v-list-item(:href='`/e/` + `default` + `/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-pencil
                 v-list-item-title Edit
@@ -47,11 +47,11 @@
                 v-list-item-icon
                   v-icon(color='grey') mdi-earth-remove
                 v-list-item-title Unpublish
-              v-list-item(:href='`/s/` + page.locale + `/` + page.path')
+              v-list-item(:href='`/s/` + `default` + `/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-code-tags
                 v-list-item-title View Source
-              v-list-item(:href='`/h/` + page.locale + `/` + page.path')
+              v-list-item(:href='`/h/` + `default` + `/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-history
                 v-list-item-title View History

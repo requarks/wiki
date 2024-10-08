@@ -227,6 +227,10 @@ export default {
 
     this.$store.set('page/mode', 'edit')
 
+    // this.$store.set('page/siteId', this.siteId)
+    // this.$store.set('page/siteName', this.siteName)
+    // this.$store.set('page/sitePath', this.sitePath)
+
     this.setCurrentSavedState()
 
     this.checkoutDateActive = this.checkoutDate
@@ -350,7 +354,8 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              title: this.$store.get('page/title'),
+              sitePath: get('page/sitePath')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -455,7 +460,8 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              title: this.$store.get('page/title'),
+              sitePath: get('page/sitePath')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
@@ -469,7 +475,7 @@ export default {
             })
             if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
               _.delay(() => {
-                window.location.replace(`/e/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+                window.location.replace(`/e/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
               }, 1000)
             }
           } else {

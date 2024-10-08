@@ -51,6 +51,9 @@ const state = {
     editMenuExternalIcon: '',
     editMenuExternalUrl: ''
   }
+  // siteId: '',
+  // siteName: '',
+  // sitePath: 'default'
 }
 
 export default {

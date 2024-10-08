@@ -236,11 +236,35 @@
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
-    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
-    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
-    page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
-    page-delete(v-model='deletePageModal', v-if='path && path.length')
-    page-convert(v-model='convertPageModal', v-if='path && path.length')
+    page-selector(
+      mode='create',
+      v-model='newPageModal',
+      :open-handler='pageNewCreate',
+      :locale='locale'
+    )
+
+    page-selector(
+      mode='move',
+      v-model='movePageModal',
+      :open-handler='pageMoveRename',
+      :path='path',
+      :locale='locale'
+    )
+
+    page-selector(mode='create',
+      v-model='duplicateOpts.modal',
+      :open-handler='pageDuplicateHandle',
+      :path='duplicateOpts.path',
+      :locale='duplicateOpts.locale'
+    )
+
+    page-delete(
+      v-model='deletePageModal', v-if='path && path.length'
+    )
+
+    page-convert(
+      v-model='convertPageModal', v-if='path && path.length'
+    )
 
     .nav-header-dev(v-if='isDevMode')
       v-icon mdi-alert
@@ -307,6 +331,7 @@ export default {
     pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
+    // sitePath: get('page/sitePath'),
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
@@ -400,19 +425,24 @@ export default {
       this.newPageModal = true
     },
     pageNewCreate ({ path, locale }) {
-      window.location.assign(`/e/${locale}/${path}`)
+      // window.location.assign(`/e/${sitePath}/${locale}/${path}`)
+      window.location.assign(`/e/default/${locale}/${path}`)
     },
     pageView () {
-      window.location.assign(`/${this.locale}/${this.path}`)
+      // window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
+      window.location.assign(`/default/${this.locale}/${this.path}`)
     },
     pageEdit () {
-      window.location.assign(`/e/${this.locale}/${this.path}`)
+      // window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}`)
+      window.location.assign(`/e/default/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      window.location.assign(`/h/${this.locale}/${this.path}`)
+      // window.location.assign(`/h/${this.sitePath}/${this.locale}/${this.path}`)
+      window.location.assign(`/h/default/${this.locale}/${this.path}`)
     },
     pageSource () {
-      window.location.assign(`/s/${this.locale}/${this.path}`)
+      // window.location.assign(`/s/${this.sitePath}/${this.locale}/${this.path}`)
+      window.location.assign(`/s/default/${this.locale}/${this.path}`)
     },
     pageDuplicate () {
       const pathParts = this.path.split('/')
@@ -422,8 +452,9 @@ export default {
         modal: true
       }
     },
-    pageDuplicateHandle ({ locale, path }) {
-      window.location.assign(`/e/${locale}/${path}?from=${this.$store.get('page/id')}`)
+    pageDuplicateHandle ({ locale, path, sitePath }) {
+      // window.location.assign(`/e/${sitePath}/${locale}/${path}?from=${this.$store.get('page/id')}`)
+      window.location.assign(`/e/default/${locale}/${path}?from=${this.$store.get('page/id')}`)
     },
     pageConvert () {
       this.convertPageModal = true
