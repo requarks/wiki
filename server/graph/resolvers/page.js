@@ -87,7 +87,8 @@ module.exports = {
         'pages.createdAt',
         'pages.updatedAt',
         'pages.siteId',
-        'sites.name as siteName'
+        'sites.name as siteName',
+        'sites.path as sitePath'
       ])
         .leftJoin('sites', 'pages.siteId', 'sites.id')
         .withGraphJoined('tags')
