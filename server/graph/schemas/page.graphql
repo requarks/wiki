@@ -117,6 +117,7 @@ type PageMutation {
     scriptJs: String
     tags: [String]
     title: String
+    siteId: String!
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   convert(

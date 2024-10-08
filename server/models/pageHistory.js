@@ -27,7 +27,8 @@ module.exports = class PageHistory extends Model {
         content: {type: 'string'},
         contentType: {type: 'string'},
 
-        createdAt: {type: 'string'}
+        createdAt: {type: 'string'},
+        siteId: {type: 'string'}
       }
     }
   }
@@ -105,7 +106,8 @@ module.exports = class PageHistory extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       action: opts.action || 'updated',
-      versionDate: opts.versionDate
+      versionDate: opts.versionDate,
+      siteId: opts.siteId
     })
   }
 

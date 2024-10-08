@@ -323,7 +323,8 @@ module.exports = class Page extends Model {
       path: opts.path,
       locale: opts.locale,
       userId: opts.user.id,
-      isPrivate: opts.isPrivate
+      isPrivate: opts.isPrivate,
+      siteId: opts.siteId
     })
 
     // -> Save Tags
@@ -394,7 +395,8 @@ module.exports = class Page extends Model {
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
       action: opts.action ? opts.action : 'updated',
-      versionDate: ogPage.updatedAt
+      versionDate: ogPage.updatedAt,
+      siteId: ogPage.siteId
     })
 
     // -> Format Extra Properties
@@ -437,7 +439,8 @@ module.exports = class Page extends Model {
         ...ogPage.extra,
         js: scriptJs,
         css: scriptCss
-      })
+      }),
+      siteId: ogPage.siteId
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
@@ -1027,9 +1030,9 @@ module.exports = class Page extends Model {
           'pages.path': opts.path,
           'pages.localeCode': opts.locale
         })
-        .andWhere({
-          siteId: opts.siteId
-        })
+        // .andWhere({
+        //   siteId: opts.siteId
+        // })
         // .andWhere(builder => {
         //   if (queryModeID) return
         //   builder.where({
