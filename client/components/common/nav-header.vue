@@ -45,9 +45,38 @@
           //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
+
+          //- v-select.mt-3( :items="sites" dense, v-if='mode !== `admin`', @click='$router.push("/sites/" + props.item.id)')
+
+          template(v-if='hasAnyPagePermissions && path && mode !== `edit`')
+            v-menu(offset-y, bottom, transition='slide-y-transition', left)
+              template(v-slot:activator='{ on: menu, attrs }')
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on: tooltip }')
+                    v-btn(
+                      icon
+                      v-bind='attrs'
+                      v-on='{ ...menu, ...tooltip }'
+                      :class='$vuetify.rtl ? `ml-3` : ``'
+                      tile
+                      height='64'
+                      :aria-label='$t(`common:header.pageActions`)'
+                      )
+                      v-icon(color='grey') mdi-file-document-edit-outline
+                  span {{$t('common:header.pageActions')}}
+              v-list(style="height: 400px; overflow-y: auto;", nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+                
+                v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='$router.push("/sites/" + props.item.id)')
+                  v-list-item-title.body-2 {{ site.text }}
+                
+            v-divider(vertical)
+
+          
+
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
           slot(name='mid')
+
             transition(name='navHeaderSearch', v-if='searchIsShown')
               v-text-field(
                 ref='searchField',
@@ -70,6 +99,9 @@
                 @keyup.up='searchMove(`up`)'
                 autocomplete='none'
               )
+
+
+
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
@@ -266,11 +298,11 @@
       v-model='convertPageModal', v-if='path && path.length'
     )
 
-    .nav-header-dev(v-if='isDevMode')
-      v-icon mdi-alert
-      div
-        .overline DEVELOPMENT VERSION
-        .overline This code base is NOT for production use!
+    //- .nav-header-dev(v-if='isDevMode')
+    //-  v-icon mdi-alert
+    //-  div
+    //-    .overline DEVELOPMENT VERSION
+    //-    .overline This code base is NOT for production use!
 </template>
 
 <script>
@@ -278,6 +310,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
+import sitesQuery from 'gql/admin/sites/sites-query-list.gql'
 
 /* global siteConfig, siteLangs */
 
@@ -311,7 +344,8 @@ export default {
         locale: 'en',
         path: 'new-page',
         modal: false
-      }
+      },
+      sites: []
     }
   },
   computed: {
@@ -395,6 +429,7 @@ export default {
       this.pageDelete()
     })
     this.isDevMode = siteConfig.devMode === true
+    this.fetchSitesFromUser()
   },
   methods: {
     searchFocus () {
@@ -503,7 +538,26 @@ export default {
     },
     goHome () {
       window.location.assign('/')
-    }
+    },
+
+    async fetchSitesFromUser () {
+      try {
+        const resp = await this.$apollo.query({
+          query: sitesQuery,
+          fetchPolicy: 'network-only'
+      })
+      
+        if (resp.data.sites) {
+          console.log(resp.data.sites)
+          this.sites = resp.data.sites.map(site => ({
+            value: site.id,
+            text: site.name
+          }))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+    },
   }
 }
 </script>
