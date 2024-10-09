@@ -264,7 +264,12 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for duplicate
-    const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
+    const dupCheck = await WIKI.models.pages.query()
+      .select('id')
+      .where('localeCode', opts.locale)
+      .where('path', opts.path)
+      .where('siteId', opts.siteId)
+      .first()
     if (dupCheck) {
       throw new WIKI.Error.PageDuplicateCreate()
     }
@@ -336,7 +341,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.renderPage(page)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree(opts.siteId)
+    // TODO: Enable once done
+    // await WIKI.models.pages.rebuildTree(opts.siteId)
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -956,7 +962,8 @@ module.exports = class Page extends Model {
    */
   static async getPage(opts) {
     // -> Get from cache first
-    let page = await WIKI.models.pages.getPageFromCache(opts)
+    // let page = await WIKI.models.pages.getPageFromCache(opts)
+    let page
     if (!page) {
       // -> Get from DB
       page = await WIKI.models.pages.getPageFromDb(opts)
@@ -1028,11 +1035,9 @@ module.exports = class Page extends Model {
           'pages.id': opts
         } : {
           'pages.path': opts.path,
-          'pages.localeCode': opts.locale
+          'pages.localeCode': opts.locale,
+          'siteId': opts.siteId
         })
-        // .andWhere({
-        //   siteId: opts.siteId
-        // })
         // .andWhere(builder => {
         //   if (queryModeID) return
         //   builder.where({
@@ -1087,7 +1092,8 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
-      updatedAt: page.updatedAt
+      updatedAt: page.updatedAt,
+      siteId: page.siteId
     }))
   }
 

@@ -74,6 +74,7 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
+    // TODO: Add siteId
     isPrivate: false
   })
 
@@ -110,7 +111,7 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
  */
 router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
-  const site = await getSite(req.params[0].sitePath)
+  const site = await getSite(req.params?.sitePath)
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/e/${site.sitePath}/${pageArgs.locale}/${pageArgs.path}`)
@@ -167,11 +168,15 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
     }
 
     _.set(res.locals, 'pageMeta.title', `Edit ${page.title}`)
-    _.set(res.locals, 'pageMeta.description', page.description)
+    _.set(res.locals, 'pageMeta.siteId', site.id)
+    _.set(res.locals, 'pageMeta.sitePath', site.path)
+    _.set(res.locals, 'pageMeta.siteName', site.name)
     page.mode = 'update'
     page.isPublished = (page.isPublished === true || page.isPublished === 1) ? 'true' : 'false'
     page.content = Buffer.from(page.content).toString('base64')
     page.siteId = site.id
+    page.sitePath = site.path
+    page.siteName = site.name
   } else {
     // -> CREATE MODE
     if (!effectivePermissions.pages.write) {
@@ -180,6 +185,9 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
     }
 
     _.set(res.locals, 'pageMeta.title', `New Page`)
+    _.set(res.locals, 'pageMeta.siteId', site.id)
+    _.set(res.locals, 'pageMeta.sitePath', site.path)
+    _.set(res.locals, 'pageMeta.siteName', site.name)
     page = {
       path: pageArgs.path,
       localeCode: pageArgs.locale,
@@ -193,7 +201,9 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
         css: '',
         js: ''
       },
-      siteId: site.id
+      siteId: site.id,
+      sitePath: site.path,
+      siteName: site.name
     }
 
     // -> From Template
@@ -242,7 +252,14 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
     }
   }
 
-  res.render('editor', { page, injectCode, effectivePermissions })
+  res.render('editor', {
+    page,
+    injectCode,
+    effectivePermissions,
+    siteId: site.id,
+    sitePath: site.path,
+    siteName: site.name
+  })
 })
 
 /**
@@ -264,6 +281,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
+    // TODO: Add siteId
     isPrivate: false
   })
 
@@ -319,9 +337,9 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
   }
 
   if (WIKI.config.lang.namespacing) {
-    return res.redirect(`/${page.localeCode}/${page.path}`)
+    return res.redirect(`/${page.sitePath}/${page.localeCode}/${page.path}`)
   } else {
-    return res.redirect(`/${page.path}`)
+    return res.redirect(`/${page.sitePath}/${page.path}`)
   }
 })
 
@@ -348,6 +366,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
+    // TODO: Add siteId
     isPrivate: false
   })
 
@@ -422,7 +441,6 @@ router.get('/_userav/:uid', async (req, res, next) => {
   return res.sendStatus(404)
 })
 
-
 const renderPage = async (req, res, next) => {
   const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
   const pageArgs = pageHelper.parsePath(req.params[0], { stripExt })
@@ -430,6 +448,7 @@ const renderPage = async (req, res, next) => {
 
   if (isPage) {
     const site = await getSite(req.params.sitePath || 'default')
+    console.log(`Switching to site ${site.path} (${site.id})`)
 
     if (pageArgs.path === 'undefined') {
       pageArgs.path = 'home'
@@ -479,6 +498,13 @@ const renderPage = async (req, res, next) => {
       if (page) {
         _.set(res.locals, 'pageMeta.title', page.title)
         _.set(res.locals, 'pageMeta.description', page.description)
+        _.set(res.locals, 'pageMeta.siteId', site.id)
+        _.set(res.locals, 'pageMeta.sitePath', site.path)
+        _.set(res.locals, 'pageMeta.siteName', site.name)
+
+        page.siteId = site.id
+        page.sitePath = site.path
+        page.siteName = site.name
 
         // -> Check Publishing State
         let pageIsPublished = page.isPublished
@@ -577,16 +603,28 @@ const renderPage = async (req, res, next) => {
             injectCode,
             comments: commentTmpl,
             effectivePermissions,
-            pageFilename
+            pageFilename,
+            site
           })
         }
       } else if (pageArgs.path === 'home') {
         _.set(res.locals, 'pageMeta.title', 'Welcome')
-        res.render('welcome', { locale: pageArgs.locale })
+        res.render('welcome', {
+          locale: pageArgs.locale,
+          siteId: site.id,
+          sitePath: site.path,
+          siteName: site.name
+        })
       } else {
         _.set(res.locals, 'pageMeta.title', 'Page Not Found')
         if (effectivePermissions.pages.write) {
-          res.status(404).render('new', { path: pageArgs.path, locale: pageArgs.locale })
+          res.status(404).render('new', {
+            path: pageArgs.path,
+            locale: pageArgs.locale,
+            siteId: site.id,
+            sitePath: site.path,
+            siteName: site.name
+          })
         } else {
           res.status(404).render('notfound', { action: 'view' })
         }

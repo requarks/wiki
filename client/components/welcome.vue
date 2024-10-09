@@ -8,7 +8,7 @@
         div
           v-btn.mt-5.mx-3.animated.fadeInUp.wait-p2s(
             color='primary',
-            :href='`/e/` + `default` + `/` + locale + `/home`', x-large
+            :href='`/e/` + sitePath + `/` + locale + `/home`', x-large
           )
             v-icon(left) mdi-plus
             span {{ $t('welcome.createhome') }}
@@ -25,6 +25,18 @@ export default {
     locale: {
       type: String,
       default: 'en'
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
     }
   },
   data() {

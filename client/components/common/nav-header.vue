@@ -331,7 +331,7 @@ export default {
     pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
-    // sitePath: get('page/sitePath'),
+    sitePath: get('page/sitePath'),
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
@@ -425,24 +425,19 @@ export default {
       this.newPageModal = true
     },
     pageNewCreate ({ path, locale }) {
-      // window.location.assign(`/e/${sitePath}/${locale}/${path}`)
-      window.location.assign(`/e/default/${locale}/${path}`)
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}`)
     },
     pageView () {
-      // window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
-      window.location.assign(`/default/${this.locale}/${this.path}`)
+      window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageEdit () {
-      // window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}`)
-      window.location.assign(`/e/default/${this.locale}/${this.path}`)
+      window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      // window.location.assign(`/h/${this.sitePath}/${this.locale}/${this.path}`)
-      window.location.assign(`/h/default/${this.locale}/${this.path}`)
+      window.location.assign(`/h/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageSource () {
-      // window.location.assign(`/s/${this.sitePath}/${this.locale}/${this.path}`)
-      window.location.assign(`/s/default/${this.locale}/${this.path}`)
+      window.location.assign(`/s/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageDuplicate () {
       const pathParts = this.path.split('/')
@@ -452,9 +447,8 @@ export default {
         modal: true
       }
     },
-    pageDuplicateHandle ({ locale, path, sitePath }) {
-      // window.location.assign(`/e/${sitePath}/${locale}/${path}?from=${this.$store.get('page/id')}`)
-      window.location.assign(`/e/default/${locale}/${path}?from=${this.$store.get('page/id')}`)
+    pageDuplicateHandle ({ locale, path }) {
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}?from=${this.$store.get('page/id')}`)
     },
     pageConvert () {
       this.convertPageModal = true
@@ -471,10 +465,11 @@ export default {
             id: this.$store.get('page/id'),
             destinationLocale: locale,
             destinationPath: path
+            // TODO: Add siteId
           }
         })
         if (_.get(resp, 'data.pages.move.responseResult.succeeded', false)) {
-          window.location.replace(`/${locale}/${path}`)
+          window.location.replace(`/${this.sitePath}/${locale}/${path}`)
         } else {
           throw new Error(_.get(resp, 'data.pages.move.responseResult.message', this.$t('common:error.unexpected')))
         }
@@ -499,7 +494,7 @@ export default {
       switch (this.mode) {
         case 'view':
         case 'history':
-          window.location.assign(`/${locale.code}/${this.path}`)
+          window.location.assign(`/${this.sitePath}/${locale.code}/${this.path}`)
           break
       }
     },

@@ -152,6 +152,18 @@ export default {
     effectivePermissions: {
       type: String,
       default: ''
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -197,6 +209,9 @@ export default {
         this.savedState.publishEndDate !== this.$store.get('page/publishEndDate'),
         this.savedState.css !== this.$store.get('page/scriptCss'),
         this.savedState.js !== this.$store.get('page/scriptJs')
+        // this.siteId !== this.$store.get('page/siteId'),
+        // this.siteName !== this.$store.get('page/siteName'),
+        // this.sitePath !== this.$store.get('page/sitePath')
       ], Boolean)
     }
   },
@@ -372,7 +387,7 @@ export default {
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
             this.exitConfirmed = true
-            window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+            window.location.assign(`/${this.sitePath}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
@@ -533,7 +548,7 @@ export default {
         if (this.$store.get('editor/mode') === 'create') {
           window.location.assign(`/`)
         } else {
-          window.location.assign(`/default/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`) // TODO: Update routing
+          window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }
       }, 500)
     },

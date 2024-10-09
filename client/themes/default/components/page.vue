@@ -489,6 +489,18 @@ export default {
     filename: {
       type: String,
       default: ''
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -599,13 +611,9 @@ export default {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
     }
 
-    // this.$store.set('page/siteId', this.siteId)
-    // this.$store.set('page/siteName', this.siteName)
-    // this.$store.set('page/sitePath', this.sitePath)
-
-    // this.$store.set('page/siteId', this.siteId)
-    // this.$store.set('page/siteName', this.siteName)
-    // this.$store.set('page/sitePath', 'default')
+    this.$store.set('page/siteId', this.siteId)
+    this.$store.set('page/siteName', this.siteName)
+    this.$store.set('page/sitePath', this.sitePath)
 
     this.$store.set('page/mode', 'view')
   },

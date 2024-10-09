@@ -84,8 +84,6 @@ module.exports = {
         // -> Create site
         const newSite = await WIKI.models.sites.createSite(args.name, args.path)
 
-        // TODO: call server / models / pages.js: createPage function and initiate it wit label Home and path equal to site.path
-
         WIKI.logger.info(`Created site ${args.name} (${args.path}).`)
 
         return {

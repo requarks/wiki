@@ -177,7 +177,8 @@ module.exports = {
     async singleByPath(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb({
         path: args.path,
-        locale: args.locale
+        locale: args.locale,
+        siteId: args.siteId
       })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
@@ -399,15 +400,8 @@ module.exports = {
      */
     async create(obj, args, context) {
       try {
-        const defaultSiteId = await WIKI.models.sites.getSiteIdByPath({ path: 'default', forceReload: true })
-
-        if (!defaultSiteId) {
-          throw new Error('Failed to insert default site and retrieve ID')
-        }
-
         const page = await WIKI.models.pages.createPage({
           ...args,
-          siteId: defaultSiteId,
           user: context.req.user
         })
         return {
