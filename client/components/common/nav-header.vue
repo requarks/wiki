@@ -65,13 +65,9 @@
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
               v-list(style="height: 400px; overflow-y: auto;", nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-                
-                v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='$router.push("/sites/" + props.item.id)')
+                v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)')
                   v-list-item-title.body-2 {{ site.text }}
-                
             v-divider(vertical)
-
-          
 
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
@@ -539,25 +535,28 @@ export default {
     goHome () {
       window.location.assign('/')
     },
+    goToSite (path) {
+      window.location.assign(`/${path}`)
+    },
 
     async fetchSitesFromUser () {
       try {
         const resp = await this.$apollo.query({
           query: sitesQuery,
           fetchPolicy: 'network-only'
-      })
-      
+        })
         if (resp.data.sites) {
           console.log(resp.data.sites)
           this.sites = resp.data.sites.map(site => ({
-            value: site.id,
+            id: site.id,
+            value: site.path,
             text: site.name
           }))
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
-    },
+    }
   }
 }
 </script>
