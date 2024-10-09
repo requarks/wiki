@@ -98,7 +98,7 @@
               solo
               :items='roles'
               v-model='rule.roles'
-              @change='dude(rule.roles)'
+              @change='rule.roles'
               placeholder='Select Role(s)...'
               hide-details
               multiple
@@ -120,7 +120,7 @@
                     v-model='props.attrs.inputValue'
                     hide-details
                     color='primary'
-                    :disabled='disableCheckbox(props.item.value)'
+                    :disabled='isCheckboxDisabled(props.item.value)'
                   )
                 v-icon.mr-2(:color='rule.deny ? `red` : `green`') {{props.item.icon}}
                 v-list-item-content
@@ -296,14 +296,11 @@ export default {
       return siteLangs
     },
     isRoleManageSite() {
-      console.log('Computed isRoleManageSite:', JSON.stringify( this.roles));
       return this.roles.includes('manage:sites');
     }
   },
   watch: {
     'rule.roles': function(newRoles) {
-      console.log('Roles updated:', newRoles);
-      console.log('isRoleManageSite:', this.isRoleManageSite);
     }
   },
   methods: {
@@ -331,40 +328,26 @@ export default {
         icon: 'directions_boat'
       })
     },
-    dude(stuff) {
-      console.info(stuff)
-    },
     fetchSites() {
       this.$store
         .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
         .then((response) => {
           const sitesData = response?.data?.sites
 
-          if (sitesData && Array.isArray(sitesData)) {
-            this.sites = sitesData.map((site) => ({
-              text: `${site.name} - ${site.path}`,
-              title: site.name,
-              value: site.id,
-              path: site.path
-            }))
-          } else if (sitesData) {
             this.sites = Object.values(sitesData).map((site) => ({
               text: `${site.name} - ${site.path}`,
               title: site.name,
               value: site.id,
               path: site.path
             }))
-          } else {
-            console.error('Fetched sites are not in array format.')
-            this.sites = []
-          }
+          
         })
         .catch((error) => {
           console.error(error)
           this.sites = []
         })
     },
-    disableCheckbox(inputValue) {
+    isCheckboxDisabled(inputValue) {
       if (this.rule.roles.includes('manage:sites')) {
         return inputValue !== 'manage:sites'
       }

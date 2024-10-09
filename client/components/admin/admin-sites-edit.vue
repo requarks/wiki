@@ -51,7 +51,7 @@
 
                   v-switch.mt-0.ml-1(
                     inset
-                    :label='$t(`Enabled Site`)'
+                    :label='$t(`Enable Site`)'
                     color='primary'
                     v-model='site.isEnabled'
                     )
