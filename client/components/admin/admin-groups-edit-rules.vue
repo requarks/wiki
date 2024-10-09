@@ -66,7 +66,6 @@
               solo
               :items='sites'
               v-model='rule.sites'
-
               placeholder='Select Site(s)...'
               hide-details
               multiple
@@ -94,11 +93,46 @@
                   v-list-item-title.body-2 {{props.item.text}}
                 v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value}}
 
+            //- Roles
+            v-select.ml-1(
+              solo
+              :items='roles'
+              v-model='rule.roles'
+              @change='rule.roles'
+              placeholder='Select Role(s)...'
+              hide-details
+              multiple
+              chips
+              deletable-chips
+              small-chips
+              height='48px'
+              style='flex: 0 1 440px;'
+              :menu-props='{ "maxHeight": 500 }'
+              clearable
+              dense
+              )
+              template(slot='selection', slot-scope='{ item, index }')
+                v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.title, item.path }}
+                v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} more
+              template(slot='item', slot-scope='props')
+                v-list-item-action(style='min-width: 30px;')
+                  v-checkbox(
+                    v-model='props.attrs.inputValue'
+                    hide-details
+                    color='primary'
+                    :disabled='isCheckboxDisabled(props.item.value)'
+                  )
+                v-icon.mr-2(:color='rule.deny ? `red` : `green`') {{props.item.icon}}
+                v-list-item-content
+                  v-list-item-title.body-2 {{props.item.text}}
+                v-chip.mr-2.grey--text(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`').caption {{props.item.value}}
+
             //- Match
             v-select.ml-1.mr-1(
               solo
               :items='matches'
               v-model='rule.match'
+              :disabled='rule.roles.includes("manage:sites")'
               placeholder='Match...'
               hide-details
               height='48px'
@@ -118,6 +152,7 @@
               solo
               :items='locales'
               v-model='rule.locales'
+              :disabled='rule.roles.includes("manage:sites")'
               placeholder='Any Locale'
               item-value='code'
               item-text='name'
@@ -159,6 +194,7 @@
             v-text-field(
               solo
               v-model='rule.path'
+              :disabled='rule.roles.includes("manage:sites")'
               label='Path'
               :prefix='(rule.match !== `END` && rule.match !== `TAG`) ? `/` : null'
               :placeholder='rule.match === `REGEX` ? `Regular Expression` : rule.match === `TAG` ? `Tag` : `Path`'
@@ -214,13 +250,34 @@ export default {
   data() {
     return {
       sites: [],
+      rule: {
+        roles: [],
+        deny: false
+      },
+      roles: [
+        { text: 'Read Pages', value: 'read:pages', icon: 'mdi-file-eye-outline' },
+        { text: 'Create + Edit Pages', value: 'write:pages', icon: 'mdi-file-plus-outline' },
+        { text: 'Rename / Move Pages', value: 'manage:pages', icon: 'mdi-file-document-edit-outline' },
+        { text: 'Delete Pages', value: 'delete:pages', icon: 'mdi-file-remove-outline' },
+        { text: 'View Pages Source', value: 'read:source', icon: 'mdi-code-tags' },
+        { text: 'View Pages History', value: 'read:history', icon: 'mdi-history' },
+        { text: 'Read / Use Assets', value: 'read:assets', icon: 'mdi-image-search-outline' },
+        { text: 'Upload Assets', value: 'write:assets', icon: 'mdi-image-plus' },
+        { text: 'Edit + Delete Assets', value: 'manage:assets', icon: 'mdi-image-size-select-large' },
+        { text: 'Edit Scripts', value: 'write:scripts', icon: 'mdi-language-javascript' },
+        { text: 'Edit Styles', value: 'write:styles', icon: 'mdi-language-css3' },
+        { text: 'Read Comments', value: 'read:comments', icon: 'mdi-comment-search-outline' },
+        { text: 'Create Comments', value: 'write:comments', icon: 'mdi-comment-plus-outline' },
+        { text: 'Edit + Delete Comments', value: 'manage:comments', icon: 'mdi-comment-remove-outline' },
+        { text: 'Manage Sites', value: 'manage:sites', icon: 'mdi-sitemap' }
+      ],
       matches: [
         { text: 'Path Starts With...', value: 'START', icon: '/...' },
         { text: 'Path is Exactly...', value: 'EXACT', icon: '=' },
         { text: 'Path Ends With...', value: 'END', icon: '.../' },
         { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
         { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
-      ]
+      ],
     }
   },
   mounted() {
@@ -237,6 +294,13 @@ export default {
     },
     locales() {
       return siteLangs
+    },
+    isRoleManageSite() {
+      return this.roles.includes('manage:sites');
+    }
+  },
+  watch: {
+    'rule.roles': function(newRoles) {
     }
   },
   methods: {
@@ -264,38 +328,30 @@ export default {
         icon: 'directions_boat'
       })
     },
-    dude(stuff) {
-      console.info(stuff)
-    },
     fetchSites() {
       this.$store
         .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
         .then((response) => {
           const sitesData = response?.data?.sites
 
-          if (sitesData && Array.isArray(sitesData)) {
-            this.sites = sitesData.map((site) => ({
-              text: `${site.name} - ${site.path}`,
-              title: site.name,
-              value: site.id,
-              path: site.path
-            }))
-          } else if (sitesData) {
             this.sites = Object.values(sitesData).map((site) => ({
               text: `${site.name} - ${site.path}`,
               title: site.name,
               value: site.id,
               path: site.path
             }))
-          } else {
-            console.error('Fetched sites are not in array format.')
-            this.sites = []
-          }
+          
         })
         .catch((error) => {
           console.error(error)
           this.sites = []
         })
+    },
+    isCheckboxDisabled(inputValue) {
+      if (this.rule.roles.includes('manage:sites')) {
+        return inputValue !== 'manage:sites'
+      }
+      return false; 
     }
   }
 }
