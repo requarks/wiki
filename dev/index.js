@@ -28,7 +28,7 @@ const init = {
     }
     global.WP_DEV.devMiddleware.waitUntilValid(() => {
       console.info(chalk.yellow.bold('>>> Starting Wiki.js in DEVELOPER mode...'))
-      this.startServer()
+      require('../server')
 
       process.stdin.setEncoding('utf8')
       process.stdin.on('data', data => {
@@ -58,10 +58,6 @@ const init = {
       })
     })
   },
-  startServer() {
-    console.info(chalk.yellow.bold('--- (Re-)starting server...'))
-    require('../server')
-  },
   async reload() {
     console.warn(chalk.yellow('--- Gracefully stopping server...'))
     await global.WIKI.kernel.shutdown(true)
@@ -85,7 +81,7 @@ const init = {
     process.removeAllListeners('unhandledRejection')
     process.removeAllListeners('uncaughtException')
 
-    this.startServer()
+    require('../server')
   }
 }
 
