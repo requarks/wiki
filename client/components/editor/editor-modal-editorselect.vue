@@ -101,7 +101,7 @@ export default {
       this.templateDialogIsShown = false
       this.isShown = false
       this.$nextTick(() => {
-        window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}?from=${id}`)
+        window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}?from=${id}`)
       })
     }
   }
