@@ -447,6 +447,7 @@ export default {
       }
     },
     branchOffHandle ({ locale, path, sitePath }) {
+      // TODO: Update sitePath in MAR-296 Page History
       window.location.assign(`/e/${sitePath}/${locale}/${path}?from=${this.pageId},${this.branchOffOpts.versionId}`)
     },
     toggleViewMode () {
