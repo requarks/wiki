@@ -12,7 +12,6 @@ const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const WriteFilePlugin = require('write-file-webpack-plugin')
 const WebpackBarPlugin = require('webpackbar')
-const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
 const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
@@ -36,8 +35,8 @@ module.exports = {
   output: {
     path: path.join(process.cwd(), 'assets'),
     publicPath: '/_assets/',
-    filename: 'js/[name].[hash].js',
-    chunkFilename: 'js/[name].[hash].js',
+    filename: 'js/[name].js',
+    chunkFilename: 'js/[name].js',
     globalObject: 'this',
     pathinfo: true,
     crossOriginLoading: 'use-credentials'
@@ -227,7 +226,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new CleanWebpackPlugin(), // Clean the output directory before each build
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
     new MomentTimezoneDataPlugin({
@@ -340,6 +338,6 @@ module.exports = {
     entrypoints: false
   },
   target: 'web',
-  watch: true,
-  devtool: 'eval-source-map' // Enable better source maps for dev (optional)
+  watch: true
+  // devtool: 'eval-source-map' // Enable better source maps for dev (optional)
 }
