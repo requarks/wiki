@@ -64,8 +64,8 @@ module.exports = {
   async createIndex() {
     try {
       const indexExists = await this.client.indices.exists({ index: this.config.indexName })
-      // 6.x / 7.x return indexExists.body, while 8.x only returns indexExists so we need uniqe conditionals
-      if ((!indexExists.body && this.config.apiVersion !== '8.x') || (!indexExists && this.config.apiVersion === '8.x')) {
+      // Elasticsearch 6.x / 7.x
+      if (this.config.apiVersion !== '8.x' && !indexExists.body) {
         WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
         try {
           const idxBody = {
@@ -79,34 +79,13 @@ module.exports = {
               tags: { type: 'text', boost: 8.0 }
             }
           }
-          // 8.x Doesn't support boost in mappings, so we will need to boost at query time.
-          const idxBody8_x = {
-            properties: {
-              suggest: { type: 'completion' },
-              title: { type: 'text' },
-              description: { type: 'text' },
-              content: { type: 'text' },
-              locale: { type: 'keyword' },
-              path: { type: 'text' },
-              tags: { type: 'text' }
-            }
-          }
-
-          let mapping
-          if (this.config.apiVersion !== '8.x') {
-            // ElasticSearch 6.x || 7.x can use the same mapping
-            mapping = idxBody
-          } else {
-            // ElasticSearch 8.x needs to use a different mapping
-            mapping = idxBody8_x
-          }
 
           await this.client.indices.create({
             index: this.config.indexName,
             body: {
-              mappings: (this.config.apiVersion !== '8.x') ? {
-                _doc: mapping
-              } : mapping,
+              mappings: {
+                _doc: idxBody
+              },
               settings: {
                 analysis: {
                   analyzer: {
@@ -118,11 +97,45 @@ module.exports = {
               }
             }
           })
-
         } catch (err) {
           WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
         }
-      }
+      // Elasticsearch 8.x
+      } else if (this.config.apiVersion === '8.x' && !indexExists) {
+        WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
+        try {
+          // 8.x Doesn't support boost in mappings, so we will need to boost at query time.
+          const idxBody = {
+            properties: {
+              suggest: { type: 'completion' },
+              title: { type: 'text' },
+              description: { type: 'text' },
+              content: { type: 'text' },
+              locale: { type: 'keyword' },
+              path: { type: 'text' },
+              tags: { type: 'text' }
+            }
+          }
+
+          await this.client.indices.create({
+            index: this.config.indexName,
+            body: {
+              mappings: idxBody,
+              settings: {
+                analysis: {
+                  analyzer: {
+                    default: {
+                      type: this.config.analyzer
+                    }
+                  }
+                }
+              }
+            }
+          })
+        } catch (err) {
+          WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
+        }
+      } 
     } catch (err) {
       WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Index Check Error: `, _.get(err, 'meta.body.error', err))
     }
