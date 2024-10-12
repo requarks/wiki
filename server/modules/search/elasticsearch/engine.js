@@ -83,9 +83,9 @@ module.exports = {
           await this.client.indices.create({
             index: this.config.indexName,
             body: {
-              mappings: {
+              mappings: (this.config.apiVersion === '6.x') ? {
                 _doc: idxBody
-              },
+              } : idxBody,
               settings: {
                 analysis: {
                   analyzer: {
@@ -229,7 +229,7 @@ module.exports = {
   async created(page) {
     await this.client.index({
       index: this.config.indexName,
-      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -251,7 +251,7 @@ module.exports = {
   async updated(page) {
     await this.client.index({
       index: this.config.indexName,
-      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -273,7 +273,7 @@ module.exports = {
   async deleted(page) {
     await this.client.delete({
       index: this.config.indexName,
-      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       refresh: true
     })
@@ -286,13 +286,13 @@ module.exports = {
   async renamed(page) {
     await this.client.delete({
       index: this.config.indexName,
-      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       refresh: true
     })
     await this.client.index({
       index: this.config.indexName,
-      ...(this.config.apiVersion !== '8.x' && {type: '_doc'}),
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.destinationHash,
       body: {
         suggest: this.buildSuggest(page),
@@ -362,7 +362,7 @@ module.exports = {
               index: {
                 _index: this.config.indexName,
                 _id: doc.id,
-                ...(this.config.apiVersion !== '8.x' && {_type: '_doc'})
+                ...(this.config.apiVersion !== '8.x' && { _type: '_doc' })
               }
             })
             doc.safeContent = WIKI.models.pages.cleanHTML(doc.render)
