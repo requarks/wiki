@@ -163,7 +163,8 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
-      updatedAt: 'string'
+      updatedAt: 'string',
+      siteId: 'string'
     })
   }
 
@@ -309,7 +310,7 @@ module.exports = class Page extends Model {
       contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
-      hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' }),
+      hash: WIKI.models.pages.generatePageHash(opts),
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
       localeCode: opts.locale,
@@ -733,7 +734,12 @@ module.exports = class Page extends Model {
       versionDate: page.updatedAt
     })
 
-    const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const destinationHash = pageHelper.generateHash({
+      siteId: opts.siteId,
+      path: opts.destinationPath,
+      locale: opts.destinationLocale,
+      privateNS: opts.isPrivate ? 'TODO' : ''
+    })
 
     // -> Move page
     const destinationTitle = (page.title === _.last(page.path.split('/')) ? _.last(opts.destinationPath.split('/')) : page.title)
@@ -1097,13 +1103,28 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Generates page hash
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
+  static async generatePageHash(opts) {
+    return pageHelper.generateHash({
+      siteId: opts.siteId,
+      path: opts.path,
+      locale: opts.locale,
+      privateNS: opts.isPrivate ? 'TODO' : ''
+    })
+  }
+
+  /**
    * Fetch an Existing Page from Cache
    *
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPageFromCache(opts) {
-    const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const pageHash = WIKI.models.pages.generatePageHash(opts)
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${pageHash}.bin`)
 
     try {
