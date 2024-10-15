@@ -962,8 +962,7 @@ module.exports = class Page extends Model {
    */
   static async getPage(opts) {
     // -> Get from cache first
-    // let page = await WIKI.models.pages.getPageFromCache(opts)
-    let page
+    let page = await WIKI.models.pages.getPageFromCache(opts)
     if (!page) {
       // -> Get from DB
       page = await WIKI.models.pages.getPageFromDb(opts)
