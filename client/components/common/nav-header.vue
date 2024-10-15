@@ -42,7 +42,13 @@
                     style="overflow: none;"
                     )
                     span Sites
-            v-list(style="height: 400px; overflow-y: auto;", nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+            v-list(
+                style="overflow-y: auto;"
+                width='168'
+                nav, :light='!$vuetify.theme.dark'
+                :dark='$vuetify.theme.dark'
+                :class='$vuetify.theme.dark ? `grey darken-4` : ``'
+              )
               v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)')
                 v-list-item-title.body-2 {{ site.text }}
           v-divider(vertical)
