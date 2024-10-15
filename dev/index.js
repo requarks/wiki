@@ -7,10 +7,6 @@
 
 const _ = require('lodash')
 const chalk = require('chalk')
-const path = require('path')
-const { spawn } = require('child_process')
-
-let serverProcess = null
 
 const init = {
   dev() {
@@ -32,7 +28,7 @@ const init = {
     }
     global.WP_DEV.devMiddleware.waitUntilValid(() => {
       console.info(chalk.yellow.bold('>>> Starting Wiki.js in DEVELOPER mode...'))
-      this.startServer()
+      require('../server')
 
       process.stdin.setEncoding('utf8')
       process.stdin.on('data', data => {
@@ -62,45 +58,30 @@ const init = {
       })
     })
   },
-  startServer() {
-    if (serverProcess) {
-      console.warn(chalk.yellow('--- Stopping existing server process...'))
-      serverProcess.kill()
-    }
-
-    console.info(chalk.green('--- Starting server process...'))
-    const serverPath = path.join(__dirname, '../server');
-    serverProcess = spawn('node', [serverPath], {
-      stdio: 'inherit', // inherit stdio to output logs to the console
-      env: {
-        ...process.env,
-        DEV: true
-      }
-    })
-
-    serverProcess.on('exit', (code) => {
-      if (code !== 0) {
-        console.error(chalk.red(`Server crashed with exit code ${code}`))
-        console.error(chalk.red('Retrying server startup in 3 seconds...'))
-        setTimeout(() => {
-          this.startServer()
-        }, 3000)
-      }
-    })
-
-    serverProcess.on('error', (err) => {
-      console.error(chalk.red(`Failed to start server: ${err.message}`))
-    })
-  },
   async reload() {
-    console.warn(chalk.yellow('--- Stopping server...'))
+    console.warn(chalk.yellow('--- Gracefully stopping server...'))
+    await global.WIKI.kernel.shutdown(true)
 
-    if (serverProcess) {
-      serverProcess.kill()
-    }
+    console.warn(chalk.yellow('--- Purging node modules cache...'))
 
-    console.info(chalk.yellow.bold('--- Restarting server...'))
-    this.startServer()
+    global.WIKI = {}
+    Object.keys(require.cache).forEach(id => {
+      if (/[/\\]server[/\\]/.test(id)) {
+        delete require.cache[id]
+      }
+    })
+    Object.keys(module.constructor._pathCache).forEach(cacheKey => {
+      if (/[/\\]server[/\\]/.test(cacheKey)) {
+        delete module.constructor._pathCache[cacheKey]
+      }
+    })
+
+    console.warn(chalk.yellow('--- Unregistering process listeners...'))
+
+    process.removeAllListeners('unhandledRejection')
+    process.removeAllListeners('uncaughtException')
+
+    require('../server')
   }
 }
 
