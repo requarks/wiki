@@ -302,6 +302,9 @@ module.exports = class Page extends Model {
       scriptJs = opts.scriptJs || ''
     }
 
+    const pageHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId, opts.path, opts.locale, opts.isPrivate)
+
     // -> Create page
     await WIKI.models.pages.query().insert({
       authorId: opts.user.id,
@@ -310,7 +313,7 @@ module.exports = class Page extends Model {
       contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
-      hash: WIKI.models.pages.generatePageHash(opts),
+      hash: pageHash,
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
       localeCode: opts.locale,
@@ -343,7 +346,7 @@ module.exports = class Page extends Model {
 
     // -> Rebuild page tree
     // TODO: Enable once done
-    // await WIKI.models.pages.rebuildTree(opts.siteId)
+    // await WIKI.models.pages.rebuildTree(page)
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -936,12 +939,12 @@ module.exports = class Page extends Model {
    *
    * @returns {Promise} Promise with no value
    */
-  static async rebuildTree(siteId) {
+  static async rebuildTree(page) {
     const rebuildJob = await WIKI.scheduler.registerJob({
       name: 'rebuild-tree',
       immediate: true,
       worker: true
-    }, siteId)
+    }, page.siteId)
     return rebuildJob.finished
   }
 
@@ -1108,12 +1111,12 @@ module.exports = class Page extends Model {
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise of the Page Model Instance
    */
-  static async generatePageHash(opts) {
+  static async generatePageHash(siteId, path, locale, isPrivate) {
     return pageHelper.generateHash({
-      siteId: opts.siteId,
-      path: opts.path,
-      locale: opts.locale,
-      privateNS: opts.isPrivate ? 'TODO' : ''
+      siteId,
+      path,
+      locale,
+      privateNS: isPrivate ? 'TODO' : ''
     })
   }
 
@@ -1124,7 +1127,8 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPageFromCache(opts) {
-    const pageHash = WIKI.models.pages.generatePageHash(opts)
+    const pageHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId, opts.path, opts.locale, opts.isPrivate)
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${pageHash}.bin`)
 
     try {
