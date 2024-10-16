@@ -30,14 +30,11 @@ export default {
           query: sitesQuery,
           fetchPolicy: 'network-only'
         })
-
-        console.log('Fetched Sites:', response.data)
         const sites = response.data
 
         commit('SET_SITES', sites)
         return response
       } catch (error) {
-        console.error('Error fetching sites:', error)
         throw error
       }
     }
