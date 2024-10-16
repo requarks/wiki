@@ -18,11 +18,11 @@ type GroupQuery {
   list(
     filter: String
     orderBy: String
-  ): [GroupMinimal] @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): [GroupMinimal] @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 
   single(
     id: Int!
-  ): Group @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): Group @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -32,7 +32,7 @@ type GroupQuery {
 type GroupMutation {
   create(
     name: String!
-  ): GroupResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): GroupResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 
   update(
     id: Int!
@@ -40,21 +40,21 @@ type GroupMutation {
     redirectOnLogin: String!
     permissions: [String]!
     rules: [RuleInput]!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 
   delete(
     id: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 
   assignUser(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 
   unassignUser(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------

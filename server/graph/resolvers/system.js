@@ -134,7 +134,7 @@ module.exports = {
             const singleGroup = await WIKI.models.groups.query().insert({
               name: `Import_${curDateISO}`,
               permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-              pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules)
+              rules: JSON.stringify(WIKI.data.groups.defaultPageRules)
             })
             groupsCount++
             assignableGroups.push(singleGroup.id)
@@ -162,7 +162,7 @@ module.exports = {
                 } else {
                   // -> Build new group
 
-                  const pageRules = _.map(usr.rights, r => {
+                  const rules = _.map(usr.rights, r => {
                     let roles = ['read:pages', 'read:assets', 'read:comments', 'write:comments']
                     if (r.role === `write`) {
                       roles = _.concat(roles, ['write:pages', 'manage:pages', 'read:source', 'read:history', 'write:assets', 'manage:assets'])
@@ -177,14 +177,14 @@ module.exports = {
                     }
                   })
 
-                  const perms = _.chain(pageRules).reject('deny').map('roles').union().flatten().value()
+                  const perms = _.chain(rules).reject('deny').map('roles').union().flatten().value()
 
                   // -> Create new group
 
                   const newGroup = await WIKI.models.groups.query().insert({
                     name: `Import_${curDateISO}_${groupsCount + 1}`,
                     permissions: JSON.stringify(perms),
-                    pageRules: JSON.stringify(pageRules)
+                    rules: JSON.stringify(rules)
                   })
                   reuseGroups.push({
                     groupId: newGroup.id,

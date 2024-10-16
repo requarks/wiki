@@ -63,6 +63,8 @@ import pencilIcon from '@ckeditor/ckeditor5-core/theme/icons/pencil.svg';
 import linkToPageIcon from '../../../static/ckeditor5-svg/link-to-page.svg';
 import diagramIcon from '../../../static/ckeditor5-svg/diagram.svg';
 
+import DiagramCommand from './diagram/diagram-command.js'
+
 export default class DecoupledEditor extends DecoupledEditorBase {}
 
 /* global WIKI */
@@ -77,7 +79,7 @@ class LinkToPage extends Plugin {
       view.set( {
         label: 'Insert Link to Page',
         icon: linkToPageIcon,
-        tooltip: true
+        tooltip: true,
       } );
 
       view.on( 'execute', () => {
@@ -99,7 +101,7 @@ class InsertAsset extends Plugin {
       view.set( {
         label: 'Insert Assets',
         icon: imageIcon,
-        tooltip: true
+        tooltip: true,
       } );
 
       view.on( 'execute', () => {
@@ -115,20 +117,20 @@ class InsertDiagram extends Plugin {
   init() {
     const editor = this.editor;
 
-    editor.ui.componentFactory.add('insertDiagram', locale => {
+    editor.ui.componentFactory.add( 'insertDiagram', locale => {
       const button = new ButtonView( locale );
 
       button.set( {
         label: 'Insert diagram',
         icon: diagramIcon,
-        tooltip: true
-    } );
+        tooltip: true,
+      } );
 
-    button.on( 'execute', () => {
-      WIKI.$emit('insertDiagram');
-  } );
+      button.on( 'execute', () => {
+        WIKI.$emit( 'insertDiagram' );
+      } );
 
-    return button;
+      return button;
     } );
   }
 }
@@ -136,18 +138,22 @@ class InsertDiagram extends Plugin {
 class EditDiagram extends Plugin {
   init() {
     const editor = this.editor;
+    const command = new DiagramCommand( editor );
 
+    editor.commands.add( 'diagram', command );
     editor.ui.componentFactory.add('editDiagram', locale => {
       const button = new ButtonView( locale );
 
-                button.set( {
-                  label: 'Edit diagram',
-                  icon: pencilIcon,
-                  tooltip: true
-                } );
+      button.set( {
+        label: 'Edit diagram',
+        icon: pencilIcon,
+        tooltip: true,
+      } );
+
+      button.bind( 'isVisible' ).to( command, 'isEnabled' )
 
       button.on( 'execute', () => {
-        WIKI.$emit('editDiagram');
+        WIKI.$emit( 'editDiagram' );
       } );
 
       return button;
@@ -208,7 +214,7 @@ DecoupledEditor.builtinPlugins = [
   TodoList,
   Underline,
   UploadAdapter,
-  WordCount
+  WordCount,
 ];
 
 // Editor configuration.
@@ -249,8 +255,8 @@ DecoupledEditor.defaultConfig = {
       'removeFormat',
       '|',
       'undo',
-      'redo'
-    ]
+      'redo',
+    ],
   },
   heading: {
     options: [
@@ -260,14 +266,14 @@ DecoupledEditor.defaultConfig = {
       { model: 'heading3', view: 'h3', title: 'Heading 3', class: '' },
       { model: 'heading4', view: 'h4', title: 'Heading 4', class: '' },
       { model: 'heading5', view: 'h5', title: 'Heading 5', class: '' },
-      { model: 'heading6', view: 'h6', title: 'Heading 6', class: '' }
-    ]
+      { model: 'heading6', view: 'h6', title: 'Heading 6', class: '' },
+    ],
   },
   image: {
     styles: [
       'full',
       'alignLeft',
-      'alignRight'
+      'alignRight',
     ],
     toolbar: [
       'imageStyle:alignLeft',
@@ -275,9 +281,8 @@ DecoupledEditor.defaultConfig = {
       'imageStyle:alignRight',
       '|',
       'imageTextAlternative',
-      '|',
-      'editDiagram'
-    ]
+      'editDiagram',
+    ],
   },
   table: {
     contentToolbar: [
@@ -285,9 +290,9 @@ DecoupledEditor.defaultConfig = {
       'tableRow',
       'mergeTableCells',
       'tableCellProperties',
-      'tableProperties'
-    ]
+      'tableProperties',
+    ],
   },
   // This value must be kept in sync with the language defined in webpack.dev.js and webpack.prod.js.
-  language: 'en'
+  language: 'en',
 };

@@ -3,7 +3,8 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/_assets/svg/sitemap-outline.svg', alt='Sites', style='width: 80px;')
+          img.animated.fadeInUp(icon)
+          v-icon(size=80) mdi-sitemap
           .admin-header-title
             .headline.blue--text.text--darken-2.animated.fadeInLeft Sites
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p4s Manage Sites
