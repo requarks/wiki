@@ -808,7 +808,8 @@ module.exports = class Page extends Model {
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise with no value
    */
-  static async deletePage(opts) {
+  static async deletePage(opts, skipSnapshot) {
+    console.log(`Deleting page with opts pageId = ${opts.id}`)
     const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
@@ -823,11 +824,13 @@ module.exports = class Page extends Model {
     }
 
     // -> Create version snapshot
-    await WIKI.models.pageHistory.addVersion({
-      ...page,
-      action: 'deleted',
-      versionDate: page.updatedAt
-    })
+    if (!skipSnapshot) {
+      await WIKI.models.pageHistory.addVersion({
+        ...page,
+        action: 'deleted',
+        versionDate: page.updatedAt
+      })
+    }
 
     // -> Delete page
     await WIKI.models.pages.query().delete().where('id', page.id)

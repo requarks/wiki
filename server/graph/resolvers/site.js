@@ -134,15 +134,49 @@ module.exports = {
         return pageIds.map(p => p.id)
       }
 
-      // const deletePage = async (pageId) => {
-      //   try {
-      //     await WIKI.models.pages.deletePage({ id: pageId })
-      //     return true
-      //   } catch (err) {
-      //     WIKI.logger.warn(err)
-      //     return generateError(err)
-      //   }
-      // }
+      const getCommentsByPageId = async (pageId) => {
+        const pageIds = await WIKI.models.comments.query()
+          .select('id')
+          .where('pageId', '=', pageId)
+        return pageIds.map(p => p.id)
+      }
+
+      const deletePage = async (pageId) => {
+        try {
+          console.log(`Deleting page with pageId = ${pageId}`)
+          await WIKI.models.pages.deletePage({id: pageId, user: context.req.user}, true)
+          return true
+        } catch (err) {
+          WIKI.logger.warn(err)
+          return generateError(err)
+        }
+      }
+
+      const deleteHistoryPage = async (pageId) => {
+        try {
+          console.log(`Deleting history page with pageId = ${pageId}`)
+          await WIKI.models.pageHistory.purgeByPageId(pageId)
+          return true
+        } catch (err) {
+          WIKI.logger.warn(err)
+          return generateError(err)
+        }
+      }
+
+      const deleteComment = async (id) => {
+        try {
+          console.log(`Deleting history page with pageId = ${id}`)
+          await WIKI.models.comments.deleteComment({
+            id,
+            user: context.req.user,
+            ip: context.req.ip
+          })
+          return true
+        } catch (err) {
+          WIKI.logger.warn(err)
+          return generateError(err)
+        }
+      }
 
       try {
         if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
@@ -157,9 +191,16 @@ module.exports = {
 
         const remainingPages = await getPagesBySiteId(args.id)
 
-        // for (const pageId of remainingPages) {
-        //   await deletePage(pageId)
-        // }
+        for (const pageId of remainingPages) {
+          const remainingComments = await getCommentsByPageId(pageId)
+
+          for (const id of remainingComments) {
+            await deleteComment(id)
+          }
+
+          await deleteHistoryPage(pageId)
+          await deletePage(pageId)
+        }
 
         // -> Delete site
         await WIKI.models.sites.deleteSite(args.id)
