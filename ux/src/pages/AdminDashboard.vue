@@ -116,7 +116,7 @@ q-page.admin-dashboard
             color='primary'
             icon='las la-chart-area'
             :label='t(`admin.analytics.title`)'
-            :disable='!userStore.can(`manage:sites`) || flagsStore.experimental'
+            :disable='!flagsStore.experimental'
             :to='`/_admin/` + adminStore.currentSiteId + `/analytics`'
             )
     //- .col-12.col-lg-9

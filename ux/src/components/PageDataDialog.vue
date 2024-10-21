@@ -143,6 +143,8 @@ function editTemplates () {
 </script>
 
 <style lang="scss">
+@use 'sass:color';
+
 .page-data-dialog {
   &-selector {
     @at-root .body--light & {
@@ -153,7 +155,7 @@ function editTemplates () {
     @at-root .body--dark & {
       background-color: $dark-4;
       box-shadow: inset 0px 1px 0 0 rgba(0,0,0, 0.75), inset 0px -1px 0 0 rgba(0,0,0,.75), 0 -1px 0 0 rgba(255,255,255,.1);
-      border-bottom: 1px solid lighten($dark-3, 10%);
+      border-bottom: 1px solid color.adjust($dark-3, $lightness: 10%);
     }
   }
 }

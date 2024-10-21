@@ -760,6 +760,8 @@ function notImplemented () {
 </script>
 
 <style lang="scss">
+@use 'sass:color';
+
 $editor-height: calc(100vh - 64px - 96px);
 $editor-preview-height: calc(100vh - 64px - 96px - 32px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
@@ -892,13 +894,13 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
   &-toolbar {
     background-color: $primary;
-    border-left: 60px solid darken($primary, 5%);
+    border-left: 60px solid color.adjust($primary, $lightness: -5%);
     color: #FFF;
     height: 32px;
   }
   &-sidebar {
     background-color: $dark-4;
-    border-top: 32px solid darken($primary, 10%);
+    border-top: 32px solid color.adjust($primary, $lightness: -10%);
     color: #FFF;
     width: 56px;
     display: flex;

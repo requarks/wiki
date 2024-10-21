@@ -425,8 +425,9 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-.page-save-dialog {
+@use 'sass:color';
 
+.page-save-dialog {
   &-browser {
     height: 300px;
     max-height: 90vh;
@@ -479,12 +480,12 @@ onMounted(() => {
     border-bottom: 1px solid #FFF;
 
     @at-root .body--light & {
-      background-color: lighten($blue-grey-1, 4%);
+      background-color: color.adjust($blue-grey-1, $lightness: 4%);
       border-bottom-color: $blue-grey-1;
       color: $blue-grey-9;
     }
     @at-root .body--dark & {
-      background-color: darken($dark-4, 1%);
+      background-color: color.adjust($dark-4, $lightness: -1%);
       border-bottom-color: $dark-1;
       color: $blue-grey-3;
     }

@@ -54,7 +54,7 @@ export default defineConfig(({ mode }) => {
       }),
       quasar({
         autoImportComponentCase: 'kebab',
-        sassVariables: 'src/css/quasar.variables.scss'
+        sassVariables: '@/css/_theme.scss'
       })
     ],
     resolve: {

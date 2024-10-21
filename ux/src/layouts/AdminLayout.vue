@@ -366,6 +366,8 @@ onMounted(async () => {
 </script>
 
 <style lang="scss">
+@use 'sass:color';
+
 .admin-nav {
   height: 100%;
 }
@@ -381,7 +383,7 @@ onMounted(async () => {
   }
 
   .q-item__label--header {
-    box-shadow: 0 -1px 0 0 rgba(255,255,255,.15), 0 -2px 0 0 darken($dark-6, 1%);
+    box-shadow: 0 -1px 0 0 rgba(255,255,255,.15), 0 -2px 0 0 color.adjust($dark-6, $lightness: -1%);
     padding-top: 16px;
   }
 }

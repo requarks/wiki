@@ -73,6 +73,8 @@ const state = reactive({
 </script>
 
 <style lang="scss">
+@use 'sass:color';
+
 .floating-sidepanel {
   .q-dialog__inner {
     right: 24px;
@@ -96,9 +98,9 @@ const state = reactive({
     }
     @at-root .body--dark & {
       background-color: $dark-4;
-      border-top: 1px solid lighten($dark-3, 8%);
+      border-top: 1px solid color.adjust($dark-3, $lightness: 8%);
       box-shadow: inset 0 1px 0 0 $dark-6, inset 0 -1px 0 0 $dark-6;
-      border-bottom: 1px solid lighten($dark-3, 8%);
+      border-bottom: 1px solid color.adjust($dark-3, $lightness: 8%);
     }
   }
 

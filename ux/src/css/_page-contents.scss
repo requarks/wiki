@@ -1,3 +1,7 @@
+@use 'sass:color';
+@use '../../node_modules/quasar/src/css/variables.sass' as quasar;
+@use 'theme';
+
 .page-contents {
   color: #424242;
   font-size: 16px;
@@ -18,10 +22,10 @@
     color: var(--q-primary);
 
     &.is-internal-link.is-invalid-page {
-      color: $red-8;
+      color: quasar.$red-8;
 
       @at-root .body--dark & {
-        color: $red-2;
+        color: quasar.$red-2;
       }
     }
 
@@ -34,13 +38,13 @@
         padding-left: 3px;
         display: inline-block;
         content: "\f35d";
-        color: $grey-5;
+        color: quasar.$grey-5;
         text-decoration: none;
       }
     }
 
     @at-root .body--dark & {
-      color: $blue-4;
+      color: quasar.$blue-4;
     }
   }
 
@@ -138,14 +142,14 @@
 
   blockquote {
     padding: 1em 1em .3em 1em;
-    background-color: $blue-grey-1;
-    border-left: 55px solid $blue-grey-5;
+    background-color: quasar.$blue-grey-1;
+    border-left: 55px solid quasar.$blue-grey-5;
     border-radius: .5rem;
     margin: 1rem 0;
     position: relative;
 
     @at-root .body--dark & {
-      background-color: $blue-grey-9;
+      background-color: quasar.$blue-grey-9;
     }
 
     &::before {
@@ -169,84 +173,84 @@
     }
 
     &.is-info {
-      background-color: $blue-1;
-      border-color: $blue-3;
-      color: $blue-9;
+      background-color: quasar.$blue-1;
+      border-color: quasar.$blue-3;
+      color: quasar.$blue-9;
 
       &::before {
         content: "\F02FC";
       }
 
       code {
-        background-color: $blue-1;
-        color: $blue-8;
+        background-color: quasar.$blue-1;
+        color: quasar.$blue-8;
       }
 
       @at-root .body--dark & {
-        background-color: $blue-9;
-        color: $blue-5;
-        border-color: $blue-5;
+        background-color: quasar.$blue-9;
+        color: quasar.$blue-5;
+        border-color: quasar.$blue-5;
       }
     }
     &.is-warning {
-      background-color: $orange-1;
-      border-color: $orange-3;
-      color: darken($orange-9, 10%);
+      background-color: quasar.$orange-1;
+      border-color: quasar.$orange-3;
+      color: color.adjust(quasar.$orange-9, $lightness: -10%);
 
       &::before {
         content: "\F0026";
       }
 
       code {
-        background-color: $orange-1;
-        color: $orange-8;
+        background-color: quasar.$orange-1;
+        color: quasar.$orange-8;
       }
 
       @at-root .body--dark & {
-        background-color: darken($orange-9, 5%);
-        color: $orange-1;
-        border-color: $orange-5;
-        box-shadow: 0 0 2px 0 $grey-9;
+        background-color: color.adjust(quasar.$orange-9, $lightness: -5%);
+        color: quasar.$orange-1;
+        border-color: quasar.$orange-5;
+        box-shadow: 0 0 2px 0 quasar.$grey-9;
       }
     }
     &.is-danger {
-      background-color: $red-1;
-      border-color: $red-3;
-      color: $red-9;
+      background-color: quasar.$red-1;
+      border-color: quasar.$red-3;
+      color: quasar.$red-9;
 
       &::before {
         content: "\F0159";
       }
 
       code {
-        background-color: $red-1;
-        color: $red-8;
+        background-color: quasar.$red-1;
+        color: quasar.$red-8;
       }
 
       @at-root .body--dark & {
-        background-color: $red-9;
-        color: $red-1;
-        border-color: $red-5;
+        background-color: quasar.$red-9;
+        color: quasar.$red-1;
+        border-color: quasar.$red-5;
       }
     }
     &.is-success {
-      background-color: $green-1;
-      border-color: $green-3;
-      color: $green-9;
+      background-color: quasar.$green-1;
+      border-color: quasar.$green-3;
+      color: quasar.$green-9;
 
       &::before {
         content: "\F0E1E";
       }
 
       code {
-        background-color: $green-1;
-        color: $green-8;
+        background-color: quasar.$green-1;
+        color: quasar.$green-8;
       }
 
       @at-root .body--dark & {
-        background-color: $green-9;
-        color: $green-5;
-        border-color: $green-5;
+        background-color: quasar.$green-9;
+        color: quasar.$green-5;
+        border-color: quasar.$green-5;
       }
     }
 
@@ -300,11 +304,11 @@
       }
 
       li {
-        background-color: $grey-1;
-        background-image: linear-gradient(to bottom, #FFF, $grey-1);
-        border-right: 1px solid $grey-3;
-        border-bottom: 1px solid $grey-3;
-        border-left: 5px solid $grey-4;
+        background-color: quasar.$grey-1;
+        background-image: linear-gradient(to bottom, #FFF, quasar.$grey-1);
+        border-right: 1px solid quasar.$grey-3;
+        border-bottom: 1px solid quasar.$grey-3;
+        border-left: 5px solid quasar.$grey-4;
         box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
         padding: 1rem;
         border-radius: 5px;
@@ -316,13 +320,13 @@
         }
 
         &:hover {
-          background-image: linear-gradient(to bottom, #FFF, lighten($blue-1, 4%));
-          border-left-color: $blue-5;
+          background-image: linear-gradient(to bottom, #FFF, color.adjust(quasar.$blue-1, $lightness: 4%));
+          border-left-color: quasar.$blue-5;
           cursor: pointer;
 
           @at-root .is-rtl & {
-            border-left-color: $grey-3;
-            border-right-width: $blue-5;
+            border-left-color: quasar.$grey-3;
+            border-right-width: quasar.$blue-5;
           }
         }
 
@@ -340,10 +344,10 @@
           > em {
             font-weight: 400;
             font-style: normal;
-            color: $grey-7;
+            color: quasar.$grey-7;
             display: inline-block;
             padding-left: .5rem;
-            border-left: 1px solid $grey-4;
+            border-left: 1px solid quasar.$grey-4;
             margin-left: .5rem;
 
             &.is-block {
@@ -361,11 +365,11 @@
         }
 
         @at-root .body--dark & {
-          background-color: $grey-1;
-          background-image: linear-gradient(to bottom, lighten($grey-9, 5%), $grey-9);
-          border-right: 1px solid $grey-9;
-          border-bottom: 1px solid $grey-9;
-          border-left: 5px solid $grey-7;
+          background-color: quasar.$grey-1;
+          background-image: linear-gradient(to bottom, color.adjust(quasar.$grey-9, $lightness: 5%), quasar.$grey-9);
+          border-right: 1px solid quasar.$grey-9;
+          border-bottom: 1px solid quasar.$grey-9;
+          border-left: 5px solid quasar.$grey-7;
           box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.1);
 
           @at-root .body--dark.is-rtl & {
@@ -374,12 +378,12 @@
           }
 
           &:hover {
-            background-image: linear-gradient(to bottom, lighten($grey-9, 2%), darken($grey-9, 3%));
+            background-image: linear-gradient(to bottom, color.adjust(quasar.$grey-9, $lightness: 2%), color.adjust(quasar.$grey-9, $lightness: -3%));
             border-left-color: mc('indigo', '300');
             cursor: pointer;
 
             @at-root .body--dark.is-rtl & {
-              border-left-color: $grey-9;
+              border-left-color: quasar.$grey-9;
               border-right-width: mc('indigo', '300');
             }
           }
@@ -390,7 +394,7 @@
     &.grid-list {
       margin: 1rem 0 0 0;
       background-color: #FFF;
-      border: 1px solid $grey-3;
+      border: 1px solid quasar.$grey-3;
       padding: 1px;
       display: inline-block;
       list-style-type: none;
@@ -401,7 +405,7 @@
       }
 
       li {
-        background-color: $grey-1;
+        background-color: quasar.$grey-1;
         padding: .6rem 1rem;
         display: block;
 
@@ -419,10 +423,10 @@
         }
 
         @at-root .body--dark & {
-          background-color: $grey-9;
+          background-color: quasar.$grey-9;
 
           &:nth-child(odd) {
-            background-color: darken($grey-9, 5%);
+            background-color: color.adjust(quasar.$grey-9, $lightness: -5%);
           }
         }
       }
@@ -461,7 +465,7 @@
       top: 2px;
       position: relative;
       margin-right: .4em;
-      background-color: $dark-5;
+      background-color: theme.$dark-5;
       border-width: 0;
 
       &::after {
@@ -472,7 +476,7 @@
         font-size: 1.25em;
         font-weight: normal;
         content: '\F0131';
-        color: $grey-10;
+        color: quasar.$grey-10;
         display: block;
         border: none;
         background-color: #FFF;
@@ -481,7 +485,7 @@
 
         @at-root .body--dark & {
           color: #FFF;
-          background-color: $dark-6;
+          background-color: theme.$dark-6;
         }
       }
 
@@ -513,7 +517,7 @@
   //   }
 
   //   @at-root .theme--dark & {
-  //     background-color: darken(mc('grey', '900'), 5%);
+  //     background-color: color.adjust(mc('grey', '900'), $lightness: -5%);
   //     color: mc('indigo', '100');
   //   }
   // }
@@ -586,7 +590,7 @@
   .align-abstopright {
     width: 100px;
     max-height: 100px;
-    border: 2px dashed $red;
+    border: 2px dashed quasar.$red;
     border-radius: 5px;
     padding: 5px;
   }

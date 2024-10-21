@@ -682,6 +682,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
+
 .nav-edit {
   height: 100%;
 
@@ -752,7 +754,7 @@ onBeforeUnmount(() => {
 .nav-edit-item-header, .nav-edit-item-separator {
   & + .nav-edit-item-link.is-nested {
     background-color: $negative !important;
-    border-left-color: darken($negative, 10%) !important;
+    border-left-color: color.adjust($negative, $lightness: -10%) !important;
 
     & + div:not(.is-nested) {
       &::before {
@@ -769,7 +771,7 @@ onBeforeUnmount(() => {
 
   .is-nested:first-child {
     background-color: $negative !important;
-    border-left-color: darken($negative, 10%) !important;
+    border-left-color: color.adjust($negative, $lightness: -10%) !important;
 
     & + div:not(.is-nested) {
       &::before {
