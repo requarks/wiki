@@ -9,7 +9,7 @@ services:
         # Update 'VARIANT' to pick an LTS version of Node.js: 18, 16, 14, 12.
         # Append -bullseye or -buster to pin to an OS version.
         # Use -bullseye variants on local arm64/Apple Silicon.
-        VARIANT: 18-bullseye
+        VARIANT: 20-bullseye
 
     volumes:
       - ..:/workspace

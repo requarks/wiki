@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
 import session from 'express-session'
-import KnexSessionStore from 'connect-session-knex'
+import { ConnectSessionKnexStore } from 'connect-session-knex'
 import favicon from 'serve-favicon'
 import path from 'node:path'
 import { set } from 'lodash-es'
@@ -139,7 +139,7 @@ export async function init () {
     secret: WIKI.config.auth.secret,
     resave: false,
     saveUninitialized: false,
-    store: new KnexSessionStore(session)({
+    store: new ConnectSessionKnexStore({
       knex: WIKI.db.knex
     })
   }))
@@ -159,7 +159,7 @@ export async function init () {
 
   app.use((req, res, next) => {
     if (req.path.length > 1 && req.path.endsWith('/')) {
-      let query = req.url.slice(req.path.length) || ''
+      const query = req.url.slice(req.path.length) || ''
       res.redirect(301, req.path.slice(0, -1) + query)
     } else {
       set(res.locals, 'pageMeta.url', `${WIKI.config.host}${req.path}`)

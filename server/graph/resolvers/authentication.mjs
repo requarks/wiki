@@ -3,7 +3,7 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 import jwt from 'jsonwebtoken'
 import ms from 'ms'
 import { DateTime } from 'luxon'
-import base64 from '@hexagon/base64'
+import { base64 } from '@hexagon/base64'
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,

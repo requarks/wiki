@@ -52,6 +52,7 @@ RUN apt-get update \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /root/.gnupg /tmp/library-scripts
 
 # Enable PNPM
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN sudo corepack enable \
     && corepack prepare pnpm@latest --activate
 
