@@ -22,52 +22,36 @@
         v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
-          //- v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
-          //-   template(v-slot:activator='{ on }')
-          //-     v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
-          //-       v-icon mdi-menu
-          //-   v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-          //-     v-list-item.pl-4(href='/')
-          //-       v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
-          //-       v-list-item-title.body-2 {{$t('common:header.home')}}
-          //-     v-list-item.pl-4(@click='')
-          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-file-tree
-          //-       v-list-item-content
-          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.siteMap')}}
-          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-          //-     v-list-item.pl-4(href='/t')
-          //-       v-list-item-avatar(size='24'): v-icon(color='teal') mdi-tag-multiple
-          //-       v-list-item-title.body-2 {{$t('common:header.browseTags')}}
-          //-     v-list-item.pl-4(@click='assets')
-          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
-          //-       v-list-item-content
-          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
-          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
 
-          //- v-select.mt-3( :items="sites" dense, v-if='mode !== `admin`', @click='$router.push("/sites/" + props.item.id)')
+          //- SITES
 
-          template(v-if='hasAnyPagePermissions && path && mode !== `edit`')
-            v-menu(offset-y, bottom, transition='slide-y-transition', left)
-              template(v-slot:activator='{ on: menu, attrs }')
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on: tooltip }')
-                    v-btn(
-                      icon
-                      v-bind='attrs'
-                      v-on='{ ...menu, ...tooltip }'
-                      :class='$vuetify.rtl ? `ml-3` : ``'
-                      tile
-                      height='64'
-                      :aria-label='$t(`common:header.pageActions`)'
-                      )
-                      v-icon(color='grey') mdi-file-document-edit-outline
-                  span {{$t('common:header.pageActions')}}
-              v-list(style="height: 400px; overflow-y: auto;", nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-                v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)')
-                  v-list-item-title.body-2 {{ site.text }}
-            v-divider(vertical)
+          v-menu(offset-y, bottom, transition='slide-y-transition', left)
+            template(v-slot:activator='{ on: menu, attrs }')
+              v-tooltip(bottom)
+                template(v-slot:activator='{ on: tooltip }')
+                  v-btn(
+                    icon
+                    v-bind='attrs'
+                    v-on='{ ...menu }'
+                    :class='$vuetify.rtl ? `ml-3` : ``'
+                    tile
+                    height='64'
+                    width='100'
+                    style="overflow: none;"
+                    )
+                    span Sites
+            v-list(
+                style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
+                width='168'
+                nav, :light='!$vuetify.theme.dark'
+                :dark='$vuetify.theme.dark'
+                :class='$vuetify.theme.dark ? `grey darken-4` : ``'
+              )
+              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)')
+                v-list-item-title.body-2 {{ site.text }}
+          v-divider(vertical)
 
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
@@ -95,8 +79,6 @@
                 @keyup.up='searchMove(`up`)'
                 autocomplete='none'
               )
-
-
 
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
@@ -546,7 +528,6 @@ export default {
           fetchPolicy: 'network-only'
         })
         if (resp.data.sites) {
-          console.log(resp.data.sites)
           this.sites = resp.data.sites.map(site => ({
             id: site.id,
             value: site.path,

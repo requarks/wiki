@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async ({ pageId, siteId }) => {
+module.exports = async (siteId) => {
   WIKI.logger.info(`Rebuilding page tree...`)
 
   try {
@@ -13,7 +13,7 @@ module.exports = async ({ pageId, siteId }) => {
     const pages = await WIKI.models.pages
       .query()
       .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS')
-      .where('siteId', 'IS', siteId)
+      // .where('siteId', '=', siteId)
       .orderBy(['localeCode', 'path'])
     let tree = []
     let pik = 0

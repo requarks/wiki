@@ -242,4 +242,13 @@ module.exports = class PageHistory extends Model {
     const olderThanISO = DateTime.utc().minus(dur)
     await WIKI.models.pageHistory.query().where('versionDate', '<', olderThanISO.toISO()).del()
   }
+
+  /**
+   * Purge history by pageId than X
+   *
+   * @param {String} pageId String
+   */
+  static async purgeByPageId (pageId) {
+    await WIKI.models.pageHistory.query().where('pageId', '=', pageId).del()
+  }
 }

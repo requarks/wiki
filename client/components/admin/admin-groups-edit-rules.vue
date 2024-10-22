@@ -98,7 +98,7 @@
               solo
               :items='roles'
               v-model='rule.roles'
-              @change='rule.roles'
+              @change='handleRoleChange'
               placeholder='Select Role(s)...'
               hide-details
               multiple
@@ -115,7 +115,9 @@
                 v-chip.white--text.ml-0(v-if='index <= 1', small, label, :color='rule.deny ? `red` : `green`').caption {{ item.text }}
                 v-chip.white--text.ml-0(v-if='index === 2', small, label, :color='rule.deny ? `red lighten-2` : `green lighten-2`').caption + {{ rule.roles.length - 2 }} more
               template(slot='item', slot-scope='props')
-                v-list-item-action(style='min-width: 30px;')
+                v-list-item-action(
+                  style='min-width: 30px;'
+                )
                   v-checkbox(
                     v-model='props.attrs.inputValue'
                     hide-details
@@ -179,7 +181,7 @@
                   v-list-item-title.body-2 Any Locale
               v-divider(slot='prepend-item')
               template(slot='item', slot-scope='props')
-                v-list-item-action(style='min-width: 30px;')
+                v-list-item-action(style='min-width: 90px;')
                   v-checkbox(
                     v-model='props.attrs.inputValue'
                     hide-details
@@ -277,7 +279,7 @@ export default {
         { text: 'Path Ends With...', value: 'END', icon: '.../' },
         { text: 'Path Matches Regex...', value: 'REGEX', icon: '$.*' },
         { text: 'Tag Matches...', value: 'TAG', icon: 'T' }
-      ],
+      ]
     }
   },
   mounted() {
@@ -347,11 +349,19 @@ export default {
           this.sites = []
         })
     },
-    isCheckboxDisabled(inputValue) {
-      if (this.rule.roles.includes('manage:sites')) {
-        return inputValue !== 'manage:sites'
+    handleRoleChange(selectedRoles) {
+    if (selectedRoles.includes('manage:sites')) {
+      this.rule.roles = ['manage:sites']
+    } else if (this.rule.roles.includes('manage:sites') && selectedRoles.length === 0) {
+      this.rule.roles = []
+    }
+    this.$forceUpdate();
+  },
+  isCheckboxDisabled(inputValue) {
+    if (this.rule.roles.includes('manage:sites')) {
+      return inputValue !== 'manage:sites'
       }
-      return false; 
+      return false
     }
   }
 }
@@ -418,6 +428,20 @@ export default {
 
   .input-group + * {
     margin-left: 0.5rem;
+  }
+
+  .v-input--is-disabled .v-input__control {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .v-input--is-disabled .v-input__slot {
+    background-color: #f5f5f5;
+  }
+
+  .is-manage-sites-selected {
+    opacity: 0.5 !important;
+    pointer-events: none !important;
   }
 }
 </style>
