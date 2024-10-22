@@ -346,7 +346,7 @@ module.exports = class Page extends Model {
 
     // -> Rebuild page tree
     // TODO: Enable once done
-    // await WIKI.models.pages.rebuildTree(page)
+    await WIKI.models.pages.rebuildTree(page)
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -838,7 +838,7 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree(opts.siteId)
+    await WIKI.models.pages.rebuildTree(page)
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
