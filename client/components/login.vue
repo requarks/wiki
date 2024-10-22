@@ -83,13 +83,6 @@
               ) {{ $t('auth:actions.login') }}
             .text-center.mt-5
               v-btn.text-none(
-                text
-                rounded
-                color='grey darken-3'
-                @click.stop.prevent='forgotPassword'
-                href='#forgot'
-                ): .caption {{ $t('auth:forgotPasswordLink') }}
-              v-btn.text-none(
                 v-if='selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
                 color='indigo darken-2'
                 text
