@@ -17,7 +17,7 @@ props:
   minDelay:
     type: Number
     title: Post delay
-    default: 30
+    default: 1
     hint: 'Minimum delay (in seconds) between comments per account. Note that all guests are considered as a single account.'
     maxWidth: 400
     order: 2
