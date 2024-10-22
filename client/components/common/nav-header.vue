@@ -518,7 +518,12 @@ export default {
       window.location.assign('/')
     },
     goToSite (path) {
-      window.location.assign(`/${path}`)
+      const baseUrl = window.location.origin
+      if (path) {
+        window.location.assign(`${baseUrl}/${path}`);
+      } else {
+        console.error('Path is empty');
+      }
     },
 
     async fetchSitesFromUser () {

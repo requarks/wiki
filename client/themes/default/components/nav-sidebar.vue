@@ -51,7 +51,7 @@
             v-icon(small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
+        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + sitePath + `/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ currentParent.title }}
@@ -61,7 +61,7 @@
           v-list-item-avatar(size='24')
             v-icon mdi-folder
           v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
+        v-list-item(v-else, :href='`/` +  sitePath + `/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ item.title }}
@@ -107,8 +107,8 @@ export default {
   },
   computed: {
     path: get('page/path'),
-    locale: get('page/locale')
-    // sitePath: get('page/sitePath')
+    locale: get('page/locale'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     switchMode (mode) {
@@ -145,9 +145,9 @@ export default {
 
       const resp = await this.$apollo.query({
         query: gql`
-          query ($parent: Int, $locale: String!) {
+          query ($parent: Int, $locale: String!, $siteId: String!) {
             pages {
-              tree(parent: $parent, mode: ALL, locale: $locale) {
+              tree(parent: $parent, mode: ALL, locale: $locale, siteId: $siteId) {
                 id
                 path
                 title
@@ -155,6 +155,7 @@ export default {
                 pageId
                 parent
                 locale
+                siteId
               }
             }
           }
@@ -183,6 +184,7 @@ export default {
                 pageId
                 parent
                 locale
+              
               }
             }
           }
