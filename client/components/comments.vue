@@ -192,6 +192,7 @@ export default {
           variables: {
             locale: this.$store.get('page/locale'),
             path: this.$store.get('page/path')
+            // sitePath: get('page/sitePath')
           },
           fetchPolicy: 'network-only'
         })

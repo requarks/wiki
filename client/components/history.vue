@@ -122,7 +122,13 @@
           v-btn(text, @click='isRestoreConfirmDialogShown = false', :disabled='restoreLoading') {{$t('common:actions.cancel')}}
           v-btn(color='orange darken-2', dark, @click='restoreConfirm', :loading='restoreLoading') {{$t('history:restore.confirmButton')}}
 
-    page-selector(mode='create', v-model='branchOffOpts.modal', :open-handler='branchOffHandle', :path='branchOffOpts.path', :locale='branchOffOpts.locale')
+    page-selector(
+      mode='create',
+      v-model='branchOffOpts.modal',
+      :open-handler='branchOffHandle',
+      :path='branchOffOpts.path',
+      :locale='branchOffOpts.locale'
+    )
 
     nav-footer
     notify
@@ -436,11 +442,13 @@ export default {
         versionId: versionId,
         locale: this.locale,
         path: (pathParts.length > 1) ? _.initial(pathParts).join('/') + `/new-page` : `new-page`,
+        sitePath: 'default', // TODO: Update
         modal: true
       }
     },
-    branchOffHandle ({ locale, path }) {
-      window.location.assign(`/e/${locale}/${path}?from=${this.pageId},${this.branchOffOpts.versionId}`)
+    branchOffHandle ({ locale, path, sitePath }) {
+      // TODO: Update sitePath in MAR-296 Page History
+      window.location.assign(`/e/${sitePath}/${locale}/${path}?from=${this.pageId},${this.branchOffOpts.versionId}`)
     },
     toggleViewMode () {
       this.viewMode = (this.viewMode === 'line-by-line') ? 'side-by-side' : 'line-by-line'

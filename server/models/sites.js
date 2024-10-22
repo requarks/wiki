@@ -32,7 +32,7 @@ module.exports = class Site extends Model {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()
     }
-    const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['default']
+    const siteId = WIKI.sitesMappings[path]
     if (siteId) {
       return WIKI.sites[siteId]
     }
@@ -43,8 +43,7 @@ module.exports = class Site extends Model {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()
     }
-    console.log(WIKI.sitesMappings)
-    const siteId = WIKI.sitesMappings[path] || WIKI.sitesMappings['first_site']
+    const siteId = WIKI.sitesMappings[path]
     if (siteId) {
       return siteId
     }

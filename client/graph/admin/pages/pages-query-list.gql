@@ -12,6 +12,8 @@ query {
       privateNS
       createdAt
       updatedAt
+      siteId
+      siteName
     }
   }
 }

@@ -76,18 +76,21 @@ module.exports = {
     async list (obj, args, context, info) {
       let results = await WIKI.models.pages.query().column([
         'pages.id',
-        'path',
+        'pages.path',
         { locale: 'localeCode' },
-        'title',
-        'description',
-        'isPublished',
-        'isPrivate',
-        'privateNS',
-        'contentType',
-        'createdAt',
-        'updatedAt',
-        'siteId'
+        'pages.title',
+        'pages.description',
+        'pages.isPublished',
+        'pages.isPrivate',
+        'pages.privateNS',
+        'pages.contentType',
+        'pages.createdAt',
+        'pages.updatedAt',
+        'pages.siteId',
+        'sites.name as siteName',
+        'sites.path as sitePath'
       ])
+        .leftJoin('sites', 'pages.siteId', 'sites.id')
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
           builder.select('tag')
@@ -174,7 +177,8 @@ module.exports = {
     async singleByPath(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb({
         path: args.path,
-        locale: args.locale
+        locale: args.locale,
+        siteId: args.siteId
       })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
@@ -396,15 +400,8 @@ module.exports = {
      */
     async create(obj, args, context) {
       try {
-        const defaultSiteId = await WIKI.models.sites.getSiteIdByPath({ path: 'default', forceReload: true })
-
-        if (!defaultSiteId) {
-          throw new Error('Failed to insert default site and retrieve ID')
-        }
-
         const page = await WIKI.models.pages.createPage({
           ...args,
-          siteId: defaultSiteId,
           user: context.req.user
         })
         return {

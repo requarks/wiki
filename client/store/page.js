@@ -50,7 +50,10 @@ const state = {
     editMenuExternalName: '',
     editMenuExternalIcon: '',
     editMenuExternalUrl: ''
-  }
+  },
+  siteId: '',
+  siteName: '',
+  sitePath: 'default'
 }
 
 export default {

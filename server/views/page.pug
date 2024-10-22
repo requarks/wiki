@@ -31,6 +31,9 @@ block body
       comments-external=comments.codeTemplate
       edit-shortcuts=Buffer.from(JSON.stringify(config.editShortcuts)).toString('base64')
       filename=pageFilename
+      site-path=site.path
+      site-id=site.id
+      site-name=site.name
       )
       template(slot='contents')
         div!= page.render

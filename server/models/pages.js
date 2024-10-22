@@ -163,7 +163,8 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
-      updatedAt: 'string'
+      updatedAt: 'string',
+      siteId: 'string'
     })
   }
 
@@ -264,7 +265,12 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for duplicate
-    const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
+    const dupCheck = await WIKI.models.pages.query()
+      .select('id')
+      .where('localeCode', opts.locale)
+      .where('path', opts.path)
+      .where('siteId', opts.siteId)
+      .first()
     if (dupCheck) {
       throw new WIKI.Error.PageDuplicateCreate()
     }
@@ -296,6 +302,9 @@ module.exports = class Page extends Model {
       scriptJs = opts.scriptJs || ''
     }
 
+    const pageHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId, opts.path, opts.locale, opts.isPrivate)
+
     // -> Create page
     await WIKI.models.pages.query().insert({
       authorId: opts.user.id,
@@ -304,7 +313,7 @@ module.exports = class Page extends Model {
       contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
       description: opts.description,
       editorKey: opts.editor,
-      hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' }),
+      hash: pageHash,
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
       localeCode: opts.locale,
@@ -323,7 +332,8 @@ module.exports = class Page extends Model {
       path: opts.path,
       locale: opts.locale,
       userId: opts.user.id,
-      isPrivate: opts.isPrivate
+      isPrivate: opts.isPrivate,
+      siteId: opts.siteId
     })
 
     // -> Save Tags
@@ -335,7 +345,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.renderPage(page)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree(opts.siteId)
+    // TODO: Enable once done
+    // await WIKI.models.pages.rebuildTree(page)
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -394,7 +405,8 @@ module.exports = class Page extends Model {
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
       action: opts.action ? opts.action : 'updated',
-      versionDate: ogPage.updatedAt
+      versionDate: ogPage.updatedAt,
+      siteId: ogPage.siteId
     })
 
     // -> Format Extra Properties
@@ -437,7 +449,8 @@ module.exports = class Page extends Model {
         ...ogPage.extra,
         js: scriptJs,
         css: scriptCss
-      })
+      }),
+      siteId: ogPage.siteId
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
@@ -724,7 +737,12 @@ module.exports = class Page extends Model {
       versionDate: page.updatedAt
     })
 
-    const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const destinationHash = pageHelper.generateHash({
+      siteId: opts.siteId,
+      path: opts.destinationPath,
+      locale: opts.destinationLocale,
+      privateNS: opts.isPrivate ? 'TODO' : ''
+    })
 
     // -> Move page
     const destinationTitle = (page.title === _.last(page.path.split('/')) ? _.last(opts.destinationPath.split('/')) : page.title)
@@ -790,7 +808,8 @@ module.exports = class Page extends Model {
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise with no value
    */
-  static async deletePage(opts) {
+  static async deletePage(opts, skipSnapshot) {
+    console.log(`Deleting page with opts pageId = ${opts.id}`)
     const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
@@ -805,11 +824,13 @@ module.exports = class Page extends Model {
     }
 
     // -> Create version snapshot
-    await WIKI.models.pageHistory.addVersion({
-      ...page,
-      action: 'deleted',
-      versionDate: page.updatedAt
-    })
+    if (!skipSnapshot) {
+      await WIKI.models.pageHistory.addVersion({
+        ...page,
+        action: 'deleted',
+        versionDate: page.updatedAt
+      })
+    }
 
     // -> Delete page
     await WIKI.models.pages.query().delete().where('id', page.id)
@@ -921,12 +942,12 @@ module.exports = class Page extends Model {
    *
    * @returns {Promise} Promise with no value
    */
-  static async rebuildTree(siteId) {
+  static async rebuildTree(page) {
     const rebuildJob = await WIKI.scheduler.registerJob({
       name: 'rebuild-tree',
       immediate: true,
       worker: true
-    }, siteId)
+    }, page.siteId)
     return rebuildJob.finished
   }
 
@@ -1002,13 +1023,19 @@ module.exports = class Page extends Model {
           'pages.authorId',
           'pages.creatorId',
           'pages.extra',
+          'pages.siteId',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
             creatorName: 'creator.name',
             creatorEmail: 'creator.email'
+          },
+          {
+            siteName: 'sites.name',
+            sitePath: 'sites.path'
           }
         ])
+        .leftJoin('sites', 'pages.siteId', 'sites.id')
         .joinRelated('author')
         .joinRelated('creator')
         .withGraphJoined('tags')
@@ -1019,7 +1046,8 @@ module.exports = class Page extends Model {
           'pages.id': opts
         } : {
           'pages.path': opts.path,
-          'pages.localeCode': opts.locale
+          'pages.localeCode': opts.locale,
+          'siteId': opts.siteId
         })
         // .andWhere(builder => {
         //   if (queryModeID) return
@@ -1075,8 +1103,24 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
-      updatedAt: page.updatedAt
+      updatedAt: page.updatedAt,
+      siteId: page.siteId
     }))
+  }
+
+  /**
+   * Generates page hash
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
+  static async generatePageHash(siteId, path, locale, isPrivate) {
+    return pageHelper.generateHash({
+      siteId,
+      path,
+      locale,
+      privateNS: isPrivate ? 'TODO' : ''
+    })
   }
 
   /**
@@ -1086,7 +1130,8 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPageFromCache(opts) {
-    const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const pageHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId, opts.path, opts.locale, opts.isPrivate)
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${pageHash}.bin`)
 
     try {
