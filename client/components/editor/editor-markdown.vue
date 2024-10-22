@@ -401,6 +401,7 @@ export default {
     path: get('page/path'),
     mode: get('editor/mode'),
     activeModal: sync('editor/activeModal')
+    // sitePath: get('page/sitePath')
   },
   watch: {
     previewShown (newValue, oldValue) {

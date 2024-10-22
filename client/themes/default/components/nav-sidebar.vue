@@ -108,6 +108,7 @@ export default {
   computed: {
     path: get('page/path'),
     locale: get('page/locale')
+    // sitePath: get('page/sitePath')
   },
   methods: {
     switchMode (mode) {

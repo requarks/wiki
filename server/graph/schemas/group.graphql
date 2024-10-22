@@ -94,7 +94,7 @@ type Rule {
   roles: [String]!
   path: String!
   locales: [String]!
-  sites: [String]!
+  sites: [String]
 }
 
 input RuleInput {

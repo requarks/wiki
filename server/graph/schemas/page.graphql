@@ -40,6 +40,7 @@ type PageQuery {
     locale: String
     creatorId: Int
     authorId: Int
+    siteId: String
   ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
 
   single(
@@ -98,6 +99,7 @@ type PageMutation {
     scriptJs: String
     tags: [String]!
     title: String!
+    siteId: String!
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   update(
@@ -115,6 +117,7 @@ type PageMutation {
     scriptJs: String
     tags: [String]
     title: String
+    siteId: String!
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   convert(
@@ -209,6 +212,7 @@ type Page {
   creatorId: Int! @auth(requires: ["write:pages", "manage:system"])
   creatorName: String! @auth(requires: ["write:pages", "manage:system"])
   creatorEmail: String! @auth(requires: ["write:pages", "manage:system"])
+  siteId: String!
 }
 
 type PageTag {
@@ -283,6 +287,8 @@ type PageListItem {
   createdAt: Date!
   updatedAt: Date!
   tags: [String]
+  siteId: String
+  siteName: String
 }
 
 type PageTreeItem {

@@ -72,6 +72,7 @@
                 td.admin-pages-path
                   v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
                   span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
+                td {{ props.item.siteName }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
@@ -95,6 +96,7 @@ export default {
         { text: 'ID', value: 'id', width: 80, sortable: true },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
+        { text: 'Site', value: 'siteName' },
         { text: 'Created', value: 'createdAt', width: 250 },
         { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
@@ -149,7 +151,7 @@ export default {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.list,
+      update: (data) => { return data.pages.list },
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
