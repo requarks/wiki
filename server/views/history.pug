@@ -18,4 +18,7 @@ block body
       :is-published=page.isPublished.toString()
       live-content=page.content
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
+      site-path=site.path
+      site-id=site.id
+      site-name=site.name
       )

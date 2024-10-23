@@ -195,6 +195,18 @@ export default {
     effectivePermissions: {
       type: String,
       default: ''
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -377,10 +389,10 @@ export default {
       }
     },
     viewSource (versionId) {
-      window.location.assign(`/s/${this.locale}/${this.path}?v=${versionId}`)
+      window.location.assign(`/s/${this.sitePath}/${this.locale}/${this.path}?v=${versionId}`)
     },
     download (versionId) {
-      window.location.assign(`/d/${this.locale}/${this.path}?v=${versionId}`)
+      window.location.assign(`/d/${this.sitePath}/${this.locale}/${this.path}?v=${versionId}`)
     },
     restore (versionId, versionDate) {
       this.restoreTarget = {
@@ -421,7 +433,7 @@ export default {
           })
           this.isRestoreConfirmDialogShown = false
           setTimeout(() => {
-            window.location.assign(`/${this.locale}/${this.path}`)
+            window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
           }, 1000)
         } else {
           throw new Error(_.get(resp, 'data.pages.restore.responseResult.message', 'An unexpected error occurred'))
@@ -442,19 +454,19 @@ export default {
         versionId: versionId,
         locale: this.locale,
         path: (pathParts.length > 1) ? _.initial(pathParts).join('/') + `/new-page` : `new-page`,
-        sitePath: 'default', // TODO: Update
+        sitePath: this.sitePath,
         modal: true
       }
     },
-    branchOffHandle ({ locale, path, sitePath }) {
+    branchOffHandle ({ locale, path }) {
       // TODO: Update sitePath in MAR-296 Page History
-      window.location.assign(`/e/${sitePath}/${locale}/${path}?from=${this.pageId},${this.branchOffOpts.versionId}`)
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}?from=${this.pageId},${this.branchOffOpts.versionId}`)
     },
     toggleViewMode () {
       this.viewMode = (this.viewMode === 'line-by-line') ? 'side-by-side' : 'line-by-line'
     },
     goLive () {
-      window.location.assign(`/${this.path}`)
+      window.location.assign(`/${this.sitePath}/${this.path}`)
     },
     setDiffSource (versionId) {
       this.diffSource = versionId

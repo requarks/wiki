@@ -66,7 +66,7 @@ router.get(['/a', '/a/*'], (req, res, next) => {
  * Download Page / Version
  */
 router.get(['/d', '/d/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
 
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
 
@@ -265,12 +265,15 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
 /**
  * History
  */
-router.get(['/h', '/h/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+router.get(['/h', '/h/:sitePath/*'], async (req, res, next) => {
+  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
+  const site = await getSite(req.params?.sitePath)
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/h/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/h/${site.sitePath}/${pageArgs.locale}/${pageArgs.path}`)
   }
+
+  WIKI.logger.debug(`Found site ${site.id}`)
 
   req.i18n.changeLanguage(pageArgs.locale)
 
@@ -280,10 +283,12 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
-    userId: req.user.id,
-    // TODO: Add siteId
-    isPrivate: false
+    // userId: req.user.id,
+    // isPrivate: false,
+    siteId: site.id
   })
+
+  WIKI.logger.debug(`Found page ${page.id}`)
 
   if (!page) {
     _.set(res.locals, 'pageMeta.title', 'Page Not Found')
@@ -303,7 +308,11 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
     _.set(res.locals, 'pageMeta.title', page.title)
     _.set(res.locals, 'pageMeta.description', page.description)
 
-    res.render('history', { page, effectivePermissions })
+    res.render('history', {
+      page,
+      effectivePermissions,
+      site
+    })
   } else {
     res.redirect(`/${pageArgs.path}`)
   }
@@ -358,22 +367,23 @@ router.get(['/p', '/p/*'], (req, res, next) => {
 /**
  * Source
  */
-router.get(['/s', '/s/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+router.get(['/s', '/s/:sitePath/*'], async (req, res, next) => {
+  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
+  const site = await getSite(req.params?.sitePath)
 
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
-    // TODO: Add siteId
-    isPrivate: false
+    isPrivate: false,
+    siteId: site.id
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
-    return res.redirect(`/s/${pageArgs.locale}/${pageArgs.path}`)
+    return res.redirect(`/s/${site.sitePath}/${pageArgs.locale}/${pageArgs.path}`)
   }
 
   // -> Effective Permissions
@@ -448,7 +458,7 @@ const renderPage = async (req, res, next) => {
 
   if (isPage) {
     const site = await getSite(req.params.sitePath || 'default')
-    console.log(`Switching to site ${site.path} (${site.id})`)
+    WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
 
     if (pageArgs.path === 'undefined') {
       pageArgs.path = 'home'
