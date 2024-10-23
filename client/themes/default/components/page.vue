@@ -171,7 +171,7 @@
                     template(v-slot:activator='{ on }')
                       v-btn.btn-animate-edit(
                         icon
-                        :href='"/h/" + locale + "/" + path'
+                        :href='"/h/" + sitePath + "/" + locale + "/" + path'
                         v-on='on'
                         x-small
                         v-if='hasReadHistoryPermission'
