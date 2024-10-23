@@ -213,6 +213,8 @@ type Page {
   creatorName: String! @auth(requires: ["write:pages", "manage:system"])
   creatorEmail: String! @auth(requires: ["write:pages", "manage:system"])
   siteId: String!
+  sitePath: String
+  siteName: String
 }
 
 type PageTag {
@@ -289,6 +291,7 @@ type PageListItem {
   tags: [String]
   siteId: String
   siteName: String
+  sitePath: String
 }
 
 type PageTreeItem {
