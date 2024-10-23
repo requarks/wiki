@@ -22,6 +22,9 @@ query($id: Int!) {
       creatorId
       creatorName
       creatorEmail
+      siteId
+      siteName
+      sitePath
     }
   }
 }
