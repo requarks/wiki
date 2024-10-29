@@ -194,11 +194,11 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Mattias Johnson ([@mattiasJohnson](https://github.com/mattiasJohnson))
 - Max Ricketts-Uy ([@MaxRickettsUy](https://github.com/MaxRickettsUy))
 - Mickael Asseline ([@PAPAMICA](https://github.com/PAPAMICA))
+- Mitchell Rowton ([@mrowton](https://github.com/mrowton))
         
 </td><td>
 <img width="441" height="1" />
 
-- Mitchell Rowton ([@mrowton](https://github.com/mrowton))
 - M. Scott Ford ([@mscottford](https://github.com/mscottford))
 - Nick Halase ([@nhalase](https://github.com/nhalase))
 - Nick Price ([@DominoTree](https://github.com/DominoTree))
@@ -211,8 +211,10 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 - Ruizhe Li ([@liruizhe1995](https://github.com/liruizhe1995))
 - Sam Martin ([@ABitMoreDepth](https://github.com/ABitMoreDepth))
 - Sean Coffey ([@seanecoffey](https://github.com/seanecoffey))
+- Simon Ott ([@ottsimon](https://github.com/ottsimon))
 - Stephan Kristyn ([@stevek-pro](https://github.com/stevek-pro))
 - Theodore Chu ([@TheodoreChu](https://github.com/TheodoreChu))
+- Tim Elmer ([@tim-elmer](https://github.com/tim-elmer))
 - Tyler Denman ([@tylerguy](https://github.com/tylerguy))
 - Victor Bilgin ([@vbilgin](https://github.com/vbilgin))
 - VMO Solutions ([@vmosolutions](https://github.com/vmosolutions))
@@ -392,6 +394,23 @@ Support this project by becoming a sponsor. Your logo will show up in the Contri
       </td>
       <td align="center" valign="middle">
         <a href="https://opencollective.com/wikijs/sponsor/44/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/44/avatar.svg"></a>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/40/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/45/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/41/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/46/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/42/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/47/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/43/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/48/avatar.svg"></a>
+      </td>
+      <td align="center" valign="middle">
+        <a href="https://opencollective.com/wikijs/sponsor/44/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/49/avatar.svg"></a>
       </td>
     </tr>
   </tbody>
