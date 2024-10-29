@@ -445,6 +445,24 @@
         }
       }
     }
+    &.success {
+       td.icon {
+          background-color: mc('green', '300');
+          color: mc('green', '50');
+          &::before {
+            content: "\F0E1E";
+          }
+        }
+      td.content {
+        color: darken(mc('green', '900'), 10%);
+        background-color: mc('green', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('green', '900');
+          color: mc('green', '50');
+        }
+      }
+    }
     &.tip {
       td.icon {
         background-color: mc('green', '300');
