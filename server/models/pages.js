@@ -862,7 +862,7 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit("deletePageFromCache", page.hash);
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree(opts.siteId);
+    await WIKI.models.pages.rebuildTree(page);
 
     // -> Rename in Search Index
     const pageContents = await WIKI.models.pages
