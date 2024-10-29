@@ -25,7 +25,7 @@ db:
 
   # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
   host: localhost
-  port: 15432
+  port: 5432
   user: wikijs
   pass: wikijsrocks
   db: wiki
@@ -93,6 +93,12 @@ ssl:
 pool:
   # min: 2
   # max: 10
+
+  min: 2
+  max: 10
+  indleTimeout5Millis: 30000
+  connectionTimeoutMillis: 30000
+  maxLifetimeMillis:  1800000
 
 # ---------------------------------------------------------------------
 # IP address the server should listen to
