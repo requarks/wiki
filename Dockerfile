@@ -43,6 +43,10 @@ COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./package.json ./package.json
 COPY --chown=node:node ./LICENSE ./LICENSE
 
+USER root
+
+ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
+RUN chmod 644 /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem && update-ca-certificates
 
 USER node
 

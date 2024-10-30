@@ -1,0 +1,25 @@
+loki:
+  enabled: true
+  nodeSelector:
+   node-role.kubernetes.io/master: "true"
+  isDefault: true
+  image:
+    tag: 2.9.7
+  # persistence:
+  #   enabled: true
+  #   storageClassName: "local-path"  # Use the different storage class as per requirement
+  #   accessModes:
+  #     - ReadWriteOnce
+  #   size: 1Gi #Need to adjust as per the requirements when more node memory is available
+
+fluent-bit:
+  enabled: false
+
+
+promtail:
+  enabled: true
+  config:
+    logLevel: debug
+  #   serverPort: 3101
+  #   clients:
+  #     - url: "http://loki.monitoring:3100/loki/api/v1/push"

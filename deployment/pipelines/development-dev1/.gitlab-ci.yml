@@ -1,0 +1,102 @@
+default:
+  tags:
+    - runner_mar
+
+stages:
+  - setup-deployment
+  - deployment
+  - monitoring
+  - rollback
+  - cleanup
+
+setup-deployment:
+  stage: setup-deployment
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$DEV1_SSH_KEY" | base64 -d | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh/
+    - echo "$DEV1_SSH_KEY" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa de-muc-mar1.apps.ce.capgemini.com >> ~/.ssh/known_hosts
+    - |
+      ssh deployer@de-muc-mar1.apps.ce.capgemini.com << 'EOF'
+        echo "Check kubelet Status"
+        kubeletStatus=$(systemctl status k3s | grep -i "Active: active (running)")
+
+        if [ -n "$kubeletStatus" ]; then
+          echo "kubelet service is active and running."
+        else
+          echo "kubelet service is not active and running. Deployment cannot proceed."
+          exit 1
+        fi
+
+        nodeName=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+        echo "Check nodes readiness ${nodeName}"
+
+        nodeStatus=$(kubectl get nodes | grep -i ready)
+        echo "Node status is ${nodeStatus}"
+
+        if [ -n "$nodeStatus" ]; then
+          echo "Node(s) are ready."
+        else
+          echo "No nodes are ready. Deployment cannot proceed."
+          exit 1
+        fi
+      EOF
+
+deployment:
+  stage: deployment
+  image: ansible/ansible
+  script:
+    - echo "infrastructure provisioning"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=dev1"
+    - echo "Deploying application"
+    - echo "$OLD_IMAGE"
+    - echo "$NEW_IMAGE"
+    - cd ../kubernetes-helm
+    - ansible-playbook -i inventory ./playbook-deploy.yml -e "IMAGE=$OLD_IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=dev1" -vv
+  environment:
+    name: $ENVIRONMENT
+
+monitoring:
+  stage: monitoring
+  image: ansible/ansible
+  script:
+    - echo "Deploying monitoring"
+    - cd ./deployment/monitoring
+    - ansible-playbook monitoring-playbook.yaml -i inventory  -e hostname=dev1 -vv
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: '$MONITORING == "yes"'
+      when: on_success
+    - if: '$MONITORING != "yes"'
+      when: never
+
+rollback:
+  stage: rollback
+  script:
+    - |
+      ssh deployer@de-muc-mar1.apps.ce.capgemini.com << 'EOF'
+      DEPLOY_AVAILABLE=$(kubectl describe deploy capwiki-app -n dev | grep -i available | grep -i "1 available" | wc -l)
+      if [ "$DEPLOY_AVAILABLE" -eq 0 ]; then
+        echo "Deployment is unavailable, rolling back to the previous version"
+        kubectl rollout undo deployment/capwiki-app -n dev
+        echo "Rollback complete."
+      else
+        echo "Deployment is available, no rollback needed."
+      fi
+      EOF
+  when: delayed
+  start_in: 2 minutes
+
+cleanup:
+  stage: cleanup
+  script:
+    - rm -f /home/mar/.ssh/id_rsa
+  when: always
+  needs:
+    - deployment
+    - rollback
