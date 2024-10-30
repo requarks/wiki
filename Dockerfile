@@ -45,12 +45,8 @@ COPY --chown=node:node ./LICENSE ./LICENSE
 
 USER root
 
-ARG ENV
-ARG CERT_FILE
-
-ADD ./deployment/config/${ENV}/certs/${CERT_FILE} /usr/local/share/ca-certificates/${CERT_FILE}
-RUN chmod 644 /usr/local/share/ca-certificates/${CERT_FILE} && update-ca-certificates
-
+ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
+RUN chmod 644 /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem && update-ca-certificates
 
 USER node
 

@@ -1,0 +1,37 @@
+## example to run playbook on dev1: ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=dev1"  
+## example to run playbook on all: ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=all"  
+---
+- name: Install k3s kubernetes cluster
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+    - role: install-kubernetes
+
+- name: Install helm
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+    - role: install-helm
+
+- name: Install nginx ingress
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+   - role: install-nginx
+
+- name: Ensure kustomize is installed
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  tasks:
+   - name: Install kustomize
+     shell: |
+        if [ ! -f /usr/local/bin/kustomize ]; then
+          curl -LO "https://github.com/kubernetes-sigs/kustomize/releases/latest/download/kustomize_v5.4.3_linux_amd64.tar.gz";
+          tar -xvf kustomize_v5.4.3_linux_amd64.tar.gz;
+          sudo mv kustomize /usr/local/bin/;
+          rm kustomize_v5.4.3_linux_amd64.tar.gz;
+        fi

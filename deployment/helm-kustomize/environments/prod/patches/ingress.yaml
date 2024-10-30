@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: capwiki-ingress
+spec:
+  rules:
+  - host: capwiki.corp.capgemini.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: capwiki-svc
+            port:
+              number: 80
+        path: /
+        pathType: Prefix    
+  tls:
+  - hosts:
+    - capwiki.corp.capgemini.com
+    secretName: capwiki-internal-tls

@@ -1,0 +1,55 @@
+grafana:
+ enabled: true 
+  # admin credentials
+  #adminUser: "admin"
+  #adminPassword: "admin@123"
+ smtp:
+    enabled: true
+    existingSecret: "capwiki-grafanaui-secret"
+    userKey: "smtpuser"
+    passwordKey: "smtppwd"
+    
+ grafana.ini:
+  smtp:
+    enabled: true
+    host: gmr10.capgemini.com:25
+    from_address: capwiki-noreply@capgemini.com
+    from_name: CapWiki
+    skip_verify: true
+
+ nodeSelector:
+  node-role.kubernetes.io/master: "true"
+ persistence:
+    enabled: true
+    type: sts
+    storageClassName: "local-path"  # Use the different storage class as per requirement
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi  #Need to adjust as per the requirements when more node memory is available
+    finalizers:
+       - kubernetes.io/pvc-protection
+
+prometheus:
+  nodeSelector:
+    node-role.kubernetes.io/master: "true"
+  service:
+    type: NodePort #(Optional - to access prometheus web ui outside the cluster on web)
+  prometheusSpec:
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ## How long to retain metrics
+    retention: 7d
+    ## Maximum size of metrics
+   ## Need to extend when more node memory is available
+    retentionSize: "1.5GB"
+  storageSpec:
+    ## Using PersistentVolumeClaim
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "local-path"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:  
+              storage: 1Gi # Need to extend when more node memory is available
