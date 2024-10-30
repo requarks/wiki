@@ -1,7 +1,13 @@
 ---
-- name: Add Docker's official GPG key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+- name: Update all packages to their latest version
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+
+#- name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+ # ansible.builtin.apt:
+ #   update_cache: yes
+  #  cache_valid_time: 3600
 
 - name: Install required packages
   apt:
@@ -12,9 +18,9 @@
       - gnupg-agent
       - software-properties-common
 
-- name: Ensure apt is up to date
-  apt:
-    update_cache: yes
+- name: Add Docker's official GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
 
 - name: Add Docker's APT repository
   apt_repository:

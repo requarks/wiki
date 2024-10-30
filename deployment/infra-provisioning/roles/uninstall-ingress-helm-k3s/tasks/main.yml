@@ -1,0 +1,57 @@
+---
+- name: Get helm installed version
+  ansible.builtin.command: helm version
+  register: helm_version_output
+  ignore_errors: true
+
+- name: Print helm version
+  debug:
+    var: helm_version_output
+  ignore_errors: true
+
+
+- name: Uninstall Helm binary
+  file:
+    path: /usr/local/bin/helm
+    state: absent
+  ignore_errors: true
+
+- name: Remove Helm configuration and cache
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /helm
+    - ~/.cache/helm
+  ignore_errors: true
+
+- name: Get k3s installed version
+  ansible.builtin.command: k3s --version
+  register: k3s_version_output
+  ignore_errors: true
+
+- name: Print k3s version
+  debug:
+    var: k3s_version_output
+
+#sudo systemctl stop k3s
+- name: Stop K3s service
+  systemd:
+    name: k3s
+    state: stopped
+    enabled: no
+  ignore_errors: true
+
+- name: Uninstall K3s
+  command: /usr/local/bin/k3s-uninstall.sh
+  when: ansible_facts['os_family'] == 'Debian'
+
+- name: Remove K3s directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /k3s
+    - /etc/rancher/k3s
+    - /var/lib/rancher/k3s
+    - ~/.kube

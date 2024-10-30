@@ -1,0 +1,28 @@
+{
+  "kind": "SealedSecret",
+  "apiVersion": "bitnami.com/v1alpha1",
+  "metadata": {
+    "name": "capwiki-nexus-registry",
+    "namespace": "default",
+    "creationTimestamp": null,
+    "annotations": {
+      "sealedsecrets.bitnami.com/cluster-wide": "true"
+    }
+  },
+  "spec": {
+    "template": {
+      "metadata": {
+        "name": "capwiki-nexus-registry",
+        "namespace": "default",
+        "creationTimestamp": null,
+        "annotations": {
+          "sealedsecrets.bitnami.com/cluster-wide": "true"
+        }
+      },
+      "type": "kubernetes.io/dockerconfigjson"
+    },
+    "encryptedData": {
+      ".dockerconfigjson": "AgBESwwa1UesT3PH1DkYfB/7NAOdKzb71E4mcCd0Wv9ofAHFGgV7ijfGCLFMD3xGH4Qzqq1ufra0bze1bW5Rc0/+XNrIHXl3aCCmJtQ+XhUkASEpumd6hINMj2ZzwvOPlVWlZwJRtqTC6Mj/fPV1PuuN4BeUFdT69rCR2i2m7lOFtmWLBnLrpRuZSIyF99JV1Y1WS0hWFqUqbbORzQSJv/uS0jqMfteXOwI5O1ALVONLSqw937JzwZtvHQ0N8UpPChK8HLg2U98IjIMq/Bu+mtPO4jK2Y7nCGvmBWhoP/aCkcUsmNAxo15gK1wYkYfXAO1noQAOP7oQgyxe8jcEserstYYw8RnjAfHCXEtuKvP3yv9TC4bb9jEaWivZ1C6dPq5KBpjSDAj77KkqtQOHln9Z3j3Nx54r82QJJ+puLzk+ySXAhcYpVn5CXhDeRrsCyKtBANOSR6LPc0OSxld60L/QctkoD1MxOrvr96f3KZQo/U44ZYjgB4rts/BLH8yGVv1eBTxCakny6K/+MRUaHHBwf8n6atbIVEVUlPmjuo1HkO/epsnlW4pUrVAq8RzlkFdmRRAL4VhboW9AvMcUKFg/FXgULw4zO0hPNZjy9EmSZL4aK1YQbXA8WoJKT24awNO8nJ4A/lmm0Vjsxl0/9L65yA5q0ve3XPZsIUaWI7JSth+pe7ytt6rm3BZjZJaNF4hqNKRZm3CY1Dq6abSriXbXJjxlPL3gcMEkdRUPyhzkmi5qE/nwPKTfSxflI+6hh8TtgjmZ3MZphNe1Cxpkv5014v1DvFY0cAr2mIKpcxwMfm2VawRjAwn+RYU/gVnWk6zE2fZyX2uVUaQ87+D0h/0CLVVQ9fqATXSAG65Yk3gVnsQ=="
+    }
+  }
+}

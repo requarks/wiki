@@ -1,9 +1,0 @@
-tls:
-  stores:
-    default:
-      defaultCertificate:
-        certFile: /etc/certs/test.crt
-        keyFile: /etc/certs/test-capwiki.corp.capgemini.key
-  certificates:
-    - certFile: /etc/certs/test.crt
-      keyFile: /etc/certs/test-capwiki.corp.capgemini.key

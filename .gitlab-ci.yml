@@ -1,0 +1,183 @@
+variables:
+  PROJECT_NAME: 'mar'
+  APP_NAME: 'capwiki'
+  DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
+  DEPLOY_USER: 'capwiki'
+  TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
+  OLD_IMAGE: "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}"
+  NEW_IMAGE: "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}:$CI_COMMIT_SHA"
+  ENVIRONMENT:
+    value: "none"
+    options:
+      - "dev1"
+      - "dev2"
+      - "production"
+      - "staging"
+      - "none"
+      - "n/a" #that one is being used in scheduled pipelone so it doesn't deploy to any environment
+    description: "Choose on which environment should pipeline run"
+  MONITORING:
+    value: "no"
+    options:
+      - "yes"
+      - "no"
+    description: "Deploy monitoring"
+  VERSION:
+    value: "v2.0.0"
+    description: "Specify the version [ONLY USED FOR PRODUCTION]"
+  MESSAGE:
+    value: ""
+    description: "Specify a tagging message [ONLY USED FOR PRODUCTION]"
+  CONTAINER_SCANNING_ENABLED:
+    value: "false"
+    options:
+      - "true"
+      - "false"
+    description: "Choose true if you want to scan the images"
+  
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "feature-deployment-phase2-k8s" # this workflow rule assigns "staging" value to the ENVIRONMENT variable so it can be run utomatically whenever there's merge to the "develop" branch
+      variables: 
+        ENVIRONMENT: staging
+    - if: $ENVIRONMENT != "none" # this workflow rule prevents pipeline to be started automatically when no ENVIRONMENT's value is specified (dev1, dev2, rod) to make sure they are started manually
+      when: always
+    - if: $ENVIRONMENT == "staging"
+      variables:
+        NEW_IMAGE: "${NEW_IMAGE}-DEV-SNAPSHOT"
+    - if: $ENVIRONMENT == "production"
+      variables:
+        NEW_IMAGE: "${NEW_IMAGE}-${VERSION}"
+    - if: $ENVIRONMENT == "n/a"
+      when: always
+
+default:
+  tags:
+    - runner_mar
+
+stages:
+  - test
+  - modify_package_json
+  - docker
+  - deployment-pipeline
+  - tagging
+
+before_script:
+  - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+
+modify_package_json:
+  stage: modify_package_json
+  image: node:alpine
+  before_script:
+   
+    # Make the scripts executable
+    - chmod +x ./modify-app-dev-mode.js
+    - chmod +x ./modify-app-releasedate-version.js
+  script:
+    - echo "Modify package json i.e release date and version"
+    # This node.js script will run in all environments
+    - node ./modify-app-releasedate-version.js "$VERSION"
+    
+    # Conditionally run this script only in staging or production environments
+    - |
+      if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production" ]]; then
+        echo "Modify package json dev mode to false for $ENVIRONMENT"
+        node ./modify-app-dev-mode.js false
+      else
+        echo "Skipping modify-app-dev-mode.sh in non-staging/non-production environments"
+      fi
+    
+    # Confirm the changes
+    - cat package.json | grep -E '"version"|"releaseDate"|"dev"' | sed 's/[",]//g'
+  rules:
+    - if: $ENVIRONMENT == "n/a"
+      when: never    
+    - when: always
+      
+  # Artifacts to persist changes for later stages
+  artifacts:
+    paths:
+      - package.json
+
+build-docker-image:
+  stage: docker
+  script:
+    - echo "Building Docker image"
+    - docker build --no-cache -f Dockerfile -t $NEW_IMAGE .
+  rules:
+    - if: $ENVIRONMENT == "n/a"
+      when: never    
+    - when: always
+
+push-docker-image:
+  stage: docker
+  script:
+    - echo "Pushing Docker image"
+    - docker push $NEW_IMAGE
+  rules:
+    - if: $ENVIRONMENT == "n/a"
+      when: never
+    - when: always
+
+container_scanning:
+  stage: test
+  trigger:
+    include: deployment/pipelines/scanning/scanning.yaml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $CONTAINER_SCANNING_ENABLED != "true"
+      when: never
+    - if: $CONTAINER_SCANNING_ENABLED == "true"
+      when: always
+
+dev1-pipeline:
+  stage: deployment-pipeline
+  trigger:
+    include: deployment/pipelines/development-dev1/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $ENVIRONMENT == "n/a"
+      when: never
+    - if: $ENVIRONMENT == "dev1" 
+
+dev2-pipeline:
+  stage: deployment-pipeline
+  trigger:
+    include: deployment/pipelines/development-dev2/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:    
+    - if: $ENVIRONMENT == "n/a"
+      when: never
+    - if: $ENVIRONMENT == "dev2" 
+
+  
+staging-pipeline:
+  stage: deployment-pipeline
+  trigger:
+    include: deployment/pipelines/staging/.gitlab-ci.yml  
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $ENVIRONMENT == "n/a"
+      when: never
+    - if: $ENVIRONMENT == "staging"
+    #- if: $CI_COMMIT_BRANCH == "feature-deployment-phase2-k8s" && $ENVIRONMENT == "staging"
+    
+prod-pipeline:
+  stage: deployment-pipeline
+  trigger:
+    include: deployment/pipelines/production/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $ENVIRONMENT == "n/a"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "main" && $ENVIRONMENT == "production"
