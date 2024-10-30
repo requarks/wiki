@@ -156,6 +156,9 @@ module.exports = {
           } else {
             res.cookie('jwt', newToken.token, { expires: DateTime.utc().plus({ days: 365 }).toJSDate() })
           }
+
+          // Avoid caching this response
+          res.set('Cache-Control', 'no-store')
         } catch (errc) {
           WIKI.logger.warn(errc)
           return next()

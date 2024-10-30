@@ -13,11 +13,11 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 
 ## Reporting a Vulnerability
 
-**DO NOT CREATE AN ISSUE ON GITHUB** to report a potential vulnerability / security problem. Instead, choose one of these options:
+**DO NOT CREATE A GITHUB ISSUE / DISCUSSION** to report a potential vulnerability / security problem. Instead, choose one of these options:
 
-### A) Disclose on Huntr.dev
+### A) Submit a Vulnerability Report *(recommended)*
 
-Disclose the vulnerability on [Huntr.dev](https://huntr.dev/bounties/disclose) for the repository `https://github.com/Requarks/wiki`.
+Fill in the form on https://github.com/requarks/wiki/security/advisories/new
 
 ### B) Send an email
 
