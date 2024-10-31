@@ -100,8 +100,8 @@
 </template>
 
 <script>
-import _ from "lodash";
-import gql from "graphql-tag";
+import _ from 'lodash'
+import gql from 'graphql-tag'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i;
 
@@ -111,28 +111,28 @@ export default {
   props: {
     value: {
       type: Boolean,
-      default: false,
+      default: false
     },
     path: {
       type: String,
-      default: "new-page",
+      default: "new-page"
     },
     locale: {
       type: String,
-      default: "en",
+      default: "en"
     },
     mode: {
       type: String,
-      default: "create",
+      default: "create"
     },
     openHandler: {
       type: Function,
-      default: () => {},
+      default: () => {}
     },
     mustExist: {
       type: Boolean,
-      default: false,
-    },
+      default: false
+    }
   },
   data() {
     return {
@@ -148,33 +148,33 @@ export default {
         {
           id: 0,
           title: this.$store.get("page/siteName"),
-          children: [],
-        },
+          children: []
+        }
       ],
       pages: [],
       all: [],
       namespaces: siteLangs.length
-        ? siteLangs.map((ns) => ns.code)
+        ? siteLangs.map(ns => ns.code)
         : [siteConfig.lang],
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
           initialScrollX: 0.01, // fix scrollbar not disappearing on load
           scrollingX: false,
-          speed: 50,
+          speed: 50
         },
         rail: {
-          gutterOfEnds: "2px",
+          gutterOfEnds: "2px"
         },
         bar: {
           onlyShowBarOnScroll: false,
           background: "#999",
           hoverStyle: {
-            background: "#64B5F6",
-          },
-        },
+            background: "#64B5F6"
+          }
+        }
       },
-      siteId: this.$store.get("page/siteId"),
+      siteId: this.$store.get("page/siteId")
     };
   },
   computed: {
@@ -184,7 +184,7 @@ export default {
       },
       set(val) {
         this.$emit("input", val);
-      },
+      }
     },
     currentPages() {
       return _.sortBy(
@@ -215,9 +215,9 @@ export default {
             "fonts",
             "img",
             "js",
-            "svg",
+            "svg"
           ],
-          (p) => {
+          p => {
             return p === firstSection;
           }
         )
@@ -226,7 +226,7 @@ export default {
       } else {
         return true;
       }
-    },
+    }
   },
   watch: {
     isShown(newValue, oldValue) {
@@ -263,7 +263,7 @@ export default {
 
         this.currentPath = _.compact([
           _.get(current, "path", ""),
-          _.last(this.currentPath.split("/")),
+          _.last(this.currentPath.split("/"))
         ]).join("/");
       }
     },
@@ -278,8 +278,8 @@ export default {
           {
             id: 0,
             title: this.$store.get("page/siteName"),
-            children: [],
-          },
+            children: []
+          }
         ];
         this.currentNode = [0];
         this.openNodes = [0];
@@ -287,7 +287,7 @@ export default {
         this.all = [];
         this.treeViewCacheId += 1;
       });
-    },
+    }
   },
   methods: {
     close() {
@@ -297,7 +297,7 @@ export default {
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
-        id: this.mustExist && this.currentPage ? this.currentPage.pageId : 0,
+        id: this.mustExist && this.currentPage ? this.currentPage.pageId : 0
       });
       if (exit !== false) {
         this.close();
@@ -307,7 +307,7 @@ export default {
       this.searchLoading = true;
       const resp = await this.$apollo.query({
         query: gql`
-          query (
+          query(
             $parent: Int!
             $mode: PageTreeMode!
             $locale: String!
@@ -336,8 +336,8 @@ export default {
           parent: item.id,
           mode: "ALL",
           locale: this.currentLocale,
-          siteId: this.siteId,
-        },
+          siteId: this.siteId
+        }
       });
 
       console.log("Full response:", resp);
@@ -346,7 +346,7 @@ export default {
       console.log("item siteId:", items.siteId);
       console.log("Current siteId:", this.siteId);
 
-      const filteredItems = items.filter((i) => {
+      const filteredItems = items.filter(i => {
         console.log(
           "Checking item siteId:",
           i.siteId,
@@ -369,12 +369,12 @@ export default {
       console.log("Filtered items:", filteredItems);
 
       const itemFolders = _.filter(filteredItems, ["isFolder", true]).map(
-        (f) => ({
+        f => ({
           ...f,
-          children: [],
+          children: []
         })
       );
-      const itemPages = _.filter(filteredItems, (i) => i.pageId > 0);
+      const itemPages = _.filter(filteredItems, i => i.pageId > 0);
       if (itemFolders.length > 0) {
         item.children = itemFolders;
       } else {
@@ -384,8 +384,8 @@ export default {
       this.all = _.unionBy(this.all, filteredItems, "id");
 
       this.searchLoading = false;
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -399,3 +399,4 @@ export default {
   }
 }
 </style>
+
