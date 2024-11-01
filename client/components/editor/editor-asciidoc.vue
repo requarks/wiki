@@ -163,6 +163,8 @@ import cmFold from './common/cmFold'
 // INIT
 // ========================================
 const asciidoctor = require('asciidoctor')()
+const registry = asciidoctor.Extensions.create()
+require('../../modules/asciidoc-extended')(registry)
 const cheerio = require('cheerio')
 
 // Platform detection
@@ -222,7 +224,8 @@ export default {
         attributes: {
           showtitle: true,
           icons: 'font'
-        }
+        },
+        'extension_registry': registry
       })
       const $ = cheerio.load(html, {
         decodeEntities: true
