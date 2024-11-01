@@ -28,7 +28,8 @@ module.exports = class Asset extends Model {
         fileSize: {type: 'integer'},
         metadata: {type: 'object'},
         createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        updatedAt: {type: 'string'},
+        siteId: {type: 'string'}
       }
     }
   }
@@ -96,7 +97,8 @@ module.exports = class Asset extends Model {
       kind: _.startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
       mime: opts.mimetype,
       fileSize: opts.size,
-      folderId: opts.folderId
+      folderId: opts.folderId,
+      siteId: opts.siteId
     }
 
     // Sanitize SVG contents

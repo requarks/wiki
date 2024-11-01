@@ -291,6 +291,7 @@ export default {
     folderTree: get('editor/media@folderTree'),
     currentFolderId: sync('editor/media@currentFolderId'),
     currentFileId: sync('editor/media@currentFileId'),
+    siteId: get('page/siteId'),
     pageTotal () {
       if (!this.assets) {
         return 0
@@ -393,7 +394,8 @@ export default {
       }
       for (let file of files) {
         file.setMetadata({
-          folderId: this.currentFolderId
+          folderId: this.currentFolderId,
+          siteId: this.siteId
         })
       }
       await this.$refs.pond.processFiles()

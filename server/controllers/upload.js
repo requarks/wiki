@@ -62,6 +62,20 @@ router.post('/u', (req, res, next) => {
     })
   }
 
+  // Get siteId
+  let siteId = null
+  try {
+    const rawMediaUpload = _.get(req, 'body.mediaUpload', false)
+    if (rawMediaUpload) {
+      siteId = _.get(JSON.parse(rawMediaUpload), 'siteId', null)
+    }
+  } catch (err) {
+    return res.status(400).json({
+      succeeded: false,
+      message: 'Missing siteId in metadata.'
+    })
+  }
+
   // Build folder hierarchy
   let hierarchy = []
   if (folderId) {
@@ -93,7 +107,8 @@ router.post('/u', (req, res, next) => {
     mode: 'upload',
     folderId: folderId,
     assetPath,
-    user: req.user
+    user: req.user,
+    siteId: siteId
   })
   res.send('ok')
 })
