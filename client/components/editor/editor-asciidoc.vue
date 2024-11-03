@@ -53,7 +53,7 @@
                 v-icon(color='blue') mdi-alpha-n-box-outline
               v-list-item-title {{'Note Blockquote'}}
             v-divider
-            v-list-item(@click='insertBeforeEachLine({ content: `SUCCESS: `})')
+            v-list-item(@click='insertBeforeEachLine({ content: `[SUCCESS]\n`})')
               v-list-item-action
                 v-icon(color='success') mdi-alpha-s-box-outline
               v-list-item-title {{'Success Blockquote'}}

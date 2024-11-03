@@ -445,14 +445,15 @@
         }
       }
     }
+
     &.success {
-       td.icon {
-          background-color: mc('green', '300');
-          color: mc('green', '50');
-          &::before {
-            content: "\F0E1E";
-          }
+      td.icon {
+        background-color: mc('green', '300');
+        color: mc('green', '50');
+        &::before {
+          content: "\F0E1E";
         }
+      }
       td.content {
         color: darken(mc('green', '900'), 10%);
         background-color: mc('green', '50');
@@ -463,6 +464,7 @@
         }
       }
     }
+
     &.tip {
       td.icon {
         background-color: mc('green', '300');
@@ -481,6 +483,7 @@
         }
       }
     }
+
     &.warning {
       background-color: transparent !important;
 
@@ -501,6 +504,7 @@
         }
       }
     }
+
     &.caution {
       td.icon {
         background-color: mc('purple', '300');
@@ -519,6 +523,7 @@
         }
       }
     }
+
     &.important {
       td.icon {
         background-color: mc('red', '300');
