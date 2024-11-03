@@ -428,6 +428,8 @@
     }
 
     &.note {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('blue', '300');
         color: mc('blue', '50');
@@ -447,6 +449,8 @@
     }
 
     &.success {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('green', '300');
         color: mc('green', '50');
@@ -466,6 +470,7 @@
     }
 
     &.tip {
+      background-color: transparent !important;
       td.icon {
         background-color: mc('green', '300');
         color: mc('green', '50');
@@ -506,6 +511,8 @@
     }
 
     &.caution {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('purple', '300');
         color: mc('purple', '50');
@@ -525,6 +532,8 @@
     }
 
     &.important {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('red', '300');
         color: mc('red', '50');
