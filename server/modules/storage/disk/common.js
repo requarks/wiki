@@ -13,7 +13,7 @@ const pageHelper = require('../../../helpers/page.js')
 
 module.exports = {
   assetFolders: null,
-  async importFromDisk ({ fullPath, moduleName }) {
+  async importFromDisk ({ fullPath, moduleName, siteId }) {
     const rootUser = await WIKI.models.users.getRootUser()
 
     await pipeline(
@@ -56,7 +56,8 @@ module.exports = {
                   relPath: relPath,
                   file: file,
                   contentType: contentType,
-                  moduleName: moduleName
+                  moduleName: moduleName,
+                  siteId
                 })
               } catch (err) {
                 WIKI.logger.warn(`(STORAGE/${moduleName}) Failed to process asset ${relPath}`)
@@ -115,7 +116,7 @@ module.exports = {
     }
   },
 
-  async processAsset ({ user, relPath, file, moduleName }) {
+  async processAsset ({ user, relPath, file, moduleName, siteId }) {
     WIKI.logger.info(`(STORAGE/${moduleName}) Asset marked for import: ${relPath}`)
 
     // -> Get all folder paths
@@ -162,7 +163,8 @@ module.exports = {
       path: file.path,
       assetPath: relPath,
       user: user,
-      skipStorage: true
+      skipStorage: true,
+      siteId: siteId
     })
   },
 

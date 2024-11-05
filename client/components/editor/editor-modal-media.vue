@@ -292,6 +292,7 @@ export default {
     currentFolderId: sync('editor/media@currentFolderId'),
     currentFileId: sync('editor/media@currentFileId'),
     siteId: get('page/siteId'),
+    sitePath: get('page/sitePath'),
     pageTotal () {
       if (!this.assets) {
         return 0
@@ -374,7 +375,7 @@ export default {
       const assetPath = this.folderTree.map(f => f.slug).join('/')
       this.$root.$emit('editorInsert', {
         kind: asset.kind,
-        path: this.currentFolderId > 0 ? `/${assetPath}/${asset.filename}` : `/${asset.filename}`,
+        path: this.currentFolderId > 0 ? `/${this.sitePath}/${assetPath}/${asset.filename}` : `/${this.sitePath}/${asset.filename}`,
         text: asset.filename,
         align: this.imageAlignment
       })

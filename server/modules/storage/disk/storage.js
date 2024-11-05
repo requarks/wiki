@@ -171,9 +171,16 @@ module.exports = {
   },
   async importAll() {
     WIKI.logger.info(`(STORAGE/DISK) Importing all content from local disk folder to the DB...`)
+    const sitePath = process.env.WIKI_SITE_PATH
+    if (!sitePath) throw new Error('Missing WIKI_SITE_PATH environment variable.')
+
+    const siteId = await WIKI.models.sites.getSiteIdByPath(sitePath)
+    if (!siteId) throw new Error(`Could not find site with path: ${sitePath}`)
+
     await commonDisk.importFromDisk({
       fullPath: this.config.path,
-      moduleName: 'DISK'
+      moduleName: 'DISK',
+      siteId: siteId
     })
     WIKI.logger.info('(STORAGE/DISK) Import completed.')
   }

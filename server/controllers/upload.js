@@ -69,6 +69,7 @@ router.post('/u', (req, res, next) => {
     if (rawMediaUpload) {
       siteId = _.get(JSON.parse(rawMediaUpload), 'siteId', null)
     }
+    WIKI.logger.debug(`(UPLOAD) found Site ID: ${siteId}`)
   } catch (err) {
     return res.status(400).json({
       succeeded: false,
@@ -108,7 +109,7 @@ router.post('/u', (req, res, next) => {
     folderId: folderId,
     assetPath,
     user: req.user,
-    siteId: siteId
+    siteId
   })
   res.send('ok')
 })

@@ -457,10 +457,10 @@ const renderPage = async (req, res, next) => {
     const pageArgs = pageHelper.parsePath(req.params[0], { stripExt })
     const isPage = (stripExt || pageArgs.path.indexOf('.') === -1) || (req.params.sitePath && !req.params[0])
 
-    if (isPage) {
-      const site = await getSite(req.params.sitePath || 'default')
-      WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
+    const site = await getSite(req.params.sitePath || 'default')
+    WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
 
+    if (isPage) {
       if (pageArgs.path === 'undefined') {
         pageArgs.path = 'home'
       }
@@ -647,7 +647,8 @@ const renderPage = async (req, res, next) => {
       if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs)) {
         return res.sendStatus(403)
       }
-      await WIKI.models.assets.getAsset(pageArgs.path, res)
+      WIKI.logger.info(`Retrieval of assets ${site.path}/${pageArgs.path}`)
+      await WIKI.models.assets.getAsset(site.path, pageArgs.path, res)
     }
   } catch (err) {
     WIKI.logger.warn(`Retrieval of ${req.path} failed`)
