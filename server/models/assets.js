@@ -195,11 +195,14 @@ module.exports = class Asset extends Model {
       }
 
       if (await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res)) {
+        WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from cache`)
         return
       }
       if (await WIKI.models.assets.getAssetFromStorage(assetPath, res)) {
+        WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from storage`)
         return
       }
+      WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from database (cache miss)`)
       await WIKI.models.assets.getAssetFromDb(fileHash, cachePath, res)
     } catch (err) {
       if (err.code === `ECONNABORTED` || err.code === `EPIPE`) {
