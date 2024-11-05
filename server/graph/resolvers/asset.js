@@ -53,13 +53,15 @@ module.exports = {
         const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId
         const result = await WIKI.models.assetFolders.query().where({
           parentId: parentFolderId,
-          slug: folderSlug
+          slug: folderSlug,
+          siteId: args.siteId
         }).first()
         if (!result) {
           await WIKI.models.assetFolders.query().insert({
             slug: folderSlug,
             name: folderSlug,
-            parentId: parentFolderId
+            parentId: parentFolderId,
+            siteId: args.siteId
           })
           return {
             responseResult: graphHelper.generateSuccess('Asset Folder has been created successfully.')

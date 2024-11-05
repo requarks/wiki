@@ -434,7 +434,8 @@ export default {
           mutation: createAssetFolderMutation,
           variables: {
             parentFolderId: this.currentFolderId,
-            slug: this.newFolderName
+            slug: this.newFolderName,
+            siteId: this.siteId
           }
         })
         if (_.get(resp, 'data.assets.createFolder.responseResult.succeeded', false)) {

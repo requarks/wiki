@@ -55,6 +55,14 @@ module.exports = class Asset extends Model {
           from: 'assets.folderId',
           to: 'assetFolders.id'
         }
+      },
+      site: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'assets.siteId',
+          to: 'site.id'
+        }
       }
     }
   }
@@ -183,7 +191,7 @@ module.exports = class Asset extends Model {
 
   static async getAsset(sitePath, assetPath, res) {
     try {
-      WIKI.logger.info(`Retrieving asset: ${sitePath}/${assetPath}`)
+      WIKI.logger.debug(`Retrieving asset: ${sitePath}/${assetPath}`)
       const combinedPath = `${sitePath}/${assetPath}`
       const fileInfo = assetHelper.getPathInfo(combinedPath)
       const fileHash = assetHelper.generateHash(combinedPath)

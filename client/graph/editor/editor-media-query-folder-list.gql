@@ -4,6 +4,7 @@ query ($parentFolderId: Int!) {
       id
       name
       slug
+      siteId
     }
   }
 }

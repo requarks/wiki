@@ -647,7 +647,6 @@ const renderPage = async (req, res, next) => {
       if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs)) {
         return res.sendStatus(403)
       }
-      WIKI.logger.info(`Retrieval of assets ${site.path}/${pageArgs.path}`)
       await WIKI.models.assets.getAsset(site.path, pageArgs.path, res)
     }
   } catch (err) {
