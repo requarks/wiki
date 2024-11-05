@@ -37,7 +37,7 @@ module.exports = class AssetFolder extends Model {
         modelClass: require('./sites'),
         join: {
           from: 'assetFolders.siteId',
-          to: 'site.id'
+          to: 'sites.id'
         }
       }
     }

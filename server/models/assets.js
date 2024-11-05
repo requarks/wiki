@@ -61,7 +61,7 @@ module.exports = class Asset extends Model {
         modelClass: require('./sites'),
         join: {
           from: 'assets.siteId',
-          to: 'site.id'
+          to: 'sites.id'
         }
       }
     }

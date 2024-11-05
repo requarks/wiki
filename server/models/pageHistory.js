@@ -78,6 +78,14 @@ module.exports = class PageHistory extends Model {
           from: 'pageHistory.localeCode',
           to: 'locales.code'
         }
+      },
+      site: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'pageHistory.siteId',
+          to: 'sites.id'
+        }
       }
     }
   }
