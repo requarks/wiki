@@ -77,7 +77,7 @@ module.exports = class Site extends Model {
       isEnabled: true,
       path,
       config: {}
-    });
+    })
 
     return newSite
   }
