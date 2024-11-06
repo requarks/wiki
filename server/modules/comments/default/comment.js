@@ -5,6 +5,9 @@ const createDOMPurify = require('dompurify')
 const _ = require('lodash')
 const { AkismetClient } = require('akismet-api')
 const moment = require('moment')
+const underline = require('./underline')
+const mdAttrs = require('markdown-it-attrs')
+const mdDecorate = require('markdown-it-decorate')
 
 /* global WIKI */
 
@@ -18,12 +21,19 @@ const mkdown = md({
   breaks: true,
   linkify: true,
   highlight(str, lang) {
-    return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    if (lang === 'diagram') {
+      return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
+    } else {
+      return `<pre><code class="language-${lang}">${_.escape(str)}</code></pre>`
+    }
   }
 })
-
+mkdown.use(underline)
 mkdown.use(mdEmoji)
-
+mkdown.use(mdAttrs, {
+  allowedAttributes: ['id', 'class', 'target']
+})
+mkdown.use(mdDecorate)
 // ------------------------------------
 // Default Comment Provider
 // ------------------------------------
