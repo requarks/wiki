@@ -164,7 +164,9 @@ export default {
     pageId: get('page/id'),
     permissions: get('page/effectivePermissions@comments'),
     isAuthenticated: get('user/authenticated'),
-    userDisplayName: get('user/name')
+    userDisplayName: get('user/name'),
+    siteId: get('page/siteId'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     onIntersect (entries, observer, isIntersecting) {
@@ -177,9 +179,9 @@ export default {
       try {
         const results = await this.$apollo.query({
           query: gql`
-            query ($locale: String!, $path: String!) {
+            query ($locale: String!, $path: String!, $siteId: String!) {
               comments {
-                list(locale: $locale, path: $path) {
+                list(locale: $locale, path: $path, siteId: $siteId) {
                   id
                   render
                   authorName
@@ -191,8 +193,8 @@ export default {
           `,
           variables: {
             locale: this.$store.get('page/locale'),
-            path: this.$store.get('page/path')
-            // sitePath: get('page/sitePath')
+            path: this.$store.get('page/path'),
+            siteId: this.siteId
           },
           fetchPolicy: 'network-only'
         })

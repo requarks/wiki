@@ -50,6 +50,16 @@ module.exports = class Site extends Model {
     return null
   }
 
+  static async getSiteById({ siteId, forceReload = false }) {
+    if (forceReload) {
+      await WIKI.models.sites.reloadCache()
+    }
+    if (siteId) {
+      return WIKI.sites[siteId]
+    }
+    return null
+  }
+
   static async reloadCache() {
     WIKI.logger.info('Reloading site configurations...')
     const sites = await WIKI.models.sites.query().orderBy('id')
@@ -67,7 +77,7 @@ module.exports = class Site extends Model {
       isEnabled: true,
       path,
       config: {}
-    });
+    })
 
     return newSite
   }

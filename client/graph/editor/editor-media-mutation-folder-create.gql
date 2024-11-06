@@ -1,6 +1,6 @@
-mutation ($parentFolderId: Int!, $slug: String!) {
+mutation ($parentFolderId: Int!, $slug: String!, $siteId: String!) {
   assets {
-    createFolder(parentFolderId:$parentFolderId, slug: $slug) {
+    createFolder(parentFolderId:$parentFolderId, slug: $slug, siteId: $siteId) {
       responseResult {
         succeeded
         errorCode

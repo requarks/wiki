@@ -20,6 +20,7 @@ type CommentQuery {
   list(
     locale: String!
     path: String!
+    siteId: String!
   ): [CommentPost]! @auth(requires: ["read:comments", "manage:system"])
 
   single(

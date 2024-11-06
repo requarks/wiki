@@ -15,12 +15,13 @@ module.exports = {
   AssetQuery: {
     async list(obj, args, context) {
       let cond = {
-        folderId: args.folderId === 0 ? null : args.folderId
+        folderId: args.folderId === 0 ? null : args.folderId,
+        siteId: args.siteId
       }
       if (args.kind !== 'ALL') {
         cond.kind = args.kind.toLowerCase()
       }
-      const folderHierarchy = await WIKI.models.assetFolders.getHierarchy(args.folderId)
+      const folderHierarchy = await WIKI.models.assetFolders.getHierarchy(args.folderId, args.siteId)
       const folderPath = folderHierarchy.map(h => h.slug).join('/')
       const results = await WIKI.models.assets.query().where(cond)
       return _.filter(results, r => {
@@ -33,9 +34,10 @@ module.exports = {
     },
     async folders(obj, args, context) {
       const results = await WIKI.models.assetFolders.query().where({
-        parentId: args.parentFolderId === 0 ? null : args.parentFolderId
+        parentId: args.parentFolderId === 0 ? null : args.parentFolderId,
+        siteId: args.siteId
       })
-      const parentHierarchy = await WIKI.models.assetFolders.getHierarchy(args.parentFolderId)
+      const parentHierarchy = await WIKI.models.assetFolders.getHierarchy(args.parentFolderId, args.siteId)
       const parentPath = parentHierarchy.map(h => h.slug).join('/')
       return _.filter(results, r => {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
@@ -53,13 +55,15 @@ module.exports = {
         const parentFolderId = args.parentFolderId === 0 ? null : args.parentFolderId
         const result = await WIKI.models.assetFolders.query().where({
           parentId: parentFolderId,
-          slug: folderSlug
+          slug: folderSlug,
+          siteId: args.siteId
         }).first()
         if (!result) {
           await WIKI.models.assetFolders.query().insert({
             slug: folderSlug,
             name: folderSlug,
-            parentId: parentFolderId
+            parentId: parentFolderId,
+            siteId: args.siteId
           })
           return {
             responseResult: graphHelper.generateSuccess('Asset Folder has been created successfully.')
@@ -102,7 +106,7 @@ module.exports = {
           // Get asset folder path
           let hierarchy = []
           if (asset.folderId) {
-            hierarchy = await WIKI.models.assetFolders.getHierarchy(asset.folderId)
+            hierarchy = await WIKI.models.assetFolders.getHierarchy(asset.folderId, asset.siteId)
           }
 
           // Check source asset permissions
