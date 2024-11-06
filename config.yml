@@ -91,14 +91,11 @@ ssl:
 # Refer to https://github.com/vincit/tarn.js for all possible options
 
 pool:
-  # min: 2
-  # max: 10
-
   min: 2
-  max: 10
-  idleTimeout5Millis: 30000
-  connectionTimeoutMillis: 30000
-  maxLifetimeMillis:  1800000
+  max: 10  
+  acquireTimeoutMillis: 60000
+  createTimeoutMillis: 30000
+  idleTimeoutMillis: 30000
 
 # ---------------------------------------------------------------------
 # IP address the server should listen to
