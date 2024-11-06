@@ -96,7 +96,7 @@ pool:
 
   min: 2
   max: 10
-  indleTimeout5Millis: 30000
+  idleTimeout5Millis: 30000
   connectionTimeoutMillis: 30000
   maxLifetimeMillis:  1800000
 
