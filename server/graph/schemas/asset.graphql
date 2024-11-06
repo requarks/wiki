@@ -18,10 +18,12 @@ type AssetQuery {
   list(
     folderId: Int!
     kind: AssetKind!
+    siteId: String!
   ): [AssetItem] @auth(requires: ["manage:system", "read:assets"])
 
   folders(
     parentFolderId: Int!
+    siteId: String!
   ): [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
 }
 
@@ -34,6 +36,7 @@ type AssetMutation {
     parentFolderId: Int!
     slug: String!
     name: String
+    siteId: String!
   ): DefaultResponse @auth(requires: ["manage:system", "write:assets"])
 
   renameAsset(
@@ -63,13 +66,15 @@ type AssetItem {
   createdAt: Date!
   updatedAt: Date!
   folder: AssetFolder
-  author: User
+  author: User,
+  siteId: String
 }
 
 type AssetFolder {
   id: Int!
   slug: String!
-  name: String
+  name: String,
+  siteId: String
 }
 
 enum AssetKind {

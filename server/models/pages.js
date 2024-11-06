@@ -112,6 +112,14 @@ module.exports = class Page extends Model {
           from: 'pages.localeCode',
           to: 'locales.code'
         }
+      },
+      site: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'pages.siteId',
+          to: 'sites.id'
+        }
       }
     }
   }
@@ -1031,11 +1039,11 @@ module.exports = class Page extends Model {
             creatorEmail: 'creator.email'
           },
           {
-            siteName: 'sites.name',
-            sitePath: 'sites.path'
+            siteName: 'site.name',
+            sitePath: 'site.path'
           }
         ])
-        .leftJoin('sites', 'pages.siteId', 'sites.id')
+        .joinRelated('site')
         .joinRelated('author')
         .joinRelated('creator')
         .withGraphJoined('tags')

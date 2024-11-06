@@ -62,11 +62,26 @@ router.post('/u', (req, res, next) => {
     })
   }
 
+  // Get siteId
+  let siteId = null
+  try {
+    const rawMediaUpload = _.get(req, 'body.mediaUpload', false)
+    if (rawMediaUpload) {
+      siteId = _.get(JSON.parse(rawMediaUpload), 'siteId', null)
+    }
+    WIKI.logger.debug(`(UPLOAD) found Site ID: ${siteId}`)
+  } catch (err) {
+    return res.status(400).json({
+      succeeded: false,
+      message: 'Missing siteId in metadata.'
+    })
+  }
+
   // Build folder hierarchy
   let hierarchy = []
   if (folderId) {
     try {
-      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId)
+      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId, siteId)
     } catch (err) {
       return res.status(400).json({
         succeeded: false,
@@ -93,7 +108,8 @@ router.post('/u', (req, res, next) => {
     mode: 'upload',
     folderId: folderId,
     assetPath,
-    user: req.user
+    user: req.user,
+    siteId
   })
   res.send('ok')
 })
