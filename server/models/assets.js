@@ -82,7 +82,7 @@ module.exports = class Asset extends Model {
   async getAssetPath() {
     let hierarchy = []
     if (this.folderId) {
-      hierarchy = await WIKI.models.assetFolders.getHierarchy(this.folderId)
+      hierarchy = await WIKI.models.assetFolders.getHierarchy(this.folderId, this.siteId)
     }
     return (this.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${this.filename}` : this.filename
   }
@@ -107,7 +107,8 @@ module.exports = class Asset extends Model {
     // Check for existing asset
     let asset = await WIKI.models.assets.query().where({
       hash: fileHash,
-      folderId: opts.folderId
+      folderId: opts.folderId,
+      siteId: opts.siteId
     }).first()
 
     // Build Object

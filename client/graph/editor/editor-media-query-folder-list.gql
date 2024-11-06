@@ -1,6 +1,6 @@
-query ($parentFolderId: Int!) {
+query ($parentFolderId: Int!, $siteId: String!) {
   assets {
-    folders(parentFolderId:$parentFolderId) {
+    folders(parentFolderId:$parentFolderId, siteId: $siteId) {
       id
       name
       slug

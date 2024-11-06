@@ -1,6 +1,6 @@
-query ($folderId: Int!, $kind: AssetKind!) {
+query ($folderId: Int!, $kind: AssetKind!, $siteId: String!) {
   assets {
-    list(folderId:$folderId, kind: $kind) {
+    list(folderId:$folderId, kind: $kind, siteId: $siteId) {
       id
       filename
       ext

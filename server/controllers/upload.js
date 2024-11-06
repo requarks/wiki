@@ -81,7 +81,7 @@ router.post('/u', (req, res, next) => {
   let hierarchy = []
   if (folderId) {
     try {
-      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId)
+      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId, siteId)
     } catch (err) {
       return res.status(400).json({
         succeeded: false,

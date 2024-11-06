@@ -526,7 +526,8 @@ export default {
       query: listFolderAssetQuery,
       variables() {
         return {
-          parentFolderId: this.currentFolderId
+          parentFolderId: this.currentFolderId,
+          siteId: this.siteId
         }
       },
       fetchPolicy: 'network-only',
@@ -540,7 +541,8 @@ export default {
       variables() {
         return {
           folderId: this.currentFolderId,
-          kind: 'ALL'
+          kind: 'ALL',
+          siteId: this.siteId
         }
       },
       throttle: 1000,

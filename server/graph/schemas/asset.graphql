@@ -18,10 +18,12 @@ type AssetQuery {
   list(
     folderId: Int!
     kind: AssetKind!
+    siteId: String!
   ): [AssetItem] @auth(requires: ["manage:system", "read:assets"])
 
   folders(
     parentFolderId: Int!
+    siteId: String!
   ): [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
 }
 
