@@ -95,11 +95,9 @@ module.exports = class Asset extends Model {
     if (!opts.siteId) throw new Error('siteId is missing, cannot process')
     if (!opts.assetPath) throw new Error('assetPath is missing, cannot process')
 
-    WIKI.logger.info(`Storing with the siteId: ${await getSite(opts.siteId)}`)
-
     const site = await getSite(opts.siteId)
     if (!site.path) throw new Error(`Could not find site with ID: ${opts.siteId}`)
-    WIKI.logger.info(`Storing asset: ${site.path}/${opts.assetPath}`)
+    WIKI.logger.debug(`Storing asset: ${site.path}/${opts.assetPath}`)
 
     const fileInfo = path.parse(opts.originalname)
     const fileHash = assetHelper.generateHash(`${site.path}/${opts.assetPath}`)
