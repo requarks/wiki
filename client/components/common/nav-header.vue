@@ -27,7 +27,7 @@
 
           //- SITES
 
-          v-menu(offset-y, bottom, transition='slide-y-transition', left)
+          v-menu(v-model='menuIsOpen', offset-y, bottom, transition='slide-y-transition', left)
             template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
@@ -42,6 +42,7 @@
                     style="overflow: none;"
                     )
                     span Sites
+                    v-icon(color='grey')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
             v-list(
                 style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
                 width='168'
@@ -323,7 +324,8 @@ export default {
         path: 'new-page',
         modal: false
       },
-      sites: []
+      sites: [],
+      menuIsOpen: false,
     }
   },
   computed: {
