@@ -91,19 +91,7 @@ export default {
     navMode: {
       type: String,
       default: 'MIXED'
-    },
-    // siteId: {
-    //   type: String,
-    //   default: ''
-    // },
-    // siteName: {
-    //   type: String,
-    //   default: ''
-    // },
-    // sitePath: {
-    //   type: String,
-    //   default: ''
-    // }
+    }
   },
   data() {
     return {
