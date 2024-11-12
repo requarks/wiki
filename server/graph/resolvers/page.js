@@ -257,10 +257,13 @@ module.exports = {
       if (!args.locale) { args.locale = WIKI.config.lang.code }
 
       if (args.path && !args.parent) {
-        curPage = await WIKI.models.knex('pageTree').first('parent', 'ancestors').where({
-          path: args.path,
-          localeCode: args.locale
-        })
+        curPage = await WIKI.models.knex('pageTree')
+          .first('parent', 'ancestors')
+          .where({
+            path: args.path,
+            localeCode: args.locale,
+            siteId: args.siteId
+          })
         if (curPage) {
           args.parent = curPage.parent || 0
         } else {
@@ -270,6 +273,7 @@ module.exports = {
 
       const results = await WIKI.models.knex('pageTree').where(builder => {
         builder.where('localeCode', args.locale)
+        builder.where('siteId', args.siteId)
         switch (args.mode) {
           case 'FOLDERS':
             builder.andWhere('isFolder', true)

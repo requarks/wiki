@@ -103,7 +103,7 @@
 import _ from 'lodash'
 import gql from 'graphql-tag'
 
-const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i;
+const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
 /* global siteLangs, siteConfig */
 
@@ -115,15 +115,15 @@ export default {
     },
     path: {
       type: String,
-      default: "new-page"
+      default: 'new-page'
     },
     locale: {
       type: String,
-      default: "en"
+      default: 'en'
     },
     mode: {
       type: String,
-      default: "create"
+      default: 'create'
     },
     openHandler: {
       type: Function,
@@ -139,23 +139,23 @@ export default {
       treeViewCacheId: 0,
       searchLoading: false,
       currentLocale: siteConfig.lang,
-      currentFolderPath: "",
-      currentPath: "new-page",
+      currentFolderPath: '',
+      currentPath: 'new-page',
       currentPage: null,
       currentNode: [0],
       openNodes: [0],
       tree: [
         {
           id: 0,
-          title: this.$store.get("page/siteName"),
+          title: this.$store.get('page/siteName'),
           children: []
         }
       ],
       pages: [],
       all: [],
-      namespaces: siteLangs.length
-        ? siteLangs.map(ns => ns.code)
-        : [siteConfig.lang],
+      namespaces: siteLangs.length ?
+        siteLangs.map(ns => ns.code) :
+        [siteConfig.lang],
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -164,112 +164,112 @@ export default {
           speed: 50
         },
         rail: {
-          gutterOfEnds: "2px"
+          gutterOfEnds: '2px'
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: "#999",
+          background: '#999',
           hoverStyle: {
-            background: "#64B5F6"
+            background: '#64B5F6'
           }
         }
       },
-      siteId: this.$store.get("page/siteId")
-    };
+      siteId: this.$store.get('page/siteId')
+    }
   },
   computed: {
     isShown: {
       get() {
-        return this.value;
+        return this.value
       },
       set(val) {
-        this.$emit("input", val);
+        this.$emit('input', val)
       }
     },
     currentPages() {
       return _.sortBy(
-        _.filter(this.pages, ["parent", _.head(this.currentNode) || 0]),
-        ["title", "path"]
-      );
+        _.filter(this.pages, ['parent', _.head(this.currentNode) || 0]),
+        ['title', 'path']
+      )
     },
     isValidPath() {
       if (!this.currentPath) {
-        return false;
+        return false
       }
       if (this.mustExist && !this.currentPage) {
-        return false;
+        return false
       }
-      const firstSection = _.head(this.currentPath.split("/"));
+      const firstSection = _.head(this.currentPath.split('/'))
       if (firstSection.length <= 1) {
-        return false;
+        return false
       } else if (localeSegmentRegex.test(firstSection)) {
-        return false;
+        return false
       } else if (
         _.some(
           [
-            "login",
-            "logout",
-            "register",
-            "verify",
-            "favicons",
-            "fonts",
-            "img",
-            "js",
-            "svg"
+            'login',
+            'logout',
+            'register',
+            'verify',
+            'favicons',
+            'fonts',
+            'img',
+            'js',
+            'svg'
           ],
           p => {
-            return p === firstSection;
+            return p === firstSection
           }
         )
       ) {
-        return false;
+        return false
       } else {
-        return true;
+        return true
       }
     }
   },
   watch: {
     isShown(newValue, oldValue) {
       if (newValue && !oldValue) {
-        this.currentPath = this.path;
-        this.currentLocale = this.locale;
+        this.currentPath = this.path
+        this.currentLocale = this.locale
         _.delay(() => {
-          this.$refs.pathIpt.focus();
-        });
+          this.$refs.pathIpt.focus()
+        })
       }
     },
     currentNode(newValue, oldValue) {
       if (newValue.length < 1) {
         // force a selection
         this.$nextTick(() => {
-          this.currentNode = oldValue;
-        });
+          this.currentNode = oldValue
+        })
       } else {
-        const current = _.find(this.all, ["id", newValue[0]]);
+        const current = _.find(this.all, ['id', newValue[0]])
 
         if (this.openNodes.indexOf(newValue[0]) < 0) {
           // auto open and load children
           if (current) {
             if (this.openNodes.indexOf(current.parent) < 0) {
               this.$nextTick(() => {
-                this.openNodes.push(current.parent);
-              });
+                this.openNodes.push(current.parent)
+              })
             }
           }
           this.$nextTick(() => {
-            this.openNodes.push(newValue[0]);
-          });
+            this.openNodes.push(newValue[0])
+          })
         }
 
         this.currentPath = _.compact([
-          _.get(current, "path", ""),
-          _.last(this.currentPath.split("/"))
-        ]).join("/");
+          _.get(current, 'path', ''),
+          _.last(this.currentPath.split('/'))
+        ]).join('/')
       }
     },
     currentPage(newValue, oldValue) {
       if (!_.isEmpty(newValue)) {
-        this.currentPath = newValue.path;
+        this.currentPath = newValue.path
       }
     },
     currentLocale(newValue, oldValue) {
@@ -277,34 +277,34 @@ export default {
         this.tree = [
           {
             id: 0,
-            title: this.$store.get("page/siteName"),
+            title: this.$store.get('page/siteName'),
             children: []
           }
-        ];
-        this.currentNode = [0];
-        this.openNodes = [0];
-        this.pages = [];
-        this.all = [];
-        this.treeViewCacheId += 1;
-      });
+        ]
+        this.currentNode = [0]
+        this.openNodes = [0]
+        this.pages = []
+        this.all = []
+        this.treeViewCacheId += 1
+      })
     }
   },
   methods: {
     close() {
-      this.isShown = false;
+      this.isShown = false
     },
     open() {
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
         id: this.mustExist && this.currentPage ? this.currentPage.pageId : 0
-      });
+      })
       if (exit !== false) {
-        this.close();
+        this.close()
       }
     },
     async fetchFolders(item) {
-      this.searchLoading = true;
+      this.searchLoading = true
       const resp = await this.$apollo.query({
         query: gql`
           query(
@@ -331,62 +331,62 @@ export default {
             }
           }
         `,
-        fetchPolicy: "network-only",
+        fetchPolicy: 'network-only',
         variables: {
           parent: item.id,
-          mode: "ALL",
+          mode: 'ALL',
           locale: this.currentLocale,
           siteId: this.siteId
         }
-      });
+      })
 
-      console.log("Full response:", resp);
-      const items = _.get(resp, "data.pages.tree", []);
-      console.log("Fetched items:", items);
-      console.log("item siteId:", items.siteId);
-      console.log("Current siteId:", this.siteId);
+      console.log('Full response:', resp)
+      const items = _.get(resp, 'data.pages.tree', [])
+      console.log('Fetched items:', items)
+      console.log('item siteId:', items.siteId)
+      console.log('Current siteId:', this.siteId)
 
       const filteredItems = items.filter(i => {
         console.log(
-          "Checking item siteId:",
+          'Checking item siteId:',
           i.siteId,
-          "against current siteId:",
+          'against current siteId:',
           this.siteId
-        );
-        console.log("Type of item siteId:", typeof i.siteId);
-        console.log("Type of current siteId:", typeof this.siteId);
+        )
+        console.log('Type of item siteId:', typeof i.siteId)
+        console.log('Type of current siteId:', typeof this.siteId)
 
-        const itemSiteId = String(i.siteId); // Convert to string
-        const currentSiteId = String(this.siteId); // Convert to string
+        const itemSiteId = String(i.siteId) // Convert to string
+        const currentSiteId = String(this.siteId) // Convert to string
 
         if (itemSiteId !== currentSiteId) {
           console.warn(
             `Mismatch: item siteId (${itemSiteId}) is not equal to current siteId (${currentSiteId})`
-          );
+          )
         }
-        return itemSiteId === currentSiteId;
-      });
-      console.log("Filtered items:", filteredItems);
+        return itemSiteId === currentSiteId
+      })
+      console.log('Filtered items:', filteredItems)
 
-      const itemFolders = _.filter(filteredItems, ["isFolder", true]).map(
+      const itemFolders = _.filter(filteredItems, ['isFolder', true]).map(
         f => ({
           ...f,
           children: []
         })
-      );
-      const itemPages = _.filter(filteredItems, i => i.pageId > 0);
+      )
+      const itemPages = _.filter(filteredItems, i => i.pageId > 0)
       if (itemFolders.length > 0) {
-        item.children = itemFolders;
+        item.children = itemFolders
       } else {
-        item.children = undefined;
+        item.children = undefined
       }
-      this.pages = _.unionBy(this.pages, itemPages, "id");
-      this.all = _.unionBy(this.all, filteredItems, "id");
+      this.pages = _.unionBy(this.pages, itemPages, 'id')
+      this.all = _.unionBy(this.all, filteredItems, 'id')
 
-      this.searchLoading = false;
+      this.searchLoading = false
     }
   }
-};
+}
 </script>
 
 <style lang="scss">
@@ -399,4 +399,3 @@ export default {
   }
 }
 </style>
-

@@ -2,6 +2,10 @@ const _ = require('lodash')
 
 /* global WIKI */
 
+const getSiteIdByPath = async (sitePath) => {
+  return WIKI.models.sites.getSiteIdByPath({ path: sitePath, forceReload: true })
+}
+
 module.exports = async (siteId) => {
   WIKI.logger.info(`Rebuilding page tree...`)
 
@@ -9,6 +13,13 @@ module.exports = async (siteId) => {
     WIKI.models = require('../core/db').init()
     await WIKI.configSvc.loadFromDb()
     await WIKI.configSvc.applyFlags()
+
+    if (!siteId || siteId === 'undefined') {
+      WIKI.logger.info(`No siteId specified, taking default site...`)
+      siteId = await getSiteIdByPath('default')
+    }
+
+    WIKI.logger.info(`Rebuilding page tree for siteId: ${siteId}`)
 
     const pages = await WIKI.models.pages
       .query()

@@ -68,9 +68,9 @@
 </template>
 
 <script>
-import _ from "lodash";
-import gql from "graphql-tag";
-import { get } from "vuex-pathify";
+import _ from 'lodash'
+import gql from 'graphql-tag'
+import { get } from 'vuex-pathify'
 
 /* global siteLangs */
 
@@ -78,71 +78,83 @@ export default {
   props: {
     color: {
       type: String,
-      default: "primary",
+      default: 'primary'
     },
     dark: {
       type: Boolean,
-      default: true,
+      default: true
     },
     items: {
       type: Array,
-      default: () => [],
+      default: () => []
     },
     navMode: {
       type: String,
-      default: "MIXED",
+      default: 'MIXED'
     },
+    // siteId: {
+    //   type: String,
+    //   default: ''
+    // },
+    // siteName: {
+    //   type: String,
+    //   default: ''
+    // },
+    // sitePath: {
+    //   type: String,
+    //   default: ''
+    // }
   },
   data() {
     return {
-      currentMode: "custom",
+      currentMode: 'custom',
       currentItems: [],
       currentParent: {
         id: 0,
-        title: "/ (root)",
+        title: '/ (root)'
       },
       parents: [],
-      loadedCache: [],
-      siteId: this.$store.get("page/siteId"),
-    };
+      loadedCache: []
+    }
   },
   computed: {
-    path: get("page/path"),
-    locale: get("page/locale"),
-    sitePath: get("page/sitePath"),
+    path: get('page/path'),
+    locale: get('page/locale'),
+    sitePath: get('page/sitePath'),
+    siteId: get('page/siteId')
   },
   methods: {
     switchMode(mode) {
-      this.currentMode = mode;
-      window.localStorage.setItem("navPref", mode);
+      this.currentMode = mode
+      window.localStorage.setItem('navPref', mode)
       if (mode === `browse` && this.loadedCache.length < 1) {
-        this.loadFromCurrentPath();
+        this.loadFromCurrentPath()
       }
     },
     async fetchBrowseItems(item) {
-      this.$store.commit(`loadingStart`, "browse-load");
+      this.$store.commit(`loadingStart`, 'browse-load')
       if (!item) {
-        item = this.currentParent;
+        item = this.currentParent
       }
 
       if (this.loadedCache.indexOf(item.id) < 0) {
-        this.currentItems = [];
+        this.currentItems = []
       }
 
       if (item.id === 0) {
-        this.parents = [];
+        this.parents = []
       } else {
-        const flushRightIndex = _.findIndex(this.parents, ["id", item.id]);
+        const flushRightIndex = _.findIndex(this.parents, ['id', item.id])
         if (flushRightIndex >= 0) {
-          this.parents = _.take(this.parents, flushRightIndex);
+          this.parents = _.take(this.parents, flushRightIndex)
         }
         if (this.parents.length < 1) {
-          this.parents.push(this.currentParent);
+          this.parents.push(this.currentParent)
         }
-        this.parents.push(item);
+        this.parents.push(item)
       }
 
-      this.currentParent = item;
+      this.currentParent = item
 
       const resp = await this.$apollo.query({
         query: gql`
@@ -166,18 +178,19 @@ export default {
             }
           }
         `,
-        fetchPolicy: "cache-first",
+        fetchPolicy: 'cache-first',
         variables: {
           parent: item.id,
           locale: this.locale,
-        },
-      });
-      this.loadedCache = _.union(this.loadedCache, [item.id]);
-      this.currentItems = _.get(resp, "data.pages.tree", []);
-      this.$store.commit(`loadingStop`, "browse-load");
+          siteId: this.siteId
+        }
+      })
+      this.loadedCache = _.union(this.loadedCache, [item.id])
+      this.currentItems = _.get(resp, 'data.pages.tree', [])
+      this.$store.commit(`loadingStop`, 'browse-load')
     },
     async loadFromCurrentPath() {
-      this.$store.commit(`loadingStart`, "browse-load");
+      this.$store.commit(`loadingStart`, 'browse-load')
 
       const resp = await this.$apollo.query({
         query: gql`
@@ -202,69 +215,63 @@ export default {
             }
           }
         `,
-        fetchPolicy: "cache-first",
+        fetchPolicy: 'cache-first',
         variables: {
           path: this.path,
           locale: this.locale,
-          siteId: this.siteId,
-        },
-      });
+          siteId: this.siteId
+        }
+      })
 
-      console.log("Fetching page tree with:", {
-        path: this.path,
-        locale: this.locale,
-        siteId: this.siteId,
-      });
-      const items = _.get(resp, "data.pages.tree", []);
+      const items = _.get(resp, 'data.pages.tree', [])
 
-      const filteredItems = items.filter((item) => item.siteId === this.siteId);
-      console.log("filteredItems", filteredItems);
+      const filteredItems = items.filter((item) => item.siteId === this.siteId)
 
       const curPage = _.find(filteredItems, [
-        "pageId",
-        this.$store.get("page/id"),
-      ]);
+        'pageId',
+        this.$store.get('page/id')
+      ])
       if (!curPage) {
-        console.warn("Could not find current page in page tree listing!");
-        return;
+        console.warn('Could not find current page in page tree listing!')
+        return
       }
 
-      let curParentId = curPage.parent;
-      let invertedAncestors = [];
+      let curParentId = curPage.parent
+      let invertedAncestors = []
       while (curParentId) {
-        const curParent = _.find(filteredItems, ["id", curParentId]);
+        const curParent = _.find(filteredItems, ['id', curParentId])
         if (!curParent) {
-          break;
+          break
         }
-        invertedAncestors.push(curParent);
-        curParentId = curParent.parent;
+        invertedAncestors.push(curParent)
+        curParentId = curParent.parent
       }
 
-      this.parents = [this.currentParent, ...invertedAncestors.reverse()];
-      this.currentParent = _.last(this.parents);
+      this.parents = [this.currentParent, ...invertedAncestors.reverse()]
+      this.currentParent = _.last(this.parents)
 
-      this.loadedCache = [curPage.parent];
-      this.currentItems = _.filter(filteredItems, ["parent", curPage.parent]);
-      this.$store.commit(`loadingStop`, "browse-load");
+      this.loadedCache = [curPage.parent]
+      this.currentItems = _.filter(filteredItems, ['parent', curPage.parent])
+      this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome() {
       window.location.assign(
-        siteLangs.length > 0 ? `/${this.locale}/home` : "/"
-      );
-    },
+        siteLangs.length > 0 ? `/${this.locale}/home` : '/'
+      )
+    }
   },
   mounted() {
-    this.currentParent.title = `/ ${this.$t("common:sidebar.root")}`;
-    if (this.navMode === "TREE") {
-      this.currentMode = "browse";
-    } else if (this.navMode === "STATIC") {
-      this.currentMode = "custom";
+    this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
+    if (this.navMode === 'TREE') {
+      this.currentMode = 'browse'
+    } else if (this.navMode === 'STATIC') {
+      this.currentMode = 'custom'
     } else {
-      this.currentMode = window.localStorage.getItem("navPref") || "custom";
+      this.currentMode = window.localStorage.getItem('navPref') || 'custom'
     }
-    if (this.currentMode === "browse") {
-      this.loadFromCurrentPath();
+    if (this.currentMode === 'browse') {
+      this.loadFromCurrentPath()
     }
-  },
-};
+  }
+}
 </script>

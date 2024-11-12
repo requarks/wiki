@@ -325,7 +325,7 @@ export default {
         modal: false
       },
       sites: [],
-      menuIsOpen: false,
+      menuIsOpen: false
     }
   },
   computed: {
@@ -522,9 +522,9 @@ export default {
     goToSite (path) {
       const baseUrl = window.location.origin
       if (path) {
-        window.location.assign(`${baseUrl}/${path}`);
+        window.location.assign(`${baseUrl}/${path}`)
       } else {
-        console.error('Path is empty');
+        console.error('Path is empty')
       }
     },
 
