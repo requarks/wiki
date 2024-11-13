@@ -243,9 +243,11 @@ export default {
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome() {
-      window.location.assign(
-        siteLangs.length > 0 ? `/${this.locale}/home` : '/'
-      )
+      if (siteLangs.length > 0) {
+        window.location.assign(`/${this.sitePath}/${this.locale}/home`)
+      } else {
+        window.location.assign(`/${this.sitePath}/home`)
+      }
     }
   },
   mounted() {
