@@ -219,10 +219,6 @@ export default {
         'pageId',
         this.$store.get('page/id')
       ])
-      if (!curPage) {
-        console.warn('Could not find current page in page tree listing!')
-        return
-      }
 
       let curParentId = curPage.parent
       let invertedAncestors = []
