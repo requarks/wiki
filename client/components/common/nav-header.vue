@@ -520,12 +520,7 @@ export default {
       window.location.assign('/')
     },
     goToSite (path) {
-      if (path) {
-        const baseUrl = window.location.origin
-        window.location.assign(`${baseUrl}/${path}`)
-      } else {
-        console.error('Path is empty')
-      }
+      window.location.assign(`/${path || ''}`)
     },
 
     async fetchSitesFromUser () {
