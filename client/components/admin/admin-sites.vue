@@ -113,7 +113,7 @@ export default {
       })
     },
     async createSite() {
-      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1)  {
+      if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
         this.$store.commit('showNotification', {
           style: 'red',
           message: 'Enter a site name and a path',
@@ -140,7 +140,6 @@ export default {
           },
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { operation: {} })
-            console.log('Mutation response:', resp)
             if (data.operation.succeeded === true) {
               const apolloData = store.readQuery({ query: sitesQuery })
               apolloData.sites.push(data.site)
@@ -169,7 +168,7 @@ export default {
     sites: {
       query: sitesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => { console.log('Received data from GraphQL query:', data); return data.sites} ,
+      update: (data) => { return data.sites },
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-sites-refresh')

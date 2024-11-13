@@ -340,33 +340,13 @@ export default {
         }
       })
 
-      console.log('Full response:', resp)
       const items = _.get(resp, 'data.pages.tree', [])
-      console.log('Fetched items:', items)
-      console.log('item siteId:', items.siteId)
-      console.log('Current siteId:', this.siteId)
 
       const filteredItems = items.filter(i => {
-        console.log(
-          'Checking item siteId:',
-          i.siteId,
-          'against current siteId:',
-          this.siteId
-        )
-        console.log('Type of item siteId:', typeof i.siteId)
-        console.log('Type of current siteId:', typeof this.siteId)
-
-        const itemSiteId = String(i.siteId) // Convert to string
-        const currentSiteId = String(this.siteId) // Convert to string
-
-        if (itemSiteId !== currentSiteId) {
-          console.warn(
-            `Mismatch: item siteId (${itemSiteId}) is not equal to current siteId (${currentSiteId})`
-          )
-        }
+        const itemSiteId = String(i.siteId)
+        const currentSiteId = String(this.siteId)
         return itemSiteId === currentSiteId
       })
-      console.log('Filtered items:', filteredItems)
 
       const itemFolders = _.filter(filteredItems, ['isFolder', true]).map(
         f => ({
