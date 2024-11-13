@@ -520,8 +520,8 @@ export default {
       window.location.assign('/')
     },
     goToSite (path) {
-      const baseUrl = window.location.origin
       if (path) {
+        const baseUrl = window.location.origin
         window.location.assign(`${baseUrl}/${path}`)
       } else {
         console.error('Path is empty')
