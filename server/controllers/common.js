@@ -460,6 +460,10 @@ const renderPage = async (req, res, next) => {
     const site = await getSite(req.params.sitePath || 'default')
     WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
 
+    if (!isPage) {
+      res.status(404).render('notfound', { action: 'view' })
+    }
+
     if (isPage) {
       if (pageArgs.path === 'undefined') {
         pageArgs.path = 'home'

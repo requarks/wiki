@@ -56,7 +56,7 @@
 
 <script>
 import _ from 'lodash'
-import { sync } from 'vuex-pathify'
+import { sync, get } from 'vuex-pathify'
 import { OrbitSpinner } from 'epic-spinners'
 
 import searchPagesQuery from 'gql/common/common-pages-query-search.gql'
@@ -95,7 +95,8 @@ export default {
     },
     paginationLength() {
       return (this.response.totalHits > 0) ? Math.ceil(this.response.totalHits / this.perPage) : 0
-    }
+    },
+    sitePath: get('page/sitePath')
   },
   watch: {
     search(newValue, oldValue) {

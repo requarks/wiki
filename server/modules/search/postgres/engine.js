@@ -35,6 +35,7 @@ module.exports = {
         table.string('description')
         table.specificType('tokens', 'TSVECTOR')
         table.text('content')
+        table.string('siteId')
       })
     }
     // -> Create Words Index
@@ -64,9 +65,15 @@ module.exports = {
         SELECT id, path, locale, title, description
         FROM "pagesVector", to_tsquery(?,?) query
         WHERE (query @@ "tokens" OR path ILIKE ?)
+          AND "siteId" = ?
       `
       let qryEnd = `ORDER BY ts_rank(tokens, query) DESC`
-      let qryParams = [this.config.dictLanguage, tsquery(q), `%${q.toLowerCase()}%`]
+      let qryParams = [
+        this.config.dictLanguage,
+        tsquery(q),
+        `%${q.toLowerCase()}%`,
+        'b722970a-e813-4b6a-8563-87ffc77827e5'
+      ]
 
       if (opts.locale) {
         qry = `${qry} AND locale = ?`
@@ -101,10 +108,10 @@ module.exports = {
    */
   async created(page) {
     await WIKI.models.knex.raw(`
-      INSERT INTO "pagesVector" (path, locale, title, description, "tokens") VALUES (
-        ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
+      INSERT INTO "pagesVector" (path, locale, title, description, "tokens", "siteId") VALUES (
+        ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?
       )
-    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent])
+    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent, 'b722970a-e813-4b6a-8563-87ffc77827e5'])
   },
   /**
    * UPDATE
@@ -119,8 +126,8 @@ module.exports = {
         tokens = (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') ||
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') ||
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
-      WHERE path = ? AND locale = ?
-    `, [page.title, page.description, page.title, page.description, page.safeContent, page.path, page.localeCode])
+      WHERE path = ? AND locale = ? AND "siteId" = ?
+    `, [page.title, page.description, page.title, page.description, page.safeContent, page.path, page.localeCode, 'b722970a-e813-4b6a-8563-87ffc77827e5'])
   },
   /**
    * DELETE
@@ -130,7 +137,8 @@ module.exports = {
   async deleted(page) {
     await WIKI.models.knex('pagesVector').where({
       locale: page.localeCode,
-      path: page.path
+      path: page.path,
+      siteId: 'b722970a-e813-4b6a-8563-87ffc77827e5'
     }).del().limit(1)
   },
   /**
@@ -144,7 +152,8 @@ module.exports = {
       path: page.path
     }).update({
       locale: page.destinationLocaleCode,
-      path: page.destinationPath
+      path: page.destinationPath,
+      siteId: 'b722970a-e813-4b6a-8563-87ffc77827e5'
     })
   },
   /**
@@ -165,10 +174,10 @@ module.exports = {
         transform: async (page, enc, cb) => {
           const content = WIKI.models.pages.cleanHTML(page.render)
           await WIKI.models.knex.raw(`
-            INSERT INTO "pagesVector" (path, locale, title, description, "tokens", content) VALUES (
-              ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?
+            INSERT INTO "pagesVector" (path, locale, title, description, "tokens", content, "siteId") VALUES (
+              ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?, ?
             )
-          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, content])
+          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, content, 'b722970a-e813-4b6a-8563-87ffc77827e5'])
           cb()
         }
       })
