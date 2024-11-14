@@ -35,12 +35,10 @@ variables:
       - "false"
     description: "Choose true if you want to scan the images"
   
+ 
 workflow:
   rules:
-    - if: $CI_COMMIT_BRANCH == "feature-deployment-phase2-k8s" # this workflow rule assigns "staging" value to the ENVIRONMENT variable so it can be run utomatically whenever there's merge to the "develop" branch
-      variables: 
-        ENVIRONMENT: staging
-    - if: $ENVIRONMENT != "none" # this workflow rule prevents pipeline to be started automatically when no ENVIRONMENT's value is specified (dev1, dev2, rod) to make sure they are started manually
+    - if: $ENVIRONMENT != "none" || $ENVIRONMENT == "n/a" # this workflow rule prevents pipeline to be started automatically when no ENVIRONMENT's value is specified (dev1, dev2, rod) to make sure they are started manually
       when: always
     - if: $ENVIRONMENT == "staging"
       variables:
@@ -48,22 +46,30 @@ workflow:
     - if: $ENVIRONMENT == "production"
       variables:
         NEW_IMAGE: "${NEW_IMAGE}-${VERSION}"
-    - if: $ENVIRONMENT == "n/a"
-      when: always
-
 default:
   tags:
     - runner_mar
 
 stages:
+  - sonarqube
   - test
   - modify_package_json
   - docker
   - deployment-pipeline
   - tagging
 
-before_script:
-  - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+
+sonarqube-scan:
+  stage: sonarqube
+  trigger:
+    include: deployment/pipelines/sonarqube/.gitlab-ci.yml  
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: always
 
 modify_package_json:
   stage: modify_package_json
@@ -101,6 +107,8 @@ modify_package_json:
 
 build-docker-image:
   stage: docker
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
     - echo "Building Docker image"
     - docker build --no-cache -f Dockerfile -t $NEW_IMAGE .
@@ -111,6 +119,8 @@ build-docker-image:
 
 push-docker-image:
   stage: docker
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
     - echo "Pushing Docker image"
     - docker push $NEW_IMAGE
@@ -142,7 +152,8 @@ dev1-pipeline:
   rules:
     - if: $ENVIRONMENT == "n/a"
       when: never
-    - if: $ENVIRONMENT == "dev1" 
+    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_BRANCH =~ /^feature/
+      
 
 dev2-pipeline:
   stage: deployment-pipeline
@@ -154,7 +165,7 @@ dev2-pipeline:
   rules:    
     - if: $ENVIRONMENT == "n/a"
       when: never
-    - if: $ENVIRONMENT == "dev2" 
+    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_BRANCH =~ /^feature/
 
   
 staging-pipeline:
@@ -167,8 +178,7 @@ staging-pipeline:
   rules:
     - if: $ENVIRONMENT == "n/a"
       when: never
-    - if: $ENVIRONMENT == "staging"
-    #- if: $CI_COMMIT_BRANCH == "feature-deployment-phase2-k8s" && $ENVIRONMENT == "staging"
+    - if: $ENVIRONMENT == "staging" && $CI_COMMIT_BRANCH == "develop"
     
 prod-pipeline:
   stage: deployment-pipeline
@@ -180,4 +190,4 @@ prod-pipeline:
   rules:
     - if: $ENVIRONMENT == "n/a"
       when: never
-    - if: $CI_COMMIT_BRANCH == "main" && $ENVIRONMENT == "production"
+    - if:  $ENVIRONMENT == "production" && $CI_COMMIT_BRANCH == "main"
