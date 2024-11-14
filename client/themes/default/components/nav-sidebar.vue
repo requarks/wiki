@@ -240,9 +240,9 @@ export default {
     },
     goHome() {
       if (siteLangs.length > 0) {
-        window.location.assign(`/${this.sitePath}/${this.locale}/home`)
+        window.location.assign(`/${this.sitePath}/${this.locale}`)
       } else {
-        window.location.assign(`/${this.sitePath}/home`)
+        window.location.assign(`/${this.sitePath}`)
       }
     }
   },

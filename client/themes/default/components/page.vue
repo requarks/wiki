@@ -551,7 +551,7 @@ export default {
     breadcrumbs() {
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
         result.push({
-          path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
+          path: _.get(_.last(result), 'path', `/${this.sitePath}/${this.locale}`) + `/${value}`,
           name: value
         })
         return result
@@ -665,7 +665,7 @@ export default {
   },
   methods: {
     goHome () {
-      window.location.assign('/')
+      window.location.assign(`/${this.sitePath}`)
     },
     toggleNavigation () {
       this.navOpen = !this.navOpen

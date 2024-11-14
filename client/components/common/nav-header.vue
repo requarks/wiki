@@ -517,7 +517,7 @@ export default {
       window.location.assign('/logout')
     },
     goHome () {
-      window.location.assign('/')
+      window.location.assign(`/${this.sitePath}`)
     },
     goToSite (path) {
       window.location.assign(`/${path || ''}`)
