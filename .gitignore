@@ -58,3 +58,6 @@ deployment/env/local/secrets/*
 
 # Postgres dumps
 *.sql
+
+# OS-specific
+.DS_Store
