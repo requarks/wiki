@@ -5,7 +5,7 @@ const path = require('path')
 
 // exclude Regex matches based on ISO 639-1 individual living languages
 const localeSegmentRegex = /^(?!a[^abfmnsv])(?!b[^ameniosrg])(?!c[^ashevoy])(?!d[^aevz])(?!e[^lnue])(?!f[^ojiry])(?!g[^dalvu])(?!h[^taezioruy])(?!i[^gsidt])(?!j[^av])(?!k[^lnsakmiyoj])(?!l[^ointbug])(?!m[^khlirty])(?!n[^avrdglnby])(?!o[^cs])(?!p[^alt])(?!r[^monu])(?!s[^giklemndotrsuv])(?!t[^yateglhionskrw])(?!u[^gkr])(?!v[^ei])(?!w[^ao])(?!x[^h])(?!y[^o])(?!z[^u])[A-Z]{2}(-[A-Z]{2})?$/i
-const localeFolderRegex = /^([a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
+const localeFolderRegex = /^((?!a[^abfmnsv])(?!b[^ameniosrg])(?!c[^ashevoy])(?!d[^aevz])(?!e[^lnue])(?!f[^ojiry])(?!g[^dalvu])(?!h[^taezioruy])(?!i[^gsidt])(?!j[^av])(?!k[^lnsakmiyoj])(?!l[^ointbug])(?!m[^khlirty])(?!n[^avrdglnby])(?!o[^cs])(?!p[^alt])(?!r[^monu])(?!s[^giklemndotrsuv])(?!t[^yateglhionskrw])(?!u[^gkr])(?!v[^ei])(?!w[^ao])(?!x[^h])(?!y[^o])(?!z[^u])[a-z]{2}(?:-[a-z]{2})?\/)?(.*)/i
 // eslint-disable-next-line no-control-regex
 const unsafeCharsRegex = /[\x00-\x1f\x80-\x9f\\"|<>:*?]/
 
