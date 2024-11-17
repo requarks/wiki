@@ -188,7 +188,9 @@ export default {
         return false
       }
       const firstSection = _.head(this.currentPath.split('/'))
-      if (
+      if (firstSection.length <= 1) {
+        return false
+      } else if (
         _.some(['login', 'logout', 'register', 'verify', 'favicons', 'fonts', 'img', 'js', 'svg'], p => {
           return p === firstSection
         })) {
