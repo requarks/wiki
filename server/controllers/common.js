@@ -26,6 +26,10 @@ router.get('/robots.txt', (req, res, next) => {
  * Health Endpoint
  */
 router.get('/healthz', (req, res, next) => {
+
+  WIKI.logger.debug(`knex db pool info  numFree is  ${WIKI.models.knex.client.pool.numFree()}...`)
+  WIKI.logger.debug(`knex db pool info numused is ${WIKI.models.knex.client.pool.numUsed()}...`)
+
   if (WIKI.models.knex.client.pool.numFree() < 1 && WIKI.models.knex.client.pool.numUsed() < 1) {
     res.status(503).json({ ok: false }).end()
   } else {
