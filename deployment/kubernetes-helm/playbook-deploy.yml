@@ -1,7 +1,7 @@
 ---
 #export IMAGE=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki
 #export NEW_IMAGE_WITH_TAG=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki:<image_tag>
-# to execute, use cmnd ansible-playbook  -i inventory ./playbook-deploy.yml -e "IMAGE='$IMAGE' NEW_IMAGE_WITH_TAG='$NEW_IMAGE_WITH_TAG' env=staging" -vv
+# to execute, use cmnd ansible-playbook  -i inventory ./playbook-deploy.yml -e "IMAGE='$IMAGE' NEW_IMAGE_WITH_TAG='$NEW_IMAGE_WITH_TAG' env=dev" -vv
 - name: Deploy application using helm-kustomize
   hosts: "{{ env }}" # to use "dev" for development
   become: false  # Ensure that only  user privileges are used

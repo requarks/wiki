@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - capwiki-internal-tls-sealed.yaml
   - resources.yaml
+  - capwiki-config.yaml
 
 patchesStrategicMerge:
   - ./patches/ingress.yaml
