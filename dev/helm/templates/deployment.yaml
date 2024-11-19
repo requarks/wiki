@@ -34,6 +34,10 @@ spec:
           command: [ "sh", "-c" ]
           args: [ "mkdir -p /wiki/data/sideload && git clone --depth=1 {{ .Values.sideload.repoURL }} /wiki/data/sideload/" ]
       {{- end }}
+    {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -77,6 +81,8 @@ spec:
             {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
+            - name: OFFLINE_ACTIVE
+              value: "{{ default "false" .Values.offline }}"
     {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

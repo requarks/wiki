@@ -4,6 +4,8 @@
 
 replicaCount: 1
 revisionHistoryLimit: 10
+# If sideload is enable, set the offline parameter to true
+offline: false
 
 image:
   repository: requarks/wiki
