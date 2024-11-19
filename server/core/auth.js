@@ -222,6 +222,25 @@ module.exports = {
       return true
     }
 
+    // Site Admin
+    if (_.includes(userPermissions, 'manage:sites')) {
+      let result = false
+      if (page && page.siteId) {
+        user.groups.forEach(grp => {
+          const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
+          _.get(WIKI.auth.groups, `${grpId}.rules`, []).forEach(rule => {
+            if (rule.sites && rule.sites.length > 0) {
+              if (rule.sites.includes(page.siteId)) { result = true }
+            }
+          })
+        })
+        if (result === true) {
+          return true
+        }
+      }
+      return false
+    }
+
     // Check Global Permissions
     if (_.intersection(userPermissions, permissions).length < 1) {
       return false
@@ -244,6 +263,9 @@ module.exports = {
         _.get(WIKI.auth.groups, `${grpId}.rules`, []).forEach(rule => {
           if (rule.locales && rule.locales.length > 0) {
             if (!rule.locales.includes(page.locale)) { return }
+          }
+          if (rule.sites && rule.sites.length > 0) {
+            if (!rule.sites.includes(page.siteId)) { return }
           }
           if (_.intersection(rule.roles, permissions).length > 0) {
             switch (rule.match) {

@@ -26,7 +26,7 @@ module.exports = {
       const results = await WIKI.models.assets.query().where(cond)
       return _.filter(results, r => {
         const path = folderPath ? `${folderPath}/${r.filename}` : r.filename
-        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
+        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path, siteId: args.siteId })
       }).map(a => ({
         ...a,
         kind: a.kind.toUpperCase()
@@ -41,7 +41,7 @@ module.exports = {
       const parentPath = parentHierarchy.map(h => h.slug).join('/')
       return _.filter(results, r => {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
-        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
+        return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path, siteId: args.siteId })
       })
     }
   },
@@ -111,13 +111,13 @@ module.exports = {
 
           // Check source asset permissions
           const assetSourcePath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${asset.filename}` : asset.filename
-          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath })) {
+          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath, siteId: args.siteId })) {
             throw new WIKI.Error.AssetRenameForbidden()
           }
 
           // Check target asset permissions
           const assetTargetPath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${filename}` : filename
-          if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath })) {
+          if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath, siteId: args.siteId })) {
             throw new WIKI.Error.AssetRenameTargetForbidden()
           }
 
@@ -163,7 +163,7 @@ module.exports = {
         if (asset) {
           // Check permissions
           const assetPath = await asset.getAssetPath()
-          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath })) {
+          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath, siteId: args.siteId })) {
             throw new WIKI.Error.AssetDeleteForbidden()
           }
 

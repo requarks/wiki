@@ -276,7 +276,8 @@ module.exports = class Page extends Model {
     if (
       !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
         locale: opts.locale,
-        path: opts.path
+        path: opts.path,
+        siteId: opts.siteId
       })
     ) {
       throw new WIKI.Error.PageDeleteForbidden()
@@ -304,7 +305,8 @@ module.exports = class Page extends Model {
     if (
       WIKI.auth.checkAccess(opts.user, ['write:styles'], {
         locale: opts.locale,
-        path: opts.path
+        path: opts.path,
+        siteId: opts.siteId
       })
     ) {
       if (!_.isEmpty(opts.scriptCss)) {
@@ -321,7 +323,8 @@ module.exports = class Page extends Model {
     if (
       WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
         locale: opts.locale,
-        path: opts.path
+        path: opts.path,
+        siteId: opts.siteId
       })
     ) {
       scriptJs = opts.scriptJs || ''
@@ -431,7 +434,8 @@ module.exports = class Page extends Model {
     if (
       !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
         locale: ogPage.localeCode,
-        path: ogPage.path
+        path: ogPage.path,
+        siteId: opts.siteId
       })
     ) {
       throw new WIKI.Error.PageUpdateForbidden()
@@ -461,7 +465,8 @@ module.exports = class Page extends Model {
     if (
       WIKI.auth.checkAccess(opts.user, ['write:styles'], {
         locale: opts.locale,
-        path: opts.path
+        path: opts.path,
+        siteId: opts.siteId
       })
     ) {
       if (!_.isEmpty(opts.scriptCss)) {
@@ -478,7 +483,8 @@ module.exports = class Page extends Model {
     if (
       WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
         locale: opts.locale,
-        path: opts.path
+        path: opts.path,
+        siteId: opts.siteId
       })
     ) {
       scriptJs = opts.scriptJs || ''
@@ -537,7 +543,8 @@ module.exports = class Page extends Model {
       if (
         !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
           locale: opts.locale,
-          path: opts.path
+          path: opts.path,
+          siteId: opts.siteId
         })
       ) {
         throw new WIKI.Error.PageMoveForbidden()
@@ -590,7 +597,8 @@ module.exports = class Page extends Model {
     if (
       !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
         locale: ogPage.localeCode,
-        path: ogPage.path
+        path: ogPage.path,
+        siteId: ogPage.siteId
       })
     ) {
       throw new WIKI.Error.PageUpdateForbidden()
@@ -814,7 +822,8 @@ module.exports = class Page extends Model {
     if (
       !WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
         locale: page.localeCode,
-        path: page.path
+        path: page.path,
+        siteId: page.siteId
       })
     ) {
       throw new WIKI.Error.PageMoveForbidden()
@@ -823,7 +832,8 @@ module.exports = class Page extends Model {
     if (
       !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
         locale: opts.destinationLocale,
-        path: opts.destinationPath
+        path: opts.destinationPath,
+        siteId: page.siteId
       })
     ) {
       throw new WIKI.Error.PageMoveForbidden()
@@ -938,7 +948,8 @@ module.exports = class Page extends Model {
     if (
       !WIKI.auth.checkAccess(opts.user, ['delete:pages'], {
         locale: page.locale,
-        path: page.path
+        path: page.path,
+        siteId: page.siteId
       })
     ) {
       throw new WIKI.Error.PageDeleteForbidden()

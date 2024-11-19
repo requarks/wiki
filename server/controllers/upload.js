@@ -95,7 +95,7 @@ router.post('/u', (req, res, next) => {
 
   // Check if user can upload at path
   const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
-  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
+  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath, siteId })) {
     return res.status(403).json({
       succeeded: false,
       message: 'You are not authorized to upload files to this folder.'

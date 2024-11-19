@@ -18,7 +18,8 @@ module.exports = {
       const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.id)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.localeCode,
+        siteId: page.siteId
       })) {
         return WIKI.models.pageHistory.getHistory({
           pageId: args.id,
@@ -36,7 +37,8 @@ module.exports = {
       const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
-        locale: page.localeCode
+        locale: page.localeCode,
+        siteId: page.siteId
       })) {
         return WIKI.models.pageHistory.getVersion({
           pageId: args.pageId,
@@ -58,7 +60,8 @@ module.exports = {
             return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
               path: r.path,
               locale: r.locale,
-              tags: r.tags // Tags are needed since access permissions can be limited by page tags too
+              tags: r.tags, // Tags are needed since access permissions can be limited by page tags too
+              siteId: args.siteId
             })
           })
         }
@@ -139,7 +142,8 @@ module.exports = {
       results = _.filter(results, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          siteId: r.siteId
         })
       }).map(r => ({
         ...r,
@@ -158,7 +162,8 @@ module.exports = {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          siteId: page.siteId
         })) {
           return {
             ...page,
@@ -183,7 +188,8 @@ module.exports = {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          siteId: page.siteId
         })) {
           return {
             ...page,
@@ -212,7 +218,8 @@ module.exports = {
       const allTags = _.filter(pages, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          siteId: r.siteId
         })
       }).flatMap(r => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
@@ -247,7 +254,7 @@ module.exports = {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
           locale: r.locale,
-          // siteId: args.siteId // TODO: Update permissions to include siteId
+          siteId: r.siteId
         })
       }).flatMap(r => r.tags).map(t => t.tag)
       return _.uniq(allTags).slice(0, 5)
@@ -298,7 +305,8 @@ module.exports = {
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.localeCode
+          locale: r.localeCode,
+          siteId: r.siteId
         })
       }).map(r => ({
         ...r,
@@ -339,8 +347,8 @@ module.exports = {
       return _.reduce(results, (result, val) => {
         // -> Check if user has access to source and linked page
         if (
-          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.path, locale: args.locale }) ||
-          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.link, locale: val.locale })
+          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.path, locale: args.locale, siteId: val.siteId }) ||
+          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.link, locale: val.locale, siteId: val.siteId })
         ) {
           return result
         }
@@ -369,7 +377,8 @@ module.exports = {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          siteId: page.siteId
         })) {
           return page.updatedAt > args.checkoutDate
         } else {
@@ -388,7 +397,7 @@ module.exports = {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
           locale: page.localeCode,
-          // siteId: page.siteId
+          siteId: page.siteId
         })) {
           return {
             ...page,
@@ -596,7 +605,8 @@ module.exports = {
 
         if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          siteId: page.siteId
         })) {
           throw new WIKI.Error.PageRestoreForbidden()
         }

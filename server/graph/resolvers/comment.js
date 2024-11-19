@@ -55,7 +55,11 @@ module.exports = {
         if (WIKI.auth.checkAccess(
           context.req.user,
           ['read:comments'],
-          { tags: page.tags, ...args }
+          {
+            tags: page.tags,
+            siteId: args.siteId,
+            ...args
+          }
         )) {
           const comments = await WIKI.models.comments.query()
             .where('pageId', page.id)
@@ -92,7 +96,8 @@ module.exports = {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
           path: page.path,
           locale: page.localeCode,
-          tags: page.tags
+          tags: page.tags,
+          siteId: args.siteId
         })) {
           return {
             ...cm,
