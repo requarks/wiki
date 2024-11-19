@@ -276,10 +276,10 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'This field is required.',
-          path: value => {
-            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
-          }
+        required: value => !!value || 'This field is required.',
+        path: value => {
+          return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+        }
       }
     }
   },
@@ -303,7 +303,8 @@ export default {
     hasStylePermission: get('page/effectivePermissions@pages.style'),
     pageSelectorMode () {
       return (this.mode === 'create') ? 'create' : 'move'
-    }
+    },
+    siteId: get('page/siteId')
   },
   watch: {
     value (newValue, oldValue) {
@@ -397,15 +398,19 @@ export default {
   apollo: {
     newTagSuggestions: {
       query: gql`
-        query ($query: String!) {
+        query ($query: String!, $siteId: String!) {
           pages {
-            searchTags (query: $query)
+            searchTags (
+              query: $query,
+              siteId: $siteId
+            )
           }
         }
       `,
       variables () {
         return {
-          query: this.newTagSearch
+          query: this.newTagSearch,
+          siteId: this.siteId
         }
       },
       fetchPolicy: 'cache-first',

@@ -32,7 +32,7 @@ type PageQuery {
     locale: String
     creatorId: Int
     authorId: Int
-    siteId: String
+    siteId: String!
   ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
 
   single(id: Int!): Page @auth(requires: ["read:pages", "manage:system"])
@@ -42,7 +42,7 @@ type PageQuery {
 
   tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
 
-  searchTags(query: String!): [String]!
+  searchTags(query: String!, siteId: String!): [String]!
     @auth(requires: ["manage:system", "read:pages"])
 
   tree(
@@ -196,6 +196,7 @@ type PageTag {
   title: String
   createdAt: Date!
   updatedAt: Date!
+  siteId: String!
 }
 
 type PageHistory {

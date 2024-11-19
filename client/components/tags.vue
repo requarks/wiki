@@ -318,7 +318,8 @@ export default {
       variables () {
         return {
           locale: this.locale === 'any' ? null : this.locale,
-          tags: this.selection
+          tags: this.selection,
+          siteId: this.siteId
         }
       },
       skip () {

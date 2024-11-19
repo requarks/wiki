@@ -18,6 +18,7 @@ module.exports = class Tag extends Model {
         id: {type: 'integer'},
         tag: {type: 'string'},
         title: {type: 'string'},
+        siteId: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -37,6 +38,14 @@ module.exports = class Tag extends Model {
             to: 'pageTags.pageId'
           },
           to: 'pages.id'
+        }
+      },
+      sites: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'tags.siteId',
+          to: 'sites.id'
         }
       }
     }
@@ -61,7 +70,8 @@ module.exports = class Tag extends Model {
 
     const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({
       tag: t,
-      title: t
+      title: t,
+      siteId: page.siteId
     }))
     if (newTags.length > 0) {
       if (WIKI.config.db.type === 'postgres') {

@@ -224,8 +224,10 @@ module.exports = {
       const query = _.trim(args.query)
       const pages = await WIKI.models.pages.query()
         .column([
-          'path',
-          { locale: 'localeCode' }
+          {
+            path: 'pages.path',
+            locale: 'localeCode',
+          }
         ])
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
@@ -238,12 +240,14 @@ module.exports = {
             } else {
               builderSub.where('tags.tag', 'LIKE', `%${query}%`)
             }
+            builderSub.where('pages.siteId', '=', args.siteId)
           })
         })
       const allTags = _.filter(pages, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          // siteId: args.siteId // TODO: Update permissions to include siteId
         })
       }).flatMap(r => r.tags).map(t => t.tag)
       return _.uniq(allTags).slice(0, 5)
@@ -383,7 +387,8 @@ module.exports = {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          // siteId: page.siteId
         })) {
           return {
             ...page,
