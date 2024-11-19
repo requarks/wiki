@@ -47,7 +47,7 @@ spec:
             {{- end }}
             - name: DB_TYPE
               value: postgres
-            {{- if (.Values.externalPostgresql).databaseURL }}
+            {{- if and .Values.externalPostgresql .Values.externalPostgresql.databaseURL }}
             - name: DATABASE_URL
               value: {{ .Values.externalPostgresql.databaseURL }}
             - name: NODE_TLS_REJECT_UNAUTHORIZED
