@@ -25,7 +25,7 @@ db:
 
   # PostgreSQL / MySQL / MariaDB / MS SQL Server only:
   host: localhost
-  port: 5432
+  port: 15432
   user: wikijs
   pass: wikijsrocks
   db: wiki
@@ -92,7 +92,7 @@ ssl:
 
 pool:
   min: 2
-  max: 10  
+  max: 10
   acquireTimeoutMillis: 60000
   createTimeoutMillis: 30000
   idleTimeoutMillis: 30000
