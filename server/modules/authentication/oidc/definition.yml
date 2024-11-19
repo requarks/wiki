@@ -22,63 +22,67 @@ props:
     title: Client Secret
     hint: Application Client Secret
     order: 2
-  authorizationURL:
+  wellKnownURL:
     type: String
-    title: Authorization Endpoint URL
-    hint: Application Authorization Endpoint URL
+    title: Well-Known Configuration URL
+    hint: The Well-Known configuration Endpoint URL (e.g. https://provider/.well-known/openid-configuration)
     order: 3
-  tokenURL:
-    type: String
-    title: Token Endpoint URL
-    hint: Application Token Endpoint URL
-    order: 4
-  userInfoURL:
-    type: String
-    title: User Info Endpoint URL
-    hint: User Info Endpoint URL
-    order: 5
   skipUserProfile:
     type: Boolean
     default: false
     title: Skip User Profile
     hint: Skips call to the OIDC UserInfo endpoint
-    order: 6
-  issuer:
+    order: 4
+  userIdClaim:
+    userIdClaim:
     type: String
-    title: Issuer
-    hint: Issuer URL
-    order: 7
+    title: ID Claim
+    hint: Field containing the user ID
+    default: id
+    maxWidth: 500
+    order: 5
   emailClaim:
     type: String
     title: Email Claim
     hint: Field containing the email address
     default: email
     maxWidth: 500
-    order: 8
+    order: 6
   displayNameClaim:
     type: String
     title: Display Name Claim
     hint: Field containing the user display name
     default: displayName
     maxWidth: 500
-    order: 9
+    order: 7
+  mergeIdTokenClaims:
+    type: Boolean
+    title: Merge ID Token Claims
+    hint: If enabled, verifies the ID token and merges its claims into the user profile
+    default: false
+    order: 8
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Map groups matching names from the groups claim value
     default: false
-    order: 10
+    order: 9
   groupsClaim:
     type: String
     title: Groups Claim
     hint: Field containing the group names
     default: groups
     maxWidth: 500
-    order: 11
+    order: 10
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
+    order: 11
+  scope:
+    type: String
+    title: Scope
+    hint: (optional) Application Client permission scopes.
     order: 12
   acrValues:
     type: String
