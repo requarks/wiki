@@ -217,6 +217,8 @@ module.exports = {
   checkAccess(user, permissions = [], page = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
+    console.log(user)
+
     // System Admin
     if (_.includes(userPermissions, 'manage:system')) {
       return true
@@ -237,6 +239,8 @@ module.exports = {
         if (result === true) {
           return true
         }
+      } else {
+        return true
       }
       return false
     }
