@@ -365,7 +365,17 @@ export default {
       }
     },
     isAdmin () {
-      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api', 'manage:sites']).length > 0
+      return _.intersection(this.permissions, [
+        'manage:system',
+        'write:users',
+        'manage:users',
+        'write:groups',
+        'manage:groups',
+        'manage:navigation',
+        'manage:theme',
+        'manage:api',
+        'manage:sites'
+      ]).length > 0
     },
     hasNewPagePermission () {
       return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0

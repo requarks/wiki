@@ -298,7 +298,7 @@ export default {
       return siteLangs
     },
     isRoleManageSite() {
-      return this.roles.includes('manage:sites');
+      return this.roles.includes('manage:sites')
     }
   },
   watch: {
@@ -336,13 +336,12 @@ export default {
         .then((response) => {
           const sitesData = response?.data?.sites
 
-            this.sites = Object.values(sitesData).map((site) => ({
-              text: `${site.name} - ${site.path}`,
-              title: site.name,
-              value: site.id,
-              path: site.path
-            }))
-          
+          this.sites = Object.values(sitesData).map((site) => ({
+            text: `${site.name} - ${site.path}`,
+            title: site.name,
+            value: site.id,
+            path: site.path
+          }))
         })
         .catch((error) => {
           console.error(error)
@@ -350,16 +349,16 @@ export default {
         })
     },
     handleRoleChange(selectedRoles) {
-    if (selectedRoles.includes('manage:sites')) {
-      this.rule.roles = ['manage:sites']
-    } else if (this.rule.roles.includes('manage:sites') && selectedRoles.length === 0) {
-      this.rule.roles = []
-    }
-    this.$forceUpdate();
-  },
-  isCheckboxDisabled(inputValue) {
-    if (this.rule.roles.includes('manage:sites')) {
-      return inputValue !== 'manage:sites'
+      if (selectedRoles.includes('manage:sites')) {
+        this.rule.roles = ['manage:sites']
+      } else if (this.rule.roles.includes('manage:sites') && selectedRoles.length === 0) {
+        this.rule.roles = []
+      }
+      this.$forceUpdate()
+    },
+    isCheckboxDisabled(inputValue) {
+      if (this.rule.roles.includes('manage:sites')) {
+        return inputValue !== 'manage:sites'
       }
       return false
     }

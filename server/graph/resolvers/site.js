@@ -7,8 +7,17 @@ const _ = require('lodash')
 module.exports = {
   Query: {
     async site() { return {} },
-    async sites() {
-      const sites = await WIKI.models.sites.query().orderBy('name')
+    async sites(obj, args, context) {
+      let sites = await WIKI.models.sites.query().orderBy('name')
+
+      sites = _.filter(sites, s => {
+        return WIKI.auth.checkAccess(context.req.user, [
+          'read:pages', 'manage:sites', 'manage:system'
+        ], {
+          siteId: s.id
+        })
+      })
+
       return sites.map(s => ({
         ...s.config,
         id: s.id,
@@ -45,11 +54,18 @@ module.exports = {
         isEnabled: site.isEnabled
       } : null
     },
-    async siteCount(obj, args) {
-      const result = await WIKI.models.sites.query().count('* as count')
-      return result ? {
-        count: result[0].count
-      } : 0
+    async siteCount(obj, args, context) {
+      let sites = await WIKI.models.sites.query().orderBy('name')
+
+      sites = _.filter(sites, s => {
+        return WIKI.auth.checkAccess(context.req.user, [
+          'read:pages', 'manage:sites', 'manage:system'
+        ], {
+          siteId: s.id
+        })
+      })
+
+      return sites.length
     }
   },
   Mutation: {
@@ -179,7 +195,7 @@ module.exports = {
       }
 
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system', 'manage:sites'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 

@@ -217,8 +217,6 @@ module.exports = {
   checkAccess(user, permissions = [], page = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
-    console.log(user)
-
     // System Admin
     if (_.includes(userPermissions, 'manage:system')) {
       return true
@@ -226,8 +224,8 @@ module.exports = {
 
     // Site Admin
     if (_.includes(userPermissions, 'manage:sites')) {
-      let result = false
       if (page && page.siteId) {
+        let result = false
         user.groups.forEach(grp => {
           const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
           _.get(WIKI.auth.groups, `${grpId}.rules`, []).forEach(rule => {
@@ -239,10 +237,9 @@ module.exports = {
         if (result === true) {
           return true
         }
-      } else {
-        return true
+        return false
       }
-      return false
+      return true
     }
 
     // Check Global Permissions

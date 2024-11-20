@@ -11,25 +11,25 @@
           v-list-item(to='/dashboard', color='primary')
             v-list-item-avatar(size='24', tile): v-icon mdi-view-dashboard-variant
             v-list-item-title {{ $t('admin:dashboard.title') }}
-          template(v-if='hasPermission([`manage:system`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
+          template(v-if='hasPermission([`manage:system`, `manage:sites`, `manage:navigation`, `write:pages`, `manage:pages`, `delete:pages`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.site') }}
-            v-list-item(to='/sites', color='primary', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/sites', color='primary', v-if='hasPermission([`manage:system`, `manage:sites`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-sitemap
               v-list-item-title {{ $t('admin:Sites') }}
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-5`')
                   .caption.grey--text {{ sitesTotal }}
-            v-list-item(to='/general', color='primary', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/general', color='primary', v-if='hasPermission([`manage:system`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-widgets
               v-list-item-title {{ $t('admin:general.title') }}
-            v-list-item(to='/locale', color='primary', v-if='hasPermission(`manage:system`)')
+            v-list-item(to='/locale', color='primary', v-if='hasPermission([`manage:system`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-web
               v-list-item-title {{ $t('admin:locale.title') }}
             v-list-item(to='/navigation', color='primary', v-if='hasPermission([`manage:system`, `manage:navigation`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-near-me
               v-list-item-title {{ $t('admin:navigation.title') }}
-            v-list-item(to='/pages', color='primary', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`])')
+            v-list-item(to='/pages', color='primary', v-if='hasPermission([`manage:system`, `write:pages`, `manage:pages`, `delete:pages`, `manage:sites`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-file-document-outline
               v-list-item-title {{ $t('admin:pages.title') }}
               v-list-item-action(style='min-width:auto;')
@@ -44,16 +44,16 @@
             v-list-item(to='/theme', color='primary', v-if='hasPermission([`manage:system`, `manage:theme`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-palette-outline
               v-list-item-title {{ $t('admin:theme.title') }}
-          template(v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
+          template(v-if='hasPermission([`manage:system`, `manage:sites`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
             v-divider.my-2
             v-subheader.pl-4 {{ $t('admin:nav.users') }}
-            v-list-item(to='/groups', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`])')
+            v-list-item(to='/groups', color='primary', v-if='hasPermission([`manage:system`, `manage:sites`, `manage:groups`, `write:groups`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-account-group
               v-list-item-title {{ $t('admin:groups.title') }}
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.groupsTotal }}
-            v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
+            v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:sites`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-account-box
               v-list-item-title {{ $t('admin:users.title') }}
               v-list-item-action(style='min-width:auto;')
@@ -251,8 +251,8 @@ export default {
       fetchPolicy: 'network-only',
       update: (data) => data.siteCount.count || 0,
       watchLoading(isLoading) {
-        this.sitesTotalLoading = isLoading;
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal');
+        this.sitesTotalLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal')
       }
     }
   }

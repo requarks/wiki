@@ -573,6 +573,7 @@ export default {
     },
     tocPosition: get('site/tocPosition'),
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
+    // hasSiteAdminPermission: get('page/effectivePermissions@site.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
