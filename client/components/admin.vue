@@ -53,7 +53,7 @@
               v-list-item-action(style='min-width:auto;')
                 v-chip(x-small, :color='$vuetify.theme.dark ? `grey darken-3-d4` : `grey lighten-4`')
                   .caption.grey--text {{ info.groupsTotal }}
-            v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:sites`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
+            v-list-item(to='/users', color='primary', v-if='hasPermission([`manage:system`, `manage:groups`, `write:groups`, `manage:users`, `write:users`])')
               v-list-item-avatar(size='24', tile): v-icon mdi-account-box
               v-list-item-title {{ $t('admin:users.title') }}
               v-list-item-action(style='min-width:auto;')
