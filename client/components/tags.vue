@@ -295,7 +295,7 @@ export default {
       this.$router.push(urlObj)
     },
     goTo (page) {
-      window.location.assign(`/${page.locale}/${page.path}`)
+      window.location.assign(`/${this.sitePath}/${page.locale}/${page.path}`)
     }
   },
   apollo: {

@@ -26,7 +26,7 @@
             span Update Site
         v-card.mt-3
           v-card(flat)
-                  
+
                 v-card-text
                   v-text-field(
                     outlined
@@ -55,8 +55,7 @@
                     color='primary'
                     v-model='site.isEnabled'
                     )
-                                       
-      
+
 </template>
 
 <script>
@@ -75,12 +74,10 @@ export default {
       loading: false,
       deleteSiteDialog: false,
       currentLang: siteConfig.lang,
-      routeParam: this.$route.params.id || '',
+      routeParam: this.$route.params.id || ''
     }
   },
-  mounted() {
-  console.log('Route param ID:', this.$route.params.id);
-},
+  mounted() {},
   methods: {
     async updateSite() {
       try {
@@ -131,19 +128,18 @@ export default {
     site: {
       query: siteQuery,
       variables() {
-        console.log('Querying with ID:', this.routeParam);
         return {
           id: this.routeParam || null
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => { console.log('Received data from GraphQL query:', data); return _.cloneDeep(data.siteById)},
+      update: (data) => { return _.cloneDeep(data.siteById) },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-sites-refresh')
       },
       skip() {
-        return !this.routeParam;
-    }
+        return !this.routeParam
+      }
     }
   }
 }

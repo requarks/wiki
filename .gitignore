@@ -56,4 +56,8 @@ deployment/data/*
 deployment/env/local/secrets/*
 **/local/certs/*
 
+# Postgres dumps
+*.sql
 
+# OS-specific
+.DS_Store

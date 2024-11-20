@@ -662,6 +662,6 @@ const renderPage = async (req, res, next) => {
 
 router.get('/:sitePath/*', renderPage)
 router.get('/:sitePath', renderPage)
-router.get('/*', renderPage)
+router.get('/', renderPage)
 
 module.exports = router

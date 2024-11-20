@@ -546,7 +546,7 @@ export default {
       this.exitConfirmed = true
       _.delay(() => {
         if (this.$store.get('editor/mode') === 'create') {
-          window.location.assign(`/`)
+          window.location.assign(`/${this.$store.get('page/sitePath')}`)
         } else {
           window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }

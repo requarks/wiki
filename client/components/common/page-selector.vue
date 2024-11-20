@@ -147,13 +147,15 @@ export default {
       tree: [
         {
           id: 0,
-          title: '/ (root)',
+          title: this.$store.get('page/siteName'),
           children: []
         }
       ],
       pages: [],
       all: [],
-      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
+      namespaces: siteLangs.length ?
+        siteLangs.map(ns => ns.code) :
+        [siteConfig.lang],
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -171,18 +173,26 @@ export default {
             background: '#64B5F6'
           }
         }
-      }
+      },
+      siteId: this.$store.get('page/siteId')
     }
   },
   computed: {
     isShown: {
-      get() { return this.value },
-      set(val) { this.$emit('input', val) }
+      get() {
+        return this.value
+      },
+      set(val) {
+        this.$emit('input', val)
+      }
     },
-    currentPages () {
-      return _.sortBy(_.filter(this.pages, ['parent', _.head(this.currentNode) || 0]), ['title', 'path'])
+    currentPages() {
+      return _.sortBy(
+        _.filter(this.pages, ['parent', _.head(this.currentNode) || 0]),
+        ['title', 'path']
+      )
     },
-    isValidPath () {
+    isValidPath() {
       if (!this.currentPath) {
         return false
       }
@@ -195,9 +205,23 @@ export default {
       } else if (localeSegmentRegex.test(firstSection)) {
         return false
       } else if (
-        _.some(['login', 'logout', 'register', 'verify', 'favicons', 'fonts', 'img', 'js', 'svg'], p => {
-          return p === firstSection
-        })) {
+        _.some(
+          [
+            'login',
+            'logout',
+            'register',
+            'verify',
+            'favicons',
+            'fonts',
+            'img',
+            'js',
+            'svg'
+          ],
+          p => {
+            return p === firstSection
+          }
+        )
+      ) {
         return false
       } else {
         return true
@@ -205,7 +229,7 @@ export default {
     }
   },
   watch: {
-    isShown (newValue, oldValue) {
+    isShown(newValue, oldValue) {
       if (newValue && !oldValue) {
         this.currentPath = this.path
         this.currentLocale = this.locale
@@ -214,15 +238,17 @@ export default {
         })
       }
     },
-    currentNode (newValue, oldValue) {
-      if (newValue.length < 1) { // force a selection
+    currentNode(newValue, oldValue) {
+      if (newValue.length < 1) {
+        // force a selection
         this.$nextTick(() => {
           this.currentNode = oldValue
         })
       } else {
         const current = _.find(this.all, ['id', newValue[0]])
 
-        if (this.openNodes.indexOf(newValue[0]) < 0) { // auto open and load children
+        if (this.openNodes.indexOf(newValue[0]) < 0) {
+          // auto open and load children
           if (current) {
             if (this.openNodes.indexOf(current.parent) < 0) {
               this.$nextTick(() => {
@@ -235,20 +261,23 @@ export default {
           })
         }
 
-        this.currentPath = _.compact([_.get(current, 'path', ''), _.last(this.currentPath.split('/'))]).join('/')
+        this.currentPath = _.compact([
+          _.get(current, 'path', ''),
+          _.last(this.currentPath.split('/'))
+        ]).join('/')
       }
     },
-    currentPage (newValue, oldValue) {
+    currentPage(newValue, oldValue) {
       if (!_.isEmpty(newValue)) {
         this.currentPath = newValue.path
       }
     },
-    currentLocale (newValue, oldValue) {
+    currentLocale(newValue, oldValue) {
       this.$nextTick(() => {
         this.tree = [
           {
             id: 0,
-            title: '/ (root)',
+            title: this.$store.get('page/siteName'),
             children: []
           }
         ]
@@ -268,25 +297,36 @@ export default {
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
-        id: (this.mustExist && this.currentPage) ? this.currentPage.pageId : 0
+        id: this.mustExist && this.currentPage ? this.currentPage.pageId : 0
       })
       if (exit !== false) {
         this.close()
       }
     },
-    async fetchFolders (item) {
+    async fetchFolders(item) {
       this.searchLoading = true
       const resp = await this.$apollo.query({
         query: gql`
-          query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
+          query(
+            $parent: Int!
+            $mode: PageTreeMode!
+            $locale: String!
+            $siteId: String!
+          ) {
             pages {
-              tree(parent: $parent, mode: $mode, locale: $locale) {
+              tree(
+                parent: $parent
+                mode: $mode
+                locale: $locale
+                siteId: $siteId
+              ) {
                 id
                 path
                 title
                 isFolder
                 pageId
                 parent
+                siteId
               }
             }
           }
@@ -295,19 +335,33 @@ export default {
         variables: {
           parent: item.id,
           mode: 'ALL',
-          locale: this.currentLocale
+          locale: this.currentLocale,
+          siteId: this.siteId
         }
       })
+
       const items = _.get(resp, 'data.pages.tree', [])
-      const itemFolders = _.filter(items, ['isFolder', true]).map(f => ({...f, children: []}))
-      const itemPages = _.filter(items, i => i.pageId > 0)
+
+      const filteredItems = items.filter(i => {
+        const itemSiteId = String(i.siteId)
+        const currentSiteId = String(this.siteId)
+        return itemSiteId === currentSiteId
+      })
+
+      const itemFolders = _.filter(filteredItems, ['isFolder', true]).map(
+        f => ({
+          ...f,
+          children: []
+        })
+      )
+      const itemPages = _.filter(filteredItems, i => i.pageId > 0)
       if (itemFolders.length > 0) {
         item.children = itemFolders
       } else {
         item.children = undefined
       }
       this.pages = _.unionBy(this.pages, itemPages, 'id')
-      this.all = _.unionBy(this.all, items, 'id')
+      this.all = _.unionBy(this.all, filteredItems, 'id')
 
       this.searchLoading = false
     }
@@ -315,8 +369,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
+<style lang="scss">
 .page-selector {
   .v-treeview-node__label {
     font-size: 13px;
@@ -325,5 +378,4 @@ export default {
     cursor: pointer;
   }
 }
-
 </style>

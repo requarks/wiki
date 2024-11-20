@@ -51,7 +51,7 @@
             v-icon(small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
+        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + sitePath + `/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ currentParent.title }}
@@ -61,7 +61,7 @@
           v-list-item-avatar(size='24')
             v-icon mdi-folder
           v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
+        v-list-item(v-else, :href='`/` +  sitePath + `/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ item.title }}
@@ -107,18 +107,19 @@ export default {
   },
   computed: {
     path: get('page/path'),
-    locale: get('page/locale')
-    // sitePath: get('page/sitePath')
+    locale: get('page/locale'),
+    sitePath: get('page/sitePath'),
+    siteId: get('page/siteId')
   },
   methods: {
-    switchMode (mode) {
+    switchMode(mode) {
       this.currentMode = mode
       window.localStorage.setItem('navPref', mode)
       if (mode === `browse` && this.loadedCache.length < 1) {
         this.loadFromCurrentPath()
       }
     },
-    async fetchBrowseItems (item) {
+    async fetchBrowseItems(item) {
       this.$store.commit(`loadingStart`, 'browse-load')
       if (!item) {
         item = this.currentParent
@@ -145,9 +146,14 @@ export default {
 
       const resp = await this.$apollo.query({
         query: gql`
-          query ($parent: Int, $locale: String!) {
+          query ($parent: Int, $locale: String!, $siteId: String!) {
             pages {
-              tree(parent: $parent, mode: ALL, locale: $locale) {
+              tree(
+                parent: $parent
+                mode: ALL
+                locale: $locale
+                siteId: $siteId
+              ) {
                 id
                 path
                 title
@@ -155,6 +161,7 @@ export default {
                 pageId
                 parent
                 locale
+                siteId
               }
             }
           }
@@ -162,7 +169,8 @@ export default {
         fetchPolicy: 'cache-first',
         variables: {
           parent: item.id,
-          locale: this.locale
+          locale: this.locale,
+          siteId: this.siteId
         }
       })
       this.loadedCache = _.union(this.loadedCache, [item.id])
@@ -171,11 +179,18 @@ export default {
     },
     async loadFromCurrentPath() {
       this.$store.commit(`loadingStart`, 'browse-load')
+
       const resp = await this.$apollo.query({
         query: gql`
-          query ($path: String, $locale: String!) {
+          query ($path: String, $locale: String!, $siteId: String!) {
             pages {
-              tree(path: $path, mode: ALL, locale: $locale, includeAncestors: true) {
+              tree(
+                path: $path
+                mode: ALL
+                locale: $locale
+                includeAncestors: true
+                siteId: $siteId
+              ) {
                 id
                 path
                 title
@@ -183,6 +198,7 @@ export default {
                 pageId
                 parent
                 locale
+                siteId
               }
             }
           }
@@ -190,20 +206,24 @@ export default {
         fetchPolicy: 'cache-first',
         variables: {
           path: this.path,
-          locale: this.locale
+          locale: this.locale,
+          siteId: this.siteId
         }
       })
+
       const items = _.get(resp, 'data.pages.tree', [])
-      const curPage = _.find(items, ['pageId', this.$store.get('page/id')])
-      if (!curPage) {
-        console.warn('Could not find current page in page tree listing!')
-        return
-      }
+
+      const filteredItems = items.filter((item) => item.siteId === this.siteId)
+
+      const curPage = _.find(filteredItems, [
+        'pageId',
+        this.$store.get('page/id')
+      ])
 
       let curParentId = curPage.parent
       let invertedAncestors = []
       while (curParentId) {
-        const curParent = _.find(items, ['id', curParentId])
+        const curParent = _.find(filteredItems, ['id', curParentId])
         if (!curParent) {
           break
         }
@@ -215,14 +235,18 @@ export default {
       this.currentParent = _.last(this.parents)
 
       this.loadedCache = [curPage.parent]
-      this.currentItems = _.filter(items, ['parent', curPage.parent])
+      this.currentItems = _.filter(filteredItems, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
-    goHome () {
-      window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
+    goHome() {
+      if (siteLangs.length > 0) {
+        window.location.assign(`/${this.sitePath}/${this.locale}`)
+      } else {
+        window.location.assign(`/${this.sitePath}`)
+      }
     }
   },
-  mounted () {
+  mounted() {
     this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
       this.currentMode = 'browse'

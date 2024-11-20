@@ -2,6 +2,10 @@ const _ = require('lodash')
 
 /* global WIKI */
 
+const getSiteIdByPath = async (sitePath) => {
+  return WIKI.models.sites.getSiteIdByPath({ path: sitePath, forceReload: true })
+}
+
 module.exports = async (siteId) => {
   WIKI.logger.info(`Rebuilding page tree...`)
 
@@ -10,10 +14,17 @@ module.exports = async (siteId) => {
     await WIKI.configSvc.loadFromDb()
     await WIKI.configSvc.applyFlags()
 
+    if (!siteId || siteId === 'undefined') {
+      WIKI.logger.info(`No siteId specified, taking default site...`)
+      siteId = await getSiteIdByPath('default')
+    }
+
+    WIKI.logger.info(`Rebuilding page tree for siteId: ${siteId}`)
+
     const pages = await WIKI.models.pages
       .query()
       .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS')
-      // .where('siteId', '=', siteId)
+      .where('siteId', '=', siteId)
       .orderBy(['localeCode', 'path'])
     let tree = []
     let pik = 0
@@ -59,7 +70,7 @@ module.exports = async (siteId) => {
       }
     }
 
-    await WIKI.models.knex.table('pageTree').where('siteId', 'IS', siteId).del()
+    await WIKI.models.knex.table('pageTree').where('siteId', '=', siteId).del()
 
     if (tree.length > 0) {
       // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)

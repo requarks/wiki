@@ -325,7 +325,7 @@ export default {
         modal: false
       },
       sites: [],
-      menuIsOpen: false,
+      menuIsOpen: false
     }
   },
   computed: {
@@ -517,10 +517,10 @@ export default {
       window.location.assign('/logout')
     },
     goHome () {
-      window.location.assign('/')
+      window.location.assign(`/${this.sitePath}`)
     },
     goToSite (path) {
-      window.location.assign(`/${path}`)
+      window.location.assign(`/${path || ''}`)
     },
 
     async fetchSitesFromUser () {
