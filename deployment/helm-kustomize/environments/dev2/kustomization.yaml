@@ -41,3 +41,7 @@ patches:
   target:
     kind: ServiceAccount
     name: capwiki-deploy-sa
+- path: patches/namespace-patch.yaml
+  target:
+    kind: ServiceAccount
+    name: capwiki-postgresdb

@@ -4,17 +4,16 @@ variables:
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
   TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
-  OLD_IMAGE: "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}"
-  NEW_IMAGE: "${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}:$CI_COMMIT_SHA"
+  IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
+
   ENVIRONMENT:
     value: "none"
     options:
+      - "none"
       - "dev1"
       - "dev2"
-      - "production"
       - "staging"
-      - "none"
-      - "n/a" #that one is being used in scheduled pipelone so it doesn't deploy to any environment
+      - "production"
     description: "Choose on which environment should pipeline run"
   MONITORING:
     value: "no"
@@ -24,58 +23,69 @@ variables:
     description: "Deploy monitoring"
   VERSION:
     value: "v2.0.0"
-    description: "Specify the version [ONLY USED FOR PRODUCTION]"
+    description: "Specify the version [ONLY USED FOR STAGING or PRODUCTION]"
   MESSAGE:
     value: ""
-    description: "Specify a tagging message [ONLY USED FOR PRODUCTION]"
+    description: "Specify a tagging message [ONLY USED FOR STAGING or PRODUCTION]"
   CONTAINER_SCANNING_ENABLED:
     value: "false"
     options:
       - "true"
       - "false"
     description: "Choose true if you want to scan the images"
-  
- 
-workflow:
-  rules:
-    - if: $ENVIRONMENT != "none" || $ENVIRONMENT == "n/a" # this workflow rule prevents pipeline to be started automatically when no ENVIRONMENT's value is specified (dev1, dev2, rod) to make sure they are started manually
-      when: always
-    - if: $ENVIRONMENT == "staging"
-      variables:
-        NEW_IMAGE: "${NEW_IMAGE}-DEV-SNAPSHOT"
-    - if: $ENVIRONMENT == "production"
-      variables:
-        NEW_IMAGE: "${NEW_IMAGE}-${VERSION}"
+
 default:
   tags:
     - runner_mar
 
 stages:
   - sonarqube
-  - test
+  - container-scan
   - modify_package_json
-  - docker
+  - docker-build
+  - docker-push
   - deployment-pipeline
   - tagging
 
 
 sonarqube-scan:
   stage: sonarqube
+  tags:
+    - docker_runner
+  image: 
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script: 
+    - sonar-scanner
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production" || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: always    
+
+container_scanning:
+  stage: container-scan
   trigger:
-    include: deployment/pipelines/sonarqube/.gitlab-ci.yml  
+    include: deployment/pipelines/scanning/scanning.yaml
     strategy: depend
     forward:
       pipeline_variables: true
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CONTAINER_SCANNING_ENABLED == "false" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: always
+    - if: $CONTAINER_SCANNING_ENABLED == "true" || $CI_PIPELINE_SOURCE == "schedule"
+      when: always
 
 modify_package_json:
   stage: modify_package_json
   image: node:alpine
   before_script:
-   
     # Make the scripts executable
     - chmod +x ./modify-app-dev-mode.js
     - chmod +x ./modify-app-releasedate-version.js
@@ -83,7 +93,7 @@ modify_package_json:
     - echo "Modify package json i.e release date and version"
     # This node.js script will run in all environments
     - node ./modify-app-releasedate-version.js "$VERSION"
-    
+
     # Conditionally run this script only in staging or production environments
     - |
       if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production" ]]; then
@@ -92,55 +102,83 @@ modify_package_json:
       else
         echo "Skipping modify-app-dev-mode.sh in non-staging/non-production environments"
       fi
-    
+
     # Confirm the changes
     - cat package.json | grep -E '"version"|"releaseDate"|"dev"' | sed 's/[",]//g'
   rules:
-    - if: $ENVIRONMENT == "n/a"
-      when: never    
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
     - when: always
-      
+
   # Artifacts to persist changes for later stages
   artifacts:
     paths:
       - package.json
 
 build-docker-image:
-  stage: docker
+  stage: docker-build
   before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+    - |
+      docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+     
+
+      if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
+        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^feature/ ) ]]; then
+          ENVIRONMENT="staging"
+        elif [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" ]]; then
+          ENVIRONMENT="production"
+        fi
+      fi
+      echo "environment is $ENVIRONMENT"
+      
+      if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^feature/  ]]; then
+        IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      elif [[ "$ENVIRONMENT" == "staging" ]]; then
+        IMAGE_TAG="${VERSION}"
+      fi
+      # Fallback if IMAGE_TAG is still empty
+      if [[ -z "$IMAGE_TAG" ]]; then
+        echo "ERROR: IMAGE_TAG is empty. Cannot proceed."
+        exit 1
+      elif [[ -n "$IMAGE_TAG" ]]; then
+        # Log the IMAGE_TAG value
+        echo "IMAGE_TAG is set to: $IMAGE_TAG"
+      fi
+      export NEW_IMAGE="${IMAGE}:$IMAGE_TAG"
+      echo "Constructed NEW_IMAGE: $NEW_IMAGE"
   script:
-     - echo "Building Docker image"
-     - docker build --no-cache -f Dockerfile -t $NEW_IMAGE .
+    - echo "Building Docker image"
+    - docker build --no-cache -f Dockerfile -t "$NEW_IMAGE" .
+    - echo "NEW_IMAGE=$NEW_IMAGE" > newimage.txt
+  artifacts:
+    paths:
+      - newimage.txt
+    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
+  environment:
+    name: $ENVIRONMENT
+    url: $NEW_IMAGE
   rules:
-    - if: $ENVIRONMENT == "n/a"
-      when: never    
-    - when: always
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: on_success
+
 
 push-docker-image:
-  stage: docker
+  stage: docker-push
+  needs:
+    - build-docker-image
   before_script:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
-     - echo "Pushing Docker image"
-     - docker push $NEW_IMAGE
+    - source newimage.txt
+    - echo "Pushing Docker image"
+    - docker push $NEW_IMAGE
+    - docker logout $DOCKER_REGISTRY
+    - docker rmi $NEW_IMAGE
   rules:
-    - if: $ENVIRONMENT == "n/a"
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: always
-
-container_scanning:
-  stage: test
-  trigger:
-    include: deployment/pipelines/scanning/scanning.yaml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $CONTAINER_SCANNING_ENABLED != "true"
-      when: never
-    - if: $CONTAINER_SCANNING_ENABLED == "true"
-      when: always
+    - when: on_success
 
 dev1-pipeline:
   stage: deployment-pipeline
@@ -150,10 +188,8 @@ dev1-pipeline:
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "n/a"
-      when: never
-    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_BRANCH =~ /^feature/
-      
+    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^feature/
+      when: manual
 
 dev2-pipeline:
   stage: deployment-pipeline
@@ -162,24 +198,25 @@ dev2-pipeline:
     strategy: depend
     forward:
       pipeline_variables: true
-  rules:    
-    - if: $ENVIRONMENT == "n/a"
-      when: never
-    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_BRANCH =~ /^feature/
+  rules:
+    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^feature/
+      when: manual
 
-  
+
 staging-pipeline:
   stage: deployment-pipeline
   trigger:
-    include: deployment/pipelines/staging/.gitlab-ci.yml  
+    include: deployment/pipelines/staging/.gitlab-ci.yml
     strategy: depend
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "n/a"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $ENVIRONMENT == "staging" && $CI_COMMIT_BRANCH == "develop"
-    
+    - if: ($ENVIRONMENT == "staging" && $CI_COMMIT_REF_NAME == "develop") || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"
+      when: on_success
+
+
 prod-pipeline:
   stage: deployment-pipeline
   trigger:
@@ -188,6 +225,7 @@ prod-pipeline:
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "n/a"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if:  $ENVIRONMENT == "production" && $CI_COMMIT_BRANCH == "main"
+    - if:  ($ENVIRONMENT == "production"  && $CI_COMMIT_REF_NAME == "main" ) || ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main")
+      when: on_success

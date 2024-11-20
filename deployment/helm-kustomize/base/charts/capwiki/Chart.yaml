@@ -5,7 +5,7 @@ name: capwiki
 version: 2.2.0
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application.
-AppVersion: latest
+appVersion: latest
 description: The most powerful and extensible open source Wiki software.
 keywords:
   - capwiki
@@ -25,11 +25,11 @@ keywords:
 type: application
 dependencies:
   - name: postgresql
-    version: 8.10.14
+    version: 16.2.1
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
 home: https://wiki.js.org
 icon: https://cdn.js.wiki/images/wikijs-butterfly.svg
 sources:
   - https://github.com/Requarks/wiki
-engine: gotpl
+#engine: gotpl
