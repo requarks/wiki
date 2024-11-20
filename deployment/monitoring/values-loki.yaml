@@ -2,7 +2,7 @@ loki:
   enabled: true
   nodeSelector:
     node-role.kubernetes.io/master: "true"
-  isDefault: true
+  isDefault: false
   image:
     tag: 2.9.7
   compactor:
