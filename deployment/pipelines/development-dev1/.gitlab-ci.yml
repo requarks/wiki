@@ -2,6 +2,9 @@ default:
   tags:
     - runner_mar
 
+variables:
+   NEW_IMAGE: "${IMAGE}:$CI_COMMIT_SHORT_SHA"
+
 stages:
   - setup-deployment
   - deployment
@@ -53,10 +56,10 @@ deployment:
     - cd ./deployment/infra-provisioning
     - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=dev1"
     - echo "Deploying application"
-    - echo "$OLD_IMAGE"
+    - echo "$IMAGE"
     - echo "$NEW_IMAGE"
     - cd ../kubernetes-helm
-    - ansible-playbook -i inventory ./playbook-deploy.yml -e "IMAGE=$OLD_IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=dev1" -vv
+    - ansible-playbook -i inventory ./playbook-deploy.yml -e "IMAGE=$IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=dev1" -vv
   environment:
     name: $ENVIRONMENT
 
