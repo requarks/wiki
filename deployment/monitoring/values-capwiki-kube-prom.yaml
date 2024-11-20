@@ -19,6 +19,20 @@ grafana:
 
  nodeSelector:
   node-role.kubernetes.io/master: "true"
+ sidecar:
+   datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+      isDefaultDatasource: true
+      name: Prometheus
+      uid: prometheus
+      alertmanager:
+        enabled: false
+        name: Alertmanager
+        uid: alertmanager
+        handleGrafanaManagedAlerts: false
+        implementation: prometheus
+        isDefaultDatasource: false   # This is NOT the default datasource
  persistence:
     enabled: true
     type: sts
