@@ -110,8 +110,8 @@ build-docker-image:
   before_script:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
-    - echo "Building Docker image"
-    - docker build --no-cache -f Dockerfile -t $NEW_IMAGE .
+     - echo "Building Docker image"
+     - docker build --no-cache -f Dockerfile -t $NEW_IMAGE .
   rules:
     - if: $ENVIRONMENT == "n/a"
       when: never    
@@ -122,8 +122,8 @@ push-docker-image:
   before_script:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
-    - echo "Pushing Docker image"
-    - docker push $NEW_IMAGE
+     - echo "Pushing Docker image"
+     - docker push $NEW_IMAGE
   rules:
     - if: $ENVIRONMENT == "n/a"
       when: never
