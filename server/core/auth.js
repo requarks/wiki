@@ -239,7 +239,7 @@ module.exports = {
         }
         return false
       }
-      return true
+      // return true // TODO: Confirm as wrong
     }
 
     // Check Global Permissions

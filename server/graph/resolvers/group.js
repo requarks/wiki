@@ -16,11 +16,26 @@ module.exports = {
     /**
      * FETCH ALL GROUPS
      */
-    async list () {
-      return WIKI.models.groups.query().select(
+    async list (obj, args, context) {
+      const groups = await WIKI.models.groups.query().select(
         'groups.*',
         WIKI.models.groups.relatedQuery('users').count().as('userCount')
       )
+
+      if (WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        return groups
+      }
+
+      const userRelevantGroups = _.filter(groups, g => {
+        return _.intersection(context.req.user.groups, [g.id]).length > 0
+      })
+
+      const userSiteManagerGroups = _.filter(userRelevantGroups, g => {
+        console.log(g)
+        return _.intersection(g.permissions, ['manage:sites', 'manage:groups']).length > 0
+      })
+
+      return userSiteManagerGroups
     },
     /**
      * FETCH A SINGLE GROUP
@@ -164,7 +179,7 @@ module.exports = {
 
       // Check assigned permissions for write:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
         args.permissions.some(p => {
           const resType = _.last(p.split(':'))
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
@@ -175,7 +190,7 @@ module.exports = {
 
       // Check assigned permissions for manage:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system', 'manage:sites']) &&
         args.permissions.some(p => _.last(p.split(':')) === 'system')
       ) {
         throw new gql.GraphQLError('You are not authorized to manage this group or assign the manage:system permissions.')
