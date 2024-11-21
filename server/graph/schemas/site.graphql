@@ -16,7 +16,7 @@ extend type Query {
     exact: Boolean!
   ): Site
 
-  siteCount: SiteCount
+  siteCount: SiteCount @auth(requires: ["manage:sites", "manage:system"])
 }
 
 extend type Mutation {
@@ -25,16 +25,16 @@ extend type Mutation {
   createSite (
     name: String!
     path: String!
-  ): SiteCreateResponse
+  ): SiteCreateResponse @auth(requires: ["manage:system"])
 
   updateSite (
     id: String! # was UUID!
     patch: SiteUpdateInput!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
 
   deleteSite (
     id: String! # was UUID!
-  ): DefaultResponse
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
