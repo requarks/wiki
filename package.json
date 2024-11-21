@@ -207,7 +207,7 @@
     "@babel/plugin-syntax-import-meta": "^7.10.4",
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.12.1",
-    "@mdi/font": "5.8.55",
+    "@mdi/font": "6.6.96",
     "@panter/vue-i18next": "0.15.2",
     "@requarks/ckeditor5": "19.0.1-wiki.2",
     "@vue/babel-preset-app": "4.5.15",
