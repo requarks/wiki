@@ -122,6 +122,11 @@ sideload:
 # externalPostgresql:
 #   # note: ?sslmode=require => ?ssl=true
 #   databaseURL: postgresql://postgres:postgres@postgres:5432/wiki?ssl=true
+#   # Exists secret which will be used for fetching database connection URL.
+#   existsSecret: wiki-database-secret
+#   # Used key in the secret.
+#   # Value in that key should be like in `externalPostgresql.databaseURL`.
+#   existsSecretKeyName: connection-url
 #   # For self signed CAs, like DigitalOcean
 #   NODE_TLS_REJECT_UNAUTHORIZED: "0"
 

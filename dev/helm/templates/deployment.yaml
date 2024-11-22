@@ -52,6 +52,14 @@ spec:
               value: {{ .Values.externalPostgresql.databaseURL }}
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
+            {{- else if and (.Values.externalPostgresql).existsSecret (.Values.externalPostgresql).existsSecretKeyName }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.externalPostgresql.existsSecret }}
+                  key: {{ .Values.externalPostgresql.existsSecretKeyName }}
+            - name: NODE_TLS_REJECT_UNAUTHORIZED
+              value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
             {{- else }}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
