@@ -27,12 +27,16 @@ spec:
       {{- if .Values.sideload.enabled }}
       initContainers:
         - name: {{ .Chart.Name }}-sideload
+          securityContext:
+            {{- toYaml .Values.sideload.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
           env:
             {{- toYaml .Values.sideload.env | nindent 12 }}
           command: [ "sh", "-c" ]
           args: [ "mkdir -p /wiki/data/sideload && git clone --depth=1 {{ .Values.sideload.repoURL }} /wiki/data/sideload/" ]
+          resources:
+            {{- toYaml .Values.sideload.resources | nindent 12 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}

@@ -97,16 +97,16 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `image.repository`                   | Wiki.js image                                | `requarks/wiki`                                           |
 | `image.tag`                          | Wiki.js image tag                            | `latest`                                                      |
 | `imagePullPolicy`                    | Image pull policy                           | `IfNotPresent`                                             |
-| `replicacount`                   | Amount of wiki.js service pods to run                   | `1`                                                        |
-| `revisionHistoryLimit`                   | Total amount of revision history points                   | `10`                                        |
-| `resources.limits`               | wiki.js service resource limits                         | `nil`                               |
-| `resources.requests`             | wiki.js service resource requests                       | `nil`                               |
-| `nodeSelector`                   | Node labels for wiki.js pod assignment          | `{}`                                                       |
-| `affinity`                       | Affinity settings for wiki.js pod assignment    | `{}`                                                       |
-| `schedulerName`                  | Name of an alternate scheduler for wiki.js pod  | `nil`                                                      |
-| `tolerations`                    | Toleration labels for wiki.jsk pod assignment    | `[]`                                                       |
-| `volumeMounts`                   | Volume mounts for Wiki.js container              | `[]`                                                       |
-| `volumes`                        | Volumes for Wiki.js Pod                          | `[]`                                                       |
+| `replicacount`                       | Number of Wiki.js pods to run                   | `1`                                                        |
+| `revisionHistoryLimit`               | Total number of revision history points                   | `10`                                        |
+| `resources.limits`               | Wiki.js service resource limits                         | `nil`                               |
+| `resources.requests`             | Wiki.js service resource requests                       | `nil`                               |
+| `nodeSelector`                   | Node labels for the Wiki.js pod assignment          | `{}`                                                       |
+| `affinity`                       | Affinity settings for the Wiki.js pod assignment    | `{}`                                                       |
+| `schedulerName`                  | Name of an alternate scheduler for the Wiki.js pod  | `nil`                                                      |
+| `tolerations`                    | Toleration labels for the Wiki.js pod assignment    | `[]`                                                       |
+| `volumeMounts`                   | Volume mounts for the Wiki.js container              | `[]`                                                       |
+| `volumes`                        | Volumes for the Wiki.js pod                          | `[]`                                                       |
 | `ingress.enabled`                    | Enable ingress controller resource          | `false`                                                    |
 | `ingress.className`                  | Ingress class name                          | `""`                                                       |
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
@@ -114,7 +114,10 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `ingress.tls`                        | Ingress TLS configuration                   | `[]`                                                       |
 | `sideload.enabled`                   | Enable sideloading of locale files from git | `false`                                                    |
 | `sideload.repoURL`                   | Git repository URL containing locale files  | `https://github.com/Requarks/wiki-localization`            |
-| `sideload.env`                       | Environment variables for sideload Container | `{}`                                                      |
+| `sideload.env`                       | Environment variables for the sideload container | `{}`                                                      |
+| `sideload.securityContext`           | Security context for the sideload container     | `nil`                                                      |
+| `sideload.resources.limits`          | Resource limits for the sideload container      | `nil`                                                      |
+| `sideload.resources.requests`        | Resource requests for the sideload container    | `nil`                                                      |
 | `nodeExtraCaCerts`                   | Trusted certificates path                   | `nil`                                                      |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
@@ -122,7 +125,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.postgresqlHost`            | External postgres host                      | `nil`                                                      |
 | `postgresql.postgresqlPassword`        | External postgres password                  | `nil`                                                      |
 | `postgresql.existingSecret`            | Provide an existing `Secret` for postgres   | `nil`                                                      |
-| `postgresql.existingSecretKey`          | The postgres password key in the existing `Secret`   | `postgresql-password`                              |
+| `postgresql.existingSecretKey`         | The postgres password key in the existing `Secret`   | `postgresql-password`                              |
 | `postgresql.postgresqlPort`            | External postgres port                      | `5432`                                                     |
 | `postgresql.ssl`                       | Enable external postgres SSL connection     | `false`                                                   |
 | `postgresql.ca`                        | Certificate of Authority content for postgres  | `nil`                                                     |
