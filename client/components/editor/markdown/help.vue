@@ -31,6 +31,17 @@
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
                       .caption: em Lorem ipsum
+              .body-2.mt-3 Underline
+              v-layout(row)
+                v-flex(xs6)
+                  v-card.editor-markdown-help-source(flat)
+                    v-card-text
+                      div _Lorem ipsum_
+                v-icon mdi-chevron-right
+                v-flex
+                  v-card.editor-markdown-help-result(flat)
+                    v-card-text
+                      .caption(style='text-decoration: underline;') Lorem ipsum
               .body-2.mt-3 Strikethrough
               v-layout(row)
                 v-flex(xs6)
