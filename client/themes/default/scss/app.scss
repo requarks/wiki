@@ -242,9 +242,9 @@
   }
 
   blockquote {
-    padding: 0 1rem 1rem 1rem;
+    padding: 0 1rem 0.8rem 1rem;
     background-color: mc('blue-grey', '50');
-    border-left: 55px solid mc('blue-grey', '500');
+    border-left: 52px solid mc('blue-grey', '500');
     border-radius: .5rem;
     margin: 1rem 0;
     position: relative;
@@ -255,12 +255,12 @@
 
     &::before {
       display: inline-block;
-      font: normal normal normal 24px/1 "Material Design Icons", sans-serif;
+      font: normal normal normal 28px/1 "Material Design Icons", sans-serif;
       position: absolute;
       margin-top: -12px;
       top: 50%;
-      left: -38px;
-      color: rgba(255, 255, 255, .7);
+      left: -39px;
+      color: rgba(255, 255, 255, 0.85);
       content: "\F0757";
     }
 
@@ -354,6 +354,46 @@
         border-color: mc('green', '500');
       }
     }
+    &.is-tip {
+      background-color: mc('green', '50');
+      border-color: mc('green', '300');
+      color: mc('green', '900');
+
+      &::before {
+        content: "\F0335";
+      }
+
+      code:not([class^="language-"]) {
+        background-color: mc('green', '50');
+        color: mc('green', '800');
+      }
+
+      @at-root .theme--dark & {
+        background-color: mc('green', '900');
+        color: mc('green', '50');
+        border-color: mc('green', '500');
+      }
+    }
+    &.is-caution {
+      background-color: mc('purple', '50');
+      border-color: mc('purple', '300');
+      color: mc('purple', '900');
+
+      &::before {
+        content: "\f0238";
+      }
+
+      code:not([class^="language-"]) {
+        background-color: mc('purple', '50');
+        color: mc('purple', '800');
+      }
+
+      @at-root .theme--dark & {
+        background-color: mc('purple', '900');
+        color: mc('purple', '50');
+        border-color: mc('purple', '500');
+      }
+    }
   }
 
   // ---------------------------------
@@ -378,7 +418,7 @@
 
       &::before {
         display: inline-block;
-        font: normal normal normal 24px/1 "Material Design Icons", sans-serif !important;
+        font: normal normal normal 28px/1 "Material Design Icons", sans-serif !important;
       }
     }
 
@@ -388,6 +428,8 @@
     }
 
     &.note {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('blue', '300');
         color: mc('blue', '50');
@@ -405,7 +447,30 @@
         }
       }
     }
+
+    &.success {
+      background-color: transparent !important;
+
+      td.icon {
+        background-color: mc('green', '300');
+        color: mc('green', '50');
+        &::before {
+          content: "\F0E1E";
+        }
+      }
+      td.content {
+        color: darken(mc('green', '900'), 10%);
+        background-color: mc('green', '50');
+
+        @at-root .theme--dark & {
+          background-color: mc('green', '900');
+          color: mc('green', '50');
+        }
+      }
+    }
+
     &.tip {
+      background-color: transparent !important;
       td.icon {
         background-color: mc('green', '300');
         color: mc('green', '50');
@@ -423,6 +488,7 @@
         }
       }
     }
+
     &.warning {
       background-color: transparent !important;
 
@@ -443,7 +509,10 @@
         }
       }
     }
+
     &.caution {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('purple', '300');
         color: mc('purple', '50');
@@ -461,7 +530,10 @@
         }
       }
     }
+
     &.important {
+      background-color: transparent !important;
+
       td.icon {
         background-color: mc('red', '300');
         color: mc('red', '50');
@@ -685,7 +757,7 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
-        
+
         &:first-child {
           width: 100%;
         }

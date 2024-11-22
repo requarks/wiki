@@ -63,10 +63,20 @@
                 v-icon(color='success') mdi-alpha-s-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteSuccess')}}
             v-divider
+            v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-tip}`})')
+              v-list-item-action
+                v-icon(color='success') mdi-alpha-t-box-outline
+              v-list-item-title {{'Tip Blockquote'}}
+            v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
               v-list-item-action
                 v-icon(color='warning') mdi-alpha-w-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteWarning')}}
+            v-divider
+            v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-caution}`})')
+              v-list-item-action
+                v-icon(color='purple') mdi-alpha-c-box-outline
+              v-list-item-title {{'Caution Blockquote'}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
               v-list-item-action
