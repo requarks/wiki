@@ -7,7 +7,8 @@ const prefetch = async (element) => {
     response = await request({
       method: `GET`,
       url,
-      resolveWithFullResponse: true
+      resolveWithFullResponse: true,
+      encoding: null
     })
   } catch (err) {
     WIKI.logger.warn(`Failed to prefetch ${url}`)
@@ -15,7 +16,7 @@ const prefetch = async (element) => {
     return
   }
   const contentType = response.headers[`content-type`]
-  const image = Buffer.from(response.body).toString('base64')
+  const image = Buffer.from(response.body, null).toString('base64')
   element.attr('src', `data:${contentType};base64,${image}`)
   element.removeClass('prefetch-candidate')
 }
