@@ -145,3 +145,9 @@ dataPath: ./data
 # file uploads.
 
 bodyParserLimit: 5mb
+
+
+seo:
+  sitemap:
+    enabled: false # sitemap is experimental feature, do not enable in production
+    cacheExpireTime: 3600 # in seconds

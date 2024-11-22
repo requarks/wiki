@@ -177,6 +177,7 @@
     "semver": "7.3.8",
     "serve-favicon": "2.5.0",
     "simple-git": "3.16.0",
+    "sitemap": "7.1.1",
     "solr-node": "1.2.1",
     "sqlite3": "5.1.4",
     "ssh2": "1.11.0",
