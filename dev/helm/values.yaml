@@ -138,9 +138,15 @@ postgresql:
   ##
   # ssl: false
   ## ca Certificate of Authority
-  ## Default to empty, point to location of CA
+  ## this can either be a single line string (without spaces or new lines)
+  ## without the prefix and suffix lines, or a path to a certificate file.
+  ## Default to empty
   ##
-  # ca: "path to ca"
+  # ca: "single line or path to ca"
+  ## rejectUnauthorized reject self-signed certificates
+  ## Default to true
+  ##
+  # rejectUnauthorized: true
   ## postgresqlHost override postgres database host
   ## Default to postgres
   ##

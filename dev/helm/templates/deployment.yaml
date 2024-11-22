@@ -65,6 +65,8 @@ spec:
               value: "{{ default "false" .Values.postgresql.ssl }}"
             - name: DB_SSL_CA
               value: "{{ default "" .Values.postgresql.ca }}"
+            - name: DB_SSL_REJECTUNAUTHORIZED
+              value: "{{ hasKey .Values.postgresql "rejectUnauthorized" | ternary .Values.postgresql.rejectUnauthorized true }}"
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:

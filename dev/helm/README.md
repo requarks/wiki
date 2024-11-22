@@ -126,6 +126,7 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.postgresqlPort`            | External postgres port                      | `5432`                                                     |
 | `postgresql.ssl`                       | Enable external postgres SSL connection     | `false`                                                   |
 | `postgresql.ca`                        | Certificate of Authority content for postgres  | `nil`                                                     |
+| `postgresql.rejectUnauthorized`                 | Reject self-signed CA certificate     | `true`                                                   |
 | `postgresql.persistence.enabled`                | Enable postgres persistence using PVC                | `true`                                                     |
 | `postgresql.persistence.existingClaim`          | Provide an existing `PersistentVolumeClaim` for postgres | `nil`                                                      |
 | `postgresql.persistence.storageClass`           | Postgres PVC Storage Class (example: `nfs`)                           | `nil`                 |
