@@ -21,7 +21,7 @@ type PageQuery {
   version(pageId: Int!, versionId: Int!): PageVersion
     @auth(requires: ["manage:system", "read:history"])
 
-  search(query: String!, path: String, locale: String): PageSearchResponse!
+  search(query: String!, path: String, locale: String, siteId: String!): PageSearchResponse!
     @auth(requires: ["manage:system", "read:pages"])
 
   list(
@@ -247,6 +247,8 @@ type PageSearchResult {
   description: String!
   path: String!
   locale: String!
+  # the siteId field must not be non-nullable even though the entries in the database are non-null...
+  siteId: String
 }
 
 type PageListItem {

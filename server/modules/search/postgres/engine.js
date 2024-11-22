@@ -72,7 +72,7 @@ module.exports = {
         this.config.dictLanguage,
         tsquery(q),
         `%${q.toLowerCase()}%`,
-        'b722970a-e813-4b6a-8563-87ffc77827e5'
+        opts.siteId
       ]
 
       if (opts.locale) {
@@ -111,7 +111,7 @@ module.exports = {
       INSERT INTO "pagesVector" (path, locale, title, description, "tokens", "siteId") VALUES (
         ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?
       )
-    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent, 'b722970a-e813-4b6a-8563-87ffc77827e5'])
+    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent, page.siteId])
   },
   /**
    * UPDATE
@@ -127,7 +127,7 @@ module.exports = {
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') ||
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
       WHERE path = ? AND locale = ? AND "siteId" = ?
-    `, [page.title, page.description, page.title, page.description, page.safeContent, page.path, page.localeCode, 'b722970a-e813-4b6a-8563-87ffc77827e5'])
+    `, [page.title, page.description, page.title, page.description, page.safeContent, page.path, page.localeCode, page.siteId])
   },
   /**
    * DELETE
@@ -138,7 +138,7 @@ module.exports = {
     await WIKI.models.knex('pagesVector').where({
       locale: page.localeCode,
       path: page.path,
-      siteId: 'b722970a-e813-4b6a-8563-87ffc77827e5'
+      siteId: page.siteId
     }).del().limit(1)
   },
   /**
@@ -153,7 +153,7 @@ module.exports = {
     }).update({
       locale: page.destinationLocaleCode,
       path: page.destinationPath,
-      siteId: 'b722970a-e813-4b6a-8563-87ffc77827e5'
+      siteId: page.siteId
     })
   },
   /**
@@ -177,7 +177,7 @@ module.exports = {
             INSERT INTO "pagesVector" (path, locale, title, description, "tokens", content, "siteId") VALUES (
               ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?, ?
             )
-          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, content, 'b722970a-e813-4b6a-8563-87ffc77827e5'])
+          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, content, page.siteId])
           cb()
         }
       })

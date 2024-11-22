@@ -148,7 +148,10 @@ export default {
       query: searchPagesQuery,
       variables() {
         return {
-          query: this.search
+          query: this.search,
+          // this siteId is not even the contained in the pages table entries,
+          // but for some reasons it still works...
+          siteId: 'b722970a-e813-4b6a-8563-87ffc77827e5', // should be list of siteIds the user has access to
         }
       },
       fetchPolicy: 'network-only',

@@ -138,6 +138,7 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   // -> Effective Permissions
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
@@ -296,6 +297,7 @@ router.get(['/h', '/h/:sitePath/*'], async (req, res, next) => {
   }
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
 
@@ -381,6 +383,7 @@ router.get(['/s', '/s/:sitePath/*'], async (req, res, next) => {
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/s/${site.sitePath}/${pageArgs.locale}/${pageArgs.path}`)

@@ -1,12 +1,13 @@
-query ($query: String!) {
+query ($query: String!, $siteId: String!) {
   pages {
-    search(query:$query) {
+    search(query:$query, siteId:$siteId) {
       results {
         id
         title
         description
         path
         locale
+        siteId
       }
       suggestions
       totalHits
