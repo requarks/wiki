@@ -8540,6 +8540,11 @@ dir-glob@^3.0.1:
   dependencies:
     path-type "^4.0.0"
 
+discord-oauth2@2.11.0:
+  version "2.11.0"
+  resolved "https://registry.yarnpkg.com/discord-oauth2/-/discord-oauth2-2.11.0.tgz#799acc6777a216f8fbbf72d5ea29086eb4303f85"
+  integrity sha512-pIbgXm498f7vqNd8/7JwoLd36YMFOFASSJdqyCGdwQpaG7ULHu9nLyifpVXI1b88xvNLqQwqugS8jxkn8Ypd1Q==
+
 doctrine@1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-1.5.0.tgz#379dce730f6166f76cefa4e6707a159b02c5a6fa"

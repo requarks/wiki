@@ -73,6 +73,10 @@ module.exports = {
     message: 'You are not authorized to register. Your domain is not whitelisted.',
     code: 1011
   }),
+  AuthDiscordRoleUnauthorized: CustomError('AuthDiscordRoleUnauthorized', {
+    message: 'You are not authorized to register. You lack the necessary Server Roles.',
+    code: 1012
+  }),
   AuthRequired: CustomError('AuthRequired', {
     message: 'You must be authenticated to access this resource.',
     code: 1019
