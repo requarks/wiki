@@ -75,6 +75,7 @@ type NavigationConfig {
 enum NavigationMode {
   NONE
   TREE
+  NEWTREE
   MIXED
   STATIC
 }
