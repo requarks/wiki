@@ -123,7 +123,7 @@ build-docker-image:
      
 
       if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
-        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^feature/ ) ]]; then
+        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task)/ ) ]]; then
           ENVIRONMENT="staging"
         elif [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" ]]; then
           ENVIRONMENT="production"
