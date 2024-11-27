@@ -1,10 +1,10 @@
-<template lang='pug'>
+<template lang="pug">
   v-app(:dark='$vuetify.theme.dark').tags
     nav-header
     v-navigation-drawer.pb-0.elevation-1(app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
       vue-scroll(:ops='scrollStyle')
         v-list(dense, nav)
-          v-list-item(href='/')
+          v-list-item( :href='`/` + sitePath')
             v-list-item-icon: v-icon mdi-home
             v-list-item-title {{$t('common:header.home')}}
           template(v-for='(tags, groupName) in tagsGrouped')
@@ -151,36 +151,41 @@
 </template>
 
 <script>
-import VueRouter from 'vue-router'
-import _ from 'lodash'
-
-import tagsQuery from 'gql/common/common-pages-query-tags.gql'
-import pagesQuery from 'gql/common/common-pages-query-list.gql'
+import VueRouter from "vue-router";
+import _ from "lodash";
+import { get } from 'vuex-pathify'
+import tagsQuery from "gql/common/common-pages-query-tags.gql";
+import pagesQuery from "gql/common/common-pages-query-list.gql";
 
 /* global siteLangs */
 
 const router = new VueRouter({
-  mode: 'history',
-  base: '/t'
-})
+  mode: "history",
+  base: "/t",
+});
 
 export default {
-  i18nOptions: { namespaces: 'tags' },
+  i18nOptions: { namespaces: "tags" },
+  props: {
+    siteId: {
+      type: String
+    }
+  },
   data() {
     return {
       tags: [],
       selection: [],
-      innerSearch: '',
-      locale: 'any',
+      innerSearch: "",
+      locale: "any",
       locales: [],
-      orderBy: 'title',
+      orderBy: "title",
       orderByDirection: 0,
       pagination: {
         page: 1,
         itemsPerPage: 12,
         mustSort: true,
-        sortBy: ['title'],
-        sortDesc: [false]
+        sortBy: ["title"],
+        sortDesc: [false],
       },
       pages: [],
       isLoading: true,
@@ -190,146 +195,154 @@ export default {
           initialScrollY: 0,
           initialScrollX: 0,
           scrollingX: false,
-          easing: 'easeOutQuad',
+          easing: "easeOutQuad",
           speed: 1000,
-          verticalNativeBarPos: this.$vuetify.rtl ? `left` : `right`
+          verticalNativeBarPos: this.$vuetify.rtl ? `left` : `right`,
         },
         rail: {
-          gutterOfEnds: '2px'
+          gutterOfEnds: "2px",
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: '#CCC',
+          background: "#CCC",
           hoverStyle: {
-            background: '#999'
-          }
-        }
-      }
-    }
+            background: "#999",
+          },
+        },
+      },
+    };
   },
   computed: {
-    tagsGrouped () {
-      return _.groupBy(this.tags, t => t.title.charAt(0).toUpperCase())
+    tagsGrouped() {
+      return _.groupBy(this.tags, (t) => t.title.charAt(0).toUpperCase());
     },
-    tagsSelected () {
-      return _.filter(this.tags, t => _.includes(this.selection, t.tag))
+    tagsSelected() {
+      return _.filter(this.tags, (t) => _.includes(this.selection, t.tag));
     },
-    pageTotal () {
-      return Math.ceil(this.pages.length / this.pagination.itemsPerPage)
+    pageTotal() {
+      return Math.ceil(this.pages.length / this.pagination.itemsPerPage);
     },
-    orderByItems () {
+    orderByItems() {
       return [
-        { text: this.$t('tags:orderByField.creationDate'), value: 'createdAt' },
-        { text: this.$t('tags:orderByField.ID'), value: 'id' },
-        { text: this.$t('tags:orderByField.lastModified'), value: 'updatedAt' },
-        { text: this.$t('tags:orderByField.path'), value: 'path' },
-        { text: this.$t('tags:orderByField.title'), value: 'title' }
-      ]
-    }
+        { text: this.$t("tags:orderByField.creationDate"), value: "createdAt" },
+        { text: this.$t("tags:orderByField.ID"), value: "id" },
+        { text: this.$t("tags:orderByField.lastModified"), value: "updatedAt" },
+        { text: this.$t("tags:orderByField.path"), value: "path" },
+        { text: this.$t("tags:orderByField.title"), value: "title" },
+      ];
+    },
   },
   watch: {
-    locale (newValue, oldValue) {
-      this.rebuildURL()
+    locale(newValue, oldValue) {
+      this.rebuildURL();
     },
-    orderBy (newValue, oldValue) {
-      this.rebuildURL()
-      this.pagination.sortBy = [newValue]
+    orderBy(newValue, oldValue) {
+      this.rebuildURL();
+      this.pagination.sortBy = [newValue];
     },
-    orderByDirection (newValue, oldValue) {
-      this.rebuildURL()
-      this.pagination.sortDesc = [newValue === 1]
-    }
+    orderByDirection(newValue, oldValue) {
+      this.rebuildURL();
+      this.pagination.sortDesc = [newValue === 1];
+    },
   },
   router,
-  created () {
-    this.$store.commit('page/SET_MODE', 'tags')
-    this.selection = _.compact(decodeURI(this.$route.path).split('/'))
+  created() {
+    this.$store.commit("page/SET_MODE", "tags");
+    let subPaths = _.compact(decodeURI(this.$route.path).split("/"));
+    this.sitePath = subPaths[0]
+    this.selection = subPaths.slice(1);
   },
-  mounted () {
+  mounted() {
     this.locales = _.concat(
-      [{name: this.$t('tags:localeAny'), code: 'any'}],
-      (siteLangs.length > 0 ? siteLangs : [])
-    )
+      [{ name: this.$t("tags:localeAny"), code: "any" }],
+      siteLangs.length > 0 ? siteLangs : []
+    );
     if (this.$route.query.lang) {
-      this.locale = this.$route.query.lang
+      this.locale = this.$route.query.lang;
     }
     if (this.$route.query.sort) {
-      this.orderBy = this.$route.query.sort.toLowerCase()
+      this.orderBy = this.$route.query.sort.toLowerCase();
       switch (this.orderBy) {
-        case 'updatedat':
-          this.orderBy = 'updatedAt'
-          break
+        case "updatedat":
+          this.orderBy = "updatedAt";
+          break;
       }
-      this.pagination.sortBy = [this.orderBy]
+      this.pagination.sortBy = [this.orderBy];
     }
     if (this.$route.query.dir) {
-      this.orderByDirection = this.$route.query.dir === 'asc' ? 0 : 1
-      this.pagination.sortDesc = [this.orderByDirection === 1]
+      this.orderByDirection = this.$route.query.dir === "asc" ? 0 : 1;
+      this.pagination.sortDesc = [this.orderByDirection === 1];
     }
   },
   methods: {
-    toggleTag (tag) {
+    toggleTag(tag) {
       if (_.includes(this.selection, tag)) {
-        this.selection = _.without(this.selection, tag)
+        this.selection = _.without(this.selection, tag);
       } else {
-        this.selection.push(tag)
+        this.selection.push(tag);
       }
-      this.rebuildURL()
+      this.rebuildURL();
     },
-    isSelected (tag) {
-      return _.includes(this.selection, tag)
+    isSelected(tag) {
+      return _.includes(this.selection, tag);
     },
-    rebuildURL () {
+    rebuildURL() {
       let urlObj = {
-        path: '/' + this.selection.join('/')
-      }
+        path: "/" + this.sitePath + "/" + this.selection.join("/"),
+      };
       if (this.locale !== `any`) {
-        _.set(urlObj, 'query.lang', this.locale)
+        _.set(urlObj, "query.lang", this.locale);
       }
       if (this.orderBy !== `TITLE`) {
-        _.set(urlObj, 'query.sort', this.orderBy.toLowerCase())
+        _.set(urlObj, "query.sort", this.orderBy.toLowerCase());
       }
       if (this.orderByDirection !== 0) {
-        _.set(urlObj, 'query.dir', this.orderByDirection === 0 ? `asc` : `desc`)
+        _.set(urlObj, "query.dir", this.orderByDirection === 0 ? `asc` : `desc`);
       }
-      this.$router.push(urlObj)
+      this.$router.push(urlObj);
     },
-    goTo (page) {
-      window.location.assign(`/${this.sitePath}/${page.locale}/${page.path}`)
-    }
+    goTo(page) {
+      window.location.assign(`/${page.sitePath}/${page.locale}/${page.path}`);
+    },
   },
   apollo: {
     tags: {
       query: tagsQuery,
-      fetchPolicy: 'cache-and-network',
+      variables() {
+        return {
+          siteId: this.siteId
+        }
+      },
+      fetchPolicy: "cache-and-network",
       update: (data) => _.cloneDeep(data.pages.tags),
-      watchLoading (isLoading) {
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'tags-refresh')
-      }
+      watchLoading(isLoading) {
+        this.$store.commit(`loading${isLoading ? "Start" : "Stop"}`, "tags-refresh");
+      },
     },
     pages: {
       query: pagesQuery,
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: "cache-and-network",
       update: (data) => _.cloneDeep(data.pages.list),
-      watchLoading (isLoading) {
-        this.isLoading = isLoading
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'pages-refresh')
+      watchLoading(isLoading) {
+        this.isLoading = isLoading;
+        this.$store.commit(`loading${isLoading ? "Start" : "Stop"}`, "pages-refresh");
       },
-      variables () {
+      variables() {
         return {
-          locale: this.locale === 'any' ? null : this.locale,
-          tags: this.selection
-        }
+          locale: this.locale === "any" ? null : this.locale,
+          tags: this.selection,
+          siteId: this.siteId
+        };
       },
-      skip () {
-        return this.selection.length < 1
-      }
-    }
-  }
-}
+      skip() {
+        return this.selection.length < 1;
+      },
+    },
+  },
+};
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 .tags-search {
   .v-input__control {
     min-height: initial !important;

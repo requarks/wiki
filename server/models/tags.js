@@ -51,7 +51,7 @@ module.exports = class Tag extends Model {
   }
 
   static async associateTags ({ tags, page }) {
-    let existingTags = await WIKI.models.tags.query().column('id', 'tag')
+    let existingTags = await WIKI.models.tags.query().column('id', 'tag').where('siteId', page.siteId)
 
     // Format tags
 
@@ -61,7 +61,8 @@ module.exports = class Tag extends Model {
 
     const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({
       tag: t,
-      title: t
+      title: t,
+      siteId: page.siteId
     }))
     if (newTags.length > 0) {
       if (WIKI.config.db.type === 'postgres') {

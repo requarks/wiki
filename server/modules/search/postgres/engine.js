@@ -43,9 +43,12 @@ module.exports = {
     if (!wordsExists) {
       WIKI.logger.info(`(SEARCH/POSTGRES) Creating Words Suggestion Index...`)
       await WIKI.models.knex.raw(`
-        CREATE TABLE "pagesWords" AS SELECT word FROM ts_stat(
-          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content") FROM "pagesVector"'
-        )`)
+        CREATE TABLE "pagesWords" AS SELECT word, pages_vector_a."siteId" FROM  "pagesVector" AS pages_vector_a, LATERAL ts_stat(
+          ' SELECT (to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content")) as tsvector_word
+            FROM "pagesVector AS pages_vector_b"
+            WHERE pages_vector_b."siteId" = ' || quote_literal(pages_vector_a."siteId")
+            )
+        `)
       await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
       await WIKI.models.knex.raw(`CREATE INDEX "pageWords_idx" ON "pagesWords" USING GIN (word gin_trgm_ops)`)
     }
@@ -88,13 +91,14 @@ module.exports = {
         ${qryEnd}
       `, qryParams)
       if (results.rows.length < 5) {
-        const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
+        const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 AND "siteId" = ? ORDER BY rank LIMIT 5;`, [q, q, opts.siteId])
         suggestions = suggestResults.rows.map(r => r.word)
       }
       return {
         results: results.rows,
         suggestions,
-        totalHits: results.rows.length
+        totalHits: results.rows.length,
+        siteId: opts.siteId
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error:')
@@ -149,7 +153,8 @@ module.exports = {
   async renamed(page) {
     await WIKI.models.knex('pagesVector').where({
       locale: page.localeCode,
-      path: page.path
+      path: page.path,
+      siteId: page.siteId
     }).update({
       locale: page.destinationLocaleCode,
       path: page.destinationPath,
@@ -165,7 +170,7 @@ module.exports = {
     await WIKI.models.knex('pagesWords').truncate()
 
     await pipeline(
-      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'render').select().from('pages').where({
+      WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'siteId', 'render').select().from('pages').where({
         isPublished: true,
         isPrivate: false
       }).stream(),
@@ -184,10 +189,14 @@ module.exports = {
     )
 
     await WIKI.models.knex.raw(`
-      INSERT INTO "pagesWords" (word)
-        SELECT word FROM ts_stat(
-          'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content") FROM "pagesVector"'
-        )
+      INSERT INTO "pagesWords" (word, "siteId")
+            SELECT word, pages_vector_a."siteId"
+            FROM "pagesVector" AS pages_vector_a,
+            LATERAL ts_stat(
+              'SELECT (to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content")) as tsvector_word
+              FROM "pagesVector" AS pages_vector_b
+              WHERE pages_vector_b."siteId" = ' || quote_literal(pages_vector_a."siteId")
+            )
       `)
 
     WIKI.logger.info(`(SEARCH/POSTGRES) Index rebuilt successfully.`)

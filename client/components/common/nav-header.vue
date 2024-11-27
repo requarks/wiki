@@ -83,7 +83,7 @@
 
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
+                v-btn.ml-2.mr-0(icon, v-on='on', :href='`/t/`+ sitePath', :aria-label='$t(`common:header.browseTags`)')
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
@@ -289,7 +289,6 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
-import sitesQuery from 'gql/admin/sites/sites-query-list.gql'
 
 /* global siteConfig, siteLangs */
 
@@ -522,24 +521,23 @@ export default {
     goToSite (path) {
       window.location.assign(`/${path || ''}`)
     },
-
     async fetchSitesFromUser () {
-      try {
-        const resp = await this.$apollo.query({
-          query: sitesQuery,
-          fetchPolicy: 'network-only'
-        })
-        if (resp.data.sites) {
-          this.sites = resp.data.sites.map(site => ({
+      this.$store
+        .dispatch('user/fetchSites', { apolloClient: this.$apollo })
+        .then((response) => {
+          const sitesData = response?.data?.sites
+          this.sites = Object.values(sitesData).map((site) => ({
             id: site.id,
             value: site.path,
             text: site.name
           }))
-        }
-      } catch (err) {
-        this.$store.commit('pushGraphError', err)
-      }
+        })
+        .catch((error) => {
+          console.error(error)
+          this.sites = []
+        })
     }
+
   }
 }
 </script>

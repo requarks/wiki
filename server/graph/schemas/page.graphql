@@ -22,7 +22,7 @@ type PageQuery {
     @auth(requires: ["manage:system", "read:history"])
 
   search(query: String!, path: String, locale: String, siteId: String!): PageSearchResponse!
-    @auth(requires: ["manage:system", "read:pages"])
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   list(
     limit: Int
@@ -33,17 +33,18 @@ type PageQuery {
     creatorId: Int
     authorId: Int
     siteId: String
-  ): [PageListItem!]! @auth(requires: ["manage:system", "read:pages"])
+  ): [PageListItem!]! @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   single(id: Int!): Page @auth(requires: ["read:pages", "manage:system"])
 
   singleByPath(path: String!, locale: String!): Page
     @auth(requires: ["read:pages", "manage:system"])
 
-  tags: [PageTag]! @auth(requires: ["manage:system", "read:pages"])
+  tags(siteId: String): [PageTag]!
+   @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
-  searchTags(query: String!): [String]!
-    @auth(requires: ["manage:system", "read:pages"])
+  searchTags(query: String!, siteId: String!): [String]!
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   tree(
     path: String
@@ -196,6 +197,7 @@ type PageTag {
   title: String
   createdAt: Date!
   updatedAt: Date!
+  siteId: String!
 }
 
 type PageHistory {

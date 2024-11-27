@@ -7,7 +7,6 @@ query ($query: String!, $siteId: String!) {
         description
         path
         locale
-        siteId
       }
       suggestions
       totalHits

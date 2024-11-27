@@ -102,6 +102,10 @@ module.exports = {
           if (args.locale) {
             queryBuilder.where('localeCode', args.locale)
           }
+          if (args.siteId) {
+            queryBuilder.where('siteId', args.siteId)
+          }
+
           if (args.creatorId && args.authorId && args.creatorId > 0 && args.authorId > 0) {
             queryBuilder.where(function () {
               this.where('creatorId', args.creatorId).orWhere('authorId', args.authorId)
@@ -139,7 +143,8 @@ module.exports = {
       results = _.filter(results, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          siteId: r.siteId
         })
       }).map(r => ({
         ...r,
@@ -207,12 +212,17 @@ module.exports = {
         .column([
           'path',
           { locale: 'localeCode' }
-        ])
+        ]).modify(queryBuilder => {
+          if (args.siteId) {
+            queryBuilder.where('tags.siteId', '=', args.siteId)
+          }
+        })
         .withGraphJoined('tags')
       const allTags = _.filter(pages, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          siteId: r.siteId
         })
       }).flatMap(r => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
@@ -238,12 +248,14 @@ module.exports = {
             } else {
               builderSub.where('tags.tag', 'LIKE', `%${query}%`)
             }
+            builderSub.andWhere('pages.siteId', '=', `${args.siteId}`)
           })
         })
       const allTags = _.filter(pages, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          siteId: r.siteId
         })
       }).flatMap(r => r.tags).map(t => t.tag)
       return _.uniq(allTags).slice(0, 5)

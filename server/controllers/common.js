@@ -433,9 +433,10 @@ router.get(['/s', '/s/:sitePath/*'], async (req, res, next) => {
 /**
  * Tags
  */
-router.get(['/t', '/t/*'], (req, res, next) => {
+router.get(['/t/:sitePath', '/t/:sitePath/*'], async (req, res, next) => {
+  const site = await getSite(req.params?.sitePath)
   _.set(res.locals, 'pageMeta.title', 'Tags')
-  res.render('tags')
+  res.render('tags', { site })
 })
 
 /**

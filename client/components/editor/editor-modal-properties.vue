@@ -294,6 +294,7 @@ export default {
     locale: sync('page/locale'),
     tags: sync('page/tags'),
     path: sync('page/path'),
+    siteId: get('page/siteId'),
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
@@ -397,15 +398,16 @@ export default {
   apollo: {
     newTagSuggestions: {
       query: gql`
-        query ($query: String!) {
+        query ($query: String!, $siteId: String!) {
           pages {
-            searchTags (query: $query)
+            searchTags (query: $query, siteId: $siteId)
           }
         }
       `,
       variables () {
         return {
-          query: this.newTagSearch
+          query: this.newTagSearch,
+          siteId: this.siteId
         }
       },
       fetchPolicy: 'cache-first',
