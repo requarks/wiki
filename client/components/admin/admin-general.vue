@@ -119,7 +119,7 @@
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p4s
                 v-toolbar(color='indigo', dark, dense, flat)
-                  v-toolbar-title.subtitle-1 Features
+                  v-toolbar-title.subtitle-1 {{$t(`admin:general.features`)}}
                 v-card-text
                   //- v-switch(
                   //-   inset
@@ -175,7 +175,7 @@
 
               v-card.mt-5.animated.fadeInUp.wait-p6s
                 v-toolbar(color='primary', dark, dense, flat)
-                  v-toolbar-title.subtitle-1 URL Handling
+                  v-toolbar-title.subtitle-1 {{$t(`admin:general.urlHandling`)}}
                 v-card-text
                   v-text-field(
                     outlined
