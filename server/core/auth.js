@@ -246,7 +246,6 @@ module.exports = {
           if (rule.locales && rule.locales.length > 0) {
             if (!rule.locales.includes(page.locale)) { return }
           }
-          WIKI.logger.info(rule.sites)
 
           if (!rule.sites || rule.sites.length === 0) {
             return
