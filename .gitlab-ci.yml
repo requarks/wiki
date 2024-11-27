@@ -123,7 +123,7 @@ build-docker-image:
      
 
       if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
-        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^feature/ ) ]]; then
+        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ) ]]; then
           ENVIRONMENT="staging"
         elif [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" ]]; then
           ENVIRONMENT="production"
@@ -131,7 +131,7 @@ build-docker-image:
       fi
       echo "environment is $ENVIRONMENT"
       
-      if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^feature/  ]]; then
+      if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
       elif [[ "$ENVIRONMENT" == "staging" ]]; then
         IMAGE_TAG="${VERSION}"
@@ -188,7 +188,7 @@ dev1-pipeline:
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^feature/
+    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^feature|task|hotfix|improvement|bugfix|docs\//
       when: manual
 
 dev2-pipeline:
@@ -199,7 +199,7 @@ dev2-pipeline:
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^feature/
+    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^feature|task|hotfix|improvement|bugfix|docs\//
       when: manual
 
 
