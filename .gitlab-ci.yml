@@ -188,7 +188,7 @@ dev1-pipeline:
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^feature|task|hotfix|improvement|bugfix|docs\//
+    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
       when: manual
 
 dev2-pipeline:
@@ -199,7 +199,7 @@ dev2-pipeline:
     forward:
       pipeline_variables: true
   rules:
-    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^feature|task|hotfix|improvement|bugfix|docs\//
+    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
       when: manual
 
 
