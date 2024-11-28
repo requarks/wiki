@@ -936,7 +936,7 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async deletePage(opts, skipSnapshot) {
-    console.log(`Deleting page with opts pageId = ${opts.id}`)
+    WIKI.logger.debug(`Deleting page with opts pageId = ${opts.id}`)
     const page = await WIKI.models.pages.getPageFromDb(
       _.has(opts, 'id') ? opts.id : opts
     )

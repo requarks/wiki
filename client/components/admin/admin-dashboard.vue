@@ -143,7 +143,7 @@ export default {
         { text: 'User', value: 'displayName' },
         { text: 'Last Login', value: 'lastLoginAt', width: 250 }
       ],
-      sitesTotal: 0,
+      sitesTotal: 0
     }
   },
   computed: {
@@ -218,10 +218,10 @@ export default {
     sitesTotal: {
       query: sitesCount,
       fetchPolicy: 'network-only',
-      update: (data) => data.siteCount.count || 0,
+      update: (data) => data?.siteCount?.count || 0,
       watchLoading(isLoading) {
-        this.sitesTotalLoading = isLoading;
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal');
+        this.sitesTotalLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal')
       }
     }
   }

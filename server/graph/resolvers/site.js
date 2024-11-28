@@ -64,8 +64,7 @@ module.exports = {
           siteId: s.id
         })
       })
-
-      return sites.length
+      return { count: sites.length }
     }
   },
   Mutation: {
@@ -159,7 +158,7 @@ module.exports = {
 
       const deletePage = async (pageId) => {
         try {
-          console.log(`Deleting page with pageId = ${pageId}`)
+          WIKI.logger.debug(`Deleting page with pageId = ${pageId}`)
           await WIKI.models.pages.deletePage({id: pageId, user: context.req.user}, true)
           return true
         } catch (err) {
@@ -170,7 +169,7 @@ module.exports = {
 
       const deleteHistoryPage = async (pageId) => {
         try {
-          console.log(`Deleting history page with pageId = ${pageId}`)
+          WIKI.logger.debug(`Deleting history page with pageId = ${pageId}`)
           await WIKI.models.pageHistory.purgeByPageId(pageId)
           return true
         } catch (err) {
@@ -181,7 +180,7 @@ module.exports = {
 
       const deleteComment = async (id) => {
         try {
-          console.log(`Deleting history page with pageId = ${id}`)
+          WIKI.logger.debug(`Deleting history page with pageId = ${id}`)
           await WIKI.models.comments.deleteComment({
             id,
             user: context.req.user,
