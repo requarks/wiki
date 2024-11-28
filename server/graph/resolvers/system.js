@@ -413,13 +413,34 @@ module.exports = {
     workingDirectory () {
       return process.cwd()
     },
-    async groupsTotal () {
-      const total = await WIKI.models.groups.query().count('* as total').first()
-      return _.toSafeInteger(total.total)
+    async groupsTotal (obj, args, context) {
+      const groups = await WIKI.models.groups.query().select('groups.id')
+
+      if (WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        return _.toSafeInteger(groups.length)
+      }
+
+      const userRelevantGroups = _.filter(groups, g => {
+        return _.intersection(context.req.user.groups, [g.id]).length > 0
+      })
+
+      return _.toSafeInteger(userRelevantGroups.length)
     },
-    async pagesTotal () {
-      const total = await WIKI.models.pages.query().count('* as total').first()
-      return _.toSafeInteger(total.total)
+    async pagesTotal (obj, args, context) {
+      let results = await WIKI.models.pages.query().column([
+        'pages.id',
+        'pages.path',
+        { locale: 'localeCode' },
+        'pages.siteId'
+      ])
+      results = _.filter(results, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], {
+          path: r.path,
+          locale: r.locale,
+          siteId: r.siteId
+        })
+      })
+      return _.toSafeInteger(results.length)
     },
     async usersTotal () {
       const total = await WIKI.models.users.query().count('* as total').first()
