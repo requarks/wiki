@@ -233,7 +233,7 @@ module.exports = {
         .column([
           {
             path: 'pages.path',
-            locale: 'localeCode',
+            locale: 'localeCode'
           }
         ])
         .withGraphJoined('tags')
