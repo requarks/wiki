@@ -239,7 +239,6 @@ module.exports = {
         }
         return false
       }
-      // return true // TODO: Confirm as wrong
     }
 
     // Check Global Permissions
@@ -332,8 +331,6 @@ module.exports = {
     if (_.intersection(userPermissions, excludePermissions).length > 0) {
       return false
     }
-
-    // TODO: Add Site Admin Rules
 
     return true
   },

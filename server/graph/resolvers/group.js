@@ -30,17 +30,16 @@ module.exports = {
         return _.intersection(context.req.user.groups, [g.id]).length > 0
       })
 
-      const userSiteManagerGroups = _.filter(userRelevantGroups, g => {
-        console.log(g)
-        return _.intersection(g.permissions, ['manage:sites', 'manage:groups']).length > 0
-      })
-
-      return userSiteManagerGroups
+      return userRelevantGroups
     },
     /**
      * FETCH A SINGLE GROUP
      */
-    async single(obj, args) {
+    async single(obj, args, context) {
+      if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
+        throw new gql.GraphQLError('No sufficient permissions to list the group properties.')
+      }
+
       return WIKI.models.groups.query().findById(args.id)
     }
   },
@@ -48,7 +47,13 @@ module.exports = {
     /**
      * ASSIGN USER TO GROUP
      */
-    async assignUser (obj, args, { req }) {
+    async assignUser (obj, args, context) {
+      const req = context.req
+
+      if (_.intersection(context.req.user.groups, [args.groupId]).length < 1) {
+        throw new gql.GraphQLError('No sufficient permissions to assign user to the group.')
+      }
+
       // Check for guest user
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot assign the Guest user to a group.')
@@ -137,7 +142,11 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args) {
+    async unassignUser (obj, args, context) {
+      if (_.intersection(context.req.user.groups, [args.groupId]).length < 1) {
+        throw new gql.GraphQLError('No sufficient permissions to remove user from the group.')
+      }
+
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot unassign Guest user')
       }
@@ -164,7 +173,13 @@ module.exports = {
     /**
      * UPDATE GROUP
      */
-    async update (obj, args, { req }) {
+    async update (obj, args, context) {
+      const req = context.req
+
+      if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
+        throw new gql.GraphQLError('No sufficient permissions to update the group.')
+      }
+
       // Check for unsafe regex page rules
       if (_.some(args.rules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)

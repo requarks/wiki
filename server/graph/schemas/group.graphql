@@ -32,7 +32,7 @@ type GroupQuery {
 type GroupMutation {
   create(
     name: String!
-  ): GroupResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
+  ): GroupResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   update(
     id: Int!
@@ -44,7 +44,7 @@ type GroupMutation {
 
   delete(
     id: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system", "manage:sites"])
+  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
 
   assignUser(
     groupId: Int!
