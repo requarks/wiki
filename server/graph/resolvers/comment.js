@@ -86,7 +86,7 @@ module.exports = {
         throw new WIKI.Error.CommentNotFound()
       }
       const page = await WIKI.models.pages.query()
-        .select('localeCode', 'path')
+        .select('localeCode', 'path', 'siteId')
         .findById(cm.pageId)
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
@@ -97,7 +97,7 @@ module.exports = {
           path: page.path,
           locale: page.localeCode,
           tags: page.tags,
-          siteId: args.siteId
+          siteId: page.siteId
         })) {
           return {
             ...cm,
