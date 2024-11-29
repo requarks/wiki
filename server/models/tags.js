@@ -18,6 +18,7 @@ module.exports = class Tag extends Model {
         id: {type: 'integer'},
         tag: {type: 'string'},
         title: {type: 'string'},
+        siteId: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -37,6 +38,14 @@ module.exports = class Tag extends Model {
             to: 'pageTags.pageId'
           },
           to: 'pages.id'
+        }
+      },
+      sites: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'tags.siteId',
+          to: 'sites.id'
         }
       }
     }

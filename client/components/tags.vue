@@ -329,10 +329,10 @@ export default {
       },
       variables() {
         return {
-          locale: this.locale === "any" ? null : this.locale,
+          locale: this.locale === 'any' ? null : this.locale,
           tags: this.selection,
           siteId: this.siteId
-        };
+        }
       },
       skip() {
         return this.selection.length < 1;

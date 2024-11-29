@@ -234,8 +234,10 @@ module.exports = {
       const query = _.trim(args.query)
       const pages = await WIKI.models.pages.query()
         .column([
-          'path',
-          { locale: 'localeCode' }
+          {
+            path: 'pages.path',
+            locale: 'localeCode',
+          }
         ])
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
@@ -395,7 +397,8 @@ module.exports = {
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
-          locale: page.localeCode
+          locale: page.localeCode,
+          // siteId: page.siteId
         })) {
           return {
             ...page,
