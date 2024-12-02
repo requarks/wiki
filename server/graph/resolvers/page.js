@@ -598,7 +598,7 @@ module.exports = {
      */
     async restore (obj, args, context) {
       try {
-        const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+        const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.pageId)
         if (!page) {
           throw new WIKI.Error.PageNotFound()
         }

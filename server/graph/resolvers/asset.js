@@ -111,13 +111,13 @@ module.exports = {
 
           // Check source asset permissions
           const assetSourcePath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${asset.filename}` : asset.filename
-          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath, siteId: args.siteId })) {
+          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath, siteId: asset.siteId })) {
             throw new WIKI.Error.AssetRenameForbidden()
           }
 
           // Check target asset permissions
           const assetTargetPath = (asset.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${filename}` : filename
-          if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath, siteId: args.siteId })) {
+          if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath, siteId: asset.siteId })) {
             throw new WIKI.Error.AssetRenameTargetForbidden()
           }
 
@@ -163,7 +163,7 @@ module.exports = {
         if (asset) {
           // Check permissions
           const assetPath = await asset.getAssetPath()
-          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath, siteId: args.siteId })) {
+          if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath, siteId: asset.siteId })) {
             throw new WIKI.Error.AssetDeleteForbidden()
           }
 

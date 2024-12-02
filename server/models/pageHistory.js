@@ -139,6 +139,7 @@ module.exports = class PageHistory extends Model {
         'pageHistory.authorId',
         'pageHistory.pageId',
         'pageHistory.versionDate',
+        'pageHistory.siteId',
         {
           versionId: 'pageHistory.id',
           editor: 'pageHistory.editorKey',

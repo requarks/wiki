@@ -227,7 +227,7 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
           _.set(res.locals, 'pageMeta.title', 'Page Not Found')
           return res.status(404).render('notfound', { action: 'template' })
         }
-        if (!WIKI.auth.checkAccess(req.user, ['read:history'], { path: pageVersion.path, locale: pageVersion.locale })) {
+        if (!WIKI.auth.checkAccess(req.user, ['read:history'], { path: pageVersion.path, locale: pageVersion.locale, siteId: site.id })) {
           _.set(res.locals, 'pageMeta.title', 'Unauthorized')
           return res.render('unauthorized', { action: 'sourceVersion' })
         }
@@ -242,7 +242,7 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
           _.set(res.locals, 'pageMeta.title', 'Page Not Found')
           return res.status(404).render('notfound', { action: 'template' })
         }
-        if (!WIKI.auth.checkAccess(req.user, ['read:source'], { path: pageOriginal.path, locale: pageOriginal.locale })) {
+        if (!WIKI.auth.checkAccess(req.user, ['read:source'], { path: pageOriginal.path, locale: pageOriginal.locale, siteId: pageOriginal.siteId })) {
           _.set(res.locals, 'pageMeta.title', 'Unauthorized')
           return res.render('unauthorized', { action: 'source' })
         }
@@ -330,7 +330,7 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
     return res.redirect('/')
   }
 
-  const page = await WIKI.models.pages.query().column(['path', 'localeCode', 'isPrivate', 'privateNS']).findById(pageId)
+  const page = await WIKI.models.pages.query().column(['path', 'localeCode', 'isPrivate', 'privateNS', 'siteId']).findById(pageId)
   if (!page) {
     _.set(res.locals, 'pageMeta.title', 'Page Not Found')
     return res.status(404).render('notfound', { action: 'view' })
@@ -342,7 +342,8 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
     private: page.isPrivate,
     privateNS: page.privateNS,
     explicitLocale: false,
-    tags: page.tags
+    tags: page.tags,
+    siteId: page.siteId
   })) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
     return res.render('unauthorized', { action: 'view' })
@@ -465,10 +466,6 @@ const renderPage = async (req, res, next) => {
     const site = await getSite(req.params.sitePath || 'default')
     WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
     pageArgs.siteId = site.id
-
-    if (!isPage) {
-      res.status(404).render('notfound', { action: 'view' })
-    }
 
     if (isPage) {
       if (pageArgs.path === 'undefined') {
