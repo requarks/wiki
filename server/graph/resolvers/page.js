@@ -15,7 +15,7 @@ module.exports = {
      * PAGE HISTORY
      */
     async history(obj, args, context, info) {
-      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.id)
+      const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.id)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
         locale: page.localeCode,
@@ -34,7 +34,7 @@ module.exports = {
      * PAGE VERSION
      */
     async version(obj, args, context, info) {
-      const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
+      const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.pageId)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
         path: page.path,
         locale: page.localeCode,
@@ -337,7 +337,7 @@ module.exports = {
           )
       } else {
         results = await WIKI.models.knex('pages')
-          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', 'siteId', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
           .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
             'pages.localeCode': args.locale
@@ -373,7 +373,7 @@ module.exports = {
      * CHECK FOR EDITING CONFLICT
      */
     async checkConflicts (obj, args, context, info) {
-      let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
+      let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt', 'siteId').findById(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,

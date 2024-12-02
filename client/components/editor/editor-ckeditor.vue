@@ -52,15 +52,15 @@ export default {
     },
     locale: get('page/locale'),
     path: get('page/path'),
-    activeModal: sync('editor/activeModal')
-    // sitePath: get('page/sitePath')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     insertLink () {
       this.insertLinkDialog = true
     },
     insertLinkHandler ({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
+      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
     },
     insertDiagram() {
       this.isDiagramEdit = false

@@ -127,7 +127,9 @@
       v-model='branchOffOpts.modal',
       :open-handler='branchOffHandle',
       :path='branchOffOpts.path',
-      :locale='branchOffOpts.locale'
+      :locale='branchOffOpts.locale',
+      :siteIdFromPageHistory='branchOffOpts.siteId'
+      :siteNameFromPageHistory='branchOffOpts.siteName'
     )
 
     nav-footer
@@ -238,7 +240,9 @@ export default {
         versionId: 0,
         locale: 'en',
         path: 'new-page',
-        modal: false
+        modal: false,
+        siteId: this.siteId,
+        siteName: this.siteName
       },
       isRestoreConfirmDialogShown: false,
       restoreLoading: false
@@ -454,12 +458,12 @@ export default {
         versionId: versionId,
         locale: this.locale,
         path: (pathParts.length > 1) ? _.initial(pathParts).join('/') + `/new-page` : `new-page`,
-        sitePath: this.sitePath,
-        modal: true
+        modal: true,
+        siteId: this.siteId,
+        siteName: this.siteName
       }
     },
     branchOffHandle ({ locale, path }) {
-      // TODO: Update sitePath in MAR-296 Page History
       window.location.assign(`/e/${this.sitePath}/${locale}/${path}?from=${this.pageId},${this.branchOffOpts.versionId}`)
     },
     toggleViewMode () {

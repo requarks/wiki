@@ -117,6 +117,14 @@ export default {
       type: String,
       default: 'new-page'
     },
+    siteIdFromPageHistory: {
+      type: String,
+      default: ''
+    },
+    siteNameFromPageHistory: {
+      type: String,
+      default: ''
+    },
     locale: {
       type: String,
       default: 'en'
@@ -147,7 +155,7 @@ export default {
       tree: [
         {
           id: 0,
-          title: this.$store.get('page/siteName'),
+          title: this.siteName,
           children: []
         }
       ],
@@ -174,7 +182,8 @@ export default {
           }
         }
       },
-      siteId: this.$store.get('page/siteId')
+      siteId: this.siteIdFromPageHistory || this.$store.get('page/siteId'),
+      siteName: this.siteNameFromPageHistory || this.$store.get('page/siteName')
     }
   },
   computed: {
@@ -277,7 +286,7 @@ export default {
         this.tree = [
           {
             id: 0,
-            title: this.$store.get('page/siteName'),
+            title: this.siteName,
             children: []
           }
         ]

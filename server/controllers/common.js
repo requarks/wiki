@@ -65,8 +65,9 @@ router.get(['/a', '/a/*'], (req, res, next) => {
 /**
  * Download Page / Version
  */
-router.get(['/d', '/d/*'], async (req, res, next) => {
+router.get(['/d', '/d/:sitePath/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
+  const site = await getSite(req.params?.sitePath)
 
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
 
@@ -74,7 +75,7 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
     path: pageArgs.path,
     locale: pageArgs.locale,
     userId: req.user.id,
-    // TODO: Add siteId
+    siteId: site.id,
     isPrivate: false
   })
 
@@ -417,13 +418,14 @@ router.get(['/s', '/s/:sitePath/*'], async (req, res, next) => {
           ...page,
           ...pageVersion
         },
-        effectivePermissions
+        effectivePermissions,
+        site
       })
     } else {
       _.set(res.locals, 'pageMeta.title', page.title)
       _.set(res.locals, 'pageMeta.description', page.description)
 
-      res.render('source', { page, effectivePermissions })
+      res.render('source', { page, effectivePermissions, site })
     }
   } else {
     res.redirect(`/${pageArgs.path}`)

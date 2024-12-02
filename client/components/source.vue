@@ -54,14 +54,6 @@ export default {
       type: String,
       default: ''
     },
-    siteId: {
-      type: String,
-      default: ''
-    },
-    siteName: {
-      type: String,
-      default: ''
-    },
     sitePath: {
       type: String,
       default: ''
