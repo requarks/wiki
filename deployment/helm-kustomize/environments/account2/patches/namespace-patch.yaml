@@ -1,3 +1,0 @@
- - op: replace
-   path: /metadata/namespace
-   value: account2
