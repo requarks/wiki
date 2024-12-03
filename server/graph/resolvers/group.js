@@ -30,6 +30,47 @@ const isEligible = (user, groupId) => {
   return false
 }
 
+const groupsToSites = (groups) => {
+  let siteIds = []
+
+  for (const groupId of groups) {
+    const group = _.get(WIKI.auth.groups, groupId, [])
+    if (group.rules) {
+      for (const rule of group.rules) {
+        if (
+          rule.deny === false &&
+          rule.sites &&
+          rule.sites.length > 0 &&
+          rule.roles.includes('manage:sites')
+        ) {
+          siteIds = siteIds.concat(rule.sites)
+        }
+      }
+    }
+  }
+
+  siteIds = _.uniq(siteIds)
+  return siteIds
+}
+
+const rulesToSites = (rules) => {
+  let siteIds = []
+
+  for (const rule of rules) {
+    if (
+      rule.deny === false &&
+      rule.sites &&
+      rule.sites.length > 0 &&
+      rule.roles.includes('manage:sites')
+    ) {
+      siteIds = siteIds.concat(rule.sites)
+    }
+  }
+
+  siteIds = _.uniq(siteIds)
+  return siteIds
+}
+
 module.exports = {
   Query: {
     async groups () { return {} }
@@ -150,27 +191,6 @@ module.exports = {
         return false
       }
 
-      const groupsToSites = (groups) => {
-        let siteIds = []
-
-        for (const groupId of groups) {
-          const group = _.get(WIKI.auth.groups, groupId, [])
-          for (const rule of group.rules) {
-            if (
-              rule.deny === false &&
-              rule.sites &&
-              rule.sites.length > 0 &&
-              rule.roles.includes('manage:sites')
-            ) {
-              siteIds = siteIds.concat(rule.sites)
-            }
-          }
-        }
-
-        siteIds = _.uniq(siteIds)
-        return siteIds
-      }
-
       if (!WIKI.auth.isSuperAdmin(req.user) && !canCreate(req.user)) {
         throw new gql.GraphQLError('No sufficient permissions to create groups.')
       }
@@ -266,8 +286,13 @@ module.exports = {
      * UPDATE GROUP
      */
     async update (obj, args, { req }) {
-      if (!isEligible(req.user, args.groupId)) {
-        throw new gql.GraphQLError('No sufficient permissions to update the group.')
+      if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites'])) {
+        const currentSites = groupsToSites(req.user.groups)
+        const newSites = rulesToSites(args.rules)
+
+        if (_.difference(newSites, currentSites).length > 0) {
+          throw new gql.GraphQLError('No sufficient permissions to extend the group rules.')
+        }
       }
 
       // Check for unsafe regex page rules
