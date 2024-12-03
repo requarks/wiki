@@ -51,7 +51,6 @@ export default {
     pagePath: get('page/path'),
     pageLocale: get('page/locale'),
     pageId: get('page/id')
-    // sitePath: get('page/sitePath')
   },
   watch: {
     isShown(newValue, oldValue) {
