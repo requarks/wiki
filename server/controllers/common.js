@@ -716,6 +716,4 @@ router.get('/:sitePath/*', renderPage)
 router.get('/:sitePath', renderPage)
 router.get('/', renderDefaultPage)
 
-
-
 module.exports = router
