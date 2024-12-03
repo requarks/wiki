@@ -147,6 +147,7 @@ module.exports = {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user
           user.permissions = user.getGlobalPermissions()
+          user.sitesWithWriteAccess = user.getSitesWithWriteAccess()
           user.groups = user.getGroups()
           req.user = user
 
@@ -214,7 +215,7 @@ module.exports = {
    * @param {Array<String>} permissions
    * @param {String|Boolean} path
    */
-  checkAccess(user, permissions = [], page = false) {
+  checkAccess(user, permissions = [], page = false, isSitesDropdown = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
     // System Admin
@@ -223,7 +224,7 @@ module.exports = {
     }
 
     // Site Admin
-    if (_.includes(userPermissions, 'manage:sites')) {
+    if (_.includes(userPermissions, 'manage:sites') || isSitesDropdown) {
       if (page && page.siteId) {
         let result = false
         user.groups.forEach(grp => {

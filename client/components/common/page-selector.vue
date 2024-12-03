@@ -117,14 +117,6 @@ export default {
       type: String,
       default: 'new-page'
     },
-    siteIdFromPageHistory: {
-      type: String,
-      default: ''
-    },
-    siteNameFromPageHistory: {
-      type: String,
-      default: ''
-    },
     locale: {
       type: String,
       default: 'en'
@@ -182,8 +174,8 @@ export default {
           }
         }
       },
-      siteId: this.siteIdFromPageHistory || this.$store.get('page/siteId'),
-      siteName: this.siteNameFromPageHistory || this.$store.get('page/siteName')
+      siteId: this.$store.get('page/siteId'),
+      siteName: this.$store.get('page/siteName')
     }
   },
   computed: {

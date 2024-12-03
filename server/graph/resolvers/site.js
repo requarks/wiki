@@ -15,7 +15,7 @@ module.exports = {
           'read:pages', 'manage:sites', 'manage:system'
         ], {
           siteId: s.id
-        })
+        }, true)
       })
 
       return sites.map(s => ({

@@ -345,7 +345,9 @@ export default {
     pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
+    sitesWithWriteAccess: get('user/sitesWithWriteAccess'),
     sitePath: get('page/sitePath'),
+    siteId: get('page/siteId'),
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
@@ -378,7 +380,7 @@ export default {
       ]).length > 0
     },
     hasNewPagePermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
+      return this.hasAdminPermission || this.sitesWithWriteAccess.includes(this.siteId)
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),

@@ -13,6 +13,7 @@ const state = {
   dateFormat: '',
   appearance: '',
   permissions: [],
+  sitesWithWriteAccess: [],
   iat: 0,
   exp: 0,
   authenticated: false
@@ -38,6 +39,7 @@ export default {
           st.appearance = jwtData.ap || ''
           // st.defaultEditor = jwtData.defaultEditor
           st.permissions = jwtData.permissions
+          st.sitesWithWriteAccess = jwtData.sitesWithWriteAccess
           st.iat = jwtData.iat
           st.exp = jwtData.exp
           st.authenticated = true

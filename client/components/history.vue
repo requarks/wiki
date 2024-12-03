@@ -127,9 +127,7 @@
       v-model='branchOffOpts.modal',
       :open-handler='branchOffHandle',
       :path='branchOffOpts.path',
-      :locale='branchOffOpts.locale',
-      :siteIdFromPageHistory='branchOffOpts.siteId'
-      :siteNameFromPageHistory='branchOffOpts.siteName'
+      :locale='branchOffOpts.locale'
     )
 
     nav-footer
@@ -240,9 +238,7 @@ export default {
         versionId: 0,
         locale: 'en',
         path: 'new-page',
-        modal: false,
-        siteId: this.siteId,
-        siteName: this.siteName
+        modal: false
       },
       isRestoreConfirmDialogShown: false,
       restoreLoading: false
@@ -316,8 +312,11 @@ export default {
     this.$store.commit('page/SET_ID', this.id)
     this.$store.commit('page/SET_LOCALE', this.locale)
     this.$store.commit('page/SET_PATH', this.path)
-
     this.$store.commit('page/SET_MODE', 'history')
+
+    this.$store.commit('page/SET_SITE_ID', this.siteId)
+    this.$store.commit('page/SET_SITE_NAME', this.siteName)
+    this.$store.commit('page/SET_SITE_PATH', this.sitePath)
 
     this.cache.push({
       action: 'live',
@@ -338,7 +337,10 @@ export default {
       tags: this.tags,
       title: this.title,
       versionId: 0,
-      versionDate: this.updatedAt
+      versionDate: this.updatedAt,
+      siteId: this.siteId,
+      sitePath: this.sitePath,
+      siteName: this.siteName
     })
 
     this.target = this.cache[0]
@@ -458,9 +460,7 @@ export default {
         versionId: versionId,
         locale: this.locale,
         path: (pathParts.length > 1) ? _.initial(pathParts).join('/') + `/new-page` : `new-page`,
-        modal: true,
-        siteId: this.siteId,
-        siteName: this.siteName
+        modal: true
       }
     },
     branchOffHandle ({ locale, path }) {
