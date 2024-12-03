@@ -151,21 +151,24 @@ module.exports = {
       }
 
       const groupsToSites = (groups) => {
-        const siteIds = new Set()
+        let siteIds = []
 
         for (const groupId of groups) {
           const group = _.get(WIKI.auth.groups, groupId, [])
           for (const rule of group.rules) {
-            if (rule.deny === false &&
-                rule.sites &&
-                rule.sites.length > 0) {
-              if (rule.roles.includes('manage:sites') && rule.deny === false) {
-                siteIds.add(...rule.sites)
-              }
+            if (
+              rule.deny === false &&
+              rule.sites &&
+              rule.sites.length > 0 &&
+              rule.roles.includes('manage:sites')
+            ) {
+              siteIds = siteIds.concat(rule.sites)
             }
           }
         }
-        return Array.from(siteIds)
+
+        siteIds = _.uniq(siteIds)
+        return siteIds
       }
 
       if (!WIKI.auth.isSuperAdmin(req.user) && !canCreate(req.user)) {
