@@ -236,7 +236,7 @@ module.exports = {
         .column([
           {
             path: 'pages.path',
-            locale: 'localeCode',
+            locale: 'localeCode'
           }
         ])
         .withGraphJoined('tags')
@@ -250,7 +250,7 @@ module.exports = {
             } else {
               builderSub.where('tags.tag', 'LIKE', `%${query}%`)
             }
-            builderSub.andWhere('pages.siteId', '=', `${args.siteId}`)
+            builderSub.where('pages.siteId', '=', `${args.siteId}`)
           })
         })
       const allTags = _.filter(pages, r => {
@@ -398,7 +398,7 @@ module.exports = {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
           locale: page.localeCode,
-          // siteId: page.siteId
+          siteId: page.siteId
         })) {
           return {
             ...page,
