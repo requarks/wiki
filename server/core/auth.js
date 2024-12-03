@@ -208,6 +208,38 @@ module.exports = {
     })(req, res, next)
   },
 
+  isSuperAdmin: (user) => {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    if (_.includes(userPermissions, 'manage:system')) {
+      return true
+    }
+    return false
+  },
+
+  hasSitePermission: (user, siteId, permission) => {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+
+    if (_.includes(userPermissions, permission)) {
+      for (const grp of user.groups) {
+        const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
+        const rules = _.get(WIKI.auth.groups, `${grpId}.rules`, [])
+        for (const rule of rules) {
+          if (rule.sites && rule.sites.length > 0) {
+            if (rule.sites.includes(siteId) && rule.roles.includes(permission)) {
+              return true
+            }
+          }
+        }
+      }
+    }
+
+    return false
+  },
+
+  isSiteAdmin: (user, siteId) => {
+    return WIKI.auth.hasSitePermission(user, siteId, 'manage:sites')
+  },
+
   /**
    * Check if user has access to resource
    *
@@ -219,26 +251,14 @@ module.exports = {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
     // System Admin
-    if (_.includes(userPermissions, 'manage:system')) {
+    if (WIKI.auth.isSuperAdmin(user)) {
       return true
     }
 
     // Site Admin
-    if (_.includes(userPermissions, 'manage:sites') || isSitesDropdown) {
-      if (page && page.siteId) {
-        let result = false
-        user.groups.forEach(grp => {
-          const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
-          _.get(WIKI.auth.groups, `${grpId}.rules`, []).forEach(rule => {
-            if (rule.sites && rule.sites.length > 0) {
-              if (rule.sites.includes(page.siteId)) { result = true }
-            }
-          })
-        })
-        if (result === true) {
-          return true
-        }
-        return false
+    if ((page && page.siteId) || isSitesDropdown) {
+      if (WIKI.auth.isSiteAdmin(user, page.siteId) || isSitesDropdown) {
+        return true
       }
     }
 
@@ -251,7 +271,6 @@ module.exports = {
     if (!page) {
       return true
     }
-
 
     // Check Page Rules
     if (user.groups) {

@@ -5,6 +5,31 @@ const gql = require('graphql')
 
 /* global WIKI */
 
+const isGroupParticipant = (user, groupIds) => {
+  return _.intersection(user.groups, groupIds).length > 0
+}
+
+const canManageSites = (g) => {
+  if (_.intersection(g.permissions, ['manage:sites']).length < 1) {
+    return false
+  }
+
+  for (const rule of g.rules) {
+    if (_.intersection(rule.roles, ['manage:sites']).length > 0) {
+      return true
+    }
+  }
+
+  return false
+}
+
+const isEligible = (user, groupId) => {
+  if (WIKI.auth.isSuperAdmin(user)) return true
+  const group = _.get(WIKI.auth.groups, groupId, [])
+  if (isGroupParticipant(user, [group.id]) && canManageSites(group)) return true
+  return false
+}
+
 module.exports = {
   Query: {
     async groups () { return {} }
@@ -16,47 +41,49 @@ module.exports = {
     /**
      * FETCH ALL GROUPS
      */
-    async list (obj, args, context) {
+    async list (obj, args, { req }) {
       const groups = await WIKI.models.groups.query().select(
         'groups.*',
         WIKI.models.groups.relatedQuery('users').count().as('userCount')
       )
 
-      if (WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+      if (WIKI.auth.isSuperAdmin(req.user)) {
         return groups
       }
 
-      const userRelevantGroups = _.filter(groups, g => {
-        return _.intersection(context.req.user.groups, [g.id]).length > 0
-      })
+      const filteredGroups = _.filter(
+        groups,
+        g => isGroupParticipant(req.user, [g.id]) && canManageSites(g)
+      )
 
-      return userRelevantGroups
+      return filteredGroups
     },
     /**
      * FETCH A SINGLE GROUP
      */
-    async single(obj, args, context) {
+    async single(obj, args, { req }) {
       const fetchGroupById = (id) => WIKI.models.groups.query().findById(id)
 
-      if (WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+      if (WIKI.auth.isSuperAdmin(req.user)) {
         return fetchGroupById(args.id)
       }
 
-      if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
-        throw new gql.GraphQLError('No sufficient permissions to list the group properties.')
+      if (isGroupParticipant(req.user, [args.id])) {
+        const group = await fetchGroupById(args.id)
+        if (canManageSites(group)) {
+          return group
+        }
       }
 
-      return fetchGroupById(args.id)
+      throw new gql.GraphQLError('No sufficient permissions to list the group properties.')
     }
   },
   GroupMutation: {
     /**
      * ASSIGN USER TO GROUP
      */
-    async assignUser (obj, args, context) {
-      const req = context.req
-
-      if (_.intersection(context.req.user.groups, [args.groupId]).length < 1) {
+    async assignUser (obj, args, { req }) {
+      if (!isEligible(req.user, args.groupId)) {
         throw new gql.GraphQLError('No sufficient permissions to assign user to the group.')
       }
 
@@ -113,15 +140,35 @@ module.exports = {
      */
     async create (obj, args, { req }) {
       // TODO: Limit fetching only to those that the user might have access to
-      // if (_.intersection(context.req.user.groups, [args.groupId]).length < 1) {
-      //   throw new gql.GraphQLError('No sufficient permissions to assign user to the group.')
+      // const listValidSites = async (user) => {
+      //   const groups = await WIKI.models.groups.query().select('groups.*')
+
+      //   const allowedGroups = _.filter(groups, g => {
+      //     return hasSiteAdminPermissions(req.user, [g.id])
+      //   })
+
+      //   const sites = allowedGroups.map(g => g.id)
+
+      //   return _.intersection(user.groups, siteIds)
+      // }
+
+      // const validSites = await listValidSites(req.user)
+      // console.log(validSites)
+
+      if (!WIKI.auth.isSuperAdmin(req.user)) {
+        throw new gql.GraphQLError('No sufficient permissions to create groups.')
+      }
+
+      // if (!isSuperAdmin(req.user) && !hasSiteAdminPermissions(req.user.groups, [args.groupId])) {
+      //   throw new gql.GraphQLError('No sufficient permissions to delete the group.')
       // }
 
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
         rules: JSON.stringify(WIKI.data.groups.defaultPageRules),
-        isSystem: false
+        isSystem: false,
+        sites: JSON.stringify((req.user.groups || []).map(g => parseInt(g))),
       })
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')
@@ -133,12 +180,12 @@ module.exports = {
     /**
      * DELETE GROUP
      */
-    async delete (obj, args, context) {
+    async delete (obj, args, { req }) {
       if (args.id === 1 || args.id === 2) {
         throw new gql.GraphQLError('Cannot delete this group.')
       }
 
-      if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
+      if (!isEligible(req.user, args.id)) {
         throw new gql.GraphQLError('No sufficient permissions to delete the group.')
       }
 
@@ -157,8 +204,8 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args, context) {
-      if (_.intersection(context.req.user.groups, [args.groupId]).length < 1) {
+    async unassignUser (obj, args, { req }) {
+      if (!isEligible(req.user, args.groupId)) {
         throw new gql.GraphQLError('No sufficient permissions to remove user from the group.')
       }
 
@@ -188,10 +235,8 @@ module.exports = {
     /**
      * UPDATE GROUP
      */
-    async update (obj, args, context) {
-      const req = context.req
-
-      if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
+    async update (obj, args, { req }) {
+      if (!isEligible(req.user, args.groupId)) {
         throw new gql.GraphQLError('No sufficient permissions to update the group.')
       }
 
