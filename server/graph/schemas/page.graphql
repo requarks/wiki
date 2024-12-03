@@ -21,7 +21,7 @@ type PageQuery {
   version(pageId: Int!, versionId: Int!): PageVersion
     @auth(requires: ["manage:system", "manage:sites", "read:history"])
 
-  search(query: String!, path: String, locale: String): PageSearchResponse!
+  search(query: String!, path: String, locale: String, siteId: String!): PageSearchResponse!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   list(
@@ -40,7 +40,8 @@ type PageQuery {
   singleByPath(path: String!, locale: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
-  tags: [PageTag]! @auth(requires: ["manage:system", "manage:sites", "read:pages"])
+  tags(siteId: String): [PageTag]!
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   searchTags(query: String!, siteId: String!): [String]!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
@@ -248,6 +249,8 @@ type PageSearchResult {
   description: String!
   path: String!
   locale: String!
+  # the siteId field must not be non-nullable even though the entries in the database are non-null...
+  siteId: String
 }
 
 type PageListItem {
