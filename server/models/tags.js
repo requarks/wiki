@@ -60,7 +60,7 @@ module.exports = class Tag extends Model {
   }
 
   static async associateTags ({ tags, page }) {
-    let existingTags = await WIKI.models.tags.query().column('id', 'tag')
+    let existingTags = await WIKI.models.tags.query().column('id', 'tag').where('siteId', page.siteId)
 
     // Format tags
 

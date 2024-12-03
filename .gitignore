@@ -28,6 +28,8 @@ server/views/setup.pug
 
 # Config Files
 config.yml
+config.*.yml
+!config.sample.yml
 .env
 
 # Data directories
