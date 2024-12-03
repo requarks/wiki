@@ -36,11 +36,17 @@ module.exports = {
      * FETCH A SINGLE GROUP
      */
     async single(obj, args, context) {
+      const fetchGroupById = (id) => WIKI.models.groups.query().findById(id)
+
+      if (WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        return fetchGroupById(args.id)
+      }
+
       if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
         throw new gql.GraphQLError('No sufficient permissions to list the group properties.')
       }
 
-      return WIKI.models.groups.query().findById(args.id)
+      return fetchGroupById(args.id)
     }
   },
   GroupMutation: {
