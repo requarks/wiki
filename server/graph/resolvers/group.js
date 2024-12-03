@@ -112,6 +112,11 @@ module.exports = {
      * CREATE NEW GROUP
      */
     async create (obj, args, { req }) {
+      // TODO: Limit fetching only to those that the user might have access to
+      // if (_.intersection(context.req.user.groups, [args.groupId]).length < 1) {
+      //   throw new gql.GraphQLError('No sufficient permissions to assign user to the group.')
+      // }
+
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
         permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
@@ -128,9 +133,13 @@ module.exports = {
     /**
      * DELETE GROUP
      */
-    async delete (obj, args) {
+    async delete (obj, args, context) {
       if (args.id === 1 || args.id === 2) {
         throw new gql.GraphQLError('Cannot delete this group.')
+      }
+
+      if (_.intersection(context.req.user.groups, [args.id]).length < 1) {
+        throw new gql.GraphQLError('No sufficient permissions to delete the group.')
       }
 
       await WIKI.models.groups.query().deleteById(args.id)
