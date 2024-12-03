@@ -61,14 +61,14 @@ module.exports = class Site extends Model {
   }
 
   static async reloadCache() {
-    WIKI.logger.info('Reloading site configurations...')
+    WIKI.logger.debug('Reloading site configurations...')
     const sites = await WIKI.models.sites.query().orderBy('id')
     WIKI.sites = keyBy(sites, 'id')
     WIKI.sitesMappings = {}
     for (const site of sites) {
       WIKI.sitesMappings[site.path] = site.id
     }
-    WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
+    WIKI.logger.debug(`Loaded ${sites.length} site configurations [ OK ]`)
   }
 
   static async createSite(name, path) {
