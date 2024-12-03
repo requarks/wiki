@@ -473,6 +473,7 @@ const renderPage = async (req, res, next) => {
     }
 
     WIKI.logger.info(`Retrieving site ${site.path} (${site.id})`)
+    pageArgs.siteId = site.id
 
     if (!isPage) {
       WIKI.logger.info('Page not found')
