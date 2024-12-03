@@ -30,7 +30,7 @@ extend type Mutation {
   updateSite (
     id: String! # was UUID!
     patch: SiteUpdateInput!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  ): DefaultResponse @auth(requires: ["manage:system"])
 
   deleteSite (
     id: String! # was UUID!
