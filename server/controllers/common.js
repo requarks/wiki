@@ -138,6 +138,7 @@ router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   // -> Effective Permissions
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
@@ -296,6 +297,7 @@ router.get(['/h', '/h/:sitePath/*'], async (req, res, next) => {
   }
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
 
@@ -381,6 +383,7 @@ router.get(['/s', '/s/:sitePath/*'], async (req, res, next) => {
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/s/${site.sitePath}/${pageArgs.locale}/${pageArgs.path}`)
@@ -430,9 +433,10 @@ router.get(['/s', '/s/:sitePath/*'], async (req, res, next) => {
 /**
  * Tags
  */
-router.get(['/t', '/t/*'], (req, res, next) => {
+router.get(['/t/:sitePath', '/t/:sitePath/*'], async (req, res, next) => {
+  const site = await getSite(req.params?.sitePath)
   _.set(res.locals, 'pageMeta.title', 'Tags')
-  res.render('tags')
+  res.render('tags', { site })
 })
 
 /**
@@ -459,6 +463,10 @@ const renderPage = async (req, res, next) => {
 
     const site = await getSite(req.params.sitePath || 'default')
     WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
+
+    if (!isPage) {
+      res.status(404).render('notfound', { action: 'view' })
+    }
 
     if (isPage) {
       if (pageArgs.path === 'undefined') {

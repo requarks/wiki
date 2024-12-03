@@ -40,7 +40,7 @@
                     @click='selectTag(tag)'
                     )
                     v-list-item-avatar(size='24', tile): v-icon(size='18', :color='tag.id === current.id ? `white` : `teal`') mdi-tag
-                    v-list-item-title(:class='tag.id === current.id ? `white--text` : ``') {{tag.tag}}
+                    v-list-item-title(:class='tag.id === current.id ? `white--text` : ``') {{retrieveSitePath(tag) +` - ` + tag.tag}}
             v-flex.animated.fadeInUp.wait-p2s
               template(v-if='current.id')
                 v-card
@@ -52,7 +52,7 @@
                       dark
                       outlined
                       small
-                      :href='`/t/` + current.tag'
+                      :href='`/t/` + retrieveSitePath(current) + "/" + current.tag'
                       )
                       span.text-none {{$t('admin:tags.viewLinkedPages')}}
                       v-icon(right) mdi-chevron-right
@@ -100,15 +100,20 @@
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
+import { sync } from 'vuex-pathify'
 
 export default {
   data() {
     return {
       tags: [],
+      sites: [],
       current: {},
       filter: '',
       deleteTagDialog: false
     }
+  },
+  mounted() {
+    this.fetchSites()
   },
   computed: {
     filteredTags () {
@@ -120,6 +125,25 @@ export default {
     }
   },
   methods: {
+    retrieveSitePath(tag) {
+      return this.sites.find(site => site.id === tag.siteId)?.path
+    },
+    fetchSites() {
+      this.$store
+        .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
+        .then((response) => {
+          const sitesData = response?.data?.sites
+          this.sites = Object.values(sitesData).map((site) => ({
+            name: site.name,
+            id: site.id,
+            path: site.path
+          }))
+        })
+        .catch((error) => {
+          console.error(error)
+          this.sites = []
+        })
+    },
     selectTag(tag) {
       this.current = tag
     },
@@ -221,6 +245,7 @@ export default {
               title
               createdAt
               updatedAt
+              siteId
             }
           }
         }

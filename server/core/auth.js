@@ -232,6 +232,7 @@ module.exports = {
       return true
     }
 
+
     // Check Page Rules
     if (user.groups) {
       let checkState = {
@@ -245,6 +246,15 @@ module.exports = {
           if (rule.locales && rule.locales.length > 0) {
             if (!rule.locales.includes(page.locale)) { return }
           }
+
+          if (!rule.sites || rule.sites.length === 0) {
+            return
+          }
+          if (!rule.sites.includes(page.siteId)) { //TODO: page.siteId should be removed after checking the siteId for any page check access
+            return
+          }
+
+
           if (_.intersection(rule.roles, permissions).length > 0) {
             switch (rule.match) {
               case 'START':
