@@ -224,7 +224,9 @@ module.exports = {
         const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
         const rules = _.get(WIKI.auth.groups, `${grpId}.rules`, [])
         for (const rule of rules) {
-          if (rule.sites && rule.sites.length > 0) {
+          if (rule.deny === false &&
+              rule.sites &&
+              rule.sites.length > 0) {
             if (rule.sites.includes(siteId) && rule.roles.includes(permission)) {
               return true
             }

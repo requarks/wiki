@@ -139,37 +139,64 @@ module.exports = {
      * CREATE NEW GROUP
      */
     async create (obj, args, { req }) {
-      // TODO: Limit fetching only to those that the user might have access to
-      // const listValidSites = async (user) => {
-      //   const groups = await WIKI.models.groups.query().select('groups.*')
+      const canCreate = (user) => {
+        for (const groupId of user.groups) {
+          const group = _.get(WIKI.auth.groups, groupId, [])
 
-      //   const allowedGroups = _.filter(groups, g => {
-      //     return hasSiteAdminPermissions(req.user, [g.id])
-      //   })
+          if (canManageSites(group)) {
+            return true
+          }
+        }
+        return false
+      }
 
-      //   const sites = allowedGroups.map(g => g.id)
+      const groupsToSites = (groups) => {
+        const siteIds = new Set()
 
-      //   return _.intersection(user.groups, siteIds)
-      // }
+        for (const groupId of groups) {
+          const group = _.get(WIKI.auth.groups, groupId, [])
+          for (const rule of group.rules) {
+            if (rule.deny === false &&
+                rule.sites &&
+                rule.sites.length > 0) {
+              if (rule.roles.includes('manage:sites') && rule.deny === false) {
+                siteIds.add(...rule.sites)
+              }
+            }
+          }
+        }
+        return Array.from(siteIds)
+      }
 
-      // const validSites = await listValidSites(req.user)
-      // console.log(validSites)
-
-      if (!WIKI.auth.isSuperAdmin(req.user)) {
+      if (!WIKI.auth.isSuperAdmin(req.user) && !canCreate(req.user)) {
         throw new gql.GraphQLError('No sufficient permissions to create groups.')
       }
 
-      // if (!isSuperAdmin(req.user) && !hasSiteAdminPermissions(req.user.groups, [args.groupId])) {
-      //   throw new gql.GraphQLError('No sufficient permissions to delete the group.')
-      // }
+      const permissions = WIKI.data.groups.defaultPermissions
+      const rules = WIKI.data.groups.defaultPageRules
+
+      if (!WIKI.auth.isSuperAdmin(req.user)) {
+        permissions.push('manage:sites')
+
+        rules[0].roles = ['manage:sites']
+        rules[0].sites = groupsToSites(req.user.groups)
+      }
 
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
-        permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-        rules: JSON.stringify(WIKI.data.groups.defaultPageRules),
-        isSystem: false,
-        sites: JSON.stringify((req.user.groups || []).map(g => parseInt(g))),
+        permissions: JSON.stringify(permissions),
+        rules: JSON.stringify(rules),
+        isSystem: false
       })
+
+      if (!WIKI.auth.isSuperAdmin(req.user)) {
+        await group.$relatedQuery('users').relate(req.user.id)
+
+        // Revoke tokens for this user
+        WIKI.auth.revokeUserTokens({ id: req.user.id, kind: 'u' })
+        WIKI.events.outbound.emit('addAuthRevoke', { id: req.user.id, kind: 'u' })
+      }
+
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')
       return {
