@@ -9,6 +9,13 @@ const isGroupParticipant = (user, groupIds) => {
   return _.intersection(user.groups, groupIds).length > 0
 }
 
+const canManageGroup = (user, groupId) => {
+  if (WIKI.auth.isSuperAdmin(user)) return true
+  if (!isGroupParticipant(user, [groupId])) return false
+  const group = _.get(WIKI.auth.groups, groupId, [])
+  return _.intersection(group.permissions, ['manage:sites']).length > 0
+}
+
 const canManageSites = (g) => {
   if (_.intersection(g.permissions, ['manage:sites']).length < 1) {
     return false
@@ -20,13 +27,6 @@ const canManageSites = (g) => {
     }
   }
 
-  return false
-}
-
-const isEligible = (user, groupId) => {
-  if (WIKI.auth.isSuperAdmin(user)) return true
-  const group = _.get(WIKI.auth.groups, groupId, [])
-  if (isGroupParticipant(user, [group.id]) && canManageSites(group)) return true
   return false
 }
 
@@ -94,7 +94,7 @@ module.exports = {
 
       const filteredGroups = _.filter(
         groups,
-        g => isGroupParticipant(req.user, [g.id]) && canManageSites(g)
+        g => isGroupParticipant(req.user, [g.id])
       )
 
       return filteredGroups
@@ -110,13 +110,10 @@ module.exports = {
       }
 
       if (isGroupParticipant(req.user, [args.id])) {
-        const group = await fetchGroupById(args.id)
-        if (canManageSites(group)) {
-          return group
-        }
+        return fetchGroupById(args.id)
       }
 
-      throw new gql.GraphQLError('No sufficient permissions to list the group properties.')
+      throw new gql.GraphQLError('Insufficient permissions to list the group properties.')
     }
   },
   GroupMutation: {
@@ -124,8 +121,8 @@ module.exports = {
      * ASSIGN USER TO GROUP
      */
     async assignUser (obj, args, { req }) {
-      if (!isEligible(req.user, args.groupId)) {
-        throw new gql.GraphQLError('No sufficient permissions to assign user to the group.')
+      if (!canManageGroup(req.user, args.groupId)) {
+        throw new gql.GraphQLError('Insufficient permissions to assign user to the group.')
       }
 
       // Check for guest user
@@ -141,7 +138,7 @@ module.exports = {
 
       // Check assigned permissions for write:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
         grp.permissions.some(p => {
           const resType = _.last(p.split(':'))
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
@@ -192,16 +189,13 @@ module.exports = {
       }
 
       if (!WIKI.auth.isSuperAdmin(req.user) && !canCreate(req.user)) {
-        throw new gql.GraphQLError('No sufficient permissions to create groups.')
+        throw new gql.GraphQLError('Insufficient permissions to create groups.')
       }
 
       const permissions = WIKI.data.groups.defaultPermissions
       const rules = WIKI.data.groups.defaultPageRules
 
       if (!WIKI.auth.isSuperAdmin(req.user)) {
-        permissions.push('manage:sites')
-
-        rules[0].roles = ['manage:sites']
         rules[0].sites = groupsToSites(req.user.groups)
       }
 
@@ -235,8 +229,8 @@ module.exports = {
         throw new gql.GraphQLError('Cannot delete this group.')
       }
 
-      if (!isEligible(req.user, args.id)) {
-        throw new gql.GraphQLError('No sufficient permissions to delete the group.')
+      if (!canManageGroup(req.user, args.id)) {
+        throw new gql.GraphQLError('Insufficient permissions to delete the group.')
       }
 
       await WIKI.models.groups.query().deleteById(args.id)
@@ -255,8 +249,8 @@ module.exports = {
      * UNASSIGN USER FROM GROUP
      */
     async unassignUser (obj, args, { req }) {
-      if (!isEligible(req.user, args.groupId)) {
-        throw new gql.GraphQLError('No sufficient permissions to remove user from the group.')
+      if (!canManageGroup(req.user, args.groupId)) {
+        throw new gql.GraphQLError('Insufficient permissions to remove user from the group.')
       }
 
       if (args.userId === 2) {
@@ -293,7 +287,7 @@ module.exports = {
               siteId: siteId,
               path: rule.path
             })) {
-              throw new gql.GraphQLError('No sufficient permissions to update access to sites.')
+              throw new gql.GraphQLError('Insufficient permissions to update access to sites.')
             }
           }
         }

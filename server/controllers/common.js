@@ -689,7 +689,9 @@ const getAsset = async (req, res, next) => {
     const pageArgs = pageHelper.parsePath(req.params[0], { stripExt })
 
     const site = await getSite(req.params.sitePath || 'default')
-    WIKI.logger.debug(`Switching to site ${site.path} (${site.id})`)
+    pageArgs.siteId = site.id
+
+    WIKI.logger.debug(`Retrieving assets from ${site.path} (${site.id})`)
 
     if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs)) {
       return res.sendStatus(403)

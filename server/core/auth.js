@@ -216,30 +216,30 @@ module.exports = {
     return false
   },
 
-  hasSitePermission: (user, siteId, permission) => {
+  isSiteAdmin: (user) => {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    if (_.includes(userPermissions, 'manage:sites')) {
+      return true
+    }
+    return false
+  },
 
-    if (_.includes(userPermissions, permission)) {
-      for (const grp of user.groups) {
-        const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
-        const rules = _.get(WIKI.auth.groups, `${grpId}.rules`, [])
-        for (const rule of rules) {
-          if (rule.deny === false &&
-              rule.sites &&
-              rule.sites.length > 0) {
-            if (rule.sites.includes(siteId) && rule.roles.includes(permission)) {
-              return true
-            }
+  hasSitePermission: (user, siteId, permission) => {
+    for (const grp of user.groups) {
+      const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
+      const rules = _.get(WIKI.auth.groups, `${grpId}.rules`, [])
+      for (const rule of rules) {
+        if (rule.deny === false &&
+            rule.sites &&
+            rule.sites.length > 0) {
+          if (rule.sites.includes(siteId) && rule.roles.includes(permission)) {
+            return true
           }
         }
       }
     }
 
     return false
-  },
-
-  isSiteAdmin: (user, siteId) => {
-    return WIKI.auth.hasSitePermission(user, siteId, 'manage:sites')
   },
 
   /**
@@ -249,7 +249,7 @@ module.exports = {
    * @param {Array<String>} permissions
    * @param {String|Boolean} path
    */
-  checkAccess(user, permissions = [], page = false, isSitesDropdown = false) {
+  checkAccess(user, permissions = [], page = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
     // System Admin
@@ -258,9 +258,11 @@ module.exports = {
     }
 
     // Site Admin
-    if ((page && page.siteId) || isSitesDropdown) {
-      if (WIKI.auth.isSiteAdmin(user, page.siteId) || isSitesDropdown) {
-        return true
+    if (WIKI.auth.isSiteAdmin(user)) {
+      if (page && page.siteId) {
+        if (WIKI.auth.hasSitePermission(user, page.siteId, 'manage:sites')) {
+          return true
+        }
       }
     }
 
@@ -295,7 +297,13 @@ module.exports = {
             return
           }
 
-          if (_.intersection(rule.roles, permissions).length > 0) {
+          if (_.intersection(rule.roles, ['manage:sites'])) {
+            checkState = {
+              deny: rule.deny,
+              match: rule.sites.includes(page.siteId),
+              specificity: ''
+            }
+          } else if (_.intersection(rule.roles, permissions).length > 0) {
             switch (rule.match) {
               case 'START':
                 if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
