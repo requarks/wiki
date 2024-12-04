@@ -381,7 +381,6 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.renderPage(page)
 
     // -> Rebuild page tree
-    // TODO: Enable once done
     await WIKI.models.pages.rebuildTree(page)
 
     // -> Add to Search Index
