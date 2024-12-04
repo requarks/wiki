@@ -227,7 +227,7 @@ module.exports = {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
           locale: r.locale,
-          siteId: r.siteId
+          siteId: args.siteId
         })
       }).flatMap(r => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
@@ -262,7 +262,7 @@ module.exports = {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
           locale: r.locale,
-          siteId: r.siteId
+          siteId: args.siteId
         })
       }).flatMap(r => r.tags).map(t => t.tag)
       return _.uniq(allTags).slice(0, 5)
