@@ -53,23 +53,23 @@ const groupsToSites = (groups) => {
   return siteIds
 }
 
-const rulesToSites = (rules) => {
-  let siteIds = []
+// const rulesToSites = (rules) => {
+//   let siteIds = []
 
-  for (const rule of rules) {
-    if (
-      rule.deny === false &&
-      rule.sites &&
-      rule.sites.length > 0 &&
-      rule.roles.includes('manage:sites')
-    ) {
-      siteIds = siteIds.concat(rule.sites)
-    }
-  }
+//   for (const rule of rules) {
+//     if (
+//       rule.deny === false &&
+//       rule.sites &&
+//       rule.sites.length > 0 &&
+//       rule.roles.includes('manage:sites')
+//     ) {
+//       siteIds = siteIds.concat(rule.sites)
+//     }
+//   }
 
-  siteIds = _.uniq(siteIds)
-  return siteIds
-}
+//   siteIds = _.uniq(siteIds)
+//   return siteIds
+// }
 
 module.exports = {
   Query: {
@@ -287,11 +287,15 @@ module.exports = {
      */
     async update (obj, args, { req }) {
       if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites'])) {
-        const currentSites = groupsToSites(req.user.groups)
-        const newSites = rulesToSites(args.rules)
-
-        if (_.difference(newSites, currentSites).length > 0) {
-          throw new gql.GraphQLError('No sufficient permissions to extend the group rules.')
+        for (const rule of args.rules) {
+          for (const siteId of rule.sites) {
+            if (!WIKI.auth.checkAccess(req.user, args.permissions, {
+              siteId: siteId,
+              path: rule.path
+            })) {
+              throw new gql.GraphQLError('No sufficient permissions to update access to sites.')
+            }
+          }
         }
       }
 
