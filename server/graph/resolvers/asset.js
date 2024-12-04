@@ -3,6 +3,10 @@ const sanitize = require('sanitize-filename')
 const graphHelper = require('../../helpers/graph')
 const assetHelper = require('../../helpers/asset')
 
+const getSite = async (siteId) => {
+  return WIKI.models.sites.getSiteById({ siteId, forceReload: true })
+}
+
 /* global WIKI */
 
 module.exports = {
@@ -97,6 +101,7 @@ module.exports = {
           // Check for collision
           const assetCollision = await WIKI.models.assets.query().where({
             filename,
+            siteId: asset.siteId,
             folderId: asset.folderId
           }).first()
           if (assetCollision) {
@@ -122,7 +127,9 @@ module.exports = {
           }
 
           // Update filename + hash
-          const fileHash = assetHelper.generateHash(assetTargetPath)
+          const site = await getSite(asset.siteId)
+
+          const fileHash = assetHelper.generateHash(site.path + '/' + assetTargetPath)
           await WIKI.models.assets.query().patch({
             filename: filename,
             hash: fileHash

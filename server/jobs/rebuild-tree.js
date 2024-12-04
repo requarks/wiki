@@ -14,17 +14,25 @@ module.exports = async (siteId) => {
     await WIKI.configSvc.loadFromDb()
     await WIKI.configSvc.applyFlags()
 
+    let defaultSiteId
     if (!siteId || siteId === 'undefined') {
-      WIKI.logger.info(`No siteId specified, taking default site...`)
-      siteId = await getSiteIdByPath('default')
+      defaultSiteId = await getSiteIdByPath('default')
+    }
+    if (siteId && siteId !== 'undefined') {
+      WIKI.logger.info(`Rebuilding page tree for siteId: ${siteId}`)
+    } else {
+      WIKI.logger.info(`Rebuilding page tree for all sites`)
     }
 
-    WIKI.logger.info(`Rebuilding page tree for siteId: ${siteId}`)
 
     const pages = await WIKI.models.pages
       .query()
-      .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS')
-      .where('siteId', '=', siteId)
+      .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS', 'siteId')
+      .where(builder => {
+        if (siteId && siteId !== 'undefined') {
+          builder.where('siteId', '=', siteId)
+        }
+      })
       .orderBy(['localeCode', 'path'])
     let tree = []
     let pik = 0
@@ -41,7 +49,8 @@ module.exports = async (siteId) => {
         currentPath = currentPath ? `${currentPath}/${part}` : part
         const found = _.find(tree, {
           localeCode: page.localeCode,
-          path: currentPath
+          path: currentPath,
+          siteId: page.siteId
         })
         if (!found) {
           pik++
@@ -57,7 +66,7 @@ module.exports = async (siteId) => {
             parent: parentId,
             pageId: isFolder ? null : page.id,
             ancestors: JSON.stringify(ancestors),
-            siteId
+            siteId: page.siteId ? page.siteId : defaultSiteId
           })
           parentId = pik
         } else if (isFolder && !found.isFolder) {
@@ -69,8 +78,11 @@ module.exports = async (siteId) => {
         ancestors.push(parentId)
       }
     }
-
-    await WIKI.models.knex.table('pageTree').where('siteId', '=', siteId).del()
+    if (siteId && siteId !== 'undefined') {
+      await WIKI.models.knex.table('pageTree').where('siteId', '=', siteId).del()
+    } else {
+      await WIKI.models.knex.table('pageTree').del()
+    }
 
     if (tree.length > 0) {
       // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)

@@ -574,9 +574,9 @@ module.exports = {
     /**
      * REBUILD TREE
      */
-    async rebuildTree(obj, args, context) {
+    async rebuildTree() {
       try {
-        await WIKI.models.pages.rebuildTree({siteId: args.siteId})
+        await WIKI.models.pages.rebuildTree()
         return {
           responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
         }

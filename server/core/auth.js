@@ -293,7 +293,7 @@ module.exports = {
           if (!rule.sites || rule.sites.length === 0) {
             return
           }
-          if (!rule.sites.includes(page.siteId)) { // TODO: page.siteId should be removed after checking the siteId for any page check access
+          if (!rule.sites.includes(page.siteId)) {
             return
           }
 
