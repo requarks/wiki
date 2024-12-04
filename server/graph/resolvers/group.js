@@ -5,29 +5,22 @@ const gql = require('graphql')
 
 /* global WIKI */
 
-const isGroupParticipant = (user, groupIds) => {
-  return _.intersection(user.groups, groupIds).length > 0
-}
+const rulesToSites = (rules) => {
+  let siteIds = []
 
-const canManageGroup = (user, groupId) => {
-  if (WIKI.auth.isSuperAdmin(user)) return true
-  if (!isGroupParticipant(user, [groupId])) return false
-  const group = _.get(WIKI.auth.groups, groupId, [])
-  return _.intersection(group.permissions, ['manage:sites']).length > 0
-}
-
-const canManageSites = (g) => {
-  if (_.intersection(g.permissions, ['manage:sites']).length < 1) {
-    return false
-  }
-
-  for (const rule of g.rules) {
-    if (_.intersection(rule.roles, ['manage:sites']).length > 0) {
-      return true
+  for (const rule of rules) {
+    if (
+      rule.deny === false &&
+      rule.sites &&
+      rule.sites.length > 0 &&
+      rule.roles.includes('manage:sites')
+    ) {
+      siteIds = siteIds.concat(rule.sites)
     }
   }
 
-  return false
+  siteIds = _.uniq(siteIds)
+  return siteIds
 }
 
 const groupsToSites = (groups) => {
@@ -53,23 +46,53 @@ const groupsToSites = (groups) => {
   return siteIds
 }
 
-// const rulesToSites = (rules) => {
-//   let siteIds = []
+const rulesToSitesNonAdmin = (rules) => {
+  let siteIds = []
 
-//   for (const rule of rules) {
-//     if (
-//       rule.deny === false &&
-//       rule.sites &&
-//       rule.sites.length > 0 &&
-//       rule.roles.includes('manage:sites')
-//     ) {
-//       siteIds = siteIds.concat(rule.sites)
-//     }
-//   }
+  for (const rule of rules) {
+    if (
+      rule.deny === false &&
+      rule.sites &&
+      rule.sites.length > 0
+    ) {
+      siteIds = siteIds.concat(rule.sites)
+    }
+  }
 
-//   siteIds = _.uniq(siteIds)
-//   return siteIds
-// }
+  siteIds = _.uniq(siteIds)
+  return siteIds
+}
+
+const isGroupParticipant = (user, groupIds) => {
+  return _.intersection(user.groups, groupIds).length > 0
+}
+
+const canManageGroup = (user, groupId) => {
+  if (WIKI.auth.isSuperAdmin(user)) return true
+  if (!isGroupParticipant(user, [groupId])) return false
+  const userSites = groupsToSites(user.groups)
+  const group = _.get(WIKI.auth.groups, groupId, [])
+  const groupSites = rulesToSitesNonAdmin(group.rules)
+
+  if (_.intersection(userSites, groupSites).length === groupSites.length) {
+    return true
+  }
+  return false
+}
+
+const canManageSites = (g) => {
+  if (_.intersection(g.permissions, ['manage:sites']).length < 1) {
+    return false
+  }
+
+  for (const rule of g.rules) {
+    if (_.intersection(rule.roles, ['manage:sites']).length > 0) {
+      return true
+    }
+  }
+
+  return false
+}
 
 module.exports = {
   Query: {
@@ -94,7 +117,7 @@ module.exports = {
 
       const filteredGroups = _.filter(
         groups,
-        g => isGroupParticipant(req.user, [g.id])
+        g => isGroupParticipant(req.user, [g.id]) && canManageGroup(req.user, g.id)
       )
 
       return filteredGroups
@@ -109,7 +132,7 @@ module.exports = {
         return fetchGroupById(args.id)
       }
 
-      if (isGroupParticipant(req.user, [args.id])) {
+      if (isGroupParticipant(req.user, [args.id]) && canManageGroup(req.user, args.id)) {
         return fetchGroupById(args.id)
       }
 
@@ -283,7 +306,7 @@ module.exports = {
       if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites'])) {
         for (const rule of args.rules) {
           for (const siteId of rule.sites) {
-            if (!WIKI.auth.checkAccess(req.user, args.permissions, {
+            if (!WIKI.auth.checkAccess(req.user, ['manage:sites'], {
               siteId: siteId,
               path: rule.path
             })) {
