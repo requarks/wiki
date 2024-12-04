@@ -49,7 +49,8 @@ module.exports = async (siteId) => {
         currentPath = currentPath ? `${currentPath}/${part}` : part
         const found = _.find(tree, {
           localeCode: page.localeCode,
-          path: currentPath
+          path: currentPath,
+          siteId: page.siteId
         })
         if (!found) {
           pik++

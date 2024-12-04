@@ -1091,7 +1091,7 @@ module.exports = class Page extends Model {
         immediate: true,
         worker: true
       },
-      page.siteId
+      page?.siteId
     )
     return rebuildJob.finished
   }
