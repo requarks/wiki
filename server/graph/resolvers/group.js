@@ -196,9 +196,6 @@ module.exports = {
       const rules = WIKI.data.groups.defaultPageRules
 
       if (!WIKI.auth.isSuperAdmin(req.user)) {
-        permissions.push('manage:sites')
-
-        rules[0].roles = ['manage:sites']
         rules[0].sites = groupsToSites(req.user.groups)
       }
 
@@ -283,10 +280,6 @@ module.exports = {
      * UPDATE GROUP
      */
     async update (obj, args, { req }) {
-      if (!canManageGroup(req.user, args.id)) {
-        throw new gql.GraphQLError('Insufficient permissions to make changes to the group.')
-      }
-
       if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites'])) {
         for (const rule of args.rules) {
           for (const siteId of rule.sites) {
