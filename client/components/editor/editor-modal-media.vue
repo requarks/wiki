@@ -375,7 +375,7 @@ export default {
       const assetPath = this.folderTree.map(f => f.slug).join('/')
       this.$root.$emit('editorInsert', {
         kind: asset.kind,
-        path: this.currentFolderId > 0 ? `/${this.sitePath}/${assetPath}/${asset.filename}` : `/${this.sitePath}/${asset.filename}`,
+        path: this.currentFolderId > 0 ? `/${this.sitePath}/assets/${assetPath}/${asset.filename}` : `/${this.sitePath}/assets/${asset.filename}`,
         text: asset.filename,
         align: this.imageAlignment
       })
