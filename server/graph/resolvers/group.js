@@ -69,6 +69,7 @@ const isGroupParticipant = (user, groupIds) => {
 
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
+  if (groupId === 1 || groupId === 2) return false
   const userSites = groupsToSites(user.groups)
   const group = _.get(WIKI.auth.groups, groupId, [])
   const groupSites = rulesToSitesNonAdmin(group.rules)
@@ -295,7 +296,8 @@ module.exports = {
      * UPDATE GROUP
      */
     async update (obj, args, { req }) {
-      if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites'])) {
+      if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites']) &&
+        canManageGroup(req.user, args.id)) {
         for (const rule of args.rules) {
           for (const siteId of rule.sites) {
             if (!WIKI.auth.checkAccess(req.user, ['manage:sites'], {
