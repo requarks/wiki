@@ -249,7 +249,7 @@ module.exports = {
    * @param {Array<String>} permissions
    * @param {String|Boolean} path
    */
-  checkAccess(user, permissions = [], page = false) {
+  checkAccess(user, permissions = [], page = false, ignoreRulePath = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
     // System Admin
@@ -297,7 +297,7 @@ module.exports = {
             return
           }
 
-          if (_.intersection(rule.roles, ['manage:sites'])) {
+          if (_.intersection(rule.roles, ['manage:sites']).length > 0 || ignoreRulePath) {
             checkState = {
               deny: rule.deny,
               match: rule.sites.includes(page.siteId),
