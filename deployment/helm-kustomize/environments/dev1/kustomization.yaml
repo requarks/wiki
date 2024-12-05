@@ -1,0 +1,47 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - resources.yaml
+  - capwiki-config.yaml
+  - dev1-capwiki-tls-sealed.yaml
+
+patchesStrategicMerge:
+  - ./patches/ingress.yaml
+
+patches:
+  - target:
+      kind: Deployment
+      name: capwiki-app
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: Ingress
+      name: capwiki-ingress
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: StatefulSet
+      name: capwiki-postgresdb
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: Service
+      name: capwiki-svc
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: Service
+      name: capwiki-postgresdb
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: Service
+      name: capwiki-postgresdb-headless
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: SealedSecret
+      name: capwiki-nexus-registry
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: ServiceAccount
+      name: capwiki-deploy-sa
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: ServiceAccount
+      name: capwiki-postgresdb
+    path: patches/namespace-patch.yaml

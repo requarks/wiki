@@ -1,0 +1,26 @@
+---
+- name: Copy deploy script to the remote machine and set permissions
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ username  }}" 
+    group: "{{ username  }}" 
+    mode: '0755'
+  loop:
+    - { src: '../../../backup.sh', dest: '/home/{{ username }}/backup.sh' }
+
+- name: Ensure the cron job for backup.sh is present
+  ansible.builtin.cron:
+    name: "Run backup.sh every day at 2 AM"
+    minute: "0"
+    hour: "2"
+    job: "/home/{{ username }}/backup.sh {{ hostname }}"
+    user: "{{ username }}"
+
+- name: Ensure the cron job to delete old files is present
+  ansible.builtin.cron:
+    name: "Delete database backups older than 1 month"
+    minute: "0"
+    hour: "0"
+    job: "bash -c 'find {{ target_directory }} -type f -mtime +{{ retention_period_days }} -exec rm -f {} \\;'"
+    user: "{{ username }}"

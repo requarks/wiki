@@ -391,7 +391,7 @@ export default {
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
-        } else {
+        } else if (this.isDirty) {
           // --------------------------------------------
           // -> UPDATE EXISTING PAGE
           // --------------------------------------------

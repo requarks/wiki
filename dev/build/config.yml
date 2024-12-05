@@ -18,3 +18,10 @@ ssl:
 logLevel: $(LOG_LEVEL:info)
 logFormat: $(LOG_FORMAT:default)
 ha: $(HA_ACTIVE)
+
+pool:
+  min: $(POOL_MIN)
+  max: $(POOL_MAX)
+  acquireTimeoutMillis: $(POOL_ACQUIRE_TIMEOUT)
+  createTimeoutMillis: $(POOL_CREATE_TIMEOUT)
+  idleTimeoutMillis: $(POOL_IDLE_TIMEOUT)

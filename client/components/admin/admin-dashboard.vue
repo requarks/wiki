@@ -60,7 +60,7 @@
             v-icon(:color='isLatestVersion ? `green` : `red darken-4`', small) mdi-wrench
           v-card-text
             v-icon.dashboard-icon mdi-blur
-            .subtitle-1 Wiki.js {{info.currentVersion}}
+            .subtitle-1 CapWiki {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)

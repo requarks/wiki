@@ -1,0 +1,13 @@
+---
+- name: Check if NGINX Ingress Controller is installed
+  command: helm list -n ingress-nginx
+  register: helm_list_output
+  ignore_errors: yes
+
+- name: Set a fact to determine if NGINX Ingress Controller is installed
+  set_fact:
+    ingress_installed: "{{ 'ingress-nginx' in helm_list_output.stdout }}"
+
+- name: Install nginx ingress
+  when: not ingress_installed
+  shell: "helm upgrade --install ingress-nginx ingress-nginx --repo {{ nginx_repo }} --namespace ingress-nginx --create-namespace"

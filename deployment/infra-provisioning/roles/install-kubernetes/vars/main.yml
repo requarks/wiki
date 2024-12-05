@@ -1,0 +1,9 @@
+---
+username: deployer
+k3s_installer: https://get.k3s.io/
+users:
+  - hgurudu
+  - deployer
+  - gdamen
+  - kkurda
+  - myefimen

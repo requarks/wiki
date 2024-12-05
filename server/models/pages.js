@@ -576,6 +576,62 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Converts all diagram elements from a markdown page into diagram elements required by the visual editor
+   * @param {Page} pageData
+   * @returns {String}
+   */
+  static convertDiagramElements(pageData) {
+    let markdownContent = pageData.content
+    let htmlContent = pageData.render
+    let htmlWithConvertedDiagrams = htmlContent
+
+    let diagramStartIdx = 0
+    let diagramEndIdx = 0
+    let svgStartIdx = 0
+    let svgEndIdx = 0
+
+    let diagramElem = ''
+    let svgElem = ''
+    let convertedElem = ''
+
+    while (diagramStartIdx !== -1 && diagramEndIdx !== -1 && svgStartIdx !== -1 && svgEndIdx !== -1) {
+      diagramStartIdx = markdownContent.indexOf('```diagram\n') + '```diagram\n'.length
+      diagramEndIdx = markdownContent.indexOf('```', diagramStartIdx)
+      svgStartIdx = htmlContent.indexOf('<svg ')
+      svgEndIdx = htmlContent.indexOf('</svg>') + '</svg>'.length
+
+      if (diagramStartIdx !== -1 && diagramEndIdx !== -1 && svgStartIdx !== -1 && svgEndIdx !== -1) {
+        diagramElem = markdownContent.substring(diagramStartIdx, diagramEndIdx)
+        svgElem = htmlContent.substring(svgStartIdx, svgEndIdx)
+
+        convertedElem = Page.convertSingleDiagramElement(diagramElem)
+        if (convertedElem !== '') {
+          htmlWithConvertedDiagrams = htmlWithConvertedDiagrams.replace(svgElem, convertedElem)
+        }
+        markdownContent = markdownContent.substring(diagramEndIdx + 1)
+        htmlContent = htmlContent.substring(svgEndIdx + 1)
+      }
+    }
+
+    return htmlWithConvertedDiagrams
+  }
+
+  /**
+   * Converts a single diagram element (as is required by the visual editor) based on the element given as input
+   * @param {String} diagramElem
+   * @returns {String} HTML of the diagram element OR empty string, if no SVG element was found
+   */
+  static convertSingleDiagramElement(diagramElem) {
+    const $ = cheerio.load(diagramElem)
+    const $svg = $('.diagram')?.find('svg');
+    if (!$svg) {
+      throw new Error('Did not find SVG element to convert.')
+    }
+
+    return `<img src="data:image/svg+xml;base64,${diagramElem}">`
+  }
+
+  /**
    * Convert an Existing Page
    *
    * @param {Object} opts Page Properties
@@ -622,7 +678,7 @@ module.exports = class Page extends Model {
             'Aborted conversion because rendered page content is empty!'
           )
         }
-        convertedContent = ogPage.render
+        convertedContent = Page.convertDiagramElements(ogPage)
 
         const $ = cheerio.load(convertedContent, {
           decodeEntities: true
@@ -737,7 +793,23 @@ module.exports = class Page extends Model {
           replacement: (c) => ''
         })
 
-        convertedContent = td.turndown(ogPage.content)
+        td.addRule('diagram', {
+          filter: (n, o) =>{
+            return n.nodeName === 'IMG' && n.getAttribute('src').startsWith('data:image/svg+xml;base64')
+          },
+          replacement: (c, n) => {
+            let src = n.getAttribute('src')
+            let start = 'data:image/svg+xml;base64,'.length
+            let markdownDiagram = src.substring(start)
+            if (!markdownDiagram.endsWith('\n')) {
+              markdownDiagram = markdownDiagram + '\n'
+            }
+            return `\`\`\`diagram\n${ markdownDiagram }\`\`\`\n`
+          }
+        })
+
+        convertedContent = td.turndown(ogPage.content) + `\n` // adding extra line break for pages that end with a diagram
+
         // -> Unsupported
       } else {
         throw new Error(
