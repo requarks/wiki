@@ -217,9 +217,10 @@ module.exports = {
       const permissions = WIKI.data.groups.defaultPermissions
       const rules = WIKI.data.groups.defaultPageRules
 
-      if (!WIKI.auth.isSuperAdmin(req.user)) {
-        rules[0].sites = groupsToSites(req.user.groups)
-      }
+      rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
+        path: 'default',
+        forceReload: true
+      })]
 
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
@@ -227,14 +228,6 @@ module.exports = {
         rules: JSON.stringify(rules),
         isSystem: false
       })
-
-      if (!WIKI.auth.isSuperAdmin(req.user)) {
-        await group.$relatedQuery('users').relate(req.user.id)
-
-        // Revoke tokens for this user
-        WIKI.auth.revokeUserTokens({ id: req.user.id, kind: 'u' })
-        WIKI.events.outbound.emit('addAuthRevoke', { id: req.user.id, kind: 'u' })
-      }
 
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')
