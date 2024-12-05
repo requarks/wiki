@@ -5,6 +5,7 @@ variables:
   DEPLOY_USER: 'capwiki'
   TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
+  STAGING_IMAGE_TAG: 'latest-staging'
 
   ENVIRONMENT:
     value: "none"
@@ -27,12 +28,18 @@ variables:
   MESSAGE:
     value: ""
     description: "Specify a tagging message [ONLY USED FOR STAGING or PRODUCTION]"
-  CONTAINER_SCANNING_ENABLED:
+  CONTAINER_SCANNING:
     value: "false"
     options:
       - "true"
       - "false"
     description: "Choose true if you want to scan the images"
+  SONARQUBE:
+    value: "true"
+    options:
+      - "true"
+      - "false"
+    description: "Choose false to skip code quality check"
 
 default:
   tags:
@@ -41,7 +48,7 @@ default:
 stages:
   - sonarqube
   - container-scan
-  - modify_package_json
+  - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
   - docker-push
   - deployment-pipeline
@@ -67,7 +74,8 @@ sonarqube-scan:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production" || $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - when: always    
+    - if: $SONARQUBE == "true" 
+      when: always    
 
 container_scanning:
   stage: container-scan
@@ -77,9 +85,9 @@ container_scanning:
     forward:
       pipeline_variables: true
   rules:
-    - if: $CONTAINER_SCANNING_ENABLED == "false" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CONTAINER_SCANNING == "false" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: $CONTAINER_SCANNING_ENABLED == "true" || $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CONTAINER_SCANNING == "true" || $CI_PIPELINE_SOURCE == "schedule"
       when: always
 
 modify_package_json:
@@ -109,7 +117,6 @@ modify_package_json:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: always
-
   # Artifacts to persist changes for later stages
   artifacts:
     paths:
@@ -121,7 +128,6 @@ build-docker-image:
     - |
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
      
-
       if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
         if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ) ]]; then
           ENVIRONMENT="staging"
@@ -134,7 +140,7 @@ build-docker-image:
       if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
       elif [[ "$ENVIRONMENT" == "staging" ]]; then
-        IMAGE_TAG="${VERSION}"
+        IMAGE_TAG="$STAGING_IMAGE_TAG"
       fi
       # Fallback if IMAGE_TAG is still empty
       if [[ -z "$IMAGE_TAG" ]]; then
@@ -160,7 +166,7 @@ build-docker-image:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: on_success
+    - when: always
 
 
 push-docker-image:

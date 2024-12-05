@@ -4,9 +4,11 @@ default:
     
 variables:
    NEW_IMAGE: "${IMAGE}:${VERSION}"
+   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
 
 stages:
   - setup-deployment
+  - promote-release-version
   - deployment
   - rollback
   - tagging
@@ -46,6 +48,27 @@ setup-deployment:
           exit 1
         fi
       EOF
+
+promote-release-version:
+  stage: promote-release-version
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+  script:
+    - echo "upgrade Docker image to release version $VERSION"
+    - echo "Staging Image is $STAGING_IMAGE"
+    - |
+      if ! docker pull $STAGING_IMAGE; then
+        echo "Error: Staging image $STAGING_IMAGE does not exist or could not be pulled."
+        exit 1
+      fi
+    - IMAGE_CREATED=$(docker inspect --format='{{.Created}}' $STAGING_IMAGE)
+    - echo "Staging Image Created at $IMAGE_CREATED"
+    - docker tag  $STAGING_IMAGE $NEW_IMAGE
+    - docker push $NEW_IMAGE
+    - docker logout $DOCKER_REGISTRY
+    - docker rmi $STAGING_IMAGE
+    - docker rmi $NEW_IMAGE
+    
 deployment:
   stage: deployment
   image: ansible/ansible
