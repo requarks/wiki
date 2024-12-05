@@ -62,15 +62,16 @@ module.exports = {
         isEnabled: site.isEnabled
       } : null
     },
-    async siteCount(obj, args, context) {
+    async siteCount(obj, args, context) { // Count sites site manager has access to
       let sites = await WIKI.models.sites.query().orderBy('name')
 
       sites = _.filter(sites, s => {
-        return WIKI.auth.checkAccess(context.req.user, [
-          'read:pages', 'manage:sites', 'manage:system'
-        ], {
-          siteId: s.id
-        })
+        return WIKI.auth.checkAccess(
+          context.req.user,
+          ['manage:sites', 'manage:system'],
+          { siteId: s.id },
+          false
+        )
       })
       return { count: sites.length }
     }
