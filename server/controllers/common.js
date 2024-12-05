@@ -80,6 +80,7 @@ router.get(['/d', '/d/:sitePath/*'], async (req, res, next) => {
   })
 
   pageArgs.tags = _.get(page, 'tags', [])
+  pageArgs.siteId = site.id
 
   if (versionId > 0) {
     if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
