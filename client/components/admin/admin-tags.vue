@@ -130,7 +130,7 @@ export default {
     },
     fetchSites() {
       this.$store
-        .dispatch('admin/fetchSites', { apolloClient: this.$apollo })
+        .dispatch('admin/fetchSitesAsAdmin', { apolloClient: this.$apollo })
         .then((response) => {
           const sitesData = response?.data?.sites
           this.sites = Object.values(sitesData).map((site) => ({

@@ -5,7 +5,9 @@
 extend type Query {
   site: SiteQuery
 
-  sites: [Site]
+  sites(
+    showAdminOnly: Boolean
+  ): [Site]
 
   siteById (
     id: String! # was UUID!

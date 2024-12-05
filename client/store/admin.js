@@ -1,5 +1,4 @@
 import { make } from 'vuex-pathify'
-import { gql } from "@apollo/client/core";
 import sitesQuery from 'gql/admin/sites/sites-query-list.gql'
 
 const state = {
@@ -28,6 +27,26 @@ export default {
       try {
         const response = await apolloClient.query({
           query: sitesQuery,
+          variables: {
+            showAdminOnly: false
+          },
+          fetchPolicy: 'network-only'
+        })
+        const sites = response.data
+
+        commit('SET_SITES', sites)
+        return response
+      } catch (error) {
+        throw error
+      }
+    },
+    async fetchSitesAsAdmin({ commit }, { apolloClient }) {
+      try {
+        const response = await apolloClient.query({
+          query: sitesQuery,
+          variables: {
+            showAdminOnly: true
+          },
           fetchPolicy: 'network-only'
         })
         const sites = response.data

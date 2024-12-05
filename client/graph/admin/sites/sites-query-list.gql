@@ -1,5 +1,5 @@
-query Sites {
-    sites {
+query Sites($showAdminOnly: Boolean) {
+    sites(showAdminOnly: $showAdminOnly) {
         id
         path
         isEnabled

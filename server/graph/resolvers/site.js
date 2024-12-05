@@ -10,12 +10,20 @@ module.exports = {
     async sites(obj, args, context) {
       let sites = await WIKI.models.sites.query().orderBy('name')
 
+      let ignoreRulePath = true
+      let permissions = ['read:pages', 'manage:sites', 'manage:system']
+
+      if (args.showAdminOnly) {
+        ignoreRulePath = false
+        permissions = ['manage:sites', 'manage:system']
+      }
+
       sites = _.filter(sites, s => {
-        return WIKI.auth.checkAccess(context.req.user, [
-          'read:pages', 'manage:sites', 'manage:system'
-        ], {
-          siteId: s.id
-        }, true)
+        return WIKI.auth.checkAccess(context.req.user,
+          permissions,
+          { siteId: s.id },
+          ignoreRulePath
+        )
       })
 
       return sites.map(s => ({

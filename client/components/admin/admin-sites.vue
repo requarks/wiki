@@ -136,7 +136,6 @@ export default {
           variables: {
             name: this.newSiteName,
             path: this.newSitePath
-
           },
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { operation: {} })
@@ -167,6 +166,9 @@ export default {
   apollo: {
     sites: {
       query: sitesQuery,
+      variables: {
+        showAdminOnly: true
+      },
       fetchPolicy: 'network-only',
       update: (data) => { return data.sites },
       watchLoading (isLoading) {
