@@ -334,8 +334,6 @@
             .body-2: strong {{ user.createdAt | moment('LLLL') }}
             .caption.grey--text.mt-3 {{$t('profile:activity.lastUpdatedOn')}}
             .body-2: strong {{ user.updatedAt | moment('LLLL') }}
-            .caption.grey--text.mt-3 {{$t('profile:activity.lastLoginOn')}}
-            .body-2: strong {{ user.lastLoginAt | moment('LLLL') }}
 
         v-card.mt-3.animated.fadeInUp.wait-p6s
           v-toolbar(color='teal', dense, dark, flat)
