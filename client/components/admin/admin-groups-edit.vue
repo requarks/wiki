@@ -71,8 +71,6 @@
                       persistent-hint
                       hint='The path / URL where the user will be redirected upon successful login.'
                       prepend-icon='mdi-arrow-top-left-thick'
-                      append-icon='mdi-folder-search'
-                      @click:append='selectPage'
                       style='max-width: 850px;'
                       :counter='255'
                     )
