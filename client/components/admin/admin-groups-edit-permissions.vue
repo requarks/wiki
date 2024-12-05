@@ -164,21 +164,21 @@ export default {
               hint: 'Can manage the site navigation',
               warning: false,
               restrictedForSystem: true,
-              disabled: false
+              disabled: true
             },
             {
               permission: 'manage:theme',
               hint: 'Can manage and modify themes',
               warning: false,
               restrictedForSystem: true,
-              disabled: false
+              disabled: true
             },
             {
               permission: 'manage:api',
               hint: 'Can generate and revoke API keys',
               warning: true,
               restrictedForSystem: true,
-              disabled: false
+              disabled: true
             },
             {
               permission: 'manage:system',
