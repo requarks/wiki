@@ -80,7 +80,7 @@ export default {
             _.delay(() => {
               document.body.classList.add('page-deleted')
               _.delay(() => {
-                window.location.assign('/')
+                window.location.assign(`/${this.$store.get('page/sitePath')}`)
               }, 1200)
             }, 400)
           } else {

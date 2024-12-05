@@ -1,6 +1,6 @@
-query ($limit: Int, $orderBy: PageOrderBy, $orderByDirection: PageOrderByDirection, $tags: [String!], $locale: String) {
+query ($limit: Int, $orderBy: PageOrderBy, $orderByDirection: PageOrderByDirection, $tags: [String!], $locale: String, $siteId: String) {
   pages {
-    list(limit: $limit, orderBy: $orderBy, orderByDirection: $orderByDirection, tags: $tags, locale: $locale) {
+    list(limit: $limit, orderBy: $orderBy, orderByDirection: $orderByDirection, tags: $tags, locale: $locale, siteId: $siteId) {
       id
       locale
       path
@@ -8,7 +8,9 @@ query ($limit: Int, $orderBy: PageOrderBy, $orderByDirection: PageOrderByDirecti
       description
       createdAt
       updatedAt
-      tags
+      tags,
+      siteId,
+      sitePath
     }
   }
 }

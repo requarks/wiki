@@ -156,6 +156,7 @@ groups:
         - 'write:comments'
       path: ''
       locales: []
+      sites: []
 reservedPaths:
   - login
   - logout

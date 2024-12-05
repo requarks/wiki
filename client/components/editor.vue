@@ -152,6 +152,18 @@ export default {
     effectivePermissions: {
       type: String,
       default: ''
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -197,6 +209,9 @@ export default {
         this.savedState.publishEndDate !== this.$store.get('page/publishEndDate'),
         this.savedState.css !== this.$store.get('page/scriptCss'),
         this.savedState.js !== this.$store.get('page/scriptJs')
+        // this.siteId !== this.$store.get('page/siteId'),
+        // this.siteName !== this.$store.get('page/siteName'),
+        // this.sitePath !== this.$store.get('page/sitePath')
       ], Boolean)
     }
   },
@@ -226,6 +241,10 @@ export default {
     this.$store.set('page/scriptJs', this.scriptJs)
 
     this.$store.set('page/mode', 'edit')
+
+    this.$store.set('page/siteId', this.siteId)
+    this.$store.set('page/siteName', this.siteName)
+    this.$store.set('page/sitePath', this.sitePath)
 
     this.setCurrentSavedState()
 
@@ -306,6 +325,7 @@ export default {
                 $scriptJs: String
                 $tags: [String]!
                 $title: String!
+                $siteId: String!
               ) {
                 pages {
                   create(
@@ -322,6 +342,7 @@ export default {
                     scriptJs: $scriptJs
                     tags: $tags
                     title: $title
+                    siteId: $siteId
                   ) {
                     responseResult {
                       succeeded
@@ -350,7 +371,8 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              title: this.$store.get('page/title'),
+              siteId: this.$store.get('page/siteId')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -365,7 +387,7 @@ export default {
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
             this.exitConfirmed = true
-            window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+            window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
@@ -410,6 +432,7 @@ export default {
                 $scriptJs: String
                 $tags: [String]
                 $title: String
+                $siteId: String!
               ) {
                 pages {
                   update(
@@ -427,6 +450,7 @@ export default {
                     scriptJs: $scriptJs
                     tags: $tags
                     title: $title
+                    siteId: $siteId
                   ) {
                     responseResult {
                       succeeded
@@ -455,7 +479,8 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              title: this.$store.get('page/title'),
+              siteId: this.$store.get('page/siteId')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
@@ -469,7 +494,7 @@ export default {
             })
             if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
               _.delay(() => {
-                window.location.replace(`/e/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+                window.location.replace(`/e/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
               }, 1000)
             }
           } else {
@@ -521,9 +546,9 @@ export default {
       this.exitConfirmed = true
       _.delay(() => {
         if (this.$store.get('editor/mode') === 'create') {
-          window.location.assign(`/`)
+          window.location.assign(`/${this.$store.get('page/sitePath')}`)
         } else {
-          window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+          window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }
       }, 500)
     },

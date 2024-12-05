@@ -4,10 +4,39 @@
 
 extend type Query {
   site: SiteQuery
+
+  sites(
+    showAdminOnly: Boolean
+  ): [Site]
+
+  siteById (
+    id: String! # was UUID!
+  ): Site
+
+  siteByPath (
+    path: String!
+    exact: Boolean!
+  ): Site
+
+  siteCount: SiteCount @auth(requires: ["manage:sites", "manage:system"])
 }
 
 extend type Mutation {
   site: SiteMutation
+
+  createSite (
+    name: String!
+    path: String!
+  ): SiteCreateResponse @auth(requires: ["manage:system"])
+
+  updateSite (
+    id: String! # was UUID!
+    patch: SiteUpdateInput!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  deleteSite (
+    id: String! # was UUID!
+  ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -72,6 +101,34 @@ type SiteMutation {
 # -----------------------------------------------
 # TYPES
 # -----------------------------------------------
+
+type Site {
+  id: String # was UUID
+  path: String
+  isEnabled: Boolean
+  name: String
+  createdAt: Date
+}
+
+type SiteCreateResponse {
+  operation: Operation
+  site: Site
+}
+
+input SiteUpdateInput {
+  isEnabled: Boolean
+  name: String
+}
+
+type SiteCount {
+  count: Int
+}
+
+type Operation {
+  succeeded: Boolean
+  slug: String
+  message: String
+}
 
 type SiteConfig {
   host: String

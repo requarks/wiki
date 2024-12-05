@@ -1,10 +1,10 @@
-<template lang='pug'>
+<template lang="pug">
   v-app(:dark='$vuetify.theme.dark').tags
     nav-header
     v-navigation-drawer.pb-0.elevation-1(app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
       vue-scroll(:ops='scrollStyle')
         v-list(dense, nav)
-          v-list-item(href='/')
+          v-list-item( :href='`/` + sitePath')
             v-list-item-icon: v-icon mdi-home
             v-list-item-title {{$t('common:header.home')}}
           template(v-for='(tags, groupName) in tagsGrouped')
@@ -98,7 +98,6 @@
           :search='innerSearch'
           :loading='isLoading'
           :options.sync='pagination'
-          @page-count='pageTotal = $event'
           hide-default-footer
           ref='dude'
           )
@@ -154,7 +153,6 @@
 <script>
 import VueRouter from 'vue-router'
 import _ from 'lodash'
-
 import tagsQuery from 'gql/common/common-pages-query-tags.gql'
 import pagesQuery from 'gql/common/common-pages-query-list.gql'
 
@@ -167,6 +165,12 @@ const router = new VueRouter({
 
 export default {
   i18nOptions: { namespaces: 'tags' },
+  props: {
+    siteId: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
       tags: [],
@@ -184,7 +188,6 @@ export default {
         sortDesc: [false]
       },
       pages: [],
-      pageTotal: 0,
       isLoading: true,
       scrollStyle: {
         vuescroll: {},
@@ -210,13 +213,16 @@ export default {
     }
   },
   computed: {
-    tagsGrouped () {
-      return _.groupBy(this.tags, t => t.title.charAt(0).toUpperCase())
+    tagsGrouped() {
+      return _.groupBy(this.tags, (t) => t.title.charAt(0).toUpperCase())
     },
-    tagsSelected () {
-      return _.filter(this.tags, t => _.includes(this.selection, t.tag))
+    tagsSelected() {
+      return _.filter(this.tags, (t) => _.includes(this.selection, t.tag))
     },
-    orderByItems () {
+    pageTotal() {
+      return Math.ceil(this.pages.length / this.pagination.itemsPerPage)
+    },
+    orderByItems() {
       return [
         { text: this.$t('tags:orderByField.creationDate'), value: 'createdAt' },
         { text: this.$t('tags:orderByField.ID'), value: 'id' },
@@ -227,27 +233,29 @@ export default {
     }
   },
   watch: {
-    locale (newValue, oldValue) {
+    locale(newValue, oldValue) {
       this.rebuildURL()
     },
-    orderBy (newValue, oldValue) {
+    orderBy(newValue, oldValue) {
       this.rebuildURL()
       this.pagination.sortBy = [newValue]
     },
-    orderByDirection (newValue, oldValue) {
+    orderByDirection(newValue, oldValue) {
       this.rebuildURL()
       this.pagination.sortDesc = [newValue === 1]
     }
   },
   router,
-  created () {
+  created() {
     this.$store.commit('page/SET_MODE', 'tags')
-    this.selection = _.compact(decodeURI(this.$route.path).split('/'))
+    let subPaths = _.compact(decodeURI(this.$route.path).split('/'))
+    this.sitePath = subPaths[0]
+    this.selection = subPaths.slice(1)
   },
-  mounted () {
+  mounted() {
     this.locales = _.concat(
-      [{name: this.$t('tags:localeAny'), code: 'any'}],
-      (siteLangs.length > 0 ? siteLangs : [])
+      [{ name: this.$t('tags:localeAny'), code: 'any' }],
+      siteLangs.length > 0 ? siteLangs : []
     )
     if (this.$route.query.lang) {
       this.locale = this.$route.query.lang
@@ -267,7 +275,7 @@ export default {
     }
   },
   methods: {
-    toggleTag (tag) {
+    toggleTag(tag) {
       if (_.includes(this.selection, tag)) {
         this.selection = _.without(this.selection, tag)
       } else {
@@ -275,12 +283,12 @@ export default {
       }
       this.rebuildURL()
     },
-    isSelected (tag) {
+    isSelected(tag) {
       return _.includes(this.selection, tag)
     },
-    rebuildURL () {
+    rebuildURL() {
       let urlObj = {
-        path: '/' + this.selection.join('/')
+        path: '/' + this.sitePath + '/' + this.selection.join('/')
       }
       if (this.locale !== `any`) {
         _.set(urlObj, 'query.lang', this.locale)
@@ -293,16 +301,21 @@ export default {
       }
       this.$router.push(urlObj)
     },
-    goTo (page) {
-      window.location.assign(`/${page.locale}/${page.path}`)
+    goTo(page) {
+      window.location.assign(`/${page.sitePath}/${page.locale}/${page.path}`)
     }
   },
   apollo: {
     tags: {
       query: tagsQuery,
+      variables() {
+        return {
+          siteId: this.siteId
+        }
+      },
       fetchPolicy: 'cache-and-network',
       update: (data) => _.cloneDeep(data.pages.tags),
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'tags-refresh')
       }
     },
@@ -310,17 +323,18 @@ export default {
       query: pagesQuery,
       fetchPolicy: 'cache-and-network',
       update: (data) => _.cloneDeep(data.pages.list),
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.isLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'pages-refresh')
       },
-      variables () {
+      variables() {
         return {
           locale: this.locale === 'any' ? null : this.locale,
-          tags: this.selection
+          tags: this.selection,
+          siteId: this.siteId
         }
       },
-      skip () {
+      skip() {
         return this.selection.length < 1
       }
     }
@@ -328,7 +342,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 .tags-search {
   .v-input__control {
     min-height: initial !important;

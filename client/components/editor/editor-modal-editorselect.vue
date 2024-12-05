@@ -83,7 +83,8 @@ export default {
     },
     currentEditor: sync('editor/editor'),
     locale: get('page/locale'),
-    path: get('page/path')
+    path: get('page/path'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     selectEditor (name) {
@@ -100,7 +101,7 @@ export default {
       this.templateDialogIsShown = false
       this.isShown = false
       this.$nextTick(() => {
-        window.location.assign(`/e/${this.locale}/${this.path}?from=${id}`)
+        window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}?from=${id}`)
       })
     }
   }

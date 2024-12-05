@@ -33,7 +33,7 @@
               span Permissions
               v-icon mdi-lock-pattern
             v-tab(key='rules')
-              span Page Rules
+              span Rules
               v-icon mdi-file-lock
             v-tab(key='users')
               span Users
@@ -71,8 +71,6 @@
                       persistent-hint
                       hint='The path / URL where the user will be redirected upon successful login.'
                       prepend-icon='mdi-arrow-top-left-thick'
-                      append-icon='mdi-folder-search'
-                      @click:append='selectPage'
                       style='max-width: 850px;'
                       :counter='255'
                     )
@@ -116,7 +114,7 @@ export default {
         name: '',
         isSystem: false,
         permissions: [],
-        pageRules: [],
+        rules: [],
         users: [],
         redirectOnLogin: '/'
       },
@@ -142,7 +140,7 @@ export default {
               $name: String!
               $redirectOnLogin: String!
               $permissions: [String]!
-              $pageRules: [PageRuleInput]!
+              $rules: [RuleInput]!
             ) {
               groups {
                 update(
@@ -150,7 +148,7 @@ export default {
                   name: $name
                   redirectOnLogin: $redirectOnLogin
                   permissions: $permissions
-                  pageRules: $pageRules
+                  rules: $rules
                 ) {
                   responseResult {
                     succeeded
@@ -167,7 +165,7 @@ export default {
             name: this.group.name,
             redirectOnLogin: this.group.redirectOnLogin,
             permissions: this.group.permissions,
-            pageRules: this.group.pageRules
+            rules: this.group.rules
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-update')
@@ -232,13 +230,14 @@ export default {
               redirectOnLogin
               isSystem
               permissions
-              pageRules {
+              rules {
                 id
                 path
                 roles
                 match
                 deny
                 locales
+                sites
               }
               users {
                 id

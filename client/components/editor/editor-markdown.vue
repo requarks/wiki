@@ -400,7 +400,8 @@ export default {
     locale: get('page/locale'),
     path: get('page/path'),
     mode: get('editor/mode'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
   watch: {
     previewShown (newValue, oldValue) {
@@ -658,7 +659,7 @@ export default {
     insertLinkHandler ({ locale, path }) {
       const lastPart = _.last(path.split('/'))
       this.insertAtCursor({
-        content: siteLangs.length > 0 ? `[${lastPart}](/${locale}/${path})` : `[${lastPart}](/${path})`
+        content: siteLangs.length > 0 ? `[${lastPart}](/${this.sitePath}/${locale}/${path})` : `[${lastPart}](/${this.sitePath}/${path})`
       })
     },
     processMarkers (from, to) {

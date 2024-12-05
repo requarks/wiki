@@ -53,6 +53,10 @@ export default {
     effectivePermissions: {
       type: String,
       default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -71,10 +75,10 @@ export default {
   },
   methods: {
     goLive() {
-      window.location.assign(`/${this.locale}/${this.path}`)
+      window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
     },
     goHistory () {
-      window.location.assign(`/h/${this.locale}/${this.path}`)
+      window.location.assign(`/h/${this.sitePath}/${this.locale}/${this.path}`)
     }
   }
 }

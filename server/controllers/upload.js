@@ -19,7 +19,7 @@ router.post('/u', (req, res, next) => {
     }
   }).array('mediaUpload')(req, res, next)
 }, async (req, res, next) => {
-  if (!_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system'], pm))) {
+  if (!_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system', 'manage:sites'], pm))) {
     return res.status(403).json({
       succeeded: false,
       message: 'You are not authorized to upload files.'
@@ -62,11 +62,26 @@ router.post('/u', (req, res, next) => {
     })
   }
 
+  // Get siteId
+  let siteId = null
+  try {
+    const rawMediaUpload = _.get(req, 'body.mediaUpload', false)
+    if (rawMediaUpload) {
+      siteId = _.get(JSON.parse(rawMediaUpload), 'siteId', null)
+    }
+    WIKI.logger.debug(`(UPLOAD) found Site ID: ${siteId}`)
+  } catch (err) {
+    return res.status(400).json({
+      succeeded: false,
+      message: 'Missing siteId in metadata.'
+    })
+  }
+
   // Build folder hierarchy
   let hierarchy = []
   if (folderId) {
     try {
-      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId)
+      hierarchy = await WIKI.models.assetFolders.getHierarchy(folderId, siteId)
     } catch (err) {
       return res.status(400).json({
         succeeded: false,
@@ -80,7 +95,7 @@ router.post('/u', (req, res, next) => {
 
   // Check if user can upload at path
   const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
-  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
+  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath, siteId })) {
     return res.status(403).json({
       succeeded: false,
       message: 'You are not authorized to upload files to this folder.'
@@ -93,7 +108,8 @@ router.post('/u', (req, res, next) => {
     mode: 'upload',
     folderId: folderId,
     assetPath,
-    user: req.user
+    user: req.user,
+    siteId
   })
   res.send('ok')
 })

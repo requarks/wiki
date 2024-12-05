@@ -1,6 +1,6 @@
-query {
+query ($siteId: String!) {
   pages {
-    tags {
+    tags (siteId: $siteId){
       tag
       title
     }

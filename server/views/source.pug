@@ -11,5 +11,6 @@ block body
       :version-id=page.versionId
       version-date=page.versionDate
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
+      site-path=site.path
       )
       code(v-pre)= page.content

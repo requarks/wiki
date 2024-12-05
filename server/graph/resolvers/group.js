@@ -5,6 +5,95 @@ const gql = require('graphql')
 
 /* global WIKI */
 
+const rulesToSites = (rules) => {
+  let siteIds = []
+
+  for (const rule of rules) {
+    if (
+      rule.deny === false &&
+      rule.sites &&
+      rule.sites.length > 0 &&
+      rule.roles.includes('manage:sites')
+    ) {
+      siteIds = siteIds.concat(rule.sites)
+    }
+  }
+
+  siteIds = _.uniq(siteIds)
+  return siteIds
+}
+
+const groupsToSites = (groups) => {
+  let siteIds = []
+
+  for (const groupId of groups) {
+    const group = _.get(WIKI.auth.groups, groupId, [])
+    if (group.rules) {
+      for (const rule of group.rules) {
+        if (
+          rule.deny === false &&
+          rule.sites &&
+          rule.sites.length > 0 &&
+          rule.roles.includes('manage:sites')
+        ) {
+          siteIds = siteIds.concat(rule.sites)
+        }
+      }
+    }
+  }
+
+  siteIds = _.uniq(siteIds)
+  return siteIds
+}
+
+const rulesToSitesNonAdmin = (rules) => {
+  let siteIds = []
+
+  for (const rule of rules) {
+    if (
+      rule.deny === false &&
+      rule.sites &&
+      rule.sites.length > 0
+    ) {
+      siteIds = siteIds.concat(rule.sites)
+    }
+  }
+
+  siteIds = _.uniq(siteIds)
+  return siteIds
+}
+
+const isGroupParticipant = (user, groupIds) => {
+  return _.intersection(user.groups, groupIds).length > 0
+}
+
+const canManageGroup = (user, groupId) => {
+  if (WIKI.auth.isSuperAdmin(user)) return true
+  if (groupId === 1 || groupId === 2) return false
+  const userSites = groupsToSites(user.groups)
+  const group = _.get(WIKI.auth.groups, groupId, [])
+  const groupSites = rulesToSitesNonAdmin(group.rules)
+
+  if (_.intersection(userSites, groupSites).length === groupSites.length) {
+    return true
+  }
+  return false
+}
+
+const canManageSites = (g) => {
+  if (_.intersection(g.permissions, ['manage:sites']).length < 1) {
+    return false
+  }
+
+  for (const rule of g.rules) {
+    if (_.intersection(rule.roles, ['manage:sites']).length > 0) {
+      return true
+    }
+  }
+
+  return false
+}
+
 module.exports = {
   Query: {
     async groups () { return {} }
@@ -16,17 +105,38 @@ module.exports = {
     /**
      * FETCH ALL GROUPS
      */
-    async list () {
-      return WIKI.models.groups.query().select(
+    async list (obj, args, { req }) {
+      const groups = await WIKI.models.groups.query().select(
         'groups.*',
         WIKI.models.groups.relatedQuery('users').count().as('userCount')
       )
+
+      if (WIKI.auth.isSuperAdmin(req.user)) {
+        return groups
+      }
+
+      const filteredGroups = _.filter(
+        groups,
+        g => canManageGroup(req.user, g.id)
+      )
+
+      return filteredGroups
     },
     /**
      * FETCH A SINGLE GROUP
      */
-    async single(obj, args) {
-      return WIKI.models.groups.query().findById(args.id)
+    async single(obj, args, { req }) {
+      const fetchGroupById = (id) => WIKI.models.groups.query().findById(id)
+
+      if (WIKI.auth.isSuperAdmin(req.user)) {
+        return fetchGroupById(args.id)
+      }
+
+      if (canManageGroup(req.user, args.id)) {
+        return fetchGroupById(args.id)
+      }
+
+      throw new gql.GraphQLError('Insufficient permissions to list the group properties.')
     }
   },
   GroupMutation: {
@@ -34,6 +144,10 @@ module.exports = {
      * ASSIGN USER TO GROUP
      */
     async assignUser (obj, args, { req }) {
+      if (!canManageGroup(req.user, args.groupId)) {
+        throw new gql.GraphQLError('Insufficient permissions to assign user to the group.')
+      }
+
       // Check for guest user
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot assign the Guest user to a group.')
@@ -47,7 +161,7 @@ module.exports = {
 
       // Check assigned permissions for write:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
         grp.permissions.some(p => {
           const resType = _.last(p.split(':'))
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
@@ -86,12 +200,40 @@ module.exports = {
      * CREATE NEW GROUP
      */
     async create (obj, args, { req }) {
+      const canCreate = (user) => {
+        for (const groupId of user.groups) {
+          const group = _.get(WIKI.auth.groups, groupId, [])
+
+          if (canManageSites(group)) {
+            return true
+          }
+        }
+        return false
+      }
+
+      if (!WIKI.auth.isSuperAdmin(req.user) && !canCreate(req.user)) {
+        throw new gql.GraphQLError('Insufficient permissions to create groups.')
+      }
+
+      const permissions = WIKI.data.groups.defaultPermissions
+      const rules = WIKI.data.groups.defaultPageRules
+
+      if (!WIKI.auth.isSuperAdmin(req.user)) {
+        rules[0].sites = groupsToSites(req.user.groups)
+      } else {
+        rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
+          path: 'default',
+          forceReload: true
+        })]
+      }
+
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
-        permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-        pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules),
+        permissions: JSON.stringify(permissions),
+        rules: JSON.stringify(rules),
         isSystem: false
       })
+
       await WIKI.auth.reloadGroups()
       WIKI.events.outbound.emit('reloadGroups')
       return {
@@ -102,9 +244,13 @@ module.exports = {
     /**
      * DELETE GROUP
      */
-    async delete (obj, args) {
+    async delete (obj, args, { req }) {
       if (args.id === 1 || args.id === 2) {
         throw new gql.GraphQLError('Cannot delete this group.')
+      }
+
+      if (!canManageGroup(req.user, args.id)) {
+        throw new gql.GraphQLError('Insufficient permissions to delete the group.')
       }
 
       await WIKI.models.groups.query().deleteById(args.id)
@@ -122,7 +268,11 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args) {
+    async unassignUser (obj, args, { req }) {
+      if (!canManageGroup(req.user, args.groupId)) {
+        throw new gql.GraphQLError('Insufficient permissions to remove user from the group.')
+      }
+
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot unassign Guest user')
       }
@@ -150,8 +300,22 @@ module.exports = {
      * UPDATE GROUP
      */
     async update (obj, args, { req }) {
+      if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites']) &&
+        canManageGroup(req.user, args.id)) {
+        for (const rule of args.rules) {
+          for (const siteId of rule.sites) {
+            if (!WIKI.auth.checkAccess(req.user, ['manage:sites'], {
+              siteId: siteId,
+              path: rule.path
+            })) {
+              throw new gql.GraphQLError('Insufficient permissions to update access to sites.')
+            }
+          }
+        }
+      }
+
       // Check for unsafe regex page rules
-      if (_.some(args.pageRules, pr => {
+      if (_.some(args.rules, pr => {
         return pr.match === 'REGEX' && !safeRegex(pr.path)
       })) {
         throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
@@ -164,7 +328,7 @@ module.exports = {
 
       // Check assigned permissions for write:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
         args.permissions.some(p => {
           const resType = _.last(p.split(':'))
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
@@ -175,7 +339,7 @@ module.exports = {
 
       // Check assigned permissions for manage:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system', 'manage:sites']) &&
         args.permissions.some(p => _.last(p.split(':')) === 'system')
       ) {
         throw new gql.GraphQLError('You are not authorized to manage this group or assign the manage:system permissions.')
@@ -186,7 +350,7 @@ module.exports = {
         name: args.name,
         redirectOnLogin: args.redirectOnLogin,
         permissions: JSON.stringify(args.permissions),
-        pageRules: JSON.stringify(args.pageRules)
+        rules: JSON.stringify(args.rules)
       }).where('id', args.id)
 
       // Revoke tokens for this group
