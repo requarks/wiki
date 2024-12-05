@@ -218,10 +218,14 @@ module.exports = {
       const permissions = WIKI.data.groups.defaultPermissions
       const rules = WIKI.data.groups.defaultPageRules
 
-      rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
-        path: 'default',
-        forceReload: true
-      })]
+      if (!WIKI.auth.isSuperAdmin(req.user)) {
+        rules[0].sites = groupsToSites(req.user.groups)
+      } else {
+        rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
+          path: 'default',
+          forceReload: true
+        })]
+      }
 
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
