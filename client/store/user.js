@@ -60,6 +60,9 @@ export default {
       try {
         const response = await apolloClient.query({
           query: sitesQuery,
+          variables: {
+            showAdminOnly: false
+          },
           fetchPolicy: 'network-only'
         })
         const sites = response.data

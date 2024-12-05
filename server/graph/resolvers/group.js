@@ -69,7 +69,6 @@ const isGroupParticipant = (user, groupIds) => {
 
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
-  if (!isGroupParticipant(user, [groupId])) return false
   const userSites = groupsToSites(user.groups)
   const group = _.get(WIKI.auth.groups, groupId, [])
   const groupSites = rulesToSitesNonAdmin(group.rules)
@@ -117,7 +116,7 @@ module.exports = {
 
       const filteredGroups = _.filter(
         groups,
-        g => isGroupParticipant(req.user, [g.id]) && canManageGroup(req.user, g.id)
+        g => canManageGroup(req.user, g.id)
       )
 
       return filteredGroups
@@ -132,7 +131,7 @@ module.exports = {
         return fetchGroupById(args.id)
       }
 
-      if (isGroupParticipant(req.user, [args.id]) && canManageGroup(req.user, args.id)) {
+      if (canManageGroup(req.user, args.id)) {
         return fetchGroupById(args.id)
       }
 
