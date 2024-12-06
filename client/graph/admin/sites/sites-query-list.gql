@@ -1,0 +1,9 @@
+query Sites($showAdminOnly: Boolean) {
+    sites(showAdminOnly: $showAdminOnly) {
+        id
+        path
+        isEnabled
+        name
+        createdAt
+    }
+}

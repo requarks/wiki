@@ -40,14 +40,30 @@ module.exports = {
      * Fetch list of comments for a page
      */
     async list (obj, args, context) {
-      const page = await WIKI.models.pages.query().select('pages.id').findOne({ localeCode: args.locale, path: args.path })
+      const page = await WIKI.models.pages.query()
+        .select('pages.id')
+        .findOne({
+          localeCode: args.locale,
+          path: args.path,
+          siteId: args.siteId
+        })
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
           builder.select('tag')
         })
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], { tags: page.tags, ...args })) {
-          const comments = await WIKI.models.comments.query().where('pageId', page.id).orderBy('createdAt')
+        if (WIKI.auth.checkAccess(
+          context.req.user,
+          ['read:comments'],
+          {
+            tags: page.tags,
+            siteId: args.siteId,
+            ...args
+          }
+        )) {
+          const comments = await WIKI.models.comments.query()
+            .where('pageId', page.id)
+            .orderBy('createdAt')
           return comments.map(c => ({
             ...c,
             authorName: c.name,
@@ -69,7 +85,9 @@ module.exports = {
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
       }
-      const page = await WIKI.models.pages.query().select('localeCode', 'path').findById(cm.pageId)
+      const page = await WIKI.models.pages.query()
+        .select('localeCode', 'path', 'siteId')
+        .findById(cm.pageId)
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
           builder.select('tag')
@@ -78,7 +96,8 @@ module.exports = {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
           path: page.path,
           locale: page.localeCode,
-          tags: page.tags
+          tags: page.tags,
+          siteId: page.siteId
         })) {
           return {
             ...cm,

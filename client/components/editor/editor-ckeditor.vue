@@ -52,14 +52,15 @@ export default {
     },
     locale: get('page/locale'),
     path: get('page/path'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     insertLink () {
       this.insertLinkDialog = true
     },
     insertLinkHandler ({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
+      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
     },
     insertDiagram() {
       this.isDiagramEdit = false
@@ -67,25 +68,25 @@ export default {
     },
     editDiagram(diagram) {
       this.isDiagramEdit = true
-      this.$store.set('editor/activeModalData', diagram);
-      this.toggleModal('editorModalDrawio');
+      this.$store.set('editor/activeModalData', diagram)
+      this.toggleModal('editorModalDrawio')
     },
     toggleModal(modalKey) {
       this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
     },
     getSelectedWidget() {
-      return document.getElementsByClassName('image ck-widget_selected').item(0);
+      return document.getElementsByClassName('image ck-widget_selected').item(0)
     },
     getSelectedDiagram() {
-      const selection = this.getSelectedWidget();
-      return selection.getElementsByTagName('img').item(0).getAttribute('src');
+      const selection = this.getSelectedWidget()
+      return selection.getElementsByTagName('img').item(0).getAttribute('src')
     },
     getDiagramCaption() {
-      const selection = this.getSelectedWidget();
-      return selection.getElementsByTagName('figcaption').item(0).firstChild.data;
+      const selection = this.getSelectedWidget()
+      return selection.getElementsByTagName('figcaption').item(0).firstChild.data
     },
     setDiagramCaption(caption) {
-      const selection = this.getSelectedWidget();
+      const selection = this.getSelectedWidget()
 
       const userAgent = navigator.userAgent
       const chromeRE = /Chrome\/(\d{3})\.\d/
@@ -93,14 +94,13 @@ export default {
       const firefoxRE = /Firefox\/(\d{3})\.\d/
       const firefoxMatch = firefoxRE.exec(userAgent)
 
-      if ( (firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
-        ( chromeMatch && Number(chromeMatch[1]) >= 124) ) {
+      if ((firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
+        (chromeMatch && Number(chromeMatch[1]) >= 124)) {
         // The caption is sanatized by the ckEditor
-        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption);
-      }
-      else if ( chromeMatch && Number(chromeMatch[1]) < 124) {
+        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption)
+      } else if (chromeMatch && Number(chromeMatch[1]) < 124) {
         // setHTMLUnsafe is not available for earlier browser versions
-        selection.getElementsByTagName('figcaption').item(0).setHTML(caption);
+        selection.getElementsByTagName('figcaption').item(0).setHTML(caption)
       }
     }
   },
@@ -144,7 +144,7 @@ export default {
           break
         case 'DIAGRAM':
           let caption = ''
-          if(this.isDiagramEdit) {
+          if (this.isDiagramEdit) {
             caption = this.getDiagramCaption()
             this.editor.execute('delete')
           }
@@ -153,7 +153,7 @@ export default {
             source: `data:image/svg+xml;base64,${opts.text}`
           })
 
-          if(this.isDiagramEdit && caption) {
+          if (this.isDiagramEdit && caption) {
             this.setDiagramCaption(caption)
           }
           break

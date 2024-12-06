@@ -22,32 +22,42 @@
         v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
-          //- v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
-          //-   template(v-slot:activator='{ on }')
-          //-     v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
-          //-       v-icon mdi-menu
-          //-   v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-          //-     v-list-item.pl-4(href='/')
-          //-       v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
-          //-       v-list-item-title.body-2 {{$t('common:header.home')}}
-          //-     v-list-item.pl-4(@click='')
-          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-file-tree
-          //-       v-list-item-content
-          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.siteMap')}}
-          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-          //-     v-list-item.pl-4(href='/t')
-          //-       v-list-item-avatar(size='24'): v-icon(color='teal') mdi-tag-multiple
-          //-       v-list-item-title.body-2 {{$t('common:header.browseTags')}}
-          //-     v-list-item.pl-4(@click='assets')
-          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
-          //-       v-list-item-content
-          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
-          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
+
+          //- SITES
+
+          v-menu(v-model='menuIsOpen', offset-y, bottom, transition='slide-y-transition', left)
+            template(v-slot:activator='{ on: menu, attrs }')
+              v-tooltip(bottom)
+                template(v-slot:activator='{ on: tooltip }')
+                  v-btn(
+                    icon
+                    v-bind='attrs'
+                    v-on='{ ...menu }'
+                    :class='$vuetify.rtl ? `ml-3` : ``'
+                    tile
+                    height='64'
+                    width='100'
+                    style="overflow: none;"
+                    )
+                    span Sites
+                    v-icon(color='grey')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
+            v-list(
+                style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
+                width='168'
+                nav, :light='!$vuetify.theme.dark'
+                :dark='$vuetify.theme.dark'
+                :class='$vuetify.theme.dark ? `grey darken-4` : ``'
+              )
+              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)')
+                v-list-item-title.body-2 {{ site.text }}
+          v-divider(vertical)
+
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(color='black', dark, flat)
           slot(name='mid')
+
             transition(name='navHeaderSearch', v-if='searchIsShown')
               v-text-field(
                 ref='searchField',
@@ -70,9 +80,10 @@
                 @keyup.up='searchMove(`up`)'
                 autocomplete='none'
               )
+
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
+                v-btn.ml-2.mr-0(icon, v-on='on', :href='`/t/`+ sitePath', :aria-label='$t(`common:header.browseTags`)')
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
@@ -236,17 +247,41 @@
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
-    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
-    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
-    page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
-    page-delete(v-model='deletePageModal', v-if='path && path.length')
-    page-convert(v-model='convertPageModal', v-if='path && path.length')
+    page-selector(
+      mode='create',
+      v-model='newPageModal',
+      :open-handler='pageNewCreate',
+      :locale='locale'
+    )
 
-    .nav-header-dev(v-if='isDevMode')
-      v-icon mdi-alert
-      div
-        .overline DEVELOPMENT VERSION
-        .overline This code base is NOT for production use!
+    page-selector(
+      mode='move',
+      v-model='movePageModal',
+      :open-handler='pageMoveRename',
+      :path='path',
+      :locale='locale'
+    )
+
+    page-selector(mode='create',
+      v-model='duplicateOpts.modal',
+      :open-handler='pageDuplicateHandle',
+      :path='duplicateOpts.path',
+      :locale='duplicateOpts.locale'
+    )
+
+    page-delete(
+      v-model='deletePageModal', v-if='path && path.length'
+    )
+
+    page-convert(
+      v-model='convertPageModal', v-if='path && path.length'
+    )
+
+    //- .nav-header-dev(v-if='isDevMode')
+    //-  v-icon mdi-alert
+    //-  div
+    //-    .overline DEVELOPMENT VERSION
+    //-    .overline This code base is NOT for production use!
 </template>
 
 <script>
@@ -287,7 +322,9 @@ export default {
         locale: 'en',
         path: 'new-page',
         modal: false
-      }
+      },
+      sites: [],
+      menuIsOpen: false
     }
   },
   computed: {
@@ -307,6 +344,9 @@ export default {
     pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
+    sitesWithWriteAccess: get('user/sitesWithWriteAccess'),
+    sitePath: get('page/sitePath'),
+    siteId: get('page/siteId'),
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
@@ -326,10 +366,20 @@ export default {
       }
     },
     isAdmin () {
-      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
+      return _.intersection(this.permissions, [
+        'manage:system',
+        'write:users',
+        'manage:users',
+        'write:groups',
+        'manage:groups',
+        'manage:navigation',
+        'manage:theme',
+        'manage:api',
+        'manage:sites'
+      ]).length > 0
     },
     hasNewPagePermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
+      return this.hasAdminPermission || this.sitesWithWriteAccess.includes(this.siteId)
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
@@ -370,6 +420,7 @@ export default {
       this.pageDelete()
     })
     this.isDevMode = siteConfig.devMode === true
+    this.fetchSitesFromUser()
   },
   methods: {
     searchFocus () {
@@ -400,19 +451,19 @@ export default {
       this.newPageModal = true
     },
     pageNewCreate ({ path, locale }) {
-      window.location.assign(`/e/${locale}/${path}`)
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}`)
     },
     pageView () {
-      window.location.assign(`/${this.locale}/${this.path}`)
+      window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageEdit () {
-      window.location.assign(`/e/${this.locale}/${this.path}`)
+      window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      window.location.assign(`/h/${this.locale}/${this.path}`)
+      window.location.assign(`/h/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageSource () {
-      window.location.assign(`/s/${this.locale}/${this.path}`)
+      window.location.assign(`/s/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageDuplicate () {
       const pathParts = this.path.split('/')
@@ -423,7 +474,7 @@ export default {
       }
     },
     pageDuplicateHandle ({ locale, path }) {
-      window.location.assign(`/e/${locale}/${path}?from=${this.$store.get('page/id')}`)
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}?from=${this.$store.get('page/id')}`)
     },
     pageConvert () {
       this.convertPageModal = true
@@ -440,10 +491,11 @@ export default {
             id: this.$store.get('page/id'),
             destinationLocale: locale,
             destinationPath: path
+            // TODO: Add siteId
           }
         })
         if (_.get(resp, 'data.pages.move.responseResult.succeeded', false)) {
-          window.location.replace(`/${locale}/${path}`)
+          window.location.replace(`/${this.sitePath}/${locale}/${path}`)
         } else {
           throw new Error(_.get(resp, 'data.pages.move.responseResult.message', this.$t('common:error.unexpected')))
         }
@@ -468,7 +520,7 @@ export default {
       switch (this.mode) {
         case 'view':
         case 'history':
-          window.location.assign(`/${locale.code}/${this.path}`)
+          window.location.assign(`/${this.sitePath}/${locale.code}/${this.path}`)
           break
       }
     },
@@ -476,8 +528,28 @@ export default {
       window.location.assign('/logout')
     },
     goHome () {
-      window.location.assign('/')
+      window.location.assign(`/${this.sitePath}`)
+    },
+    goToSite (path) {
+      window.location.assign(`/${path || ''}`)
+    },
+    async fetchSitesFromUser () {
+      this.$store
+        .dispatch('user/fetchSites', { apolloClient: this.$apollo })
+        .then((response) => {
+          const sitesData = response?.data?.sites
+          this.sites = Object.values(sitesData).map((site) => ({
+            id: site.id,
+            value: site.path,
+            text: site.name
+          }))
+        })
+        .catch((error) => {
+          console.error(error)
+          this.sites = []
+        })
     }
+
   }
 }
 </script>

@@ -164,7 +164,9 @@ export default {
     pageId: get('page/id'),
     permissions: get('page/effectivePermissions@comments'),
     isAuthenticated: get('user/authenticated'),
-    userDisplayName: get('user/name')
+    userDisplayName: get('user/name'),
+    siteId: get('page/siteId'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     onIntersect (entries, observer, isIntersecting) {
@@ -177,9 +179,9 @@ export default {
       try {
         const results = await this.$apollo.query({
           query: gql`
-            query ($locale: String!, $path: String!) {
+            query ($locale: String!, $path: String!, $siteId: String!) {
               comments {
-                list(locale: $locale, path: $path) {
+                list(locale: $locale, path: $path, siteId: $siteId) {
                   id
                   render
                   authorName
@@ -191,7 +193,8 @@ export default {
           `,
           variables: {
             locale: this.$store.get('page/locale'),
-            path: this.$store.get('page/path')
+            path: this.$store.get('page/path'),
+            siteId: this.siteId
           },
           fetchPolicy: 'network-only'
         })
@@ -548,6 +551,108 @@ export default {
       font-size: .85rem;
       font-family: Roboto Mono, monospace;
     }
+    // ---------------------------------
+    // TABLES
+    // ---------------------------------
+
+    table {
+      margin: .5rem 0;
+      border-spacing: 0;
+      border-radius: 5px;
+      border: 1px solid mc('grey', '300');
+
+      @at-root .theme--dark & {
+        border-color: mc('grey', '600');
+      }
+
+      &.dense {
+        td, th {
+          font-size: .85rem;
+          padding: .5rem;
+        }
+      }
+
+      th {
+        padding: .75rem;
+        border-bottom: 2px solid mc('grey', '500');
+        color: mc('grey', '600');
+        background-color: mc('grey', '100');
+
+        @at-root .theme--dark & {
+          background-color: darken(mc('grey', '900'), 8%);
+          border-bottom-color: mc('grey', '600');
+          color: mc('grey', '500');
+        }
+
+        &:first-child {
+          border-top-left-radius: 7px;
+        }
+        &:last-child {
+          border-top-right-radius: 7px;
+        }
+      }
+
+      td {
+        padding: .75rem;
+      }
+
+      tr {
+        td {
+          border-bottom: 1px solid mc('grey', '300');
+          border-right: 1px solid mc('grey', '100');
+
+          @at-root .theme--dark & {
+            border-bottom-color: mc('grey', '700');
+            border-right-color: mc('grey', '800');
+          }
+
+          &:nth-child(even) {
+            background-color: mc('grey', '50');
+
+            @at-root .theme--dark & {
+              background-color: darken(mc('grey', '900'), 4%);
+            }
+          }
+
+          &:last-child {
+            border-right: none;
+          }
+        }
+
+        &:nth-child(even) {
+          td {
+            background-color: mc('grey', '50');
+
+            @at-root .theme--dark & {
+              background-color: darken(mc('grey', '800'), 8%);
+            }
+
+            &:nth-child(even) {
+              background-color: mc('grey', '100');
+
+              @at-root .theme--dark & {
+                background-color: darken(mc('grey', '800'), 10%);
+              }
+            }
+          }
+        }
+
+        &:last-child {
+          td {
+            border-bottom: none;
+
+            &:first-child {
+              border-bottom-left-radius: 7px;
+            }
+            &:last-child {
+              border-bottom-right-radius: 7px;
+            }
+          }
+        }
+      }
+    }
+
   }
 }
+
 </style>

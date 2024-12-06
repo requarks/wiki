@@ -23,7 +23,7 @@ module.exports = class Group extends Model {
   }
 
   static get jsonAttributes() {
-    return ['permissions', 'pageRules']
+    return ['permissions', 'rules']
   }
 
   static get relationMappings() {

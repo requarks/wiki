@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: capwiki-config
+  namespace: dev2
+data:
+  POOL_MIN: "2"
+  POOL_MAX: "10"
+  POOL_ACQUIRE_TIMEOUT: "60000"
+  POOL_CREATE_TIMEOUT: "30000"
+  POOL_IDLE_TIMEOUT: "30000"
+  LOG_LEVEL: debug

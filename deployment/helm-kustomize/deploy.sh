@@ -23,8 +23,8 @@ confirm_deployment() {
 
 # Assign the second argument to NAMESPACE, or set a default value based on ENV_DIR
 case "$ENVIRONMENT" in
-  dev)
-    ENV_DIR="environments/dev"
+  dev2)
+    ENV_DIR="environments/dev2"
     ;;
   dev1)
     ENV_DIR="environments/dev1"

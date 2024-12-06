@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - capwiki-internal-tls-sealed.yaml
   - resources.yaml
+  - capwiki-config.yaml
 
 patchesStrategicMerge:
   - ./patches/ingress.yaml
@@ -39,4 +40,8 @@ patches:
   - target:
       kind: ServiceAccount
       name: capwiki-deploy-sa
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: ServiceAccount
+      name: capwiki-postgresdb
     path: patches/namespace-patch.yaml

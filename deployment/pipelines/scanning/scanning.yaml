@@ -2,8 +2,8 @@ variables:
   TRIVY_VERSION: "latest"
   POSTGRES_IMAGE_NAME: "postgresql"
   CAPWIKI_IMAGE_NAME: "capwiki"
-  POSTGRES_IMAGE: "docker.io/bitnami/postgresql:15.8.0"
-  CAPWIKI_IMAGE: "$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:feature-mar-46-cicd-k8s-healthcheck-rollback"
+  POSTGRES_IMAGE: "bitnami/postgresql:17.1.0-debian-12-r0"
+  CAPWIKI_IMAGE: "$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:latest"
   TRIVY_USERNAME: "$DOCKER_REGISTRY_USER"
   TRIVY_PASSWORD: "$DOCKER_REGISTRY_PASS"
 

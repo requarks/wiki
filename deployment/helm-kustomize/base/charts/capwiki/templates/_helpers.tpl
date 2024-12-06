@@ -80,8 +80,6 @@ Set postgres host
 {{- define "wiki.postgresql.host" -}}
 {{- if .Values.postgresql.enabled -}}
 {{- template "wiki.postgresql.fullname" . -}}
-{{- else -}}
-{{- .Values.postgresql.postgresqlHost | quote -}}
 {{- end -}}
 {{- end -}}
 
@@ -90,7 +88,7 @@ Set postgres secret
 */}}
 {{- define "wiki.postgresql.secret" -}}
 {{- if .Values.postgresql.enabled -}}
-{{-  .Values.postgresql.existingSecret }}
+{{-  .Values.postgresql.auth.existingSecret }}
 {{- else -}}
 {{- template "wiki.fullname" . -}}
 {{- end -}}
@@ -102,7 +100,5 @@ Set postgres secretKey
 {{- define "wiki.postgresql.secretKey" -}}
 {{- if .Values.postgresql.enabled -}}
 "postgresql-password"
-{{- else -}}
-{{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
 {{- end -}}
 {{- end -}}

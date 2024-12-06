@@ -23,12 +23,12 @@ mkdir -p ${BACKUP_DIR}
 # Fetch the PostgreSQL password from the Kubernetes secret in the provided namespace
 POSTGRES_PASSWORD=$(kubectl get secret capwiki-postgresdb-secret -n "$NAMESPACE" -o jsonpath="{.data.postgresql-password}" | base64 --decode)
 
-# Get the pod name with label 'app=postgresql' in the provided namespace
-POD_NAME=$(kubectl get pod -l app=postgresql -n "$NAMESPACE" -o jsonpath="{.items[0].metadata.name}")
+# Get the pod name with label 'app.kubernetes.io/name=postgresql' in the provided namespace
+POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=postgresql -n "$NAMESPACE" -o jsonpath="{.items[0].metadata.name}")
 
 # Check if the pod was found
 if [ -z "$POD_NAME" ]; then
-  echo "Error: No pod with label 'app=postgresql' found in namespace '$NAMESPACE'."
+  echo "Error: No pod with label 'app.kubernetes.io/name=postgresql' found in namespace '$NAMESPACE'."
   exit 1
 fi
 

@@ -1,6 +1,7 @@
 import { make } from 'vuex-pathify'
 import jwt from 'jsonwebtoken'
 import Cookies from 'js-cookie'
+import sitesQuery from 'gql/admin/sites/sites-query-list.gql'
 
 const state = {
   id: 0,
@@ -13,9 +14,11 @@ const state = {
   dateFormat: '',
   appearance: '',
   permissions: [],
+  sitesWithWriteAccess: [],
   iat: 0,
   exp: 0,
-  authenticated: false
+  authenticated: false,
+  sites: []
 }
 
 export default {
@@ -38,12 +41,36 @@ export default {
           st.appearance = jwtData.ap || ''
           // st.defaultEditor = jwtData.defaultEditor
           st.permissions = jwtData.permissions
+          st.sitesWithWriteAccess = jwtData.sitesWithWriteAccess
           st.iat = jwtData.iat
           st.exp = jwtData.exp
           st.authenticated = true
         } catch (err) {
           console.debug('Invalid JWT. Silent authentication skipped.')
         }
+      }
+    },
+    SET_SITES(state, sites) {
+      state.sites = sites
+    }
+  },
+
+  actions: {
+    async fetchSites({ commit }, { apolloClient }) {
+      try {
+        const response = await apolloClient.query({
+          query: sitesQuery,
+          variables: {
+            showAdminOnly: false
+          },
+          fetchPolicy: 'network-only'
+        })
+        const sites = response.data
+
+        commit('SET_SITES', sites)
+        return response
+      } catch (error) {
+        throw error
       }
     }
   }

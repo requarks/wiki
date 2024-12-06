@@ -2,15 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - resources.yaml
+  - capwiki-config.yaml
+  - dev1-capwiki-tls-sealed.yaml
 
 patchesStrategicMerge:
   - ./patches/ingress.yaml
 
 patches:
-  - target:
-      kind: SealedSecret
-      name: account-capwiki-internal-tls
-    path: patches/namespace-patch.yaml
   - target:
       kind: Deployment
       name: capwiki-app
@@ -42,4 +40,8 @@ patches:
   - target:
       kind: ServiceAccount
       name: capwiki-deploy-sa
+    path: patches/namespace-patch.yaml
+  - target:
+      kind: ServiceAccount
+      name: capwiki-postgresdb
     path: patches/namespace-patch.yaml

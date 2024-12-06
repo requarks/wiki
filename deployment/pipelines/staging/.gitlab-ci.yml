@@ -2,6 +2,9 @@ default:
   tags:
     - runner_mar
 
+variables:
+   NEW_IMAGE: "${IMAGE}:${VERSION}"
+   
 stages:
   - setup-deployment
   - deployment
@@ -54,7 +57,7 @@ deployment:
     - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=staging"
     - echo "Deploying application"
     - cd ../kubernetes-helm
-    - ansible-playbook  -i inventory ./playbook-deploy.yml -e "IMAGE=$OLD_IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=staging" -vv
+    - ansible-playbook  -i inventory ./playbook-deploy.yml -e "IMAGE=$IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=staging" -vv
   environment:
     name: $ENVIRONMENT
 
@@ -98,6 +101,6 @@ cleanup:
   needs:
   - deployment
   - rollback
-    
+
 # after_script:
 #   - rm -f /home/mar/.ssh/id_rsa

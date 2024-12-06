@@ -103,7 +103,8 @@ export default {
     locale: get('page/locale'),
     path: get('page/path'),
     mode: get('editor/mode'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     toggleModal(key) {

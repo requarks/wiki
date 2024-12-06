@@ -154,6 +154,15 @@ module.exports = class User extends Model {
     return _.uniq(_.flatten(_.map(this.groups, 'permissions')))
   }
 
+  getAllRules() {
+    return _.flatten(_.flatten(_.map(this.groups, 'rules')))
+  }
+
+  getSitesWithWriteAccess() {
+    return _.uniq(_.flatten(this.getAllRules().filter(rule => rule.roles && rule.roles.includes('write:pages') && rule.deny === false).map(rule => rule.sites)))
+  }
+
+
   getGroups() {
     return _.uniq(_.map(this.groups, 'id'))
   }
@@ -336,7 +345,7 @@ module.exports = class User extends Model {
    */
   static async afterLoginChecks (user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
     // Get redirect target
-    user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
+    user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin', 'rules')
     let redirect = '/'
     if (user.groups && user.groups.length > 0) {
       for (const grp of user.groups) {
@@ -418,7 +427,7 @@ module.exports = class User extends Model {
   static async refreshToken(user) {
     if (_.isSafeInteger(user)) {
       user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
-        builder.select('groups.id', 'permissions')
+        builder.select('groups.id', 'permissions', 'groups.rules')
       })
       if (!user) {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
@@ -429,7 +438,7 @@ module.exports = class User extends Model {
         throw new WIKI.Error.AuthAccountBanned()
       }
     } else if (_.isNil(user.groups)) {
-      user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
+      user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'groups.rules')
     }
 
     // Update Last Login Date
@@ -448,6 +457,7 @@ module.exports = class User extends Model {
         ap: user.appearance,
         // defaultEditor: user.defaultEditor,
         permissions: user.getGlobalPermissions(),
+        sitesWithWriteAccess: user.getSitesWithWriteAccess(),
         groups: user.getGroups()
       }, {
         key: WIKI.config.certs.private,
@@ -499,6 +509,10 @@ module.exports = class User extends Model {
     })
 
     if (usr) {
+      if (!usr.isActive) {
+        throw new WIKI.Error.AuthAccountBanned()
+      }
+      
       await WIKI.models.users.query().patch({
         password: newPassword,
         mustChangePwd: false
@@ -526,6 +540,9 @@ module.exports = class User extends Model {
     }).first()
     if (!usr) {
       WIKI.logger.debug(`Password reset attempt on nonexistant local account ${email}: [DISCARDED]`)
+      return
+    } else if (!usr.isActive) {
+      WIKI.logger.debug(`Password reset attempt on disabled local account ${email}: [DISCARDED]`)
       return
     }
     const resetToken = await WIKI.models.userKeys.generateToken({

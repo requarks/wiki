@@ -113,7 +113,7 @@
                   label
                   :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   v-for='(tag, idx) in tags'
-                  :href='`/t/` + tag.tag'
+                  :href='`/t/` + sitePath + `/` + tag.tag'
                   :key='`tag-` + tag.tag'
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
@@ -121,7 +121,7 @@
                 v-chip.mr-1.mb-1(
                   label
                   :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-                  :href='`/t/` + tags.map(t => t.tag).join(`/`)'
+                  :href='`/t/` + sitePath + `/` + tags.map(t => t.tag).join(`/`)'
                   :aria-label='$t(`common:page.tagsMatching`)'
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
@@ -171,7 +171,7 @@
                     template(v-slot:activator='{ on }')
                       v-btn.btn-animate-edit(
                         icon
-                        :href='"/h/" + locale + "/" + path'
+                        :href='"/h/" + sitePath + "/" + locale + "/" + path'
                         v-on='on'
                         x-small
                         v-if='hasReadHistoryPermission'
@@ -489,6 +489,18 @@ export default {
     filename: {
       type: String,
       default: ''
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -539,7 +551,7 @@ export default {
     breadcrumbs() {
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
         result.push({
-          path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
+          path: _.get(_.last(result), 'path', `/${this.sitePath}/${this.locale}`) + `/${value}`,
           name: value
         })
         return result
@@ -599,6 +611,10 @@ export default {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
     }
 
+    this.$store.set('page/siteId', this.siteId)
+    this.$store.set('page/siteName', this.siteName)
+    this.$store.set('page/sitePath', this.sitePath)
+
     this.$store.set('page/mode', 'view')
   },
   mounted () {
@@ -649,7 +665,7 @@ export default {
   },
   methods: {
     goHome () {
-      window.location.assign('/')
+      window.location.assign(`/${this.sitePath}`)
     },
     toggleNavigation () {
       this.navOpen = !this.navOpen

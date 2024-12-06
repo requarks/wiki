@@ -18,19 +18,19 @@ type UserQuery {
   list(
     filter: String
     orderBy: String
-  ): [UserMinimal] @auth(requires: ["write:users", "manage:users", "manage:system"])
+  ): [UserMinimal] @auth(requires: ["write:users", "manage:users", "manage:system", "manage:sites"])
 
   search(
     query: String!
-  ): [UserMinimal] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
+  ): [UserMinimal] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system", "manage:sites"])
 
   single(
     id: Int!
-  ): User @auth(requires: ["manage:users", "manage:system"])
+  ): User @auth(requires: ["manage:users", "manage:system", "manage:sites"])
 
   profile: UserProfile
 
-  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
+  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------

@@ -16,10 +16,10 @@ set -e
 SERVICE=${3:-capwiki-app}
 DB_USER=${4:-postgres}
 DATABASE=${5:-wiki}
-CONTAINER_NAME=${6:-capwiki-postgresdb}
+CONTAINER_NAME=${6:-postgresql}
 
-# Get the pod name with label 'app=postgresql' in the provided namespace
-DB_POD_NAME=$(kubectl get pod -l app=postgresql -n "$NAMESPACE" -o jsonpath="{.items[0].metadata.name}")
+# Get the pod name with label 'app.kubernetes.io/name=postgresql' in the provided namespace
+DB_POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=postgresql -n "$NAMESPACE" -o jsonpath="{.items[0].metadata.name}")
 
 
 # Fetch the PostgreSQL password from the Kubernetes secret in the provided namespace

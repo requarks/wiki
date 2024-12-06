@@ -18,11 +18,13 @@ type AssetQuery {
   list(
     folderId: Int!
     kind: AssetKind!
-  ): [AssetItem] @auth(requires: ["manage:system", "read:assets"])
+    siteId: String!
+  ): [AssetItem] @auth(requires: ["manage:system", "read:assets", "manage:sites"])
 
   folders(
     parentFolderId: Int!
-  ): [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
+    siteId: String!
+  ): [AssetFolder] @auth(requires: ["manage:system", "read:assets", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -34,16 +36,17 @@ type AssetMutation {
     parentFolderId: Int!
     slug: String!
     name: String
-  ): DefaultResponse @auth(requires: ["manage:system", "write:assets"])
+    siteId: String!
+  ): DefaultResponse @auth(requires: ["manage:system", "write:assets", "manage:sites"])
 
   renameAsset(
     id: Int!
     filename: String!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets", "manage:sites"])
 
   deleteAsset(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets", "manage:sites"])
 
   flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -63,13 +66,15 @@ type AssetItem {
   createdAt: Date!
   updatedAt: Date!
   folder: AssetFolder
-  author: User
+  author: User,
+  siteId: String
 }
 
 type AssetFolder {
   id: Int!
   slug: String!
-  name: String
+  name: String,
+  siteId: String
 }
 
 enum AssetKind {

@@ -2,6 +2,9 @@ default:
   tags:
     - runner_mar
 
+variables:
+   NEW_IMAGE: "${IMAGE}:$CI_COMMIT_SHORT_SHA"
+
 stages:
   - setup-deployment
   - deployment
@@ -53,10 +56,13 @@ deployment:
     - cd ./deployment/infra-provisioning
     - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=dev2"
     - echo "Deploying application"
+    - echo "Image is $IMAGE"
+    - echo "NEW_IMAGE is $NEW_IMAGE"
     - cd ../kubernetes-helm
-    - ansible-playbook -i inventory ./playbook-deploy.yml -e "IMAGE=$OLD_IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=dev2" -vv
+    - ansible-playbook -i inventory ./playbook-deploy.yml -e "IMAGE=$IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=dev2" -vv
   environment:
     name: $ENVIRONMENT
+
 
 monitoring:
   stage: monitoring
@@ -78,10 +84,10 @@ rollback:
   script:
     - |
       ssh deployer@de-muc-mar2.apps.ce.capgemini.com << 'EOF'
-      DEPLOY_AVAILABLE=$(kubectl describe deploy capwiki-app -n dev | grep -i available | grep -i "1 available" | wc -l)
+      DEPLOY_AVAILABLE=$(kubectl describe deploy capwiki-app -n dev2 | grep -i available | grep -i "1 available" | wc -l)
       if [ "$DEPLOY_AVAILABLE" -eq 0 ]; then
         echo "Deployment is unavailable, rolling back to the previous version"
-        kubectl rollout undo deployment/capwiki-app -n dev
+        kubectl rollout undo deployment/capwiki-app -n dev2
         echo "Rollback complete."
       else
         echo "Deployment is available, no rollback needed."
