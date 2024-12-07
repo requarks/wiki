@@ -11,21 +11,7 @@
   "customizations": {
     "vscode": {
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "zsh",
-        "sqltools.connections": [
-          // Default connection to dev DB container
-          {
-              "name": "Local Dev",
-              "server": "db",
-              "port": 5432,
-              "database": "postgres",
-              "username": "postgres",
-              "password": "postgres",
-              "driver": "PostgreSQL",
-              "askForPassword": false,
-              "connectionTimeout": 60
-          }
-        ]
+        "terminal.integrated.defaultProfile.linux": "zsh"
       },
       "extensions": [
         "arcanis.vscode-zipfs",
@@ -66,11 +52,16 @@
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "node",
 	"features": {
-    "common": {
-      "installZsh": true,
-      "installOhMyZsh": true,
-      "upgradePackages": true
+    "ghcr.io/devcontainers/features/common-utils:2": {
+			"installZsh": "true",
+      "installOhMyZsh": "true",
+			"username": "node",
+			"upgradePackages": "true"
+		},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "none"
     },
-		"github-cli": "latest"
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/joedmck/devcontainer-features/cloudflared:1": {}
 	}
 }
