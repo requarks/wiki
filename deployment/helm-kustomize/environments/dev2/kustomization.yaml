@@ -45,3 +45,7 @@ patches:
   target:
     kind: ServiceAccount
     name: capwiki-postgresdb
+images:
+- name: docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki
+  newName: docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki
+  newTag: latest-staging

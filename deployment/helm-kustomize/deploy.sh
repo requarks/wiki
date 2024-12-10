@@ -9,6 +9,7 @@ fi
 ENVIRONMENT=$1
 IMAGE=$2
 NEW_IMAGE_WITH_TAG=$3
+NAMESPACE='capwiki'
 
 
 confirm_deployment() {
@@ -62,13 +63,13 @@ else
 
 fi
 
-kubectl create namespace $ENVIRONMENT
+kubectl create namespace $NAMESPACE
 
-kubectl create -n $ENVIRONMENT secret generic capwiki-postgresdb-secret --from-literal=postgresql-password=$(openssl rand -base64 16) --dry-run=client -o yaml | kubeseal > postgresdb-secret.yaml
+kubectl create -n $NAMESPACE secret generic capwiki-postgresdb-secret --from-literal=postgresql-password=$(openssl rand -base64 16) --dry-run=client -o yaml | kubeseal > postgresdb-secret.yaml
 kubectl create -f postgresdb-secret.yaml
 rm postgresdb-secret.yaml
 
 kubectl kustomize  > kustomized_resources.yaml
-kubectl apply -f kustomized_resources.yaml
+#kubectl apply -f kustomized_resources.yaml
 rm resources.yaml
-rm kustomized_resources.yaml
+#rm kustomized_resources.yaml

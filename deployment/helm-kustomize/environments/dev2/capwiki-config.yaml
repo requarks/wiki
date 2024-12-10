@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: capwiki-config
-  namespace: dev2
+  namespace: capwiki
 data:
   POOL_MIN: "2"
   POOL_MAX: "10"
