@@ -4,6 +4,10 @@ default:
 
 variables:
    NEW_IMAGE: "${IMAGE}:${VERSION}"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
    
 stages:
   - setup-deployment
@@ -47,6 +51,7 @@ setup-deployment:
           exit 1
         fi
       EOF
+
 
 deployment:
   stage: deployment
@@ -102,5 +107,3 @@ cleanup:
   - deployment
   - rollback
 
-# after_script:
-#   - rm -f /home/mar/.ssh/id_rsa
