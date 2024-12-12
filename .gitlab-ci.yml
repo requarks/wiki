@@ -41,6 +41,7 @@ variables:
       - "false"
     description: "Choose false to skip code quality check"
 
+
 default:
   tags:
     - runner_mar
@@ -104,7 +105,7 @@ modify_package_json:
 
     # Conditionally run this script only in staging or production environments
     - |
-      if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production" ]]; then
+      if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production"  || $CI_COMMIT_REF_NAME == "develop" || ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)\/ ) ]]; then
         echo "Modify package json dev mode to false for $ENVIRONMENT"
         node ./modify-app-dev-mode.js false
       else
@@ -121,22 +122,24 @@ modify_package_json:
   artifacts:
     paths:
       - package.json
+      
 
 build-docker-image:
   stage: docker-build
   before_script:
-    - |
+    - | 
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-     
-      if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
-        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ) ]]; then
+
+       if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
+        if [[ "$CI_COMMIT_BRANCH" == "develop" ||  "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" = "develop"  ||  "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
           ENVIRONMENT="staging"
-        elif [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" ]]; then
+        elif [[ "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" == "main" && "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" == "develop" ]]; then
           ENVIRONMENT="production"
         fi
       fi
-      echo "environment is $ENVIRONMENT"
-      
+
+      echo "Building Docker image for environment: $ENVIRONMENT"
+     
       if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
       elif [[ "$ENVIRONMENT" == "staging" ]]; then
@@ -167,7 +170,6 @@ build-docker-image:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: always
-
 
 push-docker-image:
   stage: docker-push
@@ -219,7 +221,7 @@ staging-pipeline:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: ($ENVIRONMENT == "staging" && $CI_COMMIT_REF_NAME == "develop") || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"
+    - if: ($ENVIRONMENT == "staging" && $CI_COMMIT_REF_NAME == "develop") || $CI_COMMIT_REF_NAME == "develop" || ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// )
       when: on_success
 
 

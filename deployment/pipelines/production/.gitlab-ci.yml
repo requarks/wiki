@@ -6,6 +6,10 @@ variables:
    NEW_IMAGE: "${IMAGE}:${VERSION}"
    STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+
 stages:
   - setup-deployment
   - promote-release-version

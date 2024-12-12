@@ -5,6 +5,10 @@ default:
 variables:
    NEW_IMAGE: "${IMAGE}:$CI_COMMIT_SHORT_SHA"
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+
 stages:
   - setup-deployment
   - deployment
