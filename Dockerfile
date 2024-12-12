@@ -47,7 +47,10 @@ COPY --chown=node:node ./LICENSE ./LICENSE
 USER root
 
 ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
-RUN chmod 644 /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem && update-ca-certificates
+
+RUN apk add --no-cache ca-certificates && \
+    chmod 644 /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem && \
+    update-ca-certificates
 
 USER node
 

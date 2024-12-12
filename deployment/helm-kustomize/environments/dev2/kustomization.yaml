@@ -15,6 +15,10 @@ patches:
     name: capwiki-app
 - path: patches/namespace-patch.yaml
   target:
+    kind: PersistentVolumeClaim
+    name: longhorn-shared-cache-pvc
+- path: patches/namespace-patch.yaml
+  target:
     kind: Ingress
     name: capwiki-ingress
 - path: patches/namespace-patch.yaml
@@ -45,7 +49,3 @@ patches:
   target:
     kind: ServiceAccount
     name: capwiki-postgresdb
-images:
-- name: docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki
-  newName: docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki
-  newTag: latest-staging

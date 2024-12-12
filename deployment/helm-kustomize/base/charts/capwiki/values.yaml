@@ -105,9 +105,14 @@ tolerations: []
 
 affinity: {}
 
-volumeMounts: []
+volumeMounts:
+  - name: shared-cache
+    mountPath: /wiki/data/cache
 
-volumes: []
+volumes: 
+  - name: shared-cache
+    persistentVolumeClaim:
+      claimName: longhorn-shared-cache-pvc
 
 # This will allow us to install locales even without internet access using a initContainer & Wiki.js "sideloading"
 sideload:

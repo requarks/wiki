@@ -70,6 +70,6 @@ kubectl create -f postgresdb-secret.yaml
 rm postgresdb-secret.yaml
 
 kubectl kustomize  > kustomized_resources.yaml
-#kubectl apply -f kustomized_resources.yaml
+kubectl apply -f kustomized_resources.yaml
 rm resources.yaml
-#rm kustomized_resources.yaml
+rm kustomized_resources.yaml
