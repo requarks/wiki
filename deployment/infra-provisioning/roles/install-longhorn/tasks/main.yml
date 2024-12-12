@@ -1,0 +1,25 @@
+---
+- name: Add Longhorn Helm repository
+  ansible.builtin.command:
+    cmd: helm repo add longhorn https://charts.longhorn.io
+  register: add_repo
+  changed_when: "'repository' in add_repo.stdout"
+
+- name: Update Helm repositories
+  ansible.builtin.command:
+    cmd: helm repo update
+
+- name: Check if Longhorn is installed
+  ansible.builtin.command:
+    cmd: helm list -n longhorn-system
+  register: helm_list
+  failed_when: false
+
+- name: Install Longhorn
+  ansible.builtin.command:
+    cmd: >
+      helm install longhorn longhorn/longhorn
+      --namespace longhorn-system
+      --create-namespace
+      --version 1.7.2
+  when: "'longhorn' not in helm_list.stdout"

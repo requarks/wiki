@@ -23,7 +23,7 @@ variables:
       - "no"
     description: "Deploy monitoring"
   VERSION:
-    value: "v2.0.0"
+    value: "1.0.0"
     description: "Specify the version [ONLY USED FOR STAGING or PRODUCTION]"
   MESSAGE:
     value: ""

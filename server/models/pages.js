@@ -623,7 +623,7 @@ module.exports = class Page extends Model {
    */
   static convertSingleDiagramElement(diagramElem) {
     const $ = cheerio.load(diagramElem)
-    const $svg = $('.diagram')?.find('svg');
+    const $svg = $('.diagram')?.find('svg')
     if (!$svg) {
       throw new Error('Did not find SVG element to convert.')
     }
@@ -794,7 +794,7 @@ module.exports = class Page extends Model {
         })
 
         td.addRule('diagram', {
-          filter: (n, o) =>{
+          filter: (n, o) => {
             return n.nodeName === 'IMG' && n.getAttribute('src').startsWith('data:image/svg+xml;base64')
           },
           replacement: (c, n) => {
@@ -804,7 +804,7 @@ module.exports = class Page extends Model {
             if (!markdownDiagram.endsWith('\n')) {
               markdownDiagram = markdownDiagram + '\n'
             }
-            return `\`\`\`diagram\n${ markdownDiagram }\`\`\`\n`
+            return `\`\`\`diagram\n${markdownDiagram}\`\`\`\n`
           }
         })
 
@@ -926,12 +926,12 @@ module.exports = class Page extends Model {
       versionDate: page.updatedAt
     })
 
-    const destinationHash = pageHelper.generateHash({
-      siteId: opts.siteId,
-      path: opts.destinationPath,
-      locale: opts.destinationLocale,
-      privateNS: opts.isPrivate ? 'TODO' : ''
-    })
+    const destinationHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId,
+      opts.destinationPath,
+      opts.destinationLocale,
+      opts.isPrivate
+    )
 
     // -> Move page
     const destinationTitle =
@@ -1194,8 +1194,7 @@ module.exports = class Page extends Model {
    */
   static async getPage(opts) {
     // -> Get from cache first
-    // let page = await WIKI.models.pages.getPageFromCache(opts)
-    let page
+    let page = await WIKI.models.pages.getPageFromCache(opts)
     if (!page) {
       // -> Get from DB
       page = await WIKI.models.pages.getPageFromDb(opts)
@@ -1378,6 +1377,7 @@ module.exports = class Page extends Model {
       let page = WIKI.models.pages.cacheSchema.decode(pageBuffer)
       return {
         ...page,
+        siteId: opts.siteId,
         path: opts.path,
         localeCode: opts.locale,
         isPrivate: opts.isPrivate

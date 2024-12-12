@@ -40,9 +40,9 @@
       failed_when: "'Ready' not in k3s_status.stdout"
       changed_when: false
 
-    # - name: Deploy application using kustomized helm chart
-    #   ansible.builtin.shell: |
-    #     cd /home/{{ username }}/{{ target_dir_helm_kustomize }}
-    #     ./deploy.sh {{ env }} {{ IMAGE }} {{ NEW_IMAGE_WITH_TAG }}
-    #   register: kustomize_deploy
-    #   failed_when: kustomize_deploy.rc != 0
+    - name: Deploy application using kustomized helm chart
+      ansible.builtin.shell: |
+        cd /home/{{ username }}/{{ target_dir_helm_kustomize }}
+        ./deploy.sh {{ env }} {{ IMAGE }} {{ NEW_IMAGE_WITH_TAG }}
+      register: kustomize_deploy
+      failed_when: kustomize_deploy.rc != 0

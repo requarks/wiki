@@ -252,7 +252,7 @@ module.exports = {
 
     WIKI.auth.subscribeToEvents()
     WIKI.configSvc.subscribeToEvents()
-    WIKI.models.pages.subscribeToEvents()
+    // WIKI.models.pages.subscribeToEvents() replaced with shared persistence volume
 
     WIKI.logger.info(`High-Availability Listener initialized successfully: [ OK ]`)
   },
