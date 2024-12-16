@@ -491,7 +491,6 @@ export default {
             id: this.$store.get('page/id'),
             destinationLocale: locale,
             destinationPath: path
-            // TODO: Add siteId
           }
         })
         if (_.get(resp, 'data.pages.move.responseResult.succeeded', false)) {
