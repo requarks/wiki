@@ -1,0 +1,51 @@
+{{- if and (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") .Values.repoServer.metrics.enabled .Values.repoServer.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "argo-cd.repoServer.fullname" . }}
+  namespace: {{ default (include  "argo-cd.namespace" .) .Values.repoServer.metrics.serviceMonitor.namespace | quote }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.repoServer.name "name" .Values.repoServer.name) | nindent 4 }}
+    {{- with .Values.repoServer.metrics.serviceMonitor.selector }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.repoServer.metrics.serviceMonitor.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.repoServer.metrics.serviceMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+    - port: {{ .Values.repoServer.metrics.service.portName }}
+      {{- with .Values.repoServer.metrics.serviceMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+      {{- with .Values.repoServer.metrics.serviceMonitor.scrapeTimeout }}
+      scrapeTimeout: {{ . }}
+      {{- end }}
+      path: /metrics
+      {{- with .Values.repoServer.metrics.serviceMonitor.relabelings }}
+      relabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.repoServer.metrics.serviceMonitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.repoServer.metrics.serviceMonitor.scheme }}
+      honorLabels: {{ .Values.repoServer.metrics.serviceMonitor.honorLabels }}
+      scheme: {{ . }}
+      {{- end }}
+      {{- with .Values.repoServer.metrics.serviceMonitor.tlsConfig }}
+      tlsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ include "argo-cd.namespace" . }}
+  selector:
+    matchLabels:
+      {{- include "argo-cd.selectorLabels" (dict "context" . "component" .Values.repoServer.name "name" (printf "%s-metrics" .Values.repoServer.name)) | nindent 6 }}
+{{- end }}

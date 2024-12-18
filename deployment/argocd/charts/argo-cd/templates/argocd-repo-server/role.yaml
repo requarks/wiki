@@ -1,0 +1,13 @@
+{{- if .Values.repoServer.serviceAccount.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "argo-cd.repoServer.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.repoServer.name "name" .Values.repoServer.name) | nindent 4 }}
+rules:
+{{- if .Values.repoServer.rbac }}
+{{toYaml .Values.repoServer.rbac }}
+{{- end }}
+{{- end }}

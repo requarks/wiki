@@ -1,0 +1,39 @@
+{{- if .Values.applicationSet.certificate.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  {{- with (mergeOverwrite (deepCopy .Values.global.certificateAnnotations) .Values.applicationSet.certificate.annotations) }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  name: {{ template "argo-cd.applicationSet.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.applicationSet.name "name" .Values.applicationSet.name) | nindent 4 }}
+spec:
+  secretName: argocd-applicationset-controller-tls
+  commonName: {{ .Values.applicationSet.certificate.domain | default .Values.global.domain }}
+  dnsNames:
+    - {{ .Values.applicationSet.certificate.domain | default .Values.global.domain }}
+    {{- range .Values.applicationSet.certificate.additionalHosts }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- with .Values.applicationSet.certificate.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.applicationSet.certificate.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
+  issuerRef:
+    {{- with .Values.applicationSet.certificate.issuer.group }}
+    group: {{ . | quote }}
+    {{- end }}
+    kind: {{ .Values.applicationSet.certificate.issuer.kind | quote }}
+    name: {{ .Values.applicationSet.certificate.issuer.name | quote }}
+  {{- with .Values.applicationSet.certificate.privateKey }}
+  privateKey:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

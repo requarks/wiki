@@ -1,0 +1,35 @@
+{{- if .Values.controller.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "argo-cd.controller.fullname" . }}-metrics
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.controller.name "name" "metrics") | nindent 4 }}
+    {{- with .Values.controller.metrics.service.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.controller.metrics.service.annotations .Values.global.addPrometheusAnnotations }}
+  annotations:
+    {{- if .Values.global.addPrometheusAnnotations }}
+    prometheus.io/port: {{ .Values.controller.metrics.service.servicePort | quote }}
+    prometheus.io/scrape: "true"
+    {{- end }}
+    {{- range $key, $value := .Values.controller.metrics.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.controller.metrics.service.type }}
+  {{- if and .Values.controller.metrics.service.clusterIP (eq .Values.controller.metrics.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.controller.metrics.service.clusterIP }}
+  {{- end }}
+  {{- include "argo-cd.dualStack" . | indent 2 }}
+  ports:
+  - name: {{ .Values.controller.metrics.service.portName }}
+    protocol: TCP
+    port: {{ .Values.controller.metrics.service.servicePort }}
+    targetPort: metrics
+  selector:
+    {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.controller.name) | nindent 4 }}
+{{- end }}

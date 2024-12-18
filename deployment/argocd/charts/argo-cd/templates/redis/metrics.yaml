@@ -1,0 +1,35 @@
+{{- $redisHa := (index .Values "redis-ha") -}}
+{{- if and .Values.redis.enabled (not $redisHa.enabled) .Values.redis.metrics.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "argo-cd.redis.fullname" . }}-metrics
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.redis.name "name" .Values.redis.name) | nindent 4 }}
+    {{- with .Values.redis.metrics.service.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.redis.metrics.service.annotations .Values.global.addPrometheusAnnotations }}
+  annotations:
+    {{- if .Values.global.addPrometheusAnnotations }}
+    prometheus.io/port: {{ .Values.redis.metrics.service.servicePort | quote }}
+    prometheus.io/scrape: "true"
+    {{- end }}
+    {{- range $key, $value := .Values.redis.metrics.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.redis.metrics.service.type }}
+  {{- if and .Values.redis.metrics.service.clusterIP (eq .Values.redis.metrics.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.redis.metrics.service.clusterIP }}
+  {{- end }}
+  ports:
+    - name: {{ .Values.redis.metrics.service.portName }}
+      protocol: TCP
+      port: {{ .Values.redis.metrics.service.servicePort }}
+      targetPort: metrics
+  selector:
+    {{- include "argo-cd.selectorLabels" (dict "context" . "component" .Values.redis.name "name" .Values.redis.name) | nindent 4 }}
+{{- end }}

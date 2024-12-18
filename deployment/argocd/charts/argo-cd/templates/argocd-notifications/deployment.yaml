@@ -1,0 +1,207 @@
+{{- if .Values.notifications.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with (mergeOverwrite (deepCopy .Values.global.deploymentAnnotations) .Values.notifications.deploymentAnnotations) }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  name: {{ include "argo-cd.notifications.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.notifications.name "name" .Values.notifications.name) | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: {{ .Values.global.revisionHistoryLimit }}
+  {{- with include "argo-cd.strategy" (mergeOverwrite (deepCopy .Values.global.deploymentStrategy) .Values.notifications.deploymentStrategy) }}
+  strategy:
+    {{- trim . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.notifications.name) | nindent 6 }}
+  template:
+    metadata:
+      {{- with (mergeOverwrite (deepCopy .Values.global.podAnnotations) .Values.notifications.podAnnotations) }}
+      annotations:
+        {{- range $key, $value := . }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+      labels:
+        {{- include "argo-cd.labels" (dict "context" . "component" .Values.notifications.name "name" .Values.notifications.name) | nindent 8 }}
+        {{- with (mergeOverwrite (deepCopy .Values.global.podLabels) .Values.notifications.podLabels) }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.notifications.runtimeClassName | default .Values.global.runtimeClassName }}
+      runtimeClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.notifications.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.notifications.priorityClassName | default .Values.global.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- if .Values.notifications.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.notifications.terminationGracePeriodSeconds }}
+      {{- end }}
+      serviceAccountName: {{ include "argo-cd.notifications.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.notifications.automountServiceAccountToken }}
+      containers:
+        - name: {{ .Values.notifications.name }}
+          image: {{ default .Values.global.image.repository .Values.notifications.image.repository }}:{{ default (include "argo-cd.defaultTag" .) .Values.notifications.image.tag }}
+          imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.notifications.image.imagePullPolicy }}
+          args:
+            - /usr/local/bin/argocd-notifications
+            - --metrics-port={{ .Values.notifications.containerPorts.metrics }}
+            - --loglevel={{ default .Values.global.logging.level .Values.notifications.logLevel }}
+            - --logformat={{ default .Values.global.logging.format .Values.notifications.logFormat }}
+            - --namespace={{ include "argo-cd.namespace" . }}
+            - --argocd-repo-server={{ template "argo-cd.repoServer.fullname" . }}:{{ .Values.repoServer.service.port }}
+            - --secret-name={{ .Values.notifications.secret.name }}
+            {{- range .Values.notifications.extraArgs }}
+            - {{ . | squote }}
+            {{- end }}
+          env:
+            {{- with (concat .Values.global.env .Values.notifications.extraEnv) }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            - name: ARGOCD_NOTIFICATIONS_CONTROLLER_LOGLEVEL
+              valueFrom:
+                configMapKeyRef:
+                  key: notificationscontroller.log.level
+                  name: argocd-cmd-params-cm
+                  optional: true
+            - name: ARGOCD_NOTIFICATIONS_CONTROLLER_LOGFORMAT
+              valueFrom:
+                configMapKeyRef:
+                  key: notificationscontroller.log.format
+                  name: argocd-cmd-params-cm
+                  optional: true
+            - name: ARGOCD_APPLICATION_NAMESPACES
+              valueFrom:
+                configMapKeyRef:
+                  key: application.namespaces
+                  name: argocd-cmd-params-cm
+                  optional: true
+            - name: ARGOCD_NOTIFICATION_CONTROLLER_SELF_SERVICE_NOTIFICATION_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  key: notificationscontroller.selfservice.enabled
+                  name: argocd-cmd-params-cm
+                  optional: true
+            - name: ARGOCD_NOTIFICATION_CONTROLLER_REPO_SERVER_PLAINTEXT
+              valueFrom:
+                configMapKeyRef:
+                  key: notificationscontroller.repo.server.plaintext
+                  name: argocd-cmd-params-cm
+                  optional: true
+          {{- with .Values.notifications.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+          - name: metrics
+            containerPort: {{ .Values.notifications.containerPorts.metrics }}
+            protocol: TCP
+          {{- if .Values.notifications.livenessProbe.enabled }}
+          livenessProbe:
+            tcpSocket:
+              port: metrics
+            initialDelaySeconds: {{ .Values.notifications.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.notifications.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.notifications.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.notifications.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.notifications.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.notifications.readinessProbe.enabled }}
+          readinessProbe:
+            tcpSocket:
+              port: metrics
+            initialDelaySeconds: {{ .Values.notifications.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.notifications.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.notifications.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.notifications.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.notifications.readinessProbe.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.notifications.resources | nindent 12 }}
+          {{- with .Values.notifications.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          workingDir: /app
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /app/config/tls
+            - name: argocd-repo-server-tls
+              mountPath: /app/config/reposerver/tls
+            {{- with .Values.notifications.extraVolumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.notifications.extraContainers }}
+          {{- tpl (toYaml . ) $ | nindent 8 }}
+        {{- end }}
+      {{- with .Values.notifications.initContainers }}
+      initContainers:
+        {{- tpl (toYaml . ) $ | nindent 8 }}
+      {{- end }}
+      {{- with include "argo-cd.affinity" (dict "context" . "component" .Values.notifications) }}
+      affinity:
+        {{- trim . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.notifications.nodeSelector | default .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.notifications.tolerations | default .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.notifications.topologySpreadConstraints | default .Values.global.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- range $constraint := . }}
+      - {{ toYaml $constraint | nindent 8 | trim }}
+          {{- if not $constraint.labelSelector }}
+        labelSelector:
+          matchLabels:
+            {{- include "argo-cd.selectorLabels" (dict "context" $ "name" $.Values.notifications.name) | nindent 12 }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      volumes:
+        {{- with .Values.notifications.extraVolumes }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        - name: tls-certs
+          configMap:
+            name: argocd-tls-certs-cm
+        - name: argocd-repo-server-tls
+          secret:
+            secretName: argocd-repo-server-tls
+            optional: true
+            items:
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+            - key: ca.crt
+              path: ca.crt
+      {{- with .Values.notifications.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      dnsPolicy: {{ .Values.notifications.dnsPolicy }}
+{{- end }}

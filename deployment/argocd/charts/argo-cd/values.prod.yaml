@@ -1,0 +1,21 @@
+global:
+  domain: argocd-capwiki.corp.capgemini.com
+
+configs:
+  cm:
+    kustomize.buildOptions: --enable-helm
+  params:
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    extraTls:
+    - hosts:
+      - argocd-capwiki.corp.capgemini.com
+      secretName: argo-server-tls
+

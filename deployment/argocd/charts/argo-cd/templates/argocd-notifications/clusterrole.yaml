@@ -1,0 +1,52 @@
+{{- if and .Values.notifications.enabled .Values.createClusterRoles }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "argo-cd.notifications.fullname" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.notifications.name "name" .Values.notifications.name) | nindent 4 }}
+rules:
+  {{- with .Values.notifications.clusterRoleRules.rules }}
+    {{- toYaml . | nindent 2 }}
+  {{- end }}
+  - apiGroups:
+    - argoproj.io
+    resources:
+    - applications
+    - appprojects
+    verbs:
+    - get
+    - list
+    - watch
+    - update
+    - patch
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    - secrets
+    verbs:
+    - list
+    - watch
+    {{- if (index .Values.configs.params "application.namespaces") }}
+    - create
+    {{- end }}
+  {{- if .Values.notifications.cm.create }}
+  - apiGroups:
+    - ""
+    resourceNames:
+    - argocd-notifications-cm
+    resources:
+    - configmaps
+    verbs:
+    - get
+  {{- end }}
+  - apiGroups:
+    - ""
+    resourceNames:
+    - {{ .Values.notifications.secret.name }}
+    resources:
+    - secrets
+    verbs:
+    - get
+{{- end }}

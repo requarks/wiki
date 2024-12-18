@@ -1,0 +1,65 @@
+#example to deploy on staging: ansible-playbook argocd-playbook.yaml -i inventory  -e hostname=staging -vv
+## on dev2 :  ansible-playbook argocd-playbook.yaml -i inventory  -e hostname=dev2 -vv
+---
+- name: Deploy Argo CD setup
+  hosts: "{{ env }}"
+  become: false  # Use the specified user privileges
+  vars:
+    username: "deployer"
+    kubeconfig_path: /etc/rancher/k3s/k3s.yaml
+  tasks:
+    - name: Create target directory for Argo CD configuration
+      ansible.builtin.file:
+        path: "/home/{{ username }}/argocd"
+        state: directory
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Copy "argo-cd" Helm chart to the target dircetory
+      ansible.builtin.copy:
+        src: "../charts"
+        dest: "/home/{{ username }}/argocd/"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Deploy Kubernetes manifests
+      ansible.builtin.shell: |
+        cd /home/{{ username }}/argocd
+        ./deploy-argo.sh {{ env }}
+
+    - name: Deploy Helm chart
+      kubernetes.core.helm:
+        release_name: "argo-cd"
+        namespace: "argocd"
+        chart_ref: "/home/{{ username }}/argocd/charts/argo-cd"
+        kubeconfig: "{{ kubeconfig_path }}"
+        create_namespace: true
+        set_values:
+          - value: crds.install=false
+        state: present
+        values_files:
+          - "/home/{{ username }}/argocd/charts/argo-cd/values.{{ env }}.yaml"
+
+    - name: Copy provisioning manifests to the target dircetory
+      ansible.builtin.copy:
+        src: "../argocd-provisioning-manifests"
+        dest: "/home/{{ username }}/argocd/"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Copy deploy-argo bash script to the target dircetory
+      ansible.builtin.copy:
+        src: "../deploy-argo.sh"
+        dest: "/home/{{ username }}/argocd/"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Cleanup Argo CD files after deployment
+      ansible.builtin.file:
+        path: "/home/{{ username }}/argocd"
+        state: absent
+

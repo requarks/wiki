@@ -1,0 +1,32 @@
+{{- if and .Values.global.networkPolicy.create .Values.dex.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.dex.name "name" .Values.dex.name) | nindent 4 }}
+  name: {{ template "argo-cd.dex.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+spec:
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.server.name) | nindent 10 }}
+    ports:
+    - port: http
+      protocol: TCP
+    - port: grpc
+      protocol: TCP
+  {{- if .Values.dex.metrics.enabled }}
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - port: metrics
+      protocol: TCP
+  {{- end }}
+  podSelector:
+    matchLabels:
+      {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.dex.name) | nindent 6 }}
+  policyTypes:
+  - Ingress
+{{- end }}

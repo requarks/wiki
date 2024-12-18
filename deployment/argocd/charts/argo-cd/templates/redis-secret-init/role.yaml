@@ -1,0 +1,27 @@
+{{- if and .Values.redisSecretInit.enabled (not .Values.externalRedis.host) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.redisSecretInit.name "name" .Values.redisSecretInit.name) | nindent 4 }}
+  name: {{ include "argo-cd.redisSecretInit.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . | quote }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - argocd-redis
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+{{- end }}

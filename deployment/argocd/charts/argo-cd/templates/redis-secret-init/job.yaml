@@ -1,0 +1,70 @@
+{{- if and .Values.redisSecretInit.enabled (not .Values.externalRedis.host) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "argo-cd.redisSecretInit.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . | quote }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+    {{- range $key, $value := .Values.redisSecretInit.jobAnnotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.redisSecretInit.name "name" .Values.redisSecretInit.name) | nindent 4 }}
+spec:
+  ttlSecondsAfterFinished: 60
+  template:
+    metadata:
+      labels:
+        {{- include "argo-cd.labels" (dict "context" . "component" .Values.redisSecretInit.name "name" .Values.redisSecretInit.name) | nindent 8 }}
+        {{- with (mergeOverwrite (deepCopy .Values.global.podLabels) .Values.redisSecretInit.podLabels) }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with (mergeOverwrite (deepCopy .Values.global.podAnnotations) .Values.redisSecretInit.podAnnotations) }}
+      annotations:
+        {{- range $key, $value := . }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- with .Values.redisSecretInit.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - command:
+          - argocd
+          - admin
+          - redis-initial-password
+        image: {{ default .Values.global.image.repository .Values.redisSecretInit.image.repository }}:{{ default (include "argo-cd.defaultTag" .) .Values.redisSecretInit.image.tag }}
+        imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.redisSecretInit.image.imagePullPolicy }}
+        name: secret-init
+        resources:
+          {{- toYaml .Values.redisSecretInit.resources | nindent 10 }}
+        {{- with .Values.redisSecretInit.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.redisSecretInit.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redisSecretInit.priorityClassName | default .Values.global.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      restartPolicy: OnFailure
+      {{- with include "argo-cd.affinity" (dict "context" . "component" .Values.redisSecretInit) }}
+      affinity:
+        {{- trim . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redisSecretInit.nodeSelector | default .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redisSecretInit.tolerations | default .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "argo-cd.redisSecretInit.serviceAccountName" . }}
+{{- end }}
