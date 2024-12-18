@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: capwiki
+  namespace: argocd
+spec:
+  project: capwiki
+  source:
+    repoURL: >-
+      https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/CapWiki/capwiki-deployment.git
+    path: manifests/stage
+    targetRevision: main
+    kustomize:
+      namespace: capwiki
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: capwiki
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+

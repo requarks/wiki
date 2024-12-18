@@ -1,0 +1,79 @@
+{{- if .Values.createClusterRoles }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "argo-cd.server.fullname" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.server.name "name" .Values.server.name) | nindent 4 }}
+rules:
+  {{- if .Values.server.clusterRoleRules.enabled }}
+    {{- toYaml .Values.server.clusterRoleRules.rules | nindent 2 }}
+  {{- else }}
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - delete  # supports deletion a live object in UI
+      - get     # supports viewing live object manifest in UI
+      - patch   # supports `argocd app patch`
+      - list    # supports `argocd appset generate` with cluster generator
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - list    # supports listing events in UI
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - pods/log
+    verbs:
+      - get     # supports viewing pod logs from UI
+  {{- if eq (toString (index .Values.configs.cm "exec.enabled")) "true" }}
+  - apiGroups:
+      - ""
+    resources:
+      - pods/exec
+    verbs:
+      - create
+  {{- end }}
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - applications
+      - applicationsets
+    verbs:
+      - get
+      - list
+      - update
+      - watch
+  {{- if (index .Values.configs.params "application.namespaces") }}
+  - apiGroups:
+      - "argoproj.io"
+    resources:
+      - "applications"
+    verbs:
+      - create
+      - delete
+      - update
+      - patch
+  {{- end }}
+  - apiGroups:
+      - batch
+    resources:
+      {{/* supports triggering jobs from UI */}}
+      - jobs
+    verbs:
+      - create
+  - apiGroups:
+      - argoproj.io
+    resources:
+      - workflows
+    verbs:
+      {{/* supports triggering workflows from UI */}}
+      - create
+  {{- end }}
+{{- end }}

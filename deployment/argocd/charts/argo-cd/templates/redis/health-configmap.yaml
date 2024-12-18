@@ -1,0 +1,37 @@
+{{- $redisHa := index .Values "redis-ha" -}}
+{{- if and .Values.redis.enabled (not $redisHa.enabled) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "argo-cd.redis.fullname" . }}-health-configmap
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.redis.name "name" .Values.redis.name) | nindent 4 }}
+data:
+  redis_liveness.sh: |
+    response=$(
+      redis-cli \
+        -a "${REDIS_PASSWORD}" --no-auth-warning \
+        -h localhost \
+        -p {{ .Values.redis.containerPorts.redis }} \
+        ping
+    )
+    if [ "$response" != "PONG" ] && [ "${response:0:7}" != "LOADING" ] ; then
+      echo "$response"
+      exit 1
+    fi
+    echo "response=$response"
+  redis_readiness.sh: |
+    response=$(
+      redis-cli \
+        -a "${REDIS_PASSWORD}" --no-auth-warning \
+        -h localhost \
+        -p {{ .Values.redis.containerPorts.redis }} \
+        ping
+    )
+    if [ "$response" != "PONG" ] ; then
+      echo "$response"
+      exit 1
+    fi
+    echo "response=$response"
+{{- end }}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-ssh-known-hosts-cm
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "name" "ssh-known-hosts-cm") | nindent 4 }}
+  {{- with .Values.configs.ssh.annotations }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+data:
+  ssh_known_hosts: |
+    {{- .Values.configs.ssh.knownHosts | nindent 4 }}
+    {{- with .Values.configs.ssh.extraHosts }}
+      {{- . | nindent 4 }}
+    {{- end }}

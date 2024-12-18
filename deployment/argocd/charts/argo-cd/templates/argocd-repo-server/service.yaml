@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+{{- if .Values.repoServer.service.annotations }}
+  annotations:
+  {{- range $key, $value := .Values.repoServer.service.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.repoServer.name "name" .Values.repoServer.name) | nindent 4 }}
+{{- with .Values.repoServer.service.labels }}
+{{- toYaml . | nindent 4 }}
+{{- end }}
+  name: {{ template "argo-cd.repoServer.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+spec:
+  {{- include "argo-cd.dualStack" . | indent 2 }}
+  ports:
+  - name: {{ .Values.repoServer.service.portName }}
+    protocol: TCP
+    port: {{ .Values.repoServer.service.port }}
+    targetPort: repo-server
+  selector:
+    {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.repoServer.name) | nindent 4 }}

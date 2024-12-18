@@ -1,0 +1,26 @@
+{{- if and .Values.global.networkPolicy.create (or .Values.applicationSet.metrics.enabled .Values.applicationSet.ingress.enabled) }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "argo-cd.applicationSet.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.applicationSet.name "name" .Values.applicationSet.name) | nindent 4 }}
+spec:
+  ingress:
+  {{- if .Values.applicationSet.ingress.enabled }}
+  - ports:
+    - port: webhook
+  {{- end }}
+  {{- if .Values.applicationSet.metrics.enabled }}
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - port: metrics
+  {{- end }}
+  podSelector:
+    matchLabels:
+      {{- include "argo-cd.selectorLabels" (dict "context" . "name" .Values.applicationSet.name) | nindent 6 }}
+  policyTypes:
+  - Ingress
+{{- end }}

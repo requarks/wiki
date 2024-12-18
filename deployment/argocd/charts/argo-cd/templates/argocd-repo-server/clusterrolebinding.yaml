@@ -1,0 +1,16 @@
+{{- if and .Values.createClusterRoles .Values.repoServer.clusterRoleRules.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "argo-cd.repoServer.fullname" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.repoServer.name "name" .Values.repoServer.name) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "argo-cd.repoServer.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "argo-cd.repoServer.serviceAccountName" . }}
+  namespace: {{ include "argo-cd.namespace" . }}
+{{- end }}

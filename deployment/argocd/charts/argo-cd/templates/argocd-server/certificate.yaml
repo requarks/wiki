@@ -1,0 +1,50 @@
+{{- if .Values.server.certificate.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  {{- with (mergeOverwrite (deepCopy .Values.global.certificateAnnotations) .Values.server.certificate.annotations) }}
+  annotations:
+    {{- range $key, $value := . }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  name: {{ include "argo-cd.server.fullname" . }}
+  namespace: {{ include  "argo-cd.namespace" . }}
+  labels:
+    {{- include "argo-cd.labels" (dict "context" . "component" .Values.server.name "name" .Values.server.name) | nindent 4 }}
+spec:
+  {{- with .Values.server.certificate.secretTemplateAnnotations }}
+  secretTemplate:
+    annotations:
+      {{- range $key, $value := . }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+  {{- end }} 
+  secretName: argocd-server-tls
+  commonName: {{ .Values.server.certificate.domain | default .Values.global.domain }}
+  dnsNames:
+    - {{ .Values.server.certificate.domain | default .Values.global.domain }}
+    {{- range .Values.server.certificate.additionalHosts }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- with .Values.server.certificate.duration }}
+  duration: {{ . | quote }}
+  {{- end }}
+  {{- with .Values.server.certificate.renewBefore }}
+  renewBefore: {{ . | quote }}
+  {{- end }}
+  issuerRef:
+    {{- with .Values.server.certificate.issuer.group }}
+    group: {{ . | quote }}
+    {{- end }}
+    kind: {{ .Values.server.certificate.issuer.kind | quote }}
+    name: {{ .Values.server.certificate.issuer.name | quote }}
+  {{- with .Values.server.certificate.privateKey }}
+  privateKey:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.server.certificate.usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
