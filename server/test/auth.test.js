@@ -143,12 +143,12 @@ describe('Super Admin', () => {
   })
 
   it('can reach the admin zone', () => {
-    const result = checkAccess(user, [ 'read:pages', 'manage:sites' ])
+    const result = auth.checkAccess(user, [ 'read:pages', 'manage:sites' ])
     expect(result).toBe(true)
   })
 
   it('can pass with a page param', () => {
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'read:pages', 'manage:sites' ],
       { siteId: 'c2f927cf-fb55-4686-a7e9-f4911a3b225a' }
@@ -174,14 +174,14 @@ describe('Site Admin', () => {
   })
 
   it('can access the admin zone', () => {
-    const result = checkAccess(user, [ 'read:pages', 'manage:sites' ])
+    const result = auth.checkAccess(user, [ 'read:pages', 'manage:sites' ])
     expect(result).toBe(true)
   })
 
   it('can access the page they manage', () => {
     const siteId = 'b722970a-e813-4b6a-8563-87ffc77827e5'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'read:pages', 'manage:sites' ],
       { siteId }
@@ -194,7 +194,7 @@ describe('Site Admin', () => {
   xit('cannot access the page they do not manage', () => {
     const siteId = '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'read:pages', 'manage:sites' ],
       { siteId }
@@ -207,7 +207,7 @@ describe('Site Admin', () => {
   it('can edit the page they manage', () => {
     const siteId = 'b722970a-e813-4b6a-8563-87ffc77827e5'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'write:pages', 'manage:sites' ],
       { siteId }
@@ -220,7 +220,7 @@ describe('Site Admin', () => {
   xit('cannot edit the page they do not manage', () => {
     const siteId = '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'write:pages', 'manage:sites' ],
       { siteId }
@@ -233,7 +233,7 @@ describe('Site Admin', () => {
   it('can edit the page they have view rights', () => {
     const siteId = 'b722970a-e813-4b6a-8563-87ffc77827e5'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'write:pages', 'manage:sites' ],
       { siteId }
@@ -261,7 +261,7 @@ describe('Regular User', () => {
   })
 
   it('cannot access the admin zone', () => {
-    const result = checkAccess(user, [ 'manage:sites' ])
+    const result = auth.checkAccess(user, [ 'manage:sites' ])
     expect(result).toBe(false)
   })
 
@@ -292,7 +292,7 @@ describe('Regular User', () => {
   it('cannot edit the page they have read access', () => {
     const siteId = 'b722970a-e813-4b6a-8563-87ffc77827e5'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'write:pages' ],
       { siteId }
@@ -303,7 +303,7 @@ describe('Regular User', () => {
   it('cannot edit the page they do not have rights', () => {
     const siteId = '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
 
-    const result = checkAccess(
+    const result = auth.checkAccess(
       user,
       [ 'write:pages' ],
       { siteId }
@@ -311,8 +311,8 @@ describe('Regular User', () => {
     expect(result).toBe(false)
   })
 
-  xit('returns true for matching START page rule', () => {
-    user.groups = [{ id: 5 }]
+  it('returns true for matching START page rule', () => {
+    user.groups = [{ id: 1 }]
     WIKI.auth.groups = {
       1: {
         rules: [
@@ -321,12 +321,12 @@ describe('Regular User', () => {
       }
     }
 
-    const result = checkAccess(user, ['read:pages'], page)
+    const result = auth.checkAccess(user, ['read:pages'], page)
     expect(result).toBe(true)
   })
 
-  xit('returns true for matching EXACT page rule', () => {
-    user.groups = [{ id: 5 }]
+  it('returns true for matching EXACT page rule', () => {
+    user.groups = [{ id: 1 }]
     WIKI.auth.groups = {
       1: {
         rules: [
@@ -335,12 +335,12 @@ describe('Regular User', () => {
       }
     }
 
-    const result = checkAccess(user, [ 'read:pages', 'manage:sites' ], page)
+    const result = auth.checkAccess(user, [ 'read:pages', 'manage:sites' ], page)
     expect(result).toBe(true)
   })
 
-  xit('returns false when a rule denies access', () => {
-    user.groups = [{ id: 5 }]
+  it('returns false when a rule denies access', () => {
+    user.groups = [{ id: 1 }]
     WIKI.auth.groups = {
       1: {
         rules: [
@@ -349,12 +349,12 @@ describe('Regular User', () => {
       }
     }
 
-    const result = checkAccess(user, ['read:pages'], page)
+    const result = auth.checkAccess(user, ['read:pages'], page)
     expect(result).toBe(false)
   })
 
-  xit('handles REGEX rules correctly', () => {
-    user.groups = [{ id: 5 }]
+  it('handles REGEX rules correctly', () => {
+    user.groups = [{ id: 1 }]
     WIKI.auth.groups = {
       1: {
         rules: [
@@ -364,24 +364,24 @@ describe('Regular User', () => {
     }
 
     page.path = '/test/path'
-    const result = checkAccess(user, [ 'read:pages', 'manage:sites' ], page)
+    const result = auth.checkAccess(user, [ 'read:pages', 'manage:sites' ], page)
     expect(result).toBe(true)
   })
 
-  xit('returns false when no matching rules and ignoreRulePath is false', () => {
-    user.groups = [{ id: 5 }]
+  it('returns false when no matching rules and ignoreRulePath is false', () => {
+    user.groups = [{ id: 1 }]
     WIKI.auth.groups = {
       1: {
         rules: []
       }
     }
 
-    const result = checkAccess(user, [ 'read:pages', 'manage:sites' ], page)
+    const result = auth.checkAccess(user, [ 'read:pages', 'manage:sites' ], page)
     expect(result).toBe(false)
   })
 
-  xit('ignores rule paths if ignoreRulePath is true', () => {
-    user.groups = [{ id: 5 }]
+  it('ignores rule paths if ignoreRulePath is true', () => {
+    user.groups = [{ id: 1 }]
     WIKI.auth.groups = {
       1: {
         rules: [
@@ -390,7 +390,7 @@ describe('Regular User', () => {
       }
     }
 
-    const result = checkAccess(user, [ 'read:pages', 'manage:sites' ], page, true)
+    const result = auth.checkAccess(user, [ 'read:pages', 'manage:sites' ], page, true)
     expect(result).toBe(true)
   })
 })
