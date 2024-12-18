@@ -30,6 +30,7 @@
         - { src: './values-capwiki-kube-prom.yaml', dest: '/home/deployer/monitoring/values-capwiki-kube-prom.yaml' }
         - { src: './values-blackbox-exporter.yaml', dest: '/home/deployer/monitoring/values-blackbox-exporter.yaml' }
         - { src: './values-loki.yaml', dest: '/home/deployer/monitoring/values-loki.yaml' }
+        - { src: './values-loki-prod.yaml', dest: '/home/deployer/monitoring/values-loki-prod.yaml' }
   
    - name: Copy ingress file based on hostname
      copy:
