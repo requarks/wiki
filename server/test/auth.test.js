@@ -147,7 +147,7 @@ describe('Super Admin', () => {
     expect(result).toBe(true)
   })
 
-  it('can pass with a page param', () => {
+  it('can reach a page not explicitly mentioned in rules', () => {
     const result = auth.checkAccess(
       user,
       [ 'read:pages', 'manage:sites' ],
@@ -165,7 +165,7 @@ describe('Site Admin', () => {
     user = {
       id: 2,
       name: 'Site Admin',
-      groups: [ 4, 3 ],
+      groups: [ 4 ],
       permissions: [ 'manage:sites' ]
     }
     page = { siteId: 1, path: '/test', locale: 'en', tags: [] }
@@ -191,7 +191,7 @@ describe('Site Admin', () => {
     expect(WIKI.auth.hasSitePermission).toHaveBeenCalledWith(user, siteId, 'manage:sites')
   })
 
-  xit('cannot access the page they do not manage', () => {
+  it('cannot access the page they do not manage', () => {
     const siteId = '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
 
     const result = auth.checkAccess(
@@ -217,7 +217,7 @@ describe('Site Admin', () => {
     expect(WIKI.auth.hasSitePermission).toHaveBeenCalledWith(user, siteId, 'manage:sites')
   })
 
-  xit('cannot edit the page they do not manage', () => {
+  it('cannot edit the page they do not manage', () => {
     const siteId = '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
 
     const result = auth.checkAccess(
