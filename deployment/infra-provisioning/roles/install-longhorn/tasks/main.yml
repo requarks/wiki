@@ -12,7 +12,7 @@
 - name: Check if Longhorn is installed
   ansible.builtin.command:
     cmd: helm list -n longhorn-system
-  register: helm_list
+  register: longhorn_status
   failed_when: false
 
 - name: Install Longhorn
@@ -22,4 +22,4 @@
       --namespace longhorn-system
       --create-namespace
       --version 1.7.2
-  when: "'longhorn' not in helm_list.stdout"
+  when: longhorn_status.rc != 0

@@ -26,6 +26,7 @@
         --node-name k3s-master-01
         --cluster-cidr 172.16.0.0/12
         --service-cidr 192.168.0.0/12
+        --version v1.30.6+k3s1
   become_method: sudo
   args:
     creates: /usr/local/bin/k3s

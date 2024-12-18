@@ -46,6 +46,7 @@ case "$KUBERNETES_CLUSTER" in
     ;;
   prod)
     kubectl apply -f monitoring-ingress-prod-cluster.yaml -n $NAMESPACE
+    helm upgrade --install capwiki-prometheus prometheus-community/kube-prometheus-stack  --version 65.3.1 -f values-loki-prod.yaml -n $NAMESPACE
     ;;
   *)
     echo "Invalid environment. Valid options are: dev1, dev2, staging, prod"

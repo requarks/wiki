@@ -184,6 +184,7 @@ push-docker-image:
     - docker push $NEW_IMAGE
     - docker logout $DOCKER_REGISTRY
     - docker rmi $NEW_IMAGE
+    - rm newimage.txt
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
@@ -219,6 +220,8 @@ staging-pipeline:
     strategy: depend
     forward:
       pipeline_variables: true
+  variables:
+    ENVIRONMENT: "staging" 
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
@@ -233,6 +236,8 @@ prod-pipeline:
     strategy: depend
     forward:
       pipeline_variables: true
+  variables:
+    ENVIRONMENT: "production"
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
