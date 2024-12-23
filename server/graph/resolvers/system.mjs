@@ -106,9 +106,9 @@ export default {
         throw new Error('ERR_FORBIDDEN')
       }
 
-      const results = args.states?.length > 0 ?
-        await WIKI.db.knex('jobHistory').whereIn('state', args.states.map(s => s.toLowerCase())).orderBy('startedAt', 'desc') :
-        await WIKI.db.knex('jobHistory').orderBy('startedAt', 'desc')
+      const results = args.states?.length > 0
+        ? await WIKI.db.knex('jobHistory').whereIn('state', args.states.map(s => s.toLowerCase())).orderBy('startedAt', 'desc')
+        : await WIKI.db.knex('jobHistory').orderBy('startedAt', 'desc')
       return results.map(r => ({
         ...r,
         state: r.state.toUpperCase()

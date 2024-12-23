@@ -229,8 +229,8 @@ function duplicatePage () {
       itemTitle: pageStore.title,
       itemFileName: pageStore.path
     }
-  }).onOk(() => {
-    // TODO: change route to new location
+  }).onOk((newPageOpts) => {
+    pageStore.pageDuplicate({ sourecePageId: pageStore.id, path: newPageOpts.path, title: newPageOpts.title })
   })
 }
 

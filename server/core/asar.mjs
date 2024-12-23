@@ -12,7 +12,7 @@ export default {
   fdCache: {},
   async serve (pkgName, req, res, next) {
     const packages = {
-      'twemoji': path.join(WIKI.ROOTPATH, `assets/svg/twemoji.asar`)
+      twemoji: path.join(WIKI.ROOTPATH, 'assets/svg/twemoji.asar')
     }
     const file = this.readFilesystemSync(packages[pkgName])
     const { filesystem, fd } = file
@@ -74,7 +74,7 @@ export default {
       filesystem.headerSize = header.headerSize
       this.fdCache[archive] = {
         fd,
-        filesystem: filesystem
+        filesystem
       }
     }
 

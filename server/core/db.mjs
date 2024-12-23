@@ -31,13 +31,15 @@ export default {
 
     // Fetch DB Config
 
-    this.config = (!isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
-      host: WIKI.config.db.host.toString(),
-      user: WIKI.config.db.user.toString(),
-      password: WIKI.config.db.pass.toString(),
-      database: WIKI.config.db.db.toString(),
-      port: WIKI.config.db.port
-    }
+    this.config = (!isEmpty(process.env.DATABASE_URL))
+      ? process.env.DATABASE_URL
+      : {
+          host: WIKI.config.db.host.toString(),
+          user: WIKI.config.db.user.toString(),
+          password: WIKI.config.db.pass.toString(),
+          database: WIKI.config.db.db.toString(),
+          port: WIKI.config.db.port
+        }
 
     // Handle SSL Options
 
@@ -88,16 +90,17 @@ export default {
       connection: this.config,
       searchPath: [WIKI.config.db.schema],
       pool: {
-        ...workerMode ? { min: 0, max: 1 } : WIKI.config.pool,
-        async afterCreate(conn, done) {
-          // -> Set Connection App Name
-          if (workerMode) {
-            await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}'`)
-          } else {
-            await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}:MAIN'`)
-          }
-          done()
-        }
+        ...workerMode ? { min: 0, max: 1 } : WIKI.config.pool
+        // FIXME: Throws DeprecatingWarning because Knex encapsulates this into a promisify...
+        // async afterCreate (conn, done) {
+        //   // -> Set Connection App Name
+        //   if (workerMode) {
+        //     await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}'`)
+        //   } else {
+        //     await conn.query(`set application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}:MAIN'`)
+        //   }
+        //   done()
+        // }
       },
       debug: WIKI.IS_DEBUG
     })
@@ -170,7 +173,7 @@ export default {
     WIKI.configSvc.subscribeToEvents()
     WIKI.db.pages.subscribeToEvents()
 
-    WIKI.logger.info(`PG PubSub Listener initialized successfully: [ OK ]`)
+    WIKI.logger.info('PG PubSub Listener initialized successfully: [ OK ]')
   },
   /**
    * Unsubscribe from database LISTEN / NOTIFY

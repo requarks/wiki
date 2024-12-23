@@ -1,5 +1,5 @@
 // ===========================================
-// Wiki.js | Server
+// Wiki.js Server
 // Licensed under AGPLv3
 // ===========================================
 
@@ -14,8 +14,8 @@ import logger from './core/logger.mjs'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
 
-if (!semver.satisfies(process.version, '>=18')) {
-  console.error('ERROR: Node.js 18.x or later required!')
+if (!semver.satisfies(process.version, '>=20')) {
+  console.error('ERROR: Node.js 20.x or later required!')
   process.exit(1)
 }
 
@@ -40,6 +40,12 @@ const WIKI = {
   }
 }
 global.WIKI = WIKI
+
+if (WIKI.IS_DEBUG) {
+  process.on('warning', (warning) => {
+    console.log(warning.stack)
+  })
+}
 
 await WIKI.configSvc.init()
 

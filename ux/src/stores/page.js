@@ -381,6 +381,48 @@ export const usePageStore = defineStore('page', {
       })
     },
     /**
+     * PAGE - DUPLICATE
+     */
+    async pageDuplicate ({ sourecePageId, title, path }) {
+      try {
+        const resp = await APOLLO_CLIENT.query({
+          query: gql`
+            query loadPageSource (
+              $id: UUID!
+              ) {
+              pageById(
+                id: $id
+              ) {
+                id
+                content
+                contentType
+                description
+                editor
+              }
+            }
+          `,
+          variables: {
+            id: sourecePageId ?? pageStore.id
+          },
+          fetchPolicy: 'network-only'
+        })
+        const pageData = cloneDeep(resp?.data?.pageById ?? {})
+        if (!pageData?.id) {
+          throw new Error('ERR_PAGE_NOT_FOUND')
+        }
+        this.pageCreate({
+          editor: pageData.editor,
+          title,
+          path,
+          content: pageData.content,
+          description: pageData.description
+        })
+      } catch (err) {
+        console.warn(err)
+        throw err
+      }
+    },
+    /**
      * PAGE - EDIT
      */
     async pageEdit ({ path, id, fromNavigate = false } = {}) {
