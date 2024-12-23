@@ -86,7 +86,7 @@ export default {
 
         // -> Add Highlighting if enabled
         if (WIKI.config.search.termHighlighting && hasQuery) {
-          searchCols.push(WIKI.db.knex.raw(`ts_headline(?, "searchContent", query, 'MaxWords=5, MinWords=3, MaxFragments=5') AS highlight`, [dictName]))
+          searchCols.push(WIKI.db.knex.raw('ts_headline(?, "searchContent", query, \'MaxWords=5, MinWords=3, MaxFragments=5\') AS highlight', [dictName]))
         }
 
         const results = await WIKI.db.knex
@@ -408,7 +408,7 @@ export default {
      * CHECK FOR EDITING CONFLICT
      */
     async checkConflicts (obj, args, context, info) {
-      let page = await WIKI.db.pages.query().select('path', 'locale', 'updatedAt').findById(args.id)
+      const page = await WIKI.db.pages.query().select('path', 'locale', 'updatedAt').findById(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
@@ -426,7 +426,7 @@ export default {
      * FETCH LATEST VERSION FOR CONFLICT COMPARISON
      */
     async checkConflictsLatest (obj, args, context, info) {
-      let page = await WIKI.db.pages.getPageFromDb(args.id)
+      const page = await WIKI.db.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
           path: page.path,
@@ -449,7 +449,7 @@ export default {
     /**
      * CREATE PAGE
      */
-    async createPage(obj, args, context) {
+    async createPage (obj, args, context) {
       try {
         const page = await WIKI.db.pages.createPage({
           ...args,
@@ -466,7 +466,7 @@ export default {
     /**
      * UPDATE PAGE
      */
-    async updatePage(obj, args, context) {
+    async updatePage (obj, args, context) {
       try {
         const page = await WIKI.db.pages.updatePage({
           ...args,
@@ -483,7 +483,7 @@ export default {
     /**
      * CONVERT PAGE
      */
-    async convertPage(obj, args, context) {
+    async convertPage (obj, args, context) {
       try {
         await WIKI.db.pages.convertPage({
           ...args,
@@ -497,9 +497,9 @@ export default {
       }
     },
     /**
-     * RENAME PAGE
+     * MOVE PAGE
      */
-    async renamePage(obj, args, context) {
+    async movePage (obj, args, context) {
       try {
         await WIKI.db.pages.movePage({
           ...args,
@@ -515,7 +515,7 @@ export default {
     /**
      * DELETE PAGE
      */
-    async deletePage(obj, args, context) {
+    async deletePage (obj, args, context) {
       try {
         await WIKI.db.pages.deletePage({
           ...args,
@@ -571,7 +571,7 @@ export default {
     /**
      * FLUSH PAGE CACHE
      */
-    async flushCache(obj, args, context) {
+    async flushCache (obj, args, context) {
       try {
         await WIKI.db.pages.flushCache()
         WIKI.events.outbound.emit('flushCache')
@@ -585,7 +585,7 @@ export default {
     /**
      * MIGRATE ALL PAGES FROM SOURCE LOCALE TO TARGET LOCALE
      */
-    async migrateToLocale(obj, args, context) {
+    async migrateToLocale (obj, args, context) {
       try {
         const count = await WIKI.db.pages.migrateToLocale(args)
         return {
@@ -599,7 +599,7 @@ export default {
     /**
      * REBUILD TREE
      */
-    async rebuildPageTree(obj, args, context) {
+    async rebuildPageTree (obj, args, context) {
       try {
         await WIKI.db.pages.rebuildTree()
         return {

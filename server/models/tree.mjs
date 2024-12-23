@@ -17,7 +17,7 @@ const reTitle = /^[^<>"]+$/
  * Tree model
  */
 export class Tree extends Model {
-  static get tableName() { return 'tree' }
+  static get tableName () { return 'tree' }
 
   static get jsonSchema () {
     return {
@@ -25,22 +25,22 @@ export class Tree extends Model {
       required: ['fileName'],
 
       properties: {
-        id: {type: 'string'},
-        folderPath: {type: 'string'},
-        fileName: {type: 'string'},
-        type: {type: 'string'},
-        title: {type: 'string'},
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        id: { type: 'string' },
+        folderPath: { type: 'string' },
+        fileName: { type: 'string' },
+        type: { type: 'string' },
+        title: { type: 'string' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' }
       }
     }
   }
 
-  static get jsonAttributes() {
+  static get jsonAttributes () {
     return ['meta']
   }
 
-  static get relationMappings() {
+  static get relationMappings () {
     return {
       site: {
         relation: Model.BelongsToOneRelation,
@@ -53,10 +53,11 @@ export class Tree extends Model {
     }
   }
 
-  $beforeUpdate() {
+  $beforeUpdate () {
     this.updatedAt = new Date().toISOString()
   }
-  $beforeInsert() {
+
+  $beforeInsert () {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
   }
@@ -90,7 +91,7 @@ export class Tree extends Model {
       const parent = await WIKI.db.knex('tree').where({
         ...parentFilter,
         type: 'folder',
-        locale: locale,
+        locale,
         siteId
       }).first()
       if (parent) {
@@ -123,16 +124,18 @@ export class Tree extends Model {
    * @param {Object} [args.meta] - Extra metadata
    */
   static async addPage ({ id, parentId, parentPath, fileName, title, locale, siteId, tags = [], meta = {} }) {
-    const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
-      id: parentId,
-      path: parentPath,
-      locale,
-      siteId,
-      createIfMissing: true
-    }) : {
-      folderPath: '',
-      fileName: ''
-    }
+    const folder = (parentId || parentPath)
+      ? await WIKI.db.tree.getFolder({
+        id: parentId,
+        path: parentPath,
+        locale,
+        siteId,
+        createIfMissing: true
+      })
+      : {
+          folderPath: '',
+          fileName: ''
+        }
     const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
     const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
 
@@ -143,9 +146,9 @@ export class Tree extends Model {
       folderPath: encodeFolderPath(folderPath),
       fileName,
       type: 'page',
-      title: title,
+      title,
       hash: generateHash(fullPath),
-      locale: locale,
+      locale,
       siteId,
       tags,
       meta,
@@ -169,16 +172,18 @@ export class Tree extends Model {
    * @param {Object} [args.meta] - Extra metadata
    */
   static async addAsset ({ id, parentId, parentPath, fileName, title, locale, siteId, tags = [], meta = {} }) {
-    const folder = (parentId || parentPath) ? await WIKI.db.tree.getFolder({
-      id: parentId,
-      path: parentPath,
-      locale,
-      siteId,
-      createIfMissing: true
-    }) : {
-      folderPath: '',
-      fileName: ''
-    }
+    const folder = (parentId || parentPath)
+      ? await WIKI.db.tree.getFolder({
+        id: parentId,
+        path: parentPath,
+        locale,
+        siteId,
+        createIfMissing: true
+      })
+      : {
+          folderPath: '',
+          fileName: ''
+        }
     const folderPath = folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
     const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
 
@@ -189,9 +194,9 @@ export class Tree extends Model {
       folderPath: encodeFolderPath(folderPath),
       fileName,
       type: 'asset',
-      title: title,
+      title,
       hash: generateHash(fullPath),
-      locale: locale,
+      locale,
       siteId,
       tags,
       meta
@@ -246,8 +251,8 @@ export class Tree extends Model {
 
     // Check for collision
     const existingFolder = await WIKI.db.knex('tree').select('id').where({
-      siteId: siteId,
-      locale: locale,
+      siteId,
+      locale,
       folderPath: encodeFolderPath(parentPath),
       fileName: pathName,
       type: 'folder'
@@ -281,8 +286,8 @@ export class Tree extends Model {
           type: 'folder',
           title: ancestor.fileName,
           hash: generateHash(newAncestorFullPath),
-          locale: locale,
-          siteId: siteId,
+          locale,
+          siteId,
           meta: {
             children: 1
           }
@@ -301,10 +306,10 @@ export class Tree extends Model {
       folderPath: encodeFolderPath(parentPath),
       fileName: pathName,
       type: 'folder',
-      title: title,
+      title,
       hash: generateHash(fullPath),
-      locale: locale,
-      siteId: siteId,
+      locale,
+      siteId,
       meta: {
         children: 0
       }
@@ -383,13 +388,13 @@ export class Tree extends Model {
       const fullPath = folder.folderPath ? `${decodeFolderPath(folder.folderPath)}/${pathName}` : pathName
       await WIKI.db.knex('tree').where('id', folder.id).update({
         fileName: pathName,
-        title: title,
+        title,
         hash: generateHash(fullPath)
       })
     } else {
       // Update the folder title only
       await WIKI.db.knex('tree').where('id', folder.id).update({
-        title: title
+        title
       })
     }
 

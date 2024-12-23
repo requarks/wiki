@@ -162,10 +162,11 @@ extend type Mutation {
     editor: String!
   ): DefaultResponse
 
-  renamePage(
-    id: Int!
-    destinationPath: String!
+  movePage(
+    id: UUID!
     destinationLocale: String!
+    destinationPath: String!
+    title: String
   ): DefaultResponse
 
   deletePage(

@@ -64,7 +64,9 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             dense
             outlined
             @focus='state.pathDirty = true; state.currentFileId = null'
-          )
+            )
+            //- template(#append)
+            //-   q-badge(outline, color='grey', label='valid')
     q-card-actions.card-actions.q-px-md
       q-btn.acrylic-btn(
         icon='las la-ellipsis-h'
@@ -408,8 +410,17 @@ onMounted(() => {
     fName = last(fParts)
   }
   switch (props.mode) {
-    case 'pageSave': {
+    case 'savePage': {
       state.typesToFetch = ['folder', 'page']
+      break
+    }
+    case 'duplicatePage': {
+      state.typesToFetch = ['folder', 'page']
+      break
+    }
+    case 'renamePage': {
+      state.typesToFetch = ['folder', 'page']
+      state.pathDirty = true
       break
     }
   }

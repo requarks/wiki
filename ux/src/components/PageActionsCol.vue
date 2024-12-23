@@ -244,8 +244,27 @@ function renamePage () {
       itemTitle: pageStore.title,
       itemFileName: pageStore.path
     }
-  }).onOk(() => {
-    // TODO: change route to new location
+  }).onOk(async (renamedPageOpts) => {
+    try {
+      if (renamedPageOpts.path === pageStore.path) {
+        await pageStore.pageRename({ id: pageStore.id, title: renamedPageOpts.title })
+        $q.notify({
+          type: 'positive',
+          message: 'Page renamed successfully.'
+        })
+      } else {
+        await pageStore.pageMove({ id: pageStore.id, path: renamedPageOpts.path, title: renamedPageOpts.title })
+        $q.notify({
+          type: 'positive',
+          message: 'Page moved successfully.'
+        })
+      }
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: err.message
+      })
+    }
   })
 }
 

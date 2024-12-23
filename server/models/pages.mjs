@@ -1,5 +1,5 @@
 import { Model } from 'objection'
-import { find, get, has, initial, isEmpty, isString, last, pick } from 'lodash-es'
+import { cloneDeep, find, get, has, initial, isEmpty, isString, last, pick } from 'lodash-es'
 import { Type as JSBinType } from 'js-binary'
 import { getDictNameFromLocale } from '../helpers/common.mjs'
 import { generateHash, getFileExtension, injectPageMetadata } from '../helpers/page.mjs'
@@ -888,15 +888,10 @@ export class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async movePage (opts) {
-    let page
-    if (has(opts, 'id')) {
-      page = await WIKI.db.pages.query().findById(opts.id)
-    } else {
-      page = await WIKI.db.pages.query().findOne({
-        path: opts.path,
-        locale: opts.locale
-      })
+    if (!has(opts, 'id')) {
+      throw new Error('Missing page ID')
     }
+    const page = await WIKI.db.pages.query().findById(opts.id)
     if (!page) {
       throw new WIKI.Error.PageNotFound()
     }
@@ -947,63 +942,83 @@ export class Page extends Model {
       versionDate: page.updatedAt
     })
 
-    const destinationHash = generateHash({ path: opts.destinationPath, locale: opts.destinationLocale })
+    // -> Update page object
+    const updatedPage = cloneDeep(page)
+    updatedPage.path = opts.destinationPath
+    updatedPage.locale = opts.destinationLocale
+    updatedPage.title = opts.title ?? page.title
+    updatedPage.hash = generateHash({ path: opts.destinationPath, locale: opts.destinationLocale })
+    updatedPage.authorId = opts.user.id
 
     // -> Move page
-    const destinationTitle = (page.title === page.path ? opts.destinationPath : page.title)
     await WIKI.db.pages.query().patch({
-      path: opts.destinationPath,
-      locale: opts.destinationLocale,
-      title: destinationTitle,
-      hash: destinationHash
+      path: updatedPage.path,
+      locale: updatedPage.locale,
+      title: updatedPage.title,
+      hash: updatedPage.hash,
+      authorId: updatedPage.authorId
     }).findById(page.id)
     await WIKI.db.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Rebuild page tree
-    await WIKI.db.pages.rebuildTree()
+    // -> Replace tree node
+    const pathParts = updatedPage.path.split('/')
+    await WIKI.db.knex('tree').where('id', page.id).del()
+    await WIKI.db.tree.addPage({
+      id: page.id,
+      parentPath: initial(pathParts).join('/'),
+      fileName: last(pathParts),
+      locale: updatedPage.locale,
+      title: updatedPage.title,
+      tags: updatedPage.tags,
+      meta: {
+        authorId: updatedPage.authorId,
+        contentType: updatedPage.contentType,
+        creatorId: updatedPage.creatorId,
+        description: updatedPage.description,
+        isBrowsable: updatedPage.isBrowsable,
+        ownerId: updatedPage.ownerId,
+        publishState: updatedPage.publishState,
+        publishEndDate: updatedPage.publishEndDate,
+        publishStartDate: updatedPage.publishStartDate
+      },
+      siteId: updatedPage.siteId
+    })
 
     // -> Rename in Search Index
-    const pageContents = await WIKI.db.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.db.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.renamed({
-      ...page,
-      destinationPath: opts.destinationPath,
-      destinationLocale: opts.destinationLocale,
-      destinationHash
-    })
+    WIKI.db.pages.updatePageSearchVector({ id: page.id })
 
     // -> Rename in Storage
     if (!opts.skipStorage) {
-      await WIKI.db.storage.pageEvent({
-        event: 'renamed',
-        page: {
-          ...page,
-          destinationPath: opts.destinationPath,
-          destinationLocale: opts.destinationLocale,
-          destinationHash,
-          moveAuthorId: opts.user.id,
-          moveAuthorName: opts.user.name,
-          moveAuthorEmail: opts.user.email
-        }
-      })
+      // await WIKI.db.storage.pageEvent({
+      //   event: 'renamed',
+      //   page: {
+      //     ...page,
+      //     destinationPath: updatedPage.path,
+      //     destinationLocale: updatedPage.locale,
+      //     destinationHash: updatedPage.hash,
+      //     moveAuthorId: opts.user.id,
+      //     moveAuthorName: opts.user.name,
+      //     moveAuthorEmail: opts.user.email
+      //   }
+      // })
     }
 
-    // -> Reconnect Links : Changing old links to the new path
-    await WIKI.db.pages.reconnectLinks({
-      sourceLocale: page.locale,
-      sourcePath: page.path,
-      locale: opts.destinationLocale,
-      path: opts.destinationPath,
-      mode: 'move'
-    })
+    // // -> Reconnect Links : Changing old links to the new path
+    // await WIKI.db.pages.reconnectLinks({
+    //   sourceLocale: page.locale,
+    //   sourcePath: page.path,
+    //   locale: opts.destinationLocale,
+    //   path: opts.destinationPath,
+    //   mode: 'move'
+    // })
 
-    // -> Reconnect Links : Validate invalid links to the new path
-    await WIKI.db.pages.reconnectLinks({
-      locale: opts.destinationLocale,
-      path: opts.destinationPath,
-      mode: 'create'
-    })
+    // // -> Reconnect Links : Validate invalid links to the new path
+    // await WIKI.db.pages.reconnectLinks({
+    //   locale: opts.destinationLocale,
+    //   path: opts.destinationPath,
+    //   mode: 'create'
+    // })
   }
 
   /**

@@ -453,6 +453,83 @@ export const usePageStore = defineStore('page', {
       })
     },
     /**
+     * PAGE - MOVE
+     */
+    async pageMove ({ id, title, path } = {}) {
+      const resp = await APOLLO_CLIENT.mutate({
+        mutation: gql`
+          mutation movePage (
+            $id: UUID!
+            $destinationLocale: String!
+            $destinationPath: String!
+            $title: String
+          ) {
+            movePage (
+              id: $id
+              destinationLocale: $destinationLocale
+              destinationPath: $destinationPath
+              title: $title
+            ) {
+              operation {
+                succeeded
+                message
+              }
+            }
+          }
+          `,
+        variables: {
+          id,
+          destinationLocale: this.locale,
+          destinationPath: path,
+          title
+        }
+      })
+      const result = resp?.data?.movePage?.operation ?? {}
+      if (!result.succeeded) {
+        throw new Error(result.message)
+      } else {
+        this.router.replace(`/${path}`)
+      }
+    },
+    /**
+     * PAGE - Rename
+     */
+    async pageRename ({ id, title } = {}) {
+      const resp = await APOLLO_CLIENT.mutate({
+        mutation: gql`
+          mutation renamePage (
+            $id: UUID!
+            $patch: PageUpdateInput!
+          ) {
+            updatePage (
+              id: $id
+              patch: $patch
+            ) {
+              operation {
+                succeeded
+                message
+              }
+            }
+          }
+          `,
+        variables: {
+          id: id,
+          patch: {
+            title
+          }
+        }
+      })
+      const result = resp?.data?.updatePage?.operation ?? {}
+      if (!result.succeeded) {
+        throw new Error(result.message)
+      }
+
+      // Update page store
+      if (id === this.id) {
+        this.$patch({ title })
+      }
+    },
+    /**
      * PAGE SAVE
      */
     async pageSave () {
