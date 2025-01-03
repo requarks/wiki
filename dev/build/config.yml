@@ -18,3 +18,4 @@ ssl:
 logLevel: $(LOG_LEVEL:info)
 logFormat: $(LOG_FORMAT:default)
 ha: $(HA_ACTIVE)
+offline: $(OFFLINE_ACTIVE:false)
