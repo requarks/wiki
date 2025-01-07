@@ -45,22 +45,64 @@ variables:
 default:
   tags:
     - runner_mar
+  before_script:
+    - mkdir -p ~/.npm-global
+    - npm config set prefix '~/.npm-global'
+    - export PATH=$HOME/.npm-global/bin:$PATH
+    - npm install -g yarn
+    - node -v && npm -v && yarn -v
 
 stages:
+  - build
+  - test
   - sonarqube
   - container-scan
   - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
   - docker-push
   - deployment-pipeline
-  - tagging
+  - tagging  
 
+build:
+ stage: build
+ script:
+    - yarn cache clean
+    - rm -rf node_modules
+    - yarn install --frozen-lockfile
+    - yarn build
+ rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: on_success
+
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - yarn add jest-junit --dev
+    - yarn jest --coverage # Run tests
+    ## Below cmnds can be run after fixing lint errors in the codebase
+    #- yarn eslint --ext .js,.vue .
+    # - yarn pug-lint server/views
+  artifacts:
+    expire_in: 1 hr
+    when: on_success
+    paths:
+      - coverage
+      - test-results
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: on_success
 
 sonarqube-scan:
   stage: sonarqube
+  dependencies:
+    - test
   tags:
     - docker_runner
-  image: 
+  image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
   variables:
@@ -70,13 +112,13 @@ sonarqube-scan:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
-  script: 
+  script:
     - sonar-scanner
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production" || $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $SONARQUBE == "true" 
-      when: always    
+    - if: $SONARQUBE == "true"
+      when: on_success
 
 container_scanning:
   stage: container-scan
@@ -122,12 +164,12 @@ modify_package_json:
   artifacts:
     paths:
       - package.json
-      
+
 
 build-docker-image:
   stage: docker-build
   before_script:
-    - | 
+    - |
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
 
        if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
@@ -139,7 +181,7 @@ build-docker-image:
       fi
 
       echo "Building Docker image for environment: $ENVIRONMENT"
-     
+
       if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
       elif [[ "$ENVIRONMENT" == "staging" ]]; then
@@ -221,7 +263,7 @@ staging-pipeline:
     forward:
       pipeline_variables: true
   variables:
-    ENVIRONMENT: "staging" 
+    ENVIRONMENT: "staging"
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: never
