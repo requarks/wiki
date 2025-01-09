@@ -97,6 +97,10 @@ module.exports = {
     message: 'Too many attempts! Try again later.',
     code: 1008
   }),
+  AuthAccountLocked: CustomError('AuthAccountLocked', {
+    message: 'Your account has been locked due to too many failed attempts. Contact the administrator.',
+    code: 1021
+  }),
   CommentContentMissing: CustomError('CommentContentMissing', {
     message: 'Comment content is missing or too short.',
     code: 8003

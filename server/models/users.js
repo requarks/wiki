@@ -35,6 +35,8 @@ module.exports = class User extends Model {
         isSystem: {type: 'boolean'},
         isActive: {type: 'boolean'},
         isVerified: {type: 'boolean'},
+        isLocked: {type: 'boolean', default: false},
+        failedAttempts: {type: 'integer', default: 0},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -97,8 +99,17 @@ module.exports = class User extends Model {
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
 
+    if (this.failedAttempts === undefined) {
+      this.failedAttempts = 0
+    }
+
+    if (this.isLocked === undefined) {
+      this.isLocked = false
+    }
+
     await this.generateHash()
   }
+
 
   // ------------------------------------------------
   // Instance Methods
@@ -512,7 +523,7 @@ module.exports = class User extends Model {
       if (!usr.isActive) {
         throw new WIKI.Error.AuthAccountBanned()
       }
-      
+
       await WIKI.models.users.query().patch({
         password: newPassword,
         mustChangePwd: false
@@ -947,4 +958,39 @@ module.exports = class User extends Model {
       WIKI.logger.warn(`Failed to process binary thumbnail data for user ${userId}`)
     }
   }
+  /**
+   * Increment failed attempts and lock user if limit is reached
+   */
+  static async incrementFailedAttempts(email) {
+    const user = await this.query().findOne({ email, providerKey: 'local' })
+    if (!user) {
+      console.log(`User with email ${email} not found`) // Debug log
+      return false
+    }
+
+    const updatedAttempts = user.failedattempts + 1
+    const islocked = updatedAttempts >= 3
+
+    console.log(`Incrementing failed attempts for user ${email}: ${updatedAttempts}`) // Debug log
+
+    await this.query().patch({
+      failedattempts: updatedAttempts,
+      islocked
+    }).where({ id: user.id })
+
+    console.log(`User ${email} is now locked: ${islocked}`) // Debug log
+    return islocked
+  }
+
+  /**
+   * Reset failed attempts on successful login
+   */
+  static async resetFailedAttempts(userId) {
+    console.log(`Resetting failed attempts for user ID: ${userId}`) // Debug log
+
+    await this.query().patch({
+      failedattempts: 0
+    }).where({ id: userId })
+  }
+
 }
