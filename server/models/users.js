@@ -992,5 +992,4 @@ module.exports = class User extends Model {
       failedattempts: 0
     }).where({ id: userId })
   }
-
 }
