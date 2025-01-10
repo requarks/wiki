@@ -11,7 +11,6 @@ ENVIRONMENT=$1
 kubectl create namespace $NAMESPACE
 kubectl apply -f capwiki/appproject.yaml
 kubectl apply -f capwiki/capwiki-deploy-repository.yaml
-kubectl apply -f capwiki-main-repository.yaml # not needed ?
 
 
 case "$ENVIRONMENT" in
@@ -32,3 +31,5 @@ case "$ENVIRONMENT" in
     exit 1
     ;;
 esac
+
+kubectl apply -n $NAMESPACE -f https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/manifests/install.yaml
