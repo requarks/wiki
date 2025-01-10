@@ -32,4 +32,6 @@ case "$ENVIRONMENT" in
     ;;
 esac
 
+### image updater 
+kubectl apply -n $NAMESPACE -f capwiki/argocd-nexus-secret.yaml
 kubectl apply -n $NAMESPACE -f https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/manifests/install.yaml
