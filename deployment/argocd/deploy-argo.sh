@@ -9,21 +9,23 @@ NAMESPACE="argocd"
 ENVIRONMENT=$1
 
 kubectl create namespace $NAMESPACE
-kubectl apply -k https://github.com/argoproj/argo-cd/manifests/crds\?ref\=stable
-kubectl apply -f argocd-provisioning-manifests/
+kubectl apply -f capwiki/appproject.yaml
+kubectl apply -f capwiki/capwiki-deploy-repository.yaml
+kubectl apply -f capwiki-main-repository.yaml # not needed ?
+
 
 case "$ENVIRONMENT" in
   dev1)
-    kubectl apply -f argocd-provisioning-manifests/applications/dev1.yaml
+    kubectl apply -f capwiki/applications/dev1.yaml
     ;;
   dev2)
-    kubectl apply -f argocd-provisioning-manifests/applications/dev2.yaml
+    kubectl apply -f capwiki/applications/dev2.yaml
     ;;
   staging)
-    kubectl apply -f argocd-provisioning-manifests/applications/stage.yaml
+    kubectl apply -f capwiki/applications/stage.yaml
     ;;
   prod)
-    kubectl apply -f argocd-provisioning-manifests/applications/prod.yaml
+    kubectl apply -f capwiki/applications/prod.yaml
     ;;
   *)
     echo "Invalid environment. Valid options are: dev, dev1, staging, prod."

@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  resourceVersion: "57011"
+  name: capwiki
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  destinations:
+  - name: in-cluster
+    namespace: capwiki
+    server: https://kubernetes.default.svc
+  orphanedResources: {}
+  sourceRepos:
+  - https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git  # not needed ?
+  - https://pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/CapWiki/capwiki-deployment.git
+status: {}
