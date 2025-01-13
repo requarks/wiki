@@ -5,7 +5,7 @@ variables:
   DEPLOY_USER: 'capwiki'
   TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
-  #STAGING_IMAGE_TAG: 'latest-staging'
+  STAGING_IMAGE_TAG: 'latest-staging'
 
   ENVIRONMENT:
     value: "none"
@@ -185,8 +185,8 @@ build-docker-image:
       if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
       elif [[ "$ENVIRONMENT" == "staging" ]]; then
-        #IMAGE_TAG="$STAGING_IMAGE_TAG"
-        IMAGE_TAG="$VERSION-staging"
+        IMAGE_TAG="$STAGING_IMAGE_TAG"
+        #IMAGE_TAG="$VERSION-staging"
       fi
       # Fallback if IMAGE_TAG is still empty
       if [[ -z "$IMAGE_TAG" ]]; then
