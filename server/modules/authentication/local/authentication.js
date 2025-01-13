@@ -22,14 +22,14 @@ module.exports = {
           })
 
           if (user) {
-            if (user.islocked) {
+            if (user.isLocked) {
               return done(new WIKI.Error.AuthAccountLocked(), null)
             }
 
             try {
               await user.verifyPassword(uPassword)
 
-              if (user.failedattempts > 0) {
+              if (user.failedAttempts > 0) {
                 await WIKI.models.users.resetFailedAttempts(user.id)
               }
 

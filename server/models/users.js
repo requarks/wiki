@@ -110,7 +110,6 @@ module.exports = class User extends Model {
     await this.generateHash()
   }
 
-
   // ------------------------------------------------
   // Instance Methods
   // ------------------------------------------------
@@ -172,7 +171,6 @@ module.exports = class User extends Model {
   getSitesWithWriteAccess() {
     return _.uniq(_.flatten(this.getAllRules().filter(rule => rule.roles && rule.roles.includes('write:pages') && rule.deny === false).map(rule => rule.sites)))
   }
-
 
   getGroups() {
     return _.uniq(_.map(this.groups, 'id'))
@@ -968,18 +966,18 @@ module.exports = class User extends Model {
       return false
     }
 
-    const updatedAttempts = user.failedattempts + 1
-    const islocked = updatedAttempts >= 3
+    const updatedAttempts = user.failedAttempts + 1
+    const isLocked = updatedAttempts >= 3
 
     console.log(`Incrementing failed attempts for user ${email}: ${updatedAttempts}`) // Debug log
 
     await this.query().patch({
-      failedattempts: updatedAttempts,
-      islocked
+      failedAttempts: updatedAttempts,
+      isLocked
     }).where({ id: user.id })
 
-    console.log(`User ${email} is now locked: ${islocked}`) // Debug log
-    return islocked
+    console.log(`User ${email} is now locked: ${isLocked}`) // Debug log
+    return isLocked
   }
 
   /**
@@ -989,7 +987,7 @@ module.exports = class User extends Model {
     console.log(`Resetting failed attempts for user ID: ${userId}`) // Debug log
 
     await this.query().patch({
-      failedattempts: 0
+      failedAttempts: 0
     }).where({ id: userId })
   }
 }
