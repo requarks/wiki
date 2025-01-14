@@ -10,16 +10,20 @@
     cmd: helm repo update
 
 - name: Check if Longhorn is installed
-  ansible.builtin.command:
-    cmd: helm list -n longhorn-system
+  ansible.builtin.shell: helm list -n longhorn-system --output json
   register: longhorn_status
-  failed_when: false
+  ignore_errors: yes
+
+- name: Determine if Longhorn needs installation
+  ansible.builtin.set_fact:
+    install_longhorn: >
+      {{
+        longhorn_status.rc != 0 or
+        (longhorn_status.stdout | from_json | selectattr('name', 'equalto', 'longhorn') | list | length == 0)
+      }}
+
 
 - name: Install Longhorn
-  ansible.builtin.command:
-    cmd: >
-      helm install longhorn longhorn/longhorn
-      --namespace longhorn-system
-      --create-namespace
-      --version 1.7.2
-  when: longhorn_status.rc != 0
+  ansible.builtin.shell: |
+      helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.7.2
+  when: install_longhorn
