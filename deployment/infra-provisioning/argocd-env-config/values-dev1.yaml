@@ -13,7 +13,7 @@ configs:
   cm:
     kustomize.buildOptions: --enable-helm
   params:
-    server.insecure: true
+    server.insecure: false
   secret:
     argocdServerAdminPassword: "$2a$10$D/eqFQsMlFHF57c134nNcudYl38H8VF/gfZLMf4J6gVzK887xlL5i"
 
@@ -23,9 +23,9 @@ server:
     ingressClassName: nginx
     annotations:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     extraTls:
     - hosts:
       - dev1-argocd-capwiki.corp.capgemini.com
-      secretName: argo-server-tls
+      secretName: argo-tls
 
