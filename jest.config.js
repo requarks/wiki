@@ -6,16 +6,16 @@ const config = {
     '/node_modules/',
     "/dev\/cypress\/"
   ],
-  "reporters": [
-      [
-        "jest-junit",
-        {
-          "outputDirectory": "./test-results",
-          "outputName": "report.xml",
-          "addFileAttribute": "true"
-        }
-      ]
-  ],
+  // "reporters": [
+  //     [
+  //       "jest-junit",
+  //       {
+  //         "outputDirectory": "./test-results",
+  //         "outputName": "report.xml",
+  //         "addFileAttribute": "true"
+  //       }
+  //     ]
+  // ],
   rootDir: './',
   testMatch: ['**/server/test/**/*.test.js']
 }

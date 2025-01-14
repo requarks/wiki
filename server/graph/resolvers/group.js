@@ -372,3 +372,5 @@ module.exports = {
     }
   }
 }
+
+// module.exports = {canManageGroup}
