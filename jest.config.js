@@ -1,8 +1,9 @@
 /** @type {import('jest').Config} */
 const config = {
   verbose: true,
+  testEnvironment: 'node',
   testPathIgnorePatterns: [
-    "/node_modules/",
+    '/node_modules/',
     "/dev\/cypress\/"
   ],
   "reporters": [
@@ -14,7 +15,9 @@ const config = {
           "addFileAttribute": "true"
         }
       ]
-   ]
-};
+  ],
+  rootDir: './',
+  testMatch: ['**/server/test/**/*.test.js']
+}
 
-module.exports = config;
+module.exports = config
