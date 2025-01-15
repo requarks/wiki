@@ -384,7 +384,7 @@ describe('Regular User', () => {
     WIKI.auth.groups = {
       1: {
         rules: [
-          { sites: [1], roles: ['manage:sites'], match: 'START', path: '/test', deny: false }
+          { sites: [1], roles: ['manage:sites'], match: 'START', path: '/nonexistent_page', deny: false }
         ]
       }
     }
