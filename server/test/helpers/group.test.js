@@ -4,10 +4,9 @@ const {
   isSiteAdmin,
   hasSitePermission,
   _applyPageRuleSpecificity
-} = require('../core/auth')
-const group = require('../graph/resolvers/group')
+} = require('../../core/auth')
 
-// const { canManageGroup } = require('../graph/resolvers/group')
+const { canManageGroup } = require('../../helpers/group')
 
 const WIKI = {
   auth: {
@@ -145,12 +144,12 @@ describe('Super Admin', () => {
   })
 
   it('can manage group mentioned in permissions', () => {
-    const result = group.canManageGroup(user, 1)
+    const result = canManageGroup(user, 1)
     expect(result).toBe(true)
   })
 
   it('can manage any group', () => {
-    const result = group.canManageGroup(user, 2)
+    const result = canManageGroup(user, 2)
     expect(result).toBe(true)
   })
 })
@@ -170,7 +169,7 @@ describe('Site Admin', () => {
   })
 
   it('can manage group mentioned in permissions', () => {
-    const result = group.canManageGroup(user, 1)
+    const result = canManageGroup(user, 1)
     expect(result).toBe(true)
   })
 
@@ -196,7 +195,7 @@ describe('Regular User', () => {
   })
 
   it('cannot manage any groups', () => {
-    const result = group.canManageGroup(user, 2)
+    const result = canManageGroup(user, 2)
     expect(result).toBe(false)
   })
 })
