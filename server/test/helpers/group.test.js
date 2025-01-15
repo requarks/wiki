@@ -143,7 +143,32 @@ describe('Super Admin', () => {
     global.WIKI = WIKI
   })
 
-  it('can manage group mentioned in permissions', () => {
+  it('can manage the group mentioned in the permissions', () => {
+    const result = canManageGroup(user, 1)
+    expect(result).toBe(true)
+  })
+
+  it('can manage any group', () => {
+    const result = canManageGroup(user, 2)
+    expect(result).toBe(true)
+  })
+})
+
+describe('Super Admin with id != 1', () => {
+  let user
+
+  beforeEach(() => {
+    user = {
+      id: 6,
+      name: 'Administrator',
+      groups: [ 1, 3, 4 ],
+      permissions: [ 'manage:system' ]
+    }
+
+    global.WIKI = WIKI
+  })
+
+  it('can manage the group mentioned in the permissions', () => {
     const result = canManageGroup(user, 1)
     expect(result).toBe(true)
   })
@@ -168,11 +193,15 @@ describe('Site Admin', () => {
     global.WIKI = WIKI
   })
 
-  it('can manage group mentioned in permissions', () => {
-    const result = canManageGroup(user, 1)
+  it('can manage a group mentioned in the permissions', () => {
+    const result = canManageGroup(user, 4)
     expect(result).toBe(true)
   })
 
+  it('cannot manage a group they are not an admin of', () => {
+    const result = canManageGroup(user, 3)
+    expect(result).toBe(false)
+  })
 })
 
 describe('Regular User', () => {
@@ -182,7 +211,7 @@ describe('Regular User', () => {
     user = {
       id: 3,
       name: 'Regular User',
-      groups: [ 1 ],
+      groups: [ 3 ],
       permissions: [
         'read:pages',
         'read:assets',
