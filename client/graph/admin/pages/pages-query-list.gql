@@ -1,6 +1,6 @@
 query($siteId: String) {
   pages {
-    list(siteId: $siteId) {
+    list(siteId: $siteId, isAdmin: true) {
       id
       locale
       path
