@@ -275,7 +275,6 @@ describe('Regular User', () => {
     )
     expect(result).toBe(true)
     expect(WIKI.auth.isSiteAdmin).toHaveBeenCalledWith(user)
-    // expect(WIKI.auth.hasSitePermission).toHaveBeenCalledWith(user, siteId, 'read:pages')
   })
 
   it('cannot access the page they do not have read rights', () => {
