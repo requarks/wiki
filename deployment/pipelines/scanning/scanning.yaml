@@ -2,7 +2,7 @@ variables:
   TRIVY_VERSION: "latest"
   POSTGRES_IMAGE_NAME: "postgresql"
   CAPWIKI_IMAGE_NAME: "capwiki"
-  POSTGRES_IMAGE: "bitnami/postgresql:17.1.0-debian-12-r0"
+  POSTGRES_IMAGE: "bitnami/postgresql:17.2.0-debian-12-r5"
   CAPWIKI_IMAGE: "$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:latest"
   TRIVY_USERNAME: "$DOCKER_REGISTRY_USER"
   TRIVY_PASSWORD: "$DOCKER_REGISTRY_PASS"
