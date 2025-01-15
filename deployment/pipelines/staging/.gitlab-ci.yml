@@ -10,14 +10,15 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
    
 stages:
-  - setup-deployment
-  - deployment
+  - setup-remotehost
+  - infra-provisioning
+  - k3scluster-health-check
   - monitoring
-  - rollback
+  - argocd
   - cleanup
 
-setup-deployment:
-  stage: setup-deployment
+setup-remotehost:
+  stage: setup-remotehost
   script:
     - eval $(ssh-agent -s)
     - echo "$STAGING_SSH_KEY" | base64 -d | tr -d '\r' | ssh-add -
@@ -26,6 +27,21 @@ setup-deployment:
     - echo "$STAGING_SSH_KEY" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -t rsa de-muc-mar3.apps.ce.capgemini.com >> ~/.ssh/known_hosts
+    
+
+infra-provisioning:
+  stage: infra-provisioning
+  image: ansible/ansible
+  script:
+    - echo "infrastructure provisioning includes k3s, helm,ingress, kustomize, kubeseal"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=staging"
+  environment:
+    name: $ENVIRONMENT
+  
+k3scluster-health-check:
+  stage: k3scluster-health-check
+  script: 
     - |
       ssh deployer@de-muc-mar3.apps.ce.capgemini.com << 'EOF'
         echo "Check kubelet Status"
@@ -52,20 +68,6 @@ setup-deployment:
         fi
       EOF
 
-
-deployment:
-  stage: deployment
-  image: ansible/ansible
-  script:
-    - echo "infrastructure provisioning"
-    - cd ./deployment/infra-provisioning
-    - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=staging"
-    - echo "Deploying application"
-    - cd ../kubernetes-helm
-    - ansible-playbook  -i inventory ./playbook-deploy.yml -e "IMAGE=$IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=staging" -vv
-  environment:
-    name: $ENVIRONMENT
-
 monitoring:
   stage: monitoring
   image: ansible/ansible
@@ -81,29 +83,27 @@ monitoring:
     - if: '$MONITORING != "yes"'
       when: never
 
-rollback:
-  stage: rollback
+argocd:
+  stage: argocd
+  image: ansible/ansible
   script:
-    - |
-      ssh deployer@de-muc-mar3.apps.ce.capgemini.com << 'EOF'
-      DEPLOY_AVAILABLE=$(kubectl describe deploy capwiki-app -n staging | grep -i available | grep -i "1 available" | wc -l)
-      if [ "$DEPLOY_AVAILABLE" -eq 0 ]; then
-        echo "Deployment is unavailable, rolling back to the previous version"
-        kubectl rollout undo deployment/capwiki-app -n staging
-        echo "Rollback complete."
-      else
-        echo "Deployment is available, no rollback needed."
-      fi
-      EOF
-  when: delayed
-  start_in: 2 minutes
+    - echo "install argocd in kubernetes cluster"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook argocd-install-playbook.yml -i inventory -e "env=staging"  -vv
+    - echo "Configure and deploy capwiki appProject and application on argocd in kubernetes cluster"
+    - cd ../argocd/ansible
+    - ansible-playbook argocd-capwiki-deploy-playbook.yaml -i inventory  -e env=staging  -vv
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: '$ARGOCD == "yes"'
+      when: on_success
+    - if: '$ARGOCD != "yes"'
+      when: never
+
 
 cleanup:
   stage: cleanup
   script:
     - rm -f /home/mar/.ssh/id_rsa
   when: always
-  needs:
-  - deployment
-  - rollback
-
