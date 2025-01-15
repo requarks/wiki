@@ -4,7 +4,7 @@ const config = {
   testEnvironment: 'node',
   testPathIgnorePatterns: [
     '/node_modules/',
-    "/dev\/cypress\/"
+    '/dev\/cypress\/'
   ],
   rootDir: './',
   testMatch: ['**/server/test/**/*.test.js']
