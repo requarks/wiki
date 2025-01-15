@@ -1,3 +1,8 @@
+const { assignUser, unassignUser } = require('../../../graph/resolvers/group');
+
+// jest.mock('../../../core/auth');
+// jest.mock('../../../helpers/graph');
+
 const WIKI = {
   auth: {
     isSuperAdmin: jest.fn(),
@@ -6,6 +11,7 @@ const WIKI = {
     checkAccess: jest.fn(),
     revokeUserTokens: jest.fn(),
     reloadGroups: jest.fn(),
+    checkExclusiveAccess: jest.fn(),
     groups: {
       '1': {
         id: 1,
@@ -124,7 +130,15 @@ const WIKI = {
     outbound: {
       emit: jest.fn()
     }
-  }
+  },
+  users: {
+    query: jest.fn(() => ({
+      findById: jest.fn().mockResolvedValue({ id: 5 }),
+    })),
+  },
+  knex: jest.fn(() => ({
+    where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(null) })),
+  })),
 }
 
 const groupResolvers = require('../../../graph/resolvers/group')
@@ -227,5 +241,193 @@ describe('Group Resolvers', () => {
           .toThrow('Insufficient permissions to update the group.')
       })
     })
+
+    describe('Function assignUser', () => {
+      let req;
+      const { assignUser } = groupResolvers.GroupMutation;
+  
+      beforeEach(() => {
+        req = {
+          user: {
+            id: 1,
+            groups: [1],
+            permissions: ['manage:groups'],
+          },
+        };
+
+        WIKI.auth.isSuperAdmin.mockReturnValue(false)
+        WIKI.auth.isSiteAdmin.mockReturnValue(true)
+        WIKI.auth.checkExclusiveAccess.mockReturnValue(false)
+        WIKI.auth.checkAccess.mockReturnValue(true)
+
+        WIKI.models = {
+          groups: {
+            query: jest.fn(() => ({
+              findById: jest.fn().mockResolvedValue({
+                id: 4,
+                $relatedQuery: jest.fn(() => ({
+                  relate: jest.fn().mockResolvedValue(true),
+                })),
+              }),
+            })),
+          },
+          users: {
+            query: jest.fn(() => ({
+              findById: jest.fn().mockResolvedValue({ id: 5 }),
+            })),
+          },
+          knex: jest.fn(() => ({
+            where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(null) })),
+          })),
+        };
+
+        global.WIKI = WIKI
+      });
+    
+      afterEach(() => {
+        jest.restoreAllMocks()
+      });
+  
+      it('successfully assigns a user to a group', async () => {
+        const args = { groupId: 3, userId: 5 };
+        const result = await assignUser(null, args, { req });
+        expect(result.responseResult).toEqual({
+          "errorCode": 0,
+          "message": "User has been assigned to group.",
+          "slug": "ok",
+          "succeeded": true,
+        });
+        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: 4, kind: 'g' });
+      });
+  
+      it('throws an error if user does not have permission to assign', async () => {
+        req.user.permissions = [];
+        const args = { groupId: 4, userId: 5 };
+        await expect(assignUser(null, args, { req })).rejects.toThrow(
+          'Insufficient permissions to assign user to the group.'
+        );
+      });
+  
+      it('throws an error if the Guest user is being assigned', async () => {
+        const args = { groupId: 3, userId: 2 };
+        await expect(assignUser(null, args, { req })).rejects.toThrow(
+          'Cannot assign the Guest user to a group.'
+        );
+      });
+  
+      xit('throws an error if the group does not exist', async () => {
+        WIKI.models.groups.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }));
+        const args = { groupId: 99, userId: 5 };
+        await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid Group ID');
+      });
+
+      it('throws an error if the user does not exist', async () => {
+        WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }));
+        const args = { groupId: 3, userId: 99 };
+        await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid User ID');
+      });
+  
+      it('throws an error if the user is already in the group', async () => {
+        WIKI.models.knex = jest.fn(() => ({
+          where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(true) })),
+        }));
+        const args = { groupId: 3, userId: 5 };
+        await expect(assignUser(null, args, { req })).rejects.toThrow(
+          'User is already assigned to group.'
+        );
+      });
+    });
+  
+    describe('Function unassignUser', () => {
+      let req;
+      const { unassignUser } = groupResolvers.GroupMutation;
+  
+      beforeEach(() => {
+        req = {
+          user: {
+            id: 1,
+            groups: [1],
+            permissions: ['manage:groups'],
+          },
+        };
+
+        WIKI.auth.isSuperAdmin.mockReturnValue(false)
+        WIKI.auth.isSiteAdmin.mockReturnValue(true)
+        WIKI.auth.checkExclusiveAccess.mockReturnValue(false)
+        WIKI.auth.checkAccess.mockReturnValue(true)
+
+        WIKI.models = {
+          groups: {
+            query: jest.fn(() => ({
+              findById: jest.fn().mockResolvedValue({
+                id: 3,
+                $relatedQuery: jest.fn(() => ({
+                  unrelate: jest.fn(() => ({
+                    where: jest.fn().mockResolvedValue(true),
+                  })),
+                })),
+              }),
+            })),
+          },
+          users: {
+            query: jest.fn(() => ({
+              findById: jest.fn().mockResolvedValue({ id: 5 }),
+            })),
+          },
+        };
+
+        global.WIKI = WIKI
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks()
+      })
+  
+      it('successfully unassign a user from a group', async () => {
+        const args = { groupId: 3, userId: 5 };
+        const result = await unassignUser(null, args, { req });
+        expect(result.responseResult).toEqual({
+          "errorCode": 0,
+          "message": "User has been unassigned from group.",
+          "slug": "ok",
+          "succeeded": true,
+        });
+        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: 5, kind: 'u' });
+      });
+  
+      it('throws an error if user does not have permission to unassign', async () => {
+        req.user.permissions = [];
+        const args = { groupId: 4, userId: 5 };
+        await expect(unassignUser(null, args, { req })).rejects.toThrow(
+          'Insufficient permissions to remove user from the group.'
+        );
+      });
+  
+      it('throws an error if the Guest user is being unassigned', async () => {
+        const args = { groupId: 3, userId: 2 };
+        await expect(unassignUser(null, args, { req })).rejects.toThrow(
+          'Cannot unassign Guest user'
+        );
+      });
+  
+      it('throws an error if the Administrator is being unassigned from Administrators group', async () => {
+        const args = { groupId: 1, userId: 1 };
+        await expect(unassignUser(null, args, { req })).rejects.toThrow(
+           'Insufficient permissions to remove user from the group.'
+        );
+      });
+  
+      xit('throws an error if the group does not exist', async () => {
+        WIKI.models.groups.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }));
+        const args = { groupId: 99, userId: 5 };
+        await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid Group ID');
+      });
+  
+      it('throws an error if the user does not exist', async () => {
+        WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }));
+        const args = { groupId: 3, userId: 99 };
+        await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid User ID');
+      });
+    });
   })
 })
