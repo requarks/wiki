@@ -89,7 +89,7 @@ const canManageGroup = (user, groupId) => {
   const group = _.get(WIKI.auth.groups, groupId, [])
   const groupSites = rulesToSitesAdmin(group.rules)
 
-  if (_.intersection(userSites, groupSites).length === groupSites.length) {
+  if (_.isEqual(userSites, groupSites)) {
     return true
   }
   return false
