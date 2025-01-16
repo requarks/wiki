@@ -12,7 +12,7 @@
             v-icon mdi-arrow-left
           v-dialog(v-model='deleteSiteDialog', max-width='500')
             template(v-slot:activator='{ on }')
-              v-btn.ml-3(color='red', icon, outlined, v-on='on')
+              v-btn.ml-3(v-if='hasPermission(`manage:system`)', color='red', icon, outlined, v-on='on')
                 v-icon(color='red') mdi-trash-can-outline
             v-card
               .dialog-header.is-red Delete Site?
@@ -21,7 +21,7 @@
                 v-spacer
                 v-btn(text, @click='deleteSiteDialog = false') Cancel
                 v-btn(color='red', dark, @click='deleteSite') Delete
-          v-btn.ml-3(color='success', large, depressed, @click='updateSite')
+          v-btn.ml-3(v-if='hasPermission(`manage:system`)', color='success', large, depressed, @click='updateSite')
             v-icon(left) mdi-check
             span Update Site
         v-card.mt-3
@@ -36,6 +36,7 @@
                     prepend-icon='mdi-account-group'
                     :counter='255'
                     style='max-width: 600px; margin-left: 15px; padding-bottom: 10px;'
+                    :disabled='!hasPermission(`manage:system`)'
                   )
                   v-card-text
                     v-text-field(
@@ -54,16 +55,16 @@
                     :label='$t(`Enable Site`)'
                     color='primary'
                     v-model='site.isEnabled'
+                    :disabled='!hasPermission("manage:system")'
                     )
 
 </template>
 
 <script>
 import _ from 'lodash'
-import gql from 'graphql-tag'
 import siteQuery from 'gql/admin/sites/sites-query-by-id.gql'
-import deleteSiteMutation from 'gql/admin/sites/sites-mutation-delete.gql'
 import updateSiteMutation from 'gql/admin/sites/sites-mutation-update.gql'
+import permissionsMixin from './permissionsMixin'
 
 /* global siteConfig */
 
@@ -77,7 +78,7 @@ export default {
       routeParam: this.$route.params.id || ''
     }
   },
-  mounted() {},
+  mixins: [permissionsMixin],
   methods: {
     async updateSite() {
       try {
@@ -104,12 +105,6 @@ export default {
     async deleteSite() {
       this.deleteSiteDialog = false
       try {
-        const resp = await this.$apollo.mutate({
-          mutation: deleteSiteMutation,
-          variables: {
-            id: this.site.id
-          }
-        })
         this.$store.commit('showNotification', {
           style: 'success',
           message: `Site ${this.site.name} has been deleted.`,
@@ -144,7 +139,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss'>
-
-</style>
