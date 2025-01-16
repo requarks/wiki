@@ -373,7 +373,6 @@
   },
   "resolutions": {
     "@graphql-tools/relay-operation-optimizer": "6.2.5",
-    "apollo-server-express/**/graphql-tools": "4.0.8",
     "bson": "3.0.0",
     "graphql": "15.3.0",
     "immutable": "3.8.2",
