@@ -28,16 +28,16 @@ stages:
   
 
 .trivy_script_template: &trivy_script_template
-  - trivy image --no-progress --timeout 30m --format json --output trivy-report-${IMAGE_NAME}.json ${IMAGE}
-  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${IMAGE_NAME}.html trivy-report-${IMAGE_NAME}.json
-  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${IMAGE}
+  - trivy image --no-progress --timeout 30m --format json --output trivy-report-${SCAN_IMAGE_NAME}.json ${SCAN_IMAGE}
+  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${SCAN_IMAGE_NAME}.html trivy-report-${SCAN_IMAGE_NAME}.json
+  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${SCAN_IMAGE}
 
 scan_postgres_image:
   <<: *scan_template
   stage: postgres
   variables:
-    IMAGE_NAME: $POSTGRES_IMAGE_NAME
-    IMAGE: $POSTGRES_IMAGE
+    SCAN_IMAGE_NAME: $POSTGRES_IMAGE_NAME
+    SCAN_IMAGE: $POSTGRES_IMAGE
   script:
     - *trivy_script_template
 
@@ -45,8 +45,8 @@ scan_capwiki_image:
   <<: *scan_template
   stage: capwiki
   variables:
-    IMAGE_NAME: $CAPWIKI_IMAGE_NAME
-    IMAGE: $CAPWIKI_IMAGE
+    SCAN_IMAGE_NAME: $CAPWIKI_IMAGE_NAME
+    SCAN_IMAGE: $CAPWIKI_IMAGE
   script:
     - *trivy_script_template
 
