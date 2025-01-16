@@ -33,6 +33,7 @@ type PageQuery {
     creatorId: Int
     authorId: Int
     siteId: String
+    isAdmin: Boolean
   ): [PageListItem!]! @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   single(id: Int!): Page @auth(requires: ["read:pages", "manage:system", "manage:sites"])

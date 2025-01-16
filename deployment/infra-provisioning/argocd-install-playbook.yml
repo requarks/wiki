@@ -32,6 +32,14 @@
         owner: "{{ username }}"
         group: "{{ username }}"
 
+   - name: Copy TLS Certificate for ArgoCD to the target dircetory
+     ansible.builtin.copy:
+        src: "./argocd-env-config/certs/argocd-tls.yaml"
+        dest: "/home/{{ username }}/argocd-install/argocd-tls.yaml"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
    - name: Add ArgoCD Helm repository
      kubernetes.core.helm_repository:
         name: "{{ helm_repo_name }}"
@@ -52,6 +60,9 @@
 
    - name: Install argocd CRD's
      ansible.builtin.shell:  "kubectl apply -k {{ argocdcrd_url }}"
+
+   - name: Install TLS Certificate for ArgoCD
+     ansible.builtin.shell: "kubectl apply -f /home/{{ username }}/argocd-install/argocd-tls.yaml"
 
    - name: Cleanup Argo CD files after deployment
      ansible.builtin.file:

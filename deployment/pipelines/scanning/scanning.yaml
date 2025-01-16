@@ -2,16 +2,18 @@ variables:
   TRIVY_VERSION: "latest"
   POSTGRES_IMAGE_NAME: "postgresql"
   CAPWIKI_IMAGE_NAME: "capwiki"
-  POSTGRES_IMAGE: "bitnami/postgresql:17.1.0-debian-12-r0"
+  POSTGRES_IMAGE: "bitnami/postgresql:17.2.0-debian-12-r5"
   CAPWIKI_IMAGE: "$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:latest"
   TRIVY_USERNAME: "$DOCKER_REGISTRY_USER"
   TRIVY_PASSWORD: "$DOCKER_REGISTRY_PASS"
 
 stages:
   - scan
+  - postgres
+  - capwiki
+  - monitoring
 
 .scan_template: &scan_template
-  stage: scan
   tags:
   - docker_runner
   allow_failure: true
@@ -26,28 +28,31 @@ stages:
   
 
 .trivy_script_template: &trivy_script_template
-  - trivy image --no-progress --timeout 30m --format json --output trivy-report-$IMAGE_NAME.json $IMAGE
-  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-$IMAGE_NAME.html trivy-report-$IMAGE_NAME.json
-  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 $IMAGE
+  - trivy image --no-progress --timeout 30m --format json --output trivy-report-${SCAN_IMAGE_NAME}.json ${SCAN_IMAGE}
+  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${SCAN_IMAGE_NAME}.html trivy-report-${SCAN_IMAGE_NAME}.json
+  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${SCAN_IMAGE}
 
 scan_postgres_image:
   <<: *scan_template
+  stage: postgres
   variables:
-    IMAGE_NAME: $POSTGRES_IMAGE_NAME
-    IMAGE: $POSTGRES_IMAGE
+    SCAN_IMAGE_NAME: $POSTGRES_IMAGE_NAME
+    SCAN_IMAGE: $POSTGRES_IMAGE
   script:
     - *trivy_script_template
 
 scan_capwiki_image:
   <<: *scan_template
+  stage: capwiki
   variables:
-    IMAGE_NAME: $CAPWIKI_IMAGE_NAME
-    IMAGE: $CAPWIKI_IMAGE
+    SCAN_IMAGE_NAME: $CAPWIKI_IMAGE_NAME
+    SCAN_IMAGE: $CAPWIKI_IMAGE
   script:
     - *trivy_script_template
 
 scan_monitoring_helm:
   <<: *scan_template
+  stage: monitoring
   script:
     - apk add bash curl openssl
     - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3; chmod 700 get_helm.sh; ./get_helm.sh

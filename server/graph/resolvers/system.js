@@ -434,7 +434,7 @@ module.exports = {
         'pages.siteId'
       ])
       results = _.filter(results, r => {
-        return WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], {
+        return WIKI.auth.checkAccess(context.req.user, ['manage:sites'], {
           path: r.path,
           locale: r.locale,
           siteId: r.siteId
