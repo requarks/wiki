@@ -962,21 +962,17 @@ module.exports = class User extends Model {
   static async incrementFailedAttempts(email) {
     const user = await this.query().findOne({ email, providerKey: 'local' })
     if (!user) {
-      console.log(`User with email ${email} not found`) // Debug log
       return false
     }
 
     const updatedAttempts = user.failedAttempts + 1
     const isLocked = updatedAttempts >= 3
 
-    console.log(`Incrementing failed attempts for user ${email}: ${updatedAttempts}`) // Debug log
-
     await this.query().patch({
       failedAttempts: updatedAttempts,
       isLocked
     }).where({ id: user.id })
 
-    console.log(`User ${email} is now locked: ${isLocked}`) // Debug log
     return isLocked
   }
 
@@ -984,8 +980,6 @@ module.exports = class User extends Model {
    * Reset failed attempts on successful login
    */
   static async resetFailedAttempts(userId) {
-    console.log(`Resetting failed attempts for user ID: ${userId}`) // Debug log
-
     await this.query().patch({
       failedAttempts: 0
     }).where({ id: userId })
