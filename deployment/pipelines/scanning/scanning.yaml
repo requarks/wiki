@@ -25,9 +25,9 @@ stages:
     paths:
       - trivy-report-*.json
       - trivy-report-*.html
-  before_script:  # the purpose of those two lines is to check, whether the limit for pulling docker images is exceeded
-    - TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
-    - curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest
+  before_script: |  # the purpose of those two lines is to check, whether the limit for pulling docker images is exceeded
+    TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
+    curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest
   
 
 .trivy_script_template: &trivy_script_template
