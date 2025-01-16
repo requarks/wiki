@@ -28,9 +28,9 @@ stages:
   
 
 .trivy_script_template: &trivy_script_template
-  - trivy image --no-progress --timeout 30m --format json --output trivy-report-$IMAGE_NAME.json $IMAGE
-  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-$IMAGE_NAME.html trivy-report-$IMAGE_NAME.json
-  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 $IMAGE
+  - trivy image --no-progress --timeout 30m --format json --output trivy-report-${IMAGE_NAME}.json ${IMAGE}
+  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${IMAGE_NAME}.html trivy-report-${IMAGE_NAME}.json
+  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${IMAGE}
 
 scan_postgres_image:
   <<: *scan_template
