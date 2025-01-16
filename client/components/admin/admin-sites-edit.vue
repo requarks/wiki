@@ -64,6 +64,7 @@
 import _ from 'lodash'
 import siteQuery from 'gql/admin/sites/sites-query-by-id.gql'
 import updateSiteMutation from 'gql/admin/sites/sites-mutation-update.gql'
+import deleteSiteMutation from 'gql/admin/sites/sites-mutation-delete.gql'
 import permissionsMixin from './permissionsMixin'
 
 /* global siteConfig */
@@ -105,6 +106,12 @@ export default {
     async deleteSite() {
       this.deleteSiteDialog = false
       try {
+        await this.$apollo.mutate({
+          mutation: deleteSiteMutation,
+          variables: {
+            id: this.site.id
+          }
+        })
         this.$store.commit('showNotification', {
           style: 'success',
           message: `Site ${this.site.name} has been deleted.`,
