@@ -31,12 +31,11 @@ stages:
   - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${SCAN_IMAGE_NAME}.html trivy-report-${SCAN_IMAGE_NAME}.json
   - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${SCAN_IMAGE}
 
-check_limit_rates:
+check_limit_rate:
+  <<: *scan_template
   stage: check_limit_rate
-  tags:
-  - docker_runner
   before_script:
-    - apt-get update && apt-get install -y curl jq
+    - apk update && apk add curl jq
   script: |  # the purpose of those two lines is to check, whether the limit for pulling docker images is exceeded
     TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
     curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest  
