@@ -1,0 +1,14 @@
+apiVersion: longhorn.io/v1beta1
+kind: RecurringJob
+metadata:
+  name: monitoring-snapshot-job
+  namespace: longhorn-system
+spec:
+  groups:
+    - monitoring-volume-snapshot
+  task: snapshot
+  cron: "0 2 * * *"
+  retain: 1
+  concurrency: 1
+  labels:
+    created-by: recurring-job

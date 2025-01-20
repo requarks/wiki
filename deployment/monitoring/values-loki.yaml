@@ -1,7 +1,7 @@
 loki:
   enabled: true
   nodeSelector:
-    node-role.kubernetes.io/master: "true"
+    kubernetes.io/hostname: "k3s-master-01"
   isDefault: false
   image:
     tag: 2.9.7
@@ -24,8 +24,26 @@ promtail:
   enabled: true
   config:
     logLevel: debug
-    # serverPort: 3101
-    # clients:
-    #   - url: "http://loki.monitoring:3100/loki/api/v1/push"
-
- 
+    ## MAR-540. Need to fix this configuration or feel free to use other configuration 
+    # snippets: 
+      #  pipelineStages:
+            # - cri: {}
+            # - match:
+                # selector: '{namespace!~"capwiki"}'
+                # action: drop
+            # - common:
+                # - action: replace
+                  # source_labels: [__meta_kubernetes_namespace]
+                  # target_label: namespace
+      #  scrapeConfigs: |
+      #   - job_name: kubernetes-pods
+      #     kubernetes_sd_configs:
+      #       - role: pod
+      #     relabel_configs:
+      #       - source_labels: [__meta_kubernetes_namespace]
+      #         action: keep
+      #         regex: capwiki
+      #       - source_labels: [__meta_kubernetes_pod_node_name]
+      #         action: replace
+      #         target_label: __path__
+      #         replacement: /var/log/pods/$1/*.log
