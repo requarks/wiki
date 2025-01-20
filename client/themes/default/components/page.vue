@@ -182,6 +182,37 @@
                 .page-author-card-name.body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
                 .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
+            //- PPle customize
+            v-card.page-author-card.mb-5
+              .pa-5
+                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                  span บุคคล
+                  v-spacer
+                ul.tags-list
+                  li.tag-item(v-for='(tag, idx) in tags' :key='`tag-` + tag.tag')
+                    a(:href='`/คน/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
+                      | {{ tag.title }}
+
+            v-card.page-author-card.mb-5
+              .pa-5
+                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                  span สถานที่
+                  v-spacer
+                ul.tags-list
+                  li.tag-item(v-for='(tag, idx) in tags' :key='`tag-` + tag.tag')
+                    a(:href='`/สถานที่/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
+                      | {{ tag.title }}
+
+            v-card.page-author-card.mb-5
+              .pa-5
+                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                  span เหตุการณ์
+                  v-spacer
+                ul.tags-list
+                  li.tag-item(v-for='(tag, idx) in tags' :key='`tag-` + tag.tag')
+                    a(:href='`/เหตุการณ์/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
+                      | {{ tag.title }}
+
             //- v-card.mb-5
             //-   .pa-5
             //-     .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
@@ -529,10 +560,10 @@ export default {
     commentsPerms: get('page/effectivePermissions@comments'),
     editShortcutsObj: get('page/editShortcuts'),
     rating: {
-      get () {
+      get() {
         return 3.5
       },
-      set (val) {
+      set(val) {
 
       }
     },
@@ -545,18 +576,18 @@ export default {
         return result
       }, []))
     },
-    pageUrl () { return window.location.href },
-    upBtnPosition () {
+    pageUrl() { return window.location.href },
+    upBtnPosition() {
       if (this.$vuetify.breakpoint.mdAndUp) {
         return this.$vuetify.rtl ? `right: 235px;` : `left: 235px;`
       } else {
         return this.$vuetify.rtl ? `right: 65px;` : `left: 65px;`
       }
     },
-    sidebarDecoded () {
+    sidebarDecoded() {
       return JSON.parse(Buffer.from(this.sidebar, 'base64').toString())
     },
-    tocDecoded () {
+    tocDecoded() {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     },
     tocPosition: get('site/tocPosition'),
@@ -566,12 +597,12 @@ export default {
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
-    hasAnyPagePermissions () {
+    hasAnyPagePermissions() {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
     printView: sync('site/printView'),
-    editMenuExternalUrl () {
+    editMenuExternalUrl() {
       if (this.editShortcutsObj.editMenuBar && this.editShortcutsObj.editMenuExternalBtn) {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
       } else {
@@ -601,7 +632,7 @@ export default {
 
     this.$store.set('page/mode', 'view')
   },
-  mounted () {
+  mounted() {
     if (this.$vuetify.theme.dark) {
       this.scrollStyle.bar.background = '#424242'
     }
@@ -648,17 +679,17 @@ export default {
     })
   },
   methods: {
-    goHome () {
+    goHome() {
       window.location.assign('/')
     },
-    toggleNavigation () {
+    toggleNavigation() {
       this.navOpen = !this.navOpen
     },
-    upBtnScroll () {
+    upBtnScroll() {
       const scrollOffset = window.pageYOffset || document.documentElement.scrollTop
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
-    print () {
+    print() {
       if (this.printView) {
         this.printView = false
       } else {
@@ -668,28 +699,28 @@ export default {
         })
       }
     },
-    pageEdit () {
+    pageEdit() {
       this.$root.$emit('pageEdit')
     },
-    pageHistory () {
+    pageHistory() {
       this.$root.$emit('pageHistory')
     },
-    pageSource () {
+    pageSource() {
       this.$root.$emit('pageSource')
     },
-    pageConvert () {
+    pageConvert() {
       this.$root.$emit('pageConvert')
     },
-    pageDuplicate () {
+    pageDuplicate() {
       this.$root.$emit('pageDuplicate')
     },
-    pageMove () {
+    pageMove() {
       this.$root.$emit('pageMove')
     },
-    pageDelete () {
+    pageDelete() {
       this.$root.$emit('pageDelete')
     },
-    handleSideNavVisibility () {
+    handleSideNavVisibility() {
       if (window.innerWidth === this.winWidth) { return }
       this.winWidth = window.innerWidth
       if (this.$vuetify.breakpoint.mdAndUp) {
@@ -698,7 +729,7 @@ export default {
         this.navShown = false
       }
     },
-    goToComments (focusNewComment = false) {
+    goToComments(focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)
       if (focusNewComment) {
         document.querySelector('#discussion-new').focus()
@@ -709,17 +740,19 @@ export default {
 </script>
 
 <style lang="scss">
-
 .breadcrumbs-nav {
   .v-btn {
     min-width: 0;
+
     &__content {
       text-transform: none;
     }
   }
+
   .v-breadcrumbs__divider:nth-child(2n) {
     padding: 0 6px;
   }
+
   .v-breadcrumbs__divider:nth-child(2) {
     padding: 0 6px 0 12px;
   }
@@ -742,7 +775,7 @@ export default {
 .page-header-section {
   position: relative;
 
-  > .is-page-header {
+  >.is-page-header {
     position: relative;
   }
 
@@ -788,5 +821,4 @@ export default {
     }
   }
 }
-
 </style>

@@ -184,7 +184,7 @@ export default {
     currentPageTitle: sync('page/title'),
     checkoutDateActive: sync('editor/checkoutDateActive'),
     currentStyling: get('page/scriptCss'),
-    isDirty () {
+    isDirty() {
       return _.some([
         this.initContentParsed !== this.$store.get('editor/content'),
         this.locale !== this.$store.get('page/locale'),
@@ -278,7 +278,29 @@ export default {
     },
     async save({ rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
+      console.log('saving')
       this.isSaving = true
+
+      const content = this.$store.get('editor/content');
+      console.log(content)
+      const originalTag = this.$store.get('page/tags')
+
+      // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (เหตุการณ์/tag), @ (คน), หรือ ! (สถานที่)
+      const regex = /(?:^|\s|>)([#@!][\w\u0E00-\u0E7F-]+)/g;
+
+      // ดึง matches
+      const matches = [...content.matchAll(regex)].map(match => match[1]);
+
+      console.log(matches); // result = ['#เหตุการณ์', '#อภิปรายสภา', '@ณัฐพงษ์', '!อำเภอทุ่งสองห้อง', '#123', '#14ตุลา', '#แท๊กปกติ', '@คน', '!สถานที่']
+      console.log(originalTag); // result = ['tagเริ่มต้น', __ob__: Observer]
+
+      // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
+      const combinedTags = Array.from(new Set([...originalTag, ...matches]));
+
+      console.log('Combined Tags (No Duplicates):', combinedTags);
+
+      // บันทึกผลรวมกลับไปใน Store (ถ้าจำเป็น)
+      this.$store.set('page/tags', matches);
 
       const saveTimeoutHandle = setTimeout(() => {
         throw new Error('Save operation timed out.')
@@ -527,7 +549,7 @@ export default {
         }
       }, 500)
     },
-    setCurrentSavedState () {
+    setCurrentSavedState() {
       this.savedState = {
         description: this.$store.get('page/description'),
         isPublished: this.$store.get('page/isPublished'),
@@ -564,14 +586,14 @@ export default {
       `,
       fetchPolicy: 'network-only',
       pollInterval: 5000,
-      variables () {
+      variables() {
         return {
           id: this.pageId,
           checkoutDate: this.checkoutDateActive
         }
       },
       update: (data) => _.cloneDeep(data.pages.checkConflicts),
-      skip () {
+      skip() {
         return this.mode === 'create' || this.isSaving || !this.isDirty
       }
     }
@@ -580,22 +602,20 @@ export default {
 </script>
 
 <style lang='scss'>
+.editor {
+  background-color: mc('grey', '900') !important;
+  min-height: 100vh;
 
-  .editor {
-    background-color: mc('grey', '900') !important;
-    min-height: 100vh;
-
-    .application--wrap {
-      background-color: mc('grey', '900');
-    }
-
-    &-title-input input {
-      text-align: center;
-    }
+  .application--wrap {
+    background-color: mc('grey', '900');
   }
 
-  .atom-spinner.is-inline {
-    display: inline-block;
+  &-title-input input {
+    text-align: center;
   }
+}
 
+.atom-spinner.is-inline {
+  display: inline-block;
+}
 </style>
