@@ -26,11 +26,12 @@
      loop:
         - { src: './deploy.sh', dest: '/home/deployer/monitoring/deploy.sh' }
         - { src: './ingress/monitoring-capwiki-tls-secret.yaml', dest: '/home/deployer/monitoring/monitoring-capwiki-tls-secret.yaml' }
-        - { src: './capwiki-grafanaui-secret.yaml', dest: '/home/deployer/monitoring/capwiki-grafanaui-secret.yaml' }
+        - { src: './grafana-smtp-secret.yaml', dest: '/home/deployer/monitoring/grafana-smtp-secret.yaml' }
         - { src: './values-capwiki-kube-prom.yaml', dest: '/home/deployer/monitoring/values-capwiki-kube-prom.yaml' }
-        - { src: './values-blackbox-exporter.yaml', dest: '/home/deployer/monitoring/values-blackbox-exporter.yaml' }
         - { src: './values-loki.yaml', dest: '/home/deployer/monitoring/values-loki.yaml' }
         - { src: './values-loki-prod.yaml', dest: '/home/deployer/monitoring/values-loki-prod.yaml' }
+        - { src: './local-persistence/grafana-dashboard-pvc.yaml', dest: '/home/deployer/monitoring/grafana-dashboard-pvc.yaml' }
+        - { src: './backup-restore/longhorn-snapshot-recurringjob.yaml', dest: '/home/deployer/monitoring/longhorn-snapshot-recurringjob.yaml' }
   
    - name: Copy ingress file based on hostname
      copy:

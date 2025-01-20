@@ -1,11 +1,11 @@
 grafana:
  enabled: true 
   # admin credentials
-  #adminUser: "admin"
-  #adminPassword: "admin@123"
+  #adminPassword: <custom-pwd>
+
  smtp:
     enabled: true
-    existingSecret: "capwiki-grafanaui-secret"
+    existingSecret: "grafana-smtp-secret"
     userKey: "smtpuser"
     passwordKey: "smtppwd"
     
@@ -35,34 +35,59 @@ grafana:
         isDefaultDatasource: false   # This is NOT the default datasource
  persistence:
     enabled: true
-    type: sts
-    storageClassName: "local-path"  # Use the different storage class as per requirement
-    accessModes:
-      - ReadWriteOnce
-    size: 1Gi  #Need to adjust as per the requirements when more node memory is available
-    finalizers:
-       - kubernetes.io/pvc-protection
+    existingClaim: grafana-dashboard-pvc
 
-prometheus:
+prometheusOperator:
   nodeSelector:
     node-role.kubernetes.io/master: "true"
+
+kube-state-metrics:
+  nodeSelector:
+    node-role.kubernetes.io/master: "true"
+
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      node-role.kubernetes.io/master: "true"
+
+prometheus:
   service:
     type: NodePort #(Optional - to access prometheus web ui outside the cluster on web)
   prometheusSpec:
+    nodeSelector:
+      node-role.kubernetes.io/master: "true"
     ruleSelectorNilUsesHelmValues: false
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
+    persistentVolumeClaimRetentionPolicy: 
+      whenDeleted: Retain
+    
+    ##Modify this configuration or feel free to use other configuration
+    # label namespaces with "monitor: enabled" to scrape metrics only from labeld namespaces as 
+    # in the file deloy.sh line "kubectl label namespace capwiki monitoring kube-system ingress-nginx monitor=enabled  --overwrite
+    # scrapeConfigNamespaceSelector:
+    #   matchLabels:
+    #     monitor: enabled
+
     ## How long to retain metrics
-    retention: 7d
-    ## Maximum size of metrics
+    retention: 4d
+   ## Maximum size of metrics
    ## Need to extend when more node memory is available
-    retentionSize: "1.5GB"
-  storageSpec:
+    retentionSize: "1GB"
     ## Using PersistentVolumeClaim
+    storageSpec:
       volumeClaimTemplate:
+        metadata:
+          name: prom-pvc
+          labels:
+            app.kubernetes.io/name: prometheus
+              # please refer doc https://longhorn.io/docs/1.7.2/snapshots-and-backups/scheduling-backups-and-snapshots/
+            recurring-job.longhorn.io/source: enabled
+            recurring-job.longhorn.io/monitoring-snapshot-job: enabled #Link PVC to Recurring job by metadata.name
+            recurring-job-group.longhorn.io/monitoring-volume-snapshot: enabled #Link PVC to  job  group mentioned in RecurringJob spec.groups
         spec:
-          storageClassName: "local-path"
+          storageClassName: "longhorn"
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:  
