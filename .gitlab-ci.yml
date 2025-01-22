@@ -291,3 +291,7 @@ push-docker-image:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: on_success
+
+after_script:
+  # Clean up potential leftover directories to avoid conflicts
+  - rm -rf ~/.npm-global
