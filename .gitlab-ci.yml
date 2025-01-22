@@ -52,6 +52,12 @@ default:
   tags:
     - runner_mar
   before_script:
+    - |
+     NPM_GLOBAL_DIR="$HOME/.npm-global"
+     if [ -d "$NPM_GLOBAL_DIR" ]; then
+        echo "Directory $TARGET_DIR exists. Deleting it..."
+        rm -rf "$NPM_GLOBAL_DIR"
+     fi
     - mkdir -p ~/.npm-global
     - npm config set prefix '~/.npm-global'
     - export PATH=$HOME/.npm-global/bin:$PATH
@@ -291,7 +297,3 @@ push-docker-image:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: on_success
-
-after_script:
-  # Clean up potential leftover directories to avoid conflicts
-  - rm -rf ~/.npm-global
