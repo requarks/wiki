@@ -58,9 +58,9 @@ default:
         echo "Directory $TARGET_DIR exists. Deleting it..."
         rm -rf "$NPM_GLOBAL_DIR"
      fi
-    - mkdir -p ~/.npm-global
-    - npm config set prefix '~/.npm-global'
-    - export PATH=$HOME/.npm-global/bin:$PATH
+    - mkdir -p "$NPM_GLOBAL_DIR"
+    - npm config set prefix "$NPM_GLOBAL_DIR"
+    - export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
     - npm install -g yarn
     - node -v && npm -v && yarn -v
 
