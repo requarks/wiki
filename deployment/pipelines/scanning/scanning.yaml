@@ -12,6 +12,7 @@ stages:
   - postgres
   - capwiki
   - monitoring
+  - verify_monitoring
 
 .scan_template: &scan_template
   tags:
@@ -68,7 +69,24 @@ scan_monitoring_helm:
     - cd deployment/pipelines/scanning/
     - chmod +x scripts/helm_repo_add.sh; scripts/helm_repo_add.sh
     - chmod +x scripts/helm_scanner.sh; scripts/helm_scanner.sh
+    - echo "Checking for HIGH or CRITICAL vulnerabilities in scan results..."
   artifacts:
     paths:
       - "deployment/pipelines/scanning/*.json"
       - "deployment/pipelines/scanning/*.html"
+
+scan_verify:
+  <<: *scan_template
+  stage: verify_monitoring
+  dependencies:
+    - scan_monitoring_helm
+  script:
+    - echo "Verifying scan results..."
+    - if grep -q '"Severity"[[:space:]]*:[[:space:]]*"HIGH"\|"Severity"[[:space:]]*:[[:space:]]*"CRITICAL"' deployment/pipelines/scanning/*.json; then
+        echo "High or Critical severity vulnerabilities found.";
+        exit 1;
+      else
+        echo "No High or Critical severity vulnerabilities found.";
+      fi
+
+
