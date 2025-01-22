@@ -21,6 +21,7 @@ import DecoupledEditor from '@requarks/ckeditor5'
 // import DecoupledEditor from '../../../../wiki-ckeditor5/build/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
+import gql from 'graphql-tag'
 
 /* global siteLangs */
 
@@ -31,7 +32,7 @@ export default {
   props: {
     save: {
       type: Function,
-      default: () => {}
+      default: () => { }
     }
   },
   data() {
@@ -55,31 +56,123 @@ export default {
     activeModal: sync('editor/activeModal')
   },
   methods: {
-    insertLink () {
+    insertLink() {
       this.insertLinkDialog = true
     },
-    insertLinkHandler ({ locale, path }) {
+    insertLinkHandler({ locale, path }) {
       this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
+    },
+    async fetchTags(queryText) {
+      try {
+        const response = await this.$apollo.query({
+          query: gql`
+            query {
+              pages {
+                tags {
+                  id
+                  tag
+                  title
+                }
+              }
+            }
+          `
+        })
+
+        if (!response.data.pages || !response.data.pages.tags) {
+          return [];
+        }
+
+        // แปลงเป็น array ของ string แทน object
+        const allTags = response.data.pages.tags
+          .filter((tag, index, self) =>
+            index === self.findIndex(t => t.id === tag.id)
+          )
+          .map(t => ({
+            text: '#' + t.tag,  // ใช้สำหรับ filter และ insert
+            title: t.title || t.tag  // ใช้สำหรับแสดงใน dropdown
+          }))
+          .filter(tag => tag.text.includes(queryText))
+          .map(tag => ({
+            id: tag.text,  // ใช้ text เป็น id
+            text: tag.text,  // ข้อความที่จะถูกแทรก
+            label: tag.title // ข้อความที่จะแสดงใน dropdown
+          }));
+
+        return allTags;
+      } catch (err) {
+        console.error('Error fetching tags:', err)
+        return []
+      }
     }
   },
-  async mounted () {
+  async mounted() {
     this.$store.set('editor/editorKey', 'ckeditor')
 
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
       placeholder: 'Type the page content here',
       disableNativeSpellChecker: false,
-      // TODO: Mention autocomplete
-      //
-      // mention: {
-      //   feeds: [
-      //     {
-      //       marker: '@',
-      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
-      //       minimumCharacters: 1
-      //     }
-      //   ]
-      // },
+      htmlSupport: {
+        allow: [
+          {
+            name: 'span',
+            classes: ['hashtag-text']
+          }
+        ]
+      },
+      mention: {
+        feeds: [
+          {
+            marker: '#',
+            feed: async (queryText) => {
+              return await this.fetchTags(queryText)
+            },
+            minimumCharacters: 2,
+            // เพิ่ม handler สำหรับกรณีที่ผู้ใช้พิมพ์ # แต่ไม่ได้เลือกจาก dropdown
+            dropdownOnEmpty: true, // แสดง dropdown แม้ไม่มีผลลัพธ์
+            defaultItem: (queryText) => {
+              console.log(queryText)
+              return {
+                id: queryText,
+                text: `#${queryText}`,
+                label: queryText,
+                // เพิ่ม class hashtag-text เมื่อแทรกลงไป
+                renderer: () => {
+                  const span = document.createElement('span');
+                  span.classList.add('hashtag-text');
+                  span.textContent = `#${queryText}`;
+                  return span;
+                }
+              };
+            }
+          },
+          {
+            marker: '@',
+            feed: (queryText) => {
+
+              // expert-directory
+              return [
+                '@นิธิกร.บุญยกุลเจริญ',
+                '@จาบอน.จันทร์สุข',
+                '@ทิม.พิธา'
+              ].filter(user => user.toLowerCase().includes(queryText.toLowerCase()))
+            },
+            minimumCharacters: 2
+          },
+          {
+            marker: '!',
+            feed: (queryText) => {
+              // ตัวอย่างรายชื่อสถานที่
+              return [
+                '!bangkok',
+                '!london',
+                '!newyork'
+              ].filter(location => location.toLowerCase().includes(queryText.toLowerCase()))
+            },
+            minimumCharacters: 2
+          }
+        ]
+      },
       wordCount: {
         onUpdate: stats => {
           this.stats = {
@@ -96,8 +189,21 @@ export default {
     }
 
     this.editor.model.document.on('change:data', _.debounce(evt => {
-      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
-    }, 300))
+      let content = this.editor.getData();
+
+      // ตรวจสอบ `#` ที่ไม่ได้อยู่ใน `<span>` แล้วเพิ่ม `<span>` ห่อหุ้ม
+      content = content.replace(
+        /(^|\s)#(\w+)/g,
+        (match, space, tag) => `${space}<span class="hashtag-text">#${tag}</span>`
+      );
+
+      console.log(content);
+
+      this.$store.set('editor/content', beautify(content, {
+        indent_size: 2,
+        end_with_newline: true
+      }));
+    }, 500));
 
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
@@ -131,7 +237,7 @@ export default {
       this.editor.setData(this.$store.get('editor/content'))
     })
   },
-  beforeDestroy () {
+  beforeDestroy() {
     if (this.editor) {
       this.editor.destroy()
       this.editor = null
@@ -141,7 +247,6 @@ export default {
 </script>
 
 <style lang="scss">
-
 $editor-height: calc(100vh - 64px - 24px);
 $editor-height-mobile: calc(100vh - 56px - 16px);
 
@@ -167,8 +272,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255,255,255,.25);
-      display:inline-flex;
+      background-color: rgba(255, 255, 255, .25);
+      display: inline-flex;
       padding: 0 12px;
       height: 24px;
       width: 63px;
@@ -181,7 +286,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     table {
       margin: inherit;
     }
-    pre > code {
+
+    pre>code {
       background-color: unset;
       color: unset;
       padding: .15em;
@@ -199,7 +305,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     justify-content: center;
   }
 
-  > .ck-editor__editable {
+  >.ck-editor__editable {
     background-color: mc('grey', '100');
     overflow-y: auto;
     overflow-x: hidden;
@@ -246,6 +352,66 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 
       @at-root .theme--dark & {
         background-color: mc('grey', '900');
+      }
+    }
+  }
+}
+
+.hashtag-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+
+  .hashtag-symbol {
+    color: #1976d2; // สีน้ำเงิน
+    font-weight: bold;
+    margin-right: 2px;
+  }
+
+  .hashtag-text {
+    color: #333;
+  }
+}
+
+// สำหรับ Dark theme
+.theme--dark {
+  .hashtag-item {
+    .hashtag-symbol {
+      color: #64b5f6; // สีน้ำเงินอ่อนสำหรับ dark theme
+    }
+
+    .hashtag-text {
+      color: #fff;
+    }
+  }
+}
+
+.ck-content {
+  .hashtag-text {
+    color: #1976d2 !important;
+    font-weight: 500;
+  }
+
+  p {
+    span:not(.mention):not(.hashtag-text) {
+      &:matches([textContent^="#"]) {
+        color: #1976d2 !important;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Dark theme
+.theme--dark .ck-content {
+  .hashtag-text {
+    color: #64b5f6 !important;
+  }
+
+  p {
+    span:not(.mention):not(.hashtag-text) {
+      &:matches([textContent^="#"]) {
+        color: #64b5f6 !important;
       }
     }
   }

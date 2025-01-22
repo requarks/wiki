@@ -278,21 +278,19 @@ export default {
     },
     async save({ rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
-      console.log('saving')
       this.isSaving = true
 
       const content = this.$store.get('editor/content');
-      console.log(content)
       const originalTag = this.$store.get('page/tags')
 
       // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (เหตุการณ์/tag), @ (คน), หรือ ! (สถานที่)
       const regex = /(?:^|\s|>)([#@!][\w\u0E00-\u0E7F-]+)/g;
 
-      // ดึง matches
-      const matches = [...content.matchAll(regex)].map(match => match[1]);
+      // ดึง matches และลบ #, @, ! ออก
+      const matches = [...content.matchAll(regex)].map(match => match[1].substring(1));
 
-      console.log(matches); // result = ['#เหตุการณ์', '#อภิปรายสภา', '@ณัฐพงษ์', '!อำเภอทุ่งสองห้อง', '#123', '#14ตุลา', '#แท๊กปกติ', '@คน', '!สถานที่']
-      console.log(originalTag); // result = ['tagเริ่มต้น', __ob__: Observer]
+      console.log('จาก detect: ', matches); // result = ['เหตุการณ์', 'อภิปรายสภา', 'ณัฐพงษ์', 'อำเภอทุ่งสองห้อง', '123', '14ตุลา', 'แท๊กปกติ', 'คน', 'สถานที่']
+      console.log('tags เริ่มต้น: ', originalTag); // result = ['tagเริ่มต้น', __ob__: Observer]
 
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
       const combinedTags = Array.from(new Set([...originalTag, ...matches]));
@@ -312,6 +310,8 @@ export default {
           // -> CREATE PAGE
           // --------------------------------------------
 
+          // API นี้จะส่งไปที่ server/graph/resolvers/pages.js
+          // โดยจะเรียกใช้ mutation create ที่อยู่ใน pages resolver
           let resp = await this.$apollo.mutate({
             mutation: gql`
               mutation (
@@ -396,6 +396,8 @@ export default {
           // -> UPDATE EXISTING PAGE
           // --------------------------------------------
 
+          // เรียก GraphQL API ที่ server/graph/resolvers/pages.js
+          // ตรวจสอบ conflict ก่อนอัพเดท
           const conflictResp = await this.$apollo.query({
             query: gql`
               query ($id: Int!, $checkoutDate: Date!) {
@@ -415,6 +417,8 @@ export default {
             throw new Error(this.$t('editor:conflict.warning'))
           }
 
+          // เรียก GraphQL API ที่ server/graph/resolvers/pages.js
+          // เพื่ออัพเดทข้อมูลหน้า
           let resp = await this.$apollo.mutate({
             mutation: gql`
               mutation (

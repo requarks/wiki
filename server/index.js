@@ -27,6 +27,7 @@ global.WIKI = WIKI
 
 WIKI.configSvc.init()
 
+console.log('start service')
 // ----------------------------------------
 // Init Logger
 // ----------------------------------------
