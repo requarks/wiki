@@ -294,16 +294,11 @@ export default {
         return match[1];
       });
 
-      // console.log('จาก detect: ', matches); // result = ['เหตุการณ์', 'อภิปรายสภา', 'ณัฐพงษ์', 'อำเภอทุ่งสองห้อง', '123', '14ตุลา', 'แท๊กปกติ', 'คน', 'สถานที่']
-      // console.log('tags เริ่มต้น: ', originalTag); // result = ['tagเริ่มต้น', __ob__: Observer]
-
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
       const combinedTags = Array.from(new Set([...originalTag, ...matches]));
 
-      // console.log('Combined Tags (No Duplicates):', combinedTags);
-
       // บันทึกผลรวมกลับไปใน Store (ถ้าจำเป็น)
-      this.$store.set('page/tags', matches);
+      this.$store.set('page/tags', combinedTags);
 
       const saveTimeoutHandle = setTimeout(() => {
         throw new Error('Save operation timed out.')

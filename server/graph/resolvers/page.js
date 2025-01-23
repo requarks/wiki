@@ -441,10 +441,10 @@ module.exports = {
      */
     async create(obj, args, context) {
       try {
-        console.log('=============================== สร้างหน้าใหม่ - ข้อมูลที่ส่งมา =============================');
-        console.log(args);
-        console.log('=============================== สร้างหน้าใหม่ - ข้อมูลผู้ใช้ =============================');
-        console.log(context.req.user);
+        // console.log('=============================== สร้างหน้าใหม่ - ข้อมูลที่ส่งมา =============================');
+        // console.log(args);
+        // console.log('=============================== สร้างหน้าใหม่ - ข้อมูลผู้ใช้ =============================');
+        // console.log(context.req.user);
 
         const page = await WIKI.models.pages.createPage({
           ...args,
@@ -463,10 +463,10 @@ module.exports = {
      */
     async update(obj, args, context) {
       try {
-        console.log('=============================== อัพเดทหน้า - ข้อมูลที่ส่งมา =============================');
-        console.log(args);
-        console.log('=============================== อัพเดทหน้า - ข้อมูลผู้ใช้ =============================');
-        console.log(context.req.user);
+        // console.log('=============================== อัพเดทหน้า - ข้อมูลที่ส่งมา =============================');
+        // console.log(args);
+        // console.log('=============================== อัพเดทหน้า - ข้อมูลผู้ใช้ =============================');
+        // console.log(context.req.user);
 
         const page = await WIKI.models.pages.updatePage({
           ...args,
