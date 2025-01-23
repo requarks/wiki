@@ -11,7 +11,6 @@ const WIKI = {
     checkAccess: jest.fn(),
     revokeUserTokens: jest.fn(),
     reloadGroups: jest.fn(),
-    checkExclusiveAccess: jest.fn(),
     groups: {
       '1': {
         id: 1,
