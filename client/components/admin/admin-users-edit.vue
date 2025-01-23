@@ -201,12 +201,12 @@
                 v-list-item-content
                   v-list-item-title {{group.name}}
                 v-list-item-action(v-if='!user.isSystem')
-                  v-btn(icon, color='red', x-small, @click='unassignGroup(group.id)')
+                  v-btn(v-if='hasPermission(`manage:system`)', icon, color='red', x-small, @click='unassignGroup(group.id)')
                     v-icon mdi-close
               v-divider(v-if='idx < user.groups.length - 1')
           v-alert.mx-3(v-if='user.groups.length < 1', outlined, color='grey darken-1', icon='mdi-alert')
             .caption {{$t('admin:users.noGroupAssigned')}}
-          v-card-chin(v-if='!user.isSystem')
+          v-card-chin(v-if='hasPermission(`manage:system`) && !user.isSystem')
             v-spacer
             v-select(
               ref='iptAssignGroup'
