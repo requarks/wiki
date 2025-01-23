@@ -284,18 +284,23 @@ export default {
       const originalTag = this.$store.get('page/tags')
 
       // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (เหตุการณ์/tag), @ (คน), หรือ ! (สถานที่)
-      const regex = /(?:^|\s|>)([#@!][\w\u0E00-\u0E7F-]+)/g;
+      const regex = /(?:^|\s|>)([#@!][\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)/g;
 
       // ดึง matches และลบ #, @, ! ออก
-      const matches = [...content.matchAll(regex)].map(match => match[1].substring(1));
+      const matches = [...content.matchAll(regex)].map(match => {
+        if (match[1].startsWith('#')) {
+          return match[1].substring(1);
+        }
+        return match[1];
+      });
 
-      console.log('จาก detect: ', matches); // result = ['เหตุการณ์', 'อภิปรายสภา', 'ณัฐพงษ์', 'อำเภอทุ่งสองห้อง', '123', '14ตุลา', 'แท๊กปกติ', 'คน', 'สถานที่']
-      console.log('tags เริ่มต้น: ', originalTag); // result = ['tagเริ่มต้น', __ob__: Observer]
+      // console.log('จาก detect: ', matches); // result = ['เหตุการณ์', 'อภิปรายสภา', 'ณัฐพงษ์', 'อำเภอทุ่งสองห้อง', '123', '14ตุลา', 'แท๊กปกติ', 'คน', 'สถานที่']
+      // console.log('tags เริ่มต้น: ', originalTag); // result = ['tagเริ่มต้น', __ob__: Observer]
 
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
       const combinedTags = Array.from(new Set([...originalTag, ...matches]));
 
-      console.log('Combined Tags (No Duplicates):', combinedTags);
+      // console.log('Combined Tags (No Duplicates):', combinedTags);
 
       // บันทึกผลรวมกลับไปใน Store (ถ้าจำเป็น)
       this.$store.set('page/tags', matches);

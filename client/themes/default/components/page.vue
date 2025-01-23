@@ -106,25 +106,25 @@
                       v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            v-card.page-tags-card.mb-5(v-if='tags.length > 0')
-              .pa-5
-                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-                  v-for='(tag, idx) in tags'
-                  :href='`/t/` + tag.tag'
-                  :key='`tag-` + tag.tag'
-                  )
-                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
-                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-                  :href='`/t/` + tags.map(t => t.tag).join(`/`)'
-                  :aria-label='$t(`common:page.tagsMatching`)'
-                  )
-                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
+            //- v-card.page-tags-card.mb-5(v-if='tags.length > 0')
+            //-   .pa-5
+            //-     .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
+            //-     v-chip.mr-1.mb-1(
+            //-       label
+            //-       :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+            //-       v-for='(tag, idx) in tags'
+            //-       :href='`/t/` + tag.tag'
+            //-       :key='`tag-` + tag.tag'
+            //-       )
+            //-       v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
+            //-       span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
+            //-     v-chip.mr-1.mb-1(
+            //-       label
+            //-       :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+            //-       :href='`/t/` + tags.map(t => t.tag).join(`/`)'
+            //-       :aria-label='$t(`common:page.tagsMatching`)'
+            //-       )
+            //-       v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
             v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
@@ -183,35 +183,35 @@
                 .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- PPle customize
-            v-card.page-author-card.mb-5
+            v-card.page-author-card.mb-5(v-if='tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!")).length > 0')
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
-                  span บุคคล
+                  span Tags
                   v-spacer
                 ul.tags-list
-                  li.tag-item(v-for='(tag, idx) in tags' :key='`tag-` + tag.tag')
-                    a(:href='`/คน/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
+                  li.tag-item(v-for='tag in tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!"))' :key='`tag-` + tag.tag')
+                    a(:href='`/t/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
                       | {{ tag.title }}
 
-            v-card.page-author-card.mb-5
+            v-card.page-author-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("@")).length > 0')
+              .pa-5
+                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                  span คน
+                  v-spacer
+                ul.tags-list
+                  li.tag-item(v-for='tag in tags.filter(t => t.tag.startsWith("@"))' :key='`tag-` + tag.tag')
+                    a(:href='`/คน/` + tag.tag.substring(1)', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
+                      | {{ tag.title.substring(1) }}
+
+            v-card.page-author-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("!")).length > 0')
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span สถานที่
                   v-spacer
                 ul.tags-list
-                  li.tag-item(v-for='(tag, idx) in tags' :key='`tag-` + tag.tag')
-                    a(:href='`/สถานที่/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
-                      | {{ tag.title }}
-
-            v-card.page-author-card.mb-5
-              .pa-5
-                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
-                  span เหตุการณ์
-                  v-spacer
-                ul.tags-list
-                  li.tag-item(v-for='(tag, idx) in tags' :key='`tag-` + tag.tag')
-                    a(:href='`/เหตุการณ์/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
-                      | {{ tag.title }}
+                  li.tag-item(v-for='tag in tags.filter(t => t.tag.startsWith("!"))' :key='`tag-` + tag.tag')
+                    a(:href='`/สถานที่/` + tag.tag.substring(1)', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
+                      | {{ tag.title.substring(1) }}
 
             //- v-card.mb-5
             //-   .pa-5

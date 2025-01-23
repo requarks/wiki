@@ -5,17 +5,19 @@
       if (node.nodeType === Node.TEXT_NODE) {
         // Replace special tags in text content only
         const updatedText = node.textContent.replace(
-          /(?:^|\s)([#@!])([\w\u0E00-\u0E7F-]+(?:[-\.]\w+)*)/g,
-          (match, symbol, keyword) => {
-            const trimmedMatch = match.trim(); // Remove leading space for correct replacement
-            if (symbol === '#') {
-              return `&nbsp<a target="_blank" href="/t/${keyword}" class="tag tag-hashtag">${trimmedMatch}</a>`;
-            } else if (symbol === '@') {
-              return `&nbsp<a target="_blank" href="/คน/${keyword}" class="tag tag-mention">${keyword}</a>`;
-            } else if (symbol === '!') {
-              return `&nbsp<a target="_blank" href="/สถานที่/${keyword}" class="tag tag-location">${keyword}</a>`;
+          /(#([\w\u0E00-\u0E7F-]+)|!([\w\u0E00-\u0E7F-]+)|&([\w\u0E00-\u0E7F-]+))/g,
+          (match) => {
+            if (match.startsWith('#')) {
+              const keyword = match.substring(1);
+              return `<a target="_blank" href="/คน/${keyword}" class="tag tag-hashtag">${match}</a>`;
+            } else if (match.startsWith('!')) {
+              const keyword = match.substring(1);
+              return `<a target="_blank" href="/สถานที่/${keyword}" class="tag tag-mention">${match}</a>`;
+            } else if (match.startsWith('&')) {
+              const keyword = match.substring(1);
+              return `<a target="_blank" href="/เหตุการณ์/${keyword}" class="tag tag-location">${match}</a>`;
             }
-            return trimmedMatch;
+            return match;
           }
         );
 
@@ -56,13 +58,53 @@
       });
 
       // Observe changes in the container
-      observer.observe(contentContainer, {
-        childList: true,
-        subtree: true
-      });
+      observer.observe(contentContainer, { childList: true, subtree: true });
     };
 
     // Start the initialization process
     initializeObserver();
   });
 </script>
+
+<style type="text/css">
+  .v-application .primary {
+    background-color: #ef6c00 !important;
+    border-color: #ef6c00 !important
+  }
+
+  .v-application p,
+  li {
+    font-family: Sarabun !important;
+  }
+
+  .v-application .blue.darken-3 {
+    background-color: #ef6c00 !important;
+    border-color: #ef6c00 !important;
+  }
+
+  .v-application .blue.darken-2 {
+    background-color: #ffa346 !important;
+    border-color: #ffa346 !important;
+  }
+
+  h1 {
+    color: #ef6c00 !important;
+  }
+
+  .v-main .contents h1:after {
+    background: linear-gradient(90deg, #f57c00, rgba(25, 118, 210, 0));
+  }
+
+  .__bar-is-vertical {
+    background: #FF9800 !important;
+  }
+
+  b,
+  strong {
+    font-weight: 600 !important;
+  }
+
+  .page-header-section {
+    display: none !important;
+  }
+</style>

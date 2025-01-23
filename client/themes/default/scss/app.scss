@@ -685,7 +685,7 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
-        
+
         &:first-child {
           width: 100%;
         }
@@ -1152,7 +1152,7 @@
   }
 
   .mention {
-    background-color: rgba(153, 0, 48, .1);
+    // background-color: rgba(153, 0, 48, .1);
     color: #990030;
 
     @at-root .theme--dark & {
