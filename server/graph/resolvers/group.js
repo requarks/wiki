@@ -3,95 +3,19 @@ const safeRegex = require('safe-regex')
 const _ = require('lodash')
 const gql = require('graphql')
 
+const {
+  groupsToSites,
+  canManageGroup,
+  canManageSites
+} = require('../../helpers/group')
+
 /* global WIKI */
 
-const rulesToSites = (rules) => {
-  let siteIds = []
-
-  for (const rule of rules) {
-    if (
-      rule.deny === false &&
-      rule.sites &&
-      rule.sites.length > 0 &&
-      rule.roles.includes('manage:sites')
-    ) {
-      siteIds = siteIds.concat(rule.sites)
-    }
-  }
-
-  siteIds = _.uniq(siteIds)
-  return siteIds
-}
-
-const groupsToSites = (groups) => {
-  let siteIds = []
-
-  for (const groupId of groups) {
-    const group = _.get(WIKI.auth.groups, groupId, [])
-    if (group.rules) {
-      for (const rule of group.rules) {
-        if (
-          rule.deny === false &&
-          rule.sites &&
-          rule.sites.length > 0 &&
-          rule.roles.includes('manage:sites')
-        ) {
-          siteIds = siteIds.concat(rule.sites)
-        }
-      }
-    }
-  }
-
-  siteIds = _.uniq(siteIds)
-  return siteIds
-}
-
-const rulesToSitesNonAdmin = (rules) => {
-  let siteIds = []
-
-  for (const rule of rules) {
-    if (
-      rule.deny === false &&
-      rule.sites &&
-      rule.sites.length > 0
-    ) {
-      siteIds = siteIds.concat(rule.sites)
-    }
-  }
-
-  siteIds = _.uniq(siteIds)
-  return siteIds
-}
-
-const isGroupParticipant = (user, groupIds) => {
-  return _.intersection(user.groups, groupIds).length > 0
-}
-
-const canManageGroup = (user, groupId) => {
-  if (WIKI.auth.isSuperAdmin(user)) return true
-  if (groupId === 1 || groupId === 2) return false
-  const userSites = groupsToSites(user.groups)
-  const group = _.get(WIKI.auth.groups, groupId, [])
-  const groupSites = rulesToSitesNonAdmin(group.rules)
-
-  if (_.intersection(userSites, groupSites).length === groupSites.length) {
-    return true
-  }
-  return false
-}
-
-const canManageSites = (g) => {
-  if (_.intersection(g.permissions, ['manage:sites']).length < 1) {
-    return false
-  }
-
-  for (const rule of g.rules) {
-    if (_.intersection(rule.roles, ['manage:sites']).length > 0) {
-      return true
-    }
-  }
-
-  return false
+const isSystemAdminPermission = (permissions) => {
+  return permissions.some(p => {
+    const resType = _.last(p.split(':'))
+    return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
+  })
 }
 
 module.exports = {
@@ -162,10 +86,7 @@ module.exports = {
       // Check assigned permissions for write:groups
       if (
         WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
-        grp.permissions.some(p => {
-          const resType = _.last(p.split(':'))
-          return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
-        })
+        isSystemAdminPermission(grp.permissions)
       ) {
         throw new gql.GraphQLError('You are not authorized to assign a user to this elevated group.')
       }
@@ -300,8 +221,14 @@ module.exports = {
      * UPDATE GROUP
      */
     async update (obj, args, { req }) {
-      if (WIKI.auth.checkExclusiveAccess(req.user, ['manage:sites']) &&
-        canManageGroup(req.user, args.id)) {
+      // Check for unsafe regex page rules
+      if (_.some(args.rules, pr => {
+        return pr.match === 'REGEX' && !safeRegex(pr.path)
+      })) {
+        throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
+      }
+
+      if (canManageGroup(req.user, args.id)) {
         for (const rule of args.rules) {
           for (const siteId of rule.sites) {
             if (!WIKI.auth.checkAccess(req.user, ['manage:sites'], {
@@ -312,13 +239,8 @@ module.exports = {
             }
           }
         }
-      }
-
-      // Check for unsafe regex page rules
-      if (_.some(args.rules, pr => {
-        return pr.match === 'REGEX' && !safeRegex(pr.path)
-      })) {
-        throw new gql.GraphQLError('Some Page Rules contains unsafe or exponential time regex.')
+      } else {
+        throw new gql.GraphQLError('Insufficient permissions to update the group.')
       }
 
       // Set default redirect on login value
@@ -326,13 +248,13 @@ module.exports = {
         args.redirectOnLogin = '/'
       }
 
+      if (!WIKI.auth.isSuperAdmin(req.user) && isSystemAdminPermission(args.permissions)) {
+        throw new gql.GraphQLError('You are not authorized to assign the system permissions.')
+      }
+
       // Check assigned permissions for write:groups
-      if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
-        args.permissions.some(p => {
-          const resType = _.last(p.split(':'))
-          return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
-        })
+      if (WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system', 'manage:sites']) &&
+         isSystemAdminPermission(args.permissions)
       ) {
         throw new gql.GraphQLError('You are not authorized to manage this group or assign these permissions.')
       }

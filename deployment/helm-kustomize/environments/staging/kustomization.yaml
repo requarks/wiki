@@ -15,6 +15,10 @@ patches:
     name: capwiki-app
 - path: patches/namespace-patch.yaml
   target:
+    kind: PersistentVolumeClaim
+    name: longhorn-shared-cache-pvc
+- path: patches/namespace-patch.yaml
+  target:
     kind: Ingress
     name: capwiki-ingress
 - path: patches/namespace-patch.yaml

@@ -24,7 +24,6 @@ module.exports = async (siteId) => {
       WIKI.logger.info(`Rebuilding page tree for all sites`)
     }
 
-
     const pages = await WIKI.models.pages
       .query()
       .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS', 'siteId')
