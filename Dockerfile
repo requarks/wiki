@@ -3,9 +3,14 @@
 # ====================
 FROM node:20-alpine AS assets
 
-RUN apk add yarn g++ make cmake python3 --no-cache
-
 WORKDIR /wiki
+
+USER root
+
+RUN apk add yarn g++ make cmake python3 --no-cache && \
+    chown -R node:node /wiki
+
+USER node
 
 COPY ./client ./client
 COPY ./dev ./dev
@@ -14,25 +19,37 @@ COPY ./package.json ./package.json
 COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
+COPY ./yarn.lock ./yarn.lock
 
 RUN yarn cache clean
-RUN yarn --frozen-lockfile --non-interactive
+#install all dependencies including DevDependencies
+RUN yarn install --frozen-lockfile --non-interactive
 RUN yarn build
 RUN rm -rf /wiki/node_modules
 RUN yarn --production --frozen-lockfile --non-interactive
+# apply custom patches stored in patches directory to dependencies
 RUN yarn patch-package
 
 # ===============
 # --- Release ---
 # ===============
 FROM node:20-alpine
-LABEL maintainer="requarks.io"
+LABEL maintainer="capgemini"
 
-RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
+
+ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
+
+USER root
+
+RUN apk add --no-cache ca-certificates bash curl git openssh gnupg sqlite && \
+    chmod 644 /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem && \
+    update-ca-certificates && \
     mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
+
+USER node
 
 WORKDIR /wiki
 
@@ -44,12 +61,6 @@ COPY --chown=node:node ./dev/build/config.yml ./config.yml
 COPY --chown=node:node ./package.json ./package.json
 COPY --chown=node:node ./LICENSE ./LICENSE
 
-USER root
-
-ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
-RUN chmod 644 /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem && update-ca-certificates
-
-USER node
 
 VOLUME ["/wiki/data/content"]
 

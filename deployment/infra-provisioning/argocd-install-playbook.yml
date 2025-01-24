@@ -1,0 +1,71 @@
+## example to run playbook on dev2: ansible-playbook argocd-install-playbook.yml -i inventory -e "env=dev2"  
+---
+- name: Ensure argocd is installed on "{{ env }}" environment
+  hosts: "{{ env }}"
+  vars:
+    helm_repo_name: "argo"
+    helm_repo_url: "https://argoproj.github.io/argo-helm"
+    release_name: "argo-cd"
+    namespace: "argocd"
+    chart_version: "7.7.5"
+    chart_name: "argo/argo-cd"
+    kubeconfig_path: /etc/rancher/k3s/k3s.yaml
+    username: "deployer"
+    argocdcrd_url: https://github.com/argoproj/argo-cd/manifests/crds\?ref\=stable
+
+  become: false
+  become_user: "{{ username }}"
+  tasks:
+   - name: Create target directory for Argo CD configuration
+     ansible.builtin.file:
+        path: "/home/{{ username }}/argocd-install"
+        state: directory
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+   - name: Copy "argo-cd" Helm chart values for environment(dev1 or dev2 or staging or prod) with it's configuration to the target dircetory
+     ansible.builtin.copy:
+        src: "./argocd-env-config/values-{{ env }}.yaml"
+        dest: "/home/{{ username }}/argocd-install/values-{{ env }}.yaml"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+   - name: Copy TLS Certificate for ArgoCD to the target dircetory
+     ansible.builtin.copy:
+        src: "./argocd-env-config/certs/argocd-tls.yaml"
+        dest: "/home/{{ username }}/argocd-install/argocd-tls.yaml"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+   - name: Add ArgoCD Helm repository
+     kubernetes.core.helm_repository:
+        name: "{{ helm_repo_name }}"
+        repo_url: "{{ helm_repo_url }}"
+        state: present
+
+   - name: Install or upgrade ArgoCD Helm chart
+     kubernetes.core.helm:
+        release_name: "{{ release_name }}"
+        namespace: "{{ namespace }}"
+        chart_ref: "{{ chart_name }}"
+        chart_version: "{{ chart_version }}"
+        kubeconfig: "{{ kubeconfig_path }}"
+        create_namespace: true
+        values_files:
+          - "/home/{{ username }}/argocd-install/values-{{ env }}.yaml"
+        state: present
+
+   - name: Install argocd CRD's
+     ansible.builtin.shell:  "kubectl apply -k {{ argocdcrd_url }}"
+
+   - name: Install TLS Certificate for ArgoCD
+     ansible.builtin.shell: "kubectl apply -f /home/{{ username }}/argocd-install/argocd-tls.yaml"
+
+   - name: Cleanup Argo CD files after deployment
+     ansible.builtin.file:
+        path: "/home/{{ username }}/argocd-install"
+        state: absent
+    

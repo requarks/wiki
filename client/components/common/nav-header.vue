@@ -27,7 +27,7 @@
 
           //- SITES
 
-          v-menu(v-model='menuIsOpen', offset-y, bottom, transition='slide-y-transition', left)
+          v-menu(v-model='menuIsOpen', offset-y, bottom, transition='slide-y-transition', right)
             template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
@@ -39,18 +39,17 @@
                     tile
                     height='64'
                     width='100'
-                    style="overflow: none;"
                     )
                     span Sites
                     v-icon(color='grey')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
             v-list(
                 style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
-                width='168'
                 nav, :light='!$vuetify.theme.dark'
                 :dark='$vuetify.theme.dark'
                 :class='$vuetify.theme.dark ? `grey darken-4` : ``'
+                class='sitesList'
               )
-              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)')
+              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;")
                 v-list-item-title.body-2 {{ site.text }}
           v-divider(vertical)
 
@@ -491,7 +490,6 @@ export default {
             id: this.$store.get('page/id'),
             destinationLocale: locale,
             destinationPath: path
-            // TODO: Add siteId
           }
         })
         if (_.get(resp, 'data.pages.move.responseResult.succeeded', false)) {
@@ -533,23 +531,23 @@ export default {
     goToSite (path) {
       window.location.assign(`/${path || ''}`)
     },
-    async fetchSitesFromUser () {
-      this.$store
-        .dispatch('user/fetchSites', { apolloClient: this.$apollo })
-        .then((response) => {
-          const sitesData = response?.data?.sites
-          this.sites = Object.values(sitesData).map((site) => ({
+    async fetchSitesFromUser() {
+      try {
+        const response = await this.$store.dispatch('user/fetchSites', { apolloClient: this.$apollo })
+        const sitesData = response?.data?.sites || []
+
+        this.sites = Object.values(sitesData).map(site => {
+          return {
             id: site.id,
             value: site.path,
             text: site.name
-          }))
+          }
         })
-        .catch((error) => {
-          console.error(error)
-          this.sites = []
-        })
+      } catch (error) {
+        console.error(error)
+        this.sites = []
+      }
     }
-
   }
 }
 </script>
@@ -641,4 +639,18 @@ export default {
   width: 22px;
 }
 
+.sitesList {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  max-height: 500px;
+  min-width: 160px; /* Adjust for small screens */
+}
+
+@media (min-width: 1201px) {
+  .sitesList {
+    max-width: 400px; /* Adjust for large screens */
+  }
+}
 </style>

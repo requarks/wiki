@@ -202,15 +202,43 @@ module.exports = {
         }
       }
 
+      const deleteAsset = async (id) => {
+        const asset = await WIKI.models.assets.query().findById(id)
+        if (asset) {
+          const assetPath = await asset.getAssetPath()
+
+          await WIKI.models.knex('assetData').where('id', id).del()
+          await WIKI.models.assets.query().deleteById(id)
+          await asset.deleteAssetCache()
+
+          // Delete from Storage
+          await WIKI.models.storage.assetEvent({
+            event: 'deleted',
+            asset: {
+              ...asset,
+              path: assetPath,
+              authorId: context.req.user.id,
+              authorName: context.req.user.name,
+              authorEmail: context.req.user.email
+            }
+          })
+        }
+      }
+
       try {
         if (!WIKI.auth.checkAccess(context.req.user, ['manage:system', 'manage:sites'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
-        // -> Ensure site isn't last one
+        // -> Ensure at least 1 extra site still exists
         const sitesCount = await WIKI.models.sites.query().count('id').first()
         if (sitesCount?.count && _.toNumber(sitesCount?.count) <= 1) {
           throw new WIKI.Error.Custom('SiteDeleteLastSite', 'Cannot delete the last site. At least 1 site must exists at all times.')
+        }
+
+        const remainingAssets = await WIKI.models.assets.query().where({'siteId': args.id})
+        for (const asset of remainingAssets) {
+          await deleteAsset(asset.id)
         }
 
         const remainingPages = await getPagesBySiteId(args.id)

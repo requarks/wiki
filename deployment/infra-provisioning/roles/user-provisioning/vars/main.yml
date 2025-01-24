@@ -21,7 +21,7 @@ users:
     shell: /bin/bash
     groups: users,docker
     pubkey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCzew8QB4fGoPhUSL7WYBron07LYOwzkhaCg2bTnD/C6OFpf9qUzPKkXoQ89OimjVeE/gWOcc5q1uVFniu3ARt6A6QBl06/YM41tFpS12+6OwG1+OkzdsTKtYsQiRoqdOREG0KnAhbeTdzFun0+kagbtsjqlJpuJJtevYuMYDT/I6Mz5ZmX7g83n+i0/5Md3hxIe9dp4sbesVfWBSn06Qn258hHbI7eWWBmh8C57Tfac4cT8Iuvrf+3UiQk0kpWejEoy5SoprFBBHf5QfeCViv4zTC0GxEOXelf2H/MOiqpdR54ryLIi9A5AhhFc3bDSAhJ4MsqIu8XZqhjELz2Ajrkobv2vWyGiQgBuu/LCGXvZIh7dFhVplWIpRJLpCycWfKf7VlL3b4H9rr80Kb+LsVG6rXkrbSfbXHTAnGd/6VZTooKnNoS2Gg/Ah0YkchSyFs8R8pnPN77FhwSxhMZBO6vml8Gsz6rwYf6ql4XRJbGAoYq/BX+aiqV/cl0aJDQiok= corp\\myefimen@DELEQ0283001808"
-  # - name:  max
-  #   shell: /bin/bash
-  #   groups: users,docker
-  #   pubkey: ""
+  - name:  max
+    shell: /bin/bash
+    groups: users,docker
+    pubkey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCgst/dSciia7yYNcsO4ay3ZzrBHWqZG/csajFIlvdZbMsBILsYuskUy1vSoN8IMAkJRPJF2jq2Ld5994ZzsY1ZbA0ti6ZQkZNd0vmTNHMRxME0OvCK767y4Z0eVqt9382/E/HQ9kvOEUOqrQ7w9SIBSrt2q+wFN91l5I8kcYB6Y5cu3kUc4ttu2GpO9YL+WOXBonyEjhVT3zKG2MIiPjSxxzRh69aJnXlBxl43v7/Fb+89nVKKoNWhIme+T8uo7MTJ2fMc3946LaXe+RrugpbKeCfgSJceqF+MSi+gBe5XVcvMYEk80IOIezBBEsNn20inruVxhVK19hpPecijLT7YkZX5iFiSgMohmV7myhERNC/lTjoSoHZvYnwL3HTCVzsL/+9Ii7g93Jx3+3xDwdY/NC4S5DtMCaiGbG94vWF7iwzOASf+Qn7JtkHoHIHrdf/gvUEI3veATgVIXOAgmcOyXo+cZunrNZxnonsopklQ8rnEmH4AT3+LPCgAwOXkD1698WBy+0x0qNouvRD0Fa3AbkKalK9xpeZz9QEUeq2lqCZgKtfFfpzwYrfkhmj8PMYYiZKEhwjR5eaXCdf9EsQk7oxoFxlfvsY56LiXchQFkK/0SIma5bgKxWpUOT9jeGXs4cPngaW+WU8EXCmdSEOJhSOJgC6i5sFq3Oprs4kH5Q== max@DELEQ0283001808"

@@ -6,15 +6,21 @@ variables:
    NEW_IMAGE: "${IMAGE}:${VERSION}"
    STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
 
-stages:
-  - setup-deployment
-  - promote-release-version
-  - deployment
-  - rollback
-  - tagging
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
 
-setup-deployment:
-  stage: setup-deployment
+stages:
+  - setup-remotehost
+  - infra-provisioning
+  - k3scluster-health-check
+  - monitoring
+  - argocd
+  - promote-release-version
+  - cleanup
+
+setup-remotehost:
+  stage: setup-remotehost
   script:
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY_PROD" | base64 -d | tr -d '\r' | ssh-add - #Generate key and add its variables!!! MASK IT
@@ -23,6 +29,21 @@ setup-deployment:
     - echo "$SSH_PRIVATE_KEY_PROD" | base64 -d > ~/.ssh/id_rsa #Generate key and add its variables!!! MASK IT
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -t rsa de-muc-mar4.apps.ce.capgemini.com >> ~/.ssh/known_hosts
+    
+
+infra-provisioning:
+  stage: infra-provisioning
+  image: ansible/ansible
+  script:
+    - echo "infrastructure provisioning includes k3s, helm,ingress, kustomize, kubeseal"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=prod"
+  environment:
+    name: $ENVIRONMENT
+  
+k3scluster-health-check:
+  stage: k3scluster-health-check
+  script: 
     - |
       ssh deployer@de-muc-mar4.apps.ce.capgemini.com << 'EOF'
         echo "Check kubelet Status"
@@ -49,6 +70,39 @@ setup-deployment:
         fi
       EOF
 
+monitoring:
+  stage: monitoring
+  image: ansible/ansible
+  script:
+    - echo "Deploying monitoring"
+    - cd ./deployment/monitoring
+    - ansible-playbook monitoring-playbook.yaml -i inventory  -e hostname=prod -vv
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: '$MONITORING == "yes"'
+      when: on_success
+    - if: '$MONITORING != "yes"'
+      when: never
+
+argocd:
+  stage: argocd
+  image: ansible/ansible
+  script:
+    - echo "install argocd in kubernetes cluster"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook argocd-install-playbook.yml -i inventory -e "env=prod"  -vv
+    - echo "Configure and deploy capwiki appProject and application on argocd in kubernetes cluster"
+    - cd ../argocd/ansible
+    - ansible-playbook argocd-capwiki-deploy-playbook.yaml -i inventory  -e env=prod  -vv
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: '$ARGOCD == "yes"'
+      when: on_success
+    - if: '$ARGOCD != "yes"'
+      when: never
+
 promote-release-version:
   stage: promote-release-version
   before_script:
@@ -67,46 +121,10 @@ promote-release-version:
     - docker push $NEW_IMAGE
     - docker logout $DOCKER_REGISTRY
     - docker rmi $STAGING_IMAGE
-    - docker rmi $NEW_IMAGE
-    
-deployment:
-  stage: deployment
-  image: ansible/ansible
-  script:
-    - echo "infrastructure provisioning"
-    - cd ./deployment/infra-provisioning
-    - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=prod"
-    - echo "Deploying application"
-    - cd ../kubernetes-helm
-    - ansible-playbook -i inventory ./playbook-deploy.yml -e "IMAGE=$IMAGE NEW_IMAGE_WITH_TAG=$NEW_IMAGE env=prod" -vv
-  environment:
-    name: $ENVIRONMENT
+    - docker rmi $NEW_IMAGE 
 
-rollback:
-  stage: rollback
+cleanup:
+  stage: cleanup
   script:
-    - |
-      ssh deployer@de-muc-mar4.apps.ce.capgemini.com << 'EOF'
-      DEPLOY_AVAILABLE=$(kubectl describe deploy capwiki-app -n dev | grep -i available | grep -i "1 available" | wc -l)
-      if [ "$DEPLOY_AVAILABLE" -eq 0 ]; then
-        echo "Deployment is unavailable, rolling back to the previous version"
-        kubectl rollout undo deployment/capwiki-app -n dev
-        echo "Rollback complete."
-      else
-        echo "Deployment is available, no rollback needed."
-      fi
-      EOF
-  when: delayed
-  start_in: 2 minutes
-
-tagging:
-  stage: tagging
-  script:
-    - |
-      git tag | xargs git tag -d
-      git tag -a "$VERSION" -m "$MESSAGE"
-      git push https://oauth2:${PROJECT_ACCESS_TOKEN}@pt-support-shared.pl.s2-eu.capgemini.com/gitlab/tpo-bu-germany/mar.git "$VERSION"
-  when: on_success
-
-after_script:
-  - rm -f /home/mar/.ssh/id_rsa
+    - rm -f /home/mar/.ssh/id_rsa
+  when: always

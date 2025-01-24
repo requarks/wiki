@@ -77,8 +77,7 @@ spec:
                   name: {{ .Values.postgresql.auth.existingSecret }}
                   key: {{ template "wiki.postgresql.secretKey" . }}
             {{- end }}
-            - name: HA_ACTIVE
-              value: {{ .Values.replicaCount | int | le 2 | quote }}
+  
     {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

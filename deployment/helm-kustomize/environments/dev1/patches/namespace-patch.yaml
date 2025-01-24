@@ -1,3 +1,3 @@
  - op: replace
    path: /metadata/namespace
-   value: dev1
+   value: capwiki

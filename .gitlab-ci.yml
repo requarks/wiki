@@ -22,8 +22,14 @@ variables:
       - "yes"
       - "no"
     description: "Deploy monitoring"
+  ARGOCD:
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+    description: "Deploy argocd"
   VERSION:
-    value: "v2.0.0"
+    value: "1.0.0"
     description: "Specify the version [ONLY USED FOR STAGING or PRODUCTION]"
   MESSAGE:
     value: ""
@@ -41,25 +47,74 @@ variables:
       - "false"
     description: "Choose false to skip code quality check"
 
+
 default:
   tags:
     - runner_mar
+  before_script:
+    - |
+     NPM_GLOBAL_DIR="$HOME/.npm-global"
+     if [ -d "$NPM_GLOBAL_DIR" ]; then
+        echo "Directory $TARGET_DIR exists. Deleting it..."
+        rm -rf "$NPM_GLOBAL_DIR"
+     fi
+    - mkdir -p "$NPM_GLOBAL_DIR"
+    - npm config set prefix "$NPM_GLOBAL_DIR"
+    - export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
+    - npm install -g yarn
+    - node -v && npm -v && yarn -v
 
 stages:
+  - build
+  - test
   - sonarqube
   - container-scan
+  - infra-provision
   - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
-  - docker-push
-  - deployment-pipeline
-  - tagging
+  - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
 
+
+build:
+ stage: build
+ script:
+    - yarn cache clean
+    - rm -rf node_modules
+    - yarn install --frozen-lockfile
+    - yarn build
+ rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: on_success
+
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - yarn add jest-junit --dev
+    - yarn jest --coverage # Run tests
+    ## Below cmnds can be run after fixing lint errors in the codebase
+    #- yarn eslint --ext .js,.vue .
+    # - yarn pug-lint server/views
+  artifacts:
+    expire_in: 1 hr
+    when: on_success
+    paths:
+      - coverage
+      - test-results
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: on_success
 
 sonarqube-scan:
   stage: sonarqube
+  dependencies:
+    - test
   tags:
     - docker_runner
-  image: 
+  image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
   variables:
@@ -69,13 +124,13 @@ sonarqube-scan:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
-  script: 
+  script:
     - sonar-scanner
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production" || $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $SONARQUBE == "true" 
-      when: always    
+    - if: $SONARQUBE == "true"
+      when: on_success
 
 container_scanning:
   stage: container-scan
@@ -89,6 +144,61 @@ container_scanning:
       when: never
     - if: $CONTAINER_SCANNING == "true" || $CI_PIPELINE_SOURCE == "schedule"
       when: always
+
+
+dev1-pipeline:
+  stage: infra-provision
+  trigger:
+    include: deployment/pipelines/development-dev1/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
+      when: manual
+
+dev2-pipeline:
+  stage: infra-provision
+  trigger:
+    include: deployment/pipelines/development-dev2/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
+      when: manual
+
+
+staging-pipeline:
+  stage: infra-provision
+  trigger:
+    include: deployment/pipelines/staging/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    ENVIRONMENT: "staging"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: ($ENVIRONMENT == "staging" && $CI_COMMIT_REF_NAME == "develop") || $CI_COMMIT_REF_NAME == "develop" || ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// )
+      when: on_success
+
+
+prod-pipeline:
+  stage: infra-provision
+  trigger:
+    include: deployment/pipelines/production/.gitlab-ci.yml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  variables:
+    ENVIRONMENT: "production"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if:  ($ENVIRONMENT == "production"  && $CI_COMMIT_REF_NAME == "main" ) || ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main")
+      when: on_success
 
 modify_package_json:
   stage: modify_package_json
@@ -104,7 +214,7 @@ modify_package_json:
 
     # Conditionally run this script only in staging or production environments
     - |
-      if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production" ]]; then
+      if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production"  || $CI_COMMIT_REF_NAME == "develop" || ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)\/ ) ]]; then
         echo "Modify package json dev mode to false for $ENVIRONMENT"
         node ./modify-app-dev-mode.js false
       else
@@ -122,21 +232,23 @@ modify_package_json:
     paths:
       - package.json
 
+
 build-docker-image:
   stage: docker-build
   before_script:
     - |
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-     
-      if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
-        if [[ $CI_COMMIT_BRANCH == "develop" || ( $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ) ]]; then
+
+       if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" == "none" ]]; then
+        if [[ "$CI_COMMIT_BRANCH" == "develop" ||  "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" = "develop"  ||  "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
           ENVIRONMENT="staging"
-        elif [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" ]]; then
+        elif [[ "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" == "main" && "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" == "develop" ]]; then
           ENVIRONMENT="production"
         fi
       fi
-      echo "environment is $ENVIRONMENT"
-      
+
+      echo "Building Docker image for environment: $ENVIRONMENT"
+
       if [[ "$ENVIRONMENT" == "dev1" || "$ENVIRONMENT" == "dev2" || $CI_COMMIT_BRANCH =~ ^(feature|task|hotfix|improvement|bugfix|docs)/  ]]; then
         IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
       elif [[ "$ENVIRONMENT" == "staging" ]]; then
@@ -168,7 +280,6 @@ build-docker-image:
       when: never
     - when: always
 
-
 push-docker-image:
   stage: docker-push
   needs:
@@ -181,57 +292,8 @@ push-docker-image:
     - docker push $NEW_IMAGE
     - docker logout $DOCKER_REGISTRY
     - docker rmi $NEW_IMAGE
+    - rm newimage.txt
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: on_success
-
-dev1-pipeline:
-  stage: deployment-pipeline
-  trigger:
-    include: deployment/pipelines/development-dev1/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
-      when: manual
-
-dev2-pipeline:
-  stage: deployment-pipeline
-  trigger:
-    include: deployment/pipelines/development-dev2/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
-      when: manual
-
-
-staging-pipeline:
-  stage: deployment-pipeline
-  trigger:
-    include: deployment/pipelines/staging/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: ($ENVIRONMENT == "staging" && $CI_COMMIT_REF_NAME == "develop") || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"
-      when: on_success
-
-
-prod-pipeline:
-  stage: deployment-pipeline
-  trigger:
-    include: deployment/pipelines/production/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if:  ($ENVIRONMENT == "production"  && $CI_COMMIT_REF_NAME == "main" ) || ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main")
-      when: on_success

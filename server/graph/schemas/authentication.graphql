@@ -42,7 +42,7 @@ type AuthenticationMutation {
     username: String!
     password: String!
     strategy: String!
-  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+  ): AuthenticationLoginResponse
 
   loginTFA(
     continuationToken: String!

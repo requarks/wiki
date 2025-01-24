@@ -144,6 +144,13 @@ module.exports = {
           }
         })
       results = _.filter(results, r => {
+        if (args.isAdmin === true) {
+          return WIKI.auth.checkAccess(context.req.user, ['manage:sites'], {
+            path: r.path,
+            locale: r.locale,
+            siteId: r.siteId
+          })
+        }
         return WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], {
           path: r.path,
           locale: r.locale,

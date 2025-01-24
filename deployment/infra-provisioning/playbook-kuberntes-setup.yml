@@ -68,3 +68,10 @@
           sudo install -m 755 kubeseal /usr/local/bin/;
           rm kubeseal-{{ kubeseal_version }}-linux-amd64.tar.gz;
         fi
+        
+- name: Install longhron
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+    - role: install-longhorn

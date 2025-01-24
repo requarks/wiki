@@ -35,6 +35,8 @@ module.exports = class User extends Model {
         isSystem: {type: 'boolean'},
         isActive: {type: 'boolean'},
         isVerified: {type: 'boolean'},
+        isLocked: {type: 'boolean', default: false},
+        failedAttempts: {type: 'integer', default: 0},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
@@ -96,6 +98,14 @@ module.exports = class User extends Model {
 
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+
+    if (this.failedAttempts === undefined) {
+      this.failedAttempts = 0
+    }
+
+    if (this.isLocked === undefined) {
+      this.isLocked = false
+    }
 
     await this.generateHash()
   }
@@ -161,7 +171,6 @@ module.exports = class User extends Model {
   getSitesWithWriteAccess() {
     return _.uniq(_.flatten(this.getAllRules().filter(rule => rule.roles && rule.roles.includes('write:pages') && rule.deny === false).map(rule => rule.sites)))
   }
-
 
   getGroups() {
     return _.uniq(_.map(this.groups, 'id'))
@@ -512,7 +521,7 @@ module.exports = class User extends Model {
       if (!usr.isActive) {
         throw new WIKI.Error.AuthAccountBanned()
       }
-      
+
       await WIKI.models.users.query().patch({
         password: newPassword,
         mustChangePwd: false
@@ -946,5 +955,33 @@ module.exports = class User extends Model {
     } catch (err) {
       WIKI.logger.warn(`Failed to process binary thumbnail data for user ${userId}`)
     }
+  }
+  /**
+   * Increment failed attempts and lock user if limit is reached
+   */
+  static async incrementFailedAttempts(email) {
+    const user = await this.query().findOne({ email, providerKey: 'local' })
+    if (!user) {
+      return false
+    }
+
+    const updatedAttempts = user.failedAttempts + 1
+    const isLocked = updatedAttempts >= 3
+
+    await this.query().patch({
+      failedAttempts: updatedAttempts,
+      isLocked
+    }).where({ id: user.id })
+
+    return isLocked
+  }
+
+  /**
+   * Reset failed attempts on successful login
+   */
+  static async resetFailedAttempts(userId) {
+    await this.query().patch({
+      failedAttempts: 0
+    }).where({ id: userId })
   }
 }
