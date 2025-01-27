@@ -3427,15 +3427,16 @@
   resolved "https://registry.yarnpkg.com/@requarks/ckeditor5/-/ckeditor5-19.0.1-wiki.2.tgz#d601d868522680095ba50ded08094d72d74c4ca4"
   integrity sha512-l2B7VB7SmX318IAwx9EdYmDujCEBQB7b+v5ySfLyK42eyKarWBuK76R0o2TudRn2z/17dvmR5zaQBEW3fDIPsg==
 
-"@root/acme@^3.0.2":
-  version "3.0.9"
-  resolved "https://registry.yarnpkg.com/@root/acme/-/acme-3.0.9.tgz#437f4b46015e70587fb50119807889c944370388"
-  integrity sha512-/FgJF6RUrkqNpLmxqjktHaWMsLOwma6D+e4EBoxKtTjTAI+dBqW8Z8cH38feUsiIBR5LimPeYmBo/oqU3oMkKQ==
+"@root/acme@3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@root/acme/-/acme-3.1.0.tgz#e40efbdd18efa6471fa1546d5ee26474ec2bfe27"
+  integrity sha512-GAyaW63cpSYd2KvVp5lHLbCWeEhJPKZK9nsJvZJOKsD9Uv88KEttn4FpDZEJ+2q3Jsey0DWpuQ2I4ft0JV9p2w==
   dependencies:
+    "@root/csr" "^0.8.1"
     "@root/encoding" "^1.0.1"
-    "@root/keypairs" "^0.9.0"
+    "@root/keypairs" "^0.10.0"
     "@root/pem" "^1.0.4"
-    "@root/request" "^1.3.11"
+    "@root/request" "^1.6.1"
     "@root/x509" "^0.7.2"
 
 "@root/asn1@^1.0.0":
@@ -3445,7 +3446,7 @@
   dependencies:
     "@root/encoding" "^1.0.1"
 
-"@root/csr@0.8.1":
+"@root/csr@0.8.1", "@root/csr@^0.8.1":
   version "0.8.1"
   resolved "https://registry.yarnpkg.com/@root/csr/-/csr-0.8.1.tgz#97a1b821331a4ed5895eee33bedb6ad49cdef74e"
   integrity sha512-hKl0VuE549TK6SnS2Yn9nRvKbFZXn/oAg+dZJU/tlKl/f/0yRXeuUzf8akg3JjtJq+9E592zDqeXZ7yyrg8fSQ==
@@ -3459,19 +3460,10 @@
   resolved "https://registry.yarnpkg.com/@root/encoding/-/encoding-1.0.1.tgz#60cf3ccb9e2239226b30e8394c7a4a258a161c3e"
   integrity sha512-OaEub02ufoU038gy6bsNHQOjIn8nUjGiLcaRmJ40IUykneJkIW5fxDqKxQx48cszuNflYldsJLPPXCrGfHs8yQ==
 
-"@root/keypairs@0.10.3":
+"@root/keypairs@0.10.3", "@root/keypairs@^0.10.0":
   version "0.10.3"
   resolved "https://registry.yarnpkg.com/@root/keypairs/-/keypairs-0.10.3.tgz#dc89c6996bbfcc085e11bc2dd70c35a164e17466"
   integrity sha512-hbmjVbk/G99Z1XlUzJM4VOAaR8jm4vMnfwpZL301FA24ubJ/bOjj6enCrz9gKsQvBO6RY4/R4MgUuWpXeqeZZQ==
-  dependencies:
-    "@root/encoding" "^1.0.1"
-    "@root/pem" "^1.0.4"
-    "@root/x509" "^0.7.2"
-
-"@root/keypairs@^0.9.0":
-  version "0.9.0"
-  resolved "https://registry.yarnpkg.com/@root/keypairs/-/keypairs-0.9.0.tgz#0340a8a9cd865a9adc3ad5dd1f98221a7cb310df"
-  integrity sha512-NXE2L9Gv7r3iC4kB/gTPZE1vO9Ox/p14zDzAJ5cGpTpytbWOlWF7QoHSJbtVX4H7mRG/Hp7HR3jWdWdb2xaaXg==
   dependencies:
     "@root/encoding" "^1.0.1"
     "@root/pem" "^1.0.4"
@@ -3482,10 +3474,10 @@
   resolved "https://registry.yarnpkg.com/@root/pem/-/pem-1.0.4.tgz#9ecc3419c0a05c92b8ecbfe0a41f474970f8c72f"
   integrity sha512-rEUDiUsHtild8GfIjFE9wXtcVxeS+ehCJQBwbQQ3IVfORKHK93CFnRtkr69R75lZFjcmKYVc+AXDB+AeRFOULA==
 
-"@root/request@^1.3.11":
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/@root/request/-/request-1.4.2.tgz#a51e93c64eb8b9b0df06f34677e63d8239c4311c"
-  integrity sha512-J8FM4+SJuc7WRC+Jz17m+VT2lgI7HtatHhxN1F2ck5aIKUAxJEaR4u/gLBsgT60mVHevKCjKN0O8115UtJjwLw==
+"@root/request@^1.6.1":
+  version "1.9.2"
+  resolved "https://registry.yarnpkg.com/@root/request/-/request-1.9.2.tgz#3b561b3f3b61d3a6264cdb25cfef7c473749e7d5"
+  integrity sha512-wVaL9yVV9oDR9UNbPZa20qgY+4Ch6YN8JUkaE4el/uuS5dmhD8Lusm/ku8qJVNtmQA56XLzEDCRS6/vfpiHK2A==
 
 "@root/x509@^0.7.2":
   version "0.7.2"
@@ -4405,13 +4397,6 @@ accepts@~1.3.8:
   dependencies:
     mime-types "~2.1.34"
     negotiator "0.6.3"
-
-acme@3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/acme/-/acme-3.0.3.tgz#e3dd9086027118d2cda7bf72572446c02e0696ea"
-  integrity sha512-NMEugs9cWvryNRidu9GeyV3EbqDlb5XFKQjaJ6E99RFpzrHM/iYYLImdrdpnkbS4vFTCrB2nMA7MQB0vAk801w==
-  dependencies:
-    "@root/acme" "^3.0.2"
 
 acorn-globals@^6.0.0:
   version "6.0.0"
