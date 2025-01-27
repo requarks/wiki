@@ -90,7 +90,8 @@ export default {
           .filter((tag, index, self) =>
             index === self.findIndex(t => t.id === tag.id) &&
             !tag.tag.startsWith('@') &&
-            !tag.tag.startsWith('!')
+            !tag.tag.startsWith('!') &&
+            !tag.tag.startsWith('$')
           )
           .map(t => ({
             text: '#' + t.tag,  // ใช้สำหรับ filter และ insert
@@ -106,6 +107,7 @@ export default {
         // เพิ่มแท็กใหม่ถ้าไม่อยู่ใน autocomplete list และไม่ขึ้นต้นด้วย @ หรือ !
         if (!allTags.some(tag => tag.text === `#${queryText}`) &&
             !queryText.startsWith('@') &&
+            !queryText.startsWith('$') &&
             !queryText.startsWith('!')) {
           allTags.push({
             id: `#${queryText}`,
@@ -227,6 +229,57 @@ export default {
         console.error('Error fetching places:', err)
         return []
       }
+    },
+    async fetchEvent(queryText) {
+      try {
+        // Delay search by 300ms
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const response = await this.$apollo.query({
+          query: gql`
+            query {
+              pages {
+                tags {
+                  id
+                  tag
+                  title
+                }
+              }
+            }
+          `
+        })
+
+        if (!response.data.pages || !response.data.pages.tags) {
+          return [];
+        }
+
+        // กรองเฉพาะ tag ที่ขึ้นต้นด้วย $
+        const allEvents = response.data.pages.tags
+          .filter((tag, index, self) =>
+            index === self.findIndex(t => t.id === tag.id) &&
+            tag.tag.startsWith('$')
+          )
+          .map(t => ({
+            id: t.tag,
+            text: t.tag,
+            label: t.title || t.tag.substring(1) // ตัด $ ออกถ้าไม่มี title
+          }))
+          .filter(event => event.text.toLowerCase().includes(queryText.toLowerCase()));
+
+        // เพิ่มกิจกรรมใหม่ถ้าไม่อยู่ใน list
+        if (!allEvents.some(event => event.text === `$${queryText}`)) {
+          allEvents.push({
+            id: `$${queryText}`,
+            text: `$${queryText}`,
+            label: `$${queryText}`
+          });
+        }
+
+        return allEvents;
+      } catch (err) {
+        console.error('Error fetching events:', err)
+        return []
+      }
     }
   },
   async mounted() {
@@ -317,6 +370,25 @@ export default {
             defaultItem: (queryText) => ({
               id: queryText,
               text: `!${queryText}`,
+              label: queryText
+            })
+          },
+          {
+            marker: '$',
+            feed: async (queryText) => {
+              return await this.fetchEvent(queryText)
+            },
+            dropdownLimit: 10,
+            minimumCharacters: 2,
+            itemRenderer: item => {
+              const div = document.createElement('div');
+              div.classList.add('custom-item', 'event-item');
+              div.textContent = item.label;
+              return div;
+            },
+            defaultItem: (queryText) => ({
+              id: queryText,
+              text: `$${queryText}`,
               label: queryText
             })
           }

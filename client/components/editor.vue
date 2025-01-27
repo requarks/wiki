@@ -283,10 +283,10 @@ export default {
       const content = this.$store.get('editor/content');
       const originalTag = this.$store.get('page/tags')
 
-      // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (เหตุการณ์/tag), @ (คน), หรือ ! (สถานที่)
-      const regex = /(?:^|\s|>)([#@!][\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)/g;
+      // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (tag), @ (คน), ! (สถานที่), $ (เหตุการณ์)
+      const regex = /(?:^|\s|>)([#@!$][\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)/g;
 
-      // ดึง matches และลบ #, @, ! ออก
+      // ดึง matches และลบ # ออก
       const matches = [...content.matchAll(regex)].map(match => {
         if (match[1].startsWith('#')) {
           return match[1].substring(1);
@@ -297,8 +297,9 @@ export default {
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
       const combinedTags = Array.from(new Set([...originalTag, ...matches]));
 
-      // บันทึกผลรวมกลับไปใน Store (ถ้าจำเป็น)
-      this.$store.set('page/tags', combinedTags);
+      // บันทึกผลรวมกลับไปใน Store
+      this.$store.set('page/tags', matches);
+      console.log(matches)
 
       const saveTimeoutHandle = setTimeout(() => {
         throw new Error('Save operation timed out.')

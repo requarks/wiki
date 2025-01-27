@@ -106,26 +106,6 @@
                       v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            //- v-card.page-tags-card.mb-5(v-if='tags.length > 0')
-            //-   .pa-5
-            //-     .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
-            //-     v-chip.mr-1.mb-1(
-            //-       label
-            //-       :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-            //-       v-for='(tag, idx) in tags'
-            //-       :href='`/t/` + tag.tag'
-            //-       :key='`tag-` + tag.tag'
-            //-       )
-            //-       v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
-            //-       span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
-            //-     v-chip.mr-1.mb-1(
-            //-       label
-            //-       :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-            //-       :href='`/t/` + tags.map(t => t.tag).join(`/`)'
-            //-       :aria-label='$t(`common:page.tagsMatching`)'
-            //-       )
-            //-       v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
-
             v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
@@ -183,35 +163,97 @@
                 .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             //- PPle customize
-            v-card.page-author-card.mb-5(v-if='tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!")).length > 0')
+            //- Tag ทั่วไป
+            v-card.page-tags-card.mb-5(v-if='tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!") && !t.tag.startsWith("$")).length > 0')
               .pa-5
-                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
-                  span Tags
-                  v-spacer
-                ul.tags-list
-                  li.tag-item(v-for='tag in tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!"))' :key='`tag-` + tag.tag')
-                    a(:href='`/t/` + tag.tag', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
-                      | {{ tag.title }}
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  v-for='(tag, idx) in tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!") && !t.tag.startsWith("$"))'
+                  :href='`/t/` + tag.tag'
+                  :key='`tag-` + tag.tag'
+                  )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  :href='`/t/` + tags.filter(t => !t.tag.startsWith("@") && !t.tag.startsWith("!") && !t.tag.startsWith("$")).map(t => t.tag).join(`/`)'
+                  :aria-label='$t(`common:page.tagsMatching`)'
+                  )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
-            v-card.page-author-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("@")).length > 0')
+            //- Tag คน
+            v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("@")).length > 0')
               .pa-5
-                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
-                  span คน
-                  v-spacer
-                ul.tags-list
-                  li.tag-item(v-for='tag in tags.filter(t => t.tag.startsWith("@"))' :key='`tag-` + tag.tag')
-                    a(:href='`/คน/` + tag.tag.substring(1)', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
-                      | {{ tag.title.substring(1) }}
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') คน
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  v-for='tag in tags.filter(t => t.tag.startsWith("@"))'
+                  :href='`/คน/` + tag.tag.substring(1)'
+                  :key='`tag-` + tag.tag'
+                  )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-account
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1)}}
 
-            v-card.page-author-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("!")).length > 0')
+            //- Tag สถานที่
+            v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("!")).length > 0')
+              .pa-5
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') สถานที่
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  v-for='tag in tags.filter(t => t.tag.startsWith("!"))'
+                  :href='`/สถานที่/` + tag.tag.substring(1)'
+                  :key='`tag-` + tag.tag'
+                  )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-map-marker
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1)}}
+
+            //- Tag เหตุการณ์
+            v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("$")).length > 0')
+              .pa-5
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') เหตุการณ์
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  v-for='tag in tags.filter(t => t.tag.startsWith("$"))'
+                  :href='`/เหตุการณ์/` + tag.tag.substring(1)'
+                  :key='`tag-` + tag.tag'
+                  )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-calendar-clock
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1)}}
+
+            //- ข้อมูลที่เกี่ยวข้อง
+            v-card.page-person-card.mb-5(v-if='isSpecialTags')
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
-                  span สถานที่
+                  span(v-if="path.includes('/คน/')") ข้อมูลบุคคล
+                  span(v-else-if="path.includes('/เหตุการณ์/')") ข้อมูลเหตุการณ์
+                  span(v-else-if="path.includes('/สถานที่/')") ข้อมูลสถานที่
                   v-spacer
-                ul.tags-list
-                  li.tag-item(v-for='tag in tags.filter(t => t.tag.startsWith("!"))' :key='`tag-` + tag.tag')
-                    a(:href='`/สถานที่/` + tag.tag.substring(1)', target="_blank", :class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`')
-                      | {{ tag.title.substring(1) }}
+                .body-2.mt-3
+                  .mt-2 ชื่อ: {{ getTagsNameFromPath }}
+
+                .mt-4
+                  .overline.pb-2 หน้าที่เกี่ยวข้อง
+                  v-list(dense, nav)
+                    template(v-if='relatedPages.length > 0')
+                      v-list-item(
+                        v-for='page in relatedPages'
+                        :key='page.id'
+                        :href='`/${page.locale}/${page.path}`'
+                        )
+                          v-list-item-icon.icon-list(style='margin-right: 6px')
+                            v-icon mdi-file-document-outline
+                          v-list-item-content
+                            v-list-item-title {{ page.title }}
+                    template(v-else)
+                      v-list-item
+                        v-list-item-content
+                          v-list-item-title.grey--text ไม่พบหน้าที่เกี่ยวข้อง
 
             //- v-card.mb-5
             //-   .pa-5
@@ -397,6 +439,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
+import gql from 'graphql-tag'
 
 Vue.component('Tabset', Tabset)
 
@@ -551,7 +594,8 @@ export default {
           }
         }
       },
-      winWidth: 0
+      winWidth: 0,
+      relatedPages: []
     }
   },
   computed: {
@@ -608,6 +652,14 @@ export default {
       } else {
         return ''
       }
+    },
+    isSpecialTags() {
+      return this.path.startsWith('คน/') || this.path.startsWith('th/คน/') || this.path.startsWith('เหตุการณ์/')
+      || this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')
+    },
+    getTagsNameFromPath() {
+      const pathParts = this.path.split('/')
+      return pathParts[pathParts.length - 1]
     }
   },
   created() {
@@ -677,6 +729,10 @@ export default {
 
       window.boot.notify('page-ready')
     })
+
+    if (this.isSpecialTags) {
+      this.fetchRelatedPages()
+    }
   },
   methods: {
     goHome() {
@@ -733,6 +789,46 @@ export default {
       this.$vuetify.goTo('#discussion', this.scrollOpts)
       if (focusNewComment) {
         document.querySelector('#discussion-new').focus()
+      }
+    },
+    async fetchRelatedPages() {
+      try {
+        const name = this.getTagsNameFromPath
+        let prefix = '@'
+
+        // Check path pattern for person, place or event
+        const path = this.path
+        if (this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')) {
+          prefix = '!'
+        } else if (this.path.startsWith('เหตุการณ์/') || this.path.startsWith('th/เหตุการณ์/')) {
+          prefix = '$'
+        } else if (this.path.startsWith('คน/') || this.path.startsWith('th/คน/')) {
+          prefix = '@'
+        }
+
+        const response = await this.$apollo.query({
+          query: gql`
+            query ($tags: [String!]) {
+              pages {
+                list(tags: $tags) {
+                  id
+                  title
+                  path
+                  locale
+                  tags
+                }
+              }
+            }
+          `,
+          variables: {
+            tags: [`${prefix}${name}`]
+          }
+        })
+
+        this.relatedPages = response.data.pages.list
+
+      } catch (err) {
+        console.error('Error fetching related pages:', err)
       }
     }
   }
@@ -818,6 +914,20 @@ export default {
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
       }
+    }
+  }
+}
+
+.page-person-card {
+  .v-list-item {
+    min-height: 36px;
+  }
+
+  .v-list-item__icon {
+    margin: 8px 0;
+
+    .v-icon {
+      font-size: 18px;
     }
   }
 }
