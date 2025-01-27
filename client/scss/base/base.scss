@@ -3,11 +3,15 @@ html {
   height: 100%;
   overflow-y: auto !important;
 }
-*, *:before, *:after {
+
+*,
+*:before,
+*:after {
   box-sizing: inherit;
 }
 
-[v-cloak], .is-hidden {
+[v-cloak],
+.is-hidden {
   display: none;
 }
 
@@ -39,9 +43,9 @@ html {
 #root .v-application {
   .overline {
     line-height: 1rem;
-    font-size: .625rem!important;
+    font-size: .625rem !important;
     font-weight: 400;
-    letter-spacing: .1666666667em!important;
+    letter-spacing: .1666666667em !important;
   }
 
   @for $i from 0 through 25 {
@@ -55,38 +59,47 @@ html {
       background-color: darken(mc('grey', '700'), percentage($i/100)) !important;
       border-color: darken(mc('grey', '700'), percentage($i/100)) !important;
     }
+
     .grey.darken-2-l#{$i} {
       background-color: lighten(mc('grey', '700'), percentage($i/100)) !important;
       border-color: lighten(mc('grey', '700'), percentage($i/100)) !important;
     }
+
     .grey.darken-3-d#{$i} {
       background-color: darken(mc('grey', '800'), percentage($i/100)) !important;
       border-color: darken(mc('grey', '800'), percentage($i/100)) !important;
     }
+
     .grey.darken-3-l#{$i} {
       background-color: lighten(mc('grey', '800'), percentage($i/100)) !important;
       border-color: lighten(mc('grey', '800'), percentage($i/100)) !important;
     }
+
     .grey.darken-4-d#{$i} {
       background-color: darken(mc('grey', '900'), percentage($i/100)) !important;
       border-color: darken(mc('grey', '900'), percentage($i/100)) !important;
     }
+
     .grey.darken-4-l#{$i} {
       background-color: lighten(mc('grey', '900'), percentage($i/100)) !important;
       border-color: lighten(mc('grey', '900'), percentage($i/100)) !important;
     }
   }
+
   .grey.darken-5 {
-    background-color: #0C0C0C !important;
-    border-color: #0C0C0C !important;
+    .navbar {
+      background-color: #ffffff;
+      filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
+    }
   }
 
   .blue.darken-5 {
-    background-color: darken(mc('blue', '900'), 20%) !important;
-    border-color: darken(mc('blue', '900'), 20%) !important;
+    background-color: #ffffff;
+    filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
   }
+
   .indigo.darken-5 {
-    background-color: darken(mc('indigo', '900'), 10%) !important;
-    border-color: darken(mc('indigo', '900'), 10%) !important;
+    background-color: #ffffff;
+    filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
   }
 }
