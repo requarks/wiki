@@ -5,7 +5,7 @@
       if (node.nodeType === Node.TEXT_NODE) {
         // Replace special tags in text content only
         const updatedText = node.textContent.replace(
-          /(?:^|\s)([#@!])([\w\u0E00-\u0E7F-]+(?:[-\.]\w+)*)/g,
+          /(?:^|\s)([#@!$])([\w\u0E00-\u0E7F-]+(?:[-\.]\w+)*)/g,
           (match, symbol, keyword) => {
             const trimmedMatch = match.trim(); // Remove leading space for correct replacement
             if (symbol === '#') {
@@ -14,6 +14,8 @@
               return `&nbsp<a target="_blank" href="/คน/${keyword}" class="tag tag-mention">${keyword}</a>`;
             } else if (symbol === '!') {
               return `&nbsp<a target="_blank" href="/สถานที่/${keyword}" class="tag tag-location">${keyword}</a>`;
+            } else if (symbol === '$') {
+              return `&nbsp<a target="_blank" href="/เหตุการณ์/${keyword}" class="tag tag-location">${keyword}</a>`;
             }
             return trimmedMatch;
           }

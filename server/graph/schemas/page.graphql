@@ -77,6 +77,8 @@ type PageQuery {
   conflictLatest(
     id: Int!
   ): PageConflictLatest! @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
+  getRelatedTags(name: String!): [Tag]
 }
 
 # -----------------------------------------------
@@ -266,6 +268,7 @@ type PageSearchResult {
   description: String!
   path: String!
   locale: String!
+  tags: [PageTag]
 }
 
 type PageListItem {
@@ -316,6 +319,11 @@ type PageConflictLatest {
   tags: [String]
   title: String!
   updatedAt: Date!
+}
+
+type Tag {
+  tag: String!
+  title: String
 }
 
 enum PageOrderBy {

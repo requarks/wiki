@@ -433,6 +433,20 @@ module.exports = {
       } else {
         throw new WIKI.Error.PageNotFound()
       }
+    },
+    getRelatedTags: async (obj, args, context) => {
+      // ฟังก์ชันนี้ถูกเรียกใช้ใน client/themes/default/components/page.vue
+      // สำหรับดึงแท็กที่เกี่ยวข้องกับหน้าปัจจุบัน
+      // โดยจะค้นหาแท็กที่มีรูปแบบดังนี้:
+      // @ สำหรับคน เช่น @สมชาย
+      // $ สำหรับเหตุการณ์ เช่น $สงครามโลกครั้งที่2
+      // ! สำหรับสถานที่ เช่น !กรุงเทพ
+      const tags = await WIKI.models.tags.query()
+        .select('tag', 'title')
+        .where('tag', 'like', `@${args.name}`)
+        .orWhere('tag', 'like', `%$${args.name}%`)
+        .orWhere('tag', 'like', `!${args.name}`)
+      return tags
     }
   },
   PageMutation: {
