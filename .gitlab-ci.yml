@@ -257,3 +257,11 @@ push-docker-image:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: on_success
+
+after_script:
+    - |
+      NPM_GLOBAL_DIR="$HOME/.npm-global"
+      if [ -d "$NPM_GLOBAL_DIR" ]; then
+          echo "Directory $TARGET_DIR exists. Deleting it..."
+          rm -rf "$NPM_GLOBAL_DIR"
+      fi
