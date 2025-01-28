@@ -19,12 +19,15 @@ COPY ./package.json ./package.json
 COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
+COPY ./yarn.lock ./yarn.lock
 
 RUN yarn cache clean
-RUN yarn --frozen-lockfile --non-interactive
+#install all dependencies including DevDependencies
+RUN yarn install --frozen-lockfile --non-interactive
 RUN yarn build
 RUN rm -rf /wiki/node_modules
 RUN yarn --production --frozen-lockfile --non-interactive
+# apply custom patches stored in patches directory to dependencies
 RUN yarn patch-package
 
 # ===============

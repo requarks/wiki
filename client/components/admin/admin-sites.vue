@@ -13,7 +13,7 @@
             v-icon mdi-refresh
           v-dialog(v-model='newSiteDialog', max-width='500')
             template(v-slot:activator='{ on }')
-              v-btn.animated.fadeInDown(color='primary', depressed, v-on='on', large)
+              v-btn.animated.fadeInDown(v-if='hasPermission(`manage:system`)', color='primary', depressed, v-on='on', large)
                 v-icon(left) mdi-plus
                 span New Site
             v-card
@@ -73,8 +73,10 @@ import _ from 'lodash'
 
 import sitesQuery from 'gql/admin/sites/sites-query-list.gql'
 import createSiteMutation from 'gql/admin/sites/sites-mutation-create.gql'
+import permissionsMixin from './permissionsMixin'
 
 export default {
+  mixins: [permissionsMixin],
   data() {
     return {
       newSiteDialog: false,
@@ -179,7 +181,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss'>
-
-</style>

@@ -23,10 +23,10 @@
             status-indicator.mr-3.ml-4(intermediary, pulse)
             .caption.deep-orange--text {{$t('admin:users.unverified')}}
           v-spacer
-          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', icon, outlined, to='/users')
+          v-btn.ml-3.animated.fadeInDown.wait-p3s(color='grey', icon, outlined, @click='goBack')
             v-icon mdi-arrow-left
           v-menu(offset-y, origin='top right')
-            template(v-slot:activator='{ on }')
+            template(v-if='hasPermission(`manage:system`)', v-slot:activator='{ on }')
               v-btn.ml-3.animated.fadeInDown.wait-p2s(color='black', v-on='on', depressed, dark)
                 span Actions
                 v-icon(right) mdi-chevron-down
@@ -47,7 +47,7 @@
                 v-list-item-icon
                   v-icon(color='red') mdi-trash-can-outline
                 v-list-item-title Delete
-          v-btn.ml-3.animated.fadeInDown(color='primary', large, depressed, @click='updateUser')
+          v-btn.ml-3.animated.fadeInDown(v-if='hasPermission(`manage:system`)', color='primary', large, depressed, @click='updateUser')
             v-icon(left) mdi-check
             span {{$t('admin:users.updateUser')}}
       v-flex(xs6)
@@ -70,7 +70,7 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptEmail`)')
+                    v-btn(v-if='hasPermission(`manage:system`)', icon, color='grey', x-small, v-on='on', @click='focusField(`iptEmail`)')
                       v-icon mdi-pencil
                   v-card
                     v-text-field(
@@ -100,7 +100,7 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptDisplayName`)')
+                    v-btn(v-if='hasPermission(`manage:system`)', icon, color='grey', x-small, v-on='on', @click='focusField(`iptDisplayName`)')
                       v-icon mdi-pencil
                   v-card
                     v-text-field(
@@ -144,7 +144,7 @@
                     template(v-slot:activator='{ on: menu }')
                       v-tooltip(top)
                         template(v-slot:activator='{ on: tooltip }')
-                          v-btn(icon, color='grey', x-small, v-on='{ ...menu, ...tooltip }', @click='focusField(`iptNewPassword`)')
+                          v-btn(v-if='hasPermission(`manage:system`)', icon, color='grey', x-small, v-on='{ ...menu, ...tooltip }', @click='focusField(`iptNewPassword`)')
                             v-icon mdi-pencil
                         span {{$t('admin:users.changePassword')}}
                     v-card
@@ -162,7 +162,7 @@
                       )
                 v-list-item-action
                   v-tooltip(top)
-                    template(v-slot:activator='{ on }')
+                    template(v-if='hasPermission(`manage:system`)', v-slot:activator='{ on }')
                       v-btn(icon, color='grey', x-small, v-on='on', disabled)
                         v-icon mdi-email
                     span Send Password Reset Email
@@ -177,7 +177,7 @@
                   v-list-item-subtitle.red--text(v-else) Inactive
                 v-list-item-action
                   v-tooltip(top)
-                    template(v-slot:activator='{ on }')
+                    template(v-if='hasPermission(`manage:system`)', v-slot:activator='{ on }')
                       v-btn(icon, color='grey', x-small, v-on='on', @click='toggle2FA')
                         v-icon mdi-power
                     span {{$t('admin:users.toggle2FA')}}
@@ -201,12 +201,12 @@
                 v-list-item-content
                   v-list-item-title {{group.name}}
                 v-list-item-action(v-if='!user.isSystem')
-                  v-btn(icon, color='red', x-small, @click='unassignGroup(group.id)')
+                  v-btn(v-if='hasPermission(`manage:system`)', icon, color='red', x-small, @click='unassignGroup(group.id)')
                     v-icon mdi-close
               v-divider(v-if='idx < user.groups.length - 1')
           v-alert.mx-3(v-if='user.groups.length < 1', outlined, color='grey darken-1', icon='mdi-alert')
             .caption {{$t('admin:users.noGroupAssigned')}}
-          v-card-chin(v-if='!user.isSystem')
+          v-card-chin(v-if='hasPermission(`manage:system`) && !user.isSystem')
             v-spacer
             v-select(
               ref='iptAssignGroup'
@@ -250,7 +250,7 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptLocation`)')
+                    v-btn(v-if='hasPermission(`manage:system`)', icon, color='grey', x-small, v-on='on', @click='focusField(`iptLocation`)')
                       v-icon mdi-pencil
                   v-card
                     v-text-field(
@@ -279,7 +279,7 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptJobTitle`)')
+                    v-btn(v-if='hasPermission(`manage:system`)', icon, color='grey', x-small, v-on='on', @click='focusField(`iptJobTitle`)')
                       v-icon mdi-pencil
                   v-card
                     v-text-field(
@@ -308,7 +308,7 @@
                   left
                   )
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, color='grey', x-small, v-on='on', @click='focusField(`iptTimezone`)')
+                    v-btn(v-if='hasPermission(`manage:system`)', icon, color='grey', x-small, v-on='on', @click='focusField(`iptTimezone`)')
                       v-icon mdi-pencil
                   v-card
                     v-select(
@@ -375,6 +375,7 @@ import { StatusIndicator } from 'vue-status-indicator'
 import UserSearch from '../common/user-search.vue'
 
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
+import permissionsMixin from './permissionsMixin'
 
 export default {
   i18nOptions: {
@@ -666,13 +667,27 @@ export default {
         { text: '(GMT+13:00) Tongatapu', value: 'Pacific/Tongatapu' },
         { text: '(GMT+14:00) Apia', value: 'Pacific/Apia' },
         { text: '(GMT+14:00) Kiritimati', value: 'Pacific/Kiritimati' }
-      ]
+      ],
+      previousRoute: null
     }
   },
+  beforeRouteEnter(to, from, next) {
+    next(vm => {
+      vm.previousRoute = from
+    })
+  },
+  mixins: [permissionsMixin],
   computed: {
     currentUserId: get('user/id')
   },
   methods: {
+    goBack() {
+      if (this.previousRoute && this.previousRoute.fullPath !== '/' && this.previousRoute.fullPath) {
+        this.$router.push(this.previousRoute.fullPath)
+      } else {
+        this.$router.push('/users')
+      }
+    },
     /**
      * Activate a user (if previously deactivated)
      */
@@ -1069,7 +1084,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss'>
-
-</style>

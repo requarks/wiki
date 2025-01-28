@@ -2,10 +2,10 @@
 
 # Define variables
 NAMESPACE="monitoring"
-RELEASE_NAME=("capwiki-prometheus" "prometheus-blackbox" "loki")
-CHARTS=("prometheus-community/kube-prometheus-stack" "prometheus-community/prometheus-blackbox-exporter" "grafana/loki-stack")
-VALUES_FILES=("values-capwiki-kube-prom.yaml" "values-blackbox-exporter.yaml" "values-loki.yaml")
-VERSION=("65.3.1" "9.0.1" "2.10.2")
+RELEASE_NAME=("capwiki-prometheus" "loki")
+CHARTS=("prometheus-community/kube-prometheus-stack" "grafana/loki-stack")
+VALUES_FILES=("values-capwiki-kube-prom.yaml"  "values-loki.yaml")
+VERSION=("65.3.1" "2.10.2")
 KUBERNETES_CLUSTER=$1
 
 echo "Helm version is: $(helm version)"
@@ -14,7 +14,10 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
 kubectl create namespace $NAMESPACE
-kubectl create -f capwiki-grafanaui-secret.yaml -n $NAMESPACE
+kubectl label namespace capwiki monitoring kube-system ingress-nginx monitor=enabled  --overwrite
+
+kubectl create -f grafana-smtp-secret.yaml -n $NAMESPACE
+kubectl create -f grafana-dashboard-pvc.yaml -n $NAMESPACE
 
 # Function to deploy a Helm chart
 deploy_chart() {
@@ -32,6 +35,8 @@ for i in "${!CHARTS[@]}"; do
 done
 
 kubectl apply -f monitoring-capwiki-tls-secret.yaml -n $NAMESPACE
+
+kubectl create -f longhorn-snapshot-recurringjob.yaml
 
 ## based on "ingress-cluster", create ingress respectively
 case "$KUBERNETES_CLUSTER" in
