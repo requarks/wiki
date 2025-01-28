@@ -1,0 +1,82 @@
+variables:
+  TRIVY_VERSION: "latest"
+  CAPWIKI_IMAGE_NAME: "capwiki"
+  CAPWIKI_IMAGE: "$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:$CI_COMMIT_SHORT_SHA" 
+  TRIVY_USERNAME: "$DOCKER_REGISTRY_USER"
+  TRIVY_PASSWORD: "$DOCKER_REGISTRY_PASS"
+
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+    
+stages:
+  - check_limit_rate
+  - scan_capwiki_image
+  - verify_capwiki
+
+before_script:
+  - |
+     if [[ "$CI_COMMIT_BRANCH" == "develop" || "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" == "develop" ]]; then
+      export CAPWIKI_IMAGE="$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:$STAGING_IMAGE_TAG"
+     fi
+     echo "CAPWIKI_IMAGE=$CAPWIKI_IMAGE"
+
+.scan_template: &scan_template
+  tags:
+  - docker_runner
+  allow_failure: true
+  image:
+    name: aquasec/trivy:$TRIVY_VERSION
+    entrypoint: [""]
+  artifacts:
+    when: always
+    paths:
+      - trivy-report-*.json
+      - trivy-report-*.html
+
+.trivy_script_template: &trivy_script_template
+  - trivy image --no-progress --timeout 30m --format json --output trivy-report-${SCAN_IMAGE_NAME}.json ${SCAN_IMAGE}
+  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${SCAN_IMAGE_NAME}.html trivy-report-${SCAN_IMAGE_NAME}.json
+  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${SCAN_IMAGE}
+
+check_limit_rate:
+  <<: *scan_template
+  stage: check_limit_rate
+  before_script:
+    - apk update && apk add curl jq
+  script: |  # the purpose of those two lines is to check, whether the limit for pulling docker images is exceeded
+    TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
+    curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest  
+
+
+scan_capwiki_image:
+  <<: *scan_template
+  stage: scan_capwiki_image
+  variables:
+    SCAN_IMAGE_NAME: $CAPWIKI_IMAGE_NAME
+    SCAN_IMAGE: $CAPWIKI_IMAGE
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+  script:
+    - echo "new image is $CAPWIKI_IMAGE"
+    - *trivy_script_template
+  artifacts:
+    paths:
+      - "deployment/pipelines/scanning-capwiki/*.json"
+      - "deployment/pipelines/scanning-capwiki/*.html"
+
+verify_capwiki:
+  <<: *scan_template
+  stage: verify_capwiki
+  dependencies:
+    - scan_capwiki_image
+  script:
+    - echo "Verifying capwiki image scan results..."
+    - if grep -q '"Severity"[[:space:]]*:[[:space:]]*"HIGH"\|"Severity"[[:space:]]*:[[:space:]]*"CRITICAL"' deployment/pipelines/scanning-capwiki/*.json; then
+        echo "High or Critical severity vulnerabilities found.";
+        exit 1;
+      else
+        echo "No High or Critical severity vulnerabilities found.";
+      fi
+
