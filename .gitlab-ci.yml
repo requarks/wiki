@@ -69,7 +69,6 @@ stages:
   - test
   - sonarqube
   - container-scan
-  - infra-provision
   - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
@@ -144,61 +143,6 @@ container_scanning:
       when: never
     - if: $CONTAINER_SCANNING == "true" || $CI_PIPELINE_SOURCE == "schedule"
       when: always
-
-
-dev1-pipeline:
-  stage: infra-provision
-  trigger:
-    include: deployment/pipelines/development-dev1/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $ENVIRONMENT == "dev1" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
-      when: manual
-
-dev2-pipeline:
-  stage: infra-provision
-  trigger:
-    include: deployment/pipelines/development-dev2/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $ENVIRONMENT == "dev2" && $CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
-      when: manual
-
-
-staging-pipeline:
-  stage: infra-provision
-  trigger:
-    include: deployment/pipelines/staging/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  variables:
-    ENVIRONMENT: "staging"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: ($ENVIRONMENT == "staging" && $CI_COMMIT_REF_NAME == "develop") || $CI_COMMIT_REF_NAME == "develop" || ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// )
-      when: on_success
-
-
-prod-pipeline:
-  stage: infra-provision
-  trigger:
-    include: deployment/pipelines/production/.gitlab-ci.yml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  variables:
-    ENVIRONMENT: "production"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if:  ($ENVIRONMENT == "production"  && $CI_COMMIT_REF_NAME == "main" ) || ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main")
-      when: on_success
 
 modify_package_json:
   stage: modify_package_json
