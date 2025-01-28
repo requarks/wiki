@@ -8,7 +8,7 @@
           v-list-item-title.truncate(
             @click='$vuetify.goTo(item.anchor, scrollOpts)'
             :style="{ cursor: 'pointer' }"
-            :class="[getTitleClass, getTitleDarkModeClass]") {{ item.title }}
+            :class="[titleClass, titleDarkModeClass]") {{ item.title }}
     v-list(v-if="isOpen && hasChildren" dense :style="{ paddingLeft: `20px`, paddingTop: '0px', paddingBottom: '0px' }")
       TreeItem(v-for="(child, index) in item.children" :key="child.id" :item="child" :open.sync="openStates[child.id]" :toggleOpenState='toggleOpenState' :openStates='openStates' :level="level + 1" :uniqueId="child.id")
   </template>
@@ -62,13 +62,10 @@ export default {
       return this.isOpen ? 'mdi-chevron-down' : 'mdi-chevron-right'
     },
     titleClass() {
-      return this.hasChildren ? '' : 'caption grey--text'
+      return this.level > 0 ? 'caption grey--text' : ''
     },
-    getTitleDarkModeClass() {
+    titleDarkModeClass() {
       return this.$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`
-    },
-    getTitleClass(level) {
-      return level > 0 ? 'caption grey--text' : ''
     }
   },
   methods: {

@@ -488,7 +488,6 @@ export default {
   },
   data() {
     return {
-      active: [],
       openStates: {},
       navShown: false,
       navExpanded: false,
