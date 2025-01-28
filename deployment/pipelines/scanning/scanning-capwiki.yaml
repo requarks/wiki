@@ -56,6 +56,8 @@ scan_capwiki_image:
   variables:
     SCAN_IMAGE_NAME: $CAPWIKI_IMAGE_NAME
     SCAN_IMAGE: $CAPWIKI_IMAGE
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
     - echo "new image is $CAPWIKI_IMAGE"
     - *trivy_script_template
