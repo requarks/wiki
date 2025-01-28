@@ -71,6 +71,7 @@ stages:
   - container-scan
   - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
+  - capwiki-image-scan
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
 
 
@@ -134,7 +135,7 @@ sonarqube-scan:
 container_scanning:
   stage: container-scan
   trigger:
-    include: deployment/pipelines/scanning/scanning.yaml
+    include: deployment/pipelines/scanning/scanning-scheduled.yaml
     strategy: depend
     forward:
       pipeline_variables: true
@@ -223,6 +224,21 @@ build-docker-image:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: always
+
+capwiki-image-scan:
+  stage: capwiki-image-scan
+  needs:
+    - build-docker-image
+  trigger:
+    include: deployment/pipelines/scanning/scanning-capwiki.yaml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
+      when: on_success
 
 push-docker-image:
   stage: docker-push
