@@ -1,3 +1,0 @@
-# Staging environment
-[staging]
-staging-machine-1 ansible_host=de-muc-mar3.apps.ce.capgemini.com ansible_user=deployer
