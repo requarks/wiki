@@ -64,25 +64,30 @@ export default {
     },
     async fetchTags(queryText) {
       try {
-        // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Delay search by 100ms
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         const response = await this.$apollo.query({
           query: gql`
-            query {
+            query ($filter: String) {
               pages {
-                tags {
+                tags(filter: $filter) {
                   id
                   tag
                   title
                 }
               }
             }
-          `
+          `,
+          variables: {
+            filter: queryText
+          }
         })
 
+        console.log(response.data.pages)
+
         if (!response.data.pages || !response.data.pages.tags) {
-          return [];
+          return []
         }
 
         // แปลงเป็น array ของ string แทน object และกรองเฉพาะ tag ที่ไม่ขึ้นต้นด้วย @ หรือ !
@@ -94,29 +99,29 @@ export default {
             !tag.tag.startsWith('$')
           )
           .map(t => ({
-            text: '#' + t.tag,  // ใช้สำหรับ filter และ insert
-            title: t.title || t.tag  // ใช้สำหรับแสดงใน dropdown
+            text: '#' + t.tag, // ใช้สำหรับ filter และ insert
+            title: t.title || t.tag // ใช้สำหรับแสดงใน dropdown
           }))
           .filter(tag => tag.text.includes(queryText))
           .map(tag => ({
-            id: tag.text,  // ใช้ text เป็น id
-            text: tag.text,  // ข้อความที่จะถูกแทรก
+            id: tag.text, // ใช้ text เป็น id
+            text: tag.text, // ข้อความที่จะถูกแทรก
             label: tag.title // ข้อความที่จะแสดงใน dropdown
-          }));
+          }))
 
         // เพิ่มแท็กใหม่ถ้าไม่อยู่ใน autocomplete list และไม่ขึ้นต้นด้วย @ หรือ !
         if (!allTags.some(tag => tag.text === `#${queryText}`) &&
-            !queryText.startsWith('@') &&
-            !queryText.startsWith('$') &&
-            !queryText.startsWith('!')) {
+          !queryText.startsWith('@') &&
+          !queryText.startsWith('$') &&
+          !queryText.startsWith('!')) {
           allTags.push({
             id: `#${queryText}`,
             text: `#${queryText}`,
             label: `${queryText}`
-          });
+          })
         }
 
-        return allTags;
+        return allTags
       } catch (err) {
         console.error('Error fetching tags:', err)
         return []
@@ -125,24 +130,27 @@ export default {
     async fetchPeople(queryText) {
       try {
         // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         const response = await this.$apollo.query({
           query: gql`
-            query {
+            query ($filter: String) {
               pages {
-                tags {
+                tags(filter: $filter) {
                   id
                   tag
                   title
                 }
               }
             }
-          `
+          `,
+          variables: {
+            filter: queryText
+          }
         })
 
         if (!response.data.pages || !response.data.pages.tags) {
-          return [];
+          return []
         }
 
         // กรองเฉพาะ tag ที่ขึ้นต้นด้วย @
@@ -159,10 +167,10 @@ export default {
           }))
           // ปรับการ filter ให้ค้นหาได้ทั้งชื่อเต็มและบางส่วน
           .filter(person => {
-            const searchText = queryText.toLowerCase();
+            const searchText = queryText.toLowerCase()
             return person.text.toLowerCase().includes(searchText) ||
-                   person.label.toLowerCase().includes(searchText);
-          });
+              person.label.toLowerCase().includes(searchText)
+          })
 
         // เพิ่มคนใหม่ถ้าไม่อยู่ใน list และมีการพิมพ์ข้อความ
         if (queryText && !allPeople.some(person => person.text === `@${queryText}`)) {
@@ -170,10 +178,10 @@ export default {
             id: `@${queryText}`,
             text: `@${queryText}`,
             label: `@${queryText}`
-          });
+          })
         }
 
-        return allPeople;
+        return allPeople
       } catch (err) {
         console.error('Error fetching people:', err)
         return []
@@ -182,25 +190,30 @@ export default {
     async fetchPlace(queryText) {
       try {
         // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         const response = await this.$apollo.query({
           query: gql`
-            query {
+            query ($filter: String) {
               pages {
-                tags {
+                tags(filter: $filter) {
                   id
                   tag
                   title
                 }
               }
             }
-          `
+          `,
+          variables: {
+            filter: queryText
+          }
         })
 
         if (!response.data.pages || !response.data.pages.tags) {
-          return [];
+          return []
         }
+
+        console.log(response.data.pages.tags)
 
         // กรองเฉพาะ tag ที่ขึ้นต้นด้วย !
         const allPlaces = response.data.pages.tags
@@ -213,7 +226,7 @@ export default {
             text: t.tag,
             label: t.title || t.tag.substring(1) // ตัด ! ออกถ้าไม่มี title
           }))
-          .filter(place => place.text.toLowerCase().includes(queryText.toLowerCase()));
+          .filter(place => place.text.toLowerCase().includes(queryText.toLowerCase()))
 
         // เพิ่มสถานที่ใหม่ถ้าไม่อยู่ใน list
         if (!allPlaces.some(place => place.text === `!${queryText}`)) {
@@ -221,10 +234,10 @@ export default {
             id: `!${queryText}`,
             text: `!${queryText}`,
             label: `!${queryText}`
-          });
+          })
         }
 
-        return allPlaces;
+        return allPlaces
       } catch (err) {
         console.error('Error fetching places:', err)
         return []
@@ -233,24 +246,27 @@ export default {
     async fetchEvent(queryText) {
       try {
         // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         const response = await this.$apollo.query({
           query: gql`
-            query {
+            query ($filter: String) {
               pages {
-                tags {
+                tags(filter: $filter) {
                   id
                   tag
                   title
                 }
               }
             }
-          `
+          `,
+          variables: {
+            filter: queryText
+          }
         })
 
         if (!response.data.pages || !response.data.pages.tags) {
-          return [];
+          return []
         }
 
         // กรองเฉพาะ tag ที่ขึ้นต้นด้วย $
@@ -264,7 +280,7 @@ export default {
             text: t.tag,
             label: t.title || t.tag.substring(1) // ตัด $ ออกถ้าไม่มี title
           }))
-          .filter(event => event.text.toLowerCase().includes(queryText.toLowerCase()));
+          .filter(event => event.text.toLowerCase().includes(queryText.toLowerCase()))
 
         // เพิ่มกิจกรรมใหม่ถ้าไม่อยู่ใน list
         if (!allEvents.some(event => event.text === `$${queryText}`)) {
@@ -272,10 +288,10 @@ export default {
             id: `$${queryText}`,
             text: `$${queryText}`,
             label: `$${queryText}`
-          });
+          })
         }
 
-        return allEvents;
+        return allEvents
       } catch (err) {
         console.error('Error fetching events:', err)
         return []
@@ -294,58 +310,44 @@ export default {
           {
             marker: '#',
             feed: async (queryText) => {
-              return await this.fetchTags(queryText)
+              return this.fetchTags(queryText)
             },
             dropdownLimit: 10,
             minimumCharacters: 2,
             itemRenderer: item => {
-              const div = document.createElement('div');
-              div.classList.add('custom-item', 'hashtag-item');
+              const div = document.createElement('div')
+              div.classList.add('custom-item', 'hashtag-item')
 
               // สร้าง <span> สำหรับ hashtag symbol และ text
-              const span = document.createElement('span');
-              span.classList.add('hashtag-text');
-              span.textContent = `#${item.label}`;
+              const span = document.createElement('span')
+              span.classList.add('hashtag-text')
+              span.textContent = `#${item.label}`
 
-              div.appendChild(span);
-              return div;
+              div.appendChild(span)
+              return div
             },
             // เพิ่ม handler สำหรับกรณีที่ผู้ใช้พิมพ์ # แต่ไม่ได้เลือกจาก dropdown
-            dropdownOnEmpty: true, // แสดง dropdown แม้ไม่มีผลลัพธ์
-            defaultItem: (queryText) => {
-              return {
-                id: queryText,
-                text: `#${queryText}`,
-                label: queryText,
-                // เพิ่ม class hashtag-text เมื่อแทรกลงไป
-                renderer: () => {
-                  const span = document.createElement('span');
-                  span.classList.add('hashtag-text');
-                  span.textContent = `#${queryText}`;
-                  return span;
-                }
-              };
-            }
+            dropdownOnEmpty: true // แสดง dropdown แม้ไม่มีผลลัพธ์
           },
           {
             marker: '@',
             feed: async (queryText) => {
-              return await this.fetchPeople(queryText)
+              return this.fetchPeople(queryText)
             },
             dropdownLimit: 10,
             minimumCharacters: 2,
             // ปรับ itemRenderer ให้แสดงผลเต็มรูปแบบ
             itemRenderer: item => {
-              const div = document.createElement('div');
-              div.classList.add('custom-item', 'mention-item');
+              const div = document.createElement('div')
+              div.classList.add('custom-item', 'mention-item')
 
               // แสดงชื่อเต็มรูปแบบ
-              const nameSpan = document.createElement('span');
-              nameSpan.classList.add('mention-text');
-              nameSpan.textContent = item.label;
+              const nameSpan = document.createElement('span')
+              nameSpan.classList.add('mention-text')
+              nameSpan.textContent = item.label
 
-              div.appendChild(nameSpan);
-              return div;
+              div.appendChild(nameSpan)
+              return div
             },
             // ปรับ defaultItem ให้รองรับการพิมพ์ชื่อที่มีเครื่องหมายพิเศษ
             defaultItem: (queryText) => ({
@@ -357,15 +359,15 @@ export default {
           {
             marker: '!',
             feed: async (queryText) => {
-              return await this.fetchPlace(queryText)
+              return this.fetchPlace(queryText)
             },
             dropdownLimit: 10,
             minimumCharacters: 2,
             itemRenderer: item => {
-              const div = document.createElement('div');
-              div.classList.add('custom-item', 'place-item');
-              div.textContent = item.label;
-              return div;
+              const div = document.createElement('div')
+              div.classList.add('custom-item', 'place-item')
+              div.textContent = item.label
+              return div
             },
             defaultItem: (queryText) => ({
               id: queryText,
@@ -376,15 +378,15 @@ export default {
           {
             marker: '$',
             feed: async (queryText) => {
-              return await this.fetchEvent(queryText)
+              return this.fetchEvent(queryText)
             },
             dropdownLimit: 10,
             minimumCharacters: 2,
             itemRenderer: item => {
-              const div = document.createElement('div');
-              div.classList.add('custom-item', 'event-item');
-              div.textContent = item.label;
-              return div;
+              const div = document.createElement('div')
+              div.classList.add('custom-item', 'event-item')
+              div.textContent = item.label
+              return div
             },
             defaultItem: (queryText) => ({
               id: queryText,
@@ -410,19 +412,19 @@ export default {
     }
 
     this.editor.model.document.on('change:data', _.debounce(evt => {
-      let content = this.editor.getData();
+      let content = this.editor.getData()
 
       // ตรวจสอบ `#` ที่ไม่ได้อยู่ใน `<span>` แล้วเพิ่ม `<span>` ห่อหุ้ม
       content = content.replace(
         /(^|\s)#(\w+)/g,
         (match, space, tag) => `${space}<span class="hashtag-text">#${tag}</span>`
-      );
+      )
 
       this.$store.set('editor/content', beautify(content, {
         indent_size: 2,
         end_with_newline: true
-      }));
-    }, 500));
+      }))
+    }, 500))
 
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
@@ -643,6 +645,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 
   .mention-text {
     color: #333;
+
     &:hover {
       color: #1976d2;
     }
@@ -653,6 +656,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   .mention-item {
     .mention-text {
       color: #fff;
+
       &:hover {
         color: #64b5f6;
       }

@@ -21,9 +21,9 @@ module.exports = {
     async history(obj, args, context, info) {
       const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.id)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
-          path: page.path,
-          locale: page.localeCode
-        })) {
+        path: page.path,
+        locale: page.localeCode
+      })) {
         return WIKI.models.pageHistory.getHistory({
           pageId: args.id,
           offsetPage: args.offsetPage || 0,
@@ -39,9 +39,9 @@ module.exports = {
     async version(obj, args, context, info) {
       const page = await WIKI.models.pages.query().select('path', 'localeCode').findById(args.pageId)
       if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
-          path: page.path,
-          locale: page.localeCode
-        })) {
+        path: page.path,
+        locale: page.localeCode
+      })) {
         return WIKI.models.pageHistory.getVersion({
           pageId: args.pageId,
           versionId: args.versionId
@@ -79,20 +79,20 @@ module.exports = {
      */
     async list(obj, args, context, info) {
       let results = await WIKI.models.pages.query().column([
-          'pages.id',
-          'path',
-          {
-            locale: 'localeCode'
-          },
-          'title',
-          'description',
-          'isPublished',
-          'isPrivate',
-          'privateNS',
-          'contentType',
-          'createdAt',
-          'updatedAt'
-        ])
+        'pages.id',
+        'path',
+        {
+          locale: 'localeCode'
+        },
+        'title',
+        'description',
+        'isPublished',
+        'isPrivate',
+        'privateNS',
+        'contentType',
+        'createdAt',
+        'updatedAt'
+      ])
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
           builder.select('tag')
@@ -160,9 +160,9 @@ module.exports = {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
-            path: page.path,
-            locale: page.localeCode
-          })) {
+          path: page.path,
+          locale: page.localeCode
+        })) {
           return {
             ...page,
             locale: page.localeCode,
@@ -180,13 +180,13 @@ module.exports = {
     async singleByPath(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb({
         path: args.path,
-        locale: args.locale,
-      });
+        locale: args.locale
+      })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
-            path: page.path,
-            locale: page.localeCode
-          })) {
+          path: page.path,
+          locale: page.localeCode
+        })) {
           return {
             ...page,
             locale: page.localeCode,
@@ -205,21 +205,14 @@ module.exports = {
      * FETCH TAGS
      */
     async tags(obj, args, context, info) {
-      const pages = await WIKI.models.pages.query()
-        .column([
-          'path',
-          {
-            locale: 'localeCode'
-          }
-        ])
-        .withGraphJoined('tags')
-      const allTags = _.filter(pages, r => {
-        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
-          path: r.path,
-          locale: r.locale
-        })
-      }).flatMap(r => r.tags)
-      return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
+      const query = WIKI.models.tags.query().select('id', 'tag', 'title')
+      // console.log(args.filter)
+      if (args.filter) {
+        query.where('tag', 'like', `%${args.filter}%`)
+      }
+
+      const tags = await query
+      return tags
     },
     /**
      * SEARCH TAGS
@@ -332,19 +325,19 @@ module.exports = {
           })
           .unionAll(
             WIKI.models.knex('pageLinks')
-            .column({
-              id: 'pages.id'
-            }, {
-              path: 'pages.path'
-            }, 'title', {
-              link: 'pageLinks.path'
-            }, {
-              locale: 'pageLinks.localeCode'
-            })
-            .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
-            .where({
-              'pages.localeCode': args.locale
-            })
+              .column({
+                id: 'pages.id'
+              }, {
+                path: 'pages.path'
+              }, 'title', {
+                link: 'pageLinks.path'
+              }, {
+                locale: 'pageLinks.localeCode'
+              })
+              .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
+              .where({
+                'pages.localeCode': args.locale
+              })
           )
       } else {
         results = await WIKI.models.knex('pages')
@@ -401,9 +394,9 @@ module.exports = {
       let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt').findById(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
-            path: page.path,
-            locale: page.localeCode
-          })) {
+          path: page.path,
+          locale: page.localeCode
+        })) {
           return page.updatedAt > args.checkoutDate
         } else {
           throw new WIKI.Error.PageUpdateForbidden()
@@ -419,9 +412,9 @@ module.exports = {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
-            path: page.path,
-            locale: page.localeCode
-          })) {
+          path: page.path,
+          locale: page.localeCode
+        })) {
           return {
             ...page,
             tags: page.tags.map(t => t.tag),
@@ -491,7 +484,7 @@ module.exports = {
           page
         }
       } catch (err) {
-        console.error('เกิดข้อผิดพลาดในการอัพเดทหน้า:', err);
+        console.error('เกิดข้อผิดพลาดในการอัพเดทหน้า:', err)
         return graphHelper.generateError(err)
       }
     },
@@ -652,9 +645,9 @@ module.exports = {
         }
 
         if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
-            path: page.path,
-            locale: page.localeCode
-          })) {
+          path: page.path,
+          locale: page.localeCode
+        })) {
           throw new WIKI.Error.PageRestoreForbidden()
         }
 

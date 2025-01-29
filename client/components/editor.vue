@@ -173,7 +173,9 @@ export default {
         title: '',
         css: '',
         js: ''
-      }
+      },
+      tagsFromSetting: [],
+      tagsFromExistingContent: []
     }
   },
   computed: {
@@ -248,6 +250,7 @@ export default {
       this.currentEditor = `editor${_.startCase(this.initEditor || 'markdown')}`
     }
 
+    this.seperateTags()
     window.onbeforeunload = () => {
       if (!this.exitConfirmed && this.initContentParsed !== this.$store.get('editor/content')) {
         return this.$t('editor:unsavedWarning')
@@ -264,6 +267,24 @@ export default {
     // this.currentEditor = `editorApi`
   },
   methods: {
+    seperateTags() {
+      const content = this.$store.get('editor/content')
+      const originalTag = this.$store.get('page/tags')
+      const regex = /(?:^|\s|>)([#@!$](?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*))/g
+      const matches = [...content.matchAll(regex)].map(match => {
+        if (match[1].startsWith('#')) {
+          return match[1].substring(1)
+        }
+        return match[1]
+      })
+
+      // หา tags ที่อยู่ใน originalTag แต่ไม่อยู่ใน matches
+      this.tagsFromExistingContent = matches
+      console.log('Tags จากข้อความ: ', this.tagsFromExistingContent)
+      const tagsOnlyInOriginal = originalTag.filter(tag => !matches.includes(tag))
+      console.log('Tags ที่อยู่ใน originalTag แต่ไม่อยู่ในข้อความ: ', tagsOnlyInOriginal)
+      this.tagsFromSetting = tagsOnlyInOriginal
+    },
     openPropsModal(name) {
       this.dialogProps = true
     },
@@ -280,26 +301,28 @@ export default {
       this.showProgressDialog('saving')
       this.isSaving = true
 
-      const content = this.$store.get('editor/content');
-      const originalTag = this.$store.get('page/tags')
+      const content = this.$store.get('editor/content')
+      // const originalTag = this.$store.get('page/tags')
 
       // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (tag), @ (คน), ! (สถานที่), $ (เหตุการณ์)
-      const regex = /(?:^|\s|>)([#@!$][\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)/g;
+      const regex = /(?:^|\s|>)([#@!$](?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*))/g
 
       // ดึง matches และลบ # ออก
       const matches = [...content.matchAll(regex)].map(match => {
         if (match[1].startsWith('#')) {
-          return match[1].substring(1);
+          return match[1].substring(1)
         }
-        return match[1];
-      });
-
+        return match[1]
+      })
+      // console.log('Tags จากของใหม่: ', originalTag)
+      // console.log('Tags จากของเดิมที่มีในเนื้อหา: ', this.tagsFromExistingContent)
+      // console.log('Tags จากเนื้อหาปัจจุบัน: ', matches)
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
-      const combinedTags = Array.from(new Set([...originalTag, ...matches]));
+      // const combinedTags = Array.from(new Set([...this.tagsFromSetting, ...matches]))
 
       // บันทึกผลรวมกลับไปใน Store
-      this.$store.set('page/tags', matches);
-      console.log(matches)
+      this.$store.set('page/tags', matches)
+      // console.log(matches)
 
       const saveTimeoutHandle = setTimeout(() => {
         throw new Error('Save operation timed out.')

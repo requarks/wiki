@@ -196,7 +196,7 @@
                   :key='`tag-` + tag.tag'
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-account
-                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1)}}
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1).replace(/-/g, ' ')}}
 
             //- Tag สถานที่
             v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("!")).length > 0')
@@ -206,11 +206,11 @@
                   label
                   :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   v-for='tag in tags.filter(t => t.tag.startsWith("!"))'
-                  :href='`/สถานที่/` + tag.tag.substring(1)'
+                  :href='`/สถานที่/` + tag.tag.substring(1).split("/").reverse().join("/")'
                   :key='`tag-` + tag.tag'
                   )
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-map-marker
-                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1)}}
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1).split('/')[0]}}
 
             //- Tag เหตุการณ์
             v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("$")).length > 0')
@@ -654,8 +654,8 @@ export default {
       }
     },
     isSpecialTags() {
-      return this.path.startsWith('คน/') || this.path.startsWith('th/คน/') || this.path.startsWith('เหตุการณ์/')
-      || this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')
+      return this.path.startsWith('คน/') || this.path.startsWith('th/คน/') || this.path.startsWith('เหตุการณ์/') ||
+      this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')
     },
     getTagsNameFromPath() {
       const pathParts = this.path.split('/')
@@ -826,7 +826,6 @@ export default {
         })
 
         this.relatedPages = response.data.pages.list
-
       } catch (err) {
         console.error('Error fetching related pages:', err)
       }

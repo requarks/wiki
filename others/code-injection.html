@@ -5,17 +5,36 @@
       if (node.nodeType === Node.TEXT_NODE) {
         // Replace special tags in text content only
         const updatedText = node.textContent.replace(
-          /(?:^|\s)([#@!$])([\w\u0E00-\u0E7F-]+(?:[-\.]\w+)*)/g,
+          /(?:^|\s)([#@!$])([\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*)/g,
           (match, symbol, keyword) => {
             const trimmedMatch = match.trim(); // Remove leading space for correct replacement
             if (symbol === '#') {
               return `&nbsp<a target="_blank" href="/t/${keyword}" class="tag tag-hashtag">${trimmedMatch}</a>`;
             } else if (symbol === '@') {
-              return `&nbsp<a target="_blank" href="/คน/${keyword}" class="tag tag-mention">${keyword}</a>`;
+              // Replace dash with space for person names
+              const displayName = keyword.replace(/-/g, ' ');
+              return `&nbsp<a target="_blank" href="/คน/${keyword}" class="tag tag-mention">${displayName}</a>`;
             } else if (symbol === '!') {
+              // Split location parts
+              const parts = keyword.split('/');
+              if (parts.length === 3) {
+                if (parts[2] === 'กรุงเทพมหานคร') {
+                  // Bangkok format: reverse order
+                  return `&nbsp<a target="_blank" href="/สถานที่/${parts[2]}/${parts[1]}/${parts[0]}" class="tag tag-location">${parts[0]}</a>`;
+                } else if (parts[0].startsWith('ต.') && parts[1].startsWith('อ.') && parts[2].startsWith('จ.')) {
+                  // Format: ต.xxx/อ.xxx/จ.xxx
+                  const district = parts[0].substring(2); // Remove ต.
+                  const amphoe = parts[1].substring(2); // Remove อ.
+                  const province = parts[2].substring(2); // Remove จ.
+                  return `&nbsp<a target="_blank" href="/สถานที่/${province}/อำเภอ${amphoe}/ตำบล${district}" class="tag tag-location">${district}</a>`;
+                } else {
+                  // Other provinces: keep original order
+                  return `&nbsp<a target="_blank" href="/สถานที่/${parts[2]}/${parts[1]}/${parts[0]}" class="tag tag-location">${parts[0]}</a>`;
+                }
+              }
               return `&nbsp<a target="_blank" href="/สถานที่/${keyword}" class="tag tag-location">${keyword}</a>`;
             } else if (symbol === '$') {
-              return `&nbsp<a target="_blank" href="/เหตุการณ์/${keyword}" class="tag tag-location">${keyword}</a>`;
+              return `&nbsp<a target="_blank" href="/เหตุการณ์/${keyword}" class="tag tag-event">${keyword}</a>`;
             }
             return trimmedMatch;
           }
