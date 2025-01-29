@@ -124,7 +124,7 @@
 
   h1 {
     padding: 0;
-    color: mc('blue', '800');
+    color: #272936;
     margin-top: 2rem;
     position: relative;
 
@@ -139,7 +139,7 @@
       left: 0;
       width: 100%;
       height: 2px;
-      background: linear-gradient(to right, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
+      background: linear-gradient(to right, #272936, rgba(#272936, 0));
       border-radius: 3px;
 
       @at-root .theme--dark & {
@@ -303,6 +303,7 @@
   // ---------------------------------
 
   p {
+    font-family: "Ubuntu", sans-serif;
     margin-top: 0;
     margin-bottom: 1rem;
     font-size: 1rem;
