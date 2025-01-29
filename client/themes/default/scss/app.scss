@@ -1,6 +1,8 @@
 /* THEME SPECIFIC STYLES */
 
 .v-main .contents {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 300;
   color: mc('grey', '800');
   padding: .5rem 0 50px;
   position: relative;
@@ -303,7 +305,6 @@
   // ---------------------------------
 
   p {
-    font-family: "Ubuntu", sans-serif;
     margin-top: 0;
     margin-bottom: 1rem;
     font-size: 1rem;
