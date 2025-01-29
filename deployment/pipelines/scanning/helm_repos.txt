@@ -1,2 +1,0 @@
-grafana https://grafana.github.io/helm-charts
-prometheus-community https://prometheus-community.github.io/helm-charts

@@ -225,21 +225,6 @@ build-docker-image:
       when: never
     - when: always
 
-capwiki-image-scan:
-  stage: capwiki-image-scan
-  needs:
-    - build-docker-image
-  trigger:
-    include: deployment/pipelines/scanning/scanning-capwiki.yaml
-    strategy: depend
-    forward:
-      pipeline_variables: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//
-      when: on_success
-
 push-docker-image:
   stage: docker-push
   needs:
