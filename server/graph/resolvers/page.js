@@ -182,6 +182,7 @@ module.exports = {
         path: args.path,
         locale: args.locale
       })
+
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
@@ -195,10 +196,10 @@ module.exports = {
             scriptCss: page.extra.css
           }
         } else {
-          throw new WIKI.Error.PageViewForbidden()
+          return 'forbidden'
         }
       } else {
-        throw new WIKI.Error.PageNotFound()
+        return null
       }
     },
     /**
@@ -206,7 +207,7 @@ module.exports = {
      */
     async tags(obj, args, context, info) {
       const query = WIKI.models.tags.query().select('id', 'tag', 'title')
-      // console.log(args.filter)
+
       if (args.filter) {
         query.where('tag', 'like', `%${args.filter}%`)
       }

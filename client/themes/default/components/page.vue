@@ -233,11 +233,8 @@
                   span(v-if="path.includes('/คน/')") ข้อมูลบุคคล
                   span(v-else-if="path.includes('/เหตุการณ์/')") ข้อมูลเหตุการณ์
                   span(v-else-if="path.includes('/สถานที่/')") ข้อมูลสถานที่
-                  v-spacer
-                .body-2.mt-3
-                  .mt-2 ชื่อ: {{ getTagsNameFromPath }}
 
-                .mt-4
+                .mt-1
                   .overline.pb-2 หน้าที่เกี่ยวข้อง
                   v-list(dense, nav)
                     template(v-if='relatedPages.length > 0')
@@ -255,18 +252,64 @@
                         v-list-item-content
                           v-list-item-title.grey--text ไม่พบหน้าที่เกี่ยวข้อง
 
-            //- v-card.mb-5
-            //-   .pa-5
-            //-     .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
-            //-     .text-center
-            //-       v-rating(
-            //-         v-model='rating'
-            //-         color='yellow darken-3'
-            //-         background-color='grey lighten-1'
-            //-         half-increments
-            //-         hover
-            //-       )
-            //-       .caption.grey--text 5 votes
+            //- ช่วงเวลาเหตุการณ์
+            v-card.page-time-card.mb-5(v-if="isEventPage")
+              .pa-5
+                .overline.indigo--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') ช่วงเวลา
+                v-row
+                  v-col(cols="12")
+                    v-menu(
+                      ref="startDateMenu"
+                      v-model="startDateMenu"
+                      :close-on-content-click="false"
+                      transition="scale-transition"
+                      offset-y
+                      max-width="290px"
+                      min-width="290px"
+                    )
+                      template(v-slot:activator="{ on, attrs }")
+                        v-text-field(
+                          v-model="startDate"
+                          label="เริ่มต้น"
+                          prepend-icon="mdi-calendar"
+                          readonly
+                          v-bind="attrs"
+                          v-on="on"
+                          dense
+                          outlined
+                        )
+                      v-date-picker(
+                        v-model="startDate"
+                        no-title
+                        @input="startDateMenu = false"
+                      )
+                  v-col(cols="12")
+                    v-menu(
+                      ref="endDateMenu"
+                      v-model="endDateMenu"
+                      :close-on-content-click="false"
+                      transition="scale-transition"
+                      offset-y
+                      max-width="290px"
+                      min-width="290px"
+                    )
+                      template(v-slot:activator="{ on, attrs }")
+                        v-text-field(
+                          v-model="endDate"
+                          label="สิ้นสุด"
+                          prepend-icon="mdi-calendar"
+                          readonly
+                          v-bind="attrs"
+                          v-on="on"
+                          dense
+                          outlined
+                        )
+                      v-date-picker(
+                        v-model="endDate"
+                        no-title
+                        @input="endDateMenu = false"
+                      )
+                v-btn(color="primary", @click="saveDates") บันทึก
 
             v-card.page-shortcuts-card(flat)
               v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
@@ -595,7 +638,11 @@ export default {
         }
       },
       winWidth: 0,
-      relatedPages: []
+      relatedPages: [],
+      startDateMenu: false,
+      startDate: null,
+      endDateMenu: false,
+      endDate: null
     }
   },
   computed: {
@@ -655,11 +702,14 @@ export default {
     },
     isSpecialTags() {
       return this.path.startsWith('คน/') || this.path.startsWith('th/คน/') || this.path.startsWith('เหตุการณ์/') ||
-      this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')
+        this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')
     },
     getTagsNameFromPath() {
       const pathParts = this.path.split('/')
       return pathParts[pathParts.length - 1]
+    },
+    isEventPage() {
+      return this.path.includes('เหตุการณ์/') || this.path.includes('th/เหตุการณ์/')
     }
   },
   created() {
@@ -793,17 +843,28 @@ export default {
     },
     async fetchRelatedPages() {
       try {
-        const name = this.getTagsNameFromPath
-        let prefix = '@'
+        let name = this.getTagsNameFromPath
+        let prefix = ''
 
-        // Check path pattern for person, place or event
-        const path = this.path
-        if (this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')) {
-          prefix = '!'
-        } else if (this.path.startsWith('เหตุการณ์/') || this.path.startsWith('th/เหตุการณ์/')) {
-          prefix = '$'
-        } else if (this.path.startsWith('คน/') || this.path.startsWith('th/คน/')) {
-          prefix = '@'
+        // Extract path type and name based on URL pattern
+        const pathParts = this.path.split('/')
+        const isThaiPath = pathParts[0] === 'th'
+        const pathType = isThaiPath ? pathParts[1] : pathParts[0]
+
+        switch (pathType) {
+          case 'สถานที่':
+            prefix = '!'
+            name = pathParts
+              .filter(part => part !== 'สถานที่' && part !== 'th')
+              .reverse()
+              .join('/')
+            break
+          case 'เหตุการณ์':
+            prefix = '$'
+            break
+          case 'คน':
+            prefix = '@'
+            break
         }
 
         const response = await this.$apollo.query({
@@ -828,6 +889,23 @@ export default {
         this.relatedPages = response.data.pages.list
       } catch (err) {
         console.error('Error fetching related pages:', err)
+      }
+    },
+    validateDates() {
+      if (this.startDate && this.endDate && this.endDate <= this.startDate) {
+        this.$store.commit('showNotification', {
+          message: 'วันที่ของคุณไม่ถูกต้อง วันสิ้นสุดต้องมากกว่าวันเริ่มต้น',
+          style: 'error',
+          icon: 'warning'
+        })
+        return false
+      }
+      return true
+    },
+    async saveDates() {
+      if (this.validateDates()) {
+        // บันทึกวันที่หรือทำการอื่น ๆ ที่ต้องการ
+        console.log('Dates are valid and saved:', this.startDate, this.endDate)
       }
     }
   }
@@ -929,5 +1007,9 @@ export default {
       font-size: 18px;
     }
   }
+}
+
+.v-text-field__details {
+  display: none;
 }
 </style>
