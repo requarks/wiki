@@ -16,12 +16,30 @@ variables:
       - "staging"
       - "production"
     description: "Choose on which environment should pipeline run"
+  MONITORING:
+    value: "no"
+    options:
+      - "yes"
+      - "no"
+    description: "Deploy monitoring"
+  ARGOCD:
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+    description: "Deploy argocd"
   VERSION:
     value: "1.0.0"
     description: "Specify the version [ONLY USED FOR STAGING or PRODUCTION]"
   MESSAGE:
     value: ""
     description: "Specify a tagging message [ONLY USED FOR STAGING or PRODUCTION]"
+  CONTAINER_SCANNING:
+    value: "false"
+    options:
+      - "true"
+      - "false"
+    description: "Choose true if you want to scan the images"
   SONARQUBE:
     value: "true"
     options:
@@ -50,8 +68,10 @@ stages:
   - build
   - test
   - sonarqube
+  - container-scan
   - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
+  - capwiki-image-scan
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
 
 
@@ -111,6 +131,19 @@ sonarqube-scan:
       when: never
     - if: $SONARQUBE == "true"
       when: on_success
+
+container_scanning:
+  stage: container-scan
+  trigger:
+    include: deployment/pipelines/scanning/scanning-scheduled.yaml
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $CONTAINER_SCANNING == "false" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - if: $CONTAINER_SCANNING == "true" || $CI_PIPELINE_SOURCE == "schedule"
+      when: always
 
 modify_package_json:
   stage: modify_package_json
