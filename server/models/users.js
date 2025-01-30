@@ -450,10 +450,6 @@ module.exports = class User extends Model {
       user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'groups.rules')
     }
 
-    // Update Last Login Date
-    // -> Bypass Objection.js to avoid updating the updatedAt field
-    await WIKI.models.knex('users').where('id', user.id).update({ lastLoginAt: new Date().toISOString() })
-
     return {
       token: jwt.sign({
         id: user.id,
