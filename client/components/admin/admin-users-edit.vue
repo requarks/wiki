@@ -1052,7 +1052,6 @@ export default {
               isVerified
               createdAt
               updatedAt
-              lastLoginAt
               tfaIsActive
               groups {
                 id
