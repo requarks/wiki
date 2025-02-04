@@ -199,7 +199,10 @@ module.exports = class Page extends Model {
           result = frontmatterRegex.markdown.exec(raw)
           if (result[2]) {
             return {
-              ...yaml.safeLoad(result[2]),
+              ...yaml.safeLoad(result[2], {
+                json: true,
+                schema: yaml.CORE_SCHEMA
+              }),
               content: result[3]
             }
           } else {
