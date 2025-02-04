@@ -1,0 +1,7 @@
+mutation ($pageId: Int!, $siteId: String!) {
+  deleteFollower(pageId: $pageId, siteId: $siteId) {
+    succeeded
+    slug
+    message
+  }
+}

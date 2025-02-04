@@ -1,0 +1,16 @@
+mutation($pageId: Int!, $siteId: String!) {
+  createFollower(pageId: $pageId, siteId: $siteId) {
+    operation {
+      succeeded
+      slug
+      message
+    },
+    follower {
+      id
+      siteId
+      pageId
+      userId
+      createdAt
+    }
+  }
+}

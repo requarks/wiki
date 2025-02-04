@@ -237,7 +237,7 @@
     "@ckeditor/ckeditor5-typing": "^19.0.1",
     "@ckeditor/ckeditor5-word-count": "^19.0.1",
     "@jest/globals": "29.7.0",
-    "@mdi/font": "5.8.55",
+    "@mdi/font": "6.9.96",
     "@panter/vue-i18next": "0.15.2",
     "@requarks/ckeditor5": "19.0.1-wiki.2",
     "@types/fs-extra": "11.0.4",
@@ -373,7 +373,6 @@
   },
   "resolutions": {
     "@graphql-tools/relay-operation-optimizer": "6.2.5",
-    "apollo-server-express/**/graphql-tools": "4.0.8",
     "bson": "3.0.0",
     "graphql": "15.3.0",
     "immutable": "3.8.2",
