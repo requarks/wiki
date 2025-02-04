@@ -1,5 +1,4 @@
 const { Query, Mutation } = require('../../../graph/resolvers/followers')
-const site = require('../../../graph/resolvers/site')
 const { generateError, generateSuccess } = require('../../../helpers/graph')
 
 jest.mock('../../../helpers/graph', () => ({
