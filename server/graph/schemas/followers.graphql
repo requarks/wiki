@@ -25,8 +25,8 @@ type IsFollowingResponse {
 # -----------------------------------------------
 
 extend type Query {
-  isFollowing(pageId: Int!, siteId: String!): IsFollowingResponse
-    @auth(requires: ["read:pages", "manage:system"])
+  isFollowing(siteId: String!, pageId: Int): IsFollowingResponse
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -34,8 +34,8 @@ extend type Query {
 # -----------------------------------------------
 
 extend type Mutation {
-  createFollower(pageId: Int!, siteId: String!): FollowerResponse
-    @auth(requires: ["read:pages", "manage:system"])
-  deleteFollower(pageId: Int!, siteId: String!): Operation
-    @auth(requires: ["read:pages", "manage:system"])
+  createFollower(siteId: String!, pageId: Int): FollowerResponse
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+  deleteFollower(siteId: String!, pageId: Int): DefaultResponse
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 }

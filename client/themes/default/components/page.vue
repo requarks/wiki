@@ -698,8 +698,8 @@ export default {
         const response = await this.$apollo.query({
           query: isFollowingResponse,
           variables: {
-            pageId: this.pageId,
-            siteId: this.siteId
+            siteId: this.siteId,
+            pageId: this.pageId
           }
         })
         this.isFollowing = response.data.isFollowing.isFollowing
@@ -712,8 +712,8 @@ export default {
         const response = await this.$apollo.mutate({
           mutation: createFollowerMutation,
           variables: {
-            pageId: this.pageId,
-            siteId: this.siteId
+            siteId: this.siteId,
+            pageId: this.pageId
           }
         })
         if (response.data.createFollower.operation.succeeded) {
@@ -745,11 +745,11 @@ export default {
         const response = await this.$apollo.mutate({
           mutation: deleteFollowerMutation,
           variables: {
-            pageId: this.pageId,
-            siteId: this.siteId
+            siteId: this.siteId,
+            pageId: this.pageId
           }
         })
-        if (response.data.deleteFollower.succeeded) {
+        if (response.data.deleteFollower.responseResult.succeeded) {
           this.isFollowing = false
           this.$store.commit('showNotification', {
             style: 'green',

@@ -1,10 +1,10 @@
-mutation($pageId: Int!, $siteId: String!) {
-  createFollower(pageId: $pageId, siteId: $siteId) {
+mutation CreateFollower($siteId: String!, $pageId: Int) {
+  createFollower(siteId: $siteId, pageId: $pageId) {
     operation {
       succeeded
       slug
       message
-    },
+    }
     follower {
       id
       siteId

@@ -127,6 +127,24 @@
                     v-list-item-title {{lc.name}}
             v-divider(vertical)
 
+          //- Follow Site
+
+          template(v-if='isAuthenticated && path && !isFollowingSite')
+            v-tooltip(bottom)
+              template( v-slot:activator='{ on }')
+                v-btn(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)')
+                  v-icon(color='grey') mdi-track-light
+              span {{ $t('common:header.followSite') }}
+            v-divider(vertical)
+          
+          template(v-if='isAuthenticated && path && isFollowingSite')
+            v-tooltip(bottom)
+              template(v-slot:activator='{ on }')
+                v-btn(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)')
+                  v-icon(color='grey') mdi-track-light-off
+              span {{ $t('common:header.unfollowSite') }}
+            v-divider(vertical)
+
           //- PAGE ACTIONS
 
           template(v-if='hasAnyPagePermissions && path && mode !== `edit`')
@@ -288,6 +306,9 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
+import createFollowerMutation from 'gql/followers/create-follower.gql'
+import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
+import isFollowingQuery from 'gql/followers/is-following.gql'
 
 /* global siteConfig, siteLangs */
 
@@ -308,6 +329,7 @@ export default {
   },
   data() {
     return {
+      isFollowingSite: false,
       menuIsShown: true,
       searchIsShown: true,
       searchAdvMenuShown: false,
@@ -395,6 +417,7 @@ export default {
     if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {
       this.searchIsShown = false
     }
+    if (this.path) this.checkIfFollowingSite()
   },
   mounted () {
     this.$root.$on('pageEdit', () => {
@@ -546,6 +569,83 @@ export default {
       } catch (error) {
         console.error(error)
         this.sites = []
+      }
+    },
+    async checkIfFollowingSite() {
+      try {
+        const response = await this.$apollo.query({
+          query: isFollowingQuery,
+          variables: { siteId: this.siteId, pageId: null }
+        })
+        this.isFollowingSite = response.data.isFollowing.isFollowing
+      } catch (error) {
+        console.error('Error checking if following site:', error)
+      }
+    },
+    async followSite() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: createFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: null
+          }
+        })
+        if (response.data.createFollower.operation.succeeded) {
+          this.isFollowingSite = true
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully followed the site.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error following site:', response.data.createFollower.operation.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to follow the site.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error following site:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to follow the site.',
+          icon: 'error'
+        })
+      }
+    },
+    async unfollowSite() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: deleteFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: null
+          }
+        })
+        if (response.data.deleteFollower.responseResult.succeeded) {
+          this.isFollowingSite = false
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully unfollowed the site.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error unfollowing site:', response.data.deleteFollower.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to unfollow the site.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error unfollowing site:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to unfollow the site.',
+          icon: 'error'
+        })
       }
     }
   }
