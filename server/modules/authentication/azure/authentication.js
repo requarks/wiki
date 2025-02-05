@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const { default: axios } = require("axios");
 
 /* global WIKI */
 
@@ -28,23 +29,31 @@ module.exports = {
         identityMetadata: conf.entryPoint,
         clientID: conf.clientId,
         redirectUrl: conf.callbackURL,
-        responseType: 'id_token',
+        responseType: 'id_token code',
         responseMode: 'form_post',
         scope: ['profile', 'email', 'openid'],
         allowHttpForRedirectUrl: WIKI.IS_DEBUG,
+        clientSecret: conf.clientSecretValueString,
         passReqToCallback: true,
         cookieSameSite: keyArray.length > 0,
         useCookieInsteadOfSession: keyArray.length > 0,
         cookieEncryptionKeys: keyArray
-      }, async (req, iss, sub, profile, cb) => {
+      }, async (req, iss, sub, profile, access_token, refresh_token, cb) => {
         const usrEmail = _.get(profile, '_json.email', null) || _.get(profile, '_json.preferred_username')
         try {
+          const fullProfile = await callAPI(
+            "https://graph.microsoft.com/beta/me",
+            access_token
+          );
+
           const user = await WIKI.models.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               id: profile.oid,
               displayName: profile.displayName,
               email: usrEmail,
+              jobTitle: fullProfile.jobTitle,
+              location: fullProfile.department,
               picture: ''
             }
           })
@@ -53,6 +62,26 @@ module.exports = {
           cb(err, null)
         }
       })
-    )
+    );
+
+    async function callAPI(endpoint, accessToken) {
+      if (!accessToken || accessToken === "") {
+        throw new Error("No tokens found");
+      }
+
+      const options = {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      };
+
+      try {
+        const response = await axios.default.get(endpoint, options);
+        return response.data;
+      } catch (error) {
+        console.log(error);
+        return error;
+      }
+    }
   }
 }
