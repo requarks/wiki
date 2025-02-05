@@ -3,8 +3,8 @@ const fs = require('fs');
 // Get command-line arguments for version
 const version = process.argv[2];
 if (!version) {
-  console.error('Usage: node modify-package-json.js <version>');
-  process.exit(1);
+  console.error('Image tag is empty, Usage: node modify-package-json.js <version>');
+  process.exit(0);
 }
 
 // Get the current date in ISO 8601 format
