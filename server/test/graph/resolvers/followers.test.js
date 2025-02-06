@@ -206,7 +206,7 @@ describe('Followers Resolvers', () => {
 
       expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
       expect(WIKI.models.followers.query().delete().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
-      expect(result).toEqual({ succeeded: true, message: 'Successfully unfollowed the site' })
+      expect(result).toEqual({responseResult: { succeeded: true, message: 'Successfully unfollowed the site' }})
     })
 
     it('returns an error if the user is not following the site', async () => {
@@ -237,7 +237,7 @@ describe('Followers Resolvers', () => {
 
       expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(WIKI.models.followers.query().delete().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
-      expect(result).toEqual({ succeeded: true, message: 'Successfully unfollowed the page' })
+      expect(result).toEqual({responseResult: { succeeded: true, message: 'Successfully unfollowed the page' }})
     })
 
     it('returns an error if the user is not following the page', async () => {
