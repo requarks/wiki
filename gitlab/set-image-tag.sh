@@ -23,7 +23,7 @@ elif [[ "$CI_COMMIT_BRANCH" =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ]
   elif [[ "$ENVIRONMENT" == "dev2" ]]; then
     IMAGE_TAG_BY_ENV="dev2-${IMAGE_TAG}"
   fi
-
+fi
 
 
 # Export the variable for use in other scripts
