@@ -2,7 +2,8 @@
 
 IMAGE_TAG_BY_ENV=""
 ENVIRONMENT=$1
-IMAGE_TAG=$2
+IMAGE_TAG=${2:-${CI_COMMIT_SHORT_SHA}}
+echo "IMAGE_TAG is set to $IMAGE_TAG"
 STAGING_IMAGE_TAG="latest-staging"
 
 # Ensure required arguments are provided
