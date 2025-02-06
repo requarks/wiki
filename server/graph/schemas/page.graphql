@@ -21,7 +21,12 @@ type PageQuery {
   version(pageId: Int!, versionId: Int!): PageVersion
     @auth(requires: ["manage:system", "manage:sites", "read:history"])
 
-  search(query: String!, path: String, locale: String, siteId: String!): PageSearchResponse!
+  search(
+    query: String!
+    path: String
+    locale: String
+    siteId: String!
+  ): PageSearchResponse!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   list(
@@ -34,9 +39,11 @@ type PageQuery {
     authorId: Int
     siteId: String
     isAdmin: Boolean
-  ): [PageListItem!]! @auth(requires: ["manage:system", "manage:sites", "read:pages"])
+  ): [PageListItem!]!
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
-  single(id: Int!): Page @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+  single(id: Int!): Page
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
   singleByPath(path: String!, locale: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
@@ -54,16 +61,21 @@ type PageQuery {
     locale: String!
     includeAncestors: Boolean
     siteId: String!
-  ): [PageTreeItem] @auth(requires: ["manage:system", "manage:sites", "read:pages"])
+  ): [PageTreeItem]
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   links(locale: String!): [PageLinkItem]
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   checkConflicts(id: Int!, checkoutDate: Date!): Boolean!
-    @auth(requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"])
+    @auth(
+      requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
+    )
 
   conflictLatest(id: Int!): PageConflictLatest!
-    @auth(requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"])
+    @auth(
+      requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
+    )
 }
 
 # -----------------------------------------------
@@ -86,8 +98,11 @@ type PageMutation {
     tags: [String]!
     title: String!
     siteId: String!
+    notifyFollowers: Boolean!
   ): PageResponse
-    @auth(requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"])
+    @auth(
+      requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
+    )
 
   update(
     id: Int!
@@ -105,22 +120,29 @@ type PageMutation {
     tags: [String]
     title: String
     siteId: String!
+    notifyFollowers: Boolean!
   ): PageResponse
-    @auth(requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"])
+    @auth(
+      requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
+    )
 
   convert(id: Int!, editor: String!): DefaultResponse
-    @auth(requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"])
+    @auth(
+      requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
+    )
 
   move(
     id: Int!
     destinationPath: String!
     destinationLocale: String!
-  ): DefaultResponse @auth(requires: ["manage:pages", "manage:sites", "manage:system"])
+  ): DefaultResponse
+    @auth(requires: ["manage:pages", "manage:sites", "manage:system"])
 
-  delete(id: Int!): DefaultResponse
+  delete(id: Int!, notifyFollowers: Boolean!): DefaultResponse
     @auth(requires: ["delete:pages", "manage:sites", "manage:system"])
 
-  deleteTag(id: Int!): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  deleteTag(id: Int!): DefaultResponse
+    @auth(requires: ["manage:system", "manage:sites"])
 
   updateTag(id: Int!, tag: String!, title: String!): DefaultResponse
     @auth(requires: ["manage:system", "manage:sites"])
@@ -135,10 +157,13 @@ type PageMutation {
   rebuildTree: DefaultResponse
     @auth(requires: ["manage:system", "manage:sites"])
 
-  render(id: Int!): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  render(id: Int!): DefaultResponse
+    @auth(requires: ["manage:system", "manage:sites"])
 
   restore(pageId: Int!, versionId: Int!): DefaultResponse
-    @auth(requires: ["write:pages", "manage:pages", "manage:system", "manage:sites"])
+    @auth(
+      requires: ["write:pages", "manage:pages", "manage:system", "manage:sites"]
+    )
 
   purgeHistory(olderThan: String!): DefaultResponse
     @auth(requires: ["manage:system", "manage:sites"])
@@ -164,29 +189,43 @@ type Page {
   hash: String!
   title: String!
   description: String!
-  isPrivate: Boolean! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  isPublished: Boolean! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  privateNS: String @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  publishStartDate: Date! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  publishEndDate: Date! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  isPrivate: Boolean!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  isPublished: Boolean!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  privateNS: String
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  publishStartDate: Date!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  publishEndDate: Date!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
   tags: [PageTag]!
   content: String!
-    @auth(requires: ["read:source", "write:pages", "manage:system", "manage:sites"])
+    @auth(
+      requires: ["read:source", "write:pages", "manage:system", "manage:sites"]
+    )
   render: String
   toc: String
   contentType: String!
   createdAt: Date!
   updatedAt: Date!
-  editor: String! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  editor: String!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
   locale: String!
   scriptCss: String
   scriptJs: String
-  authorId: Int! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  authorName: String! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  authorEmail: String! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  creatorId: Int! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  creatorName: String! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
-  creatorEmail: String! @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  authorId: Int!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  authorName: String!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  authorEmail: String!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  creatorId: Int!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  creatorName: String!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
+  creatorEmail: String!
+    @auth(requires: ["write:pages", "manage:system", "manage:sites"])
   siteId: String!
   sitePath: String
   siteName: String

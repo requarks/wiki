@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
+const notifyUsers = require('../../jobs/notify-users')
 
 /* global WIKI */
 
@@ -437,6 +438,14 @@ module.exports = {
           ...args,
           user: context.req.user
         })
+
+        if(args.notifyFollowers) {
+        // Notify followers
+        const followers = await WIKI.models.followers.query().where({ pageId: page.id })
+        const followerIds = followers.map(follower => follower.userId)
+        notifyUsers(page.id, page.title, page.path, context.req.user.email, followerIds, 'CREATE_PAGE')
+        }
+
         return {
           responseResult: graphHelper.generateSuccess('Page created successfully.'),
           page
@@ -454,6 +463,14 @@ module.exports = {
           ...args,
           user: context.req.user
         })
+
+        if (args.notifyFollowers) {
+        // Notify followers
+        const followers = await WIKI.models.followers.query().where({ pageId: page.id })
+        const followerIds = followers.map(follower => follower.userId)
+        notifyUsers(page.id, page.title, page.path, context.req.user.email, followerIds, 'UPDATE_PAGE')
+        }
+
         return {
           responseResult: graphHelper.generateSuccess('Page has been updated.'),
           page
