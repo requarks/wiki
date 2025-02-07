@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async (pageId, pageTitle, pagePath, userEmail, followerIds, event) => {
+module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event }) => {
   WIKI.logger.info(`Notifying users for page ID ${pageId}...`)
 
   try {
@@ -15,7 +15,8 @@ module.exports = async (pageId, pageTitle, pagePath, userEmail, followerIds, eve
 
     for (const follower of activeFollowers) {
       const hasReadAccess = WIKI.auth.checkAccess(follower, ['read:pages'], {
-        path: pagePath
+        path: pagePath,
+        siteId: siteId
       })
 
       if (hasReadAccess) {
@@ -23,18 +24,22 @@ module.exports = async (pageId, pageTitle, pagePath, userEmail, followerIds, eve
       }
     }
 
+    const eventText = event.replace('_PAGE', '').toLowerCase() + 'd'
+
     const batches = _.chunk(recipients, 10)
     for (const batch of batches) {
       await WIKI.mail.send({
         template: 'page-notify',
+        to: '',
         bcc: batch,
-        subject: `Page ${event}: ${pageTitle}`,
+        subject: `[Page Notification] Page ${eventText.charAt(0).toUpperCase() + eventText.slice(1)}: ${pageTitle}`,
         text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         data: {
-          pageUrl: `${WIKI.config.siteUrl}${pagePath}`,
-          pageTitle,
-          userEmail,
-          event
+          preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+          pageUrl: `${WIKI.config.host}/${sitePath}`,
+          pageTitle: pageTitle,
+          userEmail: userEmail,
+          eventText: eventText
         }
       })
     }

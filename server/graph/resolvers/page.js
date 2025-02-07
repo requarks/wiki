@@ -443,7 +443,7 @@ module.exports = {
         // Notify followers
         const followers = await WIKI.models.followers.query().where({ pageId: page.id })
         const followerIds = followers.map(follower => follower.userId)
-        notifyUsers(page.id, page.title, page.path, context.req.user.email, followerIds, 'CREATE_PAGE')
+        notifyUsers({siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'CREATE_PAGE'})
         }
 
         return {
@@ -468,7 +468,7 @@ module.exports = {
         // Notify followers
         const followers = await WIKI.models.followers.query().where({ pageId: page.id })
         const followerIds = followers.map(follower => follower.userId)
-        notifyUsers(page.id, page.title, page.path, context.req.user.email, followerIds, 'UPDATE_PAGE')
+        notifyUsers({siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'CREATE_PAGE'})
         }
 
         return {

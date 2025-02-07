@@ -19,7 +19,7 @@ const WIKI = {
     }
   },
   config: {
-    siteUrl: 'https://example.com'
+    host: 'https://example.com'
   },
   logger: {
     warn: jest.fn(),
@@ -42,9 +42,11 @@ describe('notifyUsers', () => {
   })
 
   it('should notify users with read access', async () => {
+    const siteId = 1
     const pageId = 1
     const pageTitle = 'Test Page'
-    const pagePath = '/test-page'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
     const userEmail = 'user@example.com'
     const followerIds = [2, 3, 4]
     const event = 'UPDATE_PAGE'
@@ -76,28 +78,32 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers(pageId, pageTitle, pagePath, userEmail, followerIds, event)
+    await notifyUsers({siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event})
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
     expect(WIKI.mail.send).toHaveBeenCalledWith({
       template: 'page-notify',
+      to: '',
       bcc: ['follower1@example.com', 'follower2@example.com'],
-      subject: `Page ${event}: ${pageTitle}`,
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.siteUrl}${pagePath}`,
-        pageTitle,
-        userEmail,
-        event
+        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        eventText: 'updated'
       }
     })
   })
 
   it('should notify users with read access in batches', async () => {
+    const siteId = 1
     const pageId = 1
     const pageTitle = 'Test Page'
     const pagePath = '/test-page'
+    const sitePath = '/test-site'
     const userEmail = 'user@example.com'
     const followerIds = Array.from({ length: 25 }, (_, i) => i + 1) // Generate 25 follower IDs
     const event = 'UPDATE_PAGE'
@@ -128,52 +134,60 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers(pageId, pageTitle, pagePath, userEmail, followerIds, event)
+    await notifyUsers({siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event})
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(3) // Expect 3 batches of emails
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(1, {
       template: 'page-notify',
+      to: '',
       bcc: followers.slice(0, 10).map(f => f.email),
-      subject: `Page ${event}: ${pageTitle}`,
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.siteUrl}${pagePath}`,
-        pageTitle,
-        userEmail,
-        event
+        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        eventText: 'updated'
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(2, {
       template: 'page-notify',
+      to: '',
       bcc: followers.slice(10, 20).map(f => f.email),
-      subject: `Page ${event}: ${pageTitle}`,
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.siteUrl}${pagePath}`,
-        pageTitle,
-        userEmail,
-        event
+        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        eventText: 'updated'
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(3, {
       template: 'page-notify',
+      to: '',
       bcc: followers.slice(20, 25).map(f => f.email),
-      subject: `Page ${event}: ${pageTitle}`,
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.siteUrl}${pagePath}`,
-        pageTitle,
-        userEmail,
-        event
+        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        eventText: 'updated'
       }
     })
   })
 
   it('should not notify inactive users', async () => {
+    const siteId = 1
     const pageId = 1
     const pageTitle = 'Test Page'
     const pagePath = '/test-page'
+    const sitePath = 'test-site'
     const userEmail = 'user@example.com'
     const followerIds = [2, 3, 4]
     const event = 'UPDATE_PAGE'
@@ -190,7 +204,7 @@ describe('notifyUsers', () => {
       modifyGraph: jest.fn().mockResolvedValue(followers)
     })
 
-    await notifyUsers(pageId, pageTitle, pagePath, userEmail, followerIds, event)
+    await notifyUsers({siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event})
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
     expect(WIKI.auth.checkAccess).not.toHaveBeenCalled()
