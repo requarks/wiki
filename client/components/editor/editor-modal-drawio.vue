@@ -2,7 +2,7 @@
   v-card.editor-modal-drawio.animated.fadeIn(flat, tile)
     iframe(
       ref='drawio'
-      src='https://embed.diagrams.net/?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0&stealth=1'
+      src='https://embed.diagrams.net/?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0&stealth=1&lockdown=1'
       frameborder='0'
     )
 </template>
