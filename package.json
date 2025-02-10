@@ -237,7 +237,7 @@
     "@ckeditor/ckeditor5-typing": "^19.0.1",
     "@ckeditor/ckeditor5-word-count": "^19.0.1",
     "@jest/globals": "29.7.0",
-    "@mdi/font": "5.8.55",
+    "@mdi/font": "6.9.96",
     "@panter/vue-i18next": "0.15.2",
     "@requarks/ckeditor5": "19.0.1-wiki.2",
     "@types/fs-extra": "11.0.4",
