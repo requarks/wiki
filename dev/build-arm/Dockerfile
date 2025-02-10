@@ -1,7 +1,7 @@
 # =========================
 # --- BUILD NPM MODULES ---
 # =========================
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 RUN apk add yarn g++ make cmake python3 --no-cache
 
@@ -16,7 +16,7 @@ RUN yarn patch-package
 # ===============
 # --- Release ---
 # ===============
-FROM node:18-alpine
+FROM node:20-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \

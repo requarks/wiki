@@ -10,7 +10,7 @@ const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
 
 module.exports = {
   async render() {
-    const $ = cheerio.load(this.input, {
+    let $ = cheerio.load(this.input, {
       decodeEntities: true
     })
 
@@ -254,16 +254,34 @@ module.exports = {
     })
 
     // --------------------------------
+    // STEP: POST
+    // --------------------------------
+
+    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
+
+    for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
+      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
+      output = await renderer.init(output, child.config)
+    }
+
+    // --------------------------------
     // Escape mustache expresions
     // --------------------------------
 
+    $ = cheerio.load(output, {
+      decodeEntities: true
+    })
+
     function iterateMustacheNode (node) {
-      const list = $(node).contents().toArray()
-      list.forEach(item => {
+      $(node).contents().each((idx, item) => {
         if (item && item.type === 'text') {
           const rawText = $(item).text().replace(/\r?\n|\r/g, '')
           if (mustacheRegExp.test(rawText)) {
-            $(item).parent().attr('v-pre', true)
+            if (!item.parent || item.parent.name === 'body') {
+              $(item).wrap($('<p>').attr('v-pre', true))
+            } else {
+              $(item).parent().attr('v-pre', true)
+            }
           }
         } else {
           iterateMustacheNode(item)
@@ -276,18 +294,7 @@ module.exports = {
       $(elm).attr('v-pre', true)
     })
 
-    // --------------------------------
-    // STEP: POST
-    // --------------------------------
-
-    let output = decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
-
-    for (let child of _.sortBy(_.filter(this.children, ['step', 'post']), ['order'])) {
-      const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)
-      output = await renderer.init(output, child.config)
-    }
-
-    return output
+    return decodeEscape($.html('body').replace('<body>', '').replace('</body>', ''))
   }
 }
 
