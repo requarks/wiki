@@ -618,9 +618,9 @@ export default {
               try {
                 const respRaw = await this.$apollo.query({
                   query: gql`
-                    query ($query: String!, $locale: String) {
+                    query ($query: String!, $locale: String, $siteId: String!) {
                       pages {
-                        search(query:$query, locale:$locale) {
+                        search(query:$query, locale:$locale, siteId:$siteId) {
                           results {
                             title
                             path
@@ -633,7 +633,8 @@ export default {
                   `,
                   variables: {
                     query: queryString,
-                    locale: this.locale
+                    locale: this.locale,
+                    siteId: this.$store.get('page/siteId')
                   },
                   fetchPolicy: 'cache-first'
                 })

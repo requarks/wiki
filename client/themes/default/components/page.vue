@@ -62,9 +62,7 @@
               .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
               v-btn.mr-5(v-if='isAuthenticated && isFollower != null && !isFollower' @click='followPage') Follow
-                v-icon.ml-2(small) mdi-track-light
               v-btn.mr-5(v-if='isAuthenticated && isFollower != null && isFollower' @click='unfollowPage') Unfollow
-                v-icon.ml-2(small) mdi-track-light-off
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
               :class='tocPosition === `right` ? `is-right` : ``'
