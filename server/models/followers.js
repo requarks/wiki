@@ -9,13 +9,13 @@ module.exports = class Follower extends Model {
   static get jsonSchema() {
     return {
       type: 'object',
-      required: ['userId', 'pageId', 'siteId'],
+      required: ['userId', 'siteId'],
 
       properties: {
         id: { type: 'string' },
         userId: { type: 'integer' },
-        pageId: { type: 'integer' },
         siteId: { type: 'string' },
+        pageId: { type: ['integer', 'null'] },
         createdAt: { type: 'string' }
       }
     }

@@ -1,5 +1,5 @@
-query ($pageId: Int!, $siteId: String!) {
-  isFollowing(pageId: $pageId, siteId: $siteId) {
+query IsFollowing($siteId: String!, $pageId: Int) {
+  isFollowing(siteId: $siteId, pageId: $pageId) {
     operation {
       succeeded
       slug

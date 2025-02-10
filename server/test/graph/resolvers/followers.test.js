@@ -50,15 +50,15 @@ describe('Followers Resolvers', () => {
   describe('isFollowing', () => {
     it('returns true if the user is following the page', async () => {
       WIKI.models.followers.query.mockReturnValue({
-        findOne: jest.fn().mockResolvedValue({ userId: 1, pageId: 1, siteId: 'site-id' })
+        findOne: jest.fn().mockResolvedValue({ userId: 1, siteId: 'site-id', pageId: 1 })
       })
       generateSuccess.mockReturnValue({ succeeded: true, message: 'User is following' })
 
-      const args = { pageId: 1, siteId: 'site-id' }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Query.isFollowing(null, args, context)
 
-      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, pageId: 1, siteId: 'site-id' })
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(result).toEqual({ operation: { succeeded: true, message: 'User is following' }, isFollowing: true })
     })
 
@@ -68,11 +68,11 @@ describe('Followers Resolvers', () => {
       })
       generateSuccess.mockReturnValue({ succeeded: true, message: 'User is following' })
 
-      const args = { pageId: 1, siteId: 'site-id' }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Query.isFollowing(null, args, context)
 
-      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, pageId: 1, siteId: 'site-id' })
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(result).toEqual({ operation: { succeeded: true, message: 'User is following' }, isFollowing: false })
     })
 
@@ -83,50 +83,92 @@ describe('Followers Resolvers', () => {
       })
       generateError.mockReturnValue({ succeeded: false, message: 'Database error' })
 
-      const args = { pageId: 1, siteId: 'site-id' }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Query.isFollowing(null, args, context)
 
-      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, pageId: 1, siteId: 'site-id' })
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(result).toEqual({ succeeded: false, message: 'Database error' })
     })
   })
 
   describe('createFollower', () => {
+    it('creates a new follower for a site', async () => {
+      WIKI.models.followers.query.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue(null),
+        insert: jest.fn().mockResolvedValue({ id: 1, userId: 1, siteId: 'site-id', pageId: null })
+      })
+      WIKI.auth.checkAccess.mockReturnValue(true)
+      generateSuccess.mockReturnValue({ succeeded: true, message: 'Successfully followed the site' })
+
+      const args = { siteId: 'site-id', pageId: null }
+      const context = { req, WIKI }
+      const result = await Mutation.createFollower(null, args, context)
+
+      expect(WIKI.models.followers.query().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
+      expect(WIKI.models.followers.query().first).toHaveBeenCalled()
+      expect(WIKI.models.followers.query().insert).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
+      expect(result).toEqual({
+        operation: { succeeded: true, message: 'Successfully followed the site' },
+        follower: { id: 1, userId: 1, siteId: 'site-id', pageId: null }
+      })
+    })
+
+    it('returns an error if the user is already following the site', async () => {
+      WIKI.models.followers.query.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        first: jest.fn().mockResolvedValue({ id: 1, userId: 1, siteId: 'site-id', pageId: null })
+      })
+      WIKI.auth.checkAccess.mockReturnValue(true)
+      generateError.mockReturnValue({ succeeded: false, message: 'You are already following this site' })
+
+      const args = { siteId: 'site-id', pageId: null }
+      const context = { req, WIKI }
+      const result = await Mutation.createFollower(null, args, context)
+
+      expect(WIKI.models.followers.query().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
+      expect(WIKI.models.followers.query().first).toHaveBeenCalled()
+      expect(result).toEqual({
+        operation: { succeeded: false, message: 'You are already following this site' },
+        follower: null
+      })
+    })
+
     it('creates a new follower', async () => {
       WIKI.models.followers.query.mockReturnValue({
         where: jest.fn().mockReturnThis(),
         first: jest.fn().mockResolvedValue(null),
-        insert: jest.fn().mockResolvedValue({ id: 1, userId: 1, pageId: 1, siteId: 'site-id' })
+        insert: jest.fn().mockResolvedValue({ id: 1, userId: 1, siteId: 'site-id', pageId: 1 })
       })
       WIKI.auth.checkAccess.mockReturnValue(true)
       generateSuccess.mockReturnValue({ succeeded: true, message: 'Successfully followed the page' })
 
-      const args = { pageId: 1, siteId: 'site-id' }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Mutation.createFollower(null, args, context)
 
-      expect(WIKI.models.followers.query().where).toHaveBeenCalledWith({ userId: 1, pageId: 1, siteId: 'site-id' })
-      expect(WIKI.models.followers.query().insert).toHaveBeenCalledWith({ userId: 1, pageId: 1, siteId: 'site-id' })
+      expect(WIKI.models.followers.query().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
+      expect(WIKI.models.followers.query().insert).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(result).toEqual({
         operation: { succeeded: true, message: 'Successfully followed the page' },
-        follower: { id: 1, userId: 1, pageId: 1, siteId: 'site-id' }
+        follower: { id: 1, userId: 1, siteId: 'site-id', pageId: 1 }
       })
     })
 
     it('returns an error if the user is already following the page', async () => {
       WIKI.models.followers.query.mockReturnValue({
         where: jest.fn().mockReturnThis(),
-        first: jest.fn().mockResolvedValue({ id: 1, userId: 1, pageId: 1, siteId: 'site-id' })
+        first: jest.fn().mockResolvedValue({ id: 1, userId: 1, siteId: 'site-id', pageId: 1 })
       })
       WIKI.auth.checkAccess.mockReturnValue(true)
       generateError.mockReturnValue({ succeeded: false, message: 'You are already following this page' })
 
-      const args = { pageId: 1, siteId: 'site-id' }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Mutation.createFollower(null, args, context)
 
-      expect(WIKI.models.followers.query().where).toHaveBeenCalledWith({ userId: 1, pageId: 1, siteId: 'site-id' })
+      expect(WIKI.models.followers.query().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(result).toEqual({
         operation: { succeeded: false, message: 'You are already following this page' },
         follower: null
@@ -137,7 +179,7 @@ describe('Followers Resolvers', () => {
       WIKI.auth.checkAccess.mockReturnValue(false)
       generateError.mockReturnValue({ succeeded: false, message: 'ERR_FORBIDDEN' })
 
-      const args = { pageId: 1, siteId: 'site-id' }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Mutation.createFollower(null, args, context)
 
@@ -150,21 +192,52 @@ describe('Followers Resolvers', () => {
   })
 
   describe('deleteFollower', () => {
+    it('deletes a follower for a site', async () => {
+      WIKI.models.followers.query.mockReturnValue({
+        findOne: jest.fn().mockResolvedValue({ id: 1, userId: 1, siteId: 'site-id', pageId: null }),
+        delete: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(1)
+      })
+      generateSuccess.mockReturnValue({ succeeded: true, message: 'Successfully unfollowed the site' })
+
+      const args = { siteId: 'site-id', pageId: null }
+      const context = { req, WIKI }
+      const result = await Mutation.deleteFollower(null, args, context)
+
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
+      expect(WIKI.models.followers.query().delete().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
+      expect(result).toEqual({responseResult: { succeeded: true, message: 'Successfully unfollowed the site' }})
+    })
+
+    it('returns an error if the user is not following the site', async () => {
+      WIKI.models.followers.query.mockReturnValue({
+        findOne: jest.fn().mockResolvedValue(null)
+      })
+      generateError.mockReturnValue({ succeeded: false, message: 'You are not following this site' })
+
+      const args = { siteId: 'site-id', pageId: null }
+      const context = { req, WIKI }
+      const result = await Mutation.deleteFollower(null, args, context)
+
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: null })
+      expect(result).toEqual({ succeeded: false, message: 'You are not following this site' })
+    })
+
     it('deletes a follower', async () => {
       WIKI.models.followers.query.mockReturnValue({
-        findOne: jest.fn().mockResolvedValue({ id: 1, userId: 1, pageId: 1, siteId: 'site-id' }),
+        findOne: jest.fn().mockResolvedValue({ id: 1, userId: 1, siteId: 'site-id', pageId: 1 }),
         delete: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue(1)
       })
       generateSuccess.mockReturnValue({ succeeded: true, message: 'Successfully unfollowed the page' })
 
-      const args = { pageId: 1 }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Mutation.deleteFollower(null, args, context)
 
-      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, pageId: 1 })
-      expect(WIKI.models.followers.query().delete().where).toHaveBeenCalledWith({ userId: 1, pageId: 1 })
-      expect(result).toEqual({ succeeded: true, message: 'Successfully unfollowed the page' })
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
+      expect(WIKI.models.followers.query().delete().where).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
+      expect(result).toEqual({responseResult: { succeeded: true, message: 'Successfully unfollowed the page' }})
     })
 
     it('returns an error if the user is not following the page', async () => {
@@ -173,11 +246,11 @@ describe('Followers Resolvers', () => {
       })
       generateError.mockReturnValue({ succeeded: false, message: 'You are not following this page' })
 
-      const args = { pageId: 1 }
+      const args = { siteId: 'site-id', pageId: 1 }
       const context = { req, WIKI }
       const result = await Mutation.deleteFollower(null, args, context)
 
-      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, pageId: 1 })
+      expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
       expect(result).toEqual({ succeeded: false, message: 'You are not following this page' })
     })
   })

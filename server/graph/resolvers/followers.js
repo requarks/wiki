@@ -7,13 +7,15 @@ module.exports = {
   Query: {
     async isFollowing(obj, args, context) {
       try {
-        const { pageId, siteId } = args
+        const { siteId, pageId } = args
         const { user } = context.req
         const { id: userId } = user
 
-        const existingFollower = await WIKI.models.followers.query().findOne({ userId, pageId, siteId })
+        const existingFollower = await WIKI.models.followers.query().findOne({ userId, siteId, pageId })
 
-        return { operation: generateSuccess('User is following'), isFollowing: !!existingFollower }
+        const message = existingFollower ? 'User is following' : 'User is not following'
+
+        return { operation: generateSuccess(message), isFollowing: !!existingFollower }
       } catch (err) {
         WIKI.logger.warn(err)
         return generateError(err)
@@ -26,7 +28,7 @@ module.exports = {
      */
     async createFollower(obj, args, context) {
       try {
-        const { pageId, siteId } = args
+        const { siteId, pageId } = args
         const { user } = context.req
         const { id: userId } = user
 
@@ -35,7 +37,7 @@ module.exports = {
         }
 
         // Check if user is already following
-        const existingFollower = await WIKI.models.followers.query().where({ userId, pageId, siteId }).first()
+        const existingFollower = await WIKI.models.followers.query().where({ userId, siteId, pageId }).first()
 
         if (existingFollower) {
           throw new WIKI.Error.AlreadyFollower()
@@ -44,8 +46,8 @@ module.exports = {
         // Create new follower
         const newFollower = await WIKI.models.followers.query().insert({
           userId,
-          pageId,
-          siteId
+          siteId,
+          pageId
         })
 
         return {
@@ -62,21 +64,21 @@ module.exports = {
      */
     async deleteFollower(obj, args, context) {
       try {
-        const { pageId, siteId } = args
+        const { siteId, pageId } = args
         const { user } = context.req
         const { id: userId } = user
 
         // Check if user is following
-        const existingFollower = await WIKI.models.followers.query().findOne({ userId, pageId, siteId })
+        const existingFollower = await WIKI.models.followers.query().findOne({ userId, siteId, pageId })
 
         if (!existingFollower) {
           return generateError('You are not following this page')
         }
 
         // Delete follower
-        await WIKI.models.followers.query().delete().where({ userId, pageId, siteId })
+        await WIKI.models.followers.query().delete().where({ userId, siteId, pageId })
 
-        return generateSuccess('Successfully unfollowed the page')
+        return { responseResult: generateSuccess('Successfully unfollowed the page') }
       } catch (err) {
         WIKI.logger.warn(err)
         return generateError(err)

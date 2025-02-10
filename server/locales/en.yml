@@ -1,0 +1,3 @@
+common:
+  header.followSite: "Follow Site"
+  header.unfollowSite: "Unfollow Site"
