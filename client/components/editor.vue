@@ -26,6 +26,14 @@
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
           span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
           span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+        v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode !== "create" && isDirty'
+          text
+          color='green'
+          @click.exact='save(true)'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          )
+          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
+          span.white--text {{ $t('common:actions.saveNotify') }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
@@ -295,7 +303,7 @@ export default {
     openConflict() {
       this.$root.$emit('saveConflict')
     },
-    async save({ rethrow = false, overwrite = false } = {}) {
+    async save(notifyFollowers = false, { rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
       this.isSaving = true
 
@@ -326,6 +334,7 @@ export default {
                 $tags: [String]!
                 $title: String!
                 $siteId: String!
+                $notifyFollowers: Boolean!
               ) {
                 pages {
                   create(
@@ -343,6 +352,7 @@ export default {
                     tags: $tags
                     title: $title
                     siteId: $siteId
+                    notifyFollowers: $notifyFollowers
                   ) {
                     responseResult {
                       succeeded
@@ -372,7 +382,8 @@ export default {
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
-              siteId: this.$store.get('page/siteId')
+              siteId: this.$store.get('page/siteId'),
+              notifyFollowers: notifyFollowers
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -433,6 +444,7 @@ export default {
                 $tags: [String]
                 $title: String
                 $siteId: String!
+                $notifyFollowers: Boolean!
               ) {
                 pages {
                   update(
@@ -451,6 +463,7 @@ export default {
                     tags: $tags
                     title: $title
                     siteId: $siteId
+                    notifyFollowers: $notifyFollowers
                   ) {
                     responseResult {
                       succeeded
@@ -480,7 +493,8 @@ export default {
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
-              siteId: this.$store.get('page/siteId')
+              siteId: this.$store.get('page/siteId'),
+              notifyFollowers: notifyFollowers
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
