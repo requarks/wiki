@@ -217,6 +217,10 @@ module.exports = {
     message: 'Site already exists.',
     code: 1012
   }),
+  AlreadyFollower: CustomError('AlreadyFollower', {
+    message: 'You are already following this page.',
+    code: 1013
+  }),
   SystemGenericError: CustomError('SystemGenericError', {
     message: 'An unexpected error occured.',
     code: 7001

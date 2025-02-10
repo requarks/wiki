@@ -1,0 +1,10 @@
+query ($pageId: Int!, $siteId: String!) {
+  isFollowing(pageId: $pageId, siteId: $siteId) {
+    operation {
+      succeeded
+      slug
+      message
+    }
+    isFollowing
+  }
+}
