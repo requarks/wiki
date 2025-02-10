@@ -49,6 +49,9 @@ router.post('/u', (req, res, next) => {
     const folderRaw = _.get(req, 'body.mediaUpload', false)
     if (folderRaw) {
       folderId = _.get(JSON.parse(folderRaw), 'folderId', null)
+      if (typeof folderId !== 'number') {
+        throw new Error('Invalid folderId')
+      }
       if (folderId === 0) {
         folderId = null
       }
