@@ -90,6 +90,7 @@ describe('notifyUsers', () => {
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}`,
+        isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
@@ -146,6 +147,7 @@ describe('notifyUsers', () => {
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}`,
+        isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
@@ -160,6 +162,7 @@ describe('notifyUsers', () => {
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}`,
+        isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
@@ -174,6 +177,7 @@ describe('notifyUsers', () => {
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}`,
+        isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
@@ -209,5 +213,119 @@ describe('notifyUsers', () => {
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
     expect(WIKI.auth.checkAccess).not.toHaveBeenCalled()
     expect(WIKI.mail.send).not.toHaveBeenCalled()
+  })
+
+  it('should notify users with read access for CREATE_PAGE event', async () => {
+    const pageId = 1
+    const pageTitle = 'Test Page'
+    const pagePath = '/test-page'
+    const sitePath = '/test-site'
+    const userEmail = 'user@example.com'
+    const followerIds = [2, 3, 4]
+    const event = 'CREATE_PAGE'
+
+    const followers = [
+      { id: 2, email: 'follower1@example.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'follower2@example.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'follower3@example.com', isActive: false, groupIds: [3] }
+    ]
+
+    const groups = [
+      { id: 1, permissions: ['read:pages'], rules: [] },
+      { id: 2, permissions: ['read:pages'], rules: [] },
+      { id: 3, permissions: [], rules: [] }
+    ]
+
+    WIKI.models.users.query.mockReturnValue({
+      whereIn: jest.fn().mockReturnThis(),
+      withGraphFetched: jest.fn().mockReturnThis(),
+      modifyGraph: jest.fn().mockResolvedValue(followers)
+    })
+
+    WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
+      return user.groupIds.some(groupId => {
+        const group = groups.find(g => g.id === groupId)
+        return group && group.permissions.includes('read:pages')
+      })
+    })
+
+    WIKI.mail.send.mockResolvedValue(true)
+
+    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event })
+
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
+    expect(WIKI.mail.send).toHaveBeenCalledWith({
+      template: 'page-notify',
+      to: '',
+      bcc: ['follower1@example.com', 'follower2@example.com'],
+      subject: `[Page Notification] Page Created: ${pageTitle}`,
+      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+      data: {
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageTitle,
+        userEmail,
+        eventText: 'created',
+        isDeletion: false
+      }
+    })
+  })
+
+  it('should notify users with read access for DELETE_PAGE event', async () => {
+    const pageId = 1
+    const pageTitle = 'Test Page'
+    const pagePath = '/test-page'
+    const sitePath = '/test-site'
+    const userEmail = 'user@example.com'
+    const followerIds = [2, 3, 4]
+    const event = 'DELETE_PAGE'
+
+    const followers = [
+      { id: 2, email: 'follower1@example.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'follower2@example.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'follower3@example.com', isActive: false, groupIds: [3] }
+    ]
+
+    const groups = [
+      { id: 1, permissions: ['read:pages'], rules: [] },
+      { id: 2, permissions: ['read:pages'], rules: [] },
+      { id: 3, permissions: [], rules: [] }
+    ]
+
+    WIKI.models.users.query.mockReturnValue({
+      whereIn: jest.fn().mockReturnThis(),
+      withGraphFetched: jest.fn().mockReturnThis(),
+      modifyGraph: jest.fn().mockResolvedValue(followers)
+    })
+
+    WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
+      return user.groupIds.some(groupId => {
+        const group = groups.find(g => g.id === groupId)
+        return group && group.permissions.includes('read:pages')
+      })
+    })
+
+    WIKI.mail.send.mockResolvedValue(true)
+
+    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event })
+
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
+    expect(WIKI.mail.send).toHaveBeenCalledWith({
+      template: 'page-notify',
+      to: '',
+      bcc: ['follower1@example.com', 'follower2@example.com'],
+      subject: `[Page Notification] Page Deleted: ${pageTitle}`,
+      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+      data: {
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageTitle,
+        userEmail,
+        eventText: 'deleted',
+        isDeletion: true
+      }
+    })
   })
 })

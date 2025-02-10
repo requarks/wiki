@@ -26,14 +26,14 @@
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
           span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
           span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
-        v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode !== "create" && isDirty'
+        v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode === `create` || isDirty'
           text
           color='green'
           @click.exact='save(true)'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.white--text {{ $t('common:actions.saveNotify') }}
+          span.white--text {{ mode === 'create' ? $t('common:actions.createNotify') : $t('common:actions.saveNotify') }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
