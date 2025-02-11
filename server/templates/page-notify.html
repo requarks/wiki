@@ -584,12 +584,23 @@
                         <%= eventText.toLowerCase() %> by <%= userEmail %>.
                         <br />
                       </p>
+                      <% if (!isDeletion) { %>
                       <a
                         href="<%= pageUrl %>"
                         class="btn btn-secondary btn-sm"
                         style="margin-top: 10px; align-self: center"
                         >View Page</a
                       >
+                      <% } %> <% if (isDeletion) { %>
+                      <p>
+                        If this page was deleted by mistake, please contact
+                        CapWiki support at
+                        <a href="mailto:capwiki-support.de@capgemini.com"
+                          >capwiki-support.de@capgemini.com</a
+                        >
+                        to restore it.
+                      </p>
+                      <% } %>
                     </div>
                   </td>
                 </tr>

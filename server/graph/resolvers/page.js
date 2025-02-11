@@ -439,10 +439,17 @@ module.exports = {
           user: context.req.user
         })
 
+        // Add the creator as a follower
+        await WIKI.models.followers.query().insert({
+          siteId: page.siteId,
+          pageId: page.id,
+          userId: context.req.user.id
+        })
+
         if(args.notifyFollowers) {
         // Notify followers
-        const followers = await WIKI.models.followers.query().where({ pageId: page.id })
-        const followerIds = followers.map(follower => follower.userId)
+        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId })
+        const followerIds = [...new Set(followers.map(follower => follower.userId))]
         notifyUsers({siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'CREATE_PAGE'})
         }
 
@@ -466,9 +473,9 @@ module.exports = {
 
         if (args.notifyFollowers) {
         // Notify followers
-        const followers = await WIKI.models.followers.query().where({ pageId: page.id })
-        const followerIds = followers.map(follower => follower.userId)
-        notifyUsers({siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'CREATE_PAGE'})
+        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
+        const followerIds = [...new Set(followers.map(follower => follower.userId))]
+        notifyUsers({siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'UPDATE_PAGE'})
         }
 
         return {
@@ -516,10 +523,19 @@ module.exports = {
      */
     async delete(obj, args, context) {
       try {
+        const page = await WIKI.models.pages.query().findById(args.id)
+        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
         await WIKI.models.pages.deletePage({
           ...args,
           user: context.req.user
         })
+
+        if (args.notifyFollowers) {
+          // Notify followers
+          const followerIds = [...new Set(followers.map(follower => follower.userId))]
+          notifyUsers({siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'DELETE_PAGE'})
+          }
+
         return {
           responseResult: graphHelper.generateSuccess('Page has been deleted.')
         }

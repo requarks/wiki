@@ -25,6 +25,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
     }
 
     const eventText = event.replace('_PAGE', '').toLowerCase() + 'd'
+    const isDeletion = event === 'DELETE_PAGE'
 
     const batches = _.chunk(recipients, 10)
     for (const batch of batches) {
@@ -39,7 +40,8 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
           pageUrl: `${WIKI.config.host}/${sitePath}`,
           pageTitle: pageTitle,
           userEmail: userEmail,
-          eventText: eventText
+          eventText: eventText,
+          isDeletion: isDeletion
         }
       })
     }
