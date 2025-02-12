@@ -103,8 +103,6 @@
 import _ from 'lodash'
 import gql from 'graphql-tag'
 
-const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
-
 /* global siteLangs, siteConfig */
 
 export default {
@@ -191,8 +189,6 @@ export default {
       }
       const firstSection = _.head(this.currentPath.split('/'))
       if (firstSection.length <= 1) {
-        return false
-      } else if (localeSegmentRegex.test(firstSection)) {
         return false
       } else if (
         _.some(['login', 'logout', 'register', 'verify', 'favicons', 'fonts', 'img', 'js', 'svg'], p => {
