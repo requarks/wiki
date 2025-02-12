@@ -28,14 +28,14 @@ export default {
       switch(color){
         case 'success':
         case 'green':
-          return '#178036'; // cg-green 5
+          return '#178036'; // ext-green 5
         case 'error':
         case 'red':
-          return '#A6001A'; // cg-red 5
+          return '#A6001A'; // ext-red 5
         case 'warning':
-          return '#FF8E12'; // cg-yellow 5
+          return '#FF8E12'; // ext-yellow 5
         case 'info':
-          return '#0F434A'; // cg-peacock 5
+          return '#0F434A'; // ext-peacock 5
         default:
           return color;
       }

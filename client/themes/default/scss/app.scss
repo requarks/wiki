@@ -357,7 +357,7 @@
   blockquote {
     padding: 0 1rem 1rem 1rem;
     background-color: mc('surface', '2');
-    border-left: 55px solid mc('cg-sapphire', '5');
+    border-left: 55px solid mc('ext-sapphire', '5');
     border-radius: .5rem;
     margin: 1rem 0;
     position: relative;
@@ -368,7 +368,7 @@
     }
 
     @at-root .theme--dark & {
-      background-color: mc('cg-sapphire', '1');
+      background-color: mc('ext-sapphire', '1');
     }
 
     &::before {
@@ -392,8 +392,8 @@
     }
 
     &.is-info {
-      background-color: mc('cg-peacock', '1');
-      border-color: mc('cg-peacock', '3');
+      background-color: mc('ext-peacock', '1');
+      border-color: mc('ext-peacock', '3');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -406,15 +406,15 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('cg-peacock', '4');
+        background-color: mc('ext-peacock', '4');
         color: #FFF;
-        border-color: mc('cg-peacock', '2');
+        border-color: mc('ext-peacock', '2');
       }
     }
 
     &.is-warning {
-      background-color: mc('cg-yellow', '1');
-      border-color: mc('cg-yellow', '5');
+      background-color: mc('ext-yellow', '1');
+      border-color: mc('ext-yellow', '5');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -427,16 +427,16 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('cg-yellow', '2');
+        background-color: mc('ext-yellow', '2');
         color: mc('text', 'dark-grey');
-        border-color: mc('cg-yellow', '4');
-        box-shadow: 0 0 2px 0 mc('cg-yellow', '1');
+        border-color: mc('ext-yellow', '4');
+        box-shadow: 0 0 2px 0 mc('ext-yellow', '1');
       }
     }
 
     &.is-danger {
-      background-color: mc('cg-red', '1');
-      border-color: mc('cg-red', '5');
+      background-color: mc('ext-red', '1');
+      border-color: mc('ext-red', '5');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -449,15 +449,15 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('cg-red', '5');
+        background-color: mc('ext-red', '5');
         color: #FFF;
-        border-color: mc('cg-red', '3');
+        border-color: mc('ext-red', '3');
       }
     }
 
     &.is-success {
-      background-color: mc('cg-green', '1');
-      border-color: mc('cg-green', '5');
+      background-color: mc('ext-green', '1');
+      border-color: mc('ext-green', '5');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -470,9 +470,9 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('cg-green', '1');
+        background-color: mc('ext-green', '1');
         color: #FFF;
-        border-color: mc('cg-green', '4');
+        border-color: mc('ext-green', '4');
       }
     }
   }
@@ -1293,29 +1293,29 @@
 
   mark {
     &.pen-red {
-      color: mc('cg-red', '3');
+      color: mc('ext-red', '3');
       background-color: initial;
     }
 
     &.pen-green {
-      color: mc('cg-green', '3');
+      color: mc('ext-green', '3');
       background-color: initial;
     }
 
     &.marker-blue {
-      background-color: mc('cg-teal', '1');
+      background-color: mc('ext-teal', '1');
     }
 
     &.marker-yellow {
-      background-color: mc('cg-yellow', '1');
+      background-color: mc('ext-yellow', '1');
     }
 
     &.marker-pink {
-      background-color: mc('cg-violet', '1');
+      background-color: mc('ext-violet', '1');
     }
 
     &.marker-green {
-      background-color: mc('cg-green', '1');
+      background-color: mc('ext-green', '1');
     }
   }
 
