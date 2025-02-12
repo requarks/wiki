@@ -49,7 +49,7 @@
                 :class='$vuetify.theme.dark ? `grey darken-4` : ``'
                 class='sitesList'
               )
-              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;")
+              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;" :id='site.value === sitePath ? `selected-site-item` : ``')
                 v-list-item-title.body-2 {{ site.text }}
           v-divider(vertical)
 
@@ -555,8 +555,6 @@ export default {
 <style lang='scss'>
 
 .nav-header {
-  //z-index: 1000;
-
   .v-toolbar__extension {
     padding: 0;
 
@@ -652,5 +650,9 @@ export default {
   .sitesList {
     max-width: 400px; /* Adjust for large screens */
   }
+}
+
+#selected-site-item > div {
+  font-weight: 600;
 }
 </style>
