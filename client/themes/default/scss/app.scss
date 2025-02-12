@@ -126,7 +126,7 @@
 
   h1 {
     padding: 0;
-    color: #272936;
+    color: mc('text', 'dark-grey');
     margin-top: 2rem;
     position: relative;
 
@@ -141,7 +141,7 @@
       left: 0;
       width: 100%;
       height: 2px;
-      background: linear-gradient(to right, #272936, rgba(#272936, 0));
+      background: linear-gradient(to right, mc('text', 'dark-grey'), rgba(mc('text', 'dark-grey'), 0));
       border-radius: 3px;
 
       @at-root .theme--dark & {
@@ -356,14 +356,19 @@
 
   blockquote {
     padding: 0 1rem 1rem 1rem;
-    background-color: mc('blue-grey', '50');
-    border-left: 55px solid mc('blue-grey', '500');
+    background-color: mc('surface', '2');
+    border-left: 55px solid mc('cg-sapphire', '5');
     border-radius: .5rem;
     margin: 1rem 0;
     position: relative;
 
+    code:not([class^="language-"]) {
+      background-color: mc('primary', '3');
+      color: #FFF;
+    }
+
     @at-root .theme--dark & {
-      background-color: mc('blue-grey', '900');
+      background-color: mc('cg-sapphire', '1');
     }
 
     &::before {
@@ -387,87 +392,87 @@
     }
 
     &.is-info {
-      background-color: mc('blue', '50');
-      border-color: mc('blue', '300');
-      color: mc('blue', '900');
+      background-color: mc('cg-peacock', '1');
+      border-color: mc('cg-peacock', '3');
+      color: mc('text', 'dark-grey');
 
       &::before {
         content: "\F02FC";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('blue', '50');
-        color: mc('blue', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: mc('blue', '900');
-        color: mc('blue', '50');
-        border-color: mc('blue', '500');
+        background-color: mc('cg-peacock', '4');
+        color: #FFF;
+        border-color: mc('cg-peacock', '2');
       }
     }
 
     &.is-warning {
-      background-color: mc('orange', '50');
-      border-color: mc('orange', '300');
-      color: darken(mc('orange', '900'), 10%);
+      background-color: mc('cg-yellow', '1');
+      border-color: mc('cg-yellow', '5');
+      color: mc('text', 'dark-grey');
 
       &::before {
         content: "\F0026";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('orange', '50');
-        color: mc('orange', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: darken(mc('orange', '900'), 5%);
-        color: mc('orange', '100');
-        border-color: mc('orange', '500');
-        box-shadow: 0 0 2px 0 mc('grey', '900');
+        background-color: mc('cg-yellow', '2');
+        color: mc('text', 'dark-grey');
+        border-color: mc('cg-yellow', '4');
+        box-shadow: 0 0 2px 0 mc('cg-yellow', '1');
       }
     }
 
     &.is-danger {
-      background-color: mc('red', '50');
-      border-color: mc('red', '300');
-      color: mc('red', '900');
+      background-color: mc('cg-red', '1');
+      border-color: mc('cg-red', '5');
+      color: mc('text', 'dark-grey');
 
       &::before {
         content: "\F0159";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('red', '50');
-        color: mc('red', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: mc('red', '900');
-        color: mc('red', '100');
-        border-color: mc('red', '500');
+        background-color: mc('cg-red', '5');
+        color: #FFF;
+        border-color: mc('cg-red', '3');
       }
     }
 
     &.is-success {
-      background-color: mc('green', '50');
-      border-color: mc('green', '300');
-      color: mc('green', '900');
+      background-color: mc('cg-green', '1');
+      border-color: mc('cg-green', '5');
+      color: mc('text', 'dark-grey');
 
       &::before {
         content: "\F0E1E";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('green', '50');
-        color: mc('green', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: mc('green', '900');
-        color: mc('green', '50');
-        border-color: mc('green', '500');
+        background-color: mc('cg-green', '1');
+        color: #FFF;
+        border-color: mc('cg-green', '4');
       }
     }
   }
@@ -1288,38 +1293,38 @@
 
   mark {
     &.pen-red {
-      color: mc('red', '500');
+      color: mc('cg-red', '3');
       background-color: initial;
     }
 
     &.pen-green {
-      color: mc('green', '500');
+      color: mc('cg-green', '3');
       background-color: initial;
     }
 
     &.marker-blue {
-      background-color: mc('blue', '300');
+      background-color: mc('cg-teal', '1');
     }
 
     &.marker-yellow {
-      background-color: mc('yellow', '300');
+      background-color: mc('cg-yellow', '1');
     }
 
     &.marker-pink {
-      background-color: mc('pink', '300');
+      background-color: mc('cg-violet', '1');
     }
 
     &.marker-green {
-      background-color: mc('green', '300');
+      background-color: mc('cg-green', '1');
     }
   }
 
   .mention {
     background-color: rgba(153, 0, 48, .1);
-    color: #990030;
+    color: #0F878A;
 
     @at-root .theme--dark & {
-      color: mc('pink', '500');
+      color: #00E0CB;
     }
   }
 

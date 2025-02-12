@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-snackbar.nav-notify(
-    :color='notification.style'
+    :color='getColor()'
     top
     multi-line
     v-model='notificationState'
@@ -21,6 +21,25 @@ export default {
   computed: {
     notification: get('notification'),
     notificationState: sync('notification@isActive')
+  },
+  methods: {
+    getColor(){
+      let color = this.notification.style;
+      switch(color){
+        case 'success':
+        case 'green':
+          return '#178036'; // cg-green 5
+        case 'error':
+        case 'red':
+          return '#A6001A'; // cg-red 5
+        case 'warning':
+          return '#FF8E12'; // cg-yellow 5
+        case 'info':
+          return '#0F434A'; // cg-peacock 5
+        default:
+          return color;
+      }
+    }
   }
 }
 </script>
