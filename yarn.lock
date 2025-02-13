@@ -13230,6 +13230,11 @@ markdown-it-pivot-table@1.0.5:
     nd-table "^1.2.2"
     string-math "^1.2.2"
 
+markdown-it-regexp@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/markdown-it-regexp/-/markdown-it-regexp-0.4.0.tgz#d64d713eecec55ce4cfdeb321750ecc099e2c2dc"
+  integrity sha512-0XQmr46K/rMKnI93Y3CLXsHj4jIioRETTAiVnJnjrZCEkGaDOmUxTbZj/aZ17G5NlRcVpWBYjqpwSlQ9lj+Kxw==
+
 markdown-it-sub@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/markdown-it-sub/-/markdown-it-sub-1.0.0.tgz#375fd6026eae7ddcb012497f6411195ea1e3afe8"
@@ -13244,6 +13249,16 @@ markdown-it-task-lists@2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/markdown-it-task-lists/-/markdown-it-task-lists-2.1.1.tgz#f68f4d2ac2bad5a2c373ba93081a1a6848417088"
   integrity sha512-TxFAc76Jnhb2OUu+n3yz9RMu4CwGfaT788br6HhEDlvWfdeJcLUsxk1Hgw2yJio0OXsxv7pyIPmvECY7bMbluA==
+
+markdown-it-wikilinks@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/markdown-it-wikilinks/-/markdown-it-wikilinks-1.4.0.tgz#861f1a2f9ee5b79c15d66ec2c88f9422240ddea5"
+  integrity sha512-LJhRWett3Do9doMMkpodOV5pvAMZjOOODqcifPfd+jdobhdg3UY8i824L5657UBWx7HSbOqicwNUzcVjOiswgw==
+  dependencies:
+    extend "^3.0.2"
+    markdown-it-regexp "^0.4.0"
+    reurl "git+https://github.com/jsepia/reurl.git#commonjs"
+    sanitize-filename "^1.6.3"
 
 markdown-it@11.0.1, markdown-it@^11.0.0:
   version "11.0.1"
@@ -17629,6 +17644,12 @@ retry@0.12.0, retry@^0.12.0:
   resolved "https://registry.yarnpkg.com/retry/-/retry-0.12.0.tgz#1b42a6266a21f07421d1b0b54b7dc167b01c013b"
   integrity sha1-G0KmJmoh8HQh0bC1S33BZ7AcATs=
 
+"reurl@git+https://github.com/jsepia/reurl.git#commonjs":
+  version "1.0.0-rc.2"
+  resolved "git+https://github.com/jsepia/reurl.git#a3210117636c115fb139517fcfb2ea929025cded"
+  dependencies:
+    spec-url "^2.0.0-dev.1"
+
 reusify@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/reusify/-/reusify-1.0.4.tgz#90da382b1e126efc02146e90845a88db12925d76"
@@ -17803,7 +17824,7 @@ sane@^4.0.3:
     minimist "^1.1.1"
     walker "~1.0.5"
 
-sanitize-filename@1.6.3:
+sanitize-filename@1.6.3, sanitize-filename@^1.6.3:
   version "1.6.3"
   resolved "https://registry.yarnpkg.com/sanitize-filename/-/sanitize-filename-1.6.3.tgz#755ebd752045931977e30b2025d340d7c9090378"
   integrity sha512-y/52Mcy7aw3gRm7IrcGDFx/bCk4AhRh2eI9luHOQM86nZsqwiRkkq2GekHXBBD+SmPidc8i2PqtYZl+pWJ8Oeg==
@@ -18411,6 +18432,13 @@ spdx-license-ids@^3.0.0:
   version "3.0.5"
   resolved "https://registry.yarnpkg.com/spdx-license-ids/-/spdx-license-ids-3.0.5.tgz#3694b5804567a458d3c8045842a6358632f62654"
   integrity sha512-J+FWzZoynJEXGphVIS+XEh3kFSjZX/1i9gFBaWQcB+/tmpe2qUsSBABpcxqxnAxFdiUFEgAX1bjYGQvIZmoz9Q==
+
+spec-url@^2.0.0-dev.1:
+  version "2.0.0-dev.1"
+  resolved "https://registry.yarnpkg.com/spec-url/-/spec-url-2.0.0-dev.1.tgz#b22311a55575fb5a0f2e98360d8dc3774ccb7f0c"
+  integrity sha512-NKE2wT6tsvYa4xfVFcnjxSDFJwDOwU1NU2NhfnxFksutZrOShZ2p7pgQWS98Evq0cHMGBBjGQlbwrcAHLDywfw==
+  dependencies:
+    punycode "^2.1.1"
 
 split-string@^3.0.1, split-string@^3.0.2:
   version "3.1.0"
