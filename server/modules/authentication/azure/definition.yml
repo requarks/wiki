@@ -27,3 +27,26 @@ props:
     title: Cookie Encryption Key String
     hint: Random string with 44-character length.  Setting this enables workaround for Chrome's SameSite cookies.
     order: 3
+  allowHttp:
+    type: Boolean
+    title: Allow Http
+    hint: Enable HTTP for redirect URIs, ideal for localhost use without requiring debug mode in Wiki.js.
+    default: false
+    order: 4
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: When configured, this setting mandates the module to exclusively utilize the Authorization Code Flow for authentication. To enable this, you are required to create a secret within the Azure Portal. This is achieved by accessing the "Authentication" section found in the settings of your registered application.
+    order: 5
+  issuerList:
+    type: String
+    title: Alternate Issuer List
+    multiline: true
+    hint: '
+        Alternate issuers to allow. Each line should specify an issuer string. A typical format for the v2 endpoint resembles: https://login.microsoftonline.com/YOUR-TENANT-ID/v2.0. 
+        Pro Tip: To retrieve metadata about your tenant, navigate to https://login.microsoftonline.com/TENANT-NAME/v2.0/.well-known/openid-configuration in your web browser. 
+        For instance, to obtain information for a tenant named example.com, you would visit: https://login.microsoftonline.com/example.com/v2.0/.well-known/openid-configuration. This URL provides detailed metadata concerning the specified tenant.
+        Locate the "issuer" field, which holds the issuer string. Simply copy its contents and paste them here for use.
+        Useful when using common or organizations endpoints (for multi-tenant auths).
+     '
+    order: 6
