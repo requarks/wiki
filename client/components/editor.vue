@@ -334,7 +334,8 @@ export default {
                 $tags: [String]!
                 $title: String!
                 $siteId: String!
-                $notifyFollowers: Boolean!
+                $notifyFollowers: Boolean!,
+                $mentions: [String]
               ) {
                 pages {
                   create(
@@ -353,6 +354,7 @@ export default {
                     title: $title
                     siteId: $siteId
                     notifyFollowers: $notifyFollowers
+                    mentions: $mentions
                   ) {
                     responseResult {
                       succeeded
@@ -383,7 +385,8 @@ export default {
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
               siteId: this.$store.get('page/siteId'),
-              notifyFollowers: notifyFollowers
+              notifyFollowers: notifyFollowers,
+              mentions: this.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -445,6 +448,7 @@ export default {
                 $title: String
                 $siteId: String!
                 $notifyFollowers: Boolean!
+                $mentions: [String]
               ) {
                 pages {
                   update(
@@ -464,6 +468,7 @@ export default {
                     title: $title
                     siteId: $siteId
                     notifyFollowers: $notifyFollowers
+                    mentions: $mentions
                   ) {
                     responseResult {
                       succeeded
@@ -494,7 +499,8 @@ export default {
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
               siteId: this.$store.get('page/siteId'),
-              notifyFollowers: notifyFollowers
+              notifyFollowers: notifyFollowers,
+              mentions: this.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})

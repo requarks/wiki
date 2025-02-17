@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   .editor-ckeditor
     div(ref='toolbarContainer')
     div.contents(ref='editor')
@@ -15,23 +15,23 @@
 </template>
 
 <script>
-import _ from 'lodash'
-import { get, sync } from 'vuex-pathify'
-import DecoupledEditor from './ckeditor/ckeditor'
-import EditorConflict from './ckeditor/conflict.vue'
-import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
+import _ from "lodash";
+import { get, sync } from "vuex-pathify";
+import DecoupledEditor from "./ckeditor/ckeditor";
+import EditorConflict from "./ckeditor/conflict.vue";
+import { html as beautify } from "js-beautify/js/lib/beautifier.min.js";
 
 /* global siteLangs */
 
 export default {
   components: {
-    EditorConflict
+    EditorConflict,
   },
   props: {
     save: {
       type: Function,
-      default: () => {}
-    }
+      default: () => {},
+    },
   },
   data() {
     return {
@@ -39,163 +39,237 @@ export default {
       isDiagramEdit: false,
       stats: {
         characters: 0,
-        words: 0
+        words: 0,
       },
-      content: '',
+      content: "",
       isConflict: false,
-      insertLinkDialog: false
-    }
+      insertLinkDialog: false,
+    };
   },
   computed: {
     isMobile() {
-      return this.$vuetify.breakpoint.smAndDown
+      return this.$vuetify.breakpoint.smAndDown;
     },
-    locale: get('page/locale'),
-    path: get('page/path'),
-    activeModal: sync('editor/activeModal'),
-    sitePath: get('page/sitePath')
+    locale: get("page/locale"),
+    path: get("page/path"),
+    activeModal: sync("editor/activeModal"),
+    sitePath: get("page/sitePath"),
   },
   methods: {
-    insertLink () {
-      this.insertLinkDialog = true
+    insertLink() {
+      this.insertLinkDialog = true;
     },
-    insertLinkHandler ({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
+    insertLinkHandler({ locale, path }) {
+      this.editor.execute(
+        "link",
+        siteLangs.length > 0
+          ? `/${this.sitePath}/${locale}/${path}`
+          : `/${this.sitePath}/${path}`
+      );
     },
     insertDiagram() {
-      this.isDiagramEdit = false
-      this.toggleModal('editorModalDrawio')
+      this.isDiagramEdit = false;
+      this.toggleModal("editorModalDrawio");
     },
     editDiagram(diagram) {
-      this.isDiagramEdit = true
-      this.$store.set('editor/activeModalData', diagram)
-      this.toggleModal('editorModalDrawio')
+      this.isDiagramEdit = true;
+      this.$store.set("editor/activeModalData", diagram);
+      this.toggleModal("editorModalDrawio");
     },
     toggleModal(modalKey) {
-      this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
+      this.activeModal = this.activeModal === modalKey ? "" : modalKey;
     },
     getSelectedWidget() {
-      return document.getElementsByClassName('image ck-widget_selected').item(0)
+      return document
+        .getElementsByClassName("image ck-widget_selected")
+        .item(0);
     },
     getSelectedDiagram() {
-      const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('img').item(0).getAttribute('src')
+      const selection = this.getSelectedWidget();
+      return selection.getElementsByTagName("img").item(0).getAttribute("src");
     },
     getDiagramCaption() {
-      const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('figcaption').item(0).firstChild.data
+      const selection = this.getSelectedWidget();
+      return selection.getElementsByTagName("figcaption").item(0).firstChild
+        .data;
     },
     setDiagramCaption(caption) {
-      const selection = this.getSelectedWidget()
+      const selection = this.getSelectedWidget();
 
-      const userAgent = navigator.userAgent
-      const chromeRE = /Chrome\/(\d{3})\.\d/
-      const chromeMatch = chromeRE.exec(userAgent)
-      const firefoxRE = /Firefox\/(\d{3})\.\d/
-      const firefoxMatch = firefoxRE.exec(userAgent)
+      const userAgent = navigator.userAgent;
+      const chromeRE = /Chrome\/(\d{3})\.\d/;
+      const chromeMatch = chromeRE.exec(userAgent);
+      const firefoxRE = /Firefox\/(\d{3})\.\d/;
+      const firefoxMatch = firefoxRE.exec(userAgent);
 
-      if ((firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
-        (chromeMatch && Number(chromeMatch[1]) >= 124)) {
+      if (
+        (firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
+        (chromeMatch && Number(chromeMatch[1]) >= 124)
+      ) {
         // The caption is sanatized by the ckEditor
-        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption)
+        selection
+          .getElementsByTagName("figcaption")
+          .item(0)
+          .setHTMLUnsafe(caption);
       } else if (chromeMatch && Number(chromeMatch[1]) < 124) {
         // setHTMLUnsafe is not available for earlier browser versions
-        selection.getElementsByTagName('figcaption').item(0).setHTML(caption)
+        selection.getElementsByTagName("figcaption").item(0).setHTML(caption);
       }
-    }
+    },
   },
-  async mounted () {
-    this.$store.set('editor/editorKey', 'ckeditor')
+  async mounted() {
+    this.$store.set("editor/editorKey", "ckeditor");
 
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
-      placeholder: 'Type the page content here',
+      placeholder: "Type the page content here",
       disableNativeSpellChecker: false,
       wordCount: {
-        onUpdate: stats => {
+        onUpdate: (stats) => {
           this.stats = {
             characters: stats.characters,
-            words: stats.words
+            words: stats.words,
+          };
+        },
+      },
+    });
+    this.$refs.toolbarContainer.appendChild(
+      this.editor.ui.view.toolbar.element
+    );
+
+    if (this.mode !== "create") {
+      this.editor.setData(this.$store.get("editor/content"));
+    }
+
+    this.editor.model.document.on(
+      "change:data",
+      _.debounce((evt) => {
+        this.$store.set(
+          "editor/content",
+          beautify(this.editor.getData(), {
+            indent_size: 2,
+            end_with_newline: true,
+          })
+        );
+      }, 300)
+    );
+
+    this.$root.$on("editorInsert", (opts) => {
+      switch (opts.kind) {
+        case "IMAGE":
+          this.editor.execute("imageInsert", {
+            source: opts.path,
+          });
+          break;
+        case "BINARY":
+          this.editor.execute("link", opts.path, {
+            linkIsDownloadable: true,
+          });
+          break;
+        case "DIAGRAM":
+          let caption = "";
+          if (this.isDiagramEdit) {
+            caption = this.getDiagramCaption();
+            this.editor.execute("delete");
+          }
+
+          this.editor.execute("imageInsert", {
+            source: `data:image/svg+xml;base64,${opts.text}`,
+          });
+
+          if (this.isDiagramEdit && caption) {
+            this.setDiagramCaption(caption);
+          }
+          break;
+      }
+    });
+
+    this.$root.$on("editorLinkToPage", (opts) => {
+      this.insertLink();
+    });
+
+    // Handle save conflict
+    this.$root.$on("saveConflict", () => {
+      this.isConflict = true;
+    });
+    this.$root.$on("overwriteEditorContent", () => {
+      this.editor.setData(this.$store.get("editor/content"));
+    });
+
+    this.$root.$on("insertDiagram", () => {
+      this.insertDiagram();
+    });
+    this.$root.$on("editDiagram", () => {
+      const selectedImg = this.getSelectedDiagram();
+      this.editDiagram(selectedImg);
+    });
+
+    // Track new mentions and remove old mentions
+    let new_mentions = new Map();
+
+    this.editor.model.document.on("change:data", (evt, data) => {
+      const changes = data.operations.filter((op) => op.type === "insert");
+      changes.forEach((change) => {
+        for (const node of change.nodes) {
+          if (node.hasAttribute("mention")) {
+            let mention = node.getAttribute("mention");
+            console.log("New mention detected:", node.getAttribute("mention"));
+            new_mentions.set(mention["uid"], mention);
+          }
+        }
+      });
+
+      // Track removed mentions
+      const uidNodes = [];
+      const walker = this.editor.model
+        .createRangeIn(this.editor.model.document.getRoot())
+        .getWalker();
+
+      for (const value of walker) {
+        const node = value.item;
+        if (node.hasAttribute("mention")) {
+          const mention = node.getAttribute("mention");
+          if (mention.uid) {
+            uidNodes.push(node);
           }
         }
       }
-    })
-    this.$refs.toolbarContainer.appendChild(this.editor.ui.view.toolbar.element)
 
-    if (this.mode !== 'create') {
-      this.editor.setData(this.$store.get('editor/content'))
-    }
-
-    this.editor.model.document.on('change:data', _.debounce(evt => {
-      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
-    }, 300))
-
-    this.$root.$on('editorInsert', opts => {
-      switch (opts.kind) {
-        case 'IMAGE':
-          this.editor.execute('imageInsert', {
-            source: opts.path
-          })
-          break
-        case 'BINARY':
-          this.editor.execute('link', opts.path, {
-            linkIsDownloadable: true
-          })
-          break
-        case 'DIAGRAM':
-          let caption = ''
-          if (this.isDiagramEdit) {
-            caption = this.getDiagramCaption()
-            this.editor.execute('delete')
-          }
-
-          this.editor.execute('imageInsert', {
-            source: `data:image/svg+xml;base64,${opts.text}`
-          })
-
-          if (this.isDiagramEdit && caption) {
-            this.setDiagramCaption(caption)
-          }
-          break
+      // Compare new_mentions with uidNodes and remove non-existing mentions
+      for (const [uid, mention] of new_mentions) {
+        if (
+          !uidNodes.some((node) => node.getAttribute("mention").uid === uid)
+        ) {
+          new_mentions.delete(uid);
+        }
       }
-    })
-
-    this.$root.$on('editorLinkToPage', opts => {
-      this.insertLink()
-    })
-
-    // Handle save conflict
-    this.$root.$on('saveConflict', () => {
-      this.isConflict = true
-    })
-    this.$root.$on('overwriteEditorContent', () => {
-      this.editor.setData(this.$store.get('editor/content'))
-    })
-
-    this.$root.$on('insertDiagram', () => {
-      this.insertDiagram()
-    })
-    this.$root.$on('editDiagram', () => {
-      const selectedImg = this.getSelectedDiagram()
-      this.editDiagram(selectedImg)
-    })
+      // Set the mentions in the Vuex store
+      this.$store.set(
+        "editor/mentions",
+        Array.from(
+          new_mentions.values().map((mention) => {
+            mention.id = mention.id.substring(1);
+            return mention.id;
+          })
+        )
+      );
+    });
   },
-  beforeDestroy () {
+  beforeDestroy() {
     if (this.editor) {
-      this.editor.destroy()
-      this.editor = null
+      this.editor.destroy();
+      this.editor = null;
     }
-  }
-}
+  },
+};
 </script>
 
 <style lang="scss">
-
 $editor-height: calc(100vh - 64px - 24px);
 $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
-  background-color: mc('grey', '200');
+  background-color: mc("grey", "200");
   flex: 1 1 50%;
   display: flex;
   flex-flow: column nowrap;
@@ -204,7 +278,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   position: relative;
 
   @at-root .theme--dark & {
-    background-color: mc('grey', '900');
+    background-color: mc("grey", "900");
   }
 
   @include until($tablet) {
@@ -216,8 +290,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255,255,255,.25);
-      display:inline-flex;
+      background-color: rgba(255, 255, 255, 0.25);
+      display: inline-flex;
       padding: 0 12px;
       height: 24px;
       width: 63px;
@@ -233,15 +307,15 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     pre > code {
       background-color: unset;
       color: unset;
-      padding: .15em;
+      padding: 0.15em;
     }
   }
 
   .ck.ck-toolbar {
     border: none;
     justify-content: center;
-    background-color: mc('grey', '300');
-    color: #FFF;
+    background-color: mc("grey", "300");
+    color: #fff;
   }
 
   .ck.ck-toolbar__items {
@@ -249,11 +323,11 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   }
 
   > .ck-editor__editable {
-    background-color: mc('grey', '100');
+    background-color: mc("grey", "100");
     overflow-y: auto;
     overflow-x: hidden;
     padding: 2rem;
-    box-shadow: 0 0 5px hsla(0, 0, 0, .1);
+    box-shadow: 0 0 5px hsla(0, 0, 0, 0.1);
     margin: 1rem auto 0;
     width: calc(100vw - 256px - 16vw);
     min-height: calc(100vh - 64px - 24px - 1rem - 40px);
@@ -261,7 +335,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 
     @at-root .theme--dark & {
       background-color: #303030;
-      color: #FFF;
+      color: #fff;
     }
 
     @include until($widescreen) {
@@ -277,24 +351,26 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
 
     &.ck.ck-editor__editable:not(.ck-editor__nested-editable).ck-focused {
-      border-color: #FFF;
-      box-shadow: 0 0 10px rgba(mc('blue', '700'), .25);
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(mc("blue", "700"), 0.25);
 
       @at-root .theme--dark & {
         border-color: #444;
         border-bottom: none;
-        box-shadow: 0 0 10px rgba(#000, .25);
+        box-shadow: 0 0 10px rgba(#000, 0.25);
       }
     }
 
     &.ck .ck-editor__nested-editable.ck-editor__nested-editable_focused,
     &.ck .ck-editor__nested-editable:focus,
-    .ck-widget.table td.ck-editor__nested-editable.ck-editor__nested-editable_focused,
-    .ck-widget.table th.ck-editor__nested-editable.ck-editor__nested-editable_focused {
-      background-color: mc('grey', '100');
+    .ck-widget.table
+      td.ck-editor__nested-editable.ck-editor__nested-editable_focused,
+    .ck-widget.table
+      th.ck-editor__nested-editable.ck-editor__nested-editable_focused {
+      background-color: mc("grey", "100");
 
       @at-root .theme--dark & {
-        background-color: mc('grey', '900');
+        background-color: mc("grey", "900");
       }
     }
   }

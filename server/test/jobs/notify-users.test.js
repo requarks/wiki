@@ -8,7 +8,7 @@ const WIKI = {
     send: jest.fn()
   },
   models: {
-    followers: {
+    users: {
       query: jest.fn()
     },
     users: {
@@ -48,13 +48,13 @@ describe('notifyUsers', () => {
     const pagePath = 'test-page'
     const sitePath = 'test-site'
     const userEmail = 'user@example.com'
-    const followerIds = [2, 3, 4]
+    const userIds = [2, 3, 4]
     const event = 'UPDATE_PAGE'
 
-    const followers = [
-      { id: 2, email: 'follower1@example.com', isActive: true, groupIds: [1] },
-      { id: 3, email: 'follower2@example.com', isActive: true, groupIds: [2] },
-      { id: 4, email: 'follower3@example.com', isActive: false, groupIds: [3] }
+    const users = [
+      { id: 2, email: 'user1@example.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'user2@example.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'user3@example.com', isActive: false, groupIds: [3] }
     ]
 
     const groups = [
@@ -66,7 +66,7 @@ describe('notifyUsers', () => {
     WIKI.models.users.query.mockReturnValue({
       whereIn: jest.fn().mockReturnThis(),
       withGraphFetched: jest.fn().mockReturnThis(),
-      modifyGraph: jest.fn().mockResolvedValue(followers)
+      modifyGraph: jest.fn().mockResolvedValue(users)
     })
 
     WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
@@ -78,14 +78,14 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event})
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
 
-    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
     expect(WIKI.mail.send).toHaveBeenCalledWith({
       template: 'page-notify',
       to: '',
-      bcc: ['follower1@example.com', 'follower2@example.com'],
+      bcc: ['user1@example.com', 'user2@example.com'],
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
@@ -94,6 +94,7 @@ describe('notifyUsers', () => {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
+        event: event,
         eventText: 'updated'
       }
     })
@@ -106,12 +107,12 @@ describe('notifyUsers', () => {
     const pagePath = '/test-page'
     const sitePath = '/test-site'
     const userEmail = 'user@example.com'
-    const followerIds = Array.from({ length: 25 }, (_, i) => i + 1) // Generate 25 follower IDs
+    const userIds = Array.from({ length: 25 }, (_, i) => i + 1) // Generate 25 user IDs
     const event = 'UPDATE_PAGE'
 
-    const followers = Array.from({ length: 25 }, (_, i) => ({
+    const users = Array.from({ length: 25 }, (_, i) => ({
       id: i + 1,
-      email: `follower${i + 1}@example.com`,
+      email: `user${i + 1}@example.com`,
       isActive: true,
       groupIds: [1]
     }))
@@ -123,7 +124,7 @@ describe('notifyUsers', () => {
     WIKI.models.users.query.mockReturnValue({
       whereIn: jest.fn().mockReturnThis(),
       withGraphFetched: jest.fn().mockReturnThis(),
-      modifyGraph: jest.fn().mockResolvedValue(followers)
+      modifyGraph: jest.fn().mockResolvedValue(users)
     })
 
     WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
@@ -135,14 +136,14 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event})
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
 
-    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(3) // Expect 3 batches of emails
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(1, {
       template: 'page-notify',
       to: '',
-      bcc: followers.slice(0, 10).map(f => f.email),
+      bcc: users.slice(0, 10).map(f => f.email),
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
@@ -151,13 +152,14 @@ describe('notifyUsers', () => {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
+        event: event,
         eventText: 'updated'
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(2, {
       template: 'page-notify',
       to: '',
-      bcc: followers.slice(10, 20).map(f => f.email),
+      bcc: users.slice(10, 20).map(f => f.email),
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
@@ -166,13 +168,14 @@ describe('notifyUsers', () => {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
+        event: event,
         eventText: 'updated'
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(3, {
       template: 'page-notify',
       to: '',
-      bcc: followers.slice(20, 25).map(f => f.email),
+      bcc: users.slice(20, 25).map(f => f.email),
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
@@ -181,6 +184,7 @@ describe('notifyUsers', () => {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
         userEmail: userEmail,
+        event: event,
         eventText: 'updated'
       }
     })
@@ -193,24 +197,24 @@ describe('notifyUsers', () => {
     const pagePath = '/test-page'
     const sitePath = 'test-site'
     const userEmail = 'user@example.com'
-    const followerIds = [2, 3, 4]
+    const userIds = [2, 3, 4]
     const event = 'UPDATE_PAGE'
 
-    const followers = [
-      { id: 2, email: 'follower1@example.com', isActive: false, groupIds: [1] },
-      { id: 3, email: 'follower2@example.com', isActive: false, groupIds: [2] },
-      { id: 4, email: 'follower3@example.com', isActive: false, groupIds: [3] }
+    const users = [
+      { id: 2, email: 'user1@example.com', isActive: false, groupIds: [1] },
+      { id: 3, email: 'user2@example.com', isActive: false, groupIds: [2] },
+      { id: 4, email: 'user3@example.com', isActive: false, groupIds: [3] }
     ]
 
     WIKI.models.users.query.mockReturnValue({
       whereIn: jest.fn().mockReturnThis(),
       withGraphFetched: jest.fn().mockReturnThis(),
-      modifyGraph: jest.fn().mockResolvedValue(followers)
+      modifyGraph: jest.fn().mockResolvedValue(users)
     })
 
-    await notifyUsers({siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event})
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
 
-    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.auth.checkAccess).not.toHaveBeenCalled()
     expect(WIKI.mail.send).not.toHaveBeenCalled()
   })
@@ -221,13 +225,13 @@ describe('notifyUsers', () => {
     const pagePath = '/test-page'
     const sitePath = '/test-site'
     const userEmail = 'user@example.com'
-    const followerIds = [2, 3, 4]
+    const userIds = [2, 3, 4]
     const event = 'CREATE_PAGE'
 
-    const followers = [
-      { id: 2, email: 'follower1@example.com', isActive: true, groupIds: [1] },
-      { id: 3, email: 'follower2@example.com', isActive: true, groupIds: [2] },
-      { id: 4, email: 'follower3@example.com', isActive: false, groupIds: [3] }
+    const users = [
+      { id: 2, email: 'user1@example.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'user2@example.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'user3@example.com', isActive: false, groupIds: [3] }
     ]
 
     const groups = [
@@ -239,7 +243,7 @@ describe('notifyUsers', () => {
     WIKI.models.users.query.mockReturnValue({
       whereIn: jest.fn().mockReturnThis(),
       withGraphFetched: jest.fn().mockReturnThis(),
-      modifyGraph: jest.fn().mockResolvedValue(followers)
+      modifyGraph: jest.fn().mockResolvedValue(users)
     })
 
     WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
@@ -251,14 +255,14 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event })
+    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
 
-    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
     expect(WIKI.mail.send).toHaveBeenCalledWith({
       template: 'page-notify',
       to: '',
-      bcc: ['follower1@example.com', 'follower2@example.com'],
+      bcc: ['user1@example.com', 'user2@example.com'],
       subject: `[Page Notification] Page Created: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
@@ -266,6 +270,7 @@ describe('notifyUsers', () => {
         pageUrl: `${WIKI.config.host}/${sitePath}`,
         pageTitle,
         userEmail,
+        event: event,
         eventText: 'created',
         isDeletion: false
       }
@@ -278,13 +283,13 @@ describe('notifyUsers', () => {
     const pagePath = '/test-page'
     const sitePath = '/test-site'
     const userEmail = 'user@example.com'
-    const followerIds = [2, 3, 4]
+    const userIds = [2, 3, 4]
     const event = 'DELETE_PAGE'
 
-    const followers = [
-      { id: 2, email: 'follower1@example.com', isActive: true, groupIds: [1] },
-      { id: 3, email: 'follower2@example.com', isActive: true, groupIds: [2] },
-      { id: 4, email: 'follower3@example.com', isActive: false, groupIds: [3] }
+    const users = [
+      { id: 2, email: 'user1@example.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'user2@example.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'user3@example.com', isActive: false, groupIds: [3] }
     ]
 
     const groups = [
@@ -296,7 +301,7 @@ describe('notifyUsers', () => {
     WIKI.models.users.query.mockReturnValue({
       whereIn: jest.fn().mockReturnThis(),
       withGraphFetched: jest.fn().mockReturnThis(),
-      modifyGraph: jest.fn().mockResolvedValue(followers)
+      modifyGraph: jest.fn().mockResolvedValue(users)
     })
 
     WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
@@ -308,14 +313,14 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event })
+    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
 
-    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', followerIds)
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
     expect(WIKI.mail.send).toHaveBeenCalledWith({
       template: 'page-notify',
       to: '',
-      bcc: ['follower1@example.com', 'follower2@example.com'],
+      bcc: ['user1@example.com', 'user2@example.com'],
       subject: `[Page Notification] Page Deleted: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
@@ -323,6 +328,7 @@ describe('notifyUsers', () => {
         pageUrl: `${WIKI.config.host}/${sitePath}`,
         pageTitle,
         userEmail,
+        event: event,
         eventText: 'deleted',
         isDeletion: true
       }
