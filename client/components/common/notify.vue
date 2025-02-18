@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-snackbar.nav-notify(
-    :color='getColor()'
+    :color='$vuetify.theme.dark ? getDarkColor() : getColor()'
     top
     multi-line
     v-model='notificationState'
@@ -13,10 +13,11 @@
 
 <script>
 import { get, sync } from 'vuex-pathify'
+import { colors } from '@/themes/default/js/extended-color-scheme'
 
 export default {
   data() {
-    return { }
+    return { colors: colors }
   },
   computed: {
     notification: get('notification'),
@@ -28,14 +29,31 @@ export default {
       switch(color){
         case 'success':
         case 'green':
-          return '#178036'; // ext-green 5
+          return colors.alert.success;
         case 'error':
         case 'red':
-          return '#A6001A'; // ext-red 5
+          return colors.alert.error;
         case 'warning':
-          return '#FF8E12'; // ext-yellow 5
+          return colors.alert.warning;
         case 'info':
-          return '#0F434A'; // ext-peacock 5
+          return colors.alert.info;
+        default:
+          return color;
+      }
+    },
+    getDarkColor(){
+      let color = this.notification.style;
+      switch(color){
+        case 'success':
+        case 'green':
+          return colors.alert.successOnDark;
+        case 'error':
+        case 'red':
+          return colors.alert.errorOnDark;
+        case 'warning':
+          return colors.alert.warning;
+        case 'info':
+          return colors.alert.infoOnDark;
         default:
           return color;
       }

@@ -375,16 +375,6 @@ $material-colors: (
     '5': #A6001A,
   ),
 
-  'theme': (
-    'primary': #0070AD,
-    'secondary': #2B0A3D,
-    'accent': #12ABDB,
-    'error': #A6001A,
-    'info': #0F878A,
-    'success': #178036,
-    'warning': #FF8E12,
-  ),
-
   'primary': (
     '1': #0070AD,
     '2': #12ABDB,
@@ -400,6 +390,21 @@ $material-colors: (
   'text': (
     'dark-purple': #15011D,
     'dark-grey': #272936,
+  ),
+
+  'alert': (
+    'error': #E30021,
+    'errorOnDark': #FF455E,
+    'errorLight': #FFEFEF,
+    'info': #0070AD,
+    'infoOnDark': #12ABDB,
+    'infoLight': #ECF3FF,
+    'success': #2EA657,
+    'successOnDark': #33B569,
+    'successLight': #E5FCEB,
+    'warning': #FF8E12,
+    'warningOnDark': #FF8E12,
+    'warningLight': #FFF7DE,
   )
 );
 

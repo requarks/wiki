@@ -149,7 +149,7 @@
       }
 
       @at-root .is-rtl & {
-        background: linear-gradient(to left, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
+        background: linear-gradient(to left, mc('primary', '1'), rgba(mc('primary', '1'), 0));
       }
 
       @at-root .theme--dark.is-rtl & {
@@ -368,7 +368,8 @@
     }
 
     @at-root .theme--dark & {
-      background-color: mc('ext-sapphire', '1');
+      background-color: mc('surface', '2');
+      color: mc('text', 'dark-grey');
     }
 
     &::before {
@@ -392,8 +393,8 @@
     }
 
     &.is-info {
-      background-color: mc('ext-peacock', '1');
-      border-color: mc('ext-peacock', '3');
+      background-color: mc('alert', 'infoLight');
+      border-color: mc('alert', 'info');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -406,15 +407,13 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('ext-peacock', '4');
-        color: #FFF;
-        border-color: mc('ext-peacock', '2');
+        border-color: mc('alert', 'infoOnDark');
       }
     }
 
     &.is-warning {
-      background-color: mc('ext-yellow', '1');
-      border-color: mc('ext-yellow', '5');
+      background-color: mc('alert', 'warningLight');
+      border-color: mc('alert', 'warning');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -427,16 +426,14 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('ext-yellow', '2');
-        color: mc('text', 'dark-grey');
-        border-color: mc('ext-yellow', '4');
+        border-color: mc('alert', 'warningOnDark');
         box-shadow: 0 0 2px 0 mc('ext-yellow', '1');
       }
     }
 
     &.is-danger {
-      background-color: mc('ext-red', '1');
-      border-color: mc('ext-red', '5');
+      background-color: mc('alert', 'errorLight');
+      border-color: mc('alert', 'error');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -449,15 +446,13 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('ext-red', '5');
-        color: #FFF;
-        border-color: mc('ext-red', '3');
+        border-color: mc('alert', 'errorOnDark');
       }
     }
 
     &.is-success {
-      background-color: mc('ext-green', '1');
-      border-color: mc('ext-green', '5');
+      background-color: mc('alert', 'successLight');
+      border-color: mc('alert', 'success');
       color: mc('text', 'dark-grey');
 
       &::before {
@@ -470,9 +465,7 @@
       }
 
       @at-root .theme--dark & {
-        background-color: mc('ext-green', '1');
-        color: #FFF;
-        border-color: mc('ext-green', '4');
+        border-color: mc('alert', 'successOnDark');
       }
     }
   }
