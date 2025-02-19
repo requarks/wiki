@@ -52,6 +52,15 @@ services:
       - ../..:/wiki
       - /wiki/node_modules
       - /wiki/.git
+  pondoc:
+    container_name: pondoc
+    build:
+      context: ../
+      dockerfile: pandoc/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ../pandoc:/app
 
 
 volumes:
