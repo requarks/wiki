@@ -12,8 +12,11 @@ Here below explained how to set up a multi-threaded HTTP server using Gunicorn. 
 1. To run docker compose from dev/containers folder:
 
    ```
+   cd dev/pandoc
+   docker build -t pandoc:latest .
+
    cd dev/containers
-   docker-compose up 
+   docker-compose up -d
    ```
 
 2.  Pandoc instance:

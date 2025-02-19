@@ -54,15 +54,9 @@ services:
       - /wiki/.git
   pondoc:
     container_name: pondoc
-    build:
-      context: ../
-      dockerfile: pandoc/Dockerfile
+    image: pandoc:latest
     ports:
       - "80:80"
-    volumes:
-      - ../pandoc:/app
-
-
 volumes:
   db-data:
   # solr-data:
