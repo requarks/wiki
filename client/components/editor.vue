@@ -82,19 +82,58 @@ export default {
   components: {
     AtomSpinner,
     StatusIndicator,
-    editorApi: () => import(/* webpackChunkName: "editor-api", webpackMode: "lazy" */ './editor/editor-api.vue'),
-    editorCode: () => import(/* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'),
-    editorCkeditor: () => import(/* webpackChunkName: "editor-ckeditor", webpackMode: "lazy" */ './editor/editor-ckeditor.vue'),
-    editorAsciidoc: () => import(/* webpackChunkName: "editor-asciidoc", webpackMode: "lazy" */ './editor/editor-asciidoc.vue'),
-    editorMarkdown: () => import(/* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'),
-    editorRedirect: () => import(/* webpackChunkName: "editor-redirect", webpackMode: "lazy" */ './editor/editor-redirect.vue'),
-    editorModalEditorselect: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'),
-    editorModalProperties: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'),
-    editorModalUnsaved: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'),
-    editorModalMedia: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-media.vue'),
-    editorModalBlocks: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-blocks.vue'),
-    editorModalConflict: () => import(/* webpackChunkName: "editor-conflict", webpackMode: "lazy" */ './editor/editor-modal-conflict.vue'),
-    editorModalDrawio: () => import(/* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-drawio.vue')
+    editorApi: () =>
+      import(
+        /* webpackChunkName: "editor-api", webpackMode: "lazy" */ './editor/editor-api.vue'
+      ),
+    editorCode: () =>
+      import(
+        /* webpackChunkName: "editor-code", webpackMode: "lazy" */ './editor/editor-code.vue'
+      ),
+    editorCkeditor: () =>
+      import(
+        /* webpackChunkName: "editor-ckeditor", webpackMode: "lazy" */ './editor/editor-ckeditor.vue'
+      ),
+    editorAsciidoc: () =>
+      import(
+        /* webpackChunkName: "editor-asciidoc", webpackMode: "lazy" */ './editor/editor-asciidoc.vue'
+      ),
+    editorMarkdown: () =>
+      import(
+        /* webpackChunkName: "editor-markdown", webpackMode: "lazy" */ './editor/editor-markdown.vue'
+      ),
+    editorRedirect: () =>
+      import(
+        /* webpackChunkName: "editor-redirect", webpackMode: "lazy" */ './editor/editor-redirect.vue'
+      ),
+    editorModalEditorselect: () =>
+      import(
+        /* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-editorselect.vue'
+      ),
+    editorModalProperties: () =>
+      import(
+        /* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-properties.vue'
+      ),
+    editorModalUnsaved: () =>
+      import(
+        /* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-unsaved.vue'
+      ),
+    editorModalMedia: () =>
+      import(
+        /* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-media.vue'
+      ),
+    editorModalBlocks: () =>
+      import(
+        /* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-blocks.vue'
+      ),
+    editorModalConflict: () =>
+      import(
+        /* webpackChunkName: "editor-conflict", webpackMode: "lazy" */ './editor/editor-modal-conflict.vue'
+      ),
+    editorModalDrawio: () =>
+      import(
+        /* webpackChunkName: "editor", webpackMode: "eager" */ './editor/editor-modal-drawio.vue'
+      )
   },
   props: {
     locale: {
@@ -115,7 +154,7 @@ export default {
     },
     tags: {
       type: Array,
-      default: () => ([])
+      default: () => []
     },
     isPublished: {
       type: Boolean,
@@ -200,27 +239,34 @@ export default {
     currentEditor: sync('editor/editor'),
     activeModal: sync('editor/activeModal'),
     mode: get('editor/mode'),
-    welcomeMode() { return this.mode === `create` && this.path === `home` },
+    welcomeMode() {
+      return this.mode === `create` && this.path === `home`
+    },
     currentPageTitle: sync('page/title'),
     checkoutDateActive: sync('editor/checkoutDateActive'),
     currentStyling: get('page/scriptCss'),
-    isDirty () {
-      return _.some([
-        this.initContentParsed !== this.$store.get('editor/content'),
-        this.locale !== this.$store.get('page/locale'),
-        this.path !== this.$store.get('page/path'),
-        this.savedState.title !== this.$store.get('page/title'),
-        this.savedState.description !== this.$store.get('page/description'),
-        this.savedState.tags !== this.$store.get('page/tags'),
-        this.savedState.isPublished !== this.$store.get('page/isPublished'),
-        this.savedState.publishStartDate !== this.$store.get('page/publishStartDate'),
-        this.savedState.publishEndDate !== this.$store.get('page/publishEndDate'),
-        this.savedState.css !== this.$store.get('page/scriptCss'),
-        this.savedState.js !== this.$store.get('page/scriptJs')
-        // this.siteId !== this.$store.get('page/siteId'),
-        // this.siteName !== this.$store.get('page/siteName'),
-        // this.sitePath !== this.$store.get('page/sitePath')
-      ], Boolean)
+    isDirty() {
+      return _.some(
+        [
+          this.initContentParsed !== this.$store.get('editor/content'),
+          this.locale !== this.$store.get('page/locale'),
+          this.path !== this.$store.get('page/path'),
+          this.savedState.title !== this.$store.get('page/title'),
+          this.savedState.description !== this.$store.get('page/description'),
+          this.savedState.tags !== this.$store.get('page/tags'),
+          this.savedState.isPublished !== this.$store.get('page/isPublished'),
+          this.savedState.publishStartDate !==
+            this.$store.get('page/publishStartDate'),
+          this.savedState.publishEndDate !==
+            this.$store.get('page/publishEndDate'),
+          this.savedState.css !== this.$store.get('page/scriptCss'),
+          this.savedState.js !== this.$store.get('page/scriptJs')
+          // this.siteId !== this.$store.get('page/siteId'),
+          // this.siteName !== this.$store.get('page/siteName'),
+          // this.sitePath !== this.$store.get('page/sitePath')
+        ],
+        Boolean
+      )
     }
   },
   watch: {
@@ -259,13 +305,18 @@ export default {
     this.checkoutDateActive = this.checkoutDate
 
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      this.$store.set(
+        'page/effectivePermissions',
+        JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString())
+      )
     }
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
 
-    this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : ''
+    this.initContentParsed = this.initContent
+      ? Base64.decode(this.initContent)
+      : ''
     this.$store.set('editor/content', this.initContentParsed)
     if (this.mode === 'create' && !this.initEditor) {
       _.delay(() => {
@@ -276,7 +327,10 @@ export default {
     }
 
     window.onbeforeunload = () => {
-      if (!this.exitConfirmed && this.initContentParsed !== this.$store.get('editor/content')) {
+      if (
+        !this.exitConfirmed &&
+        this.initContentParsed !== this.$store.get('editor/content')
+      ) {
         return this.$t('editor:unsavedWarning')
       } else {
         return undefined
@@ -303,7 +357,10 @@ export default {
     openConflict() {
       this.$root.$emit('saveConflict')
     },
-    async save(notifyFollowers = false, { rethrow = false, overwrite = false } = {}) {
+    async save(
+      notifyFollowers = false,
+      { rethrow = false, overwrite = false } = {}
+    ) {
       this.showProgressDialog('saving')
       this.isSaving = true
 
@@ -334,7 +391,7 @@ export default {
                 $tags: [String]!
                 $title: String!
                 $siteId: String!
-                $notifyFollowers: Boolean!,
+                $notifyFollowers: Boolean!
                 $mentions: [String]
               ) {
                 pages {
@@ -391,7 +448,11 @@ export default {
           })
           resp = _.get(resp, 'data.pages.create', {})
           if (_.get(resp, 'responseResult.succeeded')) {
-            this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
+            this.checkoutDateActive = _.get(
+              resp,
+              'page.updatedAt',
+              this.checkoutDateActive
+            )
             this.isConflict = false
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.createSuccess'),
@@ -401,7 +462,11 @@ export default {
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
             this.exitConfirmed = true
-            window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+            window.location.assign(
+              `/${this.$store.get('page/sitePath')}/${this.$store.get(
+                'page/locale'
+              )}/${this.$store.get('page/path')}`
+            )
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
@@ -505,16 +570,27 @@ export default {
           })
           resp = _.get(resp, 'data.pages.update', {})
           if (_.get(resp, 'responseResult.succeeded')) {
-            this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
+            this.checkoutDateActive = _.get(
+              resp,
+              'page.updatedAt',
+              this.checkoutDateActive
+            )
             this.isConflict = false
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.updateSuccess'),
               style: 'success',
               icon: 'check'
             })
-            if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
+            if (
+              this.locale !== this.$store.get('page/locale') ||
+              this.path !== this.$store.get('page/path')
+            ) {
               _.delay(() => {
-                window.location.replace(`/e/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+                window.location.replace(
+                  `/e/${this.$store.get('page/sitePath')}/${this.$store.get(
+                    'page/locale'
+                  )}/${this.$store.get('page/path')}`
+                )
               }, 1000)
             }
           } else {
@@ -568,11 +644,15 @@ export default {
         if (this.$store.get('editor/mode') === 'create') {
           window.location.assign(`/${this.$store.get('page/sitePath')}`)
         } else {
-          window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+          window.location.assign(
+            `/${this.$store.get('page/sitePath')}/${this.$store.get(
+              'page/locale'
+            )}/${this.$store.get('page/path')}`
+          )
         }
       }, 500)
     },
-    setCurrentSavedState () {
+    setCurrentSavedState() {
       this.savedState = {
         description: this.$store.get('page/description'),
         isPublished: this.$store.get('page/isPublished'),
@@ -584,7 +664,7 @@ export default {
         js: this.$store.get('page/scriptJs')
       }
     },
-    injectCustomCss: _.debounce(css => {
+    injectCustomCss: _.debounce((css) => {
       const oldStyl = document.querySelector('#editor-script-css')
       if (oldStyl) {
         document.head.removeChild(oldStyl)
@@ -609,14 +689,14 @@ export default {
       `,
       fetchPolicy: 'network-only',
       pollInterval: 5000,
-      variables () {
+      variables() {
         return {
           id: this.pageId,
           checkoutDate: this.checkoutDateActive
         }
       },
       update: (data) => _.cloneDeep(data.pages.checkConflicts),
-      skip () {
+      skip() {
         return this.mode === 'create' || this.isSaving || !this.isDirty
       }
     }
@@ -624,23 +704,21 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang="scss">
+.editor {
+  background-color: mc('grey', '900') !important;
+  min-height: 100vh;
 
-  .editor {
-    background-color: mc('grey', '900') !important;
-    min-height: 100vh;
-
-    .application--wrap {
-      background-color: mc('grey', '900');
-    }
-
-    &-title-input input {
-      text-align: center;
-    }
+  .application--wrap {
+    background-color: mc('grey', '900');
   }
 
-  .atom-spinner.is-inline {
-    display: inline-block;
+  &-title-input input {
+    text-align: center;
   }
+}
 
+.atom-spinner.is-inline {
+  display: inline-block;
+}
 </style>
