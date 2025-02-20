@@ -308,6 +308,7 @@ DecoupledEditor.defaultConfig = {
             .filter((key) => queryText.startsWith(key))
             .map((key) => mentionCache[key])
             .flat()
+            .filter((email) => email.startsWith(`@${queryText}`))
 
           if (cachedResults.length > 0) {
             return cachedResults

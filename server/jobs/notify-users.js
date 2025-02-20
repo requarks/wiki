@@ -37,7 +37,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
         text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         data: {
           preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
-          pageUrl: `${WIKI.config.host}/${sitePath}`,
+          pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
           pageTitle: pageTitle,
           userEmail: userEmail,
           event: event,
