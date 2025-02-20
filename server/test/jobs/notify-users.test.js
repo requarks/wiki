@@ -11,9 +11,6 @@ const WIKI = {
     users: {
       query: jest.fn()
     },
-    users: {
-      query: jest.fn()
-    },
     groups: {
       query: jest.fn()
     }
@@ -89,7 +86,7 @@ describe('notifyUsers', () => {
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
@@ -104,8 +101,8 @@ describe('notifyUsers', () => {
     const siteId = 1
     const pageId = 1
     const pageTitle = 'Test Page'
-    const pagePath = '/test-page'
-    const sitePath = '/test-site'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
     const userEmail = 'user@example.com'
     const userIds = Array.from({ length: 25 }, (_, i) => i + 1) // Generate 25 user IDs
     const event = 'UPDATE_PAGE'
@@ -147,7 +144,7 @@ describe('notifyUsers', () => {
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
@@ -163,7 +160,7 @@ describe('notifyUsers', () => {
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
@@ -179,7 +176,7 @@ describe('notifyUsers', () => {
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
-        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageTitle: pageTitle,
@@ -194,7 +191,7 @@ describe('notifyUsers', () => {
     const siteId = 1
     const pageId = 1
     const pageTitle = 'Test Page'
-    const pagePath = '/test-page'
+    const pagePath = 'test-page'
     const sitePath = 'test-site'
     const userEmail = 'user@example.com'
     const userIds = [2, 3, 4]
@@ -222,8 +219,8 @@ describe('notifyUsers', () => {
   it('should notify users with read access for CREATE_PAGE event', async () => {
     const pageId = 1
     const pageTitle = 'Test Page'
-    const pagePath = '/test-page'
-    const sitePath = '/test-site'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
     const userEmail = 'user@example.com'
     const userIds = [2, 3, 4]
     const event = 'CREATE_PAGE'
@@ -267,7 +264,7 @@ describe('notifyUsers', () => {
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
-        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         pageTitle,
         userEmail,
         event: event,
@@ -280,8 +277,8 @@ describe('notifyUsers', () => {
   it('should notify users with read access for DELETE_PAGE event', async () => {
     const pageId = 1
     const pageTitle = 'Test Page'
-    const pagePath = '/test-page'
-    const sitePath = '/test-site'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
     const userEmail = 'user@example.com'
     const userIds = [2, 3, 4]
     const event = 'DELETE_PAGE'
@@ -325,7 +322,7 @@ describe('notifyUsers', () => {
       text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
-        pageUrl: `${WIKI.config.host}/${sitePath}`,
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         pageTitle,
         userEmail,
         event: event,
