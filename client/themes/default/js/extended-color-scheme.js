@@ -1,7 +1,7 @@
 /*
  * This object is a mirror of the extended material colors of client/scss/base/material.scss
  */
-export const colors = {
+const colors = {
   'green': {
     '1': '#57CF80',
     '2': '#33B569',
@@ -79,8 +79,8 @@ export const colors = {
   },
 
   'text': {
-    'dark-purple': '#15011D',
-    'dark-grey': '#272936',
+    'darkPurple': '#15011D',
+    'darkGrey': '#272936',
   },
 
   'alert': {
@@ -100,3 +100,5 @@ export const colors = {
 
   'white': '#FFFFFF',
 };
+
+export default colors;

@@ -126,7 +126,7 @@
 
   h1 {
     padding: 0;
-    color: mc('text', 'dark-grey');
+    color: mc('text', 'darkGrey');
     margin-top: 2rem;
     position: relative;
 
@@ -141,7 +141,7 @@
       left: 0;
       width: 100%;
       height: 2px;
-      background: linear-gradient(to right, mc('text', 'dark-grey'), rgba(mc('text', 'dark-grey'), 0));
+      background: linear-gradient(to right, mc('text', 'darkGrey'), rgba(mc('text', 'darkGrey'), 0));
       border-radius: 3px;
 
       @at-root .theme--dark & {
@@ -369,7 +369,7 @@
 
     @at-root .theme--dark & {
       background-color: mc('surface', '2');
-      color: mc('text', 'dark-grey');
+      color: mc('text', 'darkGrey');
     }
 
     &::before {
@@ -395,7 +395,7 @@
     &.is-info {
       background-color: mc('alert', 'infoLight');
       border-color: mc('alert', 'info');
-      color: mc('text', 'dark-grey');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F02FC";
@@ -414,7 +414,7 @@
     &.is-warning {
       background-color: mc('alert', 'warningLight');
       border-color: mc('alert', 'warning');
-      color: mc('text', 'dark-grey');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F0026";
@@ -434,7 +434,7 @@
     &.is-danger {
       background-color: mc('alert', 'errorLight');
       border-color: mc('alert', 'error');
-      color: mc('text', 'dark-grey');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F0159";
@@ -453,7 +453,7 @@
     &.is-success {
       background-color: mc('alert', 'successLight');
       border-color: mc('alert', 'success');
-      color: mc('text', 'dark-grey');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F0E1E";
