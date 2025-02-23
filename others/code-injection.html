@@ -5,15 +5,29 @@
       if (node.nodeType === Node.TEXT_NODE) {
         // Replace special tags in text content only
         const updatedText = node.textContent.replace(
-          /(?:^|\s)([#@!$])([\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*)/g,
+          /(?:^|\s)([#@!$])([@]?[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*)/g,
           (match, symbol, keyword) => {
             const trimmedMatch = match.trim(); // Remove leading space for correct replacement
             if (symbol === '#') {
               return `&nbsp<a href="/t/${keyword}" class="tag tag-hashtag">${trimmedMatch}</a>`;
+            } else if (symbol === '@' && keyword.startsWith('@')) {
+              // Handle @@group tags
+              const groupName = keyword.substring(1); // Remove the first @
+              // return `<a href="/กลุ่มหรือองค์กร/${groupName}" class="tag tag-mention">${groupName}</a>`;
+              const parts = groupName.split('/');
+              // สร้าง path จากการเรียงลำดับจากมากไปน้อย
+              const locationPath = parts.length > 1
+                ? '/กลุ่มหรือองค์กร/' + parts.reverse().join('/')
+                : '/กลุ่มหรือองค์กร/' + parts[0];
+
+              // แสดงชื่อกลุ่มหรือองค์กรล่าสุด (ส่วนสุดท้าย)
+              const displayName = parts[parts.length - 1];
+
+              return `<a href="${locationPath}" class="tag tag-organization">${displayName}</a>`;
             } else if (symbol === '@') {
-              // Replace dash with space for person names
+              // Handle @person tags
               const displayName = keyword.replace(/-/g, ' ');
-              return `&nbsp<a href="/คน/${keyword}" class="tag tag-mention">${displayName}</a>`;
+              return `<a href="/คน/${keyword}" class="tag tag-mention">${displayName}</a>`;
             } else if (symbol === '!') {
               // Split location parts
               const parts = keyword.split('/');
@@ -25,9 +39,9 @@
               // แสดงชื่อสถานที่ล่าสุด (ส่วนสุดท้าย)
               const displayName = parts[parts.length - 1];
 
-              return `&nbsp<a href="${locationPath}" class="tag tag-location">${displayName}</a>`;
+              return `<a href="${locationPath}" class="tag tag-location">${displayName}</a>`;
             } else if (symbol === '$') {
-              return `&nbsp<a href="/เหตุการณ์/${keyword}" class="tag tag-event">${keyword}</a>`;
+              return `<a href="/เหตุการณ์/${keyword}" class="tag tag-event">${keyword}</a>`;
             }
             return trimmedMatch;
           }

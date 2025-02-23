@@ -64,60 +64,47 @@ export default {
     },
     async fetchTags(queryText) {
       try {
-        // Delay search by 100ms
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        const response = await this.$apollo.query({
+        const responseSearchTags = await this.$apollo.query({
           query: gql`
-            query ($filter: String) {
+            query ($query: String!) {
               pages {
-                tags(filter: $filter) {
-                  id
-                  tag
-                  title
-                }
+                searchTags(query: $query)
               }
             }
           `,
           variables: {
-            filter: queryText
-          }
+            query: queryText
+          },
+          fetchPolicy: 'cache-first',
+          update: (data) => _.get(data, 'pages.searchTags', []),
+          skip: !queryText || _.isEmpty(queryText),
+          throttle: 500
         })
-
-        console.log(response.data.pages)
-
-        if (!response.data.pages || !response.data.pages.tags) {
+        console.log('=============================== ดึงแท็ก =============================')
+        console.log(responseSearchTags.data.pages.searchTags)
+        if (!responseSearchTags.data.pages.searchTags) {
           return []
         }
 
         // แปลงเป็น array ของ string แทน object และกรองเฉพาะ tag ที่ไม่ขึ้นต้นด้วย @ หรือ !
-        const allTags = response.data.pages.tags
-          .filter((tag, index, self) =>
-            index === self.findIndex(t => t.id === tag.id) &&
-            !tag.tag.startsWith('@') &&
-            !tag.tag.startsWith('!') &&
-            !tag.tag.startsWith('$')
-          )
-          .map(t => ({
-            text: '#' + t.tag, // ใช้สำหรับ filter และ insert
-            title: t.title || t.tag // ใช้สำหรับแสดงใน dropdown
-          }))
-          .filter(tag => tag.text.includes(queryText))
+        const allTags = responseSearchTags.data.pages.searchTags
+          .filter(tag => !tag.startsWith('@') && !tag.startsWith('!') && !tag.startsWith('$') && !tag.startsWith('@@'))
           .map(tag => ({
-            id: tag.text, // ใช้ text เป็น id
-            text: tag.text, // ข้อความที่จะถูกแทรก
-            label: tag.title // ข้อความที่จะแสดงใน dropdown
+            id: `#${tag}`, // เพิ่ม marker ที่จุดนี้
+            text: `#${tag}`, // เพิ่ม marker ที่จุดนี้
+            title: tag
           }))
 
         // เพิ่มแท็กใหม่ถ้าไม่อยู่ใน autocomplete list และไม่ขึ้นต้นด้วย @ หรือ !
         if (!allTags.some(tag => tag.text === `#${queryText}`) &&
           !queryText.startsWith('@') &&
           !queryText.startsWith('$') &&
-          !queryText.startsWith('!')) {
+          !queryText.startsWith('!') &&
+          !queryText.startsWith('@@')) {
           allTags.push({
             id: `#${queryText}`,
             text: `#${queryText}`,
-            label: `${queryText}`
+            label: `#${queryText}`
           })
         }
 
@@ -128,105 +115,113 @@ export default {
       }
     },
     async fetchPeople(queryText) {
+      const originalQueryText = queryText
+      let allPeople = []
+      queryText = queryText.replace(/@/g, '')
       try {
-        // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        const response = await this.$apollo.query({
+        const responseSearchTags = await this.$apollo.query({
           query: gql`
-            query ($filter: String) {
+            query ($query: String!) {
               pages {
-                tags(filter: $filter) {
-                  id
-                  tag
-                  title
-                }
+                searchTags(query: $query)
               }
             }
           `,
           variables: {
-            filter: queryText
-          }
+            query: queryText
+          },
+          fetchPolicy: 'cache-first',
+          update: (data) => _.get(data, 'pages.searchTags', []),
+          skip: !queryText || _.isEmpty(queryText),
+          throttle: 500
         })
 
-        if (!response.data.pages || !response.data.pages.tags) {
+        if (!responseSearchTags.data.pages.searchTags) {
           return []
         }
+        // console.log('ดึงคนด้วย: ', queryText)
+        // console.log('ผลลัพธ์: ', responseSearchTags.data.pages.searchTags)
 
-        // กรองเฉพาะ tag ที่ขึ้นต้นด้วย @
-        const allPeople = response.data.pages.tags
-          .filter((tag, index, self) =>
-            index === self.findIndex(t => t.id === tag.id) &&
-            tag.tag.startsWith('@')
-          )
-          .map(t => ({
-            id: t.tag,
-            text: t.tag,
-            // ใช้ tag เต็มรูปแบบเป็น label เพื่อให้แสดงชื่อเต็ม
-            label: t.title || t.tag
-          }))
-          // ปรับการ filter ให้ค้นหาได้ทั้งชื่อเต็มและบางส่วน
-          .filter(person => {
-            const searchText = queryText.toLowerCase()
-            return person.text.toLowerCase().includes(searchText) ||
-              person.label.toLowerCase().includes(searchText)
-          })
+        if (!originalQueryText.startsWith('@')) {
+          // แปลงเป็น array ของ string และกรองเฉพาะ tag ที่ขึ้นต้นด้วย @ (ไม่รวม @@)
+          // เพิ่มคนใหม่ถ้าไม่อยู่ใน list และ queryText ไม่มี @ นำหน้า
+          if (!originalQueryText.startsWith('@')) {
+            console.log('ชื่อคนที่ต้องการเพิ่ม: ', originalQueryText)
+            const newPerson = `@${originalQueryText}`
+            if (!responseSearchTags.data.pages.searchTags.some(tag => tag === newPerson)) {
+              allPeople.push({
+                id: newPerson,
+                text: newPerson,
+                label: newPerson
+              })
+            }
+          }
 
-        // เพิ่มคนใหม่ถ้าไม่อยู่ใน list และมีการพิมพ์ข้อความ
-        if (queryText && !allPeople.some(person => person.text === `@${queryText}`)) {
-          allPeople.push({
-            id: `@${queryText}`,
-            text: `@${queryText}`,
-            label: `@${queryText}`
-          })
+          allPeople = [
+            ...allPeople,
+            ...responseSearchTags.data.pages.searchTags
+              .filter(tag => tag.startsWith('@') && !tag.startsWith('@@'))
+              .map(tag => ({
+                id: tag,
+                text: tag,
+                label: tag
+              }))
+          ]
+        } else {
+          allPeople = responseSearchTags.data.pages.searchTags
+            .filter(tag => tag.startsWith('@@'))
+            .map(tag => ({
+              id: tag,
+              text: tag,
+              label: tag
+            }))
+          // เพิ่มกลุ่มใหม่ถ้าไม่อยู่ใน list และ queryText มี @ นำหน้า
+          if (originalQueryText.startsWith('@') && !allPeople.some(person => person.text === `@@${queryText}`)) {
+            allPeople.push({
+              id: `@@${queryText}`,
+              text: `@@${queryText}`,
+              label: `@@${queryText}`
+            })
+          }
         }
-
         return allPeople
       } catch (err) {
         console.error('Error fetching people:', err)
         return []
       }
     },
+
     async fetchPlace(queryText) {
       try {
-        // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        const response = await this.$apollo.query({
+        const responseSearchTags = await this.$apollo.query({
           query: gql`
-            query ($filter: String) {
+            query ($query: String!) {
               pages {
-                tags(filter: $filter) {
-                  id
-                  tag
-                  title
-                }
+                searchTags(query: $query)
               }
             }
           `,
           variables: {
-            filter: queryText
-          }
+            query: queryText
+          },
+          fetchPolicy: 'cache-first',
+          update: (data) => _.get(data, 'pages.searchTags', []),
+          skip: !queryText || _.isEmpty(queryText),
+          throttle: 500
         })
 
-        if (!response.data.pages || !response.data.pages.tags) {
+        if (!responseSearchTags.data.pages.searchTags) {
           return []
         }
 
-        console.log(response.data.pages.tags)
-
-        // กรองเฉพาะ tag ที่ขึ้นต้นด้วย !
-        const allPlaces = response.data.pages.tags
-          .filter((tag, index, self) =>
-            index === self.findIndex(t => t.id === tag.id) &&
-            tag.tag.startsWith('!')
-          )
-          .map(t => ({
-            id: t.tag,
-            text: t.tag,
-            label: t.title || t.tag.substring(1) // ตัด ! ออกถ้าไม่มี title
+        // แปลงเป็น array ของ string และกรองเฉพาะ tag ที่ขึ้นต้นด้วย !
+        const allPlaces = responseSearchTags.data.pages.searchTags
+          .filter(tag => tag.startsWith('!'))
+          .map(tag => ({
+            id: tag,
+            text: tag,
+            label: tag
           }))
-          .filter(place => place.text.toLowerCase().includes(queryText.toLowerCase()))
 
         // เพิ่มสถานที่ใหม่ถ้าไม่อยู่ใน list
         if (!allPlaces.some(place => place.text === `!${queryText}`)) {
@@ -243,51 +238,45 @@ export default {
         return []
       }
     },
+
     async fetchEvent(queryText) {
       try {
-        // Delay search by 300ms
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        const response = await this.$apollo.query({
+        const responseSearchTags = await this.$apollo.query({
           query: gql`
-            query ($filter: String) {
+            query ($query: String!) {
               pages {
-                tags(filter: $filter) {
-                  id
-                  tag
-                  title
-                }
+                searchTags(query: $query)
               }
             }
           `,
           variables: {
-            filter: queryText
-          }
+            query: queryText
+          },
+          fetchPolicy: 'cache-first',
+          update: (data) => _.get(data, 'pages.searchTags', []),
+          skip: !queryText || _.isEmpty(queryText),
+          throttle: 500
         })
 
-        if (!response.data.pages || !response.data.pages.tags) {
+        if (!responseSearchTags.data.pages.searchTags) {
           return []
         }
 
-        // กรองเฉพาะ tag ที่ขึ้นต้นด้วย $
-        const allEvents = response.data.pages.tags
-          .filter((tag, index, self) =>
-            index === self.findIndex(t => t.id === tag.id) &&
-            tag.tag.startsWith('$')
-          )
-          .map(t => ({
-            id: t.tag,
-            text: t.tag,
-            label: t.title || t.tag.substring(1) // ตัด $ ออกถ้าไม่มี title
+        // แปลงเป็น array ของ string และกรองเฉพาะ tag ที่ขึ้นต้นด้วย $
+        const allEvents = responseSearchTags.data.pages.searchTags
+          .filter(tag => tag.startsWith('$'))
+          .map(tag => ({
+            id: tag,
+            text: tag,
+            label: tag
           }))
-          .filter(event => event.text.toLowerCase().includes(queryText.toLowerCase()))
 
         // เพิ่มกิจกรรมใหม่ถ้าไม่อยู่ใน list
         if (!allEvents.some(event => event.text === `$${queryText}`)) {
           allEvents.push({
             id: `$${queryText}`,
             text: `$${queryText}`,
-            label: `$${queryText}`
+            label: queryText
           })
         }
 
@@ -313,7 +302,7 @@ export default {
               return this.fetchTags(queryText)
             },
             dropdownLimit: 10,
-            minimumCharacters: 2,
+            minimumCharacters: 3,
             itemRenderer: item => {
               const div = document.createElement('div')
               div.classList.add('custom-item', 'hashtag-item')
@@ -321,7 +310,7 @@ export default {
               // สร้าง <span> สำหรับ hashtag symbol และ text
               const span = document.createElement('span')
               span.classList.add('hashtag-text')
-              span.textContent = `#${item.label}`
+              span.textContent = `${item.text}`
 
               div.appendChild(span)
               return div
@@ -335,7 +324,7 @@ export default {
               return this.fetchPeople(queryText)
             },
             dropdownLimit: 10,
-            minimumCharacters: 2,
+            minimumCharacters: 3,
             // ปรับ itemRenderer ให้แสดงผลเต็มรูปแบบ
             itemRenderer: item => {
               const div = document.createElement('div')
@@ -344,7 +333,7 @@ export default {
               // แสดงชื่อเต็มรูปแบบ
               const nameSpan = document.createElement('span')
               nameSpan.classList.add('mention-text')
-              nameSpan.textContent = item.label
+              nameSpan.textContent = `${item.text}`
 
               div.appendChild(nameSpan)
               return div
@@ -362,7 +351,7 @@ export default {
               return this.fetchPlace(queryText)
             },
             dropdownLimit: 10,
-            minimumCharacters: 2,
+            minimumCharacters: 3,
             itemRenderer: item => {
               const div = document.createElement('div')
               div.classList.add('custom-item', 'place-item')
@@ -381,7 +370,7 @@ export default {
               return this.fetchEvent(queryText)
             },
             dropdownLimit: 10,
-            minimumCharacters: 2,
+            minimumCharacters: 3,
             itemRenderer: item => {
               const div = document.createElement('div')
               div.classList.add('custom-item', 'event-item')
@@ -462,6 +451,28 @@ export default {
     if (this.editor) {
       this.editor.destroy()
       this.editor = null
+    }
+  },
+  apollo: {
+    newTagSuggestions: {
+      query: gql`
+        query ($query: String!) {
+          pages {
+            searchTags(query: $query)
+          }
+        }
+      `,
+      variables() {
+        return {
+          query: this.newTagSearch
+        }
+      },
+      fetchPolicy: 'cache-first',
+      update: (data) => _.get(data, 'pages.searchTags', []),
+      skip() {
+        return !this.value || _.isEmpty(this.newTagSearch)
+      },
+      throttle: 500
     }
   }
 }
@@ -681,6 +692,28 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 .theme--dark .ck-content {
   .mention {
     color: #64b5f6 !important;
+  }
+}
+
+// สำหรับ organization item
+.organization-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  color: #333;
+
+  &:hover {
+    color: #1976d2;
+  }
+}
+
+.theme--dark {
+  .organization-item {
+    color: #fff;
+
+    &:hover {
+      color: #64b5f6;
+    }
   }
 }
 </style>

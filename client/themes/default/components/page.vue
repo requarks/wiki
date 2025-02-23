@@ -185,13 +185,13 @@
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
 
             //- Tag คน
-            v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("@")).length > 0')
+            v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("@") && !t.tag.startsWith("@@")).length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') คน
                 v-chip.mr-1.mb-1(
                   label
                   :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-                  v-for='tag in tags.filter(t => t.tag.startsWith("@"))'
+                  v-for='tag in tags.filter(t => t.tag.startsWith("@") && !t.tag.startsWith("@@"))'
                   :href='`/คน/` + tag.tag.substring(1)'
                   :key='`tag-` + tag.tag'
                   )
@@ -226,11 +226,25 @@
                   v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-calendar-clock
                   span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(1)}}
 
+            v-card.page-tags-card.mb-5(v-if='tags.filter(t => t.tag.startsWith("@@")).length > 0')
+              .pa-5
+                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') กลุ่มหรือองค์กร
+                v-chip.mr-1.mb-1(
+                  label
+                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
+                  v-for='tag in tags.filter(t => t.tag.startsWith("@@"))'
+                  :href='`/กลุ่มหรือองค์กร/` + tag.tag.substring(2).split("/").reverse().join("/")'
+                  :key='`tag-` + tag.tag'
+                  )
+                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-account-group
+                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title.substring(2)}}
+
             //- ข้อมูลที่เกี่ยวข้อง
             v-card.page-person-card.mb-5(v-if='isSpecialTags')
               .pa-5
                 .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
                   span(v-if="path.includes('/คน/')") ข้อมูลบุคคล
+                  span(v-else-if="path.includes('/กลุ่มหรือองค์กร/')") ข้อมูลกลุ่มหรือองค์กร
                   span(v-else-if="path.includes('/เหตุการณ์/')") ข้อมูลเหตุการณ์
                   span(v-else-if="path.includes('/สถานที่/')") ข้อมูลสถานที่
 
@@ -702,7 +716,8 @@ export default {
     },
     isSpecialTags() {
       return this.path.startsWith('คน/') || this.path.startsWith('th/คน/') || this.path.startsWith('เหตุการณ์/') ||
-        this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/')
+        this.path.startsWith('th/เหตุการณ์/') || this.path.startsWith('สถานที่/') || this.path.startsWith('th/สถานที่/') ||
+        this.path.startsWith('กลุ่มหรือองค์กร/') || this.path.startsWith('th/กลุ่มหรือองค์กร/')
     },
     getTagsNameFromPath() {
       const pathParts = this.path.split('/')
@@ -864,6 +879,9 @@ export default {
             break
           case 'คน':
             prefix = '@'
+            break
+          case 'กลุ่มหรือองค์กร':
+            prefix = '@@'
             break
         }
 

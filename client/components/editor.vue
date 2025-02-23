@@ -280,9 +280,9 @@ export default {
 
       // หา tags ที่อยู่ใน originalTag แต่ไม่อยู่ใน matches
       this.tagsFromExistingContent = matches
-      console.log('Tags จากข้อความ: ', this.tagsFromExistingContent)
+
       const tagsOnlyInOriginal = originalTag.filter(tag => !matches.includes(tag))
-      console.log('Tags ที่อยู่ใน originalTag แต่ไม่อยู่ในข้อความ: ', tagsOnlyInOriginal)
+      // console.log('Tags ที่อยู่ใน originalTag แต่ไม่อยู่ในข้อความ: ', tagsOnlyInOriginal)
       this.tagsFromSetting = tagsOnlyInOriginal
     },
     openPropsModal(name) {
@@ -304,24 +304,25 @@ export default {
       const content = this.$store.get('editor/content')
       // const originalTag = this.$store.get('page/tags')
 
-      // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (tag), @ (คน), ! (สถานที่), $ (เหตุการณ์)
-      const regex = /(?:^|\s|>)([#@!$](?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*))/g
+      // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (tag), @ (คน), ! (สถานที่), $ (เหตุการณ์), @@ (กลุ่ม/องค์กร)
+      const regex = /(?:^|\s|>)([#@!$](?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)|@@(?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*))/g
 
       // ดึง matches และลบ # ออก
       const matches = [...content.matchAll(regex)].map(match => {
-        if (match[1].startsWith('#')) {
+        if (match[1]?.startsWith('#')) {
           return match[1].substring(1)
         }
-        return match[1]
+        return match[0].startsWith('@@') ? match[0] : match[1]
       })
+      console.log(matches)
       // console.log('Tags จากของใหม่: ', originalTag)
       // console.log('Tags จากของเดิมที่มีในเนื้อหา: ', this.tagsFromExistingContent)
       // console.log('Tags จากเนื้อหาปัจจุบัน: ', matches)
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
-      // const combinedTags = Array.from(new Set([...this.tagsFromSetting, ...matches]))
+      const combinedTags = Array.from(new Set([...matches]))
 
       // บันทึกผลรวมกลับไปใน Store
-      this.$store.set('page/tags', matches)
+      this.$store.set('page/tags', combinedTags)
       // console.log(matches)
 
       const saveTimeoutHandle = setTimeout(() => {
@@ -609,21 +610,35 @@ export default {
     // PPLE Customize
     // ===============================
     async findNewTags() {
-      // ดึงเนื้อหาจาก editor
       const tags = this.$store.get('page/tags')
 
-      // ตรวจสอบหาแท็กใหม่ที่ขึ้นต้นด้วย @
-      console.log(tags)
+      // ตรวจสอบหาแท็กใหม่ที่ขึ้นต้นด้วย @, @@, $ หรือ !
       await this.extractNewTags(tags)
     },
     async extractNewTags(tags) {
       for (const tag of tags) {
-        // ตรวจสอบเฉพาะแท็กที่ขึ้นต้นด้วย @, $ หรือ !
-        if (tag.startsWith('@') || tag.startsWith('$') || tag.startsWith('!')) {
+        // ตรวจสอบเฉพาะแท็กที่ขึ้นต้นด้วย @, @@, $ หรือ !
+        if (tag.startsWith('@') || tag.startsWith('@@') || tag.startsWith('$') || tag.startsWith('!')) {
           let tagName = ''
           let tagPath = ''
 
-          if (tag.startsWith('@')) {
+          if (tag.startsWith('@@')) {
+            tagName = tag.substring(2)
+
+            const parts = tagName.split('/')
+
+            if (parts.length > 1) {
+              // กรณีมีหลายระดับ เช่น กรรมาธิการ/รัฐสภา
+              tagPath = 'กลุ่มหรือองค์กร'
+              // สลับลำดับจากท้ายไปหน้า
+              for (let i = parts.length - 1; i >= 0; i--) {
+                tagPath += '/' + parts[i].trim()
+              }
+            } else {
+              // กรณีระดับเดียว
+              tagPath = `กลุ่มหรือองค์กร/${tagName}`
+            }
+          } else if (tag.startsWith('@')) {
             tagName = tag.substring(1)
             tagPath = `คน/${tagName}`
           } else if (tag.startsWith('$')) {
@@ -669,7 +684,7 @@ export default {
           console.log(response.data.pages.singleByPath)
           if (!response.data.pages.singleByPath) {
             console.log(`ยังไม่มีหน้าสำหรับ ${tag}: false`)
-            const type = tag.startsWith('@') ? 'person' : tag.startsWith('$') ? 'event' : 'place'
+            const type = tag.startsWith('@@') ? 'organization' : tag.startsWith('@') ? 'person' : tag.startsWith('$') ? 'event' : 'place'
             await this.createPageForTag(tagName, type)
           }
         }
@@ -680,12 +695,28 @@ export default {
         let path = ''
         let prefix = ''
         let title = ''
+        let parts = []
 
         switch (type) {
+          case 'organization':
+            // กรณีกลุ่มหรือองค์กร ต้องสลับลำดับถ้ามีหลายระดับ
+            parts = tagName.split('/')
+            if (parts.length > 1) {
+              path = 'กลุ่มหรือองค์กร'
+              for (let i = parts.length - 1; i >= 0; i--) {
+                path += '/' + parts[i].trim()
+              }
+              title = parts[0]
+            } else {
+              path = `กลุ่มหรือองค์กร/${tagName}`
+              title = tagName
+            }
+            prefix = '@@'
+            break
           case 'person':
             path = `คน/${tagName}`
             prefix = '@'
-            title = tagName
+            title = tagName.replace(/-/g, ' ')
             break
           case 'event':
             path = `เหตุการณ์/${tagName}`
@@ -694,7 +725,7 @@ export default {
             break
           case 'place':
             // กรณีสถานที่ ต้องสลับลำดับถ้ามีหลายระดับ
-            const parts = tagName.split('/')
+            parts = tagName.split('/')
             if (parts.length > 1) {
               path = 'สถานที่'
               for (let i = parts.length - 1; i >= 0; i--) {
