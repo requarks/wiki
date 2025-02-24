@@ -1,0 +1,77 @@
+## example to run playbook on dev1: ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=dev1"  
+## example to run playbook on all: ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=all"  
+---
+- name: Install k3s kubernetes cluster
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+    - role: install-kubernetes
+
+- name: Install helm
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+    - role: install-helm
+
+- name: Install nginx ingress
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+   - role: install-nginx
+
+- name: Ensure kustomize is installed
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  tasks:
+   - name: Install kustomize
+     shell: |
+        if [ ! -f /usr/local/bin/kustomize ]; then
+          curl -LO "https://github.com/kubernetes-sigs/kustomize/releases/latest/download/kustomize_v5.4.3_linux_amd64.tar.gz";
+          tar -xvf kustomize_v5.4.3_linux_amd64.tar.gz;
+          sudo mv kustomize /usr/local/bin/;
+          rm kustomize_v5.4.3_linux_amd64.tar.gz;
+        fi
+
+- name: Ensure Sealed Secrets Controller and kubeseal CLI are installed
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  vars:
+    kubeseal_version: "0.27.1"
+    sealed_secrets_namespace: "kube-system"
+    sealed_secrets_release_name: "sealed-secrets"
+    sealed_secrets_fullname_override: "sealed-secrets-controller"
+
+  tasks:
+    - name: Install Sealed Secrets Controller
+      shell: |
+        if ! helm status {{ sealed_secrets_release_name }} -n {{ sealed_secrets_namespace }} &>/dev/null; then
+          helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets;
+          helm repo update;
+          helm upgrade --install {{ sealed_secrets_release_name }} \
+            -n {{ sealed_secrets_namespace }} \
+            --create-namespace \
+            --set-string fullnameOverride={{ sealed_secrets_fullname_override }} \
+            sealed-secrets/sealed-secrets;
+        fi
+
+
+    - name: Install kubeseal CLI
+      shell: |
+        if ! command -v kubeseal &> /dev/null; then
+          curl -OL "https://github.com/bitnami-labs/sealed-secrets/releases/download/v{{ kubeseal_version }}/kubeseal-{{ kubeseal_version }}-linux-amd64.tar.gz";
+          tar -xvzf kubeseal-{{ kubeseal_version }}-linux-amd64.tar.gz kubeseal;
+          sudo install -m 755 kubeseal /usr/local/bin/;
+          rm kubeseal-{{ kubeseal_version }}-linux-amd64.tar.gz;
+        fi
+        
+- name: Install longhron
+  hosts: "{{ host }}"
+  become: false
+  become_user: deployer
+  roles:
+    - role: install-longhorn

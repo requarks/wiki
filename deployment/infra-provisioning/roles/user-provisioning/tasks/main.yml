@@ -1,0 +1,44 @@
+---
+- name: Ensure docker group is present
+  group:
+    name: docker
+    state: present
+
+- name: Ensure users are present
+  user:
+    name: "{{ item.name }}"
+    state: present
+    create_home: yes
+    shell: "{{ item.shell }}"
+    groups: "{{ item.groups }}"
+  loop: "{{ users }}"
+
+- name: Add authorized keys for users
+  authorized_key:
+    user: "{{ item.name }}"
+    state: present
+    key: "{{ item.pubkey }}"
+  loop: "{{ users }}"
+  when: item.pubkey is defined
+
+- name: Ensure the deployment user exists
+  user:
+    name: "{{ username }}"
+    shell: /bin/bash
+    createhome: yes
+
+- name: Create .ssh directory
+  file:
+    path: "/home/{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: '0700'
+
+- name: Add all users' public keys to deployer
+  authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ item.pubkey }}"
+  loop: "{{ users }}"
+  when: item.pubkey is defined

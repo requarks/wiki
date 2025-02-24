@@ -1,0 +1,130 @@
+default:
+  tags:
+    - runner_mar
+    
+variables:
+   NEW_IMAGE: "${IMAGE}:${VERSION}"
+   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "parent_pipeline"
+
+stages:
+  - setup-remotehost
+  - infra-provisioning
+  - k3scluster-health-check
+  - monitoring
+  - argocd
+  - promote-release-version
+  - cleanup
+
+setup-remotehost:
+  stage: setup-remotehost
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY_PROD" | base64 -d | tr -d '\r' | ssh-add - #Generate key and add its variables!!! MASK IT
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh/
+    - echo "$SSH_PRIVATE_KEY_PROD" | base64 -d > ~/.ssh/id_rsa #Generate key and add its variables!!! MASK IT
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa de-muc-mar4.apps.ce.capgemini.com >> ~/.ssh/known_hosts
+    
+
+infra-provisioning:
+  stage: infra-provisioning
+  image: ansible/ansible
+  script:
+    - echo "infrastructure provisioning includes k3s, helm,ingress, kustomize, kubeseal"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook playbook-kuberntes-setup.yml -i inventory -e "host=prod"
+  environment:
+    name: $ENVIRONMENT
+  
+k3scluster-health-check:
+  stage: k3scluster-health-check
+  script: 
+    - |
+      ssh deployer@de-muc-mar4.apps.ce.capgemini.com << 'EOF'
+        echo "Check kubelet Status"
+        kubeletStatus=$(systemctl status k3s | grep -i "Active: active (running)")
+
+        if [ -n "$kubeletStatus" ]; then
+          echo "kubelet service is active and running."
+        else
+          echo "kubelet service is not active and running. Deployment cannot proceed."
+          exit 1
+        fi
+
+        nodeName=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
+        echo "Check nodes readiness ${nodeName}"
+
+        nodeStatus=$(kubectl get nodes | grep -i ready)
+        echo "Node status is ${nodeStatus}"
+
+        if [ -n "$nodeStatus" ]; then
+          echo "Node(s) are ready."
+        else
+          echo "No nodes are ready. Deployment cannot proceed."
+          exit 1
+        fi
+      EOF
+
+monitoring:
+  stage: monitoring
+  image: ansible/ansible
+  script:
+    - echo "Deploying monitoring"
+    - cd ./deployment/monitoring
+    - ansible-playbook monitoring-playbook.yaml -i inventory  -e hostname=prod -vv
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: '$MONITORING == "yes"'
+      when: on_success
+    - if: '$MONITORING != "yes"'
+      when: never
+
+argocd:
+  stage: argocd
+  image: ansible/ansible
+  script:
+    - echo "install argocd in kubernetes cluster"
+    - cd ./deployment/infra-provisioning
+    - ansible-playbook argocd-install-playbook.yml -i inventory -e "env=prod"  -vv
+    - echo "Configure and deploy capwiki appProject and application on argocd in kubernetes cluster"
+    - cd ../argocd/ansible
+    - ansible-playbook argocd-capwiki-deploy-playbook.yaml -i inventory  -e env=prod  -vv
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: '$ARGOCD == "yes"'
+      when: on_success
+    - if: '$ARGOCD != "yes"'
+      when: never
+
+promote-release-version:
+  stage: promote-release-version
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+  script:
+    - echo "upgrade Docker image to release version $VERSION"
+    - echo "Staging Image is $STAGING_IMAGE"
+    - |
+      if ! docker pull $STAGING_IMAGE; then
+        echo "Error: Staging image $STAGING_IMAGE does not exist or could not be pulled."
+        exit 1
+      fi
+    - IMAGE_CREATED=$(docker inspect --format='{{.Created}}' $STAGING_IMAGE)
+    - echo "Staging Image Created at $IMAGE_CREATED"
+    - docker tag  $STAGING_IMAGE $NEW_IMAGE
+    - docker push $NEW_IMAGE
+    - docker logout $DOCKER_REGISTRY
+    - docker rmi $STAGING_IMAGE
+    - docker rmi $NEW_IMAGE 
+
+cleanup:
+  stage: cleanup
+  script:
+    - rm -f /home/mar/.ssh/id_rsa
+  when: always

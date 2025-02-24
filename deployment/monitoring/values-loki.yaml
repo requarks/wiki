@@ -1,0 +1,49 @@
+loki:
+  enabled: true
+  nodeSelector:
+    kubernetes.io/hostname: "k3s-master-01"
+  isDefault: false
+  image:
+    tag: 2.9.7
+  config:
+    limits_config:
+      reject_old_samples: true
+      reject_old_samples_max_age: 24h #@TODO make it 48 or 72 hrs after testing
+      retention_period: 24h
+    compactor:
+      retention_enabled: true
+      retention_delete_delay: 1h
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: 24h
+
+fluent-bit:
+  enabled: false
+
+promtail:
+  enabled: true
+  config:
+    logLevel: debug
+    ## MAR-540. Need to fix this configuration or feel free to use other configuration 
+    # snippets: 
+      #  pipelineStages:
+            # - cri: {}
+            # - match:
+                # selector: '{namespace!~"capwiki"}'
+                # action: drop
+            # - common:
+                # - action: replace
+                  # source_labels: [__meta_kubernetes_namespace]
+                  # target_label: namespace
+      #  scrapeConfigs: |
+      #   - job_name: kubernetes-pods
+      #     kubernetes_sd_configs:
+      #       - role: pod
+      #     relabel_configs:
+      #       - source_labels: [__meta_kubernetes_namespace]
+      #         action: keep
+      #         regex: capwiki
+      #       - source_labels: [__meta_kubernetes_pod_node_name]
+      #         action: replace
+      #         target_label: __path__
+      #         replacement: /var/log/pods/$1/*.log

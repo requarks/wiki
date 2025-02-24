@@ -371,6 +371,7 @@ export default {
         appearance: '',
         createdAt: '1970-01-01',
         updatedAt: '1970-01-01',
+        lastLoginAt: '1970-01-01',
         groups: []
       },
       currentPass: '',
@@ -898,6 +899,7 @@ export default {
               appearance
               createdAt
               updatedAt
+              lastLoginAt
               groups
               pagesTotal
             }

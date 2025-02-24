@@ -118,6 +118,12 @@ export default {
         { text: 'Path', value: 'path' },
         { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
+      lastLogins: [],
+      lastLoginsLoading: false,
+      lastLoginsHeaders: [
+        { text: 'User', value: 'displayName' },
+        { text: 'Last Login', value: 'lastLoginAt', width: 250 }
+      ],
       sitesTotal: 0
     }
   },
@@ -169,6 +175,25 @@ export default {
       watchLoading (isLoading) {
         this.recentPagesLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-recentpages')
+      }
+    },
+    lastLogins: {
+      query: gql`
+        query {
+          users {
+            lastLogins {
+              id
+              name
+              lastLoginAt
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => data.users.lastLogins,
+      watchLoading (isLoading) {
+        this.lastLoginsLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-lastlogins')
       }
     },
     sitesTotal: {

@@ -6,7 +6,6 @@ variables:
   TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
   STAGING_IMAGE_TAG: 'latest-staging'
-  STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
 
   ENVIRONMENT:
     value: "none"
@@ -17,7 +16,6 @@ variables:
       - "staging"
       - "production"
     description: "Choose on which environment should pipeline run"
-<<<<<<< HEAD
   MONITORING:
     value: "no"
     options:
@@ -34,13 +32,14 @@ variables:
     value: "1.0.0"
     description: "Specify the version [ONLY USED FOR STAGING or PRODUCTION]"
   MESSAGE:
-=======
-
-  IMAGE_TAG:
->>>>>>> develop
     value: ""
-    description: "Specify the image tag: for dev use MAR-<Jira-ticket-nr> ; for staging (ignore i.e has default value latest-staging);  for prod, use tags ex: 1.0.0 etc"
-
+    description: "Specify a tagging message [ONLY USED FOR STAGING or PRODUCTION]"
+  CONTAINER_SCANNING:
+    value: "false"
+    options:
+      - "true"
+      - "false"
+    description: "Choose true if you want to scan the images"
   SONARQUBE:
     value: "true"
     options:
@@ -54,7 +53,6 @@ default:
     - runner_mar
   before_script:
     - |
-<<<<<<< HEAD
      NPM_GLOBAL_DIR="$HOME/.npm-global"
      if [ -d "$NPM_GLOBAL_DIR" ]; then
         echo "Directory $TARGET_DIR exists. Deleting it..."
@@ -65,68 +63,17 @@ default:
     - export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
     - npm install -g yarn
     - node -v && npm -v && yarn -v
-=======
-      NPM_GLOBAL_DIR="$HOME/.npm-global"
-      if [ -d "$NPM_GLOBAL_DIR" ]; then
-          echo "Directory $TARGET_DIR exists. Deleting it..."
-          rm -rf "$NPM_GLOBAL_DIR"
-      fi
-      mkdir -p "$NPM_GLOBAL_DIR/bin"
-      npm config set prefix "$NPM_GLOBAL_DIR"
-      export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
-      npm install -g yarn
-      node -v && npm -v && yarn -v
->>>>>>> develop
 
 stages:
   - build
   - test
   - sonarqube
-<<<<<<< HEAD
   - container-scan
   - infra-provision
   - modify_package_json #Need to remove this stage when MAR-444 task is done.
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
-=======
-  - modify-package-json #Need to remove this stage when MAR-444 task is done.
-  - docker-build
-  - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
-  - promote-prod-release-version
->>>>>>> develop
 
-build:
- stage: build
- script:
-    - yarn cache clean
-    - rm -rf node_modules
-    - yarn install --frozen-lockfile
-    - yarn build
- rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - when: always
-
-test:
-  stage: test
-  dependencies:
-    - build
-  script:
-    - yarn add jest-junit --dev
-    - yarn jest --coverage # Run tests
-    ## Below cmnds can be run after fixing lint errors in the codebase
-    #- yarn eslint --ext .js,.vue .
-    # - yarn pug-lint server/views
-  artifacts:
-    expire_in: 1 hr
-    when: on_success
-    paths:
-      - coverage
-      - test-results
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - when: on_success
 
 build:
  stage: build
@@ -185,7 +132,6 @@ sonarqube-scan:
     - if: $SONARQUBE == "true"
       when: on_success
 
-<<<<<<< HEAD
 container_scanning:
   stage: container-scan
   trigger:
@@ -256,45 +202,37 @@ prod-pipeline:
 
 modify_package_json:
   stage: modify_package_json
-=======
-modify-package-json:
-  stage: modify-package-json
->>>>>>> develop
   image: node:alpine
   before_script:
     # Make the scripts executable
-    - chmod +x gitlab/modify-app-dev-mode.js
-    - chmod +x gitlab/modify-app-releasedate-version.js
+    - chmod +x ./modify-app-dev-mode.js
+    - chmod +x ./modify-app-releasedate-version.js
   script:
     - echo "Modify package json i.e release date and version"
     # This node.js script will run in all environments
-    - node gitlab/modify-app-releasedate-version.js "$IMAGE_TAG"
+    - node ./modify-app-releasedate-version.js "$VERSION"
+
     # Conditionally run this script only in staging or production environments
     - |
-<<<<<<< HEAD
       if [[ "$ENVIRONMENT" == "staging" || "$ENVIRONMENT" == "production"  || $CI_COMMIT_REF_NAME == "develop" || ($CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ ^(feature|task|hotfix|improvement|bugfix|docs)\/ ) ]]; then
-=======
-      if [[ "$ENVIRONMENT" == "staging" || $CI_COMMIT_REF_NAME == "develop" ]]; then
->>>>>>> develop
         echo "Modify package json dev mode to false for $ENVIRONMENT"
-        node gitlab/modify-app-dev-mode.js false
+        node ./modify-app-dev-mode.js false
       else
         echo "Skipping modify-app-dev-mode.sh in non-staging/non-production environments"
       fi
+
     # Confirm the changes
     - cat package.json | grep -E '"version"|"releaseDate"|"dev"' | sed 's/[",]//g'
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH == "develop" || ($CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "develop" && $ENVIRONMENT == "staging")'
-      when: always
+    - when: always
   # Artifacts to persist changes for later stages
   artifacts:
     paths:
       - package.json
 
 
-<<<<<<< HEAD
 build-docker-image:
   stage: docker-build
   before_script:
@@ -319,26 +257,15 @@ build-docker-image:
       # Fallback if IMAGE_TAG is still empty
       if [[ -z "$IMAGE_TAG" ]]; then
         echo "ERROR: IMAGE_TAG is empty. Cannot proceed."
-=======
-docker-build:
-  stage: docker-build
-  before_script:
-    - |
-      chmod +x gitlab/set-image-tag.sh
-      bash gitlab/set-image-tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
-      source image_tag.env
-      echo "Image tag is ${IMAGE_TAG_BY_ENV}"
-      if [[ -z "$IMAGE_TAG_BY_ENV" ]]; then
-        echo "❌ ERROR: IMAGE_TAG_BY_ENV is empty. so could not build docker image."
->>>>>>> develop
         exit 1
+      elif [[ -n "$IMAGE_TAG" ]]; then
+        # Log the IMAGE_TAG value
+        echo "IMAGE_TAG is set to: $IMAGE_TAG"
       fi
-      docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-      export NEW_IMAGE="${IMAGE}:$IMAGE_TAG_BY_ENV"
+      export NEW_IMAGE="${IMAGE}:$IMAGE_TAG"
       echo "Constructed NEW_IMAGE: $NEW_IMAGE"
-      rm image_tag.env
   script:
-    - echo "Building Docker image for environment $ENVIRONMENT"
+    - echo "Building Docker image"
     - docker build --no-cache -f Dockerfile -t "$NEW_IMAGE" .
     - echo "NEW_IMAGE=$NEW_IMAGE" > newimage.txt
   artifacts:
@@ -351,21 +278,14 @@ docker-build:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-<<<<<<< HEAD
     - when: always
-=======
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: always
-    - if: '$CI_COMMIT_BRANCH == "develop" || ($CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "develop" && $ENVIRONMENT == "staging")'
-      when: always
->>>>>>> develop
 
 push-docker-image:
   stage: docker-push
   needs:
-   - docker-build
+    - build-docker-image
   before_script:
-   - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
     - source newimage.txt
     - echo "Pushing Docker image"
@@ -376,44 +296,4 @@ push-docker-image:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-<<<<<<< HEAD
     - when: on_success
-=======
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: on_success
-    - if: '$CI_COMMIT_BRANCH == "develop" || ($CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "develop" && $ENVIRONMENT == "staging")'
-      when: on_success
-
-promote-prod-release-version:
-  stage: promote-prod-release-version
-  before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-  script:
-    - echo "upgrade Docker image to release version $VERSION"
-    - echo "Staging Image is $STAGING_IMAGE"
-    - |
-      if ! docker pull $STAGING_IMAGE; then
-        echo "Error: Staging image $STAGING_IMAGE does not exist or could not be pulled."
-        exit 1
-      fi
-    - IMAGE_CREATED=$(docker inspect --format='{{.Created}}' $STAGING_IMAGE)
-    - echo "Staging Image Created at $IMAGE_CREATED"
-    - docker tag  $STAGING_IMAGE $NEW_IMAGE
-    - docker push $NEW_IMAGE
-    - docker logout $DOCKER_REGISTRY
-    - docker rmi $STAGING_IMAGE
-    - docker rmi $NEW_IMAGE
-  rules:
-   - if: $CI_PIPELINE_SOURCE == "schedule"
-     when: never
-   - if: '$CI_COMMIT_BRANCH == "main" || ($CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "production" && $CI_COMMIT_BRANCH == "main")'
-     when: always
-
-after_script:
-    - |
-      NPM_GLOBAL_DIR="$HOME/.npm-global"
-      if [ -d "$NPM_GLOBAL_DIR" ]; then
-          echo "Directory $TARGET_DIR exists. Deleting it..."
-          rm -rf "$NPM_GLOBAL_DIR"
-      fi
->>>>>>> develop

@@ -1,0 +1,10 @@
+---
+username: deployer
+k3s_installer: https://get.k3s.io/
+INSTALL_K3S_VERSION: v1.31.4+k3s1
+users:
+  - hgurudu
+  - deployer
+  - gdamen
+  - kkurda
+  - myefimen
