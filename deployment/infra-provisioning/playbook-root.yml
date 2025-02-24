@@ -1,0 +1,29 @@
+---
+
+## To execute tasks as root, Need to set ansible_user in host to the ansible controller logined user like  ansible_user=<ansible contoller logined user>  below example :
+## dev-machine-1 ansible_host=de-muc-mar1.apps.ce.capgemini.com ansible_user=hgurudu
+
+## example to run playbook on dev1: ansible-playbook playbook-root.yml -i inventory -e "host=dev1"  
+## example to run playbook on all: ansible-playbook playbook-root.yml -i inventory -e "host=all"  
+
+- name: Install Docker on all machines
+  hosts: "{{ host }}"
+  become: true
+  roles:
+    - role: install-docker
+
+- name: Configure users on all machines
+  hosts: "{{ host }}"
+  become: true
+  roles:
+    - role: user-provisioning
+
+- hosts: all
+  become: true
+  tasks:
+    - name: Allow 'deployer' to run sudo without password
+      copy:
+        dest: /etc/sudoers.d/deployer
+        content: "deployer ALL=(ALL) NOPASSWD: ALL\n"
+      become: yes
+      become_user: root

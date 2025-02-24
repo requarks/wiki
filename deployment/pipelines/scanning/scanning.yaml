@@ -1,0 +1,92 @@
+variables:
+  TRIVY_VERSION: "latest"
+  POSTGRES_IMAGE_NAME: "postgresql"
+  CAPWIKI_IMAGE_NAME: "capwiki"
+  POSTGRES_IMAGE: "bitnami/postgresql:17.2.0-debian-12-r5"
+  CAPWIKI_IMAGE: "$DOCKER_REGISTRY/$PROJECT_NAME/$APP_NAME:latest"
+  TRIVY_USERNAME: "$DOCKER_REGISTRY_USER"
+  TRIVY_PASSWORD: "$DOCKER_REGISTRY_PASS"
+
+stages:
+  - check_limit_rate
+  - postgres
+  - capwiki
+  - monitoring
+  - verify_monitoring
+
+.scan_template: &scan_template
+  tags:
+  - docker_runner
+  allow_failure: true
+  image:
+    name: aquasec/trivy:$TRIVY_VERSION
+    entrypoint: [""]
+  artifacts:
+    when: always
+    paths:
+      - trivy-report-*.json
+      - trivy-report-*.html
+
+.trivy_script_template: &trivy_script_template
+  - trivy image --no-progress --timeout 30m --format json --output trivy-report-${SCAN_IMAGE_NAME}.json ${SCAN_IMAGE}
+  - trivy convert --format template --template "@/contrib/html.tpl" --output trivy-report-${SCAN_IMAGE_NAME}.html trivy-report-${SCAN_IMAGE_NAME}.json
+  - trivy image --no-progress --severity MEDIUM,HIGH,CRITICAL --exit-code 1 ${SCAN_IMAGE}
+
+check_limit_rate:
+  <<: *scan_template
+  stage: check_limit_rate
+  before_script:
+    - apk update && apk add curl jq
+  script: |  # the purpose of those two lines is to check, whether the limit for pulling docker images is exceeded
+    TOKEN=$(curl "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token)
+    curl --head -H "Authorization: Bearer $TOKEN" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest  
+
+scan_postgres_image:
+  <<: *scan_template
+  stage: postgres
+  variables:
+    SCAN_IMAGE_NAME: $POSTGRES_IMAGE_NAME
+    SCAN_IMAGE: $POSTGRES_IMAGE
+  script:
+    - *trivy_script_template
+
+scan_capwiki_image:
+  <<: *scan_template
+  stage: capwiki
+  variables:
+    SCAN_IMAGE_NAME: $CAPWIKI_IMAGE_NAME
+    SCAN_IMAGE: $CAPWIKI_IMAGE
+  script:
+    - *trivy_script_template
+
+scan_monitoring_helm:
+  <<: *scan_template
+  stage: monitoring
+  script:
+    - apk add bash curl openssl
+    - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3; chmod 700 get_helm.sh; ./get_helm.sh
+    - helm plugin install https://github.com/nikhilsbhat/helm-images
+    - cd deployment/pipelines/scanning/
+    - chmod +x scripts/helm_repo_add.sh; scripts/helm_repo_add.sh
+    - chmod +x scripts/helm_scanner.sh; scripts/helm_scanner.sh
+    - echo "Checking for HIGH or CRITICAL vulnerabilities in scan results..."
+  artifacts:
+    paths:
+      - "deployment/pipelines/scanning/*.json"
+      - "deployment/pipelines/scanning/*.html"
+
+scan_verify:
+  <<: *scan_template
+  stage: verify_monitoring
+  dependencies:
+    - scan_monitoring_helm
+  script:
+    - echo "Verifying scan results..."
+    - if grep -q '"Severity"[[:space:]]*:[[:space:]]*"HIGH"\|"Severity"[[:space:]]*:[[:space:]]*"CRITICAL"' deployment/pipelines/scanning/*.json; then
+        echo "High or Critical severity vulnerabilities found.";
+        exit 1;
+      else
+        echo "No High or Critical severity vulnerabilities found.";
+      fi
+
+

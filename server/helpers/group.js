@@ -67,7 +67,8 @@ const rulesToSitesAdmin = (rules) => {
     if (
       rule.deny === false &&
       rule.sites &&
-      rule.sites.length > 0 
+      rule.sites.length > 0 &&
+      rule.roles.includes('manage:sites')
     ) {
       siteIds = siteIds.concat(rule.sites)
     }

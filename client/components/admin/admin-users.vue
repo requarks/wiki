@@ -59,6 +59,9 @@
                 td {{ props.item.email }}
                 td {{ getStrategyName(props.item.providerKey) }}
                 td {{ props.item.createdAt | moment('from') }}
+                td
+                  span(v-if='props.item.lastLoginAt') {{ props.item.lastLoginAt | moment('from') }}
+                  em.grey--text(v-else) Never
                 td.text-right
                   v-icon.mr-3(v-if='props.item.isSystem') mdi-lock-outline
                   status-indicator(positive, pulse, v-if='props.item.isActive')
@@ -99,6 +102,7 @@ export default {
         { text: 'Email', value: 'email', sortable: true },
         { text: 'Provider', value: 'provider', sortable: true },
         { text: 'Created', value: 'createdAt', sortable: true },
+        { text: 'Last Login', value: 'lastLoginAt', sortable: true },
         { text: '', value: 'actions', sortable: false, width: 80 }
       ],
       strategies: [],
@@ -145,6 +149,7 @@ export default {
               isSystem
               isActive
               createdAt
+              lastLoginAt
             }
           }
         }

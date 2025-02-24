@@ -1,0 +1,48 @@
+---
+#export IMAGE=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki
+#export NEW_IMAGE_WITH_TAG=docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki:<image_tag>
+# to execute, use cmnd ansible-playbook  -i inventory ./playbook-deploy.yml -e "IMAGE='$IMAGE' NEW_IMAGE_WITH_TAG='$NEW_IMAGE_WITH_TAG' env=dev" -vv
+- name: Deploy application using helm-kustomize
+  hosts: "{{ env }}" # to use "dev" for development
+  become: false  # Ensure that only  user privileges are used
+  become_user: "{{ username }}" 
+  vars_files:
+    - ./vars/variables.yml
+   
+  tasks:
+    - name: Remove helm-kustomize folder and it's contents
+      file: 
+        state: absent
+        path: "/home/{{ username }}/{{ target_dir_helm_kustomize }}"
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Create target directory for helm-kustomize chart if it does not exist
+      ansible.builtin.file:
+        path: "/home/{{ username }}/{{ target_dir_helm_kustomize }}"
+        state: directory
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Copy kubernetes manifest files (kustomized helm chart) to remote VM
+      ansible.builtin.copy:
+        src: "{{ helm_kustomize_directory }}/"
+        dest: "/home/{{ username }}/{{ target_dir_helm_kustomize }}/"
+        mode: '0700'
+        owner: "{{ username }}"
+        group: "{{ username }}"
+
+    - name: Check if k3s cluster is healthy
+      ansible.builtin.shell: |
+        {{ k3s_check_command }}
+      register: k3s_status
+      failed_when: "'Ready' not in k3s_status.stdout"
+      changed_when: false
+
+    - name: Deploy application using kustomized helm chart
+      ansible.builtin.shell: |
+        cd /home/{{ username }}/{{ target_dir_helm_kustomize }}
+        ./deploy.sh {{ env }} {{ IMAGE }} {{ NEW_IMAGE_WITH_TAG }}
+      register: kustomize_deploy
+      failed_when: kustomize_deploy.rc != 0

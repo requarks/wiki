@@ -1,0 +1,3 @@
+# Production environment
+[prod]
+production-machine ansible_host=de-muc-mar4.apps.ce.capgemini.com ansible_user=deployer

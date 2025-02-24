@@ -1,0 +1,4 @@
+---
+username: deployer
+target_directory: "/home/deployer/backup/postgres"  # Replace with your directory
+retention_period_days: 30  # Files older than 30 days will be deleted

@@ -579,12 +579,6 @@ export default {
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
-      document.getElementsByClassName("CodeMirror-code")[0].focus()
-      this.$store.commit('showNotification', {
-        message: 'To exit the Distraction Free Mode, press Esc.',
-        style: 'info',
-        icon: 'check'
-      })
     },
     refresh() {
       this.$nextTick(() => {
@@ -618,9 +612,9 @@ export default {
               try {
                 const respRaw = await this.$apollo.query({
                   query: gql`
-                    query ($query: String!, $locale: String, $siteId: String!) {
+                    query ($query: String!, $locale: String) {
                       pages {
-                        search(query:$query, locale:$locale, siteId:$siteId) {
+                        search(query:$query, locale:$locale) {
                           results {
                             title
                             path
@@ -633,8 +627,7 @@ export default {
                   `,
                   variables: {
                     query: queryString,
-                    locale: this.locale,
-                    siteId: this.$store.get('page/siteId')
+                    locale: this.locale
                   },
                   fetchPolicy: 'cache-first'
                 })
