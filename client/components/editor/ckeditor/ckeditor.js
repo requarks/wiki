@@ -277,7 +277,11 @@ DecoupledEditor.defaultConfig = {
     ]
   },
   image: {
-    styles: ['full', 'alignLeft', 'alignRight'],
+    styles: [
+      'full',
+      'alignLeft',
+      'alignRight'
+    ],
     toolbar: [
       'imageStyle:alignLeft',
       'imageStyle:full',

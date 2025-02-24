@@ -59,13 +59,8 @@ export default {
     insertLink() {
       this.insertLinkDialog = true
     },
-    insertLinkHandler({ locale, path }) {
-      this.editor.execute(
-        'link',
-        siteLangs.length > 0
-          ? `/${this.sitePath}/${locale}/${path}`
-          : `/${this.sitePath}/${path}`
-      )
+    insertLinkHandler ({ locale, path }) {
+      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
     },
     insertDiagram() {
       this.isDiagramEdit = false
@@ -77,7 +72,7 @@ export default {
       this.toggleModal('editorModalDrawio')
     },
     toggleModal(modalKey) {
-      this.activeModal = this.activeModal === modalKey ? '' : modalKey
+      this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
     },
     getSelectedWidget() {
       return document.getElementsByClassName('image ck-widget_selected').item(0)
@@ -88,8 +83,7 @@ export default {
     },
     getDiagramCaption() {
       const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('figcaption').item(0).firstChild
-        .data
+      return selection.getElementsByTagName('figcaption').item(0).firstChild.data
     },
     setDiagramCaption(caption) {
       const selection = this.getSelectedWidget()
@@ -100,15 +94,10 @@ export default {
       const firefoxRE = /Firefox\/(\d{3})\.\d/
       const firefoxMatch = firefoxRE.exec(userAgent)
 
-      if (
-        (firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
-        (chromeMatch && Number(chromeMatch[1]) >= 124)
-      ) {
+      if ((firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
+        (chromeMatch && Number(chromeMatch[1]) >= 124)) {
         // The caption is sanatized by the ckEditor
-        selection
-          .getElementsByTagName('figcaption')
-          .item(0)
-          .setHTMLUnsafe(caption)
+        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption)
       } else if (chromeMatch && Number(chromeMatch[1]) < 124) {
         // setHTMLUnsafe is not available for earlier browser versions
         selection.getElementsByTagName('figcaption').item(0).setHTML(caption)
@@ -123,7 +112,7 @@ export default {
       placeholder: 'Type the page content here',
       disableNativeSpellChecker: false,
       wordCount: {
-        onUpdate: (stats) => {
+        onUpdate: stats => {
           this.stats = {
             characters: stats.characters,
             words: stats.words
@@ -137,20 +126,11 @@ export default {
       this.editor.setData(this.$store.get('editor/content'))
     }
 
-    this.editor.model.document.on(
-      'change:data',
-      _.debounce((evt) => {
-        this.$store.set(
-          'editor/content',
-          beautify(this.editor.getData(), {
-            indent_size: 2,
-            end_with_newline: true
-          })
-        )
-      }, 300)
-    )
+    this.editor.model.document.on('change:data', _.debounce(evt => {
+      this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
+    }, 300))
 
-    this.$root.$on('editorInsert', (opts) => {
+    this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
         case 'IMAGE':
           this.editor.execute('imageInsert', {
@@ -180,7 +160,7 @@ export default {
       }
     })
 
-    this.$root.$on('editorLinkToPage', (opts) => {
+    this.$root.$on('editorLinkToPage', () => {
       this.insertLink()
     })
 
@@ -201,7 +181,7 @@ export default {
     })
 
     // Track new mentions and remove old mentions
-    let new_mentions = new Map()
+    let newMentions = new Map()
 
     this.editor.model.document.on('change:data', (evt, data) => {
       const changes = data.operations.filter((op) => op.type === 'insert')
@@ -210,7 +190,7 @@ export default {
           if (node.hasAttribute('mention')) {
             let mention = node.getAttribute('mention')
             console.log('New mention detected:', node.getAttribute('mention'))
-            new_mentions.set(mention['uid'], mention)
+            newMentions.set(mention['uid'], mention)
           }
         }
       })
@@ -231,19 +211,19 @@ export default {
         }
       }
 
-      // Compare new_mentions with uidNodes and remove non-existing mentions
-      for (const [uid, mention] of new_mentions) {
+      // Compare newMentions with uidNodes and remove non-existing mentions
+      for (const [uid] of newMentions) {
         if (
           !uidNodes.some((node) => node.getAttribute('mention').uid === uid)
         ) {
-          new_mentions.delete(uid)
+          newMentions.delete(uid)
         }
       }
       // Set the mentions in the Vuex store
       this.$store.set(
         'editor/mentions',
         Array.from(
-          new_mentions.values().map((mention) => {
+          newMentions.values().map((mention) => {
             mention.id = mention.id.substring(1)
             return mention.id
           })
@@ -251,7 +231,7 @@ export default {
       )
     })
   },
-  beforeDestroy() {
+  beforeDestroy () {
     if (this.editor) {
       this.editor.destroy()
       this.editor = null
@@ -265,8 +245,8 @@ $editor-height: calc(100vh - 64px - 24px);
 $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
-  background-color: mc('grey', '200');
-  flex: 1 1 50%;
+  background-color: rgba(255,255,255,.25);
+  display:inline-flex;
   display: flex;
   flex-flow: column nowrap;
   height: $editor-height;
@@ -311,7 +291,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     border: none;
     justify-content: center;
     background-color: mc('grey', '300');
-    color: #fff;
+    color: #FFF;
   }
 
   .ck.ck-toolbar__items {
@@ -323,7 +303,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     overflow-y: auto;
     overflow-x: hidden;
     padding: 2rem;
-    box-shadow: 0 0 5px hsla(0, 0, 0, 0.1);
+    box-shadow: 0 0 5px hsla(0, 0, 0, .1);
     margin: 1rem auto 0;
     width: calc(100vw - 256px - 16vw);
     min-height: calc(100vh - 64px - 24px - 1rem - 40px);
@@ -331,7 +311,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 
     @at-root .theme--dark & {
       background-color: #303030;
-      color: #fff;
+      color: #FFF;
     }
 
     @include until($widescreen) {
@@ -353,16 +333,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
       @at-root .theme--dark & {
         border-color: #444;
         border-bottom: none;
-        box-shadow: 0 0 10px rgba(#000, 0.25);
+        box-shadow: 0 0 10px rgba(#000, .25);
       }
     }
 
     &.ck .ck-editor__nested-editable.ck-editor__nested-editable_focused,
     &.ck .ck-editor__nested-editable:focus,
-    .ck-widget.table
-      td.ck-editor__nested-editable.ck-editor__nested-editable_focused,
-    .ck-widget.table
-      th.ck-editor__nested-editable.ck-editor__nested-editable_focused {
+    .ck-widget.table td.ck-editor__nested-editable.ck-editor__nested-editable_focused,
+    .ck-widget.table th.ck-editor__nested-editable.ck-editor__nested-editable_focused {
       background-color: mc('grey', '100');
 
       @at-root .theme--dark & {
