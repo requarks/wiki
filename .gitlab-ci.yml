@@ -7,6 +7,7 @@ variables:
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
+  PROD_IMAGE: "${IMAGE}:${IMAGE_TAG}"
 
   ENVIRONMENT:
     value: "none"
@@ -205,7 +206,6 @@ promote-prod-release-version:
   before_script:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
-    - export NEW_IMAGE="${IMAGE}:$IMAGE_TAG_BY_ENV"
     - echo "upgrade Docker image to release version $VERSION"
     - echo "Staging Image is $STAGING_IMAGE"
     - |
@@ -215,11 +215,11 @@ promote-prod-release-version:
       fi
     - IMAGE_CREATED=$(docker inspect --format='{{.Created}}' $STAGING_IMAGE)
     - echo "Staging Image Created at $IMAGE_CREATED"
-    - docker tag  $STAGING_IMAGE $NEW_IMAGE
-    - docker push $NEW_IMAGE
+    - docker tag  $STAGING_IMAGE $PROD_IMAGE
+    - docker push $PROD_IMAGE
     - docker logout $DOCKER_REGISTRY
     - docker rmi $STAGING_IMAGE
-    - docker rmi $NEW_IMAGE
+    - docker rmi $PROD_IMAGE
   rules:
    - if: $CI_PIPELINE_SOURCE == "schedule"
      when: never
