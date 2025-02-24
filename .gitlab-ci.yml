@@ -33,13 +33,8 @@ variables:
     description: "Specify the version [ONLY USED FOR STAGING or PRODUCTION]"
   MESSAGE:
     value: ""
-    description: "Specify a tagging message [ONLY USED FOR STAGING or PRODUCTION]"
-  CONTAINER_SCANNING:
-    value: "false"
-    options:
-      - "true"
-      - "false"
-    description: "Choose true if you want to scan the images"
+    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
+
   SONARQUBE:
     value: "true"
     options:
