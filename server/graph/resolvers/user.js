@@ -13,7 +13,7 @@ module.exports = {
   UserQuery: {
     async list(obj, args, context, info) {
       return WIKI.models.users.query()
-        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'isActive', 'createdAt', 'lastLoginAt')
+        .select('id', 'email', 'name', 'providerKey', 'isSystem', 'isActive', 'createdAt')
     },
     async search(obj, args, context, info) {
       return WIKI.models.users.query()
@@ -46,19 +46,11 @@ module.exports = {
       const providerInfo = _.get(WIKI.auth.strategies, usr.providerKey, {})
 
       usr.providerName = providerInfo.displayName || 'Unknown'
-      usr.lastLoginAt = usr.lastLoginAt || usr.updatedAt
       usr.password = ''
       usr.providerId = ''
       usr.tfaSecret = ''
 
       return usr
-    },
-    async lastLogins (obj, args, context, info) {
-      return WIKI.models.users.query()
-        .select('id', 'name', 'lastLoginAt')
-        .whereNotNull('lastLoginAt')
-        .orderBy('lastLoginAt', 'desc')
-        .limit(10)
     }
   },
   UserMutation: {

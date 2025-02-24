@@ -94,17 +94,8 @@
             )
             v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
-              v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
-                template(v-for='(tocItem, tocIdx) in tocDecoded')
-                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
-                    v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                    v-list-item-title.px-3 {{tocItem.title}}
-                  //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
-                  template(v-for='tocSubItem in tocItem.children')
-                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
-                      v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                      v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
-                    //- v-divider(inset, v-if='tocIdx < toc.length - 1')
+              v-list.d-flex.flex-column.mb-0.pb-3.pl-1.pr-1(dense nav :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+                TreeItem(v-for='(tocItem, tocIdx) in tocDecoded' :key='tocIdx' :item='tocItem' :open.sync='openStates[tocItem.id]' :toggleOpenState='toggleOpenState' :openStates='openStates' :level='0' :uniqueId='tocItem.id')
 
             v-card.page-tags-card.mb-5(v-if='tags.length > 0')
               .pa-5
@@ -354,7 +345,9 @@ import mermaid from 'mermaid'
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
+import { v4 as uuidv4 } from 'uuid'
 import Vue from 'vue'
+import TreeItem from './tree-item.vue'
 
 Vue.component('Tabset', Tabset)
 
@@ -396,7 +389,8 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
-    StatusIndicator
+    StatusIndicator,
+    TreeItem
   },
   props: {
     pageId: {
@@ -494,6 +488,7 @@ export default {
   },
   data() {
     return {
+      openStates: {},
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
@@ -558,7 +553,17 @@ export default {
       return JSON.parse(Buffer.from(this.sidebar, 'base64').toString())
     },
     tocDecoded () {
-      return JSON.parse(Buffer.from(this.toc, 'base64').toString())
+      const toc = JSON.parse(Buffer.from(this.toc, 'base64').toString())
+      const addUniqueId = (items) => {
+        items.forEach(item => {
+          item.id = uuidv4()
+          if (item.children && item.children.length > 0) {
+            addUniqueId(item.children)
+          }
+        })
+      }
+      addUniqueId(toc)
+      return toc
     },
     tocPosition: get('site/tocPosition'),
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
@@ -577,6 +582,22 @@ export default {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
       } else {
         return ''
+      }
+    }
+  },
+  watch: {
+    tocDecoded: {
+      immediate: true,
+      handler(newVal) {
+        const initializeOpenStates = (items) => {
+          items.forEach(item => {
+            this.$set(this.openStates, item.id, true)
+            if (item.children && item.children.length > 0) {
+              initializeOpenStates(item.children)
+            }
+          })
+        }
+        initializeOpenStates(newVal)
       }
     }
   },
@@ -653,6 +674,9 @@ export default {
     })
   },
   methods: {
+    toggleOpenState(id) {
+      this.$set(this.openStates, id, !this.openStates[id])
+    },
     goHome () {
       window.location.assign(`/${this.sitePath}`)
     },

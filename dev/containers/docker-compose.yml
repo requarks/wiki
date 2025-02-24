@@ -52,8 +52,11 @@ services:
       - ../..:/wiki
       - /wiki/node_modules
       - /wiki/.git
-
-
+  pandoc:
+    container_name: pandoc
+    image: pandoc:latest
+    ports:
+      - "80:80"
 volumes:
   db-data:
   # solr-data:
