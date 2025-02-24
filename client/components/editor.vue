@@ -301,28 +301,29 @@ export default {
       this.showProgressDialog('saving')
       this.isSaving = true
 
-      const content = this.$store.get('editor/content')
+      // สร้างหน้าใหม่สำหรับแท็กที่ไม่มีหน้า - ไม่จำเป็น ย้ายไป Backend แล้ว
+      // const content = this.$store.get('editor/content')
       // const originalTag = this.$store.get('page/tags')
 
       // RegEx ที่แก้ไขเพื่อดึงคำที่เริ่มต้นด้วย # (tag), @ (คน), ! (สถานที่), $ (เหตุการณ์), @@ (กลุ่ม/องค์กร)
-      const regex = /(?:^|\s|>)([#@!$](?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)|@@(?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*))/g
+      // const regex = /(?:^|\s|>)([#@!$](?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*)|@@(?:[\w\u0E00-\u0E7F-]+(?:\/[\w\u0E00-\u0E7F-]+)*|[\w\u0E00-\u0E7F-]+(?:\.[^\s<>#@!]+)*))/g
 
-      // ดึง matches และลบ # ออก
-      const matches = [...content.matchAll(regex)].map(match => {
-        if (match[1]?.startsWith('#')) {
-          return match[1].substring(1)
-        }
-        return match[0].startsWith('@@') ? match[0] : match[1]
-      })
-      console.log(matches)
+      // // ดึง matches และลบ # ออก
+      // const matches = [...content.matchAll(regex)].map(match => {
+      //   if (match[1]?.startsWith('#')) {
+      //     return match[1].substring(1)
+      //   }
+      //   return match[0].startsWith('@@') ? match[0] : match[1]
+      // })
+      // console.log(matches)
       // console.log('Tags จากของใหม่: ', originalTag)
       // console.log('Tags จากของเดิมที่มีในเนื้อหา: ', this.tagsFromExistingContent)
       // console.log('Tags จากเนื้อหาปัจจุบัน: ', matches)
       // รวม originalTag และ matches แล้วลบข้อมูลซ้ำ
-      const combinedTags = Array.from(new Set([...matches]))
+      // const combinedTags = Array.from(new Set([...matches]))
 
       // บันทึกผลรวมกลับไปใน Store
-      this.$store.set('page/tags', combinedTags)
+      // this.$store.set('page/tags', combinedTags)
       // console.log(matches)
 
       const saveTimeoutHandle = setTimeout(() => {
@@ -406,7 +407,6 @@ export default {
             this.isConflict = false
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
-            await this.findNewTags()
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.createSuccess'),
               style: 'success',
@@ -514,7 +514,10 @@ export default {
           if (_.get(resp, 'responseResult.succeeded')) {
             this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
             this.isConflict = false
-            await this.findNewTags()
+
+            // สร้างหน้าใหม่สำหรับแท็กที่ไม่มีหน้า - ไม่จำเป็น ย้ายไป Backend แล้ว
+            // await this.findNewTags()
+
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.updateSuccess'),
               style: 'success',

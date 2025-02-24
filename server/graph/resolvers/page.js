@@ -412,7 +412,6 @@ module.exports = {
      */
     async update(obj, args, context) {
       try {
-        console.log('args', args)
         const page = await WIKI.models.pages.updatePage({
           ...args,
           user: context.req.user

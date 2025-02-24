@@ -22,7 +22,6 @@ const frontmatterRegex = {
 }
 
 const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
-// const htmlEntitiesRegex = /(&#[0-9]{3};)|(&#x[a-zA-Z0-9]{2};)/ig
 
 /**
  * Pages model
@@ -240,6 +239,7 @@ module.exports = class Page extends Model {
    */
   static async createPage(opts) {
     // -> Validate path
+    // console.log('opts', opts)
     if (opts.path.includes('.') || opts.path.includes(' ') || opts.path.includes('\\') || opts.path.includes('//')) {
       throw new WIKI.Error.PageIllegalPath()
     }
@@ -271,6 +271,26 @@ module.exports = class Page extends Model {
     // -> Check for empty content
     if (!opts.content || _.trim(opts.content).length < 1) {
       throw new WIKI.Error.PageEmptyContent()
+    }
+
+    // -> Extract tags from content using regex pattern for mentions
+    const mentionRegex = /(?:^|\s|>)(#[\w\u0E00-\u0E7F-]+|@[\w\u0E00-\u0E7F-]+|![\w\u0E00-\u0E7F-/]+|\$[\w\u0E00-\u0E7F-]+|@@[\w\u0E00-\u0E7F-/]+(?:\/[\w\u0E00-\u0E7F-]+)*)/g
+    const matches = [...opts.content.matchAll(mentionRegex)]
+
+    // Get the tag values and remove # prefix
+    const extractedTags = matches.map(match => {
+      const tag = match[1]
+      return tag.startsWith('#') ? tag.substring(1) : tag
+    })
+
+    // Add extracted tags to opts.tags if not already present
+    if (extractedTags.length > 0) {
+      opts.tags = opts.tags || []
+      extractedTags.forEach(tag => {
+        if (!opts.tags.includes(tag)) {
+          opts.tags.push(tag)
+        }
+      })
     }
 
     // -> Format CSS Scripts
@@ -358,6 +378,11 @@ module.exports = class Page extends Model {
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
+    // -> Create pages for special tags (only if not already creating from tag)
+    if (!opts.isTagPage) {
+      await WIKI.models.pages.createPagesForTags(opts.tags, opts.locale)
+    }
+
     return page
   }
 
@@ -369,6 +394,28 @@ module.exports = class Page extends Model {
    */
   static async updatePage(opts) {
     // -> Fetch original page
+    // console.log('opts', opts)
+    // Extract tags from content using regex pattern for mentions
+    const mentionRegex = /(?:^|\s|>)(#[\w\u0E00-\u0E7F-]+|@[\w\u0E00-\u0E7F-]+|![\w\u0E00-\u0E7F-/]+|\$[\w\u0E00-\u0E7F-]+|@@[\w\u0E00-\u0E7F-/]+(?:\/[\w\u0E00-\u0E7F-]+)*)/g
+    const matches = [...opts.content.matchAll(mentionRegex)]
+
+    // Get the tag values from data-mention attributes and remove # prefix
+    const extractedTags = matches.map(match => {
+      const tag = match[1]
+      return tag.startsWith('#') ? tag.substring(1) : tag
+    })
+
+    // Add extracted tags to opts.tags if not already present
+    // console.log('extractedTags', extractedTags)
+    // console.log(opts.tags)
+    if (extractedTags.length > 0) {
+      opts.tags = opts.tags || []
+      extractedTags.forEach(tag => {
+        if (!opts.tags.includes(tag)) {
+          opts.tags.push(tag)
+        }
+      })
+    }
     const ogPage = await WIKI.models.pages.query().findById(opts.id)
     if (!ogPage) {
       throw new Error('Invalid Page Id')
@@ -485,7 +532,108 @@ module.exports = class Page extends Model {
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
 
+    // -> Create pages for special tags
+    await WIKI.models.pages.createPagesForTags(opts.tags, page.localeCode)
+
     return page
+  }
+
+  // ===============================
+  // PPLE Customize
+  // ===============================
+  /**
+   * Create pages for special tags (@, @@, $, !) if they don't exist
+   *
+   * @param {Array<string>} tags Array of tags
+   * @param {string} locale Locale code
+   */
+  static async createPagesForTags(tags, locale) {
+    if (!tags || !tags.length) {
+      return
+    }
+
+    for (const tag of tags) {
+      if (tag.startsWith('@') || tag.startsWith('@@') || tag.startsWith('$') || tag.startsWith('!')) {
+        let tagName = ''
+        let tagPath = ''
+        let title = ''
+        let type = ''
+
+        if (tag.startsWith('@@')) {
+          type = 'organization'
+          tagName = tag.substring(2)
+          const parts = tagName.split('/')
+          if (parts.length > 1) {
+            tagPath = 'กลุ่มหรือองค์กร'
+            for (let i = parts.length - 1; i >= 0; i--) {
+              tagPath += '/' + parts[i].trim()
+            }
+            title = parts[0]
+          } else {
+            tagPath = `กลุ่มหรือองค์กร/${tagName}`
+            title = tagName
+          }
+        } else if (tag.startsWith('@')) {
+          type = 'person'
+          tagName = tag.substring(1)
+          tagPath = `คน/${tagName}`
+          title = tagName.replace(/-/g, ' ')
+        } else if (tag.startsWith('$')) {
+          type = 'event'
+          tagName = tag.substring(1)
+          tagPath = `เหตุการณ์/${tagName}`
+          title = tagName
+        } else if (tag.startsWith('!')) {
+          type = 'place'
+          tagName = tag.substring(1)
+          const parts = tagName.split('/')
+          if (parts.length > 1) {
+            tagPath = 'สถานที่'
+            for (let i = parts.length - 1; i >= 0; i--) {
+              tagPath += '/' + parts[i].trim()
+            }
+            title = parts[0]
+          } else {
+            tagPath = `สถานที่/${tagName}`
+            title = tagName
+          }
+        }
+
+        // Check if page exists
+        const existingPage = await WIKI.models.pages.query().findOne({
+          path: tagPath,
+          localeCode: locale
+        })
+
+        if (!existingPage) {
+          try {
+            await WIKI.models.pages.createPage({
+              content: `<h1>${title}</h1>`,
+              description: '',
+              editor: 'ckeditor',
+              isPrivate: false,
+              isPublished: true,
+              locale: locale,
+              path: tagPath,
+              tags: [tag],
+              title: title,
+              isTagPage: true,
+              user: {
+                id: 1,
+                permissions: ['write:pages', 'manage:system', 'delete:pages', 'manage:pages'],
+                groups: [],
+                role: 'admin',
+                getGlobalPermissions: () => ['write:pages', 'manage:system', 'delete:pages', 'manage:pages']
+              }
+            })
+
+            // console.log(`Created page for tag: ${tag}`)
+          } catch (err) {
+            WIKI.logger.warn(`Failed to create page for tag ${tag}: ${err.message}`)
+          }
+        }
+      }
+    }
   }
 
   /**
