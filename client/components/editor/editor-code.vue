@@ -166,6 +166,12 @@ export default {
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
+      document.getElementsByClassName("CodeMirror-code")[0].focus()
+      this.$store.commit('showNotification', {
+        message: 'To exit the Distraction Free Mode, press Esc.',
+        style: 'info',
+        icon: 'check'
+      })
     },
     refresh() {
       this.$nextTick(() => {
