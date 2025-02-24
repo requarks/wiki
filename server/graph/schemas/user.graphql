@@ -29,8 +29,6 @@ type UserQuery {
   ): User @auth(requires: ["manage:users", "manage:system", "manage:sites"])
 
   profile: UserProfile
-
-  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -114,12 +112,6 @@ type UserResponse {
   user: User
 }
 
-type UserLastLogin {
-  id: Int!
-  name: String!
-  lastLoginAt: Date!
-}
-
 type UserMinimal {
   id: Int!
   name: String!
@@ -128,7 +120,6 @@ type UserMinimal {
   isSystem: Boolean!
   isActive: Boolean!
   createdAt: Date!
-  lastLoginAt: Date
 }
 
 type User {
@@ -149,7 +140,6 @@ type User {
   appearance: String!
   createdAt: Date!
   updatedAt: Date!
-  lastLoginAt: Date
   tfaIsActive: Boolean!
   groups: [Group]!
 }
@@ -169,7 +159,6 @@ type UserProfile {
   appearance: String!
   createdAt: Date!
   updatedAt: Date!
-  lastLoginAt: Date
   groups: [String]!
   pagesTotal: Int!
 }

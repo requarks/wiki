@@ -1,5 +1,0 @@
-username: deployer
-helm_kustomize_directory : "../helm-kustomize"  # Local path on the Ansible controller
-target_dir_helm_kustomize: "/mar/helm-kustomize"  # Path on the remote VM
-#image_repository: "docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/capwiki"
-k3s_check_command: "kubectl get nodes"
