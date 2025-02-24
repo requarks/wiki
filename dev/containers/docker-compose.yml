@@ -52,8 +52,8 @@ services:
       - ../..:/wiki
       - /wiki/node_modules
       - /wiki/.git
-  pondoc:
-    container_name: pondoc
+  pandoc:
+    container_name: pandoc
     image: pandoc:latest
     ports:
       - "80:80"
