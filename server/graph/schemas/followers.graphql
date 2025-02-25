@@ -1,0 +1,41 @@
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type Follower {
+  id: String
+  siteId: String
+  pageId: Int
+  userId: Int
+  createdAt: Date
+}
+
+type FollowerResponse {
+  operation: Operation!
+  follower: Follower
+}
+
+type IsFollowingResponse {
+  operation: Operation!
+  isFollowing: Boolean!
+}
+
+# -----------------------------------------------
+# EXTEND QUERIES
+# -----------------------------------------------
+
+extend type Query {
+  isFollowing(siteId: String!, pageId: Int): IsFollowingResponse
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+}
+
+# -----------------------------------------------
+# EXTEND MUTATIONS
+# -----------------------------------------------
+
+extend type Mutation {
+  createFollower(siteId: String!, pageId: Int): FollowerResponse
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+  deleteFollower(siteId: String!, pageId: Int): DefaultResponse
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+}

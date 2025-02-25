@@ -21,7 +21,8 @@
       v-card-chin
         v-spacer
         v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='red darken-2', @click='deletePage', :loading='loading').white--text {{$t('common:actions.delete')}}
+        v-btn.px-4(color='red darken-2', @click='deletePage(false)', :loading='loading').white--text {{$t('common:actions.delete')}}
+        v-btn.px-4(color='red darken-2', @click='deletePage(true)', :loading='loading').white--text {{$t('common:actions.deleteNotify')}}
 </template>
 
 <script>
@@ -64,7 +65,7 @@ export default {
       document.body.classList.remove('page-deleted-pending')
       this.isShown = false
     },
-    async deletePage() {
+    async deletePage(notifyFollowers = false) {
       this.loading = true
       this.$store.commit(`loadingStart`, 'page-delete')
       this.$nextTick(async () => {
@@ -72,7 +73,8 @@ export default {
           const resp = await this.$apollo.mutate({
             mutation: deletePageMutation,
             variables: {
-              id: this.pageId
+              id: this.pageId,
+              notifyFollowers: notifyFollowers
             }
           })
           if (_.get(resp, 'data.pages.delete.responseResult.succeeded', false)) {
