@@ -115,7 +115,7 @@ export default {
     },
     tags: {
       type: Array,
-      default: () => ([])
+      default: () => []
     },
     isPublished: {
       type: Boolean,
@@ -303,6 +303,7 @@ export default {
     openConflict() {
       this.$root.$emit('saveConflict')
     },
+
     async save(notifyFollowers = false, { rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
       this.isSaving = true
@@ -335,6 +336,7 @@ export default {
                 $title: String!
                 $siteId: String!
                 $notifyFollowers: Boolean!
+                $mentions: [String]
               ) {
                 pages {
                   create(
@@ -353,6 +355,7 @@ export default {
                     title: $title
                     siteId: $siteId
                     notifyFollowers: $notifyFollowers
+                    mentions: $mentions
                   ) {
                     responseResult {
                       succeeded
@@ -383,7 +386,8 @@ export default {
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
               siteId: this.$store.get('page/siteId'),
-              notifyFollowers: notifyFollowers
+              notifyFollowers: notifyFollowers,
+              mentions: this.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -398,6 +402,7 @@ export default {
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
             this.exitConfirmed = true
+
             window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
@@ -445,6 +450,7 @@ export default {
                 $title: String
                 $siteId: String!
                 $notifyFollowers: Boolean!
+                $mentions: [String]
               ) {
                 pages {
                   update(
@@ -464,6 +470,7 @@ export default {
                     title: $title
                     siteId: $siteId
                     notifyFollowers: $notifyFollowers
+                    mentions: $mentions
                   ) {
                     responseResult {
                       succeeded
@@ -494,7 +501,8 @@ export default {
               tags: this.$store.get('page/tags'),
               title: this.$store.get('page/title'),
               siteId: this.$store.get('page/siteId'),
-              notifyFollowers: notifyFollowers
+              notifyFollowers: notifyFollowers,
+              mentions: this.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
@@ -506,6 +514,7 @@ export default {
               style: 'success',
               icon: 'check'
             })
+
             if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
               _.delay(() => {
                 window.location.replace(`/e/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
@@ -566,7 +575,7 @@ export default {
         }
       }, 500)
     },
-    setCurrentSavedState () {
+    setCurrentSavedState() {
       this.savedState = {
         description: this.$store.get('page/description'),
         isPublished: this.$store.get('page/isPublished'),
@@ -603,14 +612,14 @@ export default {
       `,
       fetchPolicy: 'network-only',
       pollInterval: 5000,
-      variables () {
+      variables() {
         return {
           id: this.pageId,
           checkoutDate: this.checkoutDateActive
         }
       },
       update: (data) => _.cloneDeep(data.pages.checkConflicts),
-      skip () {
+      skip() {
         return this.mode === 'create' || this.isSaving || !this.isDirty
       }
     }
@@ -619,22 +628,20 @@ export default {
 </script>
 
 <style lang='scss'>
+.editor {
+  background-color: mc('grey', '900') !important;
+  min-height: 100vh;
 
-  .editor {
-    background-color: mc('grey', '900') !important;
-    min-height: 100vh;
-
-    .application--wrap {
-      background-color: mc('grey', '900');
-    }
-
-    &-title-input input {
-      text-align: center;
-    }
+  .application--wrap {
+    background-color: mc('grey', '900');
   }
 
-  .atom-spinner.is-inline {
-    display: inline-block;
+  &-title-input input {
+    text-align: center;
   }
+}
 
+.atom-spinner.is-inline {
+  display: inline-block;
+}
 </style>

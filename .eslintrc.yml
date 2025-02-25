@@ -6,9 +6,10 @@ env:
   node: true
   jest: true
 parserOptions:
-  parser: babel-eslint
+  parser: '@babel/eslint-parser'
   ecmaVersion: 2017
   allowImportExportEverywhere: true
+  requireConfigFile: false
 globals:
   document: false
   navigator: false

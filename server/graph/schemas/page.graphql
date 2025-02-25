@@ -99,6 +99,7 @@ type PageMutation {
     title: String!
     siteId: String!
     notifyFollowers: Boolean!
+    mentions: [String]
   ): PageResponse
     @auth(
       requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
@@ -121,6 +122,7 @@ type PageMutation {
     title: String
     siteId: String!
     notifyFollowers: Boolean!
+    mentions: [String]
   ): PageResponse
     @auth(
       requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]

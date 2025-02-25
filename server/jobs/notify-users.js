@@ -2,25 +2,25 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, followerIds, event }) => {
+module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event }) => {
   WIKI.logger.info(`Notifying users for page ID ${pageId}...`)
 
   try {
-    const followers = await WIKI.models.users.query().whereIn('id', followerIds).withGraphFetched('groups').modifyGraph('groups', builder => {
+    const users = await WIKI.models.users.query().whereIn('id', userIds).withGraphFetched('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions', 'groups.rules')
     })
-    const activeFollowers = followers.filter(follower => follower.isActive)
+    const activeUsers = users.filter(user => user.isActive)
 
     const recipients = []
 
-    for (const follower of activeFollowers) {
-      const hasReadAccess = WIKI.auth.checkAccess(follower, ['read:pages'], {
+    for (const activeUser of activeUsers) {
+      const hasReadAccess = WIKI.auth.checkAccess(activeUser, ['read:pages'], {
         path: pagePath,
         siteId: siteId
       })
 
       if (hasReadAccess) {
-        recipients.push(follower.email)
+        recipients.push(activeUser.email)
       }
     }
 
@@ -37,9 +37,10 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
         text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         data: {
           preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
-          pageUrl: `${WIKI.config.host}/${sitePath}`,
+          pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
           pageTitle: pageTitle,
           userEmail: userEmail,
+          event: event,
           eventText: eventText,
           isDeletion: isDeletion
         }

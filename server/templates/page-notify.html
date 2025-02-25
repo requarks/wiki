@@ -579,12 +579,20 @@
                       >
                         Page Notification
                       </h1>
+                      <% if (event != 'MENTION_PAGE') { %>
                       <p style="margin-top: 5px; margin-bottom: 5px">
                         The page "<strong><%= pageTitle %></strong>" has been
                         <%= eventText.toLowerCase() %> by <%= userEmail %>.
                         <br />
                       </p>
-                      <% if (!isDeletion) { %>
+                      <% } %> <% if (event === 'MENTION_PAGE') { %>
+                      <p style="margin-top: 5px; margin-bottom: 5px">
+                        You have been mentioned in the page "<strong
+                          ><%= pageTitle %></strong
+                        >" by <%= userEmail %>.
+                        <br />
+                      </p>
+                      <% } %> <% if (!isDeletion) { %>
                       <a
                         href="<%= pageUrl %>"
                         class="btn btn-secondary btn-sm"
@@ -610,33 +618,6 @@
           <!-- 1 Column Text + Button : END -->
         </table>
         <!-- Email Body : END -->
-
-        <!-- Email Footer : BEGIN -->
-        <table
-          align="center"
-          role="presentation"
-          cellspacing="0"
-          cellpadding="0"
-          border="0"
-          width="100%"
-          style="margin: 0 auto"
-        >
-          <tr>
-            <td
-              style="
-                padding: 20px;
-                font-family: sans-serif;
-                font-size: 12px;
-                line-height: 15px;
-                text-align: center;
-                color: #888888;
-              "
-            >
-              <%= copyright %>
-            </td>
-          </tr>
-        </table>
-        <!-- Email Footer : END -->
 
         <!--[if mso]>
             </td>
