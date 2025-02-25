@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
+const notifyUsers = require('../../jobs/notify-users')
 
 /* global WIKI */
 
@@ -51,7 +52,7 @@ module.exports = {
     /**
      * SEARCH PAGES
      */
-    async search (obj, args, context) {
+    async search(obj, args, context) {
       if (WIKI.data.searchEngine) {
         const resp = await WIKI.data.searchEngine.query(args.query, args)
         return {
@@ -76,7 +77,7 @@ module.exports = {
     /**
      * LIST PAGES
      */
-    async list (obj, args, context, info) {
+    async list(obj, args, context, info) {
       let results = await WIKI.models.pages.query().column([
         'pages.id',
         'pages.path',
@@ -168,7 +169,7 @@ module.exports = {
     /**
      * FETCH SINGLE PAGE
      */
-    async single (obj, args, context, info) {
+    async single(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
@@ -219,7 +220,7 @@ module.exports = {
     /**
      * FETCH TAGS
      */
-    async tags (obj, args, context, info) {
+    async tags(obj, args, context, info) {
       const pages = await WIKI.models.pages.query()
         .column([
           'path',
@@ -242,7 +243,7 @@ module.exports = {
     /**
      * SEARCH TAGS
      */
-    async searchTags (obj, args, context, info) {
+    async searchTags(obj, args, context, info) {
       const query = _.trim(args.query)
       const pages = await WIKI.models.pages.query()
         .column([
@@ -277,7 +278,7 @@ module.exports = {
     /**
      * FETCH PAGE TREE
      */
-    async tree (obj, args, context, info) {
+    async tree(obj, args, context, info) {
       let curPage = null
 
       if (!args.locale) { args.locale = WIKI.config.lang.code }
@@ -332,7 +333,7 @@ module.exports = {
     /**
      * FETCH PAGE LINKS
      */
-    async links (obj, args, context, info) {
+    async links(obj, args, context, info) {
       let results
 
       if (WIKI.config.db.type === 'mysql' || WIKI.config.db.type === 'mariadb' || WIKI.config.db.type === 'sqlite') {
@@ -387,7 +388,7 @@ module.exports = {
     /**
      * CHECK FOR EDITING CONFLICT
      */
-    async checkConflicts (obj, args, context, info) {
+    async checkConflicts(obj, args, context, info) {
       let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt', 'siteId').findById(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
@@ -406,7 +407,7 @@ module.exports = {
     /**
      * FETCH LATEST VERSION FOR CONFLICT COMPARISON
      */
-    async conflictLatest (obj, args, context, info) {
+    async conflictLatest(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
@@ -437,6 +438,29 @@ module.exports = {
           ...args,
           user: context.req.user
         })
+
+        // Add the creator as a follower
+        await WIKI.models.followers.query().insert({
+          siteId: page.siteId,
+          pageId: page.id,
+          userId: context.req.user.id
+        })
+
+        if (args.notifyFollowers) {
+          // Notify followers
+          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId })
+          const followerIds = [...new Set(followers.map(follower => follower.userId))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE' })
+        }
+
+        if (args.mentions.length > 0) {
+          // Notify mentioned users
+          const mentionEmails = args.mentions
+          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
+          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+        }
+
         return {
           responseResult: graphHelper.generateSuccess('Page created successfully.'),
           page
@@ -454,6 +478,22 @@ module.exports = {
           ...args,
           user: context.req.user
         })
+
+        if (args.notifyFollowers) {
+          // Notify followers
+          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
+          const followerIds = [...new Set(followers.map(follower => follower.userId))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE' })
+        }
+
+        if (args.mentions.length > 0) {
+          // Notify mentioned users
+          const mentionEmails = args.mentions
+          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
+          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+        }
+
         return {
           responseResult: graphHelper.generateSuccess('Page has been updated.'),
           page
@@ -499,10 +539,19 @@ module.exports = {
      */
     async delete(obj, args, context) {
       try {
+        const page = await WIKI.models.pages.query().findById(args.id)
+        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
         await WIKI.models.pages.deletePage({
           ...args,
           user: context.req.user
         })
+
+        if (args.notifyFollowers) {
+          // Notify followers
+          const followerIds = [...new Set(followers.map(follower => follower.userId))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'DELETE_PAGE' })
+        }
+
         return {
           responseResult: graphHelper.generateSuccess('Page has been deleted.')
         }
@@ -513,7 +562,7 @@ module.exports = {
     /**
      * DELETE TAG
      */
-    async deleteTag (obj, args, context) {
+    async deleteTag(obj, args, context) {
       try {
         const tagToDel = await WIKI.models.tags.query().findById(args.id)
         if (tagToDel) {
@@ -532,7 +581,7 @@ module.exports = {
     /**
      * UPDATE TAG
      */
-    async updateTag (obj, args, context) {
+    async updateTag(obj, args, context) {
       try {
         const affectedRows = await WIKI.models.tags.query()
           .findById(args.id)
@@ -594,7 +643,7 @@ module.exports = {
     /**
      * RENDER PAGE
      */
-    async render (obj, args, context) {
+    async render(obj, args, context) {
       try {
         const page = await WIKI.models.pages.query().findById(args.id)
         if (!page) {
@@ -611,7 +660,7 @@ module.exports = {
     /**
      * RESTORE PAGE VERSION
      */
-    async restore (obj, args, context) {
+    async restore(obj, args, context) {
       try {
         const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.pageId)
         if (!page) {
@@ -648,7 +697,7 @@ module.exports = {
     /**
      * Purge history
      */
-    async purgeHistory (obj, args, context) {
+    async purgeHistory(obj, args, context) {
       try {
         await WIKI.models.pageHistory.purge(args.olderThan)
         return {
@@ -660,7 +709,7 @@ module.exports = {
     }
   },
   Page: {
-    async tags (obj) {
+    async tags(obj) {
       return WIKI.models.pages.relatedQuery('tags').for(obj.id)
     }
     // comments(pg) {

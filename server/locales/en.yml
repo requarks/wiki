@@ -1,0 +1,6 @@
+common:
+  header.followSite: "Follow Site"
+  header.unfollowSite: "Unfollow Site"
+  actions.saveNotify: "Save & Notify"
+  actions.createNotify: "Create & Notify"
+  actions.deleteNotify: "Delete & Notify"

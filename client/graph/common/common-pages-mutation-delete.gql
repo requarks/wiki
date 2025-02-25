@@ -1,6 +1,6 @@
-mutation($id: Int!) {
+mutation ($id: Int!, $notifyFollowers: Boolean!) {
   pages {
-    delete(id: $id) {
+    delete(id: $id, notifyFollowers: $notifyFollowers) {
       responseResult {
         succeeded
         errorCode

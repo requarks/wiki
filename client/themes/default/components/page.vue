@@ -61,6 +61,8 @@
             .page-header-headings
               .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
+              v-btn.mr-5(v-if='isAuthenticated && isFollower != null && !isFollower' @click='followPage') Follow
+              v-btn.mr-5(v-if='isAuthenticated && isFollower != null && isFollower' @click='unfollowPage') Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
               :class='tocPosition === `right` ? `is-right` : ``'
@@ -348,6 +350,9 @@ import ClipboardJS from 'clipboard'
 import { v4 as uuidv4 } from 'uuid'
 import Vue from 'vue'
 import TreeItem from './tree-item.vue'
+import createFollowerMutation from 'gql/followers/create-follower.gql'
+import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
+import isFollowingResponse from 'gql/followers/is-following.gql'
 
 Vue.component('Tabset', Tabset)
 
@@ -493,6 +498,7 @@ export default {
       navExpanded: false,
       upBtnShown: false,
       pageEditFab: false,
+      isFollowing: null,
       scrollOpts: {
         duration: 1500,
         offset: 0,
@@ -531,6 +537,9 @@ export default {
       set (val) {
 
       }
+    },
+    isFollower() {
+      return this.isFollowing
     },
     breadcrumbs() {
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
@@ -621,6 +630,14 @@ export default {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
     }
 
+    // Ensure userId is set before calling checkIfFollowing
+    if (this.$store.state.user && this.$store.state.user.id) {
+      this.userId = this.$store.state.user.id
+      this.checkIfFollowing()
+    } else {
+      console.error('User is not defined or user ID is missing')
+    }
+
     this.$store.set('page/siteId', this.siteId)
     this.$store.set('page/siteName', this.siteName)
     this.$store.set('page/sitePath', this.sitePath)
@@ -674,6 +691,86 @@ export default {
     })
   },
   methods: {
+    async checkIfFollowing() {
+      try {
+        const response = await this.$apollo.query({
+          query: isFollowingResponse,
+          variables: {
+            siteId: this.siteId,
+            pageId: this.pageId
+          }
+        })
+        this.isFollowing = response.data.isFollowing.isFollowing
+      } catch (error) {
+        console.error('Error checking if following:', error)
+      }
+    },
+    async followPage() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: createFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: this.pageId
+          }
+        })
+        if (response.data.createFollower.operation.succeeded) {
+          this.isFollowing = true
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully followed the page.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error following page:', response.data.createFollower.operation.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to follow the page.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error following page:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to follow the page.',
+          icon: 'error'
+        })
+      }
+    },
+    async unfollowPage() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: deleteFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: this.pageId
+          }
+        })
+        if (response.data.deleteFollower.responseResult.succeeded) {
+          this.isFollowing = false
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully unfollowed the page.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error unfollowing page:', response.data.deleteFollower.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to unfollow the page.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error unfollowing page:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to unfollow the page.',
+          icon: 'error'
+        })
+      }
+    },
     toggleOpenState(id) {
       this.$set(this.openStates, id, !this.openStates[id])
     },
@@ -778,8 +875,8 @@ export default {
   .page-header-headings {
     min-height: 52px;
     display: flex;
-    justify-content: center;
-    flex-direction: column;
+    justify-content: space-between;
+    flex-direction: row;
   }
 
   .page-edit-shortcuts {

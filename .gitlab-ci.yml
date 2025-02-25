@@ -20,7 +20,7 @@ variables:
 
   IMAGE_TAG:
     value: ""
-    description: "Specify the image tag: for dev use MAR-<Jira-ticket-nr> ; for staging (ignore i.e has default value latest-staging);  for prod, use tags ex: 1.0.0 etc"
+    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
   SONARQUBE:
     value: "true"
@@ -40,7 +40,7 @@ default:
           echo "Directory $TARGET_DIR exists. Deleting it..."
           rm -rf "$NPM_GLOBAL_DIR"
       fi
-      mkdir -p "$NPM_GLOBAL_DIR"
+      mkdir -p "$NPM_GLOBAL_DIR/bin"
       npm config set prefix "$NPM_GLOBAL_DIR"
       export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
       npm install -g yarn
@@ -205,6 +205,7 @@ promote-prod-release-version:
   before_script:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
+    - export NEW_IMAGE="${IMAGE}:$IMAGE_TAG_BY_ENV"
     - echo "upgrade Docker image to release version $VERSION"
     - echo "Staging Image is $STAGING_IMAGE"
     - |
