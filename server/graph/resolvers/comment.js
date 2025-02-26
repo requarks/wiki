@@ -68,7 +68,7 @@ module.exports = {
             ...c,
             authorName: c.name,
             authorEmail: c.email,
-            authorIP: c.ip
+            authorIP: '' // Disable retrieving author's IP
           }))
         } else {
           throw new WIKI.Error.CommentViewForbidden()
@@ -103,7 +103,7 @@ module.exports = {
             ...cm,
             authorName: cm.name,
             authorEmail: cm.email,
-            authorIP: cm.ip
+            authorIP: '' // Disable retrieving author's IP
           }
         } else {
           throw new WIKI.Error.CommentViewForbidden()
@@ -123,7 +123,7 @@ module.exports = {
         const cmId = await WIKI.models.comments.postNewComment({
           ...args,
           user: context.req.user,
-          ip: context.req.ip
+          ip: '' // Disable storing author's IP
         })
         return {
           responseResult: graphHelper.generateSuccess('New comment posted successfully'),
@@ -141,7 +141,7 @@ module.exports = {
         const cmRender = await WIKI.models.comments.updateComment({
           ...args,
           user: context.req.user,
-          ip: context.req.ip
+          ip: '' // Disable storing author's IP
         })
         return {
           responseResult: graphHelper.generateSuccess('Comment updated successfully'),
@@ -159,7 +159,7 @@ module.exports = {
         await WIKI.models.comments.deleteComment({
           id: args.id,
           user: context.req.user,
-          ip: context.req.ip
+          ip: '' // Disable storing author's IP
         })
         return {
           responseResult: graphHelper.generateSuccess('Comment deleted successfully')

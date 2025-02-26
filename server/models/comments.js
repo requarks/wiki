@@ -136,28 +136,11 @@ module.exports = class Comment extends Model {
     }
     const page = await WIKI.models.pages.getPageFromDb(pageId)
     if (page) {
-      if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
-        path: page.path,
-        locale: page.localeCode,
-        tags: page.tags,
-        siteId: page.siteId
-      })) {
-        throw new WIKI.Error.CommentManageForbidden()
-      }
+      WIKI.logger.info('Comment updates are not possible anymore (manage:comment)', { id, content, user, ip })
+      throw new WIKI.Error.CommentManageForbidden()
     } else {
       throw new WIKI.Error.PageNotFound()
     }
-
-    // -> Process by comment provider
-    return WIKI.data.commentProvider.update({
-      id,
-      content,
-      page,
-      user: {
-        ...user,
-        ip
-      }
-    })
   }
 
   /**
@@ -171,26 +154,10 @@ module.exports = class Comment extends Model {
     }
     const page = await WIKI.models.pages.getPageFromDb(pageId)
     if (page) {
-      if (!WIKI.auth.checkAccess(user, ['manage:comments'], {
-        path: page.path,
-        locale: page.localeCode,
-        tags: page.tags,
-        siteId: page.siteId
-      })) {
-        throw new WIKI.Error.CommentManageForbidden()
-      }
+      WIKI.logger.info('Comment deletions are not possible anymore (manage:comment)', { id, user, ip })
+      throw new WIKI.Error.CommentManageForbidden()
     } else {
       throw new WIKI.Error.PageNotFound()
     }
-
-    // -> Process by comment provider
-    await WIKI.data.commentProvider.remove({
-      id,
-      page,
-      user: {
-        ...user,
-        ip
-      }
-    })
   }
 }
