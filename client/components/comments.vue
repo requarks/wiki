@@ -1,6 +1,6 @@
 <template lang="pug">
   div(v-intersect.once='onIntersect')
-    mentionable(:keys="['@.']", :items="users", @open="onOpen" @apply="handleApply")
+    mentionable(:keys="mentionableKeys", :items="users", @open="onOpen" @apply="handleApply")
       v-textarea#discussion-new(
         ref="newCommentTextarea"
         outlined
@@ -91,7 +91,7 @@
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
-              mentionable(:keys="['@']", :items="users", @open="onOpen" @apply="handleApply")
+              mentionable(:keys="mentionableKeys", :items="users", @open="onOpen" @apply="handleApply")
                 v-textarea(
                   ref="editCommentTextarea"
                   outlined
@@ -169,7 +169,8 @@ export default {
         duration: 1500,
         offset: 0,
         easing: 'easeInOutCubic'
-      }
+      },
+      mentionableKeys: Array.from({ length: 26 }, (_, i) => `@${String.fromCharCode(97 + i)}`)
     }
   },
   computed: {
