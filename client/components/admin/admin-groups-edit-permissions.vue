@@ -80,13 +80,6 @@ export default {
               disabled: false
             },
             {
-              permission: 'write:scripts',
-              hint: 'Can insert JavaScript in pages, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
               permission: 'read:source',
               hint: 'Can view pages source, as specified in the Page Rules',
               warning: false,
@@ -133,13 +126,6 @@ export default {
               hint: 'Can post new comments, as specified in the Page Rules',
               warning: false,
               restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'manage:comments',
-              hint: 'Can edit and delete existing comments, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
               disabled: false
             }
           ]

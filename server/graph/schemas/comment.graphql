@@ -51,11 +51,12 @@ type CommentMutation {
     content: String!
     pageId: Int!
     mentions: [String]
-  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:comments", "manage:system", "manage:sites"])
+  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+
 
   delete(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:comments", "manage:system", "manage:sites"])
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -81,7 +82,7 @@ input CommentProviderInput {
 
 type CommentPost {
   id: Int!
-  content: String! @auth(requires: ["write:comments", "manage:comments", "manage:system", "manage:sites"])
+  content: String! @auth(requires: ["write:comments", "manage:system", "manage:sites"])
   render: String!
   authorId: Int!
   authorName: String!
