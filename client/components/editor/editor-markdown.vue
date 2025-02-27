@@ -226,6 +226,9 @@ import mermaid from 'mermaid'
 import katexHelper from './common/katex'
 import tabsetHelper from './markdown/tabset'
 import cmFold from './common/cmFold'
+import mentionPlugin from './markdown/mention'
+import autoCompleteEmailsQuery from '../../graph/editor/users-query-auto-complete.gql'
+import { v4 as uuidv4 } from 'uuid'
 
 // ========================================
 // INIT
@@ -276,6 +279,7 @@ const md = new MarkdownIt({
   .use(mdMark)
   .use(mdFootnote)
   .use(mdImsize)
+  .use(mentionPlugin)
 
 // DOMPurify fix for draw.io
 DOMPurify.addHook('uponSanitizeElement', (elm) => {
@@ -387,7 +391,9 @@ export default {
       previewHTML: '',
       helpShown: false,
       spellModeActive: false,
-      insertLinkDialog: false
+      insertLinkDialog: false,
+      newMentions: new Map(),
+      mentionCache: {}
     }
   },
   computed: {
@@ -422,6 +428,38 @@ export default {
     }
   },
   methods: {
+    trackDeletedMentions(editor, changeObj) {
+      if (changeObj.origin === '+delete' || changeObj.origin === 'cut') {
+        const from = changeObj.from
+        const to = changeObj.to
+        for (let [uuid, value] of this.newMentions.entries()) {
+          if (this.isMentionInRange(from, to, uuid)) {
+            this.newMentions.delete(uuid)
+            console.log('Mention removed:', value.mention)
+            // Set the mentions in the Vuex store
+            this.$store.set(
+              'editor/mentions',
+              Array.from(
+                this.newMentions.values().map((mention) => {
+                  return mention.mention.substring(1)
+                })
+              )
+            )
+            break
+          }
+        }
+      }
+    },
+    isMentionInRange(from, to, uuid) {
+      const mention = this.newMentions.get(uuid)
+      if (!mention) return false
+      const mentionFrom = mention.from
+      const mentionTo = mention.to
+      return (
+        (from.line > mentionFrom.line || (from.line === mentionFrom.line && from.ch >= mentionFrom.ch)) &&
+      (to.line < mentionTo.line || (to.line === mentionTo.line && to.ch <= mentionTo.ch))
+      )
+    },
     toggleModal(key) {
       this.activeModal = (this.activeModal === key) ? '' : key
       this.helpShown = false
@@ -579,7 +617,7 @@ export default {
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
-      document.getElementsByClassName("CodeMirror-code")[0].focus()
+      document.getElementsByClassName('CodeMirror-code')[0].focus()
       this.$store.commit('showNotification', {
         message: 'To exit the Distraction Free Mode, press Esc.',
         style: 'info',
@@ -603,6 +641,69 @@ export default {
     autocomplete (cm, change) {
       if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
         return
+      }
+
+      // mentions
+      const cursor = cm.getCursor()
+      const token = cm.getTokenAt(cursor)
+      const mentionPattern = /@([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]*|[a-zA-Z0-9._%+-]+)$/
+      const match = mentionPattern.exec(token.string)
+      if (match) {
+        const query = match[1]
+        const cachedResults = Object.values(this.mentionCache)
+          .flat()
+          .filter((email) => email.startsWith(query))
+        if (cachedResults.length > 0) {
+          cm.showHint({
+            hint: async (cm, options) => {
+              const cur = cm.getCursor()
+              const token = cm.getTokenAt(cur)
+              return {
+                list: cachedResults.map((email) => ({
+                  text: '@' + `${email}` + '',
+                  displayText: ` ${email}`
+                })),
+                from: CodeMirror.Pos(cur.line, token.start),
+                to: CodeMirror.Pos(cur.line, token.end)
+              }
+            }
+          })
+        } else {
+          cm.showHint({
+            hint: async (cm, options) => {
+              const cur = cm.getCursor()
+              const token = cm.getTokenAt(cur)
+              try {
+                const respRaw = await this.$apollo.query({
+                  query: autoCompleteEmailsQuery,
+                  variables: {
+                    siteId: this.$store.get('page/siteId'),
+                    query: query
+                  }
+                })
+                const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
+                if (resp && resp.length > 0) {
+                  this.mentionCache = resp
+                  return {
+                    list: resp.map((email) => ({
+                      text: '@' + `${email}` + '',
+                      displayText: ` ${email}`
+                    })),
+                    from: CodeMirror.Pos(cur.line, token.start),
+                    to: CodeMirror.Pos(cur.line, token.end)
+                  }
+                }
+              } catch (err) {
+                console.error(err)
+              }
+              return {
+                list: [],
+                from: CodeMirror.Pos(cur.line, token.start),
+                to: CodeMirror.Pos(cur.line, token.end)
+              }
+            }
+          })
+        }
       }
 
       // Links
@@ -732,6 +833,9 @@ export default {
     }
   },
   mounted() {
+    setInterval(() => {
+      this.mentionCache = {}
+    }, 300000) // Clear cache every 5 minutes
     this.$store.set('editor/editorKey', 'markdown')
 
     if (this.mode === 'create' && !this.$store.get('editor/content')) {
@@ -824,6 +928,36 @@ export default {
 
     this.cm.on('paste', this.onCmPaste)
 
+    // Add new mentions
+    this.cm.on('change', (cm, changeObj) => {
+      const changes = changeObj.text.filter(text => text.includes('@'))
+      changes.forEach(change => {
+        const mentionPattern = /@([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+)/g
+        let match
+        while ((match = mentionPattern.exec(change)) !== null) {
+          const mention = match[0]
+          const from = changeObj.from
+          const to = { line: from.line, ch: from.ch + mention.length }
+          const uuid = uuidv4()
+          this.newMentions.set(uuid, { mention, from, to })
+          console.log('New mention detected:', mention)
+          // Set the mentions in the Vuex store
+          this.$store.set(
+            'editor/mentions',
+            Array.from(
+              this.newMentions.values().map((mention) => {
+                return mention.mention.substring(1)
+              })
+            )
+          )
+        }
+      })
+    })
+
+    // remove new mentions
+    this.cm.on('changes', (cm, changes) => {
+      changes.forEach((change) => this.trackDeletedMentions(cm, change))
+    })
     // Render initial preview
 
     this.processContent(this.$store.get('editor/content'))

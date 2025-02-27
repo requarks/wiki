@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
+const notifyUsers = require('../../jobs/notify-users')
 
 /* global WIKI */
 
@@ -39,7 +40,7 @@ module.exports = {
     /**
      * Fetch list of comments for a page
      */
-    async list (obj, args, context) {
+    async list(obj, args, context) {
       const page = await WIKI.models.pages.query()
         .select('pages.id')
         .findOne({
@@ -80,7 +81,7 @@ module.exports = {
     /**
      * Fetch a single comment
      */
-    async single (obj, args, context) {
+    async single(obj, args, context) {
       const cm = await WIKI.data.commentProvider.getCommentById(args.id)
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
@@ -118,13 +119,21 @@ module.exports = {
     /**
      * Create New Comment
      */
-    async create (obj, args, context) {
+    async create(obj, args, context) {
       try {
         const cmId = await WIKI.models.comments.postNewComment({
           ...args,
           user: context.req.user,
           ip: context.req.ip
         })
+        if (args.mentions.length > 0) {
+          // Notify mentioned users
+          const page = await WIKI.models.pages.getPageFromDb(args.pageId)
+          const mentionEmails = args.mentions
+          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
+          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+        }
         return {
           responseResult: graphHelper.generateSuccess('New comment posted successfully'),
           id: cmId
@@ -136,13 +145,21 @@ module.exports = {
     /**
      * Update an Existing Comment
      */
-    async update (obj, args, context) {
+    async update(obj, args, context) {
       try {
         const cmRender = await WIKI.models.comments.updateComment({
           ...args,
           user: context.req.user,
           ip: context.req.ip
         })
+        if (args.mentions.length > 0) {
+          // Notify mentioned users
+          const page = await WIKI.models.pages.getPageFromDb(args.pageId)
+          const mentionEmails = args.mentions
+          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
+          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+        }
         return {
           responseResult: graphHelper.generateSuccess('Comment updated successfully'),
           render: cmRender
@@ -154,7 +171,7 @@ module.exports = {
     /**
      * Delete an Existing Comment
      */
-    async delete (obj, args, context) {
+    async delete(obj, args, context) {
       try {
         await WIKI.models.comments.deleteComment({
           id: args.id,

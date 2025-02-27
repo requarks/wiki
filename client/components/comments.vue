@@ -1,19 +1,21 @@
 <template lang="pug">
   div(v-intersect.once='onIntersect')
-    v-textarea#discussion-new(
-      outlined
-      flat
-      :placeholder='$t(`common:comments.newPlaceholder`)'
-      auto-grow
-      dense
-      rows='3'
-      hide-details
-      v-model='newcomment'
-      color='blue-grey darken-2'
-      :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
-      v-if='permissions.write'
-      :aria-label='$t(`common:comments.fieldContent`)'
-    )
+    mentionable(:keys="['@.']", :items="users", @open="onOpen" @apply="handleApply")
+      v-textarea#discussion-new(
+        ref="newCommentTextarea"
+        outlined
+        flat
+        :placeholder='$t(`common:comments.newPlaceholder`)'
+        auto-grow
+        dense
+        rows='3'
+        hide-details
+        v-model='newcomment'
+        color='blue-grey darken-2'
+        :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+        v-if='permissions.write'
+        :aria-label='$t(`common:comments.fieldContent`)'
+      )
     v-row.mt-2(dense, v-if='!isAuthenticated && permissions.write')
       v-col(cols='12', lg='6')
         v-text-field(
@@ -89,18 +91,20 @@
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
-              v-textarea(
-                outlined
-                flat
-                auto-grow
-                dense
-                rows='3'
-                hide-details
-                v-model='commentEditContent'
-                color='blue-grey darken-2'
-                :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
-              )
-              .d-flex.align-center.pt-3
+              mentionable(:keys="['@']", :items="users", @open="onOpen" @apply="handleApply")
+                v-textarea(
+                  ref="editCommentTextarea"
+                  outlined
+                  flat
+                  auto-grow
+                  dense
+                  rows='3'
+                  hide-details
+                  v-model='commentEditContent'
+                  color='blue-grey darken-2'
+                  :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+                )
+                .d-flex.align-center.pt-3
                 v-spacer
                 v-btn.mr-3(
                   dark
@@ -138,8 +142,14 @@ import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
 import validate from 'validate.js'
 import _ from 'lodash'
+import { Mentionable } from 'vue-mention'
+import 'floating-vue/dist/style.css'
+import autoCompleteEmailsQuery from '../graph/editor/users-query-auto-complete.gql'
 
 export default {
+  components: {
+    Mentionable
+  },
   data () {
     return {
       newcomment: '',
@@ -153,6 +163,8 @@ export default {
       commentEditContent: null,
       deleteCommentDialogShown: false,
       isBusy: false,
+      users: [],
+      mentions: [],
       scrollOpts: {
         duration: 1500,
         offset: 0,
@@ -169,6 +181,25 @@ export default {
     sitePath: get('page/sitePath')
   },
   methods: {
+    onOpen(key) {
+      this.items = key === '@' ? this.users : []
+    },
+    handleApply(item) {
+      let textarea
+      if (this.commentEditId !== 0) {
+        textarea = this.$refs.editCommentTextarea[0].$el.querySelector('textarea')
+      } else {
+        textarea = this.$refs.newCommentTextarea[0].$el.querySelector('textarea')
+      }
+      if (textarea) {
+        const startPos = textarea.selectionStart
+        this.newcomment = `@${item.email}`
+        this.mentions.push(item.email)
+        this.$nextTick(() => {
+          textarea.selectionStart = textarea.selectionEnd = startPos + item.email.length + 2 // Adjust cursor position
+        })
+      }
+    },
     onIntersect (entries, observer, isIntersecting) {
       if (isIntersecting) {
         this.fetch(true)
@@ -275,6 +306,7 @@ export default {
               $content: String!
               $guestName: String
               $guestEmail: String
+              $mentions: [String!]
             ) {
               comments {
                 create (
@@ -283,6 +315,7 @@ export default {
                   content: $content
                   guestName: $guestName
                   guestEmail: $guestEmail
+                  mentions: $mentions
                 ) {
                   responseResult {
                     succeeded
@@ -300,11 +333,13 @@ export default {
             replyTo: 0,
             content: this.newcomment,
             guestName: this.guestName,
-            guestEmail: this.guestEmail
+            guestEmail: this.guestEmail,
+            mentions: this.mentions
           }
         })
 
         if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
+          this.mentions = []
           this.$store.commit('showNotification', {
             style: 'success',
             message: this.$t('common:comments.postSuccess'),
@@ -387,11 +422,15 @@ export default {
             mutation (
               $id: Int!
               $content: String!
+              $pageId: Int!
+              $mentions: [String!]
             ) {
               comments {
                 update (
                   id: $id,
                   content: $content
+                  pageId: $pageId
+                  mentions: $mentions
                 ) {
                   responseResult {
                     succeeded
@@ -406,11 +445,14 @@ export default {
           `,
           variables: {
             id: this.commentEditId,
-            content: this.commentEditContent
+            content: this.commentEditContent,
+            pageId: this.pageId,
+            mentions: this.mentions
           }
         })
 
         if (_.get(resp, 'data.comments.update.responseResult.succeeded', false)) {
+          this.mentions = []
           this.$store.commit('showNotification', {
             style: 'success',
             message: this.$t('common:comments.updateSuccess'),
@@ -496,12 +538,42 @@ export default {
       }
       this.isBusy = false
       this.$store.commit(`loadingStop`, 'comments-delete')
+    },
+    async fetchUsers(query) {
+      try {
+        const respRaw = await this.$apollo.query({
+          query: autoCompleteEmailsQuery,
+          variables: {
+            siteId: this.$store.get('page/siteId'),
+            query: query
+          }
+        })
+        const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
+        this.users = resp.map(email => ({
+          value: email,
+          label: email,
+          email: email
+        }))
+      } catch (err) {
+        console.error(err)
+      }
     }
+  },
+  mounted() {
+    this.fetchUsers('')
   }
 }
 </script>
 
 <style lang="scss">
+.mention-item {
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.mention-selected {
+  background: rgb(192, 250, 153);
+}
 .comments-post {
   position: relative;
 
