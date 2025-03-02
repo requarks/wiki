@@ -2,7 +2,7 @@ import { DynamicThreadPool } from 'poolifier'
 import os from 'node:os'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import cronparser from 'cron-parser'
+import { CronExpressionParser } from 'cron-parser'
 import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
 import { createDeferred } from '../helpers/common.mjs'
@@ -129,7 +129,7 @@ export default {
     }
   },
   async processJob () {
-    let jobIds = []
+    const jobIds = []
     try {
       const availableWorkers = this.maxWorkers - this.activeWorkers
       if (availableWorkers < 1) {
@@ -249,7 +249,7 @@ export default {
             lastCheckedAt: DateTime.utc().toISO()
           })
         if (jobLock > 0) {
-          WIKI.logger.info(`Scheduling future planned jobs...`)
+          WIKI.logger.info('Scheduling future planned jobs...')
           const scheduledJobs = await WIKI.db.knex('jobSchedule')
           if (scheduledJobs?.length > 0) {
             // -> Get existing scheduled jobs
@@ -257,10 +257,9 @@ export default {
             let totalAdded = 0
             for (const job of scheduledJobs) {
               // -> Get next planned iterations
-              const plannedIterations = cronparser.parseExpression(job.cron, {
+              const plannedIterations = CronExpressionParser.parse(job.cron, {
                 startDate: DateTime.utc().toJSDate(),
                 endDate: DateTime.utc().plus({ days: 1, minutes: 5 }).toJSDate(),
-                iterator: true,
                 tz: 'UTC'
               })
               // -> Add a maximum of 10 future iterations for a single task
@@ -291,7 +290,7 @@ export default {
             if (totalAdded > 0) {
               WIKI.logger.info(`Scheduled ${totalAdded} new future planned jobs: [ OK ]`)
             } else {
-              WIKI.logger.info(`No new future planned jobs to schedule: [ OK ]`)
+              WIKI.logger.info('No new future planned jobs to schedule: [ OK ]')
             }
           }
         }

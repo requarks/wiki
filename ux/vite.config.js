@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
     server: {
       // https: true
       open: false, // opens browser window automatically
+      allowedHosts: true,
       port: userConfig.dev?.port,
       proxy: ['_graphql', '_blocks', '_site', '_thumb', '_user'].reduce((result, key) => {
         result[`/${key}`] = {
