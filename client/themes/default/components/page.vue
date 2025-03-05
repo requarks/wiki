@@ -197,7 +197,12 @@
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
                       v-icon(:color='printView ? `primary` : `grey`') mdi-printer
-                  span {{$t('common:page.printFormat')}}
+                  span {{messages.printToPdf}}
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
+                      v-icon(color='grey') mdi-file-word
+                  span {{messages.exportToWord}}
                 v-spacer
 
           v-flex.page-col-content(
@@ -348,6 +353,7 @@ import ClipboardJS from 'clipboard'
 import { v4 as uuidv4 } from 'uuid'
 import Vue from 'vue'
 import TreeItem from './tree-item.vue'
+import { messages } from '@/messages'
 
 Vue.component('Tabset', Tabset)
 
@@ -488,6 +494,7 @@ export default {
   },
   data() {
     return {
+      messages: messages,
       openStates: {},
       navShown: false,
       navExpanded: false,
@@ -688,13 +695,40 @@ export default {
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
     print () {
-      if (this.printView) {
-        this.printView = false
+      this.$nextTick(() => {
+        window.print()
+      })
+    },
+    async exportWord () {
+      //window.location.assign(`/export/docx/${this.pageId}`)
+
+      const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+          },
+      });
+
+      if (response.status == 200) {
+        const blob = await response.blob();
+        const header = window.document.getElementsByClassName(
+          "row page-header-section no-gutters align-content-center"
+        )[0];
+        const title = header.getElementsByClassName("headline")[0].textContent;
+
+        // Download the DOCX file
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = title.replaceAll(" ", "_") + '.docx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        this.printView = true
-        this.$nextTick(() => {
-          window.print()
-        })
+        this.$store.commit('showNotification', {
+        message: 'Error exporting to Word',
+        style: 'error',
+        icon: 'alert'
+      })
       }
     },
     pageEdit () {
