@@ -321,6 +321,7 @@
                 span {{$t('common:comments.title')}}
               .comments-main
                 slot(name='comments')
+    loader(v-model='isLoading', :title='messages.exporting')
     nav-footer
     notify
     search-results
@@ -529,7 +530,8 @@ export default {
           }
         }
       },
-      winWidth: 0
+      winWidth: 0,
+      isLoading: false
     }
   },
   computed: {
@@ -797,14 +799,14 @@ export default {
       })
     },
     async exportWord () {
-      //window.location.assign(`/export/docx/${this.pageId}`)
-
+      this.isLoading = true;
       const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
           },
       });
+      this.isLoading = false;
 
       if (response.status == 200) {
         const blob = await response.blob();
