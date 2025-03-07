@@ -50,9 +50,6 @@ test-results/
 coverage/
 .scannerwork
 
-# Localization Resources
-/server/locales/**/*.yml
-
 
 **/secrets/*
 deployment/data/*

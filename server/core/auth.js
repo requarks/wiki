@@ -512,7 +512,7 @@ module.exports = {
       comments: {
         read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], page) : false,
         write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], page) : false,
-        manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:comments'], page) : false
+        manage: false // This role is squashed globally
       },
       history: {
         read: WIKI.auth.checkAccess(req.user, ['read:history'], page)
@@ -525,7 +525,7 @@ module.exports = {
         write: WIKI.auth.checkAccess(req.user, ['write:pages'], page),
         manage: WIKI.auth.checkAccess(req.user, ['manage:pages'], page),
         delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page),
-        script: WIKI.auth.checkAccess(req.user, ['write:scripts'], page),
+        script: false, // This role is squashed globally
         style: WIKI.auth.checkAccess(req.user, ['write:styles'], page)
       },
       system: {

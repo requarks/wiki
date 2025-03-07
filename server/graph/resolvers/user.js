@@ -51,6 +51,38 @@ module.exports = {
       usr.tfaSecret = ''
 
       return usr
+    },
+    async autoCompleteEmails(obj, args, context) {
+      const { siteId, query } = args
+
+      // Validate the search text: should contain only allowed characters in an email address
+      const emailRegex = /^[a-zA-Z0-9._%+-@]*$/
+      if (!emailRegex.test(query)) {
+        return []
+      }
+
+      // Check if the request user has access to the site
+      const userHasAccess = WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], { siteId })
+      if (!userHasAccess) {
+        throw new WIKI.Error.AuthForbidden('User does not have access to the site')
+      }
+
+      // Prepare the query to search emails
+      const emails = await WIKI.models.users.query()
+        .distinct('users.email')
+        .join('userGroups', 'userGroups.userId', 'users.id')
+        .whereIn('userGroups.groupId', function() {
+          this.select('id')
+            .from('groups')
+            .whereRaw("rules::jsonb @> ?", JSON.stringify([{ sites: [siteId], deny: false, roles: ['read:pages'] }]))
+            .orWhereRaw("rules::jsonb @> ?", JSON.stringify([{ sites: [siteId], deny: false, roles: ['manage:sites'] }]))
+        })
+        .andWhere('users.email', 'like', `${query}%`)
+
+      // Extract only the email addresses
+      const emailAddresses = [...new Set(emails.map(user => user.email))]
+
+      return emailAddresses
     }
   },
   UserMutation: {

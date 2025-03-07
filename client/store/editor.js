@@ -4,6 +4,7 @@ const state = {
   editor: '',
   editorKey: '',
   content: '',
+  mentions: [],
   mode: 'create',
   activeModal: '',
   activeModalData: null,

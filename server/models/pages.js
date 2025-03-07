@@ -320,15 +320,6 @@ module.exports = class Page extends Model {
 
     // -> Format JS Scripts
     let scriptJs = ''
-    if (
-      WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-        locale: opts.locale,
-        path: opts.path,
-        siteId: opts.siteId
-      })
-    ) {
-      scriptJs = opts.scriptJs || ''
-    }
 
     const pageHash = await WIKI.models.pages.generatePageHash(
       opts.siteId,
@@ -479,15 +470,6 @@ module.exports = class Page extends Model {
 
     // -> Format JS Scripts
     let scriptJs = _.get(ogPage, 'extra.js', '')
-    if (
-      WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-        locale: opts.locale,
-        path: opts.path,
-        siteId: opts.siteId
-      })
-    ) {
-      scriptJs = opts.scriptJs || ''
-    }
 
     // -> Update page
     await WIKI.models.pages
