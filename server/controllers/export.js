@@ -22,7 +22,7 @@ router.get('/export/docx/:pageId', async (req, res) => {
       return res.status(404).send('Page not found')
     }
 
-    const pageHTML = `
+    let pageHTML = `
         <html>
           <head>
             <title>${page.title}</title>
@@ -32,6 +32,9 @@ router.get('/export/docx/:pageId', async (req, res) => {
           </body>
         </html>
       `
+    // HTML adaptions
+    pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
+
     const response = await convertToWord(pageHTML)
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
@@ -54,15 +57,17 @@ async function convertToWord(pageHTML) {
       `${pageHTML}\r\n` +
       `--${boundary}--\r\n`;
 
-      const response = await fetch(//'http://pandoc-service.default.svc.cluster.local/convert-to-docx',
-        'http://localhost:80/convert-to-docx', {
-        method: 'POST',
-        headers: {
-          'Content-Type': `multipart/form-data; boundary=${boundary}`,
-          'Content-Length':  Buffer.byteLength(body)
-        },
-        body: Buffer.from(body)
-      });
+      const response = await fetch('http://pandoc-service.default.svc.cluster.local/convert-to-docx',
+        //'http://localhost:80/convert-to-docx',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length':  Buffer.byteLength(body)
+          },
+          body: Buffer.from(body)
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
