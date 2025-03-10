@@ -1,3 +1,4 @@
+const fetch = require('node-fetch');
 
 async function convertToWord(pageHTML) {
   try {
@@ -9,8 +10,8 @@ async function convertToWord(pageHTML) {
       `${pageHTML}\r\n` +
       `--${boundary}--\r\n`;
 
-    const response = await fetch(//'http://pandoc-service.default.svc.cluster.local/convert-to-docx',
-      'http://localhost:80/convert-to-docx',
+    const response = await fetch('http://pandoc-service.default.svc.cluster.local/convert-to-docx',
+      //'http://localhost:80/convert-to-docx',
       {
         method: 'POST',
         headers: {
