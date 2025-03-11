@@ -32,8 +32,15 @@ router.get('/export/docx/:pageId', async (req, res) => {
           </body>
         </html>
       `
-    // HTML adaptions
+    // HTML ADAPTIONS
+    // cleaning up headers
     pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
+    // creating page internal links
+    if (typeof req.query.sitePath === 'string') {
+      const internalPath = `${req.query.sitePath}/${page.path}`
+      pageHTML = pageHTML.replaceAll(`href="${WIKI.config.host}/${internalPath}#`, 'href="#') // when external links were used
+      pageHTML = pageHTML.replaceAll(`href="/${internalPath}#`, 'href="#') // when page links were used
+    }
 
     const response = await convertToWord(pageHTML)
 
