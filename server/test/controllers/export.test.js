@@ -1,7 +1,8 @@
 const request = require('supertest');
 const express = require('express');
 const router = require('../../controllers/export');
-const { convertToWord } = require('../../helpers/conversion');
+const { prepareInternalImages, convertToWord } = require('../../helpers/conversion');
+const { JSDOM } = require('jsdom');
 
 const WIKI = {
   auth: {
@@ -18,8 +19,21 @@ const WIKI = {
 };
 
 jest.mock('../../helpers/conversion', () => ({
-  convertToWord: jest.fn()
+  convertToWord: jest.fn(),
+  prepareInternalImages: jest.fn()
 }));
+
+jest.mock('jsdom', () => {
+  const actualJsdom = jest.requireActual('jsdom');
+  return {
+    ...actualJsdom,
+    JSDOM: jest.fn().mockImplementation((html) => {
+      const dom = new actualJsdom.JSDOM(html);
+      dom.serialize = jest.fn();
+      return dom;
+    })
+  };
+});
 
 const app = express();
 app.use(express.json());
@@ -89,6 +103,7 @@ describe('GET /export/docx/:pageId', () => {
     WIKI.auth.checkAccess.mockReturnValue(true);
     WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<a>Test Content¶</a>' });
     convertToWord.mockResolvedValue(Buffer.from('DOCX content'));
+    prepareInternalImages.mockResolvedValue();
     const expectedArgument = `
         <html>
           <head>
@@ -99,6 +114,13 @@ describe('GET /export/docx/:pageId', () => {
           </body>
         </html>
       `;
+
+    let dom;
+    JSDOM.mockImplementationOnce((html) => {
+      dom = new (require('jsdom').JSDOM)(html);
+      dom.serialize = jest.fn().mockReturnValue(expectedArgument);
+      return dom;
+    });
     const expectedResponse = Buffer.from('DOCX content');
 
     //WHEN
@@ -107,6 +129,8 @@ describe('GET /export/docx/:pageId', () => {
       .query({ locale: 'en', path: '/some/path', sitePath: '/site/path' });
 
     // THEN
+    expect(prepareInternalImages).toHaveBeenCalledTimes(1);
+    expect(prepareInternalImages).toHaveBeenCalledWith(dom.window.document, expect.any(Object));
     expect(convertToWord).toHaveBeenCalledTimes(1);
     expect(convertToWord).toHaveBeenCalledWith(expectedArgument);
     expect(response.status).toBe(200);
