@@ -11,6 +11,9 @@ const WIKI = {
     pages: {
       getPage: jest.fn()
     }
+  },
+  config: {
+    host: 'http://localhost:3000'
   }
 };
 
