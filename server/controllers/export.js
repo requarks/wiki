@@ -1,9 +1,11 @@
 const express = require('express')
 const router = express.Router()
 const { JSDOM } = require('jsdom')
-const { prepareInternalImages, convertToWord } = require('../helpers/conversion')
-
-
+const {
+  handleInternalLinks,
+  prepareInternalImages,
+  convertToWord
+} = require('../helpers/conversion')
 
 router.get('/export/docx/:pageId', async (req, res) => {
   try {
@@ -34,18 +36,11 @@ router.get('/export/docx/:pageId', async (req, res) => {
             ${page.render}
           </body>
         </html>
-      `
-    // HTML ADAPTIONS
-    // cleaning up headers
-    pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
+      `;
 
-    // creating page internal links
-    if (typeof req.query.sitePath === 'string') {
-      const internalPath = `${req.query.sitePath}/${page.path}`
-      pageHTML = pageHTML.replaceAll(`href="${WIKI.config.host}/${internalPath}#`, 'href="#') // when external links were used
-      pageHTML = pageHTML.replaceAll(`href="/${internalPath}#`, 'href="#') // when page links were used
-    }
-
+    // HTML Aadaptions
+    pageHTML = pageHTML.replaceAll('¶</a>', '</a>');
+    pageHTML = handleInternalLinks(pageHTML, req.query.sitePath, req.query.path);
 
     const dom = new JSDOM(pageHTML);
     const document = dom.window.document;

@@ -1,7 +1,11 @@
 const request = require('supertest');
 const express = require('express');
 const router = require('../../controllers/export');
-const { prepareInternalImages, convertToWord } = require('../../helpers/conversion');
+const {
+  handleInternalLinks,
+  prepareInternalImages,
+  convertToWord
+} = require('../../helpers/conversion');
 const { JSDOM } = require('jsdom');
 
 const WIKI = {
@@ -12,15 +16,13 @@ const WIKI = {
     pages: {
       getPage: jest.fn()
     }
-  },
-  config: {
-    host: 'http://localhost:3000'
   }
 };
 
 jest.mock('../../helpers/conversion', () => ({
-  convertToWord: jest.fn(),
-  prepareInternalImages: jest.fn()
+  handleInternalLinks: jest.fn(),
+  prepareInternalImages: jest.fn(),
+  convertToWord: jest.fn()
 }));
 
 jest.mock('jsdom', () => {
@@ -100,10 +102,6 @@ describe('GET /export/docx/:pageId', () => {
 
   it('should return 200 and the DOCX file if all parameters are correct', async () => {
     // GIVEN
-    WIKI.auth.checkAccess.mockReturnValue(true);
-    WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<a>Test Content¶</a>' });
-    convertToWord.mockResolvedValue(Buffer.from('DOCX content'));
-    prepareInternalImages.mockResolvedValue();
     const expectedArgument = `
         <html>
           <head>
@@ -114,14 +112,19 @@ describe('GET /export/docx/:pageId', () => {
           </body>
         </html>
       `;
+    const expectedResponse = Buffer.from('DOCX content');
 
+    WIKI.auth.checkAccess.mockReturnValue(true);
+    WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<a>Test Content¶</a>' });
+    handleInternalLinks.mockResolvedValue();
     let dom;
     JSDOM.mockImplementationOnce((html) => {
       dom = new (require('jsdom').JSDOM)(html);
       dom.serialize = jest.fn().mockReturnValue(expectedArgument);
       return dom;
     });
-    const expectedResponse = Buffer.from('DOCX content');
+    prepareInternalImages.mockResolvedValue();
+    convertToWord.mockResolvedValue(Buffer.from('DOCX content'));
 
     //WHEN
     const response = await request(app)
@@ -129,10 +132,13 @@ describe('GET /export/docx/:pageId', () => {
       .query({ locale: 'en', path: '/some/path', sitePath: '/site/path' });
 
     // THEN
+    expect(handleInternalLinks).toHaveBeenCalledTimes(1);
+    expect(handleInternalLinks).toHaveBeenCalledWith(expectedArgument, '/site/path', '/some/path');
+
     expect(prepareInternalImages).toHaveBeenCalledTimes(1);
     expect(prepareInternalImages).toHaveBeenCalledWith(dom.window.document, expect.any(Object));
+
     expect(convertToWord).toHaveBeenCalledTimes(1);
-    expect(convertToWord).toHaveBeenCalledWith(expectedArgument);
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     expect(response.headers['content-length']).toBe(String(expectedResponse.length));

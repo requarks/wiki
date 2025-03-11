@@ -1,6 +1,10 @@
-const { prepareInternalImages, convertToWord } = require('../../helpers/conversion');
 const { JSDOM } = require('jsdom');
 const pageHelper = require('../../helpers/page');
+const {
+  handleInternalLinks,
+  prepareInternalImages,
+  convertToWord
+} = require('../../helpers/conversion');
 
 jest.mock('node-fetch', () => jest.fn());
 const fetch = require('node-fetch');
@@ -23,10 +27,64 @@ const WIKI = {
   },
   logger: {
     warn: jest.fn()
+  },
+  config: {
+    host: 'http://internal.com'
   }
 };
 global.WIKI = WIKI;
 
+describe('prepareInternalLinks', () => {
+  it('should not modify links if sitePath is not a string', () => {
+    const initialPageHTML = '<a href="/site/page#section">Link</a>';
+    const sitePath = {}; // not a string
+    const pagePath = 'page';
+
+    const result = handleInternalLinks(initialPageHTML, sitePath, pagePath);
+
+    expect(result).toBe(initialPageHTML);
+  });
+
+  it('should not adapt external links', () => {
+    const initialPageHTML = '<a href="http://external.com/site/page#section">Link</a>';
+    const sitePath = 'site';
+    const pagePath = 'page';
+
+    const result = handleInternalLinks(initialPageHTML, sitePath, pagePath);
+
+    expect(result).toBe(initialPageHTML);
+  });
+
+  it('should filter out the full path from links to sections on the same page when an external link was used', () => {
+    const pageHTML = '<a href="http://internal.com/site/page#section">Link</a>'; // external link
+    const sitePath = 'site';
+    const pagePath = 'page';
+
+    const result = handleInternalLinks(pageHTML, sitePath, pagePath);
+
+    expect(result).toBe('<a href="#section">Link</a>');
+  });
+
+  it('should filter out the internal path from links to sections on the same page when an internal link was used', () => {
+    const pageHTML = '<a href="/site/page#section">Link</a>'; // internal link
+    const sitePath = 'site';
+    const pagePath = 'page';
+
+    const result = handleInternalLinks(pageHTML, sitePath, pagePath);
+
+    expect(result).toBe('<a href="#section">Link</a>');
+  });
+
+  it('should add the path of links to different pages', () => {
+    const pageHTML = '<a href="/site/other-page">Link</a>';
+    const sitePath = 'site';
+    const pagePath = 'page';
+
+    const result = handleInternalLinks(pageHTML, sitePath, pagePath);
+
+    expect(result).toBe('<a href="http://internal.com/site/other-page">Link</a>');
+  });
+});
 
 describe('prepareInternalImages', () => {
   let document;
@@ -82,7 +140,6 @@ describe('prepareInternalImages', () => {
     expect(images[0].src).toBe('/assets/site1/image1.png');
   });
 
-
   it('should skip images if asset is not found', async () => {
     WIKI.models.sites.getSiteByPath.mockResolvedValue({ id: 1, path: 'site1' });
     WIKI.auth.checkAccess.mockReturnValue(true);
@@ -95,6 +152,7 @@ describe('prepareInternalImages', () => {
     expect(images[0].src).toBe('/assets/site1/image1.png');
   });
 });
+
 describe('convertToWord', () => {
   const pageHTML = '<html><body><h1>Test</h1></body></html>';
   const mockResponse = {

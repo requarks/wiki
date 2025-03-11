@@ -4,9 +4,29 @@ const assetHelper = require('../helpers/asset')
 const mime = require('mime-types');
 const pageHelper = require('../helpers/page')
 
+function handleInternalLinks(pageHTML, sitePath, pagePath) {
+  if (
+    typeof sitePath === 'string' &&
+    sitePath.length > 0 &&
+    pagePath.length > 0
+  ) {
+    const internalPath = `${sitePath}/${pagePath}`;
+
+    pageHTML = pageHTML
+      // when external links were used
+      .replaceAll(`href="${WIKI.config.host}/${internalPath}#`, 'href="#')
+       // when page links were used
+      .replaceAll(`href="/${internalPath}#`, 'href="#')
+      // link to a different page
+      .replaceAll(`href="/${sitePath}`, `href="${WIKI.config.host}/${sitePath}`);
+  }
+  return pageHTML;
+}
+
 const getSite = async (sitePath) => {
   return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: false })
 }
+
 async function prepareInternalImages(document, req) {
   const images = document.querySelectorAll('img');
   const internalImages = Array.from(images).filter(img => !img.src.startsWith('data:image'));
@@ -77,4 +97,4 @@ async function convertToWord(pageHTML) {
   }
 }
 
-module.exports = { prepareInternalImages, convertToWord };
+module.exports = { handleInternalLinks, prepareInternalImages, convertToWord };
