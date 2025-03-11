@@ -145,3 +145,10 @@ dataPath: ./data
 # file uploads.
 
 bodyParserLimit: 5mb
+
+# ---------------------------------------------------------------------
+# Pandoc Service Path
+# ---------------------------------------------------------------------
+# Path to the pandoc service.
+
+pandocPath: http://pandoc-service.default.svc.cluster.local

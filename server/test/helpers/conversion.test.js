@@ -29,7 +29,8 @@ const WIKI = {
     warn: jest.fn()
   },
   config: {
-    host: 'http://internal.com'
+    host: 'http://internal.com',
+    pandocPath: 'http://pandoc-service-path.com'
   }
 };
 global.WIKI = WIKI;
@@ -171,7 +172,7 @@ describe('convertToWord', () => {
 
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith(
-      'http://pandoc-service.default.svc.cluster.local/convert-to-docx',
+      'http://pandoc-service-path.com/convert-to-docx',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
