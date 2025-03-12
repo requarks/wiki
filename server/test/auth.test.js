@@ -393,4 +393,3 @@ describe('Regular User', () => {
     expect(result).toBe(true)
   })
 })
-
