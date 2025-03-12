@@ -16,6 +16,6 @@ module.exports = {
       slug: err.name,
       message: err.message || 'An unexpected error occured.'
     }
-    return (complete) ? { responseResult: error } : error
+    return (complete) ? { operation: error } : error
   }
 }
