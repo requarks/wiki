@@ -5,7 +5,7 @@ const {
   handleInternalLinks,
   prepareInternalImages,
   convertToWord
-} = require('../helpers/conversion')
+} = require('../helpers/export')
 
 router.get('/export/docx/:pageId', async (req, res) => {
   try {

@@ -5,7 +5,7 @@ const {
   handleInternalLinks,
   prepareInternalImages,
   convertToWord
-} = require('../../helpers/conversion');
+} = require('../../helpers/export');
 const { JSDOM } = require('jsdom');
 
 const WIKI = {
@@ -19,7 +19,7 @@ const WIKI = {
   }
 };
 
-jest.mock('../../helpers/conversion', () => ({
+jest.mock('../../helpers/export', () => ({
   handleInternalLinks: jest.fn(),
   prepareInternalImages: jest.fn(),
   convertToWord: jest.fn()
