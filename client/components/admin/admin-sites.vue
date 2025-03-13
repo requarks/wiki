@@ -106,28 +106,32 @@ export default {
     }
   },
   methods: {
-    showNotification(message, style, icon) {
-      this.$store.commit('showNotification', {
-        style: style,
-        message: message,
-        icon: icon
-      })
-    },
     async refresh() {
       await this.$apollo.queries.sites.refetch()
-      this.showNotification('Sites have been refreshed.', 'success', 'cached')
+      this.$store.commit('showNotification', {
+        message: 'Sites have been refreshed.',
+        style: 'success',
+        icon: 'cached'
+      })
     },
     async createSite() {
       if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
-        this.showNotification('Enter a site name and a path', 'red', 'warning')
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Enter a site name and a path',
+          icon: 'warning'
+        })
         return
       }
       if (/[/\\.\s]/.test(this.newSitePath)) {
-        this.showNotification('Path cannot contain spaces, dots, "/", or "\\" characters', 'red', 'warning')
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Path cannot contain spaces, dots, "/", or "\\" characters',
+          icon: 'warning'
+        })
         return
       }
       this.newSiteDialog = false
-      let succeeded = false
       try {
         await this.$apollo.mutate({
           mutation: createSiteMutation,
@@ -137,13 +141,10 @@ export default {
           },
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { operation: {} })
-            succeeded = data.operation.succeeded
-            if (data.operation.succeeded) {
+            if (data.operation.succeeded === true) {
               const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               apolloData.sites.push(data.site)
               store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: apolloData })
-            } else if (!data.operation.succeeded) {
-
             } else {
               throw new Error(data.operation.message)
             }
@@ -154,11 +155,11 @@ export default {
         })
         this.newSiteName = ''
         this.newSitePath = ''
-        if (succeeded) {
-          this.showNotification(`Site has been created successfully.`, 'success', 'cached')
-        } else {
-          this.showNotification('A site with the same path already exists! Cannot have 2 sites with the same path.', 'red', 'warning')
-        }
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `Site has been created successfully.`,
+          icon: 'check'
+        })
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
