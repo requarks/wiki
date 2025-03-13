@@ -15,6 +15,9 @@ const WIKI = {
   models: {
     pages: {
       getPage: jest.fn()
+    },
+    sites: {
+      getSiteIdByPath: jest.fn()
     }
   }
 };
@@ -65,6 +68,7 @@ describe('GET /export/docx/:pageId', () => {
   });
 
   it('should return 403 if user does not have access', async () => {
+    WIKI.models.sites.getSiteIdByPath.mockResolvedValue('1234');
     WIKI.auth.checkAccess.mockReturnValue(false);
 
     const response = await request(app)
@@ -76,6 +80,7 @@ describe('GET /export/docx/:pageId', () => {
   });
 
   it('should return 404 if page is not found', async () => {
+    WIKI.models.sites.getSiteIdByPath.mockResolvedValue('1234');
     WIKI.auth.checkAccess.mockReturnValue(true);
     WIKI.models.pages.getPage.mockResolvedValue(null);
 
@@ -88,6 +93,7 @@ describe('GET /export/docx/:pageId', () => {
   });
 
   it('should return 500 if convertToWord throws an error', async () => {
+    WIKI.models.sites.getSiteIdByPath.mockResolvedValue('1234');
     WIKI.auth.checkAccess.mockReturnValue(true);
     WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<p>Test Content</p>' });
     convertToWord.mockRejectedValue(new Error('Conversion error'));
@@ -114,6 +120,7 @@ describe('GET /export/docx/:pageId', () => {
       `;
     const expectedResponse = Buffer.from('DOCX content');
 
+    WIKI.models.sites.getSiteIdByPath.mockResolvedValue('1234');
     WIKI.auth.checkAccess.mockReturnValue(true);
     WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<a>Test Content¶</a>' });
     handleInternalLinks.mockResolvedValue();
