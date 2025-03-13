@@ -17,7 +17,7 @@ router.get('/export/docx/:pageId', async (req, res) => {
       )
     }
     const siteId = await WIKI.models.sites.getSiteIdByPath({path: req.query.sitePath})
-    if (!WIKI.auth.checkAccess(req.user, ['read:pages'], { siteId, ...req.query})) {
+    if (!WIKI.auth.checkAccess(req.user, ['read:pages'], {siteId: siteId, ...req.query})) {
       return res.status(403).send('Access denied')
     }
 
