@@ -27,6 +27,11 @@ const getSite = async (sitePath) => {
   return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: false })
 }
 
+async function getSiteIdByPath(sitePath) {
+  return WIKI.models.sites.getSiteIdByPath({ path: sitePath })
+}
+
+
 async function prepareInternalImages(document, req) {
   const images = document.querySelectorAll('img');
   const internalImages = Array.from(images).filter(img => !img.src.startsWith('data:image'));
@@ -96,4 +101,4 @@ async function convertToWord(pageHTML) {
   }
 }
 
-module.exports = { handleInternalLinks, prepareInternalImages, convertToWord };
+module.exports = { handleInternalLinks, prepareInternalImages, convertToWord, getSiteIdByPath };
