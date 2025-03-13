@@ -6,6 +6,7 @@ const {
   prepareInternalImages,
   convertToWord
 } = require('../helpers/export')
+const Page = require('../models/pages')
 
 router.get('/export/docx/:pageId', async (req, res) => {
   try {
@@ -27,13 +28,20 @@ router.get('/export/docx/:pageId', async (req, res) => {
       return res.status(404).send('Page not found')
     }
 
+    let pageContent = ''
+    if (page.contentType === 'html') {
+      pageContent = page.render
+    } else {
+      pageContent = Page.convertMarkdown2HTML(page)
+    }
+
     let pageHTML = `
         <html>
           <head>
             <title>${page.title}</title>
           </head>
           <body>
-            ${page.render}
+            ${pageContent}
           </body>
         </html>
       `;

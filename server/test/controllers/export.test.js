@@ -115,7 +115,7 @@ describe('GET /export/docx/:pageId', () => {
     const expectedResponse = Buffer.from('DOCX content');
 
     WIKI.auth.checkAccess.mockReturnValue(true);
-    WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<a>Test Content¶</a>' });
+    WIKI.models.pages.getPage.mockResolvedValue({ title: 'Test Page', render: '<a>Test Content¶</a>', contentType: 'html' });
     handleInternalLinks.mockResolvedValue();
     let dom;
     JSDOM.mockImplementationOnce((html) => {
