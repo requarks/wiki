@@ -247,7 +247,7 @@ describe('Group Resolvers', () => {
           user: {
             id: 4,
             groups: [1, 4],
-            permissions: ['manage:groups']
+            permissions: ['manage:sites']
           }
         }
 
@@ -343,7 +343,7 @@ describe('Group Resolvers', () => {
           user: {
             id: 4,
             groups: [1, 4],
-            permissions: ['manage:groups']
+            permissions: ['manage:sites']
           }
         }
 
