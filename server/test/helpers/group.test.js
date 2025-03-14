@@ -95,7 +95,7 @@ const WIKI = {
       },
       '4': {
         id: 4,
-        name: 'Site Admin',
+        name: 'Site Admins 1',
         permissions: [
           'read:pages',
           'read:assets',
@@ -115,6 +115,37 @@ const WIKI = {
               'b722970a-e813-4b6a-8563-87ffc77827e5',
               'bdc620e1-e7ed-4335-bf09-fc897bf43f5b',
               'd013a996-cb0e-4fc4-954a-fc89e94dfd49'
+            ]
+          }
+        ],
+        isSystem: false,
+        createdAt: '2024-10-23T07:08:36.833Z',
+        updatedAt: '2024-12-05T15:33:52.214Z',
+        redirectOnLogin: '/'
+      },
+      '5': {
+        id: 5,
+        name: 'Site Admins 2',
+        permissions: [
+          'read:pages',
+          'read:assets',
+          'read:comments',
+          'write:comments',
+          'manage:sites'
+        ],
+        rules: [
+          {
+            id: 'default',
+            deny: false,
+            match: 'START',
+            roles: [ 'manage:sites' ],
+            path: '',
+            locales: [],
+            sites: [
+              'b722970a-e813-4b6a-8563-87ffc77827e5',
+              'bdc620e1-e7ed-4335-bf09-fc897bf43f5b',
+              'd013a996-cb0e-4fc4-954a-fc89e94dfd49',
+              '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
             ]
           }
         ],
@@ -201,6 +232,46 @@ describe('Site Admin', () => {
   it('cannot manage a group they are not an admin of', () => {
     const result = canManageGroup(user, 3)
     expect(result).toBe(false)
+  })
+})
+
+describe('Site Admin of multiple groups', () => {
+  let user
+
+  beforeEach(() => {
+    user = {
+      id: 4,
+      name: 'Site Admin',
+      groups: [ 4, 5 ],
+      permissions: [ 'manage:sites' ]
+    }
+
+    global.WIKI = WIKI
+  })
+
+  it('can manage admin group', () => {
+    const result = canManageGroup(user, 1)
+    expect(result).toBe(false)
+  })
+
+  it('can manage guest group', () => {
+    const result = canManageGroup(user, 2)
+    expect(result).toBe(true)
+  })
+
+  it('cannot manage regular group', () => {
+    const result = canManageGroup(user, 3)
+    expect(result).toBe(false)
+  })
+
+  it('can manage own group (1)', () => {
+    const result = canManageGroup(user, 4)
+    expect(result).toBe(true)
+  })
+
+  it('can manage own group (2)', () => {
+    const result = canManageGroup(user, 5)
+    expect(result).toBe(true)
   })
 })
 
