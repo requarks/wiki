@@ -67,7 +67,14 @@ module.exports = {
     /**
      * ASSIGN USER TO GROUP
      */
-    async assignUser (obj, args, { req }) {
+    async assignUser(obj, args, { req }) {
+
+      // Check for valid group
+      const grp = await WIKI.models.groups.query().findById(args.groupId)
+      if (!grp) {
+        throw new gql.GraphQLError('Invalid Group ID')
+      }
+
       if (!canManageGroup(req.user, args.groupId)) {
         throw new gql.GraphQLError('Insufficient permissions to assign user to the group.')
       }
@@ -77,11 +84,6 @@ module.exports = {
         throw new gql.GraphQLError('Cannot assign the Guest user to a group.')
       }
 
-      // Check for valid group
-      const grp = await WIKI.models.groups.query().findById(args.groupId)
-      if (!grp) {
-        throw new gql.GraphQLError('Invalid Group ID')
-      }
 
       // Check assigned permissions for write:groups
       if (
@@ -189,7 +191,12 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args, { req }) {
+    async unassignUser(obj, args, { req }) {
+      const grp = await WIKI.models.groups.query().findById(args.groupId)
+      if (!grp) {
+        throw new gql.GraphQLError('Invalid Group ID')
+      }
+
       if (!canManageGroup(req.user, args.groupId)) {
         throw new gql.GraphQLError('Insufficient permissions to remove user from the group.')
       }
@@ -200,10 +207,7 @@ module.exports = {
       if (args.userId === 1 && args.groupId === 1) {
         throw new gql.GraphQLError('Cannot unassign Administrator user from Administrators group.')
       }
-      const grp = await WIKI.models.groups.query().findById(args.groupId)
-      if (!grp) {
-        throw new gql.GraphQLError('Invalid Group ID')
-      }
+
       const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
         throw new gql.GraphQLError('Invalid User ID')

@@ -2,31 +2,13 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-const rulesToSites = (rules) => {
-  let siteIds = []
-
-  for (const rule of rules) {
-    if (
-      rule.deny === false &&
-      rule.sites &&
-      rule.sites.length > 0 &&
-      rule.roles.includes('manage:sites')
-    ) {
-      siteIds = siteIds.concat(rule.sites)
-    }
-  }
-
-  siteIds = _.uniq(siteIds)
-  return siteIds
-}
-
 const managedGroupsToSiteIds = (groups) => {
   let siteIds = []
 
   for (const groupId of groups) {
     const group = _.get(WIKI.auth.groups, groupId, [])
     if (group.permissions && !group.permissions.includes('manage:sites')) {
-      return []
+      continue
     }
     if (group.rules) {
       for (const rule of group.rules) {
@@ -46,16 +28,21 @@ const managedGroupsToSiteIds = (groups) => {
   return siteIds
 }
 
-const extractSitesFromGroupRules = (rules) => {
+const extractSiteIdsFromGroupRules = (groups) => {
   let siteIds = []
 
-  for (const rule of rules) {
-    if (
-      rule.deny === false &&
-      rule.sites &&
-      rule.sites.length > 0
-    ) {
-      siteIds = siteIds.concat(rule.sites)
+  for (const groupId of groups) {
+    const group = _.get(WIKI.auth.groups, groupId, [])
+    if (group.rules) {
+      for (const rule of group.rules) {
+        if (
+          rule.deny === false &&
+          rule.sites &&
+          rule.sites.length > 0
+        ) {
+          siteIds = siteIds.concat(rule.sites)
+        }
+      }
     }
   }
 
@@ -63,18 +50,14 @@ const extractSitesFromGroupRules = (rules) => {
   return siteIds
 }
 
-const isGroupParticipant = (user, groupIds) => {
-  return _.intersection(user.groups, groupIds).length > 0
-}
-
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
   if (groupId === 1 || groupId === 2) return false
-  const groupSites = managedGroupsToSiteIds([groupId])
-  const userSites = managedGroupsToSiteIds(user.groups)
+  const managedGroupSites = managedGroupsToSiteIds(user.groups)
+  const groupSites = extractSiteIdsFromGroupRules([groupId])
 
-  if (groupSites.length > 1 && userSites.length > 1) {
-    if (groupSites.length <= _.intersection(userSites, groupSites).length) {
+  if (managedGroupSites.length > 0 && groupSites.length > 0) {
+    if (_.difference(groupSites, managedGroupSites).length === 0) {
       return true
     }
   }
@@ -97,10 +80,7 @@ const canManageSites = (g) => {
 }
 
 module.exports = {
-  rulesToSites,
   managedGroupsToSiteIds,
-  extractSitesFromGroupRules,
-  isGroupParticipant,
   canManageGroup,
   canManageSites
 }

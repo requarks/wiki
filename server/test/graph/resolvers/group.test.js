@@ -1,8 +1,5 @@
 const { assignUser, unassignUser } = require('../../../graph/resolvers/group')
 
-// jest.mock('../../../core/auth');
-// jest.mock('../../../helpers/graph');
-
 const WIKI = {
   auth: {
     isSuperAdmin: jest.fn(),
@@ -11,12 +8,11 @@ const WIKI = {
     checkAccess: jest.fn(),
     revokeUserTokens: jest.fn(),
     reloadGroups: jest.fn(),
-    checkExclusiveAccess: jest.fn(),
     groups: {
       '1': {
         id: 1,
         name: 'Administrators',
-        permissions: [ 'manage:system' ],
+        permissions: ['manage:system'],
         rules: [],
         isSystem: true,
         createdAt: '2024-09-24T18:32:11.291Z',
@@ -26,22 +22,22 @@ const WIKI = {
       '2': {
         id: 2,
         name: 'Guests',
-        permissions: [ 'read:pages', 'read:assets', 'read:comments' ],
+        permissions: ['read:pages', 'read:assets', 'read:comments'],
         rules: [
           {
             id: 'guest',
             deny: false,
             match: 'START',
-            roles: [ 'read:pages', 'read:assets', 'read:comments' ],
+            roles: ['read:pages', 'read:assets', 'read:comments'],
             path: '',
             locales: [],
-            sites: [ 'b722970a-e813-4b6a-8563-87ffc77827e5' ]
+            sites: ['b722970a-e813-4b6a-8563-87ffc77827e5']
           },
           {
             id: '222813d816',
             deny: false,
             match: 'START',
-            roles: [ 'read:pages', 'read:assets', 'read:comments' ],
+            roles: ['read:pages', 'read:assets', 'read:comments'],
             path: '',
             locales: [],
             sites: [
@@ -82,7 +78,8 @@ const WIKI = {
             sites: [
               'SITE-1',
               'SITE-2',
-              'SITE-3'
+              'SITE-3',
+              'SITE-4'
             ]
           }
         ],
@@ -106,7 +103,7 @@ const WIKI = {
             id: 'default',
             deny: false,
             match: 'START',
-            roles: [ 'manage:sites' ],
+            roles: ['manage:sites'],
             path: '',
             locales: [],
             sites: [
@@ -173,7 +170,7 @@ describe('Group Resolvers', () => {
           })
         })
 
-        const result = await groupResolvers.GroupMutation.update(null, { id: 4, name: 'Updated Group', permissions: [], rules: [] }, { req })
+        const result = await groupResolvers.GroupMutation.update(null, { id: 4, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-4'] }] }, { req })
         expect(result.responseResult.message).toBe('Group has been updated.')
         expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: 4, kind: 'g' })
         expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: 4, kind: 'g' })
@@ -250,8 +247,8 @@ describe('Group Resolvers', () => {
         req = {
           user: {
             id: 1,
-            groups: [1],
-            permissions: ['manage:groups']
+            groups: [3, 4],
+            permissions: ['manage:sites']
           }
         }
 
@@ -289,7 +286,7 @@ describe('Group Resolvers', () => {
       })
 
       it('successfully assigns a user to a group', async () => {
-        const args = { groupId: 3, userId: 5 }
+        const args = { groupId: 4, userId: 5 }
         const result = await assignUser(null, args, { req })
         expect(result.responseResult).toEqual({
           'errorCode': 0,
@@ -297,33 +294,33 @@ describe('Group Resolvers', () => {
           'slug': 'ok',
           'succeeded': true
         })
-        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: 4, kind: 'g' })
+        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: 5, kind: 'u' })
       })
 
       it('throws an error if user does not have permission to assign', async () => {
         req.user.permissions = []
-        const args = { groupId: 4, userId: 5 }
+        const args = { groupId: 3, userId: 5 }
         await expect(assignUser(null, args, { req })).rejects.toThrow(
           'Insufficient permissions to assign user to the group.'
         )
       })
 
       it('throws an error if the Guest user is being assigned', async () => {
-        const args = { groupId: 3, userId: 2 }
+        const args = { groupId: 4, userId: 2 }
         await expect(assignUser(null, args, { req })).rejects.toThrow(
           'Cannot assign the Guest user to a group.'
         )
       })
 
-      xit('throws an error if the group does not exist', async () => {
+      it('throws an error if the group does not exist', async () => {
         WIKI.models.groups.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
         const args = { groupId: 99, userId: 5 }
-        await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid Group ID')
+        await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid Group ID')
       })
 
       it('throws an error if the user does not exist', async () => {
         WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
-        const args = { groupId: 3, userId: 99 }
+        const args = { groupId: 4, userId: 99 }
         await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
 
@@ -331,7 +328,7 @@ describe('Group Resolvers', () => {
         WIKI.models.knex = jest.fn(() => ({
           where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(true) }))
         }))
-        const args = { groupId: 3, userId: 5 }
+        const args = { groupId: 4, userId: 5 }
         await expect(assignUser(null, args, { req })).rejects.toThrow(
           'User is already assigned to group.'
         )
@@ -346,8 +343,8 @@ describe('Group Resolvers', () => {
         req = {
           user: {
             id: 1,
-            groups: [1],
-            permissions: ['manage:groups']
+            groups: [3, 4],
+            permissions: ['manage:sites']
           }
         }
 
@@ -384,7 +381,7 @@ describe('Group Resolvers', () => {
       })
 
       it('successfully unassign a user from a group', async () => {
-        const args = { groupId: 3, userId: 5 }
+        const args = { groupId: 4, userId: 5 }
         const result = await unassignUser(null, args, { req })
         expect(result.responseResult).toEqual({
           'errorCode': 0,
@@ -397,14 +394,14 @@ describe('Group Resolvers', () => {
 
       it('throws an error if user does not have permission to unassign', async () => {
         req.user.permissions = []
-        const args = { groupId: 4, userId: 5 }
+        const args = { groupId: 3, userId: 5 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow(
           'Insufficient permissions to remove user from the group.'
         )
       })
 
       it('throws an error if the Guest user is being unassigned', async () => {
-        const args = { groupId: 3, userId: 2 }
+        const args = { groupId: 4, userId: 2 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow(
           'Cannot unassign Guest user'
         )
@@ -417,7 +414,7 @@ describe('Group Resolvers', () => {
         )
       })
 
-      xit('throws an error if the group does not exist', async () => {
+      it('throws an error if the group does not exist', async () => {
         WIKI.models.groups.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
         const args = { groupId: 99, userId: 5 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid Group ID')
@@ -425,7 +422,7 @@ describe('Group Resolvers', () => {
 
       it('throws an error if the user does not exist', async () => {
         WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
-        const args = { groupId: 3, userId: 99 }
+        const args = { groupId: 4, userId: 99 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
     })
