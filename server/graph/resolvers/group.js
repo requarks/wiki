@@ -4,7 +4,7 @@ const _ = require('lodash')
 const gql = require('graphql')
 
 const {
-  groupsToSites,
+  managedGroupsToSiteIds,
   canManageGroup,
   canManageSites
 } = require('../../helpers/group')
@@ -140,7 +140,7 @@ module.exports = {
       const rules = WIKI.data.groups.defaultPageRules
 
       if (!WIKI.auth.isSuperAdmin(req.user)) {
-        rules[0].sites = groupsToSites(req.user.groups)
+        rules[0].sites = managedGroupsToSiteIds(req.user.groups)
       } else {
         rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
           path: 'default',

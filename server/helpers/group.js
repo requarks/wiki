@@ -20,7 +20,7 @@ const rulesToSites = (rules) => {
   return siteIds
 }
 
-const groupsToSites = (groups) => {
+const managedGroupsToSiteIds = (groups) => {
   let siteIds = []
 
   for (const groupId of groups) {
@@ -46,24 +46,7 @@ const groupsToSites = (groups) => {
   return siteIds
 }
 
-const rulesToSitesNonAdmin = (rules) => {
-  let siteIds = []
-
-  for (const rule of rules) {
-    if (
-      rule.deny === false &&
-      rule.sites &&
-      rule.sites.length > 0
-    ) {
-      siteIds = siteIds.concat(rule.sites)
-    }
-  }
-
-  siteIds = _.uniq(siteIds)
-  return siteIds
-}
-
-const rulesToSitesAdmin = (rules) => {
+const extractSitesFromGroupRules = (rules) => {
   let siteIds = []
 
   for (const rule of rules) {
@@ -87,8 +70,8 @@ const isGroupParticipant = (user, groupIds) => {
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
   if (groupId === 1 || groupId === 2) return false
-  const groupSites = groupsToSites([groupId])
-  const userSites = groupsToSites(user.groups)
+  const groupSites = managedGroupsToSiteIds([groupId])
+  const userSites = managedGroupsToSiteIds(user.groups)
 
   if (groupSites.length > 1 && userSites.length > 1) {
     if (groupSites.length <= _.intersection(userSites, groupSites).length) {
@@ -115,9 +98,8 @@ const canManageSites = (g) => {
 
 module.exports = {
   rulesToSites,
-  groupsToSites,
-  rulesToSitesNonAdmin,
-  rulesToSitesAdmin,
+  managedGroupsToSiteIds,
+  extractSitesFromGroupRules,
   isGroupParticipant,
   canManageGroup,
   canManageSites
