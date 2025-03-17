@@ -1,5 +1,3 @@
-const { assignUser, unassignUser } = require('../../../graph/resolvers/group')
-
 const WIKI = {
   auth: {
     isSuperAdmin: jest.fn(),
@@ -313,13 +311,15 @@ describe('Group Resolvers', () => {
       })
 
       it('throws an error if the group does not exist', async () => {
-        WIKI.models.groups.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
+        const mockFindById = jest.fn().mockResolvedValue(null)
+        WIKI.models.groups.query = jest.fn(() => ({ findById: mockFindById }))
         const args = { groupId: 99, userId: 5 }
         await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid Group ID')
       })
 
       it('throws an error if the user does not exist', async () => {
-        WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
+        const mockFindById = jest.fn().mockResolvedValue(null)
+        WIKI.models.users.query = jest.fn(() => ({ findById: mockFindById }))
         const args = { groupId: 4, userId: 99 }
         await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
@@ -415,13 +415,15 @@ describe('Group Resolvers', () => {
       })
 
       it('throws an error if the group does not exist', async () => {
-        WIKI.models.groups.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
+        const mockFindById = jest.fn().mockResolvedValue(null)
+        WIKI.models.groups.query = jest.fn(() => ({ findById: mockFindById }))
         const args = { groupId: 99, userId: 5 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid Group ID')
       })
 
       it('throws an error if the user does not exist', async () => {
-        WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn().mockResolvedValue(null) }))
+        const mockFindById = jest.fn().mockResolvedValue(null)
+        WIKI.models.users.query = jest.fn(() => ({ findById: mockFindById }))
         const args = { groupId: 4, userId: 99 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
