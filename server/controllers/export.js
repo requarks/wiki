@@ -1,38 +1,40 @@
-const express = require('express')
-const router = express.Router()
-const { JSDOM } = require('jsdom')
+const express = require('express');
+const router = express.Router();
+const { JSDOM } = require('jsdom');
 const {
   handleInternalLinks,
   prepareInternalImages,
   convertToWord
-} = require('../helpers/export')
-const Page = require('../models/pages')
+} = require('../helpers/export');
+const Page = require('../models/pages');
 
 router.get('/export/docx/:pageId', async (req, res) => {
   try {
     if (!req.query.locale || !req.query.path || !req.query.sitePath) {
-      const requiredParams = ['locale', 'path', 'sitePath']
+      const requiredParams = ['locale', 'path', 'sitePath'];
       return res.status(400).send('Missing parameters: ' +
         requiredParams.filter(p => Object.keys(req.query).indexOf(p) < 0)
           .join(', ')
-      )
+      );
     }
     if (!WIKI.auth.checkAccess(req.user, ['read:page'], req.query)) {
-      return res.status(403).send('Access denied')
+      return res.status(403).send('Access denied');
     }
 
     const { pageId } = req.params;
-    const page = await WIKI.models.pages.getPage(Number(pageId))
+    const page = await WIKI.models.pages.getPage(Number(pageId));
 
     if (!page) {
-      return res.status(404).send('Page not found')
+      return res.status(404).send('Page not found');
     }
 
-    let pageContent = ''
+    let pageContent = '';
     if (page.contentType === 'html') {
-      pageContent = page.render
+      pageContent = page.render;
+    } else if (page.contentType === 'markdown') {
+      pageContent = Page.convertMarkdown2HTML(page);
     } else {
-      pageContent = Page.convertMarkdown2HTML(page)
+      return throw new Error('Unsupported content type: ' + page.contentType);
     }
 
     let pageHTML = `
@@ -56,15 +58,15 @@ router.get('/export/docx/:pageId', async (req, res) => {
     await prepareInternalImages(document, req);
     pageHTML = dom.serialize();
 
-    const response = await convertToWord(pageHTML)
+    const response = await convertToWord(pageHTML);
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-    res.setHeader('Content-Length', Buffer.byteLength(response))
-    res.setHeader('Content-Disposition', `attachment; filename="${page.title.replaceAll(" ", "_")}.docx"`)
-    res.send(Buffer.from(response))
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Length', Buffer.byteLength(response));
+    res.setHeader('Content-Disposition', `attachment; filename="${page.title.replaceAll(" ", "_")}.docx"`);
+    res.send(Buffer.from(response));
   } catch (error) {
-    console.error('Error exporting to DOCX:', error)
-    res.status(500).send('Error exporting to DOCX')
+    console.error('Error exporting to DOCX:', error);
+    res.status(500).send('Error exporting to DOCX');
   }
 })
 
