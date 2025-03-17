@@ -1,5 +1,4 @@
 const {
-  checkAccess,
   isSuperAdmin,
   isSiteAdmin,
   hasSitePermission,
