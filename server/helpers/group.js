@@ -25,6 +25,9 @@ const groupsToSites = (groups) => {
 
   for (const groupId of groups) {
     const group = _.get(WIKI.auth.groups, groupId, [])
+    if (group.permissions && !group.permissions.includes('manage:sites')) {
+      return []
+    }
     if (group.rules) {
       for (const rule of group.rules) {
         if (
@@ -67,7 +70,7 @@ const rulesToSitesAdmin = (rules) => {
     if (
       rule.deny === false &&
       rule.sites &&
-      rule.sites.length > 0 
+      rule.sites.length > 0
     ) {
       siteIds = siteIds.concat(rule.sites)
     }
@@ -84,13 +87,15 @@ const isGroupParticipant = (user, groupIds) => {
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
   if (groupId === 1 || groupId === 2) return false
+  const groupSites = groupsToSites([groupId])
   const userSites = groupsToSites(user.groups)
-  const group = _.get(WIKI.auth.groups, groupId, [])
-  const groupSites = rulesToSitesAdmin(group.rules)
 
-  if (_.isEqual(userSites, groupSites)) {
-    return true
+  if (groupSites.length > 1 && userSites.length > 1) {
+    if (groupSites.length <= _.intersection(userSites, groupSites).length) {
+      return true
+    }
   }
+
   return false
 }
 
