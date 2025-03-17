@@ -4,9 +4,11 @@ const { JSDOM } = require('jsdom');
 const {
   handleInternalLinks,
   prepareInternalImages,
-  convertToWord
-} = require('../helpers/export');
+  convertToWord,
+  getSiteIdByPath
+} = require('../helpers/export')
 const Page = require('../models/pages');
+
 
 router.get('/export/docx/:pageId', async (req, res) => {
   try {
@@ -17,8 +19,10 @@ router.get('/export/docx/:pageId', async (req, res) => {
           .join(', ')
       );
     }
-    if (!WIKI.auth.checkAccess(req.user, ['read:page'], req.query)) {
-      return res.status(403).send('Access denied');
+
+    const siteId = await getSiteIdByPath(req.query.sitePath)
+    if (!WIKI.auth.checkAccess(req.user, ['read:pages'], {siteId: siteId, ...req.query})) {
+      return res.status(403).send('Access denied')
     }
 
     const { pageId } = req.params;

@@ -2,7 +2,7 @@
   v-card.editor-modal-drawio.animated.fadeIn(flat, tile)
     iframe(
       ref='drawio'
-      src='https://embed.diagrams.net/?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0&stealth=1&lockdown=1&plugins=0&svg-warning=0'
+      :src="drawioUrl+ '/?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0&stealth=1&lockdown=1&plugins=0&svg-warning=0'"
       frameborder='0'
     )
 </template>
@@ -13,7 +13,8 @@ import { sync, get } from 'vuex-pathify'
 export default {
   data() {
     return {
-      content: ''
+      content: '',
+      drawioUrl: 'https://embed.diagrams.net'
     }
   },
   computed: {
@@ -29,11 +30,11 @@ export default {
       this.$root.$emit('resetEditorConflict')
       this.close()
     },
-    send (msg) {
-      this.$refs.drawio.contentWindow.postMessage(JSON.stringify(msg), '*')
+    send(msg) {
+      this.$refs.drawio.contentWindow.postMessage(JSON.stringify(msg), this.drawioUrl)
     },
-    receive (evt) {
-      if (evt.frame === null || evt.source !== this.$refs.drawio.contentWindow || evt.data.length < 1) {
+    receive(evt) {
+      if (evt.frame === null || evt.source !== this.$refs.drawio.contentWindow || evt.origin !== this.drawioUrl || evt.data.length < 1) {
         return
       }
       try {
