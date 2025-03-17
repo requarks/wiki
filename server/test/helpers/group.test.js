@@ -113,7 +113,6 @@ const WIKI = {
             locales: [],
             sites: [
               'b722970a-e813-4b6a-8563-87ffc77827e5',
-              'bdc620e1-e7ed-4335-bf09-fc897bf43f5b',
               'd013a996-cb0e-4fc4-954a-fc89e94dfd49'
             ]
           }
@@ -143,9 +142,39 @@ const WIKI = {
             locales: [],
             sites: [
               'b722970a-e813-4b6a-8563-87ffc77827e5',
-              'bdc620e1-e7ed-4335-bf09-fc897bf43f5b',
               'd013a996-cb0e-4fc4-954a-fc89e94dfd49',
               '2c8498a5-c45f-4621-abbc-7f5f3df8320f'
+            ]
+          }
+        ],
+        isSystem: false,
+        createdAt: '2024-10-23T07:08:36.833Z',
+        updatedAt: '2024-12-05T15:33:52.214Z',
+        redirectOnLogin: '/'
+      },
+      '6': {
+        id: 6,
+        name: 'Site Admins 3',
+        permissions: [
+          'read:pages',
+          'read:assets',
+          'read:comments',
+          'write:comments',
+          'manage:sites'
+        ],
+        rules: [
+          {
+            id: 'default',
+            deny: false,
+            match: 'START',
+            roles: [ 'manage:sites' ],
+            path: '',
+            locales: [],
+            sites: [
+              'b722970a-e813-4b6a-8563-87ffc77827e5',
+              'd013a996-cb0e-4fc4-954a-fc89e94dfd49',
+              '2c8498a5-c45f-4621-abbc-7f5f3df8320f',
+              'bdc620e1-e7ed-4335-bf09-fc897bf43f5b'
             ]
           }
         ],
@@ -249,14 +278,14 @@ describe('Site Admin of multiple groups', () => {
     global.WIKI = WIKI
   })
 
-  it('can manage admin group', () => {
+  it('cannot manage admin group', () => {
     const result = canManageGroup(user, 1)
     expect(result).toBe(false)
   })
 
-  it('can manage guest group', () => {
+  it('cannot manage guest group', () => {
     const result = canManageGroup(user, 2)
-    expect(result).toBe(true)
+    expect(result).toBe(false)
   })
 
   it('cannot manage regular group', () => {
@@ -264,14 +293,19 @@ describe('Site Admin of multiple groups', () => {
     expect(result).toBe(false)
   })
 
-  it('can manage own group (1)', () => {
+  it('can manage own group with exact match', () => {
     const result = canManageGroup(user, 4)
     expect(result).toBe(true)
   })
 
-  it('can manage own group (2)', () => {
+  it('can manage own group with superset', () => {
     const result = canManageGroup(user, 5)
     expect(result).toBe(true)
+  })
+
+  it('cannot manage a different group with partial overlap', () => {
+    const result = canManageGroup(user, 6)
+    expect(result).toBe(false)
   })
 })
 
@@ -294,8 +328,23 @@ describe('Regular User', () => {
     global.WIKI = WIKI
   })
 
-  it('cannot manage any groups', () => {
+  it('cannot manage superadmin group', () => {
+    const result = canManageGroup(user, 1)
+    expect(result).toBe(false)
+  })
+
+  it('cannot manage guest group', () => {
     const result = canManageGroup(user, 2)
+    expect(result).toBe(false)
+  })
+
+  it('cannot manage site admin group', () => {
+    const result = canManageGroup(user, 4)
+    expect(result).toBe(false)
+  })
+
+  it('cannot manage site admin group', () => {
+    const result = canManageGroup(user, 6)
     expect(result).toBe(false)
   })
 })
