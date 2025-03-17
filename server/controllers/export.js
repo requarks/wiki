@@ -38,7 +38,7 @@ router.get('/export/docx/:pageId', async (req, res) => {
     } else if (page.contentType === 'markdown') {
       pageContent = Page.convertMarkdown2HTML(page);
     } else {
-      return throw new Error('Unsupported content type: ' + page.contentType);
+      throw new Error('Unsupported content type: ' + page.contentType);
     }
 
     let pageHTML = `
