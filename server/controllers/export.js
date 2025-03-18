@@ -4,7 +4,8 @@ const { JSDOM } = require('jsdom')
 const {
   handleInternalLinks,
   prepareInternalImages,
-  convertToWord
+  convertToWord,
+  getSiteIdByPath
 } = require('../helpers/export')
 
 router.get('/export/docx/:pageId', async (req, res) => {
@@ -16,7 +17,9 @@ router.get('/export/docx/:pageId', async (req, res) => {
           .join(', ')
       )
     }
-    if (!WIKI.auth.checkAccess(req.user, ['read:page'], req.query)) {
+
+    const siteId = await getSiteIdByPath(req.query.sitePath)
+    if (!WIKI.auth.checkAccess(req.user, ['read:pages'], {siteId: siteId, ...req.query})) {
       return res.status(403).send('Access denied')
     }
 
