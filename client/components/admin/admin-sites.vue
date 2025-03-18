@@ -136,13 +136,13 @@ export default {
             path: this.newSitePath
           },
           update (store, resp) {
-            const data = _.get(resp, 'data.createSite', { operation: {} })
-            succeeded = data.operation.succeeded
-            if (data.operation.succeeded) {
+            const data = _.get(resp, 'data.createSite', { responseResult: {} })
+            succeeded = data.responseResult.succeeded
+            if (succeeded) {
               const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               apolloData.sites.push(data.site)
               store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: apolloData })
-            } else if (!data.operation.succeeded) {
+            } else if (!succeeded) {
 
             } else {
               throw new Error(data.operation.message)
