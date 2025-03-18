@@ -106,32 +106,28 @@ export default {
     }
   },
   methods: {
+    showNotification(message, style, icon) {
+      this.$store.commit('showNotification', {
+        style: style,
+        message: message,
+        icon: icon
+      })
+    },
     async refresh() {
       await this.$apollo.queries.sites.refetch()
-      this.$store.commit('showNotification', {
-        message: 'Sites have been refreshed.',
-        style: 'success',
-        icon: 'cached'
-      })
+      this.showNotification('Sites have been refreshed.', 'success', 'cached')
     },
     async createSite() {
       if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: 'Enter a site name and a path',
-          icon: 'warning'
-        })
+        this.showNotification('Enter a site name and a path', 'red', 'warning')
         return
       }
       if (/[/\\.\s]/.test(this.newSitePath)) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: 'Path cannot contain spaces, dots, "/", or "\\" characters',
-          icon: 'warning'
-        })
+        this.showNotification('Path cannot contain spaces, dots, "/", or "\\" characters', 'red', 'warning')
         return
       }
       this.newSiteDialog = false
+      let succeeded = false
       try {
         await this.$apollo.mutate({
           mutation: createSiteMutation,
@@ -158,11 +154,11 @@ export default {
         })
         this.newSiteName = ''
         this.newSitePath = ''
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: `Site has been created successfully.`,
-          icon: 'check'
-        })
+        if (succeeded) {
+          this.showNotification(`Site has been created successfully.`, 'success', 'cached')
+        } else {
+          this.showNotification('A site with the same path already exists! Cannot have 2 sites with the same path.', 'red', 'warning')
+        }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
