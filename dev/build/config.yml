@@ -18,6 +18,9 @@ ssl:
 logLevel: $(LOG_LEVEL:info)
 logFormat: $(LOG_FORMAT:default)
 ha: $(HA_ACTIVE)
+version: $(VERSION)
+releaseDate: $(RELEASE_DATE)
+devMode: $(DEV_MODE)
 
 pool:
   min: $(POOL_MIN)
