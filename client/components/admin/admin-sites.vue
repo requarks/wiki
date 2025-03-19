@@ -142,10 +142,6 @@ export default {
               const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               apolloData.sites.push(data.site)
               store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: apolloData })
-            } else if (!succeeded) {
-
-            } else {
-              throw new Error(data.operation.message)
             }
           },
           watchLoading (isLoading) {
@@ -155,7 +151,7 @@ export default {
         this.newSiteName = ''
         this.newSitePath = ''
         if (succeeded) {
-          this.showNotification(`Site has been created successfully.`, 'success', 'cached')
+          this.showNotification(`Site has been created successfully.`, 'success', 'check')
         } else {
           this.showNotification('A site with the same path already exists! Cannot have 2 sites with the same path.', 'red', 'warning')
         }
