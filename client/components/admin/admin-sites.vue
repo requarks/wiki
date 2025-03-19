@@ -129,7 +129,7 @@ export default {
       this.newSiteDialog = false
       let succeeded = false
       try {
-        await this.$apollo.mutate({
+        const response = await this.$apollo.mutate({
           mutation: createSiteMutation,
           variables: {
             name: this.newSiteName,
@@ -148,12 +148,15 @@ export default {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-sites-create')
           }
         })
+        const data = _.get(response, 'data.createSite', { responseResult: {} })
         this.newSiteName = ''
         this.newSitePath = ''
-        if (succeeded) {
+        if (data.responseResult.succeeded) {
           this.showNotification(`Site has been created successfully.`, 'success', 'check')
-        } else {
+        } else if (data.responseResult.succeeded === 1012 ) {
           this.showNotification('A site with the same path already exists! Cannot have 2 sites with the same path.', 'red', 'warning')
+        } else {
+          this.showNotification(data.responseResult.message, 'red', 'warning')
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
