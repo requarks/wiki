@@ -227,7 +227,7 @@ const WIKI = {
       },
       [UserGroupType.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES]: {
         id: UserGroupType.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES,
-        name: 'Group with no rules',
+        name: 'Group with no manage:sites permissions but with manage:sites rules',
         permissions: ['read:pages'],
         rules: [
           {
@@ -249,7 +249,7 @@ const WIKI = {
       },
       [UserGroupType.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES]: {
         id: UserGroupType.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES,
-        name: 'Group with manage:sites permission and no managed:sites rules',
+        name: 'Group with manage:sites permissions but with no manage:sites rules',
         permissions: [
           'manage:sites'
         ],
@@ -433,32 +433,32 @@ describe('canManageGroup', () => {
 })
 
 describe('getManagedSiteIdsFromGroups', () => {
-  it('returns empty sites array for managed group with no permissions', () => {
+  it('returns empty sites array for group with no permissions', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_PERMISSIONS])
     expect(result).toEqual([])
   })
 
-  it('returns empty sites array for managed group with no rules', () => {
+  it('returns empty sites array for group with no rules', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_RULES])
     expect(result).toEqual([])
   })
-  it('returns empty sites array for managed group with no managed:sites permissions', () => {
+  it('returns empty sites array for group with no manage:sites permissions but with manage:sites rules', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES])
     expect(result).toEqual([])
   })
-  it('returns empty sites array for managed group with no managed:sites rules', () => {
+  it('returns empty sites array for group with manage:sites permissions but with no manage:sites rules', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES])
     expect(result).toEqual([])
   })
-  it('returns empty sites array for group with no manage:sites permissions and no manage:sites rule', () => {
+  it('returns empty sites array for group with no manage:sites permissions and no manage:sites rules', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.REGULAR_USERS])
     expect(result).toEqual([])
   })
-  it('returns managed sites for only groups with manage:sites permissions and manage:sites rule', () => {
+  it('returns managed sites for only groups with manage:sites permissions and manage:sites rules', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.SITE_ADMINS_1, UserGroupType.REGULAR_USERS])
     expect(result).toEqual(['b722970a-e813-4b6a-8563-87ffc77827e5', 'd013a996-cb0e-4fc4-954a-fc89e94dfd49'])
   })
-  it('returns unique list of managed sites for group with manage:sites permissions and manage:sites rule', () => {
+  it('returns unique list of managed sites for groups with manage:sites permissions and manage:sites rules', () => {
     const result = getManagedSiteIdsFromGroups([UserGroupType.SITE_ADMINS_1, UserGroupType.SITE_ADMINS_2])
     expect(result).toEqual(['b722970a-e813-4b6a-8563-87ffc77827e5', 'd013a996-cb0e-4fc4-954a-fc89e94dfd49', '2c8498a5-c45f-4621-abbc-7f5f3df8320f'])
   })
