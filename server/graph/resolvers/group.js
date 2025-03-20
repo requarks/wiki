@@ -4,7 +4,7 @@ const _ = require('lodash')
 const gql = require('graphql')
 
 const {
-  managedGroupsToSiteIds,
+  getManagedSiteIdsFromGroups,
   canManageGroup,
   canManageSites,
   DEFAULT_ADMINISTRATORS_GROUP,
@@ -144,7 +144,7 @@ module.exports = {
       const rules = WIKI.data.groups.defaultPageRules
 
       if (!WIKI.auth.isSuperAdmin(req.user)) {
-        rules[0].sites = managedGroupsToSiteIds(req.user.groups)
+        rules[0].sites = getManagedSiteIdsFromGroups(req.user.groups)
       } else {
         rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
           path: 'default',

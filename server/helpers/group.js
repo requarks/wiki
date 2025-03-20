@@ -5,7 +5,7 @@ const _ = require('lodash')
 const DEFAULT_ADMINISTRATORS_GROUP = 1
 const DEFAULT_GUESTS_GROUP = 2
 
-const managedGroupsToSiteIds = (groups) => {
+const getManagedSiteIdsFromGroups = (groups) => {
   let siteIds = []
 
   for (const groupId of groups) {
@@ -29,18 +29,16 @@ const managedGroupsToSiteIds = (groups) => {
   return _.uniq(siteIds)
 }
 
-const extractSiteIdsFromGroupRules = (groups) => {
+const getSiteIdsFromGroup = (groupId) => {
   let siteIds = []
 
-  for (const groupId of groups) {
-    const group = _.get(WIKI.auth.groups, groupId, [])
-    if (group.rules) {
-      for (const rule of group.rules) {
-        if (
-          rule.deny === false && rule.sites?.length > 0
-        ) {
-          siteIds = siteIds.concat(rule.sites)
-        }
+  const group = _.get(WIKI.auth.groups, groupId, [])
+  if (group.rules) {
+    for (const rule of group.rules) {
+      if (
+        rule.deny === false && rule.sites?.length > 0
+      ) {
+        siteIds = siteIds.concat(rule.sites)
       }
     }
   }
@@ -51,11 +49,11 @@ const extractSiteIdsFromGroupRules = (groups) => {
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
   if (groupId === DEFAULT_ADMINISTRATORS_GROUP || groupId === DEFAULT_GUESTS_GROUP) return false
-  const managedGroupSites = managedGroupsToSiteIds(user.groups)
-  const groupSites = extractSiteIdsFromGroupRules([groupId])
+  const managedSiteIds = getManagedSiteIdsFromGroups(user.groups)
+  const groupSiteIds = getSiteIdsFromGroup(groupId)
 
-  if (managedGroupSites.length > 0 && groupSites.length > 0) {
-    return _.difference(groupSites, managedGroupSites).length === 0
+  if (managedSiteIds.length > 0 && groupSiteIds.length > 0) {
+    return _.difference(groupSiteIds, managedSiteIds).length === 0
   }
 
   return false
@@ -76,7 +74,7 @@ const canManageSites = (g) => {
 }
 
 module.exports = {
-  managedGroupsToSiteIds,
+  getManagedSiteIdsFromGroups,
   canManageGroup,
   canManageSites,
   DEFAULT_ADMINISTRATORS_GROUP,

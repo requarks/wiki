@@ -1,4 +1,4 @@
-const GroupEnum = {
+const UserGroupType = {
   ADMINISTRATORS: 1,
   GUESTS: 2,
   REGULAR_USERS: 3,
@@ -14,8 +14,8 @@ const WIKI = {
     revokeUserTokens: jest.fn(),
     reloadGroups: jest.fn(),
     groups: {
-      [GroupEnum.ADMINISTRATORS]: {
-        id: GroupEnum.ADMINISTRATORS,
+      [UserGroupType.ADMINISTRATORS]: {
+        id: UserGroupType.ADMINISTRATORS,
         name: 'Administrators',
         permissions: ['manage:system'],
         rules: [],
@@ -24,8 +24,8 @@ const WIKI = {
         updatedAt: '2024-09-24T18:32:11.291Z',
         redirectOnLogin: '/'
       },
-      [GroupEnum.GUESTS]: {
-        id: GroupEnum.GUESTS,
+      [UserGroupType.GUESTS]: {
+        id: UserGroupType.GUESTS,
         name: 'Guests',
         permissions: ['read:pages', 'read:assets', 'read:comments'],
         rules: [
@@ -56,8 +56,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:47:39.465Z',
         redirectOnLogin: '/'
       },
-      [GroupEnum.REGULAR_USERS]: {
-        id: GroupEnum.REGULAR_USERS,
+      [UserGroupType.REGULAR_USERS]: {
+        id: UserGroupType.REGULAR_USERS,
         name: 'Regular Users',
         permissions: [
           'read:pages',
@@ -93,8 +93,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:48:32.442Z',
         redirectOnLogin: '/'
       },
-      [GroupEnum.SITE_ADMINS]: {
-        id: GroupEnum.SITE_ADMINS,
+      [UserGroupType.SITE_ADMINS]: {
+        id: UserGroupType.SITE_ADMINS,
         name: 'Site Admin',
         permissions: [
           'read:pages',
@@ -151,7 +151,7 @@ describe('Group Resolvers', () => {
   beforeEach(() => {
     req = {
       user: {
-        groups: [GroupEnum.REGULAR_USERS, GroupEnum.SITE_ADMINS]
+        groups: [UserGroupType.REGULAR_USERS, UserGroupType.SITE_ADMINS]
       }
     }
 
@@ -171,36 +171,36 @@ describe('Group Resolvers', () => {
       it('should update group details', async () => {
         WIKI.models.groups.query.mockReturnValue({
           patch: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue(GroupEnum.SITE_ADMINS)
+            where: jest.fn().mockResolvedValue(UserGroupType.SITE_ADMINS)
           })
         })
 
-        const result = await groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-4'] }] }, { req })
+        const result = await groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-4'] }] }, { req })
         expect(result.responseResult.message).toBe('Group has been updated.')
-        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: GroupEnum.SITE_ADMINS, kind: 'g' })
-        expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: GroupEnum.SITE_ADMINS, kind: 'g' })
+        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: UserGroupType.SITE_ADMINS, kind: 'g' })
+        expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: UserGroupType.SITE_ADMINS, kind: 'g' })
       })
 
       it('should throw error for unsafe regex in page rules', async () => {
-        await expect(groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ match: 'REGEX', path: '(a+){10}' }] }, { req }))
+        await expect(groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ match: 'REGEX', path: '(a+){10}' }] }, { req }))
           .rejects
           .toThrow('Some Page Rules contains unsafe or exponential time regex.')
       })
 
       it('should throw error if non-super admin tries to assign system permissions', async () => {
-        await expect(groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: ['manage:system'], rules: [] }, { req }))
+        await expect(groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: ['manage:system'], rules: [] }, { req }))
           .rejects
           .toThrow('You are not authorized to assign the system permissions.')
       })
 
       it('should throw error if non-super admin tries to assign multiple system permissions', async () => {
-        await expect(groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: ['manage:system', 'manage:api'], rules: [] }, { req }))
+        await expect(groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: ['manage:system', 'manage:api'], rules: [] }, { req }))
           .rejects
           .toThrow('You are not authorized to assign the system permissions.')
       })
 
       it('should throw error if non-super admin tries to assign mixed permissions including system permissions', async () => {
-        await expect(groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: ['manage:system', 'read:pages'], rules: [] }, { req }))
+        await expect(groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: ['manage:system', 'read:pages'], rules: [] }, { req }))
           .rejects
           .toThrow('You are not authorized to assign the system permissions.')
       })
@@ -208,20 +208,20 @@ describe('Group Resolvers', () => {
       it('should not throw error if non-super admin assigns non-system permissions', async () => {
         WIKI.models.groups.query.mockReturnValue({
           patch: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue(GroupEnum.SITE_ADMINS)
+            where: jest.fn().mockResolvedValue(UserGroupType.SITE_ADMINS)
           })
         })
 
-        const result = await groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: ['read:pages'], rules: [] }, { req })
+        const result = await groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: ['read:pages'], rules: [] }, { req })
         expect(result.responseResult.message).toBe('Group has been updated.')
-        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: GroupEnum.SITE_ADMINS, kind: 'g' })
-        expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: GroupEnum.SITE_ADMINS, kind: 'g' })
+        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: UserGroupType.SITE_ADMINS, kind: 'g' })
+        expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: UserGroupType.SITE_ADMINS, kind: 'g' })
       })
 
       it('should throw error if user tries to update group with invalid site access', async () => {
         WIKI.auth.checkAccess.mockReturnValue(false)
 
-        await expect(groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-1'], path: '/' }] }, { req }))
+        await expect(groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-1'], path: '/' }] }, { req }))
           .rejects
           .toThrow('Insufficient permissions to update access to sites.')
       })
@@ -229,16 +229,16 @@ describe('Group Resolvers', () => {
       it('should update group with valid site access', async () => {
         WIKI.models.groups.query.mockReturnValue({
           patch: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue(GroupEnum.SITE_ADMINS)
+            where: jest.fn().mockResolvedValue(UserGroupType.SITE_ADMINS)
           })
         })
 
-        const result = await groupResolvers.GroupMutation.update(null, { id: GroupEnum.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-4'], path: '/' }] }, { req })
+        const result = await groupResolvers.GroupMutation.update(null, { id: UserGroupType.SITE_ADMINS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-4'], path: '/' }] }, { req })
         expect(result.responseResult.message).toBe('Group has been updated.')
       })
 
       it('should throw error if user tries to update a non managed group', async () => {
-        await expect(groupResolvers.GroupMutation.update(null, { id: GroupEnum.REGULAR_USERS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-1'], path: '/' }] }, { req }))
+        await expect(groupResolvers.GroupMutation.update(null, { id: UserGroupType.REGULAR_USERS, name: 'Updated Group', permissions: [], rules: [{ sites: ['SITE-1'], path: '/' }] }, { req }))
           .rejects
           .toThrow('Insufficient permissions to update the group.')
       })
@@ -252,7 +252,7 @@ describe('Group Resolvers', () => {
         req = {
           user: {
             id: 1,
-            groups: [GroupEnum.REGULAR_USERS, GroupEnum.SITE_ADMINS],
+            groups: [UserGroupType.REGULAR_USERS, UserGroupType.SITE_ADMINS],
             permissions: ['manage:sites']
           }
         }
@@ -266,7 +266,7 @@ describe('Group Resolvers', () => {
           groups: {
             query: jest.fn(() => ({
               findById: jest.fn().mockResolvedValue({
-                id: GroupEnum.SITE_ADMINS,
+                id: UserGroupType.SITE_ADMINS,
                 $relatedQuery: jest.fn(() => ({
                   relate: jest.fn().mockResolvedValue(true)
                 }))
@@ -291,7 +291,7 @@ describe('Group Resolvers', () => {
       })
 
       it('successfully assigns a user to a group', async () => {
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 5 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 5 }
         const result = await assignUser(null, args, { req })
         expect(result.responseResult).toEqual({
           'errorCode': 0,
@@ -304,14 +304,14 @@ describe('Group Resolvers', () => {
 
       it('throws an error if user does not have permission to assign', async () => {
         req.user.permissions = []
-        const args = { groupId: GroupEnum.REGULAR_USERS, userId: 5 }
+        const args = { groupId: UserGroupType.REGULAR_USERS, userId: 5 }
         await expect(assignUser(null, args, { req })).rejects.toThrow(
           'Insufficient permissions to assign user to the group.'
         )
       })
 
       it('throws an error if the Guest user is being assigned', async () => {
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 2 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 2 }
         await expect(assignUser(null, args, { req })).rejects.toThrow(
           'Cannot assign the Guest user to a group.'
         )
@@ -327,7 +327,7 @@ describe('Group Resolvers', () => {
       it('throws an error if the user does not exist', async () => {
         const mockFindById = jest.fn().mockResolvedValue(null)
         WIKI.models.users.query = jest.fn(() => ({ findById: mockFindById }))
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 99 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 99 }
         await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
 
@@ -335,7 +335,7 @@ describe('Group Resolvers', () => {
         WIKI.models.knex = jest.fn(() => ({
           where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(true) }))
         }))
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 5 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 5 }
         await expect(assignUser(null, args, { req })).rejects.toThrow(
           'User is already assigned to group.'
         )
@@ -350,7 +350,7 @@ describe('Group Resolvers', () => {
         req = {
           user: {
             id: 1,
-            groups: [GroupEnum.REGULAR_USERS, GroupEnum.SITE_ADMINS],
+            groups: [UserGroupType.REGULAR_USERS, UserGroupType.SITE_ADMINS],
             permissions: ['manage:sites']
           }
         }
@@ -364,7 +364,7 @@ describe('Group Resolvers', () => {
           groups: {
             query: jest.fn(() => ({
               findById: jest.fn().mockResolvedValue({
-                id: GroupEnum.REGULAR_USERS,
+                id: UserGroupType.REGULAR_USERS,
                 $relatedQuery: jest.fn(() => ({
                   unrelate: jest.fn(() => ({
                     where: jest.fn().mockResolvedValue(true)
@@ -388,7 +388,7 @@ describe('Group Resolvers', () => {
       })
 
       it('successfully unassign a user from a group', async () => {
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 5 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 5 }
         const result = await unassignUser(null, args, { req })
         expect(result.responseResult).toEqual({
           'errorCode': 0,
@@ -401,21 +401,21 @@ describe('Group Resolvers', () => {
 
       it('throws an error if user does not have permission to unassign', async () => {
         req.user.permissions = []
-        const args = { groupId: GroupEnum.REGULAR_USERS, userId: 5 }
+        const args = { groupId: UserGroupType.REGULAR_USERS, userId: 5 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow(
           'Insufficient permissions to remove user from the group.'
         )
       })
 
       it('throws an error if the Guest user is being unassigned', async () => {
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 2 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 2 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow(
           'Cannot unassign Guest user'
         )
       })
 
       it('throws an error if the Administrator is being unassigned from Administrators group', async () => {
-        const args = { groupId: GroupEnum.ADMINISTRATORS, userId: 1 }
+        const args = { groupId: UserGroupType.ADMINISTRATORS, userId: 1 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow(
           'Insufficient permissions to remove user from the group.'
         )
@@ -431,7 +431,7 @@ describe('Group Resolvers', () => {
       it('throws an error if the user does not exist', async () => {
         const mockFindById = jest.fn().mockResolvedValue(null)
         WIKI.models.users.query = jest.fn(() => ({ findById: mockFindById }))
-        const args = { groupId: GroupEnum.SITE_ADMINS, userId: 99 }
+        const args = { groupId: UserGroupType.SITE_ADMINS, userId: 99 }
         await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
     })

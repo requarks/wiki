@@ -1,4 +1,4 @@
-const GroupEnum = {
+const UserGroupType = {
   ADMINISTRATORS: 1,
   GUESTS: 2,
   REGULAR_USERS: 3,
@@ -20,8 +20,8 @@ const WIKI = {
     hasSitePermission: jest.fn(hasSitePermission),
     _applyPageRuleSpecificity: jest.fn(_applyPageRuleSpecificity),
     groups: {
-      [GroupEnum.ADMINISTRATORS]: {
-        id: GroupEnum.ADMINISTRATORS,
+      [UserGroupType.ADMINISTRATORS]: {
+        id: UserGroupType.ADMINISTRATORS,
         name: 'Administrators',
         permissions: [ 'manage:system' ],
         rules: [],
@@ -30,8 +30,8 @@ const WIKI = {
         updatedAt: '2024-09-24T18:32:11.291Z',
         redirectOnLogin: '/'
       },
-      [GroupEnum.GUESTS]: {
-        id: GroupEnum.GUESTS,
+      [UserGroupType.GUESTS]: {
+        id: UserGroupType.GUESTS,
         name: 'Guests',
         permissions: [ 'read:pages', 'read:assets', 'read:comments' ],
         rules: [
@@ -62,8 +62,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:47:39.465Z',
         redirectOnLogin: '/'
       },
-      [GroupEnum.REGULAR_USERS]: {
-        id: GroupEnum.REGULAR_USERS,
+      [UserGroupType.REGULAR_USERS]: {
+        id: UserGroupType.REGULAR_USERS,
         name: 'Regular Users',
         permissions: [
           'read:pages',
@@ -98,8 +98,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:48:32.442Z',
         redirectOnLogin: '/'
       },
-      [GroupEnum.SITE_ADMIN]: {
-        id: GroupEnum.SITE_ADMIN,
+      [UserGroupType.SITE_ADMIN]: {
+        id: UserGroupType.SITE_ADMIN,
         name: 'Site Admin',
         permissions: [
           'read:pages',
@@ -141,7 +141,7 @@ describe('Super Admin', () => {
     user = {
       id: 1,
       name: 'Administrator',
-      groups: [ GroupEnum.ADMINISTRATORS ],
+      groups: [ UserGroupType.ADMINISTRATORS ],
       permissions: [ 'manage:system' ]
     }
 
@@ -171,7 +171,7 @@ describe('Site Admin', () => {
     user = {
       id: 2,
       name: 'Site Admin',
-      groups: [ GroupEnum.SITE_ADMIN ],
+      groups: [ UserGroupType.SITE_ADMIN ],
       permissions: [ 'manage:sites' ]
     }
     page = { siteId: 1, path: '/test', locale: 'en', tags: [] }
@@ -258,7 +258,7 @@ describe('Regular User', () => {
     user = {
       id: 3,
       name: 'Regular User',
-      groups: [ GroupEnum.REGULAR_USERS ],
+      groups: [ UserGroupType.REGULAR_USERS ],
       permissions: [ 'read:pages', 'read:assets', 'read:comments' ]
     }
     page = { siteId: 1, path: '/test', locale: 'en', tags: [] }
