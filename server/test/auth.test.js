@@ -1,5 +1,11 @@
+const GroupEnum = {
+  ADMINISTRATORS: 1,
+  GUESTS: 2,
+  REGULAR_USERS: 3,
+  SITE_ADMIN: 4
+}
+
 const {
-  checkAccess,
   isSuperAdmin,
   isSiteAdmin,
   hasSitePermission,
@@ -14,8 +20,8 @@ const WIKI = {
     hasSitePermission: jest.fn(hasSitePermission),
     _applyPageRuleSpecificity: jest.fn(_applyPageRuleSpecificity),
     groups: {
-      '1': {
-        id: 1,
+      [GroupEnum.ADMINISTRATORS]: {
+        id: GroupEnum.ADMINISTRATORS,
         name: 'Administrators',
         permissions: [ 'manage:system' ],
         rules: [],
@@ -24,8 +30,8 @@ const WIKI = {
         updatedAt: '2024-09-24T18:32:11.291Z',
         redirectOnLogin: '/'
       },
-      '2': {
-        id: 2,
+      [GroupEnum.GUESTS]: {
+        id: GroupEnum.GUESTS,
         name: 'Guests',
         permissions: [ 'read:pages', 'read:assets', 'read:comments' ],
         rules: [
@@ -56,8 +62,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:47:39.465Z',
         redirectOnLogin: '/'
       },
-      '3': {
-        id: 3,
+      [GroupEnum.REGULAR_USERS]: {
+        id: GroupEnum.REGULAR_USERS,
         name: 'Regular Users',
         permissions: [
           'read:pages',
@@ -92,8 +98,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:48:32.442Z',
         redirectOnLogin: '/'
       },
-      '4': {
-        id: 4,
+      [GroupEnum.SITE_ADMIN]: {
+        id: GroupEnum.SITE_ADMIN,
         name: 'Site Admin',
         permissions: [
           'read:pages',
@@ -135,7 +141,7 @@ describe('Super Admin', () => {
     user = {
       id: 1,
       name: 'Administrator',
-      groups: [ 1 ],
+      groups: [ GroupEnum.ADMINISTRATORS ],
       permissions: [ 'manage:system' ]
     }
 
@@ -165,7 +171,7 @@ describe('Site Admin', () => {
     user = {
       id: 2,
       name: 'Site Admin',
-      groups: [ 4 ],
+      groups: [ GroupEnum.SITE_ADMIN ],
       permissions: [ 'manage:sites' ]
     }
     page = { siteId: 1, path: '/test', locale: 'en', tags: [] }
@@ -252,7 +258,7 @@ describe('Regular User', () => {
     user = {
       id: 3,
       name: 'Regular User',
-      groups: [ 3 ],
+      groups: [ GroupEnum.REGULAR_USERS ],
       permissions: [ 'read:pages', 'read:assets', 'read:comments' ]
     }
     page = { siteId: 1, path: '/test', locale: 'en', tags: [] }
@@ -311,9 +317,9 @@ describe('Regular User', () => {
   })
 
   it('returns true for matching START page rule', () => {
-    user.groups = [{ id: 1 }]
+    user.groups = [{ id: 99 }]
     WIKI.auth.groups = {
-      1: {
+      99: {
         rules: [
           { sites: [1], roles: [ 'read:pages', 'manage:sites' ], match: 'START', path: '/test', deny: false }
         ]
@@ -325,9 +331,9 @@ describe('Regular User', () => {
   })
 
   it('returns true for matching EXACT page rule', () => {
-    user.groups = [{ id: 1 }]
+    user.groups = [{ id: 99 }]
     WIKI.auth.groups = {
-      1: {
+      99: {
         rules: [
           { sites: [1], roles: [ 'read:pages', 'manage:sites' ], match: 'EXACT', path: '/test', deny: false }
         ]
@@ -339,9 +345,9 @@ describe('Regular User', () => {
   })
 
   it('returns false when a rule denies access', () => {
-    user.groups = [{ id: 1 }]
+    user.groups = [{ id: 99 }]
     WIKI.auth.groups = {
-      1: {
+      99: {
         rules: [
           { sites: [1], roles: [ 'read:pages', 'manage:sites' ], match: 'EXACT', path: '/test', deny: true }
         ]
@@ -353,9 +359,9 @@ describe('Regular User', () => {
   })
 
   it('handles REGEX rules correctly', () => {
-    user.groups = [{ id: 1 }]
+    user.groups = [{ id: 99 }]
     WIKI.auth.groups = {
-      1: {
+      99: {
         rules: [
           { sites: [1], roles: [ 'read:pages', 'manage:sites' ], match: 'REGEX', path: '^/test.*$', deny: false }
         ]
@@ -368,9 +374,9 @@ describe('Regular User', () => {
   })
 
   it('returns false when no matching rules and ignoreRulePath is false', () => {
-    user.groups = [{ id: 1 }]
+    user.groups = [{ id: 99 }]
     WIKI.auth.groups = {
-      1: {
+      99: {
         rules: []
       }
     }
@@ -380,9 +386,9 @@ describe('Regular User', () => {
   })
 
   it('ignores rule paths if ignoreRulePath is true', () => {
-    user.groups = [{ id: 1 }]
+    user.groups = [{ id: 99 }]
     WIKI.auth.groups = {
-      1: {
+      99: {
         rules: [
           { sites: [1], roles: ['manage:sites'], match: 'START', path: '/nonexistent_page', deny: false }
         ]

@@ -6,7 +6,9 @@ const gql = require('graphql')
 const {
   managedGroupsToSiteIds,
   canManageGroup,
-  canManageSites
+  canManageSites,
+  DEFAULT_ADMINISTRATORS_GROUP,
+  DEFAULT_GUESTS_GROUP
 } = require('../../helpers/group')
 
 /* global WIKI */
@@ -168,7 +170,7 @@ module.exports = {
      * DELETE GROUP
      */
     async delete (obj, args, { req }) {
-      if (args.id === 1 || args.id === 2) {
+      if (args.id === DEFAULT_ADMINISTRATORS_GROUP || args.id === DEFAULT_GUESTS_GROUP) {
         throw new gql.GraphQLError('Cannot delete this group.')
       }
 
@@ -204,7 +206,7 @@ module.exports = {
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot unassign Guest user')
       }
-      if (args.userId === 1 && args.groupId === 1) {
+      if (args.userId === 1 && args.groupId === DEFAULT_ADMINISTRATORS_GROUP) {
         throw new gql.GraphQLError('Cannot unassign Administrator user from Administrators group.')
       }
 

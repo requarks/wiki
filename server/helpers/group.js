@@ -2,20 +2,22 @@ const _ = require('lodash')
 
 /* global WIKI */
 
+const DEFAULT_ADMINISTRATORS_GROUP = 1
+const DEFAULT_GUESTS_GROUP = 2
+
 const managedGroupsToSiteIds = (groups) => {
   let siteIds = []
 
   for (const groupId of groups) {
     const group = _.get(WIKI.auth.groups, groupId, [])
-    if (group.permissions && !group.permissions.includes('manage:sites')) {
+    if (!group.permissions?.includes('manage:sites')) {
       continue
     }
     if (group.rules) {
       for (const rule of group.rules) {
         if (
           rule.deny === false &&
-          rule.sites &&
-          rule.sites.length > 0 &&
+          rule.sites?.length > 0 &&
           rule.roles.includes('manage:sites')
         ) {
           siteIds = siteIds.concat(rule.sites)
@@ -24,8 +26,7 @@ const managedGroupsToSiteIds = (groups) => {
     }
   }
 
-  siteIds = _.uniq(siteIds)
-  return siteIds
+  return _.uniq(siteIds)
 }
 
 const extractSiteIdsFromGroupRules = (groups) => {
@@ -36,9 +37,7 @@ const extractSiteIdsFromGroupRules = (groups) => {
     if (group.rules) {
       for (const rule of group.rules) {
         if (
-          rule.deny === false &&
-          rule.sites &&
-          rule.sites.length > 0
+          rule.deny === false && rule.sites?.length > 0
         ) {
           siteIds = siteIds.concat(rule.sites)
         }
@@ -46,20 +45,17 @@ const extractSiteIdsFromGroupRules = (groups) => {
     }
   }
 
-  siteIds = _.uniq(siteIds)
-  return siteIds
+  return _.uniq(siteIds)
 }
 
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
-  if (groupId === 1 || groupId === 2) return false
+  if (groupId === DEFAULT_ADMINISTRATORS_GROUP || groupId === DEFAULT_GUESTS_GROUP) return false
   const managedGroupSites = managedGroupsToSiteIds(user.groups)
   const groupSites = extractSiteIdsFromGroupRules([groupId])
 
   if (managedGroupSites.length > 0 && groupSites.length > 0) {
-    if (_.difference(groupSites, managedGroupSites).length === 0) {
-      return true
-    }
+    return _.difference(groupSites, managedGroupSites).length === 0
   }
 
   return false
@@ -82,5 +78,7 @@ const canManageSites = (g) => {
 module.exports = {
   managedGroupsToSiteIds,
   canManageGroup,
-  canManageSites
+  canManageSites,
+  DEFAULT_ADMINISTRATORS_GROUP,
+  DEFAULT_GUESTS_GROUP
 }
