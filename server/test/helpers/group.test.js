@@ -14,8 +14,8 @@ const UserGroupType = {
   SITE_ADMINS_1: 4,
   SITE_ADMINS_2: 5,
   SITE_ADMINS_3: 6,
-  WITHOUT_PERMISSIONS: 7,
-  WITHOUT_RULES: 8,
+  WITH_NO_PERMISSIONS: 7,
+  WITH_NO_RULES: 8,
   WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES: 9,
   WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES: 10
 }
@@ -195,8 +195,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.WITHOUT_PERMISSIONS]: {
-        id: UserGroupType.WITHOUT_PERMISSIONS,
+      [UserGroupType.WITH_NO_PERMISSIONS]: {
+        id: UserGroupType.WITH_NO_PERMISSIONS,
         name: 'Group with no permissions',
         rules: [
           {
@@ -216,8 +216,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.WITHOUT_RULES]: {
-        id: UserGroupType.WITHOUT_RULES,
+      [UserGroupType.WITH_NO_RULES]: {
+        id: UserGroupType.WITH_NO_RULES,
         name: 'Group with no rules',
         permissions: ['manage:sites'],
         isSystem: false,
@@ -434,12 +434,12 @@ describe('canManageGroup', () => {
 
 describe('getManagedSiteIdsFromGroups', () => {
   it('returns empty sites array for managed group with no permissions', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.WITHOUT_PERMISSIONS])
+    const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_PERMISSIONS])
     expect(result).toEqual([])
   })
 
   it('returns empty sites array for managed group with no rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.WITHOUT_RULES])
+    const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_RULES])
     expect(result).toEqual([])
   })
   it('returns empty sites array for managed group with no managed:sites permissions', () => {
