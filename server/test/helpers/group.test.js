@@ -7,7 +7,7 @@ const {
 
 const { canManageGroup, getManagedSiteIdsFromGroups } = require('../../helpers/group')
 
-const UserGroupType = {
+const TestGroup = {
   ADMINISTRATORS: 1,
   GUESTS: 2,
   REGULAR_USERS: 3,
@@ -27,8 +27,8 @@ const WIKI = {
     hasSitePermission: jest.fn(hasSitePermission),
     _applyPageRuleSpecificity: jest.fn(_applyPageRuleSpecificity),
     groups: {
-      [UserGroupType.ADMINISTRATORS]: {
-        id: UserGroupType.ADMINISTRATORS,
+      [TestGroup.ADMINISTRATORS]: {
+        id: TestGroup.ADMINISTRATORS,
         name: 'Administrators',
         permissions: ['manage:system'],
         rules: [],
@@ -37,8 +37,8 @@ const WIKI = {
         updatedAt: '2024-09-24T18:32:11.291Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.GUESTS]: {
-        id: UserGroupType.GUESTS,
+      [TestGroup.GUESTS]: {
+        id: TestGroup.GUESTS,
         name: 'Guests',
         permissions: ['read:pages', 'read:assets', 'read:comments'],
         rules: [
@@ -69,8 +69,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:47:39.465Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.REGULAR_USERS]: {
-        id: UserGroupType.REGULAR_USERS,
+      [TestGroup.REGULAR_USERS]: {
+        id: TestGroup.REGULAR_USERS,
         name: 'Regular Users',
         permissions: [
           'read:pages',
@@ -105,8 +105,8 @@ const WIKI = {
         updatedAt: '2024-12-05T18:48:32.442Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.SITE_ADMINS_1]: {
-        id: UserGroupType.SITE_ADMINS_1,
+      [TestGroup.SITE_ADMINS_1]: {
+        id: TestGroup.SITE_ADMINS_1,
         name: 'Site Admins 1',
         permissions: [
           'read:pages',
@@ -134,8 +134,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.SITE_ADMINS_2]: {
-        id: UserGroupType.SITE_ADMINS_2,
+      [TestGroup.SITE_ADMINS_2]: {
+        id: TestGroup.SITE_ADMINS_2,
         name: 'Site Admins 2',
         permissions: [
           'read:pages',
@@ -164,8 +164,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.SITE_ADMINS_3]: {
-        id: UserGroupType.SITE_ADMINS_3,
+      [TestGroup.SITE_ADMINS_3]: {
+        id: TestGroup.SITE_ADMINS_3,
         name: 'Site Admins 3',
         permissions: [
           'read:pages',
@@ -195,8 +195,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.WITH_NO_PERMISSIONS]: {
-        id: UserGroupType.WITH_NO_PERMISSIONS,
+      [TestGroup.WITH_NO_PERMISSIONS]: {
+        id: TestGroup.WITH_NO_PERMISSIONS,
         name: 'Group with no permissions',
         rules: [
           {
@@ -216,8 +216,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.WITH_NO_RULES]: {
-        id: UserGroupType.WITH_NO_RULES,
+      [TestGroup.WITH_NO_RULES]: {
+        id: TestGroup.WITH_NO_RULES,
         name: 'Group with no rules',
         permissions: ['manage:sites'],
         isSystem: false,
@@ -225,8 +225,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES]: {
-        id: UserGroupType.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES,
+      [TestGroup.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES]: {
+        id: TestGroup.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES,
         name: 'Group with no manage:sites permissions but with manage:sites rules',
         permissions: ['read:pages'],
         rules: [
@@ -247,8 +247,8 @@ const WIKI = {
         updatedAt: '2024-12-05T15:33:52.214Z',
         redirectOnLogin: '/'
       },
-      [UserGroupType.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES]: {
-        id: UserGroupType.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES,
+      [TestGroup.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES]: {
+        id: TestGroup.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES,
         name: 'Group with manage:sites permissions but with no manage:sites rules',
         permissions: [
           'manage:sites'
@@ -283,7 +283,7 @@ describe('canManageGroup', () => {
       user = {
         id: 1,
         name: 'Administrator',
-        groups: [UserGroupType.ADMINISTRATORS],
+        groups: [TestGroup.ADMINISTRATORS],
         permissions: ['manage:system']
       }
 
@@ -291,12 +291,12 @@ describe('canManageGroup', () => {
     })
 
     it('can manage the group mentioned in the permissions', () => {
-      const result = canManageGroup(user, UserGroupType.ADMINISTRATORS)
+      const result = canManageGroup(user, TestGroup.ADMINISTRATORS)
       expect(result).toBe(true)
     })
 
     it('can manage any group', () => {
-      const result = canManageGroup(user, UserGroupType.GUESTS)
+      const result = canManageGroup(user, TestGroup.GUESTS)
       expect(result).toBe(true)
     })
   })
@@ -308,7 +308,7 @@ describe('canManageGroup', () => {
       user = {
         id: 6,
         name: 'Administrator',
-        groups: [UserGroupType.ADMINISTRATORS, UserGroupType.REGULAR_USERS, UserGroupType.SITE_ADMINS_1],
+        groups: [TestGroup.ADMINISTRATORS, TestGroup.REGULAR_USERS, TestGroup.SITE_ADMINS_1],
         permissions: ['manage:system']
       }
 
@@ -316,12 +316,12 @@ describe('canManageGroup', () => {
     })
 
     it('can manage the group mentioned in the permissions', () => {
-      const result = canManageGroup(user, UserGroupType.ADMINISTRATORS)
+      const result = canManageGroup(user, TestGroup.ADMINISTRATORS)
       expect(result).toBe(true)
     })
 
     it('can manage any group', () => {
-      const result = canManageGroup(user, UserGroupType.GUESTS)
+      const result = canManageGroup(user, TestGroup.GUESTS)
       expect(result).toBe(true)
     })
   })
@@ -333,7 +333,7 @@ describe('canManageGroup', () => {
       user = {
         id: 4,
         name: 'Site Admin',
-        groups: [UserGroupType.SITE_ADMINS_1],
+        groups: [TestGroup.SITE_ADMINS_1],
         permissions: ['manage:sites']
       }
 
@@ -341,12 +341,12 @@ describe('canManageGroup', () => {
     })
 
     it('can manage a group mentioned in the permissions', () => {
-      const result = canManageGroup(user, UserGroupType.SITE_ADMINS_1)
+      const result = canManageGroup(user, TestGroup.SITE_ADMINS_1)
       expect(result).toBe(true)
     })
 
     it('cannot manage a group they are not an admin of', () => {
-      const result = canManageGroup(user, UserGroupType.REGULAR_USERS)
+      const result = canManageGroup(user, TestGroup.REGULAR_USERS)
       expect(result).toBe(false)
     })
   })
@@ -358,7 +358,7 @@ describe('canManageGroup', () => {
       user = {
         id: 4,
         name: 'Site Admin',
-        groups: [UserGroupType.SITE_ADMINS_1, UserGroupType.SITE_ADMINS_2],
+        groups: [TestGroup.SITE_ADMINS_1, TestGroup.SITE_ADMINS_2],
         permissions: ['manage:sites']
       }
 
@@ -366,32 +366,32 @@ describe('canManageGroup', () => {
     })
 
     it('cannot manage admin group', () => {
-      const result = canManageGroup(user, UserGroupType.ADMINISTRATORS)
+      const result = canManageGroup(user, TestGroup.ADMINISTRATORS)
       expect(result).toBe(false)
     })
 
     it('cannot manage guest group', () => {
-      const result = canManageGroup(user, UserGroupType.GUESTS)
+      const result = canManageGroup(user, TestGroup.GUESTS)
       expect(result).toBe(false)
     })
 
     it('cannot manage regular group', () => {
-      const result = canManageGroup(user, UserGroupType.REGULAR_USERS)
+      const result = canManageGroup(user, TestGroup.REGULAR_USERS)
       expect(result).toBe(false)
     })
 
     it('can manage own group with exact match', () => {
-      const result = canManageGroup(user, UserGroupType.SITE_ADMINS_1)
+      const result = canManageGroup(user, TestGroup.SITE_ADMINS_1)
       expect(result).toBe(true)
     })
 
     it('can manage own group with superset', () => {
-      const result = canManageGroup(user, UserGroupType.SITE_ADMINS_2)
+      const result = canManageGroup(user, TestGroup.SITE_ADMINS_2)
       expect(result).toBe(true)
     })
 
     it('cannot manage a different group with partial overlap', () => {
-      const result = canManageGroup(user, UserGroupType.SITE_ADMINS_3)
+      const result = canManageGroup(user, TestGroup.SITE_ADMINS_3)
       expect(result).toBe(false)
     })
   })
@@ -403,7 +403,7 @@ describe('canManageGroup', () => {
       user = {
         id: 3,
         name: 'Regular User',
-        groups: [UserGroupType.REGULAR_USERS],
+        groups: [TestGroup.REGULAR_USERS],
         permissions: [
           'read:pages',
           'read:assets',
@@ -416,17 +416,17 @@ describe('canManageGroup', () => {
     })
 
     it('cannot manage superadmin group', () => {
-      const result = canManageGroup(user, UserGroupType.ADMINISTRATORS)
+      const result = canManageGroup(user, TestGroup.ADMINISTRATORS)
       expect(result).toBe(false)
     })
 
     it('cannot manage guest group', () => {
-      const result = canManageGroup(user, UserGroupType.GUESTS)
+      const result = canManageGroup(user, TestGroup.GUESTS)
       expect(result).toBe(false)
     })
 
     it('cannot manage site admin group', () => {
-      const result = canManageGroup(user, UserGroupType.SITE_ADMINS_1)
+      const result = canManageGroup(user, TestGroup.SITE_ADMINS_1)
       expect(result).toBe(false)
     })
   })
@@ -434,32 +434,32 @@ describe('canManageGroup', () => {
 
 describe('getManagedSiteIdsFromGroups', () => {
   it('returns empty sites array for group with no permissions', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_PERMISSIONS])
+    const result = getManagedSiteIdsFromGroups([TestGroup.WITH_NO_PERMISSIONS])
     expect(result).toEqual([])
   })
 
   it('returns empty sites array for group with no rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_RULES])
+    const result = getManagedSiteIdsFromGroups([TestGroup.WITH_NO_RULES])
     expect(result).toEqual([])
   })
   it('returns empty sites array for group with no manage:sites permissions but with manage:sites rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES])
+    const result = getManagedSiteIdsFromGroups([TestGroup.WITH_NO_MANAGE_SITES_PERMISSIONS_BUT_WITH_MANAGE_SITES_RULES])
     expect(result).toEqual([])
   })
   it('returns empty sites array for group with manage:sites permissions but with no manage:sites rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES])
+    const result = getManagedSiteIdsFromGroups([TestGroup.WITH_MANAGE_SITES_PERMISSIONS_BUT_WITH_NO_MANAGE_SITES_RULES])
     expect(result).toEqual([])
   })
   it('returns empty sites array for group with no manage:sites permissions and no manage:sites rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.REGULAR_USERS])
+    const result = getManagedSiteIdsFromGroups([TestGroup.REGULAR_USERS])
     expect(result).toEqual([])
   })
   it('returns managed sites for only groups with manage:sites permissions and manage:sites rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.SITE_ADMINS_1, UserGroupType.REGULAR_USERS])
+    const result = getManagedSiteIdsFromGroups([TestGroup.SITE_ADMINS_1, TestGroup.REGULAR_USERS])
     expect(result).toEqual(['b722970a-e813-4b6a-8563-87ffc77827e5', 'd013a996-cb0e-4fc4-954a-fc89e94dfd49'])
   })
   it('returns unique list of managed sites for groups with manage:sites permissions and manage:sites rules', () => {
-    const result = getManagedSiteIdsFromGroups([UserGroupType.SITE_ADMINS_1, UserGroupType.SITE_ADMINS_2])
+    const result = getManagedSiteIdsFromGroups([TestGroup.SITE_ADMINS_1, TestGroup.SITE_ADMINS_2])
     expect(result).toEqual(['b722970a-e813-4b6a-8563-87ffc77827e5', 'd013a996-cb0e-4fc4-954a-fc89e94dfd49', '2c8498a5-c45f-4621-abbc-7f5f3df8320f'])
   })
 })
