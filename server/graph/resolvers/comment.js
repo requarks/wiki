@@ -132,6 +132,16 @@ module.exports = {
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
           const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+
+          // Insert user mentions into the userMentions table
+          for (const userId of mentionIds) {
+            await WIKI.models.userMentions.query().insert({
+              pageId: args.pageId,
+              commentId: cmId,
+              userId: userId
+            })
+          }
+
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
         }
         return {
@@ -158,6 +168,16 @@ module.exports = {
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
           const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+
+          // Insert user mentions into the userMentions table
+          for (const userId of mentionIds) {
+            await WIKI.models.userMentions.query().insert({
+              pageId: args.pageId,
+              commentId: args.id,
+              userId: userId
+            })
+          }
+
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
         }
         return {

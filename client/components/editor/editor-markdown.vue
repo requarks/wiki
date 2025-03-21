@@ -360,7 +360,7 @@ md.renderer.rules.katex_block = (tokens, idx) => {
 
 md.renderer.rules.emoji = (token, idx) => {
   return twemoji.parse(token[idx].content, {
-    callback (icon, opts) {
+    callback (icon) {
       return `/_assets/svg/twemoji/${icon}.svg`
     }
   })
@@ -419,7 +419,7 @@ export default {
         })
       }
     },
-    spellModeActive (newValue, oldValue) {
+    spellModeActive (newValue) {
       if (newValue) {
         this.$nextTick(() => {
           this.$refs.editorPreview.focus()
@@ -428,14 +428,13 @@ export default {
     }
   },
   methods: {
-    trackDeletedMentions(editor, changeObj) {
+    trackDeletedMentions(cm, changeObj) {
       if (changeObj.origin === '+delete' || changeObj.origin === 'cut') {
         const from = changeObj.from
         const to = changeObj.to
-        for (let [uuid, value] of this.newMentions.entries()) {
+        for (let [uuid] of this.newMentions.entries()) {
           if (this.isMentionInRange(from, to, uuid)) {
             this.newMentions.delete(uuid)
-            console.log('Mention removed:', value.mention)
             // Set the mentions in the Vuex store
             this.$store.set(
               'editor/mentions',
@@ -471,7 +470,7 @@ export default {
     onCmInput: _.debounce(function (newContent) {
       this.processContent(newContent)
     }, 600),
-    onCmPaste (cm, ev) {
+    onCmPaste () {
       // const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
       // for (let clipItem of clipItems) {
       //   if (_.startsWith(clipItem.type, 'image/')) {
@@ -533,13 +532,13 @@ export default {
       if (_.startsWith(lineContent, '#')) {
         lineContent = lineContent.replace(/^(#+ )/, '')
       }
-      lineContent = _.times(lvl, n => '#').join('') + ` ` + lineContent
+      lineContent = _.times(lvl, () => '#').join('') + ` ` + lineContent
       this.cm.doc.replaceRange(lineContent, { line: curLine, ch: 0 }, { line: curLine, ch: lineLength })
     },
     /**
      * Get the header lever of the current line
      */
-    getHeaderLevel(cm) {
+    getHeaderLevel() {
       const curLine = this.cm.doc.getCursor('head').line
       let lineContent = this.cm.doc.getLine(curLine)
       let lvl = 0
@@ -646,63 +645,69 @@ export default {
       // mentions
       const cursor = cm.getCursor()
       const token = cm.getTokenAt(cursor)
-      const mentionPattern = /@([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]*|[a-zA-Z0-9._%+-]+)$/
+      const mentionPattern = /@[\w.+-]+/g
       const match = mentionPattern.exec(token.string)
       if (match) {
-        const query = match[1]
-        const cachedResults = Object.values(this.mentionCache)
-          .flat()
-          .filter((email) => email.startsWith(query))
-        if (cachedResults.length > 0) {
-          cm.showHint({
-            hint: async (cm, options) => {
-              const cur = cm.getCursor()
-              const token = cm.getTokenAt(cur)
-              return {
-                list: cachedResults.map((email) => ({
-                  text: '@' + `${email}` + '',
-                  displayText: ` ${email}`
-                })),
-                from: CodeMirror.Pos(cur.line, token.start),
-                to: CodeMirror.Pos(cur.line, token.end)
-              }
-            }
-          })
-        } else {
-          cm.showHint({
-            hint: async (cm, options) => {
-              const cur = cm.getCursor()
-              const token = cm.getTokenAt(cur)
-              try {
-                const respRaw = await this.$apollo.query({
-                  query: autoCompleteEmailsQuery,
-                  variables: {
-                    siteId: this.$store.get('page/siteId'),
-                    query: query
-                  }
-                })
-                const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
-                if (resp && resp.length > 0) {
-                  this.mentionCache = resp
-                  return {
-                    list: resp.map((email) => ({
-                      text: '@' + `${email}` + '',
-                      displayText: ` ${email}`
-                    })),
-                    from: CodeMirror.Pos(cur.line, token.start),
-                    to: CodeMirror.Pos(cur.line, token.end)
-                  }
+        const mentionIndex = token.string.indexOf(match[0])
+        const charBeforeMention = token.string[mentionIndex - 1]
+
+        // Ensure the mention is at the beginning of a word and not followed by a word character
+        if ((mentionIndex === 0 || /\s/.test(charBeforeMention))) {
+          const query = match.input.substring(1) // Remove the '@' from the query
+          const cachedResults = Object.values(this.mentionCache)
+            .flat()
+            .filter((email) => email.startsWith(query))
+          if (cachedResults.length > 0) {
+            cm.showHint({
+              hint: async (cm) => {
+                const cur = cm.getCursor()
+                const token = cm.getTokenAt(cur)
+                return {
+                  list: cachedResults.map((email) => ({
+                    text: '@' + `${email}`,
+                    displayText: ` ${email}`
+                  })),
+                  from: CodeMirror.Pos(cur.line, token.start),
+                  to: CodeMirror.Pos(cur.line, token.end)
                 }
-              } catch (err) {
-                console.error(err)
               }
-              return {
-                list: [],
-                from: CodeMirror.Pos(cur.line, token.start),
-                to: CodeMirror.Pos(cur.line, token.end)
+            })
+          } else {
+            cm.showHint({
+              hint: async (cm) => {
+                const cur = cm.getCursor()
+                const token = cm.getTokenAt(cur)
+                try {
+                  const respRaw = await this.$apollo.query({
+                    query: autoCompleteEmailsQuery,
+                    variables: {
+                      siteId: this.$store.get('page/siteId'),
+                      query: query
+                    }
+                  })
+                  const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
+                  if (resp && resp.length > 0) {
+                    this.mentionCache = resp
+                    return {
+                      list: resp.map((email) => ({
+                        text: '@' + `${email}`,
+                        displayText: ` ${email}`
+                      })),
+                      from: CodeMirror.Pos(cur.line, token.start),
+                      to: CodeMirror.Pos(cur.line, token.end)
+                    }
+                  }
+                } catch (err) {
+                  console.error(err)
+                }
+                return {
+                  list: [],
+                  from: CodeMirror.Pos(cur.line, token.start),
+                  to: CodeMirror.Pos(cur.line, token.end)
+                }
               }
-            }
-          })
+            })
+          }
         }
       }
 
@@ -711,7 +716,7 @@ export default {
         const curLine = cm.getLine(change.from.line).substring(0, change.from.ch)
         if (curLine[curLine.length - 1] === ']') {
           cm.showHint({
-            hint: async (cm, options) => {
+            hint: async (cm) => {
               const cur = cm.getCursor()
               const curLine = cm.getLine(cur.line).substring(0, cur.ch)
               const queryString = curLine.substring(curLine.lastIndexOf('[') + 1, curLine.length - 2)
@@ -798,7 +803,7 @@ export default {
                 to: { line: foundStart, ch: 10 },
                 text: 'Edit Diagram',
                 action: ((start, end) => {
-                  return (ev) => {
+                  return () => {
                     this.cm.doc.setSelection({ line: start, ch: 0 }, { line: end, ch: 3 })
                     try {
                       const raw = this.cm.doc.getLine(end - 1)
@@ -889,15 +894,15 @@ export default {
         if (c.getOption('fullScreen')) c.setOption('fullScreen', false)
       }
     }
-    _.set(keyBindings, `${CtrlKey}-S`, c => {
+    _.set(keyBindings, `${CtrlKey}-S`, () => {
       this.save()
       return false
     })
-    _.set(keyBindings, `${CtrlKey}-B`, c => {
+    _.set(keyBindings, `${CtrlKey}-B`, () => {
       this.toggleMarkup({ start: `**` })
       return false
     })
-    _.set(keyBindings, `${CtrlKey}-I`, c => {
+    _.set(keyBindings, `${CtrlKey}-I`, () => {
       this.toggleMarkup({ start: `*` })
       return false
     })
@@ -930,28 +935,44 @@ export default {
 
     // Add new mentions
     this.cm.on('change', (cm, changeObj) => {
-      const changes = changeObj.text.filter(text => text.includes('@'))
-      changes.forEach(change => {
-        const mentionPattern = /@([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|[a-zA-Z0-9._%+-]+)/g
-        let match
-        while ((match = mentionPattern.exec(change)) !== null) {
-          const mention = match[0]
-          const from = changeObj.from
-          const to = { line: from.line, ch: from.ch + mention.length }
-          const uuid = uuidv4()
-          this.newMentions.set(uuid, { mention, from, to })
-          console.log('New mention detected:', mention)
-          // Set the mentions in the Vuex store
-          this.$store.set(
-            'editor/mentions',
-            Array.from(
-              this.newMentions.values().map((mention) => {
-                return mention.mention.substring(1)
-              })
-            )
-          )
+      const processedMentions = new Set()
+
+      changeObj.text.forEach((text, index) => {
+        if (text.includes('@')) {
+          const line = changeObj.from.line + index
+          const lineText = cm.getLine(line)
+          const mentionPattern = /@[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/g
+          const matches = lineText.match(mentionPattern)
+
+          if (matches) {
+            matches.forEach(mention => {
+              const mentionIndex = lineText.indexOf(mention)
+              const charBeforeMention = lineText[mentionIndex - 1]
+
+              // Ensure the mention is at the beginning of a word
+              if (mentionIndex === 0 || /\s/.test(charBeforeMention)) {
+                if (!processedMentions.has(mention)) {
+                  processedMentions.add(mention)
+                  const from = { line, ch: mentionIndex }
+                  const to = { line, ch: mentionIndex + mention.length }
+                  const uuid = uuidv4()
+                  this.newMentions.set(uuid, { mention, from, to })
+                }
+              }
+            })
+          }
         }
       })
+
+      // Set the mentions in the Vuex store
+      this.$store.set(
+        'editor/mentions',
+        Array.from(
+          this.newMentions.values().map((mention) => {
+            return mention.mention.substring(1)
+          })
+        )
+      )
     })
 
     // remove new mentions
@@ -986,6 +1007,10 @@ export default {
           this.processMarkers(selStartLine, selEndLine)
           break
       }
+    })
+
+    this.$root.$on('saved-page', () => {
+      this.newMentions = new Map()
     })
 
     // Handle save conflict

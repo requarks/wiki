@@ -1,6 +1,6 @@
 <template lang="pug">
   div(v-intersect.once='onIntersect')
-    mentionable(:keys="mentionableKeys", :items="users", @open="onOpen" @apply="handleApply")
+    mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)" , @apply="handleApply")
       v-textarea#discussion-new(
         ref="newCommentTextarea"
         outlined
@@ -16,6 +16,8 @@
         v-if='permissions.write'
         :aria-label='$t(`common:comments.fieldContent`)'
       )
+      template( v-if='loading' #no-result) {{ 'Loading...'}}
+
     v-row.mt-2(dense, v-if='!isAuthenticated && permissions.write')
       v-col(cols='12', lg='6')
         v-text-field(
@@ -163,14 +165,19 @@ export default {
       commentEditContent: null,
       deleteCommentDialogShown: false,
       isBusy: false,
-      users: [],
       mentions: [],
+      users: [],
       scrollOpts: {
         duration: 1500,
         offset: 0,
         easing: 'easeInOutCubic'
       },
-      mentionableKeys: Array.from({ length: 26 }, (_, i) => `@${String.fromCharCode(97 + i)}`)
+      // @a @b @c ... @A @B @C ...
+      mentionableKeys: [
+        ...Array.from({ length: 26 }, (_, i) => `@${String.fromCharCode(97 + i)}`), // lowercase letters
+        ...Array.from({ length: 26 }, (_, i) => `@${String.fromCharCode(65 + i)}`) // uppercase letters
+      ],
+      loading: false
     }
   },
   computed: {
@@ -182,22 +189,43 @@ export default {
     sitePath: get('page/sitePath')
   },
   methods: {
-    onOpen(key) {
-      this.items = key === '@' ? this.users : []
+    async loadUsers(searchText) {
+      this.fetchUsers(searchText.slice(1))
     },
     handleApply(item) {
-      let textarea
-      if (this.commentEditId !== 0) {
-        textarea = this.$refs.editCommentTextarea[0].$el.querySelector('textarea')
-      } else {
-        textarea = this.$refs.newCommentTextarea[0].$el.querySelector('textarea')
-      }
+      const textarea = this.commentEditId === 0 ?
+        this.$refs.newCommentTextarea.$el.querySelector('textarea') :
+        this.$refs.editCommentTextarea.$el.querySelector('textarea')
+
+      let commentContent = this.commentEditId === 0 ? this.newcomment : this.commentEditContent
+
       if (textarea) {
-        const startPos = textarea.selectionStart
-        this.newcomment = `@${item.email}`
+        const mentionText = `@${item.email.slice(0, 1)}${item.email}`
+        const lowerCaseCommentContent = commentContent.toLowerCase()
+        const lowerCaseMentionText = mentionText.toLowerCase()
+        const mentionPos = lowerCaseCommentContent.indexOf(lowerCaseMentionText)
+
+        if (mentionPos === -1) {
+          console.error('Mention text not found in comment content')
+          return
+        }
+        // If the mention text is found, replace it with the new mention
+        const beforeMention = commentContent.slice(0, mentionPos)
+        let afterMention = commentContent.slice(mentionPos + mentionText.length)
+        // Add a space if the character immediately following the mention is not a space
+        if (afterMention.length > 0 && afterMention[0] !== ' ') {
+          afterMention = ' ' + afterMention
+        }
+        commentContent = beforeMention + `@${item.email}` + afterMention
+        if (this.commentEditId === 0) {
+          this.newcomment = commentContent
+        } else {
+          this.commentEditContent = commentContent
+        }
+
         this.mentions.push(item.email)
         this.$nextTick(() => {
-          textarea.selectionStart = textarea.selectionEnd = startPos + item.email.length + 2 // Adjust cursor position
+          textarea.selectionStart = textarea.selectionEnd = commentContent.length // Adjust cursor position
         })
       }
     },
@@ -418,6 +446,7 @@ export default {
         if (this.commentEditContent.length < 2) {
           throw new Error(this.$t('common:comments.contentMissingError'))
         }
+
         const resp = await this.$apollo.mutate({
           mutation: gql`
             mutation (
@@ -541,6 +570,7 @@ export default {
       this.$store.commit(`loadingStop`, 'comments-delete')
     },
     async fetchUsers(query) {
+      this.loading = true
       try {
         const respRaw = await this.$apollo.query({
           query: autoCompleteEmailsQuery,
@@ -557,11 +587,10 @@ export default {
         }))
       } catch (err) {
         console.error(err)
+      } finally {
+        this.loading = false
       }
     }
-  },
-  mounted() {
-    this.fetchUsers('')
   }
 }
 </script>
@@ -575,6 +604,12 @@ export default {
 .mention-selected {
   background: rgb(192, 250, 153);
 }
+
+.mention {
+    background-color: rgba(153, 0, 48, .1);
+    color: #990030;
+}
+
 .comments-post {
   position: relative;
 

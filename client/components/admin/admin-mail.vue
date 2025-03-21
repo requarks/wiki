@@ -101,6 +101,14 @@
                       prepend-icon='mdi-form-textbox-password'
                       type='password'
                       )
+                    v-text-field(
+                      outlined
+                      v-model='config.allowedDomains'
+                      :label='$t(`admin:mail.allowedDomains`)'
+                      :hint='$t(`admin:mail.allowedDomainsHint`)'
+                      persistent-hint
+                      prepend-icon='mdi-domain'
+                      )
 
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
@@ -187,7 +195,8 @@ export default {
         useDKIM: false,
         dkimDomainName: '',
         dkimKeySelector: '',
-        dkimPrivateKey: ''
+        dkimPrivateKey: '',
+        allowedDomains: ''
       },
       testEmail: '',
       testLoading: false
@@ -211,7 +220,8 @@ export default {
             useDKIM: this.config.useDKIM || false,
             dkimDomainName: this.config.dkimDomainName || '',
             dkimKeySelector: this.config.dkimKeySelector || '',
-            dkimPrivateKey: this.config.dkimPrivateKey || ''
+            dkimPrivateKey: this.config.dkimPrivateKey || '',
+            allowedDomains: this.config.allowedDomains || ''
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-mail-update')
@@ -264,7 +274,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss'>
-
-</style>

@@ -402,6 +402,7 @@ export default {
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
             this.$store.set('editor/mentions', [])
+            this.$root.$emit('saved-page')
             this.exitConfirmed = true
 
             window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
@@ -516,6 +517,7 @@ export default {
               style: 'success',
               icon: 'check'
             })
+            this.$root.$emit('saved-page')
 
             if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
               _.delay(() => {

@@ -8,6 +8,7 @@ const moment = require('moment')
 const underline = require('./underline')
 const mdAttrs = require('markdown-it-attrs')
 const mdDecorate = require('markdown-it-decorate')
+const mentionPlugin = require('../../rendering/markdown-core/mention')
 
 /* global WIKI */
 
@@ -34,6 +35,7 @@ mkdown.use(mdAttrs, {
   allowedAttributes: ['id', 'class', 'target']
 })
 mkdown.use(mdDecorate)
+mkdown.use(mentionPlugin)
 // ------------------------------------
 // Default Comment Provider
 // ------------------------------------
@@ -42,7 +44,7 @@ module.exports = {
   /**
    * Init
    */
-  async init (config) {
+  async init(config) {
     WIKI.logger.info('(COMMENTS/DEFAULT) Initializing...')
     if (WIKI.data.commentProvider.config.akismet && WIKI.data.commentProvider.config.akismet.length > 2) {
       akismetClient = new AkismetClient({
@@ -71,7 +73,7 @@ module.exports = {
   /**
    * Create New Comment
    */
-  async create ({ page, replyTo, content, user }) {
+  async create({ page, replyTo, content, user }) {
     // -> Build New Comment
     const newComment = {
       content,
@@ -133,37 +135,44 @@ module.exports = {
   /**
    * Update an existing comment
    */
-  async update ({ id, content, user }) {
+  async update({ id, content, email, name }) {
     const renderedContent = DOMPurify.sanitize(mkdown.render(content))
-    await WIKI.models.comments.query().findById(id).patch({
+    const updateData = {
       content,
       render: renderedContent
-    })
+    }
+    if (email) {
+      updateData.email = email
+    }
+    if (name) {
+      updateData.name = name
+    }
+    await WIKI.models.comments.query().findById(id).patch(updateData)
     return renderedContent
   },
   /**
    * Delete an existing comment by ID
    */
-  async remove ({ id, user }) {
+  async remove({ id, user }) {
     return WIKI.models.comments.query().findById(id).delete()
   },
   /**
    * Get the page ID from a comment ID
    */
-  async getPageIdFromCommentId (id) {
+  async getPageIdFromCommentId(id) {
     const result = await WIKI.models.comments.query().select('pageId').findById(id)
     return (result) ? result.pageId : false
   },
   /**
    * Get a comment by ID
    */
-  async getCommentById (id) {
+  async getCommentById(id) {
     return WIKI.models.comments.query().findById(id)
   },
   /**
    * Get the total comments count for a page ID
    */
-  async count (pageId) {
+  async count(pageId) {
     const result = await WIKI.models.comments.query().count('* as total').where('pageId', pageId).first()
     return _.toSafeInteger(result.total)
   }
