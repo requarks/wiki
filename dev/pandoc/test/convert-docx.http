@@ -1,0 +1,21 @@
+## Added boundary
+##as it is required for multipart/form-data requests to separate different parts of the form data
+
+POST http://localhost:80/convert-to-docx HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="input.html"
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html>s
+<head>
+    <title>Sample HTML</title>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>Test: This is a sample HTML file for testing the Flask Pandoc converter.</p>
+</body>
+</html>
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
