@@ -3,6 +3,7 @@ const mdAttrs = require('markdown-it-attrs')
 const mdDecorate = require('markdown-it-decorate')
 const _ = require('lodash')
 const underline = require('./underline')
+const mentionPlugin = require('./mention')
 
 const quoteStyles = {
   Chinese: '””‘’',
@@ -44,6 +45,7 @@ module.exports = {
       allowedAttributes: ['id', 'class', 'target']
     })
     mkdown.use(mdDecorate)
+    mkdown.use(mentionPlugin)
 
     for (let child of this.children) {
       const renderer = require(`../${_.kebabCase(child.key)}/renderer.js`)

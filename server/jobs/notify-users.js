@@ -13,6 +13,9 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
 
     const recipients = []
 
+    // Get allowed domains from configuration
+    const allowedDomains = WIKI.config.mail.allowedDomains ? WIKI.config.mail.allowedDomains.split(',').map(domain => domain.trim()) : []
+
     for (const activeUser of activeUsers) {
       const hasReadAccess = WIKI.auth.checkAccess(activeUser, ['read:pages'], {
         path: pagePath,
@@ -20,7 +23,10 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
       })
 
       if (hasReadAccess) {
-        recipients.push(activeUser.email)
+        const userDomain = activeUser.email.split('@')[1]
+        if (allowedDomains.length === 0 || allowedDomains.includes(userDomain)) {
+          recipients.push(activeUser.email)
+        }
       }
     }
 

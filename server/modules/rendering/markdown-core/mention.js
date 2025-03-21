@@ -1,4 +1,4 @@
-export default function mentionPlugin(md) {
+module.exports = function mentionPlugin(md) {
   md.inline.ruler.before('emphasis', 'mention', mention)
 
   md.renderer.rules.mention_open = function (tokens, idx) {

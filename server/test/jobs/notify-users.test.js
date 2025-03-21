@@ -16,7 +16,10 @@ const WIKI = {
     }
   },
   config: {
-    host: 'https://example.com'
+    host: 'https://example.com',
+    mail: {
+      allowedDomains: ''
+    }
   },
   logger: {
     warn: jest.fn(),
@@ -328,6 +331,188 @@ describe('notifyUsers', () => {
         event: event,
         eventText: 'deleted',
         isDeletion: true
+      }
+    })
+  })
+  it('should notify users with allowed domains', async () => {
+    const siteId = 1
+    const pageId = 1
+    const pageTitle = 'Test Page'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
+    const userEmail = 'user@example.com'
+    const userIds = [2, 3, 4]
+    const event = 'UPDATE_PAGE'
+
+    const users = [
+      { id: 2, email: 'user1@alloweddomain.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'user2@alloweddomain.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'user3@notalloweddomain.com', isActive: true, groupIds: [3] }
+    ]
+
+    const groups = [
+      { id: 1, permissions: ['read:pages'], rules: [] },
+      { id: 2, permissions: ['read:pages'], rules: [] },
+      { id: 3, permissions: [], rules: [] }
+    ]
+
+    WIKI.config.mail.allowedDomains = 'alloweddomain.com'
+
+    WIKI.models.users.query.mockReturnValue({
+      whereIn: jest.fn().mockReturnThis(),
+      withGraphFetched: jest.fn().mockReturnThis(),
+      modifyGraph: jest.fn().mockResolvedValue(users)
+    })
+
+    WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
+      return user.groupIds.some(groupId => {
+        const group = groups.find(g => g.id === groupId)
+        return group && group.permissions.includes('read:pages')
+      })
+    })
+
+    WIKI.mail.send.mockResolvedValue(true)
+
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
+    expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
+    expect(WIKI.mail.send).toHaveBeenCalledWith({
+      template: 'page-notify',
+      to: '',
+      bcc: ['user1@alloweddomain.com', 'user2@alloweddomain.com'],
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
+      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+      data: {
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
+        isDeletion: false,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        event: event,
+        eventText: 'updated'
+      }
+    })
+  })
+
+  it('should notify users with multiple allowed domains', async () => {
+    const siteId = 1
+    const pageId = 1
+    const pageTitle = 'Test Page'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
+    const userEmail = 'user@example.com'
+    const userIds = [2, 3, 4]
+    const event = 'UPDATE_PAGE'
+
+    const users = [
+      { id: 2, email: 'user1@alloweddomain1.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'user2@alloweddomain2.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'user3@notalloweddomain.com', isActive: true, groupIds: [3] }
+    ]
+
+    const groups = [
+      { id: 1, permissions: ['read:pages'], rules: [] },
+      { id: 2, permissions: ['read:pages'], rules: [] },
+      { id: 3, permissions: [], rules: [] }
+    ]
+
+    WIKI.config.mail.allowedDomains = 'alloweddomain1.com,alloweddomain2.com'
+
+    WIKI.models.users.query.mockReturnValue({
+      whereIn: jest.fn().mockReturnThis(),
+      withGraphFetched: jest.fn().mockReturnThis(),
+      modifyGraph: jest.fn().mockResolvedValue(users)
+    })
+
+    WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
+      return user.groupIds.some(groupId => {
+        const group = groups.find(g => g.id === groupId)
+        return group && group.permissions.includes('read:pages')
+      })
+    })
+
+    WIKI.mail.send.mockResolvedValue(true)
+
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
+    expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
+    expect(WIKI.mail.send).toHaveBeenCalledWith({
+      template: 'page-notify',
+      to: '',
+      bcc: ['user1@alloweddomain1.com', 'user2@alloweddomain2.com'],
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
+      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+      data: {
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
+        isDeletion: false,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        event: event,
+        eventText: 'updated'
+      }
+    })
+  })
+
+  it('should allow all domains if allowedDomains is empty', async () => {
+    const siteId = 1
+    const pageId = 1
+    const pageTitle = 'Test Page'
+    const pagePath = 'test-page'
+    const sitePath = 'test-site'
+    const userEmail = 'user@example.com'
+    const userIds = [2, 3, 4]
+    const event = 'UPDATE_PAGE'
+
+    const users = [
+      { id: 2, email: 'user1@alloweddomain1.com', isActive: true, groupIds: [1] },
+      { id: 3, email: 'user2@alloweddomain2.com', isActive: true, groupIds: [2] },
+      { id: 4, email: 'user3@notalloweddomain.com', isActive: true, groupIds: [3] }
+    ]
+
+    const groups = [
+      { id: 1, permissions: ['read:pages'], rules: [] },
+      { id: 2, permissions: ['read:pages'], rules: [] },
+      { id: 3, permissions: ['read:pages'], rules: [] }
+    ]
+
+    WIKI.config.mail.allowedDomains = ''
+
+    WIKI.models.users.query.mockReturnValue({
+      whereIn: jest.fn().mockReturnThis(),
+      withGraphFetched: jest.fn().mockReturnThis(),
+      modifyGraph: jest.fn().mockResolvedValue(users)
+    })
+
+    WIKI.auth.checkAccess.mockImplementation((user, permissions, page) => {
+      return user.groupIds.some(groupId => {
+        const group = groups.find(g => g.id === groupId)
+        return group && group.permissions.includes('read:pages')
+      })
+    })
+
+    WIKI.mail.send.mockResolvedValue(true)
+
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+
+    expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
+    expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
+    expect(WIKI.mail.send).toHaveBeenCalledWith({
+      template: 'page-notify',
+      to: '',
+      bcc: ['user1@alloweddomain1.com', 'user2@alloweddomain2.com', 'user3@notalloweddomain.com'],
+      subject: `[Page Notification] Page Updated: ${pageTitle}`,
+      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+      data: {
+        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
+        isDeletion: false,
+        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        pageTitle: pageTitle,
+        userEmail: userEmail,
+        event: event,
+        eventText: 'updated'
       }
     })
   })
