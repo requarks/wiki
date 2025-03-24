@@ -153,6 +153,8 @@ bodyParserLimit: 5mb
 
 pandocPath: http://pandoc.pandoc.svc.cluster.local
 
+# ---------------------------------------------------------------------
+
 version: 1.3.0
 releaseDate: 14.03.2025
 devMode: true
