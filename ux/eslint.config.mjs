@@ -1,6 +1,7 @@
 import js from '@eslint/js'
 import neostandard from 'neostandard'
 import pluginVue from 'eslint-plugin-vue'
+import pluginVuePug from 'eslint-plugin-vue-pug'
 import vueParser from 'vue-eslint-parser'
 import { FlatCompat } from '@eslint/eslintrc'
 
@@ -9,10 +10,8 @@ const compat = new FlatCompat()
 export default [
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
+  ...pluginVuePug.configs['flat/recommended'],
   ...neostandard(),
-  ...compat.extends(
-    'plugin:vue-pug/vue3-recommended'
-  ),
   {
     ignores: [
       '/dist',

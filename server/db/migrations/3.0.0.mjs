@@ -251,7 +251,7 @@ export async function up (knex) {
       table.string('contentType').notNullable()
       table.boolean('isBrowsable').notNullable().defaultTo(true)
       table.boolean('isSearchable').notNullable().defaultTo(true)
-      table.specificType('isSearchableComputed', `boolean GENERATED ALWAYS AS ("publishState" != 'draft' AND "isSearchable") STORED`).index()
+      table.specificType('isSearchableComputed', 'boolean GENERATED ALWAYS AS ("publishState" != \'draft\' AND "isSearchable") STORED').index()
       table.string('password')
       table.integer('ratingScore').notNullable().defaultTo(0)
       table.integer('ratingCount').notNullable().defaultTo(0)
@@ -422,7 +422,7 @@ export async function up (knex) {
     .createTable('autocomplete', table => {
       table.text('word')
     })
-    .raw(`CREATE INDEX "autocomplete_idx" ON "autocomplete" USING GIN (word gin_trgm_ops)`)
+    .raw('CREATE INDEX "autocomplete_idx" ON "autocomplete" USING GIN (word gin_trgm_ops)')
 
   // =====================================
   // DEFAULT DATA
@@ -584,7 +584,7 @@ export async function up (knex) {
     hostname: '*',
     isEnabled: true,
     config: {
-      title: 'My Wiki Site',
+      title: 'Default Site',
       description: '',
       company: '',
       contentLicense: '',
@@ -818,7 +818,7 @@ export async function up (knex) {
     isCustom: false,
     isEnabled: true,
     config: {},
-    siteId: siteId
+    siteId
   })
 
   // -> NAVIGATION
@@ -868,7 +868,7 @@ export async function up (knex) {
         children: []
       }
     ]),
-    siteId: siteId
+    siteId
   })
 
   // -> STORAGE MODULE
