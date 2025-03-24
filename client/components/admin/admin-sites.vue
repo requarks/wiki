@@ -126,8 +126,6 @@ export default {
         this.showNotification('Path cannot contain spaces, dots, "/", or "\\" characters', 'red', 'warning')
         return
       }
-      this.newSiteDialog = false
-      let succeeded = false
       try {
         const response = await this.$apollo.mutate({
           mutation: createSiteMutation,
@@ -137,7 +135,7 @@ export default {
           },
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { responseResult: {} })
-            succeeded = data.responseResult.succeeded
+            const succeeded = data.responseResult.succeeded
             if (succeeded) {
               const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               apolloData.sites.push(data.site)
@@ -149,11 +147,12 @@ export default {
           }
         })
         const data = _.get(response, 'data.createSite', { responseResult: {} })
-        this.newSiteName = ''
-        this.newSitePath = ''
         if (data.responseResult.succeeded) {
+          this.newSiteDialog = false
+          this.newSiteName = ''
+          this.newSitePath = ''
           this.showNotification(`Site has been created successfully.`, 'success', 'check')
-        } else if (data.responseResult.succeeded === 1012 ) {
+        } else if (data.responseResult.succeeded === 1012) {
           this.showNotification('A site with the same path already exists! Cannot have 2 sites with the same path.', 'red', 'warning')
         } else {
           this.showNotification(data.responseResult.message, 'red', 'warning')
