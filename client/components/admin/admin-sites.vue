@@ -42,7 +42,7 @@
                   )
               v-card-chin
                 v-spacer
-                v-btn(text, @click='newSiteDialog = false') Cancel
+                v-btn(text, @click='resetNewSiteForm') Cancel
                 v-btn(color='primary', @click='createSite') Create
         v-card.mt-3.animated.fadeInUp
           v-data-table(
@@ -106,6 +106,11 @@ export default {
     }
   },
   methods: {
+    resetNewSiteForm() {
+      this.newSiteName = ''
+      this.newSitePath = ''
+      this.newSiteDialog = false
+    },
     showNotification(message, style, icon) {
       this.$store.commit('showNotification', {
         style: style,
