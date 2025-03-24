@@ -337,7 +337,8 @@
   },
   "resolutions": {
     "apollo-server-express/**/graphql-tools": "4.0.8",
-    "graphql": "15.3.0"
+    "graphql": "15.3.0",
+    "passport-saml/**/xml-crypto": "2.1.6"
   },
   "browserslist": [
     "> 1%",
