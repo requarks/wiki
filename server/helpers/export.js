@@ -83,7 +83,8 @@ async function convertToWord(pageHTML) {
           'Content-Type': `multipart/form-data; boundary=${boundary}`,
           'Content-Length':  Buffer.byteLength(body)
         },
-        body: Buffer.from(body)
+        body: Buffer.from(body),
+        timeout: 30_000
       }
     );
 

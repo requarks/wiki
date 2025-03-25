@@ -151,4 +151,10 @@ bodyParserLimit: 5mb
 # ---------------------------------------------------------------------
 # Path to the pandoc service.
 
-pandocPath: http://pandoc-service.default.svc.cluster.local
+pandocPath: http://pandoc.pandoc.svc.cluster.local
+
+# ---------------------------------------------------------------------
+
+version: 1.3.0
+releaseDate: 14.03.2025
+devMode: true
