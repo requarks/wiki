@@ -1,7 +1,7 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:20-alpine AS assets
+FROM docker-registry-pt-support-shared.pl.s2-eu.capgemini.com/mar/node:20-alpine AS assets
 
 WORKDIR /wiki
 
