@@ -615,6 +615,82 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Convert Markdown to HTML
+   * @param {Page} ogPage
+   * @returns {String} HTML Content
+   *
+   * @throws {Error} If rendered page content is empty
+   */
+  static convertMarkdown2HTML(ogPage) {
+    if (!ogPage.render) {
+      throw new Error(
+        'Aborted conversion because rendered page content is empty!'
+      )
+    }
+    let convertedContent = Page.convertDiagramElements(ogPage)
+
+    const $ = cheerio.load(convertedContent, {
+      decodeEntities: true
+    })
+
+    if ($.root().children().length > 0) {
+      // Remove header anchors
+      $('.toc-anchor').remove()
+
+      // Attempt to convert tabsets
+      $('tabset').each((tabI, tabElm) => {
+        const tabHeaders = []
+        // -> Extract templates
+        $(tabElm)
+          .children('template')
+          .each((tmplI, tmplElm) => {
+            if ($(tmplElm).attr('v-slot:tabs') === '') {
+              $(tabElm).before(
+                '<ul class="tabset-headers">' + $(tmplElm).html() + '</ul>'
+              )
+            } else {
+              $(tabElm).after(
+                '<div class="markdown-tabset">' +
+                  $(tmplElm).html() +
+                  '</div>'
+              )
+            }
+          })
+        // -> Parse tab headers
+        $(tabElm)
+          .prev('.tabset-headers')
+          .children((i, elm) => {
+            tabHeaders.push($(elm).html())
+          })
+        $(tabElm).prev('.tabset-headers').remove()
+        // -> Inject tab headers
+        $(tabElm)
+          .next('.markdown-tabset')
+          .children((i, elm) => {
+            if (tabHeaders.length > i) {
+              $(elm).prepend(`<h2>${tabHeaders[i]}</h2>`)
+            }
+          })
+        $(tabElm).next('.markdown-tabset').prepend('<h1>Tabset</h1>')
+        $(tabElm).remove()
+      })
+
+      convertedContent = $.html('body')
+        .replace('<body>', '')
+        .replace('</body>', '')
+        .replace(/&#x([0-9a-f]{1,6});/gi, (entity, code) => {
+          code = parseInt(code, 16)
+
+          // Don't unescape ASCII characters, assuming they're encoded for a good reason
+          if (code < 0x80) return entity
+
+          return String.fromCodePoint(code)
+        })
+    }
+    return convertedContent
+  }
+
+  /**
    * Convert an Existing Page
    *
    * @param {Object} opts Page Properties
@@ -656,71 +732,7 @@ module.exports = class Page extends Model {
     if (shouldConvert) {
       // -> Markdown => HTML
       if (sourceContentType === 'markdown' && targetContentType === 'html') {
-        if (!ogPage.render) {
-          throw new Error(
-            'Aborted conversion because rendered page content is empty!'
-          )
-        }
-        convertedContent = Page.convertDiagramElements(ogPage)
-
-        const $ = cheerio.load(convertedContent, {
-          decodeEntities: true
-        })
-
-        if ($.root().children().length > 0) {
-          // Remove header anchors
-          $('.toc-anchor').remove()
-
-          // Attempt to convert tabsets
-          $('tabset').each((tabI, tabElm) => {
-            const tabHeaders = []
-            // -> Extract templates
-            $(tabElm)
-              .children('template')
-              .each((tmplI, tmplElm) => {
-                if ($(tmplElm).attr('v-slot:tabs') === '') {
-                  $(tabElm).before(
-                    '<ul class="tabset-headers">' + $(tmplElm).html() + '</ul>'
-                  )
-                } else {
-                  $(tabElm).after(
-                    '<div class="markdown-tabset">' +
-                      $(tmplElm).html() +
-                      '</div>'
-                  )
-                }
-              })
-            // -> Parse tab headers
-            $(tabElm)
-              .prev('.tabset-headers')
-              .children((i, elm) => {
-                tabHeaders.push($(elm).html())
-              })
-            $(tabElm).prev('.tabset-headers').remove()
-            // -> Inject tab headers
-            $(tabElm)
-              .next('.markdown-tabset')
-              .children((i, elm) => {
-                if (tabHeaders.length > i) {
-                  $(elm).prepend(`<h2>${tabHeaders[i]}</h2>`)
-                }
-              })
-            $(tabElm).next('.markdown-tabset').prepend('<h1>Tabset</h1>')
-            $(tabElm).remove()
-          })
-
-          convertedContent = $.html('body')
-            .replace('<body>', '')
-            .replace('</body>', '')
-            .replace(/&#x([0-9a-f]{1,6});/gi, (entity, code) => {
-              code = parseInt(code, 16)
-
-              // Don't unescape ASCII characters, assuming they're encoded for a good reason
-              if (code < 0x80) return entity
-
-              return String.fromCodePoint(code)
-            })
-        }
+        convertedContent = Page.convertMarkdown2HTML(ogPage)
 
         // -> HTML => Markdown
       } else if (

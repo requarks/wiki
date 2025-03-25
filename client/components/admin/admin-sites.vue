@@ -142,9 +142,9 @@ export default {
           update (store, resp) {
             const data = _.get(resp, 'data.createSite', { operation: {} })
             if (data.operation.succeeded === true) {
-              const apolloData = store.readQuery({ query: sitesQuery })
+              const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               apolloData.sites.push(data.site)
-              store.writeQuery({ query: sitesQuery, data: apolloData })
+              store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: apolloData })
             } else {
               throw new Error(data.operation.message)
             }
