@@ -295,6 +295,7 @@ export default {
       this.isShown = false
     },
     open() {
+      // Replace all "." with "-" to simplify the path format for the end user
       this.currentPath = this.currentPath.replace(/\./g, '-')
       const exit = this.openHandler({
         locale: this.currentLocale,

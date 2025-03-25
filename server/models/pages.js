@@ -252,7 +252,6 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async createPage(opts) {
-    opts.path = opts.path.replace(/\./g, '-')
     // -> Validate path
     if (
       opts.path.includes('.') ||
