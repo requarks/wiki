@@ -342,6 +342,27 @@
         :aria-label='$t(`common:actions.returnToTop`)'
         )
         v-icon mdi-arrow-up
+    v-dialog(
+      v-model='isExportModalVisible'
+      max-width='750'
+    )
+      v-card
+        v-card-title {{ messages.exportToWord}}
+        v-card-actions
+          v-btn(
+            color='primary'
+            @click='exportSinglePageToWord()'
+          ) {{ messages.exportSinglePage }}
+          v-btn(
+            color='primary'
+            @click='exportPageTreeToWord()'
+          ) {{ messages.exportPageTree }}
+          v-spacer
+          v-btn(
+            text
+            @click='isExportModalVisible = false'
+          ) {{ messages.cancel }}
+          v-spacer
 </template>
 
 <script>
@@ -531,7 +552,8 @@ export default {
         }
       },
       winWidth: 0,
-      isLoading: false
+      isLoading: false,
+      isExportModalVisible: false,
     }
   },
   computed: {
@@ -799,6 +821,19 @@ export default {
       })
     },
     async exportWord () {
+      if (this.$store.get('page/hasChildren')) {
+        this.isExportModalVisible = true;
+      } else {
+        await this.exportSinglePageToWord();
+      }
+    },
+    async exportPageTreeToWord () {
+      this.isExportModalVisible = false;
+      // TODO: Implement me
+      console.log('Exporting page tree to Word');
+    },
+    async exportSinglePageToWord () {
+      this.isExportModalVisible = false;
       this.isLoading = true;
       const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
         method: 'GET',

@@ -233,6 +233,7 @@ export default {
 
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
       this.currentParent = _.last(this.parents)
+      this.$store.commit('page/SET_HAS_CHILDREN', curPage.isFolder)
 
       this.loadedCache = [curPage.parent]
       this.currentItems = _.filter(filteredItems, ['parent', curPage.parent])
