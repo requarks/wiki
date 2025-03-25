@@ -1068,7 +1068,8 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async reconnectLinks(opts) {
-    const pageHref = `/${opts.locale}/${opts.path}`
+    const sitePrefix = 'default'
+    const pageHref = `/${opts.locale}/${sitePrefix}/${opts.path}`
     let replaceArgs = {
       from: '',
       to: ''
@@ -1079,7 +1080,7 @@ module.exports = class Page extends Model {
         replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'move':
-        const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
+        const prevPageHref = `/${opts.sourceLocale}/${sitePrefix}/${opts.sourcePath}`
         replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
         replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
@@ -1092,6 +1093,22 @@ module.exports = class Page extends Model {
     }
 
     let affectedHashes = []
+    const allLinks = await WIKI.models.pageLinks.query()
+    const targetPath = opts.mode === 'move' ? `${sitePrefix}/${opts.sourcePath}` : `${sitePrefix}/${opts.path}`
+    allLinks.forEach(l => {
+      console.log(`PageID: ${l.pageId}, Path: ${l.path}, Locale: ${l.localeCode}`)
+    })
+    const subquery = WIKI.models.knex
+      .select('pageLinks.pageId')
+      .from('pageLinks')
+      .where({
+        'pageLinks.path': targetPath,
+        'pageLinks.localeCode': opts.locale
+      })
+
+    const pageIds = await subquery
+    console.log('Candidate page IDs:', pageIds.map(p => p.pageId))
+
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
       const qryHashes = await WIKI.models.pages
@@ -1106,7 +1123,7 @@ module.exports = class Page extends Model {
         })
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': opts.path,
+            'pageLinks.path': targetPath,
             'pageLinks.localeCode': opts.locale
           })
         })
@@ -1124,7 +1141,7 @@ module.exports = class Page extends Model {
         })
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': opts.path,
+            'pageLinks.path': targetPath,
             'pageLinks.localeCode': opts.locale
           })
         })
