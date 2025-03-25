@@ -111,7 +111,7 @@ module.exports = {
         WIKI.logger.info(`Created site ${args.name} (${args.path}).`)
 
         return {
-          operation: generateSuccess('Site created successfully'),
+          responseResult: generateSuccess('Site created successfully'),
           site: newSite
         }
       } catch (err) {

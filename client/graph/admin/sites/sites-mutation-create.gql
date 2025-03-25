@@ -1,6 +1,6 @@
 mutation CreateSite ($name: String!, $path: String!) {
     createSite(name: $name, path: $path) {
-      operation {
+      responseResult {
         succeeded        
         slug
         message
