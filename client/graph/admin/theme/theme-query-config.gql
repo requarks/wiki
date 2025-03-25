@@ -4,6 +4,10 @@ query {
       theme
       iconset
       darkMode
+      tocDepth {
+        min
+        max
+      }
       tocPosition
       injectCSS
       injectHead
