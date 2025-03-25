@@ -34,7 +34,7 @@ module.exports = {
    *
    * @param {Object} app Express Instance
    */
-  attachMiddleware (app) {
+  attachMiddleware(app) {
     app.use(i18nMW.handle(this.engine))
   },
   /**
@@ -76,28 +76,29 @@ module.exports = {
     }
 
     // -> Load dev locale files if present
-    if (WIKI.IS_DEBUG) {
-      try {
-        const devEntriesRaw = await fs.readFile(path.join(WIKI.SERVERPATH, `locales/${locale}.yml`), 'utf8')
-        if (devEntriesRaw) {
-          const devEntries = yaml.safeLoad(devEntriesRaw)
-          _.forOwn(devEntries, (data, ns) => {
-            this.namespaces.push(ns)
-            this.engine.addResourceBundle(locale, ns, data, true, true)
-          })
-          WIKI.logger.info(`Loaded dev locales from ${locale}.yml`)
-        }
-      } catch (err) {
-        // ignore
+    // comment out to be able to use locales from file
+    // if (WIKI.IS_DEBUG) {
+    try {
+      const devEntriesRaw = await fs.readFile(path.join(WIKI.SERVERPATH, `locales/${locale}.yml`), 'utf8')
+      if (devEntriesRaw) {
+        const devEntries = yaml.safeLoad(devEntriesRaw)
+        _.forOwn(devEntries, (data, ns) => {
+          this.namespaces.push(ns)
+          this.engine.addResourceBundle(locale, ns, data, true, true)
+        })
+        WIKI.logger.info(`Loaded dev locales from ${locale}.yml`)
       }
+    } catch (err) {
+      // ignore
     }
+    // }
   },
   /**
    * Reload all namespaces for all active locales from the DB
    *
    * @param {Boolean} silent No error on fail
    */
-  async refreshNamespaces (silent = false) {
+  async refreshNamespaces(silent = false) {
     await this.loadLocale(WIKI.config.lang.code, { silent })
     if (WIKI.config.lang.namespacing) {
       for (let ns of WIKI.config.lang.namespaces) {
