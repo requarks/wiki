@@ -553,7 +553,7 @@ export default {
       },
       winWidth: 0,
       isLoading: false,
-      isExportModalVisible: false,
+      isExportModalVisible: false
     }
   },
   computed: {
@@ -822,69 +822,69 @@ export default {
     },
     async exportWord () {
       if (this.$store.get('page/hasChildren')) {
-        this.isExportModalVisible = true;
+        this.isExportModalVisible = true
       } else {
-        await this.exportSinglePageToWord();
+        await this.exportSinglePageToWord()
       }
     },
     async exportPageTreeToWord () {
-      this.isExportModalVisible = false;
+      this.isExportModalVisible = false
       // TODO: Implement me
-      console.log('Exporting page tree to Word');
+      console.log('Exporting page tree to Word')
     },
     async exportSinglePageToWord () {
-      this.isExportModalVisible = false;
-      this.isLoading = true;
+      this.isExportModalVisible = false
+      this.isLoading = true
       const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
-          },
-      });
-      this.isLoading = false;
+          'Content-Type': 'application/json'
+        }
+      })
+      this.isLoading = false
 
-      if (response.status == 200) {
-        const blob = await response.blob();
+      if (response.status === 200) {
+        const blob = await response.blob()
         const header = window.document.getElementsByClassName(
-          "row page-header-section no-gutters align-content-center"
-        )[0];
-        const title = header.getElementsByClassName("headline")[0].textContent;
+          'row page-header-section no-gutters align-content-center'
+        )[0]
+        const title = header.getElementsByClassName('headline')[0].textContent
 
         // Download the DOCX file
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = title.replaceAll(" ", "_") + '.docx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = title.replaceAll(' ', '_') + '.docx'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       } else {
         this.$store.commit('showNotification', {
-        message: 'Error exporting to Word',
-        style: 'error',
-        icon: 'alert'
-      })
+          message: 'Error exporting to Word',
+          style: 'error',
+          icon: 'alert'
+        })
       }
     },
     pageEdit () {
-      this.$root.$emit('pageEdit')
+      this.$root.$emit('page-edit')
     },
     pageHistory () {
-      this.$root.$emit('pageHistory')
+      this.$root.$emit('page-history')
     },
     pageSource () {
-      this.$root.$emit('pageSource')
+      this.$root.$emit('page-source')
     },
     pageConvert () {
-      this.$root.$emit('pageConvert')
+      this.$root.$emit('page-convert')
     },
     pageDuplicate () {
-      this.$root.$emit('pageDuplicate')
+      this.$root.$emit('page-duplicate')
     },
     pageMove () {
-      this.$root.$emit('pageMove')
+      this.$root.$emit('page-move')
     },
     pageDelete () {
-      this.$root.$emit('pageDelete')
+      this.$root.$emit('page-delete')
     },
     handleSideNavVisibility () {
       if (window.innerWidth === this.winWidth) { return }
