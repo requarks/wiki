@@ -1,4 +1,6 @@
 const asciidoctor = require('asciidoctor')()
+const registry = asciidoctor.Extensions.create()
+require('../../../../client/modules/asciidoc-extended')(registry)
 const cheerio = require('cheerio')
 
 module.exports = {
@@ -9,7 +11,8 @@ module.exports = {
       attributes: {
         showtitle: true,
         icons: 'font'
-      }
+      },
+      'extension_registry': registry
     })
 
     const $ = cheerio.load(html, {
