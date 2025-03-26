@@ -828,14 +828,15 @@ export default {
       }
     },
     async exportPageTreeToWord () {
-      this.isExportModalVisible = false
-      // TODO: Implement me
-      console.log('Exporting page tree to Word')
+      this.exportToWord(`path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}&isPageTreeExport=true`)
     },
     async exportSinglePageToWord () {
+      this.exportToWord(`path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
+    },
+    async exportToWord(queryParams) {
       this.isExportModalVisible = false
       this.isLoading = true
-      const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
+      const response = await fetch(`/export/docx/${this.pageId}?${queryParams}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'

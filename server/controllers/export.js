@@ -1,13 +1,10 @@
 const express = require('express')
 const router = express.Router()
-const { JSDOM } = require('jsdom')
 const {
-  handleInternalLinks,
-  prepareInternalImages,
   convertToWord,
-  getSiteIdByPath
+  getSiteIdByPath,
+  getExportHtmlContent
 } = require('../helpers/export')
-const Page = require('../models/pages')
 
 /* global WIKI */
 
@@ -33,36 +30,7 @@ router.get('/export/docx/:pageId', async (req, res) => {
       return res.status(404).send('Page not found')
     }
 
-    let pageContent = ''
-    if (page.contentType === 'html') {
-      pageContent = page.render
-    } else if (page.contentType === 'markdown') {
-      pageContent = Page.convertMarkdown2HTML(page)
-    } else {
-      throw new Error('Unsupported content type: ' + page.contentType)
-    }
-
-    let pageHTML = `
-        <html>
-          <head>
-            <title>${page.title}</title>
-          </head>
-          <body>
-            ${pageContent}
-          </body>
-        </html>
-      `
-
-    // HTML Aadaptions
-    pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
-    pageHTML = handleInternalLinks(pageHTML, req.query.sitePath, req.query.path)
-
-    const dom = new JSDOM(pageHTML)
-    const document = dom.window.document
-
-    await prepareInternalImages(document, req)
-    pageHTML = dom.serialize()
-
+    const pageHTML = await getExportHtmlContent(page, req.user, req.query)
     const response = await convertToWord(pageHTML)
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')

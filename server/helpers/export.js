@@ -1,7 +1,10 @@
 const fetch = require('node-fetch')
+const { JSDOM } = require('jsdom')
+
 const assetHelper = require('../helpers/asset')
 const mime = require('mime-types')
 const pageHelper = require('../helpers/page')
+const Page = require('../models/pages')
 
 /* global WIKI */
 
@@ -32,7 +35,7 @@ async function getSiteIdByPath(sitePath) {
   return WIKI.models.sites.getSiteIdByPath({ path: sitePath })
 }
 
-async function prepareInternalImages(document, req) {
+async function prepareInternalImages(document, user) {
   const images = document.querySelectorAll('img')
   const internalImages = Array.from(images).filter(img => !img.src.startsWith('data:image'))
 
@@ -49,7 +52,7 @@ async function prepareInternalImages(document, req) {
     const pageArgs = { ...pageHelper.parsePath(assetPath, {}), siteId: site.id }
     const extension = assetHelper.getPathInfo(img.src).ext
 
-    if (!WIKI.auth.checkAccess(req.user, ['read:assets'], pageArgs) || !assetHelper.isSafeExtension(extension)) {
+    if (!WIKI.auth.checkAccess(user, ['read:assets'], pageArgs) || !assetHelper.isSafeExtension(extension)) {
       return
     }
 
@@ -101,4 +104,92 @@ async function convertToWord(pageHTML) {
   }
 }
 
-module.exports = { handleInternalLinks, prepareInternalImages, convertToWord, getSiteIdByPath }
+function getPageContent(page) {
+  let pageContent = ''
+  if (page.contentType === 'html') {
+    pageContent = page.render
+  } else if (page.contentType === 'markdown') {
+    pageContent = Page.convertMarkdown2HTML(page)
+  } else {
+    throw new Error('Unsupported content type: ' + page.contentType)
+  }
+  return pageContent
+}
+
+function getPageTreeExportHtml(pageTree, user, queryParams) {
+  const mainPageContent = getPageContent(pageTree[0])
+  let pageHTML = `
+    <html>
+      <head>
+        <title>${pageTree[0].title}</title>
+      </head>
+      <body>
+        <article>
+          <div>
+            ${mainPageContent}
+          </div>
+        </article>
+  `
+  pageTree.shift() // Removing the main page
+  for (const page of pageTree) {
+    if (WIKI.auth.checkAccess(user, ['read:pages'], {siteId: page.siteId, ...queryParams})) {
+      const pageContent = getPageContent(page)
+      pageHTML += `
+        <article>
+          <h1>${page.title}</h1>
+          <div>
+            ${pageContent}
+          </div>
+        </article>
+      `
+    }
+  }
+  pageHTML += `
+      </body>
+    </html>
+  `
+
+  return pageHTML
+}
+
+function getPageExportHtml(page) {
+  const pageContent = getPageContent(page)
+  return `
+    <html>
+      <head>
+        <title>${page.title}</title>
+      </head>
+      <body>
+        ${pageContent}
+      </body>
+    </html>
+  `
+}
+
+async function getExportHtmlContent(page, user, queryParams) {
+  let pageTree = null
+  let pageHTML = ''
+  if (queryParams.isPageTreeExport) {
+    pageTree = await WIKI.models.pages.getPageTreeFrom(page.id)
+    pageHTML = getPageTreeExportHtml(pageTree, user, queryParams)
+  } else {
+    pageHTML = getPageExportHtml(page)
+  }
+  // HTML Aadaptions
+  pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
+  pageHTML = handleInternalLinks(pageHTML, queryParams.sitePath, page.path)
+
+  const dom = new JSDOM(pageHTML)
+  const document = dom.window.document
+
+  await prepareInternalImages(document, user)
+  pageHTML = dom.serialize()
+
+  return pageHTML
+}
+
+module.exports = {
+  convertToWord,
+  getSiteIdByPath,
+  getExportHtmlContent
+}
