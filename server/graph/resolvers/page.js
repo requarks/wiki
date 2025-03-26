@@ -450,7 +450,7 @@ module.exports = {
           // Notify followers
           const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: null })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE', subjectText: 'Page Created' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE', subjectText: 'Created Page' })
         }
 
         if (args.mentions.length > 0) {
@@ -483,7 +483,7 @@ module.exports = {
           // Notify followers
           const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE', subjectText: 'Page Updated' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE', subjectText: 'Updated Page' })
         }
 
         if (args.mentions.length > 0) {
@@ -550,7 +550,7 @@ module.exports = {
         if (args.notifyFollowers) {
           // Notify followers
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'DELETE_PAGE', subjectText: 'Page Deleted' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'DELETE_PAGE', subjectText: 'Deleted Page' })
         }
 
         return {
