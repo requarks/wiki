@@ -10,20 +10,20 @@ const _ = require('lodash')
 module.exports = class Comment extends Model {
   static get tableName() { return 'comments' }
 
-  static get jsonSchema () {
+  static get jsonSchema() {
     return {
       type: 'object',
       required: [],
 
       properties: {
-        id: {type: 'integer'},
-        content: {type: 'string'},
-        render: {type: 'string'},
-        name: {type: 'string'},
-        email: {type: 'string'},
-        ip: {type: 'string'},
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        id: { type: 'integer' },
+        content: { type: 'string' },
+        render: { type: 'string' },
+        name: { type: 'string' },
+        email: { type: 'string' },
+        ip: { type: 'string' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' }
       }
     }
   }
@@ -45,6 +45,14 @@ module.exports = class Comment extends Model {
           from: 'comments.pageId',
           to: 'pages.id'
         }
+      },
+      userMentions: {
+        relation: Model.HasManyRelation,
+        modelClass: require('./userMentions'),
+        join: {
+          from: 'comments.id',
+          to: 'userMentions.commentId'
+        }
       }
     }
   }
@@ -60,7 +68,7 @@ module.exports = class Comment extends Model {
   /**
    * Post New Comment
    */
-  static async postNewComment ({ pageId, replyTo, content, guestName, guestEmail, user, ip }) {
+  static async postNewComment({ pageId, replyTo, content, guestName, guestEmail, user, ip }) {
     // -> Input validation
     if (user.id === 2) {
       const validation = validate({
@@ -128,7 +136,7 @@ module.exports = class Comment extends Model {
   /**
    * Update an Existing Comment
    */
-  static async updateComment ({ id, content, user, ip }) {
+  static async updateComment({ id, content, user, ip }) {
     // -> Load Page
     const pageId = await WIKI.data.commentProvider.getPageIdFromCommentId(id)
     if (!pageId) {
@@ -146,7 +154,7 @@ module.exports = class Comment extends Model {
   /**
    * Delete an Existing Comment
    */
-  static async deleteComment ({ id, user, ip }) {
+  static async deleteComment({ id, user, ip }) {
     // -> Load Page
     const pageId = await WIKI.data.commentProvider.getPageIdFromCommentId(id)
     if (!pageId) {

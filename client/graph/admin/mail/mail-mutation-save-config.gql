@@ -12,6 +12,7 @@ mutation (
   $dkimDomainName: String!
   $dkimKeySelector: String!
   $dkimPrivateKey: String!
+  $allowedDomains: String!
 ) {
   mail {
     updateConfig(
@@ -28,6 +29,7 @@ mutation (
       dkimDomainName: $dkimDomainName
       dkimKeySelector: $dkimKeySelector
       dkimPrivateKey: $dkimPrivateKey
+      allowedDomains: $allowedDomains
     ) {
       responseResult {
         succeeded

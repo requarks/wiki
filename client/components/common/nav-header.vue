@@ -134,15 +134,15 @@
               template( v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)')
                   v-icon(color='grey') mdi-track-light
-              span {{ $t('common:header.followSite') }}
+              span Follow Site
             v-divider(vertical)
-          
+
           template(v-if='isAuthenticated && path && isFollowingSite')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)')
                   v-icon(color='grey') mdi-track-light-off
-              span {{ $t('common:header.unfollowSite') }}
+              span Unfollow Site
             v-divider(vertical)
 
           //- PAGE ACTIONS

@@ -448,9 +448,9 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId })
+          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: null })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE', subjectText: 'Created Page' })
         }
 
         if (args.mentions.length > 0) {
@@ -458,7 +458,7 @@ module.exports = {
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
           const mentionIds = [...new Set(usersToMention.map(user => user.id))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE', subjectText: 'Mentioned in Page' })
         }
 
         return {
@@ -481,9 +481,9 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
+          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE', subjectText: 'Updated Page' })
         }
 
         if (args.mentions.length > 0) {
@@ -491,7 +491,7 @@ module.exports = {
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
           const mentionIds = [...new Set(usersToMention.map(user => user.id))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE', subjectText: 'Mentioned in Page' })
         }
 
         return {
@@ -540,7 +540,8 @@ module.exports = {
     async delete(obj, args, context) {
       try {
         const page = await WIKI.models.pages.query().findById(args.id)
-        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
+        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
+
         await WIKI.models.pages.deletePage({
           ...args,
           user: context.req.user
@@ -549,7 +550,7 @@ module.exports = {
         if (args.notifyFollowers) {
           // Notify followers
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, followerIds: followerIds, event: 'DELETE_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'DELETE_PAGE', subjectText: 'Deleted Page' })
         }
 
         return {

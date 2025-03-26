@@ -84,6 +84,14 @@ module.exports = class Page extends Model {
           to: 'pageLinks.pageId'
         }
       },
+      mentions: {
+        relation: Model.HasManyRelation,
+        modelClass: require('./userMentions'),
+        join: {
+          from: 'pages.id',
+          to: 'userMentions.pageId'
+        }
+      },
       author: {
         relation: Model.BelongsToOneRelation,
         modelClass: require('./users'),
@@ -652,8 +660,8 @@ module.exports = class Page extends Model {
             } else {
               $(tabElm).after(
                 '<div class="markdown-tabset">' +
-                  $(tmplElm).html() +
-                  '</div>'
+                $(tmplElm).html() +
+                '</div>'
               )
             }
           })
