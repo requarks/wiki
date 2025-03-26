@@ -1069,7 +1069,7 @@ module.exports = class Page extends Model {
    */
   static async reconnectLinks(opts) {
     const sitePrefix = 'default'
-    const pageHref = `/${opts.locale}/${sitePrefix}/${opts.path}`
+    const pageHref = `/${sitePrefix}/${opts.path}`
     let replaceArgs = {
       from: '',
       to: ''
@@ -1080,9 +1080,9 @@ module.exports = class Page extends Model {
         replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'move':
-        const prevPageHref = `/${opts.sourceLocale}/${sitePrefix}/${opts.sourcePath}`
-        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        const prevPageHref = `/${sitePrefix}/${opts.sourcePath}`
+        replaceArgs.from = `[${opts.sourcePath}](${prevPageHref})">`
+        replaceArgs.to = `[${opts.path}](${pageHref})">`
         break
       case 'delete':
         replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
@@ -1108,15 +1108,22 @@ module.exports = class Page extends Model {
 
     const pageIds = await subquery
     console.log('Candidate page IDs:', pageIds.map(p => p.pageId))
-
+    const candidatePages = await WIKI.models.pages
+      .query()
+      .whereIn('id', pageIds.map(p => p.pageId))
+    candidatePages.forEach((page) => {
+      console.log(`\n--- Page ID: ${page.id} ---`)
+      const links = page.render.match(/<a [^>]*href="[^"]+"[^>]*>/g)
+      links?.forEach(link => console.log(link))
+    })
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
       const qryHashes = await WIKI.models.pages
         .query()
         .returning('hash')
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
-            'render',
+          content: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
+            'content',
             replaceArgs.from,
             replaceArgs.to
           ])
@@ -1127,6 +1134,15 @@ module.exports = class Page extends Model {
             'pageLinks.localeCode': opts.locale
           })
         })
+      const candidatePages2 = await WIKI.models.pages
+        .query()
+        .whereIn('id', pageIds.map(p => p.pageId))
+      candidatePages2.forEach(async (page) => {
+        console.log(`\n--- Page ID: ${page.id} ---`)
+        await WIKI.models.pages.renderPage(page)
+        const links = page.render.match(/<a [^>]*href="[^"]+"[^>]*>/g)
+        links?.forEach(link => console.log(link))
+      })
       affectedHashes = qryHashes.map((h) => h.hash)
     } else {
       // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
