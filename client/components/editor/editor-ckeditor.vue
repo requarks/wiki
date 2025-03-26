@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   .editor-ckeditor
     div(ref='toolbarContainer')
     div.contents(ref='editor')
@@ -56,7 +56,7 @@ export default {
     sitePath: get('page/sitePath')
   },
   methods: {
-    insertLink () {
+    insertLink() {
       this.insertLinkDialog = true
     },
     insertLinkHandler ({ locale, path }) {
@@ -104,7 +104,7 @@ export default {
       }
     }
   },
-  async mounted () {
+  async mounted() {
     this.$store.set('editor/editorKey', 'ckeditor')
 
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
@@ -160,7 +160,7 @@ export default {
       }
     })
 
-    this.$root.$on('editorLinkToPage', opts => {
+    this.$root.$on('editorLinkToPage', () => {
       this.insertLink()
     })
 
@@ -179,6 +179,52 @@ export default {
       const selectedImg = this.getSelectedDiagram()
       this.editDiagram(selectedImg)
     })
+
+    this.editor.model.document.on('change:data', (evt, data) => {
+      // Track new mentions and remove old mentions
+      let newMentions = new Map()
+      const changes = data.operations.filter((op) => op.type === 'insert')
+      changes.forEach((change) => {
+        for (const node of change.nodes) {
+          if (node.hasAttribute('mention')) {
+            let mention = node.getAttribute('mention')
+            mention.id = mention.id.substring(1)
+            newMentions.set(mention['uid'], mention)
+          }
+        }
+      })
+
+      // Track removed mentions
+      const uidNodes = []
+      const walker = this.editor.model
+        .createRangeIn(this.editor.model.document.getRoot())
+        .getWalker()
+
+      for (const value of walker) {
+        const node = value.item
+        if (node.hasAttribute('mention')) {
+          const mention = node.getAttribute('mention')
+          if (mention.uid) {
+            uidNodes.push(node)
+          }
+        }
+      }
+
+      // Compare newMentions with uidNodes and remove non-existing mentions
+      for (const [uid] of newMentions) {
+        if (
+          !uidNodes.some((node) => node.getAttribute('mention').uid === uid)
+        ) {
+          newMentions.delete(uid)
+        }
+      }
+      // Merge new mentions with existing mentions in the store
+      const existingMentions = this.$store.get('editor/mentions') || []
+      const mergedMentions = new Set([...existingMentions, ...Array.from(newMentions.values()).map((mention) => mention.id)])
+
+      // Set the mentions in the Vuex store
+      this.$store.set('editor/mentions', Array.from(mergedMentions))
+    })
   },
   beforeDestroy () {
     if (this.editor) {
@@ -190,13 +236,12 @@ export default {
 </script>
 
 <style lang="scss">
-
 $editor-height: calc(100vh - 64px - 24px);
 $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
-  background-color: mc('grey', '200');
-  flex: 1 1 50%;
+  background-color: rgba(255,255,255,.25);
+  display:inline-flex;
   display: flex;
   flex-flow: column nowrap;
   height: $editor-height;
@@ -216,8 +261,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255,255,255,.25);
-      display:inline-flex;
+      background-color: rgba(255, 255, 255, 0.25);
+      display: inline-flex;
       padding: 0 12px;
       height: 24px;
       width: 63px;
@@ -233,7 +278,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     pre > code {
       background-color: unset;
       color: unset;
-      padding: .15em;
+      padding: 0.15em;
     }
   }
 
@@ -277,8 +322,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
 
     &.ck.ck-editor__editable:not(.ck-editor__nested-editable).ck-focused {
-      border-color: #FFF;
-      box-shadow: 0 0 10px rgba(mc('blue', '700'), .25);
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(mc('blue', '700'), 0.25);
 
       @at-root .theme--dark & {
         border-color: #444;

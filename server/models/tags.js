@@ -112,4 +112,12 @@ module.exports = class Tag extends Model {
 
     page.tags = targetTags
   }
+
+  static async purgeTags(siteId) {
+    try {
+      await WIKI.models.tags.query().delete().where('siteId', siteId)
+    } catch (err) {
+      WIKI.logger.warn(err)
+    }
+  }
 }

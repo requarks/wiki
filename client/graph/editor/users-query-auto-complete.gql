@@ -1,0 +1,5 @@
+query ($siteId: String!, $query: String!) {
+  users {
+    autoCompleteEmails(siteId: $siteId, query: $query)
+  }
+}

@@ -188,29 +188,33 @@ module.exports = class Asset extends Model {
     }
   }
 
-  static async getAsset(sitePath, assetPath, res) {
+  static async getAsset(sitePath, assetPath, res, returnBase64Asset = false) {
     try {
       WIKI.logger.debug(`Retrieving asset: ${sitePath}/${assetPath}`)
       const combinedPath = `${sitePath}/${assetPath}`
       const fileInfo = assetHelper.getPathInfo(combinedPath)
       const fileHash = assetHelper.generateHash(combinedPath)
+
       const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${fileHash}.dat`)
 
       // Force unsafe extensions to download
-      if (WIKI.config.uploads.forceDownload && !['.png', '.apng', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(fileInfo.ext)) {
+      if (WIKI.config.uploads.forceDownload && !assetHelper.isSafeExtension(fileInfo.ext) && !returnBase64Asset) {
         res.set('Content-disposition', 'attachment; filename=' + encodeURIComponent(fileInfo.base))
       }
 
-      if (await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res)) {
+      let base64AssetOrSendDirectlyFileInResponse =  await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res, returnBase64Asset)
+
+      if (base64AssetOrSendDirectlyFileInResponse) {
         WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from cache`)
-        return
+        return base64AssetOrSendDirectlyFileInResponse
       }
-      if (await WIKI.models.assets.getAssetFromStorage(assetPath, res)) {
+      base64AssetOrSendDirectlyFileInResponse =  await  WIKI.models.assets.getAssetFromStorage(assetPath, res, returnBase64Asset)
+      if (base64AssetOrSendDirectlyFileInResponse) {
         WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from storage`)
-        return
+        return base64AssetOrSendDirectlyFileInResponse
       }
       WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from database (cache miss)`)
-      await WIKI.models.assets.getAssetFromDb(fileHash, cachePath, res)
+      return await WIKI.models.assets.getAssetFromDb(fileHash, cachePath, res, returnBase64Asset)
     } catch (err) {
       if (err.code === `ECONNABORTED` || err.code === `EPIPE`) {
         return
@@ -220,11 +224,19 @@ module.exports = class Asset extends Model {
     }
   }
 
-  static async getAssetFromCache(assetPath, cachePath, res) {
+  static async convertToBase64(filePath) {
+    const data = await fs.readFile(filePath);
+    return data.toString('base64');
+  }
+
+  static async getAssetFromCache(assetPath, cachePath, res, returnBase64Asset) {
     try {
       await fs.access(cachePath, fs.constants.R_OK)
     } catch (err) {
       return false
+    }
+    if (returnBase64Asset) {
+      return this.convertToBase64(cachePath)
     }
     const sendFile = Promise.promisify(res.sendFile, {context: res})
     res.type(path.extname(assetPath))
@@ -232,7 +244,11 @@ module.exports = class Asset extends Model {
     return true
   }
 
-  static async getAssetFromStorage(assetPath, res) {
+  static async getAssetFromStorage(assetPath, res, returnBase64Asset) {
+    if (returnBase64Asset) {
+      // NOT SUPPORTED
+      return false
+    }
     const localLocations = await WIKI.models.storage.getLocalLocations({
       asset: {
         path: assetPath
@@ -247,7 +263,7 @@ module.exports = class Asset extends Model {
     return false
   }
 
-  static async getAssetFromDb(fileHash, cachePath, res) {
+  static async getAssetFromDb(fileHash, cachePath, res, returnBase64Asset) {
     const asset = await WIKI.models.assets.query().where('hash', fileHash).first()
 
     if (asset) {
@@ -255,7 +271,14 @@ module.exports = class Asset extends Model {
       res.type(asset.ext)
       res.send(assetData.data)
       await fs.outputFile(cachePath, assetData.data)
+      if (returnBase64Asset) {
+        return this.convertToBase64(cachePath)
+      }
+      return true
     } else {
+      if (returnBase64Asset) {
+        return false
+      }
       res.sendStatus(404)
     }
   }

@@ -13,9 +13,9 @@ Here below explained how to set up a multi-threaded HTTP server using Gunicorn. 
 
    ```
    cd dev/pandoc
-   docker build -t pandoc:latest .
+   docker build -t pandoc:latest . --no-cache
 
-   cd dev/containers
+   cd ../containers
    docker-compose up -d
    ```
 
@@ -32,6 +32,21 @@ Once the application is running, we can test it by using below command:
   sudo curl -F 'file=@input.html' http://localhost:80/convert-to-docx -o output.docx
 
   ```
+
+  also added "conver-docx.http" for testing locally
+
+  2. To convert html input file to pdf, run below command:
+   
+  ```
+  sudo curl -F 'file=@input.html' http://localhost:80/convert-to-pdf -o output.pdf
+
+  ```
+  also added "conver-pdf.http" for testing locally
+
+## URL to use to connect to pandoc kubernetes service (Remote Deployment)
+
+ please replace `http://localhost:80` with  `http://pandoc.pandoc.svc.cluster.local:80`
+ 
 
 ## to Build and push docker image to nexus
 

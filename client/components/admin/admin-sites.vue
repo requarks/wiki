@@ -42,7 +42,7 @@
                   )
               v-card-chin
                 v-spacer
-                v-btn(text, @click='newSiteDialog = false') Cancel
+                v-btn(text, @click='resetNewSiteForm') Cancel
                 v-btn(color='primary', @click='createSite') Create
         v-card.mt-3.animated.fadeInUp
           v-data-table(
@@ -106,60 +106,62 @@ export default {
     }
   },
   methods: {
+    resetNewSiteForm() {
+      this.newSiteName = ''
+      this.newSitePath = ''
+      this.newSiteDialog = false
+    },
+    showNotification(message, style, icon) {
+      this.$store.commit('showNotification', {
+        style: style,
+        message: message,
+        icon: icon
+      })
+    },
     async refresh() {
       await this.$apollo.queries.sites.refetch()
-      this.$store.commit('showNotification', {
-        message: 'Sites have been refreshed.',
-        style: 'success',
-        icon: 'cached'
-      })
+      this.showNotification('Sites have been refreshed.', 'success', 'cached')
     },
     async createSite() {
       if (_.trim(this.newSiteName).length < 1 || _.trim(this.newSitePath).length < 1) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: 'Enter a site name and a path',
-          icon: 'warning'
-        })
+        this.showNotification('Enter a site name and a path', 'red', 'warning')
         return
       }
       if (/[/\\.\s]/.test(this.newSitePath)) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: 'Path cannot contain spaces, dots, "/", or "\\" characters',
-          icon: 'warning'
-        })
+        this.showNotification('Path cannot contain spaces, dots, "/", or "\\" characters', 'red', 'warning')
         return
       }
-      this.newSiteDialog = false
       try {
-        await this.$apollo.mutate({
+        const response = await this.$apollo.mutate({
           mutation: createSiteMutation,
           variables: {
             name: this.newSiteName,
             path: this.newSitePath
           },
           update (store, resp) {
-            const data = _.get(resp, 'data.createSite', { operation: {} })
-            if (data.operation.succeeded === true) {
-              const apolloData = store.readQuery({ query: sitesQuery })
+            const data = _.get(resp, 'data.createSite', { responseResult: {} })
+            const succeeded = data.responseResult.succeeded
+            if (succeeded) {
+              const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               apolloData.sites.push(data.site)
-              store.writeQuery({ query: sitesQuery, data: apolloData })
-            } else {
-              throw new Error(data.operation.message)
+              store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: apolloData })
             }
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-sites-create')
           }
         })
-        this.newSiteName = ''
-        this.newSitePath = ''
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: `Site has been created successfully.`,
-          icon: 'check'
-        })
+        const data = _.get(response, 'data.createSite', { responseResult: {} })
+        if (data.responseResult.succeeded) {
+          this.newSiteDialog = false
+          this.newSiteName = ''
+          this.newSitePath = ''
+          this.showNotification(`Site has been created successfully.`, 'success', 'check')
+        } else if (data.responseResult.succeeded === 1012) {
+          this.showNotification('A site with the same path already exists! Cannot have 2 sites with the same path.', 'red', 'warning')
+        } else {
+          this.showNotification(data.responseResult.message, 'red', 'warning')
+        }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }

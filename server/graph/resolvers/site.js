@@ -111,7 +111,7 @@ module.exports = {
         WIKI.logger.info(`Created site ${args.name} (${args.path}).`)
 
         return {
-          operation: generateSuccess('Site created successfully'),
+          responseResult: generateSuccess('Site created successfully'),
           site: newSite
         }
       } catch (err) {
@@ -225,6 +225,10 @@ module.exports = {
         }
       }
 
+      const deleteTags = async (siteId) => {
+        await WIKI.models.tags.purgeTags(siteId)
+      }
+
       try {
         if (!WIKI.auth.checkAccess(context.req.user, ['manage:system', 'manage:sites'])) {
           throw new Error('ERR_FORBIDDEN')
@@ -253,6 +257,8 @@ module.exports = {
           await deleteHistoryPage(pageId)
           await deletePage(pageId)
         }
+
+        await deleteTags(args.id)
 
         // -> Delete site
         await WIKI.models.sites.deleteSite(args.id)

@@ -61,6 +61,8 @@
             .page-header-headings
               .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
+              v-btn.mr-5(v-if='isAuthenticated && isFollower != null && !isFollower' @click='followPage') Follow
+              v-btn.mr-5(v-if='isAuthenticated && isFollower != null && isFollower' @click='unfollowPage') Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
               :class='tocPosition === `right` ? `is-right` : ``'
@@ -197,7 +199,12 @@
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
                       v-icon(:color='printView ? `primary` : `grey`') mdi-printer
-                  span {{$t('common:page.printFormat')}}
+                  span {{messages.printToPdf}}
+                //- v-tooltip(bottom)
+                //-   template(v-slot:activator='{ on }')
+                //-     v-btn(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
+                //-       v-icon(color='grey') mdi-file-word
+                //-   span {{messages.exportToWord}}
                 v-spacer
 
           v-flex.page-col-content(
@@ -314,6 +321,7 @@
                 span {{$t('common:comments.title')}}
               .comments-main
                 slot(name='comments')
+    loader(v-model='isLoading', :title='messages.exporting')
     nav-footer
     notify
     search-results
@@ -348,6 +356,10 @@ import ClipboardJS from 'clipboard'
 import { v4 as uuidv4 } from 'uuid'
 import Vue from 'vue'
 import TreeItem from './tree-item.vue'
+import { messages } from '@/messages'
+import createFollowerMutation from 'gql/followers/create-follower.gql'
+import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
+import isFollowingResponse from 'gql/followers/is-following.gql'
 
 Vue.component('Tabset', Tabset)
 
@@ -488,11 +500,13 @@ export default {
   },
   data() {
     return {
+      messages: messages,
       openStates: {},
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
       pageEditFab: false,
+      isFollowing: null,
       scrollOpts: {
         duration: 1500,
         offset: 0,
@@ -516,7 +530,8 @@ export default {
           }
         }
       },
-      winWidth: 0
+      winWidth: 0,
+      isLoading: false
     }
   },
   computed: {
@@ -531,6 +546,9 @@ export default {
       set (val) {
 
       }
+    },
+    isFollower() {
+      return this.isFollowing
     },
     breadcrumbs() {
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
@@ -621,6 +639,14 @@ export default {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
     }
 
+    // Ensure userId is set before calling checkIfFollowing
+    if (this.$store.state.user && this.$store.state.user.id) {
+      this.userId = this.$store.state.user.id
+      this.checkIfFollowing()
+    } else {
+      console.error('User is not defined or user ID is missing')
+    }
+
     this.$store.set('page/siteId', this.siteId)
     this.$store.set('page/siteName', this.siteName)
     this.$store.set('page/sitePath', this.sitePath)
@@ -674,6 +700,86 @@ export default {
     })
   },
   methods: {
+    async checkIfFollowing() {
+      try {
+        const response = await this.$apollo.query({
+          query: isFollowingResponse,
+          variables: {
+            siteId: this.siteId,
+            pageId: this.pageId
+          }
+        })
+        this.isFollowing = response.data.isFollowing.isFollowing
+      } catch (error) {
+        console.error('Error checking if following:', error)
+      }
+    },
+    async followPage() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: createFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: this.pageId
+          }
+        })
+        if (response.data.createFollower.operation.succeeded) {
+          this.isFollowing = true
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully followed the page.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error following page:', response.data.createFollower.operation.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to follow the page.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error following page:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to follow the page.',
+          icon: 'error'
+        })
+      }
+    },
+    async unfollowPage() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: deleteFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: this.pageId
+          }
+        })
+        if (response.data.deleteFollower.responseResult.succeeded) {
+          this.isFollowing = false
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully unfollowed the page.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error unfollowing page:', response.data.deleteFollower.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to unfollow the page.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error unfollowing page:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to unfollow the page.',
+          icon: 'error'
+        })
+      }
+    },
     toggleOpenState(id) {
       this.$set(this.openStates, id, !this.openStates[id])
     },
@@ -688,13 +794,40 @@ export default {
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
     print () {
-      if (this.printView) {
-        this.printView = false
+      this.$nextTick(() => {
+        window.print()
+      })
+    },
+    async exportWord () {
+      this.isLoading = true;
+      const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+          },
+      });
+      this.isLoading = false;
+
+      if (response.status == 200) {
+        const blob = await response.blob();
+        const header = window.document.getElementsByClassName(
+          "row page-header-section no-gutters align-content-center"
+        )[0];
+        const title = header.getElementsByClassName("headline")[0].textContent;
+
+        // Download the DOCX file
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = title.replaceAll(" ", "_") + '.docx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        this.printView = true
-        this.$nextTick(() => {
-          window.print()
-        })
+        this.$store.commit('showNotification', {
+        message: 'Error exporting to Word',
+        style: 'error',
+        icon: 'alert'
+      })
       }
     },
     pageEdit () {
@@ -778,8 +911,8 @@ export default {
   .page-header-headings {
     min-height: 52px;
     display: flex;
-    justify-content: center;
-    flex-direction: column;
+    justify-content: space-between;
+    flex-direction: row;
   }
 
   .page-edit-shortcuts {

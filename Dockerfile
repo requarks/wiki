@@ -36,6 +36,11 @@ RUN yarn patch-package
 FROM node:20-alpine
 LABEL maintainer="capgemini"
 
+ARG VERSION
+ARG RELEASE_DATE
+
+ENV VERSION=$VERSION
+ENV RELEASE_DATE=$RELEASE_DATE
 
 ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
 

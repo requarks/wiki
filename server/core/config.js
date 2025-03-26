@@ -72,9 +72,9 @@ module.exports = {
 
     WIKI.config = appconfig
     WIKI.data = appdata
-    WIKI.version = packageInfo.version
-    WIKI.releaseDate = packageInfo.releaseDate
-    WIKI.devMode = (packageInfo.dev === true)
+    WIKI.version = WIKI.config.version || packageInfo.version
+    WIKI.releaseDate = WIKI.config.releaseDate || packageInfo.releaseDate
+    WIKI.devMode = (WIKI.config.devMode || packageInfo.dev) === true
   },
 
   /**

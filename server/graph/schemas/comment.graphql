@@ -43,16 +43,20 @@ type CommentMutation {
     content: String!
     guestName: String
     guestEmail: String
+    mentions: [String]
   ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"]) @rateLimit(limit: 1, duration: 1)
 
   update(
     id: Int!
     content: String!
-  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:comments", "manage:system", "manage:sites"])
+    pageId: Int!
+    mentions: [String]
+  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+
 
   delete(
     id: Int!
-  ): DefaultResponse @auth(requires: ["manage:comments", "manage:system", "manage:sites"])
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -78,7 +82,7 @@ input CommentProviderInput {
 
 type CommentPost {
   id: Int!
-  content: String! @auth(requires: ["write:comments", "manage:comments", "manage:system", "manage:sites"])
+  content: String! @auth(requires: ["write:comments", "manage:system", "manage:sites"])
   render: String!
   authorId: Int!
   authorName: String!
