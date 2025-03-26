@@ -602,7 +602,7 @@ export default {
 }
 
 .mention-selected {
-  background: rgb(192, 250, 153);
+  background: rgb(0, 191, 191);
 }
 
 .mention {

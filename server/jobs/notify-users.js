@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event }) => {
+module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText }) => {
   WIKI.logger.info(`Notifying users for page ID ${pageId}...`)
 
   try {
@@ -39,8 +39,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
         template: 'page-notify',
         to: '',
         bcc: batch,
-        subject: `[Page Notification] Page ${eventText.charAt(0).toUpperCase() + eventText.slice(1)}: ${pageTitle}`,
-        text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        subject: `[Page Notification] ${subjectText}: ${pageTitle}`,
         data: {
           preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
           pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,

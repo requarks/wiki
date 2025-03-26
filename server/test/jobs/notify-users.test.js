@@ -78,7 +78,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Updated' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
@@ -87,7 +87,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: ['user1@example.com', 'user2@example.com'],
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
@@ -136,7 +135,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Updated' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(3) // Expect 3 batches of emails
@@ -145,7 +144,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: users.slice(0, 10).map(f => f.email),
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
@@ -161,7 +159,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: users.slice(10, 20).map(f => f.email),
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
@@ -177,7 +174,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: users.slice(20, 25).map(f => f.email),
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
@@ -212,7 +208,7 @@ describe('notifyUsers', () => {
       modifyGraph: jest.fn().mockResolvedValue(users)
     })
 
-    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Updated' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.auth.checkAccess).not.toHaveBeenCalled()
@@ -255,7 +251,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Created' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
@@ -264,7 +260,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: ['user1@example.com', 'user2@example.com'],
       subject: `[Page Notification] Page Created: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
@@ -313,7 +308,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId: 1, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Deleted' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
@@ -322,7 +317,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: ['user1@example.com', 'user2@example.com'],
       subject: `[Page Notification] Page Deleted: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
@@ -373,7 +367,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Updated' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
@@ -382,7 +376,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: ['user1@alloweddomain.com', 'user2@alloweddomain.com'],
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
@@ -434,7 +427,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Updated' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
@@ -443,7 +436,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: ['user1@alloweddomain1.com', 'user2@alloweddomain2.com'],
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,
@@ -495,7 +487,7 @@ describe('notifyUsers', () => {
 
     WIKI.mail.send.mockResolvedValue(true)
 
-    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event })
+    await notifyUsers({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText: 'Page Updated' })
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
@@ -504,7 +496,6 @@ describe('notifyUsers', () => {
       to: '',
       bcc: ['user1@alloweddomain1.com', 'user2@alloweddomain2.com', 'user3@notalloweddomain.com'],
       subject: `[Page Notification] Page Updated: ${pageTitle}`,
-      text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
       data: {
         pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
         isDeletion: false,

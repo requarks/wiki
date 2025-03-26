@@ -142,7 +142,7 @@ module.exports = {
             })
           }
 
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_COMMENT', subjectText: 'Mentioned in Comment' })
         }
         return {
           responseResult: graphHelper.generateSuccess('New comment posted successfully'),
@@ -178,7 +178,7 @@ module.exports = {
             })
           }
 
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE' })
+          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_COMMENT', subjectText: 'Mentioned in Comment' })
         }
         return {
           responseResult: graphHelper.generateSuccess('Comment updated successfully'),

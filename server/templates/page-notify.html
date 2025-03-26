@@ -579,7 +579,7 @@
                       >
                         Page Notification
                       </h1>
-                      <% if (event != 'MENTION_PAGE') { %>
+                      <% if (event != 'MENTION_PAGE' && event != 'MENTION_COMMENT') { %>
                       <p style="margin-top: 5px; margin-bottom: 5px">
                         The page "<strong><%= pageTitle %></strong>" has been
                         <%= eventText.toLowerCase() %> by <%= userEmail %>.
@@ -592,6 +592,13 @@
                         >" by <%= userEmail %>.
                         <br />
                       </p>
+                      <% } %> <% if (event === 'MENTION_COMMENT') { %>
+                        <p style="margin-top: 5px; margin-bottom: 5px">
+                          You have been mentioned in a comment on the page "<strong
+                            ><%= pageTitle %></strong
+                          >" by <%= userEmail %>.
+                          <br />
+                        </p>
                       <% } %> <% if (!isDeletion) { %>
                       <a
                         href="<%= pageUrl %>"
