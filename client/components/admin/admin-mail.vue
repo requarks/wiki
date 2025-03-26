@@ -104,8 +104,8 @@
                     v-text-field(
                       outlined
                       v-model='config.allowedDomains'
-                      :label='$t(`admin:mail.allowedDomains`)'
-                      :hint='$t(`admin:mail.allowedDomainsHint`)'
+                      label="Add Allow Only Sending mails to domains"
+                      hint="Add a list of domains that are allowed to send emails to users. If the list is empty, all domains are allowed. Separate domains with a comma."
                       persistent-hint
                       prepend-icon='mdi-domain'
                       )

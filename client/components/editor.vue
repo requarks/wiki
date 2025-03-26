@@ -33,7 +33,7 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.white--text {{ mode === 'create' ? $t('common:actions.createNotify') : $t('common:actions.saveNotify') }}
+          span.white--text {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'

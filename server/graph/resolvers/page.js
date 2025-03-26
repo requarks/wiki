@@ -448,7 +448,7 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId })
+          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: null })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE' })
         }
@@ -481,7 +481,7 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
+          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE' })
         }
@@ -540,6 +540,7 @@ module.exports = {
     async delete(obj, args, context) {
       try {
         const page = await WIKI.models.pages.query().findById(args.id)
+        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
 
         await WIKI.models.pages.deletePage({
           ...args,
@@ -548,7 +549,6 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId })
           const followerIds = [...new Set(followers.map(follower => follower.userId))]
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'DELETE_PAGE' })
         }
