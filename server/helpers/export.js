@@ -128,8 +128,7 @@ function getPageTreeExportHtml(pageTree, user, queryParams) {
           <div>
             ${mainPageContent}
           </div>
-        </article>
-  `
+        </article>`
   pageTree.shift() // Removing the main page
   for (const page of pageTree) {
     if (WIKI.auth.checkAccess(user, ['read:pages'], {siteId: page.siteId, ...queryParams})) {
@@ -140,14 +139,12 @@ function getPageTreeExportHtml(pageTree, user, queryParams) {
           <div>
             ${pageContent}
           </div>
-        </article>
-      `
+        </article>`
     }
   }
   pageHTML += `
       </body>
-    </html>
-  `
+    </html>`
 
   return pageHTML
 }
@@ -162,8 +159,7 @@ function getPageExportHtml(page) {
       <body>
         ${pageContent}
       </body>
-    </html>
-  `
+    </html>`
 }
 
 async function getExportHtmlContent(page, user, queryParams) {
@@ -189,7 +185,12 @@ async function getExportHtmlContent(page, user, queryParams) {
 }
 
 module.exports = {
-  convertToWord,
+  handleInternalLinks,
   getSiteIdByPath,
+  prepareInternalImages,
+  convertToWord,
+  getPageContent,
+  getPageTreeExportHtml,
+  getPageExportHtml,
   getExportHtmlContent
 }

@@ -3,8 +3,12 @@ const pageHelper = require('../../helpers/page')
 const {
   handleInternalLinks,
   prepareInternalImages,
-  convertToWord
+  convertToWord,
+  getPageContent,
+  getPageTreeExportHtml,
+  getExportHtmlContent
 } = require('../../helpers/export')
+const Page = require('../../models/pages')
 
 jest.mock('node-fetch', () => jest.fn())
 const fetch = require('node-fetch')
@@ -13,6 +17,22 @@ jest.mock('../../helpers/page', () => ({
   parsePath: jest.fn()
 }))
 
+jest.mock('../../models/pages', () => ({
+  convertMarkdown2HTML: jest.fn()
+}))
+
+jest.mock('jsdom', () => {
+  const actualJsdom = jest.requireActual('jsdom')
+  return {
+    ...actualJsdom,
+    JSDOM: jest.fn().mockImplementation((html) => {
+      const dom = new actualJsdom.JSDOM(html)
+      dom.serialize = jest.fn()
+      return dom
+    })
+  }
+})
+
 const WIKI = {
   models: {
     sites: {
@@ -20,6 +40,9 @@ const WIKI = {
     },
     assets: {
       getAsset: jest.fn()
+    },
+    pages: {
+      getPageTreeFrom: jest.fn()
     }
   },
   auth: {
@@ -36,7 +59,11 @@ const WIKI = {
 global.WIKI = WIKI
 
 describe('export helpers', () => {
-  describe('prepareInternalLinks', () => {
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  describe('handleInternalLinks', () => {
     it('should not modify links if sitePath is not a string', () => {
       const initialPageHTML = '<a href="/site/page#section">Link</a>'
       const sitePath = {} // not a string
@@ -206,6 +233,222 @@ describe('export helpers', () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error converting document:', error)
       consoleErrorSpy.mockRestore()
+    })
+  })
+
+  describe('getPageContent', () => {
+    it('should return the page content for contentType html', () => {
+      const page = {
+        contentType: 'html',
+        render: '<p>Test</p>'
+      }
+
+      const result = getPageContent(page)
+
+      expect(result).toBe(page.render)
+    })
+
+    it('should return the converted page content for contentType markdown', () => {
+      const page = {
+        contentType: 'markdown',
+        render: '## Test'
+      }
+      const expectedHTML = '<h2>Test</h2>'
+      Page.convertMarkdown2HTML.mockReturnValue(expectedHTML)
+
+      const result = getPageContent(page)
+
+      expect(Page.convertMarkdown2HTML).toHaveBeenCalledTimes(1)
+      expect(Page.convertMarkdown2HTML).toHaveBeenCalledWith(page)
+      expect(result).toBe(expectedHTML)
+    })
+
+    it('should throw an error if the content type is not supported', () => {
+      const page = {
+        contentType: 'unsupported',
+        render: 'Test'
+      }
+
+      expect(() => getPageContent(page)).toThrow('Unsupported content type: unsupported')
+    })
+  })
+
+  describe('getPageTreeExportHtml', () => {
+    it('should return the HTML content of the page tree', () => {
+      const pageTree = [
+        { title: 'Main Page', contentType: 'html', render: '<p>Main content</p>' },
+        { title: 'Page 1', contentType: 'html', render: '<p>Page 1 content</p>' },
+        { title: 'Page 2', contentType: 'html', render: '<p>Page 2 content</p>' }
+      ]
+      const user = {}
+      const queryParams = {}
+      WIKI.auth.checkAccess.mockReturnValue(true)
+
+      const result = getPageTreeExportHtml(pageTree, user, queryParams)
+
+      expect(result).toBe(`
+    <html>
+      <head>
+        <title>Main Page</title>
+      </head>
+      <body>
+        <article>
+          <div>
+            <p>Main content</p>
+          </div>
+        </article>
+        <article>
+          <h1>Page 1</h1>
+          <div>
+            <p>Page 1 content</p>
+          </div>
+        </article>
+        <article>
+          <h1>Page 2</h1>
+          <div>
+            <p>Page 2 content</p>
+          </div>
+        </article>
+      </body>
+    </html>`)
+    })
+
+    it('should skip pages the user does not have access to', () => {
+      const pageTree = [
+        { title: 'Main Page', contentType: 'html', render: '<p>Main content</p>' }, // user has access
+        { title: 'Page 1', contentType: 'html', render: '<p>Page 1 content</p>' }, // user does not have access
+        { title: 'Page 2', contentType: 'html', render: '<p>Page 2 content</p>' } // user has access
+      ]
+      const user = {}
+      const queryParams = {}
+      WIKI.auth.checkAccess.mockReturnValueOnce(false).mockReturnValueOnce(true) // the main page implicitly has access
+
+      const result = getPageTreeExportHtml(pageTree, user, queryParams)
+
+      expect(result).toBe(`
+    <html>
+      <head>
+        <title>Main Page</title>
+      </head>
+      <body>
+        <article>
+          <div>
+            <p>Main content</p>
+          </div>
+        </article>
+        <article>
+          <h1>Page 2</h1>
+          <div>
+            <p>Page 2 content</p>
+          </div>
+        </article>
+      </body>
+    </html>`)
+    })
+  })
+
+  describe('getExportHtmlContent', () => {
+    const page = {
+      title: 'Main Page',
+      contentType: 'html',
+      render: '<h1 id="main-headline"><a href="#main-headline">¶</a>Main Headline</h1><p>Main content</p>',
+      path: 'path'
+    }
+    const user = {}
+
+    beforeEach(() => {
+      WIKI.auth.checkAccess.mockReturnValue(true)
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return the HTML content of a single page', async () => {
+      // GIVEN
+      const queryParams = {
+        sitePath: 'sitePath',
+        locale: 'en',
+        path: 'path'
+      }
+      const expectedHTML = `
+    <html>
+      <head>
+        <title>Main Page</title>
+      </head>
+      <body>
+        <h1 id="main-headline"><a href="#main-headline"></a>Main Headline</h1><p>Main content</p>
+      </body>
+    </html>`
+      let dom
+      JSDOM.mockImplementationOnce((html) => {
+        dom = new (require('jsdom').JSDOM)(html)
+        dom.serialize = jest.fn().mockReturnValue(expectedHTML)
+        return dom
+      })
+
+      // WHEN
+      const result = await getExportHtmlContent(page, user, queryParams)
+
+      // THEN
+      expect(result).toBe(expectedHTML)
+    })
+
+    it('should return the HTML content of the page tree', async () => {
+      // GIVEN
+      const queryParams = {
+        sitePath: 'sitePath',
+        locale: 'en',
+        path: 'path',
+        isPageTreeExport: true
+      }
+      const pageTree = [
+        {
+          title: 'Main Page',
+          contentType: 'html',
+          render: '<h1 id="main-headline"><a href="#main-headline">¶</a>Main Headline</h1><p>Main content</p>'
+        },
+        { title: 'Page 1', contentType: 'html', render: '<p>Page 1 content</p>' },
+        { title: 'Page 2', contentType: 'html', render: '<p>Page 2 content</p>' }
+      ]
+      const expectedHTML = `
+    <html>
+      <head>
+        <title>Main Page</title>
+      </head>
+      <body>
+        <article>
+          <div>
+            <h1 id="main-headline"><a href="#main-headline"></a>Main Headline</h1><p>Main content</p>
+          </div>
+        </article>
+        <article>
+          <h1>Page 1</h1>
+          <div>
+            <p>Page 1 content</p>
+          </div>
+        </article>
+        <article>
+          <h1>Page 2</h1>
+          <div>
+            <p>Page 2 content</p>
+          </div>
+        </article>
+      </body>
+    </html>`
+      WIKI.models.pages.getPageTreeFrom.mockResolvedValue(pageTree)
+      let dom
+      JSDOM.mockImplementationOnce((html) => {
+        dom = new (require('jsdom').JSDOM)(html)
+        dom.serialize = jest.fn().mockReturnValue(expectedHTML)
+        return dom
+      })
+
+      // WHEN
+      const result = await getExportHtmlContent(page, user, queryParams)
+
+      // THEN
+      expect(result).toBe(expectedHTML)
     })
   })
 })
