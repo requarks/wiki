@@ -1,5 +1,6 @@
 const fetch = require('node-fetch')
 const { JSDOM } = require('jsdom')
+const crypto = require('crypto')
 
 const assetHelper = require('../helpers/asset')
 const mime = require('mime-types')
@@ -71,7 +72,7 @@ async function prepareInternalImages(document, user) {
 
 async function convertToWord(pageHTML) {
   try {
-    const boundary = '----WebKitFormBoundary' + Math.random().toString(16)
+    const boundary = '----WebKitFormBoundary' + crypto.randomBytes(16).toString('hex')
 
     const body = `--${boundary}\r\n` +
       `Content-Disposition: form-data; name="file"; filename="input.html"` +
