@@ -867,25 +867,25 @@ export default {
       }
     },
     pageEdit () {
-      this.$root.$emit('page-edit')
+      this.$root.$emit('pageEdit')
     },
     pageHistory () {
-      this.$root.$emit('page-history')
+      this.$root.$emit('pageHistory')
     },
     pageSource () {
-      this.$root.$emit('page-source')
+      this.$root.$emit('pageSource')
     },
     pageConvert () {
-      this.$root.$emit('page-convert')
+      this.$root.$emit('pageConvert')
     },
     pageDuplicate () {
-      this.$root.$emit('page-duplicate')
+      this.$root.$emit('pageDuplicate')
     },
     pageMove () {
-      this.$root.$emit('page-move')
+      this.$root.$emit('pageMove')
     },
     pageDelete () {
-      this.$root.$emit('page-delete')
+      this.$root.$emit('pageDelete')
     },
     handleSideNavVisibility () {
       if (window.innerWidth === this.winWidth) { return }
