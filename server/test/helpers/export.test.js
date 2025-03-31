@@ -64,12 +64,14 @@ describe('export helpers', () => {
   })
 
   describe('handleInternalLinks', () => {
+    const locale = 'en'
+    const pagePaths = ['page', 'page2']
+
     it('should not modify links if sitePath is not a string', () => {
       const initialPageHTML = '<a href="/site/page#section">Link</a>'
       const sitePath = {} // not a string
-      const pagePath = 'page'
 
-      const result = handleInternalLinks(initialPageHTML, sitePath, pagePath)
+      const result = handleInternalLinks(initialPageHTML, sitePath, locale, pagePaths)
 
       expect(result).toBe(initialPageHTML)
     })
@@ -77,41 +79,43 @@ describe('export helpers', () => {
     it('should not adapt external links', () => {
       const initialPageHTML = '<a href="http://external.com/site/page#section">Link</a>'
       const sitePath = 'site'
-      const pagePath = 'page'
 
-      const result = handleInternalLinks(initialPageHTML, sitePath, pagePath)
+      const result = handleInternalLinks(initialPageHTML, sitePath, locale, pagePaths)
 
       expect(result).toBe(initialPageHTML)
     })
 
     it('should filter out the full path from links to sections on the same page when an external link was used', () => {
-      const pageHTML = '<a href="http://internal.com/site/page#section">Link</a>' // external link
+      const pageHTML = `<a href="http://internal.com/site/page#section1">Link1</a>
+        <a href="http://internal.com/site/en/page2#section2">Link2</a>` // external link
       const sitePath = 'site'
-      const pagePath = 'page'
 
-      const result = handleInternalLinks(pageHTML, sitePath, pagePath)
+      const result = handleInternalLinks(pageHTML, sitePath, locale, pagePaths)
 
-      expect(result).toBe('<a href="#section">Link</a>')
+      expect(result).toBe(`<a href="#section1">Link1</a>
+        <a href="#section2">Link2</a>`)
     })
 
     it('should filter out the internal path from links to sections on the same page when an internal link was used', () => {
-      const pageHTML = '<a href="/site/page#section">Link</a>' // internal link
+      const pageHTML = `<a href="/site/page#section1">Link1</a>
+        <a href="/site/en/page2#section2">Link2</a>` // internal link
       const sitePath = 'site'
-      const pagePath = 'page'
 
-      const result = handleInternalLinks(pageHTML, sitePath, pagePath)
+      const result = handleInternalLinks(pageHTML, sitePath, locale, pagePaths)
 
-      expect(result).toBe('<a href="#section">Link</a>')
+      expect(result).toBe(`<a href="#section1">Link1</a>
+        <a href="#section2">Link2</a>`)
     })
 
     it('should add the path of links to different pages', () => {
-      const pageHTML = '<a href="/site/other-page">Link</a>'
+      const pageHTML = `<a href="/site/other-page">Link</a>
+        <a href="/site/en/other-page">Link with locale</a>`
       const sitePath = 'site'
-      const pagePath = 'page'
 
-      const result = handleInternalLinks(pageHTML, sitePath, pagePath)
+      const result = handleInternalLinks(pageHTML, sitePath, locale, pagePaths)
 
-      expect(result).toBe('<a href="http://internal.com/site/other-page">Link</a>')
+      expect(result).toBe(`<a href="http://internal.com/site/other-page">Link</a>
+        <a href="http://internal.com/site/en/other-page">Link with locale</a>`)
     })
   })
 

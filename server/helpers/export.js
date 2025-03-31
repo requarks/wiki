@@ -9,21 +9,26 @@ const Page = require('../models/pages')
 
 /* global WIKI */
 
-function handleInternalLinks(pageHTML, sitePath, pagePath) {
+function handleInternalLinks(pageHTML, sitePath, locale, pagePaths) {
   if (
     typeof sitePath === 'string' &&
     sitePath.length > 0 &&
-    pagePath.length > 0
+    pagePaths.length > 0
   ) {
-    const internalPath = `${sitePath}/${pagePath}`
+    for (const pagePath of pagePaths) {
+      const internalPath = `${sitePath}/${pagePath}`
+      const internalPathWithLocale = `${sitePath}/${locale}/${pagePath}`
 
-    pageHTML = pageHTML
+      pageHTML = pageHTML
       // when external links were used
-      .replaceAll(`href="${WIKI.config.host}/${internalPath}#`, 'href="#')
+        .replaceAll(`href="${WIKI.config.host}/${internalPath}#`, 'href="#')
+        .replaceAll(`href="${WIKI.config.host}/${internalPathWithLocale}#`, 'href="#')
       // when page links were used
-      .replaceAll(`href="/${internalPath}#`, 'href="#')
+        .replaceAll(`href="/${internalPath}#`, 'href="#')
+        .replaceAll(`href="/${internalPathWithLocale}#`, 'href="#')
       // link to a different page
-      .replaceAll(`href="/${sitePath}`, `href="${WIKI.config.host}/${sitePath}`)
+        .replaceAll(`href="/${sitePath}`, `href="${WIKI.config.host}/${sitePath}`)
+    }
   }
   return pageHTML
 }
@@ -38,7 +43,7 @@ async function getSiteIdByPath(sitePath) {
 
 async function prepareInternalImages(document, user) {
   const images = document.querySelectorAll('img')
-  const internalImages = Array.from(images).filter(img => !img.src.startsWith('data:image'))
+  const internalImages = Array.from(images).filter(img => !img.src.startsWith('data:image') && !img.src.startsWith('/_assets/svg/twemoji'))
 
   const processImage = async (img) => {
     const assetPath = img.src.split('/assets/')[1]
@@ -172,9 +177,15 @@ async function getExportHtmlContent(page, user, queryParams) {
   } else {
     pageHTML = getPageExportHtml(page)
   }
+
+  let pagePaths = [page.path]
+  if (pageTree) {
+    pagePaths = pagePaths.concat(pageTree.map(p => p.path))
+  }
+
   // HTML Aadaptions
   pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
-  pageHTML = handleInternalLinks(pageHTML, queryParams.sitePath, page.path)
+  pageHTML = handleInternalLinks(pageHTML, queryParams.sitePath, queryParams.locale, pagePaths)
 
   const dom = new JSDOM(pageHTML)
   const document = dom.window.document
