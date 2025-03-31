@@ -29,7 +29,7 @@
 - [Demo](https://docs.requarks.io/demo)
 - [Changelog](https://github.com/requarks/wiki/releases)
 - [Feature Requests](https://feedback.js.wiki/wiki)
-- Chat with us on [Discord](https://discord.gg/rcxt9QS2jd) / [Slack](https://wiki.requarks.io/slack)
+- Chat with us on [Discord](https://discord.gg/rcxt9QS2jd)
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
 - [E2E Testing Results](https://dashboard.cypress.io/projects/r7qxah/runs)
 - [Special Thanks](#special-thanks)
