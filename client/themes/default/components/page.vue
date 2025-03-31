@@ -200,11 +200,11 @@
                     v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
                       v-icon(:color='printView ? `primary` : `grey`') mdi-printer
                   span {{messages.printToPdf}}
-                //- v-tooltip(bottom)
-                //-   template(v-slot:activator='{ on }')
-                //-     v-btn(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
-                //-       v-icon(color='grey') mdi-file-word
-                //-   span {{messages.exportToWord}}
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
+                      v-icon(color='grey') mdi-file-word
+                  span {{messages.exportToWord}}
                 v-spacer
 
           v-flex.page-col-content(
