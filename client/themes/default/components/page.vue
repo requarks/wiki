@@ -345,24 +345,30 @@
     v-dialog(
       v-model='isExportModalVisible'
       max-width='750'
+      persistent
+      overlay-color='blue darken-4'
+      overlay-opacity='.7'
     )
       v-card
-        v-card-title {{ messages.exportToWord}}
-        v-card-actions
-          v-btn(
-            color='primary'
-            @click='exportSinglePageToWord()'
-          ) {{ messages.exportSinglePage }}
-          v-btn(
-            color='primary'
-            @click='exportPageTreeToWord()'
-          ) {{ messages.exportPageTree }}
+        .dialog-header.is-short.is-blue
+          v-icon.mr-2(color='white') mdi-file-word
+          span {{ messages.exportToWord }}
+        v-card-text.pt-5
+          span {{ messages.exportModalSubtitle }}
+        v-card-chin
           v-spacer
           v-btn(
             text
             @click='isExportModalVisible = false'
           ) {{ messages.cancel }}
-          v-spacer
+          v-btn.px-4(
+            color='primary'
+            @click='exportSinglePageToWord()'
+          ) {{ messages.exportSinglePage }}
+          v-btn.px-4(
+            color='primary'
+            @click='exportPageTreeToWord()'
+          ) {{ messages.exportPageTree }}
 </template>
 
 <script>
