@@ -5,6 +5,7 @@ variables:
   DEPLOY_USER: 'capwiki'
   TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
+  PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
 
@@ -29,6 +30,16 @@ variables:
       - "false"
     description: "Choose false to skip code quality check"
 
+  PANDOC:
+    value: "true"
+    options:
+      - "true"
+      - "false"
+    description: "Choose false to skip build & push pandoc docker image stages"
+
+  VERSION:
+     value: "1.3.0"
+     description: "Update to next release version, it should be numeric value, ex: 1.0.0"
 
 default:
   tags:
@@ -112,38 +123,6 @@ sonarqube-scan:
     - if: $SONARQUBE == "true"
       when: on_success
 
-modify-package-json:
-  stage: modify-package-json
-  image: node:alpine
-  before_script:
-    # Make the scripts executable
-    - chmod +x gitlab/modify-app-dev-mode.js
-    - chmod +x gitlab/modify-app-releasedate-version.js
-  script:
-    - echo "Modify package json i.e release date and version"
-    # This node.js script will run in all environments
-    - node gitlab/modify-app-releasedate-version.js "$IMAGE_TAG"
-    # Conditionally run this script only in staging or production environments
-    - |
-      if [[ "$ENVIRONMENT" == "staging" || $CI_COMMIT_REF_NAME == "develop" ]]; then
-        echo "Modify package json dev mode to false for $ENVIRONMENT"
-        node gitlab/modify-app-dev-mode.js false
-      else
-        echo "Skipping modify-app-dev-mode.sh in non-staging/non-production environments"
-      fi
-    # Confirm the changes
-    - cat package.json | grep -E '"version"|"releaseDate"|"dev"' | sed 's/[",]//g'
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: '$CI_COMMIT_BRANCH == "develop" || ($CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "develop" && $ENVIRONMENT == "staging")'
-      when: always
-  # Artifacts to persist changes for later stages
-  artifacts:
-    paths:
-      - package.json
-
-
 docker-build:
   stage: docker-build
   before_script:
@@ -159,11 +138,24 @@ docker-build:
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
       export NEW_IMAGE="${IMAGE}:$IMAGE_TAG_BY_ENV"
       echo "Constructed NEW_IMAGE: $NEW_IMAGE"
+      export NEW_PANDOC_IMAGE="${PANDOC_IMAGE}:$IMAGE_TAG_BY_ENV"
+      echo "Constructed NEW_PANDOC_IMAGE: $NEW_PANDOC_IMAGE"
       rm image_tag.env
   script:
     - echo "Building Docker image for environment $ENVIRONMENT"
-    - docker build --no-cache -f Dockerfile -t "$NEW_IMAGE" .
+    - docker build --no-cache --build-arg VERSION="$VERSION" --build-arg RELEASE_DATE="$(date +'%d.%m.%Y')" -f Dockerfile -t "$NEW_IMAGE" .
     - echo "NEW_IMAGE=$NEW_IMAGE" > newimage.txt
+    # Conditionally build the Pandoc image if PANDOC is set to true
+    - |
+      if [[ "$PANDOC" == "true" ]]; then
+        echo "Building Pandoc Docker image..."
+        cd dev/pandoc
+        docker build --no-cache -f Dockerfile -t "$NEW_PANDOC_IMAGE" .
+        cd ../..
+        echo "NEW_PANDOC_IMAGE=$NEW_PANDOC_IMAGE" >> newimage.txt
+      else
+        echo "Skipping Pandoc Docker image build as PANDOC is not set to true."
+      fi
   artifacts:
     paths:
       - newimage.txt
@@ -189,6 +181,13 @@ push-docker-image:
     - source newimage.txt
     - echo "Pushing Docker image"
     - docker push $NEW_IMAGE
+    # Conditionally push the Pandoc image if PANDOC is set to true
+    - |
+      if [[ "$PANDOC" == "true" ]]; then
+        echo "Push Pandoc Docker image...$NEW_PANDOC_IMAGE"
+        docker push "$NEW_PANDOC_IMAGE"
+        docker rmi $NEW_PANDOC_IMAGE
+      fi
     - docker logout $DOCKER_REGISTRY
     - docker rmi $NEW_IMAGE
     - rm newimage.txt

@@ -195,6 +195,77 @@ module.exports = {
       }
     }
 
+    // Detect mentions
+    let mentions = []
+    $('span.mention').each((i, elm) => {
+      const mention = $(elm).attr('data-mention')
+      if (mention !== 'AnonymousUser') {
+        mentions.push(mention)
+      }
+    })
+
+    // Remove duplicate mentions
+    mentions = _.uniq(mentions)
+
+    // Remove undefined mentions
+    mentions = _.compact(mentions)
+
+    // Get existing mentions from the database
+    const existingMentions = await this.page.$relatedQuery('mentions')
+
+    // Add new mentions to the database
+    for (const mention of mentions) {
+      const user = await WIKI.models.users.query().where('email', mention).first()
+      if (user && !existingMentions.some(m => m.userId === user.id)) {
+        await WIKI.models.userMentions.query().insert({
+          pageId: this.page.id,
+          userId: user.id
+        })
+      }
+    }
+
+    // Remove outdated mentions from the database
+    const outdatedMentions = await Promise.all(existingMentions.map(async m => {
+      const user = await WIKI.models.users.query().findById(m.userId)
+      if (user) {
+        return mentions.includes(`${user.email}`) ? null : m
+      } else {
+        return m
+      }
+    }))
+
+    const filteredOutdatedMentions = outdatedMentions.filter(m => m !== null)
+
+    if (filteredOutdatedMentions.length > 0) {
+      await WIKI.models.userMentions.query().delete().whereIn('id', filteredOutdatedMentions.map(m => m.id))
+    }
+
+    // Anonymize mentioned users if they are deleted
+    for (const mention of mentions) {
+      const user = await WIKI.models.users.query().where('email', mention).first()
+      if (!user) {
+        // Update the mention in the HTML
+        $('span.mention[data-mention="' + mention + '"]').each((i, elm) => {
+          $(elm).text('@AnonymousUser')
+          $(elm).removeAttr('data-mention')
+          $(elm).addClass('mention-anonymous')
+        })
+
+        if (this.page.contentType === 'markdown') {
+          // Update the mention in the markdown content
+          const mentionRegex = new RegExp(`@${mention}`, 'g')
+          this.page.content = this.page.content.replace(mentionRegex, '@AnonymousUser')
+        } else if (this.page.contentType === 'html') {
+          // Update the mention in the content column
+          const mentionRegex = new RegExp(`<span class="mention" data-mention="${mention}">@${mention}</span>`, 'g')
+          this.page.content = this.page.content.replace(mentionRegex, '<span class="mention mention-anonymous">@AnonymousUser</span>')
+        }
+      }
+    }
+
+    // Save the updated content back to the database
+    await WIKI.models.pages.query().patch({ content: this.page.content }).where({ id: this.page.id })
+
     // --------------------------------
     // Add header handles
     // --------------------------------
@@ -272,7 +343,7 @@ module.exports = {
       decodeEntities: true
     })
 
-    function iterateMustacheNode (node) {
+    function iterateMustacheNode(node) {
       $(node).contents().each((idx, item) => {
         if (item && item.type === 'text') {
           const rawText = $(item).text().replace(/\r?\n|\r/g, '')
@@ -298,7 +369,7 @@ module.exports = {
   }
 }
 
-function decodeEscape (string) {
+function decodeEscape(string) {
   return string.replace(/&#x([0-9a-f]{1,6});/ig, (entity, code) => {
     code = parseInt(code, 16)
 

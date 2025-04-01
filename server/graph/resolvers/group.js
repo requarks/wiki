@@ -4,9 +4,11 @@ const _ = require('lodash')
 const gql = require('graphql')
 
 const {
-  groupsToSites,
+  getManagedSiteIdsFromGroups,
   canManageGroup,
-  canManageSites
+  canManageSites,
+  DEFAULT_ADMINISTRATORS_GROUP,
+  DEFAULT_GUESTS_GROUP
 } = require('../../helpers/group')
 
 /* global WIKI */
@@ -67,7 +69,14 @@ module.exports = {
     /**
      * ASSIGN USER TO GROUP
      */
-    async assignUser (obj, args, { req }) {
+    async assignUser(obj, args, { req }) {
+
+      // Check for valid group
+      const grp = await WIKI.models.groups.query().findById(args.groupId)
+      if (!grp) {
+        throw new gql.GraphQLError('Invalid Group ID')
+      }
+
       if (!canManageGroup(req.user, args.groupId)) {
         throw new gql.GraphQLError('Insufficient permissions to assign user to the group.')
       }
@@ -77,11 +86,6 @@ module.exports = {
         throw new gql.GraphQLError('Cannot assign the Guest user to a group.')
       }
 
-      // Check for valid group
-      const grp = await WIKI.models.groups.query().findById(args.groupId)
-      if (!grp) {
-        throw new gql.GraphQLError('Invalid Group ID')
-      }
 
       // Check assigned permissions for write:groups
       if (
@@ -140,7 +144,7 @@ module.exports = {
       const rules = WIKI.data.groups.defaultPageRules
 
       if (!WIKI.auth.isSuperAdmin(req.user)) {
-        rules[0].sites = groupsToSites(req.user.groups)
+        rules[0].sites = getManagedSiteIdsFromGroups(req.user.groups)
       } else {
         rules[0].sites = [await WIKI.models.sites.getSiteIdByPath({
           path: 'default',
@@ -166,7 +170,7 @@ module.exports = {
      * DELETE GROUP
      */
     async delete (obj, args, { req }) {
-      if (args.id === 1 || args.id === 2) {
+      if (args.id === DEFAULT_ADMINISTRATORS_GROUP || args.id === DEFAULT_GUESTS_GROUP) {
         throw new gql.GraphQLError('Cannot delete this group.')
       }
 
@@ -189,7 +193,12 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args, { req }) {
+    async unassignUser(obj, args, { req }) {
+      const grp = await WIKI.models.groups.query().findById(args.groupId)
+      if (!grp) {
+        throw new gql.GraphQLError('Invalid Group ID')
+      }
+
       if (!canManageGroup(req.user, args.groupId)) {
         throw new gql.GraphQLError('Insufficient permissions to remove user from the group.')
       }
@@ -197,13 +206,10 @@ module.exports = {
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot unassign Guest user')
       }
-      if (args.userId === 1 && args.groupId === 1) {
+      if (args.userId === 1 && args.groupId === DEFAULT_ADMINISTRATORS_GROUP) {
         throw new gql.GraphQLError('Cannot unassign Administrator user from Administrators group.')
       }
-      const grp = await WIKI.models.groups.query().findById(args.groupId)
-      if (!grp) {
-        throw new gql.GraphQLError('Invalid Group ID')
-      }
+
       const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
         throw new gql.GraphQLError('Invalid User ID')

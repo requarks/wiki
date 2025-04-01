@@ -111,7 +111,7 @@ type Site {
 }
 
 type SiteCreateResponse {
-  operation: Operation
+  responseResult: Operation
   site: Site
 }
 
