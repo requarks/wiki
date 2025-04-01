@@ -137,7 +137,7 @@ function getPageTreeExportHtml(pageTree, user, queryParams) {
         </article>`
   pageTree.shift() // Removing the main page
   for (const page of pageTree) {
-    if (WIKI.auth.checkAccess(user, ['read:pages'], {siteId: page.siteId, ...queryParams})) {
+    if (WIKI.auth.checkAccess(user, ['read:pages'], {siteId: page.siteId, page: page, ...queryParams})) {
       const pageContent = getPageContent(page)
       pageHTML += `
         <article>
@@ -183,7 +183,7 @@ async function getExportHtmlContent(page, user, queryParams) {
     pagePaths = pagePaths.concat(pageTree.map(p => p.path))
   }
 
-  // HTML Aadaptions
+  // HTML Adaptions
   pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
   pageHTML = handleInternalLinks(pageHTML, queryParams.sitePath, queryParams.locale, pagePaths)
 

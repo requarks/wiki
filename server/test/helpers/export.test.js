@@ -358,6 +358,15 @@ describe('export helpers', () => {
       render: '<h1 id="main-headline"><a href="#main-headline">¶</a>Main Headline</h1><p>Main content</p>',
       path: 'path'
     }
+    const pageTree = [
+      {
+        title: 'Main Page',
+        contentType: 'html',
+        render: '<h1 id="main-headline"><a href="#main-headline">¶</a>Main Headline</h1><p>Main content</p>'
+      },
+      { title: 'Page 1', contentType: 'html', render: '<p>Page 1 content</p>' },
+      { title: 'Page 2', contentType: 'html', render: '<p>Page 2 content</p>' }
+    ]
     const user = {}
 
     beforeEach(() => {
@@ -406,15 +415,6 @@ describe('export helpers', () => {
         path: 'path',
         isPageTreeExport: true
       }
-      const pageTree = [
-        {
-          title: 'Main Page',
-          contentType: 'html',
-          render: '<h1 id="main-headline"><a href="#main-headline">¶</a>Main Headline</h1><p>Main content</p>'
-        },
-        { title: 'Page 1', contentType: 'html', render: '<p>Page 1 content</p>' },
-        { title: 'Page 2', contentType: 'html', render: '<p>Page 2 content</p>' }
-      ]
       const expectedHTML = `
     <html>
       <head>
@@ -452,6 +452,39 @@ describe('export helpers', () => {
       const result = await getExportHtmlContent(page, user, queryParams)
 
       // THEN
+      expect(result).toBe(expectedHTML)
+    })
+
+    it('should only export the content of a single page if isPageTreeExport is false', async () => {
+      // GIVEN
+      const queryParams = {
+        sitePath: 'sitePath',
+        locale: 'en',
+        path: 'path',
+        isPageTreeExport: false
+      }
+
+      const expectedHTML = `
+    <html>
+      <head>
+        <title>Main Page</title>
+      </head>
+      <body>
+        <h1 id="main-headline"><a href="#main-headline"></a>Main Headline</h1><p>Main content</p>
+      </body>
+    </html>`
+      let dom
+      JSDOM.mockImplementationOnce((html) => {
+        dom = new (require('jsdom').JSDOM)(html)
+        dom.serialize = jest.fn().mockReturnValue(expectedHTML)
+        return dom
+      })
+
+      // WHEN
+      const result = await getExportHtmlContent(page, user, queryParams)
+
+      // THEN
+      expect(WIKI.models.pages.getPageTreeFrom).not.toHaveBeenCalled()
       expect(result).toBe(expectedHTML)
     })
   })
