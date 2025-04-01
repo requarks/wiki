@@ -137,7 +137,7 @@ function getPageTreeExportHtml(pageTree, user, queryParams) {
         </article>`
   pageTree.shift() // Removing the main page
   for (const page of pageTree) {
-    if (WIKI.auth.checkAccess(user, ['read:pages'], {siteId: page.siteId, page: page, ...queryParams})) {
+    if (WIKI.auth.checkAccess(user, ['read:pages'], page)) {
       const pageContent = getPageContent(page)
       pageHTML += `
         <article>

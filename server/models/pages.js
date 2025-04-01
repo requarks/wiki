@@ -564,7 +564,7 @@ module.exports = class Page extends Model {
    */
   static async getPageTreeFrom(pageId) {
     return WIKI.models.knex
-      .select('pages.id', 'pages.path', 'pages.title', 'pages.contentType', 'pages.render', 'pages.content')
+      .select('pages.id', 'pages.path', 'pages.title', 'pages.contentType', 'pages.render', 'pages.content', 'pages.localeCode', 'pages.siteId')
       .from('pages')
       .join('pageTree', 'pages.id', 'pageTree.pageId')
       .whereRaw(`"ancestors"::jsonb @> (SELECT ('[' || "id" || ']')::jsonb FROM "pageTree" WHERE "pageId" = ?)`, [pageId])
