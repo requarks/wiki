@@ -46,6 +46,7 @@ defaults:
     contentLicense: ''
     footerOverride: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
+    drawioBaseUrl: https://embed.diagrams.net/
     pageExtensions:
       - md
       - html
