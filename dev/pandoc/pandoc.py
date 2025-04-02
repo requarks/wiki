@@ -1,8 +1,11 @@
 from flask import Flask, request, send_file
+from flask_wtf.csrf import CSRFProtect
 import subprocess
 from uuid import uuid4
 
 app = Flask(__name__)
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 @app.route('/convert-to-docx', methods=['POST'])
 def convert_to_docx():
