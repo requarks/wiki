@@ -28,6 +28,7 @@ type ThemingMutation {
     theme: String!
     iconset: String!
     darkMode: Boolean!
+    tocDepth: RangeInput!
     tocPosition: String
     injectCSS: String
     injectHead: String
@@ -44,6 +45,7 @@ type ThemingConfig {
   iconset: String!
   darkMode: Boolean!
   tocPosition: String
+  tocDepth: Range
   injectCSS: String
   injectHead: String
   injectBody: String
