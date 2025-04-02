@@ -849,23 +849,54 @@ module.exports = class Page extends Model {
    */
   static async reconnectLinks (opts) {
     const pageHref = `/${opts.locale}/${opts.path}`
+    await this.reconnectLinksToSpecificHref({
+      path: opts.path,
+      locale: opts.locale,
+      pageHref: pageHref,
+      sourceHref: typeof opts.sourcePath !== 'undefined' ? `/${opts.sourceLocale}/${opts.sourcePath}` : undefined,
+      mode: opts.mode
+    })
+
+    if (opts.locale === WIKI.config.lang.code) {
+      const pageHrefWithoutLangCode = `/${opts.path}`
+      await this.reconnectLinksToSpecificHref({
+        path: opts.path,
+        locale: opts.locale,
+        pageHref: pageHrefWithoutLangCode,
+        sourceHref: typeof opts.sourcePath !== 'undefined' ? `/${opts.sourcePath}` : undefined,
+        mode: opts.mode
+      })
+    }
+  }
+
+  /**
+   * Reconnect links to new/move/deleted page
+   *
+   * @param {Object} opts - Page parameters
+   * @param {string} opts.path - Page Path
+   * @param {string} opts.locale - Page Locale Code
+   * @param {string} opts.pageHref - Page href (e.g. '/en/page', '/page')
+   * @param {string} [opts.sourceHref] - Previous Page Href (move only)
+   * @param {string} opts.mode - Page Update mode (create, move, delete)
+   * @returns {Promise} Promise with no value
+   */
+  static async reconnectLinksToSpecificHref(opts) {
     let replaceArgs = {
       from: '',
       to: ''
     }
     switch (opts.mode) {
       case 'create':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.from = `<a class="is-internal-link is-invalid-page" href="${opts.pageHref}">`
+        replaceArgs.to = `<a class="is-internal-link is-valid-page" href="${opts.pageHref}">`
         break
       case 'move':
-        const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
-        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.from = `<a class="is-internal-link is-valid-page" href="${opts.sourceHref}">`
+        replaceArgs.to = `<a class="is-internal-link is-valid-page" href="${opts.pageHref}">`
         break
       case 'delete':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.from = `<a class="is-internal-link is-valid-page" href="${opts.pageHref}">`
+        replaceArgs.to = `<a class="is-internal-link is-invalid-page" href="${opts.pageHref}">`
         break
       default:
         return false
