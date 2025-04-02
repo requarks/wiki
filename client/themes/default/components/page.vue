@@ -342,6 +342,33 @@
         :aria-label='$t(`common:actions.returnToTop`)'
         )
         v-icon mdi-arrow-up
+    v-dialog(
+      v-model='isExportModalVisible'
+      max-width='750'
+      persistent
+      overlay-color='blue darken-4'
+      overlay-opacity='.7'
+    )
+      v-card
+        .dialog-header.is-short.is-blue
+          v-icon.mr-2(color='white') mdi-file-word
+          span {{ messages.exportToWord }}
+        v-card-text.pt-5
+          span {{ messages.exportModalSubtitle }}
+        v-card-chin
+          v-spacer
+          v-btn(
+            text
+            @click='isExportModalVisible = false'
+          ) {{ messages.cancel }}
+          v-btn.px-4(
+            color='primary'
+            @click='exportSinglePageToWord()'
+          ) {{ messages.exportSinglePage }}
+          v-btn.px-4(
+            color='primary'
+            @click='exportPageTreeToWord()'
+          ) {{ messages.exportPageTree }}
 </template>
 
 <script>
@@ -531,7 +558,8 @@ export default {
         }
       },
       winWidth: 0,
-      isLoading: false
+      isLoading: false,
+      isExportModalVisible: false
     }
   },
   computed: {
@@ -799,35 +827,49 @@ export default {
       })
     },
     async exportWord () {
-      this.isLoading = true;
-      const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
+      if (this.$store.get('page/hasChildren')) {
+        this.isExportModalVisible = true
+      } else {
+        await this.exportSinglePageToWord()
+      }
+    },
+    async exportPageTreeToWord () {
+      this.exportToWord(`path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}&isPageTreeExport=true`)
+    },
+    async exportSinglePageToWord () {
+      this.exportToWord(`path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
+    },
+    async exportToWord(queryParams) {
+      this.isExportModalVisible = false
+      this.isLoading = true
+      const response = await fetch(`/export/docx/${this.pageId}?${queryParams}`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
-          },
-      });
-      this.isLoading = false;
+          'Content-Type': 'application/json'
+        }
+      })
+      this.isLoading = false
 
-      if (response.status == 200) {
-        const blob = await response.blob();
+      if (response.status === 200) {
+        const blob = await response.blob()
         const header = window.document.getElementsByClassName(
-          "row page-header-section no-gutters align-content-center"
-        )[0];
-        const title = header.getElementsByClassName("headline")[0].textContent;
+          'row page-header-section no-gutters align-content-center'
+        )[0]
+        const title = header.getElementsByClassName('headline')[0].textContent
 
         // Download the DOCX file
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = title.replaceAll(" ", "_") + '.docx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = title.replaceAll(' ', '_') + '.docx'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       } else {
         this.$store.commit('showNotification', {
-        message: 'Error exporting to Word',
-        style: 'error',
-        icon: 'alert'
-      })
+          message: 'Error exporting to Word',
+          style: 'error',
+          icon: 'alert'
+        })
       }
     },
     pageEdit () {
