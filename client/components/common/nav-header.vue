@@ -158,7 +158,9 @@
           template(v-if='isAuthenticated && path && !isFollowingSite')
             v-tooltip(bottom)
               template( v-slot:activator='{ on }')
-                v-btn(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)')
+                v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)'
+                :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                )
                   v-icon(color='grey') mdi-track-light
               span Follow Site
             v-divider(vertical)
@@ -166,7 +168,9 @@
           template(v-if='isAuthenticated && path && isFollowingSite')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)')
+                v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)'
+                :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                )
                   v-icon(color='grey') mdi-track-light-off
               span Unfollow Site
             v-divider(vertical)
