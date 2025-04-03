@@ -1072,7 +1072,9 @@ module.exports = class Page extends Model {
     const pageHref = `/${sitePrefix}/${opts.path}`
     let replaceArgs = {
       from: '',
-      to: ''
+      to: '',
+      contentFrom: '',
+      contentTo: ''
     }
     switch (opts.mode) {
       case 'create':
@@ -1081,8 +1083,10 @@ module.exports = class Page extends Model {
         break
       case 'move':
         const prevPageHref = `/${sitePrefix}/${opts.sourcePath}`
-        replaceArgs.from = `[${opts.sourcePath}](${prevPageHref})">`
-        replaceArgs.to = `[${opts.path}](${pageHref})">`
+        replaceArgs.from = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
+        replaceArgs.to = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
+        replaceArgs.contentFrom = `[${opts.sourcePath}](${prevPageHref})`
+        replaceArgs.contentTo = `[${opts.path}](${pageHref})`
         break
       case 'delete':
         replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
@@ -1122,10 +1126,15 @@ module.exports = class Page extends Model {
         .query()
         .returning('hash')
         .patch({
-          content: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
-            'content',
+          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
+            'render',
             replaceArgs.from,
             replaceArgs.to
+          ]),
+          content: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
+            'content',
+            replaceArgs.contentFrom,
+            replaceArgs.contentTo
           ])
         })
         .whereIn('pages.id', function () {
@@ -1139,9 +1148,9 @@ module.exports = class Page extends Model {
         .whereIn('id', pageIds.map(p => p.pageId))
       candidatePages2.forEach(async (page) => {
         console.log(`\n--- Page ID: ${page.id} ---`)
-        await WIKI.models.pages.renderPage(page)
         const links = page.render.match(/<a [^>]*href="[^"]+"[^>]*>/g)
         links?.forEach(link => console.log(link))
+        await WIKI.models.pages.renderPage(page)
       })
       affectedHashes = qryHashes.map((h) => h.hash)
     } else {
