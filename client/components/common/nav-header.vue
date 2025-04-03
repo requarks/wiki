@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-app-bar.nav-header(
-    :color='$vuetify.theme.dark ? colors.primary[`3`] : colors.white',
+    :color='$vuetify.theme.dark ? colors.primary[3] : `white`',
     app,
     :clipped-left='!$vuetify.rtl',
     :clipped-right='$vuetify.rtl',
@@ -10,7 +10,7 @@
     )
     v-toolbar(
       v-if='searchIsShown && $vuetify.breakpoint.smAndDown',
-      :color='$vuetify.theme.dark ? colors.primary[`3`] : colors.white',
+      :color='$vuetify.theme.dark ? colors.primary[3] : `white`',
       flat,
       slot='extension'
       )
@@ -18,8 +18,8 @@
         ref='searchFieldMobile'
         v-model='search'
         clearable
-        :background-color='$vuetify.theme.dark ? colors.velvet[`5`] :colors.surface[`2`]'
-        :color='$vuetify.theme.dark ? colors.white : colors.primary[`1`]'
+        :background-color='$vuetify.theme.dark ? colors.velvet[5] :colors.surface[2]'
+        :color='$vuetify.theme.dark ? `white` : colors.primary[1]'
         :label='$t(`common:header.search`)'
         single-line
         solo
@@ -34,14 +34,14 @@
     v-layout(row)
       v-flex(xs5, md4)
         v-toolbar.nav-header-inner(
-          :color='$vuetify.theme.dark ? colors.primary[`3`] : colors.white',
+          :color='$vuetify.theme.dark ? colors.primary[3] : `white`',
           flat,
           :class='$vuetify.rtl ? `pr-3` : `pl-3`'
           )
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
-            span.subheading(:style='$vuetify.theme.dark ? `color=colors.white`: `color=colors.text.darkGrey`') {{title}}
+            span.subheading(:style='$vuetify.theme.dark ? `color="white"`: `color=colors.text.darkGrey`') {{title}}
 
           //- SITES
 
@@ -58,8 +58,8 @@
                     height='64'
                     width='100'
                     )
-                    span(:style='$vuetify.theme.dark ? `color=colors.white`: `color=colors.text.darkGrey`') Sites
-                    v-icon(:color='$vuetify.theme.dark ? `color=colors.white`: `color=colors.text.darkGrey`')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
+                    span Sites
+                    v-icon(:color='$vuetify.theme.dark ? `color="white"`: `color=colors.text.darkGrey`')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
             v-list(
                 style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
                 nav,
@@ -71,7 +71,7 @@
           v-divider(vertical)
 
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
-        v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.primary[`3`] : colors.white', flat)
+        v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.primary[3] : `white`', flat)
           slot(name='mid')
 
             transition(name='navHeaderSearch', v-if='searchIsShown')
@@ -79,8 +79,8 @@
                 ref='searchField',
                 v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
                 v-model='search',
-                :color='$vuetify.theme.dark ? colors.white : colors.primary[`1`]',
-                :background-color='$vuetify.theme.dark ? colors.velvet[`5`] : colors.white',
+                :color='$vuetify.theme.dark ? `white` : colors.primary[1]',
+                :background-color='$vuetify.theme.dark ? colors.velvet[5] : `white`',
                 :label='$t(`common:header.search`)',
                 single-line,
                 solo
@@ -111,7 +111,7 @@
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(:color='$vuetify.theme.dark ? colors.primary[`3`] : colors.white', flat)
+        v-toolbar.nav-header-inner.pr-4(:color='$vuetify.theme.dark ? colors.primary[3] : `white`', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -197,43 +197,43 @@
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-file-document-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-lightning-bolt
                   v-list-item-title.body-2 {{$t('common:header.convert')}}
                 v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[`1`] : colors.teal[`4`]'
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
                     ) mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(:color='colors.red[`4`]') mdi-trash-can-outline
+                  v-list-item-avatar(size='24', tile): v-icon(:color='colors.red[5]') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 
@@ -835,11 +835,13 @@ export default {
 }
 
 .hover-text {
+  color: mc("text", "darkGrey") !important;
   &:hover > .v-btn__content > span {
     color: mc("primary", "1");
   }
 
   &.color-theme-dark {
+    color: white !important;
     &:hover > .v-btn__content > span {
       color: mc("ext-teal", "1");
     }
