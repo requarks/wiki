@@ -979,6 +979,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links : Changing old links to the new path
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       sourceLocale: page.localeCode,
       sourcePath: page.path,
       locale: opts.destinationLocale,
@@ -988,6 +989,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links : Validate invalid links to the new path
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: opts.destinationLocale,
       path: opts.destinationPath,
       mode: 'create'
@@ -1050,6 +1052,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: page.localeCode,
       path: page.path,
       mode: 'delete'
@@ -1060,6 +1063,7 @@ module.exports = class Page extends Model {
    * Reconnect links to new/move/deleted page
    *
    * @param {Object} opts - Page parameters
+   * @param {uuid} opts.siteId - Page siteId
    * @param {string} opts.path - Page Path
    * @param {string} opts.locale - Page Locale Code
    * @param {string} [opts.sourcePath] - Previous Page Path (move only)
@@ -1068,7 +1072,8 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async reconnectLinks(opts) {
-    const sitePrefix = 'default'
+    const site = await WIKI.models.sites.query().findById(opts.siteId)
+    const sitePrefix = site.path
     const pageHref = `/${sitePrefix}/${opts.path}`
     let replaceArgs = {
       from: '',
