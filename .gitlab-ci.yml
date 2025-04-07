@@ -41,11 +41,6 @@ variables:
      value: "1.3.0"
      description: "Update to next release version, it should be numeric value, ex: 1.0.0"
 
-workflow:
-  rules:
-    - if: '"${ENVIRONMENT}" == "none"'
-      when: never
-
 default:
   tags:
     - runner_mar
