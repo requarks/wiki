@@ -68,7 +68,6 @@
               )
               v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;" :id='site.value === sitePath ? `selected-site-item` : ``')
                 v-list-item-title.body-2 {{ site.text }}
-          v-divider(vertical)
 
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.primary[3] : `white`', flat)
@@ -423,7 +422,7 @@ export default {
       },
       sites: [],
       menuIsOpen: false,
-      colors: colors,
+      colors: colors
     }
   },
   computed: {
@@ -733,6 +732,8 @@ export default {
 <style lang='scss'>
 
 .nav-header {
+  height: 64px !important;
+
   .v-toolbar__extension {
     padding: 0;
 
