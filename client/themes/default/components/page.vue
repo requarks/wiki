@@ -834,11 +834,7 @@ export default {
       })
     },
     async exportPdf () {
-      if (this.$store.get('page/hasChildren')) {
-        this.isExportModalVisible = true
-      } else {
-        await this.exportSinglePageToPdf()
-      }
+      await this.exportSinglePageToPdf()
     },
     async exportWord () {
       if (this.$store.get('page/hasChildren')) {
