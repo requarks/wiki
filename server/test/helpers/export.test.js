@@ -200,7 +200,7 @@ describe('export helpers', () => {
     it('should convert HTML to Word document successfully', async () => {
       fetch.mockResolvedValue(mockResponse)
 
-      const result = await convertToFile(pageHTML)
+      const result = await convertToFile(pageHTML, 'docx')
 
       expect(fetch).toHaveBeenCalledTimes(1)
       expect(fetch).toHaveBeenCalledWith(
@@ -223,7 +223,7 @@ describe('export helpers', () => {
         text: jest.fn().mockResolvedValue('Internal Server Error')
       })
 
-      await expect(convertToFile(pageHTML)).rejects.toThrow('HTTP error! status: 500')
+      await expect(convertToFile(pageHTML, 'docx')).rejects.toThrow('HTTP error! status: 500')
 
       expect(fetch).toHaveBeenCalledTimes(1)
     })
@@ -233,9 +233,9 @@ describe('export helpers', () => {
       const error = new Error('Network error')
       fetch.mockRejectedValue(error)
 
-      await expect(convertToFile(pageHTML)).rejects.toThrow('Network error')
+      await expect(convertToFile(pageHTML, 'docx')).rejects.toThrow('Network error')
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error converting document:', error)
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error converting document to docx:', error)
       consoleErrorSpy.mockRestore()
     })
   })
