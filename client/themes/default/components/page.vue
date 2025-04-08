@@ -3,7 +3,7 @@
     nav-header(v-if='!printView')
     v-navigation-drawer(
       v-if='navMode !== `NONE` && !printView'
-      :class='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`'
+      :color='$vuetify.theme.dark ? colors.primary[3] : colors.surface[2]'
       dark
       app
       clipped
@@ -12,13 +12,20 @@
       v-model='navShown'
       :right='$vuetify.rtl'
       )
+      //- scrollbar colors are set in 'scrollStyle'
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`', :items='sidebarDecoded', :nav-mode='navMode')
+        nav-sidebar(
+          :color='$vuetify.theme.dark ? colors.primary[3] : colors.surface[1]'
+          :items='sidebarDecoded'
+          :nav-mode='navMode'
+          :dark ='$vuetify.theme.dark'
+          )
 
+    //- Menu button for mobile view
     v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
         fab
-        color='primary'
+        :color='$vuetify.theme.dark ? colors.velvet[3]: colors.primary[1]'
         fixed
         bottom
         :right='$vuetify.rtl'
@@ -28,11 +35,12 @@
         v-if='$vuetify.breakpoint.mdAndDown'
         v-show='!navShown'
         )
-        v-icon mdi-menu
+        v-icon(color='white') mdi-menu
 
     v-main(ref='content')
       template(v-if='path !== `home`')
-        v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
+        //- breadcrumbs toolbar
+        v-toolbar(:color='$vuetify.theme.dark ? colors.velvet[4] : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
           //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
           //-   v-icon(color='grey darken-2', left) menu
           //-   span Navigation
@@ -41,7 +49,11 @@
             divider='/'
             )
             template(slot='item', slot-scope='props')
-              v-icon(v-if='props.item.path === "/"', small, @click='goHome') mdi-home
+              v-icon.hover-icon(
+                v-if='props.item.path === "/"',
+                small,
+                @click='goHome',
+                :color='$vuetify.theme.dark ? `white` : colors.primary[1]') mdi-home
               v-btn.ma-0(v-else, :href='props.item.path', small, text) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
@@ -61,7 +73,11 @@
             .page-header-headings
               .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
               .caption.grey--text.text--darken-1 {{description}}
-              v-btn.mr-5(v-if='isAuthenticated && isFollower != null && !isFollower' @click='followPage') Follow
+              //- TODO: Change button color to match theme
+              v-btn.mr-5(
+                v-if='isAuthenticated && isFollower != null && !isFollower'
+                @click='followPage'
+                ) Follow
               v-btn.mr-5(v-if='isAuthenticated && isFollower != null && isFollower' @click='unfollowPage') Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -94,10 +110,23 @@
             lg3
             xl2
             )
-            v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
-              .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
-              v-list.d-flex.flex-column.mb-0.pb-3.pl-1.pr-1(dense nav :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
-                TreeItem(v-for='(tocItem, tocIdx) in tocDecoded' :key='tocIdx' :item='tocItem' :open.sync='openStates[tocItem.id]' :toggleOpenState='toggleOpenState' :openStates='openStates' :level='0' :uniqueId='tocItem.id')
+            v-card.page-toc-card.mb-5(
+              v-if='tocDecoded.length'
+              :color='$vuetify.theme.dark ? colors.primary[3] : `white`'
+              )
+              //- TODO: Change text color
+              .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `red_1--text` : `primary_1--text`') {{$t('common:page.toc')}}
+              v-list.d-flex.flex-column.mb-0.pb-3.pl-1.pr-1(dense nav :color='$vuetify.theme.dark ? colors.primary[3] : `white`')
+                TreeItem(
+                  v-for='(tocItem, tocIdx) in tocDecoded'
+                  :key='tocIdx'
+                  :item='tocItem'
+                  :open.sync='openStates[tocItem.id]'
+                  :toggleOpenState='toggleOpenState'
+                  :openStates='openStates'
+                  :level='0' :uniqueId='tocItem.id'
+                  :color='$vuetify.theme.dark ? colors.primary[3] : `white`'
+                  )
 
             v-card.page-tags-card.mb-5(v-if='tags.length > 0')
               .pa-5
@@ -123,16 +152,6 @@
               .pa-5
                 .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
                   span {{$t('common:comments.sdTitle')}}
-                  //- v-spacer
-                  //- v-chip.text-center(
-                  //-   v-if='!commentsExternal'
-                  //-   label
-                  //-   x-small
-                  //-   :color='$vuetify.theme.dark ? `blue-grey darken-3` : `blue-grey darken-2`'
-                  //-   dark
-                  //-   style='min-width: 50px; justify-content: center;'
-                  //-   )
-                  //-   span {{commentsCount}}
                 .d-flex
                   v-btn.text-none(
                     @click='goToComments()'
@@ -170,26 +189,13 @@
                         v-if='hasReadHistoryPermission'
                         :aria-label='$t(`common:header.history`)'
                         )
-                        v-icon(color='indigo', dense) mdi-history
+                        v-icon(:color='$vuetify.theme.dark ? `teal` : colors.sapphire[3]', dense) mdi-history
                     span {{$t('common:header.history')}}
                 .page-author-card-name.body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
                 .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
-            //- v-card.mb-5
-            //-   .pa-5
-            //-     .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
-            //-     .text-center
-            //-       v-rating(
-            //-         v-model='rating'
-            //-         color='yellow darken-3'
-            //-         background-color='grey lighten-1'
-            //-         half-increments
-            //-         hover
-            //-       )
-            //-       .caption.grey--text 5 votes
-
             v-card.page-shortcuts-card(flat)
-              v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
+              v-toolbar(:color='$vuetify.theme.dark ? colors.primary[3] : colors.surface[1]', flat, dense)
                 v-spacer
                 //- v-tooltip(bottom)
                 //-   template(v-slot:activator='{ on }')
@@ -197,16 +203,17 @@
                 //-   span {{$t('common:page.bookmark')}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
+                    v-btn.hover-icon(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
                       v-icon(:color='printView ? `primary` : `grey`') mdi-printer
                   span {{messages.printToPdf}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
+                    v-btn.hover-icon(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
                       v-icon(color='grey') mdi-file-word
                   span {{messages.exportToWord}}
                 v-spacer
 
+          //- Edit Page & Page Actions (floating button)
           v-flex.page-col-content(
             xs12
             :lg9='tocPosition !== `off`'
@@ -230,14 +237,14 @@
                   template(v-slot:activator)
                     v-btn.btn-animate-edit(
                       fab
-                      color='primary'
+                      :color='$vuetify.theme.dark ? colors.velvet[5] : colors.primary[1]'
                       v-model='pageEditFab'
                       @click='pageEdit'
                       v-on='onEditActivator'
                       :disabled='!hasWritePagesPermission'
                       :aria-label='$t(`common:page.editPage`)'
                       )
-                      v-icon mdi-pencil
+                      v-icon(color='white') mdi-pencil
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
@@ -304,7 +311,7 @@
                         fab
                         dark
                         small
-                        color='red'
+                        :color='colors.red[5]'
                         v-on='on'
                         @click='pageDelete'
                         )
@@ -336,7 +343,7 @@
         small
         :depressed='this.$vuetify.breakpoint.mdAndUp'
         @click='$vuetify.goTo(0, scrollOpts)'
-        color='primary'
+        :color='$vuetify.theme.dark ? colors.velvet[5] : colors.primary[1]'
         dark
         :style='upBtnPosition'
         :aria-label='$t(`common:actions.returnToTop`)'
@@ -360,6 +367,7 @@ import { messages } from '@/messages'
 import createFollowerMutation from 'gql/followers/create-follower.gql'
 import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
 import isFollowingResponse from 'gql/followers/is-following.gql'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 Vue.component('Tabset', Tabset)
 
@@ -524,14 +532,15 @@ export default {
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: '#42A5F5',
+          background: colors.surface[3],
           hoverStyle: {
-            background: '#64B5F6'
+            background: '#64B5F6' // where/when is this used?
           }
         }
       },
       winWidth: 0,
-      isLoading: false
+      isLoading: false,
+      colors: colors
     }
   },
   computed: {
@@ -655,7 +664,9 @@ export default {
   },
   mounted () {
     if (this.$vuetify.theme.dark) {
-      this.scrollStyle.bar.background = '#424242'
+      this.scrollStyle.bar.background = '#FFFFFF'
+    } else {
+      this.scrollStyle.bar.background = colors.text.darkGrey
     }
 
     // -> Check side navigation visibility
@@ -799,35 +810,35 @@ export default {
       })
     },
     async exportWord () {
-      this.isLoading = true;
+      this.isLoading = true
       const response = await fetch(`/export/docx/${this.pageId}?path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
-          },
-      });
-      this.isLoading = false;
+          'Content-Type': 'application/json'
+        }
+      })
+      this.isLoading = false
 
-      if (response.status == 200) {
-        const blob = await response.blob();
+      if (response.status === 200) {
+        const blob = await response.blob()
         const header = window.document.getElementsByClassName(
-          "row page-header-section no-gutters align-content-center"
-        )[0];
-        const title = header.getElementsByClassName("headline")[0].textContent;
+          'row page-header-section no-gutters align-content-center'
+        )[0]
+        const title = header.getElementsByClassName('headline')[0].textContent
 
         // Download the DOCX file
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = title.replaceAll(" ", "_") + '.docx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = title.replaceAll(' ', '_') + '.docx'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       } else {
         this.$store.commit('showNotification', {
-        message: 'Error exporting to Word',
-        style: 'error',
-        icon: 'alert'
-      })
+          message: 'Error exporting to Word',
+          style: 'error',
+          icon: 'alert'
+        })
       }
     },
     pageEdit () {
@@ -935,7 +946,7 @@ export default {
       }
 
       .v-icon {
-        color: mc('blue', '700');
+        color: mc('primary', '1');
       }
 
       &:first-child {
@@ -947,6 +958,18 @@ export default {
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
       }
+    }
+  }
+}
+
+.hover-icon {
+  &:hover > .v-btn__content > .v-icon {
+    color: mc("primary", "1") !important;
+  }
+
+  &.theme--dark {
+    &:hover > .v-btn__content > .v-icon {
+      color: mc("ext-teal", "1") !important;
     }
   }
 }
