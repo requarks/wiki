@@ -203,8 +203,13 @@
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, v-on='on', @click='exportWord', :aria-label='$t(`common:page.exportWord`)')
-                      v-icon(color='grey') mdi-file-word
+                      v-icon(color='grey') mdi-file-word-box
                   span {{messages.exportToWord}}
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, tile, v-on='on', @click='exportPdf', :aria-label='$t(`common:page.exportPdf`)')
+                      v-icon(color='grey') mdi-file-pdf-box
+                  span {{messages.exportToPdf}}
                 v-spacer
 
           v-flex.page-col-content(
@@ -559,7 +564,9 @@ export default {
       },
       winWidth: 0,
       isLoading: false,
-      isExportModalVisible: false
+      isExportModalVisible: false,
+      wordDocumentType: 'docx',
+      pdfDocumentType: 'pdf'
     }
   },
   computed: {
@@ -826,6 +833,13 @@ export default {
         window.print()
       })
     },
+    async exportPdf () {
+      if (this.$store.get('page/hasChildren')) {
+        this.isExportModalVisible = true
+      } else {
+        await this.exportSinglePageToPdf()
+      }
+    },
     async exportWord () {
       if (this.$store.get('page/hasChildren')) {
         this.isExportModalVisible = true
@@ -834,15 +848,18 @@ export default {
       }
     },
     async exportPageTreeToWord () {
-      this.exportToWord(`path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}&isPageTreeExport=true`)
+      this.exportToDocument(this.wordDocumentType, `path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}&isPageTreeExport=true`)
     },
     async exportSinglePageToWord () {
-      this.exportToWord(`path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
+      this.exportToDocument(this.wordDocumentType, `path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
     },
-    async exportToWord(queryParams) {
+    async exportSinglePageToPdf () {
+      this.exportToDocument(this.pdfDocumentType, `path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
+    },
+    async exportToDocument(fileType, queryParams) {
       this.isExportModalVisible = false
       this.isLoading = true
-      const response = await fetch(`/export/docx/${this.pageId}?${queryParams}`, {
+      const response = await fetch(`/export/${fileType}/${this.pageId}?${queryParams}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -857,16 +874,17 @@ export default {
         )[0]
         const title = header.getElementsByClassName('headline')[0].textContent
 
-        // Download the DOCX file
+        // Download the file
         const link = document.createElement('a')
         link.href = URL.createObjectURL(blob)
-        link.download = title.replaceAll(' ', '_') + '.docx'
+        link.download = title.replaceAll(' ', '_') + '.' + fileType
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
       } else {
+        const message = fileType === 'pdf' ? 'Error exporting to PDF' : 'Error exporting to Word'
         this.$store.commit('showNotification', {
-          message: 'Error exporting to Word',
+          message: message,
           style: 'error',
           icon: 'alert'
         })

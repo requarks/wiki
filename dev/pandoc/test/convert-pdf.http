@@ -9,7 +9,7 @@ Content-Disposition: form-data; name="file"; filename="input.html"
 Content-Type: text/html
 
 <!DOCTYPE html>
-<html>s
+<html>
 <head>
     <title>Sample HTML</title>
 </head>

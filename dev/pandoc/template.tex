@@ -25,9 +25,10 @@ $endif$
 \usepackage{xcolor}
 \usepackage{fancyhdr}
 \usepackage{fontspec}
-\usepackage{emoji}
+% emoji package needs to be removed for now as installation doesnt work properly
+%\usepackage{emoji}
 \usepackage{amsmath,amssymb}
- 
+
  
 % Custom colors for code listings
 \definecolor{codebg}{rgb}{0.95,0.95,0.95}
@@ -110,7 +111,13 @@ $if(toc-title)$
 $endif$
 {
 $if(colorlinks)$
-\hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$$endif$}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=$if(toccolor)$$toccolor$$else$red$endif$, % Default to red if toccolor is not set
+  citecolor=blue,        % Default citation link color
+  filecolor=magenta,     % Default file link color
+  urlcolor=cyan          % Default URL link color
+}
 $endif$
 \setcounter{tocdepth}{$toc-depth$}
 \tableofcontents
