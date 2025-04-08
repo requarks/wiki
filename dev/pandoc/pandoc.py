@@ -4,8 +4,8 @@ import subprocess
 from uuid import uuid4
 
 app = Flask(__name__)
-csrf = CSRFProtect()
-csrf.init_app(app)
+# csrf = CSRFProtect()
+# csrf.init_app(app)
 
 @app.route('/convert-to-docx', methods=['POST'])
 def convert_to_docx():
