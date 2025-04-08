@@ -190,7 +190,6 @@ push-docker-image:
       fi
     - docker logout $DOCKER_REGISTRY
     - docker rmi $NEW_IMAGE
-    - rm newimage.txt
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
