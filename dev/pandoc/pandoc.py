@@ -50,10 +50,10 @@ def convert_to_pdf():
       return send_file(output_path, as_attachment=True)
 
     except subprocess.CalledProcessError as e:
-        return {"error": f"Pandoc failed: {e.stderr.decode()}"}, 500
+        return {'error': f'Pandoc failed: {e.stderr.decode()}'}, 500
 
     except Exception as e:
-        return {"error": str(e)}, 500
+        return {'error': str(e)}, 500
 
     finally:
         subprocess.run(['rm', '-f', input_path])

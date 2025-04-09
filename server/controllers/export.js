@@ -10,7 +10,7 @@ const {
 
 router.get('/export/docx/:pageId', async (req, res) => {
   try {
-    const exportData = await prepareExport(req, res)
+    const exportData = await validateAndFetchExportData(req, res)
     if (!exportData) return // Stop execution if validation fails
 
     const { page, pageHTML } = exportData
@@ -28,7 +28,7 @@ router.get('/export/docx/:pageId', async (req, res) => {
 
 router.get('/export/pdf/:pageId', async (req, res) => {
   try {
-    const exportData = await prepareExport(req, res)
+    const exportData = await validateAndFetchExportData(req, res)
     if (!exportData) return // Stop execution if validation fails
 
     const { page, pageHTML } = exportData
@@ -44,7 +44,22 @@ router.get('/export/pdf/:pageId', async (req, res) => {
   }
 })
 
-async function prepareExport(req, res) {
+async function validateAndFetchExportData(req, res) {
+  const isValid = await validateExportRequest(req, res)
+  if (!isValid) return null
+
+  const { pageId } = req.params
+  const { page, pageHTML, error, status } = await fetchPageAndHtml(pageId, req)
+
+  if (error) {
+    res.status(status).send(error)
+    return null
+  }
+
+  return { page, pageHTML }
+}
+
+async function validateExportRequest(req, res) {
   const requiredParams = ['locale', 'path', 'sitePath']
   const missingParams = requiredParams.filter(p => !req.query[p])
   if (missingParams.length > 0) {
@@ -58,11 +73,13 @@ async function prepareExport(req, res) {
     return null
   }
 
-  const { pageId } = req.params
+  return true
+}
+
+async function fetchPageAndHtml(pageId, req) {
   const page = await WIKI.models.pages.getPage(Number(pageId))
   if (!page) {
-    res.status(404).send('Page not found')
-    return null
+    return { error: 'Page not found', status: 404 }
   }
 
   const pageHTML = await getExportHtmlContent(page, req.user, req.query)
