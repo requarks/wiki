@@ -35,7 +35,7 @@
     v-list.py-2(
       v-if='currentMode === `custom`'
       dense
-      :class='color'
+      :class='dark ? `dark ` + color : color'
       :dark='dark'
       )
       template(v-for='item of items' )
@@ -46,8 +46,15 @@
           :rel='item.y === `externalblank` ? `noopener` : ``'
           )
           v-list-item-avatar(size='24', tile)
-            v-icon(v-if='item.c.match(/fa[a-z] fa-/)', size='19') {{ item.c }}
-            v-icon(v-else) {{ item.c }}
+            v-icon(
+              v-if='item.c.match(/fa[a-z] fa-/)'
+              :color='dark ? `white` : colors.text.darkGrey'
+              size='19'
+              ) {{ item.c }}
+            v-icon(
+              v-else
+              :color='dark ? `white` : colors.text.darkGrey'
+              ) {{ item.c }}
           v-list-item-title {{ item.l }}
         v-divider.my-2(v-else-if='item.k === `divider`')
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
