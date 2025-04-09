@@ -1,11 +1,11 @@
 from flask import Flask, request, send_file
-from flask_wtf.csrf import CSRFProtect
+#from flask_wtf.csrf import CSRFProtect
 import subprocess
 from uuid import uuid4
 
 app = Flask(__name__)
-# csrf = CSRFProtect()
-# csrf.init_app(app)
+#csrf = CSRFProtect()
+#csrf.init_app(app)
 
 @app.route('/convert-to-docx', methods=['POST'])
 def convert_to_docx():
@@ -39,12 +39,12 @@ def convert_to_pdf():
 
         # Run Pandoc command
       subprocess.run(
-            ['pandoc', input_path, '--standalone', '--pdf-engine=lualatex',
-             f'--template={template_path}', '--toc', '-V', 'colorlinks=true', '-V', 'toccolor=blue', '-f', 'html', '-t', 'pdf', '-o', output_path],
+            ['pandoc', input_path, '--pdf-engine=lualatex',
+            f'--template={template_path}', '-f', 'html', '-t', 'pdf', '-o', output_path],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
-        )
+      )
 
         # Return the generated PDF
       return send_file(output_path, as_attachment=True)
