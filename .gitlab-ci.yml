@@ -29,7 +29,7 @@ variables:
       - "true"
       - "false"
     description: "Choose false to skip code quality check"
-
+    
   PANDOC:
     value: "true"
     options:
@@ -41,16 +41,20 @@ variables:
      value: "1.3.0"
      description: "Update to next release version, it should be numeric value, ex: 1.0.0"
 
+workflow:
+  rules:
+    - changes:
+        - .gitlab-ci.yml
+      when: never
+    - when: always
+    
 default:
   tags:
     - runner_mar
   before_script:
     - |
+      rm -rf $HOME/.npm-global
       NPM_GLOBAL_DIR="$HOME/.npm-global"
-      if [ -d "$NPM_GLOBAL_DIR" ]; then
-          echo "Directory $TARGET_DIR exists. Deleting it..."
-          rm -rf "$NPM_GLOBAL_DIR"
-      fi
       mkdir -p "$NPM_GLOBAL_DIR/bin"
       npm config set prefix "$NPM_GLOBAL_DIR"
       export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
@@ -71,10 +75,11 @@ build:
  script:
     - yarn cache clean
     - rm -rf node_modules
-    - yarn install --frozen-lockfile
+    - rm -rf yarn.lock yarn.lock
+    - yarn install --frozen-lockfile --force
     - yarn build
  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: always
 
@@ -95,7 +100,7 @@ test:
       - coverage
       - test-results
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - when: on_success
 
@@ -118,7 +123,7 @@ sonarqube-scan:
   script:
     - sonar-scanner
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production" || $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - if: $SONARQUBE == "true"
       when: on_success
@@ -164,11 +169,11 @@ docker-build:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: always
-    - if: '$CI_COMMIT_BRANCH == "develop" || ($CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "develop" && $ENVIRONMENT == "staging")'
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
       when: always
 
 push-docker-image:
@@ -191,11 +196,11 @@ push-docker-image:
     - docker logout $DOCKER_REGISTRY
     - docker rmi $NEW_IMAGE
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule" || $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: on_success
-    - if: '$CI_COMMIT_BRANCH == "develop" || ($CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "develop" && $ENVIRONMENT == "staging")'
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
       when: on_success
 
 promote-prod-release-version:
@@ -219,9 +224,7 @@ promote-prod-release-version:
     - docker rmi $STAGING_IMAGE
     - docker rmi $NEW_IMAGE
   rules:
-   - if: $CI_PIPELINE_SOURCE == "schedule"
-     when: never
-   - if: '$CI_COMMIT_BRANCH == "main" || ($CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "production" && $CI_COMMIT_BRANCH == "main")'
+   - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
 
 after_script:
