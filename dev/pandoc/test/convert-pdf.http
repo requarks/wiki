@@ -9,13 +9,14 @@ Content-Disposition: form-data; name="file"; filename="input.html"
 Content-Type: text/html
 
 <!DOCTYPE html>
-<html>s
+<html>
 <head>
     <title>Sample HTML</title>
 </head>
 <body>
     <h1>Hello, World!</h1>
     <p>Test: This is a sample HTML file for testing the Flask Pandoc converter.</p>
+    </p>:smile:  :angel:  :cowboy_hat_face: :ghost:</p>
 </body>
 </html>
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
