@@ -65,7 +65,7 @@ module.exports = {
       // Check if the request user has access to the site
       const userHasAccess = WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], { siteId })
       if (!userHasAccess) {
-        throw new WIKI.Error.AuthForbidden('User does not have access to the site')
+        throw new WIKI.Error.SiteForbidden()
       }
 
       try {
@@ -224,7 +224,7 @@ module.exports = {
 
         await WIKI.models.users.updateUser({
           id: usr.id,
-          name: _.trim(args.name),
+          name: WIKI.auth.isSuperAdmin(context.req.user) ? _.trim(args.name) : usr.name,
           jobTitle: _.trim(args.jobTitle),
           location: _.trim(args.location),
           timezone: args.timezone,

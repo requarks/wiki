@@ -25,7 +25,7 @@
               v-list-item-content
                 v-list-item-title {{$t('profile:displayName')}}
                 v-list-item-subtitle {{ user.name }}
-              v-list-item-action
+              v-list-item-action(v-if='hasPermission(`manage:system`)')
                 v-menu(
                   v-model='editPop.name'
                   :close-on-content-click='false'
@@ -639,6 +639,7 @@ export default {
     }
   },
   computed: {
+    permissions: get('user/permissions'),
     dateFormats () {
       return [
         { text: this.$t('profile:localeDefault'), value: '' },
@@ -707,6 +708,15 @@ export default {
     }
   },
   methods: {
+    hasPermission(prm) {
+      if (_.isArray(prm)) {
+        return _.some(prm, p => {
+          return _.includes(this.permissions, p)
+        })
+      } else {
+        return _.includes(this.permissions, prm)
+      }
+    },
     /**
      * Focus an input after delay
      */
