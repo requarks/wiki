@@ -1,3 +1,5 @@
+# WARNING: This file is not using in docker build
+# Instead of it will be used file "config.yml" from root folder (that file which ignored in ".gitignore")
 port: 3000
 bindIP: 0.0.0.0
 db:
