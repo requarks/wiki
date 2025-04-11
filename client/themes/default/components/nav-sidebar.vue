@@ -2,7 +2,7 @@
   div
     .pa-3.d-flex(
       v-if='navMode === `MIXED`'
-      :class='dark ? colors.primary[3] : `grey lighten-5`'
+      :class='dark ? colors.primary[4] : colors.surface[2]'
       )
       v-btn(
         depressed
@@ -94,7 +94,7 @@
           v-if='item.isFolder'
           :key='`childfolder-` + item.id'
           :color='dark ? `white` : colors.text.darkGrey'
-          :style='`background-color: ` + getListItemBackgroundColor()'
+          :style='getListItemStyles()'
           @click='fetchBrowseItems(item)'
           )
           v-list-item-avatar(size='24')
@@ -105,7 +105,7 @@
           :href='`/` +  sitePath + `/` + item.locale + `/` + item.path'
           :key='`childpage-` + item.id'
           :input-value='path === item.path'
-          :style='`background-color: ` + getListItemBackgroundColor()'
+          :style='getListItemStyles()'
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
@@ -292,18 +292,15 @@ export default {
         window.location.assign(`/${this.sitePath}`)
       }
     },
-    getListItemBackgroundColor() {
-      if (this.dark) {
-        if (this.currentParent.pageId > 0) {
-          return this.colors.velvet[3]
-        }
-        return this.colors.primary[3]
-      }
-      // Not dark
+    getListItemStyles() {
+      let styles = ''
       if (this.currentParent.pageId > 0) {
-        return this.colors.surface[1]
+        styles = 'padding-left: 48px; '
       }
-      return this.colors.surface[2]
+      if (this.dark) {
+        return styles + 'background-color' + this.colors.primary[4] + '!important;'
+      }
+      return styles + 'background-color' + this.colors.surface[2] + '!important;'
     }
   },
   mounted() {

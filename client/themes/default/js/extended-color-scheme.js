@@ -69,7 +69,8 @@ const colors = {
   'primary': {
     '1': '#0070AD',
     '2': '#12ABDB',
-    '3': '#2B0A3D'
+    '3': '#2B0A3D',
+    '4': '#272936'
   },
 
   'surface': {
