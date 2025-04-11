@@ -21,7 +21,7 @@
       "prismjs", {
         "languages": ["typescript", "ts", "tsx"],
         "plugins": ["line-numbers", "match-braces", "autoloader", "normalize-whitespace", "copy-to-clipboard", "toolbar"],
-        "theme": "tomorrow",
+        "theme": "vsc-dark-plus",
         "css": true
       }
     ]

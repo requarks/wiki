@@ -14,13 +14,19 @@ COPY ./package.json ./package.json
 COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
+COPY ./prism-vsc-dark-plus.css ./prism-vsc-dark-plus.css
+COPY ./prism-vsc-dark-plus.css ./node_modules/prismjs/themes/prism-vsc-dark-plus.css
 
 RUN yarn cache clean
 RUN yarn --frozen-lockfile --non-interactive
+COPY ./prism-vsc-dark-plus.css ./node_modules/prismjs/themes/prism-vsc-dark-plus.css
+
 RUN yarn build
 RUN rm -rf /wiki/node_modules
 RUN yarn --production --frozen-lockfile --non-interactive
+COPY ./prism-vsc-dark-plus.css ./node_modules/prismjs/themes/prism-vsc-dark-plus.css
 RUN yarn patch-package
+COPY ./prism-vsc-dark-plus.css ./node_modules/prismjs/themes/prism-vsc-dark-plus.css
 
 # ===============
 # --- Release ---
@@ -38,6 +44,7 @@ WORKDIR /wiki
 
 COPY --chown=node:node --from=assets /wiki/assets ./assets
 COPY --chown=node:node --from=assets /wiki/node_modules ./node_modules
+#COPY --chown=node:node --from=assets /wiki/prism-vsc-dark-plus.css ./node_modules/prismjs/themes/prism-vsc-dark-plus.css
 COPY --chown=node:node ./server ./server
 COPY --chown=node:node --from=assets /wiki/server/views ./server/views
 COPY --chown=node:node ./config.yml ./config.yml
