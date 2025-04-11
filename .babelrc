@@ -19,9 +19,9 @@
     "@babel/plugin-proposal-throw-expressions",
     [
       "prismjs", {
-        "languages": ["clike", "markup"],
-        "plugins": ["line-numbers", "autoloader", "normalize-whitespace", "copy-to-clipboard", "toolbar"],
-        "theme": "twilight",
+        "languages": ["typescript", "ts", "tsx"],
+        "plugins": ["line-numbers", "match-braces", "autoloader", "normalize-whitespace", "copy-to-clipboard", "toolbar"],
+        "theme": "tomorrow",
         "css": true
       }
     ]
