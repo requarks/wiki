@@ -19,6 +19,9 @@ router.post('/u', (req, res, next) => {
     }
   }).array('mediaUpload')(req, res, next)
 }, async (req, res, next) => {
+  /**
+   * Ruslan: Disable this check for bulk uploading
+   */
   if (!_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system'], pm))) {
     return res.status(403).json({
       succeeded: false,
@@ -80,6 +83,9 @@ router.post('/u', (req, res, next) => {
 
   // Check if user can upload at path
   const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
+  /**
+   * Ruslan: Disable this check for bulk uploading
+   */
   if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
     return res.status(403).json({
       succeeded: false,
