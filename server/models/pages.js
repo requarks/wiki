@@ -724,6 +724,10 @@ module.exports = class Page extends Model {
 
     const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
 
+    /**
+     * RUSLAN: Here should be checking all exists pages for links for moving page.
+     */
+
     // -> Move page
     const destinationTitle = (page.title === _.last(page.path.split('/')) ? _.last(opts.destinationPath.split('/')) : page.title)
     await WIKI.models.pages.query().patch({

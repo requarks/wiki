@@ -19,10 +19,12 @@ router.post('/u', (req, res, next) => {
     }
   }).array('mediaUpload')(req, res, next)
 }, async (req, res, next) => {
+  const disableFlag = true
+
   /**
    * Ruslan: Disable this check for bulk uploading
    */
-  if (!_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system'], pm))) {
+  if (disableFlag && !_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system'], pm))) {
     return res.status(403).json({
       succeeded: false,
       message: 'You are not authorized to upload files.'
@@ -86,7 +88,7 @@ router.post('/u', (req, res, next) => {
   /**
    * Ruslan: Disable this check for bulk uploading
    */
-  if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
+  if (disableFlag && !WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
     return res.status(403).json({
       succeeded: false,
       message: 'You are not authorized to upload files to this folder.'
