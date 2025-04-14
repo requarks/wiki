@@ -20,13 +20,13 @@ function handleInternalLinks(pageHTML, sitePath, locale, pagePaths) {
       const internalPathWithLocale = `${sitePath}/${locale}/${pagePath}`
 
       pageHTML = pageHTML
-      // when external links were used
+        // when external links were used
         .replaceAll(`href="${WIKI.config.host}/${internalPath}#`, 'href="#')
         .replaceAll(`href="${WIKI.config.host}/${internalPathWithLocale}#`, 'href="#')
-      // when page links were used
+        // when page links were used
         .replaceAll(`href="/${internalPath}#`, 'href="#')
         .replaceAll(`href="/${internalPathWithLocale}#`, 'href="#')
-      // link to a different page
+        // link to a different page
         .replaceAll(`href="/${sitePath}`, `href="${WIKI.config.host}/${sitePath}`)
     }
   }
@@ -75,37 +75,34 @@ async function prepareInternalImages(document, user) {
   await Promise.all(internalImages.map(img => processImage(img)))
 }
 
-async function convertToWord(pageHTML) {
+async function convertToFile(pageHTML, format) {
   try {
     const boundary = '----WebKitFormBoundary' + crypto.randomBytes(16).toString('hex')
-
     const body = `--${boundary}\r\n` +
-      `Content-Disposition: form-data; name="file"; filename="input.html"` +
+      `Content-Disposition: form-data; name="file"; filename="input.html"\r\n` +
       `Content-Type: text/html\r\n\r\n` +
       `${pageHTML}\r\n` +
       `--${boundary}--\r\n`
 
-    const response = await fetch(`${WIKI.config.pandocPath}/convert-to-docx`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': `multipart/form-data; boundary=${boundary}`,
-          'Content-Length': Buffer.byteLength(body)
-        },
-        body: Buffer.from(body),
-        timeout: 30_000
-      }
-    )
+    const response = await fetch(`${WIKI.config.pandocPath}/convert-to-${format}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': Buffer.byteLength(body)
+      },
+      body: Buffer.from(body),
+      timeout: 30_000
+    })
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.log('Error converting document:', errorText)
+      console.log(`Error converting document to ${format}:`, errorText)
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
     return response.arrayBuffer()
   } catch (error) {
-    console.error('Error converting document:', error)
+    console.error(`Error converting document to ${format}:`, error)
     throw error
   }
 }
@@ -200,7 +197,7 @@ module.exports = {
   handleInternalLinks,
   getSiteIdByPath,
   prepareInternalImages,
-  convertToWord,
+  convertToFile,
   getPageContent,
   getPageTreeExportHtml,
   getPageExportHtml,

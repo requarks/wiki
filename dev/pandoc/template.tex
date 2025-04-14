@@ -26,7 +26,9 @@ $endif$
 \usepackage{fancyhdr}
 \usepackage{fontspec}
 \usepackage{emoji}
+\usepackage{svg}
 \usepackage{amsmath,amssymb}
+\setmainfont{Noto Serif}
 
 % Custom colors for code listings
 \definecolor{codebg}{rgb}{0.95,0.95,0.95}
@@ -107,7 +109,20 @@ $if(toc)$
 $if(toc-title)$
 \renewcommand*\contentsname{$toc-title$}
 $endif$
-
+{
+$if(colorlinks)$
+\hypersetup{
+  colorlinks=true,
+  linkcolor=$if(toccolor)$$toccolor$$else$red$endif$, % Default to red if toccolor is not set
+  citecolor=blue,        % Default citation link color
+  filecolor=magenta,     % Default file link color
+  urlcolor=cyan          % Default URL link color
+}
+$endif$
+\setcounter{tocdepth}{$toc-depth$}
+\tableofcontents
+\newpage
+}
 $endif$
 $if(lof)$
 \listoffigures
