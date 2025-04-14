@@ -40,7 +40,7 @@ def convert_to_pdf():
         # Run Pandoc command
       subprocess.run(
             ['pandoc', input_path, '--pdf-engine=lualatex',
-            f'--template={template_path}', '-f', 'html', '-t', 'pdf', '-o', output_path],
+            f'--template={template_path}', '-V', 'colorlinks=true', '-f', 'html', '-t', 'pdf', '-o', output_path],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
