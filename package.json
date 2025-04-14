@@ -15,8 +15,10 @@
     "postinstall": "patch-package",
 
     "service:start": "docker compose up -d",
+    "service:stop": "docker compose stop",
     "service:delete": "docker compose down -v",
-    "service:rebuild": "npm run service:delete && docker compose up --build --force-recreate"
+    "service:build": "npm run service:stop && docker compose up --build",
+    "service:recreate": "npm run service:delete && docker compose up --build --force-recreate"
   },
   "repository": {
     "type": "git",

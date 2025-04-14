@@ -1,8 +1,15 @@
 services:
   app:
+    container_name: wiki
     build:
       context: .
       dockerfile: ./dev/build/Dockerfile
     ports:
       - "80:3000"
     restart: unless-stopped
+    networks:
+      - wiki
+
+networks:
+  wiki:
+    external: true
