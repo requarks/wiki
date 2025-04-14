@@ -663,21 +663,11 @@
     }
   }
 
-  ul:not(.tabset-tabs):not(.contains-task-list) {
-    list-style: none;
-    > li::before {
-      position: absolute;
-      left: -1.1rem;
-      content: '\25b8';
-      color: mc('grey', '600');
-      width: 1.35rem;
-
-      @at-root .is-rtl & {
-        right: -1.1rem;
-        content: '\25C3';
-      }
-    }
-  }
+  // Ruslan: Вот здесь посмотреть точки для Checkbox
+  //ul:not(.tabset-tabs):not(.contains-task-list) {
+  //  list-style: none;
+  //
+  //}
   ol, ul:not(.tabset-tabs) {
     > li {
       position: relative;
@@ -685,7 +675,7 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
-        
+
         &:first-child {
           width: 100%;
         }
