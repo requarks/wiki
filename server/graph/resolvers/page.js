@@ -284,11 +284,6 @@ module.exports = {
       })
 
       // Ruslan: Custom sorting for "Tree Navigation" for folder "Users"
-      // const customSortingOrder = [
-      //   '📁 Шаблон',
-      //   'Landing'
-      // ]
-
       const emojiRegex = /^[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u
       const russianRegex = /[\u0400-\u04FF]/
 

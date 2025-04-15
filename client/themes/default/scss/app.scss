@@ -664,10 +664,12 @@
   }
 
   // Ruslan: Вот здесь посмотреть точки для Checkbox
-  //ul:not(.tabset-tabs):not(.contains-task-list) {
-  //  list-style: none;
-  //
-  //}
+  .todo-list {
+    li {
+      list-style: none;
+    }
+  }
+
   ol, ul:not(.tabset-tabs) {
     > li {
       position: relative;
@@ -708,7 +710,7 @@
     background-color: mc('indigo', '50');
     padding: 0 5px;
     color: mc('indigo', '800');
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-weight: normal;
     font-size: 1rem;
     box-shadow: none;
@@ -742,7 +744,7 @@
       box-shadow: initial;
       display: block;
       font-size: .85rem;
-      font-family: 'Roboto Mono', monospace;
+      font-family: 'JetBrains Mono', monospace;
 
       &:after, &:before {
         content: initial;
