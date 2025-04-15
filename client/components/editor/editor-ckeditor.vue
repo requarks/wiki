@@ -21,6 +21,7 @@ import DecoupledEditor from '@requarks/ckeditor5'
 // import DecoupledEditor from '../../../../wiki-ckeditor5/build/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
+import gql from 'graphql-tag'
 
 /* global siteLangs */
 
@@ -65,21 +66,44 @@ export default {
   async mounted () {
     this.$store.set('editor/editorKey', 'ckeditor')
 
+    const resp = await this.$apollo.query({
+      query: gql`
+          query ($limit: Int!) {
+            pages {
+              list(limit: $limit) {
+                id
+                path
+                title
+              }
+            }
+          }`,
+      fetchPolicy: 'network-only',
+      variables: {
+        limit: 10000
+      }
+    })
+
+    const feed = resp.data.pages.list.map(({title}) => {
+      return {
+        id: `@${title}`,
+        link: 'https://example.com',
+        userId: 1
+      }
+    })
+
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
       placeholder: 'Type the page content here',
       disableNativeSpellChecker: false,
-      // TODO: Mention autocomplete
-      //
-      // mention: {
-      //   feeds: [
-      //     {
-      //       marker: '@',
-      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
-      //       minimumCharacters: 1
-      //     }
-      //   ]
-      // },
+      mention: {
+        feeds: [
+          {
+            marker: '@',
+            feed,
+            minimumCharacters: 1
+          }
+        ]
+      },
       wordCount: {
         onUpdate: stats => {
           this.stats = {
@@ -94,6 +118,58 @@ export default {
     if (this.mode !== 'create') {
       this.editor.setData(this.$store.get('editor/content'))
     }
+
+    this.editor.conversion.for('upcast').elementToAttribute({
+      view: {
+        name: 'a',
+        key: 'data-mention',
+        classes: 'mention',
+        attributes: {
+          href: true,
+          'data-user-id': true
+        }
+      },
+      model: {
+        key: 'mention',
+        value: viewItem => {
+          // The mention feature expects that the mention attribute value
+          // in the model is a plain object with a set of additional attributes.
+          // In order to create a proper object, use the toMentionAttribute helper method:
+          const mentionAttribute = this.editor.plugins.get('Mention').toMentionAttribute(viewItem, {
+            // Add any other properties that you need.
+            link: viewItem.getAttribute('href'),
+            userId: viewItem.getAttribute('data-user-id')
+          })
+
+          return mentionAttribute
+        }
+      },
+      converterPriority: 'high'
+    })
+
+    // Downcast the model 'mention' text attribute to a view <a> element.
+    this.editor.conversion.for('downcast').attributeToElement({
+      model: 'mention',
+      view: (modelAttributeValue, writer) => {
+        // Do not convert empty attributes (lack of value means no mention).
+        if (!modelAttributeValue) {
+          return
+        }
+
+        return writer.createAttributeElement('a', {
+          class: 'mention',
+          'data-mention': modelAttributeValue.id,
+          'data-user-id': modelAttributeValue.userId,
+          'href': modelAttributeValue.link
+        }, {
+          // Make mention attribute to be wrapped by other attribute elements.
+          priority: 20,
+          // Prevent merging mentions together.
+          id: modelAttributeValue.uid
+        })
+      },
+      converterPriority: 'high'
+    })
 
     this.editor.model.document.on('change:data', _.debounce(evt => {
       this.$store.set('editor/content', beautify(this.editor.getData(), { indent_size: 2, end_with_newline: true }))
