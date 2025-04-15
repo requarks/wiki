@@ -87,7 +87,7 @@ export default {
       return {
         id: '@' + page.title,
         text: page.title,
-        link: page.path
+        link: '/' + page.path
       }
     })
 

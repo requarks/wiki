@@ -13,7 +13,6 @@
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open",
     "postinstall": "patch-package",
-
     "service:start": "docker compose up -d",
     "service:stop": "docker compose stop",
     "service:delete": "docker compose down -v",
