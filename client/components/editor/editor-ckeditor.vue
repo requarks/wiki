@@ -83,11 +83,11 @@ export default {
       }
     })
 
-    const feed = resp.data.pages.list.map(({title}) => {
+    const feed = resp.data.pages.list.map((page) => {
       return {
-        id: `@${title}`,
-        link: 'https://example.com',
-        userId: 1
+        id: '@' + page.title,
+        text: page.title,
+        link: page.path
       }
     })
 
@@ -137,8 +137,7 @@ export default {
           // In order to create a proper object, use the toMentionAttribute helper method:
           const mentionAttribute = this.editor.plugins.get('Mention').toMentionAttribute(viewItem, {
             // Add any other properties that you need.
-            link: viewItem.getAttribute('href'),
-            userId: viewItem.getAttribute('data-user-id')
+            link: viewItem.getAttribute('href')
           })
 
           return mentionAttribute
@@ -157,9 +156,8 @@ export default {
         }
 
         return writer.createAttributeElement('a', {
-          class: 'mention',
+          class: 'is-internal-link is-valid-page',
           'data-mention': modelAttributeValue.id,
-          'data-user-id': modelAttributeValue.userId,
           'href': modelAttributeValue.link
         }, {
           // Make mention attribute to be wrapped by other attribute elements.
