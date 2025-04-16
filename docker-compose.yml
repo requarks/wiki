@@ -1,12 +1,19 @@
 services:
   app:
     container_name: wiki
+    restart: unless-stopped
     build:
       context: .
       dockerfile: ./dev/build/Dockerfile
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: wiki
+      DB_PASS: wiki
+      DB_NAME: wiki
     ports:
       - "80:3000"
-    restart: unless-stopped
     networks:
       - wiki
 
