@@ -220,8 +220,16 @@ export default {
         await this.fetchBrowseItems(curPage)
       }
     },
-    goHome () {
-      window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
+    goHome (event) {
+      const url = siteLangs.length > 0 ? `/${this.locale}/home` : '/'
+
+      if (event.ctrlKey || event.metaKey) {
+        // Если зажат Ctrl или Cmd (на Mac), открываем в новом окне
+        window.open(url, '_blank')
+      } else {
+        // Иначе открываем в текущем окне
+        window.location.assign(url)
+      }
     }
   },
   mounted () {
