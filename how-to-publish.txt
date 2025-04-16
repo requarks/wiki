@@ -1,0 +1,9 @@
+Сначала включить билдер (единоразово):
+docker buildx create --use --name multiarch-builder
+
+Сбилдить и само запушит:
+docker buildx build --platform linux/amd64,linux/arm64 -f ./dev/build/Dockerfile -t mauzzz0/wiki-js:1.1 -t mauzzz0/wiki-js:latest --push .
+
+А это уже не надо:
+docker build --platform linux/amd64 -f ./dev/build/Dockerfile -t mauzzz0/wiki-js:1.1 -t mauzzz0/wiki-js:latest .
+docker push mauzzz0/wiki-js --all-tags
