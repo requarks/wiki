@@ -7,7 +7,7 @@ RUN apk add --no-cache python3 py3-pip py3-flask py3-gunicorn font-noto font-not
 # we need to remove this cmnd when pandoc/latex has new version with texlive pointing 2025 repo 
 RUN tlmgr option repository http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final
 # Verify tlmgr is updated and install packages
-RUN tlmgr install emoji svg transparent
+RUN tlmgr install emoji svg transparent ragged2e
 
 WORKDIR /app
 COPY template.tex /app

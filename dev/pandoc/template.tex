@@ -28,7 +28,18 @@ $endif$
 \usepackage{emoji}
 \usepackage{svg}
 \usepackage{amsmath,amssymb}
+\usepackage{longtable}      % For multipage tables
+\usepackage{booktabs}       % Nicer horizontal rules
+\usepackage{array}          % For p{} and column alignment
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{ragged2e}       % For better ragged text handling
+\renewcommand{\raggedright}{\RaggedRight}
+
 \setmainfont{Noto Serif}
+
+% Slightly tighter column padding
+\setlength{\tabcolsep}{4pt}
 
 % Custom colors for code listings
 \definecolor{codebg}{rgb}{0.95,0.95,0.95}
