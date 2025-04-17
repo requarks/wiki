@@ -356,8 +356,16 @@
     )
       v-card
         .dialog-header.is-short.is-blue
-          v-icon.mr-2(color='white') mdi-file-word
-          span {{ messages.exportToWord }}
+          v-icon.mr-2(
+            v-if='exportFileType === `docx`'
+            color='white'
+            ) mdi-file-word-box
+          v-icon.mr-2(
+            v-else-if='exportFileType === `pdf`'
+            color='white'
+            ) mdi-file-pdf-box
+          span(v-if='exportFileType === `docx`') {{ messages.exportToWord }}
+          span(v-else-if='exportFileType === `pdf`') {{ messages.exportToPdf }}
         v-card-text.pt-5
           span {{ messages.exportModalSubtitle }}
         v-card-chin
@@ -365,15 +373,27 @@
           v-btn(
             text
             @click='isExportModalVisible = false'
-          ) {{ messages.cancel }}
+            ) {{ messages.cancel }}
           v-btn.px-4(
+            v-if='exportFileType === `docx`'
             color='primary'
             @click='exportSinglePageToWord()'
-          ) {{ messages.exportSinglePage }}
+            ) {{ messages.exportSinglePage }}
           v-btn.px-4(
+            v-else-if='exportFileType === `pdf`'
+            color='primary'
+            @click='exportSinglePageToPdf()'
+            ) {{ messages.exportSinglePage }}
+          v-btn.px-4(
+            v-if='exportFileType === `docx`'
             color='primary'
             @click='exportPageTreeToWord()'
-          ) {{ messages.exportPageTree }}
+            ) {{ messages.exportPageTree }}
+          v-btn.px-4(
+            v-else-if='exportFileType === `pdf`'
+            color='primary'
+            @click='exportPageTreeToPdf()'
+            ) {{ messages.exportPageTree }}
 </template>
 
 <script>
@@ -566,7 +586,8 @@ export default {
       isLoading: false,
       isExportModalVisible: false,
       wordDocumentType: 'docx',
-      pdfDocumentType: 'pdf'
+      pdfDocumentType: 'pdf',
+      exportFileType: ''
     }
   },
   computed: {
@@ -834,9 +855,15 @@ export default {
       })
     },
     async exportPdf () {
-      await this.exportSinglePageToPdf()
+      this.exportFileType = 'pdf'
+      if (this.$store.get('page/hasChildren')) {
+        this.isExportModalVisible = true
+      } else {
+        await this.exportSinglePageToPdf()
+      }
     },
     async exportWord () {
+      this.exportFileType = 'docx'
       if (this.$store.get('page/hasChildren')) {
         this.isExportModalVisible = true
       } else {
@@ -848,6 +875,9 @@ export default {
     },
     async exportSinglePageToWord () {
       this.exportToDocument(this.wordDocumentType, `path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
+    },
+    async exportPageTreeToPdf () {
+      this.exportToDocument(this.pdfDocumentType, `path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}&isPageTreeExport=true`)
     },
     async exportSinglePageToPdf () {
       this.exportToDocument(this.pdfDocumentType, `path=${this.path}&locale=${this.locale}&sitePath=${this.sitePath}`)
