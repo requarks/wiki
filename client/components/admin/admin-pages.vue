@@ -55,7 +55,7 @@
             :headers='headers'
             :search='search'
             :page.sync='pagination'
-            :items-per-page='15'
+            :items-per-page='50'
             :loading='loading'
             must-sort,
             sort-by='updatedAt',
@@ -74,6 +74,7 @@
                   span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
+                td {{ props.item.orderPriority }}
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
@@ -96,7 +97,8 @@ export default {
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
         { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 }
+        { text: 'Last Updated', value: 'updatedAt', width: 250 },
+        { text: 'Order Priority', value: 'orderPriority' }
       ],
       search: '',
       selectedLang: null,
@@ -149,7 +151,11 @@ export default {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.list,
+      update: (data) => data.pages.list.map(p => {
+        p.orderPriority = Math.round(Math.random() * 100)
+
+        return p
+      }),
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
