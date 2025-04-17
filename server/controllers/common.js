@@ -429,7 +429,12 @@ router.get('/*', async (req, res, next) => {
 
     try {
       // -> Get Page from cache
-      if (pageArgs.path === 'Users/profile') { // Ruslan: Open User's page on "Users/profile" request
+      if (pageArgs.path === 'Users/profile') { // Ruslan: Open User's page on "Users/profile" request for student, but "Users" for admin
+        if (req.user.id === 1) { // Administrator
+          res.redirect(`/Users`)
+          return
+        }
+
         for (const groupId of req.user.groups) {
           const group = await WIKI.models.groups.query().findById(groupId)
 
