@@ -28,6 +28,16 @@
               dense
               style='max-width: 400px;'
               )
+            v-select.ml-2(
+              solo
+              flat
+              hide-details
+              dense
+              label='Paths'
+              :items='paths'
+              v-model='selectedPath'
+              style='max-width: 250px;'
+            )
             v-spacer
             v-select.ml-2(
               solo
@@ -74,7 +84,22 @@
                   span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
-                td {{ props.item.orderPriority }}
+                td
+                  v-edit-dialog(
+                    :return-value.sync='props.item.orderPriority'
+                    @save='savePriority(props.item)'
+                    large
+                  )
+                    div {{ props.item.orderPriority }}
+                    template(v-slot:input)
+                      v-text-field(
+                        v-model='props.item.orderPriority'
+                        type='number'
+                        label='Edit Priority'
+                        single-line
+                        autofocus
+                        :rules='[v => !!v || "Priority is required", v => v >= 0 || "Must be positive"]'
+                      )
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
@@ -98,22 +123,27 @@ export default {
         { text: 'Path', value: 'path' },
         { text: 'Created', value: 'createdAt', width: 250 },
         { text: 'Last Updated', value: 'updatedAt', width: 250 },
-        { text: 'Order Priority', value: 'orderPriority' }
+        { text: 'Order Priority', value: 'orderPriority', width: 150 }
       ],
       search: '',
       selectedLang: null,
       selectedState: null,
+      selectedPath: null,
       states: [
         { text: 'All Publishing States', value: null },
         { text: 'Published', value: true },
         { text: 'Not Published', value: false }
       ],
+      paths: [],
       loading: false
     }
   },
   computed: {
     filteredPages () {
       return _.filter(this.pages, pg => {
+        if (this.selectedPath !== null && !pg.path.startsWith(this.selectedPath)) {
+          return false
+        }
         if (this.selectedLang !== null && this.selectedLang !== pg.locale) {
           return false
         }
@@ -141,6 +171,16 @@ export default {
         style: 'success',
         icon: 'cached'
       })
+
+      this.paths = [{ text: 'aaa', value: null }]
+    },
+    updatePathSelector(pages) {
+      const paths = Array.from(new Set(pages.filter(p => p.path.includes('/')).map(p => p.path.split('/')[0])))
+
+      this.paths = [
+        { text: 'Select path', value: null },
+        ...paths.sort().map(p => ({ text: p, value: p }))
+      ]
     },
     newpage() {
       this.pageSelectorShown = true
@@ -151,11 +191,17 @@ export default {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.list.map(p => {
-        p.orderPriority = Math.round(Math.random() * 100)
+      update: function (data) {
+        const pages = data.pages.list.map(p => {
+          console.log('randomed')
+          p.orderPriority = Math.round(Math.random() * 100)
+          return p
+        })
 
-        return p
-      }),
+        this.updatePathSelector(pages)
+
+        return pages
+      },
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
@@ -171,5 +217,16 @@ export default {
   justify-content: flex-start;
   align-items: center;
   font-family: 'Roboto Mono', monospace;
+}
+
+.v-edit-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+
+  &__input {
+    padding: 16px;
+  }
 }
 </style>
