@@ -87,18 +87,23 @@
                 td
                   v-edit-dialog(
                     :return-value.sync='props.item.orderPriority'
+                    @open='startEdit(props.item)'
                     @save='savePriority(props.item)'
+                    @cancel='cancelEdit()'
                     large
+                    persistent
                   )
                     div {{ props.item.orderPriority }}
                     template(v-slot:input)
                       v-text-field(
-                        v-model='props.item.orderPriority'
+                        v-model.number='editPriorityValue'
                         type='number'
                         label='Edit Priority'
                         single-line
                         autofocus
                         :rules='[v => !!v || "Priority is required", v => v >= 0 || "Must be positive"]'
+                        @keydown.enter='saveEdit(props.item)'
+                        @keydown.esc='cancelEdit'
                       )
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
@@ -135,6 +140,9 @@ export default {
         { text: 'Not Published', value: false }
       ],
       paths: [],
+      editPriorityValue: null,
+      editingItem: null,
+      originalPriorities: new Map(),
       loading: false
     }
   },
@@ -164,6 +172,61 @@ export default {
     }
   },
   methods: {
+    startEdit(item) {
+      this.editingItem = item
+      this.editPriorityValue = item.orderPriority
+      this.originalPriorities.set(item.id, item.orderPriority)
+    },
+
+    saveEdit(item) {
+      if (this.editingItem && this.editingItem.id === item.id) {
+        item.orderPriority = this.editPriorityValue
+        this.savePriority(item)
+      }
+    },
+
+    cancelEdit() {
+      if (this.editingItem) {
+        const originalPriority = this.originalPriorities.get(this.editingItem.id)
+        if (originalPriority !== undefined) {
+          this.editingItem.orderPriority = originalPriority
+        }
+        this.originalPriorities.delete(this.editingItem.id)
+        this.editingItem = null
+      }
+    },
+
+    async savePriority(item) {
+      try {
+        // ruslan: И на стороне сервера сделать чтобы в текущей папке всё пересчитывалось
+        // Только здесь делаем фактическое сохранение
+        // await this.$apollo.mutate({
+        //   mutation: updatePagePriorityMutation,
+        //   variables: {
+        //     id: item.id,
+        //     priority: item.orderPriority
+        //   }
+        // })
+
+        this.$store.commit('showNotification', {
+          message: 'Priority updated successfully',
+          style: 'success',
+          icon: 'check'
+        })
+
+        await this.refresh()
+      } catch (error) {
+        this.cancelEdit()
+        this.$store.commit('showNotification', {
+          message: 'Failed to update priority',
+          style: 'error',
+          icon: 'error'
+        })
+      } finally {
+        this.editingItem = null
+      }
+    },
+
     async refresh() {
       await this.$apollo.queries.pages.refetch()
       this.$store.commit('showNotification', {
@@ -171,8 +234,6 @@ export default {
         style: 'success',
         icon: 'cached'
       })
-
-      this.paths = [{ text: 'aaa', value: null }]
     },
     updatePathSelector(pages) {
       const paths = Array.from(new Set(pages.filter(p => p.path.includes('/')).map(p => p.path.split('/')[0])))
@@ -193,7 +254,6 @@ export default {
       fetchPolicy: 'network-only',
       update: function (data) {
         const pages = data.pages.list.map(p => {
-          console.log('randomed')
           p.orderPriority = Math.round(Math.random() * 100)
           return p
         })

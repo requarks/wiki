@@ -4,7 +4,7 @@
     top
     multi-line
     v-model='notificationState'
-    :timeout='2000'
+    :timeout='1500'
     )
     .text-left
       v-icon.mr-3(dark) mdi-{{ notification.icon }}
@@ -46,7 +46,7 @@ export default {
       position: absolute;
       bottom: 0;
       left: 0;
-      animation: nav-notify-anim 2s linear;
+      animation: nav-notify-anim 1.5s linear;
     }
   }
 }
