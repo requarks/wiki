@@ -250,7 +250,7 @@ const md = new MarkdownIt({
   html: true,
   breaks: true,
   linkify: true,
-  typography: true,
+  typographer: true,
   highlight(str, lang) {
     if (lang === 'diagram') {
       return `<pre class="diagram">` + Buffer.from(str, 'base64').toString() + `</pre>`
@@ -815,6 +815,9 @@ export default {
     // Handle special paste
 
     this.cm.on('paste', this.onCmPaste)
+
+    // Set markdown rendering settings
+    md.set(siteConfig.mdEditorConfig)
 
     // Render initial preview
 
