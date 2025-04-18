@@ -93,29 +93,7 @@
                 :class="{'drag-over': dragOverIndex === props.index}"
               )
                 td.text-xs-right {{ props.item.id }}
-                td
-                  v-edit-dialog(
-                    :return-value.sync='props.item.orderPriority'
-                    :disabled='!selectedGroup'
-                    @open='startEdit(props.item)'
-                    @save='saveEdit(props.item)'
-                    @cancel='cancelEdit()'
-                    large
-                    persistent
-                  )
-                    div {{ props.item.orderPriority }}
-                    template(v-slot:input)
-                      v-text-field(
-                        v-model.number='editPriorityValue'
-                        type='number'
-                        label='Edit Priority'
-                        single-line
-                        autofocus
-                        :rules='[v => !!v || "Priority is required", v => v >= 0 || "Must be positive"]'
-                        :disabled='!selectedGroup'
-                        @keydown.enter='saveEdit(props.item)'
-                        @keydown.esc='cancelEdit()'
-                      )
+                td.text-xs-right {{ props.item.orderPriority }}
                 td
                   .body-2: strong {{ props.item.title }}
                   .caption {{ props.item.description }}
@@ -160,9 +138,6 @@ export default {
         { text: 'Not Published', value: false }
       ],
       groups: [],
-      editPriorityValue: null,
-      editingItem: null,
-      originalPriorities: new Map(),
       loading: false,
       draggedItem: null,
       draggedIndex: null,
@@ -195,66 +170,6 @@ export default {
     }
   },
   methods: {
-    startEdit(item) {
-      this.editingItem = item
-      this.editPriorityValue = item.orderPriority
-      this.originalPriorities.set(item.id, item.orderPriority)
-    },
-
-    saveEdit(item) {
-      if (!this.selectedGroup || !item.group) {
-        this.$store.commit('showNotification', {
-          message: 'You should select group',
-          style: 'error',
-          icon: 'error'
-        })
-      } else if (this.editingItem && this.editingItem.id === item.id) {
-        item.orderPriority = this.editPriorityValue
-        this.savePriority(item)
-      }
-    },
-
-    cancelEdit() {
-      if (this.editingItem) {
-        const originalPriority = this.originalPriorities.get(this.editingItem.id)
-        if (originalPriority !== undefined) {
-          this.editingItem.orderPriority = originalPriority
-        }
-        this.originalPriorities.delete(this.editingItem.id)
-        this.editingItem = null
-      }
-    },
-
-    async savePriority(item) {
-      try {
-        await this.$apollo.mutate({
-          mutation: updatePagePriorityMutation,
-          variables: {
-            id: item.id,
-            orderPriority: item.orderPriority,
-            group: item.group
-          }
-        })
-
-        this.$store.commit('showNotification', {
-          message: 'Priority updated successfully',
-          style: 'success',
-          icon: 'check'
-        })
-
-        await this.refresh()
-      } catch (error) {
-        this.cancelEdit()
-        this.$store.commit('showNotification', {
-          message: 'Failed to update priority',
-          style: 'error',
-          icon: 'error'
-        })
-      } finally {
-        this.editingItem = null
-      }
-    },
-
     async saveNewOrder() {
       try {
         const pagesToUpdate = this.filteredPages.map((page, index) => ({
