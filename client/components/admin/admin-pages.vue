@@ -185,7 +185,7 @@ export default {
 
         // Используем новую мутацию для массового обновления
         await this.$apollo.mutate({
-          mutation: updatePagesOrderMutation,
+          mutation: updatePagePriorityMutation,
           variables: {
             pages: pagesToUpdate
           }
@@ -253,7 +253,14 @@ export default {
 
       // Находим новые индексы с учетом фильтрации и сортировки
       const draggedIndex = filteredSorted.findIndex(p => p.id === this.draggedItem.id)
-      const targetIndex = filteredSorted.findIndex(p => p.id === item.id)
+      let targetIndex = filteredSorted.findIndex(p => p.id === item.id)
+
+      const direction = draggedIndex < targetIndex ? 'down' : 'up'
+      if (direction === 'down') {
+        targetIndex -= 1
+      }
+
+      console.log(`draggedIndex=${draggedIndex} targetIndex=${targetIndex} direction=${direction}`)
 
       if (draggedIndex === -1 || targetIndex === -1) return
 
