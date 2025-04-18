@@ -119,6 +119,7 @@ export default {
       selectedPage: {},
       pagination: 1,
       pages: [],
+      originalOrder: [],
       pageTotal: 0,
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
@@ -172,14 +173,22 @@ export default {
   methods: {
     async saveNewOrder() {
       try {
-        const pagesToUpdate = this.filteredPages.map((page, index) => ({
+        // Получаем страницы текущей группы
+        const groupPages = this.pages
+          .filter(p => p.group === this.selectedGroup)
+          .sort((a, b) => a.orderPriority - b.orderPriority)
+
+        const pagesToUpdate = groupPages.map((page, index) => ({
           id: page.id,
           orderPriority: index + 1
         }))
 
+        // Используем новую мутацию для массового обновления
         await this.$apollo.mutate({
-          mutation: updatePagePriorityMutation,
-          variables: { pages: pagesToUpdate }
+          mutation: updatePagesOrderMutation,
+          variables: {
+            pages: pagesToUpdate
+          }
         })
 
         this.$store.commit('showNotification', {
@@ -239,28 +248,42 @@ export default {
         return
       }
 
-      // Создаем копию массива страниц
+      // Получаем отфильтрованные и отсортированные страницы
+      const filteredSorted = this.filteredPages
+
+      // Находим новые индексы с учетом фильтрации и сортировки
+      const draggedIndex = filteredSorted.findIndex(p => p.id === this.draggedItem.id)
+      const targetIndex = filteredSorted.findIndex(p => p.id === item.id)
+
+      if (draggedIndex === -1 || targetIndex === -1) return
+
+      // Создаем новый порядок ID
+      const newOrderIds = filteredSorted.map(p => p.id)
+      // Удаляем перетаскиваемый элемент из его текущей позиции
+      newOrderIds.splice(draggedIndex, 1)
+      // Вставляем его в новую позицию
+      newOrderIds.splice(targetIndex, 0, this.draggedItem.id)
+
+      // Обновляем orderPriority в основном массиве
       const pagesCopy = [...this.pages]
-
-      // Находим индекс перетаскиваемого элемента в основном массиве
-      const draggedPageIndex = pagesCopy.findIndex(p => p.id === this.draggedItem.id)
-      if (draggedPageIndex === -1) return
-
-      // Удаляем перетаскиваемый элемент из массива
-      const [draggedPage] = pagesCopy.splice(draggedPageIndex, 1)
-
-      // Находим индекс целевого элемента в основном массиве
-      const targetPageIndex = pagesCopy.findIndex(p => p.id === item.id)
-      if (targetPageIndex === -1) return
-
-      // Вставляем перетаскиваемый элемент перед целевым
-      pagesCopy.splice(targetPageIndex, 0, draggedPage)
-
-      // Обновляем orderPriority для всех элементов в группе
       let currentPriority = 1
-      pagesCopy.forEach(page => {
-        if (page.group === this.selectedGroup) {
+
+      // Сначала обновляем порядок для выбранной группы
+      newOrderIds.forEach(id => {
+        const page = pagesCopy.find(p => p.id === id && p.group === this.selectedGroup)
+        if (page) {
           page.orderPriority = currentPriority++
+        }
+      })
+
+      // Затем обновляем порядок для страниц без группы (если нужно)
+      pagesCopy.forEach(page => {
+        if (page.group !== this.selectedGroup) {
+          // Сохраняем исходный порядок для страниц других групп
+          const originalPage = this.originalOrder.find(p => p.id === page.id)
+          if (originalPage) {
+            page.orderPriority = originalPage.orderPriority
+          }
         }
       })
 
