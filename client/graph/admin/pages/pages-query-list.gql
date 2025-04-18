@@ -9,6 +9,7 @@ query {
       contentType
       isPublished
       isPrivate
+      orderPriority
       privateNS
       createdAt
       updatedAt

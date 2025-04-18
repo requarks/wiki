@@ -9,6 +9,7 @@ query($id: Int!) {
       isPrivate
       isPublished
       privateNS
+      orderPriority
       publishStartDate
       publishEndDate
       contentType

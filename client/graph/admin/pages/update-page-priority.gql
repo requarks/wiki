@@ -1,0 +1,17 @@
+mutation (
+  $id: Int!
+  $orderPriority: Int!
+  $group: String!
+) {
+  pages {
+    updatePriority(
+      id: $id
+      orderPriority: $orderPriority
+      group: $group
+    ) {
+      responseResult {
+        succeeded
+      }
+    }
+  }
+}

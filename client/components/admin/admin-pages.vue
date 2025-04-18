@@ -33,9 +33,9 @@
               flat
               hide-details
               dense
-              label='Paths'
-              :items='paths'
-              v-model='selectedPath'
+              label='Groups'
+              :items='groups'
+              v-model='selectedGroup'
               style='max-width: 250px;'
             )
             v-spacer
@@ -65,11 +65,11 @@
             :headers='headers'
             :search='search'
             :page.sync='pagination'
-            :items-per-page='50'
+            :items-per-page='500'
             :loading='loading'
             must-sort,
-            sort-by='updatedAt',
-            sort-desc,
+            sort-by='orderPriority',
+            sort,
             hide-default-footer
             @page-count="pageTotal = $event"
           )
@@ -77,18 +77,11 @@
               tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
                 td.text-xs-right {{ props.item.id }}
                 td
-                  .body-2: strong {{ props.item.title }}
-                  .caption {{ props.item.description }}
-                td.admin-pages-path
-                  v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
-                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
-                td {{ props.item.createdAt | moment('calendar') }}
-                td {{ props.item.updatedAt | moment('calendar') }}
-                td
                   v-edit-dialog(
                     :return-value.sync='props.item.orderPriority'
+                    :disabled='!selectedGroup'
                     @open='startEdit(props.item)'
-                    @save='savePriority(props.item)'
+                    @save='saveEdit(props.item)'
                     @cancel='cancelEdit()'
                     large
                     persistent
@@ -102,9 +95,18 @@
                         single-line
                         autofocus
                         :rules='[v => !!v || "Priority is required", v => v >= 0 || "Must be positive"]'
+                        :disabled='!selectedGroup'
                         @keydown.enter='saveEdit(props.item)'
-                        @keydown.esc='cancelEdit'
+                        @keydown.esc='cancelEdit()'
                       )
+                td
+                  .body-2: strong {{ props.item.title }}
+                  .caption {{ props.item.description }}
+                td.admin-pages-path
+                  v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
+                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
+                td {{ props.item.createdAt | moment('calendar') }}
+                td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
@@ -114,6 +116,7 @@
 <script>
 import _ from 'lodash'
 import pagesQuery from 'gql/admin/pages/pages-query-list.gql'
+import updatePagePriorityMutation from 'gql/admin/pages/update-page-priority.gql'
 
 export default {
   data() {
@@ -124,22 +127,22 @@ export default {
       pageTotal: 0,
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
+        { text: 'Order', value: 'orderPriority', width: 100 },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
         { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 },
-        { text: 'Order Priority', value: 'orderPriority', width: 150 }
+        { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
       search: '',
       selectedLang: null,
       selectedState: null,
-      selectedPath: null,
+      selectedGroup: null,
       states: [
         { text: 'All Publishing States', value: null },
         { text: 'Published', value: true },
         { text: 'Not Published', value: false }
       ],
-      paths: [],
+      groups: [],
       editPriorityValue: null,
       editingItem: null,
       originalPriorities: new Map(),
@@ -149,7 +152,7 @@ export default {
   computed: {
     filteredPages () {
       return _.filter(this.pages, pg => {
-        if (this.selectedPath !== null && !pg.path.startsWith(this.selectedPath)) {
+        if (this.selectedGroup !== null && pg.group !== this.selectedGroup) {
           return false
         }
         if (this.selectedLang !== null && this.selectedLang !== pg.locale) {
@@ -179,7 +182,13 @@ export default {
     },
 
     saveEdit(item) {
-      if (this.editingItem && this.editingItem.id === item.id) {
+      if (!this.selectedGroup || !item.group) {
+        this.$store.commit('showNotification', {
+          message: 'You should select group',
+          style: 'error',
+          icon: 'error'
+        })
+      } else if (this.editingItem && this.editingItem.id === item.id) {
         item.orderPriority = this.editPriorityValue
         this.savePriority(item)
       }
@@ -198,15 +207,14 @@ export default {
 
     async savePriority(item) {
       try {
-        // ruslan: И на стороне сервера сделать чтобы в текущей папке всё пересчитывалось
-        // Только здесь делаем фактическое сохранение
-        // await this.$apollo.mutate({
-        //   mutation: updatePagePriorityMutation,
-        //   variables: {
-        //     id: item.id,
-        //     priority: item.orderPriority
-        //   }
-        // })
+        await this.$apollo.mutate({
+          mutation: updatePagePriorityMutation,
+          variables: {
+            id: item.id,
+            orderPriority: item.orderPriority,
+            group: item.group
+          }
+        })
 
         this.$store.commit('showNotification', {
           message: 'Priority updated successfully',
@@ -235,12 +243,12 @@ export default {
         icon: 'cached'
       })
     },
-    updatePathSelector(pages) {
-      const paths = Array.from(new Set(pages.filter(p => p.path.includes('/')).map(p => p.path.split('/')[0])))
+    updateGroupSelector(pages) {
+      const groups = Array.from(new Set(pages.filter(p => p.group).map(p => p.group)))
 
-      this.paths = [
-        { text: 'Select path', value: null },
-        ...paths.sort().map(p => ({ text: p, value: p }))
+      this.groups = [
+        { text: 'Select group', value: null },
+        ...groups.sort().map(p => ({ text: p, value: p }))
       ]
     },
     newpage() {
@@ -254,11 +262,12 @@ export default {
       fetchPolicy: 'network-only',
       update: function (data) {
         const pages = data.pages.list.map(p => {
-          p.orderPriority = Math.round(Math.random() * 100)
+          p.group = p.path.includes('/') ? p.path.split('/')[0] : null
+
           return p
         })
 
-        this.updatePathSelector(pages)
+        this.updateGroupSelector(pages)
 
         return pages
       },

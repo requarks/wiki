@@ -47,6 +47,7 @@ module.exports = class Page extends Model {
         publishEndDate: {type: 'string'},
         content: {type: 'string'},
         contentType: {type: 'string'},
+        orderPriority: {type: 'integer'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -145,6 +146,7 @@ module.exports = class Page extends Model {
       description: 'string',
       editorKey: 'string',
       isPrivate: 'boolean',
+      orderPriority: 'uint',
       isPublished: 'boolean',
       publishEndDate: 'string',
       publishStartDate: 'string',
@@ -430,6 +432,7 @@ module.exports = class Page extends Model {
       isPublished: opts.isPublished === true || opts.isPublished === 1,
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
+      orderPriority: opts.orderPriority ?? ogPage.orderPriority,
       title: opts.title,
       extra: JSON.stringify({
         ...ogPage.extra,
@@ -484,6 +487,54 @@ module.exports = class Page extends Model {
 
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+
+    return page
+  }
+
+  /**
+   * Update an Priority of Existing Page
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
+  static async updatePriority(opts) {
+    // 1. Для текущего пути запрашиваем все страницы по порядку
+    // 2. Устанавливаем новый порядок
+    // 3. Обновляем все страницы и проставляем новый приоритет (только если он изменился)
+    // 4. rebuildTree()
+
+    // -> Fetch original page
+    const page = await WIKI.models.pages.query().findById(opts.id)
+    if (!page) {
+      throw new Error('Invalid Page Id')
+    }
+
+    // -> Check for page access
+    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+      locale: page.localeCode,
+      path: page.path
+    })) {
+      throw new WIKI.Error.PageUpdateForbidden()
+    }
+
+    page.orderPriority = opts.orderPriority
+
+    // -> Original pages, sorted by orderPriority, without target (currently updating) page
+    const pages = await WIKI.models.pages.query()
+      .select('*')
+      .where('path', 'ilike', `${opts.group}%`)
+      .whereNot('id', page.id)
+      .orderBy('orderPriority', 'asc')
+
+    const insertIndex = pages.findIndex((p) => p.orderPriority >= opts.orderPriority)
+    pages.splice(insertIndex, 0, page)
+
+    const newPriorities = pages.map((p, idx) => ({id: p.id, orderPriority: idx + 1}))
+    for (const { id, orderPriority } of newPriorities) {
+      await WIKI.models.pages.query()
+        .where('id', id)
+        .patch({ orderPriority })
+    }
+    await WIKI.models.pages.rebuildTree()
 
     return page
   }
@@ -723,10 +774,6 @@ module.exports = class Page extends Model {
     })
 
     const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
-
-    /**
-     * RUSLAN: Here should be checking all exists pages for links for moving page.
-     */
 
     // -> Move page
     const destinationTitle = (page.title === _.last(page.path.split('/')) ? _.last(opts.destinationPath.split('/')) : page.title)
@@ -988,6 +1035,7 @@ module.exports = class Page extends Model {
           'pages.hash',
           'pages.title',
           'pages.description',
+          'pages.orderPriority',
           'pages.isPrivate',
           'pages.isPublished',
           'pages.privateNS',
@@ -1023,23 +1071,6 @@ module.exports = class Page extends Model {
           'pages.path': opts.path,
           'pages.localeCode': opts.locale
         })
-        // .andWhere(builder => {
-        //   if (queryModeID) return
-        //   builder.where({
-        //     'pages.isPublished': true
-        //   }).orWhere({
-        //     'pages.isPublished': false,
-        //     'pages.authorId': opts.userId
-        //   })
-        // })
-        // .andWhere(builder => {
-        //   if (queryModeID) return
-        //   if (opts.isPrivate) {
-        //     builder.where({ 'pages.isPrivate': true, 'pages.privateNS': opts.privateNS })
-        //   } else {
-        //     builder.where({ 'pages.isPrivate': false })
-        //   }
-        // })
         .first()
     } catch (err) {
       WIKI.logger.warn(err)
@@ -1063,6 +1094,7 @@ module.exports = class Page extends Model {
       creatorId: page.creatorId,
       creatorName: page.creatorName,
       description: page.description,
+      orderPriority: page.orderPriority,
       editorKey: page.editorKey,
       extra: {
         css: _.get(page, 'extra.css', ''),

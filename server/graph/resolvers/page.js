@@ -81,6 +81,7 @@ module.exports = {
         'title',
         'description',
         'isPublished',
+        'orderPriority',
         'isPrivate',
         'privateNS',
         'contentType',
@@ -281,36 +282,36 @@ module.exports = {
             builder.orWhereIn('id', _.isString(curPage.ancestors) ? JSON.parse(curPage.ancestors) : curPage.ancestors)
           }
         }
-      })
+      }).orderBy([{ column: 'isFolder', order: 'desc' }, 'orderPriority'])
 
-      // Ruslan: Custom sorting for "Tree Navigation" for folder "Users"
-      const emojiRegex = /^[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u
-      const russianRegex = /[\u0400-\u04FF]/
-
-      const userPrefix = 'Users/'
-      results.sort((a, b) => {
-        if (a.isFolder !== b.isFolder) {
-          return b.isFolder - a.isFolder
-        }
-
-        if (a.path.startsWith(userPrefix) || a.path.startsWith(userPrefix)) {
-          // Emoji first
-          const aIsEmoji = emojiRegex.test(a.title)
-          const bIsEmoji = emojiRegex.test(b.title)
-
-          if (aIsEmoji && !bIsEmoji) return -1
-          if (!aIsEmoji && bIsEmoji) return 1
-
-          // Russian second, only by first letter due to title must contain russian + english
-          const aIsRussian = russianRegex.test(a.title[0])
-          const bIsRussian = russianRegex.test(b.title[1])
-
-          if (aIsRussian && !bIsRussian) return -1
-          if (!aIsRussian && bIsRussian) return 1
-        }
-
-        return a.title.localeCompare(b.title)
-      })
+      // // Ruslan: Custom sorting for "Tree Navigation" for folder "Users"
+      // const emojiRegex = /^[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u
+      // const russianRegex = /[\u0400-\u04FF]/
+      //
+      // const userPrefix = 'Users/'
+      // results.sort((a, b) => {
+      //   if (a.isFolder !== b.isFolder) {
+      //     return b.isFolder - a.isFolder
+      //   }
+      //
+      //   if (a.path.startsWith(userPrefix) || a.path.startsWith(userPrefix)) {
+      //     // Emoji first
+      //     const aIsEmoji = emojiRegex.test(a.title)
+      //     const bIsEmoji = emojiRegex.test(b.title)
+      //
+      //     if (aIsEmoji && !bIsEmoji) return -1
+      //     if (!aIsEmoji && bIsEmoji) return 1
+      //
+      //     // Russian second, only by first letter due to title must contain russian + english
+      //     const aIsRussian = russianRegex.test(a.title[0])
+      //     const bIsRussian = russianRegex.test(b.title[1])
+      //
+      //     if (aIsRussian && !bIsRussian) return -1
+      //     if (!aIsRussian && bIsRussian) return 1
+      //   }
+      //
+      //   return a.title.localeCompare(b.title)
+      // })
 
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
@@ -454,6 +455,25 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
+
+    /**
+     * UPDATE PAGE PRIORITY
+     */
+    async updatePriority(obj, args, context) {
+      try {
+        const page = await WIKI.models.pages.updatePriority({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been updated.'),
+          page
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+
     /**
      * CONVERT PAGE
      */

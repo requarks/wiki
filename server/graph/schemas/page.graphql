@@ -117,6 +117,12 @@ type PageMutation {
     title: String
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
+  updatePriority(
+    id: Int!
+    orderPriority: Int!
+    group: String!
+  ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
   convert(
     id: Int!
     editor: String!
@@ -194,6 +200,7 @@ type Page {
   content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
   render: String
   toc: String
+  orderPriority: Int
   contentType: String!
   createdAt: Date!
   updatedAt: Date!
@@ -275,6 +282,7 @@ type PageListItem {
   title: String
   description: String
   contentType: String!
+  orderPriority: Int
   isPublished: Boolean!
   isPrivate: Boolean!
   privateNS: String
