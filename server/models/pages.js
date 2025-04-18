@@ -501,42 +501,12 @@ module.exports = class Page extends Model {
     // 2. Устанавливаем новый порядок
     // 3. Обновляем все страницы и проставляем новый приоритет (только если он изменился)
     // 4. rebuildTree()
-
-    // -> Fetch original page
-    const page = await WIKI.models.pages.query().findById(opts.id)
-    if (!page) {
-      throw new Error('Invalid Page Id')
-    }
-
-    // -> Check for page access
-    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-      locale: page.localeCode,
-      path: page.path
-    })) {
-      throw new WIKI.Error.PageUpdateForbidden()
-    }
-
-    page.orderPriority = opts.orderPriority
-
-    // -> Original pages, sorted by orderPriority, without target (currently updating) page
-    const pages = await WIKI.models.pages.query()
-      .select('*')
-      .where('path', 'ilike', `${opts.group}%`)
-      .whereNot('id', page.id)
-      .orderBy('orderPriority', 'asc')
-
-    const insertIndex = pages.findIndex((p) => p.orderPriority >= opts.orderPriority)
-    pages.splice(insertIndex, 0, page)
-
-    const newPriorities = pages.map((p, idx) => ({id: p.id, orderPriority: idx + 1}))
-    for (const { id, orderPriority } of newPriorities) {
+    for (const { id, orderPriority } of opts.pages) {
       await WIKI.models.pages.query()
         .where('id', id)
         .patch({ orderPriority })
     }
     await WIKI.models.pages.rebuildTree()
-
-    return page
   }
 
   /**
