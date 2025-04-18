@@ -61,6 +61,7 @@
             )
             v-btn.ml-2(
               color='primary'
+              :disabled='!dragged'
               depressed
               @click='saveNewOrder'
             )
@@ -140,6 +141,7 @@ export default {
       ],
       groups: [],
       loading: false,
+      dragged: false,
       draggedItem: null,
       draggedIndex: null,
       dragOverIndex: null
@@ -197,6 +199,7 @@ export default {
           icon: 'check'
         })
 
+        this.dragged = false
         await this.refresh()
       } catch (error) {
         this.$store.commit('showNotification', {
@@ -243,6 +246,7 @@ export default {
     drop(event, item, index) {
       event.preventDefault()
       this.dragOverIndex = null
+      this.dragged = true
 
       if (!this.draggedItem || this.draggedItem.id === item.id) {
         return
