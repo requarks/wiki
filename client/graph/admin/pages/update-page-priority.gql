@@ -1,13 +1,9 @@
 mutation (
-  $id: Int!
-  $orderPriority: Int!
-  $group: String!
+  $pages: [PageOrderInput!]!
 ) {
   pages {
     updatePriority(
-      id: $id
-      orderPriority: $orderPriority
-      group: $group
+      pages: $pages
     ) {
       responseResult {
         succeeded

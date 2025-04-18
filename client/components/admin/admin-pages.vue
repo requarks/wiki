@@ -27,7 +27,7 @@
               hide-details
               dense
               style='max-width: 400px;'
-              )
+            )
             v-select.ml-2(
               solo
               flat
@@ -59,6 +59,13 @@
               v-model='selectedState'
               style='max-width: 250px;'
             )
+            v-btn.ml-2(
+              color='primary'
+              depressed
+              @click='saveNewOrder'
+            )
+              v-icon(left) mdi-content-save
+              span Save Order
           v-divider
           v-data-table(
             :items='filteredPages'
@@ -74,7 +81,17 @@
             @page-count="pageTotal = $event"
           )
             template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
+              tr.is-clickable(
+                :active='props.selected',
+                draggable="true"
+                @dragstart="dragStart($event, props.item, props.index)"
+                @dragover.prevent="dragOver($event, props.item, props.index)"
+                @dragenter.prevent="dragEnter($event, props.index)"
+                @dragleave="dragLeave($event)"
+                @drop="drop($event, props.item, props.index)"
+                @click='$router.push(`/pages/` + props.item.id)'
+                :class="{'drag-over': dragOverIndex === props.index}"
+              )
                 td.text-xs-right {{ props.item.id }}
                 td
                   v-edit-dialog(
@@ -146,7 +163,10 @@ export default {
       editPriorityValue: null,
       editingItem: null,
       originalPriorities: new Map(),
-      loading: false
+      loading: false,
+      draggedItem: null,
+      draggedIndex: null,
+      dragOverIndex: null
     }
   },
   computed: {
@@ -162,7 +182,7 @@ export default {
           return false
         }
         return true
-      })
+      }).sort((a, b) => a.orderPriority - b.orderPriority)
     },
     langs () {
       return _.concat({
@@ -235,6 +255,34 @@ export default {
       }
     },
 
+    async saveNewOrder() {
+      try {
+        const pagesToUpdate = this.filteredPages.map((page, index) => ({
+          id: page.id,
+          orderPriority: index + 1
+        }))
+
+        await this.$apollo.mutate({
+          mutation: updatePagePriorityMutation,
+          variables: { pages: pagesToUpdate }
+        })
+
+        this.$store.commit('showNotification', {
+          message: 'Order updated successfully',
+          style: 'success',
+          icon: 'check'
+        })
+
+        await this.refresh()
+      } catch (error) {
+        this.$store.commit('showNotification', {
+          message: 'Failed to update order',
+          style: 'error',
+          icon: 'error'
+        })
+      }
+    },
+
     async refresh() {
       await this.$apollo.queries.pages.refetch()
       this.$store.commit('showNotification', {
@@ -243,6 +291,68 @@ export default {
         icon: 'cached'
       })
     },
+
+    dragStart(event, item, index) {
+      this.draggedItem = item
+      this.draggedIndex = index
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData('text/html', event.target.parentNode)
+    },
+
+    dragOver(event, item, index) {
+      event.preventDefault()
+      if (this.draggedItem && this.draggedItem.id !== item.id) {
+        this.dragOverIndex = index
+        event.dataTransfer.dropEffect = 'move'
+      }
+    },
+
+    dragEnter(event, index) {
+      event.preventDefault()
+      this.dragOverIndex = index
+    },
+
+    dragLeave(event) {
+      this.dragOverIndex = null
+    },
+
+    drop(event, item, index) {
+      event.preventDefault()
+      this.dragOverIndex = null
+
+      if (!this.draggedItem || this.draggedItem.id === item.id) {
+        return
+      }
+
+      // Создаем копию массива страниц
+      const pagesCopy = [...this.pages]
+
+      // Находим индекс перетаскиваемого элемента в основном массиве
+      const draggedPageIndex = pagesCopy.findIndex(p => p.id === this.draggedItem.id)
+      if (draggedPageIndex === -1) return
+
+      // Удаляем перетаскиваемый элемент из массива
+      const [draggedPage] = pagesCopy.splice(draggedPageIndex, 1)
+
+      // Находим индекс целевого элемента в основном массиве
+      const targetPageIndex = pagesCopy.findIndex(p => p.id === item.id)
+      if (targetPageIndex === -1) return
+
+      // Вставляем перетаскиваемый элемент перед целевым
+      pagesCopy.splice(targetPageIndex, 0, draggedPage)
+
+      // Обновляем orderPriority для всех элементов в группе
+      let currentPriority = 1
+      pagesCopy.forEach(page => {
+        if (page.group === this.selectedGroup) {
+          page.orderPriority = currentPriority++
+        }
+      })
+
+      // Обновляем основной массив
+      this.pages = pagesCopy
+    },
+
     updateGroupSelector(pages) {
       const groups = Array.from(new Set(pages.filter(p => p.group).map(p => p.group)))
 
@@ -256,6 +366,10 @@ export default {
     },
     recyclebin () { }
   },
+  mounted() {},
+  watch: {
+    selectedGroup() {}
+  },
   apollo: {
     pages: {
       query: pagesQuery,
@@ -263,7 +377,6 @@ export default {
       update: function (data) {
         const pages = data.pages.list.map(p => {
           p.group = p.path.includes('/') ? p.path.split('/')[0] : null
-
           return p
         })
 
@@ -296,6 +409,17 @@ export default {
 
   &__input {
     padding: 16px;
+  }
+}
+
+tr.is-clickable[draggable="true"] {
+  cursor: move;
+
+  &.drag-over {
+    td {
+      border-top: 2px solid #1976D2;
+      border-bottom: 2px solid #1976D2;
+    }
   }
 }
 </style>

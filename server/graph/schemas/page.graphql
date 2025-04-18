@@ -118,9 +118,7 @@ type PageMutation {
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   updatePriority(
-    id: Int!
-    orderPriority: Int!
-    group: String!
+    pages: [PageOrderInput!]!
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   convert(
@@ -183,6 +181,11 @@ type PageResponse {
 type PageMigrationResponse {
   responseResult: ResponseStatus!
   count: Int
+}
+
+input PageOrderInput {
+  id: Int!
+  orderPriority: Int!
 }
 
 type Page {
