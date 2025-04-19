@@ -410,27 +410,19 @@ module.exports = class Page extends Model {
           // Получаем все дочерние узлы (включая текстовые)
           const contents = $el.contents()
 
-          // Ищем текстовый узел (type: "text")
-          contents.each((_, node) => {
-            if (node.type === 'text') {
-              node.data = opts.title
-              changed = true
-            } else if (node.children.length) {
-              const child1 = node.children[0]
-
-              if (child1.type === 'text') {
-                child1.data = opts.title
+          // Рекурсивная функция для поиска и замены текста
+          const replaceText = (nodes) => {
+            nodes.each((_, node) => {
+              if (node.type === 'text') {
+                node.data = opts.title
                 changed = true
-              } else if (child1.children.length) {
-                const child2 = child1.children[0]
-
-                if (child2.type === 'text') {
-                  child2.data = opts.title
-                  changed = true
-                }
+              } else if (node.children) {
+                replaceText($(node).contents())
               }
-            }
-          })
+            })
+          }
+
+          replaceText(contents)
         })
 
         if (changed) {
@@ -440,7 +432,7 @@ module.exports = class Page extends Model {
             content: page.content
           }).where('id', page.id)
 
-          WIKI.logger.info(`Упоминание "${ogPage.title}" заменено на "${opts.title}" на странице "${page.title}" (${page.path})`)
+          WIKI.logger.info(`Упоминание "${ogPage.title}" заменено на "${opts.title}" на странице "${page.title}" (/${page.path})`)
 
           await WIKI.models.pages.renderPage(page)
           WIKI.events.outbound.emit('deletePageFromCache', page.hash)
