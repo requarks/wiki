@@ -548,10 +548,6 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async updatePriority(opts) {
-    // 1. Для текущего пути запрашиваем все страницы по порядку
-    // 2. Устанавливаем новый порядок
-    // 3. Обновляем все страницы и проставляем новый приоритет (только если он изменился)
-    // 4. rebuildTree()
     for (const { id, orderPriority } of opts.pages) {
       await WIKI.models.pages.query()
         .where('id', id)
