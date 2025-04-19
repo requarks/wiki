@@ -389,6 +389,65 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // -> Ruslan: Check for title changes => Update all other links names to this page
+    // На pageLinks опираться нельзя, т.r. авто-сгенерированные страницы не добавляются в pageLink
+    if (ogPage.title !== opts.title) {
+      const allPages = await WIKI.models.pages.query()
+      const mentionedInPages = allPages.filter(page => page.content.includes(ogPage.path))
+
+      for (const page of mentionedInPages) {
+        // const page = mentionedInPages.find(page => page.title.includes('Шаблон'))
+
+        const $ = cheerio.load(page.content)
+
+        const targetLinks = $(`a[href="/${ogPage.path}"]`)
+
+        let changed = false
+
+        targetLinks.each((_, el) => {
+          const $el = $(el)
+
+          // Получаем все дочерние узлы (включая текстовые)
+          const contents = $el.contents()
+
+          // Ищем текстовый узел (type: "text")
+          contents.each((_, node) => {
+            if (node.type === 'text') {
+              node.data = opts.title
+              changed = true
+            } else if (node.children.length) {
+              const child1 = node.children[0]
+
+              if (child1.type === 'text') {
+                child1.data = opts.title
+                changed = true
+              } else if (child1.children.length) {
+                const child2 = child1.children[0]
+
+                if (child2.type === 'text') {
+                  child2.data = opts.title
+                  changed = true
+                }
+              }
+            }
+          })
+        })
+
+        if (changed) {
+          page.content = $.html()
+
+          await WIKI.models.pages.query().patch({
+            content: page.content
+          }).where('id', page.id)
+
+          WIKI.logger.info(`Упоминание "${ogPage.title}" заменено на "${opts.title}" на странице "${page.title}" (${page.path})`)
+
+          await WIKI.models.pages.renderPage(page)
+          WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+        }
+      }
+    }
+
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
