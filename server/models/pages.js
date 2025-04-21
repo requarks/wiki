@@ -395,7 +395,7 @@ module.exports = class Page extends Model {
       const allPages = await WIKI.models.pages.query()
       const mentionedInPages = allPages.filter(page => page.content.includes(ogPage.path))
 
-      const batch = 5
+      const batch = 3
       const iterations = Math.ceil(mentionedInPages.length / batch)
 
       for (let i = 0; i < iterations; i++) {
