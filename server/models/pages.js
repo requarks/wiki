@@ -391,7 +391,7 @@ module.exports = class Page extends Model {
 
     // -> Ruslan: Check for title changes => Update all other links names to this page
     // На pageLinks опираться нельзя, т.r. авто-сгенерированные страницы не добавляются в pageLink
-    if (ogPage.title !== opts.title) {
+    if (opts.title && ogPage.title !== opts.title) {
       const allPages = await WIKI.models.pages.query()
       const mentionedInPages = allPages.filter(page => page.content.includes(ogPage.path))
 
