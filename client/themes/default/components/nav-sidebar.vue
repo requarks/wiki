@@ -14,7 +14,7 @@
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='flex: 1 1 100%;'
-        @click='switchMode(`browse`)'
+        @click='switchMode(`tree`)'
         )
         v-icon(left) mdi-file-tree
         .body-2.text-none {{$t('common:sidebar.browse')}}
@@ -26,7 +26,7 @@
         @click='switchMode(`tree`)'
         )
         v-icon(left) mdi-file-tree
-        .body-2.text-none {{$t('common:sidebar.tree')}}
+        .body-2.text-none {{'Обзор'}}
       v-btn.ml-3(
         v-else-if='currentMode === `tree`'
         depressed
@@ -361,11 +361,12 @@ export default {
   mounted () {
     this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
-      this.currentMode = 'browse'
-    } else if (this.navMode === 'STATIC') {
-      this.currentMode = 'custom'
-    } else if (this.navMode === 'NEWTREE') {
       this.currentMode = 'tree'
+    }
+    if (this.navMode === 'STATIC') {
+      this.currentMode = 'custom'
+    // } else if (this.navMode === 'NEWTREE') {
+    //   this.currentMode = 'tree'
     } else {
       this.currentMode = window.localStorage.getItem('navPref') || 'custom'
     }
@@ -387,7 +388,7 @@ export default {
     padding: 8px 0;
     font-weight: 500;
     line-height: 1rem;
-    font-size: 0.8rem;
+    font-size: 1rem;
   }
 
   .tree-item-link {
@@ -406,13 +407,37 @@ export default {
     color: inherit;
   }
 
-  a {
-    text-decoration: none;
-  }
-  &.theme--dark{
-    a {
-      color: white;
-    }
-  }
+  //.tree-item {
+  //  width: 100%;
+  //  padding: 8px 0;
+  //  font-weight: 500;
+  //  line-height: 1rem;
+  //  font-size: 0.8rem;
+  //}
+  //
+  //.tree-item-link {
+  //  display: block;
+  //  width: 100%;
+  //  text-decoration: none;
+  //  color: inherit;
+  //}
+  //
+  //.tree-item-link a {
+  //  display: block;
+  //  width: 100%;
+  //  padding: 8px 16px;
+  //  margin: -8px 0;
+  //  text-decoration: none;
+  //  color: inherit;
+  //}
+  //
+  //a {
+  //  text-decoration: none;
+  //}
+  //&.theme--dark{
+  //  a {
+  //    color: white;
+  //  }
+  //}
 }
 </style>
