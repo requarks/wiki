@@ -248,6 +248,8 @@ export default {
       this.currentEditor = `editor${_.startCase(this.initEditor || 'markdown')}`
     }
 
+    document.addEventListener('keydown', this.handleKeyDown)
+
     window.onbeforeunload = () => {
       if (!this.exitConfirmed && this.initContentParsed !== this.$store.get('editor/content')) {
         return this.$t('editor:unsavedWarning')
@@ -263,7 +265,18 @@ export default {
     // this.$store.set('editor/mode', 'edit')
     // this.currentEditor = `editorApi`
   },
+  beforeDestroy() {
+    // Удаляем обработчик при уничтожении компонента
+    document.removeEventListener('keydown', this.handleKeyDown)
+  },
   methods: {
+    handleKeyDown(e) {
+      // Проверяем сочетание Ctrl+S (или Cmd+S для Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault() // Предотвращаем стандартное поведение браузера
+        this.save() // Вызываем метод сохранения
+      }
+    },
     openPropsModal(name) {
       this.dialogProps = true
     },
