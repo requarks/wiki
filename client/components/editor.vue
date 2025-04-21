@@ -275,6 +275,9 @@ export default {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault() // Предотвращаем стандартное поведение браузера
         this.save() // Вызываем метод сохранения
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        this.exit() // Вызываем метод выхода
       }
     },
     openPropsModal(name) {
