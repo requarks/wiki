@@ -395,48 +395,51 @@ module.exports = class Page extends Model {
       const allPages = await WIKI.models.pages.query()
       const mentionedInPages = allPages.filter(page => page.content.includes(ogPage.path))
 
-      for (const page of mentionedInPages) {
-        // const page = mentionedInPages.find(page => page.title.includes('Шаблон'))
+      const batch = 5
+      const iterations = Math.ceil(mentionedInPages.length / batch)
 
-        const $ = cheerio.load(page.content)
+      for (let i = 0; i < iterations; i++) {
+        const batchPages = mentionedInPages.slice(i * batch, i * batch + batch)
 
-        const targetLinks = $(`a[href="/${ogPage.path}"]`)
+        await Promise.all(batchPages.map(async (page) => {
+          const $ = cheerio.load(page.content)
 
-        let changed = false
+          const targetLinks = $(`a[href="/${ogPage.path}"]`)
 
-        targetLinks.each((_, el) => {
-          const $el = $(el)
+          let changed = false
 
-          // Получаем все дочерние узлы (включая текстовые)
-          const contents = $el.contents()
+          targetLinks.each((_, el) => {
+            const $el = $(el)
 
-          // Рекурсивная функция для поиска и замены текста
-          const replaceText = (nodes) => {
-            nodes.each((_, node) => {
-              if (node.type === 'text') {
-                node.data = opts.title
-                changed = true
-              } else if (node.children) {
-                replaceText($(node).contents())
-              }
-            })
+            const contents = $el.contents()
+
+            const replaceText = (nodes) => {
+              nodes.each((_, node) => {
+                if (node.type === 'text') {
+                  node.data = opts.title
+                  changed = true
+                } else if (node.children) {
+                  replaceText($(node).contents())
+                }
+              })
+            }
+
+            replaceText(contents)
+          })
+
+          if (changed) {
+            page.content = $.html()
+
+            await WIKI.models.pages.query().patch({
+              content: page.content
+            }).where('id', page.id)
+
+            WIKI.logger.info(`Упоминание "${ogPage.title}" заменено на "${opts.title}" на странице "${page.title}" (/${page.path})`)
+
+            await WIKI.models.pages.renderPage(page)
+            WIKI.events.outbound.emit('deletePageFromCache', page.hash)
           }
-
-          replaceText(contents)
-        })
-
-        if (changed) {
-          page.content = $.html()
-
-          await WIKI.models.pages.query().patch({
-            content: page.content
-          }).where('id', page.id)
-
-          WIKI.logger.info(`Упоминание "${ogPage.title}" заменено на "${opts.title}" на странице "${page.title}" (/${page.path})`)
-
-          await WIKI.models.pages.renderPage(page)
-          WIKI.events.outbound.emit('deletePageFromCache', page.hash)
-        }
+        }))
       }
     }
 
