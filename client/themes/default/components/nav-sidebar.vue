@@ -70,8 +70,8 @@
         v-icon(v-else-if="open") mdi-folder-open
         v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
-        div(class='tree-item')
-          a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path")
+        div(class='tree-item' :class="{ 'tree-item-link': !item.children }")
+          a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path" class='tree-item-link')
             span {{item.name}}
           span(v-else) {{item.name}}
 
@@ -380,12 +380,32 @@ export default {
 </script>
 
 <style lang="scss">
+
 .v-treeview{
   .tree-item {
+    width: 100%;
+    padding: 8px 0;
     font-weight: 500;
     line-height: 1rem;
     font-size: 0.8rem;
   }
+
+  .tree-item-link {
+    display: block;
+    width: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .tree-item-link a {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    margin: -8px 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
   a {
     text-decoration: none;
   }
