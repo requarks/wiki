@@ -7,6 +7,7 @@
   "dev": false,
   "scripts": {
     "start": "node server",
+    "publish": "bash ./publish.sh",
     "dev": "NODE_OPTIONS=--openssl-legacy-provider node dev",
     "build": "NODE_OPTIONS=--openssl-legacy-provider webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "NODE_OPTIONS=--openssl-legacy-provider webpack --config dev/webpack/webpack.dev.js",
