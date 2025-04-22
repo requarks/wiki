@@ -14,7 +14,7 @@
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='flex: 1 1 100%;'
-        @click='switchMode(`tree`)'
+        @click='switchMode(`browse`)'
         )
         v-icon(left) mdi-file-tree
         .body-2.text-none {{$t('common:sidebar.browse')}}
@@ -70,10 +70,13 @@
         v-icon(v-else-if="open") mdi-folder-open
         v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
-        div(class='tree-item' :class="{ 'tree-item-link': !item.children }")
-          a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path" class='tree-item-link')
-            span {{item.name}}
-          span(v-else) {{item.name}}
+        a.d-flex.align-center(
+          v-if="!item.children"
+          :href="'/'+item.locale+'/'+item.path"
+          style="width: 100%; text-decoration: none; color: inherit;"
+        )
+          span {{item.name}}
+        span(v-else) {{item.name}}
 
     //-> Browse
     v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
@@ -320,7 +323,7 @@ export default {
       this.treeItems = children.map(item => this.pageItem2TreeItem(item, 0))
       this.checkTreeDefaultOpen(this.treeItems, 0)
     },
-    async checkTreeDefaultOpen(items) {
+    checkTreeDefaultOpen(items) {
       const item = items.find(item => item.children && this.path.startsWith(item.path))
       if (item) {
         setTimeout(() => {
@@ -365,11 +368,12 @@ export default {
     }
     if (this.navMode === 'STATIC') {
       this.currentMode = 'custom'
-    // } else if (this.navMode === 'NEWTREE') {
-    //   this.currentMode = 'tree'
+    } else if (this.navMode === 'NEWTREE') {
+      this.currentMode = 'tree'
     } else {
       this.currentMode = window.localStorage.getItem('navPref') || 'custom'
     }
+
     if (this.currentMode === 'browse') {
       this.loadFromCurrentPath()
     }
@@ -381,63 +385,25 @@ export default {
 </script>
 
 <style lang="scss">
+.v-treeview {
+  .v-treeview-node {
+    &__root {
+      padding: 0;
+    }
 
-.v-treeview{
-  .tree-item {
-    width: 100%;
-    padding: 8px 0;
-    font-weight: 500;
-    line-height: 1rem;
-    font-size: 1rem;
+    &__content {
+      margin: 0;
+      width: 100%;
+    }
   }
 
-  .tree-item-link {
-    display: block;
-    width: 100%;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .tree-item-link a {
-    display: block;
+  a {
+    display: flex;
+    align-items: center;
     width: 100%;
     padding: 8px 16px;
-    margin: -8px 0;
     text-decoration: none;
     color: inherit;
   }
-
-  //.tree-item {
-  //  width: 100%;
-  //  padding: 8px 0;
-  //  font-weight: 500;
-  //  line-height: 1rem;
-  //  font-size: 0.8rem;
-  //}
-  //
-  //.tree-item-link {
-  //  display: block;
-  //  width: 100%;
-  //  text-decoration: none;
-  //  color: inherit;
-  //}
-  //
-  //.tree-item-link a {
-  //  display: block;
-  //  width: 100%;
-  //  padding: 8px 16px;
-  //  margin: -8px 0;
-  //  text-decoration: none;
-  //  color: inherit;
-  //}
-  //
-  //a {
-  //  text-decoration: none;
-  //}
-  //&.theme--dark{
-  //  a {
-  //    color: white;
-  //  }
-  //}
 }
 </style>
