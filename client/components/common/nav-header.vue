@@ -243,10 +243,10 @@
     page-convert(v-model='convertPageModal', v-if='path && path.length')
 
     .nav-header-dev(v-if='isDevMode')
-      v-icon mdi-alert
+      v-icon mdi-check-circle
       div
         .overline DEVELOPMENT VERSION
-        .overline This code base is NOT for production use!
+        .overline Current code base connected to <strong>localhost</strong> database!
 </template>
 
 <script>
@@ -534,7 +534,7 @@ export default {
   }
 
   &-dev {
-    background-color: mc('red', '600');
+    background-color: mc('green', '600');
     position: absolute;
     top: 11px;
     left: 255px;
