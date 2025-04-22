@@ -392,6 +392,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: page.localeCode,
       path: page.path,
       mode: 'create'
@@ -1073,8 +1074,8 @@ module.exports = class Page extends Model {
    */
   static async reconnectLinks(opts) {
     const site = await WIKI.models.sites.query().findById(opts.siteId)
-    const sitePrefix = site.path
-    const pageHref = `/${sitePrefix}/${opts.path}`
+    const sitePath = site.path
+    const pageHref = `/${sitePath}/${opts.path}`
     let replaceArgs = {
       from: '',
       to: '',
@@ -1089,7 +1090,7 @@ module.exports = class Page extends Model {
         replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'move':
-        const prevPageHref = `/${sitePrefix}/${opts.sourcePath}`
+        const prevPageHref = `/${sitePath}/${opts.sourcePath}`
         replaceArgs.from = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
         replaceArgs.to = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
         replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
@@ -1106,7 +1107,7 @@ module.exports = class Page extends Model {
     }
 
     let affectedHashes = []
-    const targetPath = opts.mode === 'move' ? `${sitePrefix}/${opts.sourcePath}` : `${sitePrefix}/${opts.path}`
+    const targetPath = opts.mode === 'move' ? `${sitePath}/${opts.sourcePath}` : `${sitePath}/${opts.path}`
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
       const qryHashes = await WIKI.models.pages
