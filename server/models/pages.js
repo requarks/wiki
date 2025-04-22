@@ -1074,33 +1074,42 @@ module.exports = class Page extends Model {
    */
   static async reconnectLinks(opts) {
     const site = await WIKI.models.sites.query().findById(opts.siteId)
+    const host = WIKI.config.host
     const sitePath = site.path
     const pageHref = `/${sitePath}/${opts.path}`
     let replaceArgs = {
-      from: '',
-      to: '',
+      InternalFrom: '',
+      InternalTo: '',
+      ExternalFrom: '',
+      ExternalTo: '',
       MarkdownContentFrom: '',
       MarkdownContentTo: '',
       HtmlContentFrom: '',
-      HtmlContentTo: ''
+      HtmlContentTo: '',
+      ExternalHtmlContentFrom: '',
+      ExternalHtmlContentTo: ''
     }
     switch (opts.mode) {
       case 'create':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.InternalTo = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'move':
         const prevPageHref = `/${sitePath}/${opts.sourcePath}`
-        replaceArgs.from = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
-        replaceArgs.to = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
+        replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
+        replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
+        replaceArgs.ExternalFrom = `<a class="is-external-link" href="${host}${prevPageHref}">${opts.sourcePath}`
+        replaceArgs.ExternalTo = `<a class="is-external-link" href="${host}${pageHref}">${opts.path}`
         replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
         replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
         replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
         replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
+        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}${prevPageHref}">${prevPageHref}`
+        replaceArgs.ExternalHtmlContentTo = `<a href="${host}${pageHref}">${pageHref}`
         break
       case 'delete':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.InternalTo = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
         break
       default:
         return false
@@ -1114,27 +1123,29 @@ module.exports = class Page extends Model {
         .query()
         .returning('hash')
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
+          render: WIKI.models.knex.raw('REPLACE(REPLACE(??, ?, ?), ?, ?)', [
             'render',
-            replaceArgs.from,
-            replaceArgs.to
+            replaceArgs.InternalFrom,
+            replaceArgs.InternalTo,
+            replaceArgs.ExternalFrom,
+            replaceArgs.ExternalTo
           ]),
           content: WIKI.models.knex.raw(`
             REPLACE(
-              ??,
-              CASE 
-                WHEN "contentType" = 'markdown' THEN ?
-                WHEN "contentType" = 'html' THEN ?
-              END,
-              CASE
-                WHEN "contentType" = 'markdown' THEN ?
-                WHEN "contentType" = 'html' THEN ?
-              END
+              REPLACE(
+                ??,
+                CASE WHEN "contentType" = 'markdown' THEN ? WHEN "contentType" = 'html' THEN ? END,
+                CASE WHEN "contentType" = 'markdown' THEN ? WHEN "contentType" = 'html' THEN ? END
+              ),
+              CASE WHEN "contentType" = 'html' THEN ? END,
+              CASE WHEN "contentType" = 'html' THEN ? END
             )
           `, [
             'content',
             replaceArgs.MarkdownContentFrom, replaceArgs.HtmlContentFrom,
-            replaceArgs.MarkdownContentTo, replaceArgs.HtmlContentTo
+            replaceArgs.MarkdownContentTo, replaceArgs.HtmlContentTo,
+            replaceArgs.ExternalHtmlContentFrom,
+            replaceArgs.ExternalHtmlContentTo
           ])
         })
         .whereIn('pages.id', function () {
