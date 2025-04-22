@@ -447,5 +447,8 @@
     "type": "opencollective",
     "url": "https://opencollective.com/wikijs",
     "logo": "https://opencollective.com/opencollective/logo.txt"
+  },
+  "volta": {
+    "node": "20.18.2"
   }
 }
