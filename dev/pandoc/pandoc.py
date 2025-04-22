@@ -37,12 +37,12 @@ def convert_to_docx():
 def convert_to_pdf():
     file_suffix = uuid4().hex
     try:
-        input_path = os.path.join(OUTPUT_DIR, f'input_{file_suffix}.html')
-        output_path = os.path.join(OUTPUT_DIR, f'output_{file_suffix}.pdf')
+      input_path = os.path.join(OUTPUT_DIR, f'input_{file_suffix}.html')
+      output_path = os.path.join(OUTPUT_DIR, f'output_{file_suffix}.pdf')
 
-        # Save the input file
-        input_file = request.files['file']
-        input_file.save(input_path)
+      # Save the input file
+      input_file = request.files['file']
+      input_file.save(input_path)
 
         # Run Pandoc command
       subprocess.run(
