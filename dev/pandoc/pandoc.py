@@ -44,14 +44,24 @@ def convert_to_pdf():
       input_file = request.files['file']
       input_file.save(input_path)
 
-        # Run Pandoc command
-      subprocess.run(
+      # Run Pandoc command
+      try:
+        subprocess.run(
+              ['pandoc', input_path, '--pdf-engine=lualatex',
+              f'--template={TEMPLATE_PATH}', f'--lua-filter={LUA_PATH}', '-V', 'colorlinks=true', '-f', 'html', '-t', 'pdf', '-o', output_path],
+              check=True,
+              stdout=subprocess.PIPE,
+              stderr=subprocess.PIPE
+        )
+      except subprocess.CalledProcessError:
+         # If Lua filter fails, retry without it
+         subprocess.run(
             ['pandoc', input_path, '--pdf-engine=lualatex',
-            f'--template={TEMPLATE_PATH}', f'--lua-filter={LUA_PATH}', '-V', 'colorlinks=true', '-f', 'html', '-t', 'pdf', '-o', output_path],
+             f'--template={TEMPLATE_PATH}', '-V', 'colorlinks=true', '-f', 'html', '-t', 'pdf', '-o', output_path],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
-      )
+         )
 
       # Return the generated PDF
       return send_file(output_path, as_attachment=True)
