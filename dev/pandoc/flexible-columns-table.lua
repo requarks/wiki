@@ -100,11 +100,16 @@ local function renderChunk(tbl, colStart, colEnd, chunkIndex, totalChunks)
   table.insert(latex, "\\begin{longtable}{" .. colspec .. "}")
   table.insert(latex, "\\toprule")
 
-  -- Header
-  local headerRow = tbl.head.rows[1]
-  table.insert(latex, stringifyRow(headerRow, colIndices))
-  table.insert(latex, "\\midrule")
-  table.insert(latex, "\\endhead")
+  -- Header (fallback if missing)
+  local headerRow = (tbl.head and tbl.head.rows and tbl.head.rows[1])
+  if headerRow then
+    table.insert(latex, stringifyRow(headerRow, colIndices))
+    table.insert(latex, "\\midrule")
+    table.insert(latex, "\\endhead")
+  else
+    -- No header: skip \endhead block
+    table.insert(latex, "\\endfirsthead") -- avoid LaTeX error
+  end
 
   -- Body
   for _, row in ipairs(tbl.bodies[1].body or {}) do
