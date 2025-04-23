@@ -70,13 +70,10 @@
         v-icon(v-else-if="open") mdi-folder-open
         v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
-        a.d-flex.align-center(
-          v-if="!item.children"
-          :href="'/'+item.locale+'/'+item.path"
-          style="width: 100%; text-decoration: none; color: inherit;"
-        )
-          span {{item.name}}
-        span(v-else) {{item.name}}
+        div(class='tree-item')
+          a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path")
+            span {{item.name}}
+          span(v-else) {{item.name}}
 
     //-> Browse
     v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
@@ -385,25 +382,19 @@ export default {
 </script>
 
 <style lang="scss">
-.v-treeview {
-  .v-treeview-node {
-    &__root {
-      padding: 0;
-    }
-
-    &__content {
-      margin: 0;
-      width: 100%;
-    }
+.v-treeview{
+  .tree-item {
+    font-weight: 500;
+    line-height: 1rem;
+    font-size: 0.8rem;
   }
-
   a {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 8px 16px;
     text-decoration: none;
-    color: inherit;
+  }
+  &.theme--dark{
+    a {
+      color: white;
+    }
   }
 }
 </style>
