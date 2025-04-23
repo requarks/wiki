@@ -43,12 +43,16 @@ type CommentMutation {
     content: String!
     guestName: String
     guestEmail: String
+    mentions: [String]
   ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"]) @rateLimit(limit: 1, duration: 1)
 
   update(
     id: Int!
     content: String!
+    pageId: Int!
+    mentions: [String]
   ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+
 
   delete(
     id: Int!

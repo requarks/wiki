@@ -33,7 +33,7 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.white--text {{ mode === 'create' ? $t('common:actions.createNotify') : $t('common:actions.saveNotify') }}
+          span.white--text {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
@@ -401,6 +401,8 @@ export default {
             })
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
+            this.$store.set('editor/mentions', [])
+            this.$root.$emit('saved-page')
             this.exitConfirmed = true
 
             window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
@@ -502,18 +504,20 @@ export default {
               title: this.$store.get('page/title'),
               siteId: this.$store.get('page/siteId'),
               notifyFollowers: notifyFollowers,
-              mentions: this.$store.get('editor/mentions')
+              mentions: WIKI.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
           if (_.get(resp, 'responseResult.succeeded')) {
             this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
             this.isConflict = false
+            WIKI.$store.set('editor/mentions', [])
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.updateSuccess'),
               style: 'success',
               icon: 'check'
             })
+            this.$root.$emit('saved-page')
 
             if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
               _.delay(() => {

@@ -19,6 +19,7 @@ import moment from 'moment-timezone'
 import VueMoment from 'vue-moment'
 import store from './store'
 import Cookies from 'js-cookie'
+import FloatingVue from 'floating-vue'
 
 // ====================================
 // Load Modules
@@ -141,6 +142,7 @@ Vue.use(helpers)
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
 Vue.use(Vuescroll)
+Vue.use(FloatingVue)
 
 Vue.prototype.Velocity = Velocity
 
@@ -148,30 +150,30 @@ Vue.prototype.Velocity = Velocity
 // Register Vue Components
 // ====================================
 
-Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
-Vue.component('comments', () => import(/* webpackChunkName: "comments" */ './components/comments.vue'))
-Vue.component('editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
-Vue.component('history', () => import(/* webpackChunkName: "history" */ './components/history.vue'))
-Vue.component('loader', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/loader.vue'))
-Vue.component('login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
-Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
-Vue.component('new-page', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
-Vue.component('notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
-Vue.component('not-found', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
-Vue.component('page-selector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
-Vue.component('page-source', () => import(/* webpackChunkName: "source" */ './components/source.vue'))
-Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
-Vue.component('register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))
-Vue.component('search-results', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/search-results.vue'))
-Vue.component('social-sharing', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/social-sharing.vue'))
-Vue.component('tags', () => import(/* webpackChunkName: "tags" */ './components/tags.vue'))
-Vue.component('unauthorized', () => import(/* webpackChunkName: "unauthorized" */ './components/unauthorized.vue'))
-Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
-Vue.component('v-card-info', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-info.vue'))
-Vue.component('welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
+Vue.component('Admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
+Vue.component('Comments', () => import(/* webpackChunkName: "comments" */ './components/comments.vue'))
+Vue.component('Editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
+Vue.component('History', () => import(/* webpackChunkName: "history" */ './components/history.vue'))
+Vue.component('Loader', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/loader.vue'))
+Vue.component('Login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
+Vue.component('NavHeader', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
+Vue.component('NewPage', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
+Vue.component('Notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
+Vue.component('NotFound', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
+Vue.component('PageSelector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
+Vue.component('PageSource', () => import(/* webpackChunkName: "source" */ './components/source.vue'))
+Vue.component('Profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
+Vue.component('Register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))
+Vue.component('SearchResults', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/search-results.vue'))
+Vue.component('SocialSharing', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/social-sharing.vue'))
+Vue.component('Tags', () => import(/* webpackChunkName: "tags" */ './components/tags.vue'))
+Vue.component('Unauthorized', () => import(/* webpackChunkName: "unauthorized" */ './components/unauthorized.vue'))
+Vue.component('VCardChin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
+Vue.component('VCardInfo', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-info.vue'))
+Vue.component('Welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
 
-Vue.component('nav-footer', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
-Vue.component('page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
+Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
+Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
   // ====================================
@@ -210,7 +212,7 @@ let bootstrap = () => {
         dark: darkModeEnabled
       }
     }),
-    mounted () {
+    mounted() {
       this.$moment.locale(siteConfig.lang)
       if ((store.get('user/dateFormat') || '').length > 0) {
         this.$moment.updateLocale(this.$moment.locale(), {

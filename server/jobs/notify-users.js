@@ -2,7 +2,7 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event }) => {
+module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEmail, userIds, event, subjectText }) => {
   WIKI.logger.info(`Notifying users for page ID ${pageId}...`)
 
   try {
@@ -13,6 +13,9 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
 
     const recipients = []
 
+    // Get allowed domains from configuration
+    const allowedDomains = WIKI.config.mail.allowedDomains ? WIKI.config.mail.allowedDomains.split(',').map(domain => domain.trim()) : []
+
     for (const activeUser of activeUsers) {
       const hasReadAccess = WIKI.auth.checkAccess(activeUser, ['read:pages'], {
         path: pagePath,
@@ -20,7 +23,10 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
       })
 
       if (hasReadAccess) {
-        recipients.push(activeUser.email)
+        const userDomain = activeUser.email.split('@')[1]
+        if (allowedDomains.length === 0 || allowedDomains.includes(userDomain)) {
+          recipients.push(activeUser.email)
+        }
       }
     }
 
@@ -33,8 +39,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
         template: 'page-notify',
         to: '',
         bcc: batch,
-        subject: `[Page Notification] Page ${eventText.charAt(0).toUpperCase() + eventText.slice(1)}: ${pageTitle}`,
-        text: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
+        subject: `[Page Notification] ${subjectText}: ${pageTitle}`,
         data: {
           preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
           pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,

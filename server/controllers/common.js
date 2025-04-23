@@ -116,7 +116,7 @@ router.get(['/d', '/d/:sitePath/*'], async (req, res, next) => {
  * Create/Edit document
  */
 router.get(['/e', '/e/:sitePath/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: true })
+  const pageArgs = pageHelper.parsePath(req.params[0], { stripExt: false })
   const site = await getSite(req.params?.sitePath)
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {

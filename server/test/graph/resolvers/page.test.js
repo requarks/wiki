@@ -73,7 +73,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [2],
-        event: 'CREATE_PAGE'
+        event: 'CREATE_PAGE',
+        subjectText: 'Created Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
     })
@@ -113,7 +114,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [3],
-        event: 'MENTION_PAGE'
+        event: 'MENTION_PAGE',
+        subjectText: 'Mentioned in Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
     })
@@ -155,7 +157,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [2],
-        event: 'CREATE_PAGE'
+        event: 'CREATE_PAGE',
+        subjectText: 'Created Page'
       })
       expect(notifyUsers).toHaveBeenCalledWith({
         siteId: args.siteId,
@@ -165,7 +168,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [3],
-        event: 'MENTION_PAGE'
+        event: 'MENTION_PAGE',
+        subjectText: 'Mentioned in Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
     })
@@ -205,7 +209,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [2],
-        event: 'UPDATE_PAGE'
+        event: 'UPDATE_PAGE',
+        subjectText: 'Updated Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
     })
@@ -242,7 +247,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [3],
-        event: 'MENTION_PAGE'
+        event: 'MENTION_PAGE',
+        subjectText: 'Mentioned in Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
     })
@@ -283,7 +289,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [2],
-        event: 'UPDATE_PAGE'
+        event: 'UPDATE_PAGE',
+        subjectText: 'Updated Page'
       })
       expect(notifyUsers).toHaveBeenCalledWith({
         siteId: args.siteId,
@@ -293,7 +300,8 @@ describe('Page Resolvers', () => {
         sitePath: args.sitePath,
         userEmail: context.req.user.email,
         userIds: [3],
-        event: 'MENTION_PAGE'
+        event: 'MENTION_PAGE',
+        subjectText: 'Mentioned in Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
     })

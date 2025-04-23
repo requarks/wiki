@@ -1,5 +1,6 @@
 const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
+const userService = require('../services/userService')
 
 /* global WIKI */
 
@@ -34,7 +35,7 @@ module.exports = {
 
       return usr
     },
-    async profile (obj, args, context, info) {
+    async profile(obj, args, context, info) {
       if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
         throw new WIKI.Error.AuthRequired()
       }
@@ -57,36 +58,40 @@ module.exports = {
 
       // Validate the search text: should contain only allowed characters in an email address
       const emailRegex = /^[a-zA-Z0-9._%+-@]*$/
-      if (!emailRegex.test(query)) {
+      if (!emailRegex.test(query) || query.trim() === '' || /^[%_]+$/.test(query)) {
         return []
       }
 
       // Check if the request user has access to the site
       const userHasAccess = WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], { siteId })
       if (!userHasAccess) {
-        throw new WIKI.Error.AuthForbidden('User does not have access to the site')
+        throw new WIKI.Error.SiteForbidden()
       }
 
-      // Prepare the query to search emails
-      const emails = await WIKI.models.users.query()
-        .distinct('users.email')
-        .join('userGroups', 'userGroups.userId', 'users.id')
-        .whereIn('userGroups.groupId', function() {
-          this.select('id')
-            .from('groups')
-            .whereRaw("rules::jsonb @> ?", JSON.stringify([{ sites: [siteId], deny: false, roles: ['read:pages'] }]))
-            .orWhereRaw("rules::jsonb @> ?", JSON.stringify([{ sites: [siteId], deny: false, roles: ['manage:sites'] }]))
-        })
-        .andWhere('users.email', 'like', `${query}%`)
+      try {
+        // Prepare the query to search emails
+        const emails = await WIKI.models.users.query()
+          .distinct('users.email')
+          .join('userGroups', 'userGroups.userId', 'users.id')
+          .whereIn('userGroups.groupId', function () {
+            this.select('id')
+              .from('groups')
+              .whereRaw('rules::jsonb @> ?', JSON.stringify([{ sites: [siteId], deny: false, roles: ['read:pages'] }]))
+              .orWhereRaw('rules::jsonb @> ?', JSON.stringify([{ sites: [siteId], deny: false, roles: ['manage:sites'] }]))
+          })
+          .andWhereRaw('LOWER(users.email) LIKE ?', `${query.toLowerCase()}%`)
 
-      // Extract only the email addresses
-      const emailAddresses = [...new Set(emails.map(user => user.email))]
+        // Extract only the email addresses
+        const emailAddresses = [...new Set(emails.map(user => user.email))]
 
-      return emailAddresses
+        return emailAddresses
+      } catch (error) {
+        throw new Error(`Failed to fetch email addresses: ${error.message}`)
+      }
     }
   },
   UserMutation: {
-    async create (obj, args) {
+    async create(obj, args) {
       try {
         await WIKI.models.users.createNewUser(args)
 
@@ -97,28 +102,31 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async delete (obj, args) {
+    async delete(obj, args) {
       try {
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
         }
-        await WIKI.models.users.deleteUser(args.id, args.replaceId)
 
-        WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
-        WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
+        const user = await WIKI.models.users.query().findById(args.id)
+        const mentionedPages = await WIKI.models.userMentions.getMentionedPages(args.id)
+        const mentionedComments = await WIKI.models.userMentions.getMentionedComments(args.id)
+        const userComments = await WIKI.models.comments.query().where('authorId', args.id)
+
+        await WIKI.models.users.deleteUser(args.id, args.replaceId)
+        await userService.revokeUserTokens(args.id)
+
+        await userService.renderMentionedPages(mentionedPages)
+        await userService.anonymizeComments(user, mentionedComments, userComments)
 
         return {
           responseResult: graphHelper.generateSuccess('User deleted successfully')
         }
       } catch (err) {
-        if (err.message.indexOf('foreign') >= 0) {
-          return graphHelper.generateError(new WIKI.Error.UserDeleteForeignConstraint())
-        } else {
-          return graphHelper.generateError(err)
-        }
+        return userService.handleDeleteError(err)
       }
     },
-    async update (obj, args) {
+    async update(obj, args) {
       try {
         await WIKI.models.users.updateUser(args)
 
@@ -129,7 +137,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async verify (obj, args) {
+    async verify(obj, args) {
       try {
         await WIKI.models.users.query().patch({ isVerified: true }).findById(args.id)
 
@@ -140,7 +148,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async activate (obj, args) {
+    async activate(obj, args) {
       try {
         await WIKI.models.users.query().patch({ isActive: true }).findById(args.id)
 
@@ -151,7 +159,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async deactivate (obj, args) {
+    async deactivate(obj, args) {
       try {
         if (args.id <= 2) {
           throw new Error('Cannot deactivate system accounts.')
@@ -168,7 +176,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async enableTFA (obj, args) {
+    async enableTFA(obj, args) {
       try {
         await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
 
@@ -179,7 +187,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async disableTFA (obj, args) {
+    async disableTFA(obj, args) {
       try {
         await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
 
@@ -190,10 +198,10 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    resetPassword (obj, args) {
+    resetPassword(obj, args) {
       return false
     },
-    async updateProfile (obj, args, context) {
+    async updateProfile(obj, args, context) {
       try {
         if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
           throw new WIKI.Error.AuthRequired()
@@ -216,7 +224,7 @@ module.exports = {
 
         await WIKI.models.users.updateUser({
           id: usr.id,
-          name: _.trim(args.name),
+          name: WIKI.auth.isSuperAdmin(context.req.user) ? _.trim(args.name) : usr.name,
           jobTitle: _.trim(args.jobTitle),
           location: _.trim(args.location),
           timezone: args.timezone,
@@ -234,7 +242,7 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async changePassword (obj, args, context) {
+    async changePassword(obj, args, context) {
       try {
         if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
           throw new WIKI.Error.AuthRequired()
@@ -272,16 +280,16 @@ module.exports = {
     }
   },
   User: {
-    groups (usr) {
+    groups(usr) {
       return usr.$relatedQuery('groups')
     }
   },
   UserProfile: {
-    async groups (usr) {
+    async groups(usr) {
       const usrGroups = await usr.$relatedQuery('groups')
       return usrGroups.map(g => g.name)
     },
-    async pagesTotal (usr) {
+    async pagesTotal(usr) {
       const result = await WIKI.models.pages.query().count('* as total').where('creatorId', usr.id).first()
       return _.toSafeInteger(result.total)
     }

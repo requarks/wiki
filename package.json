@@ -87,6 +87,7 @@
     "express-session": "1.18.1",
     "file-type": "20.0.0",
     "filesize": "6.1.0",
+    "floating-vue": "1.0.0-beta.19",
     "fs-extra": "9.0.1",
     "getos": "3.2.1",
     "graphql": "15.3.0",
@@ -187,6 +188,7 @@
     "uslug": "1.0.4",
     "uuid": "9.0.0",
     "validate.js": "0.13.1",
+    "vue-mention": "1.0.0-floating-vue1",
     "winston": "3.8.2",
     "xss": "1.0.14",
     "yargs": "17.6.2"
@@ -445,5 +447,8 @@
     "type": "opencollective",
     "url": "https://opencollective.com/wikijs",
     "logo": "https://opencollective.com/opencollective/logo.txt"
+  },
+  "volta": {
+    "node": "20.18.2"
   }
 }

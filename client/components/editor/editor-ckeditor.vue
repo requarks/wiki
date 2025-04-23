@@ -180,16 +180,15 @@ export default {
       this.editDiagram(selectedImg)
     })
 
-    // Track new mentions and remove old mentions
-    let newMentions = new Map()
-
     this.editor.model.document.on('change:data', (evt, data) => {
+      // Track new mentions and remove old mentions
+      let newMentions = new Map()
       const changes = data.operations.filter((op) => op.type === 'insert')
       changes.forEach((change) => {
         for (const node of change.nodes) {
           if (node.hasAttribute('mention')) {
             let mention = node.getAttribute('mention')
-            console.log('New mention detected:', node.getAttribute('mention'))
+            mention.id = mention.id.substring(1)
             newMentions.set(mention['uid'], mention)
           }
         }
@@ -219,16 +218,12 @@ export default {
           newMentions.delete(uid)
         }
       }
+      // Merge new mentions with existing mentions in the store
+      const existingMentions = this.$store.get('editor/mentions') || []
+      const mergedMentions = new Set([...existingMentions, ...Array.from(newMentions.values()).map((mention) => mention.id)])
+
       // Set the mentions in the Vuex store
-      this.$store.set(
-        'editor/mentions',
-        Array.from(
-          newMentions.values().map((mention) => {
-            mention.id = mention.id.substring(1)
-            return mention.id
-          })
-        )
-      )
+      this.$store.set('editor/mentions', Array.from(mergedMentions))
     })
   },
   beforeDestroy () {

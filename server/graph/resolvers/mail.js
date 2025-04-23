@@ -57,7 +57,8 @@ module.exports = {
           useDKIM: args.useDKIM,
           dkimDomainName: args.dkimDomainName,
           dkimKeySelector: args.dkimKeySelector,
-          dkimPrivateKey: args.dkimPrivateKey
+          dkimPrivateKey: args.dkimPrivateKey,
+          allowedDomains: args.allowedDomains
         }
         await WIKI.configSvc.saveToDb(['mail'])
 

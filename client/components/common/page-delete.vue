@@ -22,7 +22,7 @@
         v-spacer
         v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
         v-btn.px-4(color='red darken-2', @click='deletePage(false)', :loading='loading').white--text {{$t('common:actions.delete')}}
-        v-btn.px-4(color='red darken-2', @click='deletePage(true)', :loading='loading').white--text {{$t('common:actions.deleteNotify')}}
+        v-btn.px-4(color='red darken-2', @click='deletePage(true)', :loading='loading').white--text Delete & Notify
 </template>
 
 <script>
