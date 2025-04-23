@@ -557,6 +557,21 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Update an Icon of Existing Page
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
+  static async updateIcon(opts) {
+    const { id, icon } = opts
+
+    await WIKI.models.pages.query()
+      .where('id', id)
+      .patch({ icon })
+
+    await WIKI.models.pages.rebuildTree()
+  }
+
+  /**
    * Convert an Existing Page
    *
    * @param {Object} opts Page Properties

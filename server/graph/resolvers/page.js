@@ -447,6 +447,24 @@ module.exports = {
     },
 
     /**
+     * UPDATE PAGE ICON
+     */
+    async updateIcon(obj, args, context) {
+      try {
+        const page = await WIKI.models.pages.updateIcon({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page icon has been updated.'),
+          page
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+
+    /**
      * CONVERT PAGE
      */
     async convert(obj, args, context) {

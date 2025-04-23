@@ -1,0 +1,15 @@
+mutation (
+  $id: Int!
+  $icon: String!
+) {
+  pages {
+    updateIcon(
+      id: $id
+      icon: $icon
+    ) {
+      responseResult {
+        succeeded
+      }
+    }
+  }
+}

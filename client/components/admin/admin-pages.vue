@@ -94,9 +94,27 @@
                 :class="{'drag-over': dragOverIndex === props.index}"
               )
                 td.text-xs-right {{ props.item.id }}
-                td.text-xs-right {{ props.item.icon }}
                 td
-                  v-icon(v-if='props.item.icon') mdi-{{ props.item.icon }}
+                  v-icon mdi-{{props.item.icon}}
+                td
+                  v-edit-dialog(
+                    :return-value.sync='props.item.icon'
+                    @save='saveIcon(props.item)'
+                    @cancel='cancelIcon'
+                    @open='openIcon(props.item)'
+                    large
+                  )
+                    div {{ props.item.icon || '—' }}
+                    template(v-slot:input)
+                      v-text-field(
+                        v-model='props.item.icon'
+                        label='Edit icon name'
+                        single-line
+                        counter
+                        autofocus
+                      )
+                    template(v-slot:append)
+                      v-icon(v-if='props.item.icon') mdi-{{ props.item.icon }}
                 td.text-xs-right {{ props.item.orderPriority }}
                 td
                   .body-2: strong {{ props.item.title }}
@@ -115,6 +133,7 @@
 import _ from 'lodash'
 import pagesQuery from 'gql/admin/pages/pages-query-list.gql'
 import updatePagePriorityMutation from 'gql/admin/pages/update-page-priority.gql'
+import updatePageIconMutation from 'gql/admin/pages/update-page-icon.gql'
 
 export default {
   data() {
@@ -126,8 +145,8 @@ export default {
       pageTotal: 0,
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
-        { text: 'Icon name', value: 'icon' },
         { text: 'Icon', value: 'icon' },
+        { text: 'Icon name', value: 'icon' },
         { text: 'Order', value: 'orderPriority', width: 100 },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },
@@ -148,7 +167,10 @@ export default {
       dragged: false,
       draggedItem: null,
       draggedIndex: null,
-      dragOverIndex: null
+      dragOverIndex: null,
+      editedIcon: '',
+      editDialog: false,
+      editedItem: null
     }
   },
   computed: {
@@ -177,6 +199,40 @@ export default {
     }
   },
   methods: {
+    openIcon(item) {
+      this.editedItem = item
+      this.editedIcon = item.icon
+    },
+    async saveIcon(item) {
+      try {
+        await this.$apollo.mutate({
+          mutation: updatePageIconMutation,
+          variables: {
+            id: item.id,
+            icon: item.icon
+          }
+        })
+
+        this.$store.commit('showNotification', {
+          message: 'Icon updated successfully',
+          style: 'success',
+          icon: 'check'
+        })
+      } catch (error) {
+        this.$store.commit('showNotification', {
+          message: 'Failed to update icon',
+          style: 'error',
+          icon: 'error'
+        })
+        // Восстановите предыдущее значение в случае ошибки
+        item.icon = this.editedIcon
+      }
+    },
+    cancelIcon() {
+      if (this.editedItem) {
+        this.editedItem.icon = this.editedIcon
+      }
+    },
     async saveNewOrder() {
       try {
         // Получаем страницы текущей группы
@@ -329,7 +385,7 @@ export default {
       fetchPolicy: 'network-only',
       update: function (data) {
         const pages = data.pages.list.map(p => {
-          p.group = p.path.includes('/') ? p.path.split('/')[0] : null
+          p.group = `/${p.path.includes('/') ? p.path.split('/')[0] : ''}`
           return p
         })
 
