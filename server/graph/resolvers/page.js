@@ -285,29 +285,6 @@ module.exports = {
         }
       }).orderBy([{ column: 'isFolder', order: 'desc' }, 'orderPriority'])
 
-      const customFolderOrder = [
-        'Аккаунты',
-        'Software',
-        'WebStorm',
-        'Intro',
-        'Git',
-        'JavaScript',
-        'TypeScript',
-        'Database',
-        'Backend-1',
-        'Backend-2',
-        'Job'
-
-      ]
-
-      results.sort((a, b) => {
-        if (a.isFolder !== b.isFolder) {
-          return b.isFolder - a.isFolder
-        }
-
-        return customFolderOrder.indexOf(a.title) - customFolderOrder.indexOf(b.title)
-      })
-
       return results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
