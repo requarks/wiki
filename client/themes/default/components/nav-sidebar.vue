@@ -311,7 +311,12 @@ export default {
       parent.children = []
       if (parent.pageId) {
         parent.children.push({
-          id: parent.pageId, level: parent.level + 1, path: parent.path, locale: parent.locale, name: parent.name
+          id: parent.pageId,
+          level: parent.level + 1,
+          icon: parent.icon,
+          path: parent.path,
+          locale: parent.locale,
+          name: parent.name
         })
       }
       parent.children.push(
