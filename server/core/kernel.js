@@ -87,6 +87,10 @@ module.exports = {
     WIKI.scheduler.start()
 
     await WIKI.models.subscribeToNotifications()
+
+    WIKI.logger.info('=======================================')
+    WIKI.logger.info(`✅ ✅ ✅\tApplication is ready ✅ ✅ ✅\t`)
+    WIKI.logger.info('=======================================')
   },
   /**
    * Init Telemetry

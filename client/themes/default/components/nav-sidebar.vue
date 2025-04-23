@@ -26,7 +26,7 @@
         @click='switchMode(`tree`)'
         )
         v-icon(left) mdi-file-tree
-        .body-2.text-none {{$t('common:sidebar.tree')}}
+        .body-2.text-none {{'Обзор'}}
       v-btn.ml-3(
         v-else-if='currentMode === `tree`'
         depressed
@@ -57,6 +57,7 @@
     v-treeview(
       v-else-if='currentMode === `tree`'
       activatable
+      dense
       open-on-click
       :color='"white"'
       :active='treeDefaultActive'
@@ -70,8 +71,8 @@
         v-icon(v-else-if="open") mdi-folder-open
         v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
-        div(class='tree-item' :class="{ 'tree-item-link': !item.children }")
-          a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path" class='tree-item-link')
+        div(class='tree-item')
+          a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path")
             span {{item.name}}
           span(v-else) {{item.name}}
 
@@ -276,7 +277,7 @@ export default {
         return { id: item.id, level: level, path: item.path, locale: item.locale, name: item.title }
       }
     },
-    activeTreeItem(id) {
+    activeTreeItem([id]) {
       const find = (items) => {
         for (const item of items) {
           if (item.id === id) {
@@ -320,7 +321,7 @@ export default {
       this.treeItems = children.map(item => this.pageItem2TreeItem(item, 0))
       this.checkTreeDefaultOpen(this.treeItems, 0)
     },
-    async checkTreeDefaultOpen(items) {
+    checkTreeDefaultOpen(items) {
       const item = items.find(item => item.children && this.path.startsWith(item.path))
       if (item) {
         setTimeout(() => {
@@ -361,14 +362,16 @@ export default {
   mounted () {
     this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
-      this.currentMode = 'browse'
-    } else if (this.navMode === 'STATIC') {
+      this.currentMode = 'tree'
+    }
+    if (this.navMode === 'STATIC') {
       this.currentMode = 'custom'
     } else if (this.navMode === 'NEWTREE') {
       this.currentMode = 'tree'
     } else {
       this.currentMode = window.localStorage.getItem('navPref') || 'custom'
     }
+
     if (this.currentMode === 'browse') {
       this.loadFromCurrentPath()
     }
@@ -380,32 +383,12 @@ export default {
 </script>
 
 <style lang="scss">
-
 .v-treeview{
   .tree-item {
-    width: 100%;
-    padding: 8px 0;
     font-weight: 500;
     line-height: 1rem;
     font-size: 0.8rem;
   }
-
-  .tree-item-link {
-    display: block;
-    width: 100%;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .tree-item-link a {
-    display: block;
-    width: 100%;
-    padding: 8px 16px;
-    margin: -8px 0;
-    text-decoration: none;
-    color: inherit;
-  }
-
   a {
     text-decoration: none;
   }
@@ -413,6 +396,23 @@ export default {
     a {
       color: white;
     }
+  }
+}
+
+.v-treeview-node {
+  min-height: 32px; /* Уменьшаем минимальную высоту узла */
+
+  .v-treeview-node__root {
+    min-height: 32px; /* Уменьшаем минимальную высоту корневого элемента */
+    padding: 2px 0;   /* Уменьшаем вертикальные отступы */
+  }
+
+  .v-treeview-node__content {
+    margin: 2px 0;    /* Уменьшаем отступы содержимого */
+  }
+
+  .v-treeview-node__children {
+    margin-left: 16px; /* Уменьшаем отступ для дочерних элементов */
   }
 }
 </style>
