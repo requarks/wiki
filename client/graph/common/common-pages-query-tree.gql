@@ -4,6 +4,8 @@ query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
       id
       path
       title
+      icon
+      orderPriority
       isFolder
       pageId
       parent

@@ -67,7 +67,8 @@
       @update:active='activeTreeItem'
     )
       template(v-slot:prepend="{ item, open }")
-        v-icon(v-if="!item.children") mdi-text-box
+        v-icon(v-if="!item.children && item.icon") mdi-{{ item.icon }}
+        v-icon(v-else-if="!item.children && !item.icon") mdi-text-box
         v-icon(v-else-if="open") mdi-folder-open
         v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
@@ -272,9 +273,9 @@ export default {
     },
     pageItem2TreeItem(item, level) {
       if (item.isFolder) {
-        return { id: item.id, level: level, pageId: item.pageId, path: item.path, locale: item.locale, name: item.title, children: [] }
+        return { id: item.id, icon: item.icon, level: level, pageId: item.pageId, path: item.path, locale: item.locale, name: item.title, children: [] }
       } else {
-        return { id: item.id, level: level, path: item.path, locale: item.locale, name: item.title }
+        return { id: item.id, icon: item.icon, level: level, path: item.path, locale: item.locale, name: item.title }
       }
     },
     activeTreeItem([id]) {
@@ -342,6 +343,7 @@ export default {
                 id
                 path
                 title
+                icon
                 isFolder
                 pageId
                 parent
@@ -356,6 +358,7 @@ export default {
           locale: this.locale
         }
       })
+
       return _.get(resp, 'data.pages.tree', [])
     }
   },

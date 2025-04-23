@@ -94,6 +94,9 @@
                 :class="{'drag-over': dragOverIndex === props.index}"
               )
                 td.text-xs-right {{ props.item.id }}
+                td.text-xs-right {{ props.item.icon }}
+                td
+                  v-icon(v-if='props.item.icon') mdi-{{ props.item.icon }}
                 td.text-xs-right {{ props.item.orderPriority }}
                 td
                   .body-2: strong {{ props.item.title }}
@@ -123,6 +126,8 @@ export default {
       pageTotal: 0,
       headers: [
         { text: 'ID', value: 'id', width: 80, sortable: true },
+        { text: 'Icon name', value: 'icon' },
+        { text: 'Icon', value: 'icon' },
         { text: 'Order', value: 'orderPriority', width: 100 },
         { text: 'Title', value: 'title' },
         { text: 'Path', value: 'path' },

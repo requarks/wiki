@@ -285,7 +285,8 @@ type PageListItem {
   title: String
   description: String
   contentType: String!
-  orderPriority: Int
+  orderPriority: Int!
+  icon: String!
   isPublished: Boolean!
   isPrivate: Boolean!
   privateNS: String
@@ -298,6 +299,8 @@ type PageTreeItem {
   id: Int!
   path: String!
   depth: Int!
+  orderPriority: Int!
+  icon: String!
   title: String!
   isPrivate: Boolean!
   isFolder: Boolean!

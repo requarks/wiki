@@ -5,6 +5,7 @@ query ($limit: Int, $orderBy: PageOrderBy, $orderByDirection: PageOrderByDirecti
       locale
       path
       title
+      icon
       description
       createdAt
       updatedAt
