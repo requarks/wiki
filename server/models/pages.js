@@ -1102,6 +1102,7 @@ module.exports = class Page extends Model {
     const host = WIKI.config.host
     const sitePath = site.path
     const pageHref = `/${sitePath}/${opts.path}`
+    const pageExternalHref = `/${sitePath}/${opts.sourceLocale}/${opts.path}`
     let replaceArgs = {
       InternalFrom: '',
       InternalTo: '',
@@ -1121,16 +1122,17 @@ module.exports = class Page extends Model {
         break
       case 'move':
         const prevPageHref = `/${sitePath}/${opts.sourcePath}`
+        const prevExternalPageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
         replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
         replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
-        replaceArgs.ExternalFrom = `<a class="is-external-link" href="${host}${prevPageHref}">${opts.sourcePath}`
-        replaceArgs.ExternalTo = `<a class="is-external-link" href="${host}${pageHref}">${opts.path}`
+        replaceArgs.ExternalFrom = `<a class="is-system-link" href="/e${prevExternalPageHref}">${host}/e${prevExternalPageHref}`
+        replaceArgs.ExternalTo = `<a class="is-system-link" href="/e${pageExternalHref}">${host}/e${pageExternalHref}`
         replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
         replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
         replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
         replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
-        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}${prevPageHref}">${prevPageHref}`
-        replaceArgs.ExternalHtmlContentTo = `<a href="${host}${pageHref}">${pageHref}`
+        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}/e${prevExternalPageHref}">${host}/e${prevExternalPageHref}`
+        replaceArgs.ExternalHtmlContentTo = `<a href="${host}/e${pageExternalHref}">${host}/e${pageExternalHref}`
         break
       case 'delete':
         replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
@@ -1156,21 +1158,32 @@ module.exports = class Page extends Model {
             replaceArgs.ExternalTo
           ]),
           content: WIKI.models.knex.raw(`
-            REPLACE(
-              REPLACE(
-                ??,
-                CASE WHEN "contentType" = 'markdown' THEN ? WHEN "contentType" = 'html' THEN ? END,
-                CASE WHEN "contentType" = 'markdown' THEN ? WHEN "contentType" = 'html' THEN ? END
-              ),
-              CASE WHEN "contentType" = 'html' THEN ? END,
-              CASE WHEN "contentType" = 'html' THEN ? END
-            )
-          `, [
+              CASE
+                WHEN "contentType" = 'markdown' THEN
+                  REPLACE(
+                    ??,
+                    ?, ?
+                  )
+                WHEN "contentType" = 'html' THEN
+                  REPLACE(
+                    REPLACE(
+                      ??,
+                      ?, ?
+                    ),
+                    ?, ?
+                  )
+                ELSE ?? -- fallback: keep content unchanged
+              END
+            `, [
             'content',
-            replaceArgs.MarkdownContentFrom, replaceArgs.HtmlContentFrom,
-            replaceArgs.MarkdownContentTo, replaceArgs.HtmlContentTo,
+            replaceArgs.MarkdownContentFrom,
+            replaceArgs.MarkdownContentTo,
+            'content',
+            replaceArgs.HtmlContentFrom,
+            replaceArgs.HtmlContentTo,
             replaceArgs.ExternalHtmlContentFrom,
-            replaceArgs.ExternalHtmlContentTo
+            replaceArgs.ExternalHtmlContentTo,
+            'content'
           ])
         })
         .whereIn('pages.id', function () {
