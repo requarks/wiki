@@ -8,13 +8,16 @@ jest.mock('../../../graph/services/userService')
 const WIKI = {
   auth: {
     checkAccess: jest.fn(),
-    revokeUserTokens: jest.fn()
+    revokeUserTokens: jest.fn(),
+    isSuperAdmin: jest.fn()
   },
   models: {
     users: {
       query: jest.fn(),
       findById: jest.fn(),
-      deleteUser: jest.fn()
+      deleteUser: jest.fn(),
+      updateUser: jest.fn(),
+      refreshToken: jest.fn()
     },
     userMentions: {
       query: jest.fn(),
@@ -42,21 +45,7 @@ const WIKI = {
       emit: jest.fn()
     }
   },
-  Error: {
-    AuthForbidden: class extends Error {
-      constructor() {
-        super('User does not have access to the site')
-      }
-    },
-    UserDeleteForeignConstraint: CustomError('UserDeleteForeignConstraint', {
-      message: 'Cannot delete user because of content relational constraints.',
-      code: 1017
-    }),
-    UserDeleteProtected: CustomError('UserDeleteProtected', {
-      message: 'Cannot delete a protected system account.',
-      code: 1018
-    })
-  }
+  Error: require('../../../helpers/error')
 }
 
 describe('UserQuery', () => {
@@ -135,7 +124,7 @@ describe('UserQuery', () => {
       // Mock the checkAccess function to return false
       WIKI.auth.checkAccess.mockReturnValue(false)
 
-      await expect(UserQuery.autoCompleteEmails(null, args, context)).rejects.toThrow('User does not have access to the site')
+      await expect(UserQuery.autoCompleteEmails(null, args, context)).rejects.toThrow(new WIKI.Error.SiteForbidden())
     })
 
     it('should return an empty array if no matching emails are found', async () => {
@@ -290,15 +279,14 @@ describe('UserQuery', () => {
 })
 
 describe('UserMutation', () => {
+  beforeEach(() => {
+    global.WIKI = WIKI
+  })
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
   describe('delete', () => {
-    beforeEach(() => {
-      global.WIKI = WIKI
-    })
-
-    afterEach(() => {
-      jest.clearAllMocks()
-    })
-
     it('should return UserDeleteProtected error response if args.id <= 2', async () => {
       // Arrange
       const args = { id: 2, replaceId: null }
@@ -401,6 +389,226 @@ describe('UserMutation', () => {
           succeeded: false
         }
       })
+    })
+  })
+
+  describe('updateProfile', () => {
+    it('Super admin can update own profile including display name successfully', async () => {
+      const args = {
+        name: 'Updated Name',
+        jobTitle: 'Updated Job Title',
+        location: 'Updated Location',
+        timezone: 'UTC',
+        dateFormat: 'YYYY-MM-DD',
+        appearance: 'dark'
+      }
+      const context = {
+        req: {
+          user: {
+            id: 3
+          }
+        }
+      }
+      const usr = {
+        id: 3,
+        isActive: true,
+        isVerified: true,
+        name: 'Old Name'
+      }
+      const newToken = { token: 'new.jwt.token' }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(usr)
+      })
+      WIKI.auth.isSuperAdmin.mockReturnValue(true)
+      WIKI.models.users.updateUser.mockResolvedValue()
+      WIKI.models.users.refreshToken.mockResolvedValue(newToken)
+
+      const result = await UserMutation.updateProfile(null, args, context)
+
+      expect(WIKI.models.users.query().findById).toHaveBeenCalledWith(
+        context.req.user.id
+      )
+      expect(WIKI.models.users.updateUser).toHaveBeenCalledWith({
+        id: usr.id,
+        name: args.name,
+        jobTitle: args.jobTitle,
+        location: args.location,
+        timezone: args.timezone,
+        dateFormat: args.dateFormat,
+        appearance: args.appearance
+      })
+
+      expect(WIKI.models.users.refreshToken).toHaveBeenCalledWith(usr.id)
+      expect(result).toEqual({
+        responseResult: graphHelper.generateSuccess(
+          'User profile updated successfully'
+        ),
+        jwt: newToken.token
+      })
+    })
+
+    it('Regular user can update own profile excluding display name successfully', async () => {
+      const args = {
+        name: 'Updated Name',
+        jobTitle: 'Updated Job Title',
+        location: 'Updated Location',
+        timezone: 'UTC',
+        dateFormat: 'YYYY-MM-DD',
+        appearance: 'dark'
+      }
+      const context = {
+        req: {
+          user: {
+            id: 3
+          }
+        }
+      }
+      const usr = {
+        id: 3,
+        isActive: true,
+        isVerified: true,
+        name: 'Old Name'
+      }
+      const newToken = { token: 'new.jwt.token' }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(usr)
+      })
+      WIKI.auth.isSuperAdmin.mockReturnValue(false)
+      WIKI.models.users.updateUser.mockResolvedValue()
+      WIKI.models.users.refreshToken.mockResolvedValue(newToken)
+
+      const result = await UserMutation.updateProfile(null, args, context)
+
+      expect(WIKI.models.users.query().findById).toHaveBeenCalledWith(
+        context.req.user.id
+      )
+      expect(WIKI.models.users.updateUser).toHaveBeenCalledWith({
+        id: usr.id,
+        name: usr.name,
+        jobTitle: args.jobTitle,
+        location: args.location,
+        timezone: args.timezone,
+        dateFormat: args.dateFormat,
+        appearance: args.appearance
+      })
+
+      expect(WIKI.models.users.refreshToken).toHaveBeenCalledWith(usr.id)
+      expect(result).toEqual({
+        responseResult: graphHelper.generateSuccess(
+          'User profile updated successfully'
+        ),
+        jwt: newToken.token
+      })
+    })
+
+    it('should throw AuthRequired error if the user is not authenticated', async () => {
+      const args = {}
+      const context = {
+        req: {
+          user: null
+        }
+      }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(null)
+      })
+
+      const result = await UserMutation.updateProfile(null, args, context)
+      expect(result).toEqual(graphHelper.generateError(new WIKI.Error.AuthRequired()))
+    })
+
+    it('should throw AuthAccountBanned error if the user is inactive', async () => {
+      const args = {}
+      const context = {
+        req: {
+          user: {
+            id: 3
+          }
+        }
+      }
+      const usr = {
+        id: 3,
+        isActive: false
+      }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(usr)
+      })
+
+      const result = await UserMutation.updateProfile(null, args, context)
+      expect(result).toEqual(graphHelper.generateError(new WIKI.Error.AuthAccountBanned()))
+    })
+
+    it('should throw AuthAccountNotVerified error if the user is not verified', async () => {
+      const args = {}
+      const context = {
+        req: {
+          user: {
+            id: 3
+          }
+        }
+      }
+      const usr = {
+        id: 3,
+        isActive: true,
+        isVerified: false
+      }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(usr)
+      })
+      const result = await UserMutation.updateProfile(null, args, context)
+      expect(result).toEqual(graphHelper.generateError(new WIKI.Error.AuthAccountNotVerified()))
+    })
+
+    it('should throw InputInvalid error if the dateFormat is invalid', async () => {
+      const args = {
+        dateFormat: 'INVALID_DATE_FORMAT'
+      }
+      const context = {
+        req: {
+          user: {
+            id: 3
+          }
+        }
+      }
+      const usr = {
+        id: 3,
+        isActive: true,
+        isVerified: true
+      }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(usr)
+      })
+      const result = await UserMutation.updateProfile(null, args, context)
+      expect(result).toEqual(graphHelper.generateError(new WIKI.Error.InputInvalid()))
+    })
+
+    it('should throw InputInvalid error if the appearance is invalid', async () => {
+      const args = {
+        appearance: 'INVALID_APPEARANCE'
+      }
+      const context = {
+        req: {
+          user: {
+            id: 3
+          }
+        }
+      }
+      const usr = {
+        id: 3,
+        isActive: true,
+        isVerified: true
+      }
+
+      WIKI.models.users.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue(usr)
+      })
+      const result = await UserMutation.updateProfile(null, args, context)
+      expect(result).toEqual(graphHelper.generateError(new WIKI.Error.InputInvalid()))
     })
   })
 })

@@ -53,7 +53,8 @@ const state = {
   },
   siteId: '',
   siteName: '',
-  sitePath: 'default'
+  sitePath: 'default',
+  hasChildren: false,
 }
 
 export default {

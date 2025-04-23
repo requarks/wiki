@@ -202,13 +202,13 @@ module.exports = class Asset extends Model {
         res.set('Content-disposition', 'attachment; filename=' + encodeURIComponent(fileInfo.base))
       }
 
-      let base64AssetOrSendDirectlyFileInResponse =  await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res, returnBase64Asset)
+      let base64AssetOrSendDirectlyFileInResponse = await WIKI.models.assets.getAssetFromCache(assetPath, cachePath, res, returnBase64Asset)
 
       if (base64AssetOrSendDirectlyFileInResponse) {
         WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from cache`)
         return base64AssetOrSendDirectlyFileInResponse
       }
-      base64AssetOrSendDirectlyFileInResponse =  await  WIKI.models.assets.getAssetFromStorage(assetPath, res, returnBase64Asset)
+      base64AssetOrSendDirectlyFileInResponse = await WIKI.models.assets.getAssetFromStorage(assetPath, res, returnBase64Asset)
       if (base64AssetOrSendDirectlyFileInResponse) {
         WIKI.logger.debug(`Asset ${sitePath}/${assetPath} served from storage`)
         return base64AssetOrSendDirectlyFileInResponse
@@ -225,8 +225,8 @@ module.exports = class Asset extends Model {
   }
 
   static async convertToBase64(filePath) {
-    const data = await fs.readFile(filePath);
-    return data.toString('base64');
+    const data = await fs.readFile(filePath)
+    return data.toString('base64')
   }
 
   static async getAssetFromCache(assetPath, cachePath, res, returnBase64Asset) {

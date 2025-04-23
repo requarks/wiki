@@ -568,6 +568,21 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Get the page tree starting from a given page
+   * @param {number} pageId
+   * @returns {Object[]} Page Tree List
+   */
+  static async getPageTreeFrom(pageId) {
+    return WIKI.models.knex
+      .select('pages.id', 'pages.path', 'pages.title', 'pages.contentType', 'pages.render', 'pages.content', 'pages.localeCode', 'pages.siteId')
+      .from('pages')
+      .join('pageTree', 'pages.id', 'pageTree.pageId')
+      .whereRaw(`"ancestors"::jsonb @> (SELECT ('[' || "id" || ']')::jsonb FROM "pageTree" WHERE "pageId" = ?)`, [pageId])
+      .orWhere('pages.id', pageId)
+      .orderBy('pages.path')
+  }
+
+  /**
    * Converts all diagram elements from a markdown page into diagram elements required by the visual editor
    * @param {Page} pageData
    * @returns {String}

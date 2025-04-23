@@ -1,0 +1,50 @@
+# -- DEV DOCKER-COMPOSE --
+# -- DO NOT USE IN PRODUCTION! --
+
+version: "3"
+services:
+  db:
+    # container_name: capwiki-db
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_USER: wikijs
+    logging:
+      driver: "none"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  wiki:
+    # container_name: capwiki-app
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: wiki
+      DB_PASS: wikijsrocks
+      DB_USER: wikijs
+      POOL_MIN: 100
+      POOL_MAX: 1000
+      POOL_ACQUIRE_TIMEOUT: 10000
+      POOL_CREATE_TIMEOUT: 10000
+      POOL_IDLE_TIMEOUT: 10000
+      PANDOC_URL: http://pandoc:80
+    depends_on:
+      - db
+      - pandoc
+    ports:
+      - "3002:3000"
+
+  pandoc:
+    # container_name: capwiki-pandoc
+    platform: linux/amd64
+    build:
+      context: ./dev/pandoc
+      # dockerfile: ./dev/pandoc/Dockerfile
+
+volumes:
+  db-data:
