@@ -17,16 +17,16 @@
         @click='switchMode(`tree`)'
         )
         v-icon(left) mdi-file-tree
-        .body-2.text-none {{$t('common:sidebar.browse')}}
-      v-btn.ml-3(
-        v-else-if='currentMode === `browse`'
-        depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
-        style='flex: 1 1 100%;'
-        @click='switchMode(`tree`)'
-        )
-        v-icon(left) mdi-file-tree
-        .body-2.text-none {{'Обзор'}}
+        .body-2.text-none {{'Темы'}}
+      //v-btn.ml-3(
+      //  v-else-if='currentMode === `browse`'
+      //  depressed
+      //  :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+      //  style='flex: 1 1 100%;'
+      //  @click='switchMode(`tree`)'
+      //  )
+      //  v-icon(left) mdi-file-tree
+      //  .body-2.text-none {{'Темы'}}
       v-btn.ml-3(
         v-else-if='currentMode === `tree`'
         depressed
@@ -34,8 +34,8 @@
         style='flex: 1 1 100%;'
         @click='switchMode(`custom`)'
         )
-        v-icon(left) mdi-navigation
-        .body-2.text-none {{$t('common:sidebar.mainMenu')}}
+        v-icon(left) mdi-menu
+        .body-2.text-none {{'Меню'}}
     v-divider
     //-> Custom Navigation
     v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
@@ -67,10 +67,12 @@
       @update:active='activeTreeItem'
     )
       template(v-slot:prepend="{ item, open }")
-        v-icon(v-if="!item.children && item.icon") mdi-{{ item.icon }}
-        v-icon(v-else-if="!item.children && !item.icon") mdi-text-box
-        v-icon(v-else-if="open") mdi-folder-open
-        v-icon(v-else) mdi-folder
+        v-icon(v-if="open") mdi-folder-open
+        v-icon(v-else) mdi-{{ item.icon }}
+        //v-icon(v-if="!item.children && item.icon") mdi-{{ item.icon }}
+        //v-icon(v-else-if="!item.children && !item.icon") mdi-text-box
+        //v-icon(v-else-if="open") mdi-folder-open
+        //v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
         div(class='tree-item')
           a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path")

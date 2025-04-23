@@ -13,12 +13,7 @@
     "watch": "NODE_OPTIONS=--openssl-legacy-provider webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open",
-    "postinstall": "patch-package",
-    "service:start": "docker compose up -d",
-    "service:stop": "docker compose stop",
-    "service:delete": "docker compose down -v",
-    "service:build": "npm run service:stop && docker compose up --build",
-    "service:recreate": "npm run service:delete && docker compose up --build --force-recreate"
+    "postinstall": "patch-package"
   },
   "repository": {
     "type": "git",
