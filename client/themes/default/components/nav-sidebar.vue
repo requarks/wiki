@@ -57,6 +57,7 @@
     v-treeview(
       v-else-if='currentMode === `tree`'
       activatable
+      dense
       open-on-click
       :color='"white"'
       :active='treeDefaultActive'
@@ -395,6 +396,23 @@ export default {
     a {
       color: white;
     }
+  }
+}
+
+.v-treeview-node {
+  min-height: 32px; /* Уменьшаем минимальную высоту узла */
+
+  .v-treeview-node__root {
+    min-height: 32px; /* Уменьшаем минимальную высоту корневого элемента */
+    padding: 2px 0;   /* Уменьшаем вертикальные отступы */
+  }
+
+  .v-treeview-node__content {
+    margin: 2px 0;    /* Уменьшаем отступы содержимого */
+  }
+
+  .v-treeview-node__children {
+    margin-left: 16px; /* Уменьшаем отступ для дочерних элементов */
   }
 }
 </style>
