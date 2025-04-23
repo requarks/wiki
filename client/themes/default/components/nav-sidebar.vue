@@ -277,7 +277,7 @@ export default {
         return { id: item.id, level: level, path: item.path, locale: item.locale, name: item.title }
       }
     },
-    activeTreeItem(id) {
+    activeTreeItem([id]) {
       const find = (items) => {
         for (const item of items) {
           if (item.id === id) {
