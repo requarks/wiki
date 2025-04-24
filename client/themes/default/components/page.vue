@@ -885,7 +885,7 @@ export default {
     async exportToDocument(fileType, queryParams) {
       this.isExportModalVisible = false
       this.isLoading = true
-      const response = await fetch(`/export/${fileType}/${this.pageId}?${queryParams}`, {
+      const response = await fetch(`/export/${fileType}/${this.siteId}/${this.pageId}?${queryParams}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
