@@ -1102,18 +1102,22 @@ module.exports = class Page extends Model {
     const host = WIKI.config.host
     const sitePath = site.path
     const pageHref = `/${sitePath}/${opts.path}`
-    const pageExternalHref = `/${sitePath}/${opts.sourceLocale}/${opts.path}`
+    const pageLocaleHref = `/${sitePath}/${opts.sourceLocale}/${opts.path}`
     let replaceArgs = {
       InternalFrom: '',
       InternalTo: '',
       ExternalFrom: '',
       ExternalTo: '',
+      ExternalLocaleFrom: '',
+      ExternalLocaleTo: '',
       MarkdownContentFrom: '',
       MarkdownContentTo: '',
       HtmlContentFrom: '',
       HtmlContentTo: '',
       ExternalHtmlContentFrom: '',
-      ExternalHtmlContentTo: ''
+      ExternalHtmlContentTo: '',
+      ExternalLocaleHtmlContentFrom: '',
+      ExternalLocaleHtmlContentTo: ''
     }
     switch (opts.mode) {
       case 'create':
@@ -1122,17 +1126,21 @@ module.exports = class Page extends Model {
         break
       case 'move':
         const prevPageHref = `/${sitePath}/${opts.sourcePath}`
-        const prevExternalPageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
+        const prevLocalePageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
         replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
         replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
-        replaceArgs.ExternalFrom = `<a class="is-system-link" href="/e${prevExternalPageHref}">${host}/e${prevExternalPageHref}`
-        replaceArgs.ExternalTo = `<a class="is-system-link" href="/e${pageExternalHref}">${host}/e${pageExternalHref}`
+        replaceArgs.ExternalLocaleFrom = `<a class="is-system-link" href="/e${prevLocalePageHref}">${host}/e${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleTo = `<a class="is-system-link" href="/e${pageLocaleHref}">${host}/e${pageLocaleHref}`
+        replaceArgs.ExternalFrom = `<a class="is-system-link" href="/e${prevPageHref}">${host}/e${prevPageHref}`
+        replaceArgs.ExternalTo = `<a class="is-system-link" href="/e${pageHref}">${host}/e${pageHref}`
         replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
         replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
         replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
         replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
-        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}/e${prevExternalPageHref}">${host}/e${prevExternalPageHref}`
-        replaceArgs.ExternalHtmlContentTo = `<a href="${host}/e${pageExternalHref}">${host}/e${pageExternalHref}`
+        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}/e${prevPageHref}">${host}/e${prevPageHref}`
+        replaceArgs.ExternalHtmlContentTo = `<a href="${host}/e${pageHref}">${host}/e${pageHref}`
+        replaceArgs.ExternalLocaleHtmlContentFrom = `<a href="${host}/e${prevLocalePageHref}">${host}/e${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleHtmlContentTo = `<a href="${host}/e${pageLocaleHref}">${host}/e${pageLocaleHref}`
         break
       case 'delete':
         replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
@@ -1150,37 +1158,49 @@ module.exports = class Page extends Model {
         .query()
         .returning('hash')
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(REPLACE(??, ?, ?), ?, ?)', [
+          render: WIKI.models.knex.raw(`
+              REPLACE(
+                REPLACE(
+                  REPLACE(??, ?, ?),
+                  ?, ?
+                ),
+                ?, ?
+              )
+            `, [
             'render',
             replaceArgs.InternalFrom,
             replaceArgs.InternalTo,
+            replaceArgs.ExternalLocaleFrom,
+            replaceArgs.ExternalLocaleTo,
             replaceArgs.ExternalFrom,
             replaceArgs.ExternalTo
           ]),
           content: WIKI.models.knex.raw(`
-              CASE
-                WHEN "contentType" = 'markdown' THEN
-                  REPLACE(
-                    ??,
-                    ?, ?
-                  )
-                WHEN "contentType" = 'html' THEN
+            CASE
+              WHEN "contentType" = 'markdown' THEN
+                REPLACE(??, ?, ?)
+              WHEN "contentType" = 'html' THEN
+                REPLACE(
                   REPLACE(
                     REPLACE(
                       ??,
                       ?, ?
                     ),
                     ?, ?
-                  )
-                ELSE ?? -- fallback: keep content unchanged
-              END
-            `, [
+                  ),
+                  ?, ?
+                )
+              ELSE ??
+            END
+          `, [
             'content',
             replaceArgs.MarkdownContentFrom,
             replaceArgs.MarkdownContentTo,
             'content',
             replaceArgs.HtmlContentFrom,
             replaceArgs.HtmlContentTo,
+            replaceArgs.ExternalLocaleHtmlContentFrom,
+            replaceArgs.ExternalLocaleHtmlContentTo,
             replaceArgs.ExternalHtmlContentFrom,
             replaceArgs.ExternalHtmlContentTo,
             'content'
