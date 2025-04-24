@@ -169,7 +169,7 @@ async function getExportHtmlContent(page, user, queryParams) {
   let pageTree = null
   let pageHTML = ''
   if (queryParams.isPageTreeExport) {
-    pageTree = await WIKI.models.pages.getPageTreeFrom(page.id)
+    pageTree = await WIKI.models.pages.getPageTreeFrom(page.siteId, page.id)
     pageHTML = getPageTreeExportHtml(pageTree, user, queryParams)
   } else {
     pageHTML = getPageExportHtml(page)

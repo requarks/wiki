@@ -572,11 +572,12 @@ module.exports = class Page extends Model {
    * @param {number} pageId
    * @returns {Object[]} Page Tree List
    */
-  static async getPageTreeFrom(pageId) {
+  static async getPageTreeFrom(siteId, pageId) {
     return WIKI.models.knex
       .select('pages.id', 'pages.path', 'pages.title', 'pages.contentType', 'pages.render', 'pages.content', 'pages.localeCode', 'pages.siteId')
       .from('pages')
       .join('pageTree', 'pages.id', 'pageTree.pageId')
+      .where('pageTree.siteId', siteId)
       .whereRaw(`"ancestors"::jsonb @> (SELECT ('[' || "id" || ']')::jsonb FROM "pageTree" WHERE "pageId" = ?)`, [pageId])
       .orWhere('pages.id', pageId)
       .orderBy('pages.path')

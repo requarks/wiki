@@ -47,8 +47,8 @@ async function validateAndFetchExportData(req, res) {
   const isValid = await validateExportRequest(req, res)
   if (!isValid) return null
 
-  const { siteId, pageId } = req.params
-  const { page, pageHTML, error, status } = await fetchPageAndHtml(siteId, pageId, req)
+  const { pageId } = req.params
+  const { page, pageHTML, error, status } = await fetchPageAndHtml(pageId, req)
 
   if (error) {
     res.status(status).send(error)
@@ -75,11 +75,8 @@ async function validateExportRequest(req, res) {
   return true
 }
 
-async function fetchPageAndHtml(siteId, pageId, req) {
-  const page = await WIKI.models.pages.getPage({
-    siteId: siteId,
-    ...req.query
-  })
+async function fetchPageAndHtml(pageId, req) {
+  const page = await WIKI.models.pages.getPage(Number(pageId))
   if (!page) {
     return { error: 'Page not found', status: 404 }
   }
