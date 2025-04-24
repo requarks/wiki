@@ -1,7 +1,7 @@
 <template lang="pug">
   div
     .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
-      v-btn(
+      v-btn.ml-2(
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='min-width:0;'
@@ -10,6 +10,15 @@
         )
         v-icon(size='20') mdi-home
       v-btn.ml-3(
+        depressed
+        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        style='min-width:0;'
+        @click='goStudentProfile'
+        :aria-label='$t(`common:header.home`)'
+      )
+        v-icon(size='20') mdi-account-box
+        //.body-2.text-none {{'Личная'}}
+      v-btn.ml-3(
         v-if='currentMode === `custom`'
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
@@ -17,7 +26,7 @@
         @click='switchMode(`tree`)'
         )
         v-icon(left) mdi-file-tree
-        .body-2.text-none {{'Темы'}}
+        //.body-2.text-none {{'Темы'}}
       //v-btn.ml-3(
       //  v-else-if='currentMode === `browse`'
       //  depressed
@@ -35,7 +44,7 @@
         @click='switchMode(`custom`)'
         )
         v-icon(left) mdi-menu
-        .body-2.text-none {{'Меню'}}
+        //.body-2.text-none {{'Меню'}}
     v-divider
     //-> Custom Navigation
     v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
@@ -270,6 +279,15 @@ export default {
         window.open(url, '_blank')
       } else {
         // Иначе открываем в текущем окне
+        window.location.assign(url)
+      }
+    },
+    goStudentProfile (event) {
+      const url = '/Users/profile'
+
+      if (event.ctrlKey || event.metaKey) {
+        window.open(url, '_blank')
+      } else {
         window.location.assign(url)
       }
     },
