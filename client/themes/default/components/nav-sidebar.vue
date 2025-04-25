@@ -348,7 +348,15 @@ export default {
       this.checkTreeDefaultOpen(this.treeItems, 0)
     },
     checkTreeDefaultOpen(items) {
-      const item = items.find(item => item.children && this.path.startsWith(item.path))
+      const autoOpenBlacklist = 'Users'
+
+      const item = items.find(item => {
+        if (item.path.startsWith(autoOpenBlacklist)) {
+          return false
+        }
+
+        return item.children && this.path.startsWith(item.path)
+      })
       if (item) {
         setTimeout(() => {
           this.treeDefaultOpen.push(item.id)
