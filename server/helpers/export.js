@@ -34,7 +34,7 @@ function handleInternalLinks(pageHTML, sitePath, locale, pagePaths) {
 }
 
 const getSite = async (sitePath) => {
-  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: false })
+  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
 }
 
 async function getSiteIdByPath(sitePath) {
