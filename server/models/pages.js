@@ -393,18 +393,21 @@ module.exports = class Page extends Model {
     // На pageLinks опираться нельзя, т.r. авто-сгенерированные страницы не добавляются в pageLink
     if (opts.title && ogPage.title !== opts.title) {
       const allPages = await WIKI.models.pages.query()
-      const mentionedInPages = allPages.filter(page => page.content.includes(ogPage.path))
+      const mentionedInPages = allPages.filter(page => page.content.includes(`data-page-id="${ogPage.id}"`))
 
       for (const page of mentionedInPages) {
-        // const page = mentionedInPages.find(page => page.title.includes('Шаблон'))
-
         const $ = cheerio.load(page.content)
 
-        const targetLinks = $(`a[href="/${ogPage.path}"]`)
+        const targetLinks = $(`a[data-page-id="${ogPage.id}"]`)
 
         let changed = false
 
         targetLinks.each((_, el) => {
+          if ('data-mention' in el.attribs) {
+            el.attribs['data-mention'] = `@${opts.title}`
+            changed = true
+          }
+
           const $el = $(el)
 
           // Получаем все дочерние узлы (включая текстовые)
