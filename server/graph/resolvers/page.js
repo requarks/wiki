@@ -546,7 +546,7 @@ module.exports = {
           (acc, page) => {
             const mentionedInPlan = planPage.content.includes(`data-page-id="${page.id}"`)
 
-            const li = `<li><label class="todo-list__label"><input ${mentionedInPlan ? 'checked="checked"' : ''} disabled="disabled" type="checkbox"><span class="todo-list__label__description">&nbsp;<a href="/${page.path}" data-page-id="${page.id}" data-mention="@${page.title}" class="mention is-internal-link is-valid-page">${page.title}</a>&nbsp;</span></label></li>`
+            const li = `<li><label class="todo-list__label"><input ${mentionedInPlan ? 'checked="checked"' : ''} disabled="disabled" type="checkbox"><span class="todo-list__label__description">&nbsp;<a href="/${page.path}" data-page-id="${page.id}" data-mention="@${page.title}" class="mention is-internal-link is-valid-page">${page.title}${mentionedInPlan ? '' : ' 📌'}</a>&nbsp;</span></label></li>`
             const [section] = page.path.split('/')
 
             if (section !== acc.previousSection) {
