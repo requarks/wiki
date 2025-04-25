@@ -1144,8 +1144,8 @@
   }
 
   .mention {
-    background-color: rgba(153, 0, 48, .1);
-    color: #990030;
+    //background-color: #ececec;
+    color: #1676d2;
 
     @at-root .theme--dark & {
       color: mc('pink', '500');
