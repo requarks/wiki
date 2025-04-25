@@ -1,6 +1,6 @@
 <template lang="pug">
   div
-    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
+    .pa-3.d-flex(:class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
       v-btn.ml-2(
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
@@ -17,54 +17,18 @@
         :aria-label='$t(`common:header.home`)'
       )
         v-icon(size='20') mdi-account-box
-        //.body-2.text-none {{'Личная'}}
-      v-btn.ml-3(
-        v-if='currentMode === `custom`'
+      v-btn.ml-2(
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='flex: 1 1 100%;'
-        @click='switchMode(`tree`)'
-        )
-        v-icon(left) mdi-file-tree
-        //.body-2.text-none {{'Темы'}}
-      //v-btn.ml-3(
-      //  v-else-if='currentMode === `browse`'
-      //  depressed
-      //  :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
-      //  style='flex: 1 1 100%;'
-      //  @click='switchMode(`tree`)'
-      //  )
-      //  v-icon(left) mdi-file-tree
-      //  .body-2.text-none {{'Темы'}}
-      v-btn.ml-3(
-        v-else-if='currentMode === `tree`'
-        depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
-        style='flex: 1 1 100%;'
-        @click='switchMode(`custom`)'
-        )
-        v-icon(left) mdi-menu
-        //.body-2.text-none {{'Меню'}}
+        @click='goPlan'
+        :aria-label='$t(`common:header.home`)'
+      )
+        v-icon(size='20') mdi-book-education
     v-divider
-    //-> Custom Navigation
-    v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
-      template(v-for='item of items')
-        v-list-item(
-          v-if='item.k === `link`'
-          :href='item.t'
-          :target='item.y === `externalblank` ? `_blank` : `_self`'
-          :rel='item.y === `externalblank` ? `noopener` : ``'
-          )
-          v-list-item-avatar(size='24', tile)
-            v-icon(v-if='item.c.match(/fa[a-z] fa-/)', size='19') {{ item.c }}
-            v-icon(v-else) {{ item.c }}
-          v-list-item-title {{ item.l }}
-        v-divider.my-2(v-else-if='item.k === `divider`')
-        v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
 
     //-> Tree Navigation
     v-treeview(
-      v-else-if='currentMode === `tree`'
       activatable
       dense
       open-on-click
@@ -78,38 +42,11 @@
       template(v-slot:prepend="{ item, open }")
         v-icon(v-if="open") mdi-folder-open
         v-icon(v-else) mdi-{{ item.icon }}
-        //v-icon(v-if="!item.children && item.icon") mdi-{{ item.icon }}
-        //v-icon(v-else-if="!item.children && !item.icon") mdi-text-box
-        //v-icon(v-else-if="open") mdi-folder-open
-        //v-icon(v-else) mdi-folder
       template(v-slot:label="{ item }")
         div(class='tree-item')
           a(v-if="!item.children" :href="'/'+item.locale+'/'+item.path")
             span {{item.name}}
           span(v-else) {{item.name}}
-
-    //-> Browse
-    //v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
-    //  template(v-if='currentParent.id > 0')
-    //    v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='fetchBrowseItems(item)', style='min-height: 30px;')
-    //      v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
-    //        v-icon(small) mdi-folder-open
-    //      v-list-item-title {{ item.title }}
-    //    v-divider.mt-2
-    //    v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
-    //      v-list-item-avatar(size='24')
-    //        v-icon mdi-text-box
-    //      v-list-item-title {{ currentParent.title }}
-    //    v-subheader.pl-4 {{$t('common:sidebar.currentDirectory')}}
-    //  template(v-for='item of currentItems')
-    //    v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='fetchBrowseItems(item)')
-    //      v-list-item-avatar(size='24')
-    //        v-icon mdi-folder
-    //      v-list-item-title {{ item.title }}
-    //    v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
-    //      v-list-item-avatar(size='24')
-    //        v-icon mdi-text-box
-    //      v-list-item-title {{ item.title }}
 </template>
 
 <script>
@@ -140,7 +77,6 @@ export default {
   },
   data() {
     return {
-      currentMode: 'custom',
       currentItems: [],
       currentParent: {
         id: 0,
@@ -158,16 +94,6 @@ export default {
     locale: get('page/locale')
   },
   methods: {
-    switchMode (mode) {
-      this.currentMode = mode
-      window.localStorage.setItem('navPref', mode)
-      if (mode === `browse` && this.loadedCache.length < 1) {
-        this.loadFromCurrentPath()
-      }
-      if (mode === 'tree') {
-        this.fetchTreeRoot()
-      }
-    },
     async fetchBrowseItems (item) {
       this.$store.commit(`loadingStart`, 'browse-load')
       if (!item) {
@@ -291,6 +217,15 @@ export default {
         window.location.assign(url)
       }
     },
+    goPlan (event) {
+      const url = '/plan'
+
+      if (event.ctrlKey || event.metaKey) {
+        window.open(url, '_blank')
+      } else {
+        window.location.assign(url)
+      }
+    },
     pageItem2TreeItem(item, level) {
       if (item.isFolder) {
         return { id: item.id, icon: item.icon, level: level, pageId: item.pageId, path: item.path, locale: item.locale, name: item.title, children: [] }
@@ -397,23 +332,8 @@ export default {
   },
   mounted () {
     this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
-    if (this.navMode === 'TREE') {
-      this.currentMode = 'tree'
-    }
-    if (this.navMode === 'STATIC') {
-      this.currentMode = 'custom'
-    } else if (this.navMode === 'NEWTREE') {
-      this.currentMode = 'tree'
-    } else {
-      this.currentMode = window.localStorage.getItem('navPref') || 'custom'
-    }
 
-    if (this.currentMode === 'browse') {
-      this.loadFromCurrentPath()
-    }
-    if (this.currentMode === 'tree') {
-      this.fetchTreeRoot()
-    }
+    this.fetchTreeRoot()
   }
 }
 </script>
@@ -423,7 +343,7 @@ export default {
   .tree-item {
     font-weight: 500;
     line-height: 1rem;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
   a {
     text-decoration: none;
@@ -436,19 +356,19 @@ export default {
 }
 
 .v-treeview-node {
-  min-height: 32px; /* Уменьшаем минимальную высоту узла */
+  min-height: 32px;
 
   .v-treeview-node__root {
-    min-height: 32px; /* Уменьшаем минимальную высоту корневого элемента */
-    padding: 2px 0;   /* Уменьшаем вертикальные отступы */
+    min-height: 32px;
+    padding: 4px 0;
   }
 
   .v-treeview-node__content {
-    margin: 2px 0;    /* Уменьшаем отступы содержимого */
+    margin: 4px 0;
   }
 
   .v-treeview-node__children {
-    margin-left: 16px; /* Уменьшаем отступ для дочерних элементов */
+    margin-left: 16px;
   }
 }
 </style>
