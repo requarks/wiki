@@ -126,6 +126,8 @@ type PageMutation {
    icon: String!
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
+  updateContent: DefaultResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
+
   convert(
     id: Int!
     editor: String!

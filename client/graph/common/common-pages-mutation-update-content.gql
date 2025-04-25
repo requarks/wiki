@@ -1,0 +1,9 @@
+mutation {
+  pages {
+    updateContent {
+      responseResult {
+        succeeded
+      }
+    }
+  }
+}

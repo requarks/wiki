@@ -188,6 +188,16 @@
               span {{$t('common:actions.exit')}}
             v-divider(vertical)
 
+          //- Update Content
+
+          template(v-if='isAuthenticated && isAdmin')
+            v-tooltip(bottom, v-if='mode !== `admin`')
+              template(v-slot:activator='{ on }')
+                v-btn(icon, tile, height='64', v-on='on', @click="updateContent")
+                  v-icon(color='grey') mdi-file-document-refresh
+              span {{'Обновить Content'}}
+            v-divider(vertical)
+
           //- ACCOUNT
 
           v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
@@ -254,6 +264,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
+import updateContentPageMutation from 'gql/common/common-pages-mutation-update-content.gql'
 
 /* global siteConfig, siteLangs */
 
@@ -372,6 +383,23 @@ export default {
     this.isDevMode = siteConfig.devMode === true
   },
   methods: {
+    async updateContent() {
+      try {
+        await this.$apollo.mutate({ mutation: updateContentPageMutation })
+
+        this.$store.commit('showNotification', {
+          message: 'Content page updated successfully',
+          style: 'success',
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          message: 'Failed to update content page',
+          style: 'error',
+          icon: 'error'
+        })
+      }
+    },
     searchFocus () {
       this.searchIsFocused = true
     },

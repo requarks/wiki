@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const graphHelper = require('../../helpers/graph')
+const moment = require('moment')
 
 /* global WIKI */
 
@@ -451,13 +452,132 @@ module.exports = {
      */
     async updateIcon(obj, args, context) {
       try {
-        const page = await WIKI.models.pages.updateIcon({
-          ...args,
-          user: context.req.user
-        })
+        const { id, icon } = args
+
+        await WIKI.models.pages.query()
+          .where('id', id)
+          .patch({ icon })
+
+        await WIKI.models.pages.rebuildTree()
+
         return {
-          responseResult: graphHelper.generateSuccess('Page icon has been updated.'),
-          page
+          responseResult: graphHelper.generateSuccess('Page icon has been updated.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+
+    /**
+     * UPDATE CONTENT PAGE
+     */
+    async updateContent(obj, args, context) {
+      try {
+        const openTag = '<ul class="todo-list">\n'
+        const closeTag = '</ul>\n'
+        const nbsp = '<p>&nbsp;</p>\n'
+        const header = `<blockquote><p><strong>⛔️ Технический раздел!</strong> Обновление от <strong>${moment().format('DD.MM.YYYY HH:mm')}</strong></p></blockquote>\n`
+
+        const contentPageId = 232
+        const planPageId = 2
+
+        const [page] = await WIKI.models.pages.query()
+          .select()
+          .where('id', contentPageId)
+
+        if (!page) {
+          throw Error('Content page not found')
+        }
+
+        const [planPage] = await WIKI.models.pages.query()
+          .select()
+          .where('id', planPageId)
+
+        let pages = await WIKI.models.pages.query()
+          .select('id', 'path', 'orderPriority', 'title')
+          .orderBy(['localeCode', 'path'])
+
+        /**
+         * Sorting order:
+         * Every not custom path without "/"
+         * Every not custom path with "/"
+         * Custom order for paths with "/"
+         */
+        const customSortingOrder = [
+          'Intro',
+          'WebStorm',
+          'Git',
+          'Software',
+          'JavaScript',
+          'TypeScript',
+          'Backend-1',
+          'Backend-2'
+        ]
+        pages = pages
+          .filter(({ path }) => !path.startsWith('Users'))
+          .sort((a, b) => {
+            const aHasSlash = a.path.includes('/')
+            const bHasSlash = b.path.includes('/')
+
+            if (aHasSlash !== bHasSlash) {
+              return aHasSlash ? 1 : -1
+            }
+
+            const [aPathPart] = a.path.split('/')
+            const [bPathPart] = b.path.split('/')
+
+            const aPriority = customSortingOrder.indexOf(aPathPart)
+            const bPriority = customSortingOrder.indexOf(bPathPart)
+
+            if (aPriority !== bPriority) {
+              return aPriority > bPriority ? 1 : -1
+            }
+
+            const pathComparison = aPathPart.localeCompare(bPathPart)
+
+            if (pathComparison !== 0) {
+              return pathComparison
+            }
+
+            return a.orderPriority - b.orderPriority
+          })
+
+        let { content } = pages.reduce(
+          (acc, page) => {
+            const mentionedInPlan = planPage.content.includes(`data-page-id="${page.id}"`)
+
+            const li = `<li><label class="todo-list__label"><input ${mentionedInPlan ? 'checked="checked"' : ''} disabled="disabled" type="checkbox"><span class="todo-list__label__description">&nbsp;<a href="/${page.path}" data-page-id="${page.id}" data-mention="@${page.title}" class="mention is-internal-link is-valid-page">${page.title}</a>&nbsp;</span></label></li>`
+            const [section] = page.path.split('/')
+
+            if (section !== acc.previousSection) {
+              if (acc.previousSection !== '') {
+                acc.content += closeTag
+              }
+
+              acc.previousSection = section
+
+              acc.content += nbsp
+              acc.content += `<h1>${section}</h1>\n`
+              acc.content += openTag
+            }
+
+            acc.content += li
+
+            return acc
+          },
+          { content: header, previousSection: '' }
+        )
+
+        content += closeTag
+
+        await WIKI.models.pages.query()
+          .where('id', contentPageId)
+          .patch({ content })
+
+        await WIKI.models.pages.renderPage(page)
+
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been updated.')
         }
       } catch (err) {
         return graphHelper.generateError(err)
