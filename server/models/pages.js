@@ -390,7 +390,6 @@ module.exports = class Page extends Model {
     }
 
     // -> Ruslan: Check for title changes => Update all other links names to this page
-    // На pageLinks опираться нельзя, т.r. авто-сгенерированные страницы не добавляются в pageLink
     if (opts.title && ogPage.title !== opts.title) {
       const allPages = await WIKI.models.pages.query()
       const mentionedInPages = allPages.filter(page => page.content.includes(`data-page-id="${ogPage.id}"`))
@@ -441,6 +440,22 @@ module.exports = class Page extends Model {
           WIKI.events.outbound.emit('deletePageFromCache', page.hash)
         }
       }
+    }
+
+    const planPageId = 2
+    if (opts.id === planPageId) {
+      const pageIds = []
+      const regex = /data-page-id="(\d+)"/g
+      let match
+
+      while ((match = regex.exec(opts.content)) !== null) {
+        const id = Number(match[1])
+        if (!pageIds.includes(id)) {
+          pageIds.push(id)
+        }
+      }
+
+      await WIKI.models.pages.updatePriority({ pages: pageIds.map((id, idx) => ({ id, orderPriority: idx + 1 })) })
     }
 
     // -> Create version snapshot
