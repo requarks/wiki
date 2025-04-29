@@ -335,7 +335,7 @@ export default {
                 $tags: [String]!
                 $title: String!
                 $siteId: String!
-                $notifyFollowers: Boolean!
+                $notifyFollowers: Boolean
                 $mentions: [String]
               ) {
                 pages {
@@ -451,7 +451,7 @@ export default {
                 $tags: [String]
                 $title: String
                 $siteId: String!
-                $notifyFollowers: Boolean!
+                $notifyFollowers: Boolean
                 $mentions: [String]
               ) {
                 pages {
