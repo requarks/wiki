@@ -6,7 +6,8 @@ LABEL maintainer "requarks.io"
 
 RUN apt-get update && \
     apt-get install -y bash curl git python3 make g++ nano openssh-server gnupg && \
-    mkdir -p /wiki
+    mkdir -p /wiki && \
+    apt-get clean
 
 WORKDIR /wiki
 
