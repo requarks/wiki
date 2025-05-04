@@ -47,13 +47,13 @@ module.exports = {
     WIKI.logger.info(`(STORAGE/SFTP) Creating file ${page.path}...`)
     const filePath = getFilePath(page, 'path')
     await this.ensureDirectory(filePath)
-    await this.sftp.writeFile(path.posix.join(this.config.basePath, filePath), page.injectMetadata())
+    await this.sftp.writeFile(path.posix.join(this.config.basePath, filePath), page.storageContent())
   },
   async updated(page) {
     WIKI.logger.info(`(STORAGE/SFTP) Updating file ${page.path}...`)
     const filePath = getFilePath(page, 'path')
     await this.ensureDirectory(filePath)
-    await this.sftp.writeFile(path.posix.join(this.config.basePath, filePath), page.injectMetadata())
+    await this.sftp.writeFile(path.posix.join(this.config.basePath, filePath), page.storageContent())
   },
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/SFTP) Deleting file ${page.path}...`)
@@ -124,7 +124,7 @@ module.exports = {
           const filePath = getFilePath(page, 'path')
           WIKI.logger.info(`(STORAGE/SFTP) Adding page ${filePath}...`)
           await this.ensureDirectory(filePath)
-          await this.sftp.writeFile(path.posix.join(this.config.basePath, filePath), pageHelper.injectPageMetadata(page))
+          await this.sftp.writeFile(path.posix.join(this.config.basePath, filePath), page.storageContent())
           cb()
         }
       })
