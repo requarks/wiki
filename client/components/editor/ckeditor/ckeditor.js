@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003–2024, CKSource Holding sp. z o.o. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -16,6 +16,8 @@ import CodeBlock from '@ckeditor/ckeditor5-code-block/src/codeblock.js'
 import Essentials from '@ckeditor/ckeditor5-essentials/src/essentials'
 import FontFamily from '@ckeditor/ckeditor5-font/src/fontfamily'
 import FontSize from '@ckeditor/ckeditor5-font/src/fontsize'
+import FontColor from '@ckeditor/ckeditor5-font/src/fontcolor'
+import FontBackgroundColor from '@ckeditor/ckeditor5-font/src/fontbackgroundcolor'
 import Heading from '@ckeditor/ckeditor5-heading/src/heading'
 import Highlight from '@ckeditor/ckeditor5-highlight/src/highlight'
 import HorizontalLine from '@ckeditor/ckeditor5-horizontal-line/src/horizontalline.js'
@@ -49,6 +51,7 @@ import Table from '@ckeditor/ckeditor5-table/src/table'
 import TableCellProperties from '@ckeditor/ckeditor5-table/src/tablecellproperties'
 import TableProperties from '@ckeditor/ckeditor5-table/src/tableproperties'
 import TableToolbar from '@ckeditor/ckeditor5-table/src/tabletoolbar.js'
+import TableColumnResize from '@ckeditor/ckeditor5-table/src/tablecolumnresize.js'
 import TextTransformation from '@ckeditor/ckeditor5-typing/src/texttransformation.js'
 import TodoList from '@ckeditor/ckeditor5-list/src/todolist'
 import Underline from '@ckeditor/ckeditor5-basic-styles/src/underline'
@@ -142,6 +145,7 @@ class InsertDiagram extends Plugin {
 }
 
 class EditDiagram extends Plugin {
+
   init() {
     const editor = this.editor
     const command = new DiagramCommand(editor)
@@ -180,6 +184,8 @@ DecoupledEditor.builtinPlugins = [
   Essentials,
   FontFamily,
   FontSize,
+  FontColor,
+  FontBackgroundColor,
   Heading,
   Highlight,
   HorizontalLine,
@@ -216,6 +222,7 @@ DecoupledEditor.builtinPlugins = [
   TableCellProperties,
   TableProperties,
   TableToolbar,
+  TableColumnResize,
   TextTransformation,
   TodoList,
   Underline,
@@ -232,6 +239,8 @@ DecoupledEditor.defaultConfig = {
       '|',
       'fontsize',
       'fontfamily',
+      'fontColor',
+      'fontBackgroundColor',
       '|',
       'bold',
       'italic',
@@ -278,15 +287,16 @@ DecoupledEditor.defaultConfig = {
   },
   image: {
     styles: [
-      'full',
+      'block',
       'alignLeft',
       'alignRight'
     ],
     toolbar: [
       'imageStyle:alignLeft',
-      'imageStyle:full',
+      'imageStyle:alignCenter',
       'imageStyle:alignRight',
       '|',
+      'toggleImageCaption',
       'imageTextAlternative',
       'editDiagram'
     ]
@@ -297,7 +307,8 @@ DecoupledEditor.defaultConfig = {
       'tableRow',
       'mergeTableCells',
       'tableCellProperties',
-      'tableProperties'
+      'tableProperties',
+      'tableColumnResize'
     ]
   },
   // This value must be kept in sync with the language defined in webpack.dev.js and webpack.prod.js.
