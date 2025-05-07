@@ -34,7 +34,7 @@ function handleInternalLinks(pageHTML, sitePath, locale, pagePaths) {
 }
 
 const getSite = async (sitePath) => {
-  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: false })
+  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
 }
 
 async function getSiteIdByPath(sitePath) {
@@ -169,7 +169,7 @@ async function getExportHtmlContent(page, user, queryParams) {
   let pageTree = null
   let pageHTML = ''
   if (queryParams.isPageTreeExport) {
-    pageTree = await WIKI.models.pages.getPageTreeFrom(page.id)
+    pageTree = await WIKI.models.pages.getPageTreeFrom(page.siteId, page.id)
     pageHTML = getPageTreeExportHtml(pageTree, user, queryParams)
   } else {
     pageHTML = getPageExportHtml(page)

@@ -18,22 +18,22 @@ const getSite = async (siteId) => {
 module.exports = class Asset extends Model {
   static get tableName() { return 'assets' }
 
-  static get jsonSchema () {
+  static get jsonSchema() {
     return {
       type: 'object',
 
       properties: {
-        id: {type: 'integer'},
-        filename: {type: 'string'},
-        hash: {type: 'string'},
-        ext: {type: 'string'},
-        kind: {type: 'string'},
-        mime: {type: 'string'},
-        fileSize: {type: 'integer'},
-        metadata: {type: 'object'},
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'},
-        siteId: {type: 'string'}
+        id: { type: 'integer' },
+        filename: { type: 'string' },
+        hash: { type: 'string' },
+        ext: { type: 'string' },
+        kind: { type: 'string' },
+        mime: { type: 'string' },
+        fileSize: { type: 'integer' },
+        metadata: { type: 'object' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' },
+        siteId: { type: 'string' }
       }
     }
   }
@@ -238,7 +238,7 @@ module.exports = class Asset extends Model {
     if (returnBase64Asset) {
       return this.convertToBase64(cachePath)
     }
-    const sendFile = Promise.promisify(res.sendFile, {context: res})
+    const sendFile = Promise.promisify(res.sendFile, { context: res })
     res.type(path.extname(assetPath))
     await sendFile(cachePath, { dotfiles: 'deny' })
     return true
@@ -268,6 +268,10 @@ module.exports = class Asset extends Model {
 
     if (asset) {
       const assetData = await WIKI.models.knex('assetData').where('id', asset.id).first()
+      // Todo: refactor as its just a temporary solution
+      if (!res) {
+        return assetData.data.toString('base64')
+      }
       res.type(asset.ext)
       res.send(assetData.data)
       await fs.outputFile(cachePath, assetData.data)
@@ -277,6 +281,9 @@ module.exports = class Asset extends Model {
       return true
     } else {
       if (returnBase64Asset) {
+        return false
+      }
+      if (!res) {
         return false
       }
       res.sendStatus(404)
