@@ -1129,18 +1129,18 @@ module.exports = class Page extends Model {
         const prevLocalePageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
         replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
         replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
-        replaceArgs.ExternalLocaleFrom = `<a class="is-system-link" href="/e${prevLocalePageHref}">${host}/e${prevLocalePageHref}`
-        replaceArgs.ExternalLocaleTo = `<a class="is-system-link" href="/e${pageLocaleHref}">${host}/e${pageLocaleHref}`
-        replaceArgs.ExternalFrom = `<a class="is-system-link" href="/e${prevPageHref}">${host}/e${prevPageHref}`
-        replaceArgs.ExternalTo = `<a class="is-system-link" href="/e${pageHref}">${host}/e${pageHref}`
+        replaceArgs.ExternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${host}${pageLocaleHref}`
+        replaceArgs.ExternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${host}${prevPageHref}`
+        replaceArgs.ExternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${host}${pageHref}`
         replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
         replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
         replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
         replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
-        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}/e${prevPageHref}">${host}/e${prevPageHref}`
-        replaceArgs.ExternalHtmlContentTo = `<a href="${host}/e${pageHref}">${host}/e${pageHref}`
-        replaceArgs.ExternalLocaleHtmlContentFrom = `<a href="${host}/e${prevLocalePageHref}">${host}/e${prevLocalePageHref}`
-        replaceArgs.ExternalLocaleHtmlContentTo = `<a href="${host}/e${pageLocaleHref}">${host}/e${pageLocaleHref}`
+        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}${prevPageHref}">${host}${prevPageHref}`
+        replaceArgs.ExternalHtmlContentTo = `<a href="${host}${pageHref}">${host}${pageHref}`
+        replaceArgs.ExternalLocaleHtmlContentFrom = `<a href="${host}${prevLocalePageHref}">${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleHtmlContentTo = `<a href="${host}${pageLocaleHref}">${host}${pageLocaleHref}`
         break
       case 'delete':
         replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
@@ -1152,6 +1152,8 @@ module.exports = class Page extends Model {
 
     let affectedHashes = []
     const targetPath = opts.mode === 'move' ? `${sitePath}/${opts.sourcePath}` : `${sitePath}/${opts.path}`
+    const targetExternalPath = opts.mode === 'move' ? `${sitePath}/${opts.locale}/${opts.sourcePath}` : `${sitePath}/${opts.locale}/${opts.path}`
+
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
       const qryHashes = await WIKI.models.pages
@@ -1207,17 +1209,20 @@ module.exports = class Page extends Model {
           ])
         })
         .whereIn('pages.id', function () {
-          this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': targetPath,
-            'pageLinks.localeCode': opts.locale
-          })
+          this.select('pageLinks.pageId').from('pageLinks')
+            .where(function() {
+              this.where('pageLinks.path', targetExternalPath)
+                .orWhere('pageLinks.path', targetPath)
+            })
+            .andWhere('pageLinks.localeCode', opts.locale)
         })
       const pageIds = await WIKI.models.knex
         .select('pageLinks.pageId')
         .from('pageLinks')
-        .where({
-          'pageLinks.path': targetPath,
-          'pageLinks.localeCode': opts.locale
+        .where('pageLinks.localeCode', opts.locale)
+        .where(function() {
+          this.where('pageLinks.path', targetExternalPath)
+            .orWhere('pageLinks.path', targetPath)
         })
       const pages = await WIKI.models.pages
         .query()
