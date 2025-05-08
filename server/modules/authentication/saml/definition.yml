@@ -21,7 +21,7 @@ props:
   audience:
     type: String
     title: Audience
-    hint: Expected SAML response Audience (if not provided, audience won't be verified)
+    hint: Expected saml response Audience, defaults to value of Issuer (if false, Audience won't be verified)
     order: 3
   cert:
     type: String
