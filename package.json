@@ -154,7 +154,7 @@
     "passport-local": "1.0.0",
     "passport-oauth2": "1.6.1",
     "passport-openidconnect": "0.1.1",
-    "passport-saml": "3.2.4",
+    "@node-saml/passport-saml": "5.0.1",
     "passport-twitch-strategy": "2.2.0",
     "patch-package": "8.0.0",
     "pem-jwk": "2.0.0",
