@@ -1106,12 +1106,18 @@ module.exports = class Page extends Model {
     let replaceArgs = {
       InternalFrom: '',
       InternalTo: '',
+      InternalLocaleFrom: '',
+      InternalLocaleTo: '',
       ExternalFrom: '',
       ExternalTo: '',
       ExternalLocaleFrom: '',
       ExternalLocaleTo: '',
       MarkdownContentFrom: '',
       MarkdownContentTo: '',
+      ExternalLocaleMarkdownContentFrom: '',
+      ExternalLocaleMarkdownContentTo: '',
+      ExternalMarkdownContentFrom: '',
+      ExternalMarkdownContentTo: '',
       HtmlContentFrom: '',
       HtmlContentTo: '',
       ExternalHtmlContentFrom: '',
@@ -1129,12 +1135,18 @@ module.exports = class Page extends Model {
         const prevLocalePageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
         replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
         replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
+        replaceArgs.InternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${opts.sourcePath}`
+        replaceArgs.InternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${opts.path}`
         replaceArgs.ExternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${host}${prevLocalePageHref}`
         replaceArgs.ExternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${host}${pageLocaleHref}`
         replaceArgs.ExternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${host}${prevPageHref}`
         replaceArgs.ExternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${host}${pageHref}`
         replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
         replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
+        replaceArgs.ExternalMarkdownContentFrom = `${host}${prevPageHref}`
+        replaceArgs.ExternalMarkdownContentTo = `${host}${pageHref}`
+        replaceArgs.ExternalLocaleMarkdownContentFrom = `${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleMarkdownContentTo = `${host}${pageLocaleHref}`
         replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
         replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
         replaceArgs.ExternalHtmlContentFrom = `<a href="${host}${prevPageHref}">${host}${prevPageHref}`
@@ -1161,9 +1173,12 @@ module.exports = class Page extends Model {
         .returning('hash')
         .patch({
           render: WIKI.models.knex.raw(`
-              REPLACE(
+            REPLACE(
                 REPLACE(
-                  REPLACE(??, ?, ?),
+                  REPLACE(
+                    REPLACE(??, ?, ?),
+                    ?, ?
+                  ),
                   ?, ?
                 ),
                 ?, ?
@@ -1175,12 +1190,20 @@ module.exports = class Page extends Model {
             replaceArgs.ExternalLocaleFrom,
             replaceArgs.ExternalLocaleTo,
             replaceArgs.ExternalFrom,
-            replaceArgs.ExternalTo
+            replaceArgs.ExternalTo,
+            replaceArgs.InternalLocaleFrom,
+            replaceArgs.InternalLocaleTo
           ]),
           content: WIKI.models.knex.raw(`
             CASE
               WHEN "contentType" = 'markdown' THEN
-                REPLACE(??, ?, ?)
+                   REPLACE(
+                    REPLACE(
+                      REPLACE(??, ?, ?),
+                      ?, ?
+                    ),
+                  ?, ?
+      )
               WHEN "contentType" = 'html' THEN
                 REPLACE(
                   REPLACE(
@@ -1198,6 +1221,10 @@ module.exports = class Page extends Model {
             'content',
             replaceArgs.MarkdownContentFrom,
             replaceArgs.MarkdownContentTo,
+            replaceArgs.ExternalMarkdownContentFrom,
+            replaceArgs.ExternalMarkdownContentTo,
+            replaceArgs.ExternalLocaleMarkdownContentFrom,
+            replaceArgs.ExternalLocaleMarkdownContentTo,
             'content',
             replaceArgs.HtmlContentFrom,
             replaceArgs.HtmlContentTo,
