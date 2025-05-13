@@ -15,7 +15,9 @@ const WIKI = {
     },
     pages: {
       createPage: jest.fn(),
-      updatePage: jest.fn()
+      updatePage: jest.fn(),
+      query: jest.fn(),
+      deletePage: jest.fn()
     },
     users: {
       query: jest.fn()
@@ -39,6 +41,37 @@ describe('Page Resolvers', () => {
   })
 
   describe('create', () => {
+    it('should create a page successfully and not notify followers when notifyFollowers is omitted', async () => {
+      const args = {
+        notifyFollowers: undefined,
+        mentions: [],
+        siteId: 'site-id',
+        title: 'Test Page',
+        path: 'test-page',
+        sitePath: 'site-path'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.createPage.mockResolvedValue({
+        id: 'page-id',
+        siteId: args.siteId,
+        title: args.title,
+        path: args.path,
+        sitePath: args.sitePath
+      })
+
+      WIKI.models.followers.query.mockReturnValue({
+        insert: jest.fn().mockResolvedValue(),
+        where: jest.fn().mockResolvedValue([]),
+        orWhere: jest.fn().mockResolvedValue([])
+      })
+
+      const result = await PageMutation.create(null, args, context)
+
+      expect(notifyUsers).not.toHaveBeenCalled()
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
+    })
+
     it('should notify followers when notifyFollowers is true', async () => {
       const args = {
         notifyFollowers: true,
@@ -176,6 +209,35 @@ describe('Page Resolvers', () => {
   })
 
   describe('update', () => {
+    it('should update a page successfully and not notify followers when notifyFollowers is omitted', async () => {
+      const args = {
+        notifyFollowers: undefined,
+        mentions: [],
+        siteId: 'site-id',
+        title: 'Test Page',
+        path: 'test-page',
+        sitePath: 'site-path'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.updatePage.mockResolvedValue({
+        id: 'page-id',
+        siteId: args.siteId,
+        title: args.title,
+        path: args.path,
+        sitePath: args.sitePath
+      })
+      WIKI.models.followers.query.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockResolvedValue([])
+      })
+
+      const result = await PageMutation.update(null, args, context)
+
+      expect(notifyUsers).not.toHaveBeenCalled()
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+    })
+
     it('should notify followers when notifyFollowers is true', async () => {
       const args = {
         notifyFollowers: true,
@@ -304,6 +366,67 @@ describe('Page Resolvers', () => {
         subjectText: 'Mentioned in Page'
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+    })
+  })
+
+  describe('delete', () => {
+    it('should delete a page successfully and not notify followers when notifyFollowers is omitted', async () => {
+      const args = {
+        notifyFollowers: undefined,
+        id: 'page-id'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue({
+          id: 'page-id',
+          siteId: 'site-id'
+        })
+      })
+      WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
+
+      const result = await PageMutation.delete(null, args, context)
+
+      expect(notifyUsers).not.toHaveBeenCalled()
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been deleted.'))
+    })
+
+    it('should notify followers when notifyFollowers is true', async () => {
+      const args = {
+        notifyFollowers: true,
+        id: 'page-id'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.query.mockReturnValue({
+        findById: jest.fn().mockResolvedValue({
+          id: 'page-id',
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        })
+      })
+      WIKI.models.followers.query.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
+      })
+      WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
+
+      const result = await PageMutation.delete(null, args, context)
+
+      expect(notifyUsers).toHaveBeenCalledWith({
+        siteId: 'site-id',
+        pageId: 'page-id',
+        pageTitle: 'Test Page',
+        pagePath: 'test-page',
+        sitePath: 'site-path',
+        userEmail: context.req.user.email,
+        userIds: [2],
+        event: 'DELETE_PAGE',
+        subjectText: 'Deleted Page'
+      })
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been deleted.'))
     })
   })
 })

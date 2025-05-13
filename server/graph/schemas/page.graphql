@@ -98,7 +98,7 @@ type PageMutation {
     tags: [String]!
     title: String!
     siteId: String!
-    notifyFollowers: Boolean!
+    notifyFollowers: Boolean
     mentions: [String]
   ): PageResponse
     @auth(
@@ -121,7 +121,7 @@ type PageMutation {
     tags: [String]
     title: String
     siteId: String!
-    notifyFollowers: Boolean!
+    notifyFollowers: Boolean
     mentions: [String]
   ): PageResponse
     @auth(
@@ -140,7 +140,7 @@ type PageMutation {
   ): DefaultResponse
     @auth(requires: ["manage:pages", "manage:sites", "manage:system"])
 
-  delete(id: Int!, notifyFollowers: Boolean!): DefaultResponse
+  delete(id: Int!, notifyFollowers: Boolean): DefaultResponse
     @auth(requires: ["delete:pages", "manage:sites", "manage:system"])
 
   deleteTag(id: Int!): DefaultResponse

@@ -23,10 +23,10 @@ COPY ./yarn.lock ./yarn.lock
 
 RUN yarn cache clean
 #install all dependencies including DevDependencies
-RUN yarn install --frozen-lockfile --non-interactive
+RUN yarn install --frozen-lockfile --non-interactive  --ignore-scripts
 RUN yarn build
 RUN rm -rf /wiki/node_modules
-RUN yarn --production --frozen-lockfile --non-interactive
+RUN yarn --production --frozen-lockfile --non-interactive  --ignore-scripts
 # apply custom patches stored in patches directory to dependencies
 RUN yarn patch-package
 
