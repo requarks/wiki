@@ -89,7 +89,6 @@ export default {
     extensions: {
       query: gql`
         {
-          system {
             extensions {
               key
               title
@@ -97,11 +96,10 @@ export default {
               isInstalled
               isCompatible
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.system.extensions),
+      update: (data) => _.cloneDeep(data.extensions),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-extensions-refresh')
       }

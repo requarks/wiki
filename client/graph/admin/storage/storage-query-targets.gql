@@ -1,27 +1,25 @@
 query {
-  storage {
-    targets {
-      isAvailable
-      isEnabled
+  storageTargets {
+    isAvailable
+    isEnabled
+    key
+    title
+    description
+    logo
+    website
+    supportedModes
+    mode
+    hasSchedule
+    syncInterval
+    syncIntervalDefault
+    config {
       key
-      title
-      description
-      logo
-      website
-      supportedModes
-      mode
-      hasSchedule
-      syncInterval
-      syncIntervalDefault
-      config {
-        key
-        value
-      }
-      actions {
-        handler
-        label
-        hint
-      }
+      value
+    }
+    actions {
+      handler
+      label
+      hint
     }
   }
 }

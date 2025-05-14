@@ -3,7 +3,10 @@
 # ===============================================
 
 extend type Query {
-  system: SystemQuery
+  flags: [SystemFlag] @auth(requires: ["manage:system"])
+  info: SystemInfo
+  extensions: [SystemExtension] @auth(requires: ["manage:system"])
+  exportStatus: SystemExportStatus @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
@@ -11,48 +14,32 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type SystemQuery {
-  flags: [SystemFlag] @auth(requires: ["manage:system"])
-  info: SystemInfo
-  extensions: [SystemExtension] @auth(requires: ["manage:system"])
-  exportStatus: SystemExportStatus @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type SystemMutation {
-  updateFlags(
-    flags: [SystemFlagInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateFlags(flags: [SystemFlagInput]!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   resetTelemetryClientId: DefaultResponse @auth(requires: ["manage:system"])
 
-  setTelemetry(
-    enabled: Boolean!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  setTelemetry(enabled: Boolean!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   performUpgrade: DefaultResponse @auth(requires: ["manage:system"])
 
   importUsersFromV1(
     mongoDbConnString: String!
     groupMode: SystemImportUsersGroupMode!
-  ): SystemImportUsersResponse @auth(requires:  ["manage:system"])
+  ): SystemImportUsersResponse @auth(requires: ["manage:system"])
 
-  setHTTPSRedirection(
-    enabled: Boolean!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  setHTTPSRedirection(enabled: Boolean!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   renewHTTPSCertificate: DefaultResponse @auth(requires: ["manage:system"])
 
-  export(
-    entities: [String]!
-    path: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  export(entities: [String]!, path: String!): DefaultResponse
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -76,7 +63,18 @@ type SystemInfo {
   dbHost: String @auth(requires: ["manage:system"])
   dbType: String @auth(requires: ["manage:system"])
   dbVersion: String @auth(requires: ["manage:system"])
-  groupsTotal: Int @auth(requires: ["manage:system", "manage:sites", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
+  groupsTotal: Int
+    @auth(
+      requires: [
+        "manage:system"
+        "manage:sites"
+        "manage:navigation"
+        "manage:groups"
+        "write:groups"
+        "manage:users"
+        "write:users"
+      ]
+    )
   hostname: String @auth(requires: ["manage:system"])
   httpPort: Int @auth(requires: ["manage:system"])
   httpRedirection: Boolean @auth(requires: ["manage:system"])
@@ -85,7 +83,16 @@ type SystemInfo {
   latestVersionReleaseDate: Date @auth(requires: ["manage:system"])
   nodeVersion: String @auth(requires: ["manage:system"])
   operatingSystem: String @auth(requires: ["manage:system"])
-  pagesTotal: Int @auth(requires: ["manage:system", "manage:sites", "manage:navigation", "manage:pages", "delete:pages"])
+  pagesTotal: Int
+    @auth(
+      requires: [
+        "manage:system"
+        "manage:sites"
+        "manage:navigation"
+        "manage:pages"
+        "delete:pages"
+      ]
+    )
   platform: String @auth(requires: ["manage:system"])
   ramTotal: String @auth(requires: ["manage:system"])
   sslDomain: String @auth(requires: ["manage:system"])
@@ -93,11 +100,31 @@ type SystemInfo {
   sslProvider: String @auth(requires: ["manage:system"])
   sslStatus: String @auth(requires: ["manage:system"])
   sslSubscriberEmail: String @auth(requires: ["manage:system"])
-  tagsTotal: Int @auth(requires: ["manage:system", "manage:sites", "manage:navigation", "manage:pages", "delete:pages"])
+  tagsTotal: Int
+    @auth(
+      requires: [
+        "manage:system"
+        "manage:sites"
+        "manage:navigation"
+        "manage:pages"
+        "delete:pages"
+      ]
+    )
   telemetry: Boolean @auth(requires: ["manage:system"])
   telemetryClientId: String @auth(requires: ["manage:system"])
   upgradeCapable: Boolean @auth(requires: ["manage:system"])
-  usersTotal: Int @auth(requires: ["manage:system", "manage:sites", "manage:navigation", "manage:groups", "write:groups", "manage:users", "write:users"])
+  usersTotal: Int
+    @auth(
+      requires: [
+        "manage:system"
+        "manage:sites"
+        "manage:navigation"
+        "manage:groups"
+        "write:groups"
+        "manage:users"
+        "write:users"
+      ]
+    )
   workingDirectory: String @auth(requires: ["manage:system"])
 }
 

@@ -2,11 +2,6 @@
 # Wiki.js GraphQL Schema #
 # ====================== #
 
-# DIRECTIVES
-# ----------
-
-directive @auth(requires: [String]) on QUERY | FIELD_DEFINITION | ARGUMENT_DEFINITION
-
 # TYPES
 # -----
 

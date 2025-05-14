@@ -1,20 +1,18 @@
-query($siteId: String) {
-  pages {
-    list(siteId: $siteId, isAdmin: true) {
-      id
-      locale
-      path
-      title
-      description
-      contentType
-      isPublished
-      isPrivate
-      privateNS
-      createdAt
-      updatedAt
-      siteId
-      siteName
-      sitePath
-    }
+query ($siteId: String) {
+  listPages(siteId: $siteId, isAdmin: true) {
+    id
+    locale
+    path
+    title
+    description
+    contentType
+    isPublished
+    isPrivate
+    privateNS
+    createdAt
+    updatedAt
+    siteId
+    siteName
+    sitePath
   }
 }

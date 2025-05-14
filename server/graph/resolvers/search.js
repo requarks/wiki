@@ -5,12 +5,6 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async search() { return {} }
-  },
-  Mutation: {
-    async search() { return {} }
-  },
-  SearchQuery: {
     async searchEngines(obj, args, context, info) {
       let searchEngines = await WIKI.models.searchEngines.getSearchEngines()
       searchEngines = searchEngines.map(searchEngine => {
@@ -36,6 +30,9 @@ module.exports = {
       if (args.orderBy) { searchEngines = _.sortBy(searchEngines, [args.orderBy]) }
       return searchEngines
     }
+  },
+  Mutation: {
+    async search() { return {} }
   },
   SearchMutation: {
     async updateSearchEngines(obj, args, context) {

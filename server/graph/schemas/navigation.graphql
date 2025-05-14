@@ -3,7 +3,10 @@
 # ===============================================
 
 extend type Query {
-  navigation: NavigationQuery
+  navigationTree: [NavigationTree]!
+    @auth(requires: ["manage:navigation", "manage:system"])
+  navigationConfig: NavigationConfig!
+    @auth(requires: ["manage:navigation", "manage:system"])
 }
 
 extend type Mutation {
@@ -11,25 +14,14 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type NavigationQuery {
-  tree: [NavigationTree]! @auth(requires: ["manage:navigation", "manage:system"])
-  config: NavigationConfig! @auth(requires: ["manage:navigation", "manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type NavigationMutation {
-  updateTree(
-    tree: [NavigationTreeInput]!
-  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
-  updateConfig(
-    mode: NavigationMode!
-  ): DefaultResponse @auth(requires: ["manage:navigation", "manage:system"])
+  updateTree(tree: [NavigationTreeInput]!): DefaultResponse
+    @auth(requires: ["manage:navigation", "manage:system"])
+  updateConfig(mode: NavigationMode!): DefaultResponse
+    @auth(requires: ["manage:navigation", "manage:system"])
 }
 
 # -----------------------------------------------

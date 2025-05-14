@@ -1,12 +1,10 @@
 query {
-  groups {
-    list {
-      id
-      name
-      isSystem
-      userCount
-      createdAt
-      updatedAt
-    }
+  listGroups {
+    id
+    name
+    isSystem
+    userCount
+    createdAt
+    updatedAt
   }
 }

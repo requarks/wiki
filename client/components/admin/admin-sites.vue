@@ -143,8 +143,15 @@ export default {
             const succeeded = data.responseResult.succeeded
             if (succeeded) {
               const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
-              apolloData.sites.push(data.site)
-              store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: apolloData })
+              const newSite = {
+                ...data.site,
+                showAdminOnly: true
+              }
+              const newApolloData = {
+                ...apolloData,
+                sites: [...apolloData.sites, newSite]
+              }
+              store.writeQuery({ query: sitesQuery, variables: { showAdminOnly: true }, data: newApolloData })
             }
           },
           watchLoading (isLoading) {

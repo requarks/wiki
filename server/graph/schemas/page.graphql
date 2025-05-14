@@ -2,26 +2,18 @@
 # PAGES
 # ===============================================
 
-extend type Query {
-  pages: PageQuery
-}
-
-extend type Mutation {
-  pages: PageMutation
-}
-
 # -----------------------------------------------
 # QUERIES
 # -----------------------------------------------
 
-type PageQuery {
+extend type Query {
   history(id: Int!, offsetPage: Int, offsetSize: Int): PageHistoryResult
     @auth(requires: ["manage:system", "manage:sites", "read:history"])
 
   version(pageId: Int!, versionId: Int!): PageVersion
     @auth(requires: ["manage:system", "manage:sites", "read:history"])
 
-  search(
+  searchPages(
     query: String!
     path: String
     locale: String
@@ -29,7 +21,7 @@ type PageQuery {
   ): PageSearchResponse!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
-  list(
+  listPages(
     limit: Int
     orderBy: PageOrderBy
     orderByDirection: PageOrderByDirection
@@ -42,10 +34,10 @@ type PageQuery {
   ): [PageListItem!]!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
-  single(id: Int!): Page
+  pageById(id: Int!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
-  singleByPath(path: String!, locale: String!): Page
+  pageByPath(path: String!, locale: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
   tags(siteId: String): [PageTag]!
@@ -76,6 +68,10 @@ type PageQuery {
     @auth(
       requires: ["write:pages", "manage:pages", "manage:sites", "manage:system"]
     )
+}
+
+extend type Mutation {
+  pages: PageMutation
 }
 
 # -----------------------------------------------

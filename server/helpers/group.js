@@ -46,6 +46,7 @@ const getSiteIdsFromGroup = (groupId) => {
   return _.uniq(siteIds)
 }
 
+
 const canManageGroup = (user, groupId) => {
   if (WIKI.auth.isSuperAdmin(user)) return true
   if (groupId === DEFAULT_ADMINISTRATORS_GROUP || groupId === DEFAULT_GUESTS_GROUP) return false

@@ -172,8 +172,7 @@ export default {
     providers: {
       query: gql`
         query {
-          comments {
-            providers {
+            commentProviders {
               isEnabled
               key
               title
@@ -186,11 +185,10 @@ export default {
                 value
               }
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.comments.providers).map(str => ({
+      update: (data) => _.cloneDeep(data.commentProviders).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,

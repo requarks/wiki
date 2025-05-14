@@ -1,56 +1,62 @@
-const { SchemaDirectiveVisitor } = require('graphql-tools')
+const { mapSchema, getDirective, MapperKind } = require('@graphql-tools/utils')
 const { defaultFieldResolver } = require('graphql')
 const _ = require('lodash')
 
-class AuthDirective extends SchemaDirectiveVisitor {
-  visitObject(type) {
-    this.ensureFieldsWrapped(type)
-    type._requiredAuthScopes = this.args.requires
-  }
-  // Visitor methods for nested types like fields and arguments
-  // also receive a details object that provides information about
-  // the parent and grandparent types.
-  visitFieldDefinition(field, details) {
-    this.ensureFieldsWrapped(details.objectType)
-    field._requiredAuthScopes = this.args.requires
+const authDirectiveTypeDefs = /* GraphQL */ `
+  directive @auth(requires: [String]) on FIELD_DEFINITION | ARGUMENT_DEFINITION
+`
+
+function checkAuth(requiredScopes, context) {
+  const user = context.req?.user
+  if (!user) {
+    throw new Error('Unauthorized')
   }
 
-  visitArgumentDefinition(argument, details) {
-    this.ensureFieldsWrapped(details.objectType)
-    argument._requiredAuthScopes = this.args.requires
+  if (!requiredScopes) {
+    return
   }
-
-  ensureFieldsWrapped(objectType) {
-    // Mark the GraphQLObjectType object to avoid re-wrapping:
-    if (objectType._authFieldsWrapped) return
-    objectType._authFieldsWrapped = true
-
-    const fields = objectType.getFields()
-
-    Object.keys(fields).forEach(fieldName => {
-      const field = fields[fieldName]
-      const { resolve = defaultFieldResolver } = field
-      field.resolve = async function (...args) {
-        // Get the required scopes from the field first, falling back
-        // to the objectType if no scopes is required by the field:
-        const requiredScopes = field._requiredAuthScopes || objectType._requiredAuthScopes
-
-        if (!requiredScopes) {
-          return resolve.apply(this, args)
-        }
-
-        const context = args[2]
-        if (!context.req.user) {
-          throw new Error('Unauthorized')
-        }
-        if (!_.some(context.req.user.permissions, pm => _.includes(requiredScopes, pm))) {
-          throw new Error('Forbidden')
-        }
-
-        return resolve.apply(this, args)
-      }
-    })
+  if (!_.some(user.permissions, pm => _.includes(requiredScopes, pm))) {
+    throw new Error('Forbidden')
   }
 }
 
-module.exports = AuthDirective
+function authDirectiveTransformer(schema, directiveName = 'auth') {
+  return mapSchema(schema, {
+    [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
+      const authDirective = getDirective(schema, fieldConfig, directiveName)?.[0]
+      const argAuthDirectives = {}
+      if (fieldConfig.args) {
+        for (const [argName, argConfig] of Object.entries(fieldConfig.args)) {
+          const argDirective = getDirective(schema, argConfig, directiveName)?.[0]
+          if (argDirective) argAuthDirectives[argName] = argDirective.requires
+        }
+      }
+      // If no @auth on field or arguments, skip
+      if (!authDirective && Object.keys(argAuthDirectives).length === 0) return fieldConfig
+
+      // Use the field's resolver if present, otherwise defaultFieldResolver
+      const originalResolve = fieldConfig.resolve || defaultFieldResolver
+      fieldConfig.resolve = async function (source, args, context, info) {
+        if (authDirective) {
+        }
+        if (Object.keys(argAuthDirectives).length > 0) {
+        }
+        // Field-level @auth
+        if (authDirective) checkAuth(authDirective.requires, context)
+        // Argument-level @auth
+        for (const [argName, requiredScopes] of Object.entries(argAuthDirectives)) {
+          if (args[argName] !== undefined) {
+            checkAuth(requiredScopes, context)
+          }
+        }
+        return originalResolve.apply(this, [source, args, context, info])
+      }
+      return fieldConfig
+    }
+  })
+}
+
+module.exports = {
+  authDirectiveTypeDefs,
+  authDirectiveTransformer
+}

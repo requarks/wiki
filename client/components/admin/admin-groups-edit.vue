@@ -223,8 +223,7 @@ export default {
     group: {
       query: gql`
         query ($id: Int!) {
-          groups {
-            single(id: $id) {
+            groupById(id: $id) {
               id
               name
               redirectOnLogin
@@ -247,7 +246,6 @@ export default {
               createdAt
               updatedAt
             }
-          }
         }
       `,
       variables() {
@@ -256,7 +254,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.groups.single),
+      update: (data) => _.cloneDeep(data.groupById),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')
       }

@@ -3,28 +3,15 @@
 # ===============================================
 
 extend type Query {
-  assets: AssetQuery
+  listAssets(folderId: Int!, kind: AssetKind!, siteId: String!): [AssetItem]
+    @auth(requires: ["manage:system", "read:assets", "manage:sites"])
+
+  folders(parentFolderId: Int!, siteId: String!): [AssetFolder]
+    @auth(requires: ["manage:system", "read:assets", "manage:sites"])
 }
 
 extend type Mutation {
   assets: AssetMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type AssetQuery {
-  list(
-    folderId: Int!
-    kind: AssetKind!
-    siteId: String!
-  ): [AssetItem] @auth(requires: ["manage:system", "read:assets", "manage:sites"])
-
-  folders(
-    parentFolderId: Int!
-    siteId: String!
-  ): [AssetFolder] @auth(requires: ["manage:system", "read:assets", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -37,16 +24,14 @@ type AssetMutation {
     slug: String!
     name: String
     siteId: String!
-  ): DefaultResponse @auth(requires: ["manage:system", "write:assets", "manage:sites"])
+  ): DefaultResponse
+    @auth(requires: ["manage:system", "write:assets", "manage:sites"])
 
-  renameAsset(
-    id: Int!
-    filename: String!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets", "manage:sites"])
+  renameAsset(id: Int!, filename: String!): DefaultResponse
+    @auth(requires: ["manage:system", "manage:assets", "manage:sites"])
 
-  deleteAsset(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets", "manage:sites"])
+  deleteAsset(id: Int!): DefaultResponse
+    @auth(requires: ["manage:system", "manage:assets", "manage:sites"])
 
   flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -66,14 +51,14 @@ type AssetItem {
   createdAt: Date!
   updatedAt: Date!
   folder: AssetFolder
-  author: User,
+  author: User
   siteId: String
 }
 
 type AssetFolder {
   id: Int!
   slug: String!
-  name: String,
+  name: String
   siteId: String
 }
 

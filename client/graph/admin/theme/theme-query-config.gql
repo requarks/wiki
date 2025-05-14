@@ -1,13 +1,11 @@
 query {
-  theming {
-    config {
-      theme
-      iconset
-      darkMode
-      tocPosition
-      injectCSS
-      injectHead
-      injectBody
-    }
+  themingConfig {
+    theme
+    iconset
+    darkMode
+    tocPosition
+    injectCSS
+    injectHead
+    injectBody
   }
 }

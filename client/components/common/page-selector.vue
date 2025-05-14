@@ -316,7 +316,6 @@ export default {
             $locale: String!
             $siteId: String!
           ) {
-            pages {
               tree(
                 parent: $parent
                 mode: $mode
@@ -331,7 +330,6 @@ export default {
                 parent
                 siteId
               }
-            }
           }
         `,
         fetchPolicy: 'network-only',
@@ -343,7 +341,7 @@ export default {
         }
       })
 
-      const items = _.get(resp, 'data.pages.tree', [])
+      const items = _.get(resp, 'data.tree', [])
 
       const filteredItems = items.filter(i => {
         const itemSiteId = String(i.siteId)

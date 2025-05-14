@@ -400,12 +400,10 @@ export default {
     newTagSuggestions: {
       query: gql`
         query ($query: String!, $siteId: String!) {
-          pages {
             searchTags (
               query: $query,
               siteId: $siteId
             )
-          }
         }
       `,
       variables () {
@@ -415,7 +413,7 @@ export default {
         }
       },
       fetchPolicy: 'cache-first',
-      update: (data) => _.get(data, 'pages.searchTags', []),
+      update: (data) => _.get(data, 'searchTags', []),
       skip () {
         return !this.value || _.isEmpty(this.newTagSearch)
       },

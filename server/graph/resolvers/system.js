@@ -23,12 +23,6 @@ const dbTypes = {
 
 module.exports = {
   Query: {
-    async system () { return {} }
-  },
-  Mutation: {
-    async system () { return {} }
-  },
-  SystemQuery: {
     flags () {
       return _.transform(WIKI.config.flags, (result, value, key) => {
         result.push({ key, value })
@@ -50,6 +44,9 @@ module.exports = {
         startedAt: WIKI.system.exportStatus.startedAt
       }
     }
+  },
+  Mutation: {
+    async system () { return {} }
   },
   SystemMutation: {
     async updateFlags (obj, args, context) {

@@ -12,7 +12,6 @@ module.exports = async () => {
     })
 
     // -> Fetch locales list
-
     const respList = await apollo({
       query: `{
         localization {

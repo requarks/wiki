@@ -417,9 +417,7 @@ export default {
           const conflictResp = await this.$apollo.query({
             query: gql`
               query ($id: Int!, $checkoutDate: Date!) {
-                pages {
                   checkConflicts(id: $id, checkoutDate: $checkoutDate)
-                }
               }
             `,
             fetchPolicy: 'network-only',
@@ -428,7 +426,7 @@ export default {
               checkoutDate: this.checkoutDateActive
             }
           })
-          if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
+          if (_.get(conflictResp, 'data.checkConflicts', false)) {
             this.$root.$emit('saveConflict')
             throw new Error(this.$t('editor:conflict.warning'))
           }
@@ -609,9 +607,7 @@ export default {
     isConflict: {
       query: gql`
         query ($id: Int!, $checkoutDate: Date!) {
-          pages {
             checkConflicts(id: $id, checkoutDate: $checkoutDate)
-          }
         }
       `,
       fetchPolicy: 'network-only',
@@ -622,7 +618,7 @@ export default {
           checkoutDate: this.checkoutDateActive
         }
       },
-      update: (data) => _.cloneDeep(data.pages.checkConflicts),
+      update: (data) => _.cloneDeep(data.checkConflicts),
       skip() {
         return this.mode === 'create' || this.isSaving || !this.isDirty
       }

@@ -6,35 +6,18 @@ const userService = require('../services/userService')
 
 module.exports = {
   Query: {
-    async users() { return {} }
-  },
-  Mutation: {
-    async users() { return {} }
-  },
-  UserQuery: {
-    async list(obj, args, context, info) {
+    async listUsers(obj, args, context, info) {
       return WIKI.models.users.query()
         .select('id', 'email', 'name', 'providerKey', 'isSystem', 'isActive', 'createdAt')
     },
-    async search(obj, args, context, info) {
+    async searchUsers(obj, args, context, info) {
       return WIKI.models.users.query()
         .where('email', 'like', `%${args.query}%`)
         .orWhere('name', 'like', `%${args.query}%`)
         .limit(10)
         .select('id', 'email', 'name', 'providerKey', 'createdAt')
     },
-    async single(obj, args, context, info) {
-      let usr = await WIKI.models.users.query().findById(args.id)
-      usr.password = ''
-      usr.tfaSecret = ''
 
-      const str = _.get(WIKI.auth.strategies, usr.providerKey)
-      str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
-      usr.providerName = str.displayName
-      usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
-
-      return usr
-    },
     async profile(obj, args, context, info) {
       if (!context.req.user || context.req.user.id < 1 || context.req.user.id === 2) {
         throw new WIKI.Error.AuthRequired()
@@ -88,7 +71,22 @@ module.exports = {
       } catch (error) {
         throw new Error(`Failed to fetch email addresses: ${error.message}`)
       }
+    },
+    async userById(obj, args, context, info) {
+      let usr = await WIKI.models.users.query().findById(args.id)
+      usr.password = ''
+      usr.tfaSecret = ''
+
+      const str = _.get(WIKI.auth.strategies, usr.providerKey)
+      str.strategy = _.find(WIKI.data.authentication, ['key', str.strategyKey])
+      usr.providerName = str.displayName
+      usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
+
+      return usr
     }
+  },
+  Mutation: {
+    async users() { return {} }
   },
   UserMutation: {
     async create(obj, args) {

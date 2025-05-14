@@ -11,13 +11,7 @@ const getSite = async (siteId) => {
 
 module.exports = {
   Query: {
-    async assets() { return {} }
-  },
-  Mutation: {
-    async assets() { return {} }
-  },
-  AssetQuery: {
-    async list(obj, args, context) {
+    async listAssets(obj, args, context) {
       let cond = {
         folderId: args.folderId === 0 ? null : args.folderId,
         siteId: args.siteId
@@ -48,6 +42,9 @@ module.exports = {
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path, siteId: args.siteId })
       })
     }
+  },
+  Mutation: {
+    async assets() { return {} }
   },
   AssetMutation: {
     /**

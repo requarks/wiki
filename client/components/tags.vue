@@ -314,7 +314,7 @@ export default {
         }
       },
       fetchPolicy: 'cache-and-network',
-      update: (data) => _.cloneDeep(data.pages.tags),
+      update: (data) => _.cloneDeep(data.tags),
       watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'tags-refresh')
       }
@@ -322,7 +322,7 @@ export default {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'cache-and-network',
-      update: (data) => _.cloneDeep(data.pages.list),
+      update: (data) => _.cloneDeep(data.listPages),
       watchLoading(isLoading) {
         this.isLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'pages-refresh')

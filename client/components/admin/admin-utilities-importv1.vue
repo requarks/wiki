@@ -366,9 +366,9 @@ export default {
               query: storageTargetsQuery,
               fetchPolicy: 'network-only'
             })
-            if (_.has(resp, 'data.storage.targets')) {
+            if (_.has(resp, 'data.storageTargets')) {
               this.progress += 10
-              let targets = resp.data.storage.targets.map(str => {
+              let targets = resp.data.storageTargets.map(str => {
                 let nStr = {
                   ...str,
                   config: _.sortBy(str.config.map(cfg => ({
@@ -443,8 +443,8 @@ export default {
                   query: storageStatusQuery,
                   fetchPolicy: 'network-only'
                 })
-                if (_.has(respStatus, 'data.storage.status[0]')) {
-                  const st = _.find(respStatus.data.storage.status, ['key', this.contentMode])
+                if (_.has(respStatus, 'data.storageStatus[0]')) {
+                  const st = _.find(respStatus.data.storageStatus, ['key', this.contentMode])
                   if (!st) {
                     throw new Error('Storage target could not be configured.')
                   }
