@@ -37,10 +37,6 @@ function authDirectiveTransformer(schema, directiveName = 'auth') {
       // Use the field's resolver if present, otherwise defaultFieldResolver
       const originalResolve = fieldConfig.resolve || defaultFieldResolver
       fieldConfig.resolve = async function (source, args, context, info) {
-        if (authDirective) {
-        }
-        if (Object.keys(argAuthDirectives).length > 0) {
-        }
         // Field-level @auth
         if (authDirective) checkAuth(authDirective.requires, context)
         // Argument-level @auth
