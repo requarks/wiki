@@ -31,4 +31,4 @@ pool:
   idleTimeoutMillis: $(POOL_IDLE_TIMEOUT)
 
 email:
-  support: "capwiki-support.de@capgemini.com"
+  support: "dummy-support@dummy.com"
