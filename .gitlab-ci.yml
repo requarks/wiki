@@ -80,7 +80,7 @@ build:
     - yarn install --frozen-lockfile --force
     - yarn build
  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_REF_NAME == "main" || $ENVIRONMENT == "production"
       when: never
     - when: always
 
@@ -101,7 +101,7 @@ test:
       - coverage
       - test-results
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_REF_NAME == "main" || $ENVIRONMENT == "production"
       when: never
     - when: on_success
 
@@ -124,7 +124,7 @@ sonarqube-scan:
   script:
     - sonar-scanner
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_REF_NAME == "main" || $ENVIRONMENT == "production"
       when: never
     - if: $SONARQUBE == "true"
       when: on_success
@@ -170,11 +170,11 @@ docker-build:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_REF_NAME == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
+    - if: '$CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
+    - if: $CI_COMMIT_REF_NAME == "develop" || $ENVIRONMENT == "staging"
       when: always
 
 push-docker-image:
@@ -197,11 +197,11 @@ push-docker-image:
     - docker logout $DOCKER_REGISTRY
     - docker rmi $NEW_IMAGE
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_REF_NAME == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
+    - if: '$CI_COMMIT_REF_NAME =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
+    - if: $CI_COMMIT_REF_NAME == "develop" || $ENVIRONMENT == "staging"
       when: on_success
 
 promote-prod-release-version:
@@ -225,7 +225,7 @@ promote-prod-release-version:
     - docker rmi $STAGING_IMAGE
     - docker rmi $NEW_IMAGE
   rules:
-   - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+   - if: $CI_COMMIT_REF_NAME == "main" || $ENVIRONMENT == "production"
      when: always
 
 after_script:
