@@ -1,3 +1,4 @@
+#!/bin/bash
 source image_tag.env
 echo "Building Docker image for environment $ENVIRONMENT"
 docker build --no-cache --build-arg VERSION="$VERSION" --build-arg RELEASE_DATE="$(date +'%d.%m.%Y')" -f Dockerfile -t "$NEW_IMAGE" .
