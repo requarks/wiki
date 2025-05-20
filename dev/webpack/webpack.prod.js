@@ -26,6 +26,8 @@ const { CKEditorTranslationsPlugin } = require('@ckeditor/ckeditor5-dev-translat
 const CKEditorWebpackPlugin = require('@ckeditor/ckeditor5-dev-webpack-plugin')
 const { bundler, styles } = require('@ckeditor/ckeditor5-dev-utils')
 
+const { GenerateSW } = require('workbox-webpack-plugin')
+
 process.noDeprecation = true
 
 fs.emptyDirSync(path.join(process.cwd(), 'assets'))
@@ -87,20 +89,20 @@ module.exports = {
           'css-loader',
           {
             loader: 'postcss-loader',
-            options: styles.getPostCssConfig( {
-                themeImporter: {
-                  themePath: require.resolve('@ckeditor/ckeditor5-theme-lark')
-                },
-                minify: true
-              })
-            }
+            options: styles.getPostCssConfig({
+              themeImporter: {
+                themePath: require.resolve('@ckeditor/ckeditor5-theme-lark')
+              },
+              minify: true
+            })
+          }
         ]
       },
       {
         test: /^(?!.*ckeditor).*\.css$/,
         exclude: [
           /ckeditor5-[^/\\]+[/\\]theme[/\\].+\.css$/,
-          path.join( __dirname, 'node_modules', '@ckeditor' ),
+          path.join(__dirname, 'node_modules', '@ckeditor')
         ],
         use: [
           'style-loader',
@@ -308,6 +310,11 @@ module.exports = {
       // See https://ckeditor.com/docs/ckeditor5/latest/features/ui-language.html
       language: 'en',
       buildAllTranslationsToSeparateFiles: true
+    }),
+    new GenerateSW({
+      clientsClaim: true,
+      skipWaiting: true,
+      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // optional 10MB limit
     })
   ],
   optimization: {
