@@ -39,7 +39,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
         template: 'page-notify',
         to: '',
         bcc: batch,
-        subject: `[Page Notification] ${subjectText}: ${pageTitle}`,
+        subject: `[CapWiki] ${subjectText}: ${pageTitle}`,
         data: {
           preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
           pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,

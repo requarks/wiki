@@ -138,237 +138,6 @@
           min-width: 414px !important;
         }
       }
-
-      .btn {
-        color: #15011d;
-        font-family: "Ubuntu", sans-serif;
-        font-weight: 400;
-        font-size: 1rem;
-        line-height: calc(1.375rem);
-        text-align: center;
-        text-decoration: none;
-        overflow: hidden;
-        vertical-align: middle;
-        cursor: pointer;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        position: relative;
-        border: 1px solid transparent;
-        background: transparent;
-        border-radius: 50rem;
-        padding: 0.688rem 1.5rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-start;
-        transition: all 0.2s ease-in-out;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .btn {
-          transition: none;
-        }
-      }
-      .btn + .btn {
-        margin-left: 1rem;
-      }
-      .btn-check:focus + .btn,
-      .btn:focus {
-        outline: 0;
-      }
-      .btn:disabled,
-      .btn.disabled,
-      fieldset:disabled .btn {
-        pointer-events: none;
-        opacity: 0.7;
-      }
-
-      .btn-link {
-        font-weight: 400;
-        color: #0070ad;
-        text-decoration: underline;
-      }
-      .btn-link:hover {
-        color: #005a8a;
-      }
-      .btn-link:disabled,
-      .btn-link.disabled {
-        color: #6c757d;
-      }
-
-      .btn-lg {
-        padding: 1rem 2rem;
-        font-size: 1.125rem;
-      }
-
-      .btn-md {
-        padding: 0.75rem 1.5rem;
-        font-size: 1.125rem;
-      }
-
-      .btn-sm {
-        padding: 0.5rem 1.5rem;
-        font-size: 1rem;
-      }
-
-      .btn-primary,
-      .btn-secondary {
-        background-color: #00e6e3;
-        color: #15011d;
-        border-color: #00e6e3;
-      }
-      .btn-primary::before,
-      .btn-secondary::before {
-        content: "";
-        display: block;
-        background-color: #15011d;
-        height: calc(100% + 2px);
-        width: calc(100% + 2px);
-        position: absolute;
-        left: -1px;
-        top: -1px;
-        transform: translate(-100%, 0) rotate(10deg);
-        transform-origin: top left;
-        transition: transform 0.2s ease-out;
-        z-index: -1;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .btn-primary::before,
-        .btn-secondary::before {
-          transition: none;
-        }
-      }
-      .btn-primary:hover,
-      .btn-primary:focus,
-      .btn-secondary:hover,
-      .btn-secondary:focus {
-        color: #00e6e3;
-        border-color: #00e6e3;
-        transform: scale(1.1785);
-        z-index: 1;
-        background-color: #15011d;
-      }
-      .btn-primary:hover::before,
-      .btn-primary:focus::before,
-      .btn-secondary:hover::before,
-      .btn-secondary:focus::before {
-        transform: translate(0);
-      }
-      .btn-primary.rounded-pill:before,
-      .btn-secondary.rounded-pill:before {
-        border-radius: 50rem;
-      }
-
-      .btn-primary:hover,
-      .btn-primary:focus,
-      .btn-primary:active,
-      .btn-primary.active {
-        color: #ffffff;
-      }
-      .btn-primary:hover .btn-icon,
-      .btn-primary:focus .btn-icon,
-      .btn-primary:active .btn-icon,
-      .btn-primary.active .btn-icon {
-        filter: invert(1) grayscale(100%) brightness(200%);
-      }
-      .btn-primary:active,
-      .btn-primary.active {
-        border-color: #15011d;
-      }
-      .btn-primary:disabled,
-      .btn-primary.disabled {
-        color: #15011d;
-        background-color: #00e6e3;
-        border-color: #00e6e3;
-      }
-      .btn-primary.btn-loader.is-loading {
-        background: linear-gradient(to right, #2b0a3d 50%, #00e6e3 50%);
-        background-size: 200% 100%;
-        background-position: right bottom;
-        -webkit-animation: 2s ease-out 0s 1 slideLefttoRight;
-        animation: 2s ease-out 0s 1 slideLefttoRight;
-        color: #ffffff !important;
-      }
-      .btn-primary.btn-loader.is-loading .btn-loader-text {
-        -webkit-animation: 2s ease-out 0s 1 loaderTextColorChange;
-        animation: 2s ease-out 0s 1 loaderTextColorChange;
-      }
-      .btn-primary.btn-loader.is-loaded {
-        background-color: #2b0a3d !important;
-        color: #ffffff !important;
-      }
-      .btn-primary.btn-loader::before {
-        content: none;
-      }
-      .btn-primary.btn-loader:hover,
-      .btn-primary.btn-loader:focus {
-        border-color: #00e6e3;
-        background-color: #00e6e3;
-        transform: scale(1);
-        color: #15011d;
-      }
-
-      .btn:not(.btn-icon-only) .btn-icon {
-        margin-left: 1rem;
-        transition: all 0.2s ease-in-out;
-      }
-
-      .btn-secondary {
-        background-color: #ffffff;
-        border-color: #15011d;
-      }
-      .btn-secondary:before {
-        background-color: #00e6e3;
-      }
-      .btn-secondary:hover,
-      .btn-secondary:focus {
-        color: #15011d;
-        background-color: #00e6e3;
-      }
-      .btn-secondary:active,
-      .btn-secondary.active {
-        border-color: #15011d;
-        background-color: #15011d;
-        color: #ffffff;
-      }
-      .btn-secondary:active:focus,
-      .btn-secondary.active:focus {
-        border-color: #00e6e3;
-        background-color: #ffffff;
-        color: #15011d;
-      }
-      .btn-secondary:disabled,
-      .btn-secondary.disabled {
-        color: #15011d;
-        background-color: #ffffff;
-        border-color: #15011d;
-      }
-      .btn-secondary.btn-loader.is-loading {
-        background: linear-gradient(to right, #2b0a3d 50%, #ffffff 50%);
-        background-size: 200% 100%;
-        background-position: right bottom;
-        -webkit-animation: 2s ease-out 0s 1 slideLefttoRight;
-        animation: 2s ease-out 0s 1 slideLefttoRight;
-        color: #ffffff !important;
-      }
-      .btn-secondary.btn-loader.is-loading .btn-loader-text {
-        -webkit-animation: 2s ease-out 0s 1 loaderTextColorChange;
-        animation: 2s ease-out 0s 1 loaderTextColorChange;
-      }
-      .btn-secondary.btn-loader.is-loaded {
-        background-color: #2b0a3d !important;
-        color: #ffffff !important;
-      }
-      .btn-secondary.btn-loader::before {
-        content: none;
-      }
-      .btn-secondary.btn-loader:hover,
-      .btn-secondary.btn-loader:focus {
-        border-color: #15011d;
-        background-color: #ffffff;
-        transform: scale(1);
-        color: #15011d;
-      }
     </style>
     <!-- CSS Reset : END -->
     <!-- Reset list spacing because Outlook ignores much of our inline CSS. -->
@@ -413,11 +182,11 @@
     <![endif]-->
   </head>
   <!--
-	The email background color (#222222) is defined in three places:
+	The email background color (#eee) is defined in three places:
 	1. body tag: for most email clients
-	2. center tag: for Gmail and Inbox mobile apps and web versions of Gmail, GSuite, Inbox, Yahoo, AOL, Libero, Comcast, freenet, Mail.ru, Orange.fr
+	2. (center tag: for Gmail and Inbox mobile apps and web versions of Gmail, GSuite, Inbox, Yahoo, AOL, Libero, Comcast, freenet, Mail.ru, Orange.fr) -> removed in order to avoid SonarQube issues
 	3. mso conditional: For Windows 10 Mail
--->
+  -->
   <body
     width="100%"
     style="
@@ -427,9 +196,8 @@
       background-color: #eee;
     "
   >
-    <center style="width: 100%; background-color: #eee">
       <!--[if mso | IE]>
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #222222;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eee;">
     <tr>
     <td>
     <![endif]-->
@@ -493,49 +261,89 @@
           width="100%"
           style="margin: 0 auto"
         >
-          <!-- Email Header : BEGIN -->
-          <tr>
-            <td style="padding: 20px 0; text-align: center">
-              <img
-                src="<%= logo %>"
-                height="50"
-                alt="<%= siteTitle %>"
-                border="0"
-                style="
-                  width: auto;
-                  background: #dddddd;
-                  font-family: sans-serif;
-                  font-size: 15px;
-                  line-height: 15px;
-                  color: #555555;
-                "
-              />
-            </td>
-          </tr>
-          <!-- Email Header : END -->
-
           <!-- Hero Image, Flush : BEGIN -->
           <tr>
-            <td style="background-color: #ffffff">
-              <img
-                src="https://static.requarks.io/email/email-cover-book.jpg"
-                width="600"
-                height=""
-                alt="Test Email"
-                border="0"
-                style="
-                  width: 100%;
-                  max-width: 600px;
-                  height: auto;
-                  background: #dddddd;
-                  font-family: sans-serif;
-                  font-size: 15px;
-                  line-height: 15px;
-                  color: #555555;
-                  margin: auto;
-                "
-                class="g-img"
-              />
+            <td style="background-color: #eee">
+              <div>
+              <p class="MsoNormal" style="background: #272936">
+                <span
+                  lang="EN"
+                  style="
+                    mso-fareast-font-family: 'Times New Roman';
+                    color: #272936;
+                    background: #272936;
+                    mso-ansi-language: EN;
+                  "
+                  >.</span
+                >
+                <span
+                  lang="EN"
+                  style="
+                    mso-fareast-font-family: 'Times New Roman';
+                    color: white;
+                    mso-color-alt: windowtext;
+                    mso-ansi-language: EN;
+                  "
+                >
+                </span>
+                <span
+                  lang="EN"
+                  style="
+                    mso-fareast-font-family: 'Times New Roman';
+                    color: white;
+                    mso-color-alt: windowtext;
+                    mso-ansi-language: EN;
+                    mso-no-proof: yes;
+                  "
+                >
+                  <img
+                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAqCAYAAAAj6gIfAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFxEAABcRAcom8z8AAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAAD2klEQVRoQ+2ZS2hdVRSG/3VSH6HGB0SU+qCWWHFQW0GtikU7E3xVRWnB+ECwOHBSpBMHnQkiWKogFQQHQlEopPioCNoOBFGxVUOLxRKrxapoi1UaGmP8fgf3JJysJL03uTlJUb/RvmutvdZ/9+Pcvc+V/udfiO0zge3AVuCa7D9tsX0xsNslNOizfVuOPa0AbgcOjwrPAG8DK3O/ecX2+cBLWexUAK8AF+U8cw6wDjiUBTYD+BFYl/PNCcBy4N0saroArwKdOX8tAOcCzwHDWUgbfG57Sa41q9h+ABjIlWeDchldl2u2DXAJ8GYuWAPHgRty/RkDPAj8nKvUBXAUuCrrmBa2O4AXc/K5ADgAdGVNLWG7G9iVk84lwLasqynApcD+nGyeWJP1SVJkgxrCL5T0UUS0t+ZmCdvfRcTVETFUtRfVD2oELpDUNx/CbY/YHpC0x/Y+28clKSIW234sx08AeD7PWd0AR4AN5YxnPauAHcD3wMKqb9yyAa6NiL1VW93Y7ouIhyPiBLBK0t2SLpM0LGmfpL6iKA4C90oaKIqiP+eQGuLfyqNSJ8BrZd1FwAfZPwrwRrmcJwfoAf7OHesC+LBS90j2Z4DPbJ9d1VzdsHdExIQNXAe2j0paW54i34uIRTkmExHX2366aquKvbnSrpsni6L4VdLWiOjJzlPw6KTLp5yW2gF2lvVWZ18zgBHbi0c1V0f+nEq7FmwPS3qq/LgluZsSER22xx6XVfF/Vdq1EBGbi6IYAHojYln2N8P2yYg4lu0C3s/TNJuUl4yFts8Avs3+VgC+sD3221Qd+T2Vdh1sLIpi0PYTEXFFdrbI9ohwNsr2LfmbzhbALjVmt2umFxrgN9vdWbfUEF8A/blTuwAngR41xD+b/a0CPJQ1jwO4L3dqF+DxMveVwBDwSY5pBrApa50UYEfuPFOAlyt5d5W2TcD9wGCOzwC/A+vHKzwFti8ADuRE06V6fQM2VOw/lLal5YumCXsAOARsBqa/sW1fDuzLSVsljfit+cBX9ds+D7jR9hrgLtsrgLPGxMyE8qXptmrRZpTP8kdGcwDLgGM5zo3YF9oW2QzgTmB3ea6YFGA/8Ez1UQbcBPySY6sAXwMbgdXA0vGVmzPpBXwyyuQrImKJ7S5JQ5IOS+qPiK8igkrseklbIqKlkbU9KGltURTvZN+cAawEduYRnory35LXZ7QxZwPbC4Be4OMsbiqAg+WaX57zTYeWl81U2O6wfY+kXklLJXVL6ixzD0n6Q9JPkr6RtFfSpxHxZUS0fYptW3ymfLfY2TgBx5+STkTESI77z/MPBJ9N4o90+8IAAAAASUVORK5CYII="
+                    alt="logo"
+                  />
+                </span>
+                <span
+                  lang="EN"
+                  style="
+                    mso-fareast-font-family: 'Times New Roman';
+                    color: #272936;
+                    background: #272936;
+                    mso-ansi-language: EN;
+                  "
+                  >.</span
+                >
+                <span
+                  lang="EN"
+                  style="
+                    font-size: 18pt;
+                    font-family: 'Ubuntu', sans-serif;
+                    mso-fareast-font-family: 'Times New Roman';
+                    color: white;
+                    mso-ansi-language: EN;
+                  "
+                >
+                  <span style="font-weight: medium"> CapWiki </span>
+                </span>
+                <span
+                  lang="EN"
+                  style="
+                    mso-fareast-font-family: 'Times New Roman';
+                    color: white;
+                    mso-color-alt: windowtext;
+                    mso-ansi-language: EN;
+                  "
+                >
+                </span>
+                <span
+                  lang="EN"
+                  style="
+                    mso-fareast-font-family: 'Times New Roman';
+                    mso-ansi-language: EN;
+                  "
+                >
+                  <o:p></o:p>
+                </span>
+              </p>
+            </div>
             </td>
           </tr>
           <!-- Hero Image, Flush : END -->
@@ -600,12 +408,42 @@
                           <br />
                         </p>
                       <% } %> <% if (!isDeletion) { %>
-                      <a
-                        href="<%= pageUrl %>"
-                        class="btn btn-secondary btn-sm"
-                        style="margin-top: 10px; align-self: center"
-                        >View Page</a
-                      >
+                      <!--[if mso]>
+                        <p style="margin-top: 15px; margin-bottom: 15px">
+                          <br />
+                        </p>
+                        <span style="color: white; background-color: white;"
+                        >_________________________</span>
+                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="<%= pageUrl %>" style="height:50px; width: 220px; v-text-anchor:middle; mso-wrap-style: none; mso-position-horizontal: center; mso-position-vertical: top;" arcsize="50%" stroke="f" fillcolor="#0070AD">
+                        <w:anchorlock/>
+                        <center style="color:#ffffff; font-family:'Ubuntu', Verdana, sans-serif; font-size:18px; font-weight:bold;">
+                      <![endif]-->
+              <a
+                rel="noopener"
+                target="_blank"
+                rel="noopener"
+                target="_blank"
+                href="<%= pageUrl %>"
+                style="
+                  background-color: #0070ad;
+                  color: #ffffff;
+                  display: inline-block;
+                  font-size: 18px;
+                  font-family: 'Ubuntu', Verdana, sans-serif;
+                  font-weight: bold;
+                  text-decoration: underline;
+                  text-underline-color: #0070ad;
+                  -webkit-text-size-adjust: none;
+                  padding: 14px 24px;
+                  align-self: center;
+                  border-radius: 24px;
+                "
+              >View Page
+              </a>
+              <!--[if mso]>
+                  </center>
+                </v:roundrect>
+              <![endif]-->
                       <% } %> <% if (isDeletion) { %>
                       <p>
                         If this page was deleted by mistake, please contact
@@ -638,6 +476,5 @@
     </tr>
     </table>
     <![endif]-->
-    </center>
   </body>
 </html>
