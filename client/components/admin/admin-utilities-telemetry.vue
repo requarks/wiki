@@ -146,8 +146,8 @@ export default {
       fetchPolicy: 'network-only',
       manual: true,
       result ({ data }) {
-        this.telemetry = _.get(data, 'system.info.telemetry', false)
-        this.clientId = _.get(data, 'system.info.telemetryClientId', 'N/A')
+        this.telemetry = _.get(data, 'info.telemetry', false)
+        this.clientId = _.get(data, 'info.telemetryClientId', 'N/A')
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-utilities-telemetry-refresh')

@@ -892,7 +892,6 @@ export default {
     user: {
       query: gql`
         {
-          users {
             profile {
               id
               name
@@ -911,11 +910,10 @@ export default {
               groups
               pagesTotal
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.users.profile),
+      update: (data) => _.cloneDeep(data.profile),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'profile-refresh')
       }

@@ -1,4 +1,4 @@
-const { UserQuery, UserMutation } = require('../../../graph/resolvers/user')
+const { Query, UserMutation } = require('../../../graph/resolvers/user')
 const CustomError = require('custom-error-instance')
 const userService = require('../../../graph/services/userService')
 const graphHelper = require('../../../helpers/graph')
@@ -85,7 +85,7 @@ describe('UserQuery', () => {
         ])
       })
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual(['test1@example.com', 'test2@example.com'])
     })
@@ -103,7 +103,7 @@ describe('UserQuery', () => {
         }
       }
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual([])
     })
@@ -124,7 +124,7 @@ describe('UserQuery', () => {
       // Mock the checkAccess function to return false
       WIKI.auth.checkAccess.mockReturnValue(false)
 
-      await expect(UserQuery.autoCompleteEmails(null, args, context)).rejects.toThrow(new WIKI.Error.SiteForbidden())
+      await expect(Query.autoCompleteEmails(null, args, context)).rejects.toThrow(new WIKI.Error.SiteForbidden())
     })
 
     it('should return an empty array if no matching emails are found', async () => {
@@ -150,7 +150,7 @@ describe('UserQuery', () => {
         andWhereRaw: jest.fn().mockResolvedValue([])
       })
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual([])
     })
@@ -179,7 +179,7 @@ describe('UserQuery', () => {
         andWhereRaw: jest.fn().mockResolvedValue([])
       })
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual([])
     })
@@ -210,7 +210,7 @@ describe('UserQuery', () => {
         ])
       })
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual(['firstname.lastname@test.com'])
     })
@@ -242,7 +242,7 @@ describe('UserQuery', () => {
         ])
       })
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual(['test1@example.com'])
     })
@@ -271,7 +271,7 @@ describe('UserQuery', () => {
         andWhereRaw: jest.fn().mockResolvedValue([])
       })
 
-      const result = await UserQuery.autoCompleteEmails(null, args, context)
+      const result = await Query.autoCompleteEmails(null, args, context)
 
       expect(result).toEqual([])
     })

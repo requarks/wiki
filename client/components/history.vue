@@ -355,7 +355,6 @@ export default {
       const resp = await this.$apollo.query({
         query: gql`
           query ($pageId: Int!, $versionId: Int!) {
-            pages {
               version (pageId: $pageId, versionId: $versionId) {
                 action
                 authorId
@@ -377,7 +376,6 @@ export default {
                 title
                 versionId
               }
-            }
           }
         `,
         variables: {
@@ -386,7 +384,7 @@ export default {
         }
       })
       this.$store.commit(`loadingStop`, 'history-version-' + versionId)
-      const page = _.get(resp, 'data.pages.version', null)
+      const page = _.get(resp, 'data.version', null)
       if (page) {
         this.cache.push(page)
         return page
@@ -485,18 +483,6 @@ export default {
           id: this.pageId,
           offsetPage: this.offsetPage,
           offsetSize: this.$vuetify.breakpoint.mdAndUp ? 25 : 5
-        },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          return {
-            pages: {
-              history: {
-                total: previousResult.pages.history.total,
-                trail: [...previousResult.pages.history.trail, ...fetchMoreResult.pages.history.trail],
-                __typename: previousResult.pages.history.__typename
-              },
-              __typename: previousResult.pages.__typename
-            }
-          }
         }
       })
     },
@@ -545,7 +531,6 @@ export default {
     trail: {
       query: gql`
         query($id: Int!, $offsetPage: Int, $offsetSize: Int) {
-          pages {
             history(id:$id, offsetPage:$offsetPage, offsetSize:$offsetSize) {
               trail {
                 versionId
@@ -558,7 +543,6 @@ export default {
               }
               total
             }
-          }
         }
       `,
       variables () {
@@ -570,8 +554,8 @@ export default {
       },
       manual: true,
       result ({ data, loading, networkStatus }) {
-        this.total = data.pages.history.total
-        this.trail = data.pages.history.trail
+        this.total = data.history.total
+        this.trail = data.history.trail
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'history-trail-refresh')

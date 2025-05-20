@@ -240,8 +240,7 @@ export default {
         const results = await this.$apollo.query({
           query: gql`
             query ($locale: String!, $path: String!, $siteId: String!) {
-              comments {
-                list(locale: $locale, path: $path, siteId: $siteId) {
+                listComments(locale: $locale, path: $path, siteId: $siteId) {
                   id
                   render
                   authorName
@@ -249,7 +248,6 @@ export default {
                   updatedAt
                 }
               }
-            }
           `,
           variables: {
             locale: this.$store.get('page/locale'),
@@ -258,14 +256,16 @@ export default {
           },
           fetchPolicy: 'network-only'
         })
-        this.comments = _.get(results, 'data.comments.list', []).map(c => {
+        this.comments = _.get(results, 'data.listComments', []).map(c => {
           const nameParts = c.authorName.toUpperCase().split(' ')
           let initials = _.head(nameParts).charAt(0)
           if (nameParts.length > 1) {
             initials += _.last(nameParts).charAt(0)
           }
-          c.initials = initials
-          return c
+          return {
+            ...c,
+            initials
+          }
         })
       } catch (err) {
         console.warn(err)
@@ -401,11 +401,9 @@ export default {
         const results = await this.$apollo.query({
           query: gql`
             query ($id: Int!) {
-              comments {
-                single(id: $id) {
+                commentById(id: $id) {
                   content
                 }
-              }
             }
           `,
           variables: {
@@ -413,7 +411,7 @@ export default {
           },
           fetchPolicy: 'network-only'
         })
-        this.commentEditContent = _.get(results, 'data.comments.single.content', null)
+        this.commentEditContent = _.get(results, 'data.commentById.content', null)
         if (this.commentEditContent === null) {
           throw new Error('Failed to load comment content.')
         }
@@ -579,7 +577,7 @@ export default {
             query: query
           }
         })
-        const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
+        const resp = _.get(respRaw, 'data.autoCompleteEmails', [])
         this.users = resp.map(email => ({
           value: email,
           label: email,

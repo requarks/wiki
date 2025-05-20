@@ -1,8 +1,6 @@
 query {
-  groups {
-    list {
-      id
-      name
-    }
+  listGroups {
+    id
+    name
   }
 }

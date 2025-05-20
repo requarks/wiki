@@ -33,6 +33,9 @@ services:
       POOL_CREATE_TIMEOUT: 10000
       POOL_IDLE_TIMEOUT: 10000
       PANDOC_URL: http://pandoc:80
+      VERSION: 1.4.1-pre.0
+      RELEASE_DATE: 20.05.2025
+      DEV_MODE: false
     depends_on:
       - db
       - pandoc

@@ -162,16 +162,14 @@ export default {
     groups: {
       query: gql`
         {
-          groups {
-            list {
+            listGroups {
               id
               name
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => data.listGroups,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-redirect-groups')
       }

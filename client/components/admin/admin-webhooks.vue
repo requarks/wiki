@@ -102,7 +102,7 @@ export default {
     hooks: {
       query: mailConfigQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.mail.config),
+      update: (data) => _.cloneDeep(data.mailConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-mail-refresh')
       }

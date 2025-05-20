@@ -1,21 +1,19 @@
 query {
-  authentication {
-    strategies {
-      isEnabled
+  strategies {
+    isEnabled
+    key
+    title
+    description
+    isAvailable
+    useForm
+    logo
+    website
+    config {
       key
-      title
-      description
-      isAvailable
-      useForm
-      logo
-      website
-      config {
-        key
-        value
-      }
-      selfRegistration
-      domainWhitelist
-      autoEnrollGroups
+      value
     }
+    selfRegistration
+    domainWhitelist
+    autoEnrollGroups
   }
 }

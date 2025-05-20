@@ -1,9 +1,7 @@
 query {
-  groups {
-    list {
-      id
-      name
-      isSystem
-    }
+  listGroups {
+    id
+    name
+    isSystem
   }
 }

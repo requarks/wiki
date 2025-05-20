@@ -241,7 +241,7 @@ export default {
     config: {
       query: themeConfigQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.theming.config,
+      update: (data) => _.cloneDeep(data.themingConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-theme-refresh')
       }

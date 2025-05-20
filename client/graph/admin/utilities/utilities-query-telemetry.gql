@@ -1,8 +1,6 @@
 query {
-  system {
-    info {
-      telemetry
-      telemetryClientId
-    }
+  info {
+    telemetry
+    telemetryClientId
   }
 }

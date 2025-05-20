@@ -183,7 +183,7 @@ export default {
     engines: {
       query: enginesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.search.searchEngines).map(str => ({
+      update: (data) => _.cloneDeep(data.searchEngines).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,

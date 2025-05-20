@@ -656,7 +656,6 @@ export default {
     strategies: {
       query: gql`
         {
-          authentication {
             activeStrategies(enabledOnly: true) {
               key
               strategy {
@@ -672,9 +671,8 @@ export default {
               selfRegistration
             }
           }
-        }
       `,
-      update: (data) => _.sortBy(data.authentication.activeStrategies, ['order']),
+      update: (data) => _.sortBy(data.activeStrategies, ['order']),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'login-strategies-refresh')
       }

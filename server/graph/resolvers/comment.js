@@ -6,42 +6,45 @@ const notifyUsers = require('../../jobs/notify-users')
 
 module.exports = {
   Query: {
-    async comments() { return {} }
-  },
-  Mutation: {
-    async comments() { return {} }
-  },
-  CommentQuery: {
     /**
      * Fetch list of Comments Providers
      */
-    async providers(obj, args, context, info) {
+    async commentProviders(obj, args, context, info) {
       const providers = await WIKI.models.commentProviders.getProviders()
-      return providers.map(provider => {
-        const providerInfo = _.find(WIKI.data.commentProviders, ['key', provider.key]) || {}
+      return providers.map((provider) => {
+        const providerInfo =
+          _.find(WIKI.data.commentProviders, ['key', provider.key]) || {}
         return {
           ...providerInfo,
           ...provider,
-          config: _.sortBy(_.transform(provider.config, (res, value, key) => {
-            const configData = _.get(providerInfo.props, key, false)
-            if (configData) {
-              res.push({
-                key,
-                value: JSON.stringify({
-                  ...configData,
-                  value
-                })
-              })
-            }
-          }, []), 'key')
+          config: _.sortBy(
+            _.transform(
+              provider.config,
+              (res, value, key) => {
+                const configData = _.get(providerInfo.props, key, false)
+                if (configData) {
+                  res.push({
+                    key,
+                    value: JSON.stringify({
+                      ...configData,
+                      value
+                    })
+                  })
+                }
+              },
+              []
+            ),
+            'key'
+          )
         }
       })
     },
     /**
      * Fetch list of comments for a page
      */
-    async list(obj, args, context) {
-      const page = await WIKI.models.pages.query()
+    async listComments(obj, args, context) {
+      const page = await WIKI.models.pages
+        .query()
         .select('pages.id')
         .findOne({
           localeCode: args.locale,
@@ -49,23 +52,22 @@ module.exports = {
           siteId: args.siteId
         })
         .withGraphJoined('tags')
-        .modifyGraph('tags', builder => {
+        .modifyGraph('tags', (builder) => {
           builder.select('tag')
         })
       if (page) {
-        if (WIKI.auth.checkAccess(
-          context.req.user,
-          ['read:comments'],
-          {
+        if (
+          WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
             tags: page.tags,
             siteId: args.siteId,
             ...args
-          }
-        )) {
-          const comments = await WIKI.models.comments.query()
+          })
+        ) {
+          const comments = await WIKI.models.comments
+            .query()
             .where('pageId', page.id)
             .orderBy('createdAt')
-          return comments.map(c => ({
+          return comments.map((c) => ({
             ...c,
             authorName: c.name,
             authorEmail: c.email,
@@ -81,25 +83,28 @@ module.exports = {
     /**
      * Fetch a single comment
      */
-    async single(obj, args, context) {
+    async commentById(obj, args, context) {
       const cm = await WIKI.data.commentProvider.getCommentById(args.id)
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
       }
-      const page = await WIKI.models.pages.query()
+      const page = await WIKI.models.pages
+        .query()
         .select('localeCode', 'path', 'siteId')
         .findById(cm.pageId)
         .withGraphJoined('tags')
-        .modifyGraph('tags', builder => {
+        .modifyGraph('tags', (builder) => {
           builder.select('tag')
         })
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
-          path: page.path,
-          locale: page.localeCode,
-          tags: page.tags,
-          siteId: page.siteId
-        })) {
+        if (
+          WIKI.auth.checkAccess(context.req.user, ['read:comments'], {
+            path: page.path,
+            locale: page.localeCode,
+            tags: page.tags,
+            siteId: page.siteId
+          })
+        ) {
           return {
             ...cm,
             authorName: cm.name,
@@ -110,9 +115,16 @@ module.exports = {
           throw new WIKI.Error.CommentViewForbidden()
         }
       } else {
-        WIKI.logger.warn(`Comment #${cm.id} is linked to a page #${cm.pageId} that doesn't exist! [ERROR]`)
+        WIKI.logger.warn(
+          `Comment #${cm.id} is linked to a page #${cm.pageId} that doesn't exist! [ERROR]`
+        )
         throw new WIKI.Error.CommentGenericError()
       }
+    }
+  },
+  Mutation: {
+    async comments() {
+      return {}
     }
   },
   CommentMutation: {
@@ -130,8 +142,12 @@ module.exports = {
           // Notify mentioned users
           const page = await WIKI.models.pages.getPageFromDb(args.pageId)
           const mentionEmails = args.mentions
-          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
-          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+          const usersToMention = await WIKI.models.users
+            .query()
+            .whereIn('email', mentionEmails)
+          const mentionIds = [
+            ...new Set(usersToMention.map((user) => user.id))
+          ]
 
           // Insert user mentions into the userMentions table
           for (const userId of mentionIds) {
@@ -142,10 +158,22 @@ module.exports = {
             })
           }
 
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_COMMENT', subjectText: 'Mentioned in Comment' })
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: mentionIds,
+            event: 'MENTION_COMMENT',
+            subjectText: 'Mentioned in Comment'
+          })
         }
         return {
-          responseResult: graphHelper.generateSuccess('New comment posted successfully'),
+          responseResult: graphHelper.generateSuccess(
+            'New comment posted successfully'
+          ),
           id: cmId
         }
       } catch (err) {
@@ -166,8 +194,12 @@ module.exports = {
           // Notify mentioned users
           const page = await WIKI.models.pages.getPageFromDb(args.pageId)
           const mentionEmails = args.mentions
-          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
-          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
+          const usersToMention = await WIKI.models.users
+            .query()
+            .whereIn('email', mentionEmails)
+          const mentionIds = [
+            ...new Set(usersToMention.map((user) => user.id))
+          ]
 
           // Insert user mentions into the userMentions table
           for (const userId of mentionIds) {
@@ -178,10 +210,22 @@ module.exports = {
             })
           }
 
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_COMMENT', subjectText: 'Mentioned in Comment' })
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: mentionIds,
+            event: 'MENTION_COMMENT',
+            subjectText: 'Mentioned in Comment'
+          })
         }
         return {
-          responseResult: graphHelper.generateSuccess('Comment updated successfully'),
+          responseResult: graphHelper.generateSuccess(
+            'Comment updated successfully'
+          ),
           render: cmRender
         }
       } catch (err) {
@@ -199,7 +243,9 @@ module.exports = {
           ip: '' // Disable storing author's IP
         })
         return {
-          responseResult: graphHelper.generateSuccess('Comment deleted successfully')
+          responseResult: graphHelper.generateSuccess(
+            'Comment deleted successfully'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -211,17 +257,30 @@ module.exports = {
     async updateProviders(obj, args, context) {
       try {
         for (let provider of args.providers) {
-          await WIKI.models.commentProviders.query().patch({
-            isEnabled: provider.isEnabled,
-            config: _.reduce(provider.config, (result, value, key) => {
-              _.set(result, `${value.key}`, _.get(JSON.parse(value.value), 'v', null))
-              return result
-            }, {})
-          }).where('key', provider.key)
+          await WIKI.models.commentProviders
+            .query()
+            .patch({
+              isEnabled: provider.isEnabled,
+              config: _.reduce(
+                provider.config,
+                (result, value, key) => {
+                  _.set(
+                    result,
+                    `${value.key}`,
+                    _.get(JSON.parse(value.value), 'v', null)
+                  )
+                  return result
+                },
+                {}
+              )
+            })
+            .where('key', provider.key)
         }
         await WIKI.models.commentProviders.initProvider()
         return {
-          responseResult: graphHelper.generateSuccess('Comment Providers updated successfully')
+          responseResult: graphHelper.generateSuccess(
+            'Comment Providers updated successfully'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)

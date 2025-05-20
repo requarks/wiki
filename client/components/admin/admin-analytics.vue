@@ -165,7 +165,7 @@ export default {
     providers: {
       query: providersQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.analytics.providers).map(str => ({
+      update: (data) => _.cloneDeep(data.analyticsProviders).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,
