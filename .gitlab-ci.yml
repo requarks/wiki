@@ -167,6 +167,8 @@ push-docker-image:
       when: on_success
 
 
+# only enable manual deployment for production
+#@TODO There is need to be new ticket created to trigger automatic build for production when we merge develop to main with commmit message having "release" in it
 promote-prod-release-version:
   stage: promote-prod-release-version
   before_script:
@@ -176,6 +178,7 @@ promote-prod-release-version:
   rules:
    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
+
 after_script:
     - |
       NPM_GLOBAL_DIR="$HOME/.npm-global"
