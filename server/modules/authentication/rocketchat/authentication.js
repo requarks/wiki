@@ -13,7 +13,8 @@ module.exports = {
     const siteURL = conf.siteURL.slice(-1) === '/' ? conf.siteURL.slice(0, -1) : conf.siteURL
 
     OAuth2Strategy.prototype.userProfile = function (accessToken, cb) {
-      this._oauth2.get(`${siteURL}/api/v1/me`, accessToken, (err, body, res) => {
+      this._oauth2.useAuthorizationHeaderforGET(true)
+      this._oauth2.get(`${siteURL}/oauth/userinfo`, accessToken, (err, body, res) => {
         if (err) {
           WIKI.logger.warn('Rocket.chat - Failed to fetch user profile.')
           return cb(err)
@@ -21,10 +22,10 @@ module.exports = {
         try {
           const usr = JSON.parse(body)
           cb(null, {
-            id: usr._id,
-            displayName: _.isEmpty(usr.name) ? usr.username : usr.name,
-            email: usr.emails[0].address,
-            picture: usr.avatarUrl
+            id: usr.sub,
+            displayName: _.isEmpty(usr.name) ? usr.preffered_username : usr.name,
+            email: usr.email,
+            picture: usr.picture
           })
         } catch (err) {
           WIKI.logger.warn('Rocket.chat - Failed to parse user profile.')
