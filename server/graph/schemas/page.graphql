@@ -130,7 +130,7 @@ type PageMutation {
 
   delete(
     id: Int!
-  ): DefaultResponse @auth(requires: ["delete:pages", "manage:system"])
+  ): DefaultResponse @auth(requires: ["delete:pages", "write:pages", "manage:system"])
 
   deleteTag(
     id: Int!
