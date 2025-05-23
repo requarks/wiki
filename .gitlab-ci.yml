@@ -47,8 +47,8 @@ default:
     - runner_mar
   before_script:
   - |
-    rm -rf $HOME/.npm-global
-    NPM_GLOBAL_DIR="$HOME/.npm-global"
+    rm -rf ${CI_PROJECT_DIR}/.npm-global
+    NPM_GLOBAL_DIR="${CI_PROJECT_DIR}/.npm-global"
     mkdir -p "$NPM_GLOBAL_DIR/bin"
     npm config set prefix "$NPM_GLOBAL_DIR"
     export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
@@ -56,21 +56,21 @@ default:
     node -v && npm -v && yarn -v
 
 stages:
-  - environment-set
+  #- environment-set
   - build
-  - test
-  - sonarqube
-  - modify-package-json #Need to remove this stage when MAR-444 task is done.
-  - docker-build
-  - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
-  - promote-prod-release-version
+  #- test
+  #- sonarqube
+  #- modify-package-json #Need to remove this stage when MAR-444 task is done.
+  #- docker-build
+  #- docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
+  #- promote-prod-release-version
 
-environment-set:
-  stage: environment-set
-  script:
-    - echo "environment used for this pipeline is ${ENVIRONMENT}"
-  environment:
-    name: ${ENVIRONMENT}
+# environment-set:
+#   stage: environment-set
+#   script:
+#     - echo "environment used for this pipeline is ${ENVIRONMENT}"
+#   environment:
+#     name: ${ENVIRONMENT}
 
 build:
  stage: build
@@ -81,108 +81,108 @@ build:
       when: never
     - when: always
 
-test:
-  stage: test
-  dependencies:
-    - build
-  script:
-    - yarn add jest-junit --dev
-    - yarn jest --coverage # Run tests
-    ## Below cmnds can be run after fixing lint errors in the codebase
-    #- yarn eslint --ext .js,.vue .
-    # - yarn pug-lint server/views
-  artifacts:
-    expire_in: 1 hr
-    when: on_success
-    paths:
-      - coverage
-      - test-results
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - when: on_success
+# test:
+#   stage: test
+#   dependencies:
+#     - build
+#   script:
+#     - yarn add jest-junit --dev
+#     - yarn jest --coverage # Run tests
+#     ## Below cmnds can be run after fixing lint errors in the codebase
+#     #- yarn eslint --ext .js,.vue .
+#     # - yarn pug-lint server/views
+#   artifacts:
+#     expire_in: 1 hr
+#     when: on_success
+#     paths:
+#       - coverage
+#       - test-results
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+#       when: never
+#     - when: on_success
 
-sonarqube-scan:
-  stage: sonarqube
-  dependencies:
-    - test
-  tags:
-    - docker_runner
-  image:
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
-  script:
-    - sonar-scanner
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $SONARQUBE == "true"
-      when: on_success
+# sonarqube-scan:
+#   stage: sonarqube
+#   dependencies:
+#     - test
+#   tags:
+#     - docker_runner
+#   image:
+#     name: sonarsource/sonar-scanner-cli:latest
+#     entrypoint: [""]
+#   variables:
+#     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+#     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+#   cache:
+#     key: "${CI_JOB_NAME}"
+#     paths:
+#       - .sonar/cache
+#   script:
+#     - sonar-scanner
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+#       when: never
+#     - if: $SONARQUBE == "true"
+#       when: on_success
 
-docker-build:
-  stage: docker-build
-  before_script:
-    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
-  script:
-    - bash scripts/build_images.sh
-  artifacts:
-    paths:
-      - newimage.txt
-    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
-  environment:
-    name: $ENVIRONMENT
-    url: $NEW_IMAGE
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: always
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
-      when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
-      when: always
-
-
-push-docker-image:
-  stage: docker-push
-  needs:
-   - docker-build
-  script:
-   - bash scripts/push_images.sh
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
-      when: on_success
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
-      when: on_success
+# docker-build:
+#   stage: docker-build
+#   before_script:
+#     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
+#   script:
+#     - bash scripts/build_images.sh
+#   artifacts:
+#     paths:
+#       - newimage.txt
+#     expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
+#   environment:
+#     name: $ENVIRONMENT
+#     url: $NEW_IMAGE
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+#       when: never
+#     - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
+#       when: always
+#     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
+#       when: always
+#     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+#       when: always
 
 
-# only enable manual deployment for production
-#@TODO There is need to be new ticket created to trigger automatic build for production when we merge develop to main with commmit message having "release" in it
-promote-prod-release-version:
-  stage: promote-prod-release-version
-  before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-  script:
-    - bash scripts/promote_to_prod.sh
-  rules:
-   - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-     when: always
+# push-docker-image:
+#   stage: docker-push
+#   needs:
+#    - docker-build
+#   script:
+#    - bash scripts/push_images.sh
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+#       when: never
+#     - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
+#       when: on_success
+#     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
+#       when: on_success
+#     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+#       when: on_success
 
-after_script:
-    - |
-      NPM_GLOBAL_DIR="$HOME/.npm-global"
-      if [ -d "$NPM_GLOBAL_DIR" ]; then
-          echo "Directory $TARGET_DIR exists. Deleting it..."
-          rm -rf "$NPM_GLOBAL_DIR"
-      fi
+
+# # only enable manual deployment for production
+# #@TODO There is need to be new ticket created to trigger automatic build for production when we merge develop to main with commmit message having "release" in it
+# promote-prod-release-version:
+#   stage: promote-prod-release-version
+#   before_script:
+#     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+#   script:
+#     - bash scripts/promote_to_prod.sh
+#   rules:
+#    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+#      when: always
+
+# after_script:
+#     - |
+#       NPM_GLOBAL_DIR="$HOME/.npm-global"
+#       if [ -d "$NPM_GLOBAL_DIR" ]; then
+#           echo "Directory $TARGET_DIR exists. Deleting it..."
+#           rm -rf "$NPM_GLOBAL_DIR"
+#       fi
