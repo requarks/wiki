@@ -1,0 +1,53 @@
+mutation UpdatePage(
+   $id: Int!
+  $content: String
+  $description: String
+  $editor: String
+  $isPrivate: Boolean
+  $isPublished: Boolean
+  $locale: String
+  $path: String
+  $publishEndDate: Date
+  $publishStartDate: Date
+  $scriptCss: String
+  $scriptJs: String
+  $tags: [String]
+  $title: String
+  $siteId: String!
+  $notifyFollowers: Boolean
+  $mentions: [String]
+) {
+  pages {
+    update(
+      id: $id
+      content: $content
+      description: $description
+      editor: $editor
+      isPrivate: $isPrivate
+      isPublished: $isPublished
+      locale: $locale
+      path: $path
+      publishEndDate: $publishEndDate
+      publishStartDate: $publishStartDate
+      scriptCss: $scriptCss
+      scriptJs: $scriptJs
+      tags: $tags
+      title: $title
+      siteId: $siteId
+      notifyFollowers: $notifyFollowers
+      mentions: $mentions
+    ) {
+      responseResult {
+        succeeded
+        message
+        slug
+      }
+      page {
+        id
+        title
+        path
+        siteId
+      }
+    }
+  }
+}

@@ -504,8 +504,10 @@ module.exports = class Page extends Model {
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
-    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
-
+    await WIKI.models.tags.associateTags({
+      tags: Array.isArray(opts.tags) ? opts.tags : [],
+      page
+    })
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)

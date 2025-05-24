@@ -453,7 +453,7 @@ module.exports = {
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE', subjectText: 'Created Page' })
         }
 
-        if (args.mentions.length > 0) {
+        if (args.mentions?.length > 0) {
           // Notify mentioned users
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
@@ -486,7 +486,7 @@ module.exports = {
           notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE', subjectText: 'Updated Page' })
         }
 
-        if (args.mentions.length > 0) {
+        if (args.mentions?.length > 0) {
           // Notify mentioned users
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
