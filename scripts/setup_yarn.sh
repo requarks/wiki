@@ -1,3 +1,5 @@
+#!/bin/bash
+
 NPM_GLOBAL_DIR="${CI_PROJECT_DIR}/.npm-global"
       echo "Setting up NPM global directory at $NPM_GLOBAL_DIR"
       # Only remove if it exists and is not empty
