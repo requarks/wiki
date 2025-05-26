@@ -10,9 +10,9 @@ if [ -d "$NPM_GLOBAL_DIR" ] && [ "$(ls -A "$NPM_GLOBAL_DIR")" ]; then
   rm -rf "$NPM_GLOBAL_DIR"
 else
   echo "Directory does not exist or is empty. Skipping removal."
+  mkdir -p "$NPM_GLOBAL_DIR/bin"
 fi
 
-mkdir -p "$NPM_GLOBAL_DIR/bin"
 npm config set prefix "$NPM_GLOBAL_DIR"
 export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
 
