@@ -47,8 +47,8 @@ default:
     - runner_mar
   before_script:
   - |
-    rm -rf $HOME/.npm-global
-    NPM_GLOBAL_DIR="$HOME/.npm-global"
+    rm -rf ${CI_PROJECT_DIR}/.npm-global
+    NPM_GLOBAL_DIR="${CI_PROJECT_DIR}/.npm-global"
     mkdir -p "$NPM_GLOBAL_DIR/bin"
     npm config set prefix "$NPM_GLOBAL_DIR"
     export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
@@ -179,10 +179,10 @@ promote-prod-release-version:
    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
 
-after_script:
-    - |
-      NPM_GLOBAL_DIR="$HOME/.npm-global"
-      if [ -d "$NPM_GLOBAL_DIR" ]; then
-          echo "Directory $TARGET_DIR exists. Deleting it..."
-          rm -rf "$NPM_GLOBAL_DIR"
-      fi
+# after_script:
+#     - |
+#       NPM_GLOBAL_DIR="$HOME/.npm-global"
+#       if [ -d "$NPM_GLOBAL_DIR" ]; then
+#           echo "Directory $TARGET_DIR exists. Deleting it..."
+#           rm -rf "$NPM_GLOBAL_DIR"
+#       fi
