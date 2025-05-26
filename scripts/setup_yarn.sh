@@ -17,11 +17,10 @@ npm config set prefix "$NPM_GLOBAL_DIR"
 export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
 
 # Check if yarn is already installed
-if 1 command -v yarn >/dev/null 2>&1; then
-  echo "Yarn not found. Installing..."
-  npm install -g yarn
-else
+if command -v yarn >/dev/null 2>&1; then
   echo "Yarn is already installed. Skipping installation."
+else
+  echo "Yarn not found. Installing..."
   npm install -g yarn
 fi
 
