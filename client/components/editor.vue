@@ -303,7 +303,40 @@ export default {
     openConflict() {
       this.$root.$emit('saveConflict')
     },
+    isContentEndingWithAlignedFigure(content) {
+      const childElems = content?.children
+      if (childElems && childElems.length > 0) {
+        const lastElem = childElems[childElems.length - 1]
+        return lastElem?.tagName === 'FIGURE' && (
+          lastElem?.classList.contains('image-style-align-left') ||
+          lastElem?.classList.contains('image-style-align-right')
+        )
+      }
+      return false
+    },
+    getEditorContent() {
+      let htmlContent = this.$store.get('editor/content')
+      const editor = this.$store.get('editor/editorKey')
 
+      // If the content was created with the CKEditor and ends with an aligned figure,
+      // we need to add a clear div to prevent layout issues.
+      if (editor === 'ckeditor') {
+        const parser = new DOMParser()
+        const document = parser.parseFromString(htmlContent, 'text/html')
+        let htmlBody = document.querySelector('body')
+
+        if (this.isContentEndingWithAlignedFigure(htmlBody)) {
+          const clearDiv = document.createElement('div')
+          clearDiv.setAttribute('style', 'clear: both;')
+          htmlBody.appendChild(clearDiv)
+
+          const serializer = new XMLSerializer()
+          htmlContent = serializer.serializeToString(document)
+        }
+      }
+
+      return htmlContent
+    },
     async save(notifyFollowers = false, { rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
       this.isSaving = true
@@ -372,7 +405,7 @@ export default {
               }
             `,
             variables: {
-              content: this.$store.get('editor/content'),
+              content: this.getEditorContent(),
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
@@ -489,7 +522,7 @@ export default {
             `,
             variables: {
               id: this.$store.get('page/id'),
-              content: this.$store.get('editor/content'),
+              content: this.getEditorContent(),
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
