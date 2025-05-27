@@ -1,20 +1,18 @@
 {
-  mail {
-    config {
-      senderName
-      senderEmail
-      host
-      port
-      name
-      secure
-      verifySSL
-      user
-      pass
-      useDKIM
-      dkimDomainName
-      dkimKeySelector
-      dkimPrivateKey
-      allowedDomains
-    }
+  mailConfig {
+    senderName
+    senderEmail
+    host
+    port
+    name
+    secure
+    verifySSL
+    user
+    pass
+    useDKIM
+    dkimDomainName
+    dkimKeySelector
+    dkimPrivateKey
+    allowedDomains
   }
 }

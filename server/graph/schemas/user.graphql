@@ -3,24 +3,12 @@
 # ===============================================
 
 extend type Query {
-  users: UserQuery
-}
-
-extend type Mutation {
-  users: UserMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type UserQuery {
-  list(filter: String, orderBy: String): [UserMinimal]
+  listUsers(filter: String, orderBy: String): [UserMinimal]
     @auth(
       requires: ["write:users", "manage:users", "manage:system", "manage:sites"]
     )
 
-  search(query: String!): [UserMinimal]
+  searchUsers(query: String!): [UserMinimal]
     @auth(
       requires: [
         "write:groups"
@@ -32,13 +20,17 @@ type UserQuery {
       ]
     )
 
-  single(id: Int!): User
-    @auth(requires: ["manage:users", "manage:system", "manage:sites"])
-
   profile: UserProfile
 
   autoCompleteEmails(siteId: String!, query: String!): [String]
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+
+  userById(id: Int!): User
+    @auth(requires: ["manage:users", "manage:system", "manage:sites"])
+}
+
+extend type Mutation {
+  users: UserMutation
 }
 
 # -----------------------------------------------

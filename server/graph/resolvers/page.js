@@ -6,22 +6,21 @@ const notifyUsers = require('../../jobs/notify-users')
 
 module.exports = {
   Query: {
-    async pages() { return {} }
-  },
-  Mutation: {
-    async pages() { return {} }
-  },
-  PageQuery: {
     /**
      * PAGE HISTORY
      */
     async history(obj, args, context, info) {
-      const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.id)
-      if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
-        path: page.path,
-        locale: page.localeCode,
-        siteId: page.siteId
-      })) {
+      const page = await WIKI.models.pages
+        .query()
+        .select('path', 'localeCode', 'siteId')
+        .findById(args.id)
+      if (
+        WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+          path: page.path,
+          locale: page.localeCode,
+          siteId: page.siteId
+        })
+      ) {
         return WIKI.models.pageHistory.getHistory({
           pageId: args.id,
           offsetPage: args.offsetPage || 0,
@@ -35,12 +34,17 @@ module.exports = {
      * PAGE VERSION
      */
     async version(obj, args, context, info) {
-      const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.pageId)
-      if (WIKI.auth.checkAccess(context.req.user, ['read:history'], {
-        path: page.path,
-        locale: page.localeCode,
-        siteId: page.siteId
-      })) {
+      const page = await WIKI.models.pages
+        .query()
+        .select('path', 'localeCode', 'siteId')
+        .findById(args.pageId)
+      if (
+        WIKI.auth.checkAccess(context.req.user, ['read:history'], {
+          path: page.path,
+          locale: page.localeCode,
+          siteId: page.siteId
+        })
+      ) {
         return WIKI.models.pageHistory.getVersion({
           pageId: args.pageId,
           versionId: args.versionId
@@ -52,12 +56,12 @@ module.exports = {
     /**
      * SEARCH PAGES
      */
-    async search(obj, args, context) {
+    async searchPages(obj, args, context) {
       if (WIKI.data.searchEngine) {
         const resp = await WIKI.data.searchEngine.query(args.query, args)
         return {
           ...resp,
-          results: _.filter(resp.results, r => {
+          results: _.filter(resp.results, (r) => {
             return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
               path: r.path,
               locale: r.locale,
@@ -77,29 +81,31 @@ module.exports = {
     /**
      * LIST PAGES
      */
-    async list(obj, args, context, info) {
-      let results = await WIKI.models.pages.query().column([
-        'pages.id',
-        'pages.path',
-        { locale: 'localeCode' },
-        'pages.title',
-        'pages.description',
-        'pages.isPublished',
-        'pages.isPrivate',
-        'pages.privateNS',
-        'pages.contentType',
-        'pages.createdAt',
-        'pages.updatedAt',
-        'pages.siteId',
-        'sites.name as siteName',
-        'sites.path as sitePath'
-      ])
+    async listPages(obj, args, context, info) {
+      let results = await WIKI.models.pages
+        .query()
+        .column([
+          'pages.id',
+          'pages.path',
+          { locale: 'localeCode' },
+          'pages.title',
+          'pages.description',
+          'pages.isPublished',
+          'pages.isPrivate',
+          'pages.privateNS',
+          'pages.contentType',
+          'pages.createdAt',
+          'pages.updatedAt',
+          'pages.siteId',
+          'sites.name as siteName',
+          'sites.path as sitePath'
+        ])
         .leftJoin('sites', 'pages.siteId', 'sites.id')
         .withGraphJoined('tags')
-        .modifyGraph('tags', builder => {
+        .modifyGraph('tags', (builder) => {
           builder.select('tag')
         })
-        .modify(queryBuilder => {
+        .modify((queryBuilder) => {
           if (args.limit) {
             queryBuilder.limit(args.limit)
           }
@@ -110,9 +116,17 @@ module.exports = {
             queryBuilder.where('siteId', args.siteId)
           }
 
-          if (args.creatorId && args.authorId && args.creatorId > 0 && args.authorId > 0) {
+          if (
+            args.creatorId &&
+            args.authorId &&
+            args.creatorId > 0 &&
+            args.authorId > 0
+          ) {
             queryBuilder.where(function () {
-              this.where('creatorId', args.creatorId).orWhere('authorId', args.authorId)
+              this.where('creatorId', args.creatorId).orWhere(
+                'authorId',
+                args.authorId
+              )
             })
           } else {
             if (args.creatorId && args.creatorId > 0) {
@@ -123,7 +137,10 @@ module.exports = {
             }
           }
           if (args.tags && args.tags.length > 0) {
-            queryBuilder.whereIn('tags.tag', args.tags.map(t => _.trim(t).toLowerCase()))
+            queryBuilder.whereIn(
+              'tags.tag',
+              args.tags.map((t) => _.trim(t).toLowerCase())
+            )
           }
           const orderDir = args.orderByDirection === 'DESC' ? 'desc' : 'asc'
           switch (args.orderBy) {
@@ -144,7 +161,7 @@ module.exports = {
               break
           }
         })
-      results = _.filter(results, r => {
+      results = _.filter(results, (r) => {
         if (args.isAdmin === true) {
           return WIKI.auth.checkAccess(context.req.user, ['manage:sites'], {
             path: r.path,
@@ -152,31 +169,43 @@ module.exports = {
             siteId: r.siteId
           })
         }
-        return WIKI.auth.checkAccess(context.req.user, ['read:pages', 'manage:sites'], {
-          path: r.path,
-          locale: r.locale,
-          siteId: r.siteId
-        })
-      }).map(r => ({
+        return WIKI.auth.checkAccess(
+          context.req.user,
+          ['read:pages', 'manage:sites'],
+          {
+            path: r.path,
+            locale: r.locale,
+            siteId: r.siteId
+          }
+        )
+      }).map((r) => ({
         ...r,
         tags: _.map(r.tags, 'tag')
       }))
       if (args.tags && args.tags.length > 0) {
-        results = _.filter(results, r => _.every(args.tags, t => _.includes(r.tags, t)))
+        results = _.filter(results, (r) =>
+          _.every(args.tags, (t) => _.includes(r.tags, t))
+        )
       }
       return results
     },
     /**
      * FETCH SINGLE PAGE
      */
-    async single(obj, args, context, info) {
+    async pageById(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
-          path: page.path,
-          locale: page.localeCode,
-          siteId: page.siteId
-        })) {
+        if (
+          WIKI.auth.checkAccess(
+            context.req.user,
+            ['manage:pages', 'delete:pages'],
+            {
+              path: page.path,
+              locale: page.localeCode,
+              siteId: page.siteId
+            }
+          )
+        ) {
           return {
             ...page,
             locale: page.localeCode,
@@ -191,18 +220,24 @@ module.exports = {
         throw new WIKI.Error.PageNotFound()
       }
     },
-    async singleByPath(obj, args, context, info) {
+    async pageByPath(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb({
         path: args.path,
         locale: args.locale,
         siteId: args.siteId
       })
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
-          path: page.path,
-          locale: page.localeCode,
-          siteId: page.siteId
-        })) {
+        if (
+          WIKI.auth.checkAccess(
+            context.req.user,
+            ['manage:pages', 'delete:pages'],
+            {
+              path: page.path,
+              locale: page.localeCode,
+              siteId: page.siteId
+            }
+          )
+        ) {
           return {
             ...page,
             locale: page.localeCode,
@@ -221,23 +256,22 @@ module.exports = {
      * FETCH TAGS
      */
     async tags(obj, args, context, info) {
-      const pages = await WIKI.models.pages.query()
-        .column([
-          'path',
-          { locale: 'localeCode' }
-        ]).modify(queryBuilder => {
+      const pages = await WIKI.models.pages
+        .query()
+        .column(['path', { locale: 'localeCode' }])
+        .modify((queryBuilder) => {
           if (args.siteId) {
             queryBuilder.where('tags.siteId', '=', args.siteId)
           }
         })
         .withGraphJoined('tags')
-      const allTags = _.filter(pages, r => {
+      const allTags = _.filter(pages, (r) => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
           locale: r.locale,
           siteId: args.siteId
         })
-      }).flatMap(r => r.tags)
+      }).flatMap((r) => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
     },
     /**
@@ -245,7 +279,8 @@ module.exports = {
      */
     async searchTags(obj, args, context, info) {
       const query = _.trim(args.query)
-      const pages = await WIKI.models.pages.query()
+      const pages = await WIKI.models.pages
+        .query()
         .column([
           {
             path: 'pages.path',
@@ -253,11 +288,11 @@ module.exports = {
           }
         ])
         .withGraphJoined('tags')
-        .modifyGraph('tags', builder => {
+        .modifyGraph('tags', (builder) => {
           builder.select('tag')
         })
-        .modify(queryBuilder => {
-          queryBuilder.andWhere(builderSub => {
+        .modify((queryBuilder) => {
+          queryBuilder.andWhere((builderSub) => {
             if (WIKI.config.db.type === 'postgres') {
               builderSub.where('tags.tag', 'ILIKE', `%${query}%`)
             } else {
@@ -266,13 +301,15 @@ module.exports = {
             builderSub.where('pages.siteId', '=', `${args.siteId}`)
           })
         })
-      const allTags = _.filter(pages, r => {
+      const allTags = _.filter(pages, (r) => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
           locale: r.locale,
           siteId: args.siteId
         })
-      }).flatMap(r => r.tags).map(t => t.tag)
+      })
+        .flatMap((r) => r.tags)
+        .map((t) => t.tag)
       return _.uniq(allTags).slice(0, 5)
     },
     /**
@@ -281,10 +318,13 @@ module.exports = {
     async tree(obj, args, context, info) {
       let curPage = null
 
-      if (!args.locale) { args.locale = WIKI.config.lang.code }
+      if (!args.locale) {
+        args.locale = WIKI.config.lang.code
+      }
 
       if (args.path && !args.parent) {
-        curPage = await WIKI.models.knex('pageTree')
+        curPage = await WIKI.models
+          .knex('pageTree')
           .first('parent', 'ancestors')
           .where({
             path: args.path,
@@ -298,37 +338,51 @@ module.exports = {
         }
       }
 
-      const results = await WIKI.models.knex('pageTree').where(builder => {
-        builder.where('localeCode', args.locale)
-        builder.where('siteId', args.siteId)
-        switch (args.mode) {
-          case 'FOLDERS':
-            builder.andWhere('isFolder', true)
-            break
-          case 'PAGES':
-            builder.andWhereNotNull('pageId')
-            break
-        }
-        if (!args.parent || args.parent < 1) {
-          builder.whereNull('parent')
-        } else {
-          builder.where('parent', args.parent)
-          if (args.includeAncestors && curPage && curPage.ancestors.length > 0) {
-            builder.orWhereIn('id', _.isString(curPage.ancestors) ? JSON.parse(curPage.ancestors) : curPage.ancestors)
+      const results = await WIKI.models
+        .knex('pageTree')
+        .where((builder) => {
+          builder.where('localeCode', args.locale)
+          builder.where('siteId', args.siteId)
+          switch (args.mode) {
+            case 'FOLDERS':
+              builder.andWhere('isFolder', true)
+              break
+            case 'PAGES':
+              builder.andWhereNotNull('pageId')
+              break
           }
-        }
-      }).orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
-      return results.filter(r => {
-        return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
-          path: r.path,
-          locale: r.localeCode,
-          siteId: r.siteId
+          if (!args.parent || args.parent < 1) {
+            builder.whereNull('parent')
+          } else {
+            builder.where('parent', args.parent)
+            if (
+              args.includeAncestors &&
+              curPage &&
+              curPage.ancestors.length > 0
+            ) {
+              builder.orWhereIn(
+                'id',
+                _.isString(curPage.ancestors) ?
+                  JSON.parse(curPage.ancestors) :
+                  curPage.ancestors
+              )
+            }
+          }
         })
-      }).map(r => ({
-        ...r,
-        parent: r.parent || 0,
-        locale: r.localeCode
-      }))
+        .orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
+      return results
+        .filter((r) => {
+          return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+            path: r.path,
+            locale: r.localeCode,
+            siteId: r.siteId
+          })
+        })
+        .map((r) => ({
+          ...r,
+          parent: r.parent || 0,
+          locale: r.localeCode
+        }))
     },
     /**
      * FETCH PAGE LINKS
@@ -336,66 +390,113 @@ module.exports = {
     async links(obj, args, context, info) {
       let results
 
-      if (WIKI.config.db.type === 'mysql' || WIKI.config.db.type === 'mariadb' || WIKI.config.db.type === 'sqlite') {
-        results = await WIKI.models.knex('pages')
-          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+      if (
+        WIKI.config.db.type === 'mysql' ||
+        WIKI.config.db.type === 'mariadb' ||
+        WIKI.config.db.type === 'sqlite'
+      ) {
+        results = await WIKI.models
+          .knex('pages')
+          .column(
+            { id: 'pages.id' },
+            { path: 'pages.path' },
+            'title',
+            { link: 'pageLinks.path' },
+            { locale: 'pageLinks.localeCode' }
+          )
           .leftJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
             'pages.localeCode': args.locale
           })
           .unionAll(
-            WIKI.models.knex('pageLinks')
-              .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+            WIKI.models
+              .knex('pageLinks')
+              .column(
+                { id: 'pages.id' },
+                { path: 'pages.path' },
+                'title',
+                { link: 'pageLinks.path' },
+                { locale: 'pageLinks.localeCode' }
+              )
               .leftJoin('pages', 'pageLinks.pageId', 'pages.id')
               .where({
                 'pages.localeCode': args.locale
               })
           )
       } else {
-        results = await WIKI.models.knex('pages')
-          .column({ id: 'pages.id' }, { path: 'pages.path' }, 'title', 'siteId', { link: 'pageLinks.path' }, { locale: 'pageLinks.localeCode' })
+        results = await WIKI.models
+          .knex('pages')
+          .column(
+            { id: 'pages.id' },
+            { path: 'pages.path' },
+            'title',
+            'siteId',
+            { link: 'pageLinks.path' },
+            { locale: 'pageLinks.localeCode' }
+          )
           .fullOuterJoin('pageLinks', 'pages.id', 'pageLinks.pageId')
           .where({
             'pages.localeCode': args.locale
           })
       }
 
-      return _.reduce(results, (result, val) => {
-        // -> Check if user has access to source and linked page
-        if (
-          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.path, locale: args.locale, siteId: val.siteId }) ||
-          !WIKI.auth.checkAccess(context.req.user, ['read:pages'], { path: val.link, locale: val.locale, siteId: val.siteId })
-        ) {
-          return result
-        }
-
-        const existingEntry = _.findIndex(result, ['id', val.id])
-        if (existingEntry >= 0) {
-          if (val.link) {
-            result[existingEntry].links.push(`${val.locale}/${val.link}`)
+      return _.reduce(
+        results,
+        (result, val) => {
+          // -> Check if user has access to source and linked page
+          if (
+            !WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+              path: val.path,
+              locale: args.locale,
+              siteId: val.siteId
+            }) ||
+            !WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+              path: val.link,
+              locale: val.locale,
+              siteId: val.siteId
+            })
+          ) {
+            return result
           }
-        } else {
-          result.push({
-            id: val.id,
-            title: val.title,
-            path: `${args.locale}/${val.path}`,
-            links: val.link ? [`${val.locale}/${val.link}`] : []
-          })
-        }
-        return result
-      }, [])
+
+          const existingEntry = _.findIndex(result, ['id', val.id])
+          if (existingEntry >= 0) {
+            if (val.link) {
+              result[existingEntry].links.push(`${val.locale}/${val.link}`)
+            }
+          } else {
+            result.push({
+              id: val.id,
+              title: val.title,
+              path: `${args.locale}/${val.path}`,
+              links: val.link ? [`${val.locale}/${val.link}`] : []
+            })
+          }
+          return result
+        },
+        []
+      )
     },
     /**
      * CHECK FOR EDITING CONFLICT
      */
     async checkConflicts(obj, args, context, info) {
-      let page = await WIKI.models.pages.query().select('path', 'localeCode', 'updatedAt', 'siteId').findById(args.id)
+      let page = await WIKI.models.pages
+        .query()
+        .select('path', 'localeCode', 'updatedAt', 'siteId')
+        .findById(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
-          path: page.path,
-          locale: page.localeCode,
-          siteId: page.siteId
-        })) {
+        if (
+          WIKI.auth.checkAccess(
+            context.req.user,
+            ['write:pages', 'manage:pages'],
+            {
+              path: page.path,
+              locale: page.localeCode,
+              siteId: page.siteId
+            }
+          )
+        ) {
           return page.updatedAt > args.checkoutDate
         } else {
           throw new WIKI.Error.PageUpdateForbidden()
@@ -410,14 +511,20 @@ module.exports = {
     async conflictLatest(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb(args.id)
       if (page) {
-        if (WIKI.auth.checkAccess(context.req.user, ['write:pages', 'manage:pages'], {
-          path: page.path,
-          locale: page.localeCode,
-          siteId: page.siteId
-        })) {
+        if (
+          WIKI.auth.checkAccess(
+            context.req.user,
+            ['write:pages', 'manage:pages'],
+            {
+              path: page.path,
+              locale: page.localeCode,
+              siteId: page.siteId
+            }
+          )
+        ) {
           return {
             ...page,
-            tags: page.tags.map(t => t.tag),
+            tags: page.tags.map((t) => t.tag),
             locale: page.localeCode
           }
         } else {
@@ -428,6 +535,12 @@ module.exports = {
       }
     }
   },
+  Mutation: {
+    async pages() {
+      return {}
+    }
+  },
+
   PageMutation: {
     /**
      * CREATE PAGE
@@ -448,21 +561,51 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: null })
-          const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'CREATE_PAGE', subjectText: 'Created Page' })
+          const followers = await WIKI.models.followers
+            .query()
+            .where({ siteId: page.siteId, pageId: null })
+          const followerIds = [
+            ...new Set(followers.map((follower) => follower.userId))
+          ]
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: followerIds,
+            event: 'CREATE_PAGE',
+            subjectText: 'Created Page'
+          })
         }
 
         if (args.mentions.length > 0) {
           // Notify mentioned users
           const mentionEmails = args.mentions
-          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
-          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE', subjectText: 'Mentioned in Page' })
+          const usersToMention = await WIKI.models.users
+            .query()
+            .whereIn('email', mentionEmails)
+          const mentionIds = [
+            ...new Set(usersToMention.map((user) => user.id))
+          ]
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: mentionIds,
+            event: 'MENTION_PAGE',
+            subjectText: 'Mentioned in Page'
+          })
         }
 
         return {
-          responseResult: graphHelper.generateSuccess('Page created successfully.'),
+          responseResult: graphHelper.generateSuccess(
+            'Page created successfully.'
+          ),
           page
         }
       } catch (err) {
@@ -481,17 +624,46 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
-          const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'UPDATE_PAGE', subjectText: 'Updated Page' })
+          const followers = await WIKI.models.followers
+            .query()
+            .where({ siteId: page.siteId, pageId: page.id })
+            .orWhere({ siteId: page.siteId, pageId: null })
+          const followerIds = [
+            ...new Set(followers.map((follower) => follower.userId))
+          ]
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: followerIds,
+            event: 'UPDATE_PAGE',
+            subjectText: 'Updated Page'
+          })
         }
 
         if (args.mentions.length > 0) {
           // Notify mentioned users
           const mentionEmails = args.mentions
-          const usersToMention = await WIKI.models.users.query().whereIn('email', mentionEmails)
-          const mentionIds = [...new Set(usersToMention.map(user => user.id))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: mentionIds, event: 'MENTION_PAGE', subjectText: 'Mentioned in Page' })
+          const usersToMention = await WIKI.models.users
+            .query()
+            .whereIn('email', mentionEmails)
+          const mentionIds = [
+            ...new Set(usersToMention.map((user) => user.id))
+          ]
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: mentionIds,
+            event: 'MENTION_PAGE',
+            subjectText: 'Mentioned in Page'
+          })
         }
 
         return {
@@ -512,7 +684,9 @@ module.exports = {
           user: context.req.user
         })
         return {
-          responseResult: graphHelper.generateSuccess('Page has been converted.')
+          responseResult: graphHelper.generateSuccess(
+            'Page has been converted.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -540,7 +714,10 @@ module.exports = {
     async delete(obj, args, context) {
       try {
         const page = await WIKI.models.pages.query().findById(args.id)
-        const followers = await WIKI.models.followers.query().where({ siteId: page.siteId, pageId: page.id }).orWhere({ siteId: page.siteId, pageId: null })
+        const followers = await WIKI.models.followers
+          .query()
+          .where({ siteId: page.siteId, pageId: page.id })
+          .orWhere({ siteId: page.siteId, pageId: null })
 
         await WIKI.models.pages.deletePage({
           ...args,
@@ -549,8 +726,20 @@ module.exports = {
 
         if (args.notifyFollowers) {
           // Notify followers
-          const followerIds = [...new Set(followers.map(follower => follower.userId))]
-          notifyUsers({ siteId: page.siteId, pageId: page.id, pageTitle: page.title, pagePath: page.path, sitePath: page.sitePath, userEmail: context.req.user.email, userIds: followerIds, event: 'DELETE_PAGE', subjectText: 'Deleted Page' })
+          const followerIds = [
+            ...new Set(followers.map((follower) => follower.userId))
+          ]
+          notifyUsers({
+            siteId: page.siteId,
+            pageId: page.id,
+            pageTitle: page.title,
+            pagePath: page.path,
+            sitePath: page.sitePath,
+            userEmail: context.req.user.email,
+            userIds: followerIds,
+            event: 'DELETE_PAGE',
+            subjectText: 'Deleted Page'
+          })
         }
 
         return {
@@ -584,7 +773,8 @@ module.exports = {
      */
     async updateTag(obj, args, context) {
       try {
-        const affectedRows = await WIKI.models.tags.query()
+        const affectedRows = await WIKI.models.tags
+          .query()
           .findById(args.id)
           .patch({
             tag: _.trim(args.tag).toLowerCase(),
@@ -594,7 +784,9 @@ module.exports = {
           throw new Error('This tag does not exist.')
         }
         return {
-          responseResult: graphHelper.generateSuccess('Tag has been updated successfully.')
+          responseResult: graphHelper.generateSuccess(
+            'Tag has been updated successfully.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -608,7 +800,9 @@ module.exports = {
         await WIKI.models.pages.flushCache()
         WIKI.events.outbound.emit('flushCache')
         return {
-          responseResult: graphHelper.generateSuccess('Pages Cache has been flushed successfully.')
+          responseResult: graphHelper.generateSuccess(
+            'Pages Cache has been flushed successfully.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -621,7 +815,9 @@ module.exports = {
       try {
         const count = await WIKI.models.pages.migrateToLocale(args)
         return {
-          responseResult: graphHelper.generateSuccess('Migrated content to target locale successfully.'),
+          responseResult: graphHelper.generateSuccess(
+            'Migrated content to target locale successfully.'
+          ),
           count
         }
       } catch (err) {
@@ -635,7 +831,9 @@ module.exports = {
       try {
         await WIKI.models.pages.rebuildTree()
         return {
-          responseResult: graphHelper.generateSuccess('Page tree rebuilt successfully.')
+          responseResult: graphHelper.generateSuccess(
+            'Page tree rebuilt successfully.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -652,7 +850,9 @@ module.exports = {
         }
         await WIKI.models.pages.renderPage(page)
         return {
-          responseResult: graphHelper.generateSuccess('Page rendered successfully.')
+          responseResult: graphHelper.generateSuccess(
+            'Page rendered successfully.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -663,20 +863,28 @@ module.exports = {
      */
     async restore(obj, args, context) {
       try {
-        const page = await WIKI.models.pages.query().select('path', 'localeCode', 'siteId').findById(args.pageId)
+        const page = await WIKI.models.pages
+          .query()
+          .select('path', 'localeCode', 'siteId')
+          .findById(args.pageId)
         if (!page) {
           throw new WIKI.Error.PageNotFound()
         }
 
-        if (!WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
-          path: page.path,
-          locale: page.localeCode,
-          siteId: page.siteId
-        })) {
+        if (
+          !WIKI.auth.checkAccess(context.req.user, ['write:pages'], {
+            path: page.path,
+            locale: page.localeCode,
+            siteId: page.siteId
+          })
+        ) {
           throw new WIKI.Error.PageRestoreForbidden()
         }
 
-        const targetVersion = await WIKI.models.pageHistory.getVersion({ pageId: args.pageId, versionId: args.versionId })
+        const targetVersion = await WIKI.models.pageHistory.getVersion({
+          pageId: args.pageId,
+          versionId: args.versionId
+        })
         if (!targetVersion) {
           throw new WIKI.Error.PageNotFound()
         }
@@ -689,7 +897,9 @@ module.exports = {
         })
 
         return {
-          responseResult: graphHelper.generateSuccess('Page version restored successfully.')
+          responseResult: graphHelper.generateSuccess(
+            'Page version restored successfully.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)
@@ -702,7 +912,9 @@ module.exports = {
       try {
         await WIKI.models.pageHistory.purge(args.olderThan)
         return {
-          responseResult: graphHelper.generateSuccess('Page history purged successfully.')
+          responseResult: graphHelper.generateSuccess(
+            'Page history purged successfully.'
+          )
         }
       } catch (err) {
         return graphHelper.generateError(err)

@@ -21,6 +21,8 @@ const { CKEditorTranslationsPlugin } = require('@ckeditor/ckeditor5-dev-translat
 const CKEditorWebpackPlugin = require('@ckeditor/ckeditor5-dev-webpack-plugin')
 const { bundler, styles } = require('@ckeditor/ckeditor5-dev-utils')
 
+const { GenerateSW } = require('workbox-webpack-plugin')
+
 process.noDeprecation = true
 
 fs.emptyDirSync(path.join(process.cwd(), 'assets'))
@@ -46,7 +48,11 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: (modulePath) => {
-          return modulePath.includes('node_modules') && !modulePath.includes('vuetify')
+          return (
+            modulePath.includes('node_modules') &&
+            !modulePath.includes('vuetify') &&
+            !modulePath.includes('graphql-ws')
+          )
         },
         use: [
           {
@@ -80,12 +86,12 @@ module.exports = {
           {
             loader: 'postcss-loader',
             options: styles.getPostCssConfig({
-              themeImporter: {
-                themePath: require.resolve('@ckeditor/ckeditor5-theme-lark')
-              },
-              minify: true
-            })
-          }
+                themeImporter: {
+                  themePath: require.resolve('@ckeditor/ckeditor5-theme-lark')
+                },
+                minify: true
+              })
+            }
         ]
       },
       {
@@ -205,7 +211,6 @@ module.exports = {
         test: /\.(graphql|gql)$/,
         exclude: /node_modules/,
         use: [
-          { loader: 'graphql-persisted-document-loader' },
           { loader: 'graphql-tag/loader' }
         ]
       },
@@ -287,6 +292,11 @@ module.exports = {
       // See https://ckeditor.com/docs/ckeditor5/latest/features/ui-language.html
       language: 'en',
       buildAllTranslationsToSeparateFiles: true
+    }),
+    new GenerateSW({
+      clientsClaim: true,
+      skipWaiting: true,
+      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // optional 10MB limit
     })
   ],
   optimization: {
@@ -316,8 +326,8 @@ module.exports = {
       'vue$': 'vue/dist/vue.esm.js',
       'gql': path.join(process.cwd(), 'client/graph'),
       // Duplicates fixes:
-      'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
-      'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
+      '@apollo/client/link': path.join(process.cwd(), 'node_modules/@apollo/client/link'),
+      '@apollo/client/utilities': path.join(process.cwd(), 'node_modules/@apollo/client/utilities'),
       'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
       'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
     },

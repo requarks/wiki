@@ -3,14 +3,6 @@
 # ===============================================
 
 extend type Query {
-  contribute: ContributeQuery
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type ContributeQuery {
   contributors: [ContributeContributor]
 }
 

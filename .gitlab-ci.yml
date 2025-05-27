@@ -8,6 +8,7 @@ variables:
   PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
+  ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
   ENVIRONMENT:
     value: "none"
@@ -29,7 +30,7 @@ variables:
       - "true"
       - "false"
     description: "Choose false to skip code quality check"
-    
+
   PANDOC:
     value: "true"
     options:
@@ -45,14 +46,14 @@ default:
   tags:
     - runner_mar
   before_script:
-    - |
-      rm -rf $HOME/.npm-global
-      NPM_GLOBAL_DIR="$HOME/.npm-global"
-      mkdir -p "$NPM_GLOBAL_DIR/bin"
-      npm config set prefix "$NPM_GLOBAL_DIR"
-      export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
-      npm install -g yarn
-      node -v && npm -v && yarn -v
+  - |
+    rm -rf ${CI_PROJECT_DIR}/.npm-global
+    NPM_GLOBAL_DIR="${CI_PROJECT_DIR}/.npm-global"
+    mkdir -p "$NPM_GLOBAL_DIR/bin"
+    npm config set prefix "$NPM_GLOBAL_DIR"
+    export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
+    npm install -g yarn
+    node -v && npm -v && yarn -v
 
 stages:
   - environment-set
@@ -74,11 +75,7 @@ environment-set:
 build:
  stage: build
  script:
-    - yarn cache clean
-    - rm -rf node_modules
-    - rm -rf yarn.lock yarn.lock
-    - yarn install --frozen-lockfile --force
-    - yarn build
+   - bash scripts/set_up_runner.sh
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
@@ -132,36 +129,9 @@ sonarqube-scan:
 docker-build:
   stage: docker-build
   before_script:
-    - |
-      chmod +x gitlab/set-image-tag.sh
-      bash gitlab/set-image-tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
-      source image_tag.env
-      echo "Image tag is ${IMAGE_TAG_BY_ENV}"
-      if [[ -z "$IMAGE_TAG_BY_ENV" ]]; then
-        echo "❌ ERROR: IMAGE_TAG_BY_ENV is empty. so could not build docker image."
-        exit 1
-      fi
-      docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-      export NEW_IMAGE="${IMAGE}:$IMAGE_TAG_BY_ENV"
-      echo "Constructed NEW_IMAGE: $NEW_IMAGE"
-      export NEW_PANDOC_IMAGE="${PANDOC_IMAGE}:$IMAGE_TAG_BY_ENV"
-      echo "Constructed NEW_PANDOC_IMAGE: $NEW_PANDOC_IMAGE"
-      rm image_tag.env
+    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
-    - echo "Building Docker image for environment $ENVIRONMENT"
-    - docker build --no-cache --build-arg VERSION="$VERSION" --build-arg RELEASE_DATE="$(date +'%d.%m.%Y')" -f Dockerfile -t "$NEW_IMAGE" .
-    - echo "NEW_IMAGE=$NEW_IMAGE" > newimage.txt
-    # Conditionally build the Pandoc image if PANDOC is set to true
-    - |
-      if [[ "$PANDOC" == "true" ]]; then
-        echo "Building Pandoc Docker image..."
-        cd dev/pandoc
-        docker build --no-cache -f Dockerfile -t "$NEW_PANDOC_IMAGE" .
-        cd ../..
-        echo "NEW_PANDOC_IMAGE=$NEW_PANDOC_IMAGE" >> newimage.txt
-      else
-        echo "Skipping Pandoc Docker image build as PANDOC is not set to true."
-      fi
+    - bash scripts/build_images.sh
   artifacts:
     paths:
       - newimage.txt
@@ -172,66 +142,47 @@ docker-build:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
       when: always
+    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+      when: always
+
 
 push-docker-image:
   stage: docker-push
   needs:
    - docker-build
-  before_script:
-   - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
-    - source newimage.txt
-    - echo "Pushing Docker image"
-    - docker push $NEW_IMAGE
-    # Conditionally push the Pandoc image if PANDOC is set to true
-    - |
-      if [[ "$PANDOC" == "true" ]]; then
-        echo "Push Pandoc Docker image...$NEW_PANDOC_IMAGE"
-        docker push "$NEW_PANDOC_IMAGE"
-        docker rmi $NEW_PANDOC_IMAGE
-      fi
-    - docker logout $DOCKER_REGISTRY
-    - docker rmi $NEW_IMAGE
+   - bash scripts/push_images.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
       when: on_success
+    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+      when: on_success
 
+
+# only enable manual deployment for production
+#@TODO There is need to be new ticket created to trigger automatic build for production when we merge develop to main with commmit message having "release" in it
 promote-prod-release-version:
   stage: promote-prod-release-version
   before_script:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
-    - export NEW_IMAGE="${IMAGE}:$IMAGE_TAG_BY_ENV"
-    - echo "upgrade Docker image to release version $VERSION"
-    - echo "Staging Image is $STAGING_IMAGE"
-    - |
-      if ! docker pull $STAGING_IMAGE; then
-        echo "Error: Staging image $STAGING_IMAGE does not exist or could not be pulled."
-        exit 1
-      fi
-    - IMAGE_CREATED=$(docker inspect --format='{{.Created}}' $STAGING_IMAGE)
-    - echo "Staging Image Created at $IMAGE_CREATED"
-    - docker tag  $STAGING_IMAGE $NEW_IMAGE
-    - docker push $NEW_IMAGE
-    - docker logout $DOCKER_REGISTRY
-    - docker rmi $STAGING_IMAGE
-    - docker rmi $NEW_IMAGE
+    - bash scripts/promote_to_prod.sh
   rules:
    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
 
-after_script:
-    - |
-      NPM_GLOBAL_DIR="$HOME/.npm-global"
-      if [ -d "$NPM_GLOBAL_DIR" ]; then
-          echo "Directory $TARGET_DIR exists. Deleting it..."
-          rm -rf "$NPM_GLOBAL_DIR"
-      fi
+# after_script:
+#     - |
+#       NPM_GLOBAL_DIR="$HOME/.npm-global"
+#       if [ -d "$NPM_GLOBAL_DIR" ]; then
+#           echo "Directory $TARGET_DIR exists. Deleting it..."
+#           rm -rf "$NPM_GLOBAL_DIR"
+#       fi

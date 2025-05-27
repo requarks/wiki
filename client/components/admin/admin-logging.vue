@@ -166,7 +166,7 @@ export default {
     loggers: {
       query: loggersQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.logging.loggers).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
+      update: (data) => _.cloneDeep(data.loggers).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.parse(cfg.value)}))})),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-logging-refresh')
       }

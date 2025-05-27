@@ -240,7 +240,7 @@ export default {
       fetchPolicy: 'network-only',
       manual: true,
       result({ data, loading, networkStatus }) {
-        this.info = data.system.info
+        this.info = data.info
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-stats-refresh')

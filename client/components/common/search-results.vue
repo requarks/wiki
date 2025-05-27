@@ -191,7 +191,7 @@ export default {
       result() {
         this.pagination = 1
       },
-      update: (data) => _.get(data, 'pages.search', {}),
+      update: (data) => _.get(data, 'searchPages', {}),
       watchLoading (isLoading) {
         this.searchIsLoading = isLoading
       }

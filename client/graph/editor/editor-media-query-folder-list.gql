@@ -1,10 +1,8 @@
 query ($parentFolderId: Int!, $siteId: String!) {
-  assets {
-    folders(parentFolderId:$parentFolderId, siteId: $siteId) {
-      id
-      name
-      slug
-      siteId
-    }
+  folders(parentFolderId: $parentFolderId, siteId: $siteId) {
+    id
+    name
+    slug
+    siteId
   }
 }

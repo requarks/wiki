@@ -1,18 +1,16 @@
 {
-  rendering {
-    renderers {
-      isEnabled
+  renderers {
+    isEnabled
+    key
+    title
+    description
+    icon
+    dependsOn
+    input
+    output
+    config {
       key
-      title
-      description
-      icon
-      dependsOn
-      input
-      output
-      config {
-        key
-        value
-      }
+      value
     }
   }
 }

@@ -136,8 +136,7 @@ export default {
     users: {
       query: gql`
         query {
-          users {
-            list {
+            listUsers {
               id
               name
               email
@@ -146,11 +145,10 @@ export default {
               isActive
               createdAt
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.users.list,
+      update: (data) => data.listUsers,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
@@ -159,12 +157,10 @@ export default {
     strategies: {
       query: gql`
         query {
-          authentication {
             activeStrategies {
               key
               displayName
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
@@ -172,7 +168,7 @@ export default {
         return _.concat({
           key: 'all',
           displayName: 'All Providers'
-        }, data.authentication.activeStrategies)
+        }, data.activeStrategies)
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')

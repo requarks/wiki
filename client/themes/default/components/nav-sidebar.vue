@@ -193,7 +193,6 @@ export default {
       const resp = await this.$apollo.query({
         query: gql`
           query ($parent: Int, $locale: String!, $siteId: String!) {
-            pages {
               tree(
                 parent: $parent
                 mode: ALL
@@ -209,7 +208,6 @@ export default {
                 locale
                 siteId
               }
-            }
           }
         `,
         fetchPolicy: 'cache-first',
@@ -220,7 +218,7 @@ export default {
         }
       })
       this.loadedCache = _.union(this.loadedCache, [item.id])
-      this.currentItems = _.get(resp, 'data.pages.tree', [])
+      this.currentItems = _.get(resp, 'data.tree', [])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     async loadFromCurrentPath() {
@@ -229,7 +227,6 @@ export default {
       const resp = await this.$apollo.query({
         query: gql`
           query ($path: String, $locale: String!, $siteId: String!) {
-            pages {
               tree(
                 path: $path
                 mode: ALL
@@ -246,7 +243,6 @@ export default {
                 locale
                 siteId
               }
-            }
           }
         `,
         fetchPolicy: 'cache-first',
@@ -257,7 +253,7 @@ export default {
         }
       })
 
-      const items = _.get(resp, 'data.pages.tree', [])
+      const items = _.get(resp, 'data.tree', [])
 
       const filteredItems = items.filter((item) => item.siteId === this.siteId)
 

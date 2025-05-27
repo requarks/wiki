@@ -107,14 +107,12 @@ export default {
     items: {
       query: gql`
         query ($query: String!) {
-          users {
-            search(query:$query) {
+            searchUsers(query:$query) {
               id
               name
               email
               providerKey
             }
-          }
         }
       `,
       variables() {
@@ -126,7 +124,7 @@ export default {
       skip() {
         return !this.search || this.search.length < 2
       },
-      update: (data) => data.users.search,
+      update: (data) => data.searchUsers,
       watchLoading (isLoading) {
         this.searchLoading = isLoading
       }

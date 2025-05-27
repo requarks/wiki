@@ -226,7 +226,7 @@ export default {
     groups: {
       query: groupsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => data.listGroups,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-groups-refresh')
       }

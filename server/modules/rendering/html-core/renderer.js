@@ -60,57 +60,55 @@ module.exports = {
         if (_.endsWith('/')) {
           href = href.slice(0, -1)
         }
+        let pagePath = null
 
+        // -> Add locale prefix if using namespacing
+        if (WIKI.config.lang.namespacing) {
+          // -> Reformat paths
+          if (href.indexOf('/') !== 0) {
+            if (this.config.absoluteLinks) {
+              href = `/${this.page.localeCode}/${href}`
+            } else {
+              href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
+            }
+          } else if (href.charAt(3) !== '/') {
+            href = `/${this.page.localeCode}${href}`
+          }
+
+          try {
+            const parsedUrl = new URL(`http://x${href}`)
+            pagePath = pageHelper.parsePath(parsedUrl.pathname)
+          } catch (err) {
+            return
+          }
+        } else {
+          // -> Reformat paths
+          if (href.indexOf('/') !== 0) {
+            if (this.config.absoluteLinks) {
+              href = `/${href}`
+            } else {
+              href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
+            }
+          }
+
+          try {
+            const parsedUrl = new URL(`http://x${href}`)
+            pagePath = pageHelper.parsePath(parsedUrl.pathname)
+          } catch (err) {
+            return
+          }
+        }
+        // -> Save internal references
+        internalRefs.push({
+          localeCode: pagePath.locale,
+          path: pagePath.path
+        })
         // -> Check for system prefix
         if (reservedPrefixes.test(href) || exactReservedPaths.test(href)) {
           $(elm).addClass(`is-system-link`)
         } else if (href.indexOf('.') >= 0) {
           $(elm).addClass(`is-asset-link`)
         } else {
-          let pagePath = null
-
-          // -> Add locale prefix if using namespacing
-          if (WIKI.config.lang.namespacing) {
-            // -> Reformat paths
-            if (href.indexOf('/') !== 0) {
-              if (this.config.absoluteLinks) {
-                href = `/${this.page.localeCode}/${href}`
-              } else {
-                href = (this.page.path === 'home') ? `/${this.page.localeCode}/${href}` : `/${this.page.localeCode}/${this.page.path}/${href}`
-              }
-            } else if (href.charAt(3) !== '/') {
-              href = `/${this.page.localeCode}${href}`
-            }
-
-            try {
-              const parsedUrl = new URL(`http://x${href}`)
-              pagePath = pageHelper.parsePath(parsedUrl.pathname)
-            } catch (err) {
-              return
-            }
-          } else {
-            // -> Reformat paths
-            if (href.indexOf('/') !== 0) {
-              if (this.config.absoluteLinks) {
-                href = `/${href}`
-              } else {
-                href = (this.page.path === 'home') ? `/${href}` : `/${this.page.path}/${href}`
-              }
-            }
-
-            try {
-              const parsedUrl = new URL(`http://x${href}`)
-              pagePath = pageHelper.parsePath(parsedUrl.pathname)
-            } catch (err) {
-              return
-            }
-          }
-          // -> Save internal references
-          internalRefs.push({
-            localeCode: pagePath.locale,
-            path: pagePath.path
-          })
-
           $(elm).addClass(`is-internal-link`)
         }
       } else {

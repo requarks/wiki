@@ -3,28 +3,17 @@
 # ===============================================
 
 extend type Query {
-  analytics: AnalyticsQuery
+  """
+  Fetch list of Analytics providers and their configuration
+  """
+  analyticsProviders(
+    "Return only active providers"
+    isEnabled: Boolean
+  ): [AnalyticsProvider] @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
   analytics: AnalyticsMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-"""
-Queries for Analytics
-"""
-type AnalyticsQuery {
-  """
-  Fetch list of Analytics providers and their configuration
-  """
-  providers(
-    "Return only active providers"
-    isEnabled: Boolean
-  ): [AnalyticsProvider] @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

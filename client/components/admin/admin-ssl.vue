@@ -240,7 +240,6 @@ export default {
     info: {
       query: gql`
         {
-          system {
             info {
               httpPort
               httpRedirection
@@ -251,11 +250,10 @@ export default {
               sslStatus
               sslSubscriberEmail
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.system.info),
+      update: (data) => _.cloneDeep(data.info),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-refresh')
       }

@@ -2,16 +2,37 @@ const fs = require('fs-extra')
 const http = require('http')
 const https = require('https')
 const { ApolloServer } = require('apollo-server-express')
+const { ApolloServerPluginLandingPageGraphQLPlayground, ApolloServerPluginLandingPageProductionDefault } = require('apollo-server-core')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const { useServer } = require('graphql-ws/lib/use/ws')
+const WebSocket = require('ws')
 
 /* global WIKI */
 
+function setupWebSocketServer(httpServer, graphqlSchema, label) {
+  WIKI.logger.info('Starting GraphQL WS subscriptions...')
+  const wsServer = new WebSocket.Server({
+    server: httpServer,
+    path: '/graphql'
+  })
+  useServer(
+    {
+      schema: graphqlSchema,
+      context: async (ctx, msg, args) => ({ req: ctx.extra.request })
+    },
+    wsServer
+  )
+  WIKI.logger.info(`GraphQL WS subscriptions enabled on ${label}`)
+  return wsServer
+}
 module.exports = {
   servers: {
     graph: null,
     http: null,
-    https: null
+    https: null,
+    wsHttp: null,
+    wsHttps: null
   },
   connections: new Map(),
   le: null,
@@ -21,8 +42,10 @@ module.exports = {
   async startHTTP () {
     WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
     this.servers.http = http.createServer(WIKI.app)
-    this.servers.graph.installSubscriptionHandlers(this.servers.http)
-
+    if (!this.servers.wsHttp) {
+      const graphqlSchema = require('../graph')
+      this.servers.wsHttp = setupWebSocketServer(this.servers.http, graphqlSchema, 'HTTP')
+    }
     this.servers.http.listen(WIKI.config.port, WIKI.config.bindIP)
     this.servers.http.on('error', (error) => {
       if (error.syscall !== 'listen') {
@@ -83,8 +106,10 @@ module.exports = {
       return process.exit(1)
     }
     this.servers.https = https.createServer(tlsOpts, WIKI.app)
-    this.servers.graph.installSubscriptionHandlers(this.servers.https)
-
+    if (!this.servers.wsHttps) {
+      const graphqlSchema = require('../graph')
+      this.servers.wsHttps = setupWebSocketServer(this.servers.https, graphqlSchema, 'HTTPS')
+    }
     this.servers.https.listen(WIKI.config.ssl.port, WIKI.config.bindIP)
     this.servers.https.on('error', (error) => {
       if (error.syscall !== 'listen') {
@@ -121,15 +146,20 @@ module.exports = {
   async startGraphQL () {
     const graphqlSchema = require('../graph')
     this.servers.graph = new ApolloServer({
-      ...graphqlSchema,
+      schema: graphqlSchema,
       context: ({ req, res }) => ({ req, res }),
-      subscriptions: {
-        onConnect: (connectionParams, webSocket) => {
-
-        },
-        path: '/graphql-subscriptions'
-      }
+      plugins: [
+        process.env.NODE_ENV === 'development' ?
+          ApolloServerPluginLandingPageGraphQLPlayground({
+            footer: false
+          }) :
+          ApolloServerPluginLandingPageProductionDefault({
+            footer: false
+          })
+      ]
     })
+    WIKI.logger.info('Starting GraphQL Server...')
+    await this.servers.graph.start()
     this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false })
   },
   /**
@@ -152,6 +182,14 @@ module.exports = {
    */
   async stopServers () {
     this.closeConnections()
+    if (this.servers.wsHttp) {
+      await Promise.fromCallback(cb => { this.servers.wsHttp.close(cb) })
+      this.servers.wsHttp = null
+    }
+    if (this.servers.wsHttps) {
+      await Promise.fromCallback(cb => { this.servers.wsHttps.close(cb) })
+      this.servers.wsHttps = null
+    }
     if (this.servers.http) {
       await Promise.fromCallback(cb => { this.servers.http.close(cb) })
       this.servers.http = null
@@ -169,6 +207,10 @@ module.exports = {
     this.closeConnections(srv)
     switch (srv) {
       case 'http':
+        if (this.servers.wsHttp) {
+          await Promise.fromCallback(cb => { this.servers.wsHttp.close(cb) })
+          this.servers.wsHttp = null
+        }
         if (this.servers.http) {
           await Promise.fromCallback(cb => { this.servers.http.close(cb) })
           this.servers.http = null
@@ -176,6 +218,10 @@ module.exports = {
         this.startHTTP()
         break
       case 'https':
+        if (this.servers.wsHttps) {
+          await Promise.fromCallback(cb => { this.servers.wsHttps.close(cb) })
+          this.servers.wsHttps = null
+        }
         if (this.servers.https) {
           await Promise.fromCallback(cb => { this.servers.https.close(cb) })
           this.servers.https = null

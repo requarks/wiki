@@ -3,7 +3,8 @@
 # ===============================================
 
 extend type Query {
-  storage: StorageQuery
+  storageTargets: [StorageTarget] @auth(requires: ["manage:system"])
+  storageStatus: [StorageStatus] @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
@@ -11,27 +12,15 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type StorageQuery {
-  targets: [StorageTarget] @auth(requires: ["manage:system"])
-  status: [StorageStatus] @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type StorageMutation {
-  updateTargets(
-    targets: [StorageTargetInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateTargets(targets: [StorageTargetInput]!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
-  executeAction(
-    targetKey: String!
-    handler: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  executeAction(targetKey: String!, handler: String!): DefaultResponse
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

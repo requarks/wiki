@@ -238,7 +238,6 @@ export default {
     tags: {
       query: gql`
         {
-          pages {
             tags {
               id
               tag
@@ -247,11 +246,10 @@ export default {
               updatedAt
               siteId
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.pages.tags),
+      update: (data) => _.cloneDeep(data.tags),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-tags-refresh')
       }

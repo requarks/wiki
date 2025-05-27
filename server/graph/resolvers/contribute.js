@@ -5,9 +5,6 @@ const _ = require('lodash')
 
 module.exports = {
   Query: {
-    async contribute() { return {} }
-  },
-  ContributeQuery: {
     async contributors(obj, args, context, info) {
       try {
         const resp = await request({
