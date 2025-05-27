@@ -303,13 +303,13 @@ export default {
     openConflict() {
       this.$root.$emit('saveConflict')
     },
-    isContentEndingWithAlignedFigure(content) {
+    isContentNotEndingWithClearDiv(content) {
       const childElems = content?.children
       if (childElems && childElems.length > 0) {
         const lastElem = childElems[childElems.length - 1]
-        return lastElem?.tagName === 'FIGURE' && (
-          lastElem?.classList.contains('image-style-align-left') ||
-          lastElem?.classList.contains('image-style-align-right')
+        return !(
+          lastElem?.tagName === 'DIV' &&
+          lastElem?.id === 'content-clear-div'
         )
       }
       return false
@@ -325,9 +325,10 @@ export default {
         const document = parser.parseFromString(htmlContent, 'text/html')
         let htmlBody = document.querySelector('body')
 
-        if (this.isContentEndingWithAlignedFigure(htmlBody)) {
+        if (this.isContentNotEndingWithClearDiv(htmlBody)) {
           const clearDiv = document.createElement('div')
           clearDiv.setAttribute('style', 'clear: both;')
+          clearDiv.id = 'content-clear-div'
           htmlBody.appendChild(clearDiv)
 
           const serializer = new XMLSerializer()
