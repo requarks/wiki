@@ -3,12 +3,12 @@
     nav-header(dense)
       template(slot='mid')
         v-text-field.editor-title-input(
-          dark
           solo
           flat
           v-model='currentPageTitle'
           hide-details
-          background-color='black'
+          :background-color='$vuetify.theme.dark ? colors.text.darkPurple : "#FFFFFF"'
+          :color='$vuetify.theme.dark ? "#FFFFFF" : colors.text.darkGrey'
           dense
           full-width
         )
@@ -23,25 +23,36 @@
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
-          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
-          span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+          v-icon(:style='"color: " + colors.alert.success', :left='$vuetify.breakpoint.lgAndUp') mdi-check
+          span.grey--text(
+            v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty'
+            :class='$vuetify.theme.dark ? "text--lighten-1" : "text--darken-1"'
+            ) {{ $t('editor:save.saved') }}
+          span.toolbar-btn-text(
+            v-else-if='$vuetify.breakpoint.lgAndUp'
+            :class='{ "dark": $vuetify.theme.dark }'
+            ) {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode === `create` || isDirty'
           text
-          color='green'
+          :style='"color: " + colors.alert.success'
           @click.exact='save(true)'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
-          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.white--text {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
+          v-icon(:style='"color: " + colors.alert.success', :left='$vuetify.breakpoint.lgAndUp') mdi-check
+          span.toolbar-btn-text(
+            :class='{ "dark": $vuetify.theme.dark }'
+          ) {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
           @click='openPropsModal'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
-          v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.page') }}
+          v-icon(:style='"color: " + colors.alert.info', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
+          span.toolbar-btn-text(
+            v-if='$vuetify.breakpoint.lgAndUp'
+            :class='{ "dark": $vuetify.theme.dark }'
+            ) {{ $t('common:actions.page') }}
         v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
           text
@@ -49,8 +60,11 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           @click='exit'
           )
-          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
+          v-icon(:style='"color: " + colors.alert.error', :left='$vuetify.breakpoint.lgAndUp') mdi-close
+          span.toolbar-btn-text(
+            v-if='$vuetify.breakpoint.lgAndUp'
+            :class='{ "dark": $vuetify.theme.dark }'
+            ) {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
     v-main
       component(:is='currentEditor', :save='save')
@@ -72,6 +86,7 @@ import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
 import editorStore from '../store/editor'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 /* global WIKI */
 
@@ -184,6 +199,7 @@ export default {
       dialogUnsaved: false,
       exitConfirmed: false,
       initContentParsed: '',
+      colors: colors,
       savedState: {
         description: '',
         isPublished: false,
@@ -642,6 +658,14 @@ export default {
 
   &-title-input input {
     text-align: center;
+  }
+}
+
+.toolbar-btn-text {
+  color: mc(text, 'darkGrey');
+
+  &.dark {
+    color: white;
   }
 }
 

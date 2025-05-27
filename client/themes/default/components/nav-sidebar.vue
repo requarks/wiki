@@ -6,7 +6,7 @@
       )
       v-btn(
         depressed
-        :color='dark ? colors.velvet[5] : colors.primary[1]'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='min-width:0;'
         @click='goHome'
         :aria-label='$t(`common:header.home`)'
@@ -15,7 +15,7 @@
       v-btn.ml-3(
         v-if='currentMode === `custom`'
         depressed
-        :color='dark ? colors.velvet[5] : colors.primary[1]'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='flex: 1 1 100%;'
         @click='switchMode(`browse`)'
         )
@@ -24,7 +24,7 @@
       v-btn.ml-3(
         v-else-if='currentMode === `browse`'
         depressed
-        :color='dark ? colors.velvet[5] : colors.primary[1]'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='flex: 1 1 100%;'
         @click='switchMode(`custom`)'
         )
@@ -88,7 +88,6 @@
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
           v-list-item-title {{ currentParent.title }}
-        v-subheader.pl-4#curDir {{$t('common:sidebar.currentDirectory')}}
       template(v-for='item of currentItems')
         v-list-item(
           v-if='item.isFolder'

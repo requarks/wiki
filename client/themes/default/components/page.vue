@@ -81,12 +81,12 @@
               v-btn.mr-5.white--text(
                 v-if='isAuthenticated && isFollower != null && !isFollower'
                 @click='followPage'
-                :color='$vuetify.theme.dark ? colors.velvet[5] : colors.primary[1]'
+                :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
                 ) Follow
               v-btn.mr-5.white--text(
                 v-if='isAuthenticated && isFollower != null && isFollower'
                 @click='unfollowPage'
-                :color='$vuetify.theme.dark ? colors.velvet[5] : colors.primary[1]'
+                :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
                 ) Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -268,7 +268,7 @@
                   template(v-slot:activator)
                     v-btn.btn-animate-edit(
                       fab
-                      :color='$vuetify.theme.dark ? colors.velvet[5] : colors.primary[1]'
+                      :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
                       v-model='pageEditFab'
                       @click='pageEdit'
                       v-on='onEditActivator'
@@ -281,60 +281,75 @@
                       v-btn(
                         fab
                         small
-                        color='white'
+                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
                         light
                         v-on='on'
                         @click='pageHistory'
                         )
-                        v-icon(size='20') mdi-history
+                        v-icon(
+                          size='20'
+                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          ) mdi-history
                     span {{$t('common:header.history')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
                         small
-                        color='white'
+                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
                         light
                         v-on='on'
                         @click='pageSource'
                         )
-                        v-icon(size='20') mdi-code-tags
+                        v-icon(
+                          size='20'
+                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          ) mdi-code-tags
                     span {{$t('common:header.viewSource')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
                         small
-                        color='white'
+                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
                         light
                         v-on='on'
                         @click='pageConvert'
                         )
-                        v-icon(size='20') mdi-lightning-bolt
+                        v-icon(
+                          size='20'
+                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          ) mdi-lightning-bolt
                     span {{$t('common:header.convert')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
                         small
-                        color='white'
+                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
                         light
                         v-on='on'
                         @click='pageDuplicate'
                         )
-                        v-icon(size='20') mdi-content-duplicate
+                        v-icon(
+                          size='20'
+                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          ) mdi-content-duplicate
                     span {{$t('common:header.duplicate')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn(
                         fab
                         small
-                        color='white'
+                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
                         light
                         v-on='on'
                         @click='pageMove'
                         )
-                        v-icon(size='20') mdi-content-save-move-outline
+                        v-icon(
+                          size='20'
+                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          ) mdi-content-save-move-outline
                     span {{$t('common:header.move')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
                     template(v-slot:activator='{ on }')
@@ -342,11 +357,14 @@
                         fab
                         dark
                         small
-                        :color='colors.red[5]'
+                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
                         v-on='on'
                         @click='pageDelete'
                         )
-                        v-icon(size='20') mdi-trash-can-outline
+                        v-icon(
+                          size='20'
+                          :color='colors.red[5]'
+                          ) mdi-trash-can-outline
                     span {{$t('common:header.delete')}}
               span {{$t('common:page.editPage')}}
             v-alert.mb-5(v-if='!isPublished', color='red', outlined, icon='mdi-minus-circle', dense)
@@ -374,7 +392,7 @@
         small
         :depressed='this.$vuetify.breakpoint.mdAndUp'
         @click='$vuetify.goTo(0, scrollOpts)'
-        :color='$vuetify.theme.dark ? colors.velvet[5] : colors.primary[1]'
+        :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
         dark
         :style='upBtnPosition'
         :aria-label='$t(`common:actions.returnToTop`)'

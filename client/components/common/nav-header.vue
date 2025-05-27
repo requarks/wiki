@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-app-bar.nav-header(
-    :color='$vuetify.theme.dark ? colors.primary[3] : `white`',
+    :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
     app,
     :clipped-left='!$vuetify.rtl',
     :clipped-right='$vuetify.rtl',
@@ -10,7 +10,7 @@
     )
     v-toolbar(
       v-if='searchIsShown && $vuetify.breakpoint.smAndDown',
-      :color='$vuetify.theme.dark ? colors.primary[3] : `white`',
+      :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
       flat,
       slot='extension'
       )
@@ -34,7 +34,7 @@
     v-layout(row)
       v-flex(xs5, md4)
         v-toolbar.nav-header-inner(
-          :color='$vuetify.theme.dark ? colors.primary[3] : `white`',
+          :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
           flat,
           :class='$vuetify.rtl ? `pr-3` : `pl-3`'
           )
@@ -70,7 +70,7 @@
                 v-list-item-title.body-2 {{ site.text }}
 
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
-        v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.primary[3] : `white`', flat)
+        v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.text.darkPurple : `white`', flat)
           slot(name='mid')
 
             transition(name='navHeaderSearch', v-if='searchIsShown')
@@ -110,7 +110,7 @@
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(:color='$vuetify.theme.dark ? colors.primary[3] : `white`', flat)
+        v-toolbar.nav-header-inner.pr-4(:color='$vuetify.theme.dark ? colors.text.darkPurple : `white`', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -862,7 +862,7 @@ export default {
 }
 
 .color-theme-dark {
-  background-color: mc("primary", "3") !important;
+  background-color: mc("text", "darkPurple") !important;
   color: white !important;
 }
 </style>
