@@ -46,15 +46,7 @@ default:
   tags:
     - runner_mar
   before_script:
-  - |
-    rm -rf ${CI_PROJECT_DIR}/.npm-global
-    NPM_GLOBAL_DIR="${CI_PROJECT_DIR}/.npm-global"
-    mkdir -p "$NPM_GLOBAL_DIR/bin"
-    npm config set prefix "$NPM_GLOBAL_DIR"
-    export PATH="$NPM_GLOBAL_DIR/bin:$PATH"
-    npm install -g yarn
-    node -v && npm -v && yarn -v
-
+     - source scripts/setup_yarn.sh
 stages:
   - environment-set
   - build
