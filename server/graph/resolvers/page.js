@@ -580,7 +580,7 @@ module.exports = {
           })
         }
 
-        if (args.mentions.length > 0) {
+        if (args.mentions?.length > 0) {
           // Notify mentioned users
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users
@@ -644,7 +644,7 @@ module.exports = {
           })
         }
 
-        if (args.mentions.length > 0) {
+        if (args.mentions?.length > 0) {
           // Notify mentioned users
           const mentionEmails = args.mentions
           const usersToMention = await WIKI.models.users
