@@ -6,7 +6,9 @@ const {
   convertToFile,
   getPageContent,
   getPageTreeExportHtml,
-  getExportHtmlContent
+  getExportHtmlContent,
+  anonymizeMentionedUsers,
+  ANONYMIZED_MENTION
 } = require('../../helpers/export')
 const Page = require('../../models/pages')
 
@@ -183,6 +185,38 @@ describe('export helpers', () => {
 
       const images = document.querySelectorAll('img')
       expect(images[0].src).toBe('/assets/site1/image1.png')
+    })
+  })
+  describe('anonymizeMentionedUsers', () => {
+    let document
+
+    beforeEach(() => {
+      const html = `
+        <html>
+          <body>
+            <span data-mention="dummyuser@dummy.com" class="mention">@dummyuser@dummy.com</span>
+            <div>
+              <span data-mention="nested@company.com" class="mention">@nested@company.com</span>
+              <div>
+                <span data-mention="deep@company.com" class="mention">@deep@company.com</span>
+              </div>
+            </div>
+            </body>
+        </html>
+      `
+      const dom = new JSDOM(html)
+      document = dom.window.document
+    })
+
+    it('should anonymize mentioned users', async () => {
+      await anonymizeMentionedUsers(document)
+
+      const mentions = document.querySelectorAll('.mention[data-mention]')
+      expect(mentions.length).toBe(3)
+      mentions.forEach(m => {
+        expect(m.getAttribute('data-mention')).toBe(ANONYMIZED_MENTION)
+        expect(m.textContent).toBe(`@${ANONYMIZED_MENTION}`)
+      })
     })
   })
 
@@ -486,6 +520,69 @@ describe('export helpers', () => {
       // THEN
       expect(WIKI.models.pages.getPageTreeFrom).not.toHaveBeenCalled()
       expect(result).toBe(expectedHTML)
+    })
+    it('should anonymize mentioned users in the exported HTML', async () => {
+      // GIVEN
+      const pageWithMention = {
+        title: 'Mention Page',
+        contentType: 'html',
+        render: `<h1 class="toc-header" id="header"><a href="#header" class="toc-anchor">¶</a> Header</h1>
+<p>Your content here</p>
+<p><span data-mention="dummy.user@dummy.com" class="mention">@dummy.user@dummy.com</span></p>`,
+        path: 'mention-path'
+      }
+      const queryParams = {
+        sitePath: 'sitePath',
+        locale: 'en',
+        path: 'mention-path'
+      }
+      let dom
+      JSDOM.mockImplementationOnce((html) => {
+        dom = new (require('jsdom').JSDOM)(html)
+        dom.serialize = jest.fn(() => {
+          return dom.window.document.documentElement.outerHTML
+        })
+        return dom
+      })
+
+      // WHEN
+      const result = await getExportHtmlContent(pageWithMention, user, queryParams)
+
+      // THEN
+      expect(result).toContain(`@${ANONYMIZED_MENTION}`)
+      expect(result).toContain(`data-mention="${ANONYMIZED_MENTION}"`)
+      expect(result).not.toContain('dummy.user@dummy.com')
+    })
+
+    it('should anonymize mentioned users in a markdown page', async () => {
+      // GIVEN
+      const markdownPage = {
+        title: 'Markdown Page',
+        contentType: 'markdown',
+        content: 'Hello @someone@company.com',
+        path: 'markdown-path'
+      }
+      const queryParams = {
+        sitePath: 'sitePath',
+        locale: 'en',
+        path: 'markdown-path'
+      }
+
+      Page.convertMarkdown2HTML.mockReturnValue('<p>Hello <span data-mention="someone@company.com" class="mention">@someone@company.com</span></p>')
+      let dom
+      JSDOM.mockImplementationOnce((html) => {
+        dom = new (require('jsdom').JSDOM)(html)
+        dom.serialize = jest.fn(() => dom.window.document.documentElement.outerHTML)
+        return dom
+      })
+
+      // WHEN
+      const result = await getExportHtmlContent(markdownPage, user, queryParams)
+
+      // THEN
+      expect(result).toContain(`@${ANONYMIZED_MENTION}`)
+      expect(result).toContain(`data-mention="${ANONYMIZED_MENTION}"`)
+      expect(result).not.toContain('someone@company.com')
     })
   })
 })
