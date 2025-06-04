@@ -2,11 +2,11 @@
   v-dialog(
     v-model='isShown'
     max-width='850px'
-    overlay-color='blue darken-4'
-    overlay-opacity='.7'
+    :overlay-color='$vuetify.theme.dark ? colors.primary[3] : colors.primary[1]'
+    :overlay-opacity='$vuetify.theme.dark ? ".6" : ".8"'
     )
     v-card.page-selector
-      .dialog-header.is-blue
+      .dialog-header(:class='$vuetify.theme.dark ? `is-dark` : ``')
         v-icon.mr-3(color='white') mdi-page-next-outline
         .body-1(v-if='mode === `create`') {{$t('common:pageSelector.createTitle')}}
         .body-1(v-else-if='mode === `move`') {{$t('common:pageSelector.moveTitle')}}
@@ -20,12 +20,17 @@
           v-show='searchLoading'
           )
       .d-flex
-        v-flex.grey(xs5, :class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
-          v-toolbar(color='grey darken-3', dark, dense, flat)
+        v-flex(xs5, :color='$vuetify.theme.dark ? colors.text.darkGrey : colors.surface[1]')
+          v-toolbar(
+            :color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]',
+            dark,
+            dense,
+            flat
+            )
             .body-2 {{$t('common:pageSelector.virtualFolders')}}
             v-spacer
             v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
-              v-icon mdi-help-box
+              v-icon(color="#ffffff") mdi-help-box
           div(style='height:400px;')
             vue-scroll(:ops='scrollStyle')
               v-treeview(
@@ -34,6 +39,7 @@
                 :open.sync='openNodes'
                 :items='tree'
                 :load-children='fetchFolders'
+                :color='$vuetify.theme.dark ? colors.peacock[1] : "black"'
                 dense
                 expand-icon='mdi-menu-down-outline'
                 item-id='path'
@@ -44,7 +50,7 @@
                 template(slot='prepend', slot-scope='{ item, open, leaf }')
                   v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs7)
-          v-toolbar(color='blue darken-2', dark, dense, flat)
+          v-toolbar(:color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]', dark, dense, flat)
             .body-2 {{$t('common:pageSelector.pages')}}
             //- v-spacer
             //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
@@ -94,14 +100,15 @@
       v-card-chin
         v-spacer
         v-btn(text, @click='close') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='primary', @click='open', :disabled='!isValidPath')
-          v-icon(left) mdi-check
-          span {{$t('common:actions.select')}}
+        v-btn.px-4(:color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]', @click='open', :disabled='!isValidPath')
+          v-icon(left color='white') mdi-check
+          span#select-btn-text {{$t('common:actions.select')}}
 </template>
 
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
@@ -175,7 +182,8 @@ export default {
         }
       },
       siteId: this.$store.get('page/siteId'),
-      siteName: this.$store.get('page/siteName')
+      siteName: this.$store.get('page/siteName'),
+      colors: colors
     }
   },
   computed: {
@@ -377,6 +385,9 @@ export default {
   }
   .v-treeview-node__content {
     cursor: pointer;
+  }
+  #select-btn-text {
+    color: white;
   }
 }
 </style>

@@ -61,7 +61,7 @@ export default {
     }
 
     &.altbg {
-      background: mc('theme', 'primary');
+      background: mc('primary', '1');
 
       span {
         color: mc('blue', '300');

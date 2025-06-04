@@ -282,10 +282,10 @@ export default {
 
 .admin-sidebar {
   .v-list__tile--active {
-    background-color: rgba(mc('theme', 'primary'), .1);
+    background-color: rgba(mc('primary', '1'), .1);
 
     .v-icon {
-      color: mc('theme', 'primary');
+      color: mc('primary', '1');
     }
   }
 
