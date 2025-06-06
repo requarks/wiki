@@ -255,7 +255,7 @@ module.exports = {
       }
 
       try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system', 'manage:sites'])) {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 

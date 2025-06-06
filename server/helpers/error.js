@@ -246,7 +246,7 @@ module.exports = {
     code: 8003
   }),
   CommentManageForbidden: CustomError('CommentManageForbidden', {
-    message: 'You are not authorized to manage comments on this page.',
+    message: 'You are either not authorized to manage comments on this page or to modify comments made by other users.',
     code: 8004
   }),
   CommentNotFound: CustomError('CommentNotFound', {
