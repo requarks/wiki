@@ -196,7 +196,7 @@ module.exports = {
     // Detect mentions
     let mentions = []
     $('span.mention').each((i, elm) => {
-      const mention = $(elm).attr('data-mention')
+      const mention = $(elm).text().replace(/^@/, '')
       if (mention !== 'AnonymousUser') {
         mentions.push(mention)
       }
