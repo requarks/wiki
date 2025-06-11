@@ -19,6 +19,7 @@ block body
       script-css=page.extra.css
       script-js=page.extra.js
       init-mode=page.mode
+      toc-options=Buffer.from(JSON.stringify(page.tocOptions)).toString('base64')
       init-editor=page.editorKey
       init-content=page.content
       checkout-date=page.updatedAt
