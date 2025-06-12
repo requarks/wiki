@@ -93,7 +93,7 @@
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
-              mentionable(:keys="mentionableKeys", :items="users", @open="onOpen" @apply="handleApply")
+              mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)", @apply="handleApply")
                 v-textarea(
                   ref="editCommentTextarea"
                   outlined
@@ -197,7 +197,7 @@ export default {
     handleApply(item) {
       const textarea = this.commentEditId === 0 ?
         this.$refs.newCommentTextarea.$el.querySelector('textarea') :
-        this.$refs.editCommentTextarea.$el.querySelector('textarea')
+        this.$refs.editCommentTextarea[0].$el.querySelector('textarea')
 
       let commentContent = this.commentEditId === 0 ? this.newcomment : this.commentEditContent
 
