@@ -1,7 +1,7 @@
 const graphHelper = require('../../helpers/graph')
 const safeRegex = require('safe-regex')
 const _ = require('lodash')
-const { handleUserInactivityAfterUnassign, removeUserInactivityIfReactivated } = require('../services/userInactivityService')
+const { handleUserSiteInactivityAfterUnassign, removeUserSiteInactivityIfReactivated } = require('../services/userSiteInactivityService')
 
 const {
   getManagedSiteIdsFromGroups,
@@ -125,7 +125,7 @@ module.exports = {
       await grp.$relatedQuery('users').relate(usr.id)
 
       // Handle user inactivity after assignment
-      await removeUserInactivityIfReactivated(usr.id, grp)
+      await removeUserSiteInactivityIfReactivated(usr.id, grp)
 
       // Revoke tokens for this user
       WIKI.auth.revokeUserTokens({ id: usr.id, kind: 'u' })
@@ -248,7 +248,7 @@ module.exports = {
       await grp.$relatedQuery('users').unrelate().where('userId', usr.id)
 
       // Handle user inactivity after unassign
-      await handleUserInactivityAfterUnassign(grp, usr)
+      await handleUserSiteInactivityAfterUnassign(grp, usr)
 
       WIKI.auth.revokeUserTokens({ id: usr.id, kind: 'u' })
       WIKI.events.outbound.emit('addAuthRevoke', { id: usr.id, kind: 'u' })
