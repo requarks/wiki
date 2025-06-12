@@ -693,7 +693,7 @@ export default {
       return toc
     },
     tocPosition: get('site/tocPosition'),
-    hasAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasAdminPermission: get('page/effectivePermissions@system.manage') || get('page/effectivePermissions@sites.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),

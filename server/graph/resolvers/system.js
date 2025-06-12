@@ -10,6 +10,9 @@ const graphHelper = require('../../helpers/graph')
 const request = require('request-promise')
 const crypto = require('crypto')
 const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
+const {
+  canManageGroup,
+} = require('../../helpers/group')
 
 /* global WIKI */
 
@@ -417,10 +420,9 @@ module.exports = {
         return _.toSafeInteger(groups.length)
       }
 
-      const userRelevantGroups = _.filter(groups, g => {
-        return _.intersection(context.req.user.groups, [g.id]).length > 0
-      })
-
+      const userRelevantGroups = _.filter(groups, (g) =>
+        canManageGroup(context.req.user, g.id)
+      )
       return _.toSafeInteger(userRelevantGroups.length)
     },
     async pagesTotal (obj, args, context) {

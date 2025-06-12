@@ -37,6 +37,9 @@ const state = {
       script: false,
       style: false
     },
+    sites: {
+      manage: false
+    },
     system: {
       manage: false
     }

@@ -139,21 +139,19 @@ type PageMutation {
   delete(id: Int!, notifyFollowers: Boolean): DefaultResponse
     @auth(requires: ["delete:pages", "manage:sites", "manage:system"])
 
-  deleteTag(id: Int!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+  deleteTag(id: Int!): DefaultResponse @auth(requires: ["manage:system"])
 
   updateTag(id: Int!, tag: String!, title: String!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:system"])
 
-  flushCache: DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  flushCache: DefaultResponse @auth(requires: ["manage:system"])
 
   migrateToLocale(
     sourceLocale: String!
     targetLocale: String!
-  ): PageMigrationResponse @auth(requires: ["manage:system", "manage:sites"])
+  ): PageMigrationResponse @auth(requires: ["manage:system"])
 
-  rebuildTree: DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+  rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
 
   render(id: Int!): DefaultResponse
     @auth(requires: ["manage:system", "manage:sites"])
@@ -164,7 +162,7 @@ type PageMutation {
     )
 
   purgeHistory(olderThan: String!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
