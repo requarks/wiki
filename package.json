@@ -191,7 +191,6 @@
     "validate.js": "0.13.1",
     "vue-mention": "1.0.0-floating-vue1",
     "winston": "3.8.2",
-    "workbox-webpack-plugin": "7.3.0",
     "ws": "8.18.2",
     "xss": "1.0.14",
     "yargs": "17.6.2"
@@ -365,6 +364,7 @@
     "webpack-subresource-integrity": "1.5.1",
     "webpackbar": "4.0.0",
     "whatwg-fetch": "3.6.2",
+    "workbox-webpack-plugin": "7.3.0",
     "write-file-webpack-plugin": "4.5.1",
     "xterm": "4.9.0",
     "zxcvbn": "4.4.2"
