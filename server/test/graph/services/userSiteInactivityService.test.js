@@ -147,5 +147,33 @@ describe('userSiteInactivityService', () => {
       expect(insertMock).toHaveBeenCalledWith({ userId: usr.id, siteId: 'siteB' })
       expect(insertMock).toHaveBeenCalledTimes(2)
     })
+    it('should not create duplicate entries for the same userId and siteId but update inactiveSince instead', async () => {
+      // Arrange
+      const grp = { id: 1, rules: [{ deny: false, sites: ['siteA'] }] }
+      const usr = { id: 42 }
+      const userGroups = [
+        { rules: [{ deny: false, sites: [] }] }
+      ]
+      WIKI.models.groups.query = jest.fn(() => ({
+        join: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue(userGroups)
+      }))
+
+      const mergeMock = jest.fn().mockResolvedValue(true)
+      const onConflictMock = jest.fn(() => ({ merge: mergeMock }))
+      const insertMock = jest.fn(() => ({ onConflict: onConflictMock }))
+      WIKI.models.userSiteInactivity.query = jest.fn(() => ({
+        insert: insertMock
+      }))
+
+      // Act
+      await userSiteInactivityService.handleUserSiteInactivityAfterUnassign(grp, usr)
+      await userSiteInactivityService.handleUserSiteInactivityAfterUnassign(grp, usr)
+
+      // Assert
+      expect(insertMock).toHaveBeenCalledTimes(2)
+      expect(onConflictMock).toHaveBeenCalledWith(['userId', 'siteId'])
+      expect(mergeMock).toHaveBeenCalledTimes(2)
+    })
   })
 })

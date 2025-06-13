@@ -28,6 +28,8 @@ async function insertUserSiteInactivityForSites(userId, sitesToUnassign, sitesUs
         userId: userId,
         siteId: siteId
       })
+        .onConflict(['userId', 'siteId'])
+        .merge({ inactiveSince: new Date().toISOString() })
     }
   }
 }
