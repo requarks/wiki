@@ -39,7 +39,9 @@ describe('userSiteInactivityService', () => {
         join: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue(userGroups)
       }))
-      const insertMock = jest.fn().mockResolvedValue(true)
+      const mergeMock = jest.fn().mockResolvedValue(true)
+      const onConflictMock = jest.fn(() => ({ merge: mergeMock }))
+      const insertMock = jest.fn(() => ({ onConflict: onConflictMock }))
       WIKI.models.userSiteInactivity.query = jest.fn(() => ({
         insert: insertMock
       }))
@@ -88,7 +90,9 @@ describe('userSiteInactivityService', () => {
         join: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue(userGroups)
       }))
-      const insertMock = jest.fn().mockResolvedValue(true)
+      const mergeMock = jest.fn().mockResolvedValue(true)
+      const onConflictMock = jest.fn(() => ({ merge: mergeMock }))
+      const insertMock = jest.fn(() => ({ onConflict: onConflictMock }))
       WIKI.models.userSiteInactivity.query = jest.fn(() => ({
         insert: insertMock
       }))
@@ -111,7 +115,9 @@ describe('userSiteInactivityService', () => {
         join: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue(userGroups)
       }))
-      const insertMock = jest.fn().mockResolvedValue(true)
+      const mergeMock = jest.fn().mockResolvedValue(true)
+      const onConflictMock = jest.fn(() => ({ merge: mergeMock }))
+      const insertMock = jest.fn(() => ({ onConflict: onConflictMock }))
       WIKI.models.userSiteInactivity.query = jest.fn(() => ({
         insert: insertMock
       }))
@@ -134,7 +140,9 @@ describe('userSiteInactivityService', () => {
         join: jest.fn().mockReturnThis(),
         where: jest.fn().mockResolvedValue(userGroups)
       }))
-      const insertMock = jest.fn().mockResolvedValue(true)
+      const mergeMock = jest.fn().mockResolvedValue(true)
+      const onConflictMock = jest.fn(() => ({ merge: mergeMock }))
+      const insertMock = jest.fn(() => ({ onConflict: onConflictMock }))
       WIKI.models.userSiteInactivity.query = jest.fn(() => ({
         insert: insertMock
       }))
