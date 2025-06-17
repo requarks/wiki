@@ -102,8 +102,7 @@ module.exports = {
         test: /^(?!.*ckeditor).*\.css$/,
         exclude: [
           /ckeditor5-[^/\\]+[/\\]theme[/\\].+\.css$/,
-          path.join(__dirname, 'node_modules', '@ckeditor'),
-          path.join(__dirname, 'node_modules', 'prismjs')
+          path.join(__dirname, 'node_modules', '@ckeditor')
         ],
         use: [
           'style-loader',
