@@ -7,7 +7,7 @@
   "dev": true,
   "scripts": {
     "start": "node server",
-    "dev": "npm run dev-win",
+    "dev": "while true; do yarn dev-linux; sleep 1; done",
     "dev-win": "set NODE_OPTIONS=--openssl-legacy-provider && node dev",
     "dev-linux": "NODE_OPTIONS=--openssl-legacy-provider node dev/linux.js",
     "dev-linux-inspect": "NODE_OPTIONS=--openssl-legacy-provider node --inspect dev/linux.js",

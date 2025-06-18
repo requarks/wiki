@@ -59,7 +59,7 @@ export default {
     insertLink() {
       this.insertLinkDialog = true
     },
-    insertLinkHandler ({ locale, path }) {
+    insertLinkHandler({ locale, path }) {
       this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
     },
     insertDiagram() {
@@ -226,7 +226,7 @@ export default {
       this.$store.set('editor/mentions', Array.from(mergedMentions))
     })
   },
-  beforeDestroy () {
+  beforeDestroy() {
     if (this.editor) {
       this.editor.destroy()
       this.editor = null
@@ -241,7 +241,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
   background-color: rgba(255,255,255,.25);
-  display:inline-flex;
+  display: inline-flex;
   display: flex;
   flex-flow: column nowrap;
   height: $editor-height;
@@ -342,6 +342,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
         background-color: mc('grey', '900');
       }
     }
+  }
+}
+
+.v-main .contents code{
+  text-shadow: none;
+  &::selection {
+    color: #ffffff;
+    background-color: mc('blue', '900') !important;
   }
 }
 </style>

@@ -18,7 +18,7 @@ const init = {
     console.info(chalk.yellow.bold('--- ====================== ---'))
 
     global.DEV = true
-    global.WP_CONFIG = require('./webpack/webpack.dev-test.js')
+    global.WP_CONFIG = require('./webpack/webpack.dev-linux.js')
     global.WP = webpack(global.WP_CONFIG)
     global.WP_DEV = {
       devMiddleware: require('webpack-dev-middleware')(global.WP, {
