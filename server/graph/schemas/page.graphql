@@ -46,6 +46,13 @@ extend type Query {
   searchTags(query: String!, siteId: String!): [String]!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
+  childPages(
+    pageId: Int!
+    locale: String!
+    siteId: String!
+  ): [PageTreeItem]
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
+
   tree(
     path: String
     parent: Int

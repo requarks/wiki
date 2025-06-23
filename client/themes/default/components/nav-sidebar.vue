@@ -65,11 +65,12 @@
       :class='dark ? `dark ` + color : color'
       :dark='dark'
       )
-      template(v-if='currentParent.id > 0')
+      //- Tree branch from root to current directory
+      template(v-if='currentParent.id > 0 || isParentPage')
         v-list-item(
           v-for='(item, idx) of parents'
+          :href='getHref(item)'
           :key='`parent-` + item.id'
-          @click='fetchBrowseItems(item)'
           style='min-height: 30px;'
           )
           v-list-item-avatar(
@@ -88,20 +89,23 @@
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
           v-list-item-title {{ currentParent.title }}
-      template(v-for='item of currentItems')
+      //- Current directory items
+      template(
+        v-for='item of itemList'
+        )
         v-list-item(
           v-if='item.isFolder'
+          :href='getHref(item)'
           :key='`childfolder-` + item.id'
           :color='dark ? `white` : colors.text.darkGrey'
           :style='getListItemStyles()'
-          @click='fetchBrowseItems(item)'
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-folder
           v-list-item-title {{ item.title }}
         v-list-item(
           v-else
-          :href='`/` +  sitePath + `/` + item.locale + `/` + item.path'
+          :href='getHref(item)'
           :key='`childpage-` + item.id'
           :input-value='path === item.path'
           :style='getListItemStyles()'
@@ -147,15 +151,28 @@ export default {
         title: '/ (root)'
       },
       parents: [],
+      childPageItems: [],
+      hasFetchedChildren: false,
       loadedCache: [],
       colors: colors
     }
   },
   computed: {
+    pageId: get('page/id'),
     path: get('page/path'),
     locale: get('page/locale'),
     sitePath: get('page/sitePath'),
-    siteId: get('page/siteId')
+    siteId: get('page/siteId'),
+    isParentPage: get('page/hasChildren'),
+    isReadyToFetchPageChildren() {
+      return this.pageId && typeof this.pageId === 'number' &&
+        this.locale && typeof this.locale === 'string' &&
+        this.siteId && typeof this.siteId === 'string' &&
+        this.isParentPage
+    },
+    itemList() {
+      return this.isParentPage ? this.childPageItems : this.currentItems
+    }
   },
   methods: {
     switchMode(mode) {
@@ -164,6 +181,9 @@ export default {
       if (mode === `browse` && this.loadedCache.length < 1) {
         this.loadFromCurrentPath()
       }
+    },
+    getHref(item) {
+      return item.path ? `/${this.sitePath}/${item.locale}/${item.path}` : `/${this.sitePath}/`
     },
     async fetchBrowseItems(item) {
       this.$store.commit(`loadingStart`, 'browse-load')
@@ -275,6 +295,9 @@ export default {
 
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
       this.currentParent = _.last(this.parents)
+      this.parents = (this.parents.length > 1 && !curPage.isFolder) ?
+        this.parents.slice(0, this.parents.length - 1) :
+        this.parents
       this.$store.commit('page/SET_HAS_CHILDREN', curPage.isFolder)
 
       this.loadedCache = [curPage.parent]
@@ -297,6 +320,61 @@ export default {
         return styles + 'background-color' + this.colors.primary[4] + '!important;'
       }
       return styles + 'background-color' + this.colors.surface[2] + '!important;'
+    },
+    async fetchChildPageItems() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+
+      if (!this.isParentPage) {
+        return []
+      }
+
+      this.currentParent = {
+        path: this.path,
+        title: this.$store.get('page/title'),
+        isFolder: true,
+        pageId: this.pageId,
+        locale: this.locale,
+        siteId: this.siteId,
+        sitePath: this.sitePath
+      }
+
+      const resp = await this.$apollo.query({
+        query: gql`
+          query ($pageId: Int!, $locale: String!, $siteId: String!) {
+              childPages(
+                pageId: $pageId
+                locale: $locale
+                siteId: $siteId
+              ) {
+                id
+                path
+                title
+                isFolder
+                pageId
+                parent
+                locale
+                siteId
+              }
+          }
+        `,
+        fetchPolicy: 'cache-first',
+        variables: {
+          pageId: this.pageId,
+          locale: this.locale,
+          siteId: this.siteId
+        }
+      })
+
+      this.$store.commit(`loadingStop`, 'browse-load')
+      this.childPageItems = _.get(resp, 'data.childPages', [])
+    }
+  },
+  watch: {
+    isReadyToFetchPageChildren(newVal) {
+      if (newVal && !this.hasFetchedChildren) {
+        this.hasFetchedChildren = true
+        this.fetchChildPageItems()
+      }
     }
   },
   mounted() {
@@ -310,6 +388,9 @@ export default {
     }
     if (this.currentMode === 'browse') {
       this.loadFromCurrentPath()
+    }
+    if (this.isReadyToFetchPageChildren && !this.hasFetchedChildren) {
+      this.fetchChildPageItems()
     }
   }
 }
