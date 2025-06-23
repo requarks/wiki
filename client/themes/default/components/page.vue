@@ -1,8 +1,8 @@
 <template lang="pug">
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
-    nav-header(v-if='!printView')
+    nav-header
     v-navigation-drawer(
-      v-if='navMode !== `NONE` && !printView'
+      v-if='navMode !== `NONE`'
       :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[2]'
       dark
       app
@@ -22,7 +22,7 @@
           )
 
     //- Menu button for mobile view
-    v-fab-transition(v-if='navMode !== `NONE`')
+    v-fab-transition
       v-btn(
         fab
         :color='$vuetify.theme.dark ? colors.teal[1]: colors.primary[2]'
@@ -230,7 +230,7 @@
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn.hover-icon(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
-                      v-icon(:color='printView ? `primary` : `grey`') mdi-printer
+                      v-icon(color='grey') mdi-printer
                   span {{messages.printToPdf}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
@@ -371,7 +371,7 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
               slot(name='contents')
-            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
+            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
                 span {{$t('common:comments.title')}}
@@ -453,7 +453,7 @@ import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
-import { get, sync } from 'vuex-pathify'
+import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import { v4 as uuidv4 } from 'uuid'
@@ -703,7 +703,6 @@ export default {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
-    printView: sync('site/printView'),
     editMenuExternalUrl () {
       if (this.editShortcutsObj.editMenuBar && this.editShortcutsObj.editMenuExternalBtn) {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
