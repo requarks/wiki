@@ -1,4 +1,5 @@
-const { PageMutation } = require('../../../graph/resolvers/page')
+const { locale } = require('yargs')
+const { PageMutation, Query } = require('../../../graph/resolvers/page')
 const graphHelper = require('../../../helpers/graph')
 const notifyUsers = require('../../../jobs/notify-users')
 
@@ -21,412 +22,621 @@ const WIKI = {
     },
     users: {
       query: jest.fn()
-    }
+    },
+    knex: jest.fn()
+  },
+  auth: {
+    checkAccess: jest.fn()
+  },
+  config: {
+    lang: 'en'
+  },
+  Error: {
+    PageViewForbidden: class extends Error {},
+    PageNotFound: class extends Error {}
   }
 }
 
 describe('Page Resolvers', () => {
   let req
 
-  beforeEach(() => {
-    req = {
-      user: { id: 1, email: 'user@example.com' },
-      siteId: 'site-id'
-    }
-    global.WIKI = WIKI
-  })
+  describe('Query', () => {
+    let args, context, parentRow, childRows
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
-
-  describe('create', () => {
-    it('should create a page successfully and not notify followers when notifyFollowers is omitted', async () => {
-      const args = {
-        notifyFollowers: undefined,
-        mentions: [],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
+    beforeEach(() => {
+      req = {
+        user: { id: 1 }
       }
-      const context = { req, WIKI }
+      global.WIKI = WIKI
 
-      WIKI.models.pages.createPage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
+      args = { pageId: 10, locale: 'en', siteId: 1 }
+      context = { req, WIKI }
 
-      WIKI.models.followers.query.mockReturnValue({
-        insert: jest.fn().mockResolvedValue(),
-        where: jest.fn().mockResolvedValue([]),
-        orWhere: jest.fn().mockResolvedValue([])
-      })
-
-      const result = await PageMutation.create(null, args, context)
-
-      expect(notifyUsers).not.toHaveBeenCalled()
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
+      parentRow = { id: 99 }
+      childRows = [
+        { id: 1, parent: 99, path: '/foo', localeCode: 'en', siteId: 1, isFolder: true, title: 'A' },
+        { id: 2, parent: 99, path: '/bar', localeCode: 'en', siteId: 1, isFolder: false, title: 'B' }
+      ]
     })
 
-    it('should notify followers when notifyFollowers is true', async () => {
-      const args = {
-        notifyFollowers: true,
-        mentions: [],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
-
-      WIKI.models.pages.createPage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        insert: jest.fn().mockResolvedValue(),
-        where: jest.fn().mockResolvedValue([{ userId: 2 }]),
-        orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
-      })
-
-      const result = await PageMutation.create(null, args, context)
-
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [2],
-        event: 'CREATE_PAGE',
-        subjectText: 'Created Page'
-      })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
+    afterEach(() => {
+      jest.clearAllMocks()
     })
 
-    it('should notify mentioned users when mentions are provided', async () => {
-      const args = {
-        notifyFollowers: false,
-        mentions: ['mention@example.com'],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
+    describe('childPages', () => {
+      it('should return child pages with correct parent and locale', async () => {
+        // GIVEN
+        WIKI.models.knex = jest.fn()
+        // first('id').where('pageId', args.pageId)
+          .mockImplementationOnce(() => ({
+            first: jest.fn().mockReturnValue({
+              where: jest.fn().mockResolvedValue(parentRow)
+            })
+          }))
+        // .where(...).orderBy(...)
+          .mockImplementationOnce(() => ({
+            where: jest.fn((cb) => {
+              const builder = {
+                where: jest.fn()
+              }
+              cb(builder)
+              return {
+                orderBy: jest.fn().mockResolvedValue(childRows)
+              }
+            })
+          }))
 
-      WIKI.models.pages.createPage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        insert: jest.fn().mockResolvedValue()
-      })
-      WIKI.models.users.query.mockReturnValue({
-        whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
-      })
+        WIKI.auth.checkAccess.mockReturnValue(true)
 
-      const result = await PageMutation.create(null, args, context)
+        // WHEN
+        const result = await Query.childPages(null, args, context)
 
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [3],
-        event: 'MENTION_PAGE',
-        subjectText: 'Mentioned in Page'
-      })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
-    })
-
-    it('should notify both followers and mentioned users', async () => {
-      const args = {
-        notifyFollowers: true,
-        mentions: ['mention@example.com'],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
-
-      WIKI.models.pages.createPage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        insert: jest.fn().mockResolvedValue(),
-        where: jest.fn().mockResolvedValue([{ userId: 2 }]),
-        orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
-      })
-      WIKI.models.users.query.mockReturnValue({
-        whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        // THEN
+        expect(WIKI.models.knex).toHaveBeenCalledTimes(2)
+        expect(result).toEqual([
+          { ...childRows[0], parent: 99, locale: 'en' },
+          { ...childRows[1], parent: 99, locale: 'en' }
+        ])
       })
 
-      const result = await PageMutation.create(null, args, context)
+      it('should set parent to 0 if parent is not a number', async () => {
+        // GIVEN
+        childRows[0] = {
+          parent: null, // relevant change for this test
+          id: 1,
+          path: '/foo',
+          localeCode: 'en',
+          siteId: 1,
+          isFolder: true,
+          title: 'A'
+        }
 
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [2],
-        event: 'CREATE_PAGE',
-        subjectText: 'Created Page'
-      })
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [3],
-        event: 'MENTION_PAGE',
-        subjectText: 'Mentioned in Page'
-      })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
-    })
-  })
+        WIKI.models.knex = jest.fn()
+          .mockImplementationOnce(() => ({
+            first: jest.fn().mockReturnValue({
+              where: jest.fn().mockResolvedValue(parentRow)
+            })
+          }))
+          .mockImplementationOnce(() => ({
+            where: jest.fn(function(cb) {
+              if (typeof cb === 'function') {
+                const builder = { where: jest.fn() }
+                cb(builder)
+              }
+              return {
+                orderBy: jest.fn().mockResolvedValue(childRows)
+              }
+            })
+          }))
 
-  describe('update', () => {
-    it('should update a page successfully and not notify followers when notifyFollowers is omitted', async () => {
-      const args = {
-        notifyFollowers: undefined,
-        mentions: [],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
+        WIKI.auth.checkAccess.mockReturnValue(true)
 
-      WIKI.models.pages.updatePage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockResolvedValue([])
+        // WHEN
+        const result = await Query.childPages(null, args, context)
+
+        // THEN
+        expect(result[0].parent).toBe(0)
       })
 
-      const result = await PageMutation.update(null, args, context)
+      it('should use default locale if not provided', async () => {
+        // GIVEN
+        args = {
+          locale: undefined, // relevant change for this test
+          pageId: 10,
+          siteId: 1
+        }
 
-      expect(notifyUsers).not.toHaveBeenCalled()
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
-    })
+        WIKI.models.knex = jest.fn()
+          .mockImplementationOnce(() => ({
+            first: jest.fn().mockReturnValue({
+              where: jest.fn().mockResolvedValue(parentRow)
+            })
+          }))
+          .mockImplementationOnce(() => ({
+            where: jest.fn(function(cb) {
+              if (typeof cb === 'function') {
+                const builder = { where: jest.fn() }
+                cb(builder)
+              }
+              return {
+                orderBy: jest.fn().mockResolvedValue(childRows)
+              }
+            })
+          }))
 
-    it('should notify followers when notifyFollowers is true', async () => {
-      const args = {
-        notifyFollowers: true,
-        mentions: [],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
+        WIKI.auth.checkAccess.mockReturnValue(true)
 
-      WIKI.models.pages.updatePage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
-      })
+        // WHEN
+        const result = await Query.childPages(null, args, context)
 
-      const result = await PageMutation.update(null, args, context)
-
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [2],
-        event: 'UPDATE_PAGE',
-        subjectText: 'Updated Page'
-      })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
-    })
-
-    it('should notify mentioned users when mentions are provided', async () => {
-      const args = {
-        notifyFollowers: false,
-        mentions: ['mention@example.com'],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
-
-      WIKI.models.pages.updatePage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.users.query.mockReturnValue({
-        whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        // THEN
+        expect(result[0].locale).toBe('en')
       })
 
-      const result = await PageMutation.update(null, args, context)
+      it('should return empty array if no parentRow and no children', async () => {
+        // GIVEN
+        WIKI.models.knex = jest.fn()
+          .mockImplementationOnce(() => ({
+            first: jest.fn().mockReturnValue({
+              where: jest.fn().mockResolvedValue(undefined) // parentRow not found
+            })
+          }))
+          .mockImplementationOnce(() => ({
+            where: jest.fn(function(cb) {
+              if (typeof cb === 'function') {
+                const builder = { where: jest.fn() }
+                cb(builder)
+              }
+              return {
+                orderBy: jest.fn().mockResolvedValue([]) // No child rows
+              }
+            })
+          }))
 
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [3],
-        event: 'MENTION_PAGE',
-        subjectText: 'Mentioned in Page'
-      })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
-    })
+        WIKI.auth.checkAccess.mockReturnValue(true)
 
-    it('should notify both followers and mentioned users', async () => {
-      const args = {
-        notifyFollowers: true,
-        mentions: ['mention@example.com'],
-        siteId: 'site-id',
-        title: 'Test Page',
-        path: 'test-page',
-        sitePath: 'site-path'
-      }
-      const context = { req, WIKI }
+        // WHEN
+        const result = await Query.childPages(null, args, context)
 
-      WIKI.models.pages.updatePage.mockResolvedValue({
-        id: 'page-id',
-        siteId: args.siteId,
-        title: args.title,
-        path: args.path,
-        sitePath: args.sitePath
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
-      })
-      WIKI.models.users.query.mockReturnValue({
-        whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        // THEN
+        expect(result).toEqual([])
       })
 
-      const result = await PageMutation.update(null, args, context)
+      it('should filter out pages if checkAccess returns false', async () => {
+        // GIVEN
+        WIKI.models.knex = jest.fn()
+          .mockImplementationOnce(() => ({
+            first: jest.fn().mockReturnValue({
+              where: jest.fn().mockResolvedValue(parentRow)
+            })
+          }))
+          .mockImplementationOnce(() => ({
+            where: jest.fn(function(cb) {
+              if (typeof cb === 'function') {
+                const builder = { where: jest.fn() }
+                cb(builder)
+              }
+              return {
+                orderBy: jest.fn().mockResolvedValue(childRows)
+              }
+            })
+          }))
 
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [2],
-        event: 'UPDATE_PAGE',
-        subjectText: 'Updated Page'
+        WIKI.auth.checkAccess
+          .mockReturnValueOnce(true) // Only allow access to the first child
+          .mockReturnValueOnce(false)
+
+        // WHEN
+        const result = await Query.childPages(null, args, context)
+
+        // THEN
+        expect(result.length).toBe(1)
+        expect(result[0].id).toBe(1)
       })
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: args.siteId,
-        pageId: 'page-id',
-        pageTitle: args.title,
-        pagePath: args.path,
-        sitePath: args.sitePath,
-        userEmail: context.req.user.email,
-        userIds: [3],
-        event: 'MENTION_PAGE',
-        subjectText: 'Mentioned in Page'
-      })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
     })
   })
 
-  describe('delete', () => {
-    it('should delete a page successfully and not notify followers when notifyFollowers is omitted', async () => {
-      const args = {
-        notifyFollowers: undefined,
-        id: 'page-id'
+  describe('PageMutation', () => {
+    beforeEach(() => {
+      req = {
+        user: { id: 1, email: 'user@example.com' },
+        siteId: 'site-id'
       }
-      const context = { req, WIKI }
-
-      WIKI.models.pages.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue({
-          id: 'page-id',
-          siteId: 'site-id'
-        })
-      })
-      WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
-
-      const result = await PageMutation.delete(null, args, context)
-
-      expect(notifyUsers).not.toHaveBeenCalled()
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been deleted.'))
+      global.WIKI = WIKI
     })
 
-    it('should notify followers when notifyFollowers is true', async () => {
-      const args = {
-        notifyFollowers: true,
-        id: 'page-id'
-      }
-      const context = { req, WIKI }
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
 
-      WIKI.models.pages.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue({
-          id: 'page-id',
+    describe('create', () => {
+      it('should create a page successfully and not notify followers when notifyFollowers is omitted', async () => {
+        const args = {
+          notifyFollowers: undefined,
+          mentions: [],
           siteId: 'site-id',
           title: 'Test Page',
           path: 'test-page',
           sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.createPage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
         })
-      })
-      WIKI.models.followers.query.mockReturnValue({
-        where: jest.fn().mockReturnThis(),
-        orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
-      })
-      WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
 
-      const result = await PageMutation.delete(null, args, context)
+        WIKI.models.followers.query.mockReturnValue({
+          insert: jest.fn().mockResolvedValue(),
+          where: jest.fn().mockResolvedValue([]),
+          orWhere: jest.fn().mockResolvedValue([])
+        })
 
-      expect(notifyUsers).toHaveBeenCalledWith({
-        siteId: 'site-id',
-        pageId: 'page-id',
-        pageTitle: 'Test Page',
-        pagePath: 'test-page',
-        sitePath: 'site-path',
-        userEmail: context.req.user.email,
-        userIds: [2],
-        event: 'DELETE_PAGE',
-        subjectText: 'Deleted Page'
+        const result = await PageMutation.create(null, args, context)
+
+        expect(notifyUsers).not.toHaveBeenCalled()
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
       })
-      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been deleted.'))
+
+      it('should notify followers when notifyFollowers is true', async () => {
+        const args = {
+          notifyFollowers: true,
+          mentions: [],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.createPage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          insert: jest.fn().mockResolvedValue(),
+          where: jest.fn().mockResolvedValue([{ userId: 2 }]),
+          orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
+        })
+
+        const result = await PageMutation.create(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [2],
+          event: 'CREATE_PAGE',
+          subjectText: 'Created Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
+      })
+
+      it('should notify mentioned users when mentions are provided', async () => {
+        const args = {
+          notifyFollowers: false,
+          mentions: ['mention@example.com'],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.createPage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          insert: jest.fn().mockResolvedValue()
+        })
+        WIKI.models.users.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        })
+
+        const result = await PageMutation.create(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [3],
+          event: 'MENTION_PAGE',
+          subjectText: 'Mentioned in Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
+      })
+
+      it('should notify both followers and mentioned users', async () => {
+        const args = {
+          notifyFollowers: true,
+          mentions: ['mention@example.com'],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.createPage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          insert: jest.fn().mockResolvedValue(),
+          where: jest.fn().mockResolvedValue([{ userId: 2 }]),
+          orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
+        })
+        WIKI.models.users.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        })
+
+        const result = await PageMutation.create(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [2],
+          event: 'CREATE_PAGE',
+          subjectText: 'Created Page'
+        })
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [3],
+          event: 'MENTION_PAGE',
+          subjectText: 'Mentioned in Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page created successfully.'))
+      })
+    })
+
+    describe('update', () => {
+      it('should update a page successfully and not notify followers when notifyFollowers is omitted', async () => {
+        const args = {
+          notifyFollowers: undefined,
+          mentions: [],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.updatePage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          where: jest.fn().mockReturnThis(),
+          orWhere: jest.fn().mockResolvedValue([])
+        })
+
+        const result = await PageMutation.update(null, args, context)
+
+        expect(notifyUsers).not.toHaveBeenCalled()
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+      })
+
+      it('should notify followers when notifyFollowers is true', async () => {
+        const args = {
+          notifyFollowers: true,
+          mentions: [],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.updatePage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          where: jest.fn().mockReturnThis(),
+          orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
+        })
+
+        const result = await PageMutation.update(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [2],
+          event: 'UPDATE_PAGE',
+          subjectText: 'Updated Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+      })
+
+      it('should notify mentioned users when mentions are provided', async () => {
+        const args = {
+          notifyFollowers: false,
+          mentions: ['mention@example.com'],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.updatePage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.users.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        })
+
+        const result = await PageMutation.update(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [3],
+          event: 'MENTION_PAGE',
+          subjectText: 'Mentioned in Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+      })
+
+      it('should notify both followers and mentioned users', async () => {
+        const args = {
+          notifyFollowers: true,
+          mentions: ['mention@example.com'],
+          siteId: 'site-id',
+          title: 'Test Page',
+          path: 'test-page',
+          sitePath: 'site-path'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.updatePage.mockResolvedValue({
+          id: 'page-id',
+          siteId: args.siteId,
+          title: args.title,
+          path: args.path,
+          sitePath: args.sitePath
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          where: jest.fn().mockReturnThis(),
+          orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
+        })
+        WIKI.models.users.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([{ id: 3 }])
+        })
+
+        const result = await PageMutation.update(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [2],
+          event: 'UPDATE_PAGE',
+          subjectText: 'Updated Page'
+        })
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: args.siteId,
+          pageId: 'page-id',
+          pageTitle: args.title,
+          pagePath: args.path,
+          sitePath: args.sitePath,
+          userEmail: context.req.user.email,
+          userIds: [3],
+          event: 'MENTION_PAGE',
+          subjectText: 'Mentioned in Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+      })
+    })
+
+    describe('delete', () => {
+      it('should delete a page successfully and not notify followers when notifyFollowers is omitted', async () => {
+        const args = {
+          notifyFollowers: undefined,
+          id: 'page-id'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.query.mockReturnValue({
+          findById: jest.fn().mockResolvedValue({
+            id: 'page-id',
+            siteId: 'site-id'
+          })
+        })
+        WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
+
+        const result = await PageMutation.delete(null, args, context)
+
+        expect(notifyUsers).not.toHaveBeenCalled()
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been deleted.'))
+      })
+
+      it('should notify followers when notifyFollowers is true', async () => {
+        const args = {
+          notifyFollowers: true,
+          id: 'page-id'
+        }
+        const context = { req, WIKI }
+
+        WIKI.models.pages.query.mockReturnValue({
+          findById: jest.fn().mockResolvedValue({
+            id: 'page-id',
+            siteId: 'site-id',
+            title: 'Test Page',
+            path: 'test-page',
+            sitePath: 'site-path'
+          })
+        })
+        WIKI.models.followers.query.mockReturnValue({
+          where: jest.fn().mockReturnThis(),
+          orWhere: jest.fn().mockResolvedValue([{ userId: 2 }])
+        })
+        WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
+
+        const result = await PageMutation.delete(null, args, context)
+
+        expect(notifyUsers).toHaveBeenCalledWith({
+          siteId: 'site-id',
+          pageId: 'page-id',
+          pageTitle: 'Test Page',
+          pagePath: 'test-page',
+          sitePath: 'site-path',
+          userEmail: context.req.user.email,
+          userIds: [2],
+          event: 'DELETE_PAGE',
+          subjectText: 'Deleted Page'
+        })
+        expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been deleted.'))
+      })
     })
   })
 })
