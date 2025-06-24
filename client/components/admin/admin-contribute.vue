@@ -202,7 +202,6 @@ export default {
     backers: {
       query: gql`
         {
-          contribute {
             contributors {
               id
               source
@@ -212,11 +211,10 @@ export default {
               twitter
               avatar
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.contribute.contributors,
+      update: (data) => data.contributors,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-contribute-refresh')
       }

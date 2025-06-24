@@ -29,3 +29,6 @@ pool:
   acquireTimeoutMillis: $(POOL_ACQUIRE_TIMEOUT)
   createTimeoutMillis: $(POOL_CREATE_TIMEOUT)
   idleTimeoutMillis: $(POOL_IDLE_TIMEOUT)
+
+email:
+  support: "dummy-support@dummy.com"

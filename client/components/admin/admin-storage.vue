@@ -329,7 +329,7 @@ export default {
     targets: {
       query: targetsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.storage.targets).map(str => ({
+      update: (data) => _.cloneDeep(data.storageTargets).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,
@@ -343,7 +343,7 @@ export default {
     status: {
       query: statusQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.storage.status,
+      update: (data) => data.storageStatus,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-storage-status-refresh')
       },

@@ -685,7 +685,7 @@ export default {
                       query: query
                     }
                   })
-                  const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
+                  const resp = _.get(respRaw, 'data.autoCompleteEmails', [])
                   if (resp && resp.length > 0) {
                     this.mentionCache = resp
                     return {
@@ -725,8 +725,7 @@ export default {
                 const respRaw = await this.$apollo.query({
                   query: gql`
                     query ($query: String!, $locale: String, $siteId: String!) {
-                      pages {
-                        search(query:$query, locale:$locale, siteId:$siteId) {
+                        searchPages(query:$query, locale:$locale, siteId:$siteId) {
                           results {
                             title
                             path
@@ -734,7 +733,6 @@ export default {
                           }
                           totalHits
                         }
-                      }
                     }
                   `,
                   variables: {
@@ -744,7 +742,7 @@ export default {
                   },
                   fetchPolicy: 'cache-first'
                 })
-                const resp = _.get(respRaw, 'data.pages.search', {})
+                const resp = _.get(respRaw, 'data.search', {})
                 if (resp && resp.totalHits > 0) {
                   return {
                     list: resp.results.map(r => ({

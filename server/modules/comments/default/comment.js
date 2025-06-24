@@ -157,13 +157,6 @@ module.exports = {
     return WIKI.models.comments.query().findById(id).delete()
   },
   /**
-   * Get the page ID from a comment ID
-   */
-  async getPageIdFromCommentId(id) {
-    const result = await WIKI.models.comments.query().select('pageId').findById(id)
-    return (result) ? result.pageId : false
-  },
-  /**
    * Get a comment by ID
    */
   async getCommentById(id) {

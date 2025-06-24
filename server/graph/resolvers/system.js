@@ -10,6 +10,9 @@ const graphHelper = require('../../helpers/graph')
 const request = require('request-promise')
 const crypto = require('crypto')
 const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
+const {
+  canManageGroup,
+} = require('../../helpers/group')
 
 /* global WIKI */
 
@@ -23,12 +26,6 @@ const dbTypes = {
 
 module.exports = {
   Query: {
-    async system () { return {} }
-  },
-  Mutation: {
-    async system () { return {} }
-  },
-  SystemQuery: {
     flags () {
       return _.transform(WIKI.config.flags, (result, value, key) => {
         result.push({ key, value })
@@ -50,6 +47,9 @@ module.exports = {
         startedAt: WIKI.system.exportStatus.startedAt
       }
     }
+  },
+  Mutation: {
+    async system () { return {} }
   },
   SystemMutation: {
     async updateFlags (obj, args, context) {
@@ -420,10 +420,9 @@ module.exports = {
         return _.toSafeInteger(groups.length)
       }
 
-      const userRelevantGroups = _.filter(groups, g => {
-        return _.intersection(context.req.user.groups, [g.id]).length > 0
-      })
-
+      const userRelevantGroups = _.filter(groups, (g) =>
+        canManageGroup(context.req.user, g.id)
+      )
       return _.toSafeInteger(userRelevantGroups.length)
     },
     async pagesTotal (obj, args, context) {

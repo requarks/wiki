@@ -1,4 +1,4 @@
-mutation ($id: Int!, $notifyFollowers: Boolean!) {
+mutation ($id: Int!, $notifyFollowers: Boolean) {
   pages {
     delete(id: $id, notifyFollowers: $notifyFollowers) {
       responseResult {

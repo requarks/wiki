@@ -3,7 +3,8 @@
 # ===============================================
 
 extend type Query {
-  rendering: RenderingQuery
+  renderers(filter: String, orderBy: String): [Renderer]
+    @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
@@ -11,24 +12,12 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type RenderingQuery {
-  renderers(
-    filter: String
-    orderBy: String
-  ): [Renderer] @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type RenderingMutation {
-  updateRenderers(
-    renderers: [RendererInput]
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateRenderers(renderers: [RendererInput]): DefaultResponse
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

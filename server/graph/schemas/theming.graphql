@@ -3,20 +3,13 @@
 # ===============================================
 
 extend type Query {
-  theming: ThemingQuery
+  themes: [ThemingTheme] @auth(requires: ["manage:theme", "manage:system"])
+  themingConfig: ThemingConfig
+    @auth(requires: ["manage:theme", "manage:system"])
 }
 
 extend type Mutation {
   theming: ThemingMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type ThemingQuery {
-  themes: [ThemingTheme] @auth(requires: ["manage:theme", "manage:system"])
-  config: ThemingConfig @auth(requires: ["manage:theme", "manage:system"])
 }
 
 # -----------------------------------------------

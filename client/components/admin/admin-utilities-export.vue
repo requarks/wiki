@@ -168,19 +168,17 @@ export default {
         const respStatus = await this.$apollo.query({
           query: gql`
             {
-              system {
                 exportStatus {
                   status
                   progress
                   message
                   startedAt
                 }
-              }
             }
           `,
           fetchPolicy: 'network-only'
         })
-        const respStatusObj = _get(respStatus, 'data.system.exportStatus', {})
+        const respStatusObj = _get(respStatus, 'data.exportStatus', {})
         if (!respStatusObj) {
           throw new Error('An unexpected error occured.')
         } else {

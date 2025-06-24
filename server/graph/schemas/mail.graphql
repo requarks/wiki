@@ -3,7 +3,7 @@
 # ===============================================
 
 extend type Query {
-  mail: MailQuery
+  mailConfig: MailConfig @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
@@ -11,21 +11,12 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type MailQuery {
-  config: MailConfig @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type MailMutation {
-  sendTest(
-    recipientEmail: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  sendTest(recipientEmail: String!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   updateConfig(
     senderName: String!

@@ -3,7 +3,12 @@
 # ===============================================
 
 extend type Query {
-  comments: CommentQuery
+  commentProviders: [CommentProvider] @auth(requires: ["manage:system"])
+
+  listComments(locale: String!, path: String!, siteId: String!): [CommentPost]!
+    @auth(requires: ["read:comments", "manage:system", "manage:sites"])
+  commentById(id: Int!): CommentPost
+    @auth(requires: ["read:comments", "manage:system", "manage:sites"])
 }
 
 extend type Mutation {
@@ -11,31 +16,12 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type CommentQuery {
-  providers: [CommentProvider] @auth(requires: ["manage:system", "manage:sites"])
-
-  list(
-    locale: String!
-    path: String!
-    siteId: String!
-  ): [CommentPost]! @auth(requires: ["read:comments", "manage:system", "manage:sites"])
-
-  single(
-    id: Int!
-  ): CommentPost @auth(requires: ["read:comments", "manage:system", "manage:sites"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type CommentMutation {
-  updateProviders(
-    providers: [CommentProviderInput]
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateProviders(providers: [CommentProviderInput]): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   create(
     pageId: Int!
@@ -44,19 +30,27 @@ type CommentMutation {
     guestName: String
     guestEmail: String
     mentions: [String]
-  ): CommentCreateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"]) @rateLimit(limit: 1, duration: 1)
+  ): CommentCreateResponse
+    @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+    @rateLimit(limit: 1, duration: 1)
 
   update(
     id: Int!
     content: String!
     pageId: Int!
     mentions: [String]
-  ): CommentUpdateResponse @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+  ): CommentUpdateResponse
+    @auth(
+      requires: [
+        "write:comments"
+        "manage:own_comments"
+        "manage:system"
+        "manage:sites"
+      ]
+    )
 
-
-  delete(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  delete(id: Int!): DefaultResponse
+    @auth(requires: ["manage:own_comments", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -82,7 +76,15 @@ input CommentProviderInput {
 
 type CommentPost {
   id: Int!
-  content: String! @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+  content: String!
+    @auth(
+      requires: [
+        "write:comments"
+        "manage:own_comments"
+        "manage:system"
+        "manage:sites"
+      ]
+    )
   render: String!
   authorId: Int!
   authorName: String!

@@ -1,15 +1,13 @@
 query ($folderId: Int!, $kind: AssetKind!, $siteId: String!) {
-  assets {
-    list(folderId:$folderId, kind: $kind, siteId: $siteId) {
-      id
-      filename
-      ext
-      kind
-      mime
-      fileSize
-      createdAt
-      updatedAt
-      siteId
-    }
+  listAssets(folderId: $folderId, kind: $kind, siteId: $siteId) {
+    id
+    filename
+    ext
+    kind
+    mime
+    fileSize
+    createdAt
+    updatedAt
+    siteId
   }
 }

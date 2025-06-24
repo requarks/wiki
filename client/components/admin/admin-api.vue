@@ -197,13 +197,11 @@ export default {
     enabled: {
       query: gql`
         {
-          authentication {
             apiState
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.authentication.apiState,
+      update: (data) => data.apiState,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-state-refresh')
       }
@@ -211,7 +209,6 @@ export default {
     keys: {
       query: gql`
         {
-          authentication {
             apiKeys {
               id
               name
@@ -221,11 +218,10 @@ export default {
               createdAt
               updatedAt
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.authentication.apiKeys,
+      update: (data) => data.apiKeys,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-api-keys-refresh')
       }

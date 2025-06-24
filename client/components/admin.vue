@@ -240,7 +240,7 @@ export default {
       fetchPolicy: 'network-only',
       manual: true,
       result({ data, loading, networkStatus }) {
-        this.info = data.system.info
+        this.info = data.info
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-stats-refresh')
@@ -282,10 +282,10 @@ export default {
 
 .admin-sidebar {
   .v-list__tile--active {
-    background-color: rgba(mc('theme', 'primary'), .1);
+    background-color: rgba(mc('primary', '1'), .1);
 
     .v-icon {
-      color: mc('theme', 'primary');
+      color: mc('primary', '1');
     }
   }
 

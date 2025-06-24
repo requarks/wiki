@@ -466,8 +466,7 @@ export default {
     config: {
       query: gql`
         {
-          site {
-            config {
+            siteConfig {
               host
               title
               description
@@ -490,11 +489,10 @@ export default {
               editMenuExternalIcon
               editMenuExternalUrl
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.site.config),
+      update: (data) => _.cloneDeep(data.siteConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-refresh')
       }

@@ -6,8 +6,10 @@ const autoload = require('auto-load')
 const PubSub = require('graphql-subscriptions').PubSub
 const { LEVEL, MESSAGE } = require('triple-beam')
 const Transport = require('winston-transport')
-const { createRateLimitTypeDef } = require('graphql-rate-limit-directive')
 // const { GraphQLUpload } = require('graphql-upload')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
+const { authDirectiveTypeDefs, authDirectiveTransformer } = require('./directives/auth')
+const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = require('./directives/rate-limit')
 
 /* global WIKI */
 
@@ -18,8 +20,7 @@ WIKI.logger.info(`Loading GraphQL Schema...`)
 WIKI.GQLEmitter = new PubSub()
 
 // Schemas
-
-let typeDefs = [createRateLimitTypeDef()]
+const typeDefs = [authDirectiveTypeDefs, rateLimitDirectiveTypeDefs]
 let schemas = fs.readdirSync(path.join(WIKI.SERVERPATH, 'graph/schemas'))
 schemas.forEach(schema => {
   typeDefs.push(fs.readFileSync(path.join(WIKI.SERVERPATH, `graph/schemas/${schema}`), 'utf8'))
@@ -34,13 +35,6 @@ const resolversObj = _.values(autoload(path.join(WIKI.SERVERPATH, 'graph/resolve
 resolversObj.forEach(resolver => {
   _.merge(resolvers, resolver)
 })
-
-// Directives
-
-let schemaDirectives = {
-  ...autoload(path.join(WIKI.SERVERPATH, 'graph/directives'))
-}
-
 // Live Trail Logger (admin)
 
 class LiveTrailLogger extends Transport {
@@ -65,10 +59,20 @@ class LiveTrailLogger extends Transport {
 
 WIKI.logger.add(new LiveTrailLogger({}))
 
+// Make executable schema
+
+WIKI.logger.info(`Compiling GraphQL Schema...`)
+
+let schema = makeExecutableSchema({
+  typeDefs,
+  resolvers
+})
+
+// Apply schema transforms
+
+schema = authDirectiveTransformer(schema)
+schema = rateLimitDirectiveTransformer(schema)
+
 WIKI.logger.info(`GraphQL Schema: [ OK ]`)
 
-module.exports = {
-  typeDefs,
-  resolvers,
-  schemaDirectives
-}
+module.exports = schema

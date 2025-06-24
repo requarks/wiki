@@ -151,7 +151,7 @@ export default {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => { return data.pages.list },
+      update: (data) => { return data.listPages },
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')

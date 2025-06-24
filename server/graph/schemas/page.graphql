@@ -2,26 +2,18 @@
 # PAGES
 # ===============================================
 
-extend type Query {
-  pages: PageQuery
-}
-
-extend type Mutation {
-  pages: PageMutation
-}
-
 # -----------------------------------------------
 # QUERIES
 # -----------------------------------------------
 
-type PageQuery {
+extend type Query {
   history(id: Int!, offsetPage: Int, offsetSize: Int): PageHistoryResult
     @auth(requires: ["manage:system", "manage:sites", "read:history"])
 
   version(pageId: Int!, versionId: Int!): PageVersion
     @auth(requires: ["manage:system", "manage:sites", "read:history"])
 
-  search(
+  searchPages(
     query: String!
     path: String
     locale: String
@@ -29,7 +21,7 @@ type PageQuery {
   ): PageSearchResponse!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
-  list(
+  listPages(
     limit: Int
     orderBy: PageOrderBy
     orderByDirection: PageOrderByDirection
@@ -42,10 +34,10 @@ type PageQuery {
   ): [PageListItem!]!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
-  single(id: Int!): Page
+  pageById(id: Int!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
-  singleByPath(path: String!, locale: String!): Page
+  pageByPath(path: String!, locale: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
   tags(siteId: String): [PageTag]!
@@ -78,6 +70,10 @@ type PageQuery {
     )
 }
 
+extend type Mutation {
+  pages: PageMutation
+}
+
 # -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
@@ -98,7 +94,7 @@ type PageMutation {
     tags: [String]!
     title: String!
     siteId: String!
-    notifyFollowers: Boolean!
+    notifyFollowers: Boolean
     mentions: [String]
   ): PageResponse
     @auth(
@@ -121,7 +117,7 @@ type PageMutation {
     tags: [String]
     title: String
     siteId: String!
-    notifyFollowers: Boolean!
+    notifyFollowers: Boolean
     mentions: [String]
   ): PageResponse
     @auth(
@@ -140,24 +136,22 @@ type PageMutation {
   ): DefaultResponse
     @auth(requires: ["manage:pages", "manage:sites", "manage:system"])
 
-  delete(id: Int!, notifyFollowers: Boolean!): DefaultResponse
+  delete(id: Int!, notifyFollowers: Boolean): DefaultResponse
     @auth(requires: ["delete:pages", "manage:sites", "manage:system"])
 
-  deleteTag(id: Int!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+  deleteTag(id: Int!): DefaultResponse @auth(requires: ["manage:system"])
 
   updateTag(id: Int!, tag: String!, title: String!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:system"])
 
-  flushCache: DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  flushCache: DefaultResponse @auth(requires: ["manage:system"])
 
   migrateToLocale(
     sourceLocale: String!
     targetLocale: String!
-  ): PageMigrationResponse @auth(requires: ["manage:system", "manage:sites"])
+  ): PageMigrationResponse @auth(requires: ["manage:system"])
 
-  rebuildTree: DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+  rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
 
   render(id: Int!): DefaultResponse
     @auth(requires: ["manage:system", "manage:sites"])
@@ -168,7 +162,7 @@ type PageMutation {
     )
 
   purgeHistory(olderThan: String!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

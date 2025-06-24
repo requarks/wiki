@@ -82,8 +82,7 @@ export default {
     pages: {
       query: gql`
         query($creatorId: Int, $authorId: Int) {
-          pages {
-            list(creatorId: $creatorId, authorId: $authorId) {
+            listPages(creatorId: $creatorId, authorId: $authorId) {
               id
               locale
               path
@@ -96,7 +95,6 @@ export default {
               createdAt
               updatedAt
             }
-          }
         }
       `,
       variables () {
@@ -106,7 +104,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.list,
+      update: (data) => data.listPages,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'profile-pages-refresh')

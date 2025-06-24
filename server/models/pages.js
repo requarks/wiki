@@ -402,6 +402,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: page.localeCode,
       path: page.path,
       mode: 'create'
@@ -503,8 +504,10 @@ module.exports = class Page extends Model {
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
-    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
-
+    await WIKI.models.tags.associateTags({
+      tags: Array.isArray(opts.tags) ? opts.tags : [],
+      page
+    })
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
@@ -572,11 +575,12 @@ module.exports = class Page extends Model {
    * @param {number} pageId
    * @returns {Object[]} Page Tree List
    */
-  static async getPageTreeFrom(pageId) {
+  static async getPageTreeFrom(siteId, pageId) {
     return WIKI.models.knex
       .select('pages.id', 'pages.path', 'pages.title', 'pages.contentType', 'pages.render', 'pages.content', 'pages.localeCode', 'pages.siteId')
       .from('pages')
       .join('pageTree', 'pages.id', 'pageTree.pageId')
+      .where('pageTree.siteId', siteId)
       .whereRaw(`"ancestors"::jsonb @> (SELECT ('[' || "id" || ']')::jsonb FROM "pageTree" WHERE "pageId" = ?)`, [pageId])
       .orWhere('pages.id', pageId)
       .orderBy('pages.path')
@@ -1004,6 +1008,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links : Changing old links to the new path
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       sourceLocale: page.localeCode,
       sourcePath: page.path,
       locale: opts.destinationLocale,
@@ -1013,6 +1018,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links : Validate invalid links to the new path
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: opts.destinationLocale,
       path: opts.destinationPath,
       mode: 'create'
@@ -1075,6 +1081,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: page.localeCode,
       path: page.path,
       mode: 'delete'
@@ -1085,6 +1092,7 @@ module.exports = class Page extends Model {
    * Reconnect links to new/move/deleted page
    *
    * @param {Object} opts - Page parameters
+   * @param {uuid} opts.siteId - Page siteId
    * @param {string} opts.path - Page Path
    * @param {string} opts.locale - Page Locale Code
    * @param {string} [opts.sourcePath] - Previous Page Path (move only)
@@ -1093,48 +1101,165 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async reconnectLinks(opts) {
-    const pageHref = `/${opts.locale}/${opts.path}`
+    const site = await WIKI.models.sites.query().findById(opts.siteId)
+    const host = WIKI.config.host
+    const sitePath = site.path
+    const pageHref = `/${sitePath}/${opts.path}`
+    const pageLocaleHref = `/${sitePath}/${opts.sourceLocale}/${opts.path}`
     let replaceArgs = {
-      from: '',
-      to: ''
+      InternalFrom: '',
+      InternalTo: '',
+      InternalLocaleFrom: '',
+      InternalLocaleTo: '',
+      ExternalFrom: '',
+      ExternalTo: '',
+      ExternalLocaleFrom: '',
+      ExternalLocaleTo: '',
+      MarkdownContentFrom: '',
+      MarkdownContentTo: '',
+      ExternalLocaleMarkdownContentFrom: '',
+      ExternalLocaleMarkdownContentTo: '',
+      ExternalMarkdownContentFrom: '',
+      ExternalMarkdownContentTo: '',
+      HtmlContentFrom: '',
+      HtmlContentTo: '',
+      ExternalHtmlContentFrom: '',
+      ExternalHtmlContentTo: '',
+      ExternalLocaleHtmlContentFrom: '',
+      ExternalLocaleHtmlContentTo: ''
     }
     switch (opts.mode) {
       case 'create':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.InternalTo = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'move':
-        const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
-        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        const prevPageHref = `/${sitePath}/${opts.sourcePath}`
+        const prevLocalePageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
+        replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
+        replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
+        replaceArgs.InternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${opts.sourcePath}`
+        replaceArgs.InternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${opts.path}`
+        replaceArgs.ExternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${host}${pageLocaleHref}`
+        replaceArgs.ExternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${host}${prevPageHref}`
+        replaceArgs.ExternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${host}${pageHref}`
+        replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
+        replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
+        replaceArgs.ExternalMarkdownContentFrom = `${host}${prevPageHref}`
+        replaceArgs.ExternalMarkdownContentTo = `${host}${pageHref}`
+        replaceArgs.ExternalLocaleMarkdownContentFrom = `${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleMarkdownContentTo = `${host}${pageLocaleHref}`
+        replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
+        replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
+        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}${prevPageHref}">${host}${prevPageHref}`
+        replaceArgs.ExternalHtmlContentTo = `<a href="${host}${pageHref}">${host}${pageHref}`
+        replaceArgs.ExternalLocaleHtmlContentFrom = `<a href="${host}${prevLocalePageHref}">${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleHtmlContentTo = `<a href="${host}${pageLocaleHref}">${host}${pageLocaleHref}`
         break
       case 'delete':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.InternalTo = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
         break
       default:
         return false
     }
 
     let affectedHashes = []
+    const targetPath = opts.mode === 'move' ? `${sitePath}/${opts.sourcePath}` : `${sitePath}/${opts.path}`
+    const targetExternalPath = opts.mode === 'move' ? `${sitePath}/${opts.locale}/${opts.sourcePath}` : `${sitePath}/${opts.locale}/${opts.path}`
+
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
       const qryHashes = await WIKI.models.pages
         .query()
         .returning('hash')
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
+          render: WIKI.models.knex.raw(`
+            REPLACE(
+                REPLACE(
+                  REPLACE(
+                    REPLACE(??, ?, ?),
+                    ?, ?
+                  ),
+                  ?, ?
+                ),
+                ?, ?
+              )
+            `, [
             'render',
-            replaceArgs.from,
-            replaceArgs.to
+            replaceArgs.InternalFrom,
+            replaceArgs.InternalTo,
+            replaceArgs.ExternalLocaleFrom,
+            replaceArgs.ExternalLocaleTo,
+            replaceArgs.ExternalFrom,
+            replaceArgs.ExternalTo,
+            replaceArgs.InternalLocaleFrom,
+            replaceArgs.InternalLocaleTo
+          ]),
+          content: WIKI.models.knex.raw(`
+            CASE
+              WHEN "contentType" = 'markdown' THEN
+                   REPLACE(
+                    REPLACE(
+                      REPLACE(??, ?, ?),
+                      ?, ?
+                    ),
+                  ?, ?
+      )
+              WHEN "contentType" = 'html' THEN
+                REPLACE(
+                  REPLACE(
+                    REPLACE(
+                      ??,
+                      ?, ?
+                    ),
+                    ?, ?
+                  ),
+                  ?, ?
+                )
+              ELSE ??
+            END
+          `, [
+            'content',
+            replaceArgs.MarkdownContentFrom,
+            replaceArgs.MarkdownContentTo,
+            replaceArgs.ExternalMarkdownContentFrom,
+            replaceArgs.ExternalMarkdownContentTo,
+            replaceArgs.ExternalLocaleMarkdownContentFrom,
+            replaceArgs.ExternalLocaleMarkdownContentTo,
+            'content',
+            replaceArgs.HtmlContentFrom,
+            replaceArgs.HtmlContentTo,
+            replaceArgs.ExternalLocaleHtmlContentFrom,
+            replaceArgs.ExternalLocaleHtmlContentTo,
+            replaceArgs.ExternalHtmlContentFrom,
+            replaceArgs.ExternalHtmlContentTo,
+            'content'
           ])
         })
         .whereIn('pages.id', function () {
-          this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': opts.path,
-            'pageLinks.localeCode': opts.locale
-          })
+          this.select('pageLinks.pageId').from('pageLinks')
+            .where(function() {
+              this.where('pageLinks.path', targetExternalPath)
+                .orWhere('pageLinks.path', targetPath)
+            })
+            .andWhere('pageLinks.localeCode', opts.locale)
         })
+      const pageIds = await WIKI.models.knex
+        .select('pageLinks.pageId')
+        .from('pageLinks')
+        .where('pageLinks.localeCode', opts.locale)
+        .where(function() {
+          this.where('pageLinks.path', targetExternalPath)
+            .orWhere('pageLinks.path', targetPath)
+        })
+      const pages = await WIKI.models.pages
+        .query()
+        .whereIn('id', pageIds.map(p => p.pageId))
+      pages.forEach(async (page) => {
+        await WIKI.models.pages.renderPage(page)
+      })
       affectedHashes = qryHashes.map((h) => h.hash)
     } else {
       // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
@@ -1149,7 +1274,7 @@ module.exports = class Page extends Model {
         })
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': opts.path,
+            'pageLinks.path': targetPath,
             'pageLinks.localeCode': opts.locale
           })
         })
