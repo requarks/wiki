@@ -37,30 +37,30 @@ const WIKI = {
 }
 
 describe('Page Resolvers -> Query', () => {
+  const mockChildPagesQuery = function(pRow, cRows) {
+    return jest.fn()
+      // first('id').where('pageId', args.pageId)
+      .mockImplementationOnce(() => ({
+        first: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue(pRow)
+        })
+      }))
+      // .where(...).orderBy(...)
+      .mockImplementationOnce(() => ({
+        where: jest.fn((cb) => {
+          const builder = {
+            where: jest.fn()
+          }
+          cb(builder)
+          return {
+            orderBy: jest.fn().mockResolvedValue(cRows)
+          }
+        })
+      }))
+  }
+
   describe('childPages', () => {
     let req, args, context, parentRow, childRows
-
-    const mockQuery = function(pRow, cRows) {
-      return jest.fn()
-        // first('id').where('pageId', args.pageId)
-        .mockImplementationOnce(() => ({
-          first: jest.fn().mockReturnValue({
-            where: jest.fn().mockResolvedValue(pRow)
-          })
-        }))
-        // .where(...).orderBy(...)
-        .mockImplementationOnce(() => ({
-          where: jest.fn((cb) => {
-            const builder = {
-              where: jest.fn()
-            }
-            cb(builder)
-            return {
-              orderBy: jest.fn().mockResolvedValue(cRows)
-            }
-          })
-        }))
-    }
 
     beforeEach(() => {
       req = {
@@ -84,7 +84,7 @@ describe('Page Resolvers -> Query', () => {
 
     it('should return child pages with correct parent and locale', async () => {
       // GIVEN
-      WIKI.models.knex = mockQuery(parentRow, childRows)
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
       WIKI.auth.checkAccess.mockReturnValue(true)
 
       // WHEN
@@ -110,7 +110,7 @@ describe('Page Resolvers -> Query', () => {
         title: 'A'
       }
 
-      WIKI.models.knex = mockQuery(parentRow, childRows)
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
       WIKI.auth.checkAccess.mockReturnValue(true)
 
       // WHEN
@@ -128,7 +128,7 @@ describe('Page Resolvers -> Query', () => {
         siteId: 1
       }
 
-      WIKI.models.knex = mockQuery(parentRow, childRows)
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
       WIKI.auth.checkAccess.mockReturnValue(true)
 
       // WHEN
@@ -140,7 +140,7 @@ describe('Page Resolvers -> Query', () => {
 
     it('should return empty array if no parentRow and no children', async () => {
       // GIVEN
-      WIKI.models.knex = mockQuery(
+      WIKI.models.knex = mockChildPagesQuery(
         undefined, // parentRow not found
         [] //  no childRows
       )
@@ -155,7 +155,7 @@ describe('Page Resolvers -> Query', () => {
 
     it('should filter out pages if checkAccess returns false', async () => {
       // GIVEN
-      WIKI.models.knex = mockQuery(parentRow, childRows)
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
       WIKI.auth.checkAccess
         .mockReturnValueOnce(true) // Only allow access to the first child
         .mockReturnValueOnce(false)
