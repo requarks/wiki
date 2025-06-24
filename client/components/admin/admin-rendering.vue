@@ -204,7 +204,7 @@ export default {
       query: renderersQuery,
       fetchPolicy: 'network-only',
       update: (data) => {
-        let renderers = _.cloneDeep(data.rendering.renderers).map(str => ({
+        let renderers = _.cloneDeep(data.renderers).map(str => ({
           ...str,
           config: _.sortBy(str.config.map(cfg => ({
             ...cfg,

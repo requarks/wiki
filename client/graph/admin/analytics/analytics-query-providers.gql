@@ -1,17 +1,15 @@
 query {
-  analytics {
-    providers {
-      isEnabled
+  analyticsProviders {
+    isEnabled
+    key
+    title
+    description
+    isAvailable
+    logo
+    website
+    config {
       key
-      title
-      description
-      isAvailable
-      logo
-      website
-      config {
-        key
-        value
-      }
+      value
     }
   }
 }

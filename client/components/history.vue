@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').history
     nav-header
-    v-content
+    v-main
       v-toolbar(color='primary', dark)
         .subheading Viewing history of #[strong /{{path}}]
         template(v-if='$vuetify.breakpoint.mdAndUp')
@@ -355,7 +355,6 @@ export default {
       const resp = await this.$apollo.query({
         query: gql`
           query ($pageId: Int!, $versionId: Int!) {
-            pages {
               version (pageId: $pageId, versionId: $versionId) {
                 action
                 authorId
@@ -377,7 +376,6 @@ export default {
                 title
                 versionId
               }
-            }
           }
         `,
         variables: {
@@ -386,7 +384,7 @@ export default {
         }
       })
       this.$store.commit(`loadingStop`, 'history-version-' + versionId)
-      const page = _.get(resp, 'data.pages.version', null)
+      const page = _.get(resp, 'data.version', null)
       if (page) {
         this.cache.push(page)
         return page
@@ -485,18 +483,6 @@ export default {
           id: this.pageId,
           offsetPage: this.offsetPage,
           offsetSize: this.$vuetify.breakpoint.mdAndUp ? 25 : 5
-        },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          return {
-            pages: {
-              history: {
-                total: previousResult.pages.history.total,
-                trail: [...previousResult.pages.history.trail, ...fetchMoreResult.pages.history.trail],
-                __typename: previousResult.pages.history.__typename
-              },
-              __typename: previousResult.pages.__typename
-            }
-          }
         }
       })
     },
@@ -545,7 +531,6 @@ export default {
     trail: {
       query: gql`
         query($id: Int!, $offsetPage: Int, $offsetSize: Int) {
-          pages {
             history(id:$id, offsetPage:$offsetPage, offsetSize:$offsetSize) {
               trail {
                 versionId
@@ -558,7 +543,6 @@ export default {
               }
               total
             }
-          }
         }
       `,
       variables () {
@@ -570,8 +554,8 @@ export default {
       },
       manual: true,
       result ({ data, loading, networkStatus }) {
-        this.total = data.pages.history.total
-        this.trail = data.pages.history.trail
+        this.total = data.history.total
+        this.trail = data.history.trail
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'history-trail-refresh')
@@ -596,6 +580,54 @@ export default {
   .d2h-file-header {
     display: none;
   }
+
+  d2h-code-line-added {
+    background-color: rgba(mc('ext-peacock', '1'), 0.2) !important;
+
+    .d2h-code-line-ctn {
+      background-color: rgba(mc('ext-peacock', '1'), 0.2) !important;
+    }
+  }
+
+  .d2h-addition {
+    background-color: rgba(mc('ext-peacock', '1'), 0.15) !important;
+  }
+
+  .d2h-ins {
+    background-color: rgba(mc('ext-peacock', '1'), 0.4) !important;
+  }
+
+  .d2h-code-line-removed {
+    background-color: rgba(mc('ext-yellow', '1'), 0.2) !important;
+
+    .d2h-code-line-ctn {
+      background-color: rgba(mc('ext-yellow', '1'), 0.2) !important;
+
+    }
+  }
+
+  .d2h-deletion {
+    background-color: rgba(mc('ext-yellow', '2'), 0.15) !important;
+  }
+
+  .d2h-del {
+    background-color: rgba(mc('ext-yellow', '2'), 0.4) !important;
+  }
+
+  // Make text in changed sections more readable
+  .d2h-code-line-added, .d2h-code-line-removed {
+    .d2h-code-line-ctn {
+      color: currentColor !important;
+    }
+  }
+}
+
+ins {
+  background-color: mc('ext-peacock', '1') !important;
+}
+
+del {
+  background-color: mc('ext-yellow', '2') !important;
 }
 
 </style>

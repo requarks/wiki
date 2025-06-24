@@ -6,12 +6,6 @@ const CleanCSS = require('clean-css')
 
 module.exports = {
   Query: {
-    async theming() { return {} }
-  },
-  Mutation: {
-    async theming() { return {} }
-  },
-  ThemingQuery: {
     async themes(obj, args, context, info) {
       return [{ // TODO
         key: 'default',
@@ -19,17 +13,20 @@ module.exports = {
         author: 'requarks.io'
       }]
     },
-    async config(obj, args, context, info) {
+    async themingConfig(obj, args, context, info) {
       return {
         theme: WIKI.config.theming.theme,
         iconset: WIKI.config.theming.iconset,
         darkMode: WIKI.config.theming.darkMode,
-        tocPosition: WIKI.config.theming.tocPosition || 'left',
+        tocPosition: WIKI.config.theming.tocPosition || 'right',
         injectCSS: new CleanCSS({ format: 'beautify' }).minify(WIKI.config.theming.injectCSS).styles,
         injectHead: WIKI.config.theming.injectHead,
         injectBody: WIKI.config.theming.injectBody
       }
     }
+  },
+  Mutation: {
+    async theming() { return {} }
   },
   ThemingMutation: {
     async setConfig(obj, args, context, info) {
@@ -45,7 +42,7 @@ module.exports = {
           theme: args.theme,
           iconset: args.iconset,
           darkMode: args.darkMode,
-          tocPosition: args.tocPosition || 'left',
+          tocPosition: args.tocPosition || 'right',
           injectCSS: args.injectCSS || '',
           injectHead: args.injectHead || '',
           injectBody: args.injectBody || ''

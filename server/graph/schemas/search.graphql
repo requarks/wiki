@@ -3,7 +3,8 @@
 # ===============================================
 
 extend type Query {
-  search: SearchQuery
+  searchEngines(filter: String, orderBy: String): [SearchEngine]
+    @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
@@ -11,24 +12,12 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type SearchQuery {
-  searchEngines(
-    filter: String
-    orderBy: String
-  ): [SearchEngine] @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type SearchMutation {
-  updateSearchEngines(
-    engines: [SearchEngineInput]
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateSearchEngines(engines: [SearchEngineInput]): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   rebuildIndex: DefaultResponse @auth(requires: ["manage:system"])
 }

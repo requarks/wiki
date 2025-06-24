@@ -531,7 +531,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => data.assets.folders,
+      update: (data) => data.folders,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-folders-list-refresh')
       }
@@ -547,7 +547,7 @@ export default {
       },
       throttle: 1000,
       fetchPolicy: 'network-only',
-      update: (data) => data.assets.list,
+      update: (data) => data.listAssets,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-list-refresh')

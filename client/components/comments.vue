@@ -86,14 +86,14 @@
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
           v-card-text
-            .comments-post-actions(v-if='permissions.manage && !isBusy && commentEditId === 0')
+            .comments-post-actions(v-if='canManageComment(cm) && !isBusy && commentEditId === 0')
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
             .comments-post-name.caption: strong {{cm.authorName}}
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
-              mentionable(:keys="mentionableKeys", :items="users", @open="onOpen" @apply="handleApply")
+              mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)", @apply="handleApply")
                 v-textarea(
                   ref="editCommentTextarea"
                   outlined
@@ -152,7 +152,7 @@ export default {
   components: {
     Mentionable
   },
-  data () {
+  data() {
     return {
       newcomment: '',
       isLoading: true,
@@ -183,8 +183,10 @@ export default {
   computed: {
     pageId: get('page/id'),
     permissions: get('page/effectivePermissions@comments'),
+    hasSuperAdminPermission: get('page/effectivePermissions@system.manage'),
     isAuthenticated: get('user/authenticated'),
     userDisplayName: get('user/name'),
+    userId: get('user/id'),
     siteId: get('page/siteId'),
     sitePath: get('page/sitePath')
   },
@@ -195,7 +197,7 @@ export default {
     handleApply(item) {
       const textarea = this.commentEditId === 0 ?
         this.$refs.newCommentTextarea.$el.querySelector('textarea') :
-        this.$refs.editCommentTextarea.$el.querySelector('textarea')
+        this.$refs.editCommentTextarea[0].$el.querySelector('textarea')
 
       let commentContent = this.commentEditId === 0 ? this.newcomment : this.commentEditContent
 
@@ -229,27 +231,26 @@ export default {
         })
       }
     },
-    onIntersect (entries, observer, isIntersecting) {
+    onIntersect(entries, observer, isIntersecting) {
       if (isIntersecting) {
         this.fetch(true)
       }
     },
-    async fetch (silent = false) {
+    async fetch(silent = false) {
       this.isLoading = true
       try {
         const results = await this.$apollo.query({
           query: gql`
             query ($locale: String!, $path: String!, $siteId: String!) {
-              comments {
-                list(locale: $locale, path: $path, siteId: $siteId) {
+                listComments(locale: $locale, path: $path, siteId: $siteId) {
                   id
                   render
                   authorName
+                  authorId
                   createdAt
                   updatedAt
                 }
               }
-            }
           `,
           variables: {
             locale: this.$store.get('page/locale'),
@@ -258,14 +259,16 @@ export default {
           },
           fetchPolicy: 'network-only'
         })
-        this.comments = _.get(results, 'data.comments.list', []).map(c => {
+        this.comments = _.get(results, 'data.listComments', []).map(c => {
           const nameParts = c.authorName.toUpperCase().split(' ')
           let initials = _.head(nameParts).charAt(0)
           if (nameParts.length > 1) {
             initials += _.last(nameParts).charAt(0)
           }
-          c.initials = initials
-          return c
+          return {
+            ...c,
+            initials
+          }
         })
       } catch (err) {
         console.warn(err)
@@ -283,7 +286,7 @@ export default {
     /**
      * Post New Comment
      */
-    async postComment () {
+    async postComment() {
       let rules = {
         comment: {
           presence: {
@@ -394,18 +397,16 @@ export default {
     /**
      * Show Comment Editing Form
      */
-    async editComment (cm) {
+    async editComment(cm) {
       this.$store.commit(`loadingStart`, 'comments-edit')
       this.isBusy = true
       try {
         const results = await this.$apollo.query({
           query: gql`
             query ($id: Int!) {
-              comments {
-                single(id: $id) {
+                commentById(id: $id) {
                   content
                 }
-              }
             }
           `,
           variables: {
@@ -413,7 +414,7 @@ export default {
           },
           fetchPolicy: 'network-only'
         })
-        this.commentEditContent = _.get(results, 'data.comments.single.content', null)
+        this.commentEditContent = _.get(results, 'data.commentById.content', null)
         if (this.commentEditContent === null) {
           throw new Error('Failed to load comment content.')
         }
@@ -432,14 +433,14 @@ export default {
     /**
      * Cancel Comment Edit
      */
-    editCommentCancel () {
+    editCommentCancel() {
       this.commentEditId = 0
       this.commentEditContent = null
     },
     /**
      * Update Comment with new content
      */
-    async updateComment () {
+    async updateComment() {
       this.$store.commit(`loadingStart`, 'comments-edit')
       this.isBusy = true
       try {
@@ -511,14 +512,14 @@ export default {
     /**
      * Show Delete Comment Confirmation Dialog
      */
-    deleteCommentConfirm (cm) {
+    deleteCommentConfirm(cm) {
       this.commentToDelete = cm
       this.deleteCommentDialogShown = true
     },
     /**
      * Delete Comment
      */
-    async deleteComment () {
+    async deleteComment() {
       this.$store.commit(`loadingStart`, 'comments-delete')
       this.isBusy = true
       this.deleteCommentDialogShown = false
@@ -579,7 +580,7 @@ export default {
             query: query
           }
         })
-        const resp = _.get(respRaw, 'data.users.autoCompleteEmails', [])
+        const resp = _.get(respRaw, 'data.autoCompleteEmails', [])
         this.users = resp.map(email => ({
           value: email,
           label: email,
@@ -590,6 +591,10 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    canManageComment(cm) {
+      if (!this.permissions.manage) return false
+      return this.hasSuperAdminPermission || cm.authorId === this.userId
     }
   }
 }

@@ -270,7 +270,9 @@ describe('Group Resolvers', () => {
                 $relatedQuery: jest.fn(() => ({
                   relate: jest.fn().mockResolvedValue(true)
                 }))
-              })
+              }),
+              join: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis()
             }))
           },
           users: {
@@ -370,7 +372,9 @@ describe('Group Resolvers', () => {
                     where: jest.fn().mockResolvedValue(true)
                   }))
                 }))
-              })
+              }),
+              join: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis()
             }))
           },
           users: {

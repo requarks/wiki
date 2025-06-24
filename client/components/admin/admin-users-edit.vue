@@ -1035,8 +1035,7 @@ export default {
     user: {
       query: gql`
         query ($id: Int!) {
-          users {
-            single(id: $id) {
+            userById(id: $id) {
               id
               name
               email
@@ -1059,7 +1058,6 @@ export default {
               }
             }
           }
-        }
       `,
       variables() {
         return {
@@ -1067,7 +1065,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => data.users.single,
+      update: (data) => _.cloneDeep(data.userById),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
       }
@@ -1075,7 +1073,7 @@ export default {
     groups: {
       query: groupsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => data.listGroups,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')
       }

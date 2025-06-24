@@ -1,17 +1,15 @@
 query {
-  logging {
-    loggers(orderBy: "title ASC") {
-      isEnabled
+  loggers(orderBy: "title ASC") {
+    isEnabled
+    key
+    title
+    description
+    logo
+    website
+    level
+    config {
       key
-      title
-      description
-      logo
-      website
-      level
-      config {
-        key
-        value
-      }
+      value
     }
   }
 }

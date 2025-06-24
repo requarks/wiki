@@ -3,20 +3,15 @@
 # ===============================================
 
 extend type Query {
-  site: SiteQuery
+  siteConfig: SiteConfig @auth(requires: ["manage:system"])
 
-  sites(
-    showAdminOnly: Boolean
-  ): [Site]
+  sites(showAdminOnly: Boolean): [Site]
 
-  siteById (
+  siteById(
     id: String! # was UUID!
   ): Site
 
-  siteByPath (
-    path: String!
-    exact: Boolean!
-  ): Site
+  siteByPath(path: String!, exact: Boolean!): Site
 
   siteCount: SiteCount @auth(requires: ["manage:sites", "manage:system"])
 }
@@ -24,27 +19,17 @@ extend type Query {
 extend type Mutation {
   site: SiteMutation
 
-  createSite (
-    name: String!
-    path: String!
-  ): SiteCreateResponse @auth(requires: ["manage:system"])
+  createSite(name: String!, path: String!): SiteCreateResponse
+    @auth(requires: ["manage:system"])
 
-  updateSite (
+  updateSite(
     id: String! # was UUID!
     patch: SiteUpdateInput!
   ): DefaultResponse @auth(requires: ["manage:system"])
 
-  deleteSite (
+  deleteSite(
     id: String! # was UUID!
   ): DefaultResponse @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type SiteQuery {
-  config: SiteConfig @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -94,7 +79,6 @@ type SiteMutation {
     uploadMaxFiles: Int
     uploadScanSVG: Boolean
     uploadForceDownload: Boolean
-
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 

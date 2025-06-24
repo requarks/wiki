@@ -403,7 +403,6 @@ export default {
     config: {
       query: gql`
         {
-          site {
             config {
               authAutoLogin
               authEnforce2FA
@@ -426,11 +425,10 @@ export default {
               securityCSP
               securityCSPDirectives
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.site.config),
+      update: (data) => _.cloneDeep(data.siteConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-security-refresh')
       }

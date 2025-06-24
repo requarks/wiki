@@ -5,18 +5,15 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async mail() { return {} }
-  },
-  Mutation: {
-    async mail() { return {} }
-  },
-  MailQuery: {
-    async config(obj, args, context, info) {
+    async mailConfig(obj, args, context, info) {
       return {
         ...WIKI.config.mail,
         pass: WIKI.config.mail.pass.length > 0 ? '********' : ''
       }
     }
+  },
+  Mutation: {
+    async mail() { return {} }
   },
   MailMutation: {
     async sendTest(obj, args, context) {

@@ -6,6 +6,7 @@ const assetHelper = require('../helpers/asset')
 const mime = require('mime-types')
 const pageHelper = require('../helpers/page')
 const Page = require('../models/pages')
+const ANONYMIZED_MENTION = 'AnonymousUser'
 
 /* global WIKI */
 
@@ -34,7 +35,7 @@ function handleInternalLinks(pageHTML, sitePath, locale, pagePaths) {
 }
 
 const getSite = async (sitePath) => {
-  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: false })
+  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
 }
 
 async function getSiteIdByPath(sitePath) {
@@ -169,7 +170,7 @@ async function getExportHtmlContent(page, user, queryParams) {
   let pageTree = null
   let pageHTML = ''
   if (queryParams.isPageTreeExport) {
-    pageTree = await WIKI.models.pages.getPageTreeFrom(page.id)
+    pageTree = await WIKI.models.pages.getPageTreeFrom(page.siteId, page.id)
     pageHTML = getPageTreeExportHtml(pageTree, user, queryParams)
   } else {
     pageHTML = getPageExportHtml(page)
@@ -188,9 +189,19 @@ async function getExportHtmlContent(page, user, queryParams) {
   const document = dom.window.document
 
   await prepareInternalImages(document, user)
+  anonymizeMentionedUsers(document)
+
   pageHTML = dom.serialize()
 
   return pageHTML
+}
+
+function anonymizeMentionedUsers(document) {
+  const mentions = document.querySelectorAll('.mention[data-mention]')
+  mentions.forEach(el => {
+    el.textContent = `@${ANONYMIZED_MENTION}`
+    el.setAttribute('data-mention', ANONYMIZED_MENTION)
+  })
 }
 
 module.exports = {
@@ -201,5 +212,7 @@ module.exports = {
   getPageContent,
   getPageTreeExportHtml,
   getPageExportHtml,
-  getExportHtmlContent
+  getExportHtmlContent,
+  anonymizeMentionedUsers,
+  ANONYMIZED_MENTION
 }

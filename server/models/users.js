@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
 const validate = require('validate.js')
 const qr = require('qr-image')
+const { handleUserSiteInactivityAfterUnassign } = require('../graph/services/userSiteInactivityService')
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
@@ -736,6 +737,11 @@ module.exports = class User extends Model {
         const remUsrGroups = _.difference(usrGroups, groups)
         for (const grp of remUsrGroups) {
           await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
+          // Handle user inactivity after unassign
+          const groupObj = usrGroupsRaw.find(g => g.id === grp)
+          if (groupObj) {
+            await handleUserSiteInactivityAfterUnassign(groupObj, usr)
+          }
         }
       }
       if (!_.isEmpty(location) && location !== usr.location) {

@@ -5,17 +5,6 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async logging() { return {} }
-  },
-  Mutation: {
-    async logging() { return {} }
-  },
-  Subscription: {
-    loggingLiveTrail: {
-      subscribe: () => WIKI.GQLEmitter.asyncIterator('livetrail')
-    }
-  },
-  LoggingQuery: {
     async loggers(obj, args, context, info) {
       let loggers = await WIKI.models.loggers.getLoggers()
       loggers = loggers.map(logger => {
@@ -38,6 +27,14 @@ module.exports = {
       // if (args.filter) { loggers = graphHelper.filter(loggers, args.filter) }
       if (args.orderBy) { loggers = _.sortBy(loggers, [args.orderBy]) }
       return loggers
+    }
+  },
+  Mutation: {
+    async logging() { return {} }
+  },
+  Subscription: {
+    loggingLiveTrail: {
+      subscribe: () => WIKI.GQLEmitter.asyncIterator('livetrail')
     }
   },
   LoggingMutation: {

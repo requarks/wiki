@@ -29,7 +29,7 @@
               :formatValue='round'
               easing='easeOutQuint'
               )
-      v-flex(xs12 md6 lg4 xl3 d-flex)
+      v-flex(xs12 md6 lg4 xl3 d-flex, v-if='hasPermission(`manage:system`)')
         v-card.blue.darken-3.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account
@@ -148,8 +148,7 @@ export default {
     recentPages: {
       query: gql`
         query {
-          pages {
-            list(limit: 10, orderBy: UPDATED, orderByDirection: DESC) {
+            listPages(limit: 10, orderBy: UPDATED, orderByDirection: DESC) {
               id
               locale
               path
@@ -162,10 +161,9 @@ export default {
               createdAt
               updatedAt
             }
-          }
         }
       `,
-      update: (data) => data.pages.list,
+      update: (data) => data.listPages,
       watchLoading (isLoading) {
         this.recentPagesLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-recentpages')

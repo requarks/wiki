@@ -229,16 +229,14 @@ export default {
     providers: {
       query: gql`
         query {
-          authentication {
             activeStrategies {
               key
               displayName
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.authentication.activeStrategies,
+      update: (data) => data.activeStrategies,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')
       }
@@ -246,7 +244,7 @@ export default {
     groups: {
       query: groupsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => data.listGroups,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
       }

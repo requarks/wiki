@@ -40,7 +40,7 @@ app.use('/', router)
 describe.each([
   { type: 'docx', contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', extension: 'docx' },
   { type: 'pdf', contentType: 'application/pdf', extension: 'pdf' }
-])('GET /export/$type/:pageId', ({ type, contentType, extension }) => {
+])('GET /export/$type/:siteId/:pageId', ({ type, contentType, extension }) => {
   beforeEach(() => {
     global.WIKI = WIKI
   })
@@ -51,7 +51,7 @@ describe.each([
 
   it('should return 400 if query parameters are missing', async () => {
     const response = await request(app)
-      .get(`/export/${type}/1`)
+      .get(`/export/${type}/1/2`)
       .query({ locale: 'en' })
 
     expect(response.status).toBe(400)
@@ -63,7 +63,7 @@ describe.each([
     WIKI.auth.checkAccess.mockReturnValue(false)
 
     const response = await request(app)
-      .get(`/export/${type}/1`)
+      .get(`/export/${type}/1/2`)
       .query({ locale: 'en', path: '/some/path', sitePath: '/site/path' })
 
     expect(response.status).toBe(403)
@@ -76,7 +76,7 @@ describe.each([
     WIKI.models.pages.getPage.mockResolvedValue(null)
 
     const response = await request(app)
-      .get(`/export/${type}/1`)
+      .get(`/export/${type}/1/2`)
       .query({ locale: 'en', path: '/some/path', sitePath: '/site/path' })
 
     expect(response.status).toBe(404)
@@ -90,7 +90,7 @@ describe.each([
     convertToFile.mockRejectedValue(new Error('Conversion error'))
 
     const response = await request(app)
-      .get(`/export/${type}/1`)
+      .get(`/export/${type}/1/2`)
       .query({ locale: 'en', path: '/some/path', sitePath: '/site/path' })
 
     expect(response.status).toBe(500)
@@ -118,7 +118,7 @@ describe.each([
 
     // WHEN
     const response = await request(app)
-      .get(`/export/${type}/1`)
+      .get(`/export/${type}/1/2`)
       .query({ locale: 'en', path: '/some/path', sitePath: '/site/path' })
 
     // THEN

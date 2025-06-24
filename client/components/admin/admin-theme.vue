@@ -151,7 +151,7 @@ export default {
         theme: 'default',
         darkMode: false,
         iconset: '',
-        tocPosition: 'left',
+        tocPosition: 'right',
         injectCSS: '',
         injectHead: '',
         injectBody: ''
@@ -184,8 +184,8 @@ export default {
     },
     tocPositions () {
       return [
-        { text: 'Left (default)', value: 'left' },
-        { text: 'Right', value: 'right' },
+        { text: 'Right (default)', value: 'right' },
+        { text: 'Left', value: 'left' },
         { text: 'Hidden', value: 'off' }
       ]
     }
@@ -241,7 +241,7 @@ export default {
     config: {
       query: themeConfigQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.theming.config,
+      update: (data) => _.cloneDeep(data.themingConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-theme-refresh')
       }

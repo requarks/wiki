@@ -221,7 +221,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.single,
+      update: (data) => data.pageById,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
       }

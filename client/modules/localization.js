@@ -37,8 +37,8 @@ export default {
                   }
                 }).then(resp => {
                   let ns = {}
-                  if (_.get(resp, 'data.localization.translations', []).length > 0) {
-                    resp.data.localization.translations.forEach(entry => {
+                  if (_.get(resp, 'data.translations', []).length > 0) {
+                    resp.data.translations.forEach(entry => {
                       _.set(ns, entry.key, entry.value)
                     })
                   }

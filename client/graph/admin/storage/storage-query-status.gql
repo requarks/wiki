@@ -1,11 +1,9 @@
 query {
-  storage {
-    status {
-      key
-      title
-      status
-      message
-      lastAttempt
-    }
+  storageStatus {
+    key
+    title
+    status
+    message
+    lastAttempt
   }
 }

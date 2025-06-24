@@ -342,7 +342,6 @@ export default {
     strategies: {
       query: gql`
         query {
-          authentication {
             strategies {
               key
               title
@@ -356,11 +355,10 @@ export default {
                 value
               }
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.get(data, 'authentication.strategies', []).map(str => ({
+      update: (data) => _.get(data, 'strategies', []).map(str => ({
         ...str,
         isDisabled: !str.isAvailable || str.key === `local`,
         props: _.sortBy(str.props.map(cfg => ({
@@ -375,7 +373,6 @@ export default {
     activeStrategies: {
       query: gql`
         query {
-          authentication {
             activeStrategies {
               key
               strategy {
@@ -397,11 +394,10 @@ export default {
               domainWhitelist
               autoEnrollGroups
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.sortBy(_.get(data, 'authentication.activeStrategies', []).map(str => ({
+      update: (data) => _.sortBy(_.get(data, 'activeStrategies', []).map(str => ({
         ...str,
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,
@@ -415,7 +411,7 @@ export default {
     groups: {
       query: groupsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => data.listGroups,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
       }
@@ -423,7 +419,7 @@ export default {
     host: {
       query: hostQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.site.config.host),
+      update: (data) => _.cloneDeep(data.siteConfig.host),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
       }

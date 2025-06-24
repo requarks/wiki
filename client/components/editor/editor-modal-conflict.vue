@@ -154,7 +154,6 @@ export default {
     let resp = await this.$apollo.query({
       query: gql`
         query ($id: Int!) {
-          pages {
             conflictLatest(id: $id) {
               id
               authorId
@@ -169,7 +168,6 @@ export default {
               title
               updatedAt
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
@@ -177,7 +175,7 @@ export default {
         id: this.$store.get('page/id')
       }
     })
-    resp = _.get(resp, 'data.pages.conflictLatest', false)
+    resp = _.get(resp, 'data.conflictLatest', false)
 
     if (!resp) {
       return this.$store.commit('showNotification', {

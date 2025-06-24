@@ -3,7 +3,9 @@
 # ===============================================
 
 extend type Query {
-  localization: LocalizationQuery
+  locales: [LocalizationLocale]
+  localizationConfig: LocalizationConfig
+  translations(locale: String!, namespace: String!): [Translation]
 }
 
 extend type Mutation {
@@ -11,23 +13,12 @@ extend type Mutation {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type LocalizationQuery {
-  locales: [LocalizationLocale]
-  config: LocalizationConfig
-  translations(locale: String!, namespace: String!): [Translation]
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type LocalizationMutation {
-  downloadLocale(
-    locale: String!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  downloadLocale(locale: String!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   updateLocale(
     locale: String!

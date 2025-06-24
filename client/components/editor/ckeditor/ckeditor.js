@@ -333,7 +333,7 @@ DecoupledEditor.defaultConfig = {
             console.error(error)
             return []
           }
-          const emails = await response.data.users.autoCompleteEmails
+          const emails = await response.data.autoCompleteEmails
           const mentions = emails.map((email) => `@${email}`)
 
           // Cache the results

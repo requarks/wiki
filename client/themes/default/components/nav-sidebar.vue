@@ -1,9 +1,12 @@
 <template lang="pug">
   div
-    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
+    .pa-3.d-flex(
+      v-if='navMode === `MIXED`'
+      :class='dark ? colors.primary[4] : colors.surface[2]'
+      )
       v-btn(
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='min-width:0;'
         @click='goHome'
         :aria-label='$t(`common:header.home`)'
@@ -12,7 +15,7 @@
       v-btn.ml-3(
         v-if='currentMode === `custom`'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='flex: 1 1 100%;'
         @click='switchMode(`browse`)'
         )
@@ -21,7 +24,7 @@
       v-btn.ml-3(
         v-else-if='currentMode === `browse`'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='flex: 1 1 100%;'
         @click='switchMode(`custom`)'
         )
@@ -29,8 +32,13 @@
         .body-2.text-none {{$t('common:sidebar.mainMenu')}}
     v-divider
     //-> Custom Navigation
-    v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
-      template(v-for='item of items')
+    v-list.py-2(
+      v-if='currentMode === `custom`'
+      dense
+      :class='dark ? `dark ` + color : color'
+      :dark='dark'
+      )
+      template(v-for='item of items' )
         v-list-item(
           v-if='item.k === `link`'
           :href='item.t'
@@ -38,32 +46,68 @@
           :rel='item.y === `externalblank` ? `noopener` : ``'
           )
           v-list-item-avatar(size='24', tile)
-            v-icon(v-if='item.c.match(/fa[a-z] fa-/)', size='19') {{ item.c }}
-            v-icon(v-else) {{ item.c }}
+            v-icon(
+              v-if='item.c.match(/fa[a-z] fa-/)'
+              :color='dark ? `white` : colors.text.darkGrey'
+              size='19'
+              ) {{ item.c }}
+            v-icon(
+              v-else
+              :color='dark ? `white` : colors.text.darkGrey'
+              ) {{ item.c }}
           v-list-item-title {{ item.l }}
         v-divider.my-2(v-else-if='item.k === `divider`')
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
     //-> Browse
-    v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
+    v-list.py-2(
+      v-else-if='currentMode === `browse`'
+      dense
+      :class='dark ? `dark ` + color : color'
+      :dark='dark'
+      )
       template(v-if='currentParent.id > 0')
-        v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='fetchBrowseItems(item)', style='min-height: 30px;')
-          v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
-            v-icon(small) mdi-folder-open
+        v-list-item(
+          v-for='(item, idx) of parents'
+          :key='`parent-` + item.id'
+          @click='fetchBrowseItems(item)'
+          style='min-height: 30px;'
+          )
+          v-list-item-avatar(
+            size='18'
+            :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`'
+            )
+            v-icon(small :color='dark ? `white` : colors.text.darkGrey') mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + sitePath + `/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
+        v-list-item.mt-2(
+          v-if='currentParent.pageId > 0'
+          :href='`/` + sitePath + `/` + currentParent.locale + `/` + currentParent.path'
+          :key='`directorypage-` + currentParent.id'
+          :input-value='path === currentParent.path'
+          )
           v-list-item-avatar(size='24')
-            v-icon mdi-text-box
+            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
           v-list-item-title {{ currentParent.title }}
-        v-subheader.pl-4 {{$t('common:sidebar.currentDirectory')}}
       template(v-for='item of currentItems')
-        v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='fetchBrowseItems(item)')
+        v-list-item(
+          v-if='item.isFolder'
+          :key='`childfolder-` + item.id'
+          :color='dark ? `white` : colors.text.darkGrey'
+          :style='getListItemStyles()'
+          @click='fetchBrowseItems(item)'
+          )
           v-list-item-avatar(size='24')
-            v-icon mdi-folder
+            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-folder
           v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` +  sitePath + `/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
+        v-list-item(
+          v-else
+          :href='`/` +  sitePath + `/` + item.locale + `/` + item.path'
+          :key='`childpage-` + item.id'
+          :input-value='path === item.path'
+          :style='getListItemStyles()'
+          )
           v-list-item-avatar(size='24')
-            v-icon mdi-text-box
+            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
           v-list-item-title {{ item.title }}
 </template>
 
@@ -71,6 +115,7 @@
 import _ from 'lodash'
 import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 /* global siteLangs */
 
@@ -102,7 +147,8 @@ export default {
         title: '/ (root)'
       },
       parents: [],
-      loadedCache: []
+      loadedCache: [],
+      colors: colors
     }
   },
   computed: {
@@ -147,7 +193,6 @@ export default {
       const resp = await this.$apollo.query({
         query: gql`
           query ($parent: Int, $locale: String!, $siteId: String!) {
-            pages {
               tree(
                 parent: $parent
                 mode: ALL
@@ -163,7 +208,6 @@ export default {
                 locale
                 siteId
               }
-            }
           }
         `,
         fetchPolicy: 'cache-first',
@@ -174,7 +218,7 @@ export default {
         }
       })
       this.loadedCache = _.union(this.loadedCache, [item.id])
-      this.currentItems = _.get(resp, 'data.pages.tree', [])
+      this.currentItems = _.get(resp, 'data.tree', [])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     async loadFromCurrentPath() {
@@ -183,7 +227,6 @@ export default {
       const resp = await this.$apollo.query({
         query: gql`
           query ($path: String, $locale: String!, $siteId: String!) {
-            pages {
               tree(
                 path: $path
                 mode: ALL
@@ -200,7 +243,6 @@ export default {
                 locale
                 siteId
               }
-            }
           }
         `,
         fetchPolicy: 'cache-first',
@@ -211,7 +253,7 @@ export default {
         }
       })
 
-      const items = _.get(resp, 'data.pages.tree', [])
+      const items = _.get(resp, 'data.tree', [])
 
       const filteredItems = items.filter((item) => item.siteId === this.siteId)
 
@@ -245,6 +287,16 @@ export default {
       } else {
         window.location.assign(`/${this.sitePath}`)
       }
+    },
+    getListItemStyles() {
+      let styles = ''
+      if (this.currentParent.pageId > 0) {
+        styles = 'padding-left: 48px; '
+      }
+      if (this.dark) {
+        return styles + 'background-color' + this.colors.primary[4] + '!important;'
+      }
+      return styles + 'background-color' + this.colors.surface[2] + '!important;'
     }
   },
   mounted() {
@@ -262,3 +314,32 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+  .dark .v-list-item {
+    & > .v-list-item__title {
+      color: white !important;
+      &:hover {
+        color: mc("ext-teal", "1") !important;
+        text-decoration: underline mc("ext-teal", "1");
+      }
+    }
+  }
+
+  .v-list-item {
+    & > .v-list-item__title {
+      color: mc('text', 'darkGrey') !important;
+      &:hover {
+        color: mc('primary', '1') !important;
+        text-decoration: underline  mc('primary', '1');
+      }
+    }
+  }
+
+  #curDir {
+    color: mc('text', 'darkGrey') !important;
+  }
+  .dark #curDir {
+    color: white !important;
+  }
+</style>
