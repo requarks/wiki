@@ -237,6 +237,38 @@ export default {
         curParentId = curParent.parent
       }
 
+      if (invertedAncestors.length > 0 || curPage.isFolder) {
+        const homePageId = 1
+        const homePageResp = await this.$apollo.query({
+          query: gql`
+            query($id: Int!) {
+              pageById(id: $id) {
+                id
+                path
+                title
+                locale
+                siteId
+              }
+            }
+          `,
+          fetchPolicy: 'cache-first',
+          variables: {
+            id: homePageId
+          }
+        })
+        this.currentParent = _.get(homePageResp, 'data.pageById', {
+          id: 0,
+          pageId: 0,
+          title: '/ (root)'
+        })
+        this.currentParent = {
+          ...this.currentParent,
+          // In this context, id represents the pageTree id, not the page id.
+          // Therefore, we explicitly set it to 0 to avoid conflict with the page id (the id received from the pageById query).
+          id: 0
+        }
+      }
+
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
       this.currentParent = _.last(this.parents)
       this.parents = (this.parents.length > 1 && !curPage.isFolder) ?
