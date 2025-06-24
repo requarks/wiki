@@ -145,7 +145,7 @@ export default {
   data() {
     return {
       currentMode: 'custom',
-      currentItems: [],
+      topLevelPageItems: [],
       currentParent: {
         id: 0,
         title: '/ (root)'
@@ -171,7 +171,7 @@ export default {
         this.isParentPage
     },
     itemList() {
-      return this.isParentPage ? this.childPageItems : this.currentItems
+      return this.isParentPage ? this.childPageItems : this.topLevelPageItems
     }
   },
   methods: {
@@ -192,7 +192,7 @@ export default {
       }
 
       if (this.loadedCache.indexOf(item.id) < 0) {
-        this.currentItems = []
+        this.topLevelPageItems = []
       }
 
       if (item.id === 0) {
@@ -238,7 +238,7 @@ export default {
         }
       })
       this.loadedCache = _.union(this.loadedCache, [item.id])
-      this.currentItems = _.get(resp, 'data.tree', [])
+      this.topLevelPageItems = _.get(resp, 'data.tree', [])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     async loadFromCurrentPath() {
@@ -301,7 +301,7 @@ export default {
       this.$store.commit('page/SET_HAS_CHILDREN', curPage.isFolder)
 
       this.loadedCache = [curPage.parent]
-      this.currentItems = _.filter(filteredItems, ['parent', curPage.parent])
+      this.topLevelPageItems = _.filter(filteredItems, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome() {
@@ -334,7 +334,6 @@ export default {
         isFolder: true,
         pageId: this.pageId,
         locale: this.locale,
-        siteId: this.siteId,
         sitePath: this.sitePath
       }
 
