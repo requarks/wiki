@@ -185,62 +185,6 @@ export default {
     getHref(item) {
       return item.path ? `/${this.sitePath}/${item.locale}/${item.path}` : `/${this.sitePath}/`
     },
-    async fetchBrowseItems(item) {
-      this.$store.commit(`loadingStart`, 'browse-load')
-      if (!item) {
-        item = this.currentParent
-      }
-
-      if (this.loadedCache.indexOf(item.id) < 0) {
-        this.topLevelPageItems = []
-      }
-
-      if (item.id === 0) {
-        this.parents = []
-      } else {
-        const flushRightIndex = _.findIndex(this.parents, ['id', item.id])
-        if (flushRightIndex >= 0) {
-          this.parents = _.take(this.parents, flushRightIndex)
-        }
-        if (this.parents.length < 1) {
-          this.parents.push(this.currentParent)
-        }
-        this.parents.push(item)
-      }
-
-      this.currentParent = item
-
-      const resp = await this.$apollo.query({
-        query: gql`
-          query ($parent: Int, $locale: String!, $siteId: String!) {
-              tree(
-                parent: $parent
-                mode: ALL
-                locale: $locale
-                siteId: $siteId
-              ) {
-                id
-                path
-                title
-                isFolder
-                pageId
-                parent
-                locale
-                siteId
-              }
-          }
-        `,
-        fetchPolicy: 'cache-first',
-        variables: {
-          parent: item.id,
-          locale: this.locale,
-          siteId: this.siteId
-        }
-      })
-      this.loadedCache = _.union(this.loadedCache, [item.id])
-      this.topLevelPageItems = _.get(resp, 'data.tree', [])
-      this.$store.commit(`loadingStop`, 'browse-load')
-    },
     async loadFromCurrentPath() {
       this.$store.commit(`loadingStart`, 'browse-load')
 
