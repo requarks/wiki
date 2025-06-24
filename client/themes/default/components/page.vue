@@ -22,7 +22,7 @@
           )
 
     //- Menu button for mobile view
-    v-fab-transition
+    v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
         fab
         :color='$vuetify.theme.dark ? colors.teal[1]: colors.primary[2]'
