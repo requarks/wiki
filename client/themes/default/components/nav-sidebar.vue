@@ -216,6 +216,9 @@ export default {
       this.loadedCache = [curPage.parent]
       this.currentItems = _.filter(items, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
+      if (curPage.isFolder) {
+        this.fetchBrowseItems(curPage)
+      }
     },
     goHome () {
       window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
