@@ -117,9 +117,12 @@
 
 <script>
 import _ from 'lodash'
-import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
 import colors from '@/themes/default/js/extended-color-scheme'
+
+import pageTreeQuery from '@/graph/common/common-pages-query-tree.gql'
+import pageByIdQuery from '@/graph/common/common-pages-query-page-by-id.gql'
+import childPagesQuery from '@/graph/common/common-pages-query-child-pages.gql'
 
 /* global siteLangs */
 
@@ -185,99 +188,84 @@ export default {
     getHref(item) {
       return item.path ? `/${this.sitePath}/${item.locale}/${item.path}` : `/${this.sitePath}/`
     },
-    async loadFromCurrentPath() {
-      this.$store.commit(`loadingStart`, 'browse-load')
-
-      const resp = await this.$apollo.query({
-        query: gql`
-          query ($path: String, $locale: String!, $siteId: String!) {
-              tree(
-                path: $path
-                mode: ALL
-                locale: $locale
-                includeAncestors: true
-                siteId: $siteId
-              ) {
-                id
-                path
-                title
-                isFolder
-                pageId
-                parent
-                locale
-                siteId
-              }
-          }
-        `,
+    async fetchPageTree() {
+      const pageTreeResp = await this.$apollo.query({
+        query: pageTreeQuery,
         fetchPolicy: 'cache-first',
         variables: {
           path: this.path,
+          mode: 'ALL',
           locale: this.locale,
+          includeAncestors: true,
           siteId: this.siteId
         }
       })
+      const items = _.get(pageTreeResp, 'data.tree', [])
 
-      const items = _.get(resp, 'data.tree', [])
-
-      const filteredItems = items.filter((item) => item.siteId === this.siteId)
-
-      const curPage = _.find(filteredItems, [
-        'pageId',
-        this.$store.get('page/id')
-      ])
-
+      return items.filter((item) => item.siteId === this.siteId)
+    },
+    extractInvertedAncestors(pageTreeItems, curPage) {
       let curParentId = curPage.parent
       let invertedAncestors = []
       while (curParentId) {
-        const curParent = _.find(filteredItems, ['id', curParentId])
+        const curParent = _.find(pageTreeItems, ['id', curParentId])
         if (!curParent) {
           break
         }
         invertedAncestors.push(curParent)
         curParentId = curParent.parent
       }
-
-      if (invertedAncestors.length > 0 || curPage.isFolder) {
-        const homePageId = 1
-        const homePageResp = await this.$apollo.query({
-          query: gql`
-            query($id: Int!) {
-              pageById(id: $id) {
-                id
-                path
-                title
-                locale
-                siteId
-              }
-            }
-          `,
-          fetchPolicy: 'cache-first',
-          variables: {
-            id: homePageId
-          }
-        })
-        this.currentParent = _.get(homePageResp, 'data.pageById', {
-          id: 0,
-          pageId: 0,
-          title: '/ (root)'
-        })
-        this.currentParent = {
-          ...this.currentParent,
-          // In this context, id represents the pageTree id, not the page id.
-          // Therefore, we explicitly set it to 0 to avoid conflict with the page id (the id received from the pageById query).
-          id: 0
+      return invertedAncestors
+    },
+    async updateRootParentWithActualData() {
+      const homePageId = 1
+      const homePageResp = await this.$apollo.query({
+        query: pageByIdQuery,
+        fetchPolicy: 'cache-first',
+        variables: {
+          id: homePageId
         }
+      })
+      this.currentParent = _.get(homePageResp, 'data.pageById', {
+        id: 0,
+        pageId: 0,
+        title: '/ (root)'
+      })
+      this.currentParent = {
+        ...this.currentParent,
+        // In this context, id represents the pageTree id, not the page id.
+        // Therefore, we explicitly set it to 0 to avoid conflict with the page id (the id received from the pageById query).
+        id: 0
       }
-
+    },
+    updateParents(curPage, invertedAncestors) {
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
       this.currentParent = _.last(this.parents)
       this.parents = (this.parents.length > 1 && !curPage.isFolder) ?
         this.parents.slice(0, this.parents.length - 1) :
         this.parents
       this.$store.commit('page/SET_HAS_CHILDREN', curPage.isFolder)
+    },
+    async loadFromCurrentPath() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+
+      const pageTreeItems = await this.fetchPageTree()
+      const curPage = _.find(pageTreeItems, [
+        'pageId',
+        this.$store.get('page/id')
+      ])
+
+      const invertedAncestors = this.extractInvertedAncestors(pageTreeItems, curPage)
+
+      if (invertedAncestors.length > 0 || curPage.isFolder) {
+        await this.updateRootParentWithActualData()
+      }
+
+      this.updateParents(curPage, invertedAncestors)
 
       this.loadedCache = [curPage.parent]
-      this.topLevelPageItems = _.filter(filteredItems, ['parent', curPage.parent])
+      this.topLevelPageItems = _.filter(pageTreeItems, ['parent', curPage.parent])
+
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome() {
@@ -314,24 +302,7 @@ export default {
       }
 
       const resp = await this.$apollo.query({
-        query: gql`
-          query ($pageId: Int!, $locale: String!, $siteId: String!) {
-              childPages(
-                pageId: $pageId
-                locale: $locale
-                siteId: $siteId
-              ) {
-                id
-                path
-                title
-                isFolder
-                pageId
-                parent
-                locale
-                siteId
-              }
-          }
-        `,
+        query: childPagesQuery,
         fetchPolicy: 'cache-first',
         variables: {
           pageId: this.pageId,
@@ -339,9 +310,9 @@ export default {
           siteId: this.siteId
         }
       })
+      this.childPageItems = _.get(resp, 'data.childPages', [])
 
       this.$store.commit(`loadingStop`, 'browse-load')
-      this.childPageItems = _.get(resp, 'data.childPages', [])
     }
   },
   watch: {
