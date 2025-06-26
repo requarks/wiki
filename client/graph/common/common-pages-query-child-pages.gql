@@ -1,0 +1,16 @@
+query (
+  $pageId: Int!,
+  $locale: String!,
+  $siteId: String!
+  ) {
+  childPages(pageId: $pageId, locale: $locale, siteId: $siteId) {
+    id
+    path
+    title
+    isFolder
+    pageId
+    parent
+    locale
+    siteId
+  }
+}

@@ -210,6 +210,7 @@
     "@babel/plugin-proposal-throw-expressions": "^7.12.1",
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
     "@babel/plugin-syntax-import-meta": "^7.10.4",
+    "@babel/plugin-transform-nullish-coalescing-operator": "7.27.1",
     "@babel/plugin-transform-optional-chaining": "7.24.8",
     "@babel/polyfill": "^7.12.1",
     "@babel/preset-env": "^7.12.1",

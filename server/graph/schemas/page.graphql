@@ -37,13 +37,20 @@ extend type Query {
   pageById(id: Int!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
-  pageByPath(path: String!, locale: String!): Page
+  pageByPath(path: String!, locale: String!, siteId: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
   tags(siteId: String): [PageTag]!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   searchTags(query: String!, siteId: String!): [String]!
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
+
+  childPages(
+    pageId: Int!
+    locale: String!
+    siteId: String!
+  ): [PageTreeItem]
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   tree(

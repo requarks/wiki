@@ -1,0 +1,17 @@
+query (
+  $path: String!
+  $locale: String!
+  $siteId: String!
+) {
+  pageByPath(
+    path: $path,
+    locale: $locale,
+    siteId: $siteId
+  ) {
+    id
+    path
+    title
+    locale
+    siteId
+  }
+}

@@ -572,6 +572,7 @@ module.exports = class Page extends Model {
 
   /**
    * Get the page tree starting from a given page
+   * @param {number} siteId
    * @param {number} pageId
    * @returns {Object[]} Page Tree List
    */
