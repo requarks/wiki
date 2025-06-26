@@ -37,7 +37,7 @@ extend type Query {
   pageById(id: Int!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
-  pageByPath(path: String!, locale: String!): Page
+  pageByPath(path: String!, locale: String!, siteId: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
   tags(siteId: String): [PageTag]!

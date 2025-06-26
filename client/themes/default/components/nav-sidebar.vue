@@ -121,7 +121,7 @@ import { get } from 'vuex-pathify'
 import colors from '@/themes/default/js/extended-color-scheme'
 
 import pageTreeQuery from '@/graph/common/common-pages-query-tree.gql'
-import pageByIdQuery from '@/graph/common/common-pages-query-page-by-id.gql'
+import pageByPathQuery from '@/graph/common/common-pages-query-page-by-path.gql'
 import childPagesQuery from '@/graph/common/common-pages-query-child-pages.gql'
 
 /* global siteLangs */
@@ -218,15 +218,17 @@ export default {
       return invertedAncestors
     },
     async updateRootParentWithActualData() {
-      const homePageId = 1
+      const homePagepath = "home"
       const homePageResp = await this.$apollo.query({
-        query: pageByIdQuery,
+        query: pageByPathQuery,
         fetchPolicy: 'cache-first',
         variables: {
-          id: homePageId
+          path: homePagepath,
+          locale: this.locale,
+          siteId: this.siteId
         }
       })
-      this.currentParent = _.get(homePageResp, 'data.pageById', {
+      this.currentParent = _.get(homePageResp, 'data.pageByPath', {
         id: 0,
         pageId: 0,
         title: '/ (root)'
