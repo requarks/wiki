@@ -37,13 +37,20 @@ extend type Query {
   pageById(id: Int!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
-  pageByPath(path: String!, locale: String!): Page
+  pageByPath(path: String!, locale: String!, siteId: String!): Page
     @auth(requires: ["read:pages", "manage:system", "manage:sites"])
 
   tags(siteId: String): [PageTag]!
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   searchTags(query: String!, siteId: String!): [String]!
+    @auth(requires: ["manage:system", "manage:sites", "read:pages"])
+
+  childPages(
+    pageId: Int!
+    locale: String!
+    siteId: String!
+  ): [PageTreeItem]
     @auth(requires: ["manage:system", "manage:sites", "read:pages"])
 
   tree(
@@ -139,21 +146,19 @@ type PageMutation {
   delete(id: Int!, notifyFollowers: Boolean): DefaultResponse
     @auth(requires: ["delete:pages", "manage:sites", "manage:system"])
 
-  deleteTag(id: Int!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+  deleteTag(id: Int!): DefaultResponse @auth(requires: ["manage:system"])
 
   updateTag(id: Int!, tag: String!, title: String!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:system"])
 
-  flushCache: DefaultResponse @auth(requires: ["manage:system", "manage:sites"])
+  flushCache: DefaultResponse @auth(requires: ["manage:system"])
 
   migrateToLocale(
     sourceLocale: String!
     targetLocale: String!
-  ): PageMigrationResponse @auth(requires: ["manage:system", "manage:sites"])
+  ): PageMigrationResponse @auth(requires: ["manage:system"])
 
-  rebuildTree: DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+  rebuildTree: DefaultResponse @auth(requires: ["manage:system"])
 
   render(id: Int!): DefaultResponse
     @auth(requires: ["manage:system", "manage:sites"])
@@ -164,7 +169,7 @@ type PageMutation {
     )
 
   purgeHistory(olderThan: String!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

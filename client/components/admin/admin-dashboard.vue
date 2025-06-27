@@ -29,7 +29,7 @@
               :formatValue='round'
               easing='easeOutQuint'
               )
-      v-flex(xs12 md6 lg4 xl3 d-flex)
+      v-flex(xs12 md6 lg4 xl3 d-flex, v-if='hasPermission(`manage:system`)')
         v-card.blue.darken-3.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account

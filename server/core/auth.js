@@ -260,6 +260,14 @@ module.exports = {
       return true
     }
 
+    // If the only requested permission is manage:system and not super admin, deny
+    if (
+      permissions?.length === 1 &&
+      permissions[0] === 'manage:system'
+    ) {
+      return false
+    }
+
     // Site Admin
     if (WIKI.auth.isSiteAdmin(user)) {
       if (page && page.siteId) {
@@ -512,7 +520,7 @@ module.exports = {
       comments: {
         read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], page) : false,
         write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], page) : false,
-        manage: false // This role is squashed globally
+        manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:own_comments'], page) : false
       },
       history: {
         read: WIKI.auth.checkAccess(req.user, ['read:history'], page)
@@ -527,6 +535,9 @@ module.exports = {
         delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page),
         script: false, // This role is squashed globally
         style: WIKI.auth.checkAccess(req.user, ['write:styles'], page)
+      },
+      sites: {
+        manage: WIKI.auth.checkAccess(req.user, ['manage:sites'], page)
       },
       system: {
         manage: WIKI.auth.checkAccess(req.user, ['manage:system'], page)

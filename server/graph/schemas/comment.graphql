@@ -3,8 +3,7 @@
 # ===============================================
 
 extend type Query {
-  commentProviders: [CommentProvider]
-    @auth(requires: ["manage:system", "manage:sites"])
+  commentProviders: [CommentProvider] @auth(requires: ["manage:system"])
 
   listComments(locale: String!, path: String!, siteId: String!): [CommentPost]!
     @auth(requires: ["read:comments", "manage:system", "manage:sites"])
@@ -41,10 +40,17 @@ type CommentMutation {
     pageId: Int!
     mentions: [String]
   ): CommentUpdateResponse
-    @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+    @auth(
+      requires: [
+        "write:comments"
+        "manage:own_comments"
+        "manage:system"
+        "manage:sites"
+      ]
+    )
 
   delete(id: Int!): DefaultResponse
-    @auth(requires: ["manage:system", "manage:sites"])
+    @auth(requires: ["manage:own_comments", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -71,7 +77,14 @@ input CommentProviderInput {
 type CommentPost {
   id: Int!
   content: String!
-    @auth(requires: ["write:comments", "manage:system", "manage:sites"])
+    @auth(
+      requires: [
+        "write:comments"
+        "manage:own_comments"
+        "manage:system"
+        "manage:sites"
+      ]
+    )
   render: String!
   authorId: Int!
   authorName: String!
