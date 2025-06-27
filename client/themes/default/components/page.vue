@@ -3,7 +3,7 @@
     nav-header(v-if='!printView')
     v-navigation-drawer(
       v-if='navMode !== `NONE` && !printView'
-      :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[2]'
+      :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[100]'
       dark
       app
       clipped
@@ -15,7 +15,7 @@
       //- scrollbar colors are set in 'scrollStyle'
       vue-scroll(:ops='scrollStyle')
         nav-sidebar(
-          :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]'
+          :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
           :items='sidebarDecoded'
           :nav-mode='navMode'
           :dark ='$vuetify.theme.dark'
@@ -25,7 +25,7 @@
     v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
         fab
-        :color='$vuetify.theme.dark ? colors.teal[1]: colors.primary[2]'
+        :color='$vuetify.theme.dark ? colors.teal[500]: colors.blue[400]'
         fixed
         bottom
         :right='$vuetify.rtl'
@@ -44,7 +44,7 @@
           v-if='$vuetify.breakpoint.smAndUp'
           dense
           flat
-          :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[2]'
+          :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[100]'
           )
           //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
           //-   v-icon(color='grey darken-2', left) menu
@@ -58,7 +58,7 @@
                 v-if='props.item.path === "/"',
                 small,
                 @click='goHome',
-                :color='$vuetify.theme.dark ? `white` : colors.primary[1]') mdi-home
+                :color='$vuetify.theme.dark ? `white` : colors.blue[600]') mdi-home
               v-btn.ma-0(v-else, :href='props.item.path', small, text) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
@@ -81,12 +81,12 @@
               v-btn.mr-5.white--text(
                 v-if='isAuthenticated && isFollower != null && !isFollower'
                 @click='followPage'
-                :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
+                :color='$vuetify.theme.dark ? colors.peacock[800] : colors.blue[600]'
                 ) Follow
               v-btn.mr-5.white--text(
                 v-if='isAuthenticated && isFollower != null && isFollower'
                 @click='unfollowPage'
-                :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
+                :color='$vuetify.theme.dark ? colors.peacock[800] : colors.blue[600]'
                 ) Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -121,7 +121,7 @@
             )
             v-card.page-toc-card.mb-5(
               v-if='tocDecoded.length'
-              :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]'
+              :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
               )
               .overline.pa-5.pb-0.card-title(
                 :class='$vuetify.theme.dark ? `dark` : ``'
@@ -129,7 +129,7 @@
               v-list.d-flex.flex-column.mb-0.pb-3.pl-1.pr-1(
                 dense
                 nav
-                :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]'
+                :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
                 )
                 TreeItem(
                   v-for='(tocItem, tocIdx) in tocDecoded'
@@ -139,35 +139,35 @@
                   :toggleOpenState='toggleOpenState'
                   :openStates='openStates'
                   :level='0' :uniqueId='tocItem.id'
-                  :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]'
+                  :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
                   )
 
             v-card.page-tags-card.mb-5(
               v-if='tags.length > 0'
-              :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]'
+              :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
               )
               .pa-5
                 .overline.pb-2.card-title(:class='$vuetify.theme.dark ? `dark` : ``') {{$t('common:page.tags')}}
                 v-chip.mr-1.mb-1(
                   label
-                  :color='$vuetify.theme.dark ? colors.sapphire[3] : colors.sapphire[1]'
+                  :color='$vuetify.theme.dark ? colors.sapphire[700] : colors.sapphire[500]'
                   v-for='(tag, idx) in tags'
                   :href='`/t/` + sitePath + `/` + tag.tag'
                   :key='`tag-` + tag.tag'
                   )
-                  v-icon(:color='$vuetify.theme.dark ? colors.peacock[1] : colors.green[1]', left, small) mdi-tag
+                  v-icon(:color='$vuetify.theme.dark ? colors.peacock[500] : colors.green[500]', left, small) mdi-tag
                   span(class='white--text') {{tag.title}}
                 v-chip.mr-1.mb-1(
                   label
-                  :color='$vuetify.theme.dark ? colors.sapphire[3] : colors.sapphire[1]'
+                  :color='$vuetify.theme.dark ? colors.sapphire[700] : colors.sapphire[500]'
                   :href='`/t/` + sitePath + `/` + tags.map(t => t.tag).join(`/`)'
                   :aria-label='$t(`common:page.tagsMatching`)'
                   )
-                  v-icon(:color='$vuetify.theme.dark ? colors.peacock[1] : colors.green[1]', size='20') mdi-tag-multiple
+                  v-icon(:color='$vuetify.theme.dark ? colors.peacock[500] : colors.green[500]', size='20') mdi-tag-multiple
 
             v-card.page-comments-card.mb-5(
               v-if='commentsEnabled && commentsPerms.read'
-              :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]'
+              :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
               )
               .pa-5
                 .overline.pb-2.d-flex.align-center
@@ -177,7 +177,7 @@
                 .d-flex
                   v-btn.text-none(
                     @click='goToComments()'
-                    :color='$vuetify.theme.dark ? colors.peacock[3] : `blue-grey darken-2`'
+                    :color='$vuetify.theme.dark ? colors.peacock[700] : `blue-grey darken-2`'
                     outlined
                     style='flex: 1 1 100%;'
                     small
@@ -192,13 +192,13 @@
                         v-on='on'
                         outlined
                         small
-                        :color='$vuetify.theme.dark ? colors.peacock[3] : `blue-grey darken-2`'
+                        :color='$vuetify.theme.dark ? colors.peacock[700] : `blue-grey darken-2`'
                         :aria-label='$t(`common:comments.newComment`)'
                         )
-                        v-icon(:color='$vuetify.theme.dark ? colors.peacock[2] : `blue-grey darken-2`', dense) mdi-comment-plus
+                        v-icon(:color='$vuetify.theme.dark ? colors.peacock[600] : `blue-grey darken-2`', dense) mdi-comment-plus
                     span {{$t('common:comments.newComment')}}
 
-            v-card.page-author-card.mb-5(:color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]')
+            v-card.page-author-card.mb-5(:color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]')
               .pa-5
                 .overline.d-flex
                   span.card-title(
@@ -215,13 +215,13 @@
                         v-if='hasReadHistoryPermission'
                         :aria-label='$t(`common:header.history`)'
                         )
-                        v-icon(:color='$vuetify.theme.dark ? colors.teal[1] : colors.sapphire[3]', dense) mdi-history
+                        v-icon(:color='$vuetify.theme.dark ? colors.teal[500] : colors.sapphire[700]', dense) mdi-history
                     span {{$t('common:header.history')}}
                 .page-author-card-name.body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
                 .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
 
             v-card.page-shortcuts-card(flat)
-              v-toolbar(:color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[1]', flat, dense)
+              v-toolbar(:color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]', flat, dense)
                 v-spacer
                 //- v-tooltip(bottom)
                 //-   template(v-slot:activator='{ on }')
@@ -268,7 +268,7 @@
                   template(v-slot:activator)
                     v-btn.btn-animate-edit(
                       fab
-                      :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
+                      :color='$vuetify.theme.dark ? colors.peacock[800] : colors.blue[600]'
                       v-model='pageEditFab'
                       @click='pageEdit'
                       v-on='onEditActivator'
@@ -281,14 +281,14 @@
                       v-btn(
                         fab
                         small
-                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
+                        :color='$vuetify.theme.dark ? colors.textLight.secondary : `white`'
                         light
                         v-on='on'
                         @click='pageHistory'
                         )
                         v-icon(
                           size='20'
-                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
                           ) mdi-history
                     span {{$t('common:header.history')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
@@ -296,14 +296,14 @@
                       v-btn(
                         fab
                         small
-                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
+                        :color='$vuetify.theme.dark ? colors.textLight.secondary : `white`'
                         light
                         v-on='on'
                         @click='pageSource'
                         )
                         v-icon(
                           size='20'
-                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
                           ) mdi-code-tags
                     span {{$t('common:header.viewSource')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
@@ -311,14 +311,14 @@
                       v-btn(
                         fab
                         small
-                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
+                        :color='$vuetify.theme.dark ? colors.textLight.secondary : `white`'
                         light
                         v-on='on'
                         @click='pageConvert'
                         )
                         v-icon(
                           size='20'
-                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
                           ) mdi-lightning-bolt
                     span {{$t('common:header.convert')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
@@ -326,14 +326,14 @@
                       v-btn(
                         fab
                         small
-                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
+                        :color='$vuetify.theme.dark ? colors.textLight.secondary : `white`'
                         light
                         v-on='on'
                         @click='pageDuplicate'
                         )
                         v-icon(
                           size='20'
-                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
                           ) mdi-content-duplicate
                     span {{$t('common:header.duplicate')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
@@ -341,14 +341,14 @@
                       v-btn(
                         fab
                         small
-                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
+                        :color='$vuetify.theme.dark ? colors.textLight.secondary : `white`'
                         light
                         v-on='on'
                         @click='pageMove'
                         )
                         v-icon(
                           size='20'
-                          :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                          :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
                           ) mdi-content-save-move-outline
                     span {{$t('common:header.move')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
@@ -357,13 +357,13 @@
                         fab
                         dark
                         small
-                        :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`'
+                        :color='$vuetify.theme.dark ? colors.textLight.secondary : `white`'
                         v-on='on'
                         @click='pageDelete'
                         )
                         v-icon(
                           size='20'
-                          :color='colors.red[5]'
+                          :color='colors.warningActionLight.secondaryDefault'
                           ) mdi-trash-can-outline
                     span {{$t('common:header.delete')}}
               span {{$t('common:page.editPage')}}
@@ -392,7 +392,7 @@
         small
         :depressed='this.$vuetify.breakpoint.mdAndUp'
         @click='$vuetify.goTo(0, scrollOpts)'
-        :color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]'
+        :color='$vuetify.theme.dark ? colors.peacock[800] : colors.blue[600]'
         dark
         :style='upBtnPosition'
         :aria-label='$t(`common:actions.returnToTop`)'
@@ -463,7 +463,7 @@ import { messages } from '@/messages'
 import createFollowerMutation from 'gql/followers/create-follower.gql'
 import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
 import isFollowingResponse from 'gql/followers/is-following.gql'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 Vue.component('Tabset', Tabset)
 
@@ -628,7 +628,7 @@ export default {
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: colors.surface[3],
+          background: colors.neutral[200],
           hoverStyle: {
             background: '#64B5F6' // where/when is this used?
           }
@@ -766,7 +766,7 @@ export default {
     if (this.$vuetify.theme.dark) {
       this.scrollStyle.bar.background = '#FFFFFF'
     } else {
-      this.scrollStyle.bar.background = colors.text.darkGrey
+      this.scrollStyle.bar.background = colors.textLight.primary
     }
 
     // -> Check side navigation visibility
@@ -1076,7 +1076,7 @@ export default {
       }
 
       .v-icon {
-        color: mc('primary', '1');
+        color: mc('surface-light', 'secondary-blue-heavy');
       }
 
       &:first-child {
@@ -1093,29 +1093,29 @@ export default {
 }
 
 #view-discussion {
-  color: rgba(mc("ext-sapphire", "5"), .75);
+  color: rgba(mc("sapphire", "900"), .75);
 
   &.dark {
-    color: mc("ext-peacock", "2");
+    color: mc("peacock", "700");
   }
 }
 
 .card-title {
-  color: mc("ext-peacock", "4");
+  color: mc("peacock", "800");
 
   &.dark {
-    color: mc("ext-peacock", "1");
+    color: mc("peacock", "500");
   }
 }
 
 .hover-icon {
   &:hover > .v-btn__content > .v-icon {
-    color: mc("primary", "1") !important;
+    color: mc("action-light", "primary-hover-on-lite") !important;
   }
 
   &.theme--dark {
     &:hover > .v-btn__content > .v-icon {
-      color: mc("ext-teal", "1") !important;
+      color: mc("action-dark", "primary-hover-on-lite") !important;
     }
   }
 }

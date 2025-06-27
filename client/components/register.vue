@@ -263,7 +263,7 @@ export default {
 
 <style lang="scss">
   .register {
-    background-color: mc('indigo', '900');
+    background-color: mc('blue', '900');
     background-image: url('../static/svg/motif-blocks.svg');
     background-repeat: repeat;
     background-size: 200px;

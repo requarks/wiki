@@ -504,7 +504,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-editor {
-    background-color: darken(mc('grey', '900'), 4.5%);
+    background-color: mc('neutral', '900');
     flex: 1 1 50%;
     display: block;
     height: $editor-ascii-height;
@@ -517,14 +517,14 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
 
   &-preview {
     flex: 1 1 50%;
-    background-color: mc('grey', '100');
+    background-color: mc('neutral', '100');
     position: relative;
     height: $editor-ascii-height;
     overflow: hidden;
     padding: 1rem;
 
     @at-root .theme--dark & {
-      background-color: mc('grey', '900');
+      background-color: mc('neutral', '900');
     }
 
     @include until($tablet) {
@@ -630,7 +630,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-sidebar {
-    background-color: mc('grey', '900');
+    background-color: mc('neutral', '900');
     width: 64px;
     display: flex;
     flex-direction: column;
@@ -705,7 +705,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
     background-repeat: repeat-x;
   }
   .cm-matchhighlight {
-    background-color: mc('grey', '800');
+    background-color: mc('neutral', '800');
   }
   .CodeMirror-selection-highlight-scrollbar {
     background-color: mc('green', '600');

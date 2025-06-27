@@ -582,36 +582,36 @@ export default {
   }
 
   d2h-code-line-added {
-    background-color: rgba(mc('ext-peacock', '1'), 0.2) !important;
+    background-color: rgba(mc('peacock', '500'), 0.2) !important;
 
     .d2h-code-line-ctn {
-      background-color: rgba(mc('ext-peacock', '1'), 0.2) !important;
+      background-color: rgba(mc('peacock', '500'), 0.2) !important;
     }
   }
 
   .d2h-addition {
-    background-color: rgba(mc('ext-peacock', '1'), 0.15) !important;
+    background-color: rgba(mc('peacock', '500'), 0.15) !important;
   }
 
   .d2h-ins {
-    background-color: rgba(mc('ext-peacock', '1'), 0.4) !important;
+    background-color: rgba(mc('peacock', '500'), 0.4) !important;
   }
 
   .d2h-code-line-removed {
-    background-color: rgba(mc('ext-yellow', '1'), 0.2) !important;
+    background-color: rgba(mc('yellow', '500'), 0.2) !important;
 
     .d2h-code-line-ctn {
-      background-color: rgba(mc('ext-yellow', '1'), 0.2) !important;
+      background-color: rgba(mc('yellow', '500'), 0.2) !important;
 
     }
   }
 
   .d2h-deletion {
-    background-color: rgba(mc('ext-yellow', '2'), 0.15) !important;
+    background-color: rgba(mc('yellow', '600'), 0.15) !important;
   }
 
   .d2h-del {
-    background-color: rgba(mc('ext-yellow', '2'), 0.4) !important;
+    background-color: rgba(mc('yellow', '600'), 0.4) !important;
   }
 
   // Make text in changed sections more readable
@@ -623,11 +623,11 @@ export default {
 }
 
 ins {
-  background-color: mc('ext-peacock', '1') !important;
+  background-color: mc('peacock', '500') !important;
 }
 
 del {
-  background-color: mc('ext-yellow', '2') !important;
+  background-color: mc('yellow', '300') !important;
 }
 
 </style>

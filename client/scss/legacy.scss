@@ -31,7 +31,7 @@
 
 html {
   box-sizing: border-box;
-  background-color: mc('grey', '50');
+  background-color: mc('neutral', '50');
   font-size: 15px;
 }
 *, *:before, *:after {
@@ -57,7 +57,7 @@ body {
 // LOGIN
 
 .login {
-  background-color: mc('grey', '900');
+  background-color: mc('neutral', '900');
   height: 100vh;
   display: flex;
   align-items: center;
@@ -68,9 +68,9 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    background-color: mc('grey', '800');
+    background-color: mc('neutral', '800');
     text-align: center;
-    color: mc('grey', '50');
+    color: mc('neutral', '50');
     height: 64px;
     display: flex;
     align-items: center;
@@ -92,11 +92,11 @@ body {
 
   &-dialog {
     width: 650px;
-    background-color: mc('grey', '100');
+    background-color: mc('neutral', '100');
     border-radius: 5px;
     text-align: center;
     padding: 2rem;
-    color: mc('grey', '800');
+    color: mc('neutral', '800');
 
     h1 {
       margin-bottom: 2rem;
@@ -135,7 +135,7 @@ body {
   &-social {
     margin-top: 2rem;
     padding-top: 1rem;
-    border-top: 1px solid mc('grey', '400');
+    border-top: 1px solid mc('neutral', '400');
 
     h2 {
       font-size: 14px;
@@ -196,7 +196,7 @@ body {
     color: mc('red', '100');
 
     a {
-      color: mc('pink', '400');
+      color: mc('red', '200');
     }
   }
 
@@ -206,7 +206,7 @@ body {
       color: #FFF;
       transition: color .3s ease;
       border-radius: 50%;
-      background-color: mc('grey', '900');
+      background-color: mc('neutral', '900');
       display: flex;
       width: 40px;
       height: 40px;
@@ -277,22 +277,22 @@ body {
 }
 
 .page-header {
-  background-color: mc('grey', '100');
+  background-color: mc('neutral', '100');
   padding: 0 24px;
   height: 90px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid mc('grey', '200');
+  border-bottom: 1px solid mc('neutral', '200');
 
   h1 {
     font-size: 24px;
     font-weight: 400;
     line-height: 32px;
-    color: mc('grey', '800');
+    color: mc('neutral', '800');
   }
 
   h2 {
-    color: mc('grey', '600');
+    color: mc('neutral', '600');
     font-size: 12px;
     font-weight: 400;
   }
@@ -306,15 +306,15 @@ body {
     padding-left: 16px;
 
     &-title {
-      color: mc('grey', '500');
+      color: mc('neutral', '500');
       font-size: 12px;
     }
     &-author {
-      color: mc('grey', '800');
+      color: mc('neutral', '800');
       font-weight: 500;
     }
     &-updated {
-      color: mc('grey', '600');
+      color: mc('neutral', '600');
       font-size: 12px;
     }
   }
@@ -326,7 +326,7 @@ body {
 
 .toc {
   flex: 0 0 348px;
-  background-color: mc('grey', '200');
+  background-color: mc('neutral', '200');
   padding: 4px 0;
 
   &-title {
@@ -346,7 +346,7 @@ body {
     font-size: 13px;
     align-items: center;
     padding: 0 16px;
-    color: mc('grey', '800');
+    color: mc('neutral', '800');
     transition: background-color .3s ease;
 
     &.inset {

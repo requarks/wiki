@@ -368,19 +368,19 @@ export default {
 
 <style lang="scss">
 .rules {
-  background-color: mc('blue-grey', '50');
+  background-color: mc('sapphire', '50');
   border-radius: 4px;
   padding: 1rem;
   position: relative;
 
   @at-root .v-application.theme--dark & {
-    background-color: mc('grey', '800');
+    background-color: mc('neutral', '800');
   }
 }
 
 .rule {
   display: flex;
-  background-color: mc('blue-grey', '100');
+  background-color: mc('sapphire', '100');
   border-radius: 4px;
   padding: 0.5rem;
   align-items: center;
@@ -395,7 +395,7 @@ export default {
   }
 
   @at-root .v-application.theme--dark & {
-    background-color: mc('grey', '700');
+    background-color: mc('neutral', '700');
   }
 
   & + .rule {
@@ -412,15 +412,15 @@ export default {
       justify-content: center;
       align-items: center;
       font-weight: 600;
-      color: mc('blue-grey', '700');
+      color: mc('sapphire', '700');
       font-size: 1.25rem;
-      background-color: mc('blue-grey', '50');
+      background-color: mc('sapphire', '50');
       left: -2rem;
       top: -1.3rem;
 
       @at-root .v-application.theme--dark & {
-        background-color: mc('grey', '800');
-        color: mc('grey', '600');
+        background-color: mc('neutral', '800');
+        color: mc('neutral', '600');
       }
     }
   }

@@ -2,8 +2,7 @@
   v-dialog(
     v-model='isShown'
     max-width='850px'
-    :overlay-color='$vuetify.theme.dark ? colors.primary[3] : colors.primary[1]'
-    :overlay-opacity='$vuetify.theme.dark ? ".6" : ".8"'
+    :overlay-color='colors.overlay.page'
     )
     v-card.page-selector
       .dialog-header(:class='$vuetify.theme.dark ? `is-dark` : ``')
@@ -20,9 +19,9 @@
           v-show='searchLoading'
           )
       .d-flex
-        v-flex(xs5, :color='$vuetify.theme.dark ? colors.text.darkGrey : colors.surface[1]')
+        v-flex(xs5, :color='$vuetify.theme.dark ? colors.textLight.primary : colors.neutral[50]')
           v-toolbar(
-            :color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]',
+            :color='$vuetify.theme.dark ? colors.sapphire[900] : colors.sapphire[500]',
             dark,
             dense,
             flat
@@ -39,7 +38,7 @@
                 :open.sync='openNodes'
                 :items='tree'
                 :load-children='fetchFolders'
-                :color='$vuetify.theme.dark ? colors.peacock[1] : "black"'
+                :color='$vuetify.theme.dark ? colors.peacock[500] : "black"'
                 dense
                 expand-icon='mdi-menu-down-outline'
                 item-id='path'
@@ -50,7 +49,7 @@
                 template(slot='prepend', slot-scope='{ item, open, leaf }')
                   v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs7)
-          v-toolbar(:color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]', dark, dense, flat)
+          v-toolbar(:color='$vuetify.theme.dark ? colors.sapphire[900] : colors.sapphire[500]', dark, dense, flat)
             .body-2 {{$t('common:pageSelector.pages')}}
             //- v-spacer
             //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
@@ -100,7 +99,7 @@
       v-card-chin
         v-spacer
         v-btn(text, @click='close') {{$t('common:actions.cancel')}}
-        v-btn.px-4(:color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]', @click='open', :disabled='!isValidPath')
+        v-btn.px-4(:color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active', @click='open', :disabled='!isValidPath')
           v-icon(left color='white') mdi-check
           span#select-btn-text {{$t('common:actions.select')}}
 </template>
@@ -108,7 +107,7 @@
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 

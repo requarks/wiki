@@ -90,14 +90,14 @@ export default {
   pre > code {
     box-shadow: none;
     background-color: transparent;
-    color: mc('grey', '800');
+    color: mc('neutral', '800');
     font-family: 'Roboto Mono', sans-serif;
     font-weight: 400;
     font-size: 1rem;
 
     @at-root .theme--dark.source pre > code {
-      background-color: mc('grey', '900');
-      color: mc('grey', '400');
+      background-color: mc('neutral', '900');
+      color: mc('neutral', '400');
     }
 
     &::before {

@@ -237,7 +237,7 @@ export default {
   .v-application--wrap {
     padding-top: 10vh;
     background-color: #111;
-    background-image: linear-gradient(45deg, mc('blue', '100'), mc('blue', '700'), mc('indigo', '900'));
+    background-image: linear-gradient(45deg, mc('blue', '100'), mc('blue', '700'), mc('blue', '900'));
     background-blend-mode: exclusion;
 
     &::before {

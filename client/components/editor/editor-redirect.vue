@@ -189,14 +189,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   }
 
   &-editor {
-    background-color: darken(mc('grey', '100'), 4.5%);
+    background-color: mc('neutral', '100');
     flex: 1 1 50%;
     display: block;
     height: $editor-height;
     position: relative;
 
     @at-root .theme--dark & {
-      background-color: darken(mc('grey', '900'), 4.5%);
+      background-color: mc('neutral', '900');
     }
   }
 

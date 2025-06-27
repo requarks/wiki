@@ -13,7 +13,7 @@
 
 <script>
 import { get, sync } from 'vuex-pathify'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   data() {

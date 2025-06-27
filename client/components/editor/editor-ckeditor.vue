@@ -249,7 +249,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   position: relative;
 
   @at-root .theme--dark & {
-    background-color: mc('grey', '900');
+    background-color: mc('neutral', '900');
   }
 
   @include until($tablet) {
@@ -285,7 +285,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   .ck.ck-toolbar {
     border: none;
     justify-content: center;
-    background-color: mc('grey', '300');
+    background-color: mc('neutral', '300');
     color: #FFF;
   }
 
@@ -294,7 +294,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   }
 
   > .ck-editor__editable {
-    background-color: mc('grey', '100');
+    background-color: mc('neutral', '100');
     overflow-y: auto;
     overflow-x: hidden;
     padding: 2rem;
@@ -336,10 +336,10 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     &.ck .ck-editor__nested-editable:focus,
     .ck-widget.table td.ck-editor__nested-editable.ck-editor__nested-editable_focused,
     .ck-widget.table th.ck-editor__nested-editable.ck-editor__nested-editable_focused {
-      background-color: mc('grey', '100');
+      background-color: mc('neutral', '100');
 
       @at-root .theme--dark & {
-        background-color: mc('grey', '900');
+        background-color: mc('neutral', '900');
       }
     }
   }

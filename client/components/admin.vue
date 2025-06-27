@@ -263,7 +263,7 @@ export default {
 
 .admin {
   &.theme--light .application--wrap {
-    background-color: lighten(mc('grey', '200'), 2%);
+    background-color: mc('neutral', '200');
   }
 }
 
@@ -282,10 +282,10 @@ export default {
 
 .admin-sidebar {
   .v-list__tile--active {
-    background-color: rgba(mc('primary', '1'), .1);
+    background-color: rgba(mc('surface-light', 'secondary-blue-heavy'), .1);
 
     .v-icon {
-      color: mc('primary', '1');
+      color: mc('surface-light', 'secondary-blue-heavy');
     }
   }
 
@@ -334,7 +334,7 @@ export default {
   code {
     box-shadow: none;
     font-family: 'Roboto Mono', monospace;
-    color: mc('pink', '500');
+    color: mc('red', '600');
   }
 }
 

@@ -1,18 +1,18 @@
 .wiki-form {
 
   &.theme--light {
-    background-color: mc('grey', '50');
+    background-color: mc('neutral', '50');
   }
 
   .v-text-field--outline {
     .v-input__slot {
       background-color: #FFF !important;
-      border-color: mc('grey', '300') !important;
+      border-color: mc('neutral', '300') !important;
       border-radius: 7px;
 
       @at-root .theme--dark & {
-        background-color: lighten(mc('grey', '900'), 5%) !important;
-        border-color: mc('grey', '700') !important;
+        background-color: mc('neutral', '900') !important;
+        border-color: mc('neutral', '700') !important;
 
         .v-label.v-label--active.primary--text {
           color: mc('blue', '500') !important;

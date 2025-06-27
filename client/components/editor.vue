@@ -7,8 +7,8 @@
           flat
           v-model='currentPageTitle'
           hide-details
-          :background-color='$vuetify.theme.dark ? colors.text.darkPurple : "#FFFFFF"'
-          :color='$vuetify.theme.dark ? "#FFFFFF" : colors.text.darkGrey'
+          :background-color='$vuetify.theme.dark ? colors.textLight.secondary : "#FFFFFF"'
+          :color='$vuetify.theme.dark ? "#FFFFFF" : colors.textLight.primary'
           dense
           full-width
         )
@@ -86,7 +86,7 @@ import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
 import editorStore from '../store/editor'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 /* global WIKI */
 
@@ -645,11 +645,11 @@ export default {
 
 <style lang='scss'>
 .editor {
-  background-color: mc('grey', '900') !important;
+  background-color: mc('neutral', '900') !important;
   min-height: 100vh;
 
   .application--wrap {
-    background-color: mc('grey', '900');
+    background-color: mc('neutral', '900');
   }
 
   &-title-input input {
@@ -658,7 +658,7 @@ export default {
 }
 
 .toolbar-btn-text {
-  color: mc(text, 'darkGrey');
+  color: mc('text-light', 'primary');
 
   &.dark {
     color: white;

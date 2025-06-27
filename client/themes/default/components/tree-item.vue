@@ -112,15 +112,15 @@ export default {
   }
   .v-list-item__title {
     &.sub-section {
-      color: rgba(mc('text', 'darkGrey'), .75);
+      color: rgba(mc('text-light', 'primary'), .75);
       &.dark {
         color: rgba(white, .75);
       }
     }
     &:hover {
-      color: mc('primary', '1');
+      color: mc('surface-light', 'secondary-blue-heavy');
       &.dark {
-        color: mc('ext-teal', '1');
+        color: mc('teal', '500');
       }
     }
   }

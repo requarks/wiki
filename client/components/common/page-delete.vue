@@ -15,9 +15,9 @@
           span(place='title' :style='"color: " + colors.alert.error') {{pageTitle}}
         .caption {{$t('common:page.deleteSubtitle')}}
         v-chip.mt-3.ml-0.mr-1(label, color='red lighten-4', small)
-          .caption(:style='"color: " + colors.red[5]') {{pageLocale.toUpperCase()}}
+          .caption(:style='"color: " + colors.red[800]') {{pageLocale.toUpperCase()}}
         v-chip.mt-3.mx-0(label, color='red lighten-5', small)
-          span(:style='"color: " + colors.red[5]') /{{pagePath}}
+          span(:style='"color: " + colors.red[800]') /{{pagePath}}
       v-card-chin
         v-spacer
         v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
@@ -30,7 +30,7 @@ import _ from 'lodash'
 import { get } from 'vuex-pathify'
 
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   props: {
@@ -108,7 +108,7 @@ export default {
     overflow: hidden;
 
     .application {
-      background-color: mc('grey', '900');
+      background-color: mc('neutral', '900');
     }
     .application--wrap {
       transform-style: preserve-3d;
