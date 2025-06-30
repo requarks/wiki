@@ -75,7 +75,7 @@ export default {
       this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
     },
     getSelectedWidget() {
-      return document.getElementsByClassName('image ck-widget_selected').item(0)
+      return document.getElementsByClassName('ck-widget_selected').item(0)
     },
     getSelectedDiagram() {
       const selection = this.getSelectedWidget()
@@ -83,7 +83,7 @@ export default {
     },
     getDiagramCaption() {
       const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('figcaption').item(0).firstChild.data
+      return selection.getElementsByTagName('figcaption')?.item(0)?.firstChild.data
     },
     setDiagramCaption(caption) {
       const selection = this.getSelectedWidget()
@@ -133,7 +133,7 @@ export default {
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
         case 'IMAGE':
-          this.editor.execute('imageInsert', {
+          this.editor.execute('insertImage', {
             source: opts.path
           })
           break
@@ -149,7 +149,7 @@ export default {
             this.editor.execute('delete')
           }
 
-          this.editor.execute('imageInsert', {
+          this.editor.execute('insertImage', {
             source: `data:image/svg+xml;base64,${opts.text}`
           })
 
