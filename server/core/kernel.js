@@ -84,6 +84,7 @@ module.exports = {
     await WIKI.models.commentProviders.initProvider()
     await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
+    await WIKI.models.userSiteInactivity.initScheduler()
     WIKI.scheduler.start()
 
     await WIKI.models.subscribeToNotifications()
@@ -106,7 +107,7 @@ module.exports = {
   /**
    * Graceful shutdown
    */
-  async shutdown (devMode = false) {
+  async shutdown(devMode = false) {
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
     }
