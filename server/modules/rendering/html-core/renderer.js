@@ -3,6 +3,7 @@ const cheerio = require('cheerio')
 const uslug = require('uslug')
 const pageHelper = require('../../../helpers/page')
 const URL = require('url').URL
+const { inactivityThresholdDate } = require('../../../helpers/dateHelpers')
 
 const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
 
@@ -254,7 +255,7 @@ module.exports = {
           })
           .first()
         if (inactivityEntry) {
-          const threeMonthsAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 90)
+          const threeMonthsAgo = inactivityThresholdDate()
           if (new Date(inactivityEntry.inactiveSince) < threeMonthsAgo) {
             shouldAnonymize = true
           }

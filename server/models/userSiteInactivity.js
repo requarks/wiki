@@ -1,7 +1,5 @@
 const { Model } = require('objection')
 
-/* global WIKI */
-
 module.exports = class UserSiteInactivity extends Model {
   static get tableName() {
     return 'userSiteInactivity'
@@ -39,16 +37,5 @@ module.exports = class UserSiteInactivity extends Model {
         }
       }
     }
-  }
-
-  static async initScheduler() {
-    // To test every 1 minute, use 'PT1M'
-    // For production, use 'P1D' (every 24h)
-    WIKI.scheduler.registerJob({
-      name: 'anonymize-inactive-users-job',
-      immediate: false,
-      schedule: 'P1D', // or 'PT1M' for testing
-      repeat: true
-    })
   }
 }

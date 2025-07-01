@@ -36,13 +36,12 @@ async function insertUserSiteInactivityForSites(userId, sitesToUnassign, sitesUs
 
 async function removedUserSiteInactivityIfReactivated(userId, siteId) {
   const userGroups = await WIKI.models.groups.query().join('userGroups', 'groups.id', 'userGroups.groupId').where('userGroups.userId', userId)
-  const accessibleSiteIds = getSiteIdsFromGroups(userGroups)
-  if (accessibleSiteIds.has(siteId)) {
+  const userSiteIds = getSiteIdsFromGroups(userGroups)
+  if (userSiteIds.has(siteId)) {
     await WIKI.models.userSiteInactivity.query().delete().where({ userId, siteId })
     return true
-  } else {
-    return false
   }
+  return false
 }
 
 module.exports = {
