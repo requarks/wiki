@@ -141,7 +141,7 @@ jobs:
     worker: true
   anonymizeInactiveUsersJob:
     onInit: true
-    schedule: PT1M
+    schedule: P1D
     offlineSkip: false
     repeat: true
     immediate: false

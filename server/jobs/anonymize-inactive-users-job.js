@@ -71,6 +71,7 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
       userId: userSiteInactivity.userId,
       siteId: userSiteInactivity.siteId
     })
+  await WIKI.models.knex.destroy()
 }
 
 module.exports = async () => {
