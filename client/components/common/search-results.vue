@@ -256,11 +256,7 @@ export default {
     text-align: left;
 
     .highlighted {
-      background: mc('surface-light', 'notice-lite');
-
-      @at-root .theme--dark & {
-        background: mc('surface-dark', 'notice-lite');;
-      }
+      background: mc('surface-light', 'secondary-sap-heavy');
     }
   }
 
