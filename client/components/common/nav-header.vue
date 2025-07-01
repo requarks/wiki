@@ -197,38 +197,38 @@
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-file-document-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-lightning-bolt
                   v-list-item-title.body-2 {{$t('common:header.convert')}}
                 v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[500] : colors.teal[800]'
+                    :color='getPageActionIconColor'
                     ) mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
@@ -485,6 +485,9 @@ export default {
     hasAnyPagePermissions () {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
+    },
+    getPageActionIconColor () {
+      return this.$vuetify.theme.dark ? this.colors.teal[500] : this.colors.teal[800]
     }
   },
   created () {
