@@ -139,9 +139,9 @@ jobs:
     repeat: false
     immediate: true
     worker: true
-  anonymizeInactiveUsers:
+  anonymizeInactiveUsersJob:
     onInit: true
-    schedule: P1D
+    schedule: PT1M
     offlineSkip: false
     repeat: true
     immediate: false

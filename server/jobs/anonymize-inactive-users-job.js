@@ -74,6 +74,9 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
 }
 
 module.exports = async () => {
+  WIKI.models = require('../core/db').init()
+  await WIKI.configSvc.loadFromDb()
+  await WIKI.configSvc.applyFlags()
   const userSiteInactivityResults = await getInactiveForThresholdOrMore()
 
   const anonymousUser = await retrieveOrCreateAnonymousUser()
