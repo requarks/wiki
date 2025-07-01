@@ -13,6 +13,8 @@ const {
 
 /* global WIKI */
 
+const GROUP_NAME_EXISTS_ERROR = 'A group with this name already exists.'
+
 const isSystemAdminPermission = (permissions) => {
   return permissions.some(p => {
     const resType = _.last(p.split(':'))
@@ -138,6 +140,11 @@ module.exports = {
      * CREATE NEW GROUP
      */
     async create(obj, args, { req }) {
+      const existingGroup = await WIKI.models.groups.query().findOne({ name: args.name })
+      if (existingGroup) {
+        throw graphHelper.badRequest(GROUP_NAME_EXISTS_ERROR)
+      }
+
       const canCreate = (user) => {
         for (const groupId of user.groups) {
           const group = _.get(WIKI.auth.groups, groupId, [])
@@ -260,6 +267,11 @@ module.exports = {
      * UPDATE GROUP
      */
     async update(obj, args, { req }) {
+      const existingGroup = await WIKI.models.groups.query().findOne({ name: args.name })
+      if (existingGroup && existingGroup.id !== args.id) {
+        throw graphHelper.badRequest(GROUP_NAME_EXISTS_ERROR)
+      }
+
       // Check for unsafe regex page rules
       if (
         _.some(args.rules, (pr) => {
