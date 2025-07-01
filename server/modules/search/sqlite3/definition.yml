@@ -1,0 +1,8 @@
+key: sqlite3
+title: Database - sqlite3
+description: Advanced Sqlite3-based search engine.
+author: dzruyk
+logo: https://static.requarks.io/logo/database.svg
+website: https://www.requarks.io/
+isAvailable: true
+props: {}
