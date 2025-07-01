@@ -22,6 +22,61 @@ const isSystemAdminPermission = (permissions) => {
   })
 }
 
+function hasUnsafeRegex(rules) {
+  return _.some(rules, (pr) => pr.match === 'REGEX' && !safeRegex(pr.path))
+}
+
+function canUpdateGroup(user, groupId, rules) {
+  if (!canManageGroup(user, groupId)) return false
+  for (const rule of rules) {
+    for (const siteId of rule.sites) {
+      if (!WIKI.auth.checkAccess(user, ['manage:sites'], { siteId, path: rule.path })) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
+function checkForbiddenSystemPermissions(user, permissions) {
+  if (!WIKI.auth.isSuperAdmin(user) && isSystemAdminPermission(permissions)) {
+    throw graphHelper.forbidden('You are not authorized to assign the system permissions.')
+  }
+  if (
+    WIKI.auth.checkExclusiveAccess(
+      user,
+      ['write:groups'],
+      ['manage:groups', 'manage:system', 'manage:sites']
+    ) &&
+    isSystemAdminPermission(permissions)
+  ) {
+    throw graphHelper.forbidden('You are not authorized to manage this group or assign these permissions.')
+  }
+  if (
+    WIKI.auth.checkExclusiveAccess(
+      user,
+      ['manage:groups'],
+      ['manage:system', 'manage:sites']
+    ) &&
+    permissions.some((p) => _.last(p.split(':')) === 'system')
+  ) {
+    throw graphHelper.forbidden('You are not authorized to manage this group or assign the manage:system permissions.')
+  }
+}
+
+function checkUpdateGroupSiteAccess(user, groupId, rules) {
+  if (!canManageGroup(user, groupId)) {
+    throw graphHelper.forbidden('Insufficient permissions to update the group.')
+  }
+  for (const rule of rules) {
+    for (const siteId of rule.sites) {
+      if (!WIKI.auth.checkAccess(user, ['manage:sites'], { siteId, path: rule.path })) {
+        throw graphHelper.forbidden('Insufficient permissions to update access to sites.')
+      }
+    }
+  }
+}
+
 module.exports = {
   Query: {
     /**
@@ -272,79 +327,20 @@ module.exports = {
         throw graphHelper.badRequest(GROUP_NAME_EXISTS_ERROR)
       }
 
-      // Check for unsafe regex page rules
-      if (
-        _.some(args.rules, (pr) => {
-          return pr.match === 'REGEX' && !safeRegex(pr.path)
-        })
-      ) {
+      if (hasUnsafeRegex(args.rules)) {
         throw graphHelper.badRequest(
           'Some Page Rules contains unsafe or exponential time regex.'
         )
       }
 
-      if (canManageGroup(req.user, args.id)) {
-        for (const rule of args.rules) {
-          for (const siteId of rule.sites) {
-            if (
-              !WIKI.auth.checkAccess(req.user, ['manage:sites'], {
-                siteId: siteId,
-                path: rule.path
-              })
-            ) {
-              throw graphHelper.forbidden(
-                'Insufficient permissions to update access to sites.'
-              )
-            }
-          }
-        }
-      } else {
-        throw graphHelper.forbidden(
-          'Insufficient permissions to update the group.'
-        )
-      }
+      checkUpdateGroupSiteAccess(req.user, args.id, args.rules)
 
       // Set default redirect on login value
       if (_.isEmpty(args.redirectOnLogin)) {
         args.redirectOnLogin = '/'
       }
 
-      if (
-        !WIKI.auth.isSuperAdmin(req.user) &&
-        isSystemAdminPermission(args.permissions)
-      ) {
-        throw graphHelper.forbidden(
-          'You are not authorized to assign the system permissions.'
-        )
-      }
-
-      // Check assigned permissions for write:groups
-      if (
-        WIKI.auth.checkExclusiveAccess(
-          req.user,
-          ['write:groups'],
-          ['manage:groups', 'manage:system', 'manage:sites']
-        ) &&
-        isSystemAdminPermission(args.permissions)
-      ) {
-        throw graphHelper.forbidden(
-          'You are not authorized to manage this group or assign these permissions.'
-        )
-      }
-
-      // Check assigned permissions for manage:groups
-      if (
-        WIKI.auth.checkExclusiveAccess(
-          req.user,
-          ['manage:groups'],
-          ['manage:system', 'manage:sites']
-        ) &&
-        args.permissions.some((p) => _.last(p.split(':')) === 'system')
-      ) {
-        throw graphHelper.forbidden(
-          'You are not authorized to manage this group or assign the manage:system permissions.'
-        )
-      }
+      checkForbiddenSystemPermissions(req.user, args.permissions)
 
       // Update group
       await WIKI.models.groups
