@@ -68,6 +68,7 @@ build:
  stage: build
  script:
    - bash scripts/set_up_runner.sh
+   - yarn install --force --check-files # To ensure  all dependencies are installed correctly after cleaning the cache
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
