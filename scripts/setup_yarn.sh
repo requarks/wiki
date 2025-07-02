@@ -24,9 +24,14 @@ else
   npm install -g yarn
 fi
 
-# Clean Yarn cache to avoid corrupt package issues
+# Clean Yarn and npm caches to avoid corrupt package issues
+# Clean global Yarn cache
 yarn cache clean || true
 rm -rf ~/.cache/yarn || true
+# Clean local Yarn and npm caches if present
+rm -rf .yarn/cache || true
+rm -rf node_modules/.cache || true
+npm cache clean --force || true
 
 # Print versions
 node -v && npm -v && yarn -v
