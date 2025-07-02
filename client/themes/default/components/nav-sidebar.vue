@@ -2,34 +2,43 @@
   div
     .pa-3.d-flex(
       v-if='navMode === `MIXED`'
-      :class='dark ? colors.surfaceDark.secondaryNeutralLite : colors.surfaceLight.secondaryNeutralLite'
+      :class='dark ? colors.surfaceDark.black : colors.surfaceLight.white'
       )
-      v-btn(
+      v-btn.hover-btn(
         depressed
-        :color='dark ? colors.peacock[800] : colors.blue[600]'
+        :color='colors.actionLight.highlightOnLite'
         style='min-width:0;'
         @click='goHome'
         :aria-label='$t(`common:header.home`)'
         )
-        v-icon(size='20') mdi-home
-      v-btn.ml-3(
+        v-icon(
+          size='20'
+          :color='colors.textLight.primary'
+          ) mdi-home
+      v-btn.ml-3.hover-btn(
         v-if='currentMode === `custom`'
         depressed
-        :color='dark ? colors.peacock[800] : colors.blue[600]'
+        :color='colors.actionLight.highlightOnLite'
         style='flex: 1 1 100%;'
         @click='switchMode(`browse`)'
         )
-        v-icon(left) mdi-file-tree
-        .body-2.text-none {{$t('common:sidebar.browse')}}
-      v-btn.ml-3(
+        v-icon(
+          left
+          :color='colors.textLight.primary'
+          ) mdi-file-tree
+        .body-2.text-none(:style='"color:" + colors.textLight.primary') {{$t('common:sidebar.browse')}}
+      v-btn.ml-3.hover-btn(
         v-else-if='currentMode === `browse`'
         depressed
-        :color='dark ? colors.peacock[800] : colors.blue[600]'
-        style='flex: 1 1 100%;'
+        :color='colors.actionLight.highlightOnLite'
+        :style='"flex: 1 1 100%; color:" + colors.textLight.primary'
         @click='switchMode(`custom`)'
         )
-        v-icon(left) mdi-navigation
-        .body-2.text-none {{$t('common:sidebar.mainMenu')}}
+        v-icon(
+          left
+          :color='colors.textLight.primary'
+          ) mdi-navigation
+        .body-2.text-none(:style='"color:" + colors.textLight.primary') {{$t('common:sidebar.mainMenu')}}
     v-divider
     //-> Custom Navigation
     v-list.py-2(
@@ -218,12 +227,11 @@ export default {
       return invertedAncestors
     },
     async updateRootParentWithActualData() {
-      const homePagepath = "home"
       const homePageResp = await this.$apollo.query({
         query: pageByPathQuery,
         fetchPolicy: 'cache-first',
         variables: {
-          path: homePagepath,
+          path: 'home',
           locale: this.locale,
           siteId: this.siteId
         }
@@ -349,8 +357,8 @@ export default {
     & > .v-list-item__title {
       color: white !important;
       &:hover {
-        color: mc("teal", "500") !important;
-        text-decoration: underline mc("teal", "500");
+        color: mc('text-dark', 'brand-primary') !important;
+        text-decoration: underline mc('text-dark', 'brand-primary');
       }
     }
   }
@@ -359,8 +367,8 @@ export default {
     & > .v-list-item__title {
       color: mc('text-light', 'primary') !important;
       &:hover {
-        color: mc('surface-light', 'secondary-blue-heavy') !important;
-        text-decoration: underline  mc('surface-light', 'secondary-blue-heavy');
+        color: mc('text-light', 'brand-primary') !important;
+        text-decoration: underline mc('text-light', 'brand-primary');
       }
     }
   }
@@ -370,5 +378,24 @@ export default {
   }
   .dark #curDir {
     color: white !important;
+  }
+
+  .v-list-item.v-list-item--link.v-list-item--active > .v-list-item__title {
+    font-weight: 1000 !important;
+    color: mc('text-light', 'brand-tertiary') !important;
+  }
+
+  .dark .v-list-item.v-list-item--link.v-list-item--active > .v-list-item__title {
+  color: mc('text-dark', 'brand-primary') !important;
+  }
+
+  .v-btn {
+    &.hover-btn {
+      border-radius: 20px;
+
+      &:hover {
+        background-color: mc('action-dark', 'highlight-on-lite') !important;
+      }
+    }
   }
 </style>
