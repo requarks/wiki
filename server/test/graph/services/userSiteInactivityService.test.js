@@ -184,4 +184,56 @@ describe('userSiteInactivityService', () => {
       expect(mergeMock).toHaveBeenCalledTimes(2)
     })
   })
+  describe('removeUserSiteInactivityIfReactivated', () => {
+    const userId = 123
+    const siteId = 'siteA'
+
+    it('removes inactivity entry and returns true if user is a member again', async () => {
+      // Arrange: user has access to siteA
+      WIKI.models.groups.query = jest.fn(() => ({
+        join: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([
+          { rules: [{ deny: false, sites: ['siteA', 'siteB'] }] }
+        ])
+      }))
+      const deleteMock = jest.fn().mockReturnThis()
+      const whereMock = jest.fn().mockResolvedValue()
+      WIKI.models.userSiteInactivity.query = jest.fn(() => ({
+        delete: deleteMock,
+        where: whereMock
+      }))
+
+      // Act
+      const result = await userSiteInactivityService.removedUserSiteInactivityIfReactivated(userId, siteId)
+
+      // Assert
+      expect(result).toBe(true)
+      expect(deleteMock).toHaveBeenCalled()
+      expect(whereMock).toHaveBeenCalledWith({ userId, siteId })
+    })
+
+    it('returns false and does not remove inactivity if user is not a member', async () => {
+      // Arrange: user does NOT have access to siteA
+      WIKI.models.groups.query = jest.fn(() => ({
+        join: jest.fn().mockReturnThis(),
+        where: jest.fn().mockResolvedValue([
+          { rules: [{ deny: false, sites: ['siteB'] }] }
+        ])
+      }))
+      const deleteMock = jest.fn().mockReturnThis()
+      const whereMock = jest.fn().mockResolvedValue()
+      WIKI.models.userSiteInactivity.query = jest.fn(() => ({
+        delete: deleteMock,
+        where: whereMock
+      }))
+
+      // Act
+      const result = await userSiteInactivityService.removedUserSiteInactivityIfReactivated(userId, siteId)
+
+      // Assert
+      expect(result).toBe(false)
+      expect(deleteMock).not.toHaveBeenCalled()
+      expect(whereMock).not.toHaveBeenCalled()
+    })
+  })
 })

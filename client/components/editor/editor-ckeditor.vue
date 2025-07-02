@@ -188,7 +188,10 @@ export default {
         for (const node of change.nodes) {
           if (node.hasAttribute('mention')) {
             let mention = node.getAttribute('mention')
-            mention.id = mention.id.substring(1)
+            if (mention.id && mention.id.startsWith('@')) {
+            // Remove '@' from the mention id
+              mention.id = mention.id.substring(1)
+            }
             newMentions.set(mention['uid'], mention)
           }
         }

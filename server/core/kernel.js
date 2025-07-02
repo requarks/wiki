@@ -106,7 +106,7 @@ module.exports = {
   /**
    * Graceful shutdown
    */
-  async shutdown (devMode = false) {
+  async shutdown(devMode = false) {
     if (WIKI.servers) {
       await WIKI.servers.stopServers()
     }

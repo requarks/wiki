@@ -139,6 +139,13 @@ jobs:
     repeat: false
     immediate: true
     worker: true
+  anonymizeInactiveUsersJob:
+    onInit: true
+    schedule: P1D
+    offlineSkip: false
+    repeat: true
+    immediate: false
+    worker: true
 groups:
   defaultPermissions:
     - 'read:pages'
