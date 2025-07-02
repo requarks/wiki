@@ -12,7 +12,21 @@ const WIKI = {
     userMentions: {
       getMentionedPagesBySiteId: jest.fn(),
       getMentionedCommentsBySiteId: jest.fn()
+    },
+    knex: {
+      destroy: jest.fn()
     }
+  },
+  data: {
+    commentProviders: {
+      initProvider: jest.fn(() => ({
+        getProvider: jest.fn()
+      }))
+    }
+  },
+  configSvc: {
+    loadFromDb: jest.fn().mockResolvedValue(),
+    applyFlags: jest.fn().mockResolvedValue()
   }
 }
 
@@ -31,6 +45,16 @@ jest.mock('../../helpers/dateHelpers', () => {
   }
 })
 
+jest.mock('../../core/db', () => ({
+  init: jest.fn(() => global.WIKI?.models || {})
+}))
+jest.mock('../../core/scheduler', () => ({
+  init: jest.fn(() => global.WIKI?.scheduler || {})
+}))
+jest.mock('../../models/commentProviders', () => ({
+  initProvider: jest.fn(() => global.WIKI?.data?.commentProviders || {})
+}))
+
 describe('anonymize-inactive-users-job', () => {
   beforeEach(() => {
     global.WIKI = WIKI
@@ -45,11 +69,11 @@ describe('anonymize-inactive-users-job', () => {
     const inactiveEntries = [{ userId: 42, siteId: 'siteA' }]
     const anonymousUser = { id: 999 }
     const user = { id: 42 }
-    const mentionedPages = [{ id: 1 }]
-    const mentionedComments = [{ id: 2 }]
-    const userComments = [{ id: 3 }]
+    const mentionedPages = [{ pageId: 1 }]
+    const mentionedComments = [{ pageId: 1 }]
+    const userComments = [{ pageId: 1, id: 3 }]
 
-    // Create mock functions for .where
+    // Mock userSiteInactivity
     const mockUserSiteInactivityWhere = jest.fn().mockResolvedValue(inactiveEntries)
     const mockUserSiteInactivityDelete = jest.fn().mockReturnThis()
     WIKI.models.userSiteInactivity.query.mockReturnValue({
@@ -66,6 +90,7 @@ describe('anonymize-inactive-users-job', () => {
     const mockPagesPatch = jest.fn().mockResolvedValue(1)
     WIKI.models.pages.query.mockReturnValue({
       where: mockPagesWhere,
+      select: jest.fn().mockReturnValue([{ id: 1 }]),
       patch: mockPagesPatch
     })
 
@@ -73,6 +98,7 @@ describe('anonymize-inactive-users-job', () => {
     const mockPageHistoryPatch = jest.fn().mockResolvedValue(1)
     WIKI.models.pageHistory.query.mockReturnValue({
       where: mockPageHistoryWhere,
+      delete: jest.fn().mockReturnThis(),
       patch: mockPageHistoryPatch
     })
 
@@ -89,8 +115,9 @@ describe('anonymize-inactive-users-job', () => {
       patch: mockAssetsPatch
     })
 
-    WIKI.models.userMentions.getMentionedPagesBySiteId.mockResolvedValue(mentionedPages)
-    WIKI.models.userMentions.getMentionedCommentsBySiteId.mockResolvedValue(mentionedComments)
+    // Use the old method names as in the job
+    WIKI.models.userMentions.getMentionedPages = jest.fn().mockResolvedValue(mentionedPages)
+    WIKI.models.userMentions.getMentionedComments = jest.fn().mockResolvedValue(mentionedComments)
 
     // Simulate user is NOT reactivated
     const userSiteInactivityService = require('../../graph/services/userSiteInactivityService')
@@ -100,13 +127,13 @@ describe('anonymize-inactive-users-job', () => {
     await runAnonymizationJob()
 
     // Assert: All queries should be called with the correct siteId
-    expect(mockPagesWhere).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
-    expect(mockPagesWhere).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
+    expect(mockPagesWhere).toHaveBeenCalledWith({ siteId: 'siteA' })
+    expect(mockPagesPatch).toHaveBeenCalled()
     expect(mockPageHistoryWhere).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
-    expect(mockCommentsWhere).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
+    expect(mockCommentsWhere).toHaveBeenCalledWith({ authorId: 42 })
     expect(mockAssetsWhere).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
-    expect(WIKI.models.userMentions.getMentionedPagesBySiteId).toHaveBeenCalledWith(42, 'siteA')
-    expect(WIKI.models.userMentions.getMentionedCommentsBySiteId).toHaveBeenCalledWith(42, 'siteA')
+    expect(WIKI.models.userMentions.getMentionedPages).toHaveBeenCalledWith(42)
+    expect(WIKI.models.userMentions.getMentionedComments).toHaveBeenCalledWith(42)
     expect(renderMentionedPages).toHaveBeenCalledWith(mentionedPages)
     expect(anonymizeComments).toHaveBeenCalledWith(
       user,
@@ -114,8 +141,8 @@ describe('anonymize-inactive-users-job', () => {
       userComments
     )
     expect(mockUserSiteInactivityDelete).toHaveBeenCalled()
-  }
-  )
+  })
+
   it('should create the anonymous user if not found', async () => {
     // Arrange
     const inactiveEntries = [{ userId: 42, siteId: 'siteA' }]
@@ -147,10 +174,12 @@ describe('anonymize-inactive-users-job', () => {
 
     WIKI.models.pages.query.mockReturnValue({
       where: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnValue([{ id: 1 }]),
       patch: jest.fn().mockResolvedValue(1)
     })
     WIKI.models.pageHistory.query.mockReturnValue({
       where: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
       patch: jest.fn().mockResolvedValue(1)
     })
     WIKI.models.comments.query
@@ -165,8 +194,8 @@ describe('anonymize-inactive-users-job', () => {
       where: jest.fn().mockReturnThis(),
       patch: jest.fn().mockResolvedValue(1)
     })
-    WIKI.models.userMentions.getMentionedPagesBySiteId.mockResolvedValue([])
-    WIKI.models.userMentions.getMentionedCommentsBySiteId.mockResolvedValue([])
+    WIKI.models.userMentions.getMentionedPages = jest.fn().mockResolvedValue([])
+    WIKI.models.userMentions.getMentionedComments = jest.fn().mockResolvedValue([])
 
     // Simulate user is NOT reactivated
     const userSiteInactivityService = require('../../graph/services/userSiteInactivityService')

@@ -54,20 +54,4 @@ module.exports = class UserMentions extends Model {
       this.whereNull('commentId')
     })
   }
-
-  static getMentionedCommentsBySiteId(userId, siteId) {
-    return WIKI.models.userMentions.query()
-      .where('userId', userId)
-      .where('siteId', siteId)
-      .whereNotNull('commentId')
-  }
-
-  static getMentionedPagesBySiteId(userId, siteId) {
-    return WIKI.models.userMentions.query()
-      .where('userId', userId)
-      .where('siteId', siteId)
-      .where(function () {
-        this.whereNull('commentId')
-      })
-  }
 }

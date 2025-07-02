@@ -43,20 +43,29 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
 
   // Anonymize mentions and comments
   const user = await WIKI.models.users.query().findById(userSiteInactivity.userId)
-  const mentionedPages = await WIKI.models.userMentions.getMentionedPagesBySiteId(userSiteInactivity.userId, userSiteInactivity.siteId)
-  const mentionedComments = await WIKI.models.userMentions.getMentionedCommentsBySiteId(userSiteInactivity.userId, userSiteInactivity.siteId)
-  const userComments = await WIKI.models.comments.query()
-    .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
+  const mentionedPages = await WIKI.models.userMentions.getMentionedPages(userSiteInactivity.userId)
+  const mentionedComments = await WIKI.models.userMentions.getMentionedComments(userSiteInactivity.userId)
 
-  await userService.renderMentionedPages(mentionedPages)
+  const sitePages = await WIKI.models.pages.query()
+    .where({ siteId: userSiteInactivity.siteId })
+    .select('id')
+  const sitePageIds = sitePages.map(page => page.id)
+
+  const mentionedPagesOfSite = mentionedPages.filter(mp => sitePageIds.includes(mp.pageId))
+  const mentionedCommentsOfSite = mentionedComments.filter(mc => sitePageIds.includes(mc.pageId))
+
+  const userComments = await WIKI.models.comments.query()
+    .where({ authorId: userSiteInactivity.userId })
+  const commentsOfSite = userComments.filter(comment => sitePageIds.includes(comment.pageId))
+
+  await userService.renderMentionedPages(mentionedPagesOfSite)
 
   await WIKI.models.assets.query()
     .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
     .patch({ authorId: anonymousUser.id })
-  await userService.anonymizeComments(user, mentionedComments, userComments)
-  await WIKI.models.pageHistory.query()
+  await userService.anonymizeComments(user, mentionedCommentsOfSite, commentsOfSite)
+  await WIKI.models.pageHistory.query().delete()
     .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
-    .patch({ authorId: anonymousUser.id })
   await WIKI.models.pages.query()
     .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
     .patch({ authorId: anonymousUser.id })
@@ -76,6 +85,8 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
 
 module.exports = async () => {
   WIKI.models = require('../core/db').init()
+  WIKI.scheduler = require('../core/scheduler').init()
+  WIKI.data.commentProviders = require('../models/commentProviders').initProvider()
   await WIKI.configSvc.loadFromDb()
   await WIKI.configSvc.applyFlags()
   const userSiteInactivityResults = await getInactiveForThresholdOrMore()

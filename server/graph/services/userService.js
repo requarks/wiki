@@ -40,6 +40,7 @@ async function anonymizeComments(user, mentionedComments, userComments) {
       }
 
       await WIKI.data.commentProvider.update(updateData)
+      await WIKI.models.userMentions.query().delete().where({ userId: user.id, pageId: comment.pageId, commentId: comment.id })
     }
   }
 }
