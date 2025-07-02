@@ -35,3 +35,6 @@ npm cache clean --force || true
 
 # Print versions
 node -v && npm -v && yarn -v
+
+# Ensure node_modules/.bin is in PATH for local binaries like webpack
+export PATH="$(pwd)/node_modules/.bin:$PATH"
