@@ -76,10 +76,10 @@
         v-toolbar.nav-header-inner(:color='colors.surfaceDark.primaryBlueLite', flat)
           slot(name='mid')
 
-            transition(name='navHeaderSearch', v-if='searchIsShown')
+            transition(name='navHeaderSearch')
               v-text-field.search-field(
                 ref='searchField',
-                v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
+                v-if='$vuetify.breakpoint.mdAndUp',
                 v-model='search',
                 :color='colors.textDark.primary',
                 :background-color='colors.surfaceLight.secondaryNeutralLite',
