@@ -24,6 +24,9 @@ else
   npm install -g yarn
 fi
 
+# Remove node_modules and yarn.lock for a clean install
+rm -rf node_modules yarn.lock || true
+
 # Clean Yarn and npm caches to avoid corrupt package issues
 # Clean global Yarn cache
 yarn cache clean || true
