@@ -26,9 +26,9 @@ fi
 
 # Remove node_modules and yarn.lock for a clean install
 rm -rf node_modules yarn.lock || true
-yarn cache clean || true
+# Clean all Yarn and npm caches to avoid corrupt package issues
+yarn cache clean --all || true
 rm -rf ~/.cache/yarn || true
-# Clean local Yarn and npm caches if present
 rm -rf .yarn/cache || true
 rm -rf node_modules/.cache || true
 npm cache clean --force || true
