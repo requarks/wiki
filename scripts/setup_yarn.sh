@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-set -x  # Print commands as they run for easier debugging
+set -x
 
 NPM_GLOBAL_DIR="${CI_PROJECT_DIR}/.npm-global"
 echo "Setting up NPM global directory at $NPM_GLOBAL_DIR"
@@ -28,11 +28,12 @@ fi
 # Clean up caches and corrupted packages
 echo "Cleaning up caches and corrupted packages..."
 rm -rf node_modules yarn.lock || true
-yarn cache clean --all || true
 rm -rf ~/.cache/yarn || true
 rm -rf .yarn/cache || true
 rm -rf node_modules/.cache || true
 rm -rf "${CI_PROJECT_DIR}/.cache/yarn/v6/npm-color-convert-"* || true
+#remove aws-sdk tarball from Yarn cache if it exists
+find ~/.cache/yarn -type f -name 'npm-aws-sdk-2.1309.0-*' -exec rm -f {} + || true
 npm cache clean --force || true
 
 # Print versions for debugging
@@ -40,12 +41,3 @@ node -v && npm -v && yarn -v
 
 # Add local node_modules binaries to PATH
 export PATH="$(pwd)/node_modules/.bin:$PATH"
-
-# Retry yarn install up to 3 times in case of transient errors
-n=0
-until [ $n -ge 3 ]; do
-  yarn install --frozen-lockfile && break
-  n=$((n+1))
-  echo "Retrying yarn install ($n)..."
-  sleep 5
-done
