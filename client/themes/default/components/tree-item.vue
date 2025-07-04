@@ -98,6 +98,7 @@ export default {
   .list-item-class {
     transition: background-color 0.3s;
     overflow: hidden;
+    border-radius: 20px;
   }
   .list-item-class:hover {
     background-color: rgba(0, 0, 0, 0.1);
