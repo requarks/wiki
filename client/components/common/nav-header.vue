@@ -52,7 +52,7 @@
             template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn.hover-text.hover-icon(
+                  v-btn.hover-text.hover-icon.rounded-32(
                     icon
                     v-bind='attrs'
                     v-on='{ ...menu }'
@@ -193,8 +193,11 @@
                       )
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
-              v-list(nav)
-                .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
+              v-list.dropdown-list(
+                nav
+                :class='$vuetify.theme.dark ? `color-theme-dark` : ``'
+                )
+                .overline.pa-4.grey--text.text--darken-1 {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24', tile): v-icon(
                     :color='getPageActionIconColor'
@@ -233,7 +236,7 @@
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(:color='colors.red[800]') mdi-trash-can-outline
+                  v-list-item-avatar(size='24', tile): v-icon(:color='trashCanColor') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 
@@ -488,6 +491,11 @@ export default {
     },
     getPageActionIconColor () {
       return this.$vuetify.theme.dark ? this.colors.teal[500] : this.colors.teal[800]
+    },
+    trashCanColor () {
+      return this.$vuetify.theme.dark ?
+        this.colors.warningActionDark.secondaryDefault :
+        this.colors.warningActionLight.secondaryDefault
     }
   },
   created () {
@@ -830,8 +838,17 @@ export default {
   }
 }
 
+.rounded-32 {
+  border-radius: 32px;
+}
+
 .hover-text {
   color: mc("text-dark", "primary") !important;
+
+  &:before {
+    background-color: mc("surface-dark", "primary-blue-lite");
+  }
+
   &:hover > .v-btn__content > span {
     color: mc("action-light", "highlight-on-lite");
   }
@@ -845,12 +862,21 @@ export default {
 
 .dropdown-list.v-list {
   background-color: mc("surface-light", "primary-neutral-lite") !important;
-  &> .v-list-item > .v-list-item__title {
-    color: mc("text-light", "primary");
-    &:hover {
-      color: mc("action-light", "primary-hover-on-lite");
+
+  &> .v-list-item {
+    &:before {
+      border-radius: 20px;
+    }
+
+    &> .v-list-item__title {
+      color: mc("text-light", "primary");
+
+      &:hover {
+        color: mc("action-light", "primary-hover-on-lite");
+      }
     }
   }
+
   &> #selected-site-item > div {
     font-weight: 600;
     color: mc("text-light", "black");
@@ -858,14 +884,17 @@ export default {
       color: mc("action-light", "primary-hover-on-lite");
     }
   }
+
   &.color-theme-dark {
-    background-color: mc("surface-dark", "primary-neutral-lite") !important;
+    background-color: mc("surface-dark", "primary-blue-lite") !important;
+
     &> .v-list-item > .v-list-item__title {
       color: mc("text-dark", "primary");
       &:hover {
       color: mc("action-dark", "primary-hover-on-lite");
       }
     }
+
     &> #selected-site-item > div {
       color: mc("text-dark", "white");
       &:hover {
@@ -880,15 +909,19 @@ export default {
   background-color: mc('surface-light', 'inverse');
   border-radius: 4px;
   font-size: 14px;
+
   &.v-input--is-focused .v-input__icon--prepend-inner > .v-icon {
     color: mc('action-light', 'highlight-on-lite') !important;
   }
+
   .v-text-field__slot > input {
     color: mc('text-dark', 'primary');
   }
+
   .v-icon.mdi.mdi-magnify {
     color: mc('text-dark', 'primary');
   }
+
   label.v-label.theme--light {
     color: mc('text-dark', 'primary') !important;
   }
@@ -902,6 +935,7 @@ export default {
       color: mc('text-light', 'primary') !important;
       caret-color: mc('text-light', 'primary') !important;
     }
+
     .v-input__append-inner {
       background-color: mc(action-light, highlight-on-lite);
       border-radius: 100%;
@@ -911,6 +945,7 @@ export default {
         color: mc('text-light', 'primary') !important;
       }
     }
+
     &.v-input--is-focused .v-input__append-inner > .v-input__icon > .v-icon.mdi.mdi-magnify {
       color: mc('text-dark', 'primary') !important;
     }
@@ -919,20 +954,29 @@ export default {
 
 .theme--light.v-list {
   background-color: mc('surface-light', 'primary-neutral-lite');
+
   .v-list-item__title {
     color: mc('text-light', 'primary');
+
     &:hover {
       color: mc("action-light", "primary-hover-on-lite");
     }
   }
 }
+
 .theme--dark.v-list {
   background-color: mc('surface-dark', 'primary-neutral-lite');
+
   .v-list-item__title{
     color: mc('text-dark', 'primary');
+
     &:hover {
       color: mc("action-dark", "primary-hover-on-lite");
     }
   }
+}
+
+.v-tooltip__content {
+  border-radius: 16px;
 }
 </style>
