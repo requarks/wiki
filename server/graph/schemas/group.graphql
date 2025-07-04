@@ -21,6 +21,15 @@ extend type Query {
         "manage:sites"
       ]
     )
+  isLastGroupForSiteGeneric(userId: Int! groupIds: [Int]!): IsLastGroupForSiteResponse
+    @auth(
+      requires: [
+        "write:groups"
+        "manage:groups"
+        "manage:system"
+        "manage:sites"
+      ]
+    )
 }
 
 extend type Mutation {
@@ -96,6 +105,12 @@ type GroupMutation {
 type GroupResponse {
   responseResult: ResponseStatus!
   group: Group
+}
+
+type IsLastGroupForSiteResponse {
+  responseResult: ResponseStatus!
+  isLastGroupForAnySite: Boolean!
+  affectedSites: [Site]
 }
 
 type GroupMinimal {

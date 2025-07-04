@@ -46,5 +46,6 @@ async function removedUserSiteInactivityIfReactivated(userId, siteId) {
 
 module.exports = {
   handleUserSiteInactivityAfterUnassign,
-  removedUserSiteInactivityIfReactivated
+  removedUserSiteInactivityIfReactivated,
+  getSiteIdsFromGroups
 }
