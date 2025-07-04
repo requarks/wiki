@@ -26,18 +26,6 @@ function hasUnsafeRegex(rules) {
   return _.some(rules, (pr) => pr.match === 'REGEX' && !safeRegex(pr.path))
 }
 
-function canUpdateGroup(user, groupId, rules) {
-  if (!canManageGroup(user, groupId)) return false
-  for (const rule of rules) {
-    for (const siteId of rule.sites) {
-      if (!WIKI.auth.checkAccess(user, ['manage:sites'], { siteId, path: rule.path })) {
-        return false
-      }
-    }
-  }
-  return true
-}
-
 function checkForbiddenSystemPermissions(user, permissions) {
   if (!WIKI.auth.isSuperAdmin(user) && isSystemAdminPermission(permissions)) {
     throw graphHelper.forbidden('You are not authorized to assign the system permissions.')
