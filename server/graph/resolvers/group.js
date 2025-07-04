@@ -1,7 +1,7 @@
 const graphHelper = require('../../helpers/graph')
 const safeRegex = require('safe-regex')
 const _ = require('lodash')
-const { handleUserSiteInactivityAfterUnassign } = require('../services/userSiteInactivityService')
+const { handleUserSiteInactivityAfterUnassign, getSiteIdsFromGroups } = require('../services/userSiteInactivityService')
 
 const {
   getManagedSiteIdsFromGroups,
@@ -60,6 +60,42 @@ module.exports = {
       throw graphHelper.forbidden(
         'Insufficient permissions to list the group properties.'
       )
+    },
+    /**
+    * Checks if this group is the last group for the user on any site
+    */
+    async isLastGroupForSiteGeneric(obj, { userId, groupIds }, { req }) {
+      const groupIdsArray = Array.isArray(groupIds) ? groupIds : [groupIds]
+
+      const userGroupIds = await WIKI.models.knex('userGroups')
+        .where({ userId })
+        .pluck('groupId')
+
+      const userGroups = await WIKI.models.groups.query()
+        .whereIn('id', userGroupIds)
+
+      const groupsToRemove = userGroups.filter(g => groupIdsArray.includes(g.id))
+      const groupsToKeep = userGroups.filter(g => !groupIdsArray.includes(g.id))
+
+      const removeSiteIds = getSiteIdsFromGroups(groupsToRemove)
+      const keepSiteIds = getSiteIdsFromGroups(groupsToKeep)
+
+      const lostSiteIds = Array.from(removeSiteIds).filter(siteId => !keepSiteIds.has(siteId))
+
+      let affectedSites = []
+      if (lostSiteIds.length > 0) {
+        affectedSites = await Promise.all(
+          lostSiteIds.map(siteId =>
+            WIKI.models.sites.getSiteById({ siteId, forceReload: true })
+          )
+        )
+      }
+
+      return {
+        responseResult: graphHelper.generateSuccess(),
+        isLastGroupForAnySite: lostSiteIds.length > 0,
+        affectedSites
+      }
     }
   },
   Mutation: {

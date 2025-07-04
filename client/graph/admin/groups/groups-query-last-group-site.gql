@@ -1,0 +1,17 @@
+query isLastGroupForSiteGeneric($userId: Int!, $groupIds: [Int]!) {
+    isLastGroupForSiteGeneric(userId: $userId, groupIds: $groupIds) {
+        responseResult {
+            succeeded
+            slug
+            message
+        }
+        isLastGroupForAnySite
+        affectedSites {
+            id
+            path
+            isEnabled
+            name
+            createdAt
+        }
+    }
+}
