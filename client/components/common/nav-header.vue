@@ -477,16 +477,17 @@ export default {
       ]).length > 0
     },
     hasNewPagePermission () {
-      return this.hasAdminPermission || this.sitesWithWriteAccess.includes(this.siteId)
+      return this.hasSuperAdminPermission || this.hasSiteAdminPermission || this.sitesWithWriteAccess.includes(this.siteId)
     },
-    hasAdminPermission: get('page/effectivePermissions@system.manage') || get('page/effectivePermissions@sites.manage'),
+    hasSuperAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasSiteAdminPermission: get('page/effectivePermissions@sites.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
-      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
+      return this.hasSuperAdminPermission || this.hasSiteAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     }
   },

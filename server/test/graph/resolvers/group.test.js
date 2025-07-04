@@ -149,7 +149,14 @@ const WIKI = {
   }))
 }
 
-const groupResolvers = require('../../../graph/resolvers/group')
+// At the top of your test file
+jest.mock('../../../graph/services/userSiteInactivityService', () => ({
+  getSiteIdsFromGroups: jest.fn(),
+  handleUserSiteInactivityAfterUnassign: jest.fn()
+}))
+
+let groupResolvers = require('../../../graph/resolvers/group')
+const { getSiteIdsFromGroups } = require('../../../graph/services/userSiteInactivityService')
 
 describe('Group Resolvers', () => {
   let req
@@ -253,7 +260,7 @@ describe('Group Resolvers', () => {
         await expect(groupResolvers.GroupMutation.update(null, { id: 456, name: 'Duplicate Group', permissions: [], rules: [{ sites: ['SITE-4'] }] }, { req }))
           .rejects
           .toThrow('A group with this name already exists.')
-      })
+    })
       it('should update group if name is unique or same as current group', async () => {
         // Case: name is unique
         WIKI.models.groups.query.mockReturnValue(getGroupQueryMock({ findOneResult: null }))
@@ -462,30 +469,177 @@ describe('Group Resolvers', () => {
         await expect(unassignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
     })
-
-    describe('create', () => {
-      function getGroupCreateQueryMock({ findOneResult = null, insertAndFetchResult = { id: 999, name: 'Unique Group' } } = {}) {
-        return {
-          findOne: jest.fn().mockResolvedValue(findOneResult),
-          insertAndFetch: jest.fn().mockResolvedValue(insertAndFetchResult)
-        }
+    // Helper functions to avoid deep nesting in tests
+    function mockGetSiteIdsFromGroupsForSiteLoss(groups) {
+      // groupsToRemove: contains SITE_ADMINS
+      if (Array.isArray(groups) && groups.some(g => g.id === TestGroup.SITE_ADMINS)) {
+        return new Set(['SITE-1', 'SITE-2'])
       }
-      it('should throw error if group name already exists', async () => {
-        WIKI.models.groups.query.mockReturnValue(getGroupCreateQueryMock({ findOneResult: { id: 123, name: 'Existing Group' } }))
-        await expect(groupResolvers.GroupMutation.create(null, { name: 'Existing Group', permissions: [], rules: [] }, { req }))
-          .rejects
-          .toThrow('A group with this name already exists.')
+      // groupsToKeep: contains GUESTS
+      if (Array.isArray(groups) && groups.some(g => g.id === TestGroup.GUESTS)) {
+        return new Set(['SITE-2'])
+      }
+      // fallback
+      return new Set()
+    }
+
+    function mockGetSiteIdsFromGroupsNoSiteLoss(groups) {
+      if (Array.isArray(groups)) {
+        // groupsToRemove: SITE_ADMINS
+        return new Set(['SITE-2'])
+      }
+      // groupsToKeep: GUESTS
+      return new Set(['SITE-2'])
+    }
+
+    function mockGetSiteIdsFromGroupsMultiple(groups) {
+      if (Array.isArray(groups) && groups.length === 2) {
+        // groupsToRemove: both groups
+        return new Set(['SITE-1', 'SITE-2', 'SITE-3', 'SITE-4'])
+      }
+      // groupsToKeep: none
+      return new Set()
+    }
+    function mockKnexWhereFirstNull() {
+      return {
+        where: jest.fn(() => ({
+          first: jest.fn().mockResolvedValue(null)
+        }))
+      }
+    }
+    function mockGetSiteById({ siteId }) {
+      return Promise.resolve({
+        id: siteId,
+        name: `Site ${siteId}`
       })
-      it('should create group if name is unique', async () => {
-        WIKI.models.groups.query.mockReturnValue(getGroupCreateQueryMock())
-        WIKI.auth.isSuperAdmin.mockReturnValue(true)
-        WIKI.models.sites = {
-          getSiteIdByPath: jest.fn().mockResolvedValue('SITE-DEFAULT')
+    }
+    function mockKnexUserGroupsPluck() {
+      return {
+        where: jest.fn(() => ({
+          pluck: jest.fn().mockResolvedValue([TestGroup.SITE_ADMINS, TestGroup.GUESTS])
+        }))
+      }
+    }
+
+    describe('isLastGroupForSiteGeneric', () => {
+      let req
+
+      beforeEach(() => {
+        req = {
+          user: {
+            id: 1,
+            groups: [TestGroup.REGULAR_USERS, TestGroup.SITE_ADMINS],
+            permissions: ['manage:sites']
+          }
         }
-        const result = await groupResolvers.GroupMutation.create(null, { name: 'Unique Group', permissions: [], rules: [{}] }, { req })
-        expect(result.group.name).toBe('Unique Group')
-        expect(result.responseResult.message).toBe('Group created successfully.')
+        WIKI.auth.isSuperAdmin.mockReturnValue(false)
+        WIKI.auth.isSiteAdmin.mockReturnValue(true)
+        WIKI.auth.checkExclusiveAccess.mockReturnValue(false)
+        WIKI.auth.checkAccess.mockReturnValue(true)
+        WIKI.models.knex = jest.fn(mockKnexWhereFirstNull)
+        WIKI.models.sites = {
+          getSiteById: jest.fn(mockGetSiteById)
+        }
+        WIKI.models.knex = jest.fn(mockKnexUserGroupsPluck)
+        global.WIKI = WIKI
+      })
+
+      afterEach(() => {
+        jest.clearAllMocks()
+      })
+
+      it('returns affectedSites and isLastGroupForAnySite=true if removing group(s) causes site loss', async () => {
+        WIKI.models.groups.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([
+            { id: TestGroup.SITE_ADMINS, rules: [{ sites: ['SITE-1', 'SITE-2'] }] },
+            { id: TestGroup.GUESTS, rules: [{ sites: ['SITE-2'] }] }
+          ])
+        })
+
+        getSiteIdsFromGroups.mockImplementation(mockGetSiteIdsFromGroupsForSiteLoss)
+
+        const args = { userId: 5, groupIds: [TestGroup.SITE_ADMINS] }
+        const result = await groupResolvers.Query.isLastGroupForSiteGeneric(
+          null,
+          args,
+          { req }
+        )
+        expect(result.isLastGroupForAnySite).toBe(true)
+        expect(result.affectedSites).toEqual([{ id: 'SITE-1', name: 'Site SITE-1' }])
+        expect(WIKI.models.sites.getSiteById).toHaveBeenCalledWith({ siteId: 'SITE-1', forceReload: true })
+      })
+
+      it('returns isLastGroupForAnySite=false and empty affectedSites if removing group(s) does not cause site loss', async () => {
+        WIKI.models.groups.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([
+            { id: TestGroup.SITE_ADMINS, rules: [{ sites: ['SITE-2'] }] },
+            { id: TestGroup.GUESTS, rules: [{ sites: ['SITE-2'] }] }
+          ])
+        })
+
+        getSiteIdsFromGroups.mockImplementation(mockGetSiteIdsFromGroupsNoSiteLoss)
+
+        const args = { userId: 5, groupIds: [TestGroup.SITE_ADMINS] }
+        const result = await groupResolvers.Query.isLastGroupForSiteGeneric(
+          null,
+          args,
+          { req }
+        )
+        expect(result.isLastGroupForAnySite).toBe(false)
+        expect(result.affectedSites).toEqual([])
+      })
+
+      it('works with multiple groupIds', async () => {
+        WIKI.models.groups.query.mockReturnValue({
+          whereIn: jest.fn().mockResolvedValue([
+            { id: TestGroup.SITE_ADMINS, rules: [{ sites: ['SITE-4'] }] },
+            { id: TestGroup.REGULAR_USERS, rules: [{ sites: ['SITE-1', 'SITE-2', 'SITE-3', 'SITE-4'] }] }
+          ])
+        })
+
+        getSiteIdsFromGroups.mockImplementation(mockGetSiteIdsFromGroupsMultiple)
+
+        const args = { userId: 5, groupIds: [TestGroup.SITE_ADMINS, TestGroup.REGULAR_USERS] }
+        const result = await groupResolvers.Query.isLastGroupForSiteGeneric(
+          null,
+          args,
+          { req }
+        )
+        expect(result.isLastGroupForAnySite).toBe(true)
+        expect(result.affectedSites).toEqual([
+          { id: 'SITE-1', name: 'Site SITE-1' },
+          { id: 'SITE-2', name: 'Site SITE-2' },
+          { id: 'SITE-3', name: 'Site SITE-3' },
+          { id: 'SITE-4', name: 'Site SITE-4' }
+        ])
       })
     })
+
+
+  describe('create', () => {
+    function getGroupCreateQueryMock({ findOneResult = null, insertAndFetchResult = { id: 999, name: 'Unique Group' } } = {}) {
+      return {
+        findOne: jest.fn().mockResolvedValue(findOneResult),
+        insertAndFetch: jest.fn().mockResolvedValue(insertAndFetchResult)
+      }
+    }
+    it('should throw error if group name already exists', async () => {
+      WIKI.models.groups.query.mockReturnValue(getGroupCreateQueryMock({ findOneResult: { id: 123, name: 'Existing Group' } }))
+      await expect(groupResolvers.GroupMutation.create(null, { name: 'Existing Group', permissions: [], rules: [] }, { req }))
+        .rejects
+        .toThrow('A group with this name already exists.')
+    })
+
+    it('should create group if name is unique', async () => {
+      WIKI.models.groups.query.mockReturnValue(getGroupCreateQueryMock())
+      WIKI.auth.isSuperAdmin.mockReturnValue(true)
+      WIKI.models.sites = {
+        getSiteIdByPath: jest.fn().mockResolvedValue('SITE-DEFAULT')
+      }
+      const result = await groupResolvers.GroupMutation.create(null, { name: 'Unique Group', permissions: [], rules: [{}] }, { req })
+      expect(result.group.name).toBe('Unique Group')
+      expect(result.responseResult.message).toBe('Group created successfully.')
+    })
+  })
   })
 })
