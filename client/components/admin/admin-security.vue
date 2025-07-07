@@ -403,7 +403,7 @@ export default {
     config: {
       query: gql`
         {
-            config {
+            siteConfig {
               authAutoLogin
               authEnforce2FA
               authHideLocal
