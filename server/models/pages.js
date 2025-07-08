@@ -1302,15 +1302,14 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async rebuildTree(page) {
-    const rebuildJob = await WIKI.scheduler.registerJob(
+    await WIKI.scheduler.registerJob(
       {
         name: 'rebuild-tree',
         immediate: true,
-        worker: true
+        wait: true
       },
       page?.siteId
     )
-    return rebuildJob.finished
   }
 
   /**
@@ -1320,15 +1319,14 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async renderPage(page) {
-    const renderJob = await WIKI.scheduler.registerJob(
+    await WIKI.scheduler.registerJob(
       {
         name: 'render-page',
         immediate: true,
-        worker: true
+        wait: true
       },
       page.id
     )
-    return renderJob.finished
   }
 
   /**

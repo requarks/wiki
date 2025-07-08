@@ -1,6 +1,5 @@
 const _ = require('lodash')
 const EventEmitter = require('eventemitter2').EventEmitter2
-
 /* global WIKI */
 
 module.exports = {
@@ -34,7 +33,7 @@ module.exports = {
       await this.initTelemetry()
       WIKI.sideloader = await require('./sideloader').init()
       WIKI.cache = require('./cache').init()
-      WIKI.scheduler = require('./scheduler').init()
+      WIKI.scheduler = await require('./scheduler').init()
       WIKI.servers = require('./servers')
       WIKI.events = {
         inbound: new EventEmitter(),

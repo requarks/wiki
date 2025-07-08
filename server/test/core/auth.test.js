@@ -10,8 +10,8 @@ const {
   isSiteAdmin,
   hasSitePermission,
   _applyPageRuleSpecificity
-} = require('../core/auth')
-const auth = require('../core/auth')
+} = require('../../core/auth')
+const auth = require('../../core/auth')
 
 const WIKI = {
   auth: {
