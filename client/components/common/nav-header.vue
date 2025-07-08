@@ -936,7 +936,7 @@ export default {
       caret-color: mc('text-light', 'primary') !important;
     }
 
-    .v-input__append-inner {
+    .v-text-field__slot + .v-input__append-inner {
       background-color: mc(action-light, highlight-on-lite);
       border-radius: 100%;
       padding: 15px;
