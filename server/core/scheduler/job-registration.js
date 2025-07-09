@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const configHelper = require('../../helpers/config')
+const schedulerUtils = require('./scheduler-utils')
 
 module.exports = {
   registerStaticJobsFromConfig(WIKI, registerJob) {
@@ -10,10 +10,11 @@ module.exports = {
         WIKI.logger.warn(`Skipping job ${queueName} because offline mode is enabled. [SKIPPED]`)
         return
       }
+      const scheduleType = schedulerUtils.getScheduleType(queueParams.schedule)
       registerJob({
         name: _.kebabCase(queueName),
         immediate: !!queueParams.onInit,
-        schedule: configHelper.isValidDurationString(queueParams.schedule) ? queueParams.schedule : 'P1D',
+        schedule: (scheduleType === 'cron' || scheduleType === 'duration') ? queueParams.schedule : 'P1D',
         repeat: !!queueParams.repeat
       })
     })
