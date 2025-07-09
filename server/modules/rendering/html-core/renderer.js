@@ -3,6 +3,7 @@ const cheerio = require('cheerio')
 const uslug = require('uslug')
 const pageHelper = require('../../../helpers/page')
 const URL = require('url').URL
+const { inactivityThresholdDate } = require('../../../helpers/dateHelpers')
 
 const mustacheRegExp = /(\{|&#x7b;?){2}(.+?)(\}|&#x7d;?){2}/i
 
@@ -238,10 +239,30 @@ module.exports = {
       await WIKI.models.userMentions.query().delete().whereIn('id', filteredOutdatedMentions.map(m => m.id))
     }
 
-    // Anonymize mentioned users if they are deleted
+    // Anonymize mentioned users if they are deleted or inactive for 3+ months
     for (const mention of mentions) {
       const user = await WIKI.models.users.query().where('email', mention).first()
+      let shouldAnonymize = false
+
       if (!user) {
+        shouldAnonymize = true
+      } else {
+        // Check inactivity
+        const inactivityEntry = await WIKI.models.userSiteInactivity.query()
+          .where({
+            userId: user.id,
+            siteId: this.page.siteId
+          })
+          .first()
+        if (inactivityEntry) {
+          const threeMonthsAgo = inactivityThresholdDate()
+          if (new Date(inactivityEntry.inactiveSince) < threeMonthsAgo) {
+            shouldAnonymize = true
+          }
+        }
+      }
+
+      if (shouldAnonymize) {
         // Update the mention in the HTML
         $('span.mention[data-mention="' + mention + '"]').each((i, elm) => {
           $(elm).text('@AnonymousUser')
