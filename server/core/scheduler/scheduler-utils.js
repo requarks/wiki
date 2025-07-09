@@ -1,5 +1,7 @@
 const crypto = require('crypto')
 const { JOB_RETENTION_HOURS, SAFE_SEND_MAX_RETRIES, DELAY_MS_SEND_AFTER_MIN, DELAY_MS_SEND_AFTER_MAX, DELAY_MS_SAFE_SEND_RETRY } = require('./scheduler-config')
+const cron = require('cron-validate').default
+const configHelper = require('../../helpers/config')
 
 module.exports = {
   calculateHash(name, data) {
@@ -100,5 +102,10 @@ module.exports = {
   getJobRequeueDelay() {
     const ms = crypto.randomInt(DELAY_MS_SEND_AFTER_MIN, DELAY_MS_SEND_AFTER_MAX + 1)
     return Math.floor(ms / 1000)
+  },
+  getScheduleType(schedule) {
+    if (cron(schedule).isValid()) return 'cron'
+    if (configHelper.isValidDurationString(schedule)) return 'duration'
+    return 'invalid'
   }
 }

@@ -109,6 +109,18 @@ describe('Scheduler class', () => {
         expect(e.message).toMatch(/This ISO 8601 duration cannot be represented as a cron expression/)
       }
     })
+    it('should schedule a repeating job with a cron expression', async () => {
+      scheduler.boss = { schedule: jest.fn().mockResolvedValue(), createQueue: jest.fn(), work: jest.fn() }
+      scheduler.knex = mockKnex
+      const opts = { name: RENDER_PAGE, repeat: true, schedule: '0 2 * * *' }
+      await scheduler.registerJob(opts, JOB_DATA)
+      expect(scheduler.boss.schedule).toHaveBeenCalledWith(
+        RENDER_PAGE,
+        '0 2 * * *',
+        expect.any(Object),
+        expect.objectContaining({ tz: 'Europe/Berlin' })
+      )
+    })
   })
 
   describe('Wait/Completion', () => {
@@ -169,7 +181,7 @@ describe('Scheduler class', () => {
 
   describe('Concurrency', () => {
     it('should use correct numberOfConcurrentWorkers for jobName', async () => {
-      const setupSpy = jest.spyOn(Scheduler, 'startConcurrentWorkers').mockImplementation(() => {})
+      const setupSpy = jest.spyOn(Scheduler, 'startConcurrentWorkers').mockImplementation(() => { })
       scheduler.boss = { createQueue: jest.fn(), send: jest.fn().mockResolvedValue('jobid'), work: jest.fn() }
       scheduler.knex = mockKnex
       const opts = { name: 'rebuild-tree', immediate: true }
@@ -183,7 +195,7 @@ describe('Scheduler class', () => {
       setupSpy.mockRestore()
     })
     it('should call setupJobWorker only once per jobName', async () => {
-      const setupSpy = jest.spyOn(Scheduler, 'setupJobWorker').mockImplementation(() => {})
+      const setupSpy = jest.spyOn(Scheduler, 'setupJobWorker').mockImplementation(() => { })
       scheduler.boss = { createQueue: jest.fn(), send: jest.fn().mockResolvedValue('jobid'), work: jest.fn() }
       scheduler.knex = mockKnex
       const opts = { name: 'unique-job', immediate: true }
