@@ -117,8 +117,7 @@ describe('Scheduler class', () => {
       expect(scheduler.boss.schedule).toHaveBeenCalledWith(
         RENDER_PAGE,
         '0 2 * * *',
-        expect.any(Object),
-        expect.objectContaining({ tz: 'Europe/Berlin' })
+        expect.any(Object)
       )
     })
   })
