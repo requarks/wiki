@@ -879,7 +879,8 @@ export default {
   }
 
   &> #selected-site-item > div {
-    font-weight: 600;
+    font-weight: 500;
+    font-size: .925rem !important;
     color: mc("text-light", "black");
     &:hover {
       color: mc("action-light", "primary-hover-on-lite");

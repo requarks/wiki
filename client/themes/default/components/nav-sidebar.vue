@@ -381,7 +381,7 @@ export default {
   }
 
   .v-list-item.v-list-item--link.v-list-item--active > .v-list-item__title {
-    font-weight: 1000 !important;
+    font-size: .9rem !important;
     color: mc('text-light', 'brand-tertiary') !important;
   }
 

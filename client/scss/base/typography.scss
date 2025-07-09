@@ -1,0 +1,83 @@
+$mdc-typography-styles-headline1: (
+  font-family: unquote("Ubuntu"),
+  font-size: 99
+);
+$mdc-typography-styles-headline2: (
+  font-family: unquote("Ubuntu"),
+  font-size: 62
+);
+$mdc-typography-styles-headline3: (
+  font-family: unquote("Ubuntu"),
+  font-size: 49
+);
+$mdc-typography-styles-headline4: (
+  font-family: unquote("Ubuntu"),
+  font-size: 35
+);
+$mdc-typography-styles-headline5: (
+  font-family: unquote("Ubuntu"),
+  font-size: 25
+);
+$mdc-typography-styles-headline6: (
+  font-family: unquote("Ubuntu"),
+  font-size: 21
+);
+$mdc-typography-styles-body1: (
+  font-family: unquote("Ubuntu"),
+  font-size: 16
+);
+$mdc-typography-styles-body2: (
+  font-family: unquote("Ubuntu"),
+  font-size: 14
+);
+$mdc-typography-styles-subtitle1: (
+  font-family: unquote("Ubuntu"),
+  font-size: 16
+);
+$mdc-typography-styles-subtitle2: (
+  font-family: unquote("Ubuntu"),
+  font-size: 14
+);
+$mdc-typography-styles-button: (
+  font-family: unquote("Ubuntu"),
+  font-size: 14
+);
+$mdc-typography-styles-overline: (
+  font-family: unquote("Ubuntu"),
+  font-size: 10
+);
+$mdc-typography-styles-caption: (
+  font-family: unquote("Ubuntu"),
+  font-size: 12
+);
+
+.v-application{
+  span,
+  div,
+  button,
+  .body-1,
+  .body-2,
+  .subtitle-1,
+  .subtitle-2,
+  .caption,
+  .overline,
+  .button,
+  .headline,
+  .title,
+  .display-1,
+  .display-2,
+  .display-3,
+  .display-4,
+  .headline1,
+  .headline2,
+  .headline3,
+  .headline4,
+  .headline5,
+  .headline6 {
+     font-family: 'Ubuntu', sans-serif !important;
+  }
+
+  code {
+    font-family: 'Ubuntu Mono', monospace !important;
+  }
+}
