@@ -133,12 +133,11 @@ jobs:
     schedule: P1D
     offlineSkip: true
     repeat: true
-  rebuildTree:
+  anonymizeInactiveUsersJob:
     onInit: true
+    schedule: P1D
     offlineSkip: false
-    repeat: false
-    immediate: true
-    worker: true
+    repeat: true
 groups:
   defaultPermissions:
     - 'read:pages'

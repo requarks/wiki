@@ -17,6 +17,9 @@ const WIKI = {
     },
     comments: {
       query: jest.fn()
+    },
+    userMentions: {
+      query: jest.fn()
     }
   },
   data: {
@@ -39,6 +42,10 @@ function setupMocks(comments, pages) {
   })
   WIKI.models.pages.query.mockReturnValue({
     findById: jest.fn().mockImplementation(findPageById(pages))
+  })
+  WIKI.models.userMentions.query.mockReturnValue({
+    delete: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis()
   })
 }
 

@@ -161,3 +161,9 @@ devMode: true
 
 email:
   support: "dummy-support@dummy.com"
+
+scheduler:
+  concurrentWorkers:
+    rebuild-tree: 3
+    render-page: 3
+    sanitize-svg: 3

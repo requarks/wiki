@@ -129,12 +129,11 @@ module.exports = class Asset extends Model {
         fileInfo.ext.toLowerCase() === '.svg'
       )
     ) {
-      const svgSanitizeJob = await WIKI.scheduler.registerJob({
+      await WIKI.scheduler.registerJob({
         name: 'sanitize-svg',
         immediate: true,
-        worker: true
+        wait: true
       }, opts.path)
-      await svgSanitizeJob.finished
     }
 
     // Save asset data
