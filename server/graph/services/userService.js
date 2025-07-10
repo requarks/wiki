@@ -1,4 +1,5 @@
 const graphHelper = require('../../helpers/graph')
+const renderPage = require('../../jobs/render-page')
 
 /* global WIKI */
 
@@ -11,6 +12,13 @@ async function renderMentionedPages(mentionedPages) {
   for (const pageMention of mentionedPages) {
     const page = await WIKI.models.pages.query().findById(pageMention.pageId)
     await WIKI.models.pages.renderPage(page)
+  }
+}
+
+async function renderMentionedPagesWithoutScheduler(mentionedPages) {
+  for (const pageMention of mentionedPages) {
+    const page = await WIKI.models.pages.query().findById(pageMention.pageId)
+    await renderPage(page.id)
   }
 }
 
@@ -56,6 +64,7 @@ function handleDeleteError(err) {
 module.exports = {
   revokeUserTokens,
   renderMentionedPages,
+  renderMentionedPagesWithoutScheduler,
   anonymizeComments,
   handleDeleteError
 }

@@ -58,7 +58,10 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
     .where({ authorId: userSiteInactivity.userId })
   const commentsOfSite = userComments.filter(comment => sitePageIds.includes(comment.pageId))
 
-  await userService.renderMentionedPages(mentionedPagesOfSite)
+  await userService.renderMentionedPagesWithoutScheduler(mentionedPagesOfSite)
+  // Connection needs to be re-established after rendering pages
+  // because the connection is closed in the render job
+  WIKI.models = require('../core/db').init()
 
   await WIKI.models.assets.query()
     .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
@@ -86,7 +89,6 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
 
 module.exports = async () => {
   WIKI.models = require('../core/db').init()
-  WIKI.scheduler = require('../core/scheduler').init()
   WIKI.data.commentProviders = require('../models/commentProviders').initProvider()
   await WIKI.configSvc.loadFromDb()
   await WIKI.configSvc.applyFlags()
