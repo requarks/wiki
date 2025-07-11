@@ -263,7 +263,7 @@ module.exports = class PageHistory extends Model {
   /**
  * Anonymize user mentions in pageHistory content for given pageIds
  * @param {Array<string>} pageIds - IDs of pages where the user is mentioned
- * @param {Function} anonymizeFn - Function to anonymize content (e.g., replace username/id)
+ * @param {Function} anonymizeFn - Function to anonymize mentions in content of page history
  * @param {string} email - Email of the user to anonymize mentions for
  */
   static async anonymizeMentionsByPageIds(pageIds, anonymizeFn, email) {
