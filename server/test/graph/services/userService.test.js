@@ -214,4 +214,39 @@ describe('userService', () => {
       expect(result).toEqual(graphHelper.generateError(error))
     })
   })
+
+  describe('anonymizeUserMentions', () => {
+    const email = 'test.user@example.com'
+    const { anonymizeUserMentions } = userService
+
+    it('should anonymize markdown mentions', () => {
+      const content = 'Hello @test.user@example.com, please review.'
+      const result = anonymizeUserMentions(content, 'markdown', email)
+      expect(result).toBe('Hello @AnonymousUser, please review.')
+    })
+
+    it('should anonymize multiple markdown mentions', () => {
+      const content = '@test.user@example.com and @test.user@example.com and @user@example.com'
+      const result = anonymizeUserMentions(content, 'markdown', email)
+      expect(result).toBe('@AnonymousUser and @AnonymousUser and @user@example.com')
+    })
+
+    it('should anonymize html mentions', () => {
+      const content = '<span class="mention" data-mention="test.user@example.com">@test.user@example.com</span> is here'
+      const result = anonymizeUserMentions(content, 'html', email)
+      expect(result).toBe('<span class="mention mention-anonymous">@AnonymousUser</span> is here')
+    })
+
+    it('should anonymize multiple html mentions', () => {
+      const content = '<span class="mention" data-mention="test.user@example.com">@test.user@example.com</span> and <span class="mention" data-mention="test.user@example.com">@test.user@example.com</span> and <span class="mention" data-mention="user@example.com">@user@example.com</span>'
+      const result = anonymizeUserMentions(content, 'html', email)
+      expect(result).toBe('<span class="mention mention-anonymous">@AnonymousUser</span> and <span class="mention mention-anonymous">@AnonymousUser</span> and <span class="mention" data-mention="user@example.com">@user@example.com</span>')
+    })
+
+    it('should return content unchanged for unknown contentType', () => {
+      const content = 'No mention here'
+      const result = anonymizeUserMentions(content, 'other', email)
+      expect(result).toBe(content)
+    })
+  })
 })

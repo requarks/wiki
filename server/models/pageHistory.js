@@ -10,25 +10,25 @@ const { DateTime, Duration } = require('luxon')
 module.exports = class PageHistory extends Model {
   static get tableName() { return 'pageHistory' }
 
-  static get jsonSchema () {
+  static get jsonSchema() {
     return {
       type: 'object',
       required: ['path', 'title'],
 
       properties: {
-        id: {type: 'integer'},
-        path: {type: 'string'},
-        hash: {type: 'string'},
-        title: {type: 'string'},
-        description: {type: 'string'},
-        isPublished: {type: 'boolean'},
-        publishStartDate: {type: 'string'},
-        publishEndDate: {type: 'string'},
-        content: {type: 'string'},
-        contentType: {type: 'string'},
+        id: { type: 'integer' },
+        path: { type: 'string' },
+        hash: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        isPublished: { type: 'boolean' },
+        publishStartDate: { type: 'string' },
+        publishEndDate: { type: 'string' },
+        content: { type: 'string' },
+        contentType: { type: 'string' },
 
-        createdAt: {type: 'string'},
-        siteId: {type: 'string'}
+        createdAt: { type: 'string' },
+        siteId: { type: 'string' }
       }
     }
   }
@@ -246,7 +246,7 @@ module.exports = class PageHistory extends Model {
    *
    * @param {String} olderThan ISO 8601 Duration
    */
-  static async purge (olderThan) {
+  static async purge(olderThan) {
     const dur = Duration.fromISO(olderThan)
     const olderThanISO = DateTime.utc().minus(dur)
     await WIKI.models.pageHistory.query().where('versionDate', '<', olderThanISO.toISO()).del()
@@ -257,7 +257,33 @@ module.exports = class PageHistory extends Model {
    *
    * @param {String} pageId String
    */
-  static async purgeByPageId (pageId) {
+  static async purgeByPageId(pageId) {
     await WIKI.models.pageHistory.query().where('pageId', '=', pageId).del()
+  }
+  /**
+ * Anonymize user mentions in pageHistory content for given pageIds
+ * @param {Array<string>} pageIds - IDs of pages where the user is mentioned
+ * @param {Function} anonymizeFn - Function to anonymize content (e.g., replace username/id)
+ * @param {string} email - Email of the user to anonymize mentions for
+ */
+  static async anonymizeMentionsByPageIds(pageIds, anonymizeFn, email) {
+    const histories = await WIKI.models.pageHistory.query()
+      .whereIn('pageId', pageIds)
+      .where(builder => {
+        builder
+          .where('content', 'like', `%@${email}%`)
+          .orWhere('content', 'like', `%data-mention="${email}"%`)
+      })
+    for (const history of histories) {
+      let newContent = history.content
+      if (typeof anonymizeFn === 'function') {
+        newContent = anonymizeFn(history.content, history.contentType)
+      }
+      if (newContent !== history.content) {
+        await WIKI.models.pageHistory.query()
+          .patch({ content: newContent })
+          .where('id', history.id)
+      }
+    }
   }
 }

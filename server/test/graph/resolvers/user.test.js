@@ -1,5 +1,4 @@
 const { Query, UserMutation } = require('../../../graph/resolvers/user')
-const CustomError = require('custom-error-instance')
 const userService = require('../../../graph/services/userService')
 const graphHelper = require('../../../helpers/graph')
 
@@ -30,6 +29,9 @@ const WIKI = {
     pages: {
       query: jest.fn(),
       renderPage: jest.fn()
+    },
+    pageHistory: {
+      anonymizeMentionsByPageIds: jest.fn()
     }
   },
   data: {
@@ -330,6 +332,10 @@ describe('UserMutation', () => {
       WIKI.models.users.query.mockReturnValue({
         findById: jest.fn().mockResolvedValue(user)
       })
+      WIKI.models.userMentions.query.mockReturnValue({
+        delete: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis()
+      })
       WIKI.models.userMentions.getMentionedPages.mockResolvedValue(mentionedPages)
       WIKI.models.userMentions.getMentionedComments.mockResolvedValue(mentionedComments)
       WIKI.models.comments.query.mockReturnValue({
@@ -340,6 +346,7 @@ describe('UserMutation', () => {
       userService.revokeUserTokens.mockResolvedValue()
       userService.renderMentionedPages.mockResolvedValue()
       userService.anonymizeComments.mockResolvedValue()
+      userService.anonymizeUserMentions.mockResolvedValue()
 
       // Act
       const result = await UserMutation.delete(null, args)
@@ -389,6 +396,35 @@ describe('UserMutation', () => {
           succeeded: false
         }
       })
+    })
+    it('should anonymize page history and delete user mentions when deleting a user', async () => {
+      // Arrange
+      const args = { id: 42, replaceId: null }
+      const user = { id: 42, email: 'test@example.com' }
+      const mentionedPages = [{ pageId: 1 }, { pageId: 2 }]
+      const mentionedComments = []
+      const userComments = []
+
+      // Mock all DB/model/service calls
+      WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn(() => user) }))
+      WIKI.models.userMentions.getMentionedPages = jest.fn(() => mentionedPages)
+      WIKI.models.userMentions.getMentionedComments = jest.fn(() => mentionedComments)
+      WIKI.models.comments.query = jest.fn(() => ({ where: jest.fn(() => userComments) }))
+      WIKI.models.users.deleteUser = jest.fn()
+      userService.revokeUserTokens = jest.fn()
+      WIKI.models.pageHistory.anonymizeMentionsByPageIds = jest.fn()
+      userService.renderMentionedPages = jest.fn()
+      userService.anonymizeComments = jest.fn()
+
+      // Act
+      const result = await UserMutation.delete({}, args)
+
+      // Assert
+      expect(WIKI.models.pageHistory.anonymizeMentionsByPageIds).toHaveBeenCalledWith(
+        [1, 2],
+        expect.any(Function)
+      )
+      expect(result.responseResult).toBeDefined()
     })
   })
 

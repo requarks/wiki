@@ -70,6 +70,11 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
   await WIKI.models.pageHistory.query()
     .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
     .patch({ authorId: anonymousUser.id })
+  await WIKI.models.pageHistory.anonymizeMentionsByPageIds(
+    sitePageIds,
+    (content, contentType) => userService.anonymizeUserMentions(content, contentType, user.email),
+    user.email
+  )
   await WIKI.models.pages.query()
     .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
     .patch({ authorId: anonymousUser.id })
@@ -84,6 +89,15 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
       userId: userSiteInactivity.userId,
       siteId: userSiteInactivity.siteId
     })
+  // Remove user mentions
+  for (const mentionedPage of mentionedPagesOfSite) {
+    await WIKI.models.userMentions.query()
+      .delete()
+      .where({
+        userId: userSiteInactivity.userId,
+        pageId: mentionedPage.pageId
+      })
+  }
   await WIKI.models.knex.destroy()
 }
 

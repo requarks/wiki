@@ -61,10 +61,20 @@ function handleDeleteError(err) {
   }
 }
 
+function anonymizeUserMentions(content, contentType, email) {
+  if (contentType === 'markdown') {
+    return content.replace(new RegExp(`@${email}`, 'g'), '@AnonymousUser')
+  } else if (contentType === 'html') {
+    return content.replace(new RegExp(`<span class="mention" data-mention="${email}">@${email}</span>`, 'g'), '<span class="mention mention-anonymous">@AnonymousUser</span>')
+  }
+  return content
+}
+
 module.exports = {
   revokeUserTokens,
   renderMentionedPages,
   renderMentionedPagesWithoutScheduler,
   anonymizeComments,
-  handleDeleteError
+  handleDeleteError,
+  anonymizeUserMentions
 }

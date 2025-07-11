@@ -114,6 +114,11 @@ module.exports = {
         await WIKI.models.users.deleteUser(args.id, args.replaceId)
         await userService.revokeUserTokens(args.id)
 
+        await WIKI.models.pageHistory.anonymizeMentionsByPageIds(
+          mentionedPages.map(mp => mp.pageId),
+          (content, contentType) => userService.anonymizeUserMentions(content, contentType, user.email)
+        )
+
         await userService.renderMentionedPages(mentionedPages)
         await userService.anonymizeComments(user, mentionedComments, userComments)
 
