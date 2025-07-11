@@ -52,7 +52,7 @@
             template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn.hover-text.hover-icon.rounded-32(
+                  v-btn.hover-text.hover-icon(
                     icon
                     v-bind='attrs'
                     v-on='{ ...menu }'
@@ -839,10 +839,6 @@ export default {
   }
 }
 
-.rounded-32 {
-  border-radius: 32px;
-}
-
 .hover-text {
   color: mc("text-dark", "primary") !important;
 
@@ -856,6 +852,10 @@ export default {
 }
 
 .hover-icon {
+  &.v-btn.v-btn--tile:hover:before {
+    opacity: 0;
+  }
+
   &:hover > .v-btn__content > .v-icon {
     color: mc("action-light", "highlight-on-lite") !important;
   }

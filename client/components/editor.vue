@@ -672,7 +672,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang='scss' scoped>
 .editor {
   background-color: mc('neutral', '900') !important;
   min-height: 100vh;
@@ -696,5 +696,9 @@ export default {
 
 .atom-spinner.is-inline {
   display: inline-block;
+}
+
+.v-btn.v-btn--flat.v-btn--text {
+  border-radius: 50px;
 }
 </style>
