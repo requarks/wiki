@@ -116,7 +116,8 @@ module.exports = {
 
         await WIKI.models.pageHistory.anonymizeMentionsByPageIds(
           mentionedPages.map(mp => mp.pageId),
-          (content, contentType) => userService.anonymizeUserMentions(content, contentType, user.email)
+          (content, contentType) => userService.anonymizeUserMentions(content, contentType, user.email),
+          user.email
         )
 
         await userService.renderMentionedPages(mentionedPages)

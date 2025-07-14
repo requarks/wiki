@@ -427,7 +427,8 @@ describe('UserMutation', () => {
       // Assert
       expect(WIKI.models.pageHistory.anonymizeMentionsByPageIds).toHaveBeenCalledWith(
         [1, 2],
-        expect.any(Function)
+        expect.any(Function),
+        user.email
       )
       expect(result.responseResult).toBeDefined()
     })
