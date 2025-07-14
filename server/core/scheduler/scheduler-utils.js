@@ -33,8 +33,8 @@ module.exports = {
     }
   },
 
-  async safeSend(boss, jobName, data, logger, delay = false) {
-    const options = { retentionHours: JOB_RETENTION_HOURS }
+  async safeSend(boss, jobName, data, logger, expireInMinutes, delay = false) {
+    const options = { retentionHours: JOB_RETENTION_HOURS, expireInMinutes: expireInMinutes }
     let lastError
     for (let i = 0; i < SAFE_SEND_MAX_RETRIES; i++) {
       try {
@@ -107,5 +107,10 @@ module.exports = {
     if (cron(schedule).isValid()) return 'cron'
     if (configHelper.isValidDurationString(schedule)) return 'duration'
     return 'invalid'
+  },
+
+  getTotalNumberOfConcurrentWorkers(numberOfConcurrentWorkersMap) {
+    const jobCounts = Object.values(numberOfConcurrentWorkersMap || {})
+    return jobCounts.length > 0 ? jobCounts.reduce((a, b) => a + b, 0) : 1
   }
 }

@@ -163,6 +163,7 @@ email:
   support: "dummy-support@dummy.com"
 
 scheduler:
+  activeJobExpirationMinutes: 5 # Duration in minutes for which active jobs are kept in the queue. Use shorter values if you stop the server frequently.
   concurrentWorkers:
     rebuild-tree: 3
     render-page: 3

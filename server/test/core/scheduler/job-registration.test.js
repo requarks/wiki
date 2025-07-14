@@ -108,4 +108,15 @@ describe('job-registration', () => {
       repeat: true
     }))
   })
+
+  it('should call registerJob with runInMainThread if set in job config', () => {
+    const WIKI = {
+      logger: { debug: jest.fn(), warn: jest.fn() },
+      config: {},
+      data: { jobs: { 'sync-graph-updates': { schedule: 'P1D', runInMainThread: true } } }
+    }
+    const registerJob = jest.fn()
+    jobRegistration.registerStaticJobsFromConfig(WIKI, registerJob)
+    expect(registerJob).toHaveBeenCalledWith(expect.objectContaining({ name: 'sync-graph-updates', runInMainThread: true }))
+  })
 })

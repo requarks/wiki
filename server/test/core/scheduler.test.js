@@ -14,7 +14,6 @@ const { Scheduler } = require('../../core/scheduler')
 const PgBoss = require('pg-boss')
 const knexModule = require('../../core/db')
 const schedulerUtils = require('../../core/scheduler/scheduler-utils')
-const workerRunner = require('../../core/scheduler/worker-runner')
 
 jest.mock('pg-boss')
 jest.mock('../../core/db')
@@ -30,13 +29,19 @@ mockKnex.first = jest.fn().mockResolvedValue({ count: '0' })
 const REBUILD_TREE = 'rebuild-tree'
 const RENDER_PAGE = 'render-page'
 const SANITIZE_SVG = 'sanitize-svg'
+const SYNC_GRAPH_UPDATES = 'sync-graph-updates'
 const JOB_DATA_HASH = '1fc4ebd2031c7fc204259a32ed197344534a9198969c03ddb993ae3e1b7db5e0'
 const JOB_DATA = '8efe6eca-2d38-4686-b6e1-32511713d23e'
+const DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES = 5
+const JOB_RETENTION_HOURS = 6
 
 beforeEach(() => {
   knexModule.init = jest.fn(() => ({ knex: mockKnex }))
   PgBoss.mockClear()
 })
+
+const mockSyncGraphUpdates = jest.fn()
+jest.mock('../../jobs/sync-graph-updates', () => mockSyncGraphUpdates, { virtual: true })
 
 describe('Scheduler class', () => {
   let scheduler
@@ -70,16 +75,61 @@ describe('Scheduler class', () => {
       scheduler.knex = mockKnex
     }
     it('should call safeSend and return jobId for immediate jobs', async () => {
+      const safeSendSpy = jest.spyOn(schedulerUtils, 'safeSend')
       setupBossAndKnex(scheduler)
-      const opts = { name: REBUILD_TREE, immediate: true }
+      const opts = { name: REBUILD_TREE, immediate: true, runInMainThread: false }
       const jobId = await scheduler.registerJob(opts, JOB_DATA)
       expect(jobId).toBe('jobid')
+      expect(safeSendSpy).toHaveBeenCalledWith(
+        scheduler.boss,
+        REBUILD_TREE,
+        expect.objectContaining({
+          data: JOB_DATA,
+          hash: expect.any(String),
+          runInMainThread: false
+        }),
+        global.WIKI.logger,
+        DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES
+      )
     })
     it('should schedule a repeating job with cron expression', async () => {
       setupBossAndKnex(scheduler)
+      const scheduleSpy = jest.spyOn(scheduler.boss, 'schedule')
       const opts = { name: RENDER_PAGE, repeat: true, schedule: 'P1D' }
       await scheduler.registerJob(opts, JOB_DATA)
       expect(scheduler.boss.schedule).toHaveBeenCalled()
+      expect(scheduleSpy).toHaveBeenCalledWith(
+        RENDER_PAGE,
+        '0 0 */1 * *',
+        expect.objectContaining({ data: expect.anything(), hash: expect.any(String), runInMainThread: undefined }),
+        {'expireInMinutes': DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES, 'retentionHours': JOB_RETENTION_HOURS}
+      )
+    })
+    it('should call safesend and schedule with runInMainThread set to true', async () => {
+      setupBossAndKnex(scheduler)
+      const safeSendSpy = jest.spyOn(schedulerUtils, 'safeSend')
+      const safeSendOpts = { name: REBUILD_TREE, immediate: true, runInMainThread: true }
+      await scheduler.registerJob(safeSendOpts, JOB_DATA)
+      expect(safeSendSpy).toHaveBeenCalledWith(
+        scheduler.boss,
+        REBUILD_TREE,
+        expect.objectContaining({
+          data: JOB_DATA,
+          hash: expect.any(String),
+          runInMainThread: true
+        }),
+        global.WIKI.logger,
+        DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES
+      )
+      const scheduleSpy = jest.spyOn(scheduler.boss, 'schedule')
+      const scheduleOpts = { name: RENDER_PAGE, repeat: true, schedule: 'P1D', runInMainThread: true }
+      await scheduler.registerJob(scheduleOpts, JOB_DATA)
+      expect(scheduleSpy).toHaveBeenCalledWith(
+        RENDER_PAGE,
+        '0 0 */1 * *',
+        expect.objectContaining({ data: expect.anything(), hash: expect.any(String), runInMainThread: true }),
+        {'expireInMinutes': DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES, 'retentionHours': JOB_RETENTION_HOURS}
+      )
     })
     it('should not add job to _registeredJobs if already registered', async () => {
       scheduler._registeredJobs.add(REBUILD_TREE)
@@ -117,7 +167,8 @@ describe('Scheduler class', () => {
       expect(scheduler.boss.schedule).toHaveBeenCalledWith(
         RENDER_PAGE,
         '0 2 * * *',
-        expect.any(Object)
+        expect.any(Object),
+        {'expireInMinutes': DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES, 'retentionHours': JOB_RETENTION_HOURS}
       )
     })
   })
@@ -319,44 +370,48 @@ describe('Scheduler class', () => {
     let jobName
     beforeEach(() => {
       scheduler.boss = { work: jest.fn() }
-      jobName = 'test-job'
-      Scheduler.setupJobWorker(scheduler.boss, scheduler.knex, jobName, 1)
+      jobName = SYNC_GRAPH_UPDATES
+      mockSyncGraphUpdates.mockClear()
     })
-    function runJobWithDecision(decision, job, runWorker = false) {
+    function runJobWithDecision(decision, job, runWorker = false, runInMainThread = false) {
       schedulerUtils.getJobDecision = jest.fn().mockResolvedValue(decision)
-      workerRunner.runWorkerProcess = runWorker ? jest.fn().mockResolvedValue() : jest.fn()
+      if (!runInMainThread) {
+        scheduler.workerPool = { runTask: runWorker ? jest.fn().mockResolvedValue('worker-result') : jest.fn() }
+        Scheduler.setupJobWorker(scheduler.boss, scheduler.knex, jobName, 1, scheduler.workerPool)
+      } else {
+        Scheduler.setupJobWorker(scheduler.boss, scheduler.knex, jobName, 1)
+      }
       schedulerUtils.safeSend = jest.fn().mockResolvedValue()
       return scheduler.boss.work.mock.calls[0][2](job)
     }
+
     it('should not call worker/queue for job decision "SKIP"', async () => {
       await runJobWithDecision(schedulerUtils.JobDecision.SKIP, [{ data: { hash: 'abc' }, id: 1 }])
-      expect(workerRunner.runWorkerProcess).not.toHaveBeenCalled()
       expect(schedulerUtils.safeSend).not.toHaveBeenCalled()
+      expect(scheduler.workerPool.runTask).not.toHaveBeenCalled()
+      expect(mockSyncGraphUpdates).not.toHaveBeenCalled()
     })
     it('should call safeSend for job decision "REQUEUE"', async () => {
       await runJobWithDecision(schedulerUtils.JobDecision.REQUEUE, [{ data: { hash: 'abc' }, id: 2 }])
       expect(schedulerUtils.safeSend).toHaveBeenCalledWith(
-        scheduler.boss, jobName, { hash: 'abc' }, global.WIKI.logger, true
+        scheduler.boss, jobName, { hash: 'abc' }, global.WIKI.logger, DEFAULT_ACTIVE_JOB_EXPIRATION_MINUTES, true
       )
-      expect(workerRunner.runWorkerProcess).not.toHaveBeenCalled()
+      expect(scheduler.workerPool.runTask).not.toHaveBeenCalled()
+      expect(mockSyncGraphUpdates).not.toHaveBeenCalled()
     })
-    it('should call runWorkerProcess for job decision "PROCEED"', async () => {
+
+    it('should run job in main-thread for job decision "PROCEED" and runInMainThread set to true', async () => {
+      await runJobWithDecision(schedulerUtils.JobDecision.PROCEED, [{ data: { hash: 'abc', runInMainThread: true }, id: 1 }], false, true)
+      expect(scheduler.workerPool).toBeNull()
+      expect(mockSyncGraphUpdates).toHaveBeenCalled()
+    })
+
+    it('should call runWorkerProcess for job decision "PROCEED"  and runInMainThread set to false', async () => {
       await runJobWithDecision(schedulerUtils.JobDecision.PROCEED, [{ data: { hash: 'abc', data: { foo: 'bar' } }, id: 2 }], true)
-      expect(workerRunner.runWorkerProcess).toHaveBeenCalledWith(
-        jobName,
-        expect.arrayContaining([`--job=${jobName}`, expect.stringContaining('--data=')]),
-        global.WIKI.ROOTPATH,
-        global.WIKI.logger
+      expect(scheduler.workerPool.runTask).toHaveBeenCalledWith(
+        { 'data': { 'foo': 'bar' }, 'job': 'sync-graph-updates' }
       )
-      expect(schedulerUtils.safeSend).not.toHaveBeenCalled()
-    })
-    it('should not add --data arg if jobData.data is empty object', async () => {
-      schedulerUtils.getJobDecision = jest.fn().mockResolvedValue(schedulerUtils.JobDecision.PROCEED)
-      workerRunner.runWorkerProcess = jest.fn().mockResolvedValue()
-      const job = [{ data: { hash: 'abc', data: {} }, id: 4 }]
-      await scheduler.boss.work.mock.calls[0][2](job)
-      const args = workerRunner.runWorkerProcess.mock.calls[0][1]
-      expect(args).toEqual([`--job=${jobName}`])
+      expect(mockSyncGraphUpdates).not.toHaveBeenCalled()
     })
   })
 })
