@@ -405,11 +405,19 @@ describe('UserMutation', () => {
       const mentionedComments = []
       const userComments = []
 
+      // Helper mock functions to avoid deep nesting
+      function mockUserQuery() {
+        return { findById: jest.fn(() => user) }
+      }
+      function mockCommentsQuery() {
+        return { where: jest.fn(() => userComments) }
+      }
+
       // Mock all DB/model/service calls
-      WIKI.models.users.query = jest.fn(() => ({ findById: jest.fn(() => user) }))
+      WIKI.models.users.query = jest.fn(mockUserQuery)
       WIKI.models.userMentions.getMentionedPages = jest.fn(() => mentionedPages)
       WIKI.models.userMentions.getMentionedComments = jest.fn(() => mentionedComments)
-      WIKI.models.comments.query = jest.fn(() => ({ where: jest.fn(() => userComments) }))
+      WIKI.models.comments.query = jest.fn(mockCommentsQuery)
       WIKI.models.users.deleteUser = jest.fn()
       userService.revokeUserTokens = jest.fn()
       WIKI.models.pageHistory.anonymizeMentionsByPageIds = jest.fn()
