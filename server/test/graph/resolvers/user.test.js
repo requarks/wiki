@@ -397,21 +397,18 @@ describe('UserMutation', () => {
         }
       })
     })
+    const user = { id: 42, email: 'test@example.com' }
+    const userComments = []
+    // Helper mock functions to avoid deep nesting
+    const mockUserQuery = () => ({ findById: jest.fn(() => user) })
+    const mockCommentsQuery = () => ({ where: jest.fn(() => userComments) })
+
     it('should anonymize page history and delete user mentions when deleting a user', async () => {
       // Arrange
       const args = { id: 42, replaceId: null }
-      const user = { id: 42, email: 'test@example.com' }
+
       const mentionedPages = [{ pageId: 1 }, { pageId: 2 }]
       const mentionedComments = []
-      const userComments = []
-
-      // Helper mock functions to avoid deep nesting
-      function mockUserQuery() {
-        return { findById: jest.fn(() => user) }
-      }
-      function mockCommentsQuery() {
-        return { where: jest.fn(() => userComments) }
-      }
 
       // Mock all DB/model/service calls
       WIKI.models.users.query = jest.fn(mockUserQuery)
