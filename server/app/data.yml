@@ -138,6 +138,11 @@ jobs:
     schedule: P1D
     offlineSkip: false
     repeat: true
+  purgePageHistory:
+    onInit: false
+    schedule: 0 2 * * *
+    offlineSkip: false
+    repeat: true
 groups:
   defaultPermissions:
     - 'read:pages'

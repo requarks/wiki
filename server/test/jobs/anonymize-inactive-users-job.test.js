@@ -1,5 +1,5 @@
 const runAnonymizationJob = require('../../jobs/anonymize-inactive-users-job')
-const { renderMentionedPages, anonymizeComments } = require('../../graph/services/userService')
+const { anonymizeComments, renderMentionedPagesWithoutScheduler } = require('../../graph/services/userService')
 
 const WIKI = {
   models: {
@@ -31,7 +31,7 @@ const WIKI = {
 }
 
 jest.mock('../../graph/services/userService', () => ({
-  renderMentionedPages: jest.fn(),
+  renderMentionedPagesWithoutScheduler: jest.fn(),
   anonymizeComments: jest.fn()
 }))
 
@@ -47,9 +47,6 @@ jest.mock('../../helpers/dateHelpers', () => {
 
 jest.mock('../../core/db', () => ({
   init: jest.fn(() => global.WIKI?.models || {})
-}))
-jest.mock('../../core/scheduler', () => ({
-  init: jest.fn(() => global.WIKI?.scheduler || {})
 }))
 jest.mock('../../models/commentProviders', () => ({
   initProvider: jest.fn(() => global.WIKI?.data?.commentProviders || {})
@@ -134,7 +131,7 @@ describe('anonymize-inactive-users-job', () => {
     expect(mockAssetsWhere).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
     expect(WIKI.models.userMentions.getMentionedPages).toHaveBeenCalledWith(42)
     expect(WIKI.models.userMentions.getMentionedComments).toHaveBeenCalledWith(42)
-    expect(renderMentionedPages).toHaveBeenCalledWith(mentionedPages)
+    expect(renderMentionedPagesWithoutScheduler).toHaveBeenCalledWith(mentionedPages)
     expect(anonymizeComments).toHaveBeenCalledWith(
       user,
       mentionedComments,
@@ -229,7 +226,7 @@ describe('anonymize-inactive-users-job', () => {
     // Assert
     expect(WIKI.models.pages.query).not.toHaveBeenCalled()
     expect(WIKI.models.comments.query).not.toHaveBeenCalled()
-    expect(renderMentionedPages).not.toHaveBeenCalled()
+    expect(renderMentionedPagesWithoutScheduler).not.toHaveBeenCalled()
     expect(anonymizeComments).not.toHaveBeenCalled()
   })
   it('should skip anonymization if user was reactivated', async () => {
@@ -252,7 +249,7 @@ describe('anonymize-inactive-users-job', () => {
     // Assert
     expect(WIKI.models.pages.query).not.toHaveBeenCalled()
     expect(WIKI.models.comments.query).not.toHaveBeenCalled()
-    expect(renderMentionedPages).not.toHaveBeenCalled()
+    expect(renderMentionedPagesWithoutScheduler).not.toHaveBeenCalled()
     expect(anonymizeComments).not.toHaveBeenCalled()
   })
 })

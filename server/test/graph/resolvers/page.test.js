@@ -31,13 +31,13 @@ const WIKI = {
     lang: 'en'
   },
   Error: {
-    PageViewForbidden: class extends Error {},
-    PageNotFound: class extends Error {}
+    PageViewForbidden: class extends Error { },
+    PageNotFound: class extends Error { }
   }
 }
 
 describe('Page Resolvers -> Query', () => {
-  const mockChildPagesQuery = function(pRow, cRows) {
+  const mockChildPagesQuery = function (pRow, cRows) {
     return jest.fn()
       // first('id').where('pageId', args.pageId)
       .mockImplementationOnce(() => ({
@@ -529,6 +529,10 @@ describe('Page Resolvers -> PageMutation', () => {
         })
       })
       WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
+      WIKI.models.followers.query.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockResolvedValue([])
+      })
 
       const result = await PageMutation.delete(null, args, context)
 

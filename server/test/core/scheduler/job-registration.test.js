@@ -9,10 +9,12 @@ describe('job-registration', () => {
     const WIKI = {
       logger: { debug: jest.fn(), warn: jest.fn() },
       config: {},
-      data: { jobs: {
-        'purge-uploads': { schedule: 'PT15M', repeat: true },
-        'anonymize-inactive-users-job': { schedule: 'P1D', repeat: true }
-      } }
+      data: {
+        jobs: {
+          'purge-uploads': { schedule: 'PT15M', repeat: true },
+          'anonymize-inactive-users-job': { schedule: 'P1D', repeat: true }
+        }
+      }
     }
     const registerJob = jest.fn()
     jobRegistration.registerStaticJobsFromConfig(WIKI, registerJob)
@@ -25,10 +27,12 @@ describe('job-registration', () => {
     const WIKI = {
       logger: { debug: jest.fn(), warn: jest.fn() },
       config: { offline: true },
-      data: { jobs: {
-        'rebuild-tree': { offlineSkip: true, schedule: 'P1D' },
-        'render-page': { schedule: 'P1D' }
-      } }
+      data: {
+        jobs: {
+          'rebuild-tree': { offlineSkip: true, schedule: 'P1D' },
+          'render-page': { schedule: 'P1D' }
+        }
+      }
     }
     const registerJob = jest.fn()
     jobRegistration.registerStaticJobsFromConfig(WIKI, registerJob)
@@ -81,5 +85,27 @@ describe('job-registration', () => {
     const registerJob = jest.fn()
     jobRegistration.registerStaticJobsFromConfig(WIKI, registerJob)
     expect(registerJob).toHaveBeenCalledWith(expect.objectContaining({ name: 'rebuild-tree', immediate: true }))
+  })
+  it('should call registerJob with a cron expression schedule', () => {
+    const WIKI = {
+      logger: { debug: jest.fn(), warn: jest.fn() },
+      config: {},
+      data: {
+        jobs: {
+          'purge-page-history': { schedule: '0 2 * * *', repeat: true }
+        }
+      }
+    }
+    const registerJob = jest.fn()
+    // Mock getScheduleType to return 'cron' for this cron expression
+    const schedulerUtils = require('../../../core/scheduler/scheduler-utils')
+    jest.spyOn(schedulerUtils, 'getScheduleType').mockReturnValue('cron')
+
+    jobRegistration.registerStaticJobsFromConfig(WIKI, registerJob)
+    expect(registerJob).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'purge-page-history',
+      schedule: '0 2 * * *',
+      repeat: true
+    }))
   })
 })

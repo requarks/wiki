@@ -1,6 +1,5 @@
 const PgBoss = require('pg-boss')
 const knexModule = require('./db')
-const configHelper = require('../helpers/config')
 const { isoDurationToCron } = require('../helpers/iso-duration-to-cron')
 const { useClientDbPooling } = require('./db')
 
@@ -97,12 +96,15 @@ class Scheduler {
   }
 
   async handleRepeatJob(opts, data, jobName, hash) {
-    let cronExpr = opts.schedule
-    if (configHelper.isValidDurationString(opts.schedule)) {
+    let cronExpr
+    const scheduleType = schedulerUtils.getScheduleType(opts.schedule)
+    if (scheduleType === 'duration') {
       cronExpr = isoDurationToCron(opts.schedule)
       if (!cronExpr) {
         throw new Error(`Unsupported ISO 8601 duration for schedule: ${opts.schedule}`)
       }
+    } else if (scheduleType === 'cron') {
+      cronExpr = opts.schedule
     }
     await this.boss.schedule(jobName, cronExpr, { data, hash })
     WIKI.logger.debug(`[scheduler] Scheduled repeating job ${jobName} with cron/interval: ${cronExpr}`)

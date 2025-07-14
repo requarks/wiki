@@ -73,6 +73,7 @@
     "connect-session-knex": "3",
     "cookie-parser": "1.4.6",
     "cors": "2.8.5",
+    "cron-validate": "1.5.2",
     "cuint": "0.2.2",
     "custom-error-instance": "2.1.2",
     "dependency-graph": "0.11.0",

@@ -120,4 +120,19 @@ describe('scheduler-utils', () => {
       expect(result).toBe(schedulerUtils.JobDecision.REQUEUE)
     })
   })
+  describe('getScheduleType', () => {
+    it('should return "cron" for a valid cron expression', () => {
+      expect(schedulerUtils.getScheduleType('0 2 * * *')).toBe('cron')
+    })
+
+    it('should return "duration" for a valid ISO 8601 duration', () => {
+      jest.spyOn(require('../../../helpers/config'), 'isValidDurationString').mockReturnValueOnce(true)
+      expect(schedulerUtils.getScheduleType('P1D')).toBe('duration')
+    })
+
+    it('should return "invalid" for an invalid schedule', () => {
+      jest.spyOn(require('../../../helpers/config'), 'isValidDurationString').mockReturnValueOnce(false)
+      expect(schedulerUtils.getScheduleType('not-a-schedule')).toBe('invalid')
+    })
+  })
 })
