@@ -59,7 +59,13 @@
                 small,
                 @click='goHome',
                 :color='$vuetify.theme.dark ? colors.surfaceDark.tertiaryBlueLite : colors.actionLight.active') mdi-home
-              v-btn.ma-0.text-none.rounded-16(v-else, :href='props.item.path', small, text) {{props.item.name}}
+              v-btn.ma-0.text-none(
+                v-else
+                :href='props.item.path'
+                small
+                text
+                rounded
+                ) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
             .caption.red--text {{$t('common:page.unpublished')}}
@@ -80,15 +86,17 @@
             .page-header-headings
               .headline {{title}}
               .caption.grey--text.text--darken-1 {{description}}
-              v-btn.mr-5.hover-btn.rounded-20.text-primary.text-none(
+              v-btn.mr-5.hover-btn.text-primary.text-none(
                 v-if='isAuthenticated && isFollower != null && !isFollower'
                 @click='followPage'
                 :color='colors.actionLight.highlightOnLite'
+                rounded
                 ) Follow
-              v-btn.mr-5.hover-btn.rounded-20.text-primary.text-none(
+              v-btn.mr-5.hover-btn.text-primary.text-none(
                 v-if='isAuthenticated && isFollower != null && isFollower'
                 @click='unfollowPage'
                 :color='colors.actionLight.highlightOnLite'
+                rounded
                 ) Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -137,7 +145,7 @@
                 nav
                 :color='tileColor'
                 )
-                TreeItem.rounded-20(
+                TreeItem(
                   v-for='(tocItem, tocIdx) in tocDecoded'
                   :key='tocIdx'
                   :item='tocItem'
@@ -181,10 +189,11 @@
                     :class='$vuetify.theme.dark ? `dark` : ``'
                     ) {{$t('common:comments.sdTitle')}}
                 .d-flex
-                  v-btn.text-none.rounded-20(
+                  v-btn.text-none(
                     @click='goToComments()'
                     :color='tileBtnColor'
                     outlined
+                    rounded
                     style='flex: 1 1 100%;'
                     small
                     )
@@ -193,10 +202,11 @@
                       ) {{$t('common:comments.viewDiscussion')}}
                   v-tooltip(bottom, v-if='commentsPerms.write')
                     template(v-slot:activator='{ on }')
-                      v-btn.ml-2.rounded-20(
+                      v-btn.ml-2(
                         @click='goToComments(true)'
                         v-on='on'
                         outlined
+                        rounded
                         small
                         :color='tileBtnColor'
                         :aria-label='$t(`common:comments.newComment`)'
@@ -410,6 +420,7 @@
         :aria-label='$t(`common:actions.returnToTop`)'
         )
         v-icon mdi-arrow-up
+    //- Export to File Modal
     v-dialog(
       v-model='isExportModalVisible'
       max-width='750'
@@ -435,28 +446,29 @@
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
           v-spacer
-          v-btn.rounded-20(
+          v-btn(
             text
+            rounded
             @click='isExportModalVisible = false'
             ) {{ messages.cancel }}
-          v-btn.px-4.rounded-20.action-btn.hover-btn(
+          v-btn.px-4.action-btn.hover-btn(
             v-if='exportFileType === `docx`'
-            color='primary'
+            rounded
             @click='exportSinglePageToWord()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.rounded-20.action-btn.hover-btn(
+          v-btn.px-4.action-btn.hover-btn(
             v-else-if='exportFileType === `pdf`'
-            color='primary'
+            rounded
             @click='exportSinglePageToPdf()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.rounded-20.action-btn.hover-btn(
+          v-btn.px-4.action-btn.hover-btn(
             v-if='exportFileType === `docx`'
-            color='primary'
+            rounded
             @click='exportPageTreeToWord()'
             ) {{ messages.exportPageTree }}
-          v-btn.px-4.rounded-20.action-btn.hover-btn(
+          v-btn.px-4.action-btn.hover-btn(
             v-else-if='exportFileType === `pdf`'
-            color='primary'
+            rounded
             @click='exportPageTreeToPdf()'
             ) {{ messages.exportPageTree }}
 </template>
@@ -1154,14 +1166,6 @@ export default {
   &:hover {
     background-color: mc('action-dark', 'highlight-on-lite') !important;
   }
-}
-
-.v-btn.rounded-16 {
-  border-radius: 16px;
-}
-
-.v-btn.rounded-20 {
-  border-radius: 20px !important;
 }
 
 .v-btn.rounded-fully {

@@ -103,11 +103,12 @@
         )
       v-card-chin
         v-spacer
-        v-btn.rounded-20(text, @click='close') {{$t('common:actions.cancel')}}
-        v-btn.px-4.rounded-20(
+        v-btn(text, rounded, @click='close') {{$t('common:actions.cancel')}}
+        v-btn.px-4(
           :color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
           @click='open'
           :disabled='!isValidPath'
+          rounded
           )
           v-icon(
             left
@@ -413,10 +414,6 @@ export default {
     &.is-dark {
       color: mc("text-dark", "inverse")
     }
-  }
-
-  .rounded-20 {
-    border-radius: 20px;
   }
 
   .left-rounded-50 {

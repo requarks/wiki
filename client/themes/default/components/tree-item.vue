@@ -1,6 +1,6 @@
 <template lang="pug">
   div.d-flex.flex-column.w-100
-    v-list-item.list-item-class.w-100.pl-0.pr-0
+    v-list-item.list-item-class.w-100.pl-0.pr-0.rounded-20
       div.d-flex.align-center.flex-grow-1.w-100.pl-2
         v-icon.mr-2(v-if='hasChildren', color='grey', small, @click.stop='handleToggle') {{ icon }}
         v-icon.mr-2(v-else, color='transparent', small) mdi-chevron-right
@@ -110,6 +110,9 @@ export default {
   }
   .w-100 {
     width: 100%;
+  }
+  .rounded-20 {
+  border-radius: 20px;
   }
   .v-list-item__title {
     &.sub-section {
