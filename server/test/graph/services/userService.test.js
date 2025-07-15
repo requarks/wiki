@@ -243,9 +243,11 @@ describe('userService', () => {
       expect(result).toBe('<span class="mention mention-anonymous">@AnonymousUser</span> and <span class="mention mention-anonymous">@AnonymousUser</span> and <span class="mention" data-mention="user@example.com">@user@example.com</span>')
     })
 
-    it('should return content unchanged for unknown contentType', () => {
-      const content = 'No mention here'
-      const result = anonymizeUserMentions(content, 'other', email)
+    it('should return content unchanged for ascii contentType', () => {
+      const email = 'test.user@example.com'
+      const { anonymizeUserMentions } = userService
+      const content = 'This is some ascii content with @test.user@example.com'
+      const result = anonymizeUserMentions(content, 'ascii', email)
       expect(result).toBe(content)
     })
   })

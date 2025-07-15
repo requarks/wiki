@@ -260,6 +260,7 @@ module.exports = class PageHistory extends Model {
   static async purgeByPageId(pageId) {
     await WIKI.models.pageHistory.query().where('pageId', '=', pageId).del()
   }
+
   /**
  * Anonymize user mentions in pageHistory content for given pageIds
  * @param {Array<string>} pageIds - IDs of pages where the user is mentioned
