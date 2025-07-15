@@ -50,6 +50,10 @@ const WIKI = {
   Error: require('../../../helpers/error')
 }
 
+jest.mock('../../../helpers/anonymizeInactiveUsersHelpers', () => ({
+  retrieveOrCreateAnonymousUser: jest.fn().mockResolvedValue({ id: 999 })
+}))
+
 describe('UserQuery', () => {
   describe('autoCompleteEmails', () => {
     beforeEach(() => {
@@ -328,6 +332,7 @@ describe('UserMutation', () => {
       const mentionedPages = []
       const mentionedComments = []
       const userComments = []
+      const anonymousUser = { id: 999 }
 
       WIKI.models.users.query.mockReturnValue({
         findById: jest.fn().mockResolvedValue(user)
@@ -359,7 +364,7 @@ describe('UserMutation', () => {
       expect(WIKI.models.users.deleteUser).toHaveBeenCalledWith(args.id, args.replaceId)
       expect(userService.revokeUserTokens).toHaveBeenCalledWith(args.id)
       expect(userService.renderMentionedPages).toHaveBeenCalledWith(mentionedPages)
-      expect(userService.anonymizeComments).toHaveBeenCalledWith(user, mentionedComments, userComments)
+      expect(userService.anonymizeComments).toHaveBeenCalledWith(user, mentionedComments, userComments, anonymousUser)
       expect(result).toEqual({
         responseResult: graphHelper.generateSuccess('User deleted successfully')
       })

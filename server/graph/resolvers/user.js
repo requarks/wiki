@@ -1,6 +1,7 @@
 const graphHelper = require('../../helpers/graph')
 const _ = require('lodash')
 const userService = require('../services/userService')
+const { retrieveOrCreateAnonymousUser } = require('../../helpers/anonymizeInactiveUsersHelpers')
 
 /* global WIKI */
 
@@ -110,6 +111,7 @@ module.exports = {
         const mentionedPages = await WIKI.models.userMentions.getMentionedPages(args.id)
         const mentionedComments = await WIKI.models.userMentions.getMentionedComments(args.id)
         const userComments = await WIKI.models.comments.query().where('authorId', args.id)
+        const anonymousUser = await retrieveOrCreateAnonymousUser()
 
         await WIKI.models.users.deleteUser(args.id, args.replaceId)
         await userService.revokeUserTokens(args.id)
@@ -121,7 +123,7 @@ module.exports = {
         )
 
         await userService.renderMentionedPages(mentionedPages)
-        await userService.anonymizeComments(user, mentionedComments, userComments)
+        await userService.anonymizeComments(user, mentionedComments, userComments, anonymousUser)
 
         return {
           responseResult: graphHelper.generateSuccess('User deleted successfully')

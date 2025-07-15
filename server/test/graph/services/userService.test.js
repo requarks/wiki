@@ -35,6 +35,9 @@ const WIKI = {
     }
   }
 }
+jest.mock('../../../helpers/anonymizeInactiveUsersHelpers', () => ({
+  retrieveOrCreateAnonymousUser: jest.fn().mockResolvedValue({ id: 999 })
+}))
 
 function setupMocks(comments, pages) {
   WIKI.models.comments.query.mockReturnValue({
@@ -109,11 +112,12 @@ describe('userService', () => {
       const pages = [
         { id: 1 }
       ]
+      const anonymousUser = { id: 999 }
 
       setupMocks(comments, pages)
 
       // Act
-      await userService.anonymizeComments(user, mentionedComments, [])
+      await userService.anonymizeComments(user, mentionedComments, [], anonymousUser)
 
       // Assert
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledTimes(1)
@@ -136,11 +140,12 @@ describe('userService', () => {
         { id: 1 },
         { id: 2 }
       ]
+      const anonymousUser = { id: 999 }
 
       setupMocks(userCommentomments, pages)
 
       // Act
-      await userService.anonymizeComments(user, mentionedComments, userCommentomments)
+      await userService.anonymizeComments(user, mentionedComments, userCommentomments, anonymousUser)
 
       // Assert
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledTimes(2)
@@ -149,14 +154,16 @@ describe('userService', () => {
         content: userCommentomments[0].content,
         page: pages[0],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledWith({
         id: userCommentomments[1].id,
         content: userCommentomments[1].content,
         page: pages[1],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
     })
     it('should anonymize comments authored by the user mentioning self', async () => {
@@ -172,11 +179,12 @@ describe('userService', () => {
         { id: 1 },
         { id: 2 }
       ]
+      const anonymousUser = { id: 999 }
 
       setupMocks(userComments, pages)
 
       // Act
-      await userService.anonymizeComments(user, mentionedComments, userComments)
+      await userService.anonymizeComments(user, mentionedComments, userComments, anonymousUser)
 
       // Assert
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledTimes(2)
@@ -185,14 +193,16 @@ describe('userService', () => {
         content: 'Hello @AnonymousUser',
         page: pages[0],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledWith({
         id: 2,
         content: 'Hi @AnonymousUser',
         page: pages[1],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
     })
   })

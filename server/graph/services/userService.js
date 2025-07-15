@@ -22,7 +22,7 @@ async function renderMentionedPagesWithoutScheduler(mentionedPages) {
   }
 }
 
-async function anonymizeComments(user, mentionedComments, userComments) {
+async function anonymizeComments(user, mentionedComments, userComments, anonymousUser) {
   const allComments = [...mentionedComments, ...userComments.map(comment => ({ commentId: comment.id }))]
   const uniqueCommentIds = [...new Set(allComments.map(comment => comment.commentId))]
 
@@ -45,6 +45,10 @@ async function anonymizeComments(user, mentionedComments, userComments) {
       if (userComments.some(userComment => userComment.id === commentId)) {
         updateData.name = 'Anonymous User'
         updateData.email = '[deleted]'
+      }
+
+      if (userComments.some(userComment => userComment.authorId === user.id)) {
+        updateData.authorId = anonymousUser.id
       }
 
       await WIKI.data.commentProvider.update(updateData)
