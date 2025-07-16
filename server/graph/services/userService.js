@@ -22,7 +22,7 @@ async function renderMentionedPagesWithoutScheduler(mentionedPages) {
   }
 }
 
-async function anonymizeComments(user, mentionedComments, userComments) {
+async function anonymizeComments(user, mentionedComments, userComments, anonymousUser) {
   const allComments = [...mentionedComments, ...userComments.map(comment => ({ commentId: comment.id }))]
   const uniqueCommentIds = [...new Set(allComments.map(comment => comment.commentId))]
 
@@ -47,6 +47,10 @@ async function anonymizeComments(user, mentionedComments, userComments) {
         updateData.email = '[deleted]'
       }
 
+      if (userComments.some(userComment => userComment.authorId === user.id)) {
+        updateData.authorId = anonymousUser.id
+      }
+
       await WIKI.data.commentProvider.update(updateData)
       await WIKI.models.userMentions.query().delete().where({ userId: user.id, pageId: comment.pageId, commentId: comment.id })
     }
@@ -61,10 +65,31 @@ function handleDeleteError(err) {
   }
 }
 
+/**
+ * This function anonymizes user mentions in content for both markdown and HTML content types.
+ * It replaces mentions of the user's email with '@AnonymousUser' in markdown,
+ * and replaces HTML span elements with the mention class with a generic anonymous mention.
+ * Currently, there is no mention functionality for the 'ascii' editor
+ * so this function returns the original content for ascii.
+ * @param {*} content - The content of the page.
+ * @param {*} contentType - The content type of the page ('markdown', 'html', or 'ascii').
+ * @param {*} email - The email of the user to anonymize.
+ * @returns {string} Content with anonymized mentions, or the original content for ascii.
+ */
+function anonymizeUserMentions(content, contentType, email) {
+  if (contentType === 'markdown') {
+    return content.replace(new RegExp(`@${email}`, 'g'), '@AnonymousUser')
+  } else if (contentType === 'html') {
+    return content.replace(new RegExp(`<span class="mention" data-mention="${email}">@${email}</span>`, 'g'), '<span class="mention mention-anonymous">@AnonymousUser</span>')
+  }
+  return content
+}
+
 module.exports = {
   revokeUserTokens,
   renderMentionedPages,
   renderMentionedPagesWithoutScheduler,
   anonymizeComments,
-  handleDeleteError
+  handleDeleteError,
+  anonymizeUserMentions
 }

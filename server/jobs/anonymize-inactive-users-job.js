@@ -1,89 +1,46 @@
 
 const userService = require('../graph/services/userService')
-const userSiteInactivityService = require('../graph/services/userSiteInactivityService')
-const { inactivityThresholdISOString } = require('../helpers/dateHelpers')
+const {
+  getUser,
+  getSitePageIds,
+  getMentionedPagesOfSite,
+  getMentionedCommentsOfSite,
+  getUserCommentsOfSite,
+  userWasReactivated,
+  anonymizeAssets,
+  anonymizePageHistory,
+  anonymizePages,
+  removeInactivityEntry,
+  removeUserMentions,
+  getInactiveForThresholdOrMore,
+  retrieveOrCreateAnonymousUser } = require('../helpers/anonymizeInactiveUsersHelpers')
 
 /* global WIKI */
 
-async function getInactiveForThresholdOrMore() {
-  const thresholdDate = inactivityThresholdISOString()
-  const inactiveEntries = await WIKI.models.userSiteInactivity.query()
-    .where('inactiveSince', '<', thresholdDate)
-  return inactiveEntries
-}
-
-// Helper to get or create the anonymous user
-async function retrieveOrCreateAnonymousUser() {
-  let anonymousUser = await WIKI.models.users.query().findOne({ email: 'anonymous@user.com' })
-  if (!anonymousUser) {
-    anonymousUser = await WIKI.models.users.query().insert({
-      provider: 'local',
-      email: 'anonymous@user.com',
-      name: 'AnonymousUser',
-      password: '',
-      locale: 'en',
-      defaultEditor: 'markdown',
-      tfaIsActive: false,
-      isSystem: true,
-      isActive: true,
-      isVerified: true,
-      isLocked: true
-    })
-  }
-  return anonymousUser
-}
-
 async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
   // Check if user was reactivated
-  const userIsActiveAgain = await userSiteInactivityService.removedUserSiteInactivityIfReactivated(userSiteInactivity.userId)
-  if (userIsActiveAgain) {
-    console.log(`User ${userSiteInactivity.userId} was reactivated, skipping anonymization for site ${userSiteInactivity.siteId}`)
-    return
-  }
+  if (await userWasReactivated(userSiteInactivity.userId)) return
 
-  // Anonymize mentions and comments
-  const user = await WIKI.models.users.query().findById(userSiteInactivity.userId)
-  const mentionedPages = await WIKI.models.userMentions.getMentionedPages(userSiteInactivity.userId)
-  const mentionedComments = await WIKI.models.userMentions.getMentionedComments(userSiteInactivity.userId)
+  // Gather all relevant data
+  const user = await getUser(userSiteInactivity.userId)
+  const sitePageIds = await getSitePageIds(userSiteInactivity.siteId)
+  const mentionedPagesOfSite = await getMentionedPagesOfSite(userSiteInactivity.userId, sitePageIds)
+  const mentionedCommentsOfSite = await getMentionedCommentsOfSite(userSiteInactivity.userId, sitePageIds)
+  const commentsOfSite = await getUserCommentsOfSite(userSiteInactivity.userId, sitePageIds)
 
-  const sitePages = await WIKI.models.pages.query()
-    .where({ siteId: userSiteInactivity.siteId })
-    .select('id')
-  const sitePageIds = sitePages.map(page => page.id)
-
-  const mentionedPagesOfSite = mentionedPages.filter(mp => sitePageIds.includes(mp.pageId))
-  const mentionedCommentsOfSite = mentionedComments.filter(mc => sitePageIds.includes(mc.pageId))
-
-  const userComments = await WIKI.models.comments.query()
-    .where({ authorId: userSiteInactivity.userId })
-  const commentsOfSite = userComments.filter(comment => sitePageIds.includes(comment.pageId))
-
+  // Render mentioned pages and re-init DB connection
   await userService.renderMentionedPagesWithoutScheduler(mentionedPagesOfSite)
-  // Connection needs to be re-established after rendering pages
-  // because the connection is closed in the render job
   WIKI.models = require('../core/db').init()
 
-  await WIKI.models.assets.query()
-    .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
-    .patch({ authorId: anonymousUser.id })
-  await userService.anonymizeComments(user, mentionedCommentsOfSite, commentsOfSite)
-  await WIKI.models.pageHistory.query()
-    .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
-    .patch({ authorId: anonymousUser.id })
-  await WIKI.models.pages.query()
-    .where({ 'authorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
-    .patch({ authorId: anonymousUser.id })
-  await WIKI.models.pages.query()
-    .where({ 'creatorId': userSiteInactivity.userId, 'siteId': userSiteInactivity.siteId })
-    .patch({ creatorId: anonymousUser.id })
+  // Anonymize assets, comments, page history, and pages
+  await anonymizeAssets(userSiteInactivity, anonymousUser)
+  await userService.anonymizeComments(user, mentionedCommentsOfSite, commentsOfSite, anonymousUser)
+  await anonymizePageHistory(userSiteInactivity, anonymousUser, user)
+  await anonymizePages(userSiteInactivity, anonymousUser)
 
-  // Remove inactivity entry
-  await WIKI.models.userSiteInactivity.query()
-    .delete()
-    .where({
-      userId: userSiteInactivity.userId,
-      siteId: userSiteInactivity.siteId
-    })
+  // Remove inactivity entry and user mentions
+  await removeInactivityEntry(userSiteInactivity)
+  await removeUserMentions(mentionedPagesOfSite, userSiteInactivity.userId)
   await WIKI.models.knex.destroy()
 }
 
