@@ -53,7 +53,7 @@ describe('runAnonymizationJob', () => {
     global.WIKI = WIKI
   })
 
-  afterAll(() => {
+  afterEach(() => {
     jest.clearAllMocks()
   })
 

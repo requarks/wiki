@@ -74,7 +74,7 @@ describe('anonymizeInactiveUsersHelpers', () => {
         { pageId: 1 }, { pageId: 2 }, { pageId: 3 }
       ])
 
-      const result = await helpers.getMentionedPagesOfSite(42, [1, 3])
+      const result = await helpers.getMentionedPagesOfSite(42, [1, 3, 4])
 
       expect(result).toEqual([{ pageId: 1 }, { pageId: 3 }])
     })
@@ -86,7 +86,7 @@ describe('anonymizeInactiveUsersHelpers', () => {
         { pageId: 1 }, { pageId: 2 }
       ])
 
-      const result = await helpers.getMentionedCommentsOfSite(42, [2])
+      const result = await helpers.getMentionedCommentsOfSite(42, [2, 3])
 
       expect(result).toEqual([{ pageId: 2 }])
     })
@@ -100,7 +100,7 @@ describe('anonymizeInactiveUsersHelpers', () => {
         ])
       })
 
-      const result = await helpers.getUserCommentsOfSite(42, [2])
+      const result = await helpers.getUserCommentsOfSite(42, [2, 3])
 
       expect(result).toEqual([{ pageId: 2 }])
     })
@@ -191,8 +191,8 @@ describe('anonymizeInactiveUsersHelpers', () => {
   })
 
   describe('retrieveOrCreateAnonymousUser', () => {
+    const anonymousUser = { id: 999 }
     it('should return existing anonymous user', async () => {
-      const anonymousUser = { id: 999 }
       WIKI.models.users.query.mockReturnValue({ findOne: jest.fn().mockResolvedValue(anonymousUser) })
 
       const result = await helpers.retrieveOrCreateAnonymousUser()
@@ -200,7 +200,6 @@ describe('anonymizeInactiveUsersHelpers', () => {
       expect(result).toBe(anonymousUser)
     })
     it('should create anonymous user if not found', async () => {
-      const anonymousUser = { id: 999 }
       WIKI.models.users.query
         .mockReturnValueOnce({ findOne: jest.fn().mockResolvedValue(null) })
         .mockReturnValueOnce({ insert: jest.fn().mockResolvedValue(anonymousUser) })

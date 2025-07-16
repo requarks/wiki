@@ -95,11 +95,11 @@ async function getInactiveForThresholdOrMore() {
 
 // Helper to get or create the anonymous user
 async function retrieveOrCreateAnonymousUser() {
-  let anonymousUser = await WIKI.models.users.query().findOne({ email: 'anonymous@user.com' })
+  let anonymousUser = await WIKI.models.users.query().findOne({ email: 'deleted@deleted.deleted' })
   if (!anonymousUser) {
     anonymousUser = await WIKI.models.users.query().insert({
       provider: 'local',
-      email: 'anonymous@user.com',
+      email: 'deleted@deleted.deleted',
       name: 'AnonymousUser',
       password: '',
       locale: 'en',

@@ -99,6 +99,7 @@ describe('userService', () => {
   })
 
   describe('anonymizeComments', () => {
+    const anonymousUser = { id: 999 }
     it('should anonymize comments where the user was mentioned by others', async () => {
       // Arrange
       const userId = 3
@@ -112,7 +113,6 @@ describe('userService', () => {
       const pages = [
         { id: 1 }
       ]
-      const anonymousUser = { id: 999 }
 
       setupMocks(comments, pages)
 
@@ -140,7 +140,6 @@ describe('userService', () => {
         { id: 1 },
         { id: 2 }
       ]
-      const anonymousUser = { id: 999 }
 
       setupMocks(userCommentomments, pages)
 
@@ -179,7 +178,6 @@ describe('userService', () => {
         { id: 1 },
         { id: 2 }
       ]
-      const anonymousUser = { id: 999 }
 
       setupMocks(userComments, pages)
 
