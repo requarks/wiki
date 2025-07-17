@@ -41,6 +41,25 @@ module.exports = {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
       })
+    },
+    async folderByPath(obj, args, context) {
+      const parts = args.path.toLowerCase().split('/').filter(Boolean)
+      let parentId = null
+      for (const slug of parts) {
+        const folder = await WIKI.models.assetFolders.query().where({
+          parentId: parentId,
+          slug: slug
+        }).first()
+        if (!folder) {
+          return null
+        }
+        const currentPath = [...parts.slice(0, parts.indexOf(slug) + 1)].join('/')
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path: currentPath })) {
+          throw new WIKI.Error.AssetAccessForbidden()
+        }
+        parentId = folder.id
+      }
+      return WIKI.models.assetFolders.query().findById(parentId)
     }
   },
   AssetMutation: {
