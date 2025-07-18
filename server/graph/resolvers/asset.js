@@ -43,23 +43,23 @@ module.exports = {
       })
     },
     async folderByPath(obj, args, context) {
-      const parts = args.path.toLowerCase().split('/').filter(Boolean)
+      const segments = args.path.toLowerCase().split('/').filter(Boolean)
+      const allFolders = await WIKI.models.assetFolders.query()
       let parentId = null
-      for (const slug of parts) {
-        const folder = await WIKI.models.assetFolders.query().where({
-          parentId: parentId,
-          slug: slug
-        }).first()
-        if (!folder) {
+      let currentFolder = null
+      let builtPath = ''
+      for (const segment of segments) {
+        currentFolder = allFolders.find(f =>
+          f.parentId === parentId && f.slug === segment
+        )
+        if (!currentFolder) return null
+        builtPath = builtPath ? `${builtPath}/${segment}` : segment
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path: builtPath })) {
           return null
         }
-        const currentPath = [...parts.slice(0, parts.indexOf(slug) + 1)].join('/')
-        if (!WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path: currentPath })) {
-          throw new WIKI.Error.AssetAccessForbidden()
-        }
-        parentId = folder.id
+        parentId = currentFolder.id
       }
-      return WIKI.models.assetFolders.query().findById(parentId)
+      return currentFolder
     }
   },
   AssetMutation: {
