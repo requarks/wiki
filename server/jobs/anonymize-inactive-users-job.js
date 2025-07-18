@@ -28,9 +28,8 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
   const mentionedCommentsOfSite = await getMentionedCommentsOfSite(userSiteInactivity.userId, sitePageIds)
   const commentsOfSite = await getUserCommentsOfSite(userSiteInactivity.userId, sitePageIds)
 
-  // Render mentioned pages and re-init DB connection
+  // Render mentioned pages
   await userService.renderMentionedPagesWithoutScheduler(mentionedPagesOfSite)
-  WIKI.models = require('../core/db').init()
 
   // Anonymize assets, comments, page history, and pages
   await anonymizeAssets(userSiteInactivity, anonymousUser)
@@ -41,11 +40,9 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
   // Remove inactivity entry and user mentions
   await removeInactivityEntry(userSiteInactivity)
   await removeUserMentions(mentionedPagesOfSite, userSiteInactivity.userId)
-  await WIKI.models.knex.destroy()
 }
 
 module.exports = async () => {
-  WIKI.models = require('../core/db').init()
   WIKI.data.commentProviders = require('../models/commentProviders').initProvider()
   await WIKI.configSvc.loadFromDb()
   await WIKI.configSvc.applyFlags()
