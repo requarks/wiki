@@ -41,6 +41,25 @@ module.exports = {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
       })
+    },
+    async folderByPath(obj, args, context) {
+      const segments = args.path.toLowerCase().split('/').filter(Boolean)
+      const allFolders = await WIKI.models.assetFolders.query()
+      let parentId = null
+      let currentFolder = null
+      let builtPath = ''
+      for (const segment of segments) {
+        currentFolder = allFolders.find(f =>
+          f.parentId === parentId && f.slug === segment
+        )
+        if (!currentFolder) return null
+        builtPath = builtPath ? `${builtPath}/${segment}` : segment
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path: builtPath })) {
+          return null
+        }
+        parentId = currentFolder.id
+      }
+      return currentFolder
     }
   },
   AssetMutation: {
