@@ -2,7 +2,7 @@
   .editor-ckeditor
     div(ref='toolbarContainer')
     div.contents(ref='editor')
-    v-system-bar.editor-ckeditor-sysbar(dark, status, color='grey darken-3')
+    v-system-bar.editor-ckeditor-sysbar(dark, status, :color='colors.surfaceDark.black')
       .caption.editor-ckeditor-sysbar-locale {{locale.toUpperCase()}}
       .caption.px-3 /{{path}}
       template(v-if='$vuetify.breakpoint.mdAndUp')
@@ -20,6 +20,7 @@ import { get, sync } from 'vuex-pathify'
 import DecoupledEditor from './ckeditor/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
+import colors from '@/themes/default/js/color-scheme'
 
 /* global siteLangs */
 
@@ -43,7 +44,8 @@ export default {
       },
       content: '',
       isConflict: false,
-      insertLinkDialog: false
+      insertLinkDialog: false,
+      colors: colors
     }
   },
   computed: {
@@ -238,12 +240,12 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 $editor-height: calc(100vh - 64px - 24px);
 $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
-  background-color: rgba(255,255,255,.25);
+  background-color: mc('surface-light', 'disabled');
   display: inline-flex;
   display: flex;
   flex-flow: column nowrap;
@@ -252,7 +254,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   position: relative;
 
   @at-root .theme--dark & {
-    background-color: mc('neutral', '900');
+    background-color: mc('surface-dark', 'disabled');
   }
 
   @include until($tablet) {
@@ -264,7 +266,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255, 255, 255, 0.25);
+      background-color: mc("surface-dark", "secondary-neutral-lite");
       display: inline-flex;
       padding: 0 12px;
       height: 24px;
@@ -275,6 +277,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   }
 
   .contents {
+
     table {
       margin: inherit;
     }
@@ -285,19 +288,13 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
   }
 
-  .ck.ck-toolbar {
-    border: none;
-    justify-content: center;
-    background-color: mc('neutral', '300');
-    color: #FFF;
-  }
-
   .ck.ck-toolbar__items {
     justify-content: center;
   }
 
   > .ck-editor__editable {
-    background-color: mc('neutral', '100');
+    background-color: mc('surface-light', 'page-background');
+    color: mc('text-light', 'primary');
     overflow-y: auto;
     overflow-x: hidden;
     padding: 2rem;
@@ -308,8 +305,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     border-radius: 5px;
 
     @at-root .theme--dark & {
-      background-color: #303030;
-      color: #FFF;
+      background-color: mc('surface-dark', 'page-background');
+      color: mc('text-dark', 'primary');
     }
 
     @include until($widescreen) {
@@ -354,5 +351,82 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     color: #ffffff;
     background-color: mc('blue', '900') !important;
   }
+}
+</style>
+
+// Global styling
+<style lang="scss">
+.editor-ckeditor {
+
+  .ck.ck-toolbar {
+    border: none;
+    justify-content: center;
+    background-color: mc('surface-light', 'tertiary-neutral-lite');
+
+    &.ck-disabled {
+      color: mc('text-light', 'disabled');
+    }
+
+    .ck-button:hover {
+      &:not(.ck-disabled) {
+        background: mc('surface-light', 'secondary-neutral-lite');
+      }
+      &.ck-disabled {
+        background: transparent;
+        &> .ck-icon {
+          background-color: transparent;
+        }
+      }
+    }
+
+    @at-root .theme--dark & {
+      background-color: mc('surface-dark', 'tertiary-neutral-lite');
+
+      .ck.ck-dropdown__panel {
+        border: mc('border-dark', 'inverse');
+
+        .ck.ck-button.ck-list-item-button {
+          background: mc('surface-dark', 'primary-neutral-lite');
+
+          &:hover {
+            color: mc('action-dark', 'active')
+          }
+        }
+      }
+
+      .ck.ck-list {
+        background-color: mc('surface-dark', 'primary-neutral-lite');
+        border-radius: 0px;
+      }
+
+      .ck.ck-dropdown__button:hover:not(.ck-disabled) > *,
+      .ck.ck-dropdown__button.ck-splitbutton_open > *,
+      .ck.ck-dropdown > .ck-button.ck-on {
+        background-color: mc('surface-dark', 'primary-neutral-lite');
+      }
+
+      .ck-button, .ck-dropdown {
+        color: mc('text-dark', 'primary');
+
+        &:hover:not(.ck-disabled),
+        &.ck-on,
+        .ck.ck-dropdown__panel,
+        .ck.ck-toolbar,
+        .ck-toolbar__items,
+        .ck-color-grids-fragment {
+          background: mc('surface-dark', 'primary-neutral-lite');
+          color: mc('action-dark', 'active')
+        }
+      }
+    }
+  }
+}
+
+:root {
+  --ck-highlight-marker-yellow: #{mc('yellow', '600')};
+  --ck-highlight-marker-green: #{mc('green', '600')};
+  --ck-highlight-marker-blue: #{mc('blue', '600')};
+  --ck-highlight-marker-red: #{mc('red', '700')};
+  --ck-highlight-marker-pink: #{mc('red', '400')};
 }
 </style>

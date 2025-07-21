@@ -1,6 +1,12 @@
 <template lang='pug'>
   .editor-markdown
-    v-toolbar.editor-markdown-toolbar(dense, :color='colors.surfaceDark.primaryBlueHeavy', dark, flat, style='overflow-x: hidden;')
+    v-toolbar.editor-markdown-toolbar(
+      :color='colors.surfaceDark.primaryBlueHeavy'
+      style='overflow-x: hidden;'
+      dense
+      dark
+      flat
+      )
       template(v-if='isModalShown')
         v-spacer
         v-btn.animated.fadeInRight(text, @click='closeAllModal')
@@ -1027,7 +1033,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang='scss' scoped>
 
 $editor-height: calc(100vh - 112px - 24px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
@@ -1118,7 +1124,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
         font-size: 14px;
         font-weight: 500;
         border-radius: 5px 0 0 0;
-        font-style: italic;
 
         &::after {
           display: none;
@@ -1237,12 +1242,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     }
   }
 
-  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+  ::v-deep .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
     background-color: mc('surface-dark', 'page-background');
   }
 
-  .CodeMirror-scroll {
+  ::v-deep .CodeMirror-scroll {
     .CodeMirror-gutters {
       background-color: mc('surface-dark', 'page-background');
     }

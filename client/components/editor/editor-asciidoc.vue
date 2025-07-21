@@ -1,18 +1,24 @@
 <template lang='pug'>
   .editor-asciidoc
-    v-toolbar.editor-asciidoc-toolbar(dense, color='primary', dark, flat, style='overflow-x: hidden;')
+    v-toolbar.editor-asciidoc-toolbar(
+      :color='colors.surfaceDark.primaryBlueHeavy'
+      style='overflow-x: hidden;'
+      dense
+      dark
+      flat
+      )
       template(v-if='isModalShown')
         v-spacer
         v-btn.animated.fadeInRight(text, @click='closeAllModal')
           v-icon(left) mdi-arrow-left-circle
           span {{$t('editor:backToEditor')}}
       template(v-else)
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn(icon, tile, v-on='on', @click='toggleMarkup({ start: `**` })').mx-0
               v-icon mdi-format-bold
           span {{$t('editor:markup.bold')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p1s(icon, tile, v-on='on', @click='toggleMarkup({ start: `__` })').mx-0
               v-icon mdi-format-italic
@@ -28,12 +34,12 @@
                   v-icon(:size='24 - (idx - 1) * 2') mdi-format-header-{{n}}
                 v-list-item-title {{$t('editor:markup.heading', { level: n })}}
               v-divider(v-if='idx < 5')
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p4s(icon, tile, v-on='on', @click='toggleMarkup({ start: `~` })').mx-0
               v-icon mdi-format-subscript
           span {{$t('editor:markup.subscript')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p5s(icon, tile, v-on='on', @click='toggleMarkup({ start: `^` })').mx-0
               v-icon mdi-format-superscript
@@ -74,7 +80,7 @@
             v-divider
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
-          v-tooltip(bottom, color='primary')
+          v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
               v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
                 v-icon mdi-book-open-outline
@@ -82,24 +88,24 @@
 
     .editor-asciidoc-main
       .editor-asciidoc-sidebar
-        v-tooltip(right, color='teal')
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, @click='insertLink').mx-0
               v-icon mdi-link-plus
           span {{$t('editor:markup.insertLink')}}
-        v-tooltip(right, color='teal')
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
               v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
           span {{$t('editor:markup.insertAssets')}}
-        v-tooltip(right, color='teal')
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p5s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
-          v-tooltip(right, color='teal')
+          v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
               v-btn.mt-3.animated.fadeInLeft.wait-p8s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
                 v-icon mdi-arrow-expand-all
@@ -114,7 +120,7 @@
               v-html='previewHTML'
               )
 
-    v-system-bar.editor-asciidoc-sysbar(dark, status, color='grey darken-3')
+    v-system-bar.editor-asciidoc-sysbar(dark, status, :color='colors.surfaceDark.black')
       .caption.editor-asciidoc-sysbar-locale {{locale.toUpperCase()}}
       .caption.px-3 /{{path}}
       template(v-if='$vuetify.breakpoint.mdAndUp')
@@ -129,6 +135,7 @@
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
 import DOMPurify from 'dompurify'
+import colors from '@/themes/default/js/color-scheme'
 
 // ========================================
 // IMPORTS
@@ -180,7 +187,8 @@ export default {
       previewShown: true, // TODO
       insertLinkDialog: false,
       helpShown: false,
-      previewHTML: ''
+      previewHTML: '',
+      colors: colors
     }
   },
   computed: {
@@ -493,9 +501,18 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang='scss' scoped>
 $editor-ascii-height: calc(100vh - 137px);
 $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
+$editor-bg: mc('surface-dark', 'page-background');
+
+.v-btn {
+  border-radius: 50px;
+}
+
+.editor-asciidoc-toolbar.v-toolbar.v-toolbar--dense {
+  background-color: mc('surface-dark', 'primary-blue-heavy') !important;
+}
 
 .editor-asciidoc {
   &-main {
@@ -504,7 +521,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-editor {
-    background-color: mc('neutral', '900');
+    background-color: $editor-bg;
     flex: 1 1 50%;
     display: block;
     height: $editor-ascii-height;
@@ -517,14 +534,14 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
 
   &-preview {
     flex: 1 1 50%;
-    background-color: mc('neutral', '100');
+    background-color: mc('surface-light', 'page-background');
     position: relative;
     height: $editor-ascii-height;
     overflow: hidden;
     padding: 1rem;
 
     @at-root .theme--dark & {
-      background-color: mc('neutral', '900');
+      background-color: mc('surface-dark', 'page-background');
     }
 
     @include until($tablet) {
@@ -575,7 +592,6 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
         font-size: 14px;
         font-weight: 500;
         border-radius: 5px 0 0 0;
-        font-style: italic;
 
         &::after {
           display: none;
@@ -609,8 +625,6 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-toolbar {
-    background-color: mc('blue', '700');
-    background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue','800') 100%);
     color: #FFF;
 
     .v-toolbar__content {
@@ -630,7 +644,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-sidebar {
-    background-color: mc('neutral', '900');
+    background-color: mc('surface-dark', 'secondary-neutral-heavy');
     width: 64px;
     display: flex;
     flex-direction: column;
@@ -648,7 +662,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255,255,255,.25);
+      background-color: mc('surface-dark', 'primary-neutral-heavy');
       display:inline-flex;
       padding: 0 12px;
       height: 24px;
@@ -674,6 +688,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
     height: auto;
     font-family: 'Roboto Mono', monospace;
     font-size: .9rem;
+    background-color: $editor-bg;
 
     .cm-header-1 {
       font-size: 1.5rem;
@@ -695,8 +710,21 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
     }
   }
 
-  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+  ::v-deep .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
+    background-color: $editor-bg;
+  }
+
+  ::v-deep .cm-s-wikijs-dark .CodeMirror-scroll {
+    .CodeMirror-gutters {
+      background-color: $editor-bg;
+    }
+
+    .CodeMirror-linenumber.CodeMirror-gutter-elt,
+    .CodeMirror-foldgutter-open.CodeMirror-guttermarker-subtle,
+    .CodeMirror-foldgutter-folded.CodeMirror-guttermarker-subtle {
+      color: mc('text-dark', 'tertiary');
+    }
   }
 
   .CodeMirror-focused .cm-matchhighlight {
