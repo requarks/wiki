@@ -27,6 +27,7 @@
         flat
         hide-details
         outlined
+        rounded
         prepend-inner-icon='mdi-magnify'
         :loading='searchIsLoading'
         @keyup.enter='searchEnter'

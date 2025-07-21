@@ -51,33 +51,13 @@ $mdc-typography-styles-caption: (
   font-size: 12
 );
 
-.v-application{
-  span,
-  div,
-  button,
-  .body-1,
-  .body-2,
-  .subtitle-1,
-  .subtitle-2,
-  .caption,
-  .overline,
-  .button,
-  .headline,
-  .title,
-  .display-1,
-  .display-2,
-  .display-3,
-  .display-4,
-  .headline1,
-  .headline2,
-  .headline3,
-  .headline4,
-  .headline5,
-  .headline6 {
-     font-family: 'Ubuntu', sans-serif !important;
-  }
 
-  code {
-    font-family: 'Ubuntu Mono', monospace !important;
-  }
+body,
+.v-application,
+.v-application * {
+  font-family: 'Ubuntu', sans-serif !important;
+}
+
+.v-application code {
+  font-family: 'Ubuntu Mono', monospace !important;
 }

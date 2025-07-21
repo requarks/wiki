@@ -442,7 +442,7 @@
           span(v-else-if='exportFileType === `pdf`') {{ messages.exportToPdf }}
         v-card-text.pt-5
           span {{ messages.exportModalSubtitle }}
-        v-card-chin.dialog-footer(
+        v-card-chin(
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
           v-spacer
@@ -1231,15 +1231,14 @@ export default {
   background-color: mc("surface-dark", "primary-blue-lite");
 }
 
-.dialog-footer {
-  background-color: mc("surface-light", "tertiary-neutral-lite");
-
-  &.theme--dark {
-    background-color: mc("surface-dark", "tertiary-neutral-lite");
-  }
-}
-
 .v-tooltip__content{
   border-radius: 16px;
+}
+</style>
+
+// Global styles
+<style lang="scss">
+.theme--dark .v-application--wrap {
+  background-color: mc("surface-dark", "black");
 }
 </style>

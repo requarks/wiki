@@ -326,16 +326,16 @@ const colors = {
 
   'alert': {
     'error': '#dd1d46',
-    'errorOnDark': '#ff6270',
+    'errorOnDark': '#9e0029',
     'errorLight': '#ffa7a9',
-    'info': '#0070ad',
-    'infoOnDark': '#12abdb',
+    'info': '#12abdb',
+    'infoOnDark': '#00476d',
     'infoLight': '#b4dbf1',
     'success': '#4eb972',
-    'successOnDark': '#8ad9a2',
+    'successOnDark': '#43a063',
     'successLight': '#cdedd5',
     'warning': '#e4c372',
-    'warningOnDark': '#ffe2a2',
+    'warningOnDark': '#e4c372',
     'warningLight': '#fff1d5'
   }
 }
