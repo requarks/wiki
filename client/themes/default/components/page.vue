@@ -162,22 +162,31 @@
               )
               .pa-5
                 .overline.pb-2.card-title(:class='$vuetify.theme.dark ? `dark` : ``') {{$t('common:page.tags')}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :color='tileColor'
+                v-chip.hover-chip.mr-1.mb-1(
+                  outlined
+                  :color='tileBtnColor'
+                  :class='$vuetify.theme.dark ? `dark` : ``'
                   v-for='(tag, idx) in tags'
                   :href='`/t/` + sitePath + `/` + tag.tag'
                   :key='`tag-` + tag.tag'
                   )
-                  v-icon(:color='$vuetify.theme.dark ? colors.peacock[500] : colors.green[500]', left, small) mdi-tag
-                  span(class='white--text') {{tag.title}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :color='$vuetify.theme.dark ? colors.sapphire[700] : colors.sapphire[500]'
+                  v-icon(
+                    left
+                    small
+                    :color='tileBtnColor'
+                    ) mdi-tag
+                  span.tag-title(:class='$vuetify.theme.dark ? `dark` : ``') {{tag.title}}
+                v-chip.mr-1.mb-1.hover-chip(
+                  outlined
+                  :color='tileBtnColor'
+                  :class='$vuetify.theme.dark ? `dark` : ``'
                   :href='`/t/` + sitePath + `/` + tags.map(t => t.tag).join(`/`)'
                   :aria-label='$t(`common:page.tagsMatching`)'
                   )
-                  v-icon(:color='$vuetify.theme.dark ? colors.peacock[500] : colors.green[500]', size='20') mdi-tag-multiple
+                  v-icon(
+                    size='20'
+                    :color='tileBtnColor'
+                    ) mdi-tag-multiple
 
             v-card.page-comments-card.mb-5.tile-border(
               v-if='commentsEnabled && commentsPerms.read'
@@ -189,9 +198,10 @@
                     :class='$vuetify.theme.dark ? `dark` : ``'
                     ) {{$t('common:comments.sdTitle')}}
                 .d-flex
-                  v-btn.text-none(
+                  v-btn.inverse-hover-btn.text-none(
                     @click='goToComments()'
                     :color='tileBtnColor'
+                    :class='$vuetify.theme.dark ? `dark` : ``'
                     outlined
                     rounded
                     style='flex: 1 1 100%;'
@@ -202,13 +212,14 @@
                       ) {{$t('common:comments.viewDiscussion')}}
                   v-tooltip(bottom, v-if='commentsPerms.write')
                     template(v-slot:activator='{ on }')
-                      v-btn.ml-2(
+                      v-btn.inverse-hover-btn.ml-2(
                         @click='goToComments(true)'
                         v-on='on'
                         outlined
                         rounded
                         small
                         :color='tileBtnColor'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         :aria-label='$t(`common:comments.newComment`)'
                         )
                         v-icon(:color='tileBtnColor', dense) mdi-comment-plus
@@ -223,7 +234,8 @@
                   v-spacer
                   v-tooltip(bottom, v-if='isAuthenticated')
                     template(v-slot:activator='{ on }')
-                      v-btn.btn-animate-edit(
+                      v-btn.btn-animate-edit.inverse-hover-btn(
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         icon
                         :href='"/h/" + sitePath + "/" + locale + "/" + path'
                         v-on='on'
@@ -294,11 +306,11 @@
                       v-icon(color='white') mdi-pencil
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission')
                     template(v-slot:activator='{ on }')
-                      v-btn.border-btn(
+                      v-btn.border-btn.hover-btn(
                         fab
                         small
                         :color='pageActionBgColor'
-                        :dark='$vuetify.theme.dark'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         v-on='on'
                         @click='pageHistory'
                         )
@@ -309,11 +321,11 @@
                     span {{$t('common:header.history')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
                     template(v-slot:activator='{ on }')
-                      v-btn.border-btn(
+                      v-btn.border-btn.hover-btn(
                         fab
                         small
                         :color='pageActionBgColor'
-                        :dark='$vuetify.theme.dark'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         v-on='on'
                         @click='pageSource'
                         )
@@ -324,11 +336,11 @@
                     span {{$t('common:header.viewSource')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
                     template(v-slot:activator='{ on }')
-                      v-btn.border-btn(
+                      v-btn.border-btn.hover-btn(
                         fab
                         small
                         :color='pageActionBgColor'
-                        :dark='$vuetify.theme.dark'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         v-on='on'
                         @click='pageConvert'
                         )
@@ -339,11 +351,11 @@
                     span {{$t('common:header.convert')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
                     template(v-slot:activator='{ on }')
-                      v-btn.border-btn(
+                      v-btn.border-btn.hover-btn(
                         fab
                         small
                         :color='pageActionBgColor'
-                        :dark='$vuetify.theme.dark'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         v-on='on'
                         @click='pageDuplicate'
                         )
@@ -354,11 +366,11 @@
                     span {{$t('common:header.duplicate')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
                     template(v-slot:activator='{ on }')
-                      v-btn.border-btn(
+                      v-btn.border-btn.hover-btn(
                         fab
                         small
                         :color='pageActionBgColor'
-                        :dark='$vuetify.theme.dark'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         v-on='on'
                         @click='pageMove'
                         )
@@ -369,9 +381,9 @@
                     span {{$t('common:header.move')}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
                     template(v-slot:activator='{ on }')
-                      v-btn.border-btn(
+                      v-btn.border-btn.hover-btn.delete-btn(
                         fab
-                        :dark='$vuetify.theme.dark'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
                         small
                         :color='pageActionBgColor'
                         v-on='on'
@@ -1150,6 +1162,22 @@ export default {
   }
 }
 
+.inverse-hover-btn:hover {
+  background-color: mc("action-light", "primary-hover-on-lite") !important;
+
+  .v-icon, span{
+    color: mc("surface-light", "white") !important;
+  }
+
+  &.dark {
+    background-color: mc("action-dark", "highlight-on-lite") !important;
+
+    .v-icon, span{
+      color: mc("neutral", "850") !important;
+    }
+  }
+}
+
 .hover-icon.v-btn {
   &:hover > .v-btn__content > .v-icon {
     color: mc("action-light", "active") !important;
@@ -1181,8 +1209,53 @@ export default {
   border: 1px solid mc("border-light", "primary") !important;
   box-shadow: none !important;
 
+  &.hover-btn:hover {
+    background-color: mc("teal", "800") !important;
+    border: 1px solid mc("teal", "800") !important;
+
+    .v-icon {
+      color: mc("surface-light", "white") !important;
+    }
+
+    &.delete-btn {
+      background-color: mc("warning-action-light", "secondary-default") !important;
+      border: 1px solid mc("warning-action-light", "secondary-default") !important;
+
+      .v-icon {
+        color: mc("action-light", "content-white") !important;
+      }
+    }
+
+    &.dark {
+      background-color: mc("teal", "500") !important;
+      border: 1px solid mc("teal", "500") !important;
+
+      .v-icon {
+        color: mc("action-dark", "content-on-lite") !important;
+      }
+
+      &.delete-btn {
+        background-color: mc("warning-action-dark", "secondary-default") !important;
+        border: 1px solid mc("warning-action-dark", "secondary-default") !important;
+
+        .v-icon {
+          color: mc("action-dark", "content-on-lite") !important;
+        }
+      }
+    }
+  }
+
   &.theme--dark {
     border: 1px solid mc("border-dark", "primary") !important;
+
+    &.hover-btn:hover {
+      background-color: mc("action-dark", "highlight-on-lite") !important;
+      border: 1px solid mc("action-dark", "highlight-on-lite") !important;
+
+      .v-icon {
+        color: mc("action-dark", "content-on-lite") !important;
+      }
+    }
   }
 }
 
@@ -1224,6 +1297,31 @@ export default {
 
   &.theme--dark {
     border: 1px solid mc("border-dark", "primary") !important;
+  }
+
+  .tag-title {
+    color: mc("action-light", "active");
+
+    &.dark {
+      color: mc("action-dark", "highlight-on-lite");
+    }
+  }
+
+  .hover-chip:hover {
+    background-color: mc("action-light", "primary-hover-on-lite") !important;
+    border: 1px solid mc("action-light", "primary-hover-on-lite") !important;
+
+    .v-icon, .tag-title {
+      color: mc("surface-light", "white") !important;
+    }
+
+    &.dark {
+      background-color: mc("action-dark", "highlight-on-lite") !important;
+
+      .v-icon, .tag-title {
+        color: mc("neutral", "850") !important;
+      }
+    }
   }
 }
 
