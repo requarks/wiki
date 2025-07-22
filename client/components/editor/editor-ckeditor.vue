@@ -358,7 +358,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 <style lang="scss">
 .editor-ckeditor {
 
-  .ck.ck-toolbar {
+  .ck.ck-toolbar.ck-toolbar_grouping {
     border: none;
     justify-content: center;
     background-color: mc('surface-light', 'tertiary-neutral-lite');
@@ -400,8 +400,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
       }
 
       .ck.ck-dropdown__button:hover:not(.ck-disabled) > *,
-      .ck.ck-dropdown__button.ck-splitbutton_open > *,
-      .ck.ck-dropdown > .ck-button.ck-on {
+      .ck.ck-splitbutton.ck-dropdown__button.ck-splitbutton_open > *,
+      .ck.ck-dropdown > .ck-button.ck-splitbutton.ck-on {
         background-color: mc('surface-dark', 'primary-neutral-lite');
       }
 
