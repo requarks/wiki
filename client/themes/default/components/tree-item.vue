@@ -98,7 +98,10 @@ export default {
   .list-item-class {
     transition: background-color 0.3s;
     overflow: hidden;
-    border-radius: 20px;
+
+    &.rounded-20 {
+      border-radius: 20px;
+    }
   }
   .list-item-class:hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -110,9 +113,6 @@ export default {
   }
   .w-100 {
     width: 100%;
-  }
-  .rounded-20 {
-  border-radius: 20px;
   }
   .v-list-item__title {
     &.sub-section {
