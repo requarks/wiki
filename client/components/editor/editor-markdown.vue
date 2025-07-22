@@ -1037,6 +1037,7 @@ export default {
 
 $editor-height: calc(100vh - 112px - 24px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
+$editor-bg: mc('surface-dark', 'page-background');
 
 .v-btn {
   border-radius: 50px;
@@ -1053,11 +1054,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-editor {
-    background-color: mc('neutral', '900');
+    background-color: $editor-bg;
     flex: 1 1 50%;
     display: block;
     height: $editor-height;
     position: relative;
+    border-right: 1px solid mc('border-dark', 'primary');
 
     @include until($tablet) {
       height: $editor-height-mobile;
@@ -1220,7 +1222,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     height: auto;
     font-family: 'Roboto Mono', monospace;
     font-size: .9rem;
-    background-color: mc('surface-dark', 'page-background');
+    background-color: $editor-bg;
 
     .cm-header-1 {
       font-size: 1.5rem;
@@ -1244,12 +1246,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
   ::v-deep .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
-    background-color: mc('surface-dark', 'page-background');
+    background-color: $editor-bg;
   }
 
-  ::v-deep .CodeMirror-scroll {
-    .CodeMirror-gutters {
-      background-color: mc('surface-dark', 'page-background');
+  ::v-deep .cm-s-wikijs-dark.CodeMirror {
+    &, .CodeMirror-gutters {
+      background-color: $editor-bg;
     }
 
     .CodeMirror-linenumber.CodeMirror-gutter-elt,

@@ -526,6 +526,7 @@ $editor-bg: mc('surface-dark', 'page-background');
     display: block;
     height: $editor-ascii-height;
     position: relative;
+    border-right: 1px solid mc('border-dark', 'primary');
 
     @include until($tablet) {
       height: $editor-ascii-height-mobile;
@@ -715,8 +716,8 @@ $editor-bg: mc('surface-dark', 'page-background');
     background-color: $editor-bg;
   }
 
-  ::v-deep .cm-s-wikijs-dark .CodeMirror-scroll {
-    .CodeMirror-gutters {
+  ::v-deep .cm-s-wikijs-dark.CodeMirror {
+    &, .CodeMirror-gutters {
       background-color: $editor-bg;
     }
 
