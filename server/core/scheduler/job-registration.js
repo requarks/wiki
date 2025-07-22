@@ -15,7 +15,8 @@ module.exports = {
         name: _.kebabCase(queueName),
         immediate: !!queueParams.onInit,
         schedule: (scheduleType === 'cron' || scheduleType === 'duration') ? queueParams.schedule : 'P1D',
-        repeat: !!queueParams.repeat
+        repeat: !!queueParams.repeat,
+        runInMainThread: queueParams.runInMainThread === true
       })
     })
   }

@@ -1,5 +1,4 @@
 const { Query, UserMutation } = require('../../../graph/resolvers/user')
-const CustomError = require('custom-error-instance')
 const userService = require('../../../graph/services/userService')
 const graphHelper = require('../../../helpers/graph')
 
@@ -30,6 +29,9 @@ const WIKI = {
     pages: {
       query: jest.fn(),
       renderPage: jest.fn()
+    },
+    pageHistory: {
+      anonymizeMentionsByPageIds: jest.fn()
     }
   },
   data: {
@@ -47,6 +49,13 @@ const WIKI = {
   },
   Error: require('../../../helpers/error')
 }
+
+jest.mock('../../../helpers/anonymizeInactiveUsersHelpers', () => ({
+  retrieveOrCreateAnonymousUser: jest.fn().mockResolvedValue({ id: 999 })
+}))
+
+const mockUserQuery = user => ({ findById: jest.fn(() => user) })
+const mockCommentsQuery = userComments => ({ where: jest.fn(() => userComments) })
 
 describe('UserQuery', () => {
   describe('autoCompleteEmails', () => {
@@ -326,20 +335,22 @@ describe('UserMutation', () => {
       const mentionedPages = []
       const mentionedComments = []
       const userComments = []
+      const anonymousUser = { id: 999 }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(user)
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(user))
+      WIKI.models.userMentions.query.mockReturnValue({
+        delete: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis()
       })
       WIKI.models.userMentions.getMentionedPages.mockResolvedValue(mentionedPages)
       WIKI.models.userMentions.getMentionedComments.mockResolvedValue(mentionedComments)
-      WIKI.models.comments.query.mockReturnValue({
-        where: jest.fn().mockResolvedValue(userComments)
-      })
+      WIKI.models.comments.query.mockReturnValue(mockCommentsQuery(userComments))
       WIKI.models.users.deleteUser.mockResolvedValue()
 
       userService.revokeUserTokens.mockResolvedValue()
       userService.renderMentionedPages.mockResolvedValue()
       userService.anonymizeComments.mockResolvedValue()
+      userService.anonymizeUserMentions.mockResolvedValue()
 
       // Act
       const result = await UserMutation.delete(null, args)
@@ -352,7 +363,7 @@ describe('UserMutation', () => {
       expect(WIKI.models.users.deleteUser).toHaveBeenCalledWith(args.id, args.replaceId)
       expect(userService.revokeUserTokens).toHaveBeenCalledWith(args.id)
       expect(userService.renderMentionedPages).toHaveBeenCalledWith(mentionedPages)
-      expect(userService.anonymizeComments).toHaveBeenCalledWith(user, mentionedComments, userComments)
+      expect(userService.anonymizeComments).toHaveBeenCalledWith(user, mentionedComments, userComments, anonymousUser)
       expect(result).toEqual({
         responseResult: graphHelper.generateSuccess('User deleted successfully')
       })
@@ -390,6 +401,38 @@ describe('UserMutation', () => {
         }
       })
     })
+
+    it('should anonymize page history and delete user mentions when deleting a user', async () => {
+      // Arrange
+      const args = { id: 42, replaceId: null }
+
+      const user = { id: 42, email: 'test@example.com' }
+      const userComments = []
+      const mentionedPages = [{ pageId: 1 }, { pageId: 2 }]
+      const mentionedComments = []
+
+      // Mock all DB/model/service calls
+      WIKI.models.users.query = jest.fn(() => mockUserQuery(user))
+      WIKI.models.userMentions.getMentionedPages = jest.fn(() => mentionedPages)
+      WIKI.models.userMentions.getMentionedComments = jest.fn(() => mentionedComments)
+      WIKI.models.comments.query = jest.fn(() => mockCommentsQuery(userComments))
+      WIKI.models.users.deleteUser = jest.fn()
+      userService.revokeUserTokens = jest.fn()
+      WIKI.models.pageHistory.anonymizeMentionsByPageIds = jest.fn()
+      userService.renderMentionedPages = jest.fn()
+      userService.anonymizeComments = jest.fn()
+
+      // Act
+      const result = await UserMutation.delete({}, args)
+
+      // Assert
+      expect(WIKI.models.pageHistory.anonymizeMentionsByPageIds).toHaveBeenCalledWith(
+        [1, 2],
+        expect.any(Function),
+        user.email
+      )
+      expect(result.responseResult).toBeDefined()
+    })
   })
 
   describe('updateProfile', () => {
@@ -417,9 +460,7 @@ describe('UserMutation', () => {
       }
       const newToken = { token: 'new.jwt.token' }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(usr)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(usr))
       WIKI.auth.isSuperAdmin.mockReturnValue(true)
       WIKI.models.users.updateUser.mockResolvedValue()
       WIKI.models.users.refreshToken.mockResolvedValue(newToken)
@@ -472,9 +513,7 @@ describe('UserMutation', () => {
       }
       const newToken = { token: 'new.jwt.token' }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(usr)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(usr))
       WIKI.auth.isSuperAdmin.mockReturnValue(false)
       WIKI.models.users.updateUser.mockResolvedValue()
       WIKI.models.users.refreshToken.mockResolvedValue(newToken)
@@ -511,9 +550,7 @@ describe('UserMutation', () => {
         }
       }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(null)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(null))
 
       const result = await UserMutation.updateProfile(null, args, context)
       expect(result).toEqual(graphHelper.generateError(new WIKI.Error.AuthRequired()))
@@ -533,9 +570,7 @@ describe('UserMutation', () => {
         isActive: false
       }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(usr)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(usr))
 
       const result = await UserMutation.updateProfile(null, args, context)
       expect(result).toEqual(graphHelper.generateError(new WIKI.Error.AuthAccountBanned()))
@@ -556,9 +591,7 @@ describe('UserMutation', () => {
         isVerified: false
       }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(usr)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(usr))
       const result = await UserMutation.updateProfile(null, args, context)
       expect(result).toEqual(graphHelper.generateError(new WIKI.Error.AuthAccountNotVerified()))
     })
@@ -580,9 +613,7 @@ describe('UserMutation', () => {
         isVerified: true
       }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(usr)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(usr))
       const result = await UserMutation.updateProfile(null, args, context)
       expect(result).toEqual(graphHelper.generateError(new WIKI.Error.InputInvalid()))
     })
@@ -604,9 +635,7 @@ describe('UserMutation', () => {
         isVerified: true
       }
 
-      WIKI.models.users.query.mockReturnValue({
-        findById: jest.fn().mockResolvedValue(usr)
-      })
+      WIKI.models.users.query.mockReturnValue(mockUserQuery(usr))
       const result = await UserMutation.updateProfile(null, args, context)
       expect(result).toEqual(graphHelper.generateError(new WIKI.Error.InputInvalid()))
     })

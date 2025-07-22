@@ -28,6 +28,29 @@ const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/gi
 /**
  * Pages model
  */
+
+function checkAccess(user, perms, params, error) {
+  if (!WIKI.auth.checkAccess(user, perms, params)) {
+    throw new WIKI.Error[error]()
+  }
+}
+
+function getScriptCss(ogPage, opts) {
+  if (
+    WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+      locale: opts.locale,
+      path: opts.path,
+      siteId: opts.siteId
+    })
+  ) {
+    if (!_.isEmpty(opts.scriptCss)) {
+      return new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
+    }
+    return ''
+  }
+  return _.get(ogPage, 'extra.css', '')
+}
+
 module.exports = class Page extends Model {
   static get tableName() {
     return 'pages'
@@ -271,27 +294,16 @@ module.exports = class Page extends Model {
     ) {
       throw new WIKI.Error.PageIllegalPath()
     }
-
     // -> Remove trailing slash
-    if (opts.path.endsWith('/')) {
-      opts.path = opts.path.slice(0, -1)
-    }
-
+    if (opts.path.endsWith('/')) opts.path = opts.path.slice(0, -1)
     // -> Remove starting slash
-    if (opts.path.startsWith('/')) {
-      opts.path = opts.path.slice(1)
-    }
-
+    if (opts.path.startsWith('/')) opts.path = opts.path.slice(1)
     // -> Check for page access
-    if (
-      !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-        locale: opts.locale,
-        path: opts.path,
-        siteId: opts.siteId
-      })
-    ) {
-      throw new WIKI.Error.PageDeleteForbidden()
-    }
+    checkAccess(opts.user, ['write:pages'], {
+      locale: opts.locale,
+      path: opts.path,
+      siteId: opts.siteId
+    }, 'PageDeleteForbidden')
 
     // -> Check for duplicate
     const dupCheck = await WIKI.models.pages
@@ -301,43 +313,18 @@ module.exports = class Page extends Model {
       .where('path', opts.path)
       .where('siteId', opts.siteId)
       .first()
-    if (dupCheck) {
-      throw new WIKI.Error.PageDuplicateCreate()
-    }
-
-    // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
-      throw new WIKI.Error.PageEmptyContent()
-    }
-
+    if (dupCheck) throw new WIKI.Error.PageDuplicateCreate()
+    if (!opts.content || _.trim(opts.content).length < 1) throw new WIKI.Error.PageEmptyContent()
     // -> Format CSS Scripts
-    let scriptCss = ''
-    if (
-      WIKI.auth.checkAccess(opts.user, ['write:styles'], {
-        locale: opts.locale,
-        path: opts.path,
-        siteId: opts.siteId
-      })
-    ) {
-      if (!_.isEmpty(opts.scriptCss)) {
-        scriptCss = new CleanCSS({ inline: false }).minify(
-          opts.scriptCss
-        ).styles
-      } else {
-        scriptCss = ''
-      }
-    }
-
+    let scriptCss = getScriptCss({}, opts)
     // -> Format JS Scripts
     let scriptJs = ''
-
     const pageHash = await WIKI.models.pages.generatePageHash(
       opts.siteId,
       opts.path,
       opts.locale,
       opts.isPrivate
     )
-
     // -> Create page
     await WIKI.models.pages.query().insert({
       authorId: opts.user.id,
@@ -359,12 +346,10 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       toc: '[]',
-      extra: JSON.stringify({
-        js: scriptJs,
-        css: scriptCss
-      }),
+      extra: JSON.stringify({ js: scriptJs, css: scriptCss }),
       siteId: opts.siteId
     })
+
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
       locale: opts.locale,
@@ -377,36 +362,25 @@ module.exports = class Page extends Model {
     if (opts.tags && opts.tags.length > 0) {
       await WIKI.models.tags.associateTags({ tags: opts.tags, page })
     }
+    await Promise.all([
+      WIKI.models.pages.renderPage(page),
+      WIKI.models.pages.rebuildTree(page)
+    ])
 
-    // -> Render page to HTML
-    await WIKI.models.pages.renderPage(page)
-
-    // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree(page)
-
-    // -> Add to Search Index
-    const pageContents = await WIKI.models.pages
-      .query()
-      .findById(page.id)
-      .select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.created(page)
-
-    // -> Add to Storage
-    if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
-        event: 'created',
-        page
+    await Promise.all([
+      (async () => {
+        const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+        page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+        await WIKI.data.searchEngine.created(page)
+      })(),
+      (!opts.skipStorage ? WIKI.models.storage.pageEvent({ event: 'created', page }) : null),
+      WIKI.models.pages.reconnectLinks({
+        siteId: page.siteId,
+        locale: page.localeCode,
+        path: page.path,
+        mode: 'create'
       })
-    }
-
-    // -> Reconnect Links
-    await WIKI.models.pages.reconnectLinks({
-      siteId: page.siteId,
-      locale: page.localeCode,
-      path: page.path,
-      mode: 'create'
-    })
+    ].filter(Boolean))
 
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.models.pages
@@ -425,27 +399,39 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async updatePage(opts) {
+    // Helper: Move page if needed
+    async function movePageIfPathOrLocaleChanged(page, opts) {
+      if ((opts.locale && opts.locale !== page.localeCode) || (opts.path && opts.path !== page.path)) {
+        checkAccess(opts.user, ['write:pages'], {
+          locale: opts.locale,
+          path: opts.path,
+          siteId: opts.siteId
+        }, 'PageMoveForbidden')
+        await WIKI.models.pages.movePage({
+          id: page.id,
+          destinationLocale: opts.locale,
+          destinationPath: opts.path,
+          user: opts.user
+        })
+      } else {
+        await WIKI.models.knex
+          .table('pageTree')
+          .where({ pageId: page.id })
+          .update('title', page.title)
+      }
+    }
+
     // -> Fetch original page
     const ogPage = await WIKI.models.pages.query().findById(opts.id)
-    if (!ogPage) {
-      throw new Error('Invalid Page Id')
-    }
+    if (!ogPage) throw new Error('Invalid Page Id')
 
-    // -> Check for page access
-    if (
-      !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-        locale: ogPage.localeCode,
-        path: ogPage.path,
-        siteId: opts.siteId
-      })
-    ) {
-      throw new WIKI.Error.PageUpdateForbidden()
-    }
+    checkAccess(opts.user, ['write:pages'], {
+      locale: ogPage.localeCode,
+      path: ogPage.path,
+      siteId: opts.siteId
+    }, 'PageUpdateForbidden')
 
-    // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
-      throw new WIKI.Error.PageEmptyContent()
-    }
+    if (!opts.content || _.trim(opts.content).length < 1) throw new WIKI.Error.PageEmptyContent()
 
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
@@ -456,30 +442,8 @@ module.exports = class Page extends Model {
       siteId: ogPage.siteId
     })
 
-    // -> Format Extra Properties
-    if (!_.isPlainObject(ogPage.extra)) {
-      ogPage.extra = {}
-    }
-
-    // -> Format CSS Scripts
-    let scriptCss = _.get(ogPage, 'extra.css', '')
-    if (
-      WIKI.auth.checkAccess(opts.user, ['write:styles'], {
-        locale: opts.locale,
-        path: opts.path,
-        siteId: opts.siteId
-      })
-    ) {
-      if (!_.isEmpty(opts.scriptCss)) {
-        scriptCss = new CleanCSS({ inline: false }).minify(
-          opts.scriptCss
-        ).styles
-      } else {
-        scriptCss = ''
-      }
-    }
-
-    // -> Format JS Scripts
+    if (!_.isPlainObject(ogPage.extra)) ogPage.extra = {}
+    let scriptCss = getScriptCss(ogPage, opts)
     let scriptJs = _.get(ogPage, 'extra.js', '')
 
     // -> Update page
@@ -512,54 +476,16 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.renderPage(page)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Update Search Index
-    const pageContents = await WIKI.models.pages
-      .query()
-      .findById(page.id)
-      .select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.updated(page)
+    await Promise.all([
+      (async () => {
+        const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+        page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+        await WIKI.data.searchEngine.updated(page)
+      })(),
+      (!opts.skipStorage ? WIKI.models.storage.pageEvent({ event: 'updated', page }) : null)
+    ].filter(Boolean))
 
-    // -> Update on Storage
-    if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
-        event: 'updated',
-        page
-      })
-    }
-
-    // -> Perform move?
-    if (
-      (opts.locale && opts.locale !== page.localeCode) ||
-      (opts.path && opts.path !== page.path)
-    ) {
-      // -> Check target path access
-      if (
-        !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-          locale: opts.locale,
-          path: opts.path,
-          siteId: opts.siteId
-        })
-      ) {
-        throw new WIKI.Error.PageMoveForbidden()
-      }
-
-      await WIKI.models.pages.movePage({
-        id: page.id,
-        destinationLocale: opts.locale,
-        destinationPath: opts.path,
-        user: opts.user
-      })
-    } else {
-      // -> Update title of page tree entry
-      await WIKI.models.knex
-        .table('pageTree')
-        .where({
-          pageId: page.id
-        })
-        .update('title', page.title)
-    }
-
+    await movePageIfPathOrLocaleChanged(page, opts)
     // -> Get latest updatedAt
     page.updatedAt = await WIKI.models.pages
       .query()
@@ -914,25 +840,17 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for source page access
-    if (
-      !WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
-        locale: page.localeCode,
-        path: page.path,
-        siteId: page.siteId
-      })
-    ) {
-      throw new WIKI.Error.PageMoveForbidden()
-    }
+    checkAccess(opts.user, ['manage:pages'], {
+      locale: page.localeCode,
+      path: page.path,
+      siteId: page.siteId
+    }, 'PageMoveForbidden')
     // -> Check for destination page access
-    if (
-      !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-        locale: opts.destinationLocale,
-        path: opts.destinationPath,
-        siteId: page.siteId
-      })
-    ) {
-      throw new WIKI.Error.PageMoveForbidden()
-    }
+    checkAccess(opts.user, ['write:pages'], {
+      locale: opts.destinationLocale,
+      path: opts.destinationPath,
+      siteId: page.siteId
+    }, 'PageMoveForbidden')
 
     // -> Check for existing page at destination path
     const destPage = await WIKI.models.pages.query().findOne({
@@ -1258,9 +1176,7 @@ module.exports = class Page extends Model {
       const pages = await WIKI.models.pages
         .query()
         .whereIn('id', pageIds.map(p => p.pageId))
-      pages.forEach(async (page) => {
-        await WIKI.models.pages.renderPage(page)
-      })
+      await Promise.all(pages.map(page => WIKI.models.pages.renderPage(page)))
       affectedHashes = qryHashes.map((h) => h.hash)
     } else {
       // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
@@ -1290,10 +1206,10 @@ module.exports = class Page extends Model {
         })
       affectedHashes = qryHashes.map((h) => h.hash)
     }
-    for (const hash of affectedHashes) {
+    await Promise.all(affectedHashes.map(async (hash) => {
       await WIKI.models.pages.deletePageFromCache(hash)
       WIKI.events.outbound.emit('deletePageFromCache', hash)
-    }
+    }))
   }
 
   /**
