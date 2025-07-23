@@ -3,7 +3,7 @@
 .v-main .contents {
   font-family: "Ubuntu", sans-serif;
   font-weight: 300;
-  color: mc('neutral', '800');
+  color: mc("text-light", "primary");
   padding: .5rem 0 50px;
   position: relative;
 
@@ -12,7 +12,7 @@
   }
 
   @at-root .theme--dark & {
-    color: mc('neutral', '300');
+    color: mc("text-dark", "primary");
   }
 
   // ---------------------------------
@@ -73,6 +73,11 @@
   h5,
   h6 {
     position: relative;
+    color: mc("text-light", "primary");
+
+    @at-root .theme--dark & {
+    color: mc("text-dark", "primary");
+  }
 
     &:first-child {
       padding-top: 0;
@@ -126,13 +131,8 @@
 
   h1 {
     padding: 0;
-    color: mc('text-light', 'primary');
     margin-top: 2rem;
     position: relative;
-
-    @at-root .theme--dark & {
-      color: mc('neutral', '300');
-    }
 
     &::after {
       content: '';
@@ -176,12 +176,7 @@
 
   h2 {
     margin: 1rem 0 0 0;
-    color: mc('neutral', '800');
     position: relative;
-
-    @at-root .theme--dark & {
-      color: mc('neutral', '400');
-    }
 
     &::after {
       content: '';
@@ -224,12 +219,7 @@
 
   h3 {
     margin: 8px 0 0 0;
-    color: mc('neutral', '700');
     position: relative;
-
-    @at-root .theme--dark & {
-      color: mc('neutral', '600');
-    }
 
     &::after {
       content: '';
@@ -270,12 +260,7 @@
   h5,
   h6 {
     margin: 8px 0 0 0;
-    color: mc('neutral', '700');
     position: relative;
-
-    @at-root .theme--dark & {
-      color: mc('neutral', '600');
-    }
 
     &::after {
       content: '';
@@ -705,11 +690,15 @@
           >em {
             font-weight: 400;
             font-style: normal;
-            color: mc('neutral', '700');
+            color: mc('text-light', 'secondary');
             display: inline-block;
             padding-left: .5rem;
             border-left: 1px solid mc('neutral', '300');
             margin-left: .5rem;
+
+            @at-root .theme--dark & {
+              color: mc('text-dark', 'secondary');
+            }
 
             &.is-block {
               display: block;
@@ -1300,28 +1289,32 @@
     }
 
     &.marker-blue {
-      background-color: mc('teal', '500');
+      background-color: mc('blue', '600');
     }
 
     &.marker-yellow {
-      background-color: mc('yellow', '500');
+      background-color: mc('yellow', '600');
+    }
+
+    &.marker-red {
+      background-color: mc('red', '700');
     }
 
     &.marker-pink {
-      background-color: #e557ad;
+      background-color: mc('red', '400');
     }
 
     &.marker-green {
-      background-color: mc('green', '500');
+      background-color: mc('green', '600');
     }
   }
 
   .mention {
-    background-color: rgba(153, 0, 48, .1);
-    color: #0F878A;
+    background-color: rgba(mc('red', '200'), .1);
+    color: mc('text-light', 'brand-secondary');
 
     @at-root .theme--dark & {
-      color: #00E0CB;
+      color: mc('text-dark', 'brand-secondary');
     }
   }
 
