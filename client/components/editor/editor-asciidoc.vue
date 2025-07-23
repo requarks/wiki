@@ -588,9 +588,9 @@ $editor-bg: mc('surface-dark', 'page-background');
         overflow-wrap: break-word;
       }
 
-      .tabset {
-        background-color: mc('teal', '700');
-        color: mc('teal', '100') !important;
+      ::v-deep .tabset {
+        background-color: mc('peacock', '700');
+        color: mc('peacock', '100') !important;
         padding: 5px 12px;
         font-size: 14px;
         font-weight: 500;
@@ -601,7 +601,7 @@ $editor-bg: mc('surface-dark', 'page-background');
         }
 
         &-header {
-          background-color: mc('teal', '500');
+          background-color: mc('peacock', '500');
           color: #FFF !important;
           padding: 5px 12px;
           font-size: 14px;
@@ -614,13 +614,13 @@ $editor-bg: mc('surface-dark', 'page-background');
         }
 
         &-content {
-          border-left: 5px solid mc('teal', '500');
-          background-color: mc('teal', '50');
+          border-left: 5px solid mc('peacock', '500');
+          background-color: mc('peacock', '50');
           padding: 0 15px 15px;
           overflow: hidden;
 
           @at-root .theme--dark & {
-            background-color: rgba(mc('teal', '500'), .1);
+            background-color: rgba(mc('peacock', '500'), .1);
           }
         }
       }
