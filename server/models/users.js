@@ -8,6 +8,7 @@ const Model = require('objection').Model
 const validate = require('validate.js')
 const qr = require('qr-image')
 const { handleUserSiteInactivityAfterUnassign } = require('../graph/services/userSiteInactivityService')
+const userService = require('../graph/services/userService')
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
@@ -298,6 +299,8 @@ module.exports = class User extends Model {
         isActive: true,
         isVerified: true
       })
+
+      userService.sendWelcomeEmail(user)
 
       // Assign to group(s)
       if (provider.autoEnrollGroups.length > 0) {
@@ -677,20 +680,7 @@ module.exports = class User extends Model {
       }
 
       if (sendWelcomeEmail) {
-        // Send welcome email
-        await WIKI.mail.send({
-          template: 'accountWelcome',
-          to: email,
-          subject: `Welcome to the wiki ${WIKI.config.title}`,
-          data: {
-            preheadertext: `You've been invited to the wiki ${WIKI.config.title}`,
-            title: `You've been invited to the wiki ${WIKI.config.title}`,
-            content: `Click the button below to access the wiki.`,
-            buttonLink: `${WIKI.config.host}/login`,
-            buttonText: 'Login'
-          },
-          text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
-        })
+        userService.sendWelcomeEmail(newUsr)
       }
     } else {
       throw new WIKI.Error.AuthAccountAlreadyExists()

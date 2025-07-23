@@ -175,3 +175,5 @@ scheduler:
 # Use ISO 8601 duration format (e.g. P2Y for 2 years, P1Y for 1 year, P180D for 180 days).
 # All page history older than this duration will be deleted by the scheduled job.
 purgePageHistoryOlderThan: P2Y
+
+companyName: "Dummy Company"
