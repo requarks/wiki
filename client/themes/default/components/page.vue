@@ -1307,7 +1307,7 @@ export default {
     }
   }
 
-  .hover-chip:hover {
+  .v-chip.hover-chip:hover {
     background-color: mc("action-light", "primary-hover-on-lite") !important;
     border: 1px solid mc("action-light", "primary-hover-on-lite") !important;
 
