@@ -96,12 +96,12 @@
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in tocDecoded')
-                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
+                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)', :id='tocItem.anchor')
                     v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
                     v-list-item-title.px-3 {{tocItem.title}}
                   //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
                   template(v-for='tocSubItem in tocItem.children')
-                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
+                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)', :id='tocSubItem.anchor')
                       v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
                       v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
@@ -600,6 +600,7 @@ export default {
     }
 
     this.$store.set('page/mode', 'view')
+    window.addEventListener('scroll', this.handleScroll)
   },
   mounted () {
     if (this.$vuetify.theme.dark) {
@@ -647,6 +648,9 @@ export default {
       window.boot.notify('page-ready')
     })
   },
+  destroyed () {
+    window.removeEventListener('scroll', this.handleScroll)
+  },
   methods: {
     goHome () {
       window.location.assign('/')
@@ -667,6 +671,26 @@ export default {
           window.print()
         })
       }
+    },
+    // Highlight the current section items in a sticky table of contents as you scroll down the page.
+    handleScroll () {
+      const scrollPosition = window.scrollY
+      const sections = document.querySelectorAll('h1, h2')
+      const links = document.querySelectorAll('.v-list-item--link') // .v-list-item--link .v-list-item__title
+      const current = []
+      sections.forEach((el) => {
+        if (el.offsetTop <= scrollPosition + 5) {
+          current.push(el)
+        }
+      })
+      const currentSection = current[current.length - 1]
+      const id = currentSection && currentSection.id
+      links.forEach((el) => {
+        el.classList.remove('titleactive')
+        if (el.getAttribute('id') === `#${id}`) {
+          el.classList.add('titleactive')
+        }
+      })
     },
     pageEdit () {
       this.$root.$emit('pageEdit')
@@ -788,5 +812,12 @@ export default {
     }
   }
 }
-
+.titleactive {
+  background-color:#E1F5FE !important;
+  // add animation
+  transition: background-color 0.5s ease;
+  .v-list-item__title {
+    color: #01579B !important;
+  }
+}
 </style>
