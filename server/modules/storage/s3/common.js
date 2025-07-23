@@ -67,12 +67,12 @@ module.exports = class S3CompatibleStorage {
   async created(page) {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Creating file ${page.path}...`)
     const filePath = getFilePath(page, 'path')
-    await this.s3.putObject({ Key: filePath, Body: page.injectMetadata() }).promise()
+    await this.s3.putObject({ Key: filePath, Body: page.storageContent() }).promise()
   }
   async updated(page) {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Updating file ${page.path}...`)
     const filePath = getFilePath(page, 'path')
-    await this.s3.putObject({ Key: filePath, Body: page.injectMetadata() }).promise()
+    await this.s3.putObject({ Key: filePath, Body: page.storageContent() }).promise()
   }
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/${this.storageName}) Deleting file ${page.path}...`)
@@ -141,7 +141,7 @@ module.exports = class S3CompatibleStorage {
         transform: async (page, enc, cb) => {
           const filePath = getFilePath(page, 'path')
           WIKI.logger.info(`(STORAGE/${this.storageName}) Adding page ${filePath}...`)
-          await this.s3.putObject({ Key: filePath, Body: pageHelper.injectPageMetadata(page) }).promise()
+          await this.s3.putObject({ Key: filePath, Body: page.storageContent() }).promise()
           cb()
         }
       })
