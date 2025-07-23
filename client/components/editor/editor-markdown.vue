@@ -1100,6 +1100,8 @@ $editor-bg: mc('surface-dark', 'page-background');
       overflow-y: scroll;
       padding: 0;
       width: calc(100% + 17px);
+      position: relative;
+      top: -1rem;
       // -ms-overflow-style: none;
 
       // &::-webkit-scrollbar {
@@ -1247,6 +1249,10 @@ $editor-bg: mc('surface-dark', 'page-background');
   ::v-deep .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
     background-color: $editor-bg;
+
+    ::selection {
+      background-color: mc('neutral', '750');
+    }
   }
 
   ::v-deep .cm-s-wikijs-dark.CodeMirror {
