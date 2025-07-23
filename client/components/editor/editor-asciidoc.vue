@@ -576,6 +576,10 @@ $editor-bg: mc('surface-dark', 'page-background');
       //   background: transparent;
       // }
 
+      &.contents {
+        padding-bottom: 1rem;
+      }
+
       @include until($tablet) {
         height: $editor-ascii-height-mobile;
       }
