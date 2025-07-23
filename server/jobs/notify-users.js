@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const userService = require('../graph/services/userService')
 
 /* global WIKI */
 
@@ -44,6 +45,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
           preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
           pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
           pageTitle: pageTitle,
+          mailLogoSrc: userService.getMailLogoSource(),
           userEmail: userEmail,
           event: event,
           eventText: eventText,
