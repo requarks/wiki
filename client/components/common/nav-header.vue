@@ -66,7 +66,8 @@
                     v-icon(:color='colors.textDark.primary')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
             v-list.dropdown-list(
                 style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
-                nav,
+                nav
+                rounded
                 :class='{ "color-theme-dark": $vuetify.theme.dark }'
                 class='sitesList'
               )
@@ -843,7 +844,7 @@ export default {
 .hover-text {
   color: mc("text-dark", "primary") !important;
 
-  &:before {
+  &::before {
     background-color: mc("surface-dark", "primary-blue-lite");
   }
 
@@ -853,7 +854,7 @@ export default {
 }
 
 .hover-icon {
-  &.v-btn.v-btn--tile:hover:before {
+  &.v-btn:hover::before {
     opacity: 0;
   }
 
@@ -865,17 +866,11 @@ export default {
 .dropdown-list.v-list {
   background-color: mc("surface-light", "primary-neutral-lite") !important;
 
-  &> .v-list-item {
-    &:before {
-      border-radius: 20px;
-    }
+  &> .v-list-item > .v-list-item__title {
+    color: mc("text-light", "primary");
 
-    &> .v-list-item__title {
-      color: mc("text-light", "primary");
-
-      &:hover {
-        color: mc("action-light", "primary-hover-on-lite");
-      }
+    &:hover {
+      color: mc("action-light", "primary-hover-on-lite");
     }
   }
 

@@ -161,7 +161,7 @@
               :color='tileColor'
               )
               .pa-5
-                .overline.pb-2.card-title(:class='$vuetify.theme.dark ? `dark` : ``') {{$t('common:page.tags')}}
+                .overline.pb-2.card-title.text-primary(:class='$vuetify.theme.dark ? `dark` : ``') {{$t('common:page.tags')}}
                 v-chip.hover-chip.mr-1.mb-1(
                   outlined
                   :color='tileBtnColor'

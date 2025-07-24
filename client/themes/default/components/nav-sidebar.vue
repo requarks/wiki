@@ -44,6 +44,7 @@
     v-list.py-2(
       v-if='currentMode === `custom`'
       dense
+      rounded
       :class='dark ? `dark ` + color : color'
       :dark='dark'
       )
@@ -71,6 +72,7 @@
     v-list.py-2(
       v-else-if='currentMode === `browse`'
       dense
+      rounded
       :class='dark ? `dark ` + color : color'
       :dark='dark'
       )
