@@ -14,8 +14,8 @@ import logger from './core/logger.mjs'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
 
-if (!semver.satisfies(process.version, '>=20')) {
-  console.error('ERROR: Node.js 20.x or later required!')
+if (!semver.satisfies(process.version, '>=24')) {
+  console.error('ERROR: Node.js 24.x or later required!')
   process.exit(1)
 }
 

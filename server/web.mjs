@@ -93,7 +93,7 @@ export async function init () {
     next()
   })
   app.use(cors({ origin: false }))
-  app.options('*', cors({ origin: false }))
+  app.options('/{*splat}', cors({ origin: false }))
   if (WIKI.config.security.securityTrustProxy) {
     app.enable('trust proxy')
   }

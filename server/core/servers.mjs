@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import http from 'node:http'
 import https from 'node:https'
 import { ApolloServer } from '@apollo/server'
-import { expressMiddleware } from '@apollo/server/express4'
+import { expressMiddleware } from '@as-integrations/express5'
 import { isEmpty } from 'lodash-es'
 import { Server as IoServer } from 'socket.io'
 import { ApolloServerPluginLandingPageLocalDefault, ApolloServerPluginLandingPageProductionDefault } from '@apollo/server/plugin/landingPage/default'
@@ -46,7 +46,7 @@ export default {
     })
 
     this.http.on('connection', conn => {
-      let connKey = `http:${conn.remoteAddress}:${conn.remotePort}`
+      const connKey = `http:${conn.remoteAddress}:${conn.remotePort}`
       this.connections.set(connKey, conn)
       conn.on('close', () => {
         this.connections.delete(connKey)
@@ -113,7 +113,7 @@ export default {
     })
 
     this.https.on('connection', conn => {
-      let connKey = `https:${conn.remoteAddress}:${conn.remotePort}`
+      const connKey = `https:${conn.remoteAddress}:${conn.remotePort}`
       this.connections.set(connKey, conn)
       conn.on('close', () => {
         this.connections.delete(connKey)
@@ -137,15 +137,17 @@ export default {
       csrfPrevention: true,
       cache: 'bounded',
       plugins: [
-        process.env.NODE_ENV === 'production' ? ApolloServerPluginLandingPageProductionDefault({
-          footer: false
-        }) : ApolloServerPluginLandingPageLocalDefault({
-          footer: false,
-          embed: {
-            endpointIsEditable: false,
-            runTelemetry: false
-          }
-        })
+        process.env.NODE_ENV === 'production'
+          ? ApolloServerPluginLandingPageProductionDefault({
+            footer: false
+          })
+          : ApolloServerPluginLandingPageLocalDefault({
+            footer: false,
+            embed: {
+              endpointIsEditable: false,
+              runTelemetry: false
+            }
+          })
         // ApolloServerPluginDrainHttpServer({ httpServer: this.http })
         // ...(this.https && ApolloServerPluginDrainHttpServer({ httpServer: this.https }))
       ]
@@ -162,20 +164,20 @@ export default {
   /**
    * Start Socket.io WebSocket Server
    */
-  async initWebSocket() {
+  async initWebSocket () {
     if (this.https) {
       this.ws = new IoServer(this.https, {
         path: '/_ws/',
         serveClient: false
       })
-      WIKI.logger.info(`WebSocket Server attached to HTTPS Server [ OK ]`)
+      WIKI.logger.info('WebSocket Server attached to HTTPS Server [ OK ]')
     } else {
       this.ws = new IoServer(this.http, {
         path: '/_ws/',
         serveClient: false,
         cors: true // TODO: dev only, replace with app settings once stable
       })
-      WIKI.logger.info(`WebSocket Server attached to HTTP Server [ OK ]`)
+      WIKI.logger.info('WebSocket Server attached to HTTP Server [ OK ]')
     }
   },
   /**
@@ -183,7 +185,7 @@ export default {
    */
   closeConnections (mode = 'all') {
     for (const [key, conn] of this.connections) {
-      if (mode !== `all` && key.indexOf(`${mode}:`) !== 0) {
+      if (mode !== 'all' && key.indexOf(`${mode}:`) !== 0) {
         continue
       }
       conn.destroy()

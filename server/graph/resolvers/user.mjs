@@ -1,5 +1,5 @@
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
-import _, { isNil } from 'lodash-es'
+import { find, isNil, mapValues, transform } from 'lodash-es'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { DateTime } from 'luxon'
@@ -67,7 +67,7 @@ export default {
       // usr.providerName = str.displayName
       // usr.providerIs2FACapable = _.get(str, 'strategy.useForm', false)
 
-      usr.auth = _.mapValues(usr.auth, (auth, providerKey) => {
+      usr.auth = mapValues(usr.auth, (auth, providerKey) => {
         if (auth.password) {
           auth.password = 'redacted'
         }
@@ -153,7 +153,7 @@ export default {
           throw new Error('ERR_FORBIDDEN')
         }
 
-        if (args.id <= 2) {
+        if (args.id === WIKI.auth.guest.id) {
           throw new WIKI.Error.UserDeleteProtected()
         }
         await WIKI.db.users.deleteUser(args.id, args.replaceId)
@@ -165,11 +165,7 @@ export default {
           operation: generateSuccess('User deleted successfully')
         }
       } catch (err) {
-        if (err.message.indexOf('foreign') >= 0) {
-          return generateError(new WIKI.Error.UserDeleteForeignConstraint())
-        } else {
-          return generateError(err)
-        }
+        return generateError(err)
       }
     },
     async updateUser (obj, args, context) {
@@ -371,7 +367,7 @@ export default {
         const destFolder = path.resolve(
           process.cwd(),
           WIKI.config.dataPath,
-          `assets`
+          'assets'
         )
         const destPath = path.join(destFolder, `userav-${args.id}.jpg`)
         await fs.ensureDir(destFolder)
@@ -451,22 +447,24 @@ export default {
   User: {
     async auth (usr, args, context) {
       const authStrategies = await WIKI.db.authentication.getStrategies({ enabledOnly: true })
-      return _.transform(usr.auth, (result, value, key) => {
-        const authStrategy = _.find(authStrategies, ['id', key])
-        const authModule = _.find(WIKI.data.authentication, ['key', authStrategy.module])
+      return transform(usr.auth, (result, value, key) => {
+        const authStrategy = find(authStrategies, ['id', key])
+        const authModule = find(WIKI.data.authentication, ['key', authStrategy.module])
         if (!authStrategy || !authModule) { return }
         result.push({
           authId: key,
           authName: authStrategy.displayName,
           strategyKey: authStrategy.module,
           strategyIcon: authModule.icon,
-          config: authStrategy.module === 'local' ? {
-            isPasswordSet: value.password?.length > 0,
-            isTfaSetup: value.tfaIsActive && value.tfaSecret?.length > 0,
-            isTfaRequired: (value.tfaRequired || authStrategy.config.enforceTfa) ?? false,
-            mustChangePwd: value.mustChangePwd ?? false,
-            restrictLogin: value.restrictLogin ?? false
-          } : value
+          config: authStrategy.module === 'local'
+            ? {
+                isPasswordSet: value.password?.length > 0,
+                isTfaSetup: value.tfaIsActive && value.tfaSecret?.length > 0,
+                isTfaRequired: (value.tfaRequired || authStrategy.config.enforceTfa) ?? false,
+                mustChangePwd: value.mustChangePwd ?? false,
+                restrictLogin: value.restrictLogin ?? false
+              }
+            : value
         })
       }, [])
     },

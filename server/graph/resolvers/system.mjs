@@ -223,6 +223,10 @@ export default {
     },
     async installExtension (obj, args, context) {
       try {
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+          throw new Error('ERR_FORBIDDEN')
+        }
+
         await WIKI.extensions.ext[args.key].install()
         // TODO: broadcast ext install
         return {

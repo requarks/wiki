@@ -1,6 +1,6 @@
 # Based of https://github.com/devcontainers/images/blob/main/src/javascript-node/.devcontainer/Dockerfile
 
-ARG VARIANT=22-bookworm
+ARG VARIANT=24-bookworm
 FROM node:${VARIANT}
 
 ARG USERNAME=node

@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:24
 LABEL maintainer="requarks.io"
 
 RUN apt-get update && apt-get install -qy --no-install-recommends \

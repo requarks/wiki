@@ -59,7 +59,7 @@
 			"upgradePackages": "true"
 		},
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "none"
+      "version": "24"
     },
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/joedmck/devcontainer-features/cloudflared:1": {}

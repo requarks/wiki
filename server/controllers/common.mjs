@@ -33,7 +33,7 @@ export default function () {
   /**
    * Site Asset
    */
-  router.get('/_site/:siteId?/:resource', async (req, res, next) => {
+  router.get('/_site{/:siteId}/:resource', async (req, res, next) => {
     const site = req.params.siteId ? WIKI.sites[req.params.siteId] : await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
     if (!site) {
       return res.status(404).send('Site Not Found')
@@ -540,7 +540,7 @@ export default function () {
   //   }
   // })
 
-  router.get('/*', async (req, res, next) => {
+  router.get('/{*splat}', async (req, res, next) => {
     const site = await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
 
     if (!site) {
