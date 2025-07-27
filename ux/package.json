@@ -112,18 +112,18 @@
     "@quasar/app-vite": "2.3.0",
     "@quasar/vite-plugin": "1.10.0",
     "@types/lodash": "4.17.20",
-    "@vue/devtools": "7.7.7",
     "@vue/language-plugin-pug": "3.0.4",
     "autoprefixer": "10.4.21",
     "browserlist": "latest",
     "eslint": "9.32.0",
     "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-n": "17.21.0",
+    "eslint-plugin-n": "17.21.2",
     "eslint-plugin-promise": "7.2.1",
     "eslint-plugin-vue": "10.3.0",
     "eslint-plugin-vue-pug": "1.0.0-alpha.3",
     "neostandard": "0.12.2",
-    "sass": "1.89.2"
+    "sass": "1.89.2",
+    "vite-plugin-vue-devtools": "8.0.0"
   },
   "engines": {
     "node": ">= 18.0",

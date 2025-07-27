@@ -1,7 +1,7 @@
 import _ from 'lodash-es'
 import sanitize from 'sanitize-filename'
 import { generateError, generateSuccess } from '../../helpers/graph.mjs'
-import { decodeFolderPath, decodeTreePath, generateHash } from '../../helpers/common.mjs'
+import { decodeTreePath, generateHash } from '../../helpers/common.mjs'
 import path from 'node:path'
 import fs from 'fs-extra'
 import { v4 as uuid } from 'uuid'
@@ -9,10 +9,13 @@ import { pipeline } from 'node:stream/promises'
 
 export default {
   Query: {
-    async assetById(obj, args, context) {
-      // FIXME: Perm
-      const asset = await WIKI.db.assets.query().findById(args.id)
+    async assetById (obj, args, context) {
+      const asset = await WIKI.db.assets.query().findById(args.id).withGraphFetched('tree')
       if (asset) {
+        const assetPath = asset.tree.folderPath ? `${decodeTreePath(asset.tree.folderPath)}/${asset.tree.fileName}` : asset.tree.fileName
+        if (!WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path: assetPath })) {
+          throw new Error('ERR_FORBIDDEN')
+        }
         return asset
       } else {
         throw new Error('ERR_ASSET_NOT_FOUND')
@@ -23,7 +26,7 @@ export default {
     /**
      * Rename an Asset
      */
-    async renameAsset(obj, args, context) {
+    async renameAsset (obj, args, context) {
       try {
         const filename = sanitize(args.fileName).toLowerCase()
 
@@ -50,13 +53,13 @@ export default {
           }
 
           // Check source asset permissions
-          const assetSourcePath = (treeItem.folderPath) ? decodeTreePath(decodeFolderPath(treeItem.folderPath)) + `/${treeItem.fileName}` : treeItem.fileName
+          const assetSourcePath = (treeItem.folderPath) ? decodeTreePath(treeItem.folderPath) + `/${treeItem.fileName}` : treeItem.fileName
           if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetSourcePath })) {
             throw new Error('ERR_FORBIDDEN')
           }
 
           // Check target asset permissions
-          const assetTargetPath = (treeItem.folderPath) ? decodeTreePath(decodeFolderPath(treeItem.folderPath)) + `/${filename}` : filename
+          const assetTargetPath = (treeItem.folderPath) ? decodeTreePath(treeItem.folderPath) + `/${filename}` : filename
           if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: assetTargetPath })) {
             throw new Error('ERR_TARGET_FORBIDDEN')
           }
@@ -102,12 +105,12 @@ export default {
     /**
      * Delete an Asset
      */
-    async deleteAsset(obj, args, context) {
+    async deleteAsset (obj, args, context) {
       try {
         const treeItem = await WIKI.db.tree.query().findById(args.id)
         if (treeItem) {
           // Check permissions
-          const assetPath = (treeItem.folderPath) ? decodeTreePath(decodeFolderPath(treeItem.folderPath)) + `/${treeItem.fileName}` : treeItem.fileName
+          const assetPath = (treeItem.folderPath) ? decodeTreePath(treeItem.folderPath) + `/${treeItem.fileName}` : treeItem.fileName
           if (!WIKI.auth.checkAccess(context.req.user, ['manage:assets'], { path: assetPath })) {
             throw new Error('ERR_FORBIDDEN')
           }
@@ -144,7 +147,7 @@ export default {
     /**
      * Upload Assets
      */
-    async uploadAssets(obj, args, context) {
+    async uploadAssets (obj, args, context) {
       try {
         // FIXME: Perm
         // -> Get Folder
@@ -354,7 +357,7 @@ export default {
         const failedResults = results.filter(r => r.status === 'rejected')
         if (failedResults.length > 0) {
           // -> One or more thrown errors
-          WIKI.logger.warn(`Failed to upload one or more assets:`)
+          WIKI.logger.warn('Failed to upload one or more assets:')
           for (const failedResult of failedResults) {
             WIKI.logger.warn(failedResult.reason)
           }
@@ -380,7 +383,7 @@ export default {
     /**
      * Flush Temporary Uploads
      */
-    async flushTempUploads(obj, args, context) {
+    async flushTempUploads (obj, args, context) {
       try {
         if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
           throw new Error('ERR_FORBIDDEN')

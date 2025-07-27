@@ -3,7 +3,7 @@ import { generateError, generateSuccess } from '../../helpers/graph.mjs'
 
 export default {
   Query: {
-    async analyticsProviders(obj, args, context, info) {
+    async analyticsProviders (obj, args, context, info) {
       if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
         throw new Error('ERR_FORBIDDEN')
       }
@@ -30,13 +30,13 @@ export default {
     }
   },
   Mutation: {
-    async updateAnalyticsProviders(obj, args, context) {
+    async updateAnalyticsProviders (obj, args, context) {
       try {
         if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
           throw new Error('ERR_FORBIDDEN')
         }
 
-        for (let str of args.providers) {
+        for (const str of args.providers) {
           await WIKI.db.analytics.query().patch({
             isEnabled: str.isEnabled,
             config: reduce(str.config, (result, value, key) => {

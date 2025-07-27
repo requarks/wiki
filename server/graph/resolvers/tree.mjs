@@ -1,7 +1,5 @@
 import _ from 'lodash-es'
 import {
-  decodeFolderPath,
-  encodeFolderPath,
   decodeTreePath,
   encodeTreePath
 } from '../../helpers/common.mjs'
@@ -50,12 +48,12 @@ export default {
       if (args.parentId) {
         const parent = await WIKI.db.knex('tree').where('id', args.parentId).first()
         if (parent) {
-          parentPath = (parent.folderPath ? `${decodeFolderPath(parent.folderPath)}.${parent.fileName}` : parent.fileName)
+          parentPath = (parent.folderPath ? `${parent.folderPath}.${parent.fileName}` : parent.fileName)
         }
       } else if (args.parentPath) {
         parentPath = encodeTreePath(args.parentPath)
       }
-      const folderPathCondition = parentPath ? `${encodeFolderPath(parentPath)}.${depthCondition}` : depthCondition
+      const folderPathCondition = parentPath ? `${parentPath}.${depthCondition}` : depthCondition
 
       // Fetch Items
       const items = await WIKI.db.knex('tree')
@@ -67,7 +65,7 @@ export default {
             const parentPathParts = parentPath.split('.')
             for (let i = 0; i <= parentPathParts.length; i++) {
               builder.orWhere({
-                folderPath: encodeFolderPath(_.dropRight(parentPathParts, i).join('.')),
+                folderPath: _.dropRight(parentPathParts, i).join('.'),
                 fileName: _.nth(parentPathParts, i * -1),
                 type: 'folder'
               })
@@ -103,7 +101,7 @@ export default {
         id: item.id,
         depth: item.depth,
         type: item.type,
-        folderPath: decodeTreePath(decodeFolderPath(item.folderPath)),
+        folderPath: decodeTreePath(item.folderPath),
         fileName: item.fileName,
         title: item.title,
         tags: item.tags ?? [],

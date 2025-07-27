@@ -4,34 +4,35 @@ import fse from 'fs-extra'
 import { startsWith } from 'lodash-es'
 import { generateHash } from '../helpers/common.mjs'
 
+import { Tree } from './tree.mjs'
 import { User } from './users.mjs'
 
 /**
  * Users model
  */
 export class Asset extends Model {
-  static get tableName() { return 'assets' }
+  static get tableName () { return 'assets' }
 
   static get jsonSchema () {
     return {
       type: 'object',
 
       properties: {
-        id: {type: 'string'},
-        filename: {type: 'string'},
-        hash: {type: 'string'},
-        ext: {type: 'string'},
-        kind: {type: 'string'},
-        mime: {type: 'string'},
-        fileSize: {type: 'integer'},
-        metadata: {type: 'object'},
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        id: { type: 'string' },
+        filename: { type: 'string' },
+        hash: { type: 'string' },
+        ext: { type: 'string' },
+        kind: { type: 'string' },
+        mime: { type: 'string' },
+        fileSize: { type: 'integer' },
+        metadata: { type: 'object' },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' }
       }
     }
   }
 
-  static get relationMappings() {
+  static get relationMappings () {
     return {
       author: {
         relation: Model.BelongsToOneRelation,
@@ -40,23 +41,32 @@ export class Asset extends Model {
           from: 'assets.authorId',
           to: 'users.id'
         }
+      },
+      tree: {
+        relation: Model.HasOneRelation,
+        modelClass: Tree,
+        join: {
+          from: 'assets.id',
+          to: 'tree.id'
+        }
       }
     }
   }
 
-  async $beforeUpdate(opt, context) {
+  async $beforeUpdate (opt, context) {
     await super.$beforeUpdate(opt, context)
 
     this.updatedAt = new Date().toISOString()
   }
-  async $beforeInsert(context) {
+
+  async $beforeInsert (context) {
     await super.$beforeInsert(context)
 
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
   }
 
-  async getAssetPath() {
+  async getAssetPath () {
     let hierarchy = []
     if (this.folderId) {
       hierarchy = await WIKI.db.assetFolders.getHierarchy(this.folderId)
@@ -64,11 +74,11 @@ export class Asset extends Model {
     return (this.folderId) ? hierarchy.map(h => h.slug).join('/') + `/${this.filename}` : this.filename
   }
 
-  async deleteAssetCache() {
+  async deleteAssetCache () {
     await fse.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${this.hash}.dat`))
   }
 
-  static async upload(opts) {
+  static async upload (opts) {
     const fileInfo = path.parse(opts.originalname)
 
     // Check for existing asset
@@ -78,7 +88,7 @@ export class Asset extends Model {
     }).first()
 
     // Build Object
-    let assetRow = {
+    const assetRow = {
       filename: opts.originalname,
       ext: fileInfo.ext,
       kind: startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
@@ -158,15 +168,17 @@ export class Asset extends Model {
     return WIKI.db.tree.query()
       .select('tree.*', 'assets.preview', 'assets.previewState')
       .innerJoin('assets', 'tree.id', 'assets.id')
-      .where(id ? { 'tree.id': id } : {
-        'tree.hash': generateHash(path),
-        'tree.locale': locale,
-        'tree.siteId': siteId
-      })
+      .where(id
+        ? { 'tree.id': id }
+        : {
+            'tree.hash': generateHash(path),
+            'tree.locale': locale,
+            'tree.siteId': siteId
+          })
       .first()
   }
 
-  static async getAsset({ pathArgs, siteId }, res) {
+  static async getAsset ({ pathArgs, siteId }, res) {
     try {
       const fileInfo = path.parse(pathArgs.path.toLowerCase())
       const fileHash = generateHash(pathArgs.path)
@@ -185,7 +197,7 @@ export class Asset extends Model {
       // }
       await WIKI.db.assets.getAssetFromDb({ pathArgs, fileHash, cachePath, siteId }, res)
     } catch (err) {
-      if (err.code === `ECONNABORTED` || err.code === `EPIPE`) {
+      if (err.code === 'ECONNABORTED' || err.code === 'EPIPE') {
         return
       }
       WIKI.logger.error(err)
@@ -193,7 +205,7 @@ export class Asset extends Model {
     }
   }
 
-  static async getAssetFromCache({ cachePath, extName }, res) {
+  static async getAssetFromCache ({ cachePath, extName }, res) {
     try {
       await fse.access(cachePath, fse.constants.R_OK)
     } catch (err) {
@@ -204,13 +216,13 @@ export class Asset extends Model {
     return true
   }
 
-  static async getAssetFromStorage(assetPath, res) {
+  static async getAssetFromStorage (assetPath, res) {
     const localLocations = await WIKI.db.storage.getLocalLocations({
       asset: {
         path: assetPath
       }
     })
-    for (let location of localLocations.filter(location => Boolean(location.path))) {
+    for (const location of localLocations.filter(location => Boolean(location.path))) {
       const assetExists = await WIKI.db.assets.getAssetFromCache(assetPath, location.path, res)
       if (assetExists) {
         return true
@@ -219,7 +231,7 @@ export class Asset extends Model {
     return false
   }
 
-  static async getAssetFromDb({ pathArgs, fileHash, cachePath, siteId }, res) {
+  static async getAssetFromDb ({ pathArgs, fileHash, cachePath, siteId }, res) {
     const asset = await WIKI.db.knex('tree').where({
       siteId,
       hash: fileHash
@@ -234,7 +246,7 @@ export class Asset extends Model {
     }
   }
 
-  static async flushTempUploads() {
-    return fse.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `uploads`))
+  static async flushTempUploads () {
+    return fse.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads'))
   }
 }

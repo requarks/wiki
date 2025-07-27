@@ -51,26 +51,6 @@ export function encodeTreePath (str) {
 }
 
 /**
- * Encode a folder path (to support legacy PostgresSQL ltree)
- *
- * @param {string} val String to encode
- * @returns Encoded folder path
- */
-export function encodeFolderPath (val) {
-  return WIKI.db.LEGACY ? val?.replaceAll('-', '_') : val
-}
-
-/**
- * Decode a folder path (to support legacy PostgresSQL ltree)
- *
- * @param {string} val String to decode
- * @returns Decoded folder path
- */
-export function decodeFolderPath (val) {
-  return WIKI.db.LEGACY ? val?.replaceAll('_', '-') : val
-}
-
-/**
  * Generate SHA-1 Hash of a string
  *
  * @param {string} str String to hash
