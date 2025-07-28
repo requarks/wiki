@@ -75,4 +75,32 @@ module.exports = class AssetFolder extends Model {
     })
     return folders
   }
+
+  /**
+   * Get asset folder by resolving its path from root
+   * @param {string} path Folder path, e.g. 'abc/def/ghi'
+   */
+  static async getFolderByPath(path) {
+    const segments = String(path).split('/').filter(Boolean)
+    if (segments.length === 0) return null
+    const db = this.knex()
+    const targetPath = segments.join('/')
+    let results
+    if (WIKI.config.db.type === 'mssql') {
+      results = await db
+        .with('folder_path', (qb) => {
+          qb.select('af.*').select(db.raw('CAST(af.slug AS VARCHAR(MAX)) AS current_path')).from('assetFolders as af').whereNull('af.parentId').unionAll((uqb) => {
+            uqb.select('af.*').select(db.raw("CAST(fp.current_path + '/' + af.slug AS VARCHAR(MAX)) AS current_path")).from('assetFolders as af').join('folder_path as fp', 'af.parentId', 'fp.id')
+          })
+        }).select('*').from('folder_path').where('current_path', targetPath).limit(1)
+    } else {
+      results = await db
+        .withRecursive('folder_path', (qb) => {
+          qb.select('af.*').select(db.raw('af.slug::TEXT AS current_path')).from('assetFolders as af').whereNull('af.parentId').unionAll((uqb) => {
+            uqb.select('af.*').select(db.raw("fp.current_path || '/' || af.slug AS current_path")).from('assetFolders as af').join('folder_path as fp', 'af.parentId', 'fp.id')
+          }, true)
+        }).select('*').from('folder_path').where('current_path', targetPath).limit(1)
+    }
+    return results[0] || null
+  }
 }
