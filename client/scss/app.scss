@@ -29,3 +29,11 @@
 @import 'pages/error';
 
 @import 'layout/_rtl';
+
+@media print {
+    pre, code {
+      white-space: pre-wrap !important;
+      word-wrap: break-word !important;
+    }
+  }
+  
