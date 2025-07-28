@@ -144,13 +144,13 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
         </a>
       </td>
       <td align="center" valign="middle" width="148">
-        <a href="http://www.taicep.org/" target="_blank">
-          <img src="https://avatars.githubusercontent.com/u/160072306?v=4">
+        <a href="https://github.com/shanekearney" target="_blank">
+          Shane Kearney<br />(@shanekearney)
         </a>
       </td>
-      <td align="center" valign="middle" colspan="1">
-        <a href="https://github.com/sponsors/NGPixel" target="_blank">
-          <img src="https://static.requarks.io/sponsors/become-148x72.png">
+      <td align="center" valign="middle" width="148">
+        <a href="http://www.taicep.org/" target="_blank">
+          <img src="https://avatars.githubusercontent.com/u/160072306?v=4">
         </a>
       </td>
     </tr>
