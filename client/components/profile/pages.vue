@@ -24,7 +24,7 @@
             hide-default-footer
           )
             template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='goToPage(props.item.id)')
+              tr.is-clickable(:active='props.selected', @click='goToPage(props.item)')
                 td
                   .body-2: strong {{ props.item.title }}
                   .caption {{ props.item.description }}
@@ -74,8 +74,8 @@ export default {
         icon: 'cached'
       })
     },
-    goToPage(id) {
-      window.location.assign(`/i/` + id)
+    goToPage(item) {
+      window.location.assign(`/${item.sitePath}/${item.locale}/${item.path}`)
     }
   },
   apollo: {
@@ -94,6 +94,7 @@ export default {
               privateNS
               createdAt
               updatedAt
+              sitePath
             }
         }
       `,
