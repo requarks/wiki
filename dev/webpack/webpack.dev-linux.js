@@ -35,8 +35,8 @@ module.exports = {
   output: {
     path: path.join(process.cwd(), 'assets'),
     publicPath: '/_assets/',
-    filename: 'js/[name].js',
-    chunkFilename: 'js/[name].js',
+    filename: `js/[name].js`,
+    chunkFilename: `js/[name].js`,
     globalObject: 'this',
     pathinfo: true,
     crossOriginLoading: 'use-credentials'
@@ -83,13 +83,15 @@ module.exports = {
           'css-loader',
           {
             loader: 'postcss-loader',
-            options: styles.getPostCssConfig({
+            options: {
+              postcssOptions: styles.getPostCssConfig({
                 themeImporter: {
                   themePath: require.resolve('@ckeditor/ckeditor5-theme-lark')
                 },
                 minify: true
               })
             }
+          }
         ]
       },
       {
@@ -188,11 +190,11 @@ module.exports = {
       },
       {
         test: /ckeditor5-[^/\\]+[/\\]theme[/\\]icons[/\\][^/\\]+\.svg$/,
-        use: [ 'raw-loader' ]
+        use: ['raw-loader']
       },
       {
         test: /ckeditor5-svg[/\\][^/\\]+\.svg$/,
-        use: [ 'raw-loader' ]
+        use: ['raw-loader']
       },
       {
         test: /\.svg$/,
@@ -214,19 +216,19 @@ module.exports = {
       {
         test: /\.(graphql|gql)$/,
         exclude: /node_modules/,
-        use: [
-          { loader: 'graphql-tag/loader' }
-        ]
+        use: [{ loader: 'graphql-tag/loader' }]
       },
       {
         test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        use: [{
-          loader: 'file-loader',
-          options: {
-            name: '[name].[ext]',
-            outputPath: 'fonts/'
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'fonts/'
+            }
           }
-        }]
+        ]
       },
       {
         loader: 'webpack-modernizr-loader',
@@ -239,7 +241,7 @@ module.exports = {
     new VuetifyLoaderPlugin(),
     new MomentTimezoneDataPlugin({
       startYear: 2017,
-      endYear: (new Date().getFullYear()) + 5
+      endYear: new Date().getFullYear() + 5
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -322,22 +324,26 @@ module.exports = {
     symlinks: true,
     alias: {
       '@': path.join(process.cwd(), 'client'),
-      'vue$': 'vue/dist/vue.esm.js',
-      'gql': path.join(process.cwd(), 'client/graph'),
+      vue$: 'vue/dist/vue.esm.js',
+      gql: path.join(process.cwd(), 'client/graph'),
       // Duplicates fixes:
-      '@apollo/client/link': path.join(process.cwd(), 'node_modules/@apollo/client/link'),
-      '@apollo/client/utilities': path.join(process.cwd(), 'node_modules/@apollo/client/utilities'),
+      '@apollo/client/link': path.join(
+        process.cwd(),
+        'node_modules/@apollo/client/link'
+      ),
+      '@apollo/client/utilities': path.join(
+        process.cwd(),
+        'node_modules/@apollo/client/utilities'
+      ),
       'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
-      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
+      modernizr$: path.resolve(process.cwd(), 'client/.modernizrrc.js')
     },
     extensions: [
       '.js',
       '.json',
       '.vue'
     ],
-    modules: [
-      'node_modules'
-    ]
+    modules: ['node_modules']
   },
   node: {
     fs: 'empty'

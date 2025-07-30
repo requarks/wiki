@@ -5,6 +5,7 @@ const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
 const qs = require('querystring')
+const { useClientDbPooling } = require('../core/db')
 
 /* global WIKI */
 
@@ -28,11 +29,12 @@ router.get('/robots.txt', (req, res, next) => {
   }
 })
 
-/**
- * Health Endpoint
- */
 router.get('/healthz', (req, res, next) => {
-
+  const clientPoolUsed = useClientDbPooling()
+  if (!clientPoolUsed) {
+    WIKI.logger.debug('healthz: Client DB pooling disabled or managed by external service, skipping pool check')
+    return res.status(200).json({ ok: true, clientPoolUsed: 'disabled' }).end()
+  }
   WIKI.logger.debug(`knex db pool info  numFree is  ${WIKI.models.knex.client.pool.numFree()}...`)
   WIKI.logger.debug(`knex db pool info numused is ${WIKI.models.knex.client.pool.numUsed()}...`)
 

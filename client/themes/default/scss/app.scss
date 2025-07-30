@@ -126,7 +126,7 @@
 
   h1 {
     padding: 0;
-    color: #272936;
+    color: mc('text', 'darkGrey');
     margin-top: 2rem;
     position: relative;
 
@@ -141,7 +141,7 @@
       left: 0;
       width: 100%;
       height: 2px;
-      background: linear-gradient(to right, #272936, rgba(#272936, 0));
+      background: linear-gradient(to right, mc('text', 'darkGrey'), rgba(mc('text', 'darkGrey'), 0));
       border-radius: 3px;
 
       @at-root .theme--dark & {
@@ -149,7 +149,7 @@
       }
 
       @at-root .is-rtl & {
-        background: linear-gradient(to left, mc('theme', 'primary'), rgba(mc('theme', 'primary'), 0));
+        background: linear-gradient(to left, mc('primary', '1'), rgba(mc('primary', '1'), 0));
       }
 
       @at-root .theme--dark.is-rtl & {
@@ -356,14 +356,20 @@
 
   blockquote {
     padding: 0 1rem 1rem 1rem;
-    background-color: mc('blue-grey', '50');
-    border-left: 55px solid mc('blue-grey', '500');
+    background-color: mc('surface', '2');
+    border-left: 55px solid mc('ext-sapphire', '5');
     border-radius: .5rem;
     margin: 1rem 0;
     position: relative;
 
+    code:not([class^="language-"]) {
+      background-color: mc('primary', '3');
+      color: #FFF;
+    }
+
     @at-root .theme--dark & {
-      background-color: mc('blue-grey', '900');
+      background-color: mc('surface', '2');
+      color: mc('text', 'darkGrey');
     }
 
     &::before {
@@ -387,87 +393,79 @@
     }
 
     &.is-info {
-      background-color: mc('blue', '50');
-      border-color: mc('blue', '300');
-      color: mc('blue', '900');
+      background-color: mc('alert', 'infoLight');
+      border-color: mc('alert', 'info');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F02FC";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('blue', '50');
-        color: mc('blue', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: mc('blue', '900');
-        color: mc('blue', '50');
-        border-color: mc('blue', '500');
+        border-color: mc('alert', 'infoOnDark');
       }
     }
 
     &.is-warning {
-      background-color: mc('orange', '50');
-      border-color: mc('orange', '300');
-      color: darken(mc('orange', '900'), 10%);
+      background-color: mc('alert', 'warningLight');
+      border-color: mc('alert', 'warning');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F0026";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('orange', '50');
-        color: mc('orange', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: darken(mc('orange', '900'), 5%);
-        color: mc('orange', '100');
-        border-color: mc('orange', '500');
-        box-shadow: 0 0 2px 0 mc('grey', '900');
+        border-color: mc('alert', 'warningOnDark');
+        box-shadow: 0 0 2px 0 mc('ext-yellow', '1');
       }
     }
 
     &.is-danger {
-      background-color: mc('red', '50');
-      border-color: mc('red', '300');
-      color: mc('red', '900');
+      background-color: mc('alert', 'errorLight');
+      border-color: mc('alert', 'error');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F0159";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('red', '50');
-        color: mc('red', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: mc('red', '900');
-        color: mc('red', '100');
-        border-color: mc('red', '500');
+        border-color: mc('alert', 'errorOnDark');
       }
     }
 
     &.is-success {
-      background-color: mc('green', '50');
-      border-color: mc('green', '300');
-      color: mc('green', '900');
+      background-color: mc('alert', 'successLight');
+      border-color: mc('alert', 'success');
+      color: mc('text', 'darkGrey');
 
       &::before {
         content: "\F0E1E";
       }
 
       code:not([class^="language-"]) {
-        background-color: mc('green', '50');
-        color: mc('green', '800');
+        background-color: mc('primary', '3');
+        color: #FFF;
       }
 
       @at-root .theme--dark & {
-        background-color: mc('green', '900');
-        color: mc('green', '50');
-        border-color: mc('green', '500');
+        border-color: mc('alert', 'successOnDark');
       }
     }
   }
@@ -1198,6 +1196,11 @@
       }
     }
   }
+  figure.image-style-align-center {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
 
   figure.image-style-align-right {
     float: right;
@@ -1288,38 +1291,38 @@
 
   mark {
     &.pen-red {
-      color: mc('red', '500');
+      color: mc('ext-red', '3');
       background-color: initial;
     }
 
     &.pen-green {
-      color: mc('green', '500');
+      color: mc('ext-green', '3');
       background-color: initial;
     }
 
     &.marker-blue {
-      background-color: mc('blue', '300');
+      background-color: mc('ext-teal', '1');
     }
 
     &.marker-yellow {
-      background-color: mc('yellow', '300');
+      background-color: mc('ext-yellow', '1');
     }
 
     &.marker-pink {
-      background-color: mc('pink', '300');
+      background-color: mc('ext-violet', '1');
     }
 
     &.marker-green {
-      background-color: mc('green', '300');
+      background-color: mc('ext-green', '1');
     }
   }
 
   .mention {
     background-color: rgba(153, 0, 48, .1);
-    color: #990030;
+    color: #0F878A;
 
     @at-root .theme--dark & {
-      color: mc('pink', '500');
+      color: #00E0CB;
     }
   }
 

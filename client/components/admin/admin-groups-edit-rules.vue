@@ -269,6 +269,7 @@ export default {
         { text: 'Edit Styles', value: 'write:styles', icon: 'mdi-language-css3' },
         { text: 'Read Comments', value: 'read:comments', icon: 'mdi-comment-search-outline' },
         { text: 'Create Comments', value: 'write:comments', icon: 'mdi-comment-plus-outline' },
+        { text: 'Edit + Delete own Comments', value: 'manage:own_comments', icon: 'mdi-comment-remove-outline' },
         { text: 'Manage Sites', value: 'manage:sites', icon: 'mdi-sitemap' }
       ],
       matches: [

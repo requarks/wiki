@@ -51,14 +51,14 @@ module.exports = {
   LocalizationMutation: {
     async downloadLocale(obj, args, context) {
       try {
-        const job = await WIKI.scheduler.registerJob(
+        await WIKI.scheduler.registerJob(
           {
             name: 'fetch-graph-locale',
-            immediate: true
+            immediate: true,
+            wait: true
           },
           args.locale
         )
-        await job.finished
         return {
           responseResult: graphHelper.generateSuccess(
             'Locale downloaded successfully'

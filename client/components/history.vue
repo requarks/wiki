@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').history
     nav-header
-    v-content
+    v-main
       v-toolbar(color='primary', dark)
         .subheading Viewing history of #[strong /{{path}}]
         template(v-if='$vuetify.breakpoint.mdAndUp')
@@ -580,6 +580,54 @@ export default {
   .d2h-file-header {
     display: none;
   }
+
+  d2h-code-line-added {
+    background-color: rgba(mc('ext-peacock', '1'), 0.2) !important;
+
+    .d2h-code-line-ctn {
+      background-color: rgba(mc('ext-peacock', '1'), 0.2) !important;
+    }
+  }
+
+  .d2h-addition {
+    background-color: rgba(mc('ext-peacock', '1'), 0.15) !important;
+  }
+
+  .d2h-ins {
+    background-color: rgba(mc('ext-peacock', '1'), 0.4) !important;
+  }
+
+  .d2h-code-line-removed {
+    background-color: rgba(mc('ext-yellow', '1'), 0.2) !important;
+
+    .d2h-code-line-ctn {
+      background-color: rgba(mc('ext-yellow', '1'), 0.2) !important;
+
+    }
+  }
+
+  .d2h-deletion {
+    background-color: rgba(mc('ext-yellow', '2'), 0.15) !important;
+  }
+
+  .d2h-del {
+    background-color: rgba(mc('ext-yellow', '2'), 0.4) !important;
+  }
+
+  // Make text in changed sections more readable
+  .d2h-code-line-added, .d2h-code-line-removed {
+    .d2h-code-line-ctn {
+      color: currentColor !important;
+    }
+  }
+}
+
+ins {
+  background-color: mc('ext-peacock', '1') !important;
+}
+
+del {
+  background-color: mc('ext-yellow', '2') !important;
 }
 
 </style>

@@ -10,8 +10,8 @@ const {
   isSiteAdmin,
   hasSitePermission,
   _applyPageRuleSpecificity
-} = require('../core/auth')
-const auth = require('../core/auth')
+} = require('../../core/auth')
+const auth = require('../../core/auth')
 
 const WIKI = {
   auth: {
@@ -247,6 +247,11 @@ describe('Site Admin', () => {
     expect(result).toBe(true)
     expect(WIKI.auth.isSiteAdmin).toHaveBeenCalledWith(user)
     expect(WIKI.auth.hasSitePermission).toHaveBeenCalledWith(user, siteId, 'manage:sites')
+  })
+
+  it('denies access if the only requested permission is manage:system and user is not super admin', () => {
+    const result = auth.checkAccess(user, ['manage:system'])
+    expect(result).toBe(false)
   })
 })
 
