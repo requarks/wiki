@@ -147,6 +147,7 @@ push-docker-image:
   needs:
    - docker-build
   script:
+   - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
