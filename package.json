@@ -71,6 +71,7 @@
     "dependency-graph": "0.11.0",
     "diff": "4.0.2",
     "diff2html": "3.1.14",
+    "discord-oauth2": "2.11.0",
     "dompurify": "2.4.3",
     "dotize": "0.3.0",
     "elasticsearch6": "npm:@elastic/elasticsearch@6",
