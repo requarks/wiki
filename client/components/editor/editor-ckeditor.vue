@@ -59,7 +59,7 @@ export default {
     insertLink() {
       this.insertLinkDialog = true
     },
-    insertLinkHandler ({ locale, path }) {
+    insertLinkHandler({ locale, path }) {
       this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
     },
     insertDiagram() {
@@ -75,7 +75,7 @@ export default {
       this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
     },
     getSelectedWidget() {
-      return document.getElementsByClassName('image ck-widget_selected').item(0)
+      return document.getElementsByClassName('ck-widget_selected').item(0)
     },
     getSelectedDiagram() {
       const selection = this.getSelectedWidget()
@@ -83,7 +83,7 @@ export default {
     },
     getDiagramCaption() {
       const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('figcaption').item(0).firstChild.data
+      return selection.getElementsByTagName('figcaption')?.item(0)?.firstChild.data
     },
     setDiagramCaption(caption) {
       const selection = this.getSelectedWidget()
@@ -133,7 +133,7 @@ export default {
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
         case 'IMAGE':
-          this.editor.execute('imageInsert', {
+          this.editor.execute('insertImage', {
             source: opts.path
           })
           break
@@ -149,7 +149,7 @@ export default {
             this.editor.execute('delete')
           }
 
-          this.editor.execute('imageInsert', {
+          this.editor.execute('insertImage', {
             source: `data:image/svg+xml;base64,${opts.text}`
           })
 
@@ -188,7 +188,10 @@ export default {
         for (const node of change.nodes) {
           if (node.hasAttribute('mention')) {
             let mention = node.getAttribute('mention')
-            mention.id = mention.id.substring(1)
+            if (mention.id && mention.id.startsWith('@')) {
+            // Remove '@' from the mention id
+              mention.id = mention.id.substring(1)
+            }
             newMentions.set(mention['uid'], mention)
           }
         }
@@ -226,7 +229,7 @@ export default {
       this.$store.set('editor/mentions', Array.from(mergedMentions))
     })
   },
-  beforeDestroy () {
+  beforeDestroy() {
     if (this.editor) {
       this.editor.destroy()
       this.editor = null
@@ -241,7 +244,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
   background-color: rgba(255,255,255,.25);
-  display:inline-flex;
+  display: inline-flex;
   display: flex;
   flex-flow: column nowrap;
   height: $editor-height;
@@ -342,6 +345,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
         background-color: mc('grey', '900');
       }
     }
+  }
+}
+
+.v-main .contents code{
+  text-shadow: none;
+  &::selection {
+    color: #ffffff;
+    background-color: mc('blue', '900') !important;
   }
 }
 </style>

@@ -8,7 +8,7 @@ requirements:
 props:
   sdPosition:
     type: String
-    default: 'left'
+    default: 'right'
     title: Table of Contents Position
     hint: Should the content sidebar be shown on the left or right.
     enum:

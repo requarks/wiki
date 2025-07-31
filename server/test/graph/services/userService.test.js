@@ -17,6 +17,9 @@ const WIKI = {
     },
     comments: {
       query: jest.fn()
+    },
+    userMentions: {
+      query: jest.fn()
     }
   },
   data: {
@@ -32,6 +35,9 @@ const WIKI = {
     }
   }
 }
+jest.mock('../../../helpers/anonymizeInactiveUsersHelpers', () => ({
+  retrieveOrCreateAnonymousUser: jest.fn().mockResolvedValue({ id: 999 })
+}))
 
 function setupMocks(comments, pages) {
   WIKI.models.comments.query.mockReturnValue({
@@ -39,6 +45,10 @@ function setupMocks(comments, pages) {
   })
   WIKI.models.pages.query.mockReturnValue({
     findById: jest.fn().mockImplementation(findPageById(pages))
+  })
+  WIKI.models.userMentions.query.mockReturnValue({
+    delete: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis()
   })
 }
 
@@ -89,6 +99,7 @@ describe('userService', () => {
   })
 
   describe('anonymizeComments', () => {
+    const anonymousUser = { id: 999 }
     it('should anonymize comments where the user was mentioned by others', async () => {
       // Arrange
       const userId = 3
@@ -106,7 +117,7 @@ describe('userService', () => {
       setupMocks(comments, pages)
 
       // Act
-      await userService.anonymizeComments(user, mentionedComments, [])
+      await userService.anonymizeComments(user, mentionedComments, [], anonymousUser)
 
       // Assert
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledTimes(1)
@@ -133,7 +144,7 @@ describe('userService', () => {
       setupMocks(userCommentomments, pages)
 
       // Act
-      await userService.anonymizeComments(user, mentionedComments, userCommentomments)
+      await userService.anonymizeComments(user, mentionedComments, userCommentomments, anonymousUser)
 
       // Assert
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledTimes(2)
@@ -142,14 +153,16 @@ describe('userService', () => {
         content: userCommentomments[0].content,
         page: pages[0],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledWith({
         id: userCommentomments[1].id,
         content: userCommentomments[1].content,
         page: pages[1],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
     })
     it('should anonymize comments authored by the user mentioning self', async () => {
@@ -169,7 +182,7 @@ describe('userService', () => {
       setupMocks(userComments, pages)
 
       // Act
-      await userService.anonymizeComments(user, mentionedComments, userComments)
+      await userService.anonymizeComments(user, mentionedComments, userComments, anonymousUser)
 
       // Assert
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledTimes(2)
@@ -178,14 +191,16 @@ describe('userService', () => {
         content: 'Hello @AnonymousUser',
         page: pages[0],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
       expect(WIKI.data.commentProvider.update).toHaveBeenCalledWith({
         id: 2,
         content: 'Hi @AnonymousUser',
         page: pages[1],
         name: 'Anonymous User',
-        email: '[deleted]'
+        email: '[deleted]',
+        authorId: anonymousUser.id
       })
     })
   })
@@ -205,6 +220,43 @@ describe('userService', () => {
       const result = userService.handleDeleteError(error)
 
       expect(result).toEqual(graphHelper.generateError(error))
+    })
+  })
+
+  describe('anonymizeUserMentions', () => {
+    const email = 'test.user@example.com'
+    const { anonymizeUserMentions } = userService
+
+    it('should anonymize markdown mentions', () => {
+      const content = 'Hello @test.user@example.com, please review.'
+      const result = anonymizeUserMentions(content, 'markdown', email)
+      expect(result).toBe('Hello @AnonymousUser, please review.')
+    })
+
+    it('should anonymize multiple markdown mentions', () => {
+      const content = '@test.user@example.com and @test.user@example.com and @user@example.com'
+      const result = anonymizeUserMentions(content, 'markdown', email)
+      expect(result).toBe('@AnonymousUser and @AnonymousUser and @user@example.com')
+    })
+
+    it('should anonymize html mentions', () => {
+      const content = '<span class="mention" data-mention="test.user@example.com">@test.user@example.com</span> is here'
+      const result = anonymizeUserMentions(content, 'html', email)
+      expect(result).toBe('<span class="mention mention-anonymous">@AnonymousUser</span> is here')
+    })
+
+    it('should anonymize multiple html mentions', () => {
+      const content = '<span class="mention" data-mention="test.user@example.com">@test.user@example.com</span> and <span class="mention" data-mention="test.user@example.com">@test.user@example.com</span> and <span class="mention" data-mention="user@example.com">@user@example.com</span>'
+      const result = anonymizeUserMentions(content, 'html', email)
+      expect(result).toBe('<span class="mention mention-anonymous">@AnonymousUser</span> and <span class="mention mention-anonymous">@AnonymousUser</span> and <span class="mention" data-mention="user@example.com">@user@example.com</span>')
+    })
+
+    it('should return content unchanged for ascii contentType', () => {
+      const email = 'test.user@example.com'
+      const { anonymizeUserMentions } = userService
+      const content = 'This is some ascii content with @test.user@example.com'
+      const result = anonymizeUserMentions(content, 'ascii', email)
+      expect(result).toBe(content)
     })
   })
 })

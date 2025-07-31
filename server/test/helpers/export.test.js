@@ -6,7 +6,9 @@ const {
   convertToFile,
   getPageContent,
   getPageTreeExportHtml,
-  getExportHtmlContent
+  getExportHtmlContent,
+  anonymizeMentionedUsers,
+  ANONYMIZED_MENTION
 } = require('../../helpers/export')
 const Page = require('../../models/pages')
 
@@ -57,6 +59,76 @@ const WIKI = {
   }
 }
 global.WIKI = WIKI
+
+function createImageTestDom() {
+  const html = `
+    <html>
+      <body>
+        <img src="/assets/site1/image1.png" />
+        <img src="data:image/png;base64,..." />
+        <img src="/assets/site1/image2.jpg" />
+      </body>
+    </html>
+  `
+  const dom = new JSDOM(html)
+  return dom.window.document
+}
+
+function createMentionTestDom() {
+  const html = `
+    <html>
+      <body>
+        <span data-mention="dummyuser@dummy.com" class="mention">@dummyuser@dummy.com</span>
+        <div>
+          <span data-mention="nested@company.com" class="mention">@nested@company.com</span>
+          <div>
+            <span data-mention="deep@company.com" class="mention">@deep@company.com</span>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+  const dom = new JSDOM(html)
+  return dom.window.document
+}
+
+function createDomWithSerialize(expectedHTML) {
+  let dom
+  JSDOM.mockImplementationOnce((html) => {
+    dom = new (require('jsdom').JSDOM)(html)
+    dom.serialize = jest.fn().mockReturnValue(expectedHTML)
+    return dom
+  })
+  return dom
+}
+
+function setupDomForMention(html) {
+  let dom
+  JSDOM.mockImplementationOnce((htmlContent) => {
+    dom = new (require('jsdom').JSDOM)(htmlContent)
+    dom.serialize = jest.fn(() => dom.window.document.documentElement.outerHTML)
+    return dom
+  })
+  return dom
+}
+
+function getMarkdownPage() {
+  return {
+    title: 'Markdown Page',
+    contentType: 'markdown',
+    content: 'Hello @someone@company.com',
+    path: 'markdown-path'
+  }
+}
+
+function getQueryParams(path) {
+  return {
+    sitePath: 'sitePath',
+    locale: 'en',
+    path
+  }
+}
+
 
 describe('export helpers', () => {
   afterEach(() => {
@@ -124,17 +196,7 @@ describe('export helpers', () => {
     let req
 
     beforeEach(() => {
-      const html = `
-        <html>
-          <body>
-            <img src="/assets/site1/image1.png" />
-            <img src="data:image/png;base64,..." />
-            <img src="/assets/site1/image2.jpg" />
-          </body>
-        </html>
-      `
-      const dom = new JSDOM(html)
-      document = dom.window.document
+      document = createImageTestDom()
       req = {
         user: {}
       }
@@ -183,6 +245,25 @@ describe('export helpers', () => {
 
       const images = document.querySelectorAll('img')
       expect(images[0].src).toBe('/assets/site1/image1.png')
+    })
+  })
+
+  describe('anonymizeMentionedUsers', () => {
+    let document
+
+    beforeEach(() => {
+      document = createMentionTestDom()
+    })
+
+    it('should anonymize mentioned users', async () => {
+      anonymizeMentionedUsers(document)
+
+      const mentions = document.querySelectorAll('.mention[data-mention]')
+      expect(mentions.length).toBe(3)
+      mentions.forEach(m => {
+        expect(m.getAttribute('data-mention')).toBe(ANONYMIZED_MENTION)
+        expect(m.textContent).toBe(`@${ANONYMIZED_MENTION}`)
+      })
     })
   })
 
@@ -378,12 +459,7 @@ describe('export helpers', () => {
     })
 
     it('should return the HTML content of a single page', async () => {
-      // GIVEN
-      const queryParams = {
-        sitePath: 'sitePath',
-        locale: 'en',
-        path: 'path'
-      }
+      const queryParams = getQueryParams('path')
       const expectedHTML = `
     <html>
       <head>
@@ -393,28 +469,14 @@ describe('export helpers', () => {
         <h1 id="main-headline"><a href="#main-headline"></a>Main Headline</h1><p>Main content</p>
       </body>
     </html>`
-      let dom
-      JSDOM.mockImplementationOnce((html) => {
-        dom = new (require('jsdom').JSDOM)(html)
-        dom.serialize = jest.fn().mockReturnValue(expectedHTML)
-        return dom
-      })
+      createDomWithSerialize(expectedHTML)
 
-      // WHEN
       const result = await getExportHtmlContent(page, user, queryParams)
-
-      // THEN
       expect(result).toBe(expectedHTML)
     })
 
     it('should return the HTML content of the page tree', async () => {
-      // GIVEN
-      const queryParams = {
-        sitePath: 'sitePath',
-        locale: 'en',
-        path: 'path',
-        isPageTreeExport: true
-      }
+      const queryParams = { ...getQueryParams('path'), isPageTreeExport: true }
       const expectedHTML = `
     <html>
       <head>
@@ -441,29 +503,14 @@ describe('export helpers', () => {
       </body>
     </html>`
       WIKI.models.pages.getPageTreeFrom.mockResolvedValue(pageTree)
-      let dom
-      JSDOM.mockImplementationOnce((html) => {
-        dom = new (require('jsdom').JSDOM)(html)
-        dom.serialize = jest.fn().mockReturnValue(expectedHTML)
-        return dom
-      })
+      createDomWithSerialize(expectedHTML)
 
-      // WHEN
       const result = await getExportHtmlContent(page, user, queryParams)
-
-      // THEN
       expect(result).toBe(expectedHTML)
     })
 
     it('should only export the content of a single page if isPageTreeExport is false', async () => {
-      // GIVEN
-      const queryParams = {
-        sitePath: 'sitePath',
-        locale: 'en',
-        path: 'path',
-        isPageTreeExport: false
-      }
-
+      const queryParams = { ...getQueryParams('path'), isPageTreeExport: false }
       const expectedHTML = `
     <html>
       <head>
@@ -473,19 +520,42 @@ describe('export helpers', () => {
         <h1 id="main-headline"><a href="#main-headline"></a>Main Headline</h1><p>Main content</p>
       </body>
     </html>`
-      let dom
-      JSDOM.mockImplementationOnce((html) => {
-        dom = new (require('jsdom').JSDOM)(html)
-        dom.serialize = jest.fn().mockReturnValue(expectedHTML)
-        return dom
-      })
+      createDomWithSerialize(expectedHTML)
 
-      // WHEN
       const result = await getExportHtmlContent(page, user, queryParams)
-
-      // THEN
       expect(WIKI.models.pages.getPageTreeFrom).not.toHaveBeenCalled()
       expect(result).toBe(expectedHTML)
+    })
+
+    it('should anonymize mentioned users in the exported HTML', async () => {
+      const pageWithMention = {
+        title: 'Mention Page',
+        contentType: 'html',
+        render: `<h1 class="toc-header" id="header"><a href="#header" class="toc-anchor">¶</a> Header</h1>
+<p>Your content here</p>
+<p><span data-mention="dummy.user@dummy.com" class="mention">@dummy.user@dummy.com</span></p>`,
+        path: 'mention-path'
+      }
+      const queryParams = getQueryParams('mention-path')
+      setupDomForMention(pageWithMention.render)
+
+      const result = await getExportHtmlContent(pageWithMention, user, queryParams)
+      expect(result).toContain(`@${ANONYMIZED_MENTION}`)
+      expect(result).toContain(`data-mention="${ANONYMIZED_MENTION}"`)
+      expect(result).not.toContain('dummy.user@dummy.com')
+    })
+
+    it('should anonymize mentioned users in a markdown page', async () => {
+      const markdownPage = getMarkdownPage()
+      const queryParams = getQueryParams('markdown-path')
+
+      Page.convertMarkdown2HTML.mockReturnValue('<p>Hello <span data-mention="someone@company.com" class="mention">@someone@company.com</span></p>')
+      setupDomForMention('<p>Hello <span data-mention="someone@company.com" class="mention">@someone@company.com</span></p>')
+
+      const result = await getExportHtmlContent(markdownPage, user, queryParams)
+      expect(result).toContain(`@${ANONYMIZED_MENTION}`)
+      expect(result).toContain(`data-mention="${ANONYMIZED_MENTION}"`)
+      expect(result).not.toContain('someone@company.com')
     })
   })
 })

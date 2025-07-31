@@ -2,18 +2,32 @@
   div.d-flex.flex-column.w-100
     v-list-item.list-item-class.w-100.pl-0.pr-0
       div.d-flex.align-center.flex-grow-1.w-100.pl-2
-        v-icon.mr-2(v-if="hasChildren", color="grey", small, @click.stop="handleToggle") {{ icon }}
-        v-icon.mr-2(v-else, color="transparent", small) mdi-chevron-right
+        v-icon.mr-2(v-if='hasChildren', color='grey', small, @click.stop='handleToggle') {{ icon }}
+        v-icon.mr-2(v-else, color='transparent', small) mdi-chevron-right
         v-list-item-content
           v-list-item-title.truncate(
             @click='$vuetify.goTo(item.anchor, scrollOpts)'
-            :style="{ cursor: 'pointer' }"
-            :class="[titleClass, titleDarkModeClass]") {{ item.title }}
-    v-list(v-if="isOpen && hasChildren" dense :style="{ paddingLeft: `20px`, paddingTop: '0px', paddingBottom: '0px' }")
-      TreeItem(v-for="(child, index) in item.children" :key="child.id" :item="child" :open.sync="openStates[child.id]" :toggleOpenState='toggleOpenState' :openStates='openStates' :level="level + 1" :uniqueId="child.id")
+            :style='{ cursor: `pointer` }'
+            :class='[isSubSection, isDark]'
+            ) {{ item.title }}
+    v-list(
+      v-if='isOpen && hasChildren'
+      dense
+      :style='{ paddingLeft: `20px`, paddingTop: `0px`, paddingBottom: `0px`, backgroundColor: color }'
+      )
+      TreeItem(
+        v-for='(child, index) in item.children'
+        :key='child.id' :item='child'
+        :open.sync='openStates[child.id]'
+        :toggleOpenState='toggleOpenState'
+        :openStates='openStates'
+        :level='level + 1'
+        :uniqueId='child.id'
+        :color='color'
+        )
   </template>
-
 <script>
+
 export default {
   name: 'TreeItem',
   props: {
@@ -40,6 +54,10 @@ export default {
     uniqueId: {
       type: String,
       default: ''
+    },
+    color: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -61,11 +79,11 @@ export default {
     icon() {
       return this.isOpen ? 'mdi-chevron-down' : 'mdi-chevron-right'
     },
-    titleClass() {
-      return this.level > 0 ? 'caption grey--text' : ''
+    isSubSection() {
+      return this.level > 0 ? 'sub-section' : ''
     },
-    titleDarkModeClass() {
-      return this.$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`
+    isDark() {
+      return this.$vuetify.theme.dark ? 'dark' : ''
     }
   },
   methods: {
@@ -91,5 +109,19 @@ export default {
   }
   .w-100 {
     width: 100%;
+  }
+  .v-list-item__title {
+    &.sub-section {
+      color: rgba(mc('text', 'darkGrey'), .75);
+      &.dark {
+        color: rgba(white, .75);
+      }
+    }
+    &:hover {
+      color: mc('primary', '1');
+      &.dark {
+        color: mc('ext-teal', '1');
+      }
+    }
   }
 </style>

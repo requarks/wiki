@@ -1,9 +1,12 @@
 <template lang="pug">
   div
-    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
+    .pa-3.d-flex(
+      v-if='navMode === `MIXED`'
+      :class='dark ? colors.primary[4] : colors.surface[2]'
+      )
       v-btn(
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='min-width:0;'
         @click='goHome'
         :aria-label='$t(`common:header.home`)'
@@ -12,7 +15,7 @@
       v-btn.ml-3(
         v-if='currentMode === `custom`'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='flex: 1 1 100%;'
         @click='switchMode(`browse`)'
         )
@@ -21,7 +24,7 @@
       v-btn.ml-3(
         v-else-if='currentMode === `browse`'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
+        :color='dark ? colors.peacock[4] : colors.primary[1]'
         style='flex: 1 1 100%;'
         @click='switchMode(`custom`)'
         )
@@ -29,8 +32,13 @@
         .body-2.text-none {{$t('common:sidebar.mainMenu')}}
     v-divider
     //-> Custom Navigation
-    v-list.py-2(v-if='currentMode === `custom`', dense, :class='color', :dark='dark')
-      template(v-for='item of items')
+    v-list.py-2(
+      v-if='currentMode === `custom`'
+      dense
+      :class='dark ? `dark ` + color : color'
+      :dark='dark'
+      )
+      template(v-for='item of items' )
         v-list-item(
           v-if='item.k === `link`'
           :href='item.t'
@@ -38,39 +46,83 @@
           :rel='item.y === `externalblank` ? `noopener` : ``'
           )
           v-list-item-avatar(size='24', tile)
-            v-icon(v-if='item.c.match(/fa[a-z] fa-/)', size='19') {{ item.c }}
-            v-icon(v-else) {{ item.c }}
+            v-icon(
+              v-if='item.c.match(/fa[a-z] fa-/)'
+              :color='dark ? `white` : colors.text.darkGrey'
+              size='19'
+              ) {{ item.c }}
+            v-icon(
+              v-else
+              :color='dark ? `white` : colors.text.darkGrey'
+              ) {{ item.c }}
           v-list-item-title {{ item.l }}
         v-divider.my-2(v-else-if='item.k === `divider`')
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
     //-> Browse
-    v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
-      template(v-if='currentParent.id > 0')
-        v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='fetchBrowseItems(item)', style='min-height: 30px;')
-          v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
-            v-icon(small) mdi-folder-open
+    v-list.py-2(
+      v-else-if='currentMode === `browse`'
+      dense
+      :class='dark ? `dark ` + color : color'
+      :dark='dark'
+      )
+      //- Tree branch from root to current directory
+      template(v-if='currentParent.id > 0 || isParentPage')
+        v-list-item(
+          v-for='(item, idx) of parents'
+          :href='getHref(item)'
+          :key='`parent-` + item.id'
+          style='min-height: 30px;'
+          )
+          v-list-item-avatar(
+            size='18'
+            :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`'
+            )
+            v-icon(small :color='dark ? `white` : colors.text.darkGrey') mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + sitePath + `/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
+        v-list-item.mt-2(
+          v-if='currentParent.pageId > 0'
+          :href='`/` + sitePath + `/` + currentParent.locale + `/` + currentParent.path'
+          :key='`directorypage-` + currentParent.id'
+          :input-value='path === currentParent.path'
+          )
           v-list-item-avatar(size='24')
-            v-icon mdi-text-box
+            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
           v-list-item-title {{ currentParent.title }}
-        v-subheader.pl-4 {{$t('common:sidebar.currentDirectory')}}
-      template(v-for='item of currentItems')
-        v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='fetchBrowseItems(item)')
+      //- Current directory items
+      template(
+        v-for='item of itemList'
+        )
+        v-list-item(
+          v-if='item.isFolder'
+          :href='getHref(item)'
+          :key='`childfolder-` + item.id'
+          :color='dark ? `white` : colors.text.darkGrey'
+          :style='getListItemStyles()'
+          )
           v-list-item-avatar(size='24')
-            v-icon mdi-folder
+            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-folder
           v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` +  sitePath + `/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
+        v-list-item(
+          v-else
+          :href='getHref(item)'
+          :key='`childpage-` + item.id'
+          :input-value='path === item.path'
+          :style='getListItemStyles()'
+          )
           v-list-item-avatar(size='24')
-            v-icon mdi-text-box
+            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
           v-list-item-title {{ item.title }}
 </template>
 
 <script>
 import _ from 'lodash'
-import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
+import colors from '@/themes/default/js/extended-color-scheme'
+
+import pageTreeQuery from '@/graph/common/common-pages-query-tree.gql'
+import pageByPathQuery from '@/graph/common/common-pages-query-page-by-path.gql'
+import childPagesQuery from '@/graph/common/common-pages-query-child-pages.gql'
 
 /* global siteLangs */
 
@@ -96,20 +148,34 @@ export default {
   data() {
     return {
       currentMode: 'custom',
-      currentItems: [],
+      topLevelPageItems: [],
       currentParent: {
         id: 0,
         title: '/ (root)'
       },
       parents: [],
-      loadedCache: []
+      childPageItems: [],
+      hasFetchedChildren: false,
+      loadedCache: [],
+      colors: colors
     }
   },
   computed: {
+    pageId: get('page/id'),
     path: get('page/path'),
     locale: get('page/locale'),
     sitePath: get('page/sitePath'),
-    siteId: get('page/siteId')
+    siteId: get('page/siteId'),
+    isParentPage: get('page/hasChildren'),
+    isReadyToFetchPageChildren() {
+      return this.pageId && typeof this.pageId === 'number' &&
+        this.locale && typeof this.locale === 'string' &&
+        this.siteId && typeof this.siteId === 'string' &&
+        this.isParentPage
+    },
+    itemList() {
+      return this.isParentPage ? this.childPageItems : this.topLevelPageItems
+    }
   },
   methods: {
     switchMode(mode) {
@@ -119,120 +185,89 @@ export default {
         this.loadFromCurrentPath()
       }
     },
-    async fetchBrowseItems(item) {
-      this.$store.commit(`loadingStart`, 'browse-load')
-      if (!item) {
-        item = this.currentParent
-      }
-
-      if (this.loadedCache.indexOf(item.id) < 0) {
-        this.currentItems = []
-      }
-
-      if (item.id === 0) {
-        this.parents = []
-      } else {
-        const flushRightIndex = _.findIndex(this.parents, ['id', item.id])
-        if (flushRightIndex >= 0) {
-          this.parents = _.take(this.parents, flushRightIndex)
-        }
-        if (this.parents.length < 1) {
-          this.parents.push(this.currentParent)
-        }
-        this.parents.push(item)
-      }
-
-      this.currentParent = item
-
-      const resp = await this.$apollo.query({
-        query: gql`
-          query ($parent: Int, $locale: String!, $siteId: String!) {
-              tree(
-                parent: $parent
-                mode: ALL
-                locale: $locale
-                siteId: $siteId
-              ) {
-                id
-                path
-                title
-                isFolder
-                pageId
-                parent
-                locale
-                siteId
-              }
-          }
-        `,
-        fetchPolicy: 'cache-first',
-        variables: {
-          parent: item.id,
-          locale: this.locale,
-          siteId: this.siteId
-        }
-      })
-      this.loadedCache = _.union(this.loadedCache, [item.id])
-      this.currentItems = _.get(resp, 'data.tree', [])
-      this.$store.commit(`loadingStop`, 'browse-load')
+    getHref(item) {
+      return item.path ? `/${this.sitePath}/${item.locale}/${item.path}` : `/${this.sitePath}/`
     },
-    async loadFromCurrentPath() {
-      this.$store.commit(`loadingStart`, 'browse-load')
-
-      const resp = await this.$apollo.query({
-        query: gql`
-          query ($path: String, $locale: String!, $siteId: String!) {
-              tree(
-                path: $path
-                mode: ALL
-                locale: $locale
-                includeAncestors: true
-                siteId: $siteId
-              ) {
-                id
-                path
-                title
-                isFolder
-                pageId
-                parent
-                locale
-                siteId
-              }
-          }
-        `,
+    async fetchPageTree() {
+      const pageTreeResp = await this.$apollo.query({
+        query: pageTreeQuery,
         fetchPolicy: 'cache-first',
         variables: {
           path: this.path,
+          mode: 'ALL',
           locale: this.locale,
+          includeAncestors: true,
           siteId: this.siteId
         }
       })
+      const items = _.get(pageTreeResp, 'data.tree', [])
 
-      const items = _.get(resp, 'data.tree', [])
-
-      const filteredItems = items.filter((item) => item.siteId === this.siteId)
-
-      const curPage = _.find(filteredItems, [
-        'pageId',
-        this.$store.get('page/id')
-      ])
-
+      return items.filter((item) => item.siteId === this.siteId)
+    },
+    extractInvertedAncestors(pageTreeItems, curPage) {
       let curParentId = curPage.parent
       let invertedAncestors = []
       while (curParentId) {
-        const curParent = _.find(filteredItems, ['id', curParentId])
+        const curParent = _.find(pageTreeItems, ['id', curParentId])
         if (!curParent) {
           break
         }
         invertedAncestors.push(curParent)
         curParentId = curParent.parent
       }
-
+      return invertedAncestors
+    },
+    async updateRootParentWithActualData() {
+      const homePagepath = "home"
+      const homePageResp = await this.$apollo.query({
+        query: pageByPathQuery,
+        fetchPolicy: 'cache-first',
+        variables: {
+          path: homePagepath,
+          locale: this.locale,
+          siteId: this.siteId
+        }
+      })
+      this.currentParent = _.get(homePageResp, 'data.pageByPath', {
+        id: 0,
+        pageId: 0,
+        title: '/ (root)'
+      })
+      this.currentParent = {
+        ...this.currentParent,
+        // In this context, id represents the pageTree id, not the page id.
+        // Therefore, we explicitly set it to 0 to avoid conflict with the page id (the id received from the pageById query).
+        id: 0
+      }
+    },
+    updateParents(curPage, invertedAncestors) {
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
       this.currentParent = _.last(this.parents)
+      this.parents = (this.parents.length > 1 && !curPage.isFolder) ?
+        this.parents.slice(0, this.parents.length - 1) :
+        this.parents
       this.$store.commit('page/SET_HAS_CHILDREN', curPage.isFolder)
+    },
+    async loadFromCurrentPath() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+
+      const pageTreeItems = await this.fetchPageTree()
+      const curPage = _.find(pageTreeItems, [
+        'pageId',
+        this.$store.get('page/id')
+      ])
+
+      const invertedAncestors = this.extractInvertedAncestors(pageTreeItems, curPage)
+
+      if (invertedAncestors.length > 0 || curPage.isFolder) {
+        await this.updateRootParentWithActualData()
+      }
+
+      this.updateParents(curPage, invertedAncestors)
 
       this.loadedCache = [curPage.parent]
-      this.currentItems = _.filter(filteredItems, ['parent', curPage.parent])
+      this.topLevelPageItems = _.filter(pageTreeItems, ['parent', curPage.parent])
+
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome() {
@@ -240,6 +275,53 @@ export default {
         window.location.assign(`/${this.sitePath}/${this.locale}`)
       } else {
         window.location.assign(`/${this.sitePath}`)
+      }
+    },
+    getListItemStyles() {
+      let styles = ''
+      if (this.currentParent.pageId > 0) {
+        styles = 'padding-left: 48px; '
+      }
+      if (this.dark) {
+        return styles + 'background-color' + this.colors.primary[4] + '!important;'
+      }
+      return styles + 'background-color' + this.colors.surface[2] + '!important;'
+    },
+    async fetchChildPageItems() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+
+      if (!this.isParentPage) {
+        return []
+      }
+
+      this.currentParent = {
+        path: this.path,
+        title: this.$store.get('page/title'),
+        isFolder: true,
+        pageId: this.pageId,
+        locale: this.locale,
+        sitePath: this.sitePath
+      }
+
+      const resp = await this.$apollo.query({
+        query: childPagesQuery,
+        fetchPolicy: 'cache-first',
+        variables: {
+          pageId: this.pageId,
+          locale: this.locale,
+          siteId: this.siteId
+        }
+      })
+      this.childPageItems = _.get(resp, 'data.childPages', [])
+
+      this.$store.commit(`loadingStop`, 'browse-load')
+    }
+  },
+  watch: {
+    isReadyToFetchPageChildren(newVal) {
+      if (newVal && !this.hasFetchedChildren) {
+        this.hasFetchedChildren = true
+        this.fetchChildPageItems()
       }
     }
   },
@@ -255,6 +337,38 @@ export default {
     if (this.currentMode === 'browse') {
       this.loadFromCurrentPath()
     }
+    if (this.isReadyToFetchPageChildren && !this.hasFetchedChildren) {
+      this.fetchChildPageItems()
+    }
   }
 }
 </script>
+
+<style lang="scss" scoped>
+  .dark .v-list-item {
+    & > .v-list-item__title {
+      color: white !important;
+      &:hover {
+        color: mc("ext-teal", "1") !important;
+        text-decoration: underline mc("ext-teal", "1");
+      }
+    }
+  }
+
+  .v-list-item {
+    & > .v-list-item__title {
+      color: mc('text', 'darkGrey') !important;
+      &:hover {
+        color: mc('primary', '1') !important;
+        text-decoration: underline  mc('primary', '1');
+      }
+    }
+  }
+
+  #curDir {
+    color: mc('text', 'darkGrey') !important;
+  }
+  .dark #curDir {
+    color: white !important;
+  }
+</style>

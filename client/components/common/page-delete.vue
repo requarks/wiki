@@ -3,26 +3,26 @@
     v-model='isShown'
     max-width='550'
     persistent
-    overlay-color='red darken-4'
+    :overlay-color='colors.alert.error'
     overlay-opacity='.7'
     )
     v-card
-      .dialog-header.is-short.is-red
+      .dialog-header.is-short(:style='"background-color: " + colors.alert.error')
         v-icon.mr-2(color='white') mdi-file-document-box-remove-outline
         span {{$t('common:page.delete')}}
       v-card-text.pt-5
         i18next.body-1(path='common:page.deleteTitle', tag='div')
-          span.red--text.text--darken-2(place='title') {{pageTitle}}
+          span(place='title' :style='"color: " + colors.alert.error') {{pageTitle}}
         .caption {{$t('common:page.deleteSubtitle')}}
         v-chip.mt-3.ml-0.mr-1(label, color='red lighten-4', small)
-          .caption.red--text.text--darken-2 {{pageLocale.toUpperCase()}}
+          .caption(:style='"color: " + colors.red[5]') {{pageLocale.toUpperCase()}}
         v-chip.mt-3.mx-0(label, color='red lighten-5', small)
-          span.red--text.text--darken-2 /{{pagePath}}
+          span(:style='"color: " + colors.red[5]') /{{pagePath}}
       v-card-chin
         v-spacer
         v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='red darken-2', @click='deletePage(false)', :loading='loading').white--text {{$t('common:actions.delete')}}
-        v-btn.px-4(color='red darken-2', @click='deletePage(true)', :loading='loading').white--text Delete & Notify
+        v-btn.px-4(:color='colors.alert.error', @click='deletePage(false)', :loading='loading').white--text {{$t('common:actions.delete')}}
+        v-btn.px-4(:color='colors.alert.error', @click='deletePage(true)', :loading='loading').white--text Delete & Notify
 </template>
 
 <script>
@@ -30,6 +30,7 @@ import _ from 'lodash'
 import { get } from 'vuex-pathify'
 
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 export default {
   props: {
@@ -40,7 +41,8 @@ export default {
   },
   data() {
     return {
-      loading: false
+      loading: false,
+      colors: colors
     }
   },
   computed: {
