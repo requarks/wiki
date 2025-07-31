@@ -20,6 +20,10 @@ if [[ "$PANDOC" == "true" ]]; then
     echo "ERROR: PANDOC=true but NEW_PANDOC_IMAGE is not set. Aborting."
     exit 1
   fi
+  # Check if image exists locally before pushing
+  if ! docker image inspect "$NEW_PANDOC_IMAGE" > /dev/null 2>&1; then
+    echo "ERROR: Pandoc Docker image $NEW_PANDOC_IMAGE does not exist locally. Aborting push."; exit 1;
+  fi
   echo "Pushing Pandoc Docker image: $NEW_PANDOC_IMAGE"
   docker push "$NEW_PANDOC_IMAGE"
   docker rmi "$NEW_PANDOC_IMAGE"
