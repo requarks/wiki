@@ -122,6 +122,8 @@ sonarqube-scan:
 docker-build:
   stage: docker-build
   before_script:
+    - df -h # Check disk space before building
+    - export PANDOC="$PANDOC"
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
     - bash scripts/build_images.sh
@@ -173,10 +175,7 @@ promote-prod-release-version:
    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
 
-# after_script:
-#     - |
-#       NPM_GLOBAL_DIR="$HOME/.npm-global"
-#       if [ -d "$NPM_GLOBAL_DIR" ]; then
-#           echo "Directory $TARGET_DIR exists. Deleting it..."
-#           rm -rf "$NPM_GLOBAL_DIR"
-#       fi
+after_script:
+  - echo "Cleaning up to prevent ENOSPC (no space left on device error)..."
+  - rm -rf ~/.cache/yarn ~/.npm $CI_PROJECT_DIR/node_modules $CI_PROJECT_DIR/.cache /tmp/* || true
+  - df -h
