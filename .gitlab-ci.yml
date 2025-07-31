@@ -121,6 +121,7 @@ sonarqube-scan:
 docker-build:
   stage: docker-build
   before_script:
+    - export PANDOC="$PANDOC"
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
     - bash scripts/build_images.sh
