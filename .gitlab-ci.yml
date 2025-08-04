@@ -10,44 +10,6 @@ variables:
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
-cache:
-  key: "global-cache"
-  paths:
-    - node_modules/
-    - .yarn/cache/
-    - .sonar/cache
-
-  ENVIRONMENT:
-    value: "none"
-    options:
-      - "none"
-      - "dev1"
-      - "dev2"
-      - "staging"
-      - "production"
-    description: "Choose on which environment should pipeline run"
-
-  IMAGE_TAG:
-    value: ""
-    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
-
-  SONARQUBE:
-    value: "true"
-    options:
-      - "true"
-      - "false"
-    description: "Choose false to skip code quality check"
-
-  PANDOC:
-    value: "true"
-    options:
-      - "true"
-      - "false"
-    description: "Choose false to skip build & push pandoc docker image stages"
-
-  VERSION:
-     value: "1.3.0"
-     description: "Update to next release version, it should be numeric value, ex: 1.0.0"
 
 default:
   tags:
@@ -87,7 +49,14 @@ test:
     - build
   script:
     - yarn add jest-junit --dev
-    - yarn jest --coverage # Run tests
+  cache:
+    key: "global-cache"
+    paths:
+      - node_modules/
+      - .yarn/cache/
+      - .sonar/cache
+      - yarn jest --coverage 
+    # Run tests
     ## Below cmnds can be run after fixing lint errors in the codebase
     #- yarn eslint --ext .js,.vue .
     # - yarn pug-lint server/views
