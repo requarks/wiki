@@ -10,6 +10,13 @@ variables:
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
+cache:
+  key: "global-cache"
+  paths:
+    - node_modules/
+    - .yarn/cache/
+    - .sonar/cache
+
   ENVIRONMENT:
     value: "none"
     options:
@@ -104,13 +111,6 @@ sonarqube-scan:
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
   script:
     - sonar-scanner
   rules:
@@ -130,7 +130,7 @@ docker-build:
   artifacts:
     paths:
       - newimage.txt
-    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
+    expire_in: 1 hour  # Expires 1 hour after the pipeline finishhes
   environment:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
@@ -178,4 +178,4 @@ promote-prod-release-version:
 after_script:
   - echo "Cleaning up to prevent ENOSPC (no space left on device error)..."
   - rm -rf ~/.cache/yarn ~/.npm $CI_PROJECT_DIR/node_modules $CI_PROJECT_DIR/.cache /tmp/* || true
-  - df -h
+  - df -h # Check disk space after cleanup
