@@ -34,6 +34,12 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets'))
 
 module.exports = {
   mode: 'production',
+  cache: {
+    type: 'filesystem',
+    buildDependencies: {
+      config: [__filename]
+    }
+  },
   entry: {
     app: './client/index-app.js',
     legacy: './client/index-legacy.js',

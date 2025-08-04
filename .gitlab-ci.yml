@@ -73,7 +73,7 @@ build:
  stage: build
  script:
    - bash scripts/set_up_runner.sh
-   - npx update-browserslist-db@latest
+   - yarn install --frozen-lockfile
    - yarn build
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
