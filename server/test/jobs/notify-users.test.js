@@ -19,6 +19,9 @@ const WIKI = {
     host: 'https://example.com',
     mail: {
       allowedDomains: ''
+    },
+    email: {
+      support: 'support@example.com'
     }
   },
   logger: {
@@ -94,7 +97,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
   })
@@ -151,7 +155,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(2, {
@@ -166,7 +171,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(3, {
@@ -181,7 +187,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
   })
@@ -267,7 +274,8 @@ describe('notifyUsers', () => {
         userEmail,
         event: event,
         eventText: 'created',
-        isDeletion: false
+        isDeletion: false,
+        supportMail: WIKI.config.email.support
       }
     })
   })
@@ -324,7 +332,8 @@ describe('notifyUsers', () => {
         userEmail,
         event: event,
         eventText: 'deleted',
-        isDeletion: true
+        isDeletion: true,
+        supportMail: WIKI.config.email.support
       }
     })
   })
@@ -383,7 +392,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
   })
@@ -443,7 +453,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
   })
@@ -503,7 +514,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        supportMail: WIKI.config.email.support
       }
     })
   })
