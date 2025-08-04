@@ -51,11 +51,13 @@ spec:
             {{- end }}
             - name: DB_TYPE
               value: postgres
-            {{- if and .Values.externalPostgresql .Values.externalPostgresql.databaseURL }}
+            {{- if .Values.externalPostgresql }}
+            {{- if .Values.externalPostgresql.databaseURL }}
             - name: DATABASE_URL
               value: {{ .Values.externalPostgresql.databaseURL }}
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
+            {{- end }}
             {{- else }}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
