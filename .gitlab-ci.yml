@@ -46,7 +46,6 @@ cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - node_modules/
-    - .yarn/
 
 default:
   tags:
@@ -74,6 +73,7 @@ build:
  stage: build
  script:
    - bash scripts/set_up_runner.sh
+   - npx update-browserslist-db@latest
    - yarn build
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
@@ -95,7 +95,6 @@ test:
     when: on_success
     paths:
       - coverage
-      - test-results
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
@@ -181,7 +180,7 @@ promote-prod-release-version:
    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
 
-after_script:
-  - echo "Cleaning up to prevent ENOSPC (no space left on device error)..."
-  - rm -rf ~/.cache/yarn ~/.npm $CI_PROJECT_DIR/node_modules $CI_PROJECT_DIR/.cache /tmp/* || true
-  - df -h
+# after_script:
+#   - echo "Cleaning up to prevent ENOSPC (no space left on device error)..."
+#   - rm -rf ~/.cache/yarn ~/.npm $CI_PROJECT_DIR/.cache /tmp/* || true
+#   - df -h
