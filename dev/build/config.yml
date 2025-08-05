@@ -9,6 +9,8 @@ db:
   db: $(DB_NAME)
   storage: $(DB_FILEPATH)
   ssl: $(DB_SSL)
+  client:
+    pooling: $(DB_CLIENT_POOLING)
 ssl:
   enabled: $(SSL_ACTIVE)
   port: 3443
@@ -23,12 +25,6 @@ version: $(VERSION)
 releaseDate: $(RELEASE_DATE)
 devMode: $(DEV_MODE)
 
-pool:
-  min: $(POOL_MIN)
-  max: $(POOL_MAX)
-  acquireTimeoutMillis: $(POOL_ACQUIRE_TIMEOUT)
-  createTimeoutMillis: $(POOL_CREATE_TIMEOUT)
-  idleTimeoutMillis: $(POOL_IDLE_TIMEOUT)
 
 email:
   support: "dummy-support@dummy.com"
