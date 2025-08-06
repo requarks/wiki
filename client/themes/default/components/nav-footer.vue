@@ -16,7 +16,7 @@
             rel='noopener'
           )  Data Protection Notice
           |  before sharing any personal and/or confidential data.
-          | Note that "Company sensitive" (SEC 3) information must not be shared in CapWiki
+          | Note that "Company sensitive" (SEC 3) information must not be shared in {{wikiName}}
       .d-flex.justify-center.mt-2
         span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
 </template>
@@ -24,6 +24,7 @@
 <script>
 import { get } from 'vuex-pathify'
 import MarkdownIt from 'markdown-it'
+/* global siteConfig */
 
 const md = new MarkdownIt({
   html: false,
@@ -44,8 +45,9 @@ export default {
   },
   data() {
     return {
-      currentYear: (new Date()).getFullYear()
-    }
+      currentYear: new Date().getFullYear(),
+      wikiName: siteConfig.title || "Wiki.js",
+    };
   },
   computed: {
     company: get('site/company'),
