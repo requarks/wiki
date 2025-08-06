@@ -6,7 +6,19 @@
       template(v-else-if='company && company.length > 0 && contentLicense !== ``')
         span(v-if='contentLicense === `alr`') {{ $t('common:footer.copyright', { company: company, year: currentYear, interpolation: { escapeValue: false } }) }} |&nbsp;
         span(v-else) {{ $t('common:footer.license', { company: company, license: $t('common:license.' + contentLicense), interpolation: { escapeValue: false } }) }} |&nbsp;
-      span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
+      //- DISCLAIMER (MANDATORY) FOOTER
+      .login-disclaimer.mt-6
+        .body-2
+          | Please review the
+          a(
+            href='https://talent.capgemini.com/media_library/Medias/Group_IT/MURAL_Data_Protection_Notice-v2.pdf'
+            target='_blank'
+            rel='noopener'
+          )  Data Protection Notice
+          |  before sharing any personal and/or confidential data.
+          | Note that "Company sensitive" (SEC 3) information must not be shared in CapWiki
+      .d-flex.justify-center.mt-2
+        span {{ $t('common:footer.poweredBy') }} #[a(href='https://wiki.js.org', ref='nofollow') Wiki.js]
 </template>
 
 <script>
