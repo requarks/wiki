@@ -124,21 +124,29 @@ jobs:
     offlineSkip: false
     repeat: true
   syncGraphLocales:
+    # This job only updates the application cache for locales; its result is not persisted in the database.
     onInit: true
     schedule: P1D
     offlineSkip: true
     repeat: true
+    runInMainThread: true
   syncGraphUpdates:
+    # This job only updates the application cache for graph updates; its result is not persisted in the database.
     onInit: true
     schedule: P1D
     offlineSkip: true
     repeat: true
-  rebuildTree:
+    runInMainThread: true
+  anonymizeInactiveUsersJob:
     onInit: true
+    schedule: P1D
     offlineSkip: false
-    repeat: false
-    immediate: true
-    worker: true
+    repeat: true
+  purgePageHistory:
+    onInit: false
+    schedule: 0 2 * * *
+    offlineSkip: false
+    repeat: true
 groups:
   defaultPermissions:
     - 'read:pages'

@@ -364,6 +364,9 @@
           v-btn(color='red', dark, @click='deleteUser') {{$t('common:actions.delete')}}
 
         user-search(v-model='deleteSearchUserDialog', @select='assignDeleteUser')
+    page-last-group(
+      v-model='warningPageModel', :sites='affectedSites', @discard='resetUnassignState', @confirm='finallyUpdateUser'
+    )
 
 </template>
 <script>
@@ -377,13 +380,16 @@ import UserSearch from '../common/user-search.vue'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 import permissionsMixin from './permissionsMixin'
 
+import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
+
 export default {
   i18nOptions: {
     namespaces: ['admin', 'profile']
   },
   components: {
     StatusIndicator,
-    UserSearch
+    UserSearch,
+    PageLastGroup: () => import('../common/page-last-group.vue')
   },
   data () {
     return {
@@ -416,6 +422,7 @@ export default {
         isActive: false,
         isVerified: false
       },
+      originalUser: null,
       timezones: [
         { text: '(GMT-11:00) Niue', value: 'Pacific/Niue' },
         { text: '(GMT-11:00) Pago Pago', value: 'Pacific/Pago_Pago' },
@@ -668,7 +675,11 @@ export default {
         { text: '(GMT+14:00) Apia', value: 'Pacific/Apia' },
         { text: '(GMT+14:00) Kiritimati', value: 'Pacific/Kiritimati' }
       ],
-      previousRoute: null
+      previousRoute: null,
+      warningPageModel: false,
+      pendingUnassignUser: null,
+      affectedSites: [],
+      removedUserGroupIds: []
     }
   },
   beforeRouteEnter(to, from, next) {
@@ -839,6 +850,20 @@ export default {
      * Update a user
      */
     async updateUser() {
+      if (this.removedUserGroupIds.length > 0) {
+        const { data } = await this.isLastGroupOfSite(this.user.id, this.removedUserGroupIds)
+        const lastGroupInfo = data.isLastGroupForSiteGeneric
+
+        if (lastGroupInfo.isLastGroupForAnySite) {
+          this.pendingUnassignUser = this.user.id
+          this.affectedSites = lastGroupInfo.affectedSites
+          this.warningPageModel = true
+          return
+        }
+      }
+      this.finallyUpdateUser()
+    },
+    async finallyUpdateUser() {
       this.$store.commit(`loadingStart`, 'admin-users-update')
       const resp = await this.$apollo.mutate({
         mutation: gql`
@@ -868,6 +893,8 @@ export default {
       })
       this.newPassword = ''
       if (_.get(resp, 'data.users.update.responseResult.succeeded', false)) {
+        this.removedUserGroupIds = []
+        this.affectedSites = []
         this.$store.commit('showNotification', {
           style: 'success',
           message: this.$t('admin:users.userUpdateSuccess'),
@@ -897,6 +924,10 @@ export default {
      * Assign group to user
      */
     assignGroup() {
+      const idx = this.removedUserGroupIds.indexOf(this.newGroup)
+      if (idx !== -1) {
+        this.removedUserGroupIds.splice(idx, 1)
+      }
       if (_.some(this.user.groups, ['id', this.newGroup])) {
         this.$store.commit('showNotification', {
           message: this.$t('admin:users.userAlreadyAssignedToGroup'),
@@ -912,6 +943,7 @@ export default {
      * Unassign group from user
      */
     unassignGroup(gid) {
+      this.removedUserGroupIds.push(gid)
       this.user.groups = _.reject(this.user.groups, ['id', gid])
     },
     /**
@@ -1029,6 +1061,35 @@ export default {
         }
       }
       this.$store.commit(`loadingStop`, 'admin-users-toggle2fa')
+    },
+    async isLastGroupOfSite(userId, groupIds) {
+      return this.$apollo.query({
+        query: groupsQueryLastGroupOfSite,
+        variables: {
+          userId: userId,
+          groupIds: groupIds
+        },
+        fetchPolicy: 'network-only'
+      })
+    },
+    resetUnassignState() {
+      this.warningPageModel = false
+      this.pendingUnassignUser = null
+      this.affectedSites = []
+      if (this.originalUser) {
+        this.user.groups = _.cloneDeep(this.originalUser.groups)
+      }
+    }
+  },
+  watch: {
+    user: {
+      handler(newVal) {
+        if (!this.originalUser && newVal && newVal.id) {
+          this.originalUser = _.cloneDeep(newVal)
+        }
+      },
+      immediate: true,
+      deep: true
     }
   },
   apollo: {

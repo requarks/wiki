@@ -58,7 +58,7 @@ module.exports = {
       from: `"${WIKI.config.mail.senderName}" <${WIKI.config.mail.senderEmail}>`,
       to: opts.to,
       bcc: opts.bcc,
-      subject: `${opts.subject} - ${WIKI.config.title}`,
+      subject: `${opts.subject}`,
       text: opts.text,
       html: _.get(this.templates, opts.template)({
         logo: (WIKI.config.logoUrl.startsWith('http') ? '' : WIKI.config.host) + WIKI.config.logoUrl,

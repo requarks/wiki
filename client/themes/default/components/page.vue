@@ -1,8 +1,8 @@
 <template lang="pug">
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
-    nav-header(v-if='!printView')
+    nav-header
     v-navigation-drawer(
-      v-if='navMode !== `NONE` && !printView'
+      v-if='navMode !== `NONE`'
       :color='$vuetify.theme.dark ? colors.primary[4] : colors.surface[2]'
       dark
       app
@@ -230,7 +230,7 @@
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn.hover-icon(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
-                      v-icon(:color='printView ? `primary` : `grey`') mdi-printer
+                      v-icon(color='grey') mdi-printer
                   span {{messages.printToPdf}}
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
@@ -371,7 +371,7 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
               slot(name='contents')
-            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
+            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
                 span {{$t('common:comments.title')}}
@@ -453,7 +453,7 @@ import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
-import { get, sync } from 'vuex-pathify'
+import { get } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import { v4 as uuidv4 } from 'uuid'
@@ -693,17 +693,17 @@ export default {
       return toc
     },
     tocPosition: get('site/tocPosition'),
-    hasAdminPermission: get('page/effectivePermissions@system.manage') || get('page/effectivePermissions@sites.manage'),
+    hasSuperAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasSiteAdminPermission: get('page/effectivePermissions@sites.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
-      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
+      return this.hasSuperAdminPermission || this.hasSiteAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
-    printView: sync('site/printView'),
     editMenuExternalUrl () {
       if (this.editShortcutsObj.editMenuBar && this.editShortcutsObj.editMenuExternalBtn) {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)

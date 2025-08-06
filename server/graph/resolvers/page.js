@@ -313,6 +313,44 @@ module.exports = {
       return _.uniq(allTags).slice(0, 5)
     },
     /**
+     * FETCH IMMEDIATE CHILD PAGES
+     * This will return all pages that are direct children of the given page.
+     */
+    async childPages(obj, args, context, info) {
+      if (!args.locale) {
+        args.locale = WIKI.config.lang.code
+      }
+
+      const parentRow = await WIKI.models.knex('pageTree')
+        .first('id')
+        .where('pageId', args.pageId)
+      const results = await WIKI.models
+        .knex('pageTree')
+        .where((builder) => {
+          builder.where('localeCode', args.locale)
+          builder.where('siteId', args.siteId)
+          if (parentRow) {
+            builder.where('parent', parentRow.id)
+          } else {
+            builder.where('parent', null)
+          }
+        })
+        .orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
+      return results
+        .filter((r) => {
+          return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+            path: r.path,
+            locale: r.localeCode,
+            siteId: r.siteId
+          })
+        })
+        .map((r) => ({
+          ...r,
+          parent: typeof r.parent === 'number' ? r.parent : 0,
+          locale: r.localeCode
+        }))
+    },
+    /**
      * FETCH PAGE TREE
      */
     async tree(obj, args, context, info) {

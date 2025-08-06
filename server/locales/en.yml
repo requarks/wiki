@@ -1,4 +1,5 @@
 common:
+  github.repository: 'Visit our GitHub Repository'
   header.followSite: "Follow Site"
   header.unfollowSite: "Unfollow Site"
   actions.saveNotify: "Save & Notify"

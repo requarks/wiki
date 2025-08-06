@@ -1,4 +1,4 @@
-const { PageMutation } = require('../../../graph/resolvers/page')
+const { PageMutation, Query } = require('../../../graph/resolvers/page')
 const graphHelper = require('../../../helpers/graph')
 const notifyUsers = require('../../../jobs/notify-users')
 
@@ -21,11 +21,156 @@ const WIKI = {
     },
     users: {
       query: jest.fn()
-    }
+    },
+    knex: jest.fn()
+  },
+  auth: {
+    checkAccess: jest.fn()
+  },
+  config: {
+    lang: 'en'
+  },
+  Error: {
+    PageViewForbidden: class extends Error { },
+    PageNotFound: class extends Error { }
   }
 }
 
-describe('Page Resolvers', () => {
+describe('Page Resolvers -> Query', () => {
+  const mockChildPagesQuery = function (pRow, cRows) {
+    return jest.fn()
+      // first('id').where('pageId', args.pageId)
+      .mockImplementationOnce(() => ({
+        first: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue(pRow)
+        })
+      }))
+      // .where(...).orderBy(...)
+      .mockImplementationOnce(() => ({
+        where: jest.fn((cb) => {
+          const builder = {
+            where: jest.fn()
+          }
+          cb(builder)
+          return {
+            orderBy: jest.fn().mockResolvedValue(cRows)
+          }
+        })
+      }))
+  }
+
+  describe('childPages', () => {
+    let req, args, context, parentRow, childRows
+
+    beforeEach(() => {
+      req = {
+        user: { id: 1 }
+      }
+      global.WIKI = WIKI
+
+      args = { pageId: 10, locale: 'en', siteId: 1 }
+      context = { req, WIKI }
+
+      parentRow = { id: 99 }
+      childRows = [
+        { id: 1, parent: 99, path: '/foo', localeCode: 'en', siteId: 1, isFolder: true, title: 'A' },
+        { id: 2, parent: 99, path: '/bar', localeCode: 'en', siteId: 1, isFolder: false, title: 'B' }
+      ]
+    })
+
+    afterEach(() => {
+      jest.clearAllMocks()
+    })
+
+    it('should return child pages with correct parent and locale', async () => {
+      // GIVEN
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
+      WIKI.auth.checkAccess.mockReturnValue(true)
+
+      // WHEN
+      const result = await Query.childPages(null, args, context)
+
+      // THEN
+      expect(WIKI.models.knex).toHaveBeenCalledTimes(2)
+      expect(result).toEqual([
+        { ...childRows[0], parent: 99, locale: 'en' },
+        { ...childRows[1], parent: 99, locale: 'en' }
+      ])
+    })
+
+    it('should set parent to 0 if parent is not a number', async () => {
+      // GIVEN
+      childRows[0] = {
+        parent: null, // relevant change for this test
+        id: 1,
+        path: '/foo',
+        localeCode: 'en',
+        siteId: 1,
+        isFolder: true,
+        title: 'A'
+      }
+
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
+      WIKI.auth.checkAccess.mockReturnValue(true)
+
+      // WHEN
+      const result = await Query.childPages(null, args, context)
+
+      // THEN
+      expect(result[0].parent).toBe(0)
+    })
+
+    it('should use default locale if not provided', async () => {
+      // GIVEN
+      args = {
+        locale: undefined, // relevant change for this test
+        pageId: 10,
+        siteId: 1
+      }
+
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
+      WIKI.auth.checkAccess.mockReturnValue(true)
+
+      // WHEN
+      const result = await Query.childPages(null, args, context)
+
+      // THEN
+      expect(result[0].locale).toBe('en')
+    })
+
+    it('should return empty array if no parentRow and no children', async () => {
+      // GIVEN
+      WIKI.models.knex = mockChildPagesQuery(
+        undefined, // parentRow not found
+        [] //  no childRows
+      )
+      WIKI.auth.checkAccess.mockReturnValue(true)
+
+      // WHEN
+      const result = await Query.childPages(null, args, context)
+
+      // THEN
+      expect(result).toEqual([])
+    })
+
+    it('should filter out pages if checkAccess returns false', async () => {
+      // GIVEN
+      WIKI.models.knex = mockChildPagesQuery(parentRow, childRows)
+      WIKI.auth.checkAccess
+        .mockReturnValueOnce(true) // Only allow access to the first child
+        .mockReturnValueOnce(false)
+
+      // WHEN
+      const result = await Query.childPages(null, args, context)
+
+      // THEN
+      expect(result.length).toBe(1)
+      expect(result[0].id).toBe(1)
+    })
+  })
+})
+
+describe('Page Resolvers -> PageMutation', () => {
   let req
 
   beforeEach(() => {
@@ -384,6 +529,10 @@ describe('Page Resolvers', () => {
         })
       })
       WIKI.models.pages.deletePage = jest.fn().mockResolvedValue()
+      WIKI.models.followers.query.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockResolvedValue([])
+      })
 
       const result = await PageMutation.delete(null, args, context)
 

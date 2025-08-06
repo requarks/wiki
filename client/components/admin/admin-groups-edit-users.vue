@@ -46,6 +46,9 @@
       v-pagination(v-model='pagination', :length='pageCount')
 
     user-search(v-model='searchUserDialog', @select='assignUser')
+    page-last-group(
+      v-model='warningPageModel', :sites='affectedSites', @discard='resetUnassignState', @confirm='finalUnassignUser(pendingUnassignUser)'
+    )
 </template>
 
 <script>
@@ -53,6 +56,7 @@ import UserSearch from '../common/user-search.vue'
 
 import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
 import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
+import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
 
 export default {
   props: {
@@ -62,7 +66,8 @@ export default {
     }
   },
   components: {
-    UserSearch
+    UserSearch,
+    PageLastGroup: () => import('../common/page-last-group.vue')
   },
   data() {
     return {
@@ -75,7 +80,10 @@ export default {
       searchUserDialog: false,
       pagination: 1,
       pageCount: 0,
-      search: ''
+      search: '',
+      warningPageModel: false,
+      pendingUnassignUser: null,
+      affectedSites: []
     }
   },
   computed: {
@@ -119,6 +127,18 @@ export default {
       }
     },
     async unassignUser(id) {
+      const { data } = await this.isLastGroupOfSite(id)
+      const lastGroupInfo = data.isLastGroupForSiteGeneric
+
+      if (lastGroupInfo.isLastGroupForAnySite) {
+        this.pendingUnassignUser = id
+        this.affectedSites = lastGroupInfo.affectedSites
+        this.warningPageModel = true
+        return
+      }
+      this.finalUnassignUser(id)
+    },
+    async finalUnassignUser(id) {
       try {
         await this.$apollo.mutate({
           mutation: unassignUserMutation,
@@ -135,6 +155,8 @@ export default {
           message: `User has been unassigned from ${this.group.name}.`,
           icon: 'assignment_ind'
         })
+        this.pendingUnassignUser = null
+        this.affectedSites = []
         this.$emit('refresh')
       } catch (err) {
         this.$store.commit('showNotification', {
@@ -143,6 +165,21 @@ export default {
           icon: 'warning'
         })
       }
+    },
+    async isLastGroupOfSite(userId) {
+      return this.$apollo.query({
+        query: groupsQueryLastGroupOfSite,
+        variables: {
+          userId: userId,
+          groupIds: this.group.id
+        },
+        fetchPolicy: 'network-only'
+      })
+    },
+    resetUnassignState() {
+      this.warningPageModel = false
+      this.pendingUnassignUser = null
+      this.affectedSites = []
     }
   }
 }

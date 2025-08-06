@@ -75,7 +75,6 @@
           label='Send a welcome email'
           hide-details
           v-model='sendWelcomeEmail'
-          disabled
         )
       v-card-chin
         v-spacer
@@ -113,7 +112,7 @@ export default {
       groups: [],
       group: [],
       mustChangePwd: false,
-      sendWelcomeEmail: false
+      sendWelcomeEmail: true
     }
   },
   computed: {

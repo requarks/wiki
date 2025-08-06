@@ -1,27 +1,24 @@
 <!DOCTYPE html>
-<html
-  lang="en"
-  xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:v="urn:schemas-microsoft-com:vml"
-  xmlns:o="urn:schemas-microsoft-com:office:office"
->
-  <head>
-    <meta charset="utf-8" />
-    <!-- utf-8 works for most cases -->
-    <meta name="viewport" content="width=device-width" />
-    <!-- Forcing initial-scale shouldn't be necessary -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <!-- Use the latest (edge) version of IE rendering engine -->
-    <meta name="x-apple-disable-message-reformatting" />
-    <!-- Disable auto-scale in iOS 10 Mail entirely -->
-    <title></title>
-    <!-- The title tag shows in email notifications, like Android 4.4. -->
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office">
 
-    <!-- Web Font / @font-face : BEGIN -->
-    <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
+<head>
+  <meta charset="utf-8" />
+  <!-- utf-8 works for most cases -->
+  <meta name="viewport" content="width=device-width" />
+  <!-- Forcing initial-scale shouldn't be necessary -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <!-- Use the latest (edge) version of IE rendering engine -->
+  <meta name="x-apple-disable-message-reformatting" />
+  <!-- Disable auto-scale in iOS 10 Mail entirely -->
+  <title></title>
+  <!-- The title tag shows in email notifications, like Android 4.4. -->
 
-    <!-- Desktop Outlook chokes on web font references and defaults to Times New Roman, so we force a safe fallback font. -->
-    <!--[if mso]>
+  <!-- Web Font / @font-face : BEGIN -->
+  <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
+
+  <!-- Desktop Outlook chokes on web font references and defaults to Times New Roman, so we force a safe fallback font. -->
+  <!--[if mso]>
       <style>
         * {
           font-family: sans-serif !important;
@@ -29,119 +26,123 @@
       </style>
     <![endif]-->
 
-    <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
-    <!--[if !mso]><!-->
-    <!-- insert web font reference, eg: <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
-    <!--<![endif]-->
+  <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
+  <!--[if !mso]><!-->
+  <!-- insert web font reference, eg: <link href='https://fonts.googleapis.com/css?family=Roboto:400,700' rel='stylesheet' type='text/css'> -->
+  <!--<![endif]-->
 
-    <!-- Web Font / @font-face : END -->
+  <!-- Web Font / @font-face : END -->
 
-    <!-- CSS Reset : BEGIN -->
-    <style>
-      /* What it does: Remove spaces around the email design added by some email clients. */
-      /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
-      html,
-      body {
-        margin: 0 auto !important;
-        padding: 0 !important;
-        height: 100% !important;
-        width: 100% !important;
-      }
+  <!-- CSS Reset : BEGIN -->
+  <style>
+    /* What it does: Remove spaces around the email design added by some email clients. */
+    /* Beware: It can remove the padding / margin and add a background color to the compose a reply window. */
+    html,
+    body {
+      margin: 0 auto !important;
+      padding: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
+    }
 
-      /* What it does: Stops email clients resizing small text. */
-      * {
-        -ms-text-size-adjust: 100%;
-        -webkit-text-size-adjust: 100%;
-      }
+    /* What it does: Stops email clients resizing small text. */
+    * {
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
 
-      /* What it does: Centers email on Android 4.4 */
-      div[style*="margin: 16px 0"] {
-        margin: 0 !important;
-      }
+    /* What it does: Centers email on Android 4.4 */
+    div[style*="margin: 16px 0"] {
+      margin: 0 !important;
+    }
 
-      /* What it does: Stops Outlook from adding extra spacing to tables. */
-      table,
-      td {
-        mso-table-lspace: 0pt !important;
-        mso-table-rspace: 0pt !important;
-      }
+    /* What it does: Stops Outlook from adding extra spacing to tables. */
+    table,
+    td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+    }
 
-      /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table alignment bug. Applies table-layout to the first 2 tables then removes for anything nested deeper. */
-      table {
-        border-spacing: 0 !important;
-        border-collapse: collapse !important;
-        table-layout: fixed !important;
-        margin: 0 auto !important;
-      }
-      table table table {
-        table-layout: auto;
-      }
+    /* What it does: Fixes webkit padding issue. Fix for Yahoo mail table alignment bug. Applies table-layout to the first 2 tables then removes for anything nested deeper. */
+    table {
+      border-spacing: 0 !important;
+      border-collapse: collapse !important;
+      table-layout: fixed !important;
+      margin: 0 auto !important;
+    }
 
-      /* What it does: Uses a better rendering method when resizing images in IE. */
-      img {
-        -ms-interpolation-mode: bicubic;
-      }
+    table table table {
+      table-layout: auto;
+    }
 
-      /* What it does: Prevents Windows 10 Mail from underlining links despite inline CSS. Styles for underlined links should be inline. */
-      a {
-        text-decoration: none;
-      }
+    /* What it does: Uses a better rendering method when resizing images in IE. */
+    img {
+      -ms-interpolation-mode: bicubic;
+    }
 
-      /* What it does: A work-around for email clients meddling in triggered links. */
-      *[x-apple-data-detectors],  /* iOS */
-        .unstyle-auto-detected-links *,
-        .aBn {
-        border-bottom: 0 !important;
-        cursor: default !important;
-        color: inherit !important;
-        text-decoration: none !important;
-        font-size: inherit !important;
-        font-family: inherit !important;
-        font-weight: inherit !important;
-        line-height: inherit !important;
-      }
+    /* What it does: Prevents Windows 10 Mail from underlining links despite inline CSS. Styles for underlined links should be inline. */
+    a {
+      text-decoration: none;
+    }
 
-      /* What it does: Prevents Gmail from displaying a download button on large, non-linked images. */
-      .a6S {
-        display: none !important;
-        opacity: 0.01 !important;
-      }
+    /* What it does: A work-around for email clients meddling in triggered links. */
+    *[x-apple-data-detectors],
+    /* iOS */
+    .unstyle-auto-detected-links *,
+    .aBn {
+      border-bottom: 0 !important;
+      cursor: default !important;
+      color: inherit !important;
+      text-decoration: none !important;
+      font-size: inherit !important;
+      font-family: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
 
-      /* What it does: Prevents Gmail from changing the text color in conversation threads. */
-      .im {
-        color: inherit !important;
-      }
+    /* What it does: Prevents Gmail from displaying a download button on large, non-linked images. */
+    .a6S {
+      display: none !important;
+      opacity: 0.01 !important;
+    }
 
-      /* If the above doesn't work, add a .g-img class to any image in question. */
-      img.g-img + div {
-        display: none !important;
-      }
+    /* What it does: Prevents Gmail from changing the text color in conversation threads. */
+    .im {
+      color: inherit !important;
+    }
 
-      /* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89  */
-      /* Create one of these media queries for each additional viewport size you'd like to fix */
+    /* If the above doesn't work, add a .g-img class to any image in question. */
+    img.g-img+div {
+      display: none !important;
+    }
 
-      /* iPhone 4, 4S, 5, 5S, 5C, and 5SE */
-      @media only screen and (min-device-width: 320px) and (max-device-width: 374px) {
-        u ~ div .email-container {
-          min-width: 320px !important;
-        }
+    /* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89  */
+    /* Create one of these media queries for each additional viewport size you'd like to fix */
+
+    /* iPhone 4, 4S, 5, 5S, 5C, and 5SE */
+    @media only screen and (min-device-width: 320px) and (max-device-width: 374px) {
+      u~div .email-container {
+        min-width: 320px !important;
       }
-      /* iPhone 6, 6S, 7, 8, and X */
-      @media only screen and (min-device-width: 375px) and (max-device-width: 413px) {
-        u ~ div .email-container {
-          min-width: 375px !important;
-        }
+    }
+
+    /* iPhone 6, 6S, 7, 8, and X */
+    @media only screen and (min-device-width: 375px) and (max-device-width: 413px) {
+      u~div .email-container {
+        min-width: 375px !important;
       }
-      /* iPhone 6+, 7+, and 8+ */
-      @media only screen and (min-device-width: 414px) {
-        u ~ div .email-container {
-          min-width: 414px !important;
-        }
+    }
+
+    /* iPhone 6+, 7+, and 8+ */
+    @media only screen and (min-device-width: 414px) {
+      u~div .email-container {
+        min-width: 414px !important;
       }
-    </style>
-    <!-- CSS Reset : END -->
-    <!-- Reset list spacing because Outlook ignores much of our inline CSS. -->
-    <!--[if mso]>
+    }
+  </style>
+  <!-- CSS Reset : END -->
+  <!-- Reset list spacing because Outlook ignores much of our inline CSS. -->
+  <!--[if mso]>
       <style type="text/css">
         ul,
         ol {
@@ -159,20 +160,21 @@
       </style>
     <![endif]-->
 
-    <!-- Progressive Enhancements : BEGIN -->
-    <style>
-      /* Media Queries */
-      @media screen and (max-width: 600px) {
-        /* What it does: Adjust typography on small screens to improve readability */
-        .email-container p {
-          font-size: 17px !important;
-        }
-      }
-    </style>
-    <!-- Progressive Enhancements : END -->
+  <!-- Progressive Enhancements : BEGIN -->
+  <style>
+    /* Media Queries */
+    @media screen and (max-width: 600px) {
 
-    <!-- What it does: Makes background images in 72ppi Outlook render at correct size. -->
-    <!--[if gte mso 9]>
+      /* What it does: Adjust typography on small screens to improve readability */
+      .email-container p {
+        font-size: 17px !important;
+      }
+    }
+  </style>
+  <!-- Progressive Enhancements : END -->
+
+  <!-- What it does: Makes background images in 72ppi Outlook render at correct size. -->
+  <!--[if gte mso 9]>
       <xml>
         <o:OfficeDocumentSettings>
           <o:AllowPNG />
@@ -180,31 +182,28 @@
         </o:OfficeDocumentSettings>
       </xml>
     <![endif]-->
-  </head>
-  <!--
+</head>
+<!--
 	The email background color (#eee) is defined in three places:
 	1. body tag: for most email clients
 	2. (center tag: for Gmail and Inbox mobile apps and web versions of Gmail, GSuite, Inbox, Yahoo, AOL, Libero, Comcast, freenet, Mail.ru, Orange.fr) -> removed in order to avoid SonarQube issues
 	3. mso conditional: For Windows 10 Mail
   -->
-  <body
-    width="100%"
-    style="
+
+<body width="100%" style="
       margin: 0;
       padding: 0 !important;
       mso-line-height-rule: exactly;
       background-color: #eee;
-    "
-  >
-      <!--[if mso | IE]>
+    ">
+  <!--[if mso | IE]>
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #eee;">
     <tr>
     <td>
     <![endif]-->
 
-      <!-- Visually Hidden Preheader Text : BEGIN -->
-      <div
-        style="
+  <!-- Visually Hidden Preheader Text : BEGIN -->
+  <div style="
           display: none;
           font-size: 1px;
           line-height: 1px;
@@ -214,16 +213,14 @@
           overflow: hidden;
           mso-hide: all;
           font-family: sans-serif;
-        "
-      >
-        <%= preheadertext %>
-      </div>
-      <!-- Visually Hidden Preheader Text : END -->
+        ">
+    <%= preheadertext %>
+  </div>
+  <!-- Visually Hidden Preheader Text : END -->
 
-      <!-- Create white space after the desired preview text so email clients don’t pull other distracting text into the inbox preview. Extend as necessary. -->
-      <!-- Preview Text Spacing Hack : BEGIN -->
-      <div
-        style="
+  <!-- Create white space after the desired preview text so email clients don’t pull other distracting text into the inbox preview. Extend as necessary. -->
+  <!-- Preview Text Spacing Hack : BEGIN -->
+  <div style="
           display: none;
           font-size: 1px;
           line-height: 1px;
@@ -233,182 +230,111 @@
           overflow: hidden;
           mso-hide: all;
           font-family: sans-serif;
-        "
-      >
-        &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
-      </div>
-      <!-- Preview Text Spacing Hack : END -->
+        ">
+    &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+  </div>
+  <!-- Preview Text Spacing Hack : END -->
 
-      <!--
+  <!--
             Set the email width. Defined in two places:
             1. max-width for all clients except Desktop Windows Outlook, allowing the email to squish on narrow but never go wider than 600px.
             2. MSO tags for Desktop Windows Outlook enforce a 600px width.
         -->
-      <div style="max-width: 600px; margin: 0 auto" class="email-container">
-        <!--[if mso]>
+  <div style="max-width: 600px; margin: 0 auto" class="email-container">
+    <!--[if mso]>
             <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600">
             <tr>
             <td>
             <![endif]-->
 
-        <!-- Email Body : BEGIN -->
-        <table
-          align="center"
-          role="presentation"
-          cellspacing="0"
-          cellpadding="0"
-          border="0"
-          width="100%"
-          style="margin: 0 auto"
-        >
-          <!-- Hero Image, Flush : BEGIN -->
-          <tr>
-            <td style="background-color: #eee">
-              <div>
-              <p class="MsoNormal" style="background: #272936">
-                <span
-                  lang="EN"
-                  style="
-                    mso-fareast-font-family: 'Times New Roman';
-                    color: #272936;
-                    background: #272936;
-                    mso-ansi-language: EN;
-                  "
-                  >.</span
-                >
-                <span
-                  lang="EN"
-                  style="
-                    mso-fareast-font-family: 'Times New Roman';
-                    color: white;
-                    mso-color-alt: windowtext;
-                    mso-ansi-language: EN;
-                  "
-                >
-                </span>
-                <span
-                  lang="EN"
-                  style="
-                    mso-fareast-font-family: 'Times New Roman';
-                    color: white;
-                    mso-color-alt: windowtext;
-                    mso-ansi-language: EN;
-                    mso-no-proof: yes;
-                  "
-                >
-                  <img
-                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC8AAAAqCAYAAAAj6gIfAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFxEAABcRAcom8z8AAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAAD2klEQVRoQ+2ZS2hdVRSG/3VSH6HGB0SU+qCWWHFQW0GtikU7E3xVRWnB+ECwOHBSpBMHnQkiWKogFQQHQlEopPioCNoOBFGxVUOLxRKrxapoi1UaGmP8fgf3JJysJL03uTlJUb/RvmutvdZ/9+Pcvc+V/udfiO0zge3AVuCa7D9tsX0xsNslNOizfVuOPa0AbgcOjwrPAG8DK3O/ecX2+cBLWexUAK8AF+U8cw6wDjiUBTYD+BFYl/PNCcBy4N0saroArwKdOX8tAOcCzwHDWUgbfG57Sa41q9h+ABjIlWeDchldl2u2DXAJ8GYuWAPHgRty/RkDPAj8nKvUBXAUuCrrmBa2O4AXc/K5ADgAdGVNLWG7G9iVk84lwLasqynApcD+nGyeWJP1SVJkgxrCL5T0UUS0t+ZmCdvfRcTVETFUtRfVD2oELpDUNx/CbY/YHpC0x/Y+28clKSIW234sx08AeD7PWd0AR4AN5YxnPauAHcD3wMKqb9yyAa6NiL1VW93Y7ouIhyPiBLBK0t2SLpM0LGmfpL6iKA4C90oaKIqiP+eQGuLfyqNSJ8BrZd1FwAfZPwrwRrmcJwfoAf7OHesC+LBS90j2Z4DPbJ9d1VzdsHdExIQNXAe2j0paW54i34uIRTkmExHX2366aquKvbnSrpsni6L4VdLWiOjJzlPw6KTLp5yW2gF2lvVWZ18zgBHbi0c1V0f+nEq7FmwPS3qq/LgluZsSER22xx6XVfF/Vdq1EBGbi6IYAHojYln2N8P2yYg4lu0C3s/TNJuUl4yFts8Avs3+VgC+sD3221Qd+T2Vdh1sLIpi0PYTEXFFdrbI9ohwNsr2LfmbzhbALjVmt2umFxrgN9vdWbfUEF8A/blTuwAngR41xD+b/a0CPJQ1jwO4L3dqF+DxMveVwBDwSY5pBrApa50UYEfuPFOAlyt5d5W2TcD9wGCOzwC/A+vHKzwFti8ADuRE06V6fQM2VOw/lLal5YumCXsAOARsBqa/sW1fDuzLSVsljfit+cBX9ds+D7jR9hrgLtsrgLPGxMyE8qXptmrRZpTP8kdGcwDLgGM5zo3YF9oW2QzgTmB3ea6YFGA/8Ez1UQbcBPySY6sAXwMbgdXA0vGVmzPpBXwyyuQrImKJ7S5JQ5IOS+qPiK8igkrseklbIqKlkbU9KGltURTvZN+cAawEduYRnory35LXZ7QxZwPbC4Be4OMsbiqAg+WaX57zTYeWl81U2O6wfY+kXklLJXVL6ixzD0n6Q9JPkr6RtFfSpxHxZUS0fYptW3ymfLfY2TgBx5+STkTESI77z/MPBJ9N4o90+8IAAAAASUVORK5CYII="
-                    alt="logo"
-                  />
-                </span>
-                <span
-                  lang="EN"
-                  style="
-                    mso-fareast-font-family: 'Times New Roman';
-                    color: #272936;
-                    background: #272936;
-                    mso-ansi-language: EN;
-                  "
-                  >.</span
-                >
-                <span
-                  lang="EN"
-                  style="
+    <!-- Email Body : BEGIN -->
+    <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+      style="margin: 0 auto">
+      <!-- Hero Image, Flush : BEGIN -->
+      <tr>
+        <td style="background-color: #eee">
+          <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+            style="margin: 0 auto">
+            <tr>
+              <td style="background-color: #eee">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+                  style="background: #272936;">
+                  <tr>
+                    <td style="padding: 8px 0 8px 16px; vertical-align: middle; width:47px;">
+                      <img src="<%= mailLogoSrc %>" width="47" height="42" alt="logo"
+                        style="display: inline-block; vertical-align: middle;" />
+                    </td>
+                    <td style="vertical-align: middle; padding-left: 12px;" width="100%">
+                      <span lang="EN" style="
                     font-size: 18pt;
                     font-family: 'Ubuntu', sans-serif;
                     mso-fareast-font-family: 'Times New Roman';
                     color: white;
                     mso-ansi-language: EN;
-                  "
-                >
-                  <span style="font-weight: medium"> CapWiki </span>
-                </span>
-                <span
-                  lang="EN"
-                  style="
-                    mso-fareast-font-family: 'Times New Roman';
-                    color: white;
-                    mso-color-alt: windowtext;
-                    mso-ansi-language: EN;
-                  "
-                >
-                </span>
-                <span
-                  lang="EN"
-                  style="
-                    mso-fareast-font-family: 'Times New Roman';
-                    mso-ansi-language: EN;
-                  "
-                >
-                  <o:p></o:p>
-                </span>
-              </p>
-            </div>
-            </td>
-          </tr>
-          <!-- Hero Image, Flush : END -->
+                  ">
+                        <%= WIKI.config.title %>
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- Hero Image, Flush : END -->
 
-          <!-- 1 Column Text + Button : BEGIN -->
-          <tr>
-            <td style="background-color: #ffffff">
-              <table
-                role="presentation"
-                cellspacing="0"
-                cellpadding="0"
-                border="0"
-                width="100%"
-              >
-                <tr>
-                  <td
-                    style="
+            <!-- 1 Column Text + Button : BEGIN -->
+            <tr>
+              <td style="background-color: #ffffff">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
+                    <td style="
                       padding: 20px;
                       font-family: sans-serif;
                       font-size: 15px;
                       line-height: 20px;
                       color: #555555;
-                    "
-                  >
-                    <div
-                      style="
+                    ">
+                      <div style="
                         display: flex;
                         flex-direction: column;
                         align-items: flex-start;
-                      "
-                    >
-                      <h1
-                        style="
+                      ">
+                        <h1 style="
                           margin: 0 0 10px 0;
                           font-family: sans-serif;
                           font-size: 25px;
                           line-height: 30px;
                           color: #333333;
                           font-weight: normal;
-                        "
-                      >
-                        Page Notification
-                      </h1>
-                      <% if (event != 'MENTION_PAGE' && event != 'MENTION_COMMENT') { %>
-                      <p style="margin-top: 5px; margin-bottom: 5px">
-                        The page "<strong><%= pageTitle %></strong>" has been
-                        <%= eventText.toLowerCase() %> by <%= userEmail %>.
-                        <br />
-                      </p>
-                      <% } %> <% if (event === 'MENTION_PAGE') { %>
-                      <p style="margin-top: 5px; margin-bottom: 5px">
-                        You have been mentioned in the page "<strong
-                          ><%= pageTitle %></strong
-                        >" by <%= userEmail %>.
-                        <br />
-                      </p>
-                      <% } %> <% if (event === 'MENTION_COMMENT') { %>
-                        <p style="margin-top: 5px; margin-bottom: 5px">
-                          You have been mentioned in a comment on the page "<strong
-                            ><%= pageTitle %></strong
-                          >" by <%= userEmail %>.
-                          <br />
-                        </p>
-                      <% } %> <% if (!isDeletion) { %>
-                      <!--[if mso]>
+                        ">
+                          Page Notification
+                        </h1>
+                        <% if (event !='MENTION_PAGE' && event !='MENTION_COMMENT' ) { %>
+                          <p style="margin-top: 5px; margin-bottom: 5px">
+                            The page "<strong>
+                              <%= pageTitle %>
+                            </strong>" has been
+                            <%= eventText.toLowerCase() %> by <%= userEmail %>.
+                                <br />
+                          </p>
+                          <% } %>
+                            <% if (event==='MENTION_PAGE' ) { %>
+                              <p style="margin-top: 5px; margin-bottom: 5px">
+                                You have been mentioned in the page "<strong>
+                                  <%= pageTitle %>
+                                </strong>" by <%= userEmail %>.
+                                  <br />
+                              </p>
+                              <% } %>
+                                <% if (event==='MENTION_COMMENT' ) { %>
+                                  <p style="margin-top: 5px; margin-bottom: 5px">
+                                    You have been mentioned in a comment on the page "<strong>
+                                      <%= pageTitle %>
+                                    </strong>" by <%= userEmail %>.
+                                      <br />
+                                  </p>
+                                  <% } %>
+                                    <% if (!isDeletion) { %>
+                                      <!--[if mso]>
                         <p style="margin-top: 15px; margin-bottom: 15px">
                           <br />
                         </p>
@@ -418,13 +344,8 @@
                         <w:anchorlock/>
                         <center style="color:#ffffff; font-family:'Ubuntu', Verdana, sans-serif; font-size:18px; font-weight:bold;">
                       <![endif]-->
-              <a
-                rel="noopener"
-                target="_blank"
-                rel="noopener"
-                target="_blank"
-                href="<%= pageUrl %>"
-                style="
+                                      <a rel="noopener" target="_blank" rel="noopener" target="_blank"
+                                        href="<%= pageUrl %>" style="
                   background-color: #0070ad;
                   color: #ffffff;
                   display: inline-block;
@@ -437,44 +358,45 @@
                   padding: 14px 24px;
                   align-self: center;
                   border-radius: 24px;
-                "
-              >View Page
-              </a>
-              <!--[if mso]>
+                ">View Page
+                                      </a>
+                                      <!--[if mso]>
                   </center>
                 </v:roundrect>
               <![endif]-->
-                      <% } %> <% if (isDeletion) { %>
-                      <p>
-                        If this page was deleted by mistake, please contact
-                        CapWiki support at
-                        <a href="mailto:<%= WIKI.config.email.support %>"
-                          ><%= WIKI.config.email.support %></a
-                        >
-                        to restore it.
-                      </p>
-                      <% } %>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <!-- 1 Column Text + Button : END -->
-        </table>
-        <!-- Email Body : END -->
+                                      <% } %>
+                                        <% if (isDeletion) { %>
+                                          <p>
+                                            If this page was deleted by mistake, please contact
+                                            CapWiki support at
+                                            <a href="mailto:<%= WIKI.config.email.support %>">
+                                              <%= WIKI.config.email.support %>
+                                            </a>
+                                            to restore it.
+                                          </p>
+                                          <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- 1 Column Text + Button : END -->
+          </table>
+          <!-- Email Body : END -->
 
-        <!--[if mso]>
+          <!--[if mso]>
             </td>
             </tr>
             </table>
             <![endif]-->
-      </div>
+  </div>
 
-      <!--[if mso | IE]>
+  <!--[if mso | IE]>
     </td>
     </tr>
     </table>
     <![endif]-->
-  </body>
+</body>
+
 </html>
