@@ -31,4 +31,4 @@ pool:
   idleTimeoutMillis: $(POOL_IDLE_TIMEOUT)
 
 email:
-  support: '$(SUPPORT_EMAIL)'
+  support: '$(EMAIL_SUPPORT)'
