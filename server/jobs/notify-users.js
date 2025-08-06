@@ -49,8 +49,7 @@ module.exports = async ({ siteId, pageId, pageTitle, pagePath, sitePath, userEma
           userEmail: userEmail,
           event: event,
           eventText: eventText,
-          isDeletion: isDeletion,
-          supportMail: process.env.EMAIL_SUPPORT || WIKI.config.email.support || 'Support email is not set up in config.'
+          isDeletion: isDeletion
         }
       })
     }
