@@ -20,7 +20,7 @@ echo "Pushing main Docker image: $NEW_IMAGE"
 docker push "$NEW_IMAGE"
 docker rmi "$NEW_IMAGE"
 
-# Push Pandoc image if enabled
+# Push Pandoc image if it is enabled
 if [[ "$PANDOC" == "true" ]]; then
   if [[ -z "$NEW_PANDOC_IMAGE" ]]; then
     echo "ERROR: PANDOC=true but NEW_PANDOC_IMAGE is not set. Aborting."
