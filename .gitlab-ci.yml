@@ -49,10 +49,9 @@ default:
      - source scripts/setup_yarn.sh
 stages:
   - environment-set
-  # - build
-  # - test
-  # - sonarqube
-  # - modify-package-json #Need to remove this stage when MAR-444 task is done.
+  - build
+  - test
+  - sonarqube
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
   - promote-prod-release-version
@@ -64,59 +63,59 @@ environment-set:
   environment:
     name: ${ENVIRONMENT}
 
-# build:
-#  stage: build
-#  script:
-#    - bash scripts/set_up_runner.sh
-#  rules:
-#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-#       when: never
-#     - when: always
+build:
+ stage: build
+ script:
+   - bash scripts/set_up_runner.sh
+ rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: always
 
-# test:
-#   stage: test
-#   dependencies:
-#     - build
-#   script:
-#     - yarn add jest-junit --dev
-#     - yarn jest --coverage # Run tests
-#     ## Below cmnds can be run after fixing lint errors in the codebase
-#     #- yarn eslint --ext .js,.vue .
-#     # - yarn pug-lint server/views
-#   artifacts:
-#     expire_in: 1 hr
-#     when: on_success
-#     paths:
-#       - coverage
-#       - test-results
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-#       when: never
-#     - when: on_success
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - yarn add jest-junit --dev
+    - yarn jest --coverage # Run tests
+    ## Below cmnds can be run after fixing lint errors in the codebase
+    #- yarn eslint --ext .js,.vue .
+    # - yarn pug-lint server/views
+  artifacts:
+    expire_in: 1 hr
+    when: on_success
+    paths:
+      - coverage
+      - test-results
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - when: on_success
 
-# sonarqube-scan:
-#   stage: sonarqube
-#   dependencies:
-#     - test
-#   tags:
-#     - docker_runner
-#   image:
-#     name: sonarsource/sonar-scanner-cli:latest
-#     entrypoint: [""]
-#   variables:
-#     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-#     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-#   cache:
-#     key: "${CI_JOB_NAME}"
-#     paths:
-#       - .sonar/cache
-#   script:
-#     - sonar-scanner
-#   rules:
-#     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-#       when: never
-#     - if: $SONARQUBE == "true"
-#       when: on_success
+sonarqube-scan:
+  stage: sonarqube
+  dependencies:
+    - test
+  tags:
+    - docker_runner
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: never
+    - if: $SONARQUBE == "true"
+      when: on_success
 
 docker-build:
   stage: docker-build
@@ -168,7 +167,7 @@ promote-prod-release-version:
   script:
     - bash scripts/promote_to_prod.sh
   rules:
-   - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+   - if: $CI_COMMIT_BRANCH == "main" && $ENVIRONMENT == "production" && $CI_PIPELINE_SOURCE == "web"
      when: always
 
 # after_script:
