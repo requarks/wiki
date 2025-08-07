@@ -29,7 +29,6 @@ rm -rf ~/.cache/yarn || true
 
 # Configure yarn for better network handling
 yarn config set network-timeout 100000
-yarn config set registry https://registry.npmjs.org/
 
 # Print versions
 node -v && npm -v && yarn -v
