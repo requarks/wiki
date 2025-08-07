@@ -50,7 +50,6 @@ test-results/
 coverage/
 .scannerwork
 
-
 **/secrets/*
 deployment/data/*
 deployment/env/local/secrets/*
