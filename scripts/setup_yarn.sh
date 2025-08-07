@@ -28,5 +28,8 @@ fi
 yarn cache clean || true
 rm -rf ~/.cache/yarn || true
 
+# Configure yarn for better network handling
+yarn config set network-timeout 100000
+
 # Print versions
 node -v && npm -v && yarn -v
