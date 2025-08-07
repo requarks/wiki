@@ -13,10 +13,8 @@ WORKDIR /app
 COPY template.tex /app
 COPY reference.docx /app
 COPY pandoc.py /app
-COPY flexible-columns-table.lua /app
 
 # Set environment variables for paths
-ENV LUA_PATH=/app/flexible-columns-table.lua
 ENV TEMPLATE_PATH=/app/template.tex
 ENV REFERENCE_DOC_PATH=/app/reference.docx
 ENV OUTPUT_DIR=/app

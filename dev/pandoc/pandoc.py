@@ -37,34 +37,36 @@ def convert_to_docx():
 def convert_to_pdf():
     file_suffix = uuid4().hex
     try:
-      input_path = os.path.join(OUTPUT_DIR, f'input_{file_suffix}.html')
-      output_path = os.path.join(OUTPUT_DIR, f'output_{file_suffix}.pdf')
+        input_path = os.path.join(OUTPUT_DIR, f'input_{file_suffix}.html')
+        docx_path = os.path.join(OUTPUT_DIR, f'temp_{file_suffix}.docx')
+        output_path = os.path.join(OUTPUT_DIR, f'output_{file_suffix}.pdf')
 
-      # Save the input file
-      input_file = request.files['file']
-      input_file.save(input_path)
+        # Save the input file
+        input_file = request.files['file']
+        input_file.save(input_path)
 
-      # Run Pandoc command
-      try:
+        # Step 1: HTML → DOCX
         subprocess.run(
-              ['pandoc', input_path, '--pdf-engine=lualatex',
-              f'--template={TEMPLATE_PATH}', f'--lua-filter={LUA_PATH}', '-V', 'colorlinks=true', '-f', 'html', '-t', 'pdf', '-o', output_path],
-              check=True,
-              stdout=subprocess.PIPE,
-              stderr=subprocess.PIPE
-        )
-      except subprocess.CalledProcessError:
-         # If Lua filter fails, retry without it
-         subprocess.run(
-            ['pandoc', input_path, '--pdf-engine=lualatex',
-             f'--template={TEMPLATE_PATH}', '-V', 'colorlinks=true', '-f', 'html', '-t', 'pdf', '-o', output_path],
+            ['pandoc', input_path, '-f', 'html', '-t', 'docx', '-o', docx_path],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
-         )
+        )
 
-      # Return the generated PDF
-      return send_file(output_path, as_attachment=True)
+        subprocess.run(
+            [
+                'pandoc', docx_path, '-f', 'docx', '-o', output_path,
+                f'--template={TEMPLATE_PATH}',
+                '--pdf-engine=lualatex',
+                '-V', 'colorlinks=true'
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
+        # Return the generated PDF
+        return send_file(output_path, as_attachment=True)
 
     except subprocess.CalledProcessError as e:
         return {'error': f'Pandoc failed: {e.stderr.decode()}'}, 500
@@ -74,6 +76,7 @@ def convert_to_pdf():
 
     finally:
         subprocess.run(['rm', '-f', input_path])
+        subprocess.run(['rm', '-f', docx_path])
         subprocess.run(['rm', '-f', output_path])
 
 
