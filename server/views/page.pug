@@ -25,6 +25,7 @@ block body
       toc=Buffer.from(page.toc).toString('base64')
       :page-id=page.id
       sidebar=Buffer.from(JSON.stringify(sidebar)).toString('base64')
+      toc-options=Buffer.from(JSON.stringify(tocOptions)).toString('base64')
       nav-mode=config.nav.mode
       comments-enabled=config.features.featurePageComments
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')

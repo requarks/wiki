@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-dialog(
+v-dialog(
     v-model='isShown'
     persistent
     width='1000'
@@ -19,9 +19,9 @@
     v-card(tile)
       v-tabs(color='white', background-color='blue darken-1', dark, centered, v-model='currentTab')
         v-tab {{$t('editor:props.info')}}
+        v-tab {{$t('editor:props.toc')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
-        v-tab(disabled) {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.pt-5
@@ -90,6 +90,24 @@
               hide-no-data
               :search-input.sync='newTagSearch'
               )
+        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
+          v-card-text
+            .overline.pb-5 {{$t('editor:props.tocTitle')}}
+            v-switch(
+              :label='$t(`editor:props.tocUseDefault`)'
+              v-model='useDefaultTocDepth'
+            )
+            v-range-slider(
+              :disabled='useDefaultTocDepth'
+              prepend-icon='mdi-menu-open'
+              :label='$t(`editor:props.tocHeadingLevels`)'
+              v-model='tocDepth'
+              :min='1'
+              :max='6'
+              :tick-labels='["H1", "H2", "H3", "H4", "H5", "H6"]'
+              )
+            .text-caption.pl-8.grey--text {{$t('editor:props.tocHeadingLevelsHint')}}
+
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
             .overline {{$t('editor:props.publishState')}}
@@ -196,43 +214,6 @@
           .editor-props-codeeditor-hint
             .caption {{$t('editor:props.htmlHint')}}
 
-        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
-          v-card-text
-            .overline {{$t('editor:props.socialFeatures')}}
-            v-switch(
-              :label='$t(`editor:props.allowComments`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowCommentsHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.allowRatings`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowRatingsHint`)'
-              persistent-hint
-              disabled
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displayAuthor`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displayAuthorHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displaySharingBar`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displaySharingBarHint`)'
-              persistent-hint
-              inset
-              )
-
         v-tab-item(:transition='false', :reverse-transition='false')
           .editor-props-codeeditor-title
             .overline {{$t('editor:props.css')}}
@@ -255,6 +236,7 @@ import 'codemirror/mode/htmlmixed/htmlmixed.js'
 import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
+// eslint-disable-next-line no-useless-escape
 const filenamePattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
 
 export default {
@@ -276,10 +258,10 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'This field is required.',
-          path: value => {
-            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
-          }
+        required: value => !!value || 'This field is required.',
+        path: value => {
+          return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+        }
       }
     }
   },
@@ -297,6 +279,19 @@ export default {
     isPublished: sync('page/isPublished'),
     publishStartDate: sync('page/publishStartDate'),
     publishEndDate: sync('page/publishEndDate'),
+    tocDepth: {
+      get() {
+        const tocDepth = this.$store.get('page/tocDepth')
+        return [tocDepth.min, tocDepth.max]
+      },
+      set(value) {
+        this.$store.set('page/tocDepth', {
+          min: parseInt(value[0]),
+          max: parseInt(value[1])
+        })
+      }
+    },
+    useDefaultTocDepth: sync('page/useDefaultTocDepth'),
     scriptJs: sync('page/scriptJs'),
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),
@@ -328,7 +323,7 @@ export default {
       if (this.cm) {
         this.cm.toTextArea()
       }
-      if (newValue === 2) {
+      if (newValue === 3) {
         this.$nextTick(() => {
           setTimeout(() => {
             this.loadEditor(this.$refs.codejs, 'html')
