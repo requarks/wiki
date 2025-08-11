@@ -51,12 +51,17 @@
             v-list-item(@click='insertBeforeEachLine({ content: `NOTE: `})')
               v-list-item-action
                 v-icon(color='blue') mdi-alpha-n-box-outline
-              v-list-item-title {{'Note blockquote'}}
+              v-list-item-title {{'Note Blockquote'}}
+            v-divider
+            v-list-item(@click='insertBeforeEachLine({ content: `[SUCCESS]\n`})')
+              v-list-item-action
+                v-icon(color='success') mdi-alpha-s-box-outline
+              v-list-item-title {{'Success Blockquote'}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `TIP: `})')
               v-list-item-action
                 v-icon(color='success') mdi-alpha-t-box-outline
-              v-list-item-title {{'Tip blockquote'}}
+              v-list-item-title {{'Tip Blockquote'}}
             v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `WARNING: `})')
               v-list-item-action
@@ -66,11 +71,12 @@
             v-list-item(@click='insertBeforeEachLine({ content: `CAUTION: `})')
               v-list-item-action
                 v-icon(color='purple') mdi-alpha-c-box-outline
-              v-list-item-title {{'Caution blockquote'}}
+              v-list-item-title {{'Caution Blockquote'}}
+            v-divider
             v-list-item(@click='insertBeforeEachLine({ content: `IMPORTANT: `})')
               v-list-item-action
                 v-icon(color='error') mdi-alpha-i-box-outline
-              v-list-item-title {{'Important blockquote'}}
+              v-list-item-title {{'Important Blockquote'}}
             v-divider
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
@@ -157,6 +163,8 @@ import cmFold from './common/cmFold'
 // INIT
 // ========================================
 const asciidoctor = require('asciidoctor')()
+const registry = asciidoctor.Extensions.create()
+require('../../modules/asciidoc-extended')(registry)
 const cheerio = require('cheerio')
 
 // Platform detection
@@ -216,7 +224,8 @@ export default {
         attributes: {
           showtitle: true,
           icons: 'font'
-        }
+        },
+        'extension_registry': registry
       })
       const $ = cheerio.load(html, {
         decodeEntities: true
