@@ -14,7 +14,10 @@
   }
 
   .v-application .is-page-header.is-page-header  {
-    .headline, .headline.grey--text.text--lighten-2, .caption, .caption.grey--text.text--darken-1 {
+    .headline,
+    .headline.grey--text.text--lighten-2,
+    .caption,
+    .caption.grey--text.text--darken-1 {
       color: #1a1a1a !important;
     }
   }
@@ -24,8 +27,10 @@
       color: black !important;
     }
 
+    /* Kapitelbeginn auf neuer Seite */
     h1:not(:first-child) {
       break-before: page !important;
+      page-break-before: always !important; /* legacy */
     }
 
     h1 {
@@ -36,8 +41,30 @@
       font-size: 1.2rem !important;
     }
 
+    /* Überschriften nicht am Seitenende hängen lassen */
     h1, h2, h3 {
       break-after: avoid-page !important;
+    }
+    h1, h2 {
+      page-break-after: avoid !important; /* legacy/webkit */
+    }
+
+    /* Folgenden Block nicht vom Heading trennen */
+    h1 + *,
+    h2 + * {
+      break-before: avoid !important;
+      page-break-before: avoid !important; /* legacy/webkit */
+    }
+
+    /* Große direkt folgende Elemente als Einheit behandeln */
+    h1 + img,
+    h2 + img,
+    h1 + figure,
+    h2 + figure,
+    h1 + .screenshot,
+    h2 + .screenshot {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important; /* legacy/webkit */
     }
 
     @at-root .v-main.v-main & h1 + h2 {
@@ -51,10 +78,12 @@
 
     ul, ol {
       break-before: avoid-page !important;
+      page-break-before: avoid !important; /* legacy */
     }
 
     blockquote {
       break-inside: avoid-page !important;
+      page-break-inside: avoid !important; /* legacy */
       border-color: #dddddd !important;
       background-color: #f0f0f0 !important;
 
