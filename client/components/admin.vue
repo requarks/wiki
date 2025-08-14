@@ -333,7 +333,7 @@ export default {
 .v-application.admin {
   code {
     box-shadow: none;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Ubuntu Mono', monospace;
     color: mc('pink', '500');
   }
 }
