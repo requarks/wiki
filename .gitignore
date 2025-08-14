@@ -45,5 +45,28 @@ server/views/setup.pug
 test-results/
 .scannerwork
 
-# Localization Resources
-/server/locales/**/*.yml
+# Secrets and sensitive data
+**/secrets/*
+deployment/data/*
+deployment/env/local/secrets/*
+**/local/certs/*
+keycloak-host-full-chain-cert.pem
+
+# Postgres dumps
+*.sql
+
+# CI/CD related files
+.gitlab-ci.yml
+Jenkinsfile
+dev/helm/*.yml
+
+# SonarQube
+.sonarlint
+
+# Miscellaneous
+license-README.md
+scripts/
+docker-compose.yml
+
+# OS-specific
+.DS_Store
