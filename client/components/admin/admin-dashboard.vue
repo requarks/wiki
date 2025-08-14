@@ -49,7 +49,7 @@
             v-icon(:color='isLatestVersion ? `green` : `red darken-4`', small) mdi-wrench
           v-card-text
             v-icon.dashboard-icon mdi-blur
-            .subtitle-1 Wiki.js {{info.currentVersion}}
+            .subtitle-1 {{wikiName}} {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
       v-flex(xs12, xl6)
@@ -112,12 +112,15 @@ import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
 import semverLte from 'semver/functions/lte'
 
+/* global siteConfig */
+
 export default {
   components: {
     AnimatedNumber
   },
   data() {
     return {
+      wikiName: siteConfig.title || 'Wiki.js',
       recentPages: [],
       recentPagesLoading: false,
       recentPagesHeaders: [

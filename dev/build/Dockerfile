@@ -26,7 +26,10 @@ RUN yarn patch-package
 # --- Release ---
 # ===============
 FROM node:20-alpine
-LABEL maintainer="requarks.io"
+LABEL maintainer="mar-team"
+
+ARG VERSION
+ARG RELEASE_DATE
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \

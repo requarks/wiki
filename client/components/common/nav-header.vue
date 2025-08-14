@@ -188,6 +188,18 @@
               span {{$t('common:actions.exit')}}
             v-divider(vertical)
 
+          // - GITHUB REPO
+
+          template
+            v-tooltip(bottom)
+              template(v-slot:activator='{ on }')
+                v-btn(
+                  icon, tile, height='64', v-on='on', @click="goToRepo", :aria-label='$t(`common:github.repository`)'
+                )
+                  v-icon(color='grey') mdi-github
+              span {{$t('common:github.repository')}}
+            v-divider(vertical)
+
           //- ACCOUNT
 
           v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
@@ -477,6 +489,9 @@ export default {
     },
     goHome () {
       window.location.assign('/')
+    },
+    goToRepo () {
+      window.open('https://github.com/mar-team/wiki', '_blank', 'noopener')
     }
   }
 }
