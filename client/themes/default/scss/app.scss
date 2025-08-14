@@ -1,10 +1,17 @@
 /* THEME SPECIFIC STYLES */
 
+:root {
+  font-size: 16px; // 1rem = 16px
+}
+
 .v-main .contents {
+  --rem-factor: 0.875; // 0.875rem = 14px
+  font-size: calc(var(--rem-factor) * 1rem);
+
   font-family: "Ubuntu", sans-serif;
   font-weight: 300;
   color: mc('grey', '800');
-  padding: .5rem 0 50px;
+  padding: calc(var(--rem-factor)*.5rem) 0 50px;
   position: relative;
 
   >div>*:first-child {
@@ -87,9 +94,9 @@
     .toc-anchor {
       display: none;
       position: absolute;
-      right: 1rem;
-      bottom: .5rem;
-      font-size: 1.25rem;
+      right: calc(var(--rem-factor) * 1rem);
+      bottom: calc(var(--rem-factor)*.5rem);
+      font-size: calc(var(--rem-factor)*1.25rem);
       text-decoration: none;
       color: mc('grey', '500');
     }
@@ -109,29 +116,21 @@
 
   h1,
   .h1 {
-    font-size: calc(1.375rem + 1.5vw);
-    font-weight: 500;
-    line-height: 3rem;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: calc(var(--rem-factor)*3rem);
     letter-spacing: 0.12px;
     text-transform: uppercase;
-  }
-
-  @media (min-width: 1200px) {
-
-    h1,
-    .h1 {
-      font-size: 2.5rem;
-    }
   }
 
   h1 {
     padding: 0;
     color: mc('text', 'darkGrey');
-    margin-top: 2rem;
+    margin-top: calc(var(--rem-factor)*2rem);
     position: relative;
 
     @at-root .theme--dark & {
-      color: mc('grey', '300');
+      color: mc('grey', '200');
     }
 
     &::after {
@@ -160,27 +159,19 @@
 
   h2,
   .h2 {
-    font-size: calc(1.35rem + 1.2vw);
+    font-size: 20px;
     font-weight: 400;
-    line-height: 3rem;
+    line-height: calc(var(--rem-factor)*3rem);
     letter-spacing: 0.12px;
   }
 
-  @media (min-width: 1200px) {
-
-    h2,
-    .h2 {
-      font-size: 2.25rem;
-    }
-  }
-
   h2 {
-    margin: 1rem 0 0 0;
+    margin: calc(var(--rem-factor) * 1rem) 0 0 0;
     color: mc('grey', '800');
     position: relative;
 
     @at-root .theme--dark & {
-      color: mc('grey', '400');
+      color: mc('grey', '300');
     }
 
     &::after {
@@ -208,18 +199,10 @@
 
   h3,
   .h3 {
-    font-size: calc(1.325rem + 0.9vw);
-    font-weight: 400;
-    line-height: 2.5rem;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: calc(var(--rem-factor)*2.5rem);
     letter-spacing: 0.12px;
-  }
-
-  @media (min-width: 1200px) {
-
-    h3,
-    .h3 {
-      font-size: 2rem;
-    }
   }
 
   h3 {
@@ -228,7 +211,7 @@
     position: relative;
 
     @at-root .theme--dark & {
-      color: mc('grey', '600');
+      color: mc('grey', '500');
     }
 
     &::after {
@@ -244,38 +227,30 @@
 
   h4,
   .h4 {
-    font-size: calc(1.275rem + 0.3vw);
-    font-weight: 400;
-    line-height: 2rem;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: calc(var(--rem-factor)*2rem);
     letter-spacing: 0.4px;
-  }
 
-  @media (min-width: 1200px) {
-
-    h4,
-    .h4 {
-      font-size: 1.5rem;
+    @at-root .theme--dark & {
+      color: mc('grey', '500');
     }
   }
 
   h5,
   .h5 {
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: calc(var(--rem-factor)*1.5rem);
     letter-spacing: 0.12px;
+    color: mc('grey', '600');
   }
 
   h4,
   h5,
   h6 {
     margin: 8px 0 0 0;
-    color: mc('grey', '700');
     position: relative;
-
-    @at-root .theme--dark & {
-      color: mc('grey', '600');
-    }
 
     &::after {
       content: '';
@@ -294,7 +269,12 @@
     }
   }
 
-  h6 {
+  h6,
+  .h6 {
+    font-size: 12px;
+    font-weight: 600;
+    color: mc('grey', '600');
+
     &::after {
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 30%);
     }
@@ -306,12 +286,12 @@
 
   p {
     margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1rem;
+    margin-bottom: calc(var(--rem-factor) * 1rem);
+    font-size: calc(var(--rem-factor) * 1rem);
     font-weight: 300;
     letter-spacing: 0.4px;
-    line-height: 1.5rem;
-    padding: 1rem 0 0 0;
+    line-height: calc(var(--rem-factor)*1.5rem);
+    padding: calc(var(--rem-factor) * 1rem) 0 0 0;
 
     @at-root .contents>div>p:first-child {
       padding-top: 0;
@@ -323,7 +303,7 @@
   }
 
   hr {
-    margin: 1rem 0;
+    margin: calc(var(--rem-factor) * 1rem) 0;
     height: 1px;
     border: none;
     background-color: mc('grey', '400');
@@ -355,11 +335,11 @@
   }
 
   blockquote {
-    padding: 0 1rem 1rem 1rem;
+    padding: 0 calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem);
     background-color: mc('surface', '2');
     border-left: 55px solid mc('ext-sapphire', '5');
-    border-radius: .5rem;
-    margin: 1rem 0;
+    border-radius: calc(var(--rem-factor)*.5rem);
+    margin: calc(var(--rem-factor) * 1rem) 0;
     position: relative;
 
     code:not([class^="language-"]) {
@@ -384,7 +364,7 @@
     }
 
     >p:first-child .emoji {
-      margin-right: .5rem;
+      margin-right: calc(var(--rem-factor)*.5rem);
     }
 
     &.valign-center>p {
@@ -475,7 +455,7 @@
   // ---------------------------------
 
   .admonitionblock {
-    margin: 1rem 0;
+    margin: calc(var(--rem-factor) * 1rem) 0;
     position: relative;
 
     table {
@@ -612,7 +592,7 @@
   .exampleblock {
     >.title {
       font-style: italic;
-      font-size: 1rem !important;
+      font-size: calc(var(--rem-factor) * 1rem) !important;
       color: #7a2717;
 
       @at-root .theme--dark & {
@@ -634,27 +614,27 @@
 
   ol,
   ul:not(.tabset-tabs) {
-    padding-top: 1rem;
+    padding-top: calc(var(--rem-factor) * 1rem);
     width: 100%;
 
     @at-root .is-rtl & {
       padding-left: 0;
-      padding-right: 1rem;
+      padding-right: calc(var(--rem-factor) * 1rem);
     }
 
     li>ul,
     li>ol {
-      padding-top: .5rem;
-      padding-left: 1rem;
+      padding-top: calc(var(--rem-factor)*.5rem);
+      padding-left: calc(var(--rem-factor) * 1rem);
 
       @at-root .is-rtl & {
         padding-left: 0;
-        padding-right: 1rem;
+        padding-right: calc(var(--rem-factor) * 1rem);
       }
     }
 
     li+li {
-      margin-top: .5rem;
+      margin-top: calc(var(--rem-factor)*.5rem);
     }
 
     &.links-list {
@@ -672,7 +652,7 @@
         border-bottom: 1px solid mc('grey', '200');
         border-left: 5px solid mc('grey', '300');
         box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
-        padding: 1rem;
+        padding: calc(var(--rem-factor) * 1rem);
         border-radius: 5px;
         font-weight: 500;
 
@@ -700,17 +680,17 @@
         >a {
           display: block;
           text-decoration: none;
-          margin: -1rem;
-          padding: 1rem;
+          margin: calc(var(--rem-factor)*(-1rem));
+          padding: calc(var(--rem-factor) * 1rem);
 
           >em {
             font-weight: 400;
             font-style: normal;
             color: mc('grey', '700');
             display: inline-block;
-            padding-left: .5rem;
+            padding-left: calc(var(--rem-factor)*.5rem);
             border-left: 1px solid mc('grey', '300');
-            margin-left: .5rem;
+            margin-left: calc(var(--rem-factor)*.5rem);
 
             &.is-block {
               display: block;
@@ -754,7 +734,7 @@
     }
 
     &.grid-list {
-      margin: 1rem 0 0 0;
+      margin: calc(var(--rem-factor) * 1rem) 0 0 0;
       background-color: #FFF;
       border: 1px solid mc('grey', '200');
       padding: 1px;
@@ -768,7 +748,7 @@
 
       li {
         background-color: mc('grey', '50');
-        padding: .6rem 1rem;
+        padding: calc(var(--rem-factor)*.6rem) calc(var(--rem-factor) * 1rem);
         display: block;
 
         &:nth-child(odd) {
@@ -800,13 +780,13 @@
 
     >li::before {
       position: absolute;
-      left: -1.1rem;
+      left: calc(var(--rem-factor)*(-1.1rem));
       content: '\25b8';
       color: mc('grey', '600');
-      width: 1.35rem;
+      width: calc(var(--rem-factor)*1.35rem);
 
       @at-root .is-rtl & {
-        right: -1.1rem;
+        right: calc(var(--rem-factor)*(-1.1rem));
         content: '\25C3';
       }
     }
@@ -854,9 +834,9 @@
     background-color: mc('indigo', '50');
     padding: 0 5px;
     color: mc('indigo', '800');
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Ubuntu Mono', monospace;
     font-weight: normal;
-    font-size: 1rem;
+    font-size: calc(var(--rem-factor) * 1rem);
     box-shadow: none;
 
     &::before,
@@ -875,8 +855,8 @@
     border-radius: 5px;
     box-shadow: initial;
     background-color: mc('grey', '900');
-    padding: 1rem 1rem 1rem 3rem;
-    margin: 1rem 0;
+    padding: calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem) calc(var(--rem-factor)*3rem);
+    margin: calc(var(--rem-factor) * 1rem) 0;
 
     @at-root .theme--dark & {
       background-color: darken(mc('grey', '900'), 5%);
@@ -888,8 +868,8 @@
       color: #FFF;
       box-shadow: initial;
       display: block;
-      font-size: .85rem;
-      font-family: 'Roboto Mono', monospace;
+      font-size: calc(var(--rem-factor)*.85rem);
+      font-family: 'Ubuntu Mono', monospace;
 
       &:after,
       &:before {
@@ -900,7 +880,7 @@
   }
 
   .diagram {
-    margin-top: 1rem;
+    margin-top: calc(var(--rem-factor) * 1rem);
     overflow: auto;
 
     svg:first-child {
@@ -921,8 +901,8 @@
     list-style-type: none;
 
     &-checkbox[disabled] {
-      width: 1.1rem;
-      height: 1.1rem;
+      width: calc(var(--rem-factor)*1.1rem);
+      height: calc(var(--rem-factor)*1.1rem);
       top: 2px;
       position: relative;
       margin-right: 2px;
@@ -933,14 +913,14 @@
         top: 0;
         content: ' ';
         display: block;
-        width: 1.1rem;
-        height: 1.1rem;
+        width: calc(var(--rem-factor)*1.1rem);
+        height: calc(var(--rem-factor)*1.1rem);
         background-color: #FFF;
         border: 1px solid mc('grey', '400');
         border-radius: 2px;
         font-weight: bold;
-        font-size: .8rem;
-        line-height: 1rem;
+        font-size: calc(var(--rem-factor)*.8rem);
+        line-height: calc(var(--rem-factor) * 1rem);
         text-align: center;
 
         @at-root .theme--dark & {
@@ -955,7 +935,7 @@
     }
 
     .contains-task-list {
-      padding: .5rem 0 0 1.5rem;
+      padding: calc(var(--rem-factor)*.5rem) 0 0 calc(var(--rem-factor)*1.5rem);
     }
   }
 
@@ -964,7 +944,7 @@
   // ---------------------------------
 
   table {
-    margin: .5rem 0;
+    margin: calc(var(--rem-factor)*.5rem) 0;
     border-spacing: 0;
     border-radius: 5px;
     border: 1px solid mc('grey', '300');
@@ -977,13 +957,13 @@
 
       td,
       th {
-        font-size: .85rem;
-        padding: .5rem;
+        font-size: calc(var(--rem-factor)*.85rem);
+        padding: calc(var(--rem-factor)*.5rem);
       }
     }
 
     th {
-      padding: .75rem;
+      padding: calc(var(--rem-factor)*.75rem);
       border-bottom: 2px solid mc('grey', '500');
       color: mc('grey', '600');
       background-color: mc('grey', '100');
@@ -1004,7 +984,7 @@
     }
 
     td {
-      padding: .75rem;
+      padding: calc(var(--rem-factor)*.75rem);
     }
 
     tr {
@@ -1081,7 +1061,7 @@
       th {
         border: 1px solid mc('blue-grey', '100');
         box-shadow: inset -1px -1px 0 0 #FFF, inset 1px 0 0 #FFF;
-        padding: .5rem .75rem;
+        padding: calc(var(--rem-factor)*.5rem) calc(var(--rem-factor)*.75rem);
         border-radius: 0 !important;
 
         @at-root .theme--dark & {
@@ -1134,12 +1114,12 @@
 
     &.align-left {
       float: left;
-      margin: 0 1rem 1rem 0;
+      margin: 0 calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem) 0;
     }
 
     &.align-right {
       float: right;
-      margin: 0 0 1rem 1rem;
+      margin: 0 0 calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem);
       z-index: 1;
       position: relative;
     }
@@ -1153,12 +1133,12 @@
     &.align-abstopright {
       position: absolute;
       top: -90px;
-      right: 1rem;
+      right: calc(var(--rem-factor) * 1rem);
       height: calc(90px - 32px);
       width: auto;
 
       @at-root .is-rtl & {
-        left: 1rem;
+        left: calc(var(--rem-factor) * 1rem);
         right: initial;
       }
     }
@@ -1172,19 +1152,19 @@
     }
 
     &.uml-diagram {
-      margin: 1rem 0;
+      margin: calc(var(--rem-factor) * 1rem) 0;
     }
   }
 
   figure.image {
-    margin: 1rem 0 0 0;
+    margin: calc(var(--rem-factor) * 1rem) 0 0 0;
 
     img {
       margin: 0 auto;
     }
 
     figcaption {
-      padding: 4px 1rem;
+      padding: 4px calc(var(--rem-factor) * 1rem);
       text-align: center;
       font-size: 12px;
       color: mc('grey', '700');
@@ -1216,7 +1196,7 @@
 
   details {
     background-color: mc('grey', '50');
-    margin: 1rem 2rem;
+    margin: calc(var(--rem-factor) * 1rem) calc(var(--rem-factor)*2rem);
     border: 1px solid mc('grey', '300');
     border-radius: 7px;
 
@@ -1230,7 +1210,7 @@
       cursor: pointer;
       display: list-item;
       align-items: center;
-      padding: 0.4rem 1rem;
+      padding: calc(var(--rem-factor)*0.4rem) calc(var(--rem-factor) * 1rem);
       transition: background-color .4s ease;
 
       &:focus {
@@ -1258,14 +1238,14 @@
     }
 
     &[open] {
-      padding: 1rem;
+      padding: calc(var(--rem-factor) * 1rem);
 
       >summary {
         background-color: mc('grey', '100');
         border-bottom: 1px solid mc('grey', '300');
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
-        margin: -1rem -1rem 1rem -1rem;
+        margin: calc(var(--rem-factor)*(-1rem)) calc(var(--rem-factor)*(-1rem)) calc(var(--rem-factor) * 1rem) calc(var(--rem-factor)*(-1rem));
       }
     }
 
