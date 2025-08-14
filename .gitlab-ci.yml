@@ -67,8 +67,13 @@ environment-set:
 build:
  stage: build
  script:
-   - bash scripts/set_up_runner.sh
-   - yarn build
+   - docker build -f Dockerfile.build -t codebase-build .
+   - docker run --rm -v $(pwd)/assets:/wiki/assets codebase-build
+   - docker rmi codebase-build
+ artifacts:
+   paths:
+     - assets/
+   expire_in: 1 hour
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never

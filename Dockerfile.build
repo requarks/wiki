@@ -1,0 +1,32 @@
+# ====================
+# --- Build Stage Only ---
+# ====================
+FROM node:20-alpine AS build
+
+WORKDIR /wiki
+
+USER root
+
+# Install build dependencies
+RUN apk add yarn g++ make cmake python3 --no-cache && \
+    chown -R node:node /wiki
+
+USER node
+
+# Copy source files needed for build
+COPY --chown=node:node ./client ./client
+COPY --chown=node:node ./dev ./dev
+COPY --chown=node:node ./patches ./patches
+COPY --chown=node:node ./package.json ./package.json
+COPY --chown=node:node ./.babelrc ./.babelrc
+COPY --chown=node:node ./.eslintignore ./.eslintignore
+COPY --chown=node:node ./.eslintrc.yml ./.eslintrc.yml
+COPY --chown=node:node ./yarn.lock ./yarn.lock
+
+# Clean cache and install dependencies
+RUN yarn cache clean && \
+    yarn install --frozen-lockfile --non-interactive --ignore-scripts && \
+    yarn build && \
+    rm -rf /wiki/node_modules && \
+    yarn --production --frozen-lockfile --non-interactive --ignore-scripts && \
+    yarn patch-package
