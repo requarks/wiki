@@ -1,7 +1,8 @@
 # ====================
 # --- Build Stage Only ---
 # ====================
-FROM node:20-alpine AS build
+ARG NODE_IMAGE
+FROM ${NODE_IMAGE} AS build
 
 WORKDIR /wiki
 
