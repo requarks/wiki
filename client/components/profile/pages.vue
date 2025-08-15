@@ -24,7 +24,7 @@
             hide-default-footer
           )
             template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='goToPage(props.item.id)')
+              tr.is-clickable(:active='props.selected', @click='goToPage(props.item)')
                 td
                   .body-2: strong {{ props.item.title }}
                   .caption {{ props.item.description }}
@@ -74,16 +74,15 @@ export default {
         icon: 'cached'
       })
     },
-    goToPage(id) {
-      window.location.assign(`/i/` + id)
+    goToPage(item) {
+      window.location.assign(`/${item.sitePath}/${item.locale}/${item.path}`)
     }
   },
   apollo: {
     pages: {
       query: gql`
         query($creatorId: Int, $authorId: Int) {
-          pages {
-            list(creatorId: $creatorId, authorId: $authorId) {
+            listPages(creatorId: $creatorId, authorId: $authorId) {
               id
               locale
               path
@@ -95,8 +94,8 @@ export default {
               privateNS
               createdAt
               updatedAt
+              sitePath
             }
-          }
         }
       `,
       variables () {
@@ -106,7 +105,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.list,
+      update: (data) => data.listPages,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'profile-pages-refresh')

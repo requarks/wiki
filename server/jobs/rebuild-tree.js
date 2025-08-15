@@ -2,79 +2,142 @@ const _ = require('lodash')
 
 /* global WIKI */
 
-module.exports = async (pageId) => {
-  WIKI.logger.info(`Rebuilding page tree...`)
+const getSiteIdByPath = async (sitePath) => {
+  return WIKI.models.sites.getSiteIdByPath({ path: sitePath, forceReload: true })
+}
 
-  try {
-    WIKI.models = require('../core/db').init()
-    await WIKI.configSvc.loadFromDb()
-    await WIKI.configSvc.applyFlags()
+function isEmptySiteId(siteId) {
+  return (
+    !siteId ||
+    siteId === 'undefined' ||
+    (typeof siteId === 'object' && siteId !== null && Object.keys(siteId).length === 0)
+  )
+}
 
-    const pages = await WIKI.models.pages.query().select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS').orderBy(['localeCode', 'path'])
-    let tree = []
-    let pik = 0
+async function getDefaultSiteIdIfNeeded(siteId) {
+  await getSiteIdByPath('default')
+}
 
-    for (const page of pages) {
-      const pagePaths = page.path.split('/')
-      let currentPath = ''
-      let depth = 0
-      let parentId = null
-      let ancestors = []
-      for (const part of pagePaths) {
-        depth++
-        const isFolder = (depth < pagePaths.length)
-        currentPath = currentPath ? `${currentPath}/${part}` : part
-        const found = _.find(tree, {
-          localeCode: page.localeCode,
-          path: currentPath
+function buildPageTree(pages, defaultSiteId) {
+  let tree = []
+  let treeMap = new Map()
+  let pik = 0
+
+  function getKey(page, currentPath) {
+    return `${page.localeCode}:${page.siteId}:${currentPath}`
+  }
+
+  function createNode({
+    id, page, currentPath, depth, isFolder, parentId, ancestors, defaultSiteId
+  }) {
+    return {
+      id,
+      localeCode: page.localeCode,
+      path: currentPath,
+      depth: depth,
+      title: isFolder ? currentPath.split('/').pop() : page.title,
+      isFolder: isFolder,
+      isPrivate: !isFolder && page.isPrivate,
+      privateNS: !isFolder ? page.privateNS : null,
+      parent: parentId,
+      pageId: isFolder ? null : page.id,
+      ancestors: JSON.stringify(ancestors),
+      siteId: page.siteId ? page.siteId : defaultSiteId
+    }
+  }
+
+  function processPage(page) {
+    const pagePaths = page.path.split('/')
+    let currentPath = ''
+    let depth = 0
+    let parentId = null
+    let ancestors = []
+    for (const part of pagePaths) {
+      depth++
+      const isFolder = (depth < pagePaths.length)
+      currentPath = currentPath ? `${currentPath}/${part}` : part
+      const key = getKey(page, currentPath)
+      let found = treeMap.get(key)
+      if (!found) {
+        pik++
+        const node = createNode({
+          id: pik,
+          page,
+          currentPath,
+          depth,
+          isFolder,
+          parentId,
+          ancestors: [...ancestors],
+          defaultSiteId
         })
-        if (!found) {
-          pik++
-          tree.push({
-            id: pik,
-            localeCode: page.localeCode,
-            path: currentPath,
-            depth: depth,
-            title: isFolder ? part : page.title,
-            isFolder: isFolder,
-            isPrivate: !isFolder && page.isPrivate,
-            privateNS: !isFolder ? page.privateNS : null,
-            parent: parentId,
-            pageId: isFolder ? null : page.id,
-            ancestors: JSON.stringify(ancestors)
-          })
-          parentId = pik
-        } else if (isFolder && !found.isFolder) {
-          found.isFolder = true
-          parentId = found.id
-        } else {
-          parentId = found.id
-        }
-        ancestors.push(parentId)
-      }
-    }
-
-    await WIKI.models.knex.table('pageTree').truncate()
-    if (tree.length > 0) {
-      // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)
-      if ((WIKI.config.db.type !== 'sqlite')) {
-        for (const chunk of _.chunk(tree, 100)) {
-          await WIKI.models.knex.table('pageTree').insert(chunk)
-        }
+        tree.push(node)
+        treeMap.set(key, node)
+        parentId = pik
       } else {
-        for (const chunk of _.chunk(tree, 60)) {
-          await WIKI.models.knex.table('pageTree').insert(chunk)
+        if (isFolder && !found.isFolder) {
+          found.isFolder = true
         }
+        parentId = found.id
       }
+      ancestors.push(parentId)
+    }
+  }
+
+  for (const page of pages) {
+    processPage(page)
+  }
+  return tree
+}
+
+async function deletePageTree(siteId) {
+  if (!isEmptySiteId(siteId)) {
+    await WIKI.models.knex.table('pageTree').where('siteId', '=', siteId).del()
+  } else {
+    await WIKI.models.knex.table('pageTree').del()
+  }
+}
+
+async function insertPageTree(tree) {
+  if (tree.length === 0) return
+  const dbType = WIKI.config.db.type
+  let chunkSize = 100
+  if (dbType === 'postgres') chunkSize = 500
+  else if (dbType === 'sqlite') chunkSize = 60
+  for (const chunk of _.chunk(tree, chunkSize)) {
+    await WIKI.models.knex.table('pageTree').insert(chunk)
+  }
+}
+
+module.exports = async (siteId) => {
+  WIKI.logger.info(`Rebuilding page tree...`)
+  await WIKI.configSvc.loadFromDb()
+  await WIKI.configSvc.applyFlags()
+  try {
+    let defaultSiteId
+    const noSiteSelected = isEmptySiteId(siteId)
+    if (noSiteSelected) {
+      defaultSiteId = await getDefaultSiteIdIfNeeded(siteId)
+      WIKI.logger.info(`Rebuilding page tree for all sites`)
+    } else {
+      WIKI.logger.info(`Rebuilding page tree for siteId: ${typeof siteId === 'object' ? JSON.stringify(siteId) : siteId}`)
     }
 
-    await WIKI.models.knex.destroy()
-
+    const pages = await WIKI.models.pages
+      .query()
+      .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS', 'siteId')
+      .where(builder => {
+        if (!noSiteSelected) {
+          builder.where('siteId', '=', siteId)
+        }
+      })
+      .orderBy(['localeCode', 'path'])
+    const tree = buildPageTree(pages, defaultSiteId)
+    await deletePageTree(siteId)
+    await insertPageTree(tree)
     WIKI.logger.info(`Rebuilding page tree: [ COMPLETED ]`)
   } catch (err) {
     WIKI.logger.error(`Rebuilding page tree: [ FAILED ]`)
     WIKI.logger.error(err.message)
-    // exit process with error code
     throw err
   }
 }

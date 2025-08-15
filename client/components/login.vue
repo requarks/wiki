@@ -83,13 +83,6 @@
               ) {{ $t('auth:actions.login') }}
             .text-center.mt-5
               v-btn.text-none(
-                text
-                rounded
-                color='grey darken-3'
-                @click.stop.prevent='forgotPassword'
-                href='#forgot'
-                ): .caption {{ $t('auth:forgotPasswordLink') }}
-              v-btn.text-none(
                 v-if='selectedStrategyKey === `local` && selectedStrategy.selfRegistration'
                 color='indigo darken-2'
                 text
@@ -663,7 +656,6 @@ export default {
     strategies: {
       query: gql`
         {
-          authentication {
             activeStrategies(enabledOnly: true) {
               key
               strategy {
@@ -679,9 +671,8 @@ export default {
               selfRegistration
             }
           }
-        }
       `,
-      update: (data) => _.sortBy(data.authentication.activeStrategies, ['order']),
+      update: (data) => _.sortBy(data.activeStrategies, ['order']),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'login-strategies-refresh')
       }

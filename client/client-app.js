@@ -3,13 +3,12 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
-import { ApolloClient } from 'apollo-client'
-import { BatchHttpLink } from 'apollo-link-batch-http'
-import { ApolloLink, split } from 'apollo-link'
-import { WebSocketLink } from 'apollo-link-ws'
-import { ErrorLink } from 'apollo-link-error'
-import { InMemoryCache } from 'apollo-cache-inmemory'
-import { getMainDefinition } from 'apollo-utilities'
+import { ApolloClient, InMemoryCache, ApolloLink, split } from '@apollo/client/core'
+import { BatchHttpLink } from '@apollo/client/link/batch-http'
+import { createClient } from 'graphql-ws'
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
+import { onError } from '@apollo/client/link/error'
+import { getMainDefinition } from '@apollo/client/utilities'
 import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify/lib'
 import Velocity from 'velocity-animate'
@@ -19,6 +18,7 @@ import moment from 'moment-timezone'
 import VueMoment from 'vue-moment'
 import store from './store'
 import Cookies from 'js-cookie'
+import FloatingVue from 'floating-vue'
 
 // ====================================
 // Load Modules
@@ -50,10 +50,10 @@ store.commit('user/REFRESH_AUTH')
 // ====================================
 
 const graphQLEndpoint = window.location.protocol + '//' + window.location.host + '/graphql'
-const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'ws:') + '//' + window.location.host + '/graphql-subscriptions'
+const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'ws:') + '//' + window.location.host + '/graphql'
 
 const graphQLLink = ApolloLink.from([
-  new ErrorLink(({ graphQLErrors, networkError }) => {
+  onError(({ graphQLErrors, networkError }) => {
     if (graphQLErrors) {
       let isAuthError = false
       graphQLErrors.map(({ message, locations, path }) => {
@@ -110,20 +110,40 @@ const graphQLLink = ApolloLink.from([
   })
 ])
 
-const graphQLWSLink = new WebSocketLink({
-  uri: graphQLWSEndpoint,
-  options: {
-    reconnect: true,
-    lazy: true
+const wsClient = createClient({
+  url: graphQLWSEndpoint,
+  connectionParams: () => {
+    const jwtToken = Cookies.get('jwt')
+    return jwtToken ? { Authorization: `Bearer ${jwtToken}` } : {}
   }
 })
 
+const graphQLWSLink = new GraphQLWsLink(wsClient)
+const cache = new InMemoryCache({
+  typePolicies: {
+    Query: {
+      fields: {
+        history: {
+          keyArgs: ['id'],
+          merge(existing = {}, incoming, { args }) {
+            const existingTrail = existing.trail || []
+            const incomingTrail = incoming.trail || []
+            const trail = (args && args.offsetPage === 0) ?
+              incomingTrail :
+              existingTrail.concat(incomingTrail)
+            return { ...incoming, trail }
+          }
+        }
+      }
+    }
+  }
+})
 window.graphQL = new ApolloClient({
   link: split(({ query }) => {
     const { kind, operation } = getMainDefinition(query)
     return kind === 'OperationDefinition' && operation === 'subscription'
   }, graphQLWSLink, graphQLLink),
-  cache: new InMemoryCache(),
+  cache: cache,
   connectToDevTools: (process.env.node_env === 'development')
 })
 
@@ -141,6 +161,7 @@ Vue.use(helpers)
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
 Vue.use(Vuescroll)
+Vue.use(FloatingVue)
 
 Vue.prototype.Velocity = Velocity
 
@@ -148,30 +169,30 @@ Vue.prototype.Velocity = Velocity
 // Register Vue Components
 // ====================================
 
-Vue.component('admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
-Vue.component('comments', () => import(/* webpackChunkName: "comments" */ './components/comments.vue'))
-Vue.component('editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
-Vue.component('history', () => import(/* webpackChunkName: "history" */ './components/history.vue'))
-Vue.component('loader', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/loader.vue'))
-Vue.component('login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
-Vue.component('nav-header', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
-Vue.component('new-page', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
-Vue.component('notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
-Vue.component('not-found', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
-Vue.component('page-selector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
-Vue.component('page-source', () => import(/* webpackChunkName: "source" */ './components/source.vue'))
-Vue.component('profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
-Vue.component('register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))
-Vue.component('search-results', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/search-results.vue'))
-Vue.component('social-sharing', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/social-sharing.vue'))
-Vue.component('tags', () => import(/* webpackChunkName: "tags" */ './components/tags.vue'))
-Vue.component('unauthorized', () => import(/* webpackChunkName: "unauthorized" */ './components/unauthorized.vue'))
-Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
-Vue.component('v-card-info', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-info.vue'))
-Vue.component('welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
+Vue.component('Admin', () => import(/* webpackChunkName: "admin" */ './components/admin.vue'))
+Vue.component('Comments', () => import(/* webpackChunkName: "comments" */ './components/comments.vue'))
+Vue.component('Editor', () => import(/* webpackPrefetch: -100, webpackChunkName: "editor" */ './components/editor.vue'))
+Vue.component('History', () => import(/* webpackChunkName: "history" */ './components/history.vue'))
+Vue.component('Loader', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/loader.vue'))
+Vue.component('Login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
+Vue.component('NavHeader', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
+Vue.component('NewPage', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
+Vue.component('Notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
+Vue.component('NotFound', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
+Vue.component('PageSelector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
+Vue.component('PageSource', () => import(/* webpackChunkName: "source" */ './components/source.vue'))
+Vue.component('Profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
+Vue.component('Register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))
+Vue.component('SearchResults', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/search-results.vue'))
+Vue.component('SocialSharing', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/social-sharing.vue'))
+Vue.component('Tags', () => import(/* webpackChunkName: "tags" */ './components/tags.vue'))
+Vue.component('Unauthorized', () => import(/* webpackChunkName: "unauthorized" */ './components/unauthorized.vue'))
+Vue.component('VCardChin', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-chin.vue'))
+Vue.component('VCardInfo', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-info.vue'))
+Vue.component('Welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
 
-Vue.component('nav-footer', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
-Vue.component('page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
+Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
+Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
   // ====================================
@@ -210,7 +231,7 @@ let bootstrap = () => {
         dark: darkModeEnabled
       }
     }),
-    mounted () {
+    mounted() {
       this.$moment.locale(siteConfig.lang)
       if ((store.get('user/dateFormat') || '').length > 0) {
         this.$moment.updateLocale(this.$moment.locale(), {

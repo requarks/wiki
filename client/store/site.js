@@ -15,8 +15,7 @@ const state = {
   searchIsFocused: false,
   searchIsLoading: false,
   searchRestrictLocale: false,
-  searchRestrictPath: false,
-  printView: false
+  searchRestrictPath: false
 }
 
 export default {

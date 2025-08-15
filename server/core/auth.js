@@ -82,7 +82,7 @@ module.exports = {
           const strategy = require(`../modules/authentication/${stg.strategyKey}/authentication.js`)
 
           stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
-          stg.config.key = stg.key;
+          stg.config.key = stg.key
           strategy.init(passport, stg.config)
           strategy.config = stg.config
 
@@ -147,6 +147,7 @@ module.exports = {
           const newToken = await WIKI.models.users.refreshToken(jwtPayload.id)
           user = newToken.user
           user.permissions = user.getGlobalPermissions()
+          user.sitesWithWriteAccess = user.getSitesWithWriteAccess()
           user.groups = user.getGroups()
           req.user = user
 
@@ -210,6 +211,40 @@ module.exports = {
     })(req, res, next)
   },
 
+  isSuperAdmin: (user) => {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    if (_.includes(userPermissions, 'manage:system')) {
+      return true
+    }
+    return false
+  },
+
+  isSiteAdmin: (user) => {
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    if (_.includes(userPermissions, 'manage:sites')) {
+      return true
+    }
+    return false
+  },
+
+  hasSitePermission: (user, siteId, permission) => {
+    for (const grp of user.groups) {
+      const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
+      const rules = _.get(WIKI.auth.groups, `${grpId}.rules`, [])
+      for (const rule of rules) {
+        if (rule.deny === false &&
+            rule.sites &&
+            rule.sites.length > 0) {
+          if (rule.sites.includes(siteId) && rule.roles.includes(permission)) {
+            return true
+          }
+        }
+      }
+    }
+
+    return false
+  },
+
   /**
    * Check if user has access to resource
    *
@@ -217,12 +252,29 @@ module.exports = {
    * @param {Array<String>} permissions
    * @param {String|Boolean} path
    */
-  checkAccess(user, permissions = [], page = false) {
+  checkAccess(user, permissions = [], page = false, ignoreRulePath = false) {
     const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
 
     // System Admin
-    if (_.includes(userPermissions, 'manage:system')) {
+    if (WIKI.auth.isSuperAdmin(user)) {
       return true
+    }
+
+    // If the only requested permission is manage:system and not super admin, deny
+    if (
+      permissions?.length === 1 &&
+      permissions[0] === 'manage:system'
+    ) {
+      return false
+    }
+
+    // Site Admin
+    if (WIKI.auth.isSiteAdmin(user)) {
+      if (page && page.siteId) {
+        if (WIKI.auth.hasSitePermission(user, page.siteId, 'manage:sites')) {
+          return true
+        }
+      }
     }
 
     // Check Global Permissions
@@ -244,11 +296,25 @@ module.exports = {
       }
       user.groups.forEach(grp => {
         const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
-        _.get(WIKI.auth.groups, `${grpId}.pageRules`, []).forEach(rule => {
+        _.get(WIKI.auth.groups, `${grpId}.rules`, []).forEach(rule => {
           if (rule.locales && rule.locales.length > 0) {
             if (!rule.locales.includes(page.locale)) { return }
           }
-          if (_.intersection(rule.roles, permissions).length > 0) {
+
+          if (!rule.sites || rule.sites.length === 0) {
+            return
+          }
+          if (!rule.sites.includes(page.siteId)) {
+            return
+          }
+
+          if (_.intersection(rule.roles, ['manage:sites']).length > 0 || ignoreRulePath) {
+            checkState = {
+              deny: rule.deny,
+              match: rule.sites.includes(page.siteId),
+              specificity: ''
+            }
+          } else if (_.intersection(rule.roles, permissions).length > 0) {
             switch (rule.match) {
               case 'START':
                 if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
@@ -454,7 +520,7 @@ module.exports = {
       comments: {
         read: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['read:comments'], page) : false,
         write: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['write:comments'], page) : false,
-        manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:comments'], page) : false
+        manage: WIKI.config.features.featurePageComments ? WIKI.auth.checkAccess(req.user, ['manage:own_comments'], page) : false
       },
       history: {
         read: WIKI.auth.checkAccess(req.user, ['read:history'], page)
@@ -467,8 +533,11 @@ module.exports = {
         write: WIKI.auth.checkAccess(req.user, ['write:pages'], page),
         manage: WIKI.auth.checkAccess(req.user, ['manage:pages'], page),
         delete: WIKI.auth.checkAccess(req.user, ['delete:pages'], page),
-        script: WIKI.auth.checkAccess(req.user, ['write:scripts'], page),
+        script: false, // This role is squashed globally
         style: WIKI.auth.checkAccess(req.user, ['write:styles'], page)
+      },
+      sites: {
+        manage: WIKI.auth.checkAccess(req.user, ['manage:sites'], page)
       },
       system: {
         manage: WIKI.auth.checkAccess(req.user, ['manage:system'], page)

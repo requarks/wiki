@@ -170,25 +170,23 @@ export default {
         const pagesRaw = await this.$apollo.query({
           query: gql`
             {
-              pages {
-                list {
+                listPages {
                   id
                   path
                   locale
                 }
-              }
             }
           `,
           fetchPolicy: 'network-only'
         })
-        if (_.get(pagesRaw, 'data.pages.list', []).length < 1) {
+        if (_.get(pagesRaw, 'data.listPages', []).length < 1) {
           throw new Error('Could not find any page to render!')
         }
 
         this.renderIndex = 0
-        this.renderTotal = pagesRaw.data.pages.list.length
+        this.renderTotal = pagesRaw.data.listPages.length
         let failed = 0
-        for (const page of pagesRaw.data.pages.list) {
+        for (const page of pagesRaw.data.listPages) {
           this.renderCurrentPath = `${page.locale}/${page.path}`
           this.renderIndex++
           this.renderProgress = Math.round(this.renderIndex / this.renderTotal * 100)

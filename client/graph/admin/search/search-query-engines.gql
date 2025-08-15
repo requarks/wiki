@@ -1,17 +1,15 @@
 query {
-  search {
-    searchEngines(orderBy: "title") {
-      isEnabled
+  searchEngines(orderBy: "title") {
+    isEnabled
+    key
+    title
+    description
+    logo
+    website
+    isAvailable
+    config {
       key
-      title
-      description
-      logo
-      website
-      isAvailable
-      config {
-        key
-        value
-      }
+      value
     }
   }
 }

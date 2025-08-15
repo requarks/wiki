@@ -6,7 +6,10 @@
         .headline.animated.fadeInUp {{ $t('welcome.title') }}
         .subtitle-1.mt-3.animated.fadeInUp.wait-p1s {{ $t('welcome.subtitle') }}
         div
-          v-btn.mt-5.mx-3.animated.fadeInUp.wait-p2s(color='primary', :href='`/e/` + locale + `/home`', x-large)
+          v-btn.mt-5.mx-3.animated.fadeInUp.wait-p2s(
+            color='primary',
+            :href='`/e/` + sitePath + `/` + locale + `/home`', x-large
+          )
             v-icon(left) mdi-plus
             span {{ $t('welcome.createhome') }}
           v-btn.mt-5.mx-3.animated.fadeInUp.wait-p3s(color='primary', href='/a', x-large)
@@ -22,6 +25,18 @@ export default {
     locale: {
       type: String,
       default: 'en'
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
     }
   },
   data() {

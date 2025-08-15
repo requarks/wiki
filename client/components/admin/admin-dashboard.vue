@@ -11,6 +11,17 @@
         v-card.primary.dashboard-card.animated.fadeInUp(dark)
           v-card-text
             v-icon.dashboard-icon mdi-file-document-outline
+            .overline {{$t('sites')}}
+            animated-number.display-1(
+              :value='sitesTotal'
+              :duration='2000'
+              :formatValue='round'
+              easing='easeOutQuint'
+              )
+      v-flex(xs12 md6 lg4 xl3 d-flex)
+        v-card.primary.dashboard-card.animated.fadeInUp(dark)
+          v-card-text
+            v-icon.dashboard-icon mdi-file-document-outline
             .overline {{$t('admin:dashboard.pages')}}
             animated-number.display-1(
               :value='info.pagesTotal'
@@ -18,7 +29,7 @@
               :formatValue='round'
               easing='easeOutQuint'
               )
-      v-flex(xs12 md6 lg4 xl3 d-flex)
+      v-flex(xs12 md6 lg4 xl3 d-flex, v-if='hasPermission(`manage:system`)')
         v-card.blue.darken-3.dashboard-card.animated.fadeInUp.wait-p2s(dark)
           v-card-text
             v-icon.dashboard-icon mdi-account
@@ -73,25 +84,6 @@
                   v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
                   span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
                 td.text-right.caption(width='250') {{ props.item.updatedAt | moment('calendar') }}
-      v-flex(xs12, xl6)
-        v-card.radius-7.animated.fadeInUp.wait-p4s
-          v-toolbar(:color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`', dense, flat)
-            v-spacer
-            .overline {{$t('admin:dashboard.lastLogins')}}
-            v-spacer
-          v-data-table.pb-2(
-            :items='lastLogins'
-            :headers='lastLoginsHeaders'
-            :loading='lastLoginsLoading'
-            hide-default-footer
-            hide-default-header
-            )
-            template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='$router.push(`/users/` + props.item.id)')
-                td
-                  .body-2: strong {{ props.item.name }}
-                td.text-right.caption(width='250') {{ props.item.lastLoginAt | moment('calendar') }}
-
       v-flex(xs12)
         v-card.dashboard-contribute.animated.fadeInUp.wait-p4s
           v-card-text
@@ -109,6 +101,7 @@
 import _ from 'lodash'
 import AnimatedNumber from 'animated-number-vue'
 import { get } from 'vuex-pathify'
+import sitesCount from 'gql/admin/sites/sites-query-count.gql'
 import gql from 'graphql-tag'
 import semverLte from 'semver/functions/lte'
 
@@ -128,12 +121,7 @@ export default {
         { text: 'Path', value: 'path' },
         { text: 'Last Updated', value: 'updatedAt', width: 250 }
       ],
-      lastLogins: [],
-      lastLoginsLoading: false,
-      lastLoginsHeaders: [
-        { text: 'User', value: 'displayName' },
-        { text: 'Last Login', value: 'lastLoginAt', width: 250 }
-      ]
+      sitesTotal: 0
     }
   },
   computed: {
@@ -163,8 +151,7 @@ export default {
     recentPages: {
       query: gql`
         query {
-          pages {
-            list(limit: 10, orderBy: UPDATED, orderByDirection: DESC) {
+            listPages(limit: 10, orderBy: UPDATED, orderByDirection: DESC) {
               id
               locale
               path
@@ -177,32 +164,21 @@ export default {
               createdAt
               updatedAt
             }
-          }
         }
       `,
-      update: (data) => data.pages.list,
+      update: (data) => data.listPages,
       watchLoading (isLoading) {
         this.recentPagesLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-recentpages')
       }
     },
-    lastLogins: {
-      query: gql`
-        query {
-          users {
-            lastLogins {
-              id
-              name
-              lastLoginAt
-            }
-          }
-        }
-      `,
+    sitesTotal: {
+      query: sitesCount,
       fetchPolicy: 'network-only',
-      update: (data) => data.users.lastLogins,
-      watchLoading (isLoading) {
-        this.lastLoginsLoading = isLoading
-        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-lastlogins')
+      update: (data) => data?.siteCount?.count || 0,
+      watchLoading(isLoading) {
+        this.sitesTotalLoading = isLoading
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-dashboard-sitesTotal')
       }
     }
   }

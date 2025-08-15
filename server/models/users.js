@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken')
 const Model = require('objection').Model
 const validate = require('validate.js')
 const qr = require('qr-image')
+const { handleUserSiteInactivityAfterUnassign } = require('../graph/services/userSiteInactivityService')
+const userService = require('../graph/services/userService')
 
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
@@ -16,27 +18,29 @@ const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 module.exports = class User extends Model {
   static get tableName() { return 'users' }
 
-  static get jsonSchema () {
+  static get jsonSchema() {
     return {
       type: 'object',
       required: ['email'],
 
       properties: {
-        id: {type: 'integer'},
-        email: {type: 'string', format: 'email'},
-        name: {type: 'string', minLength: 1, maxLength: 255},
-        providerId: {type: 'string'},
-        password: {type: 'string'},
-        tfaIsActive: {type: 'boolean', default: false},
-        tfaSecret: {type: ['string', null]},
-        jobTitle: {type: 'string'},
-        location: {type: 'string'},
-        pictureUrl: {type: 'string'},
-        isSystem: {type: 'boolean'},
-        isActive: {type: 'boolean'},
-        isVerified: {type: 'boolean'},
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        id: { type: 'integer' },
+        email: { type: 'string', format: 'email' },
+        name: { type: 'string', minLength: 1, maxLength: 255 },
+        providerId: { type: 'string' },
+        password: { type: 'string' },
+        tfaIsActive: { type: 'boolean', default: false },
+        tfaSecret: { type: ['string', null] },
+        jobTitle: { type: 'string' },
+        location: { type: 'string' },
+        pictureUrl: { type: 'string' },
+        isSystem: { type: 'boolean' },
+        isActive: { type: 'boolean' },
+        isVerified: { type: 'boolean' },
+        isLocked: { type: 'boolean', default: false },
+        failedAttempts: { type: 'integer', default: 0 },
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' }
       }
     }
   }
@@ -78,6 +82,14 @@ module.exports = class User extends Model {
           from: 'users.localeCode',
           to: 'locales.code'
         }
+      },
+      userMentions: {
+        relation: Model.HasManyRelation,
+        modelClass: require('./userMentions'),
+        join: {
+          from: 'users.id',
+          to: 'userMentions.userId'
+        }
       }
     }
   }
@@ -96,6 +108,14 @@ module.exports = class User extends Model {
 
     this.createdAt = new Date().toISOString()
     this.updatedAt = new Date().toISOString()
+
+    if (this.failedAttempts === undefined) {
+      this.failedAttempts = 0
+    }
+
+    if (this.isLocked === undefined) {
+      this.isLocked = false
+    }
 
     await this.generateHash()
   }
@@ -152,6 +172,14 @@ module.exports = class User extends Model {
 
   getGlobalPermissions() {
     return _.uniq(_.flatten(_.map(this.groups, 'permissions')))
+  }
+
+  getAllRules() {
+    return _.flatten(_.flatten(_.map(this.groups, 'rules')))
+  }
+
+  getSitesWithWriteAccess() {
+    return _.uniq(_.flatten(this.getAllRules().filter(rule => rule.roles && rule.roles.includes('write:pages') && rule.deny === false).map(rule => rule.sites)))
   }
 
   getGroups() {
@@ -272,6 +300,8 @@ module.exports = class User extends Model {
         isVerified: true
       })
 
+      userService.sendWelcomeEmail(user)
+
       // Assign to group(s)
       if (provider.autoEnrollGroups.length > 0) {
         await user.$relatedQuery('groups').relate(provider.autoEnrollGroups)
@@ -290,7 +320,7 @@ module.exports = class User extends Model {
   /**
    * Login a user
    */
-  static async login (opts, context) {
+  static async login(opts, context) {
     if (_.has(WIKI.auth.strategies, opts.strategy)) {
       const selStrategy = _.get(WIKI.auth.strategies, opts.strategy)
       if (!selStrategy.isEnabled) {
@@ -324,7 +354,7 @@ module.exports = class User extends Model {
           } catch (err) {
             reject(err)
           }
-        })(context.req, context.res, () => {})
+        })(context.req, context.res, () => { })
       })
     } else {
       throw new WIKI.Error.AuthProviderInvalid()
@@ -334,9 +364,9 @@ module.exports = class User extends Model {
   /**
    * Perform post-login checks
    */
-  static async afterLoginChecks (user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
+  static async afterLoginChecks(user, context, { skipTFA, skipChangePwd } = { skipTFA: false, skipChangePwd: false }) {
     // Get redirect target
-    user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin')
+    user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'redirectOnLogin', 'rules')
     let redirect = '/'
     if (user.groups && user.groups.length > 0) {
       for (const grp of user.groups) {
@@ -418,7 +448,7 @@ module.exports = class User extends Model {
   static async refreshToken(user) {
     if (_.isSafeInteger(user)) {
       user = await WIKI.models.users.query().findById(user).withGraphFetched('groups').modifyGraph('groups', builder => {
-        builder.select('groups.id', 'permissions')
+        builder.select('groups.id', 'permissions', 'groups.rules')
       })
       if (!user) {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Not found.`)
@@ -429,12 +459,8 @@ module.exports = class User extends Model {
         throw new WIKI.Error.AuthAccountBanned()
       }
     } else if (_.isNil(user.groups)) {
-      user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
+      user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions', 'groups.rules')
     }
-
-    // Update Last Login Date
-    // -> Bypass Objection.js to avoid updating the updatedAt field
-    await WIKI.models.knex('users').where('id', user.id).update({ lastLoginAt: new Date().toISOString() })
 
     return {
       token: jwt.sign({
@@ -448,6 +474,7 @@ module.exports = class User extends Model {
         ap: user.appearance,
         // defaultEditor: user.defaultEditor,
         permissions: user.getGlobalPermissions(),
+        sitesWithWriteAccess: user.getSitesWithWriteAccess(),
         groups: user.getGroups()
       }, {
         key: WIKI.config.certs.private,
@@ -465,7 +492,7 @@ module.exports = class User extends Model {
   /**
    * Verify a TFA login
    */
-  static async loginTFA ({ securityCode, continuationToken, setup }, context) {
+  static async loginTFA({ securityCode, continuationToken, setup }, context) {
     if (securityCode.length === 6 && continuationToken.length > 1) {
       const user = await WIKI.models.userKeys.validateToken({
         kind: setup ? 'tfaSetup' : 'tfa',
@@ -489,7 +516,7 @@ module.exports = class User extends Model {
   /**
    * Change Password from a Mandatory Password Change after Login
    */
-  static async loginChangePassword ({ continuationToken, newPassword }, context) {
+  static async loginChangePassword({ continuationToken, newPassword }, context) {
     if (!newPassword || newPassword.length < 6) {
       throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
     }
@@ -502,7 +529,7 @@ module.exports = class User extends Model {
       if (!usr.isActive) {
         throw new WIKI.Error.AuthAccountBanned()
       }
-      
+
       await WIKI.models.users.query().patch({
         password: newPassword,
         mustChangePwd: false
@@ -523,7 +550,7 @@ module.exports = class User extends Model {
   /**
    * Send a password reset request
    */
-  static async loginForgotPassword ({ email }, context) {
+  static async loginForgotPassword({ email }, context) {
     const usr = await WIKI.models.users.query().where({
       email,
       providerKey: 'local'
@@ -560,7 +587,7 @@ module.exports = class User extends Model {
    *
    * @param {Object} param0 User Fields
    */
-  static async createNewUser ({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
+  static async createNewUser({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
     // Input sanitization
     email = _.toLower(email)
 
@@ -653,20 +680,7 @@ module.exports = class User extends Model {
       }
 
       if (sendWelcomeEmail) {
-        // Send welcome email
-        await WIKI.mail.send({
-          template: 'accountWelcome',
-          to: email,
-          subject: `Welcome to the wiki ${WIKI.config.title}`,
-          data: {
-            preheadertext: `You've been invited to the wiki ${WIKI.config.title}`,
-            title: `You've been invited to the wiki ${WIKI.config.title}`,
-            content: `Click the button below to access the wiki.`,
-            buttonLink: `${WIKI.config.host}/login`,
-            buttonText: 'Login'
-          },
-          text: `You've been invited to the wiki ${WIKI.config.title}: ${WIKI.config.host}/login`
-        })
+        userService.sendWelcomeEmail(newUsr)
       }
     } else {
       throw new WIKI.Error.AuthAccountAlreadyExists()
@@ -678,7 +692,7 @@ module.exports = class User extends Model {
    *
    * @param {Object} param0 User ID and fields to update
    */
-  static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
+  static async updateUser({ id, email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
       let usrData = {}
@@ -713,6 +727,11 @@ module.exports = class User extends Model {
         const remUsrGroups = _.difference(usrGroups, groups)
         for (const grp of remUsrGroups) {
           await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
+          // Handle user inactivity after unassign
+          const groupObj = usrGroupsRaw.find(g => g.id === grp)
+          if (groupObj) {
+            await handleUserSiteInactivityAfterUnassign(groupObj, usr)
+          }
         }
       }
       if (!_.isEmpty(location) && location !== usr.location) {
@@ -741,7 +760,7 @@ module.exports = class User extends Model {
    *
    * @param {*} id User ID
    */
-  static async deleteUser (id, replaceId) {
+  static async deleteUser(id, replaceId) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
       await WIKI.models.assets.query().patch({ authorId: replaceId }).where('authorId', id)
@@ -763,7 +782,7 @@ module.exports = class User extends Model {
    * @param {Object} param0 User fields
    * @param {Object} context GraphQL Context
    */
-  static async register ({ email, password, name, verify = false, bypassChecks = false }, context) {
+  static async register({ email, password, name, verify = false, bypassChecks = false }, context) {
     const localStrg = await WIKI.models.authentication.getStrategy('local')
     // Check if self-registration is enabled
     if (localStrg.selfRegistration || bypassChecks) {
@@ -867,7 +886,7 @@ module.exports = class User extends Model {
   /**
    * Logout the current user
    */
-  static async logout (context) {
+  static async logout(context) {
     if (!context.req.user || context.req.user.id === 2) {
       return '/'
     }
@@ -876,7 +895,7 @@ module.exports = class User extends Model {
     return provider.logout ? provider.logout(provider.config, context) : '/'
   }
 
-  static async getGuestUser () {
+  static async getGuestUser() {
     const user = await WIKI.models.users.query().findById(2).withGraphJoined('groups').modifyGraph('groups', builder => {
       builder.select('groups.id', 'permissions')
     })
@@ -888,7 +907,7 @@ module.exports = class User extends Model {
     return user
   }
 
-  static async getRootUser () {
+  static async getRootUser() {
     let user = await WIKI.models.users.query().findById(1)
     if (!user) {
       WIKI.logger.error('CRITICAL ERROR: Root Administrator user is missing!')
@@ -901,7 +920,7 @@ module.exports = class User extends Model {
   /**
    * Add / Update User Avatar Data
    */
-  static async updateUserAvatarData (userId, data) {
+  static async updateUserAvatarData(userId, data) {
     try {
       WIKI.logger.debug(`Updating user ${userId} avatar data...`)
       if (data.length > 1024 * 1024) {
@@ -925,7 +944,7 @@ module.exports = class User extends Model {
     }
   }
 
-  static async getUserAvatarData (userId) {
+  static async getUserAvatarData(userId) {
     try {
       const usrData = await WIKI.models.knex('userAvatars').where('id', userId).first()
       if (usrData) {
@@ -936,5 +955,33 @@ module.exports = class User extends Model {
     } catch (err) {
       WIKI.logger.warn(`Failed to process binary thumbnail data for user ${userId}`)
     }
+  }
+  /**
+   * Increment failed attempts and lock user if limit is reached
+   */
+  static async incrementFailedAttempts(email) {
+    const user = await this.query().findOne({ email, providerKey: 'local' })
+    if (!user) {
+      return false
+    }
+
+    const updatedAttempts = user.failedAttempts + 1
+    const isLocked = updatedAttempts >= 3
+
+    await this.query().patch({
+      failedAttempts: updatedAttempts,
+      isLocked
+    }).where({ id: user.id })
+
+    return isLocked
+  }
+
+  /**
+   * Reset failed attempts on successful login
+   */
+  static async resetFailedAttempts(userId) {
+    await this.query().patch({
+      failedAttempts: 0
+    }).where({ id: userId })
   }
 }

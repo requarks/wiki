@@ -25,7 +25,7 @@
               v-list-item-content
                 v-list-item-title {{$t('profile:displayName')}}
                 v-list-item-subtitle {{ user.name }}
-              v-list-item-action
+              v-list-item-action(v-if='hasPermission(`manage:system`)')
                 v-menu(
                   v-model='editPop.name'
                   :close-on-content-click='false'
@@ -333,8 +333,6 @@
             .body-2: strong {{ user.createdAt | moment('LLLL') }}
             .caption.grey--text.mt-3 {{$t('profile:activity.lastUpdatedOn')}}
             .body-2: strong {{ user.updatedAt | moment('LLLL') }}
-            .caption.grey--text.mt-3 {{$t('profile:activity.lastLoginOn')}}
-            .body-2: strong {{ user.lastLoginAt | moment('LLLL') }}
             v-divider.mt-3
             .caption.grey--text.mt-3 {{$t('profile:activity.pagesCreated')}}
             .body-2: strong {{ user.pagesTotal }}
@@ -373,7 +371,6 @@ export default {
         appearance: '',
         createdAt: '1970-01-01',
         updatedAt: '1970-01-01',
-        lastLoginAt: '1970-01-01',
         groups: []
       },
       currentPass: '',
@@ -642,6 +639,7 @@ export default {
     }
   },
   computed: {
+    permissions: get('user/permissions'),
     dateFormats () {
       return [
         { text: this.$t('profile:localeDefault'), value: '' },
@@ -710,6 +708,15 @@ export default {
     }
   },
   methods: {
+    hasPermission(prm) {
+      if (_.isArray(prm)) {
+        return _.some(prm, p => {
+          return _.includes(this.permissions, p)
+        })
+      } else {
+        return _.includes(this.permissions, prm)
+      }
+    },
     /**
      * Focus an input after delay
      */
@@ -885,7 +892,6 @@ export default {
     user: {
       query: gql`
         {
-          users {
             profile {
               id
               name
@@ -901,15 +907,13 @@ export default {
               appearance
               createdAt
               updatedAt
-              lastLoginAt
               groups
               pagesTotal
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.users.profile),
+      update: (data) => _.cloneDeep(data.profile),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'profile-refresh')
       }

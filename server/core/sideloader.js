@@ -31,8 +31,8 @@ module.exports = {
       let importedLocales = 0
 
       const locales = await fs.readJson(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'sideload/locales.json'))
-      if (locales && _.has(locales, 'data.localization.locales')) {
-        for (const locale of locales.data.localization.locales) {
+      if (locales && _.has(locales, 'data.locales')) {
+        for (const locale of locales.data.locales) {
           try {
             const localeData = await fs.readJson(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `sideload/${locale.code}.json`))
             if (localeData) {

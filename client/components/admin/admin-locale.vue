@@ -276,26 +276,26 @@ export default {
     locales: {
       query: localesQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.localization.locales.map(lc => ({ ...lc, isDownloading: false })),
+      update: (data) => data.locales.map(lc => ({ ...lc, isDownloading: false })),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-locale-refresh')
       }
     },
     selectedLocale: {
       query: localesQuery,
-      update: (data) => data.localization.config.locale
+      update: (data) => data.localizationConfig.locale
     },
     autoUpdate: {
       query: localesQuery,
-      update: (data) => data.localization.config.autoUpdate
+      update: (data) => data.localizationConfig.autoUpdate
     },
     namespacing: {
       query: localesQuery,
-      update: (data) => data.localization.config.namespacing
+      update: (data) => data.localizationConfig.namespacing
     },
     namespaces: {
       query: localesQuery,
-      update: (data) => data.localization.config.namespaces
+      update: (data) => data.localizationConfig.namespaces
     }
   }
 }

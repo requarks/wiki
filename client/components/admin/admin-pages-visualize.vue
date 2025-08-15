@@ -366,13 +366,11 @@ export default {
     pages: {
       query: gql`
         query ($locale: String!) {
-          pages {
             links(locale: $locale) {
               id
               path
               title
               links
-            }
           }
         }
       `,
@@ -382,7 +380,7 @@ export default {
         }
       },
       fetchPolicy: 'network-only',
-      update: (data) => data.pages.links,
+      update: (data) => data.links,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
       }

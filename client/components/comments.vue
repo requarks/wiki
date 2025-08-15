@@ -1,19 +1,23 @@
 <template lang="pug">
   div(v-intersect.once='onIntersect')
-    v-textarea#discussion-new(
-      outlined
-      flat
-      :placeholder='$t(`common:comments.newPlaceholder`)'
-      auto-grow
-      dense
-      rows='3'
-      hide-details
-      v-model='newcomment'
-      color='blue-grey darken-2'
-      :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
-      v-if='permissions.write'
-      :aria-label='$t(`common:comments.fieldContent`)'
-    )
+    mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)" , @apply="handleApply")
+      v-textarea#discussion-new(
+        ref="newCommentTextarea"
+        outlined
+        flat
+        :placeholder='$t(`common:comments.newPlaceholder`)'
+        auto-grow
+        dense
+        rows='3'
+        hide-details
+        v-model='newcomment'
+        color='blue-grey darken-2'
+        :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+        v-if='permissions.write'
+        :aria-label='$t(`common:comments.fieldContent`)'
+      )
+      template( v-if='loading' #no-result) {{ 'Loading...'}}
+
     v-row.mt-2(dense, v-if='!isAuthenticated && permissions.write')
       v-col(cols='12', lg='6')
         v-text-field(
@@ -82,25 +86,27 @@
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
           v-card-text
-            .comments-post-actions(v-if='permissions.manage && !isBusy && commentEditId === 0')
+            .comments-post-actions(v-if='canManageComment(cm) && !isBusy && commentEditId === 0')
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
             .comments-post-name.caption: strong {{cm.authorName}}
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
-              v-textarea(
-                outlined
-                flat
-                auto-grow
-                dense
-                rows='3'
-                hide-details
-                v-model='commentEditContent'
-                color='blue-grey darken-2'
-                :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
-              )
-              .d-flex.align-center.pt-3
+              mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)", @apply="handleApply")
+                v-textarea(
+                  ref="editCommentTextarea"
+                  outlined
+                  flat
+                  auto-grow
+                  dense
+                  rows='3'
+                  hide-details
+                  v-model='commentEditContent'
+                  color='blue-grey darken-2'
+                  :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+                )
+                .d-flex.align-center.pt-3
                 v-spacer
                 v-btn.mr-3(
                   dark
@@ -138,9 +144,15 @@ import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
 import validate from 'validate.js'
 import _ from 'lodash'
+import { Mentionable } from 'vue-mention'
+import 'floating-vue/dist/style.css'
+import autoCompleteEmailsQuery from '../graph/editor/users-query-auto-complete.gql'
 
 export default {
-  data () {
+  components: {
+    Mentionable
+  },
+  data() {
     return {
       newcomment: '',
       isLoading: true,
@@ -153,56 +165,110 @@ export default {
       commentEditContent: null,
       deleteCommentDialogShown: false,
       isBusy: false,
+      mentions: [],
+      users: [],
       scrollOpts: {
         duration: 1500,
         offset: 0,
         easing: 'easeInOutCubic'
-      }
+      },
+      // @a @b @c ... @A @B @C ...
+      mentionableKeys: [
+        ...Array.from({ length: 26 }, (_, i) => `@${String.fromCharCode(97 + i)}`), // lowercase letters
+        ...Array.from({ length: 26 }, (_, i) => `@${String.fromCharCode(65 + i)}`) // uppercase letters
+      ],
+      loading: false
     }
   },
   computed: {
     pageId: get('page/id'),
     permissions: get('page/effectivePermissions@comments'),
+    hasSuperAdminPermission: get('page/effectivePermissions@system.manage'),
     isAuthenticated: get('user/authenticated'),
-    userDisplayName: get('user/name')
+    userDisplayName: get('user/name'),
+    userId: get('user/id'),
+    siteId: get('page/siteId'),
+    sitePath: get('page/sitePath')
   },
   methods: {
-    onIntersect (entries, observer, isIntersecting) {
+    async loadUsers(searchText) {
+      this.fetchUsers(searchText.slice(1))
+    },
+    handleApply(item) {
+      const textarea = this.commentEditId === 0 ?
+        this.$refs.newCommentTextarea.$el.querySelector('textarea') :
+        this.$refs.editCommentTextarea[0].$el.querySelector('textarea')
+
+      let commentContent = this.commentEditId === 0 ? this.newcomment : this.commentEditContent
+
+      if (textarea) {
+        const mentionText = `@${item.email.slice(0, 1)}${item.email}`
+        const lowerCaseCommentContent = commentContent.toLowerCase()
+        const lowerCaseMentionText = mentionText.toLowerCase()
+        const mentionPos = lowerCaseCommentContent.indexOf(lowerCaseMentionText)
+
+        if (mentionPos === -1) {
+          console.error('Mention text not found in comment content')
+          return
+        }
+        // If the mention text is found, replace it with the new mention
+        const beforeMention = commentContent.slice(0, mentionPos)
+        let afterMention = commentContent.slice(mentionPos + mentionText.length)
+        // Add a space if the character immediately following the mention is not a space
+        if (afterMention.length > 0 && afterMention[0] !== ' ') {
+          afterMention = ' ' + afterMention
+        }
+        commentContent = beforeMention + `@${item.email}` + afterMention
+        if (this.commentEditId === 0) {
+          this.newcomment = commentContent
+        } else {
+          this.commentEditContent = commentContent
+        }
+
+        this.mentions.push(item.email)
+        this.$nextTick(() => {
+          textarea.selectionStart = textarea.selectionEnd = commentContent.length // Adjust cursor position
+        })
+      }
+    },
+    onIntersect(entries, observer, isIntersecting) {
       if (isIntersecting) {
         this.fetch(true)
       }
     },
-    async fetch (silent = false) {
+    async fetch(silent = false) {
       this.isLoading = true
       try {
         const results = await this.$apollo.query({
           query: gql`
-            query ($locale: String!, $path: String!) {
-              comments {
-                list(locale: $locale, path: $path) {
+            query ($locale: String!, $path: String!, $siteId: String!) {
+                listComments(locale: $locale, path: $path, siteId: $siteId) {
                   id
                   render
                   authorName
+                  authorId
                   createdAt
                   updatedAt
                 }
               }
-            }
           `,
           variables: {
             locale: this.$store.get('page/locale'),
-            path: this.$store.get('page/path')
+            path: this.$store.get('page/path'),
+            siteId: this.siteId
           },
           fetchPolicy: 'network-only'
         })
-        this.comments = _.get(results, 'data.comments.list', []).map(c => {
+        this.comments = _.get(results, 'data.listComments', []).map(c => {
           const nameParts = c.authorName.toUpperCase().split(' ')
           let initials = _.head(nameParts).charAt(0)
           if (nameParts.length > 1) {
             initials += _.last(nameParts).charAt(0)
           }
-          c.initials = initials
-          return c
+          return {
+            ...c,
+            initials
+          }
         })
       } catch (err) {
         console.warn(err)
@@ -220,7 +286,7 @@ export default {
     /**
      * Post New Comment
      */
-    async postComment () {
+    async postComment() {
       let rules = {
         comment: {
           presence: {
@@ -272,6 +338,7 @@ export default {
               $content: String!
               $guestName: String
               $guestEmail: String
+              $mentions: [String!]
             ) {
               comments {
                 create (
@@ -280,6 +347,7 @@ export default {
                   content: $content
                   guestName: $guestName
                   guestEmail: $guestEmail
+                  mentions: $mentions
                 ) {
                   responseResult {
                     succeeded
@@ -297,11 +365,13 @@ export default {
             replyTo: 0,
             content: this.newcomment,
             guestName: this.guestName,
-            guestEmail: this.guestEmail
+            guestEmail: this.guestEmail,
+            mentions: this.mentions
           }
         })
 
         if (_.get(resp, 'data.comments.create.responseResult.succeeded', false)) {
+          this.mentions = []
           this.$store.commit('showNotification', {
             style: 'success',
             message: this.$t('common:comments.postSuccess'),
@@ -327,18 +397,16 @@ export default {
     /**
      * Show Comment Editing Form
      */
-    async editComment (cm) {
+    async editComment(cm) {
       this.$store.commit(`loadingStart`, 'comments-edit')
       this.isBusy = true
       try {
         const results = await this.$apollo.query({
           query: gql`
             query ($id: Int!) {
-              comments {
-                single(id: $id) {
+                commentById(id: $id) {
                   content
                 }
-              }
             }
           `,
           variables: {
@@ -346,7 +414,7 @@ export default {
           },
           fetchPolicy: 'network-only'
         })
-        this.commentEditContent = _.get(results, 'data.comments.single.content', null)
+        this.commentEditContent = _.get(results, 'data.commentById.content', null)
         if (this.commentEditContent === null) {
           throw new Error('Failed to load comment content.')
         }
@@ -365,30 +433,35 @@ export default {
     /**
      * Cancel Comment Edit
      */
-    editCommentCancel () {
+    editCommentCancel() {
       this.commentEditId = 0
       this.commentEditContent = null
     },
     /**
      * Update Comment with new content
      */
-    async updateComment () {
+    async updateComment() {
       this.$store.commit(`loadingStart`, 'comments-edit')
       this.isBusy = true
       try {
         if (this.commentEditContent.length < 2) {
           throw new Error(this.$t('common:comments.contentMissingError'))
         }
+
         const resp = await this.$apollo.mutate({
           mutation: gql`
             mutation (
               $id: Int!
               $content: String!
+              $pageId: Int!
+              $mentions: [String!]
             ) {
               comments {
                 update (
                   id: $id,
                   content: $content
+                  pageId: $pageId
+                  mentions: $mentions
                 ) {
                   responseResult {
                     succeeded
@@ -403,11 +476,14 @@ export default {
           `,
           variables: {
             id: this.commentEditId,
-            content: this.commentEditContent
+            content: this.commentEditContent,
+            pageId: this.pageId,
+            mentions: this.mentions
           }
         })
 
         if (_.get(resp, 'data.comments.update.responseResult.succeeded', false)) {
+          this.mentions = []
           this.$store.commit('showNotification', {
             style: 'success',
             message: this.$t('common:comments.updateSuccess'),
@@ -436,14 +512,14 @@ export default {
     /**
      * Show Delete Comment Confirmation Dialog
      */
-    deleteCommentConfirm (cm) {
+    deleteCommentConfirm(cm) {
       this.commentToDelete = cm
       this.deleteCommentDialogShown = true
     },
     /**
      * Delete Comment
      */
-    async deleteComment () {
+    async deleteComment() {
       this.$store.commit(`loadingStart`, 'comments-delete')
       this.isBusy = true
       this.deleteCommentDialogShown = false
@@ -493,12 +569,52 @@ export default {
       }
       this.isBusy = false
       this.$store.commit(`loadingStop`, 'comments-delete')
+    },
+    async fetchUsers(query) {
+      this.loading = true
+      try {
+        const respRaw = await this.$apollo.query({
+          query: autoCompleteEmailsQuery,
+          variables: {
+            siteId: this.$store.get('page/siteId'),
+            query: query
+          }
+        })
+        const resp = _.get(respRaw, 'data.autoCompleteEmails', [])
+        this.users = resp.map(email => ({
+          value: email,
+          label: email,
+          email: email
+        }))
+      } catch (err) {
+        console.error(err)
+      } finally {
+        this.loading = false
+      }
+    },
+    canManageComment(cm) {
+      if (!this.permissions.manage) return false
+      return this.hasSuperAdminPermission || cm.authorId === this.userId
     }
   }
 }
 </script>
 
 <style lang="scss">
+.mention-item {
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.mention-selected {
+  background: rgb(0, 191, 191);
+}
+
+.mention {
+    background-color: rgba(153, 0, 48, .1);
+    color: #990030;
+}
+
 .comments-post {
   position: relative;
 
@@ -546,8 +662,110 @@ export default {
       color: #FFF;
       font-weight: 400;
       font-size: .85rem;
-      font-family: Roboto Mono, monospace;
+      font-family: Ubuntu Mono, monospace;
     }
+    // ---------------------------------
+    // TABLES
+    // ---------------------------------
+
+    table {
+      margin: .5rem 0;
+      border-spacing: 0;
+      border-radius: 5px;
+      border: 1px solid mc('grey', '300');
+
+      @at-root .theme--dark & {
+        border-color: mc('grey', '600');
+      }
+
+      &.dense {
+        td, th {
+          font-size: .85rem;
+          padding: .5rem;
+        }
+      }
+
+      th {
+        padding: .75rem;
+        border-bottom: 2px solid mc('grey', '500');
+        color: mc('grey', '600');
+        background-color: mc('grey', '100');
+
+        @at-root .theme--dark & {
+          background-color: darken(mc('grey', '900'), 8%);
+          border-bottom-color: mc('grey', '600');
+          color: mc('grey', '500');
+        }
+
+        &:first-child {
+          border-top-left-radius: 7px;
+        }
+        &:last-child {
+          border-top-right-radius: 7px;
+        }
+      }
+
+      td {
+        padding: .75rem;
+      }
+
+      tr {
+        td {
+          border-bottom: 1px solid mc('grey', '300');
+          border-right: 1px solid mc('grey', '100');
+
+          @at-root .theme--dark & {
+            border-bottom-color: mc('grey', '700');
+            border-right-color: mc('grey', '800');
+          }
+
+          &:nth-child(even) {
+            background-color: mc('grey', '50');
+
+            @at-root .theme--dark & {
+              background-color: darken(mc('grey', '900'), 4%);
+            }
+          }
+
+          &:last-child {
+            border-right: none;
+          }
+        }
+
+        &:nth-child(even) {
+          td {
+            background-color: mc('grey', '50');
+
+            @at-root .theme--dark & {
+              background-color: darken(mc('grey', '800'), 8%);
+            }
+
+            &:nth-child(even) {
+              background-color: mc('grey', '100');
+
+              @at-root .theme--dark & {
+                background-color: darken(mc('grey', '800'), 10%);
+              }
+            }
+          }
+        }
+
+        &:last-child {
+          td {
+            border-bottom: none;
+
+            &:first-child {
+              border-bottom-left-radius: 7px;
+            }
+            &:last-child {
+              border-bottom-right-radius: 7px;
+            }
+          }
+        }
+      }
+    }
+
   }
 }
+
 </style>

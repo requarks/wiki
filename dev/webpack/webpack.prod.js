@@ -22,6 +22,12 @@ const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
 const cacheDir = '.webpack-cache/cache'
 const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
 
+const { CKEditorTranslationsPlugin } = require('@ckeditor/ckeditor5-dev-translations')
+const CKEditorWebpackPlugin = require('@ckeditor/ckeditor5-dev-webpack-plugin')
+const { bundler, styles } = require('@ckeditor/ckeditor5-dev-utils')
+
+const { GenerateSW } = require('workbox-webpack-plugin')
+
 process.noDeprecation = true
 
 fs.emptyDirSync(path.join(process.cwd(), 'assets'))
@@ -46,7 +52,11 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: (modulePath) => {
-          return modulePath.includes('node_modules') && !modulePath.includes('vuetify')
+          return (
+            modulePath.includes('node_modules') &&
+            !modulePath.includes('vuetify') &&
+            !modulePath.includes('graphql-ws')
+          )
         },
         use: [
           {
@@ -65,7 +75,37 @@ module.exports = {
         ]
       },
       {
-        test: /\.css$/,
+        test: /ckeditor5-[^/\\]+[/\\]theme[/\\].+\.css$/,
+        use: [
+          {
+            loader: 'style-loader',
+            options: {
+              injectType: 'singletonStyleTag',
+              attributes: {
+                'data-cke': true
+              }
+            }
+          },
+          'css-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: styles.getPostCssConfig({
+                themeImporter: {
+                  themePath: require.resolve('@ckeditor/ckeditor5-theme-lark')
+                },
+                minify: true
+              })
+            }
+          }
+        ]
+      },
+      {
+        test: /^(?!.*ckeditor).*\.css$/,
+        exclude: [
+          /ckeditor5-[^/\\]+[/\\]theme[/\\].+\.css$/,
+          path.join(__dirname, 'node_modules', '@ckeditor')
+        ],
         use: [
           'style-loader',
           MiniCssExtractPlugin.loader,
@@ -151,9 +191,19 @@ module.exports = {
         ]
       },
       {
+        test: /ckeditor5-[^/\\]+[/\\]theme[/\\]icons[/\\][^/\\]+\.svg$/,
+        use: ['raw-loader']
+      },
+      {
+        test: /ckeditor5-svg[/\\][^/\\]+\.svg$/,
+        use: ['raw-loader']
+      },
+      {
         test: /\.svg$/,
         exclude: [
-          path.join(process.cwd(), 'node_modules/grapesjs')
+          path.join(process.cwd(), 'node_modules/grapesjs'),
+          /ckeditor5-[^/\\]+[/\\]theme[/\\]icons[/\\][^/\\]+\.svg$/,
+          /ckeditor5-svg[/\\][^/\\]+\.svg$/
         ],
         use: [
           {
@@ -168,20 +218,19 @@ module.exports = {
       {
         test: /\.(graphql|gql)$/,
         exclude: /node_modules/,
-        use: [
-          { loader: 'graphql-persisted-document-loader' },
-          { loader: 'graphql-tag/loader' }
-        ]
+        use: [{ loader: 'graphql-tag/loader' }]
       },
       {
         test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        use: [{
-          loader: 'file-loader',
-          options: {
-            name: '[name].[ext]',
-            outputPath: 'fonts/'
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'fonts/'
+            }
           }
-        }]
+        ]
       },
       {
         loader: 'webpack-modernizr-loader',
@@ -195,7 +244,7 @@ module.exports = {
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
     new MomentTimezoneDataPlugin({
       startYear: 2017,
-      endYear: (new Date().getFullYear()) + 5
+      endYear: new Date().getFullYear() + 5
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -247,6 +296,27 @@ module.exports = {
     }),
     new webpack.optimize.MinChunkSizePlugin({
       minChunkSize: 50000
+    }),
+    new CKEditorWebpackPlugin({
+      // UI language. Language codes follow the https://en.wikipedia.org/wiki/ISO_639-1 format.
+      // When changing the built-in language, remember to also change it in the editor's configuration (client/components/editor/ckeditor/ckeditor.js).
+      language: 'en',
+      additionalLanguages: 'all',
+      buildAllTranslationsToSeparateFiles: true
+    }),
+    new webpack.BannerPlugin({
+      banner: bundler.getLicenseBanner(),
+      raw: true
+    }),
+    new CKEditorTranslationsPlugin({
+      // See https://ckeditor.com/docs/ckeditor5/latest/features/ui-language.html
+      language: 'en',
+      buildAllTranslationsToSeparateFiles: true
+    }),
+    new GenerateSW({
+      clientsClaim: true,
+      skipWaiting: true,
+      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // optional 10MB limit
     })
   ],
   optimization: {
@@ -263,22 +333,22 @@ module.exports = {
     symlinks: true,
     alias: {
       '@': path.join(process.cwd(), 'client'),
-      'vue$': 'vue/dist/vue.esm.js',
-      'gql': path.join(process.cwd(), 'client/graph'),
+      vue$: 'vue/dist/vue.esm.js',
+      gql: path.join(process.cwd(), 'client/graph'),
       // Duplicates fixes:
-      'apollo-link': path.join(process.cwd(), 'node_modules/apollo-link'),
-      'apollo-utilities': path.join(process.cwd(), 'node_modules/apollo-utilities'),
+      '@apollo/client/link': path.join(
+        process.cwd(),
+        'node_modules/@apollo/client/link'
+      ),
+      '@apollo/client/utilities': path.join(
+        process.cwd(),
+        'node_modules/@apollo/client/utilities'
+      ),
       'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
-      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
+      modernizr$: path.resolve(process.cwd(), 'client/.modernizrrc.js')
     },
-    extensions: [
-      '.js',
-      '.json',
-      '.vue'
-    ],
-    modules: [
-      'node_modules'
-    ]
+    extensions: ['.js', '.json', '.vue'],
+    modules: ['node_modules']
   },
   node: {
     fs: 'empty'

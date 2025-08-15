@@ -17,39 +17,66 @@ const cheerio = require('cheerio')
 
 const frontmatterRegex = {
   html: /^(<!-{2}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{2}>)?(?:\n|\r)*([\w\W]*)*/,
-  legacy: /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
+  legacy:
+    /^(<!-- TITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)?(<!-- SUBTITLE: ?([\w\W]+?) ?-{2}>)?(?:\n|\r)*([\w\W]*)*/i,
   markdown: /^(-{3}(?:\n|\r)([\w\W]+?)(?:\n|\r)-{3})?(?:\n|\r)*([\w\W]*)*/
 }
 
-const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/ig
+const punctuationRegex = /[!,:;/\\_+\-=()&#@<>$~%^*[\]{}"'|]+|(\.\s)|(\s\.)/gi
 // const htmlEntitiesRegex = /(&#[0-9]{3};)|(&#x[a-zA-Z0-9]{2};)/ig
 
 /**
  * Pages model
  */
-module.exports = class Page extends Model {
-  static get tableName() { return 'pages' }
 
-  static get jsonSchema () {
+function checkAccess(user, perms, params, error) {
+  if (!WIKI.auth.checkAccess(user, perms, params)) {
+    throw new WIKI.Error[error]()
+  }
+}
+
+function getScriptCss(ogPage, opts) {
+  if (
+    WIKI.auth.checkAccess(opts.user, ['write:styles'], {
+      locale: opts.locale,
+      path: opts.path,
+      siteId: opts.siteId
+    })
+  ) {
+    if (!_.isEmpty(opts.scriptCss)) {
+      return new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
+    }
+    return ''
+  }
+  return _.get(ogPage, 'extra.css', '')
+}
+
+module.exports = class Page extends Model {
+  static get tableName() {
+    return 'pages'
+  }
+
+  static get jsonSchema() {
     return {
       type: 'object',
       required: ['path', 'title'],
 
       properties: {
-        id: {type: 'integer'},
-        path: {type: 'string'},
-        hash: {type: 'string'},
-        title: {type: 'string'},
-        description: {type: 'string'},
-        isPublished: {type: 'boolean'},
-        privateNS: {type: 'string'},
-        publishStartDate: {type: 'string'},
-        publishEndDate: {type: 'string'},
-        content: {type: 'string'},
-        contentType: {type: 'string'},
+        id: { type: 'integer' },
+        path: { type: 'string' },
+        hash: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        isPublished: { type: 'boolean' },
+        privateNS: { type: 'string' },
+        publishStartDate: { type: 'string' },
+        publishEndDate: { type: 'string' },
+        content: { type: 'string' },
+        contentType: { type: 'string' },
+        siteId: { type: 'string' },
 
-        createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        createdAt: { type: 'string' },
+        updatedAt: { type: 'string' }
       }
     }
   }
@@ -78,6 +105,14 @@ module.exports = class Page extends Model {
         join: {
           from: 'pages.id',
           to: 'pageLinks.pageId'
+        }
+      },
+      mentions: {
+        relation: Model.HasManyRelation,
+        modelClass: require('./userMentions'),
+        join: {
+          from: 'pages.id',
+          to: 'userMentions.pageId'
         }
       },
       author: {
@@ -110,6 +145,14 @@ module.exports = class Page extends Model {
         join: {
           from: 'pages.localeCode',
           to: 'locales.code'
+        }
+      },
+      site: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'pages.siteId',
+          to: 'sites.id'
         }
       }
     }
@@ -162,7 +205,8 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
-      updatedAt: 'string'
+      updatedAt: 'string',
+      siteId: 'string'
     })
   }
 
@@ -171,7 +215,7 @@ module.exports = class Page extends Model {
    *
    * @returns {string} Page Contents with Injected Metadata
    */
-  injectMetadata () {
+  injectMetadata() {
     return pageHelper.injectPageMetadata(this)
   }
 
@@ -191,7 +235,7 @@ module.exports = class Page extends Model {
    * @param {String} contentType Content Type
    * @returns {Object} Parsed Page Metadata with Raw Content
    */
-  static parseMetadata (raw, contentType) {
+  static parseMetadata(raw, contentType) {
     let result
     try {
       switch (contentType) {
@@ -239,71 +283,61 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async createPage(opts) {
+    // Replace all "." with "-" to simplify the path format for the end user
+    opts.path = opts.path.replace(/\./g, '-')
     // -> Validate path
-    if (opts.path.includes('.') || opts.path.includes(' ') || opts.path.includes('\\') || opts.path.includes('//')) {
+    if (
+      opts.path.includes('.') ||
+      opts.path.includes(' ') ||
+      opts.path.includes('\\') ||
+      opts.path.includes('//')
+    ) {
       throw new WIKI.Error.PageIllegalPath()
     }
-
     // -> Remove trailing slash
-    if (opts.path.endsWith('/')) {
-      opts.path = opts.path.slice(0, -1)
-    }
-
+    if (opts.path.endsWith('/')) opts.path = opts.path.slice(0, -1)
     // -> Remove starting slash
-    if (opts.path.startsWith('/')) {
-      opts.path = opts.path.slice(1)
-    }
-
+    if (opts.path.startsWith('/')) opts.path = opts.path.slice(1)
     // -> Check for page access
-    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+    checkAccess(opts.user, ['write:pages'], {
       locale: opts.locale,
-      path: opts.path
-    })) {
-      throw new WIKI.Error.PageDeleteForbidden()
-    }
+      path: opts.path,
+      siteId: opts.siteId
+    }, 'PageDeleteForbidden')
 
     // -> Check for duplicate
-    const dupCheck = await WIKI.models.pages.query().select('id').where('localeCode', opts.locale).where('path', opts.path).first()
-    if (dupCheck) {
-      throw new WIKI.Error.PageDuplicateCreate()
-    }
-
-    // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
-      throw new WIKI.Error.PageEmptyContent()
-    }
-
+    const dupCheck = await WIKI.models.pages
+      .query()
+      .select('id')
+      .where('localeCode', opts.locale)
+      .where('path', opts.path)
+      .where('siteId', opts.siteId)
+      .first()
+    if (dupCheck) throw new WIKI.Error.PageDuplicateCreate()
+    if (!opts.content || _.trim(opts.content).length < 1) throw new WIKI.Error.PageEmptyContent()
     // -> Format CSS Scripts
-    let scriptCss = ''
-    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
-      locale: opts.locale,
-      path: opts.path
-    })) {
-      if (!_.isEmpty(opts.scriptCss)) {
-        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
-      } else {
-        scriptCss = ''
-      }
-    }
-
+    let scriptCss = getScriptCss({}, opts)
     // -> Format JS Scripts
     let scriptJs = ''
-    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-      locale: opts.locale,
-      path: opts.path
-    })) {
-      scriptJs = opts.scriptJs || ''
-    }
-
+    const pageHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId,
+      opts.path,
+      opts.locale,
+      opts.isPrivate
+    )
     // -> Create page
     await WIKI.models.pages.query().insert({
       authorId: opts.user.id,
       content: opts.content,
       creatorId: opts.user.id,
-      contentType: _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text'),
+      contentType: _.get(
+        _.find(WIKI.data.editors, ['key', opts.editor]),
+        `contentType`,
+        'text'
+      ),
       description: opts.description,
       editorKey: opts.editor,
-      hash: pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' }),
+      hash: pageHash,
       isPrivate: opts.isPrivate,
       isPublished: opts.isPublished,
       localeCode: opts.locale,
@@ -312,51 +346,48 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       toc: '[]',
-      extra: JSON.stringify({
-        js: scriptJs,
-        css: scriptCss
-      })
+      extra: JSON.stringify({ js: scriptJs, css: scriptCss }),
+      siteId: opts.siteId
     })
+
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
       locale: opts.locale,
       userId: opts.user.id,
-      isPrivate: opts.isPrivate
+      isPrivate: opts.isPrivate,
+      siteId: opts.siteId
     })
 
     // -> Save Tags
     if (opts.tags && opts.tags.length > 0) {
       await WIKI.models.tags.associateTags({ tags: opts.tags, page })
     }
+    await Promise.all([
+      WIKI.models.pages.renderPage(page),
+      WIKI.models.pages.rebuildTree(page)
+    ])
 
-    // -> Render page to HTML
-    await WIKI.models.pages.renderPage(page)
-
-    // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
-
-    // -> Add to Search Index
-    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.created(page)
-
-    // -> Add to Storage
-    if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
-        event: 'created',
-        page
+    await Promise.all([
+      (async () => {
+        const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+        page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+        await WIKI.data.searchEngine.created(page)
+      })(),
+      (!opts.skipStorage ? WIKI.models.storage.pageEvent({ event: 'created', page }) : null),
+      WIKI.models.pages.reconnectLinks({
+        siteId: page.siteId,
+        locale: page.localeCode,
+        path: page.path,
+        mode: 'create'
       })
-    }
-
-    // -> Reconnect Links
-    await WIKI.models.pages.reconnectLinks({
-      locale: page.localeCode,
-      path: page.path,
-      mode: 'create'
-    })
+    ].filter(Boolean))
 
     // -> Get latest updatedAt
-    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+    page.updatedAt = await WIKI.models.pages
+      .query()
+      .findById(page.id)
+      .select('updatedAt')
+      .then((r) => r.updatedAt)
 
     return page
   }
@@ -368,124 +399,250 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async updatePage(opts) {
+    // Helper: Move page if needed
+    async function movePageIfPathOrLocaleChanged(page, opts) {
+      if ((opts.locale && opts.locale !== page.localeCode) || (opts.path && opts.path !== page.path)) {
+        checkAccess(opts.user, ['write:pages'], {
+          locale: opts.locale,
+          path: opts.path,
+          siteId: opts.siteId
+        }, 'PageMoveForbidden')
+        await WIKI.models.pages.movePage({
+          id: page.id,
+          destinationLocale: opts.locale,
+          destinationPath: opts.path,
+          user: opts.user
+        })
+      } else {
+        await WIKI.models.knex
+          .table('pageTree')
+          .where({ pageId: page.id })
+          .update('title', page.title)
+      }
+    }
+
     // -> Fetch original page
     const ogPage = await WIKI.models.pages.query().findById(opts.id)
-    if (!ogPage) {
-      throw new Error('Invalid Page Id')
-    }
+    if (!ogPage) throw new Error('Invalid Page Id')
 
-    // -> Check for page access
-    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+    checkAccess(opts.user, ['write:pages'], {
       locale: ogPage.localeCode,
-      path: ogPage.path
-    })) {
-      throw new WIKI.Error.PageUpdateForbidden()
-    }
+      path: ogPage.path,
+      siteId: opts.siteId
+    }, 'PageUpdateForbidden')
 
-    // -> Check for empty content
-    if (!opts.content || _.trim(opts.content).length < 1) {
-      throw new WIKI.Error.PageEmptyContent()
-    }
+    if (!opts.content || _.trim(opts.content).length < 1) throw new WIKI.Error.PageEmptyContent()
 
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
       isPublished: ogPage.isPublished === true || ogPage.isPublished === 1,
       action: opts.action ? opts.action : 'updated',
-      versionDate: ogPage.updatedAt
+      versionDate: ogPage.updatedAt,
+      siteId: ogPage.siteId
     })
 
-    // -> Format Extra Properties
-    if (!_.isPlainObject(ogPage.extra)) {
-      ogPage.extra = {}
-    }
-
-    // -> Format CSS Scripts
-    let scriptCss = _.get(ogPage, 'extra.css', '')
-    if (WIKI.auth.checkAccess(opts.user, ['write:styles'], {
-      locale: opts.locale,
-      path: opts.path
-    })) {
-      if (!_.isEmpty(opts.scriptCss)) {
-        scriptCss = new CleanCSS({ inline: false }).minify(opts.scriptCss).styles
-      } else {
-        scriptCss = ''
-      }
-    }
-
-    // -> Format JS Scripts
+    if (!_.isPlainObject(ogPage.extra)) ogPage.extra = {}
+    let scriptCss = getScriptCss(ogPage, opts)
     let scriptJs = _.get(ogPage, 'extra.js', '')
-    if (WIKI.auth.checkAccess(opts.user, ['write:scripts'], {
-      locale: opts.locale,
-      path: opts.path
-    })) {
-      scriptJs = opts.scriptJs || ''
-    }
 
     // -> Update page
-    await WIKI.models.pages.query().patch({
-      authorId: opts.user.id,
-      content: opts.content,
-      description: opts.description,
-      isPublished: opts.isPublished === true || opts.isPublished === 1,
-      publishEndDate: opts.publishEndDate || '',
-      publishStartDate: opts.publishStartDate || '',
-      title: opts.title,
-      extra: JSON.stringify({
-        ...ogPage.extra,
-        js: scriptJs,
-        css: scriptCss
+    await WIKI.models.pages
+      .query()
+      .patch({
+        authorId: opts.user.id,
+        content: opts.content,
+        description: opts.description,
+        isPublished: opts.isPublished === true || opts.isPublished === 1,
+        publishEndDate: opts.publishEndDate || '',
+        publishStartDate: opts.publishStartDate || '',
+        title: opts.title,
+        extra: JSON.stringify({
+          ...ogPage.extra,
+          js: scriptJs,
+          css: scriptCss
+        }),
+        siteId: ogPage.siteId
       })
-    }).where('id', ogPage.id)
+      .where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
-    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
-
+    await WIKI.models.tags.associateTags({
+      tags: Array.isArray(opts.tags) ? opts.tags : [],
+      page
+    })
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Update Search Index
-    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
-    page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
-    await WIKI.data.searchEngine.updated(page)
+    await Promise.all([
+      (async () => {
+        const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+        page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+        await WIKI.data.searchEngine.updated(page)
+      })(),
+      (!opts.skipStorage ? WIKI.models.storage.pageEvent({ event: 'updated', page }) : null)
+    ].filter(Boolean))
 
-    // -> Update on Storage
-    if (!opts.skipStorage) {
-      await WIKI.models.storage.pageEvent({
-        event: 'updated',
-        page
-      })
-    }
-
-    // -> Perform move?
-    if ((opts.locale && opts.locale !== page.localeCode) || (opts.path && opts.path !== page.path)) {
-      // -> Check target path access
-      if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-        locale: opts.locale,
-        path: opts.path
-      })) {
-        throw new WIKI.Error.PageMoveForbidden()
-      }
-
-      await WIKI.models.pages.movePage({
-        id: page.id,
-        destinationLocale: opts.locale,
-        destinationPath: opts.path,
-        user: opts.user
-      })
-    } else {
-      // -> Update title of page tree entry
-      await WIKI.models.knex.table('pageTree').where({
-        pageId: page.id
-      }).update('title', page.title)
-    }
-
+    await movePageIfPathOrLocaleChanged(page, opts)
     // -> Get latest updatedAt
-    page.updatedAt = await WIKI.models.pages.query().findById(page.id).select('updatedAt').then(r => r.updatedAt)
+    page.updatedAt = await WIKI.models.pages
+      .query()
+      .findById(page.id)
+      .select('updatedAt')
+      .then((r) => r.updatedAt)
 
     return page
+  }
+
+  /**
+   * Get the page tree starting from a given page
+   * @param {number} siteId
+   * @param {number} pageId
+   * @returns {Object[]} Page Tree List
+   */
+  static async getPageTreeFrom(siteId, pageId) {
+    return WIKI.models.knex
+      .select('pages.id', 'pages.path', 'pages.title', 'pages.contentType', 'pages.render', 'pages.content', 'pages.localeCode', 'pages.siteId')
+      .from('pages')
+      .join('pageTree', 'pages.id', 'pageTree.pageId')
+      .where('pageTree.siteId', siteId)
+      .whereRaw(`"ancestors"::jsonb @> (SELECT ('[' || "id" || ']')::jsonb FROM "pageTree" WHERE "pageId" = ?)`, [pageId])
+      .orWhere('pages.id', pageId)
+      .orderBy('pages.path')
+  }
+
+  /**
+   * Converts all diagram elements from a markdown page into diagram elements required by the visual editor
+   * @param {Page} pageData
+   * @returns {String}
+   */
+  static convertDiagramElements(pageData) {
+    let markdownContent = pageData.content
+    let htmlContent = pageData.render
+    let htmlWithConvertedDiagrams = htmlContent
+
+    let diagramStartIdx = 0
+    let diagramEndIdx = 0
+    let svgStartIdx = 0
+    let svgEndIdx = 0
+
+    let diagramElem = ''
+    let svgElem = ''
+    let convertedElem = ''
+
+    while (diagramStartIdx !== -1 && diagramEndIdx !== -1 && svgStartIdx !== -1 && svgEndIdx !== -1) {
+      diagramStartIdx = markdownContent.indexOf('```diagram\n') + '```diagram\n'.length
+      diagramEndIdx = markdownContent.indexOf('```', diagramStartIdx)
+      svgStartIdx = htmlContent.indexOf('<svg ')
+      svgEndIdx = htmlContent.indexOf('</svg>') + '</svg>'.length
+
+      if (diagramStartIdx !== -1 && diagramEndIdx !== -1 && svgStartIdx !== -1 && svgEndIdx !== -1) {
+        diagramElem = markdownContent.substring(diagramStartIdx, diagramEndIdx)
+        svgElem = htmlContent.substring(svgStartIdx, svgEndIdx)
+
+        convertedElem = Page.convertSingleDiagramElement(diagramElem)
+        if (convertedElem !== '') {
+          htmlWithConvertedDiagrams = htmlWithConvertedDiagrams.replace(svgElem, convertedElem)
+        }
+        markdownContent = markdownContent.substring(diagramEndIdx + 1)
+        htmlContent = htmlContent.substring(svgEndIdx + 1)
+      }
+    }
+
+    return htmlWithConvertedDiagrams
+  }
+
+  /**
+   * Converts a single diagram element (as is required by the visual editor) based on the element given as input
+   * @param {String} diagramElem
+   * @returns {String} HTML of the diagram element OR empty string, if no SVG element was found
+   */
+  static convertSingleDiagramElement(diagramElem) {
+    const $ = cheerio.load(diagramElem)
+    const $svg = $('.diagram')?.find('svg')
+    if (!$svg) {
+      throw new Error('Did not find SVG element to convert.')
+    }
+
+    return `<img src="data:image/svg+xml;base64,${diagramElem}">`
+  }
+
+  /**
+   * Convert Markdown to HTML
+   * @param {Page} ogPage
+   * @returns {String} HTML Content
+   *
+   * @throws {Error} If rendered page content is empty
+   */
+  static convertMarkdown2HTML(ogPage) {
+    if (!ogPage.render) {
+      throw new Error(
+        'Aborted conversion because rendered page content is empty!'
+      )
+    }
+    let convertedContent = Page.convertDiagramElements(ogPage)
+
+    const $ = cheerio.load(convertedContent, {
+      decodeEntities: true
+    })
+
+    if ($.root().children().length > 0) {
+      // Remove header anchors
+      $('.toc-anchor').remove()
+
+      // Attempt to convert tabsets
+      $('tabset').each((tabI, tabElm) => {
+        const tabHeaders = []
+        // -> Extract templates
+        $(tabElm)
+          .children('template')
+          .each((tmplI, tmplElm) => {
+            if ($(tmplElm).attr('v-slot:tabs') === '') {
+              $(tabElm).before(
+                '<ul class="tabset-headers">' + $(tmplElm).html() + '</ul>'
+              )
+            } else {
+              $(tabElm).after(
+                '<div class="markdown-tabset">' +
+                $(tmplElm).html() +
+                '</div>'
+              )
+            }
+          })
+        // -> Parse tab headers
+        $(tabElm)
+          .prev('.tabset-headers')
+          .children((i, elm) => {
+            tabHeaders.push($(elm).html())
+          })
+        $(tabElm).prev('.tabset-headers').remove()
+        // -> Inject tab headers
+        $(tabElm)
+          .next('.markdown-tabset')
+          .children((i, elm) => {
+            if (tabHeaders.length > i) {
+              $(elm).prepend(`<h2>${tabHeaders[i]}</h2>`)
+            }
+          })
+        $(tabElm).next('.markdown-tabset').prepend('<h1>Tabset</h1>')
+        $(tabElm).remove()
+      })
+
+      convertedContent = $.html('body')
+        .replace('<body>', '')
+        .replace('</body>', '')
+        .replace(/&#x([0-9a-f]{1,6});/gi, (entity, code) => {
+          code = parseInt(code, 16)
+
+          // Don't unescape ASCII characters, assuming they're encoded for a good reason
+          if (code < 0x80) return entity
+
+          return String.fromCodePoint(code)
+        })
+    }
+    return convertedContent
   }
 
   /**
@@ -506,16 +663,23 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for page access
-    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
-      locale: ogPage.localeCode,
-      path: ogPage.path
-    })) {
+    if (
+      !WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+        locale: ogPage.localeCode,
+        path: ogPage.path,
+        siteId: ogPage.siteId
+      })
+    ) {
       throw new WIKI.Error.PageUpdateForbidden()
     }
 
     // -> Check content type
     const sourceContentType = ogPage.contentType
-    const targetContentType = _.get(_.find(WIKI.data.editors, ['key', opts.editor]), `contentType`, 'text')
+    const targetContentType = _.get(
+      _.find(WIKI.data.editors, ['key', opts.editor]),
+      `contentType`,
+      'text'
+    )
     const shouldConvert = sourceContentType !== targetContentType
     let convertedContent = null
 
@@ -523,57 +687,13 @@ module.exports = class Page extends Model {
     if (shouldConvert) {
       // -> Markdown => HTML
       if (sourceContentType === 'markdown' && targetContentType === 'html') {
-        if (!ogPage.render) {
-          throw new Error('Aborted conversion because rendered page content is empty!')
-        }
-        convertedContent = ogPage.render
+        convertedContent = Page.convertMarkdown2HTML(ogPage)
 
-        const $ = cheerio.load(convertedContent, {
-          decodeEntities: true
-        })
-
-        if ($.root().children().length > 0) {
-          // Remove header anchors
-          $('.toc-anchor').remove()
-
-          // Attempt to convert tabsets
-          $('tabset').each((tabI, tabElm) => {
-            const tabHeaders = []
-            // -> Extract templates
-            $(tabElm).children('template').each((tmplI, tmplElm) => {
-              if ($(tmplElm).attr('v-slot:tabs') === '') {
-                $(tabElm).before('<ul class="tabset-headers">' + $(tmplElm).html() + '</ul>')
-              } else {
-                $(tabElm).after('<div class="markdown-tabset">' + $(tmplElm).html() + '</div>')
-              }
-            })
-            // -> Parse tab headers
-            $(tabElm).prev('.tabset-headers').children((i, elm) => {
-              tabHeaders.push($(elm).html())
-            })
-            $(tabElm).prev('.tabset-headers').remove()
-            // -> Inject tab headers
-            $(tabElm).next('.markdown-tabset').children((i, elm) => {
-              if (tabHeaders.length > i) {
-                $(elm).prepend(`<h2>${tabHeaders[i]}</h2>`)
-              }
-            })
-            $(tabElm).next('.markdown-tabset').prepend('<h1>Tabset</h1>')
-            $(tabElm).remove()
-          })
-
-          convertedContent = $.html('body').replace('<body>', '').replace('</body>', '').replace(/&#x([0-9a-f]{1,6});/ig, (entity, code) => {
-            code = parseInt(code, 16)
-
-            // Don't unescape ASCII characters, assuming they're encoded for a good reason
-            if (code < 0x80) return entity
-
-            return String.fromCodePoint(code)
-          })
-        }
-
-      // -> HTML => Markdown
-      } else if (sourceContentType === 'html' && targetContentType === 'markdown') {
+        // -> HTML => Markdown
+      } else if (
+        sourceContentType === 'html' &&
+        targetContentType === 'markdown'
+      ) {
         const td = new TurndownService({
           bulletListMarker: '-',
           codeBlockStyle: 'fenced',
@@ -592,22 +712,24 @@ module.exports = class Page extends Model {
 
         td.addRule('subscript', {
           filter: ['sub'],
-          replacement: c => `~${c}~`
+          replacement: (c) => `~${c}~`
         })
 
         td.addRule('superscript', {
           filter: ['sup'],
-          replacement: c => `^${c}^`
+          replacement: (c) => `^${c}^`
         })
 
         td.addRule('underline', {
           filter: ['u'],
-          replacement: c => `_${c}_`
+          replacement: (c) => `_${c}_`
         })
 
         td.addRule('taskList', {
           filter: (n, o) => {
-            return n.nodeName === 'INPUT' && n.getAttribute('type') === 'checkbox'
+            return (
+              n.nodeName === 'INPUT' && n.getAttribute('type') === 'checkbox'
+            )
           },
           replacement: (c, n) => {
             return n.getAttribute('checked') ? '[x] ' : '[ ] '
@@ -618,13 +740,31 @@ module.exports = class Page extends Model {
           filter: (n, o) => {
             return n.nodeName === 'A' && n.classList.contains('toc-anchor')
           },
-          replacement: c => ''
+          replacement: (c) => ''
         })
 
-        convertedContent = td.turndown(ogPage.content)
-      // -> Unsupported
+        td.addRule('diagram', {
+          filter: (n, o) => {
+            return n.nodeName === 'IMG' && n.getAttribute('src').startsWith('data:image/svg+xml;base64')
+          },
+          replacement: (c, n) => {
+            let src = n.getAttribute('src')
+            let start = 'data:image/svg+xml;base64,'.length
+            let markdownDiagram = src.substring(start)
+            if (!markdownDiagram.endsWith('\n')) {
+              markdownDiagram = markdownDiagram + '\n'
+            }
+            return `\`\`\`diagram\n${markdownDiagram}\`\`\`\n`
+          }
+        })
+
+        convertedContent = td.turndown(ogPage.content) + `\n` // adding extra line break for pages that end with a diagram
+
+        // -> Unsupported
       } else {
-        throw new Error('Unsupported source / destination content types combination.')
+        throw new Error(
+          'Unsupported source / destination content types combination.'
+        )
       }
     }
 
@@ -639,11 +779,14 @@ module.exports = class Page extends Model {
     }
 
     // -> Update page
-    await WIKI.models.pages.query().patch({
-      contentType: targetContentType,
-      editorKey: opts.editor,
-      ...(convertedContent ? { content: convertedContent } : {})
-    }).where('id', ogPage.id)
+    await WIKI.models.pages
+      .query()
+      .patch({
+        contentType: targetContentType,
+        editorKey: opts.editor,
+        ...(convertedContent ? { content: convertedContent } : {})
+      })
+      .where('id', ogPage.id)
     const page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     await WIKI.models.pages.deletePageFromCache(page.hash)
@@ -677,7 +820,12 @@ module.exports = class Page extends Model {
     }
 
     // -> Validate path
-    if (opts.destinationPath.includes('.') || opts.destinationPath.includes(' ') || opts.destinationPath.includes('\\') || opts.destinationPath.includes('//')) {
+    if (
+      opts.destinationPath.includes('.') ||
+      opts.destinationPath.includes(' ') ||
+      opts.destinationPath.includes('\\') ||
+      opts.destinationPath.includes('//')
+    ) {
       throw new WIKI.Error.PageIllegalPath()
     }
 
@@ -692,19 +840,17 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for source page access
-    if (!WIKI.auth.checkAccess(opts.user, ['manage:pages'], {
+    checkAccess(opts.user, ['manage:pages'], {
       locale: page.localeCode,
-      path: page.path
-    })) {
-      throw new WIKI.Error.PageMoveForbidden()
-    }
+      path: page.path,
+      siteId: page.siteId
+    }, 'PageMoveForbidden')
     // -> Check for destination page access
-    if (!WIKI.auth.checkAccess(opts.user, ['write:pages'], {
+    checkAccess(opts.user, ['write:pages'], {
       locale: opts.destinationLocale,
-      path: opts.destinationPath
-    })) {
-      throw new WIKI.Error.PageMoveForbidden()
-    }
+      path: opts.destinationPath,
+      siteId: page.siteId
+    }, 'PageMoveForbidden')
 
     // -> Check for existing page at destination path
     const destPage = await WIKI.models.pages.query().findOne({
@@ -722,24 +868,38 @@ module.exports = class Page extends Model {
       versionDate: page.updatedAt
     })
 
-    const destinationHash = pageHelper.generateHash({ path: opts.destinationPath, locale: opts.destinationLocale, privateNS: opts.isPrivate ? 'TODO' : '' })
+    const destinationHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId,
+      opts.destinationPath,
+      opts.destinationLocale,
+      opts.isPrivate
+    )
 
     // -> Move page
-    const destinationTitle = (page.title === _.last(page.path.split('/')) ? _.last(opts.destinationPath.split('/')) : page.title)
-    await WIKI.models.pages.query().patch({
-      path: opts.destinationPath,
-      localeCode: opts.destinationLocale,
-      title: destinationTitle,
-      hash: destinationHash
-    }).findById(page.id)
+    const destinationTitle =
+      page.title === _.last(page.path.split('/')) ?
+        _.last(opts.destinationPath.split('/')) :
+        page.title
+    await WIKI.models.pages
+      .query()
+      .patch({
+        path: opts.destinationPath,
+        localeCode: opts.destinationLocale,
+        title: destinationTitle,
+        hash: destinationHash
+      })
+      .findById(page.id)
     await WIKI.models.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.models.pages.rebuildTree(page)
 
     // -> Rename in Search Index
-    const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
+    const pageContents = await WIKI.models.pages
+      .query()
+      .findById(page.id)
+      .select('render')
     page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
     await WIKI.data.searchEngine.renamed({
       ...page,
@@ -767,6 +927,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links : Changing old links to the new path
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       sourceLocale: page.localeCode,
       sourcePath: page.path,
       locale: opts.destinationLocale,
@@ -776,6 +937,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links : Validate invalid links to the new path
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: opts.destinationLocale,
       path: opts.destinationPath,
       mode: 'create'
@@ -788,26 +950,34 @@ module.exports = class Page extends Model {
    * @param {Object} opts Page Properties
    * @returns {Promise} Promise with no value
    */
-  static async deletePage(opts) {
-    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
+  static async deletePage(opts, skipSnapshot) {
+    WIKI.logger.debug(`Deleting page with opts pageId = ${opts.id}`)
+    const page = await WIKI.models.pages.getPageFromDb(
+      _.has(opts, 'id') ? opts.id : opts
+    )
     if (!page) {
       throw new WIKI.Error.PageNotFound()
     }
 
     // -> Check for page access
-    if (!WIKI.auth.checkAccess(opts.user, ['delete:pages'], {
-      locale: page.locale,
-      path: page.path
-    })) {
+    if (
+      !WIKI.auth.checkAccess(opts.user, ['delete:pages'], {
+        locale: page.locale,
+        path: page.path,
+        siteId: page.siteId
+      })
+    ) {
       throw new WIKI.Error.PageDeleteForbidden()
     }
 
     // -> Create version snapshot
-    await WIKI.models.pageHistory.addVersion({
-      ...page,
-      action: 'deleted',
-      versionDate: page.updatedAt
-    })
+    if (!skipSnapshot) {
+      await WIKI.models.pageHistory.addVersion({
+        ...page,
+        action: 'deleted',
+        versionDate: page.updatedAt
+      })
+    }
 
     // -> Delete page
     await WIKI.models.pages.query().delete().where('id', page.id)
@@ -815,7 +985,7 @@ module.exports = class Page extends Model {
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
     // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    await WIKI.models.pages.rebuildTree(page)
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
@@ -830,6 +1000,7 @@ module.exports = class Page extends Model {
 
     // -> Reconnect Links
     await WIKI.models.pages.reconnectLinks({
+      siteId: page.siteId,
       locale: page.localeCode,
       path: page.path,
       mode: 'delete'
@@ -840,6 +1011,7 @@ module.exports = class Page extends Model {
    * Reconnect links to new/move/deleted page
    *
    * @param {Object} opts - Page parameters
+   * @param {uuid} opts.siteId - Page siteId
    * @param {string} opts.path - Page Path
    * @param {string} opts.locale - Page Locale Code
    * @param {string} [opts.sourcePath] - Previous Page Path (move only)
@@ -847,58 +1019,184 @@ module.exports = class Page extends Model {
    * @param {string} opts.mode - Page Update mode (create, move, delete)
    * @returns {Promise} Promise with no value
    */
-  static async reconnectLinks (opts) {
-    const pageHref = `/${opts.locale}/${opts.path}`
+  static async reconnectLinks(opts) {
+    const site = await WIKI.models.sites.query().findById(opts.siteId)
+    const host = WIKI.config.host
+    const sitePath = site.path
+    const pageHref = `/${sitePath}/${opts.path}`
+    const pageLocaleHref = `/${sitePath}/${opts.sourceLocale}/${opts.path}`
     let replaceArgs = {
-      from: '',
-      to: ''
+      InternalFrom: '',
+      InternalTo: '',
+      InternalLocaleFrom: '',
+      InternalLocaleTo: '',
+      ExternalFrom: '',
+      ExternalTo: '',
+      ExternalLocaleFrom: '',
+      ExternalLocaleTo: '',
+      MarkdownContentFrom: '',
+      MarkdownContentTo: '',
+      ExternalLocaleMarkdownContentFrom: '',
+      ExternalLocaleMarkdownContentTo: '',
+      ExternalMarkdownContentFrom: '',
+      ExternalMarkdownContentTo: '',
+      HtmlContentFrom: '',
+      HtmlContentTo: '',
+      ExternalHtmlContentFrom: '',
+      ExternalHtmlContentTo: '',
+      ExternalLocaleHtmlContentFrom: '',
+      ExternalLocaleHtmlContentTo: ''
     }
     switch (opts.mode) {
       case 'create':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.InternalTo = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
         break
       case 'move':
-        const prevPageHref = `/${opts.sourceLocale}/${opts.sourcePath}`
-        replaceArgs.from = `<a href="${prevPageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        const prevPageHref = `/${sitePath}/${opts.sourcePath}`
+        const prevLocalePageHref = `/${sitePath}/${opts.sourceLocale}/${opts.sourcePath}`
+        replaceArgs.InternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${opts.sourcePath}`
+        replaceArgs.InternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${opts.path}`
+        replaceArgs.InternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${opts.sourcePath}`
+        replaceArgs.InternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${opts.path}`
+        replaceArgs.ExternalLocaleFrom = `<a class="is-internal-link is-invalid-page" href="${prevLocalePageHref}">${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleTo = `<a class="is-internal-link is-invalid-page" href="${pageLocaleHref}">${host}${pageLocaleHref}`
+        replaceArgs.ExternalFrom = `<a class="is-internal-link is-invalid-page" href="${prevPageHref}">${host}${prevPageHref}`
+        replaceArgs.ExternalTo = `<a class="is-internal-link is-invalid-page" href="${pageHref}">${host}${pageHref}`
+        replaceArgs.MarkdownContentFrom = `[${opts.sourcePath}](${prevPageHref})`
+        replaceArgs.MarkdownContentTo = `[${opts.path}](${pageHref})`
+        replaceArgs.ExternalMarkdownContentFrom = `${host}${prevPageHref}`
+        replaceArgs.ExternalMarkdownContentTo = `${host}${pageHref}`
+        replaceArgs.ExternalLocaleMarkdownContentFrom = `${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleMarkdownContentTo = `${host}${pageLocaleHref}`
+        replaceArgs.HtmlContentFrom = `<a href="${prevPageHref}">${prevPageHref}`
+        replaceArgs.HtmlContentTo = `<a href="${pageHref}">${pageHref}`
+        replaceArgs.ExternalHtmlContentFrom = `<a href="${host}${prevPageHref}">${host}${prevPageHref}`
+        replaceArgs.ExternalHtmlContentTo = `<a href="${host}${pageHref}">${host}${pageHref}`
+        replaceArgs.ExternalLocaleHtmlContentFrom = `<a href="${host}${prevLocalePageHref}">${host}${prevLocalePageHref}`
+        replaceArgs.ExternalLocaleHtmlContentTo = `<a href="${host}${pageLocaleHref}">${host}${pageLocaleHref}`
         break
       case 'delete':
-        replaceArgs.from = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
-        replaceArgs.to = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
+        replaceArgs.InternalFrom = `<a href="${pageHref}" class="is-internal-link is-valid-page">`
+        replaceArgs.InternalTo = `<a href="${pageHref}" class="is-internal-link is-invalid-page">`
         break
       default:
         return false
     }
 
     let affectedHashes = []
+    const targetPath = opts.mode === 'move' ? `${sitePath}/${opts.sourcePath}` : `${sitePath}/${opts.path}`
+    const targetExternalPath = opts.mode === 'move' ? `${sitePath}/${opts.locale}/${opts.sourcePath}` : `${sitePath}/${opts.locale}/${opts.path}`
+
     // -> Perform replace and return affected page hashes (POSTGRES only)
     if (WIKI.config.db.type === 'postgres') {
-      const qryHashes = await WIKI.models.pages.query()
+      const qryHashes = await WIKI.models.pages
+        .query()
         .returning('hash')
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
+          render: WIKI.models.knex.raw(`
+            REPLACE(
+                REPLACE(
+                  REPLACE(
+                    REPLACE(??, ?, ?),
+                    ?, ?
+                  ),
+                  ?, ?
+                ),
+                ?, ?
+              )
+            `, [
+            'render',
+            replaceArgs.InternalFrom,
+            replaceArgs.InternalTo,
+            replaceArgs.ExternalLocaleFrom,
+            replaceArgs.ExternalLocaleTo,
+            replaceArgs.ExternalFrom,
+            replaceArgs.ExternalTo,
+            replaceArgs.InternalLocaleFrom,
+            replaceArgs.InternalLocaleTo
+          ]),
+          content: WIKI.models.knex.raw(`
+            CASE
+              WHEN "contentType" = 'markdown' THEN
+                   REPLACE(
+                    REPLACE(
+                      REPLACE(??, ?, ?),
+                      ?, ?
+                    ),
+                  ?, ?
+      )
+              WHEN "contentType" = 'html' THEN
+                REPLACE(
+                  REPLACE(
+                    REPLACE(
+                      ??,
+                      ?, ?
+                    ),
+                    ?, ?
+                  ),
+                  ?, ?
+                )
+              ELSE ??
+            END
+          `, [
+            'content',
+            replaceArgs.MarkdownContentFrom,
+            replaceArgs.MarkdownContentTo,
+            replaceArgs.ExternalMarkdownContentFrom,
+            replaceArgs.ExternalMarkdownContentTo,
+            replaceArgs.ExternalLocaleMarkdownContentFrom,
+            replaceArgs.ExternalLocaleMarkdownContentTo,
+            'content',
+            replaceArgs.HtmlContentFrom,
+            replaceArgs.HtmlContentTo,
+            replaceArgs.ExternalLocaleHtmlContentFrom,
+            replaceArgs.ExternalLocaleHtmlContentTo,
+            replaceArgs.ExternalHtmlContentFrom,
+            replaceArgs.ExternalHtmlContentTo,
+            'content'
+          ])
         })
         .whereIn('pages.id', function () {
-          this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': opts.path,
-            'pageLinks.localeCode': opts.locale
-          })
+          this.select('pageLinks.pageId').from('pageLinks')
+            .where(function() {
+              this.where('pageLinks.path', targetExternalPath)
+                .orWhere('pageLinks.path', targetPath)
+            })
+            .andWhere('pageLinks.localeCode', opts.locale)
         })
-      affectedHashes = qryHashes.map(h => h.hash)
+      const pageIds = await WIKI.models.knex
+        .select('pageLinks.pageId')
+        .from('pageLinks')
+        .where('pageLinks.localeCode', opts.locale)
+        .where(function() {
+          this.where('pageLinks.path', targetExternalPath)
+            .orWhere('pageLinks.path', targetPath)
+        })
+      const pages = await WIKI.models.pages
+        .query()
+        .whereIn('id', pageIds.map(p => p.pageId))
+      await Promise.all(pages.map(page => WIKI.models.pages.renderPage(page)))
+      affectedHashes = qryHashes.map((h) => h.hash)
     } else {
       // -> Perform replace, then query affected page hashes (MYSQL, MARIADB, MSSQL, SQLITE only)
-      await WIKI.models.pages.query()
+      await WIKI.models.pages
+        .query()
         .patch({
-          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', ['render', replaceArgs.from, replaceArgs.to])
+          render: WIKI.models.knex.raw('REPLACE(??, ?, ?)', [
+            'render',
+            replaceArgs.from,
+            replaceArgs.to
+          ])
         })
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
-            'pageLinks.path': opts.path,
+            'pageLinks.path': targetPath,
             'pageLinks.localeCode': opts.locale
           })
         })
-      const qryHashes = await WIKI.models.pages.query()
+      const qryHashes = await WIKI.models.pages
+        .query()
         .column('hash')
         .whereIn('pages.id', function () {
           this.select('pageLinks.pageId').from('pageLinks').where({
@@ -906,12 +1204,12 @@ module.exports = class Page extends Model {
             'pageLinks.localeCode': opts.locale
           })
         })
-      affectedHashes = qryHashes.map(h => h.hash)
+      affectedHashes = qryHashes.map((h) => h.hash)
     }
-    for (const hash of affectedHashes) {
+    await Promise.all(affectedHashes.map(async (hash) => {
       await WIKI.models.pages.deletePageFromCache(hash)
       WIKI.events.outbound.emit('deletePageFromCache', hash)
-    }
+    }))
   }
 
   /**
@@ -919,13 +1217,15 @@ module.exports = class Page extends Model {
    *
    * @returns {Promise} Promise with no value
    */
-  static async rebuildTree() {
-    const rebuildJob = await WIKI.scheduler.registerJob({
-      name: 'rebuild-tree',
-      immediate: true,
-      worker: true
-    })
-    return rebuildJob.finished
+  static async rebuildTree(page) {
+    await WIKI.scheduler.registerJob(
+      {
+        name: 'rebuild-tree',
+        immediate: true,
+        wait: true
+      },
+      page?.siteId
+    )
   }
 
   /**
@@ -935,12 +1235,14 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async renderPage(page) {
-    const renderJob = await WIKI.scheduler.registerJob({
-      name: 'render-page',
-      immediate: true,
-      worker: true
-    }, page.id)
-    return renderJob.finished
+    await WIKI.scheduler.registerJob(
+      {
+        name: 'render-page',
+        immediate: true,
+        wait: true
+      },
+      page.id
+    )
   }
 
   /**
@@ -961,7 +1263,9 @@ module.exports = class Page extends Model {
           await WIKI.models.pages.savePageToCache(page)
         } else {
           // -> No render? Last page render failed...
-          throw new Error('Page has no rendered version. Looks like the Last page render failed. Try to edit the page and save it again.')
+          throw new Error(
+            'Page has no rendered version. Looks like the Last page render failed. Try to edit the page and save it again.'
+          )
         }
       }
     }
@@ -977,7 +1281,8 @@ module.exports = class Page extends Model {
   static async getPageFromDb(opts) {
     const queryModeID = _.isNumber(opts)
     try {
-      return WIKI.models.pages.query()
+      return WIKI.models.pages
+        .query()
         .column([
           'pages.id',
           'pages.path',
@@ -1000,13 +1305,19 @@ module.exports = class Page extends Model {
           'pages.authorId',
           'pages.creatorId',
           'pages.extra',
+          'pages.siteId',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
             creatorName: 'creator.name',
             creatorEmail: 'creator.email'
+          },
+          {
+            siteName: 'site.name',
+            sitePath: 'site.path'
           }
         ])
+        .joinRelated('site')
         .joinRelated('author')
         .joinRelated('creator')
         .withGraphJoined('tags')
@@ -1017,7 +1328,8 @@ module.exports = class Page extends Model {
           'pages.id': opts
         } : {
           'pages.path': opts.path,
-          'pages.localeCode': opts.locale
+          'pages.localeCode': opts.locale,
+          'siteId': opts.siteId
         })
         // .andWhere(builder => {
         //   if (queryModeID) return
@@ -1050,31 +1362,54 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async savePageToCache(page) {
-    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`)
-    await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
-      id: page.id,
-      authorId: page.authorId,
-      authorName: page.authorName,
-      createdAt: page.createdAt,
-      creatorId: page.creatorId,
-      creatorName: page.creatorName,
-      description: page.description,
-      editorKey: page.editorKey,
-      extra: {
-        css: _.get(page, 'extra.css', ''),
-        js: _.get(page, 'extra.js', '')
-      },
-      isPrivate: page.isPrivate === 1 || page.isPrivate === true,
-      isPublished: page.isPublished === 1 || page.isPublished === true,
-      publishEndDate: page.publishEndDate,
-      publishStartDate: page.publishStartDate,
-      contentType: page.contentType,
-      render: page.render,
-      tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
-      title: page.title,
-      toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
-      updatedAt: page.updatedAt
-    }))
+    const cachePath = path.resolve(
+      WIKI.ROOTPATH,
+      WIKI.config.dataPath,
+      `cache/${page.hash}.bin`
+    )
+    await fs.outputFile(
+      cachePath,
+      WIKI.models.pages.cacheSchema.encode({
+        id: page.id,
+        authorId: page.authorId,
+        authorName: page.authorName,
+        createdAt: page.createdAt,
+        creatorId: page.creatorId,
+        creatorName: page.creatorName,
+        description: page.description,
+        editorKey: page.editorKey,
+        extra: {
+          css: _.get(page, 'extra.css', ''),
+          js: _.get(page, 'extra.js', '')
+        },
+        isPrivate: page.isPrivate === 1 || page.isPrivate === true,
+        isPublished: page.isPublished === 1 || page.isPublished === true,
+        publishEndDate: page.publishEndDate,
+        publishStartDate: page.publishStartDate,
+        contentType: page.contentType,
+        render: page.render,
+        tags: page.tags.map((t) => _.pick(t, ['tag', 'title'])),
+        title: page.title,
+        toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
+        updatedAt: page.updatedAt,
+        siteId: page.siteId
+      })
+    )
+  }
+
+  /**
+   * Generates page hash
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise of the Page Model Instance
+   */
+  static async generatePageHash(siteId, path, locale, isPrivate) {
+    return pageHelper.generateHash({
+      siteId,
+      path,
+      locale,
+      privateNS: isPrivate ? 'TODO' : ''
+    })
   }
 
   /**
@@ -1084,14 +1419,24 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise of the Page Model Instance
    */
   static async getPageFromCache(opts) {
-    const pageHash = pageHelper.generateHash({ path: opts.path, locale: opts.locale, privateNS: opts.isPrivate ? 'TODO' : '' })
-    const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${pageHash}.bin`)
+    const pageHash = await WIKI.models.pages.generatePageHash(
+      opts.siteId,
+      opts.path,
+      opts.locale,
+      opts.isPrivate
+    )
+    const cachePath = path.resolve(
+      WIKI.ROOTPATH,
+      WIKI.config.dataPath,
+      `cache/${pageHash}.bin`
+    )
 
     try {
       const pageBuffer = await fs.readFile(cachePath)
       let page = WIKI.models.pages.cacheSchema.decode(pageBuffer)
       return {
         ...page,
+        siteId: opts.siteId,
         path: opts.path,
         localeCode: opts.locale,
         isPrivate: opts.isPrivate
@@ -1112,14 +1457,18 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async deletePageFromCache(hash) {
-    return fs.remove(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${hash}.bin`))
+    return fs.remove(
+      path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${hash}.bin`)
+    )
   }
 
   /**
    * Flush the contents of the Cache
    */
   static async flushCache() {
-    return fs.emptyDir(path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache`))
+    return fs.emptyDir(
+      path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache`)
+    )
   }
 
   /**
@@ -1131,15 +1480,19 @@ module.exports = class Page extends Model {
    * @returns {Promise} Promise with no value
    */
   static async migrateToLocale({ sourceLocale, targetLocale }) {
-    return WIKI.models.pages.query()
+    return WIKI.models.pages
+      .query()
       .patch({
         localeCode: targetLocale
       })
       .where({
         localeCode: sourceLocale
       })
-      .whereNotExists(function() {
-        this.select('id').from('pages AS pagesm').where('pagesm.localeCode', targetLocale).andWhereRaw('pagesm.path = pages.path')
+      .whereNotExists(function () {
+        this.select('id')
+          .from('pages AS pagesm')
+          .where('pagesm.localeCode', targetLocale)
+          .andWhereRaw('pagesm.path = pages.path')
       })
   }
 
@@ -1150,21 +1503,24 @@ module.exports = class Page extends Model {
    * @returns {string} Cleaned Content Text
    */
   static cleanHTML(rawHTML = '') {
-    let data = striptags(rawHTML || '', [], ' ')
-      .replace(emojiRegex(), '')
-      // .replace(htmlEntitiesRegex, '')
-    return he.decode(data)
+    let data = striptags(rawHTML || '', [], ' ').replace(emojiRegex(), '')
+    // .replace(htmlEntitiesRegex, '')
+    return he
+      .decode(data)
       .replace(punctuationRegex, ' ')
       .replace(/(\r\n|\n|\r)/gm, ' ')
       .replace(/\s\s+/g, ' ')
-      .split(' ').filter(w => w.length > 1).join(' ').toLowerCase()
+      .split(' ')
+      .filter((w) => w.length > 1)
+      .join(' ')
+      .toLowerCase()
   }
 
   /**
    * Subscribe to HA propagation events
    */
   static subscribeToEvents() {
-    WIKI.events.inbound.on('deletePageFromCache', hash => {
+    WIKI.events.inbound.on('deletePageFromCache', (hash) => {
       WIKI.models.pages.deletePageFromCache(hash)
     })
     WIKI.events.inbound.on('flushCache', () => {

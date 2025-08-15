@@ -37,6 +37,9 @@ const state = {
       script: false,
       style: false
     },
+    sites: {
+      manage: false
+    },
     system: {
       manage: false
     }
@@ -50,7 +53,11 @@ const state = {
     editMenuExternalName: '',
     editMenuExternalIcon: '',
     editMenuExternalUrl: ''
-  }
+  },
+  siteId: '',
+  siteName: '',
+  sitePath: 'default',
+  hasChildren: false
 }
 
 export default {

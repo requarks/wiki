@@ -5,13 +5,7 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async storage() { return {} }
-  },
-  Mutation: {
-    async storage() { return {} }
-  },
-  StorageQuery: {
-    async targets(obj, args, context, info) {
+    async storageTargets(obj, args, context, info) {
       let targets = await WIKI.models.storage.getTargets()
       targets = _.sortBy(targets.map(tgt => {
         const targetInfo = _.find(WIKI.data.storage, ['key', tgt.key]) || {}
@@ -37,7 +31,7 @@ module.exports = {
       }), ['title', 'key'])
       return targets
     },
-    async status(obj, args, context, info) {
+    async storageStatus(obj, args, context, info) {
       let activeTargets = await WIKI.models.storage.query().where('isEnabled', true)
       return activeTargets.map(tgt => {
         const targetInfo = _.find(WIKI.data.storage, ['key', tgt.key]) || {}
@@ -50,6 +44,9 @@ module.exports = {
         }
       })
     }
+  },
+  Mutation: {
+    async storage() { return {} }
   },
   StorageMutation: {
     async updateTargets(obj, args, context) {

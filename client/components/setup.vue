@@ -1,6 +1,6 @@
 <template lang="pug">
   v-app.setup
-    v-content
+    v-main
       v-container
         v-layout
           v-flex(xs12, lg6, offset-lg3)

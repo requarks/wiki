@@ -10,6 +10,9 @@ const graphHelper = require('../../helpers/graph')
 const request = require('request-promise')
 const crypto = require('crypto')
 const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
+const {
+  canManageGroup,
+} = require('../../helpers/group')
 
 /* global WIKI */
 
@@ -23,12 +26,6 @@ const dbTypes = {
 
 module.exports = {
   Query: {
-    async system () { return {} }
-  },
-  Mutation: {
-    async system () { return {} }
-  },
-  SystemQuery: {
     flags () {
       return _.transform(WIKI.config.flags, (result, value, key) => {
         result.push({ key, value })
@@ -50,6 +47,9 @@ module.exports = {
         startedAt: WIKI.system.exportStatus.startedAt
       }
     }
+  },
+  Mutation: {
+    async system () { return {} }
   },
   SystemMutation: {
     async updateFlags (obj, args, context) {
@@ -134,7 +134,7 @@ module.exports = {
             const singleGroup = await WIKI.models.groups.query().insert({
               name: `Import_${curDateISO}`,
               permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-              pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules)
+              rules: JSON.stringify(WIKI.data.groups.defaultPageRules)
             })
             groupsCount++
             assignableGroups.push(singleGroup.id)
@@ -162,7 +162,7 @@ module.exports = {
                 } else {
                   // -> Build new group
 
-                  const pageRules = _.map(usr.rights, r => {
+                  const rules = _.map(usr.rights, r => {
                     let roles = ['read:pages', 'read:assets', 'read:comments', 'write:comments']
                     if (r.role === `write`) {
                       roles = _.concat(roles, ['write:pages', 'manage:pages', 'read:source', 'read:history', 'write:assets', 'manage:assets'])
@@ -177,14 +177,14 @@ module.exports = {
                     }
                   })
 
-                  const perms = _.chain(pageRules).reject('deny').map('roles').union().flatten().value()
+                  const perms = _.chain(rules).reject('deny').map('roles').union().flatten().value()
 
                   // -> Create new group
 
                   const newGroup = await WIKI.models.groups.query().insert({
                     name: `Import_${curDateISO}_${groupsCount + 1}`,
                     permissions: JSON.stringify(perms),
-                    pageRules: JSON.stringify(pageRules)
+                    rules: JSON.stringify(rules)
                   })
                   reuseGroups.push({
                     groupId: newGroup.id,
@@ -413,13 +413,33 @@ module.exports = {
     workingDirectory () {
       return process.cwd()
     },
-    async groupsTotal () {
-      const total = await WIKI.models.groups.query().count('* as total').first()
-      return _.toSafeInteger(total.total)
+    async groupsTotal (obj, args, context) {
+      const groups = await WIKI.models.groups.query().select('groups.id')
+
+      if (WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
+        return _.toSafeInteger(groups.length)
+      }
+
+      const userRelevantGroups = _.filter(groups, (g) =>
+        canManageGroup(context.req.user, g.id)
+      )
+      return _.toSafeInteger(userRelevantGroups.length)
     },
-    async pagesTotal () {
-      const total = await WIKI.models.pages.query().count('* as total').first()
-      return _.toSafeInteger(total.total)
+    async pagesTotal (obj, args, context) {
+      let results = await WIKI.models.pages.query().column([
+        'pages.id',
+        'pages.path',
+        { locale: 'localeCode' },
+        'pages.siteId'
+      ])
+      results = _.filter(results, r => {
+        return WIKI.auth.checkAccess(context.req.user, ['manage:sites'], {
+          path: r.path,
+          locale: r.locale,
+          siteId: r.siteId
+        })
+      })
+      return _.toSafeInteger(results.length)
     },
     async usersTotal () {
       const total = await WIKI.models.users.query().count('* as total').first()

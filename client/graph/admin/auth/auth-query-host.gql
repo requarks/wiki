@@ -1,7 +1,5 @@
 {
-  site {
-    config {
-      host
-    }
+  siteConfig {
+    host
   }
 }

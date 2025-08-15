@@ -59,9 +59,6 @@
                 td {{ props.item.email }}
                 td {{ getStrategyName(props.item.providerKey) }}
                 td {{ props.item.createdAt | moment('from') }}
-                td
-                  span(v-if='props.item.lastLoginAt') {{ props.item.lastLoginAt | moment('from') }}
-                  em.grey--text(v-else) Never
                 td.text-right
                   v-icon.mr-3(v-if='props.item.isSystem') mdi-lock-outline
                   status-indicator(positive, pulse, v-if='props.item.isActive')
@@ -102,7 +99,6 @@ export default {
         { text: 'Email', value: 'email', sortable: true },
         { text: 'Provider', value: 'provider', sortable: true },
         { text: 'Created', value: 'createdAt', sortable: true },
-        { text: 'Last Login', value: 'lastLoginAt', sortable: true },
         { text: '', value: 'actions', sortable: false, width: 80 }
       ],
       strategies: [],
@@ -140,8 +136,7 @@ export default {
     users: {
       query: gql`
         query {
-          users {
-            list {
+            listUsers {
               id
               name
               email
@@ -149,13 +144,11 @@ export default {
               isSystem
               isActive
               createdAt
-              lastLoginAt
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.users.list,
+      update: (data) => data.listUsers,
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-refresh')
@@ -164,12 +157,10 @@ export default {
     strategies: {
       query: gql`
         query {
-          authentication {
             activeStrategies {
               key
               displayName
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
@@ -177,7 +168,7 @@ export default {
         return _.concat({
           key: 'all',
           displayName: 'All Providers'
-        }, data.authentication.activeStrategies)
+        }, data.activeStrategies)
       },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-users-strategies-refresh')

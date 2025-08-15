@@ -129,9 +129,16 @@ export default {
             const data = _.get(resp, 'data.groups.create', { responseResult: {} })
             if (data.responseResult.succeeded === true) {
               const apolloData = store.readQuery({ query: groupsQuery })
-              data.group.userCount = 0
-              apolloData.groups.list.push(data.group)
-              store.writeQuery({ query: groupsQuery, data: apolloData })
+              const newGroup = {
+                ...data.group,
+                userCount: 0,
+                isSystem: false
+              }
+              const newApolloData = {
+                ...apolloData,
+                listGroups: [...apolloData.listGroups, newGroup]
+              }
+              store.writeQuery({ query: groupsQuery, data: newApolloData })
             } else {
               throw new Error(data.responseResult.message)
             }
@@ -155,7 +162,7 @@ export default {
     groups: {
       query: groupsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => _.cloneDeep(data.listGroups),
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-refresh')

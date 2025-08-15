@@ -1,12 +1,10 @@
 query {
-  system {
-    info {
-      currentVersion
-      latestVersion
-      groupsTotal
-      pagesTotal
-      usersTotal
-      tagsTotal
-    }
+  info {
+    currentVersion
+    latestVersion
+    groupsTotal
+    pagesTotal
+    usersTotal
+    tagsTotal
   }
 }

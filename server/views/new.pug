@@ -2,4 +2,10 @@ extends master.pug
 
 block body
   #root.is-fullscreen
-    new-page(locale=locale, path=path)
+    new-page(
+      locale=locale,
+      path=path,
+      site-id=siteId,
+      site-path=sitePath,
+      site-name=siteName
+    )

@@ -444,15 +444,13 @@ export default {
     config: {
       query: gql`
         {
-          navigation {
-            config {
+            navigationConfig {
               mode
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.navigation.config),
+      update: (data) => _.cloneDeep(data.navigationConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-config')
       }
@@ -460,8 +458,7 @@ export default {
     trees: {
       query: gql`
         {
-          navigation {
-            tree {
+            navigationTree {
               locale
               items {
                 id
@@ -474,11 +471,10 @@ export default {
                 visibilityGroups
               }
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.navigation.tree),
+      update: (data) => _.cloneDeep(data.navigationTree),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-tree')
       }
@@ -486,7 +482,7 @@ export default {
     groups: {
       query: groupsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.groups.list,
+      update: (data) => data.listGroups,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-groups')
       }
@@ -494,17 +490,15 @@ export default {
     allLocales: {
       query: gql`
         {
-          localization {
             locales {
               code
               name
               nativeName
             }
-          }
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => data.localization.locales,
+      update: (data) => data.locales,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-navigation-locales')
       }

@@ -193,7 +193,7 @@ module.exports = {
    *
    * @param {Array<String>} files Array of files to process
    */
-  async processFiles(files, user) {
+  async processFiles(files, user, siteId) {
     for (const item of files) {
       const contentType = pageHelper.getContentType(item.relPath)
       const fileExists = await fs.pathExists(item.file.path)
@@ -281,7 +281,8 @@ module.exports = {
             relPath: item.relPath,
             file: item.file,
             contentType: contentType,
-            moduleName: 'GIT'
+            moduleName: 'GIT',
+            siteId
           })
         } catch (err) {
           WIKI.logger.warn(`(STORAGE/GIT) Failed to process asset ${item.relPath}`)

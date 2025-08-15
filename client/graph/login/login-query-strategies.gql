@@ -1,14 +1,10 @@
 query {
-  authentication {
-    strategies(
-      isEnabled: true
-    ) {
-      key
-      title
-      useForm
-      icon
-      color
-      selfRegistration
-    }
+  strategies(isEnabled: true) {
+    key
+    title
+    useForm
+    icon
+    color
+    selfRegistration
   }
 }

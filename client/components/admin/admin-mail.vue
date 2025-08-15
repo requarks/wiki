@@ -101,6 +101,14 @@
                       prepend-icon='mdi-form-textbox-password'
                       type='password'
                       )
+                    v-text-field(
+                      outlined
+                      v-model='config.allowedDomains'
+                      label="Add Allow Only Sending mails to domains"
+                      hint="Add a list of domains that are allowed to send emails to users. If the list is empty, all domains are allowed. Separate domains with a comma."
+                      persistent-hint
+                      prepend-icon='mdi-domain'
+                      )
 
             v-flex(lg6 xs12)
               v-card.animated.fadeInUp.wait-p2s
@@ -187,7 +195,8 @@ export default {
         useDKIM: false,
         dkimDomainName: '',
         dkimKeySelector: '',
-        dkimPrivateKey: ''
+        dkimPrivateKey: '',
+        allowedDomains: ''
       },
       testEmail: '',
       testLoading: false
@@ -211,7 +220,8 @@ export default {
             useDKIM: this.config.useDKIM || false,
             dkimDomainName: this.config.dkimDomainName || '',
             dkimKeySelector: this.config.dkimKeySelector || '',
-            dkimPrivateKey: this.config.dkimPrivateKey || ''
+            dkimPrivateKey: this.config.dkimPrivateKey || '',
+            allowedDomains: this.config.allowedDomains || ''
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-mail-update')
@@ -256,7 +266,7 @@ export default {
     config: {
       query: mailConfigQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.mail.config),
+      update: (data) => _.cloneDeep(data.mailConfig),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-mail-refresh')
       }
@@ -264,7 +274,3 @@ export default {
   }
 }
 </script>
-
-<style lang='scss'>
-
-</style>

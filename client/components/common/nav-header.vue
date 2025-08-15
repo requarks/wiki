@@ -1,17 +1,31 @@
 <template lang='pug'>
-  v-app-bar.nav-header(color='black', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
-    v-toolbar(color='deep-purple', flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
+  v-app-bar.nav-header(
+    :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
+    app,
+    :clipped-left='!$vuetify.rtl',
+    :clipped-right='$vuetify.rtl',
+    fixed,
+    flat,
+    :extended='searchIsShown && $vuetify.breakpoint.smAndDown'
+    )
+    v-toolbar(
+      v-if='searchIsShown && $vuetify.breakpoint.smAndDown',
+      :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
+      flat,
+      slot='extension'
+      )
       v-text-field(
         ref='searchFieldMobile'
         v-model='search'
         clearable
-        background-color='deep-purple'
-        color='white'
+        :background-color='$vuetify.theme.dark ? colors.velvet[5] :colors.surface[2]'
+        :color='$vuetify.theme.dark ? `white` : colors.primary[1]'
         :label='$t(`common:header.search`)'
         single-line
         solo
         flat
         hide-details
+        outlined
         prepend-inner-icon='mdi-magnify'
         :loading='searchIsLoading'
         @keyup.enter='searchEnter'
@@ -19,47 +33,60 @@
       )
     v-layout(row)
       v-flex(xs5, md4)
-        v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
+        v-toolbar.nav-header-inner(
+          :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
+          flat,
+          :class='$vuetify.rtl ? `pr-3` : `pl-3`'
+          )
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
-          //- v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
-          //-   template(v-slot:activator='{ on }')
-          //-     v-app-bar-nav-icon.btn-animate-app(v-on='on', :class='$vuetify.rtl ? `mx-0` : ``')
-          //-       v-icon mdi-menu
-          //-   v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-          //-     v-list-item.pl-4(href='/')
-          //-       v-list-item-avatar(size='24'): v-icon(color='blue') mdi-home
-          //-       v-list-item-title.body-2 {{$t('common:header.home')}}
-          //-     v-list-item.pl-4(@click='')
-          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-file-tree
-          //-       v-list-item-content
-          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.siteMap')}}
-          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
-          //-     v-list-item.pl-4(href='/t')
-          //-       v-list-item-avatar(size='24'): v-icon(color='teal') mdi-tag-multiple
-          //-       v-list-item-title.body-2 {{$t('common:header.browseTags')}}
-          //-     v-list-item.pl-4(@click='assets')
-          //-       v-list-item-avatar(size='24'): v-icon(color='grey lighten-2') mdi-folder-multiple-image
-          //-       v-list-item-content
-          //-         v-list-item-title.body-2.grey--text.text--ligten-2 {{$t('common:header.imagesFiles')}}
-          //-         v-list-item-subtitle.overline.grey--text.text--lighten-2 Coming soon
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
-            span.subheading {{title}}
+            span.subheading(:style='$vuetify.theme.dark ? `color="white"`: `color=colors.text.darkGrey`') {{title}}
+
+          //- SITES
+
+          v-menu(v-model='menuIsOpen', offset-y, bottom, transition='slide-y-transition', right)
+            template(v-slot:activator='{ on: menu, attrs }')
+              v-tooltip(bottom)
+                template(v-slot:activator='{ on: tooltip }')
+                  v-btn.hover-text(
+                    icon
+                    v-bind='attrs'
+                    v-on='{ ...menu }'
+                    :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                    tile
+                    height='64'
+                    width='100'
+                    )
+                    span Sites
+                    v-icon(:color='$vuetify.theme.dark ? `color="white"`: `color=colors.text.darkGrey`')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
+            v-list(
+                style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
+                nav,
+                :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                class='sitesList'
+              )
+              v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;" :id='site.value === sitePath ? `selected-site-item` : ``')
+                v-list-item-title.body-2 {{ site.text }}
+
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
-        v-toolbar.nav-header-inner(color='black', dark, flat)
+        v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.text.darkPurple : `white`', flat)
           slot(name='mid')
+
             transition(name='navHeaderSearch', v-if='searchIsShown')
               v-text-field(
                 ref='searchField',
                 v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
                 v-model='search',
-                color='white',
+                :color='$vuetify.theme.dark ? `white` : colors.primary[1]',
+                :background-color='$vuetify.theme.dark ? colors.velvet[5] : `white`',
                 :label='$t(`common:header.search`)',
                 single-line,
                 solo
                 flat
                 rounded
                 hide-details,
+                outlined,
                 prepend-inner-icon='mdi-magnify',
                 :loading='searchIsLoading',
                 @keyup.enter='searchEnter'
@@ -70,13 +97,20 @@
                 @keyup.up='searchMove(`up`)'
                 autocomplete='none'
               )
+
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
+                v-btn.ml-2.mr-0.hover-icon(
+                  icon,
+                  v-on='on',
+                  :href='`/t/`+ sitePath',
+                  :aria-label='$t(`common:header.browseTags`)',
+                  :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                  )
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
+        v-toolbar.nav-header-inner.pr-4(:color='$vuetify.theme.dark ? colors.text.darkPurple : `white`', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -85,8 +119,9 @@
 
           //- (mobile) SEARCH TOGGLE
 
-          v-btn(
+          v-btn.hover-icon(
             v-if='!hideSearch && $vuetify.breakpoint.smAndDown'
+            :class='{ "color-theme-dark": $vuetify.theme.dark }'
             @click='searchToggle'
             icon
             )
@@ -99,11 +134,11 @@
               template(v-slot:activator='{ on: menu, attrs }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
-                    v-btn(
+                    v-btn.hover-icon(
                       icon
                       v-bind='attrs'
                       v-on='{ ...menu, ...tooltip }'
-                      :class='$vuetify.rtl ? `ml-3` : ``'
+                      :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
                       tile
                       height='64'
                       :aria-label='$t(`common:header.language`)'
@@ -113,8 +148,30 @@
               v-list(nav)
                 template(v-for='(lc, idx) of locales')
                   v-list-item(@click='changeLocale(lc)')
-                    v-list-item-action(style='min-width:auto;'): v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
+                    v-list-item-action(style='min-width:auto;'): v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label) {{lc.code.toUpperCase()}}
                     v-list-item-title {{lc.name}}
+            v-divider(vertical)
+
+          //- Follow Site
+
+          template(v-if='isAuthenticated && path && !isFollowingSite')
+            v-tooltip(bottom)
+              template( v-slot:activator='{ on }')
+                v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)'
+                :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                )
+                  v-icon(color='grey') mdi-track-light
+              span Follow Site
+            v-divider(vertical)
+
+          template(v-if='isAuthenticated && path && isFollowingSite')
+            v-tooltip(bottom)
+              template(v-slot:activator='{ on }')
+                v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)'
+                :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                )
+                  v-icon(color='grey') mdi-track-light-off
+              span Unfollow Site
             v-divider(vertical)
 
           //- PAGE ACTIONS
@@ -124,44 +181,58 @@
               template(v-slot:activator='{ on: menu, attrs }')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on: tooltip }')
-                    v-btn(
+                    v-btn.hover-icon(
                       icon
                       v-bind='attrs'
                       v-on='{ ...menu, ...tooltip }'
-                      :class='$vuetify.rtl ? `ml-3` : ``'
+                      :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
                       tile
                       height='64'
                       :aria-label='$t(`common:header.pageActions`)'
                       )
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
-              v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+              v-list(nav, :class='{ "color-theme-dark": $vuetify.theme.dark }')
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-outline
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-file-document-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-history
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-lightning-bolt
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-lightning-bolt
                   v-list-item-title.body-2 {{$t('common:header.convert')}}
                 v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-save-move-outline
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    ) mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(color='red darken-2') mdi-trash-can-outline
+                  v-list-item-avatar(size='24', tile): v-icon(:color='colors.red[5]') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 
@@ -170,7 +241,15 @@
           template(v-if='hasNewPagePermission && path && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn(icon, tile, height='64', v-on='on', @click='pageNew', :aria-label='$t(`common:header.newPage`)')
+                v-btn.hover-icon(
+                  icon,
+                  tile,
+                  height='64',
+                  v-on='on',
+                  @click='pageNew',
+                  :aria-label='$t(`common:header.newPage`)',
+                  :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                  )
                   v-icon(color='grey') mdi-text-box-plus-outline
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
@@ -180,10 +259,26 @@
           template(v-if='isAuthenticated && isAdmin')
             v-tooltip(bottom, v-if='mode !== `admin`')
               template(v-slot:activator='{ on }')
-                v-btn(icon, tile, height='64', v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
+                v-btn.hover-icon(
+                  icon,
+                  tile,
+                  height='64',
+                  v-on='on',
+                  href='/a',
+                  :aria-label='$t(`common:header.admin`)',
+                  :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                  )
                   v-icon(color='grey') mdi-cog
               span {{$t('common:header.admin')}}
-            v-btn(v-else, text, tile, height='64', href='/', :aria-label='$t(`common:actions.exit`)')
+            v-btn.hover-icon(
+              v-else,
+              text,
+              tile,
+              height='64',
+              href='/',
+              :aria-label='$t(`common:actions.exit`)',
+              :class='{ "color-theme-dark": $vuetify.theme.dark }'
+              )
               v-icon(left, color='grey') mdi-exit-to-app
               span {{$t('common:actions.exit')}}
             v-divider(vertical)
@@ -206,11 +301,11 @@
             template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn(
+                  v-btn.hover-icon(
                     icon
                     v-bind='attrs'
                     v-on='{ ...menu, ...tooltip }'
-                    :class='$vuetify.rtl ? `ml-0` : ``'
+                    :class='{ "ml-0": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
                     tile
                     height='64'
                     :aria-label='$t(`common:header.account`)'
@@ -244,28 +339,64 @@
 
           v-tooltip(v-else, left)
             template(v-slot:activator='{ on }')
-              v-btn(icon, v-on='on', color='grey darken-3', href='/login', :aria-label='$t(`common:header.login`)')
+              v-btn.hover-icon(
+                icon,
+                v-on='on',
+                color='grey darken-3',
+                href='/login',
+                :aria-label='$t(`common:header.login`)',
+                :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                )
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
 
-    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
-    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
-    page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
-    page-delete(v-model='deletePageModal', v-if='path && path.length')
-    page-convert(v-model='convertPageModal', v-if='path && path.length')
+    page-selector(
+      mode='create',
+      v-model='newPageModal',
+      :open-handler='pageNewCreate',
+      :locale='locale'
+    )
 
-    .nav-header-dev(v-if='isDevMode')
-      v-icon mdi-alert
-      div
-        .overline DEVELOPMENT VERSION
-        .overline This code base is NOT for production use!
+    page-selector(
+      mode='move',
+      v-model='movePageModal',
+      :open-handler='pageMoveRename',
+      :path='path',
+      :locale='locale'
+    )
+
+    page-selector(mode='create',
+      v-model='duplicateOpts.modal',
+      :open-handler='pageDuplicateHandle',
+      :path='duplicateOpts.path',
+      :locale='duplicateOpts.locale'
+    )
+
+    page-delete(
+      v-model='deletePageModal', v-if='path && path.length'
+    )
+
+    page-convert(
+      v-model='convertPageModal', v-if='path && path.length'
+    )
+
+    //- .nav-header-dev(v-if='isDevMode')
+    //-  v-icon mdi-alert
+    //-  div
+    //-    .overline DEVELOPMENT VERSION
+    //-    .overline This code base is NOT for production use!
 </template>
 
 <script>
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
+import colors from '@/themes/default/js/extended-color-scheme'
+
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
+import createFollowerMutation from 'gql/followers/create-follower.gql'
+import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
+import isFollowingQuery from 'gql/followers/is-following.gql'
 
 /* global siteConfig, siteLangs */
 
@@ -286,6 +417,7 @@ export default {
   },
   data() {
     return {
+      isFollowingSite: false,
       menuIsShown: true,
       searchIsShown: true,
       searchAdvMenuShown: false,
@@ -299,7 +431,10 @@ export default {
         locale: 'en',
         path: 'new-page',
         modal: false
-      }
+      },
+      sites: [],
+      menuIsOpen: false,
+      colors: colors
     }
   },
   computed: {
@@ -319,6 +454,9 @@ export default {
     pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
+    sitesWithWriteAccess: get('user/sitesWithWriteAccess'),
+    sitePath: get('page/sitePath'),
+    siteId: get('page/siteId'),
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
@@ -338,19 +476,30 @@ export default {
       }
     },
     isAdmin () {
-      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
+      return _.intersection(this.permissions, [
+        'manage:system',
+        'write:users',
+        'manage:users',
+        'write:groups',
+        'manage:groups',
+        'manage:navigation',
+        'manage:theme',
+        'manage:api',
+        'manage:sites'
+      ]).length > 0
     },
     hasNewPagePermission () {
-      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
+      return this.hasSuperAdminPermission || this.hasSiteAdminPermission || this.sitesWithWriteAccess.includes(this.siteId)
     },
-    hasAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasSuperAdminPermission: get('page/effectivePermissions@system.manage'),
+    hasSiteAdminPermission: get('page/effectivePermissions@sites.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
-      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
+      return this.hasSuperAdminPermission || this.hasSiteAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     }
   },
@@ -358,6 +507,7 @@ export default {
     if (this.hideSearch || this.dense || this.$vuetify.breakpoint.smAndDown) {
       this.searchIsShown = false
     }
+    if (this.path) this.checkIfFollowingSite()
   },
   mounted () {
     this.$root.$on('pageEdit', () => {
@@ -382,6 +532,7 @@ export default {
       this.pageDelete()
     })
     this.isDevMode = siteConfig.devMode === true
+    this.fetchSitesFromUser()
   },
   methods: {
     searchFocus () {
@@ -412,19 +563,19 @@ export default {
       this.newPageModal = true
     },
     pageNewCreate ({ path, locale }) {
-      window.location.assign(`/e/${locale}/${path}`)
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}`)
     },
     pageView () {
-      window.location.assign(`/${this.locale}/${this.path}`)
+      window.location.assign(`/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageEdit () {
-      window.location.assign(`/e/${this.locale}/${this.path}`)
+      window.location.assign(`/e/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageHistory () {
-      window.location.assign(`/h/${this.locale}/${this.path}`)
+      window.location.assign(`/h/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageSource () {
-      window.location.assign(`/s/${this.locale}/${this.path}`)
+      window.location.assign(`/s/${this.sitePath}/${this.locale}/${this.path}`)
     },
     pageDuplicate () {
       const pathParts = this.path.split('/')
@@ -435,7 +586,7 @@ export default {
       }
     },
     pageDuplicateHandle ({ locale, path }) {
-      window.location.assign(`/e/${locale}/${path}?from=${this.$store.get('page/id')}`)
+      window.location.assign(`/e/${this.sitePath}/${locale}/${path}?from=${this.$store.get('page/id')}`)
     },
     pageConvert () {
       this.convertPageModal = true
@@ -455,7 +606,7 @@ export default {
           }
         })
         if (_.get(resp, 'data.pages.move.responseResult.succeeded', false)) {
-          window.location.replace(`/${locale}/${path}`)
+          window.location.replace(`/${this.sitePath}/${locale}/${path}`)
         } else {
           throw new Error(_.get(resp, 'data.pages.move.responseResult.message', this.$t('common:error.unexpected')))
         }
@@ -480,7 +631,7 @@ export default {
       switch (this.mode) {
         case 'view':
         case 'history':
-          window.location.assign(`/${locale.code}/${this.path}`)
+          window.location.assign(`/${this.sitePath}/${locale.code}/${this.path}`)
           break
       }
     },
@@ -488,7 +639,104 @@ export default {
       window.location.assign('/logout')
     },
     goHome () {
-      window.location.assign('/')
+      window.location.assign(`/${this.sitePath}`)
+    },
+    goToSite (path) {
+      window.location.assign(`/${path || ''}`)
+    },
+    async fetchSitesFromUser() {
+      try {
+        const response = await this.$store.dispatch('user/fetchSites', { apolloClient: this.$apollo })
+        const sitesData = response?.data?.sites || []
+
+        this.sites = Object.values(sitesData).map(site => {
+          return {
+            id: site.id,
+            value: site.path,
+            text: site.name
+          }
+        })
+      } catch (error) {
+        console.error(error)
+        this.sites = []
+      }
+    },
+    async checkIfFollowingSite() {
+      try {
+        const response = await this.$apollo.query({
+          query: isFollowingQuery,
+          variables: { siteId: this.siteId, pageId: null }
+        })
+        this.isFollowingSite = response.data.isFollowing.isFollowing
+      } catch (error) {
+        console.error('Error checking if following site:', error)
+      }
+    },
+    async followSite() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: createFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: null
+          }
+        })
+        if (response.data.createFollower.operation.succeeded) {
+          this.isFollowingSite = true
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully followed the site.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error following site:', response.data.createFollower.operation.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to follow the site.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error following site:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to follow the site.',
+          icon: 'error'
+        })
+      }
+    },
+    async unfollowSite() {
+      try {
+        const response = await this.$apollo.mutate({
+          mutation: deleteFollowerMutation,
+          variables: {
+            siteId: this.siteId,
+            pageId: null
+          }
+        })
+        if (response.data.deleteFollower.responseResult.succeeded) {
+          this.isFollowingSite = false
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: 'Successfully unfollowed the site.',
+            icon: 'check_circle'
+          })
+        } else {
+          console.error('Error unfollowing site:', response.data.deleteFollower.message)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: 'An error occurred while trying to unfollow the site.',
+            icon: 'error'
+          })
+        }
+      } catch (error) {
+        console.error('Error unfollowing site:', error)
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'An error occurred while trying to unfollow the site.',
+          icon: 'error'
+        })
+      }
     },
     goToRepo () {
       window.open('https://github.com/mar-team/wiki', '_blank', 'noopener')
@@ -500,7 +748,7 @@ export default {
 <style lang='scss'>
 
 .nav-header {
-  //z-index: 1000;
+  height: 64px !important;
 
   .v-toolbar__extension {
     padding: 0;
@@ -584,4 +832,53 @@ export default {
   width: 22px;
 }
 
+.sitesList {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  max-height: 500px;
+  min-width: 160px; /* Adjust for small screens */
+}
+
+@media (min-width: 1201px) {
+  .sitesList {
+    max-width: 400px; /* Adjust for large screens */
+  }
+}
+
+#selected-site-item > div {
+  font-weight: 600;
+}
+
+.hover-text {
+  color: mc("text", "darkGrey") !important;
+  &:hover > .v-btn__content > span {
+    color: mc("primary", "1");
+  }
+
+  &.color-theme-dark {
+    color: white !important;
+    &:hover > .v-btn__content > span {
+      color: mc("ext-teal", "1");
+    }
+  }
+}
+
+.hover-icon {
+  &:hover > .v-btn__content > .v-icon {
+    color: mc("primary", "1") !important;
+  }
+
+  &.color-theme-dark {
+    &:hover > .v-btn__content > .v-icon {
+      color: mc("ext-teal", "1") !important;
+    }
+  }
+}
+
+.color-theme-dark {
+  background-color: mc("text", "darkPurple") !important;
+  color: white !important;
+}
 </style>

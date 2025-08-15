@@ -56,7 +56,7 @@
 
 <script>
 import _ from 'lodash'
-import { sync } from 'vuex-pathify'
+import { sync, get } from 'vuex-pathify'
 import { OrbitSpinner } from 'epic-spinners'
 
 import searchPagesQuery from 'gql/common/common-pages-query-search.gql'
@@ -74,7 +74,8 @@ export default {
         results: [],
         suggestions: [],
         totalHits: 0
-      }
+      },
+      sites: [],
     }
   },
   computed: {
@@ -109,8 +110,10 @@ export default {
     results() {
       this.cursor = 0
     }
+
   },
   mounted() {
+    this.fetchSitesFromUser()
     this.$root.$on('searchMove', (dir) => {
       this.cursor += ((dir === 'up') ? -1 : 1)
       if (this.cursor < -1) {
@@ -136,18 +139,47 @@ export default {
       this.search = term
     },
     goToPage(item) {
-      window.location.assign(`/${item.locale}/${item.path}`)
+      window.location.assign(`/${this.sitePath}/${item.locale}/${item.path}`)
     },
     goToPageInNewTab(item) {
-      window.open(`/${item.locale}/${item.path}`, '_blank')
-    }
+      window.open(`/${this.sitePath}/${item.locale}/${item.path}`, '_blank')
+    },
+    fetchSitesFromUser () {
+      this.$store
+        .dispatch('user/fetchSites', { apolloClient: this.$apollo })
+        .then((response) => {
+          const sitesData = response?.data?.sites
+          this.sites = Object.values(sitesData).map((site) => ({
+            id: site.id,
+            path: site.path,
+            name: site.name
+          }))
+          let pathname = window.location.pathname
+          if (pathname === '/') {
+            this.sitePath = 'default'
+          } else if (pathname.includes('/t/')) {
+            this.sitePath = _.compact(decodeURI(pathname).split("/"))[1]
+          } else {
+            this.sitePath = _.compact(decodeURI(pathname).split("/"))[0]
+          }
+          this.siteId = this.retrieveSiteId(this.sitePath)
+        })
+        .catch((error) => {
+          console.error(error)
+          this.sites = []
+        })
+    },
+    retrieveSiteId(sitePath) {
+      return this.sites.find(site => site.path === sitePath)?.id
+    },
   },
   apollo: {
     response: {
       query: searchPagesQuery,
       variables() {
         return {
-          query: this.search
+          query: this.search,
+          siteId: this.siteId
         }
       },
       fetchPolicy: 'network-only',
@@ -159,7 +191,7 @@ export default {
       result() {
         this.pagination = 1
       },
-      update: (data) => _.get(data, 'pages.search', {}),
+      update: (data) => _.get(data, 'searchPages', {}),
       watchLoading (isLoading) {
         this.searchIsLoading = isLoading
       }

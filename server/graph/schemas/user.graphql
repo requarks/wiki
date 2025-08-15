@@ -3,34 +3,34 @@
 # ===============================================
 
 extend type Query {
-  users: UserQuery
+  listUsers(filter: String, orderBy: String): [UserMinimal]
+    @auth(
+      requires: ["write:users", "manage:users", "manage:system", "manage:sites"]
+    )
+
+  searchUsers(query: String!): [UserMinimal]
+    @auth(
+      requires: [
+        "write:groups"
+        "manage:groups"
+        "write:users"
+        "manage:users"
+        "manage:system"
+        "manage:sites"
+      ]
+    )
+
+  profile: UserProfile
+
+  autoCompleteEmails(siteId: String!, query: String!): [String]
+    @auth(requires: ["read:pages", "manage:system", "manage:sites"])
+
+  userById(id: Int!): User
+    @auth(requires: ["manage:users", "manage:system", "manage:sites"])
 }
 
 extend type Mutation {
   users: UserMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type UserQuery {
-  list(
-    filter: String
-    orderBy: String
-  ): [UserMinimal] @auth(requires: ["write:users", "manage:users", "manage:system"])
-
-  search(
-    query: String!
-  ): [UserMinimal] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
-
-  single(
-    id: Int!
-  ): User @auth(requires: ["manage:users", "manage:system"])
-
-  profile: UserProfile
-
-  lastLogins: [UserLastLogin] @auth(requires: ["write:groups", "manage:groups", "write:users", "manage:users", "manage:system"])
 }
 
 # -----------------------------------------------
@@ -46,7 +46,8 @@ type UserMutation {
     groups: [Int]!
     mustChangePassword: Boolean
     sendWelcomeEmail: Boolean
-  ): UserResponse @auth(requires: ["write:users", "manage:users", "manage:system"])
+  ): UserResponse
+    @auth(requires: ["write:users", "manage:users", "manage:system"])
 
   update(
     id: Int!
@@ -61,34 +62,25 @@ type UserMutation {
     appearance: String
   ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
 
-  delete(
-    id: Int!
-    replaceId: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  delete(id: Int!, replaceId: Int!): DefaultResponse
+    @auth(requires: ["manage:users", "manage:system"])
 
-  verify(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  verify(id: Int!): DefaultResponse
+    @auth(requires: ["manage:users", "manage:system"])
 
-  activate(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  activate(id: Int!): DefaultResponse
+    @auth(requires: ["manage:users", "manage:system"])
 
-  deactivate(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  deactivate(id: Int!): DefaultResponse
+    @auth(requires: ["manage:users", "manage:system"])
 
-  enableTFA(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  enableTFA(id: Int!): DefaultResponse
+    @auth(requires: ["manage:users", "manage:system"])
 
-  disableTFA(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:users", "manage:system"])
+  disableTFA(id: Int!): DefaultResponse
+    @auth(requires: ["manage:users", "manage:system"])
 
-  resetPassword(
-    id: Int!
-  ): DefaultResponse
+  resetPassword(id: Int!): DefaultResponse
 
   updateProfile(
     name: String!
@@ -99,10 +91,7 @@ type UserMutation {
     appearance: String!
   ): UserTokenResponse
 
-  changePassword(
-    current: String!
-    new: String!
-  ): UserTokenResponse
+  changePassword(current: String!, new: String!): UserTokenResponse
 }
 
 # -----------------------------------------------
@@ -114,12 +103,6 @@ type UserResponse {
   user: User
 }
 
-type UserLastLogin {
-  id: Int!
-  name: String!
-  lastLoginAt: Date!
-}
-
 type UserMinimal {
   id: Int!
   name: String!
@@ -128,7 +111,6 @@ type UserMinimal {
   isSystem: Boolean!
   isActive: Boolean!
   createdAt: Date!
-  lastLoginAt: Date
 }
 
 type User {
@@ -149,7 +131,6 @@ type User {
   appearance: String!
   createdAt: Date!
   updatedAt: Date!
-  lastLoginAt: Date
   tfaIsActive: Boolean!
   groups: [Group]!
 }
@@ -169,7 +150,6 @@ type UserProfile {
   appearance: String!
   createdAt: Date!
   updatedAt: Date!
-  lastLoginAt: Date
   groups: [String]!
   pagesTotal: Int!
 }

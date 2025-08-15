@@ -3,12 +3,12 @@
     nav-header(dense)
       template(slot='mid')
         v-text-field.editor-title-input(
-          dark
           solo
           flat
           v-model='currentPageTitle'
           hide-details
-          background-color='black'
+          :background-color='$vuetify.theme.dark ? colors.text.darkPurple : "#FFFFFF"'
+          :color='$vuetify.theme.dark ? "#FFFFFF" : colors.text.darkGrey'
           dense
           full-width
         )
@@ -19,21 +19,40 @@
         v-btn.animated.fadeInDown(
           text
           color='green'
-          @click.exact='save'
+          @click.exact='save(false)'
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
-          v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
-          span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+          v-icon(:style='"color: " + colors.alert.success', :left='$vuetify.breakpoint.lgAndUp') mdi-check
+          span.grey--text(
+            v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty'
+            :class='$vuetify.theme.dark ? "text--lighten-1" : "text--darken-1"'
+            ) {{ $t('editor:save.saved') }}
+          span.toolbar-btn-text(
+            v-else-if='$vuetify.breakpoint.lgAndUp'
+            :class='{ "dark": $vuetify.theme.dark }'
+            ) {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+        v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode === `create` || isDirty'
+          text
+          :style='"color: " + colors.alert.success'
+          @click.exact='save(true)'
+          :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          )
+          v-icon(:style='"color: " + colors.alert.success', :left='$vuetify.breakpoint.lgAndUp') mdi-check
+          span.toolbar-btn-text(
+            :class='{ "dark": $vuetify.theme.dark }'
+          ) {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
           @click='openPropsModal'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
-          v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.page') }}
+          v-icon(:style='"color: " + colors.alert.info', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
+          span.toolbar-btn-text(
+            v-if='$vuetify.breakpoint.lgAndUp'
+            :class='{ "dark": $vuetify.theme.dark }'
+            ) {{ $t('common:actions.page') }}
         v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
           text
@@ -41,8 +60,11 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           @click='exit'
           )
-          v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
+          v-icon(:style='"color: " + colors.alert.error', :left='$vuetify.breakpoint.lgAndUp') mdi-close
+          span.toolbar-btn-text(
+            v-if='$vuetify.breakpoint.lgAndUp'
+            :class='{ "dark": $vuetify.theme.dark }'
+            ) {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
     v-main
       component(:is='currentEditor', :save='save')
@@ -64,6 +86,7 @@ import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
 import editorStore from '../store/editor'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 /* global WIKI */
 
@@ -107,7 +130,7 @@ export default {
     },
     tags: {
       type: Array,
-      default: () => ([])
+      default: () => []
     },
     isPublished: {
       type: Boolean,
@@ -152,6 +175,18 @@ export default {
     effectivePermissions: {
       type: String,
       default: ''
+    },
+    siteId: {
+      type: String,
+      default: ''
+    },
+    siteName: {
+      type: String,
+      default: ''
+    },
+    sitePath: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -164,6 +199,7 @@ export default {
       dialogUnsaved: false,
       exitConfirmed: false,
       initContentParsed: '',
+      colors: colors,
       savedState: {
         description: '',
         isPublished: false,
@@ -197,6 +233,9 @@ export default {
         this.savedState.publishEndDate !== this.$store.get('page/publishEndDate'),
         this.savedState.css !== this.$store.get('page/scriptCss'),
         this.savedState.js !== this.$store.get('page/scriptJs')
+        // this.siteId !== this.$store.get('page/siteId'),
+        // this.siteName !== this.$store.get('page/siteName'),
+        // this.sitePath !== this.$store.get('page/sitePath')
       ], Boolean)
     }
   },
@@ -226,6 +265,10 @@ export default {
     this.$store.set('page/scriptJs', this.scriptJs)
 
     this.$store.set('page/mode', 'edit')
+
+    this.$store.set('page/siteId', this.siteId)
+    this.$store.set('page/siteName', this.siteName)
+    this.$store.set('page/sitePath', this.sitePath)
 
     this.setCurrentSavedState()
 
@@ -276,7 +319,42 @@ export default {
     openConflict() {
       this.$root.$emit('saveConflict')
     },
-    async save({ rethrow = false, overwrite = false } = {}) {
+    isContentNotEndingWithClearDiv(content) {
+      const childElems = content?.children
+      if (childElems && childElems.length > 0) {
+        const lastElem = childElems[childElems.length - 1]
+        return !(
+          lastElem?.tagName === 'DIV' &&
+          lastElem?.id === 'content-clear-div'
+        )
+      }
+      return false
+    },
+    getEditorContent() {
+      let htmlContent = this.$store.get('editor/content')
+      const editor = this.$store.get('editor/editorKey')
+
+      // If the content was created with the CKEditor and ends with an aligned figure,
+      // we need to add a clear div to prevent layout issues.
+      if (editor === 'ckeditor') {
+        const parser = new DOMParser()
+        const document = parser.parseFromString(htmlContent, 'text/html')
+        let htmlBody = document.querySelector('body')
+
+        if (this.isContentNotEndingWithClearDiv(htmlBody)) {
+          const clearDiv = document.createElement('div')
+          clearDiv.setAttribute('style', 'clear: both;')
+          clearDiv.id = 'content-clear-div'
+          htmlBody.appendChild(clearDiv)
+
+          const serializer = new XMLSerializer()
+          htmlContent = serializer.serializeToString(document)
+        }
+      }
+
+      return htmlContent
+    },
+    async save(notifyFollowers = false, { rethrow = false, overwrite = false } = {}) {
       this.showProgressDialog('saving')
       this.isSaving = true
 
@@ -306,6 +384,9 @@ export default {
                 $scriptJs: String
                 $tags: [String]!
                 $title: String!
+                $siteId: String!
+                $notifyFollowers: Boolean
+                $mentions: [String]
               ) {
                 pages {
                   create(
@@ -322,6 +403,9 @@ export default {
                     scriptJs: $scriptJs
                     tags: $tags
                     title: $title
+                    siteId: $siteId
+                    notifyFollowers: $notifyFollowers
+                    mentions: $mentions
                   ) {
                     responseResult {
                       succeeded
@@ -338,7 +422,7 @@ export default {
               }
             `,
             variables: {
-              content: this.$store.get('editor/content'),
+              content: this.getEditorContent(),
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
@@ -350,7 +434,10 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              title: this.$store.get('page/title'),
+              siteId: this.$store.get('page/siteId'),
+              notifyFollowers: notifyFollowers,
+              mentions: this.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.create', {})
@@ -364,12 +451,15 @@ export default {
             })
             this.$store.set('editor/id', _.get(resp, 'page.id'))
             this.$store.set('editor/mode', 'update')
+            this.$store.set('editor/mentions', [])
+            this.$root.$emit('saved-page')
             this.exitConfirmed = true
-            window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+
+            window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
           } else {
             throw new Error(_.get(resp, 'responseResult.message'))
           }
-        } else {
+        } else if (this.isDirty) {
           // --------------------------------------------
           // -> UPDATE EXISTING PAGE
           // --------------------------------------------
@@ -377,9 +467,7 @@ export default {
           const conflictResp = await this.$apollo.query({
             query: gql`
               query ($id: Int!, $checkoutDate: Date!) {
-                pages {
                   checkConflicts(id: $id, checkoutDate: $checkoutDate)
-                }
               }
             `,
             fetchPolicy: 'network-only',
@@ -388,7 +476,7 @@ export default {
               checkoutDate: this.checkoutDateActive
             }
           })
-          if (_.get(conflictResp, 'data.pages.checkConflicts', false)) {
+          if (_.get(conflictResp, 'data.checkConflicts', false)) {
             this.$root.$emit('saveConflict')
             throw new Error(this.$t('editor:conflict.warning'))
           }
@@ -410,6 +498,9 @@ export default {
                 $scriptJs: String
                 $tags: [String]
                 $title: String
+                $siteId: String!
+                $notifyFollowers: Boolean
+                $mentions: [String]
               ) {
                 pages {
                   update(
@@ -427,6 +518,9 @@ export default {
                     scriptJs: $scriptJs
                     tags: $tags
                     title: $title
+                    siteId: $siteId
+                    notifyFollowers: $notifyFollowers
+                    mentions: $mentions
                   ) {
                     responseResult {
                       succeeded
@@ -443,7 +537,7 @@ export default {
             `,
             variables: {
               id: this.$store.get('page/id'),
-              content: this.$store.get('editor/content'),
+              content: this.getEditorContent(),
               description: this.$store.get('page/description'),
               editor: this.$store.get('editor/editorKey'),
               locale: this.$store.get('page/locale'),
@@ -455,21 +549,27 @@ export default {
               scriptCss: this.$store.get('page/scriptCss'),
               scriptJs: this.$store.get('page/scriptJs'),
               tags: this.$store.get('page/tags'),
-              title: this.$store.get('page/title')
+              title: this.$store.get('page/title'),
+              siteId: this.$store.get('page/siteId'),
+              notifyFollowers: notifyFollowers,
+              mentions: WIKI.$store.get('editor/mentions')
             }
           })
           resp = _.get(resp, 'data.pages.update', {})
           if (_.get(resp, 'responseResult.succeeded')) {
             this.checkoutDateActive = _.get(resp, 'page.updatedAt', this.checkoutDateActive)
             this.isConflict = false
+            WIKI.$store.set('editor/mentions', [])
             this.$store.commit('showNotification', {
               message: this.$t('editor:save.updateSuccess'),
               style: 'success',
               icon: 'check'
             })
+            this.$root.$emit('saved-page')
+
             if (this.locale !== this.$store.get('page/locale') || this.path !== this.$store.get('page/path')) {
               _.delay(() => {
-                window.location.replace(`/e/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+                window.location.replace(`/e/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
               }, 1000)
             }
           } else {
@@ -521,13 +621,13 @@ export default {
       this.exitConfirmed = true
       _.delay(() => {
         if (this.$store.get('editor/mode') === 'create') {
-          window.location.assign(`/`)
+          window.location.assign(`/${this.$store.get('page/sitePath')}`)
         } else {
-          window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
+          window.location.assign(`/${this.$store.get('page/sitePath')}/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }
       }, 500)
     },
-    setCurrentSavedState () {
+    setCurrentSavedState() {
       this.savedState = {
         description: this.$store.get('page/description'),
         isPublished: this.$store.get('page/isPublished'),
@@ -557,21 +657,19 @@ export default {
     isConflict: {
       query: gql`
         query ($id: Int!, $checkoutDate: Date!) {
-          pages {
             checkConflicts(id: $id, checkoutDate: $checkoutDate)
-          }
         }
       `,
       fetchPolicy: 'network-only',
       pollInterval: 5000,
-      variables () {
+      variables() {
         return {
           id: this.pageId,
           checkoutDate: this.checkoutDateActive
         }
       },
-      update: (data) => _.cloneDeep(data.pages.checkConflicts),
-      skip () {
+      update: (data) => _.cloneDeep(data.checkConflicts),
+      skip() {
         return this.mode === 'create' || this.isSaving || !this.isDirty
       }
     }
@@ -580,22 +678,28 @@ export default {
 </script>
 
 <style lang='scss'>
+.editor {
+  background-color: mc('grey', '900') !important;
+  min-height: 100vh;
 
-  .editor {
-    background-color: mc('grey', '900') !important;
-    min-height: 100vh;
-
-    .application--wrap {
-      background-color: mc('grey', '900');
-    }
-
-    &-title-input input {
-      text-align: center;
-    }
+  .application--wrap {
+    background-color: mc('grey', '900');
   }
 
-  .atom-spinner.is-inline {
-    display: inline-block;
+  &-title-input input {
+    text-align: center;
   }
+}
 
+.toolbar-btn-text {
+  color: mc(text, 'darkGrey');
+
+  &.dark {
+    color: white;
+  }
+}
+
+.atom-spinner.is-inline {
+  display: inline-block;
+}
 </style>

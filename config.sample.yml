@@ -145,3 +145,36 @@ dataPath: ./data
 # file uploads.
 
 bodyParserLimit: 5mb
+
+# ---------------------------------------------------------------------
+# Pandoc Service Path
+# ---------------------------------------------------------------------
+# Path to the pandoc service.
+
+pandocPath: http://pandoc.pandoc.svc.cluster.local
+
+# ---------------------------------------------------------------------
+
+version: 1.3.0
+releaseDate: 14.03.2025
+devMode: true
+
+email:
+  support: "dummy-support@dummy.com"
+
+scheduler:
+  activeJobExpirationMinutes: 5 # Duration in minutes for which active jobs are kept in the queue. Use shorter values if you stop the server frequently.
+  concurrentWorkers:
+    rebuild-tree: 3
+    render-page: 3
+    sanitize-svg: 3
+
+# ---------------------------------------------------------------------
+# Page History Purge Duration
+# ---------------------------------------------------------------------
+# Duration to keep page history before purging.
+# Use ISO 8601 duration format (e.g. P2Y for 2 years, P1Y for 1 year, P180D for 180 days).
+# All page history older than this duration will be deleted by the scheduled job.
+purgePageHistoryOlderThan: P2Y
+
+companyName: "Dummy Company"
