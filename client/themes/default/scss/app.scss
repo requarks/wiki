@@ -838,6 +838,7 @@
     font-weight: normal;
     font-size: calc(var(--rem-factor) * 1rem);
     box-shadow: none;
+    overflow: auto;
 
     &::before,
     &::after {
