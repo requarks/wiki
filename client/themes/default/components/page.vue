@@ -94,18 +94,14 @@
             )
             v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
               .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
-              v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
-                template(v-for='(tocItem, tocIdx) in tocDecoded')
-                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
-                    v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                    v-list-item-title.px-3 {{tocItem.title}}
-                  //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
-                  template(v-for='tocSubItem in tocItem.children')
-                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
-                      v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                      v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
-                    //- v-divider(inset, v-if='tocIdx < toc.length - 1')
-
+              v-list.py-2(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+                page-toc-item(
+                  v-for='(item, idx) in tocDecoded'
+                  :key='`tocitem-` + idx'
+                  :item='item'
+                  :min='tocOptionsDecoded.min'
+                  :max='tocOptionsDecoded.max'
+                  )
             v-card.page-tags-card.mb-5(v-if='tags.length > 0')
               .pa-5
                 .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
@@ -360,6 +356,7 @@
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
+import PageTocItem from './page-toc-item.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get, sync } from 'vuex-pathify'
@@ -407,6 +404,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
+    PageTocItem,
     StatusIndicator
   },
   props: {
@@ -489,6 +487,10 @@ export default {
     filename: {
       type: String,
       default: ''
+    },
+    tocOptions: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -560,12 +562,16 @@ export default {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     },
     tocPosition: get('site/tocPosition'),
+    tocOptionsDecoded () {
+      return JSON.parse(Buffer.from(this.tocOptions, 'base64').toString())
+    },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
+
     hasAnyPagePermissions () {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission

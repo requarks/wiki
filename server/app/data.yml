@@ -60,6 +60,9 @@ defaults:
       theme: 'default'
       iconset: 'md'
       darkMode: false
+      tocDepth:
+        min: 1
+        max: 2
       tocPosition: 'left'
     auth:
       autoLogin: false

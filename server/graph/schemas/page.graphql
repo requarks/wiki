@@ -98,6 +98,8 @@ type PageMutation {
     scriptJs: String
     tags: [String]!
     title: String!
+    tocDepth: RangeInput
+    useDefaultTocDepth: Boolean
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   update(
@@ -115,6 +117,8 @@ type PageMutation {
     scriptJs: String
     tags: [String]
     title: String
+    tocDepth: RangeInput
+    useDefaultTocDepth: Boolean
   ): PageResponse @auth(requires: ["write:pages", "manage:pages", "manage:system"])
 
   convert(
@@ -180,33 +184,35 @@ type PageMigrationResponse {
 }
 
 type Page {
-  id: Int!
-  path: String!
-  hash: String!
-  title: String!
-  description: String!
-  isPrivate: Boolean! @auth(requires: ["write:pages", "manage:system"])
-  isPublished: Boolean! @auth(requires: ["write:pages", "manage:system"])
+  id: Int
+  path: String
+  hash: String
+  title: String
+  description: String
+  isPrivate: Boolean @auth(requires: ["write:pages", "manage:system"])
+  isPublished: Boolean @auth(requires: ["write:pages", "manage:system"])
   privateNS: String @auth(requires: ["write:pages", "manage:system"])
-  publishStartDate: Date! @auth(requires: ["write:pages", "manage:system"])
-  publishEndDate: Date! @auth(requires: ["write:pages", "manage:system"])
-  tags: [PageTag]!
-  content: String! @auth(requires: ["read:source", "write:pages", "manage:system"])
+  publishStartDate: Date @auth(requires: ["write:pages", "manage:system"])
+  publishEndDate: Date @auth(requires: ["write:pages", "manage:system"])
+  tags: [PageTag]
+  content: String @auth(requires: ["read:source", "write:pages", "manage:system"])
   render: String
   toc: String
-  contentType: String!
-  createdAt: Date!
-  updatedAt: Date!
-  editor: String! @auth(requires: ["write:pages", "manage:system"])
-  locale: String!
+  tocDepth: Range
+  useDefaultTocDepth: Boolean
+  contentType: String
+  createdAt: Date
+  updatedAt: Date
+  editor: String @auth(requires: ["write:pages", "manage:system"])
+  locale: String
   scriptCss: String
   scriptJs: String
-  authorId: Int! @auth(requires: ["write:pages", "manage:system"])
-  authorName: String! @auth(requires: ["write:pages", "manage:system"])
-  authorEmail: String! @auth(requires: ["write:pages", "manage:system"])
-  creatorId: Int! @auth(requires: ["write:pages", "manage:system"])
-  creatorName: String! @auth(requires: ["write:pages", "manage:system"])
-  creatorEmail: String! @auth(requires: ["write:pages", "manage:system"])
+  authorId: Int @auth(requires: ["write:pages", "manage:system"])
+  authorName: String @auth(requires: ["write:pages", "manage:system"])
+  authorEmail: String @auth(requires: ["write:pages", "manage:system"])
+  creatorId: Int @auth(requires: ["write:pages", "manage:system"])
+  creatorName: String @auth(requires: ["write:pages", "manage:system"])
+  creatorEmail: String @auth(requires: ["write:pages", "manage:system"])
 }
 
 type PageTag {

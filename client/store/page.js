@@ -17,6 +17,11 @@ const state = {
   editor: '',
   mode: '',
   scriptJs: '',
+  tocDepth: {
+    min: 1,
+    max: 2
+  },
+  useDefaultTocDepth: true,
   scriptCss: '',
   effectivePermissions: {
     comments: {
