@@ -662,7 +662,7 @@ export default {
       color: #FFF;
       font-weight: 400;
       font-size: .85rem;
-      font-family: Roboto Mono, monospace;
+      font-family: Ubuntu Mono, monospace;
     }
     // ---------------------------------
     // TABLES

@@ -300,7 +300,7 @@ export default {
   &-source {
     background-color: mc('sapphire', '900') !important;
     border-radius: 7px;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Ubuntu Mono', monospace;
     font-size: 14px;
     color: #FFF !important;
 

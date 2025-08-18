@@ -1226,7 +1226,7 @@ $editor-bg: mc('surface-dark', 'page-background');
 
   .CodeMirror {
     height: auto;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Ubuntu Mono', monospace;
     font-size: .9rem;
     background-color: $editor-bg;
 
@@ -1299,7 +1299,7 @@ $editor-bg: mc('surface-dark', 'page-background');
   border: 1px solid mc('neutral', '700');
 
   background: mc('neutral', '900');
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Ubuntu Mono', monospace;
   font-size: .9rem;
 
   max-height: 150px;

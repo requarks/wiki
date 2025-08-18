@@ -693,7 +693,7 @@ $editor-bg: mc('surface-dark', 'page-background');
 
   .CodeMirror {
     height: auto;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Ubuntu Mono', monospace;
     font-size: .9rem;
     background-color: $editor-bg;
 

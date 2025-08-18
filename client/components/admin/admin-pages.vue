@@ -166,6 +166,6 @@ export default {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Ubuntu Mono', monospace;
 }
 </style>

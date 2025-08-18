@@ -6,6 +6,7 @@ variables:
   TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
   PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
+  NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
@@ -66,9 +67,17 @@ environment-set:
 
 build:
  stage: build
+ before_script:
+   - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
  script:
-   - bash scripts/set_up_runner.sh
-   - yarn build
+   - docker image inspect "$NODE_IMAGE" > /dev/null 2>&1 || docker pull "$NODE_IMAGE"
+   - docker build --no-cache -f Dockerfile.build --build-arg NODE_IMAGE="$NODE_IMAGE" -t codebase-build .
+   - docker run --rm -v $(pwd)/assets:/wiki/assets codebase-build
+   - docker rmi codebase-build
+ artifacts:
+   paths:
+     - assets/
+   expire_in: 1 hour
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
@@ -122,6 +131,8 @@ sonarqube-scan:
 docker-build:
   stage: docker-build
   before_script:
+    - df -h # Check disk space before building
+    - export PANDOC="$PANDOC"
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
     - bash scripts/build_images.sh
@@ -148,6 +159,7 @@ push-docker-image:
   needs:
    - docker-build
   script:
+   - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
@@ -172,10 +184,6 @@ promote-prod-release-version:
    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
      when: always
 
-# after_script:
-#     - |
-#       NPM_GLOBAL_DIR="$HOME/.npm-global"
-#       if [ -d "$NPM_GLOBAL_DIR" ]; then
-#           echo "Directory $TARGET_DIR exists. Deleting it..."
-#           rm -rf "$NPM_GLOBAL_DIR"
-#       fi
+after_script:
+  - echo "Cleaning up to prevent ENOSPC (no space left on device error)..."
+  - rm -rf ~/.cache/yarn ~/.npm $CI_PROJECT_DIR/node_modules $CI_PROJECT_DIR/.cache /tmp/* || true

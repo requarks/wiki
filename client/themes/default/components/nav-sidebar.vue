@@ -65,7 +65,13 @@
               v-else
               :color='dark ? `white` : colors.textLight.primary'
               ) {{ item.c }}
-          v-list-item-title {{ item.l }}
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              )  {{ item.l }}
+            span {{ item.l }}
         v-divider.my-2(v-else-if='item.k === `divider`')
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
     //-> Browse
@@ -89,7 +95,13 @@
             :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`'
             )
             v-icon(small :color='dark ? `white` : colors.textLight.primary') mdi-folder-open
-          v-list-item-title {{ item.title }}
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              ) {{ item.title }}
+            span {{ item.title }}
         v-divider.mt-2
         v-list-item.mt-2(
           v-if='currentParent.pageId > 0'
@@ -99,7 +111,13 @@
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.textLight.primary') mdi-text-box
-          v-list-item-title {{ currentParent.title }}
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='currentParent.title'
+              ) {{ currentParent.title }}
+            span {{ currentParent.title }}
       //- Current directory items
       template(
         v-for='item of itemList'
@@ -113,7 +131,13 @@
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.textLight.primary') mdi-folder
-          v-list-item-title {{ item.title }}
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              ) {{ item.title }}
+            span {{ item.title }}
         v-list-item(
           v-else
           :href='getHref(item)'
@@ -123,7 +147,13 @@
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.textLight.primary') mdi-text-box
-          v-list-item-title {{ item.title }}
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              ) {{ item.title }}
+            span {{ item.title }}
 </template>
 
 <script>
