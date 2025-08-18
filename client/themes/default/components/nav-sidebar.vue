@@ -55,7 +55,7 @@
               v-else
               :color='dark ? `white` : colors.text.darkGrey'
               ) {{ item.c }}
-          v-tooltip(bottom)
+          v-tooltip(bottom, open-delay=500)
             template(v-slot:activator='{ on }')
               v-list-item-title(
                 v-on='on',
@@ -84,7 +84,7 @@
             :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`'
             )
             v-icon(small :color='dark ? `white` : colors.text.darkGrey') mdi-folder-open
-          v-tooltip(bottom)
+          v-tooltip(bottom, open-delay=500)
             template(v-slot:activator='{ on }')
               v-list-item-title(
                 v-on='on',
@@ -100,7 +100,7 @@
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
-          v-tooltip(bottom)
+          v-tooltip(bottom, open-delay=500)
             template(v-slot:activator='{ on }')
               v-list-item-title(
                 v-on='on',
@@ -120,7 +120,7 @@
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-folder
-          v-tooltip(bottom)
+          v-tooltip(bottom, open-delay=500)
             template(v-slot:activator='{ on }')
               v-list-item-title(
                 v-on='on',
@@ -136,7 +136,7 @@
           )
           v-list-item-avatar(size='24')
             v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
-          v-tooltip(bottom)
+          v-tooltip(bottom, open-delay=500)
             template(v-slot:activator='{ on }')
               v-list-item-title(
                 v-on='on',
@@ -248,7 +248,7 @@ export default {
       return invertedAncestors
     },
     async updateRootParentWithActualData() {
-      const homePagepath = "home"
+      const homePagepath = 'home'
       const homePageResp = await this.$apollo.query({
         query: pageByPathQuery,
         fetchPolicy: 'cache-first',
