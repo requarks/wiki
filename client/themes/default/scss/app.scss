@@ -944,6 +944,11 @@
   // TABLES
   // ---------------------------------
 
+  div.table-wrap, figure.table {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
   table {
     margin: calc(var(--rem-factor)*.5rem) 0;
     border-spacing: 0;
