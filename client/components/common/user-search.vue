@@ -123,7 +123,6 @@ export default {
     },
     createUser() {
       this.isCreateDialogShown = true
-      // No need to emit, just open the dialog, as the prop is passed directly
     }
   },
   components: {
