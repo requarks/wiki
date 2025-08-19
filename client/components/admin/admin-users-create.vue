@@ -96,6 +96,7 @@ import createUserMutation from 'gql/admin/users/users-mutation-create.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
+  name: 'UserCreate',
   props: {
     value: {
       type: Boolean,
