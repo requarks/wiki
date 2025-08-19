@@ -82,10 +82,6 @@
     position: relative;
     color: mc("text-light", "primary");
 
-    @at-root .theme--dark & {
-    color: mc("text-dark", "primary");
-  }
-
     &:first-child {
       padding-top: 0;
     }
@@ -1315,10 +1311,11 @@
   }
 
   .mention {
-    background-color: rgba(mc('red', '200'), .1);
+    background-color: rgba(mc('red', '600'), .1);
     color: mc('text-light', 'brand-secondary');
 
     @at-root .theme--dark & {
+      background-color: rgba(mc('red', '800'), .25);
       color: mc('text-dark', 'brand-secondary');
     }
   }

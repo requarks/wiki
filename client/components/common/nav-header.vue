@@ -78,6 +78,7 @@
         v-toolbar.nav-header-inner(:color='colors.surfaceDark.primaryBlueLite', flat)
           slot(name='mid')
 
+            //- SEARCH-FIELD
             transition(name='navHeaderSearch')
               v-text-field.search-field(
                 ref='searchField',
@@ -103,6 +104,7 @@
                 autocomplete='none'
               )
 
+            //- BROWSE BY TAGS
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.ml-2.mr-0.hover-icon(
@@ -286,12 +288,12 @@
               span {{$t('common:actions.exit')}}
             v-divider(vertical)
 
-          // - GITHUB REPO
+          //- GITHUB REPO
 
           template
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn(
+                v-btn.hover-icon(
                   icon, tile, height='64', v-on='on', @click="goToRepo", :aria-label='$t(`common:github.repository`)'
                 )
                   v-icon(color='grey') mdi-github
@@ -949,11 +951,18 @@ export default {
       caret-color: mc('text-light', 'primary') !important;
     }
 
+    &.v-input:hover{
+      .v-label {
+        font-size: 17px;
+      }
+    }
+
     .v-text-field__slot + .v-input__append-inner {
-      background-color: mc(action-light, highlight-on-lite);
+      background-color: mc('action-light', 'highlight-on-lite');
       border-radius: 100%;
       padding: 15px;
       margin-right: -23px;
+
       &> .v-input__icon > .v-icon.mdi.mdi-magnify {
         color: mc('text-light', 'primary') !important;
       }

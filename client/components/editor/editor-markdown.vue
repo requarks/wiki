@@ -1034,7 +1034,6 @@ export default {
 </script>
 
 <style lang='scss' scoped>
-
 $editor-height: calc(100vh - 112px - 24px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
 $editor-bg: mc('surface-dark', 'page-background');
@@ -1219,6 +1218,14 @@ $editor-bg: mc('surface-dark', 'page-background');
   .speed-dial--fixed {
     z-index: 8;
   }
+}
+</style>
+
+// Global styles
+<style lang='scss'>
+$editor-bg: mc('surface-dark', 'page-background');
+
+.editor-markdown {
 
   // ==========================================
   // CODE MIRROR
@@ -1250,7 +1257,7 @@ $editor-bg: mc('surface-dark', 'page-background');
     }
   }
 
-  ::v-deep .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
+  .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
     background-color: $editor-bg;
 
@@ -1259,7 +1266,7 @@ $editor-bg: mc('surface-dark', 'page-background');
     }
   }
 
-  ::v-deep .cm-s-wikijs-dark.CodeMirror {
+  .cm-s-wikijs-dark.CodeMirror {
     &, .CodeMirror-gutters {
       background-color: $editor-bg;
     }
