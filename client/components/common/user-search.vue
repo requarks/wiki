@@ -44,7 +44,7 @@
           v-btn(
             color='primary'
             @click='createUser'
-            :disabled='loading'
+            :disabled='loading || searchLoading || !search || items.length > 0'
           )
             v-icon(left) mdi-plus
             span Create User
