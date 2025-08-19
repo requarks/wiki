@@ -94,8 +94,7 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
  */
 router.post('/login', bruteforce.prevent, async (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Login')
-
-  if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
+  if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
     try {
       const authResult = await WIKI.models.users.login({
         strategy: req.body.strategy,
