@@ -55,8 +55,9 @@
             :disabled='loading'
           ) {{$t('common:actions.cancel')}}
     UserCreate(
-      v-model='isCreateDialogShown'
-      @refresh='refresh(false)'
+      v-model="isCreateDialogShown"
+      :default-group="defaultGroup"
+      @refresh="refresh(false)"
     )
 </template>
 
@@ -79,6 +80,10 @@ export default {
     value: {
       type: Boolean,
       default: false
+    },
+    defaultGroup: {
+      type: [String, Number, Array],
+      default: null
     }
   },
   data() {
@@ -118,7 +123,7 @@ export default {
     },
     createUser() {
       this.isCreateDialogShown = true
-      this.$emit('create')
+      // No need to emit, just open the dialog, as the prop is passed directly
     }
   },
   components: {

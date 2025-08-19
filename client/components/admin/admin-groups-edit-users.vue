@@ -45,7 +45,11 @@
     .text-center.py-2(v-if='group.users.length > 15')
       v-pagination(v-model='pagination', :length='pageCount')
 
-    user-search(v-model='searchUserDialog', @select='assignUser')
+    user-search(
+      v-model="searchUserDialog"
+      :default-group="group.id"
+      @select="assignUser"
+    )
     page-last-group(
       v-model='warningPageModel', :sites='affectedSites', @discard='resetUnassignState', @confirm='finalUnassignUser(pendingUnassignUser)'
     )
