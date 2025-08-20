@@ -5,12 +5,6 @@ const graphHelper = require('../../helpers/graph')
 
 module.exports = {
   Query: {
-    async rendering() { return {} }
-  },
-  Mutation: {
-    async rendering() { return {} }
-  },
-  RenderingQuery: {
     async renderers(obj, args, context, info) {
       let renderers = await WIKI.models.renderers.getRenderers()
       renderers = renderers.map(rdr => {
@@ -36,6 +30,9 @@ module.exports = {
       if (args.orderBy) { renderers = _.sortBy(renderers, [args.orderBy]) }
       return renderers
     }
+  },
+  Mutation: {
+    async rendering() { return {} }
   },
   RenderingMutation: {
     async updateRenderers(obj, args, context) {

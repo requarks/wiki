@@ -1,0 +1,9 @@
+query ($id: Int!) {
+  pageById(id: $id) {
+    id
+    path
+    title
+    locale
+    siteId
+  }
+}

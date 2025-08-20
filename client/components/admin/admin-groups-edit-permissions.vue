@@ -39,176 +39,49 @@ export default {
     }
   },
   data() {
+    function preparePermission(permission, hint, opts = {}) {
+      return {
+        permission,
+        hint,
+        warning: opts.warning || false,
+        restrictedForSystem: opts.restrictedForSystem || false,
+        disabled: opts.disabled || false
+      }
+    }
+
     return {
       permissions: [
         {
           category: 'Content',
           items: [
-            {
-              permission: 'read:pages',
-              hint: 'Can view pages, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'write:pages',
-              hint: 'Can create / edit pages, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:pages',
-              hint: 'Can move existing pages as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'delete:pages',
-              hint: 'Can delete existing pages, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'write:styles',
-              hint: 'Can insert CSS styles in pages, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'write:scripts',
-              hint: 'Can insert JavaScript in pages, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'read:source',
-              hint: 'Can view pages source, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'read:history',
-              hint: 'Can view pages history, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'read:assets',
-              hint: 'Can view / use assets (such as images and files), as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'write:assets',
-              hint: 'Can upload new assets (such as images and files), as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:assets',
-              hint: 'Can edit and delete existing assets (such as images and files), as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'read:comments',
-              hint: 'Can view comments, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'write:comments',
-              hint: 'Can post new comments, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: false,
-              disabled: false
-            },
-            {
-              permission: 'manage:comments',
-              hint: 'Can edit and delete existing comments, as specified in the Page Rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            }
+            preparePermission('read:pages', 'Can view pages, as specified in the Page Rules'),
+            preparePermission('write:pages', 'Can create / edit pages, as specified in the Page Rules', { restrictedForSystem: true }),
+            preparePermission('manage:pages', 'Can move existing pages as specified in the Page Rules', { restrictedForSystem: true }),
+            preparePermission('delete:pages', 'Can delete existing pages, as specified in the Page Rules', { restrictedForSystem: true }),
+            preparePermission('write:styles', 'Can insert CSS styles in pages, as specified in the Page Rules', { restrictedForSystem: true }),
+            preparePermission('read:source', 'Can view pages source, as specified in the Page Rules'),
+            preparePermission('read:history', 'Can view pages history, as specified in the Page Rules'),
+            preparePermission('read:assets', 'Can view / use assets (such as images and files), as specified in the Page Rules'),
+            preparePermission('write:assets', 'Can upload new assets (such as images and files), as specified in the Page Rules', { restrictedForSystem: true }),
+            preparePermission('manage:assets', 'Can edit and delete existing assets (such as images and files), as specified in the Page Rules', { restrictedForSystem: true }),
+            preparePermission('read:comments', 'Can view comments, as specified in the Page Rules'),
+            preparePermission('write:comments', 'Can post new comments, as specified in the Page Rules'),
+            preparePermission('manage:own_comments', 'Can edit and delete own comments, as specified in the Page Rules', { restrictedForSystem: true })
           ]
         },
         {
-          category: 'Users',
+          category: 'Sites',
           items: [
-            {
-              permission: 'write:users',
-              hint: 'Can create or authorize new users, but not modify existing ones',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:users',
-              hint: 'Can manage all users (but not users with administrative permissions)',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'write:groups',
-              hint: 'Can manage groups and assign CONTENT permissions / page rules',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:groups',
-              hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
-              warning: true,
-              restrictedForSystem: true,
-              disabled: false
-            }
+            preparePermission('manage:sites', 'Can manage the groups of one or more sites, add & remove users from the site(s)', { restrictedForSystem: true })
           ]
         },
         {
           category: 'Administration',
           items: [
-            {
-              permission: 'manage:navigation',
-              hint: 'Can manage the site navigation',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:theme',
-              hint: 'Can manage and modify themes',
-              warning: false,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:api',
-              hint: 'Can generate and revoke API keys',
-              warning: true,
-              restrictedForSystem: true,
-              disabled: false
-            },
-            {
-              permission: 'manage:system',
-              hint: 'Can manage and access everything. Root administrator.',
-              warning: true,
-              restrictedForSystem: true,
-              disabled: true
-
-            }
+            preparePermission('manage:navigation', 'Can manage the site navigation', { restrictedForSystem: true, disabled: true }),
+            preparePermission('manage:theme', 'Can manage and modify themes', { restrictedForSystem: true, disabled: true }),
+            preparePermission('manage:api', 'Can generate and revoke API keys', { warning: true, restrictedForSystem: true, disabled: true }),
+            preparePermission('manage:system', 'Can manage and access everything. Root administrator.', { warning: true, restrictedForSystem: true, disabled: true })
           ]
         }
       ]

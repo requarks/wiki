@@ -1,12 +1,24 @@
-query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
-  pages {
-    tree(parent: $parent, mode: $mode, locale: $locale) {
-      id
-      path
-      title
-      isFolder
-      pageId
-      parent
-    }
+query (
+  $path: String
+  $mode: PageTreeMode!
+  $locale: String!
+  $includeAncestors: Boolean!
+  $siteId: String!
+) {
+  tree(
+    path: $path
+    mode: $mode
+    locale: $locale
+    includeAncestors: $includeAncestors
+    siteId: $siteId
+  ) {
+    id
+    path
+    title
+    isFolder
+    pageId
+    parent
+    locale
+    siteId
   }
 }

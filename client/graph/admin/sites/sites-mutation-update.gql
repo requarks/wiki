@@ -1,0 +1,13 @@
+mutation UpdateSite ($id: String!, $isEnabled: Boolean!, $name: String!) {
+    updateSite(
+        id: $id,
+        patch: { isEnabled: $isEnabled, name: $name}
+    ) {
+        responseResult {
+            succeeded
+            errorCode
+            slug
+            message
+        }
+    }
+}

@@ -3,27 +3,18 @@
 # ===============================================
 
 extend type Query {
-  authentication: AuthenticationQuery
-}
-
-extend type Mutation {
-  authentication: AuthenticationMutation
-}
-
-# -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type AuthenticationQuery {
-  apiKeys: [AuthenticationApiKey] @auth(requires: ["manage:system", "manage:api"])
+  apiKeys: [AuthenticationApiKey]
+    @auth(requires: ["manage:system", "manage:api"])
 
   apiState: Boolean! @auth(requires: ["manage:system", "manage:api"])
 
   strategies: [AuthenticationStrategy] @auth(requires: ["manage:system"])
 
-  activeStrategies(
-    enabledOnly: Boolean
-  ): [AuthenticationActiveStrategy]
+  activeStrategies(enabledOnly: Boolean): [AuthenticationActiveStrategy]
+}
+
+extend type Mutation {
+  authentication: AuthenticationMutation
 }
 
 # -----------------------------------------------
@@ -36,13 +27,14 @@ type AuthenticationMutation {
     expiration: String!
     fullAccess: Boolean!
     group: Int
-  ): AuthenticationCreateApiKeyResponse @auth(requires: ["manage:system", "manage:api"])
+  ): AuthenticationCreateApiKeyResponse
+    @auth(requires: ["manage:system", "manage:api"])
 
   login(
     username: String!
     password: String!
     strategy: String!
-  ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
+  ): AuthenticationLoginResponse
 
   loginTFA(
     continuationToken: String!
@@ -55,9 +47,8 @@ type AuthenticationMutation {
     newPassword: String!
   ): AuthenticationLoginResponse @rateLimit(limit: 5, duration: 60)
 
-  forgotPassword(
-    email: String!
-  ): DefaultResponse @rateLimit(limit: 3, duration: 60)
+  forgotPassword(email: String!): DefaultResponse
+    @rateLimit(limit: 3, duration: 60)
 
   register(
     email: String!
@@ -65,17 +56,14 @@ type AuthenticationMutation {
     name: String!
   ): AuthenticationRegisterResponse
 
-  revokeApiKey(
-    id: Int!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+  revokeApiKey(id: Int!): DefaultResponse
+    @auth(requires: ["manage:system", "manage:api"])
 
-  setApiState(
-    enabled: Boolean!
-  ): DefaultResponse @auth(requires: ["manage:system", "manage:api"])
+  setApiState(enabled: Boolean!): DefaultResponse
+    @auth(requires: ["manage:system", "manage:api"])
 
-  updateStrategies(
-    strategies: [AuthenticationStrategyInput]!
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateStrategies(strategies: [AuthenticationStrategyInput]!): DefaultResponse
+    @auth(requires: ["manage:system"])
 
   regenerateCertificates: DefaultResponse @auth(requires: ["manage:system"])
 

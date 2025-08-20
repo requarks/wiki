@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   .editor-ckeditor
     div(ref='toolbarContainer')
     div.contents(ref='editor')
@@ -17,8 +17,7 @@
 <script>
 import _ from 'lodash'
 import { get, sync } from 'vuex-pathify'
-import DecoupledEditor from '@requarks/ckeditor5'
-// import DecoupledEditor from '../../../../wiki-ckeditor5/build/ckeditor'
+import DecoupledEditor from './ckeditor/ckeditor'
 import EditorConflict from './ckeditor/conflict.vue'
 import { html as beautify } from 'js-beautify/js/lib/beautifier.min.js'
 
@@ -37,6 +36,7 @@ export default {
   data() {
     return {
       editor: null,
+      isDiagramEdit: false,
       stats: {
         characters: 0,
         words: 0
@@ -52,34 +52,65 @@ export default {
     },
     locale: get('page/locale'),
     path: get('page/path'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
   methods: {
-    insertLink () {
+    insertLink() {
       this.insertLinkDialog = true
     },
-    insertLinkHandler ({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${locale}/${path}` : `/${path}`)
+    insertLinkHandler({ locale, path }) {
+      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
+    },
+    insertDiagram() {
+      this.isDiagramEdit = false
+      this.toggleModal('editorModalDrawio')
+    },
+    editDiagram(diagram) {
+      this.isDiagramEdit = true
+      this.$store.set('editor/activeModalData', diagram)
+      this.toggleModal('editorModalDrawio')
+    },
+    toggleModal(modalKey) {
+      this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
+    },
+    getSelectedWidget() {
+      return document.getElementsByClassName('ck-widget_selected').item(0)
+    },
+    getSelectedDiagram() {
+      const selection = this.getSelectedWidget()
+      return selection.getElementsByTagName('img').item(0).getAttribute('src')
+    },
+    getDiagramCaption() {
+      const selection = this.getSelectedWidget()
+      return selection.getElementsByTagName('figcaption')?.item(0)?.firstChild.data
+    },
+    setDiagramCaption(caption) {
+      const selection = this.getSelectedWidget()
+
+      const userAgent = navigator.userAgent
+      const chromeRE = /Chrome\/(\d{3})\.\d/
+      const chromeMatch = chromeRE.exec(userAgent)
+      const firefoxRE = /Firefox\/(\d{3})\.\d/
+      const firefoxMatch = firefoxRE.exec(userAgent)
+
+      if ((firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
+        (chromeMatch && Number(chromeMatch[1]) >= 124)) {
+        // The caption is sanatized by the ckEditor
+        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption)
+      } else if (chromeMatch && Number(chromeMatch[1]) < 124) {
+        // setHTMLUnsafe is not available for earlier browser versions
+        selection.getElementsByTagName('figcaption').item(0).setHTML(caption)
+      }
     }
   },
-  async mounted () {
+  async mounted() {
     this.$store.set('editor/editorKey', 'ckeditor')
 
     this.editor = await DecoupledEditor.create(this.$refs.editor, {
       language: this.locale,
       placeholder: 'Type the page content here',
       disableNativeSpellChecker: false,
-      // TODO: Mention autocomplete
-      //
-      // mention: {
-      //   feeds: [
-      //     {
-      //       marker: '@',
-      //       feed: [ '@Barney', '@Lily', '@Marshall', '@Robin', '@Ted' ],
-      //       minimumCharacters: 1
-      //     }
-      //   ]
-      // },
       wordCount: {
         onUpdate: stats => {
           this.stats = {
@@ -102,7 +133,7 @@ export default {
     this.$root.$on('editorInsert', opts => {
       switch (opts.kind) {
         case 'IMAGE':
-          this.editor.execute('imageInsert', {
+          this.editor.execute('insertImage', {
             source: opts.path
           })
           break
@@ -112,14 +143,24 @@ export default {
           })
           break
         case 'DIAGRAM':
-          this.editor.execute('imageInsert', {
+          let caption = ''
+          if (this.isDiagramEdit) {
+            caption = this.getDiagramCaption()
+            this.editor.execute('delete')
+          }
+
+          this.editor.execute('insertImage', {
             source: `data:image/svg+xml;base64,${opts.text}`
           })
+
+          if (this.isDiagramEdit && caption) {
+            this.setDiagramCaption(caption)
+          }
           break
       }
     })
 
-    this.$root.$on('editorLinkToPage', opts => {
+    this.$root.$on('editorLinkToPage', () => {
       this.insertLink()
     })
 
@@ -130,8 +171,65 @@ export default {
     this.$root.$on('overwriteEditorContent', () => {
       this.editor.setData(this.$store.get('editor/content'))
     })
+
+    this.$root.$on('insertDiagram', () => {
+      this.insertDiagram()
+    })
+    this.$root.$on('editDiagram', () => {
+      const selectedImg = this.getSelectedDiagram()
+      this.editDiagram(selectedImg)
+    })
+
+    this.editor.model.document.on('change:data', (evt, data) => {
+      // Track new mentions and remove old mentions
+      let newMentions = new Map()
+      const changes = data.operations.filter((op) => op.type === 'insert')
+      changes.forEach((change) => {
+        for (const node of change.nodes) {
+          if (node.hasAttribute('mention')) {
+            let mention = node.getAttribute('mention')
+            if (mention.id && mention.id.startsWith('@')) {
+            // Remove '@' from the mention id
+              mention.id = mention.id.substring(1)
+            }
+            newMentions.set(mention['uid'], mention)
+          }
+        }
+      })
+
+      // Track removed mentions
+      const uidNodes = []
+      const walker = this.editor.model
+        .createRangeIn(this.editor.model.document.getRoot())
+        .getWalker()
+
+      for (const value of walker) {
+        const node = value.item
+        if (node.hasAttribute('mention')) {
+          const mention = node.getAttribute('mention')
+          if (mention.uid) {
+            uidNodes.push(node)
+          }
+        }
+      }
+
+      // Compare newMentions with uidNodes and remove non-existing mentions
+      for (const [uid] of newMentions) {
+        if (
+          !uidNodes.some((node) => node.getAttribute('mention').uid === uid)
+        ) {
+          newMentions.delete(uid)
+        }
+      }
+      // Merge new mentions with existing mentions in the store
+      const existingMentions = this.$store.get('editor/mentions') || []
+      const mergedMentions = new Set([...existingMentions, ...Array.from(newMentions.values()).map((mention) => mention.id)])
+
+      // Set the mentions in the Vuex store
+      this.$store.set('editor/mentions', Array.from(mergedMentions))
+    })
   },
-  beforeDestroy () {
+  beforeDestroy() {
     if (this.editor) {
       this.editor.destroy()
       this.editor = null
@@ -141,13 +239,12 @@ export default {
 </script>
 
 <style lang="scss">
-
 $editor-height: calc(100vh - 64px - 24px);
 $editor-height-mobile: calc(100vh - 56px - 16px);
 
 .editor-ckeditor {
-  background-color: mc('grey', '200');
-  flex: 1 1 50%;
+  background-color: rgba(255,255,255,.25);
+  display: inline-flex;
   display: flex;
   flex-flow: column nowrap;
   height: $editor-height;
@@ -167,8 +264,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255,255,255,.25);
-      display:inline-flex;
+      background-color: rgba(255, 255, 255, 0.25);
+      display: inline-flex;
       padding: 0 12px;
       height: 24px;
       width: 63px;
@@ -184,7 +281,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     pre > code {
       background-color: unset;
       color: unset;
-      padding: .15em;
+      padding: 0.15em;
     }
   }
 
@@ -228,8 +325,8 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     }
 
     &.ck.ck-editor__editable:not(.ck-editor__nested-editable).ck-focused {
-      border-color: #FFF;
-      box-shadow: 0 0 10px rgba(mc('blue', '700'), .25);
+      border-color: #fff;
+      box-shadow: 0 0 10px rgba(mc('blue', '700'), 0.25);
 
       @at-root .theme--dark & {
         border-color: #444;
@@ -248,6 +345,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
         background-color: mc('grey', '900');
       }
     }
+  }
+}
+
+.v-main .contents code{
+  text-shadow: none;
+  &::selection {
+    color: #ffffff;
+    background-color: mc('blue', '900') !important;
   }
 }
 </style>

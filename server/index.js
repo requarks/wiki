@@ -21,7 +21,8 @@ let WIKI = {
   Error: require('./helpers/error'),
   configSvc: require('./core/config'),
   kernel: require('./core/kernel'),
-  startedAt: DateTime.utc()
+  startedAt: DateTime.utc(),
+  sitesMappings: {}
 }
 global.WIKI = WIKI
 

@@ -103,7 +103,8 @@ export default {
     locale: get('page/locale'),
     path: get('page/path'),
     mode: get('editor/mode'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
   methods: {
     toggleModal(key) {
@@ -165,6 +166,12 @@ export default {
     },
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
+      document.getElementsByClassName("CodeMirror-code")[0].focus()
+      this.$store.commit('showNotification', {
+        message: 'To exit the Distraction Free Mode, press Esc.',
+        style: 'info',
+        icon: 'check'
+      })
     },
     refresh() {
       this.$nextTick(() => {

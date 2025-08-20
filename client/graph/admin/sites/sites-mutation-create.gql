@@ -1,0 +1,17 @@
+mutation CreateSite ($name: String!, $path: String!) {
+    createSite(name: $name, path: $path) {
+      responseResult {
+        succeeded        
+        slug
+        message
+      }
+      site {
+        id
+        name
+        path
+        isEnabled
+        createdAt
+      }
+    }
+  }
+

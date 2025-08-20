@@ -193,7 +193,8 @@ export default {
     locale: get('page/locale'),
     path: get('page/path'),
     mode: get('editor/mode'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    sitePath: get('page/sitePath')
   },
 
   methods: {
@@ -304,6 +305,12 @@ export default {
 
     toggleFullscreen () {
       this.cm.setOption('fullScreen', true)
+      document.getElementsByClassName("CodeMirror-code")[0].focus()
+      this.$store.commit('showNotification', {
+        message: 'To exit the Distraction Free Mode, press Esc.',
+        style: 'info',
+        icon: 'check'
+      })
     },
     refresh() {
       this.$nextTick(() => {
@@ -316,7 +323,7 @@ export default {
     insertLinkHandler ({ locale, path }) {
       const lastPart = _.last(path.split('/'))
       this.insertAtCursor({
-        content: siteLangs.length > 0 ? `link:/${locale}/${path}[${lastPart}]` : `link:/${path}[${lastPart}]`
+        content: siteLangs.length > 0 ? `link:/${this.sitePath}/${locale}/${path}[${lastPart}]` : `link:/${this.sitePath}/${path}[${lastPart}]`
       })
     },
     processMarkers (from, to) {
@@ -665,7 +672,7 @@ $editor-ascii-height-mobile: calc(100vh - 112px - 16px);
 
   .CodeMirror {
     height: auto;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Ubuntu Mono', monospace;
     font-size: .9rem;
 
     .cm-header-1 {

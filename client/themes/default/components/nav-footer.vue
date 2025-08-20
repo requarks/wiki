@@ -12,6 +12,7 @@
 <script>
 import { get } from 'vuex-pathify'
 import MarkdownIt from 'markdown-it'
+/* global siteConfig */
 
 const md = new MarkdownIt({
   html: false,
@@ -32,8 +33,9 @@ export default {
   },
   data() {
     return {
-      currentYear: (new Date()).getFullYear()
-    }
+      currentYear: new Date().getFullYear(),
+      wikiName: siteConfig.title || "Wiki.js",
+    };
   },
   computed: {
     company: get('site/company'),
@@ -61,7 +63,7 @@ export default {
     }
 
     &.altbg {
-      background: mc('theme', 'primary');
+      background: mc('primary', '1');
 
       span {
         color: mc('blue', '300');

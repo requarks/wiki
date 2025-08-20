@@ -9,6 +9,8 @@ db:
   db: $(DB_NAME)
   storage: $(DB_FILEPATH)
   ssl: $(DB_SSL)
+  client:
+    pooling: $(DB_CLIENT_POOLING)
 ssl:
   enabled: $(SSL_ACTIVE)
   port: 3443
@@ -18,3 +20,11 @@ ssl:
 logLevel: $(LOG_LEVEL:info)
 logFormat: $(LOG_FORMAT:default)
 ha: $(HA_ACTIVE)
+pandocPath: $(PANDOC_URL)
+version: $(VERSION)
+releaseDate: $(RELEASE_DATE)
+devMode: $(DEV_MODE)
+
+
+email:
+  support: "dummy-support@dummy.com"

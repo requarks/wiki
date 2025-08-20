@@ -18,6 +18,7 @@ module.exports = {
   Objection,
   knex: null,
   listener: null,
+  useClientDbPooling,
   /**
    * Initialize DB
    *
@@ -26,141 +27,160 @@ module.exports = {
   init() {
     let self = this
 
-    // Fetch DB Config
-
-    let dbClient = null
-    let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
-      host: WIKI.config.db.host.toString(),
-      user: WIKI.config.db.user.toString(),
-      password: WIKI.config.db.pass.toString(),
-      database: WIKI.config.db.db.toString(),
-      port: WIKI.config.db.port
+    function buildDbConfig() {
+      if (!_.isEmpty(process.env.DATABASE_URL)) return process.env.DATABASE_URL
+      return {
+        host: WIKI.config.db.host?.toString(),
+        user: WIKI.config.db.user?.toString(),
+        password: WIKI.config.db.pass?.toString(),
+        database: WIKI.config.db.db?.toString(),
+        port: WIKI.config.db.port
+      }
     }
 
-    // Handle SSL Options
-
-    let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
-    let sslOptions = null
-    if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
-      sslOptions = WIKI.config.db.sslOptions
-      sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized !== false
-      if (sslOptions.ca && sslOptions.ca.indexOf('-----') !== 0) {
-        sslOptions.ca = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.ca))
+    function handleSSLOptions(dbConfig) {
+      let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
+      let sslOptions = null
+      if (dbUseSSL && _.isPlainObject(dbConfig) && _.get(WIKI.config.db, 'sslOptions.auto', null) === false) {
+        sslOptions = WIKI.config.db.sslOptions
+        sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized !== false
+        if (sslOptions.ca && sslOptions.ca.indexOf('-----') !== 0) {
+          sslOptions.ca = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.ca))
+        }
+        if (sslOptions.cert) {
+          sslOptions.cert = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.cert))
+        }
+        if (sslOptions.key) {
+          sslOptions.key = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.key))
+        }
+        if (sslOptions.pfx) {
+          sslOptions.pfx = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.pfx))
+        }
+      } else {
+        sslOptions = true
       }
-      if (sslOptions.cert) {
-        sslOptions.cert = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.cert))
-      }
-      if (sslOptions.key) {
-        sslOptions.key = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.key))
-      }
-      if (sslOptions.pfx) {
-        sslOptions.pfx = fs.readFileSync(path.resolve(WIKI.ROOTPATH, sslOptions.pfx))
-      }
-    } else {
-      sslOptions = true
+      return { dbUseSSL, sslOptions }
     }
 
-    // Handle inline SSL CA Certificate mode
-    if (!_.isEmpty(process.env.DB_SSL_CA)) {
+    function handleInlineSSLCA() {
+      if (_.isEmpty(process.env.DB_SSL_CA)) return null
       const chunks = []
       for (let i = 0, charsLength = process.env.DB_SSL_CA.length; i < charsLength; i += 64) {
         chunks.push(process.env.DB_SSL_CA.substring(i, i + 64))
       }
-
-      dbUseSSL = true
-      sslOptions = {
+      return {
         rejectUnauthorized: true,
         ca: '-----BEGIN CERTIFICATE-----\n' + chunks.join('\n') + '\n-----END CERTIFICATE-----\n'
       }
     }
 
-    // Engine-specific config
-    switch (WIKI.config.db.type) {
-      case 'postgres':
-        dbClient = 'pg'
-
-        if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
-        }
-        break
-      case 'mariadb':
-      case 'mysql':
-        dbClient = 'mysql2'
-
-        if (dbUseSSL && _.isPlainObject(dbConfig)) {
-          dbConfig.ssl = sslOptions
-        }
-
-        // Fix mysql boolean handling...
-        dbConfig.typeCast = (field, next) => {
-          if (field.type === 'TINY' && field.length === 1) {
-            let value = field.string()
-            return value ? (value === '1') : null
+    function applyEngineSpecificConfig(dbConfig, sslOptions, dbUseSSL) {
+      let dbClient = null
+      switch (WIKI.config.db.type) {
+        case 'postgres':
+          dbClient = 'pg'
+          if (dbUseSSL && _.isPlainObject(dbConfig)) {
+            dbConfig.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
           }
-          return next()
-        }
-        break
-      case 'mssql':
-        dbClient = 'mssql'
-
-        if (_.isPlainObject(dbConfig)) {
-          dbConfig.appName = 'Wiki.js'
-          _.set(dbConfig, 'options.appName', 'Wiki.js')
-
-          dbConfig.enableArithAbort = true
-          _.set(dbConfig, 'options.enableArithAbort', true)
-
-          if (dbUseSSL) {
-            dbConfig.encrypt = true
-            _.set(dbConfig, 'options.encrypt', true)
+          break
+        case 'mariadb':
+        case 'mysql':
+          dbClient = 'mysql2'
+          if (dbUseSSL && _.isPlainObject(dbConfig)) {
+            dbConfig.ssl = sslOptions
           }
-        }
-        break
-      case 'sqlite':
-        dbClient = 'sqlite3'
-        dbConfig = { filename: WIKI.config.db.storage }
-        break
-      default:
-        WIKI.logger.error('Invalid DB Type')
-        process.exit(1)
+          // Fix mysql boolean handling...
+          dbConfig.typeCast = (field, next) => {
+            if (field.type === 'TINY' && field.length === 1) {
+              let value = field.string()
+              return value ? (value === '1') : null
+            }
+            return next()
+          }
+          break
+        case 'mssql':
+          dbClient = 'mssql'
+          if (_.isPlainObject(dbConfig)) {
+            dbConfig.appName = 'Wiki.js'
+            _.set(dbConfig, 'options.appName', 'Wiki.js')
+            dbConfig.enableArithAbort = true
+            _.set(dbConfig, 'options.enableArithAbort', true)
+            if (dbUseSSL) {
+              dbConfig.encrypt = true
+              _.set(dbConfig, 'options.encrypt', true)
+            }
+          }
+          break
+        case 'sqlite':
+          dbClient = 'sqlite3'
+          dbConfig = { filename: WIKI.config.db.storage }
+          break
+        default:
+          WIKI.logger.error('Invalid DB Type')
+          process.exit(1)
+      }
+      return { dbClient, dbConfig }
     }
 
-    // Initialize Knex
-    this.knex = Knex({
-      client: dbClient,
-      useNullAsDefault: true,
-      asyncStackTraces: WIKI.IS_DEBUG,
-      connection: dbConfig,
-      pool: {
-        ...WIKI.config.pool,
-        async afterCreate(conn, done) {
-          // -> Set Connection App Name
-          switch (WIKI.config.db.type) {
-            case 'postgres':
-              await conn.query(`set application_name = 'Wiki.js'`)
-              // -> Set schema if it's not public
-              if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
-                await conn.query(`set search_path TO ${WIKI.config.db.schema}, public;`)
+    function initKnex(dbClient, dbConfig) {
+      const clientPoolUsed = useClientDbPooling()
+      WIKI.logger.info(`[db] Client Connection pool ${clientPoolUsed ? 'ENABLED' : 'DISABLED'} (host: ${process.env.DB_HOST || process.env.DATABASE_URL || WIKI.config.db.host?.toString()})`)
+      return Knex({
+        client: dbClient,
+        useNullAsDefault: true,
+        asyncStackTraces: WIKI.IS_DEBUG,
+        connection: dbConfig,
+        ...(clientPoolUsed ? {
+          pool: {
+            ...WIKI.config.pool,
+            async afterCreate(conn, done) {
+              switch (WIKI.config.db.type) {
+                case 'postgres':
+                  await conn.query(`set application_name = 'Wiki.js'`)
+                  if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
+                    await conn.query(`set search_path TO ${WIKI.config.db.schema}, public;`)
+                  }
+                  done()
+                  break
+                case 'mysql':
+                  await conn.promise().query(`set autocommit = 1`)
+                  done()
+                  break
+                default:
+                  done()
+                  break
               }
-              done()
-              break
-            case 'mysql':
-              await conn.promise().query(`set autocommit = 1`)
-              done()
-              break
-            default:
-              done()
-              break
+            }
           }
-        }
-      },
-      debug: WIKI.IS_DEBUG
-    })
+        } : {
+          pool: { min: 0, max: 1 }
+        }),
+        debug: WIKI.IS_DEBUG
+      })
+    }
+
+    // Fetch DB Config
+    let dbConfig = buildDbConfig()
+
+    // Handle SSL Options
+    let { dbUseSSL, sslOptions } = handleSSLOptions(dbConfig)
+
+    // Handle inline SSL CA Certificate mode
+    const inlineSSL = handleInlineSSLCA()
+    if (inlineSSL) {
+      dbUseSSL = true
+      sslOptions = inlineSSL
+    }
+
+    // Engine-specific config
+    const { dbClient, dbConfig: finalDbConfig } = applyEngineSpecificConfig(dbConfig, sslOptions, dbUseSSL)
+
+    // Initialize Knex
+    this.knex = initKnex(dbClient, finalDbConfig)
 
     Objection.Model.knex(this.knex)
 
     // Load DB Models
-
     const models = autoload(path.join(WIKI.SERVERPATH, 'models'))
 
     // Set init tasks
@@ -209,7 +229,6 @@ module.exports = {
     ]
 
     // Perform init tasks
-
     WIKI.logger.info(`Using database driver ${dbClient} for ${WIKI.config.db.type} [ OK ]`)
     this.onReady = Promise.each(initTasksQueue, t => t()).return(true)
 
@@ -252,7 +271,7 @@ module.exports = {
 
     WIKI.auth.subscribeToEvents()
     WIKI.configSvc.subscribeToEvents()
-    WIKI.models.pages.subscribeToEvents()
+    // WIKI.models.pages.subscribeToEvents() replaced with shared persistence volume
 
     WIKI.logger.info(`High-Availability Listener initialized successfully: [ OK ]`)
   },
@@ -279,4 +298,11 @@ module.exports = {
       value
     })
   }
+}
+
+function useClientDbPooling() {
+  if (typeof process.env.DB_CLIENT_POOLING !== 'undefined') {
+    return process.env.DB_CLIENT_POOLING === 'true'
+  }
+  return (WIKI.config.db?.client?.pooling ?? true) !== false
 }

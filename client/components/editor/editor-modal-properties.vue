@@ -255,6 +255,7 @@ import 'codemirror/mode/htmlmixed/htmlmixed.js'
 import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
+// eslint-disable-next-line no-useless-escape
 const filenamePattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
 
 export default {
@@ -276,10 +277,10 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'This field is required.',
-          path: value => {
-            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
-          }
+        required: value => !!value || 'This field is required.',
+        path: value => {
+          return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+        }
       }
     }
   },
@@ -303,7 +304,8 @@ export default {
     hasStylePermission: get('page/effectivePermissions@pages.style'),
     pageSelectorMode () {
       return (this.mode === 'create') ? 'create' : 'move'
-    }
+    },
+    siteId: get('page/siteId')
   },
   watch: {
     value (newValue, oldValue) {
@@ -397,19 +399,21 @@ export default {
   apollo: {
     newTagSuggestions: {
       query: gql`
-        query ($query: String!) {
-          pages {
-            searchTags (query: $query)
-          }
+        query ($query: String!, $siteId: String!) {
+            searchTags (
+              query: $query,
+              siteId: $siteId
+            )
         }
       `,
       variables () {
         return {
-          query: this.newTagSearch
+          query: this.newTagSearch,
+          siteId: this.siteId
         }
       },
       fetchPolicy: 'cache-first',
-      update: (data) => _.get(data, 'pages.searchTags', []),
+      update: (data) => _.get(data, 'searchTags', []),
       skip () {
         return !this.value || _.isEmpty(this.newTagSearch)
       },

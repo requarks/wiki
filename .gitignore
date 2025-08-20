@@ -27,7 +27,10 @@ server/views/setup.pug
 .fusebox
 
 # Config Files
-/config.yml
+config.yml
+config.*.yml
+!config.sample.yml
+.env
 
 # Data directories
 /repo
@@ -40,9 +43,11 @@ server/views/setup.pug
 # IDE exclude
 .idea
 *.sublime-*
+.vscode
 
 # Test results
 test-results/
+coverage/
 .scannerwork
 
 # Secrets and sensitive data
@@ -59,9 +64,10 @@ keycloak-host-full-chain-cert.pem
 .gitlab-ci.yml
 Jenkinsfile
 dev/helm/*.yml
+dev/helm/*.yaml
 
 # SonarQube
-.sonarlint
+.sonarlint/
 
 # Miscellaneous
 license-README.md

@@ -58,7 +58,8 @@ export default {
     pagePath: get('page/path'),
     pageLocale: get('page/locale'),
     pageId: get('page/id'),
-    pageEditor: get('page/editor')
+    pageEditor: get('page/editor'),
+    sitePath: get('page/sitePath')
   },
   mounted () {
     this.newEditor = this.pageEditor
@@ -100,7 +101,7 @@ export default {
           })
           if (_.get(resp, 'data.pages.convert.responseResult.succeeded', false)) {
             this.isShown = false
-            window.location.assign(`/e/${this.pageLocale}/${this.pagePath}`)
+            window.location.assign(`/e/${this.sitePath}/${this.pageLocale}/${this.pagePath}`)
           } else {
             throw new Error(_.get(resp, 'data.pages.convert.responseResult.message', this.$t('common:error.unexpected')))
           }

@@ -3,7 +3,8 @@
 # ===============================================
 
 extend type Query {
-  logging: LoggingQuery
+  loggers(filter: String, orderBy: String): [Logger]
+    @auth(requires: ["manage:system"])
 }
 
 extend type Mutation {
@@ -15,24 +16,12 @@ extend type Subscription {
 }
 
 # -----------------------------------------------
-# QUERIES
-# -----------------------------------------------
-
-type LoggingQuery {
-  loggers(
-    filter: String
-    orderBy: String
-  ): [Logger] @auth(requires: ["manage:system"])
-}
-
-# -----------------------------------------------
 # MUTATIONS
 # -----------------------------------------------
 
 type LoggingMutation {
-  updateLoggers(
-    loggers: [LoggerInput]
-  ): DefaultResponse @auth(requires: ["manage:system"])
+  updateLoggers(loggers: [LoggerInput]): DefaultResponse
+    @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------

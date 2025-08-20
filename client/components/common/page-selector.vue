@@ -2,11 +2,11 @@
   v-dialog(
     v-model='isShown'
     max-width='850px'
-    overlay-color='blue darken-4'
-    overlay-opacity='.7'
+    :overlay-color='$vuetify.theme.dark ? colors.primary[3] : colors.primary[1]'
+    :overlay-opacity='$vuetify.theme.dark ? ".6" : ".8"'
     )
     v-card.page-selector
-      .dialog-header.is-blue
+      .dialog-header(:class='$vuetify.theme.dark ? `is-dark` : ``')
         v-icon.mr-3(color='white') mdi-page-next-outline
         .body-1(v-if='mode === `create`') {{$t('common:pageSelector.createTitle')}}
         .body-1(v-else-if='mode === `move`') {{$t('common:pageSelector.moveTitle')}}
@@ -20,12 +20,17 @@
           v-show='searchLoading'
           )
       .d-flex
-        v-flex.grey(xs5, :class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
-          v-toolbar(color='grey darken-3', dark, dense, flat)
+        v-flex(xs5, :color='$vuetify.theme.dark ? colors.text.darkGrey : colors.surface[1]')
+          v-toolbar(
+            :color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]',
+            dark,
+            dense,
+            flat
+            )
             .body-2 {{$t('common:pageSelector.virtualFolders')}}
             v-spacer
             v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
-              v-icon mdi-help-box
+              v-icon(color="#ffffff") mdi-help-box
           div(style='height:400px;')
             vue-scroll(:ops='scrollStyle')
               v-treeview(
@@ -34,6 +39,7 @@
                 :open.sync='openNodes'
                 :items='tree'
                 :load-children='fetchFolders'
+                :color='$vuetify.theme.dark ? colors.peacock[1] : "black"'
                 dense
                 expand-icon='mdi-menu-down-outline'
                 item-id='path'
@@ -44,7 +50,7 @@
                 template(slot='prepend', slot-scope='{ item, open, leaf }')
                   v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs7)
-          v-toolbar(color='blue darken-2', dark, dense, flat)
+          v-toolbar(:color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]', dark, dense, flat)
             .body-2 {{$t('common:pageSelector.pages')}}
             //- v-spacer
             //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
@@ -94,14 +100,15 @@
       v-card-chin
         v-spacer
         v-btn(text, @click='close') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='primary', @click='open', :disabled='!isValidPath')
-          v-icon(left) mdi-check
-          span {{$t('common:actions.select')}}
+        v-btn.px-4(:color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]', @click='open', :disabled='!isValidPath')
+          v-icon(left color='white') mdi-check
+          span#select-btn-text {{$t('common:actions.select')}}
 </template>
 
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
+import colors from '@/themes/default/js/extended-color-scheme'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
@@ -147,13 +154,15 @@ export default {
       tree: [
         {
           id: 0,
-          title: '/ (root)',
+          title: this.siteName,
           children: []
         }
       ],
       pages: [],
       all: [],
-      namespaces: siteLangs.length ? siteLangs.map(ns => ns.code) : [siteConfig.lang],
+      namespaces: siteLangs.length ?
+        siteLangs.map(ns => ns.code) :
+        [siteConfig.lang],
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -171,18 +180,28 @@ export default {
             background: '#64B5F6'
           }
         }
-      }
+      },
+      siteId: this.$store.get('page/siteId'),
+      siteName: this.$store.get('page/siteName'),
+      colors: colors
     }
   },
   computed: {
     isShown: {
-      get() { return this.value },
-      set(val) { this.$emit('input', val) }
+      get() {
+        return this.value
+      },
+      set(val) {
+        this.$emit('input', val)
+      }
     },
-    currentPages () {
-      return _.sortBy(_.filter(this.pages, ['parent', _.head(this.currentNode) || 0]), ['title', 'path'])
+    currentPages() {
+      return _.sortBy(
+        _.filter(this.pages, ['parent', _.head(this.currentNode) || 0]),
+        ['title', 'path']
+      )
     },
-    isValidPath () {
+    isValidPath() {
       if (!this.currentPath) {
         return false
       }
@@ -195,9 +214,23 @@ export default {
       } else if (localeSegmentRegex.test(firstSection)) {
         return false
       } else if (
-        _.some(['login', 'logout', 'register', 'verify', 'favicons', 'fonts', 'img', 'js', 'svg'], p => {
-          return p === firstSection
-        })) {
+        _.some(
+          [
+            'login',
+            'logout',
+            'register',
+            'verify',
+            'favicons',
+            'fonts',
+            'img',
+            'js',
+            'svg'
+          ],
+          p => {
+            return p === firstSection
+          }
+        )
+      ) {
         return false
       } else {
         return true
@@ -205,7 +238,7 @@ export default {
     }
   },
   watch: {
-    isShown (newValue, oldValue) {
+    isShown(newValue, oldValue) {
       if (newValue && !oldValue) {
         this.currentPath = this.path
         this.currentLocale = this.locale
@@ -214,15 +247,17 @@ export default {
         })
       }
     },
-    currentNode (newValue, oldValue) {
-      if (newValue.length < 1) { // force a selection
+    currentNode(newValue, oldValue) {
+      if (newValue.length < 1) {
+        // force a selection
         this.$nextTick(() => {
           this.currentNode = oldValue
         })
       } else {
         const current = _.find(this.all, ['id', newValue[0]])
 
-        if (this.openNodes.indexOf(newValue[0]) < 0) { // auto open and load children
+        if (this.openNodes.indexOf(newValue[0]) < 0) {
+          // auto open and load children
           if (current) {
             if (this.openNodes.indexOf(current.parent) < 0) {
               this.$nextTick(() => {
@@ -235,20 +270,23 @@ export default {
           })
         }
 
-        this.currentPath = _.compact([_.get(current, 'path', ''), _.last(this.currentPath.split('/'))]).join('/')
+        this.currentPath = _.compact([
+          _.get(current, 'path', ''),
+          _.last(this.currentPath.split('/'))
+        ]).join('/')
       }
     },
-    currentPage (newValue, oldValue) {
+    currentPage(newValue, oldValue) {
       if (!_.isEmpty(newValue)) {
         this.currentPath = newValue.path
       }
     },
-    currentLocale (newValue, oldValue) {
+    currentLocale(newValue, oldValue) {
       this.$nextTick(() => {
         this.tree = [
           {
             id: 0,
-            title: '/ (root)',
+            title: this.siteName,
             children: []
           }
         ]
@@ -265,49 +303,74 @@ export default {
       this.isShown = false
     },
     open() {
+      // Replace all "." with "-" to simplify the path format for the end user
+      this.currentPath = this.currentPath.replace(/\./g, '-')
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
-        id: (this.mustExist && this.currentPage) ? this.currentPage.pageId : 0
+        id: this.mustExist && this.currentPage ? this.currentPage.pageId : 0
       })
       if (exit !== false) {
         this.close()
       }
     },
-    async fetchFolders (item) {
+    async fetchFolders(item) {
       this.searchLoading = true
       const resp = await this.$apollo.query({
         query: gql`
-          query ($parent: Int!, $mode: PageTreeMode!, $locale: String!) {
-            pages {
-              tree(parent: $parent, mode: $mode, locale: $locale) {
+          query(
+            $parent: Int!
+            $mode: PageTreeMode!
+            $locale: String!
+            $siteId: String!
+          ) {
+              tree(
+                parent: $parent
+                mode: $mode
+                locale: $locale
+                siteId: $siteId
+              ) {
                 id
                 path
                 title
                 isFolder
                 pageId
                 parent
+                siteId
               }
-            }
           }
         `,
         fetchPolicy: 'network-only',
         variables: {
           parent: item.id,
           mode: 'ALL',
-          locale: this.currentLocale
+          locale: this.currentLocale,
+          siteId: this.siteId
         }
       })
-      const items = _.get(resp, 'data.pages.tree', [])
-      const itemFolders = _.filter(items, ['isFolder', true]).map(f => ({...f, children: []}))
-      const itemPages = _.filter(items, i => i.pageId > 0)
+
+      const items = _.get(resp, 'data.tree', [])
+
+      const filteredItems = items.filter(i => {
+        const itemSiteId = String(i.siteId)
+        const currentSiteId = String(this.siteId)
+        return itemSiteId === currentSiteId
+      })
+
+      const itemFolders = _.filter(filteredItems, ['isFolder', true]).map(
+        f => ({
+          ...f,
+          children: []
+        })
+      )
+      const itemPages = _.filter(filteredItems, i => i.pageId > 0)
       if (itemFolders.length > 0) {
         item.children = itemFolders
       } else {
         item.children = undefined
       }
       this.pages = _.unionBy(this.pages, itemPages, 'id')
-      this.all = _.unionBy(this.all, items, 'id')
+      this.all = _.unionBy(this.all, filteredItems, 'id')
 
       this.searchLoading = false
     }
@@ -315,8 +378,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
+<style lang="scss">
 .page-selector {
   .v-treeview-node__label {
     font-size: 13px;
@@ -324,6 +386,8 @@ export default {
   .v-treeview-node__content {
     cursor: pointer;
   }
+  #select-btn-text {
+    color: white;
+  }
 }
-
 </style>

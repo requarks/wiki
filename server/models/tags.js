@@ -18,6 +18,7 @@ module.exports = class Tag extends Model {
         id: {type: 'integer'},
         tag: {type: 'string'},
         title: {type: 'string'},
+        siteId: {type: 'string'},
 
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
@@ -38,6 +39,14 @@ module.exports = class Tag extends Model {
           },
           to: 'pages.id'
         }
+      },
+      sites: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: require('./sites'),
+        join: {
+          from: 'tags.siteId',
+          to: 'sites.id'
+        }
       }
     }
   }
@@ -51,7 +60,7 @@ module.exports = class Tag extends Model {
   }
 
   static async associateTags ({ tags, page }) {
-    let existingTags = await WIKI.models.tags.query().column('id', 'tag')
+    let existingTags = await WIKI.models.tags.query().column('id', 'tag').where('siteId', page.siteId)
 
     // Format tags
 
@@ -61,7 +70,8 @@ module.exports = class Tag extends Model {
 
     const newTags = _.filter(tags, t => !_.some(existingTags, ['tag', t])).map(t => ({
       tag: t,
-      title: t
+      title: t,
+      siteId: page.siteId
     }))
     if (newTags.length > 0) {
       if (WIKI.config.db.type === 'postgres') {
@@ -101,5 +111,13 @@ module.exports = class Tag extends Model {
     }
 
     page.tags = targetTags
+  }
+
+  static async purgeTags(siteId) {
+    try {
+      await WIKI.models.tags.query().delete().where('siteId', siteId)
+    } catch (err) {
+      WIKI.logger.warn(err)
+    }
   }
 }

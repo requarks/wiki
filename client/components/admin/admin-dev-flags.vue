@@ -78,7 +78,7 @@ export default {
     flags: {
       query: flagsQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.transform(data.system.flags, (result, row) => {
+      update: (data) => _.transform(data.flags, (result, row) => {
         _.set(result, row.key, row.value)
       }, {}),
       watchLoading (isLoading) {

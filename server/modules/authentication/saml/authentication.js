@@ -6,7 +6,7 @@ const _ = require('lodash')
 // SAML Account
 // ------------------------------------
 
-const SAMLStrategy = require('passport-saml').Strategy
+const SAMLStrategy = require('@node-saml/passport-saml').Strategy
 
 module.exports = {
   init (passport, conf) {
@@ -14,7 +14,7 @@ module.exports = {
       callbackUrl: conf.callbackURL,
       entryPoint: conf.entryPoint,
       issuer: conf.issuer,
-      cert: (conf.cert || '').split('|'),
+      idpCert: (conf.cert || '').split('|'),
       signatureAlgorithm: conf.signatureAlgorithm,
       digestAlgorithm: conf.digestAlgorithm,
       identifierFormat: conf.identifierFormat,
@@ -32,6 +32,8 @@ module.exports = {
     }
     if (!_.isEmpty(conf.audience)) {
       samlConfig.audience = conf.audience
+    } else {
+      samlConfig.audience = conf.issuer
     }
     if (!_.isEmpty(conf.privateKey)) {
       samlConfig.privateKey = conf.privateKey
