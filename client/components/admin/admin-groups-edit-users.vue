@@ -61,7 +61,6 @@ import UserSearch from '../common/user-search.vue'
 import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
 import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
 import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
-
 export default {
   props: {
     value: {
@@ -104,30 +103,25 @@ export default {
     }
   },
   methods: {
-    async assignUser({ id, email, name }) {
+    async assignUser(user) {
       try {
         await this.$apollo.mutate({
           mutation: assignUserMutation,
           variables: {
             groupId: this.group.id,
-            userId: id
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-assign')
+            userId: user.id
           }
         })
+
+        await this.sendUserAddedToGroupEmail(user, this.group, `${window.WIKI.config.host}/groups/${this.group.id}`)
+
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `User has been assigned to ${this.group.name}.`,
-          icon: 'assignment_ind'
+          message: `${user.name} has been added to the group.`,
+          icon: 'check'
         })
-        this.$emit('refresh')
       } catch (err) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: err.message,
-          icon: 'warning'
-        })
+        this.$store.commit('pushGraphError', err)
       }
     },
     async unassignUser(id) {
