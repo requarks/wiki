@@ -92,6 +92,21 @@ async function sendWelcomeEmail(user) {
   })
 }
 
+const sendUserAddedToGroupEmail = async (user, group, url) => {
+  await WIKI.mail.send({
+    template: 'user-added-to-new-group', // Template file
+    to: user.email, // Recipient's email
+    subject: `Welcome to CapWiki - Added to Group: ${group.name}`,
+    data: {
+      firstname: user.name || 'User', // User's first name
+      groupName: group.name, // Group name
+      url: url, // URL to access the group
+      mailLogoSrc: `${WIKI.config.host}/assets/logo.png`, // Logo source
+      companyName: WIKI.config.title || 'CapWiki' // Company name
+    }
+  })
+}
+
 function getMailLogoSource() {
   let mailLogoSrcValue
   if (WIKI.config.mailLogoSrc) {
@@ -124,6 +139,19 @@ function anonymizeUserMentions(content, contentType, email) {
   return content
 }
 
+async function assignUserToGroup(userId, groupId) {
+  // Add the user to the group
+  await graphHelper.addUserToGroup(userId, groupId)
+
+  // Fetch user and group details
+  const user = await graphHelper.getUserById(userId)
+  const group = await graphHelper.getGroupById(groupId)
+
+  // Send the email
+  const url = `${WIKI.config.host}/groups/${groupId}`
+  await sendUserAddedToGroupEmail(user, group, url)
+}
+
 module.exports = {
   revokeUserTokens,
   renderMentionedPages,
@@ -131,6 +159,8 @@ module.exports = {
   anonymizeComments,
   handleDeleteError,
   sendWelcomeEmail,
+  sendUserAddedToGroupEmail,
   anonymizeUserMentions,
-  getMailLogoSource
+  getMailLogoSource,
+  assignUserToGroup
 }
