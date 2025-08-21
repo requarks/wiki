@@ -92,21 +92,17 @@ async function sendWelcomeEmail(user) {
   })
 }
 
-async function sendUserAddedToGroupEmail(user, group, url) {
-  // Determine the company name
-  let companyName = WIKI.config.companyName || process.env.COMPANY_NAME || 'CapWiki'
-
-  // Send the email
+const sendUserAddedToGroupEmail = async (user, group, url) => {
   await WIKI.mail.send({
-    template: 'user-added-to-new-group', // Template file name
+    template: 'user-added-to-new-group', // Template file
     to: user.email, // Recipient's email
-    subject: `Welcome to ${companyName} – You've been added to a new group!`,
+    subject: `Welcome to CapWiki - Added to Group: ${group.name}`,
     data: {
       firstname: user.name || 'User', // User's first name
       groupName: group.name, // Group name
-      url: url, // URL to access CapWiki
-      mailLogoSrc: getMailLogoSource(), // Logo source
-      companyName: companyName // Company name
+      url: url, // URL to access the group
+      mailLogoSrc: `${WIKI.config.host}/assets/logo.png`, // Logo source
+      companyName: WIKI.config.title || 'CapWiki' // Company name
     }
   })
 }

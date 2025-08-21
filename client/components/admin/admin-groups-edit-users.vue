@@ -61,6 +61,7 @@ import UserSearch from '../common/user-search.vue'
 import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
 import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
 import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
+import gql from 'graphql-tag'
 export default {
   props: {
     value: {
@@ -105,6 +106,7 @@ export default {
   methods: {
     async assignUser(user) {
       try {
+        // Call the GraphQL mutation to assign the user to the group
         await this.$apollo.mutate({
           mutation: assignUserMutation,
           variables: {
@@ -113,15 +115,36 @@ export default {
           }
         })
 
+        // Send the email after the user is successfully added to the group
         await this.sendUserAddedToGroupEmail(user, this.group, `${window.WIKI.config.host}/groups/${this.group.id}`)
 
+        // Show a success notification
         this.$store.commit('showNotification', {
           style: 'success',
           message: `${user.name} has been added to the group.`,
           icon: 'check'
         })
       } catch (err) {
+        // Handle errors
         this.$store.commit('pushGraphError', err)
+      }
+    },
+    async sendUserAddedToGroupEmail(user, group, url) {
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!, $url: String!) {
+              sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId, url: $url)
+            }
+          `,
+          variables: {
+            userId: user.id,
+            groupId: group.id,
+            url: url
+          }
+        })
+      } catch (err) {
+        console.error('Failed to send email:', err)
       }
     },
     async unassignUser(id) {

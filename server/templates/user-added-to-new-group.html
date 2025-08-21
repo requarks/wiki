@@ -3,6 +3,9 @@
 
 <head>
   <meta charset="utf-8">
+  <title>
+    <%= WIKI.config.title %> - User Added to Group
+  </title>
   <style>
     body {
       margin: 0;
@@ -20,11 +23,36 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
+    header {
+      background-color: #272936;
+      padding: 16px;
+      text-align: center;
+    }
+
+    header img {
+      display: inline-block;
+      vertical-align: middle;
+      width: 47px;
+      height: 42px;
+    }
+
+    header span {
+      color: white;
+      font-size: 18pt;
+      font-family: 'Ubuntu', sans-serif;
+      margin-left: 12px;
+    }
+
     .content {
-      padding: 24px 32px 0 32px;
+      padding: 24px 32px;
       color: #555;
       font-size: 16px;
       line-height: 1.6;
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
     }
 
     .button {
@@ -37,64 +65,36 @@
       text-decoration: none;
       padding: 8px 18px;
       border-radius: 18px;
-      margin-top: 20px;
     }
   </style>
 </head>
 
-<body width="100%" style="
-      margin: 0;
-      padding: 0 !important;
-      mso-line-height-rule: exactly;
-      background-color: #eee;
-    ">
-  <div style="max-width: 600px; margin: 0 auto" class="email-container">
-    <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
-      style="margin: 0 auto">
-      <tr>
-        <td style="background-color: #272936; padding: 16px; text-align: center;">
-          <img src="<%= mailLogoSrc %>" width="47" height="42" alt="logo"
-            style="display: inline-block; vertical-align: middle;" />
-          <span style="color: white; font-size: 18pt; font-family: 'Ubuntu', sans-serif; margin-left: 12px;">
-            <%= WIKI.config.title %>
-          </span>
-        </td>
-      </tr>
-      <tr>
-        <td style="background-color: #ffffff">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-            <tr>
-              <td style="
-                                  padding: 20px;
-                                  font-family: sans-serif;
-                                  font-size: 15px;
-                                  line-height: 20px;
-                                  color: #555555;
-                                ">
-                <div class="content">
-                  <p>
-                    <strong>Hello <%= firstname %></strong>,<br><br>
-                    Welcome to CapWiki!<br><br>
-                    You have been added to the group: <strong>
-                      <%= groupName %>
-                    </strong>.<br><br>
-                    Please use the following URL to access CapWiki:
-                  </p>
-                  <div style="text-align: center;">
-                    <a href="<%= url %>" class="button">Access CapWiki</a>
-                  </div>
-                  <p>
-                    If you have any questions, feel free to reach out to your administrator.<br><br>
-                    <strong>Happy collaborating!</strong><br><br>
-                    Your <%= WIKI.config.title %> Team
-                  </p>
-                </div>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+<body>
+  <div class="email-container">
+    <header>
+      <img src="<%= mailLogoSrc %>" alt="CapWiki Logo" />
+      <span>
+        <%= WIKI.config.title %>
+      </span>
+    </header>
+    <div class="content">
+      <p>
+        <strong>Hello <%= firstname %></strong>,<br><br>
+        Welcome to CapWiki!<br><br>
+        You have been added to the group: <strong>
+          <%= groupName %>
+        </strong>.<br><br>
+        Please use the following URL to access CapWiki:
+      </p>
+      <div class="button-container">
+        <a href="<%= url %>" class="button">Access CapWiki Group</a>
+      </div>
+      <p>
+        If you have any questions, feel free to reach out to your administrator.<br><br>
+        <strong>Happy collaborating!</strong><br><br>
+        Your <%= WIKI.config.title %> Team
+      </p>
+    </div>
   </div>
 </body>
 
