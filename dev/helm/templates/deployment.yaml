@@ -38,6 +38,10 @@ spec:
           resources:
             {{- toYaml .Values.sideload.resources | nindent 12 }}
       {{- end }}
+    {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -81,6 +85,8 @@ spec:
             {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
+            - name: OFFLINE_ACTIVE
+              value: "{{ default "false" .Values.offline }}"
     {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
