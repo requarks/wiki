@@ -5,8 +5,8 @@
         .admin-header
           img.animated.fadeInUp(src='/_assets/svg/icon-venn-diagram.svg', alt='Visualize Pages', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Visualize Pages
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Dendrogram representation of your pages
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{$t('admin:pages.visualize.title')}}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:pages.visualize.subtitle')}}
           v-spacer
           v-select.mx-5.animated.fadeInDown.wait-p1s(
             v-if='locales.length > 0'
@@ -22,13 +22,13 @@
           v-btn-toggle.animated.fadeInDown(v-model='graphMode', color='primary', dense, rounded)
             v-btn.px-5(value='htree')
               v-icon(left, :color='graphMode === `htree` ? `primary` : `grey darken-3`') mdi-sitemap
-              span.text-none Hierarchical Tree
+              span.text-none {{$t('admin:pages.visualize.hierarchialTree')}}
             v-btn.px-5(value='hradial')
               v-icon(left, :color='graphMode === `hradial` ? `primary` : `grey darken-3`') mdi-chart-donut-variant
-              span.text-none Hierarchical Radial
+              span.text-none {{$t('admin:pages.visualize.hierarchialRadial')}}
             v-btn.px-5(value='rradial')
               v-icon(left, :color='graphMode === `rradial` ? `primary` : `grey darken-3`') mdi-blur-radial
-              span.text-none Relational Radial
+              span.text-none {{$t('admin:pages.visualize.relationalRadial')}}
         .admin-pages-visualize-svg(ref='svgContainer', v-show='pages.length >= 1')
         v-alert(v-if='pages.length < 1', outlined, type='warning', style='max-width: 650px; margin: 0 auto;') Looks like there's no data yet to graph!
 </template>
