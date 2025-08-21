@@ -5,6 +5,7 @@ const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
 const qs = require('querystring')
+const { SitemapStream, streamToPromise } = require('sitemap')
 
 /* global WIKI */
 
@@ -21,6 +22,88 @@ router.get('/robots.txt', (req, res, next) => {
     res.status(200).end()
   }
 })
+
+/**
+ * sitemap.xml
+ */
+// TODO: toggle off before the feature is ready
+if(WIKI.config.seo.sitemap.enabled) {
+
+  const DEFAULT = {
+    cacheExpireTime: 3600,
+    changefreq: 'weekly',
+    priority: 0.0
+  }
+
+  const cache = {
+    lastUpdateAt: 0,
+    content: null,
+  };
+
+  const host = WIKI.config.host
+  const {cacheExpireTime, changefreq, priority} = Object.assign({}, DEFAULT, WIKI.config.seo.sitemap)
+
+  WIKI.logger.info(`Experimental feature sitemap is enabled`)
+  router.get('/sitemap.xml', async (req, res
+
+    ) => {
+
+    res.header('Content-Type', 'application/xml');
+
+    if(Date.now() - cache.lastUpdateAt < cacheExpireTime * 1000 && cache.content !== null) {
+      WIKI.logger.debug(`seo.sitemap: return cached sitemap`)
+      res.send(cache.content)
+      return
+    }
+
+    try {
+
+      const startTime = Date.now();
+      const smStream = new SitemapStream({ hostname: host})
+
+      const TRUE = 1;
+      const FALSE = 0;
+
+      const pages = await WIKI.models.pages.query()
+        .where('isPublished', TRUE)
+        .where('isPrivate', FALSE)
+        .orderBy('updatedAt', 'desc')
+
+      for (const page of pages) {
+        if (WIKI.auth.checkAccess(WIKI.auth.guest, ['read:pages'], page)) {
+          smStream.write({
+            url: `/${page.localeCode}/${page.path}`,
+            lastmod: page.updatedAt,
+            changefreq: changefreq || 'weekly',
+            priority: priority || 0.0
+          })
+        }
+      }
+
+      smStream.end();
+      streamToPromise(smStream)
+        .then((data) => {
+          const endTime = new Date();
+          cache.lastUpdateAt = endTime.getTime()
+          cache.content = data.toString()
+          WIKI.logger.info(`sitemap was generated in ${endTime.getTime() - startTime} ms`)
+          res.send(cache.content)
+        }
+       )
+        .catch(e => {
+          WIKI.logger.error(`unable to generate sitemap: ${e.message}`)
+          res.status(500).end()
+        })
+
+    } catch (e) {
+      WIKI.logger.error(`unexpected failure when generating sitemap: ${e.message}`)
+      res.status(500).end()
+    }
+
+  })
+}
+
+
 
 /**
  * Health Endpoint
