@@ -12,5 +12,6 @@
   },
   "i18n-ally.localesPaths": [
     "server/locales"
-  ]
+  ],
+  "search.useGlobalIgnoreFiles": true
 }

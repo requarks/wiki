@@ -1,6 +1,19 @@
 {
     "version": "0.2.0",
     "configurations": [
+      {
+        "type": "node",
+        "request": "attach",
+        "name": "Containers: Attach to Node",
+        "remoteRoot": "/usr/src/app"
+      },
+      {
+        "type": "dockerfile",
+        "request": "launch",
+        "name": "Docker: Build",
+        "dockerfile": "Dockerfile",
+        "contextPath": "${workspaceFolder}"
+      },
         {
             "name": "Launch Server",
             "program": "${workspaceFolder}/server.js",
@@ -23,6 +36,13 @@
             "name": "Attach to Port",
             "address": "localhost",
             "port": 9222
+        },
+        {
+            "name": "Containers: Node.js Launch",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "platform": "node"
         }
     ]
 }

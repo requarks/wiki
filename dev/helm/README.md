@@ -1,3 +1,4 @@
+import {} from 'cheerio';
 <div align="center">
 
 <img src="https://static.requarks.io/logo/wikijs-full.svg" alt="Wiki.js" width="600" />
@@ -52,7 +53,7 @@ It also optionally packages the [PostgreSQL](https://github.com/kubernetes/chart
 ## Adding the Wiki.js Helm Repository
 
 ```console
-$ helm repo add requarks https://charts.js.wiki
+helm repo add requarks https://charts.js.wiki
 ```
 
 ## Installing the Chart
@@ -61,11 +62,11 @@ To install the chart with the release name `my-release` run the following:
 
 ### Using Helm 3:
 ```console
-$ helm install my-release requarks/wiki
+helm install my-release requarks/wiki
 ```
 ### Using Helm 2:
 ```console
-$ helm install --name my-release requarks/wiki
+helm install --name my-release requarks/wiki
 ```
 
 The command deploys Wiki.js on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
@@ -77,7 +78,7 @@ The command deploys Wiki.js on the Kubernetes cluster in the default configurati
 To uninstall/delete the `my-release` deployment:
 
 ```console
-$ helm delete my-release
+helm delete my-release
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -85,7 +86,7 @@ The command removes all the Kubernetes components associated with the chart and 
 > **Warning**: Persistant Volume Claims for the database are not deleted automatically. They need to be manually deleted
 
 ```console
-$ kubectl delete pvc/data-wiki-postgresql-0
+kubectl delete pvc/data-wiki-postgresql-0
 ```
 
 ## Configuration
@@ -145,7 +146,7 @@ $ helm install --name my-release \
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install --name my-release -f values.yaml requarks/wiki
+helm install --name my-release -f values.yaml requarks/wiki
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
