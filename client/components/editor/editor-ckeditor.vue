@@ -86,22 +86,15 @@ export default {
       return selection.getElementsByTagName('figcaption')?.item(0)?.firstChild.data
     },
     setDiagramCaption(caption) {
-      const selection = this.getSelectedWidget()
+      this.editor.model.change(writer => {
+        const selectedElement = this.editor.model.document.selection.getSelectedElement()
 
-      const userAgent = navigator.userAgent
-      const chromeRE = /Chrome\/(\d{3})\.\d/
-      const chromeMatch = chromeRE.exec(userAgent)
-      const firefoxRE = /Firefox\/(\d{3})\.\d/
-      const firefoxMatch = firefoxRE.exec(userAgent)
-
-      if ((firefoxMatch && Number(firefoxMatch[1]) >= 123) ||
-        (chromeMatch && Number(chromeMatch[1]) >= 124)) {
-        // The caption is sanatized by the ckEditor
-        selection.getElementsByTagName('figcaption').item(0).setHTMLUnsafe(caption)
-      } else if (chromeMatch && Number(chromeMatch[1]) < 124) {
-        // setHTMLUnsafe is not available for earlier browser versions
-        selection.getElementsByTagName('figcaption').item(0).setHTML(caption)
-      }
+        if (selectedElement && selectedElement.name === 'imageBlock') {
+          const captionElement = writer.createElement('caption')
+          writer.insertText(caption, captionElement)
+          writer.append(captionElement, selectedElement)
+        }
+      })
     }
   },
   async mounted() {
