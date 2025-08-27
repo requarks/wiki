@@ -1,0 +1,26 @@
+ARG NODE_IMAGE=node:20-alpine
+FROM ${NODE_IMAGE} AS test
+
+WORKDIR /wiki
+
+USER root
+
+# Install yarn and any build tools needed for native modules
+RUN apk add --no-cache g++ make python3 yarn
+
+# Copy only dependency files first for better caching
+COPY package.json yarn.lock ./
+
+# Install all dependencies (including devDependencies for testing)
+RUN yarn install --frozen-lockfile --non-interactive
+
+# Now copy the rest of the code (only what's needed for tests)
+COPY jest.config.js ./
+COPY ./server ./server
+
+#RUN mkdir -p /wiki/coverage && chown -R node:node /wiki/coverage
+
+USER node
+
+# Default command (can be overridden)
+CMD ["yarn", "jest", "--config=jest.config.js", "--coverage"]
