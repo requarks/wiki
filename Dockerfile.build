@@ -9,7 +9,7 @@ WORKDIR /wiki
 USER root
 
 # Install build dependencies
-RUN apk add yarn g++ make cmake python3 --no-cache && \
+RUN apk add --no-cache g++ make python3 yarn && \
     chown -R node:node /wiki
 
 USER node
