@@ -96,10 +96,15 @@ import createUserMutation from 'gql/admin/users/users-mutation-create.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
+  name: 'UserCreate',
   props: {
     value: {
       type: Boolean,
       default: false
+    },
+    defaultGroup: {
+      type: [String, Number, Array],
+      default: null
     }
   },
   data() {
@@ -122,11 +127,18 @@ export default {
     }
   },
   watch: {
-    value(newValue, oldValue) {
+    value(newValue) {
       if (newValue) {
         this.$nextTick(() => {
           this.$refs.emailInput.focus()
         })
+        // Set default group and provider when dialog opens
+        if (this.defaultGroup) {
+          this.group = Array.isArray(this.defaultGroup) ? this.defaultGroup : [this.defaultGroup]
+        } else {
+          this.group = []
+        }
+        this.provider = 'local'
       }
     }
   },
