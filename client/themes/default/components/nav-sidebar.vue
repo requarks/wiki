@@ -344,13 +344,13 @@ export default {
       })
       this.childPageItems = _.get(resp, 'data.childPages', [])
 
+      this.hasFetchedChildren = true
       this.$store.commit(`loadingStop`, 'browse-load')
     }
   },
   watch: {
     isReadyToFetchPageChildren(newVal) {
       if (newVal && !this.hasFetchedChildren) {
-        this.hasFetchedChildren = true
         this.fetchChildPageItems()
       }
     }
