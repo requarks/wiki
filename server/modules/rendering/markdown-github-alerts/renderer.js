@@ -4,7 +4,7 @@
 
 module.exports = {
   init (md, conf) {
-    // Plugin to parse GitHub-style alerts
+    // Plugin to parse GitHub-style alerts using renderer approach
     md.use(githubAlertsPlugin, conf)
   }
 }
@@ -19,64 +19,63 @@ function githubAlertsPlugin(md, options = {}) {
     'caution': { class: 'is-danger' }
   }
 
-  // Add custom rule to transform GitHub alert syntax
-  md.core.ruler.before('normalize', 'github_alerts', function(state) {
-    let pos = 0
-    let lines = state.src.split('\n')
-    let processedLines = []
+  // Store original renderer
+  const defaultRender = md.renderer.rules.blockquote_open || function(tokens, idx, options, env, slf) {
+    return slf.renderToken(tokens, idx, options)
+  }
 
-    while (pos < lines.length) {
-      const line = lines[pos]
+  // Override blockquote_open renderer
+  md.renderer.rules.blockquote_open = function(tokens, idx, opts, env, slf) {
+    const nextToken = tokens[idx + 1]
 
-      // Check if this line starts a potential GitHub alert blockquote
-      if (line.trim().startsWith('> [!')) {
-        const alertMatch = line.match(/^>\s*\[!(NOTE|INFO|TIP|WARNING|IMPORTANT|CAUTION)\](?:\s+(.+?))?\s*$/i)
+    // Check if the next token is a paragraph containing inline content
+    if (nextToken && nextToken.type === 'paragraph_open') {
+      const inlineToken = tokens[idx + 2] // The inline token after paragraph_open
 
-        if (alertMatch) {
-          const alertType = alertMatch[1].toLowerCase()
-          const customTitle = alertMatch[2] ? alertMatch[2].trim() : null
+      if (inlineToken && inlineToken.type === 'inline' && inlineToken.children) {
+        const firstChild = inlineToken.children[0]
 
-          // Check if this is a valid alert type
-          const alertConfig = alertTypes[alertType]
-          if (alertConfig) {
-            // Collect all blockquote lines for this alert
-            let blockquoteLines = []
-            let currentPos = pos + 1
+        if (firstChild && firstChild.type === 'text') {
+          const content = firstChild.content
+          const alertMatch = content.match(/^\[!(NOTE|INFO|TIP|WARNING|IMPORTANT|CAUTION)\](?:\s+(.+?))?$/i)
 
-            // Add the title line if there's a custom title
-            if (customTitle && options.customTitle !== false) {
-              blockquoteLines.push(`> **${customTitle}**`)
+          if (alertMatch) {
+            const alertType = alertMatch[1].toLowerCase()
+            const customTitle = alertMatch[2] ? alertMatch[2].trim() : null
+
+            const alertConfig = alertTypes[alertType]
+            if (alertConfig) {
+              // Add CSS class to blockquote
+              tokens[idx].attrJoin('class', alertConfig.class)
+
+              // Handle custom title or remove alert tag
+              if (customTitle && options.customTitle !== false) {
+                // Replace with bold custom title
+                firstChild.content = `**${customTitle}**`
+              } else if (customTitle && options.customTitle === false) {
+                // Custom titles disabled but title provided - remove the entire alert line
+                firstChild.content = ''
+              } else {
+                // No custom title - remove the alert tag
+                firstChild.content = ''
+              }
+
+              // If we emptied the first text node, remove it
+              if (firstChild.content === '') {
+                inlineToken.children.shift()
+                // Also remove the following softbreak if it exists
+                if (inlineToken.children[0] && inlineToken.children[0].type === 'softbreak') {
+                  inlineToken.children.shift()
+                }
+              }
             }
-
-            // Collect subsequent blockquote lines
-            while (currentPos < lines.length && lines[currentPos].trim().startsWith('>')) {
-              blockquoteLines.push(lines[currentPos])
-              currentPos++
-            }
-
-            // If we have content, add the class attribute to the last line
-            if (blockquoteLines.length > 0) {
-              const lastLineIndex = blockquoteLines.length - 1
-              blockquoteLines[lastLineIndex] += ` {.${alertConfig.class}}`
-            } else {
-              // If no content, create a line with just the class
-              blockquoteLines.push(`> {.${alertConfig.class}}`)
-            }
-
-            processedLines = processedLines.concat(blockquoteLines)
-
-            pos = currentPos
-            continue
           }
         }
       }
-
-      processedLines.push(line)
-      pos++
     }
 
-    state.src = processedLines.join('\n')
-  })
+    return defaultRender(tokens, idx, opts, env, slf)
+  }
 }
 
 
