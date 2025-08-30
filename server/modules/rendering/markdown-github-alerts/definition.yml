@@ -5,11 +5,3 @@ author: requarks.io
 icon: mdi-alert-box-outline
 enabledDefault: true
 dependsOn: markdownCore
-props:
-  customTitle:
-    type: Boolean
-    default: true
-    title: Support custom titles
-    hint: Allow custom titles like > [!NOTE] Custom Title
-    order: 1
-    public: true
