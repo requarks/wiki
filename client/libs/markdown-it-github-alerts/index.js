@@ -43,8 +43,7 @@ function githubAlertsPlugin(md, options = {}) {
 
               // Handle custom title or remove alert tag
               if (customTitle && options.customTitle !== false) {
-                // Replace with bold custom title
-                firstChild.content = `**${customTitle}**`
+                firstChild.content = `<b>${customTitle}</b>`
               } else if (customTitle && options.customTitle === false) {
                 // Custom titles disabled but title provided - remove the entire alert line
                 firstChild.content = ''

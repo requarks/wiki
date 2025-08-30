@@ -267,7 +267,7 @@ const md = new MarkdownIt({
   })
   .use(mdDecorate)
   .use(underline)
-  .use(githubAlerts, { customTitle: true })
+  .use(githubAlerts, { customTitle: false })
   .use(mdEmoji)
   .use(mdTaskLists, { label: false, labelAfter: false })
   .use(mdExpandTabs)
