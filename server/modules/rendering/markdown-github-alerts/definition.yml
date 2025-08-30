@@ -6,45 +6,10 @@ icon: mdi-alert-box-outline
 enabledDefault: true
 dependsOn: markdownCore
 props:
-  enableNoteAlert:
-    type: Boolean
-    default: true
-    title: Enable NOTE alerts
-    hint: Support for > [!NOTE] syntax
-    order: 1
-    public: true
-  enableTipAlert:
-    type: Boolean
-    default: true
-    title: Enable TIP alerts
-    hint: Support for > [!TIP] syntax
-    order: 2
-    public: true
-  enableWarningAlert:
-    type: Boolean
-    default: true
-    title: Enable WARNING alerts
-    hint: Support for > [!WARNING] syntax
-    order: 3
-    public: true
-  enableImportantAlert:
-    type: Boolean
-    default: true
-    title: Enable IMPORTANT alerts
-    hint: Support for > [!IMPORTANT] syntax
-    order: 4
-    public: true
-  enableCautionAlert:
-    type: Boolean
-    default: true
-    title: Enable CAUTION alerts
-    hint: Support for > [!CAUTION] syntax
-    order: 5
-    public: true
   customTitle:
     type: Boolean
     default: true
     title: Support custom titles
     hint: Allow custom titles like > [!NOTE] Custom Title
-    order: 6
+    order: 1
     public: true

@@ -11,12 +11,12 @@ module.exports = {
 
 function githubAlertsPlugin(md, options = {}) {
   const alertTypes = {
-    'note': { enabled: options.enableNoteAlert !== false, class: 'is-info' },
-    'info': { enabled: options.enableNoteAlert !== false, class: 'is-info' },
-    'tip': { enabled: options.enableTipAlert !== false, class: 'is-success' },
-    'warning': { enabled: options.enableWarningAlert !== false, class: 'is-warning' },
-    'important': { enabled: options.enableImportantAlert !== false, class: 'is-info' },
-    'caution': { enabled: options.enableCautionAlert !== false, class: 'is-danger' }
+    'note': { class: 'is-info' },
+    'info': { class: 'is-info' },
+    'tip': { class: 'is-success' },
+    'warning': { class: 'is-warning' },
+    'important': { class: 'is-info' },
+    'caution': { class: 'is-danger' }
   }
 
   // Add custom rule to transform GitHub alert syntax
@@ -36,9 +36,9 @@ function githubAlertsPlugin(md, options = {}) {
           const alertType = alertMatch[1].toLowerCase()
           const customTitle = alertMatch[2] ? alertMatch[2].trim() : null
 
-          // Check if this alert type is enabled
+          // Check if this is a valid alert type
           const alertConfig = alertTypes[alertType]
-          if (alertConfig && alertConfig.enabled) {
+          if (alertConfig) {
             // Collect all blockquote lines for this alert
             let blockquoteLines = []
             let currentPos = pos + 1
