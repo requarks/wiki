@@ -212,6 +212,7 @@ import mdFootnote from 'markdown-it-footnote'
 import mdImsize from 'markdown-it-imsize'
 import katex from 'katex'
 import underline from '../../libs/markdown-it-underline'
+import githubAlerts from '../../libs/markdown-it-github-alerts'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './markdown/plantuml'
@@ -266,6 +267,7 @@ const md = new MarkdownIt({
   })
   .use(mdDecorate)
   .use(underline)
+  .use(githubAlerts, { customTitle: true })
   .use(mdEmoji)
   .use(mdTaskLists, { label: false, labelAfter: false })
   .use(mdExpandTabs)
@@ -308,9 +310,21 @@ function injectLineNumbers (tokens, idx, options, env, slf) {
   }
   return slf.renderToken(tokens, idx, options, env, slf)
 }
+
+// Store the existing blockquote renderer (which now includes GitHub alerts)
+const existingBlockquoteRender = md.renderer.rules.blockquote_open
+
+// Create a combined renderer for blockquotes that handles both line numbers and GitHub alerts
+md.renderer.rules.blockquote_open = function(tokens, idx, opts, env, slf) {
+  // First apply line number injection
+  injectLineNumbers(tokens, idx, opts, env, slf)
+  // Then apply the GitHub alerts rendering (if any)
+  return existingBlockquoteRender(tokens, idx, opts, env, slf)
+}
+
+// Apply line number injection to other elements
 md.renderer.rules.paragraph_open = injectLineNumbers
 md.renderer.rules.heading_open = injectLineNumbers
-md.renderer.rules.blockquote_open = injectLineNumbers
 
 cmFold.register('markdown')
 // ========================================
