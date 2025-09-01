@@ -66,6 +66,12 @@
       padding: 8px 18px;
       border-radius: 18px;
     }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 32px 0;
+    }
   </style>
 </head>
 
@@ -78,17 +84,61 @@
       </span>
     </header>
     <div class="content">
+      <div style="text-align: center; font-size: 13px; color: #888;">
+        ***for the English version please scroll down***
+      </div>
+      <!-- German Version -->
       <p>
-        <strong>Hello <%= firstname %></strong>,<br><br>
-        Welcome to CapWiki!<br><br>
-        You have been added to the group: <strong>
+        <strong>Hallo <%= username %></strong>,<br><br>
+        Du wurdest erfolgreich zur Gruppe <strong>
           <%= groupName %>
-        </strong>.<br><br>
-        Please use the following URL to access CapWiki:
+        </strong> hinzugefügt.<br>
+        <% if (groupDescription) { %>
+          <em>
+            <%= groupDescription %>
+          </em><br>
+          <% } %>
+            <br>
+            Bitte nutze den folgenden Link, um auf CapWiki zuzugreifen:
       </p>
       <div class="button-container">
-        <a href="<%= url %>" class="button">Access CapWiki Group</a>
+        <a href="<%= url %>" class="button">CapWiki öffnen</a>
       </div>
+      <p>
+        Oder kopiere diesen Link in deinen Browser:<br>
+        <a href="<%= url %>">
+          <%= url %>
+        </a>
+      </p>
+      <p>
+        Solltest du Fragen haben, wende dich bitte an deinen Administrator.<br><br>
+        <strong>Viel Erfolg und viel Spaß beim Zusammenarbeiten!</strong><br><br>
+        Dein <%= WIKI.config.title %>-Team
+      </p>
+      <hr>
+      <!-- English Version -->
+      <p>
+        <strong>Hello <%= username %></strong>,<br><br>
+        You have been successfully added to the group: <strong>
+          <%= groupName %>
+        </strong>.<br>
+        <% if (groupDescription) { %>
+          <em>
+            <%= groupDescription %>
+          </em><br>
+          <% } %>
+            <br>
+            Please use the following link to access CapWiki:
+      </p>
+      <div class="button-container">
+        <a href="<%= url %>" class="button">Access CapWiki</a>
+      </div>
+      <p>
+        Or copy this link into your browser:<br>
+        <a href="<%= url %>">
+          <%= url %>
+        </a>
+      </p>
       <p>
         If you have any questions, feel free to reach out to your administrator.<br><br>
         <strong>Happy collaborating!</strong><br><br>

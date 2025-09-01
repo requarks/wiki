@@ -9,13 +9,12 @@ const validate = require('validate.js')
 const qr = require('qr-image')
 const { handleUserSiteInactivityAfterUnassign } = require('../graph/services/userSiteInactivityService')
 const userService = require('../graph/services/userService')
-
 const bcryptRegexp = /^\$2[ayb]\$[0-9]{2}\$[A-Za-z0-9./]{53}$/
 
 /**
  * Users model
  */
-module.exports = class User extends Model {
+class User extends Model {
   static get tableName() { return 'users' }
 
   static get jsonSchema() {
@@ -983,5 +982,18 @@ module.exports = class User extends Model {
     await this.query().patch({
       failedAttempts: 0
     }).where({ id: userId })
+  }
+}
+
+module.exports = User
+
+// If you need to export Mutation for GraphQL, do it separately:
+module.exports.Mutation = {
+  async sendUserAddedToGroupEmail(_, { userId, groupId }) {
+    const user = await WIKI.models.users.query().findById(userId)
+    const group = await WIKI.models.groups.query().findById(groupId)
+    if (!user || !group) throw new Error('User or group not found')
+    await userService.sendUserAddedToGroupEmail(user, group)
+    return true
   }
 }

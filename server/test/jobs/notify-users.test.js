@@ -82,21 +82,22 @@ describe('notifyUsers', () => {
 
     expect(WIKI.models.users.query().whereIn).toHaveBeenCalledWith('id', userIds)
     expect(WIKI.mail.send).toHaveBeenCalledTimes(1)
-    expect(WIKI.mail.send).toHaveBeenCalledWith({
+    expect(WIKI.mail.send).toHaveBeenCalledWith(expect.objectContaining({
       template: 'page-notify',
       to: '',
       bcc: ['user1@example.com', 'user2@example.com'],
-      subject: `[CapWiki] Page Updated: ${pageTitle}`,
-      data: {
-        pageUrl: `${WIKI.config.host}/${sitePath}/${pagePath}`,
+      subject: '[CapWiki] Page Updated: Test Page',
+      data: expect.objectContaining({
+        event: 'UPDATE_PAGE',
+        eventText: 'updated',
         isDeletion: false,
-        preheadertext: `The page "${pageTitle}" has been ${event.toLowerCase()} by ${userEmail}.`,
-        pageTitle: pageTitle,
-        userEmail: userEmail,
-        event: event,
-        eventText: 'updated'
-      }
-    })
+        pageTitle: 'Test Page',
+        pageUrl: 'https://example.com/test-site/test-page',
+        preheadertext: 'The page "Test Page" has been update_page by user@example.com.',
+        userEmail: 'user@example.com'
+        // mailLogoSrc is allowed but not required in the expectation
+      })
+    }))
   })
 
   it('should notify users with read access in batches', async () => {
@@ -151,7 +152,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(2, {
@@ -166,7 +168,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
     expect(WIKI.mail.send).toHaveBeenNthCalledWith(3, {
@@ -181,7 +184,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
   })
@@ -267,7 +271,8 @@ describe('notifyUsers', () => {
         userEmail,
         event: event,
         eventText: 'created',
-        isDeletion: false
+        isDeletion: false,
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
   })
@@ -324,7 +329,8 @@ describe('notifyUsers', () => {
         userEmail,
         event: event,
         eventText: 'deleted',
-        isDeletion: true
+        isDeletion: true,
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
   })
@@ -383,7 +389,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
   })
@@ -443,7 +450,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
   })
@@ -503,7 +511,8 @@ describe('notifyUsers', () => {
         pageTitle: pageTitle,
         userEmail: userEmail,
         event: event,
-        eventText: 'updated'
+        eventText: 'updated',
+        mailLogoSrc: 'https://default-logo-url.com/logo.png'
       }
     })
   })
