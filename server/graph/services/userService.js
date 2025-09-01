@@ -92,29 +92,30 @@ async function sendWelcomeEmail(user) {
   })
 }
 
-const sendUserAddedToGroupEmail = async (user, group, url) => {
+async function sendUserAddedToGroupEmail(user, group) {
+  const url = `${WIKI.config.host}`
   await WIKI.mail.send({
-    template: 'user-added-to-new-group', // Template file
-    to: user.email, // Recipient's email
-    subject: `Welcome to CapWiki - Added to Group: ${group.name}`,
+    template: 'user-added-to-group',
+    to: user.email,
+    subject: `You've been added to the group ${group.name}`,
     data: {
-      firstname: user.name || 'User', // User's first name
-      groupName: group.name, // Group name
-      url: url, // URL to access the group
-      mailLogoSrc: `${WIKI.config.host}/assets/logo.png`, // Logo source
-      companyName: WIKI.config.title || 'CapWiki' // Company name
+      username: user.name,
+      groupName: group.name,
+      groupDescription: group.description || '',
+      url: url,
+      mailLogoSrc: getMailLogoSource()
     }
   })
 }
 
 function getMailLogoSource() {
   let mailLogoSrcValue
-  if (WIKI.config.mailLogoSrc) {
+  if (WIKI.config?.mailLogoSrc) {
     mailLogoSrcValue = WIKI.config.mailLogoSrc
   } else if (process.env.MAIL_LOGO_SRC) {
     mailLogoSrcValue = process.env.MAIL_LOGO_SRC
   } else {
-    mailLogoSrcValue = WIKI.config.logoUrl
+    mailLogoSrcValue = WIKI.config?.logoUrl || 'https://default-logo-url.com/logo.png'
   }
   return mailLogoSrcValue
 }
@@ -147,9 +148,8 @@ async function assignUserToGroup(userId, groupId) {
   const user = await graphHelper.getUserById(userId)
   const group = await graphHelper.getGroupById(groupId)
 
-  // Send the email
-  const url = `${WIKI.config.host}/groups/${groupId}`
-  await sendUserAddedToGroupEmail(user, group, url)
+  // Send notification email to the user
+  await sendUserAddedToGroupEmail(user, group)
 }
 
 module.exports = {

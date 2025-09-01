@@ -49,6 +49,7 @@
       v-model="searchUserDialog"
       :default-group="group.id"
       @select="assignUser"
+      @user-created-and-assigned="refreshGroupPage"
     )
     page-last-group(
       v-model='warningPageModel', :sites='affectedSites', @discard='resetUnassignState', @confirm='finalUnassignUser(pendingUnassignUser)'
@@ -62,6 +63,11 @@ import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
 import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
 import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
 import gql from 'graphql-tag'
+const SEND_USER_ADDED_TO_GROUP_EMAIL = gql`
+  mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!) {
+    sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId)
+  }
+`
 export default {
   props: {
     value: {
@@ -106,7 +112,7 @@ export default {
   methods: {
     async assignUser(user) {
       try {
-        // Call the GraphQL mutation to assign the user to the group
+        // Assign the user to the group
         await this.$apollo.mutate({
           mutation: assignUserMutation,
           variables: {
@@ -115,36 +121,25 @@ export default {
           }
         })
 
-        // Send the email after the user is successfully added to the group
-        await this.sendUserAddedToGroupEmail(user, this.group, `${window.WIKI.config.host}/groups/${this.group.id}`)
-
-        // Show a success notification
-        this.$store.commit('showNotification', {
-          style: 'success',
-          message: `${user.name} has been added to the group.`,
-          icon: 'check'
-        })
-      } catch (err) {
-        // Handle errors
-        this.$store.commit('pushGraphError', err)
-      }
-    },
-    async sendUserAddedToGroupEmail(user, group, url) {
-      try {
+        // Send the email via backend
         await this.$apollo.mutate({
-          mutation: gql`
-            mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!, $url: String!) {
-              sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId, url: $url)
-            }
-          `,
+          mutation: SEND_USER_ADDED_TO_GROUP_EMAIL,
           variables: {
             userId: user.id,
-            groupId: group.id,
-            url: url
+            groupId: this.group.id
           }
         })
+
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `${user.name} has been added to the group and notified by email.`,
+          icon: 'check'
+        })
+
+        // Add this line to refresh the group user list
+        this.$emit('refresh')
       } catch (err) {
-        console.error('Failed to send email:', err)
+        this.$store.commit('pushGraphError', err)
       }
     },
     async unassignUser(id) {
@@ -201,6 +196,41 @@ export default {
       this.warningPageModel = false
       this.pendingUnassignUser = null
       this.affectedSites = []
+    },
+    async loadGroupData() {
+      try {
+        const { data } = await this.$apollo.query({
+          query: gql`
+            query GetGroup($id: Int!) {
+              groupById(id: $id) {
+                id
+                name
+                users {
+                  id
+                  name
+                  email
+                }
+                # add other fields as needed
+              }
+            }
+          `,
+          variables: { id: this.group.id },
+          fetchPolicy: 'network-only'
+        })
+        // Update the group data
+        this.$emit('input', data.groupById)
+      } catch (err) {
+        console.error('Error refreshing group data:', err) // Log the error for debugging
+        this.$store.commit('showNotification', {
+          style: 'error',
+          message: 'Failed to refresh group data. Please try again later.',
+          icon: 'alert'
+        })
+        // Optionally, you can implement a fallback action here
+      }
+    },
+    refreshGroupPage() {
+      this.loadGroupData()
     }
   }
 }
