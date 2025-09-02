@@ -8,9 +8,9 @@ WORKDIR /wiki
 
 USER root
 
-# Install build dependencies
+# Install build dependencies (explicit versions recommended for production)
 RUN apk add --no-cache g++ make python3 yarn && \
-    chown -R node:node /wiki
+  chown -R node:node /wiki
 
 USER node
 
@@ -24,10 +24,11 @@ COPY --chown=node:node ./.eslintignore ./.eslintignore
 COPY --chown=node:node ./.eslintrc.yml ./.eslintrc.yml
 COPY --chown=node:node ./yarn.lock ./yarn.lock
 
-# Clean cache and install dependencies
-RUN yarn cache clean && \
-    yarn install --frozen-lockfile --non-interactive --ignore-scripts && \
-    yarn build && \
-    rm -rf /wiki/node_modules && \
-    yarn --production --frozen-lockfile --non-interactive --ignore-scripts && \
-    yarn patch-package
+# Remove write permissions from copied resources for security
+RUN chmod -R a-w ./client ./dev ./patches \
+  && yarn cache clean \
+  && yarn install --frozen-lockfile --non-interactive --ignore-scripts \
+  && yarn build \
+  && rm -rf /wiki/node_modules \
+  && yarn --production --frozen-lockfile --non-interactive --ignore-scripts \
+  && yarn patch-package
