@@ -66,22 +66,14 @@ function handleDeleteError(err) {
 }
 
 async function sendWelcomeEmail(user) {
-  // Send welcome email
-  let companyName
-  if (WIKI.config.companyName) {
-    companyName = WIKI.config.companyName
-  } else if (process.env.COMPANY_NAME) {
-    companyName = process.env.COMPANY_NAME
-  } else {
-    companyName = 'Dummy Company'
-  }
+  let companyName = WIKI.config.companyName || process.env.COMPANY_NAME || 'Dummy Company'
 
   await WIKI.mail.send({
     template: 'account-welcome',
     to: user.email,
     subject: `Welcome to ${WIKI.config.title} – Let’s Get You Started!`,
     data: {
-      username: `${user.name || 'User'}`,
+      username: user.name || 'User',
       companyName: companyName,
       mailLogoSrc: getMailLogoSource(),
       buttonLink: `${WIKI.config.host}/login`,

@@ -9,7 +9,7 @@
     "start": "node server",
     "dev": "while true; do yarn dev-linux; sleep 1; done",
     "dev-win": "set NODE_OPTIONS=--openssl-legacy-provider && node dev",
-    "dev-linux": "NODE_OPTIONS=--openssl-legacy-provider node dev/linux.js",
+    "dev-linux": "set NODE_OPTIONS=--openssl-legacy-provider && node dev/linux.js",
     "dev-linux-inspect": "NODE_OPTIONS=--openssl-legacy-provider node --inspect dev/linux.js",
     "build": "NODE_OPTIONS=--openssl-legacy-provider webpack --profile --config dev/webpack/webpack.prod.js",
     "watch": "NODE_OPTIONS=--openssl-legacy-provider webpack --config dev/webpack/webpack.dev.js",
