@@ -20,9 +20,9 @@ deploy-to-production:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
 
-      
 variables:
   PROJECT_NAME: 'mar'
+  ENVIRONMENT: "dev2"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
