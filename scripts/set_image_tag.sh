@@ -13,7 +13,7 @@ IMAGE_TAG_BY_ENV=""
 determine_environment() {
   case "$CI_COMMIT_BRANCH" in
     develop)
-      ENVIRONMENT="staging"
+      ENVIRONMENT="dev2"
       ;;
     main)
       ENVIRONMENT="prod"
@@ -36,11 +36,13 @@ echo "Determined ENVIRONMENT=$ENVIRONMENT"
 
 # Determine image tag based on environment
 case "$ENVIRONMENT" in
-  staging)
+  dev2)
     if [[ "$CI_COMMIT_BRANCH" == "develop" ]]; then
-      IMAGE_TAG_BY_ENV="$STAGING_IMAGE_TAG"
+      IMAGE_TAG_BY_ENV="dev2-${IMAGE_TAG}"
+    elif [[ "$CI_COMMIT_BRANCH" =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ]]; then
+      IMAGE_TAG_BY_ENV="dev2-${IMAGE_TAG}"
     else
-      echo "ERROR: Only 'develop' branch can be deployed to staging"
+      echo "ERROR: Branch name doesn't match allowed prefixes for dev2 environment"
       exit 1
     fi
     ;;

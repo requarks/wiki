@@ -1,3 +1,13 @@
+# Promote dev2 image to staging
+promote-to-staging:
+  stage: promote-prod-release-version
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+  script:
+    - bash scripts/promote_to_staging.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: manual
 variables:
   PROJECT_NAME: 'mar'
   APP_NAME: 'capwiki'
@@ -9,6 +19,8 @@ variables:
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
+  DEV2_IMAGE_TAG: 'latest-dev2'
+  DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
   ENVIRONMENT:
@@ -150,7 +162,7 @@ docker-build:
       when: never
     - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: always
@@ -168,7 +180,7 @@ push-docker-image:
       when: never
     - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
       when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "staging"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: on_success
