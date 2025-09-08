@@ -18,8 +18,7 @@ deploy-to-production:
     name: production
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: delayed
-      start_in: 14 days
+  when: manual
 
 variables:
   PROJECT_NAME: 'mar'
