@@ -147,6 +147,11 @@ jobs:
     schedule: 0 2 * * *
     offlineSkip: false
     repeat: true
+  sendScriptUserWelcomeEmails:
+    onInit: true
+    schedule: 0 * * * *
+    offlineSkip: false
+    repeat: true
 groups:
   defaultPermissions:
     - 'read:pages'

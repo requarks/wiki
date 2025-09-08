@@ -38,7 +38,11 @@
                   v-list-item-title.body-2 {{usr.name}}
                   v-list-item-subtitle {{usr.email}}
                 v-list-item-action
-                  v-icon(color='primary') mdi-arrow-right
+                  v-btn(
+                    color="primary"
+                    @click="assignUserToGroup(usr, selectedGroup)"
+                  )
+                    v-icon mdi-account-plus
               v-divider.my-0(v-if='idx < items.length - 1')
         v-card-chin
           v-btn(
@@ -57,7 +61,8 @@
     UserCreate(
       v-model="isCreateDialogShown"
       :default-group="defaultGroup"
-      @refresh="refresh(false)"
+      :disable-group-select="!!defaultGroup"
+      @refresh="onUserCreated"
     )
 </template>
 
@@ -123,6 +128,71 @@ export default {
     },
     createUser() {
       this.isCreateDialogShown = true
+    },
+    async assignUserToGroup(user, group) {
+      try {
+        // Assign the user to the group
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation AssignUserToGroup($userId: Int!, $groupId: Int!) {
+              assignUserToGroup(userId: $userId, groupId: $groupId)
+            }
+          `,
+          variables: {
+            userId: user.id,
+            groupId: group.id
+          }
+        })
+
+        // Now send the "added to group" email
+        await this.sendUserAddedToGroupEmail(user, group)
+
+        this.$store.commit('showNotification', {
+          style: 'success',
+          message: `${user.name} has been added to the group ${group.name} and notified by email.`,
+          icon: 'check'
+        })
+      } catch (err) {
+        console.error('Error assigning user to group or sending email:', err)
+        this.$store.commit('showNotification', {
+          style: 'error',
+          message: 'Failed to assign user to group or send email.',
+          icon: 'alert'
+        })
+      }
+    },
+    async sendUserAddedToGroupEmail(user, group) {
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!) {
+              sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId)
+            }
+          `,
+          variables: {
+            userId: user.id,
+            groupId: group.id
+          }
+        })
+      } catch (err) {
+        console.error('Failed to send user-added-to-group email:', err)
+        this.$store.commit('showNotification', {
+          style: 'error',
+          message: 'Failed to send group notification email.',
+          icon: 'alert'
+        })
+      }
+    },
+    onUserCreated() {
+      this.$store.commit('showNotification', {
+        style: 'success',
+        message: 'New user created and added to the group.',
+        icon: 'check'
+      })
+      this.$emit('refresh')
+      this.isCreateDialogShown = false
+      this.close()
+      this.$emit('user-created-and-assigned')
     }
   },
   components: {

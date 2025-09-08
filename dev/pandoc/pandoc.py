@@ -1,12 +1,9 @@
 import os
 from flask import Flask, request, send_file
-#from flask_wtf.csrf import CSRFProtect
 import subprocess
 from uuid import uuid4
 
 app = Flask(__name__)
-#csrf = CSRFProtect()
-#csrf.init_app(app)
 
 # Configure paths using environment variables with default fallbacks
 LUA_PATH = os.getenv('LUA_PATH', './flexible-columns-table.lua')
