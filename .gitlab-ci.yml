@@ -163,6 +163,8 @@ sonarqube-scan:
       when: always
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+      when: always
 
 push-docker-image:
   stage: docker-push
