@@ -98,7 +98,10 @@ build:
  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: always
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+      when: always
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
 
 test:
   stage: test
@@ -120,7 +123,10 @@ test:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: on_success
 
 sonarqube-scan:
   stage: sonarqube
@@ -143,7 +149,9 @@ sonarqube-scan:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: $SONARQUBE == "true"
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $SONARQUBE == "true"'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
 
 docker-build:
@@ -164,8 +172,6 @@ docker-build:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
@@ -181,8 +187,6 @@ push-docker-image:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
