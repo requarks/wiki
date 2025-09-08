@@ -1,13 +1,25 @@
-# Promote dev2 image to staging
-promote-to-staging:
+# Deploy to staging after merging to main
+deploy-to-staging:
   stage: promote-prod-release-version
-  before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
+    - echo "Deploying main branch image to staging..."
     - bash scripts/promote_to_staging.sh
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: manual
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+
+# Deploy to production after staging, blocked for 14 days
+deploy-to-production:
+  stage: promote-prod-release-version
+  script:
+    - echo "Deploying main branch image to production..."
+    - bash scripts/promote_to_prod.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: delayed
+      start_in: 14 days
+
+      
 variables:
   PROJECT_NAME: 'mar'
   APP_NAME: 'capwiki'
@@ -23,15 +35,6 @@ variables:
   DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
-  ENVIRONMENT:
-    value: "none"
-    options:
-      - "none"
-      - "dev1"
-      - "dev2"
-      - "staging"
-      - "production"
-    description: "Choose on which environment should pipeline run"
 
   IMAGE_TAG:
     value: ""
