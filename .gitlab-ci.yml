@@ -14,6 +14,8 @@ deploy-to-production:
   script:
     - echo "Deploying main branch image to production..."
     - bash scripts/promote_to_prod.sh
+  environment:
+    name: production
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
