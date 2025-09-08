@@ -18,7 +18,7 @@ deploy-to-production:
     name: production
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-  when: manual
+      when: manual
 
 variables:
   PROJECT_NAME: 'mar'
@@ -167,7 +167,7 @@ sonarqube-scan:
 push-docker-image:
   stage: docker-push
   needs:
-   - docker-build
+   - build
   script:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
