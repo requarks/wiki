@@ -8,7 +8,7 @@ deploy-to-staging:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always
 
-# Deploy to production after staging, blocked for 14 days
+# Deploy to production after staging, manual trigger
 deploy-to-production:
   stage: promote-prod-release-version
   script:
@@ -16,8 +16,7 @@ deploy-to-production:
     - bash scripts/promote_to_prod.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: delayed
-      start_in: 14 days
+      when: manual
 
       
 variables:
@@ -170,7 +169,6 @@ docker-build:
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: always
 
-
 push-docker-image:
   stage: docker-push
   needs:
@@ -189,15 +187,4 @@ push-docker-image:
       when: on_success
 
 
-# only enable manual deployment for production
-#@TODO There is need to be new ticket created to trigger automatic build for production when we merge develop to main with commmit message having "release" in it
-promote-prod-release-version:
-  stage: promote-prod-release-version
-  before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-  script:
-    - bash scripts/promote_to_prod.sh
-  rules:
-   - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-     when: always
 
