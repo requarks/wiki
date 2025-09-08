@@ -18,11 +18,20 @@ deploy-to-production:
     name: production
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
+      when: delayed
+      start_in: 14 days
 
 variables:
   PROJECT_NAME: 'mar'
-  ENVIRONMENT: "dev2"
+  ENVIRONMENT:
+    value: "none"
+    options:
+      - "none"
+      - "dev1"
+      - "dev2"
+      - "staging"
+      - "production"
+    description: "Choose on which environment should pipeline run"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
@@ -82,25 +91,25 @@ environment-set:
     name: ${ENVIRONMENT}
 
 build:
- stage: build
- before_script:
-   - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
- script:
-   - export BUILD_IMAGE="codebase-build:$CI_COMMIT_SHORT_SHA"
-   - docker image inspect "$NODE_IMAGE" > /dev/null 2>&1 || docker pull "$NODE_IMAGE"
-   - docker build --no-cache -f Dockerfile.build --build-arg NODE_IMAGE="$NODE_IMAGE" -t $BUILD_IMAGE .
-   - docker run --rm -v $(pwd)/assets:/wiki/assets $BUILD_IMAGE
-   - docker rmi $BUILD_IMAGE || true
- artifacts:
-   paths:
-     - assets/
-   expire_in: 1 hour
- rules:
+  stage: build
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+  script:
+    - export BUILD_IMAGE="codebase-build:$CI_COMMIT_SHORT_SHA"
+    - docker image inspect "$NODE_IMAGE" > /dev/null 2>&1 || docker pull "$NODE_IMAGE"
+    - docker build --no-cache -f Dockerfile.build --build-arg NODE_IMAGE="$NODE_IMAGE" -t $BUILD_IMAGE .
+    - docker run --rm -v $(pwd)/assets:/wiki/assets $BUILD_IMAGE
+    - docker rmi $BUILD_IMAGE || true
+  artifacts:
+    paths:
+      - assets/
+    expire_in: 1 hour
+  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
-      when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
       when: always
 
 test:
@@ -115,7 +124,7 @@ test:
     - docker run --rm -v $CI_PROJECT_DIR/coverage:/wiki/coverage $TEST_IMAGE
     - docker rmi $TEST_IMAGE || true
   artifacts:
-    expire_in: 1 hr
+    expire_in: 1 hour
     when: on_success
     paths:
       - coverage
@@ -123,9 +132,9 @@ test:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
-      when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
       when: on_success
 
 sonarqube-scan:
@@ -137,30 +146,9 @@ sonarqube-scan:
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
   script:
-    - sonar-scanner
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $SONARQUBE == "true"'
-      when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
-      when: on_success
-
-docker-build:
-  stage: docker-build
-  before_script:
-    - df -h # Check disk space before building
     - export PANDOC="$PANDOC"
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
-  script:
     - bash scripts/build_images.sh
   artifacts:
     paths:
