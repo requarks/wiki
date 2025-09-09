@@ -169,7 +169,7 @@ docker-build:
 push-docker-image:
   stage: docker-push
   needs:
-   - build
+   - docker-build
   script:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
