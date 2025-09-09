@@ -1,15 +1,36 @@
-# Promote dev2 image to staging
-promote-to-staging:
+# Deploy to staging after merging to main
+deploy-to-staging:
   stage: promote-prod-release-version
-  before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
+    - echo "Deploying main branch image to staging..."
     - bash scripts/promote_to_staging.sh
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+
+# Deploy to production after staging, manual trigger
+deploy-to-production:
+  stage: promote-prod-release-version
+  script:
+    - echo "Deploying main branch image to production..."
+    - bash scripts/promote_to_prod.sh
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
       when: manual
+
 variables:
   PROJECT_NAME: 'mar'
+  ENVIRONMENT:
+    value: "none"
+    options:
+      - "none"
+      - "dev1"
+      - "dev2"
+      - "staging"
+      - "production"
+    description: "Choose on which environment should pipeline run"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
@@ -23,15 +44,6 @@ variables:
   DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
-  ENVIRONMENT:
-    value: "none"
-    options:
-      - "none"
-      - "dev1"
-      - "dev2"
-      - "staging"
-      - "production"
-    description: "Choose on which environment should pipeline run"
 
   IMAGE_TAG:
     value: ""
@@ -78,23 +90,26 @@ environment-set:
     name: ${ENVIRONMENT}
 
 build:
- stage: build
- before_script:
-   - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
- script:
-   - export BUILD_IMAGE="codebase-build:$CI_COMMIT_SHORT_SHA"
-   - docker image inspect "$NODE_IMAGE" > /dev/null 2>&1 || docker pull "$NODE_IMAGE"
-   - docker build --no-cache -f Dockerfile.build --build-arg NODE_IMAGE="$NODE_IMAGE" -t $BUILD_IMAGE .
-   - docker run --rm -v $(pwd)/assets:/wiki/assets $BUILD_IMAGE
-   - docker rmi $BUILD_IMAGE || true
- artifacts:
-   paths:
-     - assets/
-   expire_in: 1 hour
- rules:
+  stage: build
+  before_script:
+    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+  script:
+    - export BUILD_IMAGE="codebase-build:$CI_COMMIT_SHORT_SHA"
+    - docker image inspect "$NODE_IMAGE" > /dev/null 2>&1 || docker pull "$NODE_IMAGE"
+    - docker build --no-cache -f Dockerfile.build --build-arg NODE_IMAGE="$NODE_IMAGE" -t $BUILD_IMAGE .
+    - docker run --rm -v $(pwd)/assets:/wiki/assets $BUILD_IMAGE
+    - docker rmi $BUILD_IMAGE || true
+  artifacts:
+    paths:
+      - assets/
+    expire_in: 1 hour
+  rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: always
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+      when: always
 
 test:
   stage: test
@@ -108,7 +123,7 @@ test:
     - docker run --rm -v $CI_PROJECT_DIR/coverage:/wiki/coverage $TEST_IMAGE
     - docker rmi $TEST_IMAGE || true
   artifacts:
-    expire_in: 1 hr
+    expire_in: 1 hour
     when: on_success
     paths:
       - coverage
@@ -116,7 +131,10 @@ test:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - when: on_success
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+      when: on_success
 
 sonarqube-scan:
   stage: sonarqube
@@ -128,8 +146,8 @@ sonarqube-scan:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
   cache:
     key: "${CI_JOB_NAME}"
     paths:
@@ -139,62 +157,27 @@ sonarqube-scan:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: $SONARQUBE == "true"
-      when: on_success
-
-docker-build:
-  stage: docker-build
-  before_script:
-    - df -h # Check disk space before building
-    - export PANDOC="$PANDOC"
-    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
-  script:
-    - bash scripts/build_images.sh
-  artifacts:
-    paths:
-      - newimage.txt
-    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
-  environment:
-    name: $ENVIRONMENT
-    url: $NEW_IMAGE
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: always
-
+    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+      when: always
 
 push-docker-image:
   stage: docker-push
   needs:
-   - docker-build
+   - build
   script:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES && $CI_PIPELINE_SOURCE == "web" && ($ENVIRONMENT == "dev1" || $ENVIRONMENT == "dev2")'
-      when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: on_success
 
 
-# only enable manual deployment for production
-#@TODO There is need to be new ticket created to trigger automatic build for production when we merge develop to main with commmit message having "release" in it
-promote-prod-release-version:
-  stage: promote-prod-release-version
-  before_script:
-    - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-  script:
-    - bash scripts/promote_to_prod.sh
-  rules:
-   - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-     when: always
 
