@@ -1,25 +1,3 @@
-# Deploy to staging after merging to main
-deploy-to-staging:
-  stage: promote-prod-release-version
-  script:
-    - echo "Deploying main branch image to staging..."
-    - bash scripts/promote_to_staging.sh
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
-
-# Deploy to production after staging, manual trigger
-deploy-to-production:
-  stage: promote-prod-release-version
-  script:
-    - echo "Deploying main branch image to production..."
-    - bash scripts/promote_to_prod.sh
-  environment:
-    name: production
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
-
 variables:
   PROJECT_NAME: 'mar'
   ENVIRONMENT:
@@ -164,6 +142,30 @@ sonarqube-scan:
     - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
       when: always
 
+docker-build:
+  stage: docker-build
+  before_script:
+    - df -h # Check disk space before building
+    - export PANDOC="$PANDOC"
+    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
+  script:
+    - bash scripts/build_images.sh
+  artifacts:
+    paths:
+      - newimage.txt
+    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
+  environment:
+    name: $ENVIRONMENT
+    url: $NEW_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
+    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+      when: always
+
+
 push-docker-image:
   stage: docker-push
   needs:
@@ -179,5 +181,26 @@ push-docker-image:
     - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
       when: on_success
 
+# Deploy to staging after merging to main
+deploy-to-staging:
+  stage: promote-prod-release-version
+  script:
+    - echo "Deploying main branch image to staging..."
+    - bash scripts/promote_to_staging.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+
+# Deploy to production after staging, manual trigger
+deploy-to-production:
+  stage: promote-prod-release-version
+  script:
+    - echo "Deploying main branch image to production..."
+    - bash scripts/promote_to_prod.sh
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
 
 
