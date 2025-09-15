@@ -1,23 +1,29 @@
 <template lang='pug'>
   .editor-markdown
-    v-toolbar.editor-markdown-toolbar(dense, color='primary', dark, flat, style='overflow-x: hidden;')
+    v-toolbar.editor-markdown-toolbar(
+      :color='colors.surfaceDark.primaryBlueHeavy'
+      style='overflow-x: hidden;'
+      dense
+      dark
+      flat
+      )
       template(v-if='isModalShown')
         v-spacer
         v-btn.animated.fadeInRight(text, @click='closeAllModal')
           v-icon(left) mdi-arrow-left-circle
           span {{$t('editor:backToEditor')}}
       template(v-else)
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn(icon, tile, v-on='on', @click='toggleMarkup({ start: `**` })').mx-0
               v-icon mdi-format-bold
           span {{$t('editor:markup.bold')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p1s(icon, tile, v-on='on', @click='toggleMarkup({ start: `*` })').mx-0
               v-icon mdi-format-italic
           span {{$t('editor:markup.italic')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='toggleMarkup({ start: `~~` })').mx-0
               v-icon mdi-format-strikethrough
@@ -33,12 +39,12 @@
                   v-icon(:size='24 - (idx - 1) * 2') mdi-format-header-{{n}}
                 v-list-item-title {{$t('editor:markup.heading', { level: n })}}
               v-divider(v-if='idx < 5')
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p4s(icon, tile, v-on='on', @click='toggleMarkup({ start: `~` })').mx-0
               v-icon mdi-format-subscript
           span {{$t('editor:markup.subscript')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p5s(icon, tile, v-on='on', @click='toggleMarkup({ start: `^` })').mx-0
               v-icon mdi-format-superscript
@@ -73,68 +79,68 @@
                 v-icon(color='error') mdi-alpha-e-box-outline
               v-list-item-title {{$t('editor:markup.blockquoteError')}}
             v-divider
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p7s(icon, tile, v-on='on', @click='insertBeforeEachLine({ content: `- `})').mx-0
               v-icon mdi-format-list-bulleted
           span {{$t('editor:markup.unorderedList')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p8s(icon, tile, v-on='on', @click='insertBeforeEachLine({ content: `1. `})').mx-0
               v-icon mdi-format-list-numbered
           span {{$t('editor:markup.orderedList')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p9s(icon, tile, v-on='on', @click='toggleMarkup({ start: "`" })').mx-0
               v-icon mdi-code-tags
           span {{$t('editor:markup.inlineCode')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p10s(icon, tile, v-on='on', @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })').mx-0
               v-icon mdi-keyboard-variant
           span {{$t('editor:markup.keyboardKey')}}
-        v-tooltip(bottom, color='primary')
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='insertAfter({ content: `---`, newLine: true })').mx-0
               v-icon mdi-minus
           span {{$t('editor:markup.horizontalBar')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
-          v-tooltip(bottom, color='primary', v-if='previewShown')
+          v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy', v-if='previewShown')
             template(v-slot:activator='{ on }')
               v-btn.animated.fadeIn.wait-p1s(icon, tile, v-on='on', @click='spellModeActive = !spellModeActive').mx-0
                 v-icon(:color='spellModeActive ? `amber` : `white`') mdi-spellcheck
             span {{$t('editor:markup.toggleSpellcheck')}}
-          v-tooltip(bottom, color='primary')
+          v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
               v-btn.animated.fadeIn.wait-p2s(icon, tile, v-on='on', @click='previewShown = !previewShown').mx-0
                 v-icon mdi-book-open-outline
             span {{$t('editor:markup.togglePreviewPane')}}
     .editor-markdown-main
       .editor-markdown-sidebar
-        v-tooltip(right, color='teal')
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.animated.fadeInLeft(icon, tile, v-on='on', dark, @click='insertLink').mx-0
               v-icon mdi-link-plus
           span {{$t('editor:markup.insertLink')}}
-        v-tooltip(right, color='teal')
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
               v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
           span {{$t('editor:markup.insertAssets')}}
-        v-tooltip(right, color='teal')
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
             v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
-          v-tooltip(right, color='teal')
+          v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
               v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
                 v-icon mdi-arrow-expand-all
             span {{$t('editor:markup.distractionFreeMode')}}
-          v-tooltip(right, color='teal')
+          v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
               v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, @click='toggleHelp').mx-0
                 v-icon(:color='helpShown ? `teal` : ``') mdi-help-circle
@@ -152,7 +158,7 @@
               @blur='spellModeActive = false'
               )
 
-    v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
+    v-system-bar.editor-markdown-sysbar(dark, status, :color='colors.surfaceDark.black')
       .caption.editor-markdown-sysbar-locale {{locale.toUpperCase()}}
       .caption.px-3 /{{path}}
       template(v-if='$vuetify.breakpoint.mdAndUp')
@@ -171,6 +177,7 @@ import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
+import colors from '@/themes/default/js/color-scheme'
 
 /* global siteConfig, siteLangs */
 
@@ -393,7 +400,8 @@ export default {
       spellModeActive: false,
       insertLinkDialog: false,
       newMentions: new Map(),
-      mentionCache: {}
+      mentionCache: {},
+      colors: colors
     }
   },
   computed: {
@@ -1025,10 +1033,18 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
+<style lang='scss' scoped>
 $editor-height: calc(100vh - 112px - 24px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
+$editor-bg: mc('surface-dark', 'page-background');
+
+.v-btn {
+  border-radius: 50px;
+}
+
+.editor-markdown-toolbar.v-toolbar.v-toolbar--dense {
+  background-color: mc('surface-dark', 'primary-blue-heavy') !important;
+}
 
 .editor-markdown {
   &-main {
@@ -1037,11 +1053,12 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-editor {
-    background-color: darken(mc('grey', '900'), 4.5%);
+    background-color: $editor-bg;
     flex: 1 1 50%;
     display: block;
     height: $editor-height;
     position: relative;
+    border-right: 1px solid mc('border-dark', 'primary');
 
     @include until($tablet) {
       height: $editor-height-mobile;
@@ -1050,14 +1067,14 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
   &-preview {
     flex: 1 1 50%;
-    background-color: mc('grey', '100');
+    background-color: mc('surface-light', 'page-background');
     position: relative;
     height: $editor-height;
     overflow: hidden;
     padding: 1rem;
 
     @at-root .theme--dark & {
-      background-color: mc('grey', '900');
+      background-color: mc('surface-dark', 'page-background');
     }
 
     @include until($tablet) {
@@ -1082,12 +1099,18 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       overflow-y: scroll;
       padding: 0;
       width: calc(100% + 17px);
+      position: relative;
+      top: -1rem;
       // -ms-overflow-style: none;
 
       // &::-webkit-scrollbar {
       //   width: 0px;
       //   background: transparent;
       // }
+
+      &.contents {
+        padding-bottom: 1rem;
+      }
 
       @include until($tablet) {
         height: $editor-height-mobile;
@@ -1101,21 +1124,20 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
         overflow-wrap: break-word;
       }
 
-      .tabset {
-        background-color: mc('teal', '700');
-        color: mc('teal', '100') !important;
+      ::v-deep .tabset {
+        background-color: mc('peacock', '700');
+        color: mc('peacock', '100') !important;
         padding: 5px 12px;
         font-size: 14px;
         font-weight: 500;
         border-radius: 5px 0 0 0;
-        font-style: italic;
 
         &::after {
           display: none;
         }
 
         &-header {
-          background-color: mc('teal', '500');
+          background-color: mc('peacock', '500');
           color: #FFF !important;
           padding: 5px 12px;
           font-size: 14px;
@@ -1128,13 +1150,13 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
         }
 
         &-content {
-          border-left: 5px solid mc('teal', '500');
-          background-color: mc('teal', '50');
+          border-left: 5px solid mc('peacock', '500');
+          background-color: mc('peacock', '50');
           padding: 0 15px 15px;
           overflow: hidden;
 
           @at-root .theme--dark & {
-            background-color: rgba(mc('teal', '500'), .1);
+            background-color: rgba(mc('peacock', '500'), .1);
           }
         }
       }
@@ -1142,8 +1164,6 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-toolbar {
-    background-color: mc('blue', '700');
-    background-image: linear-gradient(to bottom, mc('blue', '700') 0%, mc('blue','800') 100%);
     color: #FFF;
 
     .v-toolbar__content {
@@ -1163,7 +1183,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   }
 
   &-sidebar {
-    background-color: mc('grey', '900');
+    background-color: mc('surface-dark', 'secondary-neutral-heavy');
     width: 64px;
     display: flex;
     flex-direction: column;
@@ -1181,7 +1201,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     padding-left: 0;
 
     &-locale {
-      background-color: rgba(255,255,255,.25);
+      background-color: mc('surface-dark', 'primary-neutral-heavy');
       display:inline-flex;
       padding: 0 12px;
       height: 24px;
@@ -1198,6 +1218,14 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   .speed-dial--fixed {
     z-index: 8;
   }
+}
+</style>
+
+// Global styles
+<style lang='scss'>
+$editor-bg: mc('surface-dark', 'page-background');
+
+.editor-markdown {
 
   // ==========================================
   // CODE MIRROR
@@ -1207,6 +1235,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     height: auto;
     font-family: 'Ubuntu Mono', monospace;
     font-size: .9rem;
+    background-color: $editor-bg;
 
     .cm-header-1 {
       font-size: 1.5rem;
@@ -1230,6 +1259,23 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
   .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
+    background-color: $editor-bg;
+
+    ::selection {
+      background-color: mc('neutral', '750');
+    }
+  }
+
+  .cm-s-wikijs-dark.CodeMirror {
+    &, .CodeMirror-gutters {
+      background-color: $editor-bg;
+    }
+
+    .CodeMirror-linenumber.CodeMirror-gutter-elt,
+    .CodeMirror-foldgutter-open.CodeMirror-guttermarker-subtle,
+    .CodeMirror-foldgutter-folded.CodeMirror-guttermarker-subtle {
+      color: mc('text-dark', 'tertiary');
+    }
   }
 
   .CodeMirror-focused .cm-matchhighlight {
@@ -1238,7 +1284,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     background-repeat: repeat-x;
   }
   .cm-matchhighlight {
-    background-color: mc('grey', '800');
+    background-color: mc('neutral', '800');
   }
   .CodeMirror-selection-highlight-scrollbar {
     background-color: mc('green', '600');
@@ -1257,9 +1303,9 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   padding: 1px;
 
   box-shadow: 2px 3px 5px rgba(0,0,0,.2);
-  border: 1px solid mc('grey', '700');
+  border: 1px solid mc('neutral', '700');
 
-  background: mc('grey', '900');
+  background: mc('neutral', '900');
   font-family: 'Ubuntu Mono', monospace;
   font-size: .9rem;
 

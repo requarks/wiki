@@ -684,7 +684,7 @@ export default {
 <style lang="scss">
   .login {
     // background-image: url('/_assets/img/splash/1.jpg');
-    background-color: mc('grey', '900');
+    background-color: mc('neutral', '900');
     background-size: cover;
     background-position: center center;
     width: 100%;
@@ -745,7 +745,7 @@ export default {
       padding: 12px;
       font-size: 13px;
       text-align: center;
-      color: mc('grey', '900');
+      color: mc('neutral', '900');
     }
 
     &-list {

@@ -2,22 +2,35 @@
   v-app(:dark='$vuetify.theme.dark').source
     nav-header
     v-content
-      v-toolbar(color='primary', dark)
-        i18next.subheading(v-if='versionId > 0', path='common:page.viewingSourceVersion', tag='div')
-          strong(place='date', :title='$options.filters.moment(versionDate, `LLL`)') {{versionDate | moment('lll')}}
-          strong(place='path') /{{path}}
-        i18next.subheading(v-else, path='common:page.viewingSource', tag='div')
-          strong(place='path') /{{path}}
+      v-toolbar(:color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueHeavy : colors.surfaceLight.primaryBlueHeavy')
+        span(:style='{"color": colors.textDark.primary}')
+          i18next.subheading(v-if='versionId > 0', path='common:page.viewingSourceVersion', tag='div')
+            strong(place='date', :title='$options.filters.moment(versionDate, `LLL`)') {{versionDate | moment('lll')}}
+            strong(place='path') /{{path}}
+          i18next.subheading(v-else, path='common:page.viewingSource', tag='div')
+            strong(place='path') /{{path}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           .caption.blue--text.text--lighten-3 {{$t('common:page.id', { id: pageId })}}
           .caption.blue--text.text--lighten-3.ml-4(v-if='versionId > 0') {{$t('common:page.versionId', { id: versionId })}}
           v-btn.ml-4(v-if='versionId > 0', depressed, color='blue darken-1', @click='goHistory')
             v-icon mdi-history
-          v-btn.ml-4(depressed, color='blue darken-1', @click='goLive') {{$t('common:page.returnNormalView')}}
-      v-card(tile)
+          v-btn#return-btn.ml-4(
+            depressed
+            rounded
+            :class='$vuetify.theme.dark ? `theme--dark` : ``'
+            @click='goLive'
+            )
+            span {{$t('common:page.returnNormalView')}}
+      v-card(
+        tile
+        :color='$vuetify.theme.dark ? colors.borderDark.secondary : colors.borderLight.secondary'
+        )
         v-card-text
-          v-card.grey.radius-7(flat, :class='$vuetify.theme.dark ? `darken-4` : `lighten-4`')
+          v-card.radius-7(
+            flat
+            :color='$vuetify.theme.dark ? colors.surfaceDark.black : colors.surfaceLight.white'
+            )
             v-card-text
               pre
                 slot
@@ -28,6 +41,8 @@
 </template>
 
 <script>
+import colors from '@/themes/default/js/color-scheme'
+
 export default {
   props: {
     pageId: {
@@ -60,10 +75,12 @@ export default {
     }
   },
   data() {
-    return {}
+    return {
+      colors: colors
+    }
   },
   created () {
-    this.$store.commit('page/SET_ID', this.id)
+    this.$store.commit('page/SET_ID', this.pageId)
     this.$store.commit('page/SET_LOCALE', this.locale)
     this.$store.commit('page/SET_PATH', this.path)
 
@@ -84,24 +101,55 @@ export default {
 }
 </script>
 
+<style lang='scss' scoped>
+#return-btn {
+  background-color: mc('action-light', 'active') !important;
+  &> ::v-deep span {
+    color: mc('text-dark', 'primary')
+  }
+  &:hover {
+    background-color: mc('action-light', 'primary-hover-on-heavy') !important;
+    &> ::v-deep span {
+      color: mc('text-light', 'brand-primary')
+    }
+  }
+
+  &.theme--dark {
+    background-color: mc('action-dark', 'active') !important;
+    &> ::v-deep span {
+      color: mc('text-light', 'brand-primary')
+    }
+    &:hover {
+      background-color: mc('action-dark', 'primary-hover-on-heavy') !important;
+    }
+  }
+}
+</style>
+
 <style lang='scss'>
 
 .source {
-  pre > code {
-    box-shadow: none;
-    background-color: transparent;
-    color: mc('grey', '800');
-    font-family: 'Ubuntu Mono', sans-serif;
-    font-weight: 400;
-    font-size: 1rem;
 
-    @at-root .theme--dark.source pre > code {
-      background-color: mc('grey', '900');
-      color: mc('grey', '400');
-    }
+  pre {
+    overflow: auto;
+    height: calc(100vh - 278px);
 
-    &::before {
-      display: none;
+    &> code {
+      box-shadow: none;
+      background-color: mc('surface-light', 'white');
+      color: mc('text-light', 'primary');
+      font-family: 'Ubuntu Mono', sans-serif;
+      font-weight: 400;
+      font-size: 1rem;
+
+      @at-root .theme--dark.source pre > code {
+        background-color: mc('surface-dark', 'black');
+        color: mc('text-dark', 'primary');
+      }
+
+      &::before {
+        display: none;
+      }
     }
   }
 }

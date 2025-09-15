@@ -1,11 +1,11 @@
 .newpage {
-  background: linear-gradient(to bottom, darken(mc('blue', '900'), 10%) 0%, mc('purple', '500') 100%);
+  background: mc('blue', '900');
   height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: mc('grey', '50');
+  color: mc('neutral', '50');
 
   &::before {
     content: '';

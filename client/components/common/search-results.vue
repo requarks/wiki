@@ -256,17 +256,13 @@ export default {
     text-align: left;
 
     .highlighted {
-      background: #FFF linear-gradient(to bottom, #FFF, mc('orange', '100'));
-
-      @at-root .theme--dark & {
-        background: mc('grey', '900') linear-gradient(to bottom, mc('orange', '900'), darken(mc('orange', '900'), 15%));
-      }
+      background: mc('surface-light', 'secondary-sap-heavy');
     }
   }
 
   &-suggestions {
     .highlighted {
-      background: transparent linear-gradient(to bottom, mc('blue', '500'), mc('blue', '700'));
+      background: mc('surface-light', 'primary-blue-lite');
     }
   }
 }

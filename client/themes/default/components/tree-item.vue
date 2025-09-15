@@ -1,6 +1,6 @@
 <template lang="pug">
   div.d-flex.flex-column.w-100
-    v-list-item.list-item-class.w-100.pl-0.pr-0
+    v-list-item.list-item-class.w-100.pl-0.pr-0.rounded-20
       div.d-flex.align-center.flex-grow-1.w-100.pl-2
         v-icon.mr-2(v-if='hasChildren', color='grey', small, @click.stop='handleToggle') {{ icon }}
         v-icon.mr-2(v-else, color='transparent', small) mdi-chevron-right
@@ -98,6 +98,10 @@ export default {
   .list-item-class {
     transition: background-color 0.3s;
     overflow: hidden;
+
+    &.rounded-20 {
+      border-radius: 20px;
+    }
   }
   .list-item-class:hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -112,15 +116,15 @@ export default {
   }
   .v-list-item__title {
     &.sub-section {
-      color: rgba(mc('text', 'darkGrey'), .75);
+      color: rgba(mc('text-light', 'primary'), .75);
       &.dark {
         color: rgba(white, .75);
       }
     }
     &:hover {
-      color: mc('primary', '1');
+      color: mc('surface-light', 'secondary-blue-heavy');
       &.dark {
-        color: mc('ext-teal', '1');
+        color: mc('teal', '500');
       }
     }
   }

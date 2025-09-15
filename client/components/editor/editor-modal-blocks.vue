@@ -71,7 +71,7 @@ export default {
     z-index: 10;
     width: calc(100vw - 64px - 17px);
     height: calc(100vh - 112px - 24px);
-    background-color: rgba(darken(mc('grey', '900'), 3%), .9) !important;
+    background-color: rgba(mc('neutral', '900'), .9) !important;
 
     @include until($tablet) {
       left: 40px;

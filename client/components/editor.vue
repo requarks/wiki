@@ -7,8 +7,8 @@
           flat
           v-model='currentPageTitle'
           hide-details
-          :background-color='$vuetify.theme.dark ? colors.text.darkPurple : "#FFFFFF"'
-          :color='$vuetify.theme.dark ? "#FFFFFF" : colors.text.darkGrey'
+          :background-color='colors.surfaceDark.secondaryNeutralLite'
+          dark
           dense
           full-width
         )
@@ -28,9 +28,8 @@
             v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty'
             :class='$vuetify.theme.dark ? "text--lighten-1" : "text--darken-1"'
             ) {{ $t('editor:save.saved') }}
-          span.toolbar-btn-text(
+          span.toolbar-btn-text.dark(
             v-else-if='$vuetify.breakpoint.lgAndUp'
-            :class='{ "dark": $vuetify.theme.dark }'
             ) {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode === `create` || isDirty'
           text
@@ -39,9 +38,7 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(:style='"color: " + colors.alert.success', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.toolbar-btn-text(
-            :class='{ "dark": $vuetify.theme.dark }'
-          ) {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
+          span.toolbar-btn-text.dark {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
@@ -49,9 +46,8 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
           v-icon(:style='"color: " + colors.alert.info', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
-          span.toolbar-btn-text(
+          span.toolbar-btn-text.dark(
             v-if='$vuetify.breakpoint.lgAndUp'
-            :class='{ "dark": $vuetify.theme.dark }'
             ) {{ $t('common:actions.page') }}
         v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
@@ -61,9 +57,8 @@
           @click='exit'
           )
           v-icon(:style='"color: " + colors.alert.error', :left='$vuetify.breakpoint.lgAndUp') mdi-close
-          span.toolbar-btn-text(
+          span.toolbar-btn-text.dark(
             v-if='$vuetify.breakpoint.lgAndUp'
-            :class='{ "dark": $vuetify.theme.dark }'
             ) {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
     v-main
@@ -86,7 +81,7 @@ import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 
 import editorStore from '../store/editor'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 /* global WIKI */
 
@@ -677,13 +672,13 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang='scss' scoped>
 .editor {
-  background-color: mc('grey', '900') !important;
+  background-color: mc('neutral', '900') !important;
   min-height: 100vh;
 
   .application--wrap {
-    background-color: mc('grey', '900');
+    background-color: mc('neutral', '900');
   }
 
   &-title-input input {
@@ -692,7 +687,7 @@ export default {
 }
 
 .toolbar-btn-text {
-  color: mc(text, 'darkGrey');
+  color: mc('text-light', 'primary');
 
   &.dark {
     color: white;
@@ -701,5 +696,9 @@ export default {
 
 .atom-spinner.is-inline {
   display: inline-block;
+}
+
+.v-btn.v-btn--flat.v-btn--text {
+  border-radius: 50px;
 }
 </style>

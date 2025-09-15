@@ -426,7 +426,7 @@ export default {
 <style lang='scss'>
 
 .editor-props-codeeditor {
-  background-color: mc('grey', '900');
+  background-color: mc('neutral', '900');
   min-height: 500px;
 
   > textarea {
@@ -434,16 +434,16 @@ export default {
   }
 
   &-title {
-    background-color: mc('grey', '900');
-    border-bottom: 1px solid lighten(mc('grey', '900'), 10%);
+    background-color: mc('neutral', '900');
+    border-bottom: 1px solid mc('neutral', '900');
     color: #FFF;
     padding: 10px;
   }
 
   &-hint {
-    background-color: mc('grey', '900');
-    border-top: 1px solid lighten(mc('grey', '900'), 5%);
-    color: mc('grey', '500');
+    background-color: mc('neutral', '900');
+    border-top: 1px solid mc('neutral', '900');
+    color: mc('neutral', '500');
     padding: 5px 10px;
   }
 }

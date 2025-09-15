@@ -294,11 +294,11 @@ export default {
   z-index: 10;
   width: calc(100vw - 64px - 17px);
   height: calc(100vh - 112px - 24px);
-  background-color: rgba(darken(mc('grey', '900'), 3%), .9) !important;
+  background-color: rgba(mc('neutral', '900'), 3%) !important;
   overflow: auto;
 
   &-source {
-    background-color: mc('blue-grey', '900') !important;
+    background-color: mc('sapphire', '900') !important;
     border-radius: 7px;
     font-family: 'Ubuntu Mono', monospace;
     font-size: 14px;
@@ -310,13 +310,13 @@ export default {
   }
 
   &-result {
-    background-color: mc('blue-grey', '50') !important;
+    background-color: mc('sapphire', '50') !important;
     border-radius: 7px;
     font-size: 14px;
 
     code {
       display: inline-block;
-      background-color: mc('pink', '50');
+      background-color: mc('red', '50');
       box-shadow: none;
       font-size: inherit;
     }
@@ -343,7 +343,7 @@ export default {
         margin: 0 0.2em;
         box-shadow: 0 1px 0px rgba(0, 0, 0, 0.2), 0 0 0 2px #fff inset;
         background-color: #f7f7f7;
-        color: mc('grey', '700');
+        color: mc('neutral', '700');
         font-size: 12px;
       }
     }
