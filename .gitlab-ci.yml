@@ -35,15 +35,15 @@ variables:
     description: "Choose false to skip code quality check"
 
   PANDOC:
-    value: "true"
+    value: "false"
     options:
       - "true"
       - "false"
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-     value: "1.3.0"
-     description: "Update to next release version, it should be numeric value, ex: 1.0.0"
+     value: ""
+     description: "Update to next release version, it should be numeric value, ex: 1.3.0"
 
 default:
   tags:
