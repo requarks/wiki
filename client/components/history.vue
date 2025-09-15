@@ -539,53 +539,57 @@ export default {
       })
     },
     trailColor (actionType) {
-      switch (actionType) {
-        case 'edit':
-          return this.$vuetify.theme.dark ? colors.neutral[600] : colors.neutral[200]
-        case 'move':
-          return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
-        case 'initial':
-          return this.$vuetify.theme.dark ? colors.sapphire[800] : colors.sapphire[400]
-        case 'live':
-          return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeLite
-        default:
-          return this.$vuetify.theme.dark ? colors.blue[800] : colors.blue[300]
+      if (actionType === 'edit') {
+        return this.$vuetify.theme.dark ? colors.neutral[600] : colors.neutral[200]
       }
+      if (actionType === 'move') {
+        return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
+      }
+      if (actionType === 'initial') {
+        return this.$vuetify.theme.dark ? colors.sapphire[800] : colors.sapphire[400]
+      }
+      if (actionType === 'live') {
+        return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeLite
+      }
+      return this.$vuetify.theme.dark ? colors.blue[800] : colors.blue[300]
     },
+
     trailIcon (actionType) {
-      switch (actionType) {
-        case 'edit':
-          return '' // 'mdi-pencil'
-        case 'move':
-          return 'mdi-forward'
-        case 'initial':
-          return 'mdi-plus'
-        case 'live':
-          return 'mdi-atom-variant'
-        default:
-          return 'mdi-alert'
+      if (actionType === 'edit') {
+        return '' // No icon for edit
       }
+      if (actionType === 'move') {
+        return 'mdi-forward'
+      }
+      if (actionType === 'initial') {
+        return 'mdi-plus'
+      }
+      if (actionType === 'live') {
+        return 'mdi-atom-variant'
+      }
+      return 'mdi-alert'
     },
+
     trailBgColor (actionType) {
-      switch (actionType) {
-        case 'move':
-          return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
-        case 'initial':
-          return this.$vuetify.theme.dark ? colors.sapphire[600] : colors.sapphire[200]
-        case 'live':
-          return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
-        default:
-          return this.$vuetify.theme.dark ? colors.neutral[550] : colors.neutral[100]
+      if (actionType === 'move') {
+        return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
       }
+      if (actionType === 'initial') {
+        return this.$vuetify.theme.dark ? colors.sapphire[600] : colors.sapphire[200]
+      }
+      if (actionType === 'live') {
+        return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
+      }
+      return this.$vuetify.theme.dark ? colors.neutral[550] : colors.neutral[100]
     },
+
     trailTextColor (actionType) {
-      switch (actionType) {
-        case 'live':
-          return colors.textLight.primary
-        default:
-          return this.$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary
+      if (actionType === 'live') {
+        return colors.textLight.primary
       }
+      return this.$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary
     },
+
     isDiffSourceDisabled(sourceId) {
       return (sourceId >= this.diffTarget && this.diffTarget !== 0) || sourceId === 0
     },
@@ -593,17 +597,23 @@ export default {
       return targetId <= this.diffSource && targetId !== 0
     },
     getDiffSelectorStyle(versionId, diffReference, isDisabled) {
+      let diffBackgroundColor
+      if (diffReference === versionId) {
+        diffBackgroundColor = colors.green[600]
+      } else {
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.neutral[700] : colors.neutral[100]
+      }
+      let diffColor
+      if (diffReference === versionId) {
+        diffColor = colors.textLight.black
+      } else if (isDisabled) {
+        diffColor = colors.textLight.disabled
+      } else {
+        diffColor = colors.textLight.primary
+      }
       return {
-        'background-color':
-          (diffReference === versionId) ?
-            colors.green[600] :
-            (this.$vuetify.theme.dark ? colors.neutral[150] : colors.surfaceLight.white),
-        'color':
-          (diffReference === versionId) ?
-            colors.textLight.black :
-            isDisabled ?
-              colors.textLight.disabled :
-              colors.textLight.primary
+        'background-color': diffBackgroundColor,
+        'color': diffColor
       }
     }
   },
