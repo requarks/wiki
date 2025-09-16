@@ -61,6 +61,7 @@
           persistent-hint
           clearable
           multiple
+          :disabled="disableGroupSelect"
           )
         v-divider
         v-checkbox(
@@ -96,8 +97,17 @@ import createUserMutation from 'gql/admin/users/users-mutation-create.gql'
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
 
 export default {
+  name: 'UserCreate',
   props: {
     value: {
+      type: Boolean,
+      default: false
+    },
+    defaultGroup: {
+      type: [String, Number, Array],
+      default: null
+    },
+    disableGroupSelect: {
       type: Boolean,
       default: false
     }
@@ -105,7 +115,7 @@ export default {
   data() {
     return {
       providers: [],
-      provider: 'local',
+      provider: 'default', // Default value, updated later
       email: '',
       password: '',
       name: '',
@@ -122,11 +132,35 @@ export default {
     }
   },
   watch: {
-    value(newValue, oldValue) {
+    value(newValue) {
       if (newValue) {
         this.$nextTick(() => {
           this.$refs.emailInput.focus()
         })
+
+        // Set default group and provider when dialog opens
+        if (this.defaultGroup) {
+          this.group = Array.isArray(this.defaultGroup) ? this.defaultGroup : [this.defaultGroup]
+        } else {
+          this.group = []
+        }
+
+        // Set the provider to the second item in the providers array
+        if (this.providers.length > 1) {
+          this.provider = this.providers[1].key // Select the second provider
+        } else {
+          this.provider = 'default' // Fallback if no second provider exists
+        }
+      }
+    },
+    providers(newProviders) {
+      const userLoginProvider = newProviders.find(provider => provider.key === 'userLogin')
+      if (userLoginProvider) {
+        this.provider = userLoginProvider.key // Explicitly select "user login"
+      } else if (newProviders.length > 1) {
+        this.provider = newProviders[1].key // Fallback to the second provider
+      } else {
+        this.provider = 'default' // Fallback if no providers exist
       }
     }
   },
@@ -248,6 +282,21 @@ export default {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
       }
     }
+  },
+  mounted() {
+    const userLoginProvider = this.providers.find(provider => provider.key === 'userLogin')
+    if (userLoginProvider) {
+      this.provider = userLoginProvider.key // Explicitly select "user login"
+    } else if (this.providers.length > 1) {
+      this.provider = this.providers[1].key // Fallback to the second provider
+    }
+  },
+  created() {
+    const activeStrategies = [
+      { key: 'adminLogin', displayName: 'Admin Login' },
+      { key: 'userLogin', displayName: 'User Login' }
+    ]
+    this.providers = activeStrategies.sort((a, b) => a.key.localeCompare(b.key)) // Sort if needed
   }
 }
 </script>

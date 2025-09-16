@@ -1,55 +1,41 @@
 @font-face {
-  font-family: 'Roboto';
-  src: url('../../fonts/default/Roboto-MediumItalic.woff2') format('woff2'),
-      url('../../fonts/default/Roboto-MediumItalic.woff') format('woff');
-  font-weight: 500;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Roboto';
-  src: url('../../fonts/default/Roboto-Italic.woff2') format('woff2'),
-      url('../../fonts/default/Roboto-Italic.woff') format('woff');
-  font-weight: normal;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Roboto';
-  src: url('../../fonts/default/Roboto-Bold.woff2') format('woff2'),
-      url('../../fonts/default/Roboto-Bold.woff') format('woff');
-  font-weight: bold;
+  font-family: 'Ubuntu';
+  src: url('../../fonts/default/Ubuntu-Light.ttf') format('truetype');
+  font-weight: 300;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('../../fonts/default/Roboto-Regular.woff2') format('woff2'),
-      url('../../fonts/default/Roboto-Regular.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Roboto';
-  src: url('../../fonts/default/Roboto-BoldItalic.woff2') format('woff2'),
-      url('../../fonts/default/Roboto-BoldItalic.woff') format('woff');
-  font-weight: bold;
+  font-family: 'Ubuntu';
+  src: url('../../fonts/default/Ubuntu-LightItalic.ttf') format('truetype');
+  font-weight: 300;
   font-style: italic;
 }
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('../../fonts/default/Roboto-Medium.woff2') format('woff2'),
-      url('../../fonts/default/Roboto-Medium.woff') format('woff');
+  font-family: 'Ubuntu';
+  src: url('../../fonts/default/Ubuntu-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('../../fonts/default/Ubuntu-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Ubuntu';
+  src: url('../../fonts/default/Ubuntu-Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Roboto Mono';
-  src: url('../../fonts/default/RobotoMono-Regular.woff2') format('woff2'),
-      url('../../fonts/default/RobotoMono-Regular.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
+  font-family: 'Ubuntu';
+  src: url('../../fonts/default/Ubuntu-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
 }

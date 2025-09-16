@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>
+    <%= WIKI.config.title %> - User Added to Group
+  </title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #EEE;
+      font-family: sans-serif;
+    }
+
+    .email-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    header {
+      background-color: #272936;
+      padding: 16px;
+      text-align: center;
+    }
+
+    header img {
+      display: inline-block;
+      vertical-align: middle;
+      width: 47px;
+      height: 42px;
+    }
+
+    header span {
+      color: white;
+      font-size: 18pt;
+      font-family: 'Ubuntu', sans-serif;
+      margin-left: 12px;
+    }
+
+    .content {
+      padding: 24px 32px;
+      color: #555;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .button {
+      background-color: #0070ad;
+      color: #ffffff;
+      display: inline-block;
+      font-size: 15px;
+      font-family: 'Ubuntu', Verdana, sans-serif;
+      font-weight: bold;
+      text-decoration: none;
+      padding: 8px 18px;
+      border-radius: 18px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 32px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="email-container">
+    <header>
+      <img src="<%= mailLogoSrc %>" alt="CapWiki Logo" />
+      <span>
+        <%= WIKI.config.title %>
+      </span>
+    </header>
+    <div class="content">
+      <div style="text-align: center; font-size: 13px; color: #888;">
+        ***for the English version please scroll down***
+      </div>
+      <!-- German Version -->
+      <p>
+        <strong>Hallo <%= username %></strong>,<br><br>
+        Du wurdest erfolgreich zur Gruppe <strong>
+          <%= groupName %>
+        </strong> hinzugefügt.<br>
+        <% if (groupDescription) { %>
+          <em>
+            <%= groupDescription %>
+          </em><br>
+          <% } %>
+            <br>
+            Bitte nutze den folgenden Link, um auf CapWiki zuzugreifen:
+      </p>
+      <div class="button-container">
+        <a href="<%= url %>" class="button">CapWiki öffnen</a>
+      </div>
+      <p>
+        Oder kopiere diesen Link in deinen Browser:<br>
+        <a href="<%= url %>">
+          <%= url %>
+        </a>
+      </p>
+      <p>
+        Solltest du Fragen haben, wende dich bitte an deinen Administrator.<br><br>
+        <strong>Viel Erfolg und viel Spaß beim Zusammenarbeiten!</strong><br><br>
+        Dein <%= WIKI.config.title %>-Team
+      </p>
+      <hr>
+      <!-- English Version -->
+      <p>
+        <strong>Hello <%= username %></strong>,<br><br>
+        You have been successfully added to the group: <strong>
+          <%= groupName %>
+        </strong>.<br>
+        <% if (groupDescription) { %>
+          <em>
+            <%= groupDescription %>
+          </em><br>
+          <% } %>
+            <br>
+            Please use the following link to access CapWiki:
+      </p>
+      <div class="button-container">
+        <a href="<%= url %>" class="button">Access CapWiki</a>
+      </div>
+      <p>
+        Or copy this link into your browser:<br>
+        <a href="<%= url %>">
+          <%= url %>
+        </a>
+      </p>
+      <p>
+        If you have any questions, feel free to reach out to your administrator.<br><br>
+        <strong>Happy collaborating!</strong><br><br>
+        Your <%= WIKI.config.title %> Team
+      </p>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -31,6 +31,8 @@ extend type Query {
 
 extend type Mutation {
   users: UserMutation
+
+  sendUserAddedToGroupEmail(userId: Int!, groupId: Int!): Boolean
 }
 
 # -----------------------------------------------

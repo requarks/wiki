@@ -237,8 +237,8 @@ export default {
     display: inline-block;
     margin-bottom: 12px;
     border-radius: 7px;
-    background-color: mc('grey', '100');
-    color: mc('grey', '700');
+    background-color: mc('neutral', '100');
+    color: mc('neutral', '700');
     padding: 12px;
 
     strong {

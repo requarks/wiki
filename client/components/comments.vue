@@ -648,7 +648,7 @@ export default {
     }
 
     code {
-      background-color: rgba(mc('pink', '500'), .1);
+      background-color: rgba(mc('red', '600'), .1);
       box-shadow: none;
     }
 
@@ -662,7 +662,7 @@ export default {
       color: #FFF;
       font-weight: 400;
       font-size: .85rem;
-      font-family: Roboto Mono, monospace;
+      font-family: Ubuntu Mono, monospace;
     }
     // ---------------------------------
     // TABLES
@@ -672,10 +672,10 @@ export default {
       margin: .5rem 0;
       border-spacing: 0;
       border-radius: 5px;
-      border: 1px solid mc('grey', '300');
+      border: 1px solid mc('neutral', '300');
 
       @at-root .theme--dark & {
-        border-color: mc('grey', '600');
+        border-color: mc('neutral', '600');
       }
 
       &.dense {
@@ -687,14 +687,14 @@ export default {
 
       th {
         padding: .75rem;
-        border-bottom: 2px solid mc('grey', '500');
-        color: mc('grey', '600');
-        background-color: mc('grey', '100');
+        border-bottom: 2px solid mc('neutral', '500');
+        color: mc('neutral', '600');
+        background-color: mc('neutral', '100');
 
         @at-root .theme--dark & {
-          background-color: darken(mc('grey', '900'), 8%);
-          border-bottom-color: mc('grey', '600');
-          color: mc('grey', '500');
+          background-color: mc('neutral', '900');
+          border-bottom-color: mc('neutral', '600');
+          color: mc('neutral', '500');
         }
 
         &:first-child {
@@ -711,19 +711,19 @@ export default {
 
       tr {
         td {
-          border-bottom: 1px solid mc('grey', '300');
-          border-right: 1px solid mc('grey', '100');
+          border-bottom: 1px solid mc('neutral', '300');
+          border-right: 1px solid mc('neutral', '100');
 
           @at-root .theme--dark & {
-            border-bottom-color: mc('grey', '700');
-            border-right-color: mc('grey', '800');
+            border-bottom-color: mc('neutral', '700');
+            border-right-color: mc('neutral', '800');
           }
 
           &:nth-child(even) {
-            background-color: mc('grey', '50');
+            background-color: mc('neutral', '50');
 
             @at-root .theme--dark & {
-              background-color: darken(mc('grey', '900'), 4%);
+              background-color: mc('neutral', '900');
             }
           }
 
@@ -734,17 +734,17 @@ export default {
 
         &:nth-child(even) {
           td {
-            background-color: mc('grey', '50');
+            background-color: mc('neutral', '50');
 
             @at-root .theme--dark & {
-              background-color: darken(mc('grey', '800'), 8%);
+              background-color: mc('neutral', '800');
             }
 
             &:nth-child(even) {
-              background-color: mc('grey', '100');
+              background-color: mc('neutral', '100');
 
               @at-root .theme--dark & {
-                background-color: darken(mc('grey', '800'), 10%);
+                background-color: mc('neutral', '800');
               }
             }
           }

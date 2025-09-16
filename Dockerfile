@@ -1,7 +1,8 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:20-alpine AS assets
+ARG NODE_IMAGE
+FROM ${NODE_IMAGE} AS assets
 
 WORKDIR /wiki
 
@@ -33,7 +34,8 @@ RUN yarn patch-package
 # ===============
 # --- Release ---
 # ===============
-FROM node:20-alpine
+ARG NODE_IMAGE
+FROM ${NODE_IMAGE}
 LABEL maintainer="capgemini"
 
 ARG VERSION

@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-app-bar.nav-header(
-    :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
+    :color='colors.surfaceDark.primaryBlueLite',
     app,
     :clipped-left='!$vuetify.rtl',
     :clipped-right='$vuetify.rtl',
@@ -10,22 +10,24 @@
     )
     v-toolbar(
       v-if='searchIsShown && $vuetify.breakpoint.smAndDown',
-      :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
+      :color='colors.surfaceDark.primaryBlueLite',
       flat,
       slot='extension'
       )
-      v-text-field(
+      v-text-field.mobile-search-field(
         ref='searchFieldMobile'
         v-model='search'
         clearable
-        :background-color='$vuetify.theme.dark ? colors.velvet[5] :colors.surface[2]'
-        :color='$vuetify.theme.dark ? `white` : colors.primary[1]'
+        :background-color='colors.surfaceLight.inverse'
+        :style='{ caretColor: colors.actionLight.highlightOnLite, color: colors.actionLight.highlightOnLite }'
+        :color='colors.textDark.primary'
         :label='$t(`common:header.search`)'
         single-line
         solo
         flat
         hide-details
         outlined
+        rounded
         prepend-inner-icon='mdi-magnify'
         :loading='searchIsLoading'
         @keyup.enter='searchEnter'
@@ -34,14 +36,16 @@
     v-layout(row)
       v-flex(xs5, md4)
         v-toolbar.nav-header-inner(
-          :color='$vuetify.theme.dark ? colors.text.darkPurple : `white`',
+          :color='colors.surfaceDark.primaryBlueLite',
           flat,
           :class='$vuetify.rtl ? `pr-3` : `pl-3`'
           )
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
-            span.subheading(:style='$vuetify.theme.dark ? `color="white"`: `color=colors.text.darkGrey`') {{title}}
+            span.subheading(
+              :style="{ color: colors.textDark.primary }"
+              ) {{title}}
 
           //- SITES
 
@@ -49,20 +53,21 @@
             template(v-slot:activator='{ on: menu, attrs }')
               v-tooltip(bottom)
                 template(v-slot:activator='{ on: tooltip }')
-                  v-btn.hover-text(
+                  v-btn.hover-text.hover-icon(
                     icon
                     v-bind='attrs'
                     v-on='{ ...menu }'
-                    :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                    :class='{ "ml-3": $vuetify.rtl }'
                     tile
                     height='64'
                     width='100'
                     )
                     span Sites
-                    v-icon(:color='$vuetify.theme.dark ? `color="white"`: `color=colors.text.darkGrey`')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
-            v-list(
+                    v-icon(:color='colors.textDark.primary')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
+            v-list.dropdown-list(
                 style="overflow-y: auto; box-shadow: 0 3px 5px -1px rgba(0, 0, 0, .2); 0 6px 10px 0 rgba(0, 0, 0, .14); 0 1px 18px 0 rgba(0, 0, 0, .12);"
-                nav,
+                nav
+                rounded
                 :class='{ "color-theme-dark": $vuetify.theme.dark }'
                 class='sitesList'
               )
@@ -70,16 +75,17 @@
                 v-list-item-title.body-2 {{ site.text }}
 
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
-        v-toolbar.nav-header-inner(:color='$vuetify.theme.dark ? colors.text.darkPurple : `white`', flat)
+        v-toolbar.nav-header-inner(:color='colors.surfaceDark.primaryBlueLite', flat)
           slot(name='mid')
 
-            transition(name='navHeaderSearch', v-if='searchIsShown')
-              v-text-field(
+            //- SEARCH-FIELD
+            transition(name='navHeaderSearch')
+              v-text-field.search-field(
                 ref='searchField',
-                v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
+                v-if='$vuetify.breakpoint.mdAndUp',
                 v-model='search',
-                :color='$vuetify.theme.dark ? `white` : colors.primary[1]',
-                :background-color='$vuetify.theme.dark ? colors.velvet[5] : `white`',
+                :color='colors.textDark.primary',
+                :background-color='colors.surfaceLight.secondaryNeutralLite',
                 :label='$t(`common:header.search`)',
                 single-line,
                 solo
@@ -87,7 +93,7 @@
                 rounded
                 hide-details,
                 outlined,
-                prepend-inner-icon='mdi-magnify',
+                append-icon='mdi-magnify',
                 :loading='searchIsLoading',
                 @keyup.enter='searchEnter'
                 @keyup.esc='searchClose'
@@ -98,19 +104,19 @@
                 autocomplete='none'
               )
 
+            //- BROWSE BY TAGS
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.ml-2.mr-0.hover-icon(
                   icon,
                   v-on='on',
                   :href='`/t/`+ sitePath',
-                  :aria-label='$t(`common:header.browseTags`)',
-                  :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                  :aria-label='$t(`common:header.browseTags`)'
                   )
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(:color='$vuetify.theme.dark ? colors.text.darkPurple : `white`', flat)
+        v-toolbar.nav-header-inner.pr-4(:color='colors.surfaceDark.primaryBlueLite', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -121,7 +127,6 @@
 
           v-btn.hover-icon(
             v-if='!hideSearch && $vuetify.breakpoint.smAndDown'
-            :class='{ "color-theme-dark": $vuetify.theme.dark }'
             @click='searchToggle'
             icon
             )
@@ -138,7 +143,7 @@
                       icon
                       v-bind='attrs'
                       v-on='{ ...menu, ...tooltip }'
-                      :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                      :class='{ "ml-3": $vuetify.rtl }'
                       tile
                       height='64'
                       :aria-label='$t(`common:header.language`)'
@@ -158,7 +163,7 @@
             v-tooltip(bottom)
               template( v-slot:activator='{ on }')
                 v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)'
-                :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                :class='{ "ml-3": $vuetify.rtl }'
                 )
                   v-icon(color='grey') mdi-track-light
               span Follow Site
@@ -168,7 +173,7 @@
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)'
-                :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                :class='{ "ml-3": $vuetify.rtl }'
                 )
                   v-icon(color='grey') mdi-track-light-off
               span Unfollow Site
@@ -185,54 +190,57 @@
                       icon
                       v-bind='attrs'
                       v-on='{ ...menu, ...tooltip }'
-                      :class='{ "ml-3": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                      :class='{ "ml-3": $vuetify.rtl }'
                       tile
                       height='64'
                       :aria-label='$t(`common:header.pageActions`)'
                       )
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
-              v-list(nav, :class='{ "color-theme-dark": $vuetify.theme.dark }')
-                .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
+              v-list.dropdown-list(
+                nav
+                :class='$vuetify.theme.dark ? `color-theme-dark` : ``'
+                )
+                .overline.pa-4.grey--text.text--darken-1 {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-file-document-outline
                   v-list-item-title.body-2 {{$t('common:header.view')}}
                 v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-file-document-edit-outline
                   v-list-item-title.body-2 {{$t('common:header.edit')}}
                 v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-history
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.history')}}
                 v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-code-tags
                   v-list-item-title.body-2 {{$t('common:header.viewSource')}}
                 v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-lightning-bolt
                   v-list-item-title.body-2 {{$t('common:header.convert')}}
                 v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-content-duplicate
                   v-list-item-title.body-2 {{$t('common:header.duplicate')}}
                 v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(
-                    :color='$vuetify.theme.dark ? colors.teal[1] : colors.teal[4]'
+                    :color='getPageActionIconColor'
                     ) mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
                 v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
-                  v-list-item-avatar(size='24', tile): v-icon(:color='colors.red[5]') mdi-trash-can-outline
+                  v-list-item-avatar(size='24', tile): v-icon(:color='trashCanColor') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
             v-divider(vertical)
 
@@ -247,8 +255,7 @@
                   height='64',
                   v-on='on',
                   @click='pageNew',
-                  :aria-label='$t(`common:header.newPage`)',
-                  :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                  :aria-label='$t(`common:header.newPage`)'
                   )
                   v-icon(color='grey') mdi-text-box-plus-outline
               span {{$t('common:header.newPage')}}
@@ -265,30 +272,28 @@
                   height='64',
                   v-on='on',
                   href='/a',
-                  :aria-label='$t(`common:header.admin`)',
-                  :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                  :aria-label='$t(`common:header.admin`)'
                   )
                   v-icon(color='grey') mdi-cog
               span {{$t('common:header.admin')}}
-            v-btn.hover-icon(
+            v-btn.hover-icon.hover-text(
               v-else,
               text,
               tile,
               height='64',
               href='/',
-              :aria-label='$t(`common:actions.exit`)',
-              :class='{ "color-theme-dark": $vuetify.theme.dark }'
+              :aria-label='$t(`common:actions.exit`)'
               )
               v-icon(left, color='grey') mdi-exit-to-app
               span {{$t('common:actions.exit')}}
             v-divider(vertical)
 
-          // - GITHUB REPO
+          //- GITHUB REPO
 
           template
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn(
+                v-btn.hover-icon(
                   icon, tile, height='64', v-on='on', @click="goToRepo", :aria-label='$t(`common:github.repository`)'
                 )
                   v-icon(color='grey') mdi-github
@@ -305,7 +310,7 @@
                     icon
                     v-bind='attrs'
                     v-on='{ ...menu, ...tooltip }'
-                    :class='{ "ml-0": $vuetify.rtl, "color-theme-dark": $vuetify.theme.dark }'
+                    :class='{ "ml-0": $vuetify.rtl }'
                     tile
                     height='64'
                     :aria-label='$t(`common:header.account`)'
@@ -344,8 +349,7 @@
                 v-on='on',
                 color='grey darken-3',
                 href='/login',
-                :aria-label='$t(`common:header.login`)',
-                :class='{ "color-theme-dark": $vuetify.theme.dark }'
+                :aria-label='$t(`common:header.login`)'
                 )
                 v-icon(color='grey') mdi-account-circle
             span {{$t('common:header.login')}}
@@ -391,7 +395,7 @@
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 import createFollowerMutation from 'gql/followers/create-follower.gql'
@@ -501,6 +505,14 @@ export default {
     hasAnyPagePermissions () {
       return this.hasSuperAdminPermission || this.hasSiteAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
+    },
+    getPageActionIconColor () {
+      return this.$vuetify.theme.dark ? this.colors.teal[500] : this.colors.teal[800]
+    },
+    trashCanColor () {
+      return this.$vuetify.theme.dark ?
+        this.colors.warningActionDark.secondaryDefault :
+        this.colors.warningActionLight.secondaryDefault
     }
   },
   created () {
@@ -745,8 +757,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
+<style lang='scss' scoped>
 .nav-header {
   height: 64px !important;
 
@@ -847,38 +858,147 @@ export default {
   }
 }
 
-#selected-site-item > div {
-  font-weight: 600;
-}
-
 .hover-text {
-  color: mc("text", "darkGrey") !important;
-  &:hover > .v-btn__content > span {
-    color: mc("primary", "1");
+  color: mc("text-dark", "primary") !important;
+
+  &::before {
+    background-color: mc("surface-dark", "primary-blue-lite");
   }
 
-  &.color-theme-dark {
-    color: white !important;
-    &:hover > .v-btn__content > span {
-      color: mc("ext-teal", "1");
-    }
+  &:hover > .v-btn__content > span {
+    color: mc("action-light", "highlight-on-lite");
   }
 }
 
 .hover-icon {
+  &.v-btn:hover::before {
+    opacity: 0;
+  }
+
   &:hover > .v-btn__content > .v-icon {
-    color: mc("primary", "1") !important;
+    color: mc("action-light", "highlight-on-lite") !important;
+  }
+}
+
+.dropdown-list.v-list {
+  background-color: mc("surface-light", "primary-neutral-lite") !important;
+
+  &> .v-list-item > .v-list-item__title {
+    color: mc("text-light", "primary");
+
+    &:hover {
+      color: mc("action-light", "primary-hover-on-lite");
+    }
+  }
+
+  &> #selected-site-item > div {
+    font-weight: 500;
+    font-size: .925rem !important;
+    color: mc("text-light", "black");
+    &:hover {
+      color: mc("action-light", "primary-hover-on-lite");
+    }
   }
 
   &.color-theme-dark {
-    &:hover > .v-btn__content > .v-icon {
-      color: mc("ext-teal", "1") !important;
+    background-color: mc("surface-dark", "primary-blue-lite") !important;
+
+    &> .v-list-item > .v-list-item__title {
+      color: mc("text-dark", "primary");
+      &:hover {
+      color: mc("action-dark", "primary-hover-on-lite");
+      }
+    }
+
+    &> #selected-site-item > div {
+      color: mc("text-dark", "white");
+      &:hover {
+        color: mc("action-dark", "primary-hover-on-lite");
+      }
     }
   }
 }
 
-.color-theme-dark {
-  background-color: mc("text", "darkPurple") !important;
-  color: white !important;
+::v-deep .mobile-search-field {
+  width: 100%;
+  background-color: mc('surface-light', 'inverse');
+  border-radius: 4px;
+  font-size: 14px;
+
+  &.v-input--is-focused .v-input__icon--prepend-inner > .v-icon {
+    color: mc('action-light', 'highlight-on-lite') !important;
+  }
+
+  .v-text-field__slot > input {
+    color: mc('text-dark', 'primary');
+  }
+
+  .v-icon.mdi.mdi-magnify {
+    color: mc('text-dark', 'primary');
+  }
+
+  label.v-label.theme--light {
+    color: mc('text-dark', 'primary') !important;
+  }
+}
+
+@media (min-width: 960px) {
+  ::v-deep .search-field {
+    &.v-input > .v-input__control > .v-input__slot > .v-text-field__slot > input,
+    &.v-input textarea,
+    .v-label {
+      color: mc('text-light', 'primary') !important;
+      caret-color: mc('text-light', 'primary') !important;
+    }
+
+    &.v-input:hover{
+      .v-label {
+        font-size: 17px;
+      }
+    }
+
+    .v-text-field__slot + .v-input__append-inner {
+      background-color: mc('action-light', 'highlight-on-lite');
+      border-radius: 100%;
+      padding: 15px;
+      margin-right: -23px;
+
+      &> .v-input__icon > .v-icon.mdi.mdi-magnify {
+        color: mc('text-light', 'primary') !important;
+      }
+    }
+
+    &.v-input--is-focused .v-input__append-inner > .v-input__icon > .v-icon.mdi.mdi-magnify {
+      color: mc('text-dark', 'primary') !important;
+    }
+  }
+}
+
+.theme--light.v-list {
+  background-color: mc('surface-light', 'primary-neutral-lite');
+
+  .v-list-item__title {
+    color: mc('text-light', 'primary');
+
+    &:hover {
+      color: mc("action-light", "primary-hover-on-lite");
+    }
+  }
+}
+
+.theme--dark.v-list {
+  background-color: mc('surface-dark', 'primary-neutral-lite');
+
+  .v-list-item__title{
+    color: mc('text-dark', 'primary');
+
+    &:hover {
+      color: mc("action-dark", "primary-hover-on-lite");
+    }
+  }
+}
+
+.v-tooltip__content {
+  border-radius: 16px;
 }
 </style>

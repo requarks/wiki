@@ -66,22 +66,14 @@ function handleDeleteError(err) {
 }
 
 async function sendWelcomeEmail(user) {
-  // Send welcome email
-  let companyName
-  if (WIKI.config.companyName) {
-    companyName = WIKI.config.companyName
-  } else if (process.env.COMPANY_NAME) {
-    companyName = process.env.COMPANY_NAME
-  } else {
-    companyName = 'Dummy Company'
-  }
+  let companyName = WIKI.config.companyName || process.env.COMPANY_NAME || 'Dummy Company'
 
   await WIKI.mail.send({
     template: 'account-welcome',
     to: user.email,
     subject: `Welcome to ${WIKI.config.title} – Let’s Get You Started!`,
     data: {
-      username: `${user.name || 'User'}`,
+      username: user.name || 'User',
       companyName: companyName,
       mailLogoSrc: getMailLogoSource(),
       buttonLink: `${WIKI.config.host}/login`,
@@ -92,14 +84,30 @@ async function sendWelcomeEmail(user) {
   })
 }
 
+async function sendUserAddedToGroupEmail(user, group) {
+  const url = `${WIKI.config.host}`
+  await WIKI.mail.send({
+    template: 'user-added-to-group',
+    to: user.email,
+    subject: `You've been added to the group ${group.name}`,
+    data: {
+      username: user.name,
+      groupName: group.name,
+      groupDescription: group.description || '',
+      url: url,
+      mailLogoSrc: getMailLogoSource()
+    }
+  })
+}
+
 function getMailLogoSource() {
   let mailLogoSrcValue
-  if (WIKI.config.mailLogoSrc) {
+  if (WIKI.config?.mailLogoSrc) {
     mailLogoSrcValue = WIKI.config.mailLogoSrc
   } else if (process.env.MAIL_LOGO_SRC) {
     mailLogoSrcValue = process.env.MAIL_LOGO_SRC
   } else {
-    mailLogoSrcValue = WIKI.config.logoUrl
+    mailLogoSrcValue = WIKI.config?.logoUrl || 'https://default-logo-url.com/logo.png'
   }
   return mailLogoSrcValue
 }
@@ -124,6 +132,18 @@ function anonymizeUserMentions(content, contentType, email) {
   return content
 }
 
+async function assignUserToGroup(userId, groupId) {
+  // Add the user to the group
+  await graphHelper.addUserToGroup(userId, groupId)
+
+  // Fetch user and group details
+  const user = await graphHelper.getUserById(userId)
+  const group = await graphHelper.getGroupById(groupId)
+
+  // Send notification email to the user
+  await sendUserAddedToGroupEmail(user, group)
+}
+
 module.exports = {
   revokeUserTokens,
   renderMentionedPages,
@@ -131,6 +151,8 @@ module.exports = {
   anonymizeComments,
   handleDeleteError,
   sendWelcomeEmail,
+  sendUserAddedToGroupEmail,
   anonymizeUserMentions,
-  getMailLogoSource
+  getMailLogoSource,
+  assignUserToGroup
 }

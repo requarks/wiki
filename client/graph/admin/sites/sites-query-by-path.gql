@@ -1,0 +1,8 @@
+query SiteByPath($path: String!, $exact: Boolean!) {
+  siteByPath(path: $path, exact: $exact) {
+    id
+    path
+    isEnabled
+    name
+  }
+}

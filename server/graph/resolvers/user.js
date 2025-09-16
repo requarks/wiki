@@ -87,7 +87,14 @@ module.exports = {
     }
   },
   Mutation: {
-    async users() { return {} }
+    async users() { return {} },
+    async sendUserAddedToGroupEmail(_, { userId, groupId }) {
+      const user = await WIKI.models.users.query().findById(userId)
+      const group = await WIKI.models.groups.query().findById(groupId)
+      if (!user || !group) throw new Error('User or group not found')
+      await userService.sendUserAddedToGroupEmail(user, group)
+      return true
+    }
   },
   UserMutation: {
     async create(obj, args) {

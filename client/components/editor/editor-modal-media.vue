@@ -236,6 +236,7 @@ import 'filepond/dist/filepond.min.css'
 
 import listAssetQuery from 'gql/editor/editor-media-query-list.gql'
 import listFolderAssetQuery from 'gql/editor/editor-media-query-folder-list.gql'
+import siteByPathQuery from 'gql/admin/sites/sites-query-by-path.gql'
 import createAssetFolderMutation from 'gql/editor/editor-media-mutation-folder-create.gql'
 import renameAssetMutation from 'gql/editor/editor-media-mutation-asset-rename.gql'
 import deleteAssetMutation from 'gql/editor/editor-media-mutation-asset-delete.gql'
@@ -278,7 +279,8 @@ export default {
       renameAssetName: '',
       renameAssetLoading: false,
       deleteDialog: false,
-      deleteAssetLoading: false
+      deleteAssetLoading: false,
+      siteId: ''
     }
   },
   computed: {
@@ -291,7 +293,6 @@ export default {
     folderTree: get('editor/media@folderTree'),
     currentFolderId: sync('editor/media@currentFolderId'),
     currentFileId: sync('editor/media@currentFileId'),
-    siteId: get('page/siteId'),
     sitePath: get('page/sitePath'),
     pageTotal () {
       if (!this.assets) {
@@ -362,6 +363,26 @@ export default {
     }
   },
   methods: {
+    async getSiteId() {
+      let siteId = this.$store.get('page/siteId')
+
+      if (!siteId) {
+        try {
+          const siteResponse = await this.$apollo.query({
+            query: siteByPathQuery,
+            variables: {
+              path: 'default',
+              exact: true
+            }
+          })
+          siteId = siteResponse.data.siteByPath?.id || ''
+        } catch (err) {
+          console.error('Failed to fetch site by path:', err)
+        }
+      }
+
+      return siteId
+    },
     async refresh() {
       await this.$apollo.queries.assets.refetch()
       this.$store.commit('showNotification', {
@@ -530,6 +551,10 @@ export default {
           siteId: this.siteId
         }
       },
+      skip() {
+        // Do not run the query if siteId is not available
+        return !this.siteId
+      },
       fetchPolicy: 'network-only',
       update: (data) => data.folders,
       watchLoading (isLoading) {
@@ -545,6 +570,9 @@ export default {
           siteId: this.siteId
         }
       },
+      skip() {
+        return !this.siteId
+      },
       throttle: 1000,
       fetchPolicy: 'network-only',
       update: (data) => data.listAssets,
@@ -553,6 +581,9 @@ export default {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-list-refresh')
       }
     }
+  },
+  async mounted() {
+    this.siteId = await this.getSiteId()
   }
 }
 </script>
@@ -565,7 +596,7 @@ export default {
   z-index: 10;
   width: calc(100vw - 64px - 17px);
   height: calc(100vh - 112px - 24px);
-  background-color: rgba(darken(mc('grey', '900'), 3%), .9) !important;
+  background-color: rgba(mc('neutral', '900'), .9) !important;
   overflow: auto;
 
   @include until($tablet) {

@@ -45,7 +45,12 @@
     .text-center.py-2(v-if='group.users.length > 15')
       v-pagination(v-model='pagination', :length='pageCount')
 
-    user-search(v-model='searchUserDialog', @select='assignUser')
+    user-search(
+      v-model="searchUserDialog"
+      :default-group="group.id"
+      @select="assignUser"
+      @user-created-and-assigned="refreshGroupPage"
+    )
     page-last-group(
       v-model='warningPageModel', :sites='affectedSites', @discard='resetUnassignState', @confirm='finalUnassignUser(pendingUnassignUser)'
     )
@@ -57,7 +62,12 @@ import UserSearch from '../common/user-search.vue'
 import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
 import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
 import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
-
+import gql from 'graphql-tag'
+const SEND_USER_ADDED_TO_GROUP_EMAIL = gql`
+  mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!) {
+    sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId)
+  }
+`
 export default {
   props: {
     value: {
@@ -100,30 +110,36 @@ export default {
     }
   },
   methods: {
-    async assignUser({ id, email, name }) {
+    async assignUser(user) {
       try {
+        // Assign the user to the group
         await this.$apollo.mutate({
           mutation: assignUserMutation,
           variables: {
             groupId: this.group.id,
-            userId: id
-          },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-groups-assign')
+            userId: user.id
           }
         })
+
+        // Send the email via backend
+        await this.$apollo.mutate({
+          mutation: SEND_USER_ADDED_TO_GROUP_EMAIL,
+          variables: {
+            userId: user.id,
+            groupId: this.group.id
+          }
+        })
+
         this.$store.commit('showNotification', {
           style: 'success',
-          message: `User has been assigned to ${this.group.name}.`,
-          icon: 'assignment_ind'
+          message: `${user.name} has been added to the group and notified by email.`,
+          icon: 'check'
         })
+
+        // Add this line to refresh the group user list
         this.$emit('refresh')
       } catch (err) {
-        this.$store.commit('showNotification', {
-          style: 'red',
-          message: err.message,
-          icon: 'warning'
-        })
+        this.$store.commit('pushGraphError', err)
       }
     },
     async unassignUser(id) {
@@ -180,6 +196,41 @@ export default {
       this.warningPageModel = false
       this.pendingUnassignUser = null
       this.affectedSites = []
+    },
+    async loadGroupData() {
+      try {
+        const { data } = await this.$apollo.query({
+          query: gql`
+            query GetGroup($id: Int!) {
+              groupById(id: $id) {
+                id
+                name
+                users {
+                  id
+                  name
+                  email
+                }
+                # add other fields as needed
+              }
+            }
+          `,
+          variables: { id: this.group.id },
+          fetchPolicy: 'network-only'
+        })
+        // Update the group data
+        this.$emit('input', data.groupById)
+      } catch (err) {
+        console.error('Error refreshing group data:', err) // Log the error for debugging
+        this.$store.commit('showNotification', {
+          style: 'error',
+          message: 'Failed to refresh group data. Please try again later.',
+          icon: 'alert'
+        })
+        // Optionally, you can implement a fallback action here
+      }
+    },
+    refreshGroupPage() {
+      this.loadGroupData()
     }
   }
 }

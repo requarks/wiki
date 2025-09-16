@@ -75,7 +75,7 @@ export default {
     }
 
     &.altbg {
-      background: mc('primary', '1');
+      background: mc('surface-light', 'secondary-blue-heavy');
 
       span {
         color: mc('blue', '300');

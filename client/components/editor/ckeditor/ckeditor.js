@@ -145,7 +145,6 @@ class InsertDiagram extends Plugin {
 }
 
 class EditDiagram extends Plugin {
-
   init() {
     const editor = this.editor
     const command = new DiagramCommand(editor)

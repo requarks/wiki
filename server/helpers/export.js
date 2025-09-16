@@ -185,6 +185,9 @@ async function getExportHtmlContent(page, user, queryParams) {
   pageHTML = pageHTML.replaceAll('¶</a>', '</a>')
   pageHTML = handleInternalLinks(pageHTML, queryParams.sitePath, queryParams.locale, pagePaths)
 
+  // Replace figure with div for tables
+  pageHTML = pageHTML.replaceAll('<figure class="table">', '<div class="table">')
+
   const dom = new JSDOM(pageHTML)
   const document = dom.window.document
 

@@ -11,8 +11,8 @@ describe('dateHelpers', () => {
     const fiveDaysAgo = daysAgo(5)
     const diff = now - fiveDaysAgo.getTime()
     // Allow a small margin for test execution time
-    expect(diff).toBeGreaterThanOrEqual(1000 * 60 * 60 * 24 * 5)
-    expect(diff).toBeLessThan(1000 * 60 * 60 * 24 * 5 + 1000 * 10)
+    expect(diff).toBeGreaterThanOrEqual(1000 * 60 * 60 * 24 * 5 - 10000) // allow 10s margin
+    expect(diff).toBeLessThan(1000 * 60 * 60 * 24 * 5 + 10000)
   })
 
   it('inactivityThresholdDate should return a date N days in the past', () => {

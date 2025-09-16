@@ -27,4 +27,4 @@ devMode: $(DEV_MODE)
 
 
 email:
-  support: "dummy-support@dummy.com"
+  support: '$(EMAIL_SUPPORT)'

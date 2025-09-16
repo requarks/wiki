@@ -2,39 +2,49 @@
   div
     .pa-3.d-flex(
       v-if='navMode === `MIXED`'
-      :class='dark ? colors.primary[4] : colors.surface[2]'
+      :class='dark ? colors.surfaceDark.black : colors.surfaceLight.white'
       )
-      v-btn(
+      v-btn.hover-btn(
         depressed
-        :color='dark ? colors.peacock[4] : colors.primary[1]'
+        :color='colors.actionLight.highlightOnLite'
         style='min-width:0;'
         @click='goHome'
         :aria-label='$t(`common:header.home`)'
         )
-        v-icon(size='20') mdi-home
-      v-btn.ml-3(
+        v-icon(
+          size='20'
+          :color='colors.textLight.primary'
+          ) mdi-home
+      v-btn.ml-3.hover-btn(
         v-if='currentMode === `custom`'
         depressed
-        :color='dark ? colors.peacock[4] : colors.primary[1]'
+        :color='colors.actionLight.highlightOnLite'
         style='flex: 1 1 100%;'
         @click='switchMode(`browse`)'
         )
-        v-icon(left) mdi-file-tree
-        .body-2.text-none {{$t('common:sidebar.browse')}}
-      v-btn.ml-3(
+        v-icon(
+          left
+          :color='colors.textLight.primary'
+          ) mdi-file-tree
+        .body-2.text-none(:style='"color:" + colors.textLight.primary') {{$t('common:sidebar.browse')}}
+      v-btn.ml-3.hover-btn(
         v-else-if='currentMode === `browse`'
         depressed
-        :color='dark ? colors.peacock[4] : colors.primary[1]'
-        style='flex: 1 1 100%;'
+        :color='colors.actionLight.highlightOnLite'
+        :style='"flex: 1 1 100%; color:" + colors.textLight.primary'
         @click='switchMode(`custom`)'
         )
-        v-icon(left) mdi-navigation
-        .body-2.text-none {{$t('common:sidebar.mainMenu')}}
+        v-icon(
+          left
+          :color='colors.textLight.primary'
+          ) mdi-navigation
+        .body-2.text-none(:style='"color:" + colors.textLight.primary') {{$t('common:sidebar.mainMenu')}}
     v-divider
     //-> Custom Navigation
     v-list.py-2(
       v-if='currentMode === `custom`'
       dense
+      rounded
       :class='dark ? `dark ` + color : color'
       :dark='dark'
       )
@@ -48,20 +58,27 @@
           v-list-item-avatar(size='24', tile)
             v-icon(
               v-if='item.c.match(/fa[a-z] fa-/)'
-              :color='dark ? `white` : colors.text.darkGrey'
+              :color='dark ? `white` : colors.textLight.primary'
               size='19'
               ) {{ item.c }}
             v-icon(
               v-else
-              :color='dark ? `white` : colors.text.darkGrey'
+              :color='dark ? `white` : colors.textLight.primary'
               ) {{ item.c }}
-          v-list-item-title {{ item.l }}
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              )  {{ item.l }}
+            span {{ item.l }}
         v-divider.my-2(v-else-if='item.k === `divider`')
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
     //-> Browse
     v-list.py-2(
       v-else-if='currentMode === `browse`'
       dense
+      rounded
       :class='dark ? `dark ` + color : color'
       :dark='dark'
       )
@@ -77,8 +94,14 @@
             size='18'
             :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`'
             )
-            v-icon(small :color='dark ? `white` : colors.text.darkGrey') mdi-folder-open
-          v-list-item-title {{ item.title }}
+            v-icon(small :color='dark ? `white` : colors.textLight.primary') mdi-folder-open
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              ) {{ item.title }}
+            span {{ item.title }}
         v-divider.mt-2
         v-list-item.mt-2(
           v-if='currentParent.pageId > 0'
@@ -87,8 +110,14 @@
           :input-value='path === currentParent.path'
           )
           v-list-item-avatar(size='24')
-            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
-          v-list-item-title {{ currentParent.title }}
+            v-icon(:color='dark ? `white` : colors.textLight.primary') mdi-text-box
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='currentParent.title'
+              ) {{ currentParent.title }}
+            span {{ currentParent.title }}
       //- Current directory items
       template(
         v-for='item of itemList'
@@ -97,12 +126,18 @@
           v-if='item.isFolder'
           :href='getHref(item)'
           :key='`childfolder-` + item.id'
-          :color='dark ? `white` : colors.text.darkGrey'
+          :color='dark ? `white` : colors.textLight.primary'
           :style='getListItemStyles()'
           )
           v-list-item-avatar(size='24')
-            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-folder
-          v-list-item-title {{ item.title }}
+            v-icon(:color='dark ? `white` : colors.textLight.primary') mdi-folder
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              ) {{ item.title }}
+            span {{ item.title }}
         v-list-item(
           v-else
           :href='getHref(item)'
@@ -111,14 +146,20 @@
           :style='getListItemStyles()'
           )
           v-list-item-avatar(size='24')
-            v-icon(:color='dark ? `white` : colors.text.darkGrey') mdi-text-box
-          v-list-item-title {{ item.title }}
+            v-icon(:color='dark ? `white` : colors.textLight.primary') mdi-text-box
+          v-tooltip(bottom, open-delay=500)
+            template(v-slot:activator='{ on }')
+              v-list-item-title(
+                v-on='on',
+                :aria-label='item.title'
+              ) {{ item.title }}
+            span {{ item.title }}
 </template>
 
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 import pageTreeQuery from '@/graph/common/common-pages-query-tree.gql'
 import pageByPathQuery from '@/graph/common/common-pages-query-page-by-path.gql'
@@ -218,12 +259,11 @@ export default {
       return invertedAncestors
     },
     async updateRootParentWithActualData() {
-      const homePagepath = "home"
       const homePageResp = await this.$apollo.query({
         query: pageByPathQuery,
         fetchPolicy: 'cache-first',
         variables: {
-          path: homePagepath,
+          path: 'home',
           locale: this.locale,
           siteId: this.siteId
         }
@@ -283,9 +323,9 @@ export default {
         styles = 'padding-left: 48px; '
       }
       if (this.dark) {
-        return styles + 'background-color' + this.colors.primary[4] + '!important;'
+        return styles + 'background-color' + this.colors.surfaceDark.primaryBlueLite + '!important;'
       }
-      return styles + 'background-color' + this.colors.surface[2] + '!important;'
+      return styles + 'background-color' + this.colors.neutral[100] + '!important;'
     },
     async fetchChildPageItems() {
       this.$store.commit(`loadingStart`, 'browse-load')
@@ -314,13 +354,13 @@ export default {
       })
       this.childPageItems = _.get(resp, 'data.childPages', [])
 
+      this.hasFetchedChildren = true
       this.$store.commit(`loadingStop`, 'browse-load')
     }
   },
   watch: {
     isReadyToFetchPageChildren(newVal) {
       if (newVal && !this.hasFetchedChildren) {
-        this.hasFetchedChildren = true
         this.fetchChildPageItems()
       }
     }
@@ -349,26 +389,45 @@ export default {
     & > .v-list-item__title {
       color: white !important;
       &:hover {
-        color: mc("ext-teal", "1") !important;
-        text-decoration: underline mc("ext-teal", "1");
+        color: mc('text-dark', 'brand-primary') !important;
+        text-decoration: underline mc('text-dark', 'brand-primary');
       }
     }
   }
 
   .v-list-item {
     & > .v-list-item__title {
-      color: mc('text', 'darkGrey') !important;
+      color: mc('text-light', 'primary') !important;
       &:hover {
-        color: mc('primary', '1') !important;
-        text-decoration: underline  mc('primary', '1');
+        color: mc('text-light', 'brand-primary') !important;
+        text-decoration: underline mc('text-light', 'brand-primary');
       }
     }
   }
 
   #curDir {
-    color: mc('text', 'darkGrey') !important;
+    color: mc('text-light', 'primary') !important;
   }
   .dark #curDir {
     color: white !important;
+  }
+
+  .v-list-item.v-list-item--link.v-list-item--active > .v-list-item__title {
+    font-size: .9rem !important;
+    color: mc('text-light', 'brand-tertiary') !important;
+  }
+
+  .dark .v-list-item.v-list-item--link.v-list-item--active > .v-list-item__title {
+  color: mc('text-dark', 'brand-primary') !important;
+  }
+
+  .v-btn {
+    &.hover-btn {
+      border-radius: 20px;
+
+      &:hover {
+        background-color: mc('action-dark', 'highlight-on-lite') !important;
+      }
+    }
   }
 </style>

@@ -278,21 +278,21 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   }
 
   &-editor {
-    background-color: darken(mc('grey', '900'), 4.5%);
+    background-color: mc('neutral', '900');
     flex: 1 1 50%;
     display: block;
     height: $editor-height;
     position: relative;
 
     &-title {
-      background-color: mc('grey', '800');
+      background-color: mc('neutral', '800');
       border-bottom-left-radius: 5px;
       display: inline-flex;
       height: 30px;
       justify-content: center;
       align-items: center;
       padding: 0 1rem;
-      color: mc('grey', '500');
+      color: mc('neutral', '500');
       position: absolute;
       top: 0;
       right: 0;
@@ -308,7 +308,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
   }
 
   &-sidebar {
-    background-color: mc('grey', '900');
+    background-color: mc('neutral', '900');
     width: 64px;
     display: flex;
     flex-direction: column;
@@ -369,14 +369,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     background-repeat: repeat-x;
   }
   .cm-matchhighlight {
-    background-color: mc('grey', '800');
+    background-color: mc('neutral', '800');
   }
   .CodeMirror-selection-highlight-scrollbar {
     background-color: mc('green', '600');
   }
 
   .cm-s-wikijs-dark.CodeMirror {
-    background: darken(mc('grey','900'), 3%);
+    background: mc('neutral','900');
     color: #e0e0e0;
   }
   .cm-s-wikijs-dark div.CodeMirror-selected {
@@ -386,14 +386,14 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     background: mc('blue','800');
   }
   .cm-s-wikijs-dark .CodeMirror-line::selection, .cm-s-wikijs-dark .CodeMirror-line > span::selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::selection {
-    background: mc('amber', '500');
+    background: mc('yellow', '500');
   }
   .cm-s-wikijs-dark .CodeMirror-line::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span::-moz-selection, .cm-s-wikijs-dark .CodeMirror-line > span > span::-moz-selection {
-    background: mc('amber', '500');
+    background: mc('yellow', '500');
   }
   .cm-s-wikijs-dark .CodeMirror-gutters {
-    background: darken(mc('grey','900'), 6%);
-    border-right: 1px solid mc('grey','900');
+    background: mc('neutral','900');
+    border-right: 1px solid mc('neutral','900');
   }
   .cm-s-wikijs-dark .CodeMirror-guttermarker {
     color: #ac4142;
@@ -402,13 +402,13 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     color: #505050;
   }
   .cm-s-wikijs-dark .CodeMirror-linenumber {
-    color: mc('grey','800');
+    color: mc('neutral','800');
   }
   .cm-s-wikijs-dark .CodeMirror-cursor {
     border-left: 1px solid #b0b0b0;
   }
   .cm-s-wikijs-dark span.cm-comment {
-    color: mc('orange','800');
+    color: mc('text-dark','notice-on-lite');
   }
   .cm-s-wikijs-dark span.cm-atom {
     color: #aa759f;
@@ -448,7 +448,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     color: #b0b0b0;
   }
   .cm-s-wikijs-dark .CodeMirror-activeline-background {
-    background: mc('grey','900');
+    background: mc('neutral','900');
   }
   .cm-s-wikijs-dark .CodeMirror-matchingbracket {
     text-decoration: underline;
