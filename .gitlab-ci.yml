@@ -185,7 +185,7 @@ push-docker-image:
 deploy-to-staging:
   stage: promote-prod-release-version
   script:
-    - export DEV2_IMAGE_TAG=dev2-9fc93413
+    - echo "Deploying main branch image to staging..."
     - bash scripts/promote_to_staging.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
