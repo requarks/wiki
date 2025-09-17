@@ -1,9 +1,4 @@
-query (
-  $parent: Int!
-  $mode: PageTreeMode!
-  $locale: String!
-  $siteId: String!
-) {
+query TreeByParent($parent: Int!, $mode: PageTreeMode!, $locale: String!, $siteId: String!) {
   tree(parent: $parent, mode: $mode, locale: $locale, siteId: $siteId) {
     id
     path
@@ -11,13 +6,10 @@ query (
     isFolder
     pageId
     parent
-query (
-  $path: String
-  $mode: PageTreeMode!
-  $locale: String!
-  $includeAncestors: Boolean!
-  $siteId: String!
-) {
+  }
+}
+
+query TreeByPath($path: String, $mode: PageTreeMode!, $locale: String!, $includeAncestors: Boolean!, $siteId: String!) {
   tree(
     path: $path
     mode: $mode
