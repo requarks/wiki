@@ -22,6 +22,9 @@ COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
 COPY ./yarn.lock ./yarn.lock
 
+# Set permissions to read-only for client, dev, patches
+RUN chmod -R a-w ./client ./dev ./patches
+
 RUN yarn cache clean
 #install all dependencies including DevDependencies
 RUN yarn install --frozen-lockfile --non-interactive  --ignore-scripts
