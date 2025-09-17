@@ -49,7 +49,7 @@ default:
   tags:
     - runner_mar
   before_script:
-     - source scripts/setup_yarn.sh
+    - source scripts/setup_yarn.sh
 stages:
   - environment-set
   - build
