@@ -42,8 +42,8 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-     value: "1.7.0"
-     description: "Update to next release version, it should be numeric value, ex: 1.3.0"
+    value: "1.7.0"
+    description: "Update to next release version, it should be numeric value, ex: 1.3.0"
 
 default:
   tags:
