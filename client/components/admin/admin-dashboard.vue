@@ -197,21 +197,19 @@ export default {
 
 .dashboard-contribute {
   background-color: #FFF;
-  background-image: linear-gradient(to bottom, #FFF 0%, lighten(mc('indigo', '50'), 3%) 100%);
   border-radius: 7px;
 
   @at-root .theme--dark & {
-    background-color: mc('grey', '800');
-    background-image: linear-gradient(to bottom, mc('grey', '800') 0%, darken(mc('grey', '800'), 6%) 100%);
+    background-color: mc('neutral', '800');
   }
 
   .v-card__text {
     display: flex;
     align-items: center;
-    color: mc('indigo', '500') !important;
+    color: mc('blue', '500') !important;
 
     @at-root .theme--dark & {
-      color: mc('grey', '300') !important;
+      color: mc('neutral', '300') !important;
     }
   }
 }

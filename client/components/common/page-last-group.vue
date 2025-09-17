@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   props: {

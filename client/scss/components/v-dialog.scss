@@ -1,5 +1,5 @@
 .dialog-header {
-  background-color: mc('primary', '1');
+  background-color: mc('surface-light', 'secondary-blue-heavy');
   height: 60px;
   color: #FFF;
   display: flex;
@@ -9,30 +9,22 @@
 
   &.is-red {
     background-color: mc('red', '700');
-    background-image: radial-gradient(ellipse at top, mc('red', '500'), mc('red', '700')),
-                      radial-gradient(ellipse at bottom, mc('red', '800'), mc('red', '700'));
   }
 
   &.is-orange {
-    background-color: mc('orange', '700');
-    background-image: radial-gradient(ellipse at top, mc('orange', '600'), mc('orange', '800')),
-                      radial-gradient(ellipse at bottom, mc('orange', '900'), mc('orange', '800'));
+    background-color: mc('surface-light', 'notice-lite');
   }
 
   &.is-indigo {
-    background-color: mc('indigo', '700');
-    background-image: radial-gradient(ellipse at top, mc('indigo', '500'), mc('indigo', '700')),
-                      radial-gradient(ellipse at bottom, mc('indigo', '800'), mc('indigo', '700'));
+    background-color: mc('blue', '800');
   }
 
   &.is-dark {
-    background-color: mc('text', 'darkPurple');
+    background-color: mc('surface-dark', 'tertiary-neutral-lite');
   }
 
   &.is-teal {
     background-color: mc('teal', '700');
-    background-image: radial-gradient(ellipse at top, mc('teal', '500'), mc('teal', '700')),
-                      radial-gradient(ellipse at bottom, mc('teal', '800'), mc('teal', '700'));
   }
 }
 

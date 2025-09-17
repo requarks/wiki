@@ -2,8 +2,7 @@
   v-dialog(
     v-model='isShown'
     max-width='850px'
-    :overlay-color='$vuetify.theme.dark ? colors.primary[3] : colors.primary[1]'
-    :overlay-opacity='$vuetify.theme.dark ? ".6" : ".8"'
+    :overlay-color='colors.overlay.page'
     )
     v-card.page-selector
       .dialog-header(:class='$vuetify.theme.dark ? `is-dark` : ``')
@@ -20,9 +19,9 @@
           v-show='searchLoading'
           )
       .d-flex
-        v-flex(xs5, :color='$vuetify.theme.dark ? colors.text.darkGrey : colors.surface[1]')
+        v-flex(xs5)
           v-toolbar(
-            :color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]',
+            :color='$vuetify.theme.dark ? colors.surfaceDark.secondaryBlueHeavy : colors.surfaceLight.secondaryBlueHeavy',
             dark,
             dense,
             flat
@@ -39,7 +38,7 @@
                 :open.sync='openNodes'
                 :items='tree'
                 :load-children='fetchFolders'
-                :color='$vuetify.theme.dark ? colors.peacock[1] : "black"'
+                :color='$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary'
                 dense
                 expand-icon='mdi-menu-down-outline'
                 item-id='path'
@@ -50,7 +49,12 @@
                 template(slot='prepend', slot-scope='{ item, open, leaf }')
                   v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
         v-flex(xs7)
-          v-toolbar(:color='$vuetify.theme.dark ? colors.sapphire[5] : colors.sapphire[1]', dark, dense, flat)
+          v-toolbar(
+            :color='$vuetify.theme.dark ? colors.surfaceDark.secondaryBlueHeavy : colors.surfaceLight.secondaryBlueHeavy',
+            dark,
+            dense,
+            flat
+            )
             .body-2 {{$t('common:pageSelector.pages')}}
             //- v-spacer
             //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
@@ -76,18 +80,19 @@
             )
             .body-2 {{$t('common:pageSelector.folderEmptyWarning')}}
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
-        v-select(
+        v-select.left-rounded-50(
           solo
           dark
           flat
-          background-color='grey darken-3-d2'
+          :background-color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
+          :class='$vuetify.theme.dark ? `is-dark` : ``'
           hide-details
           single-line
           :items='namespaces'
-          style='flex: 0 0 100px; border-radius: 4px 0 0 4px;'
+          style='flex: 0 0 100px;'
           v-model='currentLocale'
           )
-        v-text-field(
+        v-text-field.right-rounded-50(
           ref='pathIpt'
           solo
           hide-details
@@ -95,20 +100,27 @@
           v-model='currentPath'
           flat
           clearable
-          style='border-radius: 0 4px 4px 0;'
         )
       v-card-chin
         v-spacer
-        v-btn(text, @click='close') {{$t('common:actions.cancel')}}
-        v-btn.px-4(:color='$vuetify.theme.dark ? colors.peacock[4] : colors.primary[1]', @click='open', :disabled='!isValidPath')
-          v-icon(left color='white') mdi-check
-          span#select-btn-text {{$t('common:actions.select')}}
+        v-btn(text, rounded, @click='close') {{$t('common:actions.cancel')}}
+        v-btn.px-4(
+          :color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
+          @click='open'
+          :disabled='!isValidPath'
+          rounded
+          )
+          v-icon(
+            left
+            :color='$vuetify.theme.dark ? colors.textDark.inverse : colors.textLight.inverse'
+            ) mdi-check
+          span.select-btn-text(:class='$vuetify.theme.dark ? `is-dark` : ``') {{$t('common:actions.select')}}
 </template>
 
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
-import colors from '@/themes/default/js/extended-color-scheme'
+import colors from '@/themes/default/js/color-scheme'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
@@ -383,11 +395,46 @@ export default {
   .v-treeview-node__label {
     font-size: 13px;
   }
+
+  .dialog-header {
+    background-color: mc("surface-light", "primary-blue-heavy");
+
+    &.is-dark {
+      background-color: mc("surface-dark", "primary-blue-heavy");
+    }
+  }
+
   .v-treeview-node__content {
     cursor: pointer;
   }
-  #select-btn-text {
+
+  .select-btn-text {
     color: white;
+
+    &.is-dark {
+      color: mc("text-dark", "inverse")
+    }
+  }
+
+  .left-rounded-50 {
+    border-bottom-left-radius: 50px;
+    border-top-left-radius: 50px;
+  }
+
+  .right-rounded-50 {
+    border-bottom-right-radius: 50px;
+    border-top-right-radius: 50px;
+  }
+
+  .v-select .v-select__selection {
+    padding-left: 16px;
+    color: mc("text-light", "inverse");
+  }
+
+  .v-select.is-dark .v-select__selection,
+  .v-select.is-dark .theme--dark.v-icon.mdi
+   {
+    color: mc("text-dark", "inverse");
   }
 }
 </style>

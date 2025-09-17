@@ -1,4 +1,17 @@
 query (
+  $parent: Int!
+  $mode: PageTreeMode!
+  $locale: String!
+  $siteId: String!
+) {
+  tree(parent: $parent, mode: $mode, locale: $locale, siteId: $siteId) {
+    id
+    path
+    title
+    isFolder
+    pageId
+    parent
+query (
   $path: String
   $mode: PageTreeMode!
   $locale: String!

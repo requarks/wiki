@@ -35,12 +35,12 @@ variables:
     description: "Choose false to skip code quality check"
 
   PANDOC:
-    value: "true"
+    value: "false"
     options:
       - "true"
       - "false"
     description: "Choose false to skip build & push pandoc docker image stages"
-
+# Remove extra space
   VERSION:
      value: "1.7.0"
      description: "Update to next release version, it should be numeric value, ex: 1.0.0"
@@ -49,7 +49,7 @@ default:
   tags:
     - runner_mar
   before_script:
-     - source scripts/setup_yarn.sh
+    - source scripts/setup_yarn.sh
 stages:
   - environment-set
   - build

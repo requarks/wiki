@@ -1,5 +1,5 @@
 export const messages = {
-  printToPdf: 'Print to PDF',
+  printPage: 'Print Page',
   exportToWord: 'Export to Word',
   exportToPdf: 'Export to PDF',
   exportModalSubtitle: 'This page has sub-pages, do you want to include them in the export?',
