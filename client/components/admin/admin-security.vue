@@ -196,6 +196,15 @@
                     persistent-hint
                     :hint='$t(`admin:security.hideLocalLoginHint`)'
                     )
+                    //- :label='$t(`admin:security.startGuestAuth`)'
+                    //- :hint='$t(`admin:security.startGuestAuthHint`)'
+                  v-switch(
+                    inset
+                    color='primary'
+                    v-model='config.authGuestLogin'
+                    prepend-icon='mdi-login'
+                    persistent-hint
+                    )
                 v-divider.mt-3
                 .overline.grey--text.pa-4 {{$t('admin:security.loginSecurity')}}
                 .px-4.pb-3
@@ -272,6 +281,7 @@ export default {
         securityCSP: false,
         securityCSPDirectives: '',
         authAutoLogin: false,
+        authGuestLogin: false,
         authHideLocal: false,
         authLoginBgUrl: '',
         authJwtAudience: 'urn:wiki.js',
@@ -298,6 +308,7 @@ export default {
           mutation: gql`
             mutation (
               $authAutoLogin: Boolean
+              $authGuestLogin: Boolean
               $authEnforce2FA: Boolean
               $authHideLocal: Boolean
               $authLoginBgUrl: String
@@ -321,6 +332,7 @@ export default {
               site {
                 updateConfig(
                   authAutoLogin: $authAutoLogin,
+                  authGuestLogin: $authGuestLogin,
                   authEnforce2FA: $authEnforce2FA,
                   authHideLocal: $authHideLocal,
                   authLoginBgUrl: $authLoginBgUrl,
@@ -353,6 +365,7 @@ export default {
           `,
           variables: {
             authAutoLogin: _.get(this.config, 'authAutoLogin', false),
+            authGuestLogin: _.get(this.config, 'authGuestLogin', false),
             authEnforce2FA: _.get(this.config, 'authEnforce2FA', false),
             authHideLocal: _.get(this.config, 'authHideLocal', false),
             authLoginBgUrl: _.get(this.config, 'authLoginBgUrl', ''),
@@ -406,6 +419,7 @@ export default {
           site {
             config {
               authAutoLogin
+              authGuestLogin
               authEnforce2FA
               authHideLocal
               authLoginBgUrl
