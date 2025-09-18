@@ -500,7 +500,8 @@ export default {
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
       this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
-        ADD_TAGS: ['foreignObject']
+        ADD_TAGS: ['img'],
+        ADD_ATTR: ['src', 'alt']
       })
       this.$nextTick(() => {
         tabsetHelper.format()
@@ -641,7 +642,8 @@ export default {
         mermaidId++
         const mermaidDef = elm.innerText
         const mmElm = document.createElement('div')
-        mmElm.innerHTML = `<div id="mermaid-id-${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
+        mmElm.innerHTML = `<div id="mermaid-id-
+        ${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
         elm.parentElement.replaceWith(mmElm)
       })
     },

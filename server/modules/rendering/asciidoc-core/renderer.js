@@ -12,7 +12,10 @@ module.exports = {
       }
     })
 
-    const $ = cheerio.load(html, {
+    // Remove all <foreignObject> elements from the HTML
+    let cleanedHtml = html.replace(/<foreignObject[\s\S]*?<\/foreignObject>/g, '')
+
+    const $ = cheerio.load(cleanedHtml, {
       decodeEntities: true
     })
 
@@ -20,7 +23,6 @@ module.exports = {
       const diagramContent = Buffer.from($(elm).html(), 'base64').toString()
       $(elm).parent().replaceWith(`<pre class="diagram">${diagramContent}</div>`)
     })
-
     return $.html()
   }
 }
