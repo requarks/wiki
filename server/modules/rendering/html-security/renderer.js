@@ -37,6 +37,7 @@ module.exports = {
         ADD_TAGS: allowedTags
       })
     }
+    input = input.replace(/<foreignObject[\s\S]*?<\/foreignObject>/g, '')
     return input
   }
 }
