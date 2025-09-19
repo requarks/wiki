@@ -11,8 +11,10 @@ module.exports = {
         icons: 'font'
       }
     })
+    // Remove all <foreignObject> elements from the HTML
+    let cleanedHtml = html.replace(/<foreignObject[\s\S]*?<\/foreignObject>/g, '')
 
-    const $ = cheerio.load(html, {
+    const $ = cheerio.load(cleanedHtml, {
       decodeEntities: true
     })
 
