@@ -17,13 +17,39 @@ query TreeByPath($path: String, $mode: PageTreeMode!, $locale: String!, $include
     includeAncestors: $includeAncestors
     siteId: $siteId
   ) {
-    id
-    path
-    title
-    isFolder
-    pageId
-    parent
-    locale
-    siteId
+    tree(parent: $parent, mode: $mode, locale: $locale, siteId: $siteId) {
+      id
+      path
+      title
+      isFolder
+      pageId
+      parent
+      locale
+      siteId
+    }
   }
-}
+
+  query (
+    $path: String
+    $mode: PageTreeMode!
+    $locale: String!
+    $includeAncestors: Boolean!
+    $siteId: String!
+  ) {
+    tree(
+      path: $path
+      mode: $mode
+      locale: $locale
+      includeAncestors: $includeAncestors
+      siteId: $siteId
+    ) {
+      id
+      path
+      title
+      isFolder
+      pageId
+      parent
+      locale
+      siteId
+    }
+  }

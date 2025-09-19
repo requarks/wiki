@@ -24,7 +24,7 @@ variables:
 
 
   IMAGE_TAG:
-    value: ""
+    value: "1.7.0"
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
   SONARQUBE:
@@ -185,7 +185,7 @@ push-docker-image:
 deploy-to-staging:
   stage: promote-prod-release-version
   script:
-    - echo "Deploying main branch image to staging..."
+    - export DEV2_IMAGE_TAG=dev2-9fc93413
     - bash scripts/promote_to_staging.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
