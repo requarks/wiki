@@ -18,13 +18,13 @@ variables:
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
-  DEV2_IMAGE_TAG: "${IMAGE_TAG}"
+  DEV2_IMAGE_TAG: 'latest-dev2'
   DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
 
   IMAGE_TAG:
-    value: ""
+    value: "1.7.0"
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
   SONARQUBE:
@@ -40,16 +40,16 @@ variables:
       - "true"
       - "false"
     description: "Choose false to skip build & push pandoc docker image stages"
-# Remove extra space
+
   VERSION:
      value: "1.7.0"
-     description: "Update to next release version, it should be numeric value, ex: 1.0.0"
+     description: "Update to next release version, it should be numeric value, ex: 1.3.0"
 
 default:
   tags:
     - runner_mar
   before_script:
-    - source scripts/setup_yarn.sh
+     - source scripts/setup_yarn.sh
 stages:
   - environment-set
   - build
@@ -195,16 +195,6 @@ deploy-to-staging:
 deploy-to-production:
   stage: promote-prod-release-version
   script:
-    - echo "Deploying main branch image to production..."
-    - bash scripts/promote_to_prod.sh
-  environment:
-    name: production
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
-
-
-
     - echo "Deploying main branch image to production..."
     - bash scripts/promote_to_prod.sh
   environment:
