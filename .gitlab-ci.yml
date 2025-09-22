@@ -1,14 +1,6 @@
 variables:
   PROJECT_NAME: 'mar'
-  ENVIRONMENT:
-    value: "none"
-    options:
-      - "none"
-      - "dev1"
-      - "dev2"
-      - "staging"
-      - "production"
-    description: "Choose on which environment should pipeline run"
+  ENVIRONMENT: "none"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
@@ -21,29 +13,10 @@ variables:
   DEV2_IMAGE_TAG: 'latest-dev2'
   DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
-
-
-  IMAGE_TAG:
-    value: "MAR-1334"
-    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
-
-  SONARQUBE:
-    value: "true"
-    options:
-      - "true"
-      - "false"
-    description: "Choose false to skip code quality check"
-
-  PANDOC:
-    value: "false"
-    options:
-      - "true"
-      - "false"
-    description: "Choose false to skip build & push pandoc docker image stages"
-
-  VERSION:
-     value: ""
-     description: "Update to next release version, it should be numeric value, ex: 1.3.0"
+  IMAGE_TAG: "MAR-1334"
+  SONARQUBE: "true"
+  PANDOC: "false"
+  VERSION: ""
 
 default:
   tags:
@@ -157,16 +130,13 @@ docker-build:
   before_script:
     - df -h # Check disk space before building
     - export PANDOC="$PANDOC"
- once    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
+    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
     - bash scripts/build_images.sh
   artifacts:
     paths:
       - newimage.txt
-    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
-  environment:
-    name: $ENVIRONMENT
-    url: $NEW_IMAGE
+    expire_in: 1 hour
   rules:
     # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
