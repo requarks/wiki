@@ -1,3 +1,13 @@
+# Deploy to dev2 after merging feature branch into develop
+deploy-to-dev2:
+  stage: promote-prod-release-version
+  script:
+    - echo "Deploying develop branch image to dev2..."
+    - bash scripts/promote_to_dev2.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+
 variables:
   PROJECT_NAME: 'mar'
   ENVIRONMENT:
@@ -59,6 +69,7 @@ stages:
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
   - promote-prod-release-version
+
 
 environment-set:
   stage: environment-set
@@ -188,27 +199,26 @@ push-docker-image:
     - if: $CI_COMMIT_BRANCH == "develop"
       when: on_success
 
-# Deploy to staging after merging to main
+  # Deploy to staging after merging develop into main
 deploy-to-staging:
-  stage: promote-prod-release-version
-  script:
-    #- export DEV2_IMAGE_TAG=capwiki:1.7.1
-    - echo "Deploying develop branch image to staging..."
-    - bash scripts/promote_to_staging.sh
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
+    stage: promote-prod-release-version
+    script:
+      - echo "Deploying dev2 branch image to staging..."
+      - bash scripts/promote_to_staging.sh
+    rules:
+      - if: $CI_COMMIT_BRANCH == "main"
+        when: always
 
-# Deploy to production after staging, manual trigger
+  # Deploy to production after staging, manual trigger
 deploy-to-production:
-  stage: promote-prod-release-version
-  script:
-    - echo "Deploying main branch image to production..."
-    - bash scripts/promote_to_prod.sh
-  environment:
-    name: production
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
+    stage: promote-prod-release-version
+    script:
+      - echo "Deploying staging branch image to production..."
+      - bash scripts/promote_to_prod.sh
+    environment:
+      name: production
+    rules:
+      - if: $CI_COMMIT_BRANCH == "main"
+        when: manual
 
 
