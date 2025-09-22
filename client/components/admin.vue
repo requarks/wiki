@@ -290,7 +290,7 @@ export default {
   }
 
   .v-list-group > .v-list-item {
-    padding-left: 0;
+    padding-left: 100px;
   }
 }
 
