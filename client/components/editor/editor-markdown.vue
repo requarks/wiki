@@ -644,7 +644,6 @@ export default {
         const mmElm = document.createElement('div')
         mmElm.innerHTML = `<div id="mermaid-id-
         ${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
-        elm.parentElement.replaceWith(mmElm)
       })
     },
     autocomplete (cm, change) {
