@@ -73,7 +73,7 @@ environment-set:
       when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\/'
       when: always
 
 build:
@@ -94,9 +94,9 @@ build:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop" 
+    - if: $CI_COMMIT_BRANCH == "develop"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\/'
       when: always
 
 test:
@@ -122,7 +122,7 @@ test:
       when: on_success
     - if: $CI_COMMIT_BRANCH == "develop"
       when: on_success
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\/'
       when: on_success
 
 sonarqube-scan:
@@ -149,7 +149,7 @@ sonarqube-scan:
       when: always
     - if: $CI_COMMIT_BRANCH == "develop"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\/'
       when: always
 
 docker-build:
