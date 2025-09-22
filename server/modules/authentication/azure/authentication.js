@@ -48,6 +48,19 @@ module.exports = {
               picture: ''
             }
           })
+          if (conf.mapGroups) {
+            const groups = _.get(profile, '_json.groups')
+            if (groups && _.isArray(groups)) {
+              const currentGroups = (await user.$relatedQuery('groups').select('groups.id')).map(g => g.id)
+              const expectedGroups = Object.values(WIKI.auth.groups).filter(g => groups.includes(g.name)).map(g => g.id)
+              for (const groupId of _.difference(expectedGroups, currentGroups)) {
+                await user.$relatedQuery('groups').relate(groupId)
+              }
+              for (const groupId of _.difference(currentGroups, expectedGroups)) {
+                await user.$relatedQuery('groups').unrelate().where('groupId', groupId)
+              }
+            }
+          }
           cb(null, user)
         } catch (err) {
           cb(err, null)

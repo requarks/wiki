@@ -222,7 +222,7 @@ module.exports = {
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
   async subscribeToNotifications () {
-    const useHA = (WIKI.config.ha === true || WIKI.config.ha === 'true' || WIKI.config.ha === 1 || WIKI.config.ha === '1')
+    const useHA = (WIKI.config.ha === true || (typeof WIKI.config.ha === 'string' && WIKI.config.ha.toLowerCase() === 'true') || WIKI.config.ha === 1 || WIKI.config.ha === '1')
     if (!useHA) {
       return
     } else if (WIKI.config.db.type !== 'postgres') {

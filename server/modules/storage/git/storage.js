@@ -298,7 +298,7 @@ module.exports = {
   async created(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing new file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.repoPath, fileName)
@@ -320,7 +320,7 @@ module.exports = {
   async updated(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing updated file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.repoPath, fileName)
@@ -342,7 +342,7 @@ module.exports = {
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/GIT) Committing removed file [${page.localeCode}] ${page.path}...`)
     let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+    if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
       fileName = `${page.localeCode}/${fileName}`
     }
 
@@ -364,11 +364,11 @@ module.exports = {
     let sourceFileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
     let destinationFileName = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
-    if (WIKI.config.lang.namespacing) {
-      if (WIKI.config.lang.code !== page.localeCode) {
+    if (this.config.alwaysNamespace || WIKI.config.lang.namespacing) {
+      if (this.config.alwaysNamespace || WIKI.config.lang.code !== page.localeCode) {
         sourceFileName = `${page.localeCode}/${sourceFileName}`
       }
-      if (WIKI.config.lang.code !== page.destinationLocaleCode) {
+      if (this.config.alwaysNamespace || WIKI.config.lang.code !== page.destinationLocaleCode) {
         destinationFileName = `${page.destinationLocaleCode}/${destinationFileName}`
       }
     }
@@ -483,7 +483,7 @@ module.exports = {
           page.tags = await pageObject.$relatedQuery('tags')
 
           let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-          if (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode) {
+          if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
             fileName = `${page.localeCode}/${fileName}`
           }
           WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)

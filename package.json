@@ -7,9 +7,9 @@
   "dev": true,
   "scripts": {
     "start": "node server",
-    "dev": "NODE_OPTIONS=--openssl-legacy-provider node dev",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider webpack --profile --config dev/webpack/webpack.prod.js",
-    "watch": "NODE_OPTIONS=--openssl-legacy-provider webpack --config dev/webpack/webpack.dev.js",
+    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider node dev",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider webpack --profile --config dev/webpack/webpack.prod.js",
+    "watch": "cross-env NODE_OPTIONS=--openssl-legacy-provider webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --format codeframe --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open",
     "postinstall": "patch-package"
@@ -71,10 +71,11 @@
     "dependency-graph": "0.11.0",
     "diff": "4.0.2",
     "diff2html": "3.1.14",
-    "dompurify": "2.4.3",
+    "dompurify": "3.2.6",
     "dotize": "0.3.0",
     "elasticsearch6": "npm:@elastic/elasticsearch@6",
     "elasticsearch7": "npm:@elastic/elasticsearch@7",
+    "elasticsearch8": "npm:@elastic/elasticsearch@8",
     "emoji-regex": "10.2.1",
     "eventemitter2": "6.4.9",
     "express": "4.18.2",
@@ -239,6 +240,7 @@
     "codemirror-asciidoc": "1.0.4",
     "copy-webpack-plugin": "6.2.1",
     "core-js": "3.6.5",
+    "cross-env": "10.0.0",
     "css-loader": "4.3.0",
     "cssnano": "4.1.10",
     "cypress": "5.3.0",
@@ -336,7 +338,8 @@
   },
   "resolutions": {
     "apollo-server-express/**/graphql-tools": "4.0.8",
-    "graphql": "15.3.0"
+    "graphql": "15.3.0",
+    "passport-saml/**/xml-crypto": "2.1.6"
   },
   "browserslist": [
     "> 1%",

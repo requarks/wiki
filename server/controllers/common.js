@@ -507,7 +507,7 @@ router.get('/*', async (req, res, next) => {
           injectCode.body = `${injectCode.body}\n${page.extra.js}`
         }
 
-        if (req.query.legacy || req.get('user-agent').indexOf('Trident') >= 0) {
+        if (req.query.legacy || (req.get('user-agent') && req.get('user-agent').indexOf('Trident') >= 0)) {
           // -> Convert page TOC
           if (_.isString(page.toc)) {
             page.toc = JSON.parse(page.toc)
