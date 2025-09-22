@@ -186,13 +186,10 @@ push-docker-image:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
   rules:
-    # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
-    # Only run for staging when merging develop to main
     - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
       when: on_success
-    # Never run in production (prod handled by manual job)
     - if: $ENVIRONMENT == "production"
       when: never
 
