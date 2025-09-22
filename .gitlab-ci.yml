@@ -1,13 +1,3 @@
-# Deploy to dev2 after merging feature branch into develop
-deploy-to-dev2:
-  stage: promote-prod-release-version
-  script:
-    - echo "Deploying develop branch image to dev2..."
-    - bash scripts/promote_to_dev2.sh
-  rules:
-    - if: $CI_COMMIT_BRANCH == "develop"
-      when: always
-
 variables:
   PROJECT_NAME: 'mar'
   ENVIRONMENT:
@@ -79,9 +69,9 @@ environment-set:
     name: ${ENVIRONMENT}
   # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
@@ -102,9 +92,9 @@ build:
     expire_in: 1 hour
   # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
@@ -128,9 +118,9 @@ test:
       #- test-results
   # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: on_success
@@ -155,9 +145,9 @@ sonarqube-scan:
     - sonar-scanner
   # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
@@ -179,11 +169,12 @@ docker-build:
     url: $NEW_IMAGE
   # Only run on main and develop
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+      when: always
 
 push-docker-image:
   stage: docker-push
