@@ -1,43 +1,42 @@
-query (
-  query (
-    $parent: Int!
-    $mode: PageTreeMode!
-    $locale: String!
-    $siteId: String!
-  ) {
-    tree(parent: $parent, mode: $mode, locale: $locale, siteId: $siteId) {
-      id
-      path
-      title
-      isFolder
-      pageId
-      parent
-      locale
-      siteId
-    }
+query PageTreeByParent(
+  $parent: Int!
+  $mode: PageTreeMode!
+  $locale: String!
+  $siteId: String!
+) {
+  tree(parent: $parent, mode: $mode, locale: $locale, siteId: $siteId) {
+    id
+    path
+    title
+    isFolder
+    pageId
+    parent
+    locale
+    siteId
   }
+}
 
-  query (
-    $path: String
-    $mode: PageTreeMode!
-    $locale: String!
-    $includeAncestors: Boolean!
-    $siteId: String!
+query PageTreeByPath(
+  $path: String
+  $mode: PageTreeMode!
+  $locale: String!
+  $includeAncestors: Boolean!
+  $siteId: String!
+) {
+  tree(
+    path: $path
+    mode: $mode
+    locale: $locale
+    includeAncestors: $includeAncestors
+    siteId: $siteId
   ) {
-    tree(
-      path: $path
-      mode: $mode
-      locale: $locale
-      includeAncestors: $includeAncestors
-      siteId: $siteId
-    ) {
-      id
-      path
-      title
-      isFolder
-      pageId
-      parent
-      locale
-      siteId
-    }
+    id
+    path
+    title
+    isFolder
+    pageId
+    parent
+    locale
+    siteId
   }
+}

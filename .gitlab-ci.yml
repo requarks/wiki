@@ -24,7 +24,7 @@ variables:
 
 
   IMAGE_TAG:
-    value: "1.7.0"
+    value: "MAR-1334"
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
   SONARQUBE:
@@ -42,7 +42,7 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-     value: "1.7.0"
+     value: ""
      description: "Update to next release version, it should be numeric value, ex: 1.3.0"
 
 default:
@@ -60,12 +60,21 @@ stages:
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
   - promote-prod-release-version
 
+
 environment-set:
   stage: environment-set
   script:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
   environment:
     name: ${ENVIRONMENT}
+  # Run on main, develop, and feature branches
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+      when: always
 
 build:
   stage: build
@@ -81,12 +90,13 @@ build:
     paths:
       - assets/
     expire_in: 1 hour
+  # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+    - if: $CI_COMMIT_BRANCH == "develop" 
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
 test:
@@ -106,12 +116,13 @@ test:
     paths:
       - coverage
       #- test-results
+  # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: on_success
 
 sonarqube-scan:
@@ -132,14 +143,13 @@ sonarqube-scan:
       - .sonar/cache
   script:
     - sonar-scanner
+  # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+    - if: $CI_COMMIT_BRANCH == "develop"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
 docker-build:
@@ -158,13 +168,15 @@ docker-build:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: always
+    # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+    # Only run for staging when merging develop to main
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
       when: always
-
+    # Never run in production (prod handled by manual job)
+    - if: $ENVIRONMENT == "production"
+      when: never
 
 push-docker-image:
   stage: docker-push
@@ -174,33 +186,36 @@ push-docker-image:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
+    # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+    # Only run for staging when merging develop to main
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
       when: on_success
+    # Never run in production (prod handled by manual job)
+    - if: $ENVIRONMENT == "production"
+      when: never
 
-# Deploy to staging after merging to main
+  # Deploy to staging after merging develop into main
 deploy-to-staging:
-  stage: promote-prod-release-version
-  script:
-    - export DEV2_IMAGE_TAG=capwiki:1.7.0
-    - bash scripts/promote_to_staging.sh
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
+    stage: promote-prod-release-version
+    script:
+      - echo "Deploying dev2 branch image to staging..."
+      - bash scripts/promote_to_staging.sh
+    rules:
+      - if: $CI_COMMIT_BRANCH == "main"
+        when: always
 
-# Deploy to production after staging, manual trigger
+  # Deploy to production after staging, manual trigger
 deploy-to-production:
-  stage: promote-prod-release-version
-  script:
-    - echo "Deploying main branch image to production..."
-    - bash scripts/promote_to_prod.sh
-  environment:
-    name: production
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
+    stage: promote-prod-release-version
+    script:
+      - echo "Deploying staging branch image to production..."
+      - bash scripts/promote_to_prod.sh
+    environment:
+      name: production
+    rules:
+      - if: $CI_COMMIT_BRANCH == "main"
+        when: manual
 
 
