@@ -66,6 +66,14 @@ environment-set:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
   environment:
     name: ${ENVIRONMENT}
+  # Run on main, develop, and feature branches
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+      when: always
 
 build:
   stage: build
@@ -81,12 +89,13 @@ build:
     paths:
       - assets/
     expire_in: 1 hour
+  # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
 test:
@@ -106,12 +115,13 @@ test:
     paths:
       - coverage
       #- test-results
+  # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: on_success
 
 sonarqube-scan:
@@ -132,14 +142,13 @@ sonarqube-scan:
       - .sonar/cache
   script:
     - sonar-scanner
+  # Run on main, develop, and feature branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+    - if: $CI_COMMIT_BRANCH == "develop"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ $ALLOWED_BRANCH_PREFIXES'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
 docker-build:
@@ -157,12 +166,11 @@ docker-build:
   environment:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
+  # Only run on main and develop
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
-      when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+    - if: $CI_COMMIT_BRANCH == "develop"
       when: always
 
 
@@ -173,12 +181,11 @@ push-docker-image:
   script:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
+  # Only run on main and develop
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
-    - if: '$CI_COMMIT_REF_NAME =~ /^(hotfix|release)(\/.*)?$/'
+    - if: $CI_COMMIT_BRANCH == "develop"
       when: on_success
 
 # Deploy to staging after merging to main
