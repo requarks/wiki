@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
+const jwt = require('jsonwebtoken')
+const jwksClient = require('jwks-rsa')
 
 /**
  * Function to get the signing key for a specific token.
@@ -7,16 +7,15 @@ const jwksClient = require('jwks-rsa');
  * @returns {Promise<string>} - Resolves with the signing key.
  */
 function getSigningKey(header, jwksUri) {
-    return new Promise((resolve, reject) => {
-        const client = jwksClient({ jwksUri });
-        client.getSigningKey(header.kid, (err, key) => {
-            if (err) {
-                return reject('Error getting signing key:' + err);
-            }
-            const signingKey = key.getPublicKey();
-            resolve(signingKey);
-        });
-    });
+  return new Promise((resolve, reject) => {
+    const client = jwksClient({ jwksUri })
+    client.getSigningKey(header.kid, (err, key) => {
+      if (err) {
+        return reject(new Error('Error getting signing key: ' + err))
+      }
+      resolve(key.getPublicKey())
+    })
+  })
 }
 
 /**
@@ -26,23 +25,23 @@ function getSigningKey(header, jwksUri) {
  * @returns {Promise<Object>} - Resolves with the decoded token if verification is successful.
  */
 async function verifyJwt(token, conf) {
-    try {
-        const decodedHeader = jwt.decode(token, { complete: true });
-        if (!decodedHeader || !decodedHeader.header) {
-            throw new Error('JWT verification failed: Invalid token header');
-        }
-        const signingKey = await getSigningKey(decodedHeader.header, conf.jwksUri);
-        const decoded = jwt.verify(token, signingKey, {
-            algorithms: conf.algorithms || ['RS256'],
-            issuer: conf.issuer,
-            audience: conf.clientId
-        });
-        return decoded;
-    } catch (err) {
-        throw new Error('JWT verification failed: ' + err.message);
+  try {
+    const decodedHeader = jwt.decode(token, { complete: true })
+    if (!decodedHeader || !decodedHeader.header) {
+      throw new Error('JWT verification failed: Invalid token header')
     }
+    const signingKey = await getSigningKey(decodedHeader.header, conf.jwksUri)
+    const decoded = jwt.verify(token, signingKey, {
+      algorithms: conf.algorithms || ['RS256'],
+      issuer: conf.issuer,
+      audience: conf.clientId
+    })
+    return decoded
+  } catch (err) {
+    throw new Error('JWT verification failed: ' + err.message)
+  }
 }
 
 module.exports = {
-    verifyJwt
-};
+  verifyJwt
+}

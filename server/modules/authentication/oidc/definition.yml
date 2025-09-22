@@ -27,65 +27,72 @@ props:
     title: Well-Known Configuration URL
     hint: The Well-Known configuration Endpoint URL (e.g. https://provider/.well-known/openid-configuration)
     order: 3
+  authorizationURL:
+    type: String
+    title: Authorization Endpoint URL
+    hint: Application Authorization Endpoint URL (overrides value from well-known URL if set)
+    order: 4
+  tokenURL:
+    type: String
+    title: Token Endpoint URL
+    hint: Application Token Endpoint URL (overrides value from well-known URL if set)
+    order: 5
+  userInfoURL:
+    type: String
+    title: User Info Endpoint URL
+    hint: User Info Endpoint URL (overrides value from well-known URL if set)
+    order: 6
   skipUserProfile:
     type: Boolean
     default: false
     title: Skip User Profile
     hint: Skips call to the OIDC UserInfo endpoint
-    order: 4
-  userIdClaim:
-    userIdClaim:
+    order: 7
+  issuer:
     type: String
-    title: ID Claim
-    hint: Field containing the user ID
-    default: id
-    maxWidth: 500
-    order: 5
+    title: Issuer
+    hint: Issuer URL (overrides value from well-known URL if set)
+    order: 8
   emailClaim:
     type: String
     title: Email Claim
     hint: Field containing the email address
     default: email
     maxWidth: 500
-    order: 6
+    order: 9
   displayNameClaim:
     type: String
     title: Display Name Claim
     hint: Field containing the user display name
     default: displayName
     maxWidth: 500
-    order: 7
+    order: 10
   mergeIdTokenClaims:
     type: Boolean
     title: Merge ID Token Claims
     hint: If enabled, verifies the ID token and merges its claims into the user profile
     default: false
-    order: 8
+    order: 11
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Map groups matching names from the groups claim value
     default: false
-    order: 9
+    order: 12
   groupsClaim:
     type: String
     title: Groups Claim
     hint: Field containing the group names
     default: groups
     maxWidth: 500
-    order: 10
+    order: 13
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 11
-  scope:
-    type: String
-    title: Scope
-    hint: (optional) Application Client permission scopes.
-    order: 12
+    order: 14
   acrValues:
     type: String
     title: ACR Values
     hint: (optional) Authentication Context Class Reference
-    order: 13
+    order: 15
