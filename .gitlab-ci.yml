@@ -1,6 +1,14 @@
 variables:
   PROJECT_NAME: 'mar'
-  ENVIRONMENT: "none"
+  ENVIRONMENT:
+    value: "none"
+    options:
+      - "none"
+      - "dev1"
+      - "dev2"
+      - "staging"
+      - "production"
+    description: "Choose on which environment should pipeline run"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
@@ -13,10 +21,29 @@ variables:
   DEV2_IMAGE_TAG: 'latest-dev2'
   DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
-  IMAGE_TAG: "MAR-1334"
-  SONARQUBE: "true"
-  PANDOC: "false"
-  VERSION: ""
+
+
+  IMAGE_TAG:
+    value: "MAR-1334"
+    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
+
+  SONARQUBE:
+    value: "true"
+    options:
+      - "true"
+      - "false"
+    description: "Choose false to skip code quality check"
+
+  PANDOC:
+    value: "false"
+    options:
+      - "true"
+      - "false"
+    description: "Choose false to skip build & push pandoc docker image stages"
+
+  VERSION:
+     value: ""
+     description: "Update to next release version, it should be numeric value, ex: 1.3.0"
 
 default:
   tags:
@@ -67,7 +94,7 @@ build:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "develop" 
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
@@ -95,7 +122,7 @@ test:
       when: on_success
     - if: $CI_COMMIT_BRANCH == "develop"
       when: on_success
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\/'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: on_success
 
 sonarqube-scan:
@@ -122,7 +149,7 @@ sonarqube-scan:
       when: always
     - if: $CI_COMMIT_BRANCH == "develop"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\/'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
 docker-build:
@@ -136,7 +163,10 @@ docker-build:
   artifacts:
     paths:
       - newimage.txt
-    expire_in: 1 hour
+    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
+  environment:
+    name: $ENVIRONMENT
+    url: $NEW_IMAGE
   rules:
     # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
@@ -178,18 +208,18 @@ deploy-to-staging:
 
   # Deploy to production after staging, manual trigger
 deploy-to-production:
-    stage: promote-prod-release-version
-    script:
-      - echo "Deploying staging branch image to production..."
-      - bash scripts/promote_to_prod.sh
-    environment:
-      name: production
-    rules:
-      # Manual for regular main merges
-      - if: $CI_COMMIT_BRANCH == "main"
-        when: manual
-      # Auto for hotfix branches merged to main
-      - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//
-        when: always
+  stage: promote-prod-release-version
+  script:
+    - echo "Deploying staging branch image to production..."
+    - bash scripts/promote_to_prod.sh
+  environment:
+    name: production
+  rules:
+    # Manual for regular main merges
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    # Auto for hotfix branches merged to main
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//
+      when: always
 
 
