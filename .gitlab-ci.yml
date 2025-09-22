@@ -167,14 +167,16 @@ docker-build:
   environment:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
-  # Only run on main and develop
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: always
+    # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    # Only run for staging when merging develop to main
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
       when: always
+    # Never run in production (prod handled by manual job)
+    - if: $ENVIRONMENT == "production"
+      when: never
 
 push-docker-image:
   stage: docker-push
@@ -183,12 +185,16 @@ push-docker-image:
   script:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
-  # Only run on main and develop
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    # Only run for dev2 when merging to develop
+    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop"
+    # Only run for staging when merging develop to main
+    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
       when: on_success
+    # Never run in production (prod handled by manual job)
+    - if: $ENVIRONMENT == "production"
+      when: never
 
   # Deploy to staging after merging develop into main
 deploy-to-staging:
