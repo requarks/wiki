@@ -197,7 +197,7 @@ push-docker-image:
 deploy-to-staging:
     stage: promote-prod-release-version
     script:
-      - echo "Deploying dev2 branch image to staging...
+      - echo "Deploying dev2 branch image to staging..."
       - export DEV2_IMAGE_TAG=MAR-1349
       - bash scripts/promote_to_staging.sh
     rules:
