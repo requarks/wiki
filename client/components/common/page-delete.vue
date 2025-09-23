@@ -159,7 +159,6 @@ body.page-deleted {
 }
 .theme--dark .v-card__text {
   color: #fff !important;
-  background-color: #000;
 }
 .button-bar {
   padding: 16px 24px;
