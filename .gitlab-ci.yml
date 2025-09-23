@@ -198,6 +198,7 @@ deploy-to-staging:
     stage: promote-prod-release-version
     script:
       - echo "Deploying dev2 branch image to staging..."
+      - export DEV2_IMAGE_TAG=capwiki:364f213c
       - bash scripts/promote_to_staging.sh
     rules:
       - if: $CI_COMMIT_BRANCH == "main"
