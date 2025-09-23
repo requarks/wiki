@@ -22,7 +22,6 @@ module.exports = {
       const diagramContent = Buffer.from($(elm).html(), 'base64').toString()
       $(elm).parent().replaceWith(`<pre class="diagram">${diagramContent}</div>`)
     })
-
     return $.html()
   }
 }
