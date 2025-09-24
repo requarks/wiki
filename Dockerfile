@@ -70,7 +70,6 @@ COPY --chown=node:node --chmod=444 ./package.json ./package.json
 COPY --chown=node:node --chmod=444 ./LICENSE ./LICENSE
 
 
-
 VOLUME ["/wiki/data/content"]
 
 EXPOSE 3000
