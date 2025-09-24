@@ -75,12 +75,12 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
   if (versionId > 0) {
     if (!WIKI.auth.checkAccess(req.user, ['read:history'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'downloadVersion' })
+      return res.status(403).render('unauthorized', { action: 'downloadVersion' })
     }
   } else {
     if (!WIKI.auth.checkAccess(req.user, ['read:source'], pageArgs)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'download' })
+      return res.status(403).render('unauthorized', { action: 'download' })
     }
   }
 
@@ -142,7 +142,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     // -> EDIT MODE
     if (!(effectivePermissions.pages.write || effectivePermissions.pages.manage)) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'edit' })
+      return res.status(403).render('unauthorized', { action: 'edit' })
     }
 
     // -> Get page tags
@@ -166,7 +166,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
     // -> CREATE MODE
     if (!effectivePermissions.pages.write) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'create' })
+      return res.status(403).render('unauthorized', { action: 'create' })
     }
 
     _.set(res.locals, 'pageMeta.title', `New Page`)
@@ -206,7 +206,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
         }
         if (!WIKI.auth.checkAccess(req.user, ['read:history'], { path: pageVersion.path, locale: pageVersion.locale })) {
           _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-          return res.render('unauthorized', { action: 'sourceVersion' })
+          return res.status(403).render('unauthorized', { action: 'sourceVersion' })
         }
         page.content = Buffer.from(pageVersion.content).toString('base64')
         page.editorKey = pageVersion.editor
@@ -221,7 +221,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
         }
         if (!WIKI.auth.checkAccess(req.user, ['read:source'], { path: pageOriginal.path, locale: pageOriginal.locale })) {
           _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-          return res.render('unauthorized', { action: 'source' })
+          return res.status(403).render('unauthorized', { action: 'source' })
         }
         page.content = Buffer.from(pageOriginal.content).toString('base64')
         page.editorKey = pageOriginal.editorKey
@@ -304,7 +304,7 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
     tags: page.tags
   })) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-    return res.render('unauthorized', { action: 'view' })
+    return res.status(403).render('unauthorized', { action: 'view' })
   }
 
   if (WIKI.config.lang.namespacing) {
@@ -319,7 +319,7 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
  */
 router.get(['/p', '/p/*'], (req, res, next) => {
   if (!req.user || req.user.id < 1 || req.user.id === 2) {
-    return res.render('unauthorized', { action: 'view' })
+    return res.status(403).render('unauthorized', { action: 'view' })
   }
 
   _.set(res.locals, 'pageMeta.title', 'User Profile')
@@ -355,12 +355,12 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   if (versionId > 0) {
     if (!effectivePermissions.history.read) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'sourceVersion' })
+      return res.status(403).render('unauthorized', { action: 'sourceVersion' })
     }
   } else {
     if (!effectivePermissions.source.read) {
       _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-      return res.render('unauthorized', { action: 'source' })
+      return res.status(403).render('unauthorized', { action: 'source' })
     }
   }
 
