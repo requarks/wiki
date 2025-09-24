@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const { verifyJwt } = require('../../../helpers/jwt')
+
 /* global WIKI */
 
 // ------------------------------------
@@ -19,7 +20,7 @@ module.exports = {
         clientID: conf.clientId,
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
-        scope: conf.scope,
+        scope: 'profile email ' + conf.scope,
         passReqToCallback: true,
         skipUserProfile: conf.skipUserProfile,
         acrValues: conf.acrValues
