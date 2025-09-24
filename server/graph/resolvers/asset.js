@@ -41,6 +41,13 @@ module.exports = {
         const path = parentPath ? `${parentPath}/${r.slug}` : r.slug
         return WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })
       })
+    },
+    async folderByPath(obj, args, context) {
+      const path = args.path.toLowerCase()
+      if (!WIKI.auth.checkAccess(context.req.user, ['read:assets'], { path })) {
+        return null
+      }
+      return WIKI.models.assetFolders.getFolderByPath(path)
     }
   },
   AssetMutation: {
