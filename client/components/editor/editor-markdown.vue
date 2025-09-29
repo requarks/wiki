@@ -1102,13 +1102,6 @@ $editor-bg: mc('surface-dark', 'page-background');
       width: calc(100% + 17px);
       position: relative;
       top: -1rem;
-      // -ms-overflow-style: none;
-
-      // &::-webkit-scrollbar {
-      //   width: 0px;
-      //   background: transparent;
-      // }
-
       &.contents {
         padding-bottom: 1rem;
       }
