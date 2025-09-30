@@ -58,7 +58,6 @@
         depressed
         :aria-label='$t(`common:comments.postComment`)'
         )
-        v-icon(left) mdi-comment
         span.text-none {{$t('common:comments.postComment')}}
     v-divider.mt-3(v-if='permissions.write')
     .pa-5.d-flex.align-center.justify-center(v-if='isLoading && !hasLoadedOnce')
@@ -122,7 +121,6 @@
                   @click='updateComment'
                   depressed
                   )
-                  v-icon(left) mdi-comment
                   span.text-none {{$t('common:comments.updateComment')}}
     .pt-5.text-center.body-2.blue-grey--text(v-else-if='permissions.write') {{$t('common:comments.beFirst')}}
     .text-center.body-2.blue-grey--text(v-else) {{$t('common:comments.none')}}
