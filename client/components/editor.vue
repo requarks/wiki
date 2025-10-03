@@ -12,6 +12,14 @@
           dense
           full-width
         )
+        div(
+          v-if='isDirty'
+          class='d-inline-flex align-center px-4 py-2 rounded-lg animated fadeInDown'
+          style='background-color: #d32f2f; color: white; font-weight: 500; letter-spacing: 0.5px;'
+          )
+          v-icon(color='white', size='25', class='mr-2') mdi-alert
+          div
+          div.text-body-2 {{ locale !== `de` ? 'Not saved' : 'Nicht gespeichert' }}
       template(slot='actions')
         v-btn.mr-3.animated.fadeIn(color='amber', outlined, small, v-if='isConflict', @click='openConflict')
           .overline.amber--text.mr-3 Conflict
@@ -22,6 +30,7 @@
           @click.exact='save'
           @click.ctrl.exact='saveAndClose'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
+          :disabled="mode !== 'create' && !isDirty"
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
           span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
@@ -164,6 +173,7 @@ export default {
       dialogUnsaved: false,
       exitConfirmed: false,
       initContentParsed: '',
+      draftCache: null,
       savedState: {
         description: '',
         isPublished: false,
@@ -186,6 +196,7 @@ export default {
     currentStyling: get('page/scriptCss'),
     isDirty () {
       return _.some([
+        this.draftCache && Base64.encode(this.draftCache) !== this.initContent,
         this.initContentParsed !== this.$store.get('editor/content'),
         this.locale !== this.$store.get('page/locale'),
         this.path !== this.$store.get('page/path'),
@@ -210,7 +221,10 @@ export default {
     },
     currentStyling(newValue) {
       this.injectCustomCss(newValue)
-    }
+    },
+    '$store.state.editor.content': _.debounce(function (val) {
+      this.writeDraft(val)
+    }, 800)
   },
   created() {
     this.$store.set('page/id', this.pageId)
@@ -237,9 +251,7 @@ export default {
   },
   mounted() {
     this.$store.set('editor/mode', this.initMode || 'create')
-
-    this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : ''
-    this.$store.set('editor/content', this.initContentParsed)
+    this.parseContent()
     if (this.mode === 'create' && !this.initEditor) {
       _.delay(() => {
         this.dialogEditorSelector = true
@@ -264,21 +276,56 @@ export default {
     // this.currentEditor = `editorApi`
   },
   methods: {
-    openPropsModal(name) {
-      this.dialogProps = true
+    draftKey() {
+      return 'wiki-editor-draft-' + this.$store.get('page/path')
     },
-    showProgressDialog(textKey) {
-      this.dialogProgress = true
+    readDraft() {
+      try {
+        const raw = localStorage.getItem(this.draftKey())
+        if (!raw) return null
+        try {
+          const parsed = JSON.parse(raw)
+          return Base64.decode(parsed.v)
+        } catch {
+          return Base64.decode(raw) // legacy
+        }
+      } catch (e) {
+        console.warn('Draft read error', e)
+        return null
+      }
     },
-    hideProgressDialog() {
-      this.dialogProgress = false
+    writeDraft(content) {
+      try {
+        const payload = JSON.stringify({ v: Base64.encode(content), t: new Date().toISOString() })
+        localStorage.setItem(this.draftKey(), payload)
+        this.draftCache = content
+      } catch (e) {
+        console.warn('Draft write error', e)
+      }
     },
-    openConflict() {
-      this.$root.$emit('saveConflict')
+    removeDraft() {
+      try {
+        localStorage.removeItem(this.draftKey())
+      } catch (e) {
+        console.warn('Draft remove error', e)
+      }
+      this.draftCache = null
     },
-    async save({ rethrow = false, overwrite = false } = {}) {
-      this.showProgressDialog('saving')
+    parseContent() {
+      const draft = this.readDraft()
+      this.initContentParsed = (draft !== null && draft !== undefined) ? draft : (this.initContent ? Base64.decode(this.initContent) : '');
+      this.$store.set('editor/content', this.initContentParsed)
+      this.draftCache = draft
+    },
+    openPropsModal() { this.dialogProps = true },
+    showProgressDialog() { this.dialogProgress = true },
+    hideProgressDialog() { this.dialogProgress = false },
+    openConflict() { this.$root.$emit('saveConflict') },
+
+    async save({ rethrow = false } = {}) {
+      this.showProgressDialog()
       this.isSaving = true
+      this.removeDraft()
 
       const saveTimeoutHandle = setTimeout(() => {
         throw new Error('Save operation timed out.')
@@ -511,8 +558,10 @@ export default {
     async exit() {
       if (this.isDirty) {
         this.dialogUnsaved = true
+        this.removeDraft()
       } else {
         this.exitGo()
+        this.removeDraft()
       }
     },
     exitGo() {
@@ -585,9 +634,9 @@ export default {
     background-color: mc('grey', '900') !important;
     min-height: 100vh;
 
-    .application--wrap {
-      background-color: mc('grey', '900');
-    }
+  .application--wrap {
+    background-color: mc('grey', '900');
+  }
 
     &-title-input input {
       text-align: center;
