@@ -1324,6 +1324,7 @@
 
 }
 
+
 // ---------------------------------
 // COMMENTS
 // ---------------------------------
@@ -1457,25 +1458,42 @@
 }
 
 .comments-header {
-  background-color: #fff;
+  background-color: mc('neutral', '50');
   color: #000;
 
   @at-root .theme--dark & {
-    background-color: mc('sapphire', '900');
+    background-color: mc('neutral', '900');
     color: #fff;
   }
 }
 
 .v-icon.v-icon {
   color: black;
+
+  @at-root .theme--dark & {
+    color: #fff;
+  }
 }
 
 .comments-container {
   border: 1px solid mc('neutral', '300');
   border-radius: 7px;
   padding: 16px;
+  background-color: mc('neutral', '50');
 
   @at-root .theme--dark & {
     border-color: mc('neutral', '700');
+    background-color: mc('neutral', '900');
+  }
+}
+
+.v-text-field fieldset,
+.v-text-field .v-input__control {
+  color: inherit;
+
+  background-color: white;
+
+  @at-root .theme--dark & {
+    background-color: mc('neutral', '1000');
   }
 }

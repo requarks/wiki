@@ -49,8 +49,9 @@
       .caption.blue-grey--text {{$t('common:comments.markdownFormat')}}
       v-spacer
       .caption.mr-3(v-if='isAuthenticated')
-        i18next(tag='span', path='common:comments.postingAs')
-          strong(place='name') {{userDisplayName}}
+        strong
+          span {{ $t('common:comments.postingAs') || 'Posting As' }}
+        | {{userDisplayName}}
       v-btn(
         dark
         color='blue-grey darken-2'
