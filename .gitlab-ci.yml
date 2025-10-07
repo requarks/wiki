@@ -18,8 +18,6 @@ variables:
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
-  DEV2_IMAGE_TAG: 'latest-dev2'
-  DEV2_IMAGE: "${IMAGE}:${DEV2_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
 
@@ -55,7 +53,6 @@ stages:
   - build
   - test
   - sonarqube
-  - modify-package-json #Need to remove this stage when MAR-444 task is done.
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
   - promote-prod-release-version
@@ -67,12 +64,8 @@ environment-set:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
   environment:
     name: ${ENVIRONMENT}
-  # Run on main, develop, and feature branches
+  # Run only on the following branches
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "production"
-      when: always
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
-      when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
@@ -90,10 +83,8 @@ build:
     paths:
       - assets/
     expire_in: 1 hour
-  # Run on main, develop, and feature branches
+  # Run on develop and feature branches only
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
     - if: $CI_COMMIT_BRANCH == "develop"
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
@@ -116,10 +107,8 @@ test:
     paths:
       - coverage
       #- test-results
-  # Run on main, develop, and feature branches
+  # Run on develop and feature branches only
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: on_success
     - if: $CI_COMMIT_BRANCH == "develop"
       when: on_success
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
@@ -143,10 +132,8 @@ sonarqube-scan:
       - .sonar/cache
   script:
     - sonar-scanner
-  # Run on main, develop, and feature branches
+  # Run on develop and feature branches only
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
     - if: $CI_COMMIT_BRANCH == "develop"
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
@@ -160,19 +147,22 @@ docker-build:
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
     - bash scripts/build_images.sh
+    - |
+      if [ -f newimage.txt ]; then
+        echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
+      fi
   artifacts:
     paths:
       - newimage.txt
-    expire_in: 1 hour  # Expires 1 minute after the pipeline finishes
+    reports:
+      dotenv: build.env
+    expire_in: 15 days
   environment:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
   rules:
     # Only run for dev2 when merging to develop
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
-      when: always
-    # Only run for staging when merging develop to main
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
       when: always
     # Never run in production (prod handled by manual job)
     - if: $ENVIRONMENT == "production"
@@ -188,17 +178,18 @@ push-docker-image:
   rules:
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
-    - if: $CI_COMMIT_BRANCH == "main" || $ENVIRONMENT == "staging"
-      when: on_success
     - if: $ENVIRONMENT == "production"
       when: never
 
   # Deploy to staging after merging develop into main
 deploy-to-staging:
     stage: promote-prod-release-version
+    needs:
+      - docker-build
     script:
       - echo "Deploying dev2 branch image to staging..."
-      - export DEV2_IMAGE_TAG=dev2-MAR-1388
+      - echo "Using built image tag:${BUILT_IMAGE_TAG}"
+      - export DEV2_IMAGE_TAG="${BUILT_IMAGE_TAG}"
       - bash scripts/promote_to_staging.sh
     rules:
       - if: $CI_COMMIT_BRANCH == "main"
