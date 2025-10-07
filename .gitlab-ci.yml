@@ -25,6 +25,10 @@ variables:
     value: ""
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
+  DEV2_IMAGE_TAG_OVERRIDE:
+    value: ""
+    description: "Specify the dev2 image tag to promote to staging (e.g., dev2-caefcfeb). Required when merging to main."
+
   SONARQUBE:
     value: "true"
     options:
@@ -183,20 +187,19 @@ deploy-to-staging:
         optional: true
     script:
       - echo "Deploying dev2 branch image to staging..."
-      - echo "Debug - BUILT_IMAGE_TAG value:" "${BUILT_IMAGE_TAG}"
       - |
-        if [ -z "${BUILT_IMAGE_TAG}" ]; then
-          echo "BUILT_IMAGE_TAG is empty, trying to get from newimage.txt"
-          if [ -f newimage.txt ]; then
-            export DEV2_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')
-            echo "Found DEV2_IMAGE_TAG from newimage.txt: ${DEV2_IMAGE_TAG}"
-          else
-            echo "ERROR: No BUILT_IMAGE_TAG and no newimage.txt file found"
-            exit 1
-          fi
-        else
+        if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
+          export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
+          echo "Using manual override: ${DEV2_IMAGE_TAG}"
+        elif [ -n "${BUILT_IMAGE_TAG}" ]; then
           export DEV2_IMAGE_TAG="${BUILT_IMAGE_TAG}"
-          echo "Using BUILT_IMAGE_TAG: ${DEV2_IMAGE_TAG}"
+          echo "Using automatic BUILT_IMAGE_TAG: ${DEV2_IMAGE_TAG}"
+        elif [ -f newimage.txt ]; then
+          export DEV2_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')
+          echo "Found DEV2_IMAGE_TAG from newimage.txt: ${DEV2_IMAGE_TAG}"
+        else
+          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-caefcfeb)"
+          exit 1
         fi
       - bash scripts/promote_to_staging.sh
     rules:
