@@ -83,10 +83,8 @@ build:
     paths:
       - assets/
     expire_in: 1 hour
-  # Run on develop and feature branches only
+  # Run on feature branches only (develop already validated via MR)
   rules:
-    - if: $CI_COMMIT_BRANCH == "develop"
-      when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
@@ -107,10 +105,8 @@ test:
     paths:
       - coverage
       #- test-results
-  # Run on develop and feature branches only
+  # Run on feature branches only (develop already validated via MR)
   rules:
-    - if: $CI_COMMIT_BRANCH == "develop"
-      when: on_success
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: on_success
 
@@ -132,10 +128,8 @@ sonarqube-scan:
       - .sonar/cache
   script:
     - sonar-scanner
-  # Run on develop and feature branches only
+  # Run on feature branches only (develop already validated via MR)
   rules:
-    - if: $CI_COMMIT_BRANCH == "develop"
-      when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
       when: always
 
