@@ -179,7 +179,8 @@ push-docker-image:
 deploy-to-staging:
     stage: promote-prod-release-version
     needs:
-      - docker-build
+      - job: docker-build
+        optional: true
     script:
       - echo "Deploying dev2 branch image to staging..."
       - echo "Using built image tag:${BUILT_IMAGE_TAG}"
