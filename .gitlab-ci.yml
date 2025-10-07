@@ -24,7 +24,7 @@ variables:
 
 
   IMAGE_TAG:
-    value: "task/MAR-1388-nodejs-2"
+    value: "MAR-1388" #nodejs upgrade task 2
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
   SONARQUBE:
