@@ -20,6 +20,7 @@ variables:
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
 
+  # test argo with no custom image tag set
 
   IMAGE_TAG:
     value: ""
