@@ -45,7 +45,7 @@ variables:
 
   VERSION:
      value: ""
-     description: "Update to next release version, it should be numeric value, ex: 1.3.0"
+     description: "Update to next release version, it should be numeric value, ex: 1.7.5"
 
 default:
   tags:
