@@ -68,9 +68,9 @@ environment-set:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
   environment:
     name: ${ENVIRONMENT}
-  # Run only on the following branches
+  # Run only on the following branches when there are commits (not just branch creation)
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
 
 build:
@@ -87,9 +87,9 @@ build:
     paths:
       - assets/
     expire_in: 1 hour
-  # Run on feature branches only (develop already validated via MR)
+  # Run on feature branches only when there are commits (develop already validated via MR)
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
 
 test:
@@ -109,9 +109,9 @@ test:
     paths:
       - coverage
       #- test-results
-  # Run on feature branches only (develop already validated via MR)
+  # Run on feature branches only when there are commits (develop already validated via MR)
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
 
 sonarqube-scan:
@@ -132,9 +132,9 @@ sonarqube-scan:
       - .sonar/cache
   script:
     - sonar-scanner
-  # Run on feature branches only (develop already validated via MR)
+  # Run on feature branches only when there are commits
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\//'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
 
 docker-build:
@@ -190,15 +190,9 @@ deploy-to-staging:
       - |
         if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
           export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
-          echo "Using manual override: ${DEV2_IMAGE_TAG}"
-        elif [ -n "${BUILT_IMAGE_TAG}" ]; then
-          export DEV2_IMAGE_TAG="${BUILT_IMAGE_TAG}"
-          echo "Using automatic BUILT_IMAGE_TAG: ${DEV2_IMAGE_TAG}"
-        elif [ -f newimage.txt ]; then
-          export DEV2_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')
-          echo "Found DEV2_IMAGE_TAG from newimage.txt: ${DEV2_IMAGE_TAG}"
+          echo "Using dev2 image: ${DEV2_IMAGE_TAG}"
         else
-          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-caefcfeb)"
+          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-6c24c269)"
           exit 1
         fi
       - bash scripts/promote_to_staging.sh
