@@ -1,0 +1,20 @@
+key: vectra
+title: Vectra Vector Search
+description: Local vector search with embeddings using Vectra database and embeddings.js
+author: vectra-integration
+logo: https://example.com/logo.svg
+website: https://github.com/Stevenic/vectra
+isAvailable: true
+props:
+  indexPath:
+    type: String
+    title: Index Path
+    hint: Folder where Vectra index files will be stored
+    default: './vectra-index'
+    order: 1
+  model:
+    type: String
+    title: Embedding Model
+    hint: Hugging Face model for local embeddings
+    default: 'Xenova/all-MiniLM-L6-v2'
+    order: 2
