@@ -45,8 +45,8 @@
           :aria-label='$t(`common:comments.fieldEmail`)'
         )
     .d-flex.align-center.pt-3(v-if='permissions.write')
-      v-icon.mr-1(color='blue-grey') mdi-language-markdown-outline
-      .caption.blue-grey--text {{$t('common:comments.markdownFormat')}}
+      v-icon.mr-1(color='grey-lighten-1') mdi-language-markdown-outline
+      .caption.grey-lighten--text {{$t('common:comments.markdownFormat')}}
       v-spacer
       .caption.mr-3(v-if='isAuthenticated')
         strong
@@ -74,14 +74,14 @@
       v-else-if='comments && comments.length > 0'
       )
       v-timeline-item.comments-post(
-        color='pink darken-4'
+        color='indigo-darken'
         large
         v-for='cm of comments'
         :key='`comment-` + cm.id'
         :id='`comment-post-id-` + cm.id'
         )
         template(v-slot:icon)
-          v-avatar(color='blue-grey')
+          v-avatar(color='red-darken')
             //- v-img(src='http://i.pravatar.cc/64')
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
