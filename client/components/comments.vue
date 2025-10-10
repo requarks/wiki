@@ -89,7 +89,7 @@
             .comments-post-actions(v-if='canManageComment(cm) && !isBusy && commentEditId === 0')
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
-            .comments-post-name.caption.grey-darken--text: strong {{cm.authorName}}
+            .comments-post-name.caption.author-name: strong {{cm.authorName}}
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
@@ -612,6 +612,13 @@ export default {
 .mention {
     background-color: rgba(153, 0, 48, .1);
     color: #990030;
+}
+.author-name {
+  color: mc('neutral', '800');    
+  
+  @at-root .theme--dark & {
+    color: mc('neutral', '100');
+  }
 }
 .v-btn.rounded-button {
   border-radius: 20px;
