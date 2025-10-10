@@ -48,11 +48,11 @@
       v-icon.mr-1(color='grey lighten-1') mdi-language-markdown-outline
       .caption.grey-lighten--text {{$t('common:comments.markdownFormat')}}
       v-spacer
-      .caption.mr-3(v-if='isAuthenticated')
+      .caption.mr-3.grey--text(v-if='isAuthenticated')
         strong
           span {{ $t('common:comments.postingAs') || 'Posting As' }}
         | {{userDisplayName}}
-      v-btn(
+      v-btn.rounded-button(
         dark
         color='indigo darken-2'
         @click='postComment'
@@ -81,7 +81,7 @@
         :id='`comment-post-id-` + cm.id'
         )
         template(v-slot:icon)
-          v-avatar(color='indigo darken-3')
+          v-avatar(color='indigo darken-2')
             //- v-img(src='http://i.pravatar.cc/64')
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
@@ -89,7 +89,7 @@
             .comments-post-actions(v-if='canManageComment(cm) && !isBusy && commentEditId === 0')
               v-icon.mr-3(small, @click='editComment(cm)') mdi-pencil
               v-icon(small, @click='deleteCommentConfirm(cm)') mdi-delete
-            .comments-post-name.caption: strong {{cm.authorName}}
+            .comments-post-name.caption.grey-darken--text: strong {{cm.authorName}}
             .comments-post-date.overline.grey--text {{cm.createdAt | moment('from') }} #[em(v-if='cm.createdAt !== cm.updatedAt') - {{$t('common:comments.modified', { reldate: $options.filters.moment(cm.updatedAt, 'from') })}}]
             .comments-post-content.mt-3(v-if='commentEditId !== cm.id', v-html='cm.render')
             .comments-post-editcontent.mt-3(v-else)
@@ -613,7 +613,9 @@ export default {
     background-color: rgba(153, 0, 48, .1);
     color: #990030;
 }
-
+.v-btn.rounded-button {
+  border-radius: 20px;
+}
 .comments-post {
   position: relative;
 
