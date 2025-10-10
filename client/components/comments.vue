@@ -54,7 +54,7 @@
         | {{userDisplayName}}
       v-btn.rounded-button(
         dark
-        color='indigo darken-2'
+        :color='$vuetify.theme.dark ? `indigo darken-4` : `indigo darken-2`'
         @click='postComment'
         depressed
         :aria-label='$t(`common:comments.postComment`)'
@@ -81,7 +81,7 @@
         :id='`comment-post-id-` + cm.id'
         )
         template(v-slot:icon)
-          v-avatar(color='indigo darken-2')
+          v-avatar(:color='$vuetify.theme.dark ? `indigo darken-4` : `indigo darken-2`')
             //- v-img(src='http://i.pravatar.cc/64')
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
