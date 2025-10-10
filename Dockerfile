@@ -44,7 +44,7 @@ ARG RELEASE_DATE
 ENV VERSION=$VERSION
 ENV RELEASE_DATE=$RELEASE_DATE
 
-ADD keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
+COPY keycloak-host-full-chain-cert.pem /usr/local/share/ca-certificates/keycloak-host-full-chain-cert.pem
 
 USER root
 
@@ -60,13 +60,14 @@ USER node
 
 WORKDIR /wiki
 
-COPY --chown=node:node --from=assets /wiki/assets ./assets
-COPY --chown=node:node --from=assets /wiki/node_modules ./node_modules
-COPY --chown=node:node ./server ./server
-COPY --chown=node:node --from=assets /wiki/server/views ./server/views
-COPY --chown=node:node ./dev/build/config.yml ./config.yml
-COPY --chown=node:node ./package.json ./package.json
-COPY --chown=node:node ./LICENSE ./LICENSE
+# Add explicit --chmod flags to restrict write access
+COPY --chown=node:node --chmod=555 --from=assets /wiki/assets ./assets
+COPY --chown=node:node --chmod=555 --from=assets /wiki/node_modules ./node_modules  
+COPY --chown=node:node --chmod=544 ./server ./server
+COPY --chown=node:node --chmod=555 --from=assets /wiki/server/views ./server/views
+COPY --chown=node:node --chmod=444 ./dev/build/config.yml ./config.yml
+COPY --chown=node:node --chmod=444 ./package.json ./package.json
+COPY --chown=node:node --chmod=444 ./LICENSE ./LICENSE
 
 
 VOLUME ["/wiki/data/content"]
