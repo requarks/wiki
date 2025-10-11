@@ -45,6 +45,21 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
+        include: /node_modules\/mermaid/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env']
+          }
+        }
+      },
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
+      },
+      {
+        test: /\.js$/,
         exclude: (modulePath) => {
           return (
             modulePath.includes('node_modules') &&

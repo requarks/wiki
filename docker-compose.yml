@@ -35,7 +35,7 @@ services:
       PANDOC_URL: http://pandoc:80
       VERSION: 1.4.1-pre.0
       RELEASE_DATE: 20.05.2025
-      DEV_MODE: false
+      DEV_MODE: "false"
     depends_on:
       - db
       - pandoc
