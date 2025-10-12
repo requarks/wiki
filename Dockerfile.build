@@ -28,11 +28,15 @@ COPY --chown=node:node ./yarn.lock ./yarn.lock
 # Prepare writable Yarn cache folder
 #RUN mkdir -p /home/node/.cache/yarn && chown -R node:node /home/node/.cache
 
+
+# Create writable Yarn cache folder and set ENV
+RUN mkdir -p /wiki/.yarn-cache && chmod 777 /wiki/.yarn-cache
+ENV YARN_CACHE_FOLDER=/wiki/.yarn-cache
 # Remove write permissions from copied resources for security
 RUN chmod -R a-w ./client ./dev ./patches \
-  && yarn cache clean --cache-folder /home/node/.cache/yarn \
-  && yarn install --frozen-lockfile --non-interactive --ignore-scripts --cache-folder /home/node/.cache/yarn \
+  && yarn cache clean --cache-folder "$YARN_CACHE_FOLDER" \
+  && yarn install --frozen-lockfile --non-interactive --ignore-scripts --cache-folder "$YARN_CACHE_FOLDER" \
   && yarn build \
   && rm -rf /wiki/node_modules \
-  && yarn --production --frozen-lockfile --non-interactive --ignore-scripts --cache-folder /home/node/.cache/yarn \
+  && yarn --production --frozen-lockfile --non-interactive --ignore-scripts --cache-folder "$YARN_CACHE_FOLDER" \
   && yarn patch-package
