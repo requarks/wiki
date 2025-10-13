@@ -97,10 +97,35 @@ module.exports = class Asset extends Model {
 
     const site = await getSite(opts.siteId)
     if (!site.path) throw new Error(`Could not find site with ID: ${opts.siteId}`)
-    WIKI.logger.debug(`Storing asset: ${site.path}/${opts.assetPath}`)
 
-    const fileInfo = path.parse(opts.originalname)
-    const fileHash = assetHelper.generateHash(`${site.path}/${opts.assetPath}`)
+    // Replace all spaces in assetPath and originalname with underscores (fix: use regex global replace)
+    let assetPathSanitized
+    if (Array.isArray(opts.assetPath)) {
+      let sanitizedAssetPathArray = []
+      for (const p of opts.assetPath) {
+        if (typeof p === 'string') {
+          sanitizedAssetPathArray.push(p.replace(/ /g, '_'))
+        } else {
+          sanitizedAssetPathArray.push(p)
+        }
+      }
+      assetPathSanitized = sanitizedAssetPathArray.join('/')
+    } else if (typeof opts.assetPath === 'string') {
+      assetPathSanitized = opts.assetPath.replace(/ /g, '_')
+    } else {
+      assetPathSanitized = opts.assetPath
+    }
+    let originalNameSanitized
+    if (typeof opts.originalname === 'string') {
+      originalNameSanitized = opts.originalname.replace(/ /g, '_')
+    } else {
+      originalNameSanitized = opts.originalname
+    }
+
+    WIKI.logger.debug(`Storing asset: ${site.path}/${assetPathSanitized}`)
+
+    const fileInfo = path.parse(originalNameSanitized)
+    const fileHash = assetHelper.generateHash(`${site.path}/${assetPathSanitized}`)
 
     // Check for existing asset
     let asset = await WIKI.models.assets.query().where({
@@ -111,7 +136,7 @@ module.exports = class Asset extends Model {
 
     // Build Object
     let assetRow = {
-      filename: opts.originalname,
+      filename: originalNameSanitized,
       hash: fileHash,
       ext: fileInfo.ext,
       kind: _.startsWith(opts.mimetype, 'image/') ? 'image' : 'binary',
@@ -189,8 +214,10 @@ module.exports = class Asset extends Model {
 
   static async getAsset(sitePath, assetPath, res, returnBase64Asset = false) {
     try {
-      WIKI.logger.debug(`Retrieving asset: ${sitePath}/${assetPath}`)
-      const combinedPath = `${sitePath}/${assetPath}`
+      // Normalize assetPath: replace all spaces with underscores (fix: use regex global replace)
+      const normalizedAssetPath = assetPath.replace(/ /g, '_')
+      WIKI.logger.debug(`Retrieving asset: ${sitePath}/${normalizedAssetPath}`)
+      const combinedPath = `${sitePath}/${normalizedAssetPath}`
       const fileInfo = assetHelper.getPathInfo(combinedPath)
       const fileHash = assetHelper.generateHash(combinedPath)
 

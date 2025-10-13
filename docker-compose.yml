@@ -1,53 +1,52 @@
-# -- DEV DOCKER-COMPOSE --
-# -- DO NOT USE IN PRODUCTION! --
+# -- DEV DOCKER-COMPOSE to install POSTGRESQL --
+# -- for local development only --
 
-version: "3"
 services:
   db:
-    # container_name: capwiki-db
+    container_name: capwiki-local-db
     image: postgres:15-alpine
     environment:
       POSTGRES_DB: wiki
       POSTGRES_PASSWORD: wikijsrocks
       POSTGRES_USER: wikijs
-    logging:
-      driver: "none"
+    ports:
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-
-  wiki:
-    # container_name: capwiki-app
-    build:
-      context: ./
-      dockerfile: ./Dockerfile
-    environment:
-      DB_TYPE: postgres
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: wiki
-      DB_PASS: wikijsrocks
-      DB_USER: wikijs
-      POOL_MIN: 100
-      POOL_MAX: 1000
-      POOL_ACQUIRE_TIMEOUT: 10000
-      POOL_CREATE_TIMEOUT: 10000
-      POOL_IDLE_TIMEOUT: 10000
-      PANDOC_URL: http://pandoc:80
-      VERSION: 1.4.1-pre.0
-      RELEASE_DATE: 20.05.2025
-      DEV_MODE: false
-    depends_on:
-      - db
-      - pandoc
+      
+  drawio:
+    container_name: capwiki-local-drawio  
+    image: jgraph/drawio:12.4.8
     ports:
-      - "3002:3000"
-
-  pandoc:
-    # container_name: capwiki-pandoc
-    platform: linux/amd64
-    build:
-      context: ./dev/pandoc
-      # dockerfile: ./dev/pandoc/Dockerfile
+      - "8097:8080"
+      - "8443:8443"
+    networks:
+      - app_network
+      
+  maildev:
+    image: maildev/maildev
+    restart: always
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP server
+    environment:
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    volumes:
+      - maildev_data:/data
+      
+      
+#  pandoc:
+#    container_name: capwiki-local-pandoc
+#    image: pandoc:latest
+#    ports:
+#      - "80:80"
 
 volumes:
   db-data:
+
+  maildev_data:  
+
+networks:
+  app_network:
+    driver: bridge

@@ -50,6 +50,22 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
+      },
+      {
+        test: /\.js$/,
+        include: /node_modules\/mermaid/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            ...babelConfig,
+            cacheDirectory: babelDir
+          }
+        }
+      },
+      {
         test: /\.js$/,
         exclude: (modulePath) => {
           return (

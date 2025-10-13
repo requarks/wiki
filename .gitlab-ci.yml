@@ -49,8 +49,9 @@ variables:
 
 default:
   tags:
-    - runner_mar_backup
+    - runner_mar
   before_script:
+     #- apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
   - environment-set
@@ -72,6 +73,8 @@ environment-set:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+      when: always
 
 build:
   stage: build
@@ -87,10 +90,13 @@ build:
     paths:
       - assets/
     expire_in: 1 hour
-  # Run on feature branches only when there are commits (develop already validated via MR)
   rules:
+    # Run for feature branches on push OR if ENVIRONMENT is dev1 (manual trigger)
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+      when: always
+
 
 test:
   stage: test
@@ -108,10 +114,10 @@ test:
     when: on_success
     paths:
       - coverage
-      #- test-results
-  # Run on feature branches only when there are commits (develop already validated via MR)
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
 
 sonarqube-scan:
@@ -136,11 +142,13 @@ sonarqube-scan:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+      when: on_success
 
 docker-build:
   stage: docker-build
   before_script:
-    - df -h # Check disk space before building
+    - df -h
     - export PANDOC="$PANDOC"
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
   script:
@@ -159,10 +167,10 @@ docker-build:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
   rules:
-    # Only run for dev2 when merging to develop
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+      when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-    # Never run in production (prod handled by manual job)
     - if: $ENVIRONMENT == "production"
       when: never
 
@@ -174,6 +182,8 @@ push-docker-image:
    - export PANDOC="$PANDOC"
    - bash scripts/push_images.sh
   rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+      when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
     - if: $ENVIRONMENT == "production"

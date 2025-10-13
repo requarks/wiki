@@ -638,13 +638,22 @@ export default {
       })
     },
     renderMermaidDiagrams () {
-      document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
-        mermaidId++
-        const mermaidDef = elm.innerText
-        const mmElm = document.createElement('div')
-        mmElm.innerHTML = `<div id="mermaid-id-
-        ${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
+      // Mermaid v10: initialize and run
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: this.$vuetify.theme.dark ? 'dark' : 'default'
       })
+      document.addEventListener('DOMContentLoaded', () => {
+        mermaid.run();
+      })
+      // Optionally, if you need to render specific diagrams manually:
+      // document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
+      //   mermaidId++
+      //   const mermaidDef = elm.innerText
+      //   const mmElm = document.createElement('div')
+      //   mmElm.innerHTML = `<div class="mermaid">${mermaidDef}</div>`
+      //   elm.parentNode.replaceWith(mmElm)
+      // })
     },
     autocomplete (cm, change) {
       if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
