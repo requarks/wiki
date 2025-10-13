@@ -49,7 +49,7 @@ variables:
 
 default:
   tags:
-    - runner_mar_backup
+    - ubuntu-docker
   before_script:
      - source scripts/setup_yarn.sh
 stages:
