@@ -49,7 +49,7 @@ variables:
 
 default:
   tags:
-    - runner_mar
+    - runner_mar_backup
   before_script:
      - source scripts/setup_yarn.sh
 stages:
