@@ -51,6 +51,7 @@ default:
   tags:
     - runner_mar
   before_script:
+     #- apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
   - environment-set

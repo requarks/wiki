@@ -16,11 +16,12 @@ describe('dateHelpers', () => {
   })
 
   it('inactivityThresholdDate should return a date N days in the past', () => {
-    const now = Date.now()
-    const thresholdDate = inactivityThresholdDate()
-    const diff = now - thresholdDate.getTime()
-    expect(diff).toBeGreaterThanOrEqual(1000 * 60 * 60 * 24 * INACTIVITY_DAYS_THRESHOLD)
-    expect(diff).toBeLessThan(1000 * 60 * 60 * 24 * INACTIVITY_DAYS_THRESHOLD + 1000 * 10)
+  const now = Date.now()
+  const thresholdDate = inactivityThresholdDate()
+  const diff = now - thresholdDate.getTime()
+  // Allow 1ms tolerance for timing precision
+  expect(diff).toBeGreaterThanOrEqual(1000 * 60 * 60 * 24 * INACTIVITY_DAYS_THRESHOLD - 1)
+  expect(diff).toBeLessThan(1000 * 60 * 60 * 24 * INACTIVITY_DAYS_THRESHOLD + 1000 * 10)
   })
 
   it('inactivityThresholdISOString should return a valid ISO string for N days ago', () => {

@@ -841,10 +841,13 @@ export default {
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
 
-    // -> Render Mermaid diagrams
-    mermaid.mermaidAPI.initialize({
+    // -> Render Mermaid diagrams (Mermaid v10)
+    mermaid.initialize({
       startOnLoad: true,
-      theme: this.$vuetify.theme.dark ? `dark` : `default`
+      theme: this.$vuetify.theme.dark ? 'dark' : 'default'
+    })
+    document.addEventListener('DOMContentLoaded', () => {
+      mermaid.run();
     })
 
     // -> Handle anchor scrolling
