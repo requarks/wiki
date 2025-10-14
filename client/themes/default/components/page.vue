@@ -407,7 +407,7 @@
               slot(name='contents')
             .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
               .comments-header
-                v-icon.mr-2(dark) mdi-comment-text-outline
+                v-icon.mr-2(dark, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite :colors.surfaceLight.inverse') mdi-comment-text-outline
                 span {{$t('common:comments.title')}}
               .comments-main
                 slot(name='comments')
