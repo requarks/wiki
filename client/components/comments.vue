@@ -110,15 +110,15 @@
                 v-spacer
                 v-btn.mr-3(
                   dark
-                  :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
+                  :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
                   @click='editCommentCancel'
                   outlined
                   )
-                  v-icon(left) mdi-close
+                  v-icon(left, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite :colors.surfaceLight.inverse') mdi-close
                   span.text-none {{$t('common:actions.cancel')}}
                 v-btn(
                   dark
-                  color='blue-grey darken-2'
+                  :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
                   @click='updateComment'
                   depressed
                   )
