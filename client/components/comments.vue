@@ -54,7 +54,7 @@
         | {{userDisplayName}}
       v-btn.rounded-button(
         dark
-        :color='$vuetify.theme.dark ? `indigo darken-4` : `indigo darken-2`'
+        :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
         @click='postComment'
         depressed
         :aria-label='$t(`common:comments.postComment`)'
@@ -81,7 +81,7 @@
         :id='`comment-post-id-` + cm.id'
         )
         template(v-slot:icon)
-          v-avatar(:color='$vuetify.theme.dark ? `indigo darken-4` : `indigo darken-2`')
+          v-avatar(:color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy')
             //- v-img(src='http://i.pravatar.cc/64')
             span.white--text.title {{cm.initials}}
         v-card.elevation-1
@@ -110,7 +110,7 @@
                 v-spacer
                 v-btn.mr-3(
                   dark
-                  color='blue-grey darken-2'
+                  :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
                   @click='editCommentCancel'
                   outlined
                   )
@@ -145,6 +145,7 @@ import validate from 'validate.js'
 import _ from 'lodash'
 import { Mentionable } from 'vue-mention'
 import 'floating-vue/dist/style.css'
+import colors from '@/themes/default/js/color-scheme'
 import autoCompleteEmailsQuery from '../graph/editor/users-query-auto-complete.gql'
 
 export default {
@@ -153,6 +154,7 @@ export default {
   },
   data() {
     return {
+      colors,
       newcomment: '',
       isLoading: true,
       hasLoadedOnce: false,
