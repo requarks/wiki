@@ -155,3 +155,65 @@ export default {
 }
 
 </style>
+<style lang='scss'>
+// Styles moved from main page component for unfollow/follow button hover behavior
+.v-btn.hover-btn {
+  &:hover {
+    background-color: mc('action-dark', 'highlight-on-lite') !important;
+  }
+}
+
+.v-btn.border-btn {
+  border: 1px solid mc('border-light', 'primary') !important;
+  box-shadow: none !important;
+
+  &.hover-btn:hover {
+    background-color: mc('teal', '800') !important;
+    border: 1px solid mc('teal', '800') !important;
+
+    .v-icon {
+      color: mc('surface-light', 'white') !important;
+    }
+
+    &.delete-btn {
+      background-color: mc('warning-action-light', 'secondary-default') !important;
+      border: 1px solid mc('warning-action-light', 'secondary-default') !important;
+
+      .v-icon {
+        color: mc('action-light', 'content-white') !important;
+      }
+    }
+
+    &.dark {
+      background-color: mc('teal', '500') !important;
+      border: 1px solid mc('teal', '500') !important;
+
+      .v-icon {
+        color: mc('action-dark', 'content-on-lite') !important;
+      }
+
+      &.delete-btn {
+        background-color: mc('warning-action-dark', 'secondary-default') !important;
+        border: 1px solid mc('warning-action-dark', 'secondary-default') !important;
+
+        .v-icon {
+          color: mc('action-dark', 'content-on-lite') !important;
+        }
+      }
+    }
+  }
+
+  &.theme--dark {
+    border: 1px solid mc('border-dark', 'primary') !important;
+
+    &.hover-btn:hover {
+      background-color: mc('action-dark', 'highlight-on-lite') !important;
+      border: 1px solid mc('action-dark', 'highlight-on-lite') !important;
+
+      .v-icon {
+        color: mc('action-dark', 'content-on-lite') !important;
+      }
+    }
+  }
+}
+</style>
