@@ -1497,3 +1497,15 @@
     background-color: mc('neutral', '1000');
   }
 }
+
+.v-timeline-item.comments-post,
+.v-timeline-item__body,
+.elevation-1.v-card.v-sheet {
+  box-shadow: none !important;
+}
+
+.v-timeline-item__body>.v-card:not(.v-card--flat):before,
+.v-timeline-item__body>.v-card:not(.v-card--flat):after {
+  border: none !important;
+  content: none !important;
+}
