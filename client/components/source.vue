@@ -123,7 +123,8 @@ export default {
     &> code {
       box-shadow: none;
       background-color: mc('surface-light', 'white');
-      color: mc('text-light', 'primary');
+      
+  color: #343840; 
       font-family: 'Ubuntu Mono', sans-serif;
       font-weight: 400;
       font-size: 1rem;
