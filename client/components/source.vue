@@ -15,13 +15,11 @@
           .caption.blue--text.text--lighten-3.ml-4(v-if='versionId > 0') {{$t('common:page.versionId', { id: versionId })}}
           v-btn.ml-4(v-if='versionId > 0', depressed, color='blue darken-1', @click='goHistory')
             v-icon mdi-history
-          v-btn#return-btn.ml-4(
-            depressed
+          v-btn#return-btn.ml-4.hover-btn.text-primary.text-none(
             rounded
-            :class='$vuetify.theme.dark ? `theme--dark` : ``'
+            :color='colors.actionLight.highlightOnLite'
             @click='goLive'
-            )
-            span {{$t('common:page.returnNormalView')}}
+            ) {{$t('common:page.returnNormalView')}}
       v-card(
         tile
         :color='$vuetify.theme.dark ? colors.borderDark.secondary : colors.borderLight.secondary'
@@ -102,34 +100,22 @@ export default {
 </script>
 
 <style lang='scss' scoped>
-#return-btn {
-  background-color: mc('action-light', 'active') !important;
-  &> ::v-deep span {
-    color: mc('text-dark', 'primary')
-  }
-  &:hover {
-    background-color: mc('action-light', 'primary-hover-on-heavy') !important;
-    &> ::v-deep span {
-      color: mc('text-light', 'brand-primary')
-    }
-  }
 
-  &.theme--dark {
-    background-color: mc('action-dark', 'active') !important;
-    &> ::v-deep span {
-      color: mc('text-light', 'brand-primary')
-    }
-    &:hover {
-      background-color: mc('action-dark', 'primary-hover-on-heavy') !important;
-    }
-  }
+#return-btn,
+#return-btn .v-btn__content,
+#return-btn .v-btn__content > span {
+  color: mc('text-light', 'primary') !important; 
+}
+
+#return-btn.white--text,
+#return-btn .white--text {
+  color: mc('text-light', 'primary') !important;
+
 }
 </style>
 
 <style lang='scss'>
-
 .source {
-
   pre {
     overflow: auto;
     height: calc(100vh - 278px);
@@ -149,69 +135,6 @@ export default {
 
       &::before {
         display: none;
-      }
-    }
-  }
-}
-
-</style>
-<style lang='scss'>
-// Styles moved from main page component for unfollow/follow button hover behavior
-.v-btn.hover-btn {
-  &:hover {
-    background-color: mc('action-dark', 'highlight-on-lite') !important;
-  }
-}
-
-.v-btn.border-btn {
-  border: 1px solid mc('border-light', 'primary') !important;
-  box-shadow: none !important;
-
-  &.hover-btn:hover {
-    background-color: mc('teal', '800') !important;
-    border: 1px solid mc('teal', '800') !important;
-
-    .v-icon {
-      color: mc('surface-light', 'white') !important;
-    }
-
-    &.delete-btn {
-      background-color: mc('warning-action-light', 'secondary-default') !important;
-      border: 1px solid mc('warning-action-light', 'secondary-default') !important;
-
-      .v-icon {
-        color: mc('action-light', 'content-white') !important;
-      }
-    }
-
-    &.dark {
-      background-color: mc('teal', '500') !important;
-      border: 1px solid mc('teal', '500') !important;
-
-      .v-icon {
-        color: mc('action-dark', 'content-on-lite') !important;
-      }
-
-      &.delete-btn {
-        background-color: mc('warning-action-dark', 'secondary-default') !important;
-        border: 1px solid mc('warning-action-dark', 'secondary-default') !important;
-
-        .v-icon {
-          color: mc('action-dark', 'content-on-lite') !important;
-        }
-      }
-    }
-  }
-
-  &.theme--dark {
-    border: 1px solid mc('border-dark', 'primary') !important;
-
-    &.hover-btn:hover {
-      background-color: mc('action-dark', 'highlight-on-lite') !important;
-      border: 1px solid mc('action-dark', 'highlight-on-lite') !important;
-
-      .v-icon {
-        color: mc('action-dark', 'content-on-lite') !important;
       }
     }
   }
