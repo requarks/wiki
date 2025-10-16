@@ -1,6 +1,6 @@
 <template lang="pug">
   div(v-intersect.once='onIntersect')
-    mentionable.discussion-textarea(:keys="mentionableKeys", :items="users", @open="loadUsers($event)" , @apply="handleApply")
+    mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)" , @apply="handleApply")
       v-textarea#discussion-new(
         ref="newCommentTextarea"
         outlined
