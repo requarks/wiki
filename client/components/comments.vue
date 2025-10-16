@@ -1,6 +1,6 @@
 <template lang="pug">
   div(v-intersect.once='onIntersect')
-    mentionable(:keys="mentionableKeys", :items="users", @open="loadUsers($event)" , @apply="handleApply")
+    mentionable.discussion-textarea(:keys="mentionableKeys", :items="users", @open="loadUsers($event)" , @apply="handleApply")
       v-textarea#discussion-new(
         ref="newCommentTextarea"
         outlined
@@ -616,8 +616,8 @@ export default {
     color: #990030;
 }
 .author-name {
-  color: mc('neutral', '800');    
-  
+  color: mc('neutral', '800');
+
   @at-root .theme--dark & {
     color: mc('neutral', '100');
   }

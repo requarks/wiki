@@ -1490,11 +1490,16 @@
 .v-text-field fieldset,
 .v-text-field .v-input__control {
   color: inherit;
-
   background-color: white;
+}
 
-  @at-root .theme--dark & {
-    background-color: mc('neutral', '1000');
+.mentionable.discussion-textarea {
+
+  v-text-field fieldset,
+  .v-text-field .v-input__control {
+    @at-root .theme--dark & {
+      background-color: mc('neutral', '1000');
+    }
   }
 }
 
