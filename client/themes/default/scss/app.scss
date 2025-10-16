@@ -1493,14 +1493,10 @@
   background-color: white;
 }
 
-.mentionable.discussion-textarea {
-
-  v-text-field fieldset,
-  .v-text-field .v-input__control {
-    @at-root .theme--dark & {
-      background-color: mc('neutral', '1000');
-    }
-  }
+.theme--dark .mentionable.discussion-textarea .v-input__slot,
+.theme--dark .mentionable.discussion-textarea textarea {
+  background-color: mc('neutral', '1000') !important;
+  color: #fff !important;
 }
 
 .v-timeline-item.comments-post,
