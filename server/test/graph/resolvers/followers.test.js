@@ -88,7 +88,7 @@ describe('Followers Resolvers', () => {
       const result = await Query.isFollowing(null, args, context)
 
       expect(WIKI.models.followers.query().findOne).toHaveBeenCalledWith({ userId: 1, siteId: 'site-id', pageId: 1 })
-      expect(result).toEqual({ succeeded: false, message: 'Database error' })
+      expect(result).toEqual({ operation: { succeeded: false, message: 'Database error' }, isFollowing: false })
     })
   })
 
