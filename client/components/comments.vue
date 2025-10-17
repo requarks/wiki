@@ -11,7 +11,7 @@
         rows='3'
         hide-details
         v-model='newcomment'
-        color='blue-grey darken-2'
+        color='indigo darken-1'
         :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
         v-if='permissions.write'
         :aria-label='$t(`common:comments.fieldContent`)'
