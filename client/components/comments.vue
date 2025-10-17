@@ -11,7 +11,7 @@
         rows='3'
         hide-details
         v-model='newcomment'
-        color='indigo darken-1'
+        color='blue-grey darken-2'
         :background-color='$vuetify.theme.dark ? `indigo darken-1` : `white`'
         v-if='permissions.write'
         :aria-label='$t(`common:comments.fieldContent`)'
@@ -23,7 +23,7 @@
         v-text-field(
           outlined
           color='blue-grey darken-2'
-          :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+          :background-color='$vuetify.theme.dark ? `indigo darken-1` : `white`'
           :placeholder='$t(`common:comments.fieldName`)'
           hide-details
           dense
@@ -104,7 +104,7 @@
                   hide-details
                   v-model='commentEditContent'
                   color='blue-grey darken-2'
-                  :background-color='$vuetify.theme.dark ? `grey darken-5` : `white`'
+                  :background-color='$vuetify.theme.dark ? `indigo darken-1` : `white`'
                 )
                 .d-flex.align-center.pt-3
                 v-spacer
