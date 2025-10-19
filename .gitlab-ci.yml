@@ -45,13 +45,12 @@ variables:
 
   VERSION:
      value: ""
-     description: "Update to next release version, it should be numeric value, ex: 1.8.0"
+     description: "Update to next release version, it should be numeric value, ex: 1.7.5"
 
 default:
   tags:
-    - ubuntu-docker
+    - runner_mar_backup
   before_script:
-     - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
   - environment-set
@@ -73,8 +72,8 @@ environment-set:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
-      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"' ## to prevent jobs from running when branch is created.
+      when: never
 
 build:
   stage: build
@@ -94,6 +93,8 @@ build:
     # Run for feature branches on push OR if ENVIRONMENT is dev1 (manual trigger)
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: always
 
@@ -117,6 +118,8 @@ test:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
 
@@ -142,6 +145,8 @@ sonarqube-scan:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
 
