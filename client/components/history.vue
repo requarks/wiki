@@ -9,13 +9,11 @@
           v-spacer
           .caption.blue--text.text--lighten-3.mr-4 Trail Length: {{total}}
           .caption.blue--text.text--lighten-3 ID: {{pageId}}
-          v-btn#return-btn.ml-4(
-            depressed
+          v-btn#return-btn.ml-4.hover-btn.text-primary.text-none(
+            :color='colors.actionLight.highlightOnLite'
             rounded
-            :class='$vuetify.theme.dark ? `theme--dark` : ``'
             @click='goLive'
-            )
-            span Return to Live Version
+            ) Return to Live Version
       v-container(
         fluid
         grid-list-xl
@@ -26,10 +24,10 @@
             v-chip.my-0.ml-6.centered(
               label
               small
-              :color='$vuetify.theme.dark ? colors.neutral[750] : colors.neutral[200]'
+              :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.inverse'
               )
               span(
-                :style='{"color": $vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary}'
+                 :style='{"color": $vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary}'
               ) Live
             v-timeline.centered(
               dense
@@ -155,10 +153,10 @@
                         dark
                         rounded
                         outlined
-                        :color='$vuetify.theme.dark ? `white` : `grey darken-3`'
+                        :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
                         @click='toggleViewMode')
-                        v-icon(left) mdi-eye
-                        .overline View Mode
+                        v-icon(left, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.inverse') mdi-eye
+                        .overline.text-none View Mode
                 v-card.mt-3(light, v-html='diffHTML', flat)
 
     v-dialog(v-model='isRestoreConfirmDialogShown', max-width='650', persistent)
@@ -546,10 +544,10 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.sapphire[800] : colors.sapphire[400]
+        return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
       }
       if (actionType === 'live') {
-        return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeLite
+        return this.$vuetify.theme.dark ?  colors.neutral[550] : colors.neutral[600]
       }
       return this.$vuetify.theme.dark ? colors.blue[800] : colors.blue[300]
     },
@@ -575,7 +573,7 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.sapphire[600] : colors.sapphire[200]
+        return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
       }
       if (actionType === 'live') {
         return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
@@ -687,28 +685,7 @@ export default {
   }
 }
 
-#return-btn {
-  background-color: mc('action-light', 'active');
-  &> ::v-deep span {
-    color: mc('text-dark', 'primary')
-  }
-  &:hover {
-    background-color: mc('action-light', 'primary-hover-on-heavy');
-    &> ::v-deep span {
-      color: mc('text-light', 'brand-primary')
-    }
-  }
-
-  &.theme--dark {
-    background-color: mc('action-dark', 'active');
-    &> ::v-deep span {
-      color: mc('text-light', 'brand-primary')
-    }
-    &:hover {
-      background-color: mc('action-dark', 'primary-hover-on-heavy');
-    }
-  }
-}
+// #return-btn styling now uses global .hover-btn and .text-primary classes
 
 #load-more-btn {
   width: calc(100% - 24px);
@@ -717,12 +694,26 @@ export default {
 
 // Global styling
 <style lang='scss'>
+.v-btn.hover-btn {
+  &:hover {
+    background-color: mc('action-dark', 'highlight-on-lite') !important;
+  }
+}
+
+.text-primary {
+  color: mc("text-light", "primary") !important;
+
+  &.dark {
+    color: mc("text-dark", "primary") !important;
+  }
+}
+
 ins {
-  background-color: mc('peacock', '600') !important;
+  background-color: mc('green', '200') !important;
 }
 
 del {
-  background-color: mc('yellow', '700') !important;
+  background-color: mc('red', '100') !important;
 }
 
 .history {
@@ -740,36 +731,36 @@ del {
   }
 
   d2h-code-line-added {
-    background-color: rgba(mc('peacock', '500'), 0.2) !important;
+    background-color: rgba(mc('green', '200'), 0.9) !important;
 
     .d2h-code-line-ctn {
-      background-color: rgba(mc('peacock', '500'), 0.2) !important;
+      background-color: rgba(mc('green', '200'), 0.9) !important;
     }
   }
 
   .d2h-addition {
-    background-color: rgba(mc('peacock', '500'), 0.15) !important;
+    background-color: rgba(mc('green', '200'), 0.7) !important;
   }
 
   .d2h-ins {
-    background-color: rgba(mc('peacock', '500'), 0.4) !important;
+    background-color: rgba(mc('green', '200'), 1.0) !important;
   }
 
   .d2h-code-line-removed {
-    background-color: rgba(mc('yellow', '500'), 0.2) !important;
+    background-color: rgba(mc('red', '50'), 0.6) !important;
 
     .d2h-code-line-ctn {
-      background-color: rgba(mc('yellow', '500'), 0.2) !important;
+      background-color: rgba(mc('red', '50'), 0.6) !important;
 
     }
   }
 
   .d2h-deletion {
-    background-color: rgba(mc('yellow', '600'), 0.15) !important;
+    background-color: rgba(mc('red', '50'), 0.4) !important;
   }
 
   .d2h-del {
-    background-color: rgba(mc('yellow', '600'), 0.4) !important;
+    background-color: rgba(mc('red', '100'), 0.7) !important;
   }
 
   // Make text in changed sections more readable
