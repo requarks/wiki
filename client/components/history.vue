@@ -118,15 +118,14 @@
                       :disabled='isDiffTargetDisabled(ph.versionId)'
                       ): strong B
 
-            v-btn#load-more-btn.ml-8(
+            v-btn#load-more-btn.ml-8.rounded-button(
               v-if='total > trail.length'
-              rounded
-              :color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
+              dark
+              :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
               @click='loadMore'
+              depressed
               )
-              .caption(
-                :style='{"color": $vuetify.theme.dark ? colors.textLight.primary : colors.textDark.primary}'
-              ) Load More...
+              span.text-none Load More...
 
             v-chip.ma-0(
               v-else
@@ -689,6 +688,10 @@ export default {
 
 #load-more-btn {
   width: calc(100% - 24px);
+}
+
+.v-btn.rounded-button {
+  border-radius: 20px;
 }
 </style>
 
