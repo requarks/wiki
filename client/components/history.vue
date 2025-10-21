@@ -543,7 +543,7 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.sapphire[400]
+        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.blue[300]
       }
       if (actionType === 'live') {
         return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeLite
@@ -572,7 +572,7 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.sapphire[200]
+        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.blue[200]
       }
       if (actionType === 'live') {
         return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
