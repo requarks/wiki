@@ -709,7 +709,7 @@ export default {
 }
 
 ins {
-  background-color: mc('green', '200') !important;
+  background-color: mc('green', '300') !important;
 }
 
 del {
