@@ -156,7 +156,11 @@
                         @click='toggleViewMode')
                         v-icon(left, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.inverse') mdi-eye
                         .overline.text-none View Mode
-                v-card.mt-3(light, v-html='diffHTML', flat)
+                v-card.mt-3(
+                  v-html='diffHTML', 
+                  flat,
+                  :color='$vuetify.theme.dark ? colors.surfaceDark.secondaryNeutralHeavy : colors.surfaceLight.primaryNeutralLite'
+                )
 
     v-dialog(v-model='isRestoreConfirmDialogShown', max-width='650', persistent)
       v-card
@@ -712,12 +716,28 @@ export default {
   }
 }
 
-ins {
-  background-color: mc('green', '300') !important;
+// Light theme ins/del colors
+.theme--light {
+  ins {
+    background-color: mc('green', '300') !important;
+  }
+
+  del {
+    background-color: mc('red', '100') !important;
+  }
 }
 
-del {
-  background-color: mc('red', '100') !important;
+// Dark theme ins/del colors - darker and more visible
+.theme--dark {
+  ins {
+    background-color: mc('green', '700') !important;
+    color: mc('green', '50') !important;
+  }
+
+  del {
+    background-color: mc('red', '600') !important;
+    color: mc('red', '50') !important;
+  }
 }
 
 .history {
@@ -725,46 +745,154 @@ del {
     border-top: 5px solid mc('blue', '700');
   }
 
-  .d2h-file-wrapper {
-    border: 1px solid #EEE;
-    border-left: none;
+  // Light theme diff container
+  &.theme--light {
+    .d2h-file-wrapper {
+      border: 1px solid #EEE;
+      border-left: none;
+      background-color: #ffffff;
+    }
+  }
+
+  // Dark theme diff container
+  &.theme--dark {
+    .d2h-file-wrapper {
+      border: 1px solid mc('neutral', '600');
+      border-left: none;
+      background-color: mc('neutral', '750') !important;
+      color: mc('text-dark', 'primary') !important;
+    }
+
+    // Override all diff2html backgrounds and text colors for dark theme
+    .d2h-code-wrapper,
+    .d2h-code-line,
+    .d2h-line-number,
+    .d2h-code-linenumber,
+    .d2h-info,
+    tbody tr,
+    tbody td {
+      color: mc('text-dark', 'primary') !important;
+      background-color: mc('neutral', '750') !important;
+    }
+
+    // Context lines only (not added/removed)
+    .d2h-context .d2h-code-line-ctn {
+      color: mc('text-dark', 'primary') !important;
+      background-color: mc('neutral', '750') !important;
+    }
+
+    // Line numbers on the left side
+    .d2h-code-linenumber {
+      background-color: mc('neutral', '700') !important;
+      color: mc('text-dark', 'secondary') !important;
+      border-right: 1px solid mc('neutral', '600') !important;
+    }
+
+    // Untouched/context lines
+    .d2h-context .d2h-code-line-ctn {
+      background-color: mc('neutral', '750') !important;
+      color: mc('text-dark', 'primary') !important;
+    }
+
+    // Table structure
+    .d2h-diff-table {
+      background-color: mc('neutral', '750') !important;
+    }
   }
 
   .d2h-file-header {
     display: none;
   }
 
-  d2h-code-line-added {
-    background-color: rgba(mc('green', '200'), 0.9) !important;
-
-    .d2h-code-line-ctn {
+  // Light theme - keep original green/red colors
+  &.theme--light {
+    .d2h-code-line-added {
       background-color: rgba(mc('green', '200'), 0.9) !important;
+
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('green', '200'), 0.9) !important;
+      }
     }
-  }
 
-  .d2h-addition {
-    background-color: rgba(mc('green', '200'), 0.7) !important;
-  }
+    .d2h-addition {
+      background-color: rgba(mc('green', '200'), 0.7) !important;
+    }
 
-  .d2h-ins {
-    background-color: rgba(mc('green', '200'), 1.0) !important;
-  }
+    .d2h-ins {
+      background-color: rgba(mc('green', '200'), 1.0) !important;
+    }
 
-  .d2h-code-line-removed {
-    background-color: rgba(mc('red', '50'), 0.6) !important;
-
-    .d2h-code-line-ctn {
+    .d2h-code-line-removed {
       background-color: rgba(mc('red', '50'), 0.6) !important;
 
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('red', '50'), 0.6) !important;
+      }
+    }
+
+    .d2h-deletion {
+      background-color: rgba(mc('red', '50'), 0.4) !important;
+    }
+
+    .d2h-del {
+      background-color: rgba(mc('red', '100'), 0.7) !important;
     }
   }
 
-  .d2h-deletion {
-    background-color: rgba(mc('red', '50'), 0.4) !important;
-  }
+  // Dark theme - darker green/red with better contrast
+  &.theme--dark {
+    .d2h-code-line-added {
+      background-color: rgba(mc('green', '600'), 0.3) !important;
+      color: mc('green', '100') !important;
 
-  .d2h-del {
-    background-color: rgba(mc('red', '100'), 0.7) !important;
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('green', '600'), 0.3) !important;
+        color: mc('green', '100') !important;
+      }
+    }
+
+    .d2h-addition {
+      background-color: rgba(mc('green', '600'), 0.2) !important;
+      color: mc('green', '100') !important;
+    }
+
+    .d2h-ins {
+      background-color: rgba(mc('green', '500'), 0.4) !important;
+      color: mc('green', '50') !important;
+    }
+
+    .d2h-code-line-removed {
+      background-color: rgba(mc('red', '500'), 0.4) !important;
+      color: mc('red', '100') !important;
+
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('red', '500'), 0.4) !important;
+        color: mc('red', '100') !important;
+      }
+    }
+
+    .d2h-deletion {
+      background-color: rgba(mc('red', '500'), 0.3) !important;
+      color: mc('red', '100') !important;
+    }
+
+    .d2h-del {
+      background-color: rgba(mc('red', '400'), 0.6) !important;
+      color: mc('red', '50') !important;
+    }
+
+    // Force override any gray background on removed lines
+    .d2h-code-line-removed,
+    .d2h-deletion,
+    .d2h-del {
+      background-color: rgba(mc('red', '500'), 0.4) !important;
+    }
+
+    // Specific styling for deleted text content
+    .d2h-del {
+      background-color: rgba(mc('red', '400'), 0.7) !important;
+      color: mc('red', '50') !important;
+    }
   }
 
   // Make text in changed sections more readable
