@@ -24,10 +24,10 @@
             v-chip.my-0.ml-6.centered(
               label
               small
-              :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.inverse'
+              :color='$vuetify.theme.dark ? colors.neutral[750] : colors.neutral[200]'
               )
               span(
-                 :style='{"color": $vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary}'
+                :style='{"color": $vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary}'
               ) Live
             v-timeline.centered(
               dense
@@ -544,10 +544,10 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
+        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.sapphire[400]
       }
       if (actionType === 'live') {
-        return this.$vuetify.theme.dark ?  colors.neutral[550] : colors.neutral[600]
+        return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeLite
       }
       return this.$vuetify.theme.dark ? colors.blue[800] : colors.blue[300]
     },
@@ -573,7 +573,7 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
+        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.sapphire[200]
       }
       if (actionType === 'live') {
         return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
