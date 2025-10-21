@@ -596,15 +596,16 @@ export default {
     getDiffSelectorStyle(versionId, diffReference, isDisabled) {
       let diffBackgroundColor
       if (diffReference === versionId) {
-        diffBackgroundColor = colors.green[600]
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy
       } else {
-        diffBackgroundColor = this.$vuetify.theme.dark ? colors.neutral[700] : colors.neutral[100]
-      }
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
+      } 
       let diffColor
       if (diffReference === versionId) {
-        diffColor = colors.textLight.black
+        diffColor = colors.surfaceLight.primaryNeutralLite
       } else if (isDisabled) {
         diffColor = colors.textLight.disabled
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.neutral[700] : colors.neutral[150]
       } else {
         diffColor = colors.textLight.primary
       }
