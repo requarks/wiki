@@ -1,7 +1,7 @@
 # -- DEV DOCKERFILE --
 # -- DO NOT USE IN PRODUCTION! --
 
-FROM node:18
+FROM node:20
 LABEL maintainer "requarks.io"
 
 RUN apt-get update && \
