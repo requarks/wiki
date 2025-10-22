@@ -745,67 +745,18 @@ export default {
     border-top: 5px solid mc('blue', '700');
   }
 
-  // Light theme diff container
+  .d2h-file-header {
+    display: none;
+  }
+
+  // Light theme - complete styling
   &.theme--light {
     .d2h-file-wrapper {
       border: 1px solid #EEE;
       border-left: none;
       background-color: #ffffff;
     }
-  }
 
-  // Dark theme diff container
-  &.theme--dark {
-    .d2h-file-wrapper {
-      border: 1px solid mc('neutral', '600');
-      border-left: none;
-      background-color: mc('neutral', '750') !important;
-      color: mc('text-dark', 'primary') !important;
-    }
-
-    // Override all diff2html backgrounds and text colors for dark theme
-    .d2h-code-wrapper,
-    .d2h-code-line,
-    .d2h-line-number,
-    .d2h-code-linenumber,
-    .d2h-info,
-    tbody tr,
-    tbody td {
-      color: mc('text-dark', 'primary') !important;
-      background-color: mc('neutral', '750') !important;
-    }
-
-    // Context lines only (not added/removed)
-    .d2h-context .d2h-code-line-ctn {
-      color: mc('text-dark', 'primary') !important;
-      background-color: mc('neutral', '750') !important;
-    }
-
-    // Line numbers on the left side
-    .d2h-code-linenumber {
-      background-color: mc('neutral', '700') !important;
-      color: mc('text-dark', 'secondary') !important;
-      border-right: 1px solid mc('neutral', '600') !important;
-    }
-
-    // Untouched/context lines
-    .d2h-context .d2h-code-line-ctn {
-      background-color: mc('neutral', '750') !important;
-      color: mc('text-dark', 'primary') !important;
-    }
-
-    // Table structure
-    .d2h-diff-table {
-      background-color: mc('neutral', '750') !important;
-    }
-  }
-
-  .d2h-file-header {
-    display: none;
-  }
-
-  // Light theme - keep original green/red colors
-  &.theme--light {
     .d2h-code-line-added {
       background-color: rgba(mc('green', '200'), 0.9) !important;
 
@@ -839,8 +790,45 @@ export default {
     }
   }
 
-  // Dark theme - darker green/red with better contrast
+  // Dark theme - complete styling
   &.theme--dark {
+    .d2h-file-wrapper {
+      border: 1px solid mc('neutral', '600');
+      border-left: none;
+      background-color: mc('neutral', '750') !important;
+      color: mc('text-dark', 'primary') !important;
+    }
+
+    // Override all diff2html backgrounds and text colors for dark theme
+    .d2h-code-wrapper,
+    .d2h-code-line,
+    .d2h-line-number,
+    .d2h-code-linenumber,
+    .d2h-info,
+    tbody tr,
+    tbody td {
+      color: mc('text-dark', 'primary') !important;
+      background-color: mc('neutral', '750') !important;
+    }
+
+    // Context lines only (not added/removed)
+    .d2h-context .d2h-code-line-ctn {
+      color: mc('text-dark', 'primary') !important;
+      background-color: mc('neutral', '750') !important;
+    }
+
+    // Line numbers on the left side
+    .d2h-code-linenumber {
+      background-color: mc('neutral', '700') !important;
+      color: mc('text-dark', 'secondary') !important;
+      border-right: 1px solid mc('neutral', '600') !important;
+    }
+
+    // Table structure
+    .d2h-diff-table {
+      background-color: mc('neutral', '750') !important;
+    }
+
     .d2h-code-line-added {
       background-color: rgba(mc('green', '600'), 0.3) !important;
       color: mc('green', '100') !important;
@@ -876,19 +864,6 @@ export default {
       color: mc('red', '100') !important;
     }
 
-    .d2h-del {
-      background-color: rgba(mc('red', '400'), 0.6) !important;
-      color: mc('red', '50') !important;
-    }
-
-    // Force override any gray background on removed lines
-    .d2h-code-line-removed,
-    .d2h-deletion,
-    .d2h-del {
-      background-color: rgba(mc('red', '500'), 0.4) !important;
-    }
-
-    // Specific styling for deleted text content
     .d2h-del {
       background-color: rgba(mc('red', '400'), 0.7) !important;
       color: mc('red', '50') !important;
