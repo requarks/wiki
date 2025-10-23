@@ -8,7 +8,7 @@
     )
     v-card
       .dialog-header.is-short.is-dark
-        v-icon.mr-2(color='white') mdi-lightning-bolt
+        v-icon.mr-2(:color='$vuetify.theme.dark ? "white" : "black"') mdi-lightning-bolt
         span {{$t('common:page.convert')}}
       v-card-text.pt-5
         i18next.body-2(path='common:page.convertTitle', tag='div')
@@ -27,14 +27,28 @@
         .caption.mt-5 {{$t('common:page.convertSubtitle')}}
       v-card-chin
         v-spacer
-        v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='grey darken-3', @click='convertPage', :loading='loading').white--text {{$t('common:actions.convert')}}
+        v-btn.rounded-button(
+          outlined
+          rounded
+          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+          @click='discard'
+          :disabled='loading'
+          ) {{$t('common:actions.cancel')}}
+        v-btn.px-4.rounded-button(
+          rounded
+          dark
+          :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
+          @click='convertPage'
+          :loading='loading'
+          )
+          span.text-none CONVERT
 </template>
 
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   props: {
@@ -46,7 +60,8 @@ export default {
   data() {
     return {
       loading: false,
-      newEditor: ''
+      newEditor: '',
+      colors: colors
     }
   },
   computed: {
@@ -117,5 +132,7 @@ export default {
 </script>
 
 <style lang='scss'>
-
+.v-btn.rounded-button {
+  border-radius: 20px;
+}
 </style>
