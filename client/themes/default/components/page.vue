@@ -444,11 +444,11 @@
         .dialog-header.is-short.is-blue
           v-icon.mr-2(
             v-if='exportFileType === `docx`'
-            color='white'
+            :color='$vuetify.theme.dark ? "white" : "black"'
             ) mdi-file-word-box
           v-icon.mr-2(
             v-else-if='exportFileType === `pdf`'
-            color='white'
+            :color='$vuetify.theme.dark ? "white" : "black"'
             ) mdi-file-pdf-box
           span(v-if='exportFileType === `docx`') {{ messages.exportToWord }}
           span(v-else-if='exportFileType === `pdf`') {{ messages.exportToPdf }}
@@ -458,29 +458,38 @@
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
           v-spacer
-          v-btn(
-            text
+          v-btn.rounded-button(
+            outlined
             rounded
+            :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
             @click='isExportModalVisible = false'
             ) {{ messages.cancel }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-if='exportFileType === `docx`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportSinglePageToWord()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-else-if='exportFileType === `pdf`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportSinglePageToPdf()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-if='exportFileType === `docx`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportPageTreeToWord()'
             ) {{ messages.exportPageTree }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-else-if='exportFileType === `pdf`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportPageTreeToPdf()'
             ) {{ messages.exportPageTree }}
 </template>
@@ -770,6 +779,11 @@ export default {
         this.colors.teal[800]
     },
     actionBtnColor () {
+      return this.$vuetify.theme.dark ?
+        this.colors.surfaceDark.secondarySapHeavy :
+        this.colors.surfaceLight.secondaryBlueHeavy
+    },
+    primaryActionBtnColor () {
       return this.$vuetify.theme.dark ?
         this.colors.surfaceDark.secondarySapHeavy :
         this.colors.surfaceLight.secondaryBlueHeavy
