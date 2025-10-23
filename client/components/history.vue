@@ -9,13 +9,11 @@
           v-spacer
           .caption.blue--text.text--lighten-3.mr-4 Trail Length: {{total}}
           .caption.blue--text.text--lighten-3 ID: {{pageId}}
-          v-btn#return-btn.ml-4(
-            depressed
+          v-btn#return-btn.ml-4.hover-btn.text-primary.text-none(
+            :color='colors.actionLight.highlightOnLite'
             rounded
-            :class='$vuetify.theme.dark ? `theme--dark` : ``'
             @click='goLive'
-            )
-            span Return to Live Version
+            ) Return to Live Version
       v-container(
         fluid
         grid-list-xl
@@ -120,15 +118,14 @@
                       :disabled='isDiffTargetDisabled(ph.versionId)'
                       ): strong B
 
-            v-btn#load-more-btn.ml-8(
+            v-btn#load-more-btn.ml-8.rounded-button(
               v-if='total > trail.length'
-              rounded
-              :color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
+              dark
+              :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
               @click='loadMore'
+              depressed
               )
-              .caption(
-                :style='{"color": $vuetify.theme.dark ? colors.textLight.primary : colors.textDark.primary}'
-              ) Load More...
+              span.text-none Load More...
 
             v-chip.ma-0(
               v-else
@@ -155,11 +152,15 @@
                         dark
                         rounded
                         outlined
-                        :color='$vuetify.theme.dark ? `white` : `grey darken-3`'
+                        :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
                         @click='toggleViewMode')
-                        v-icon(left) mdi-eye
-                        .overline View Mode
-                v-card.mt-3(light, v-html='diffHTML', flat)
+                        v-icon(left, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.inverse') mdi-eye
+                        .overline.text-none View Mode
+                v-card.mt-3(
+                  v-html='diffHTML', 
+                  flat,
+                  :color='$vuetify.theme.dark ? colors.surfaceDark.secondaryNeutralHeavy : colors.surfaceLight.primaryNeutralLite'
+                )
 
     v-dialog(v-model='isRestoreConfirmDialogShown', max-width='650', persistent)
       v-card
@@ -546,7 +547,7 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[400]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.sapphire[800] : colors.sapphire[400]
+        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.blue[300]
       }
       if (actionType === 'live') {
         return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeLite
@@ -575,7 +576,7 @@ export default {
         return this.$vuetify.theme.dark ? colors.red[800] : colors.red[200]
       }
       if (actionType === 'initial') {
-        return this.$vuetify.theme.dark ? colors.sapphire[600] : colors.sapphire[200]
+        return this.$vuetify.theme.dark ? colors.sapphire[500] : colors.blue[200]
       }
       if (actionType === 'live') {
         return this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
@@ -599,15 +600,16 @@ export default {
     getDiffSelectorStyle(versionId, diffReference, isDisabled) {
       let diffBackgroundColor
       if (diffReference === versionId) {
-        diffBackgroundColor = colors.green[600]
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy
       } else {
-        diffBackgroundColor = this.$vuetify.theme.dark ? colors.neutral[700] : colors.neutral[100]
-      }
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.surfaceDark.noticeLite : colors.surfaceLight.noticeHeavy
+      } 
       let diffColor
       if (diffReference === versionId) {
-        diffColor = colors.textLight.black
+        diffColor = colors.surfaceLight.primaryNeutralLite
       } else if (isDisabled) {
         diffColor = colors.textLight.disabled
+        diffBackgroundColor = this.$vuetify.theme.dark ? colors.neutral[700] : colors.neutral[150]
       } else {
         diffColor = colors.textLight.primary
       }
@@ -687,42 +689,55 @@ export default {
   }
 }
 
-#return-btn {
-  background-color: mc('action-light', 'active');
-  &> ::v-deep span {
-    color: mc('text-dark', 'primary')
-  }
-  &:hover {
-    background-color: mc('action-light', 'primary-hover-on-heavy');
-    &> ::v-deep span {
-      color: mc('text-light', 'brand-primary')
-    }
-  }
-
-  &.theme--dark {
-    background-color: mc('action-dark', 'active');
-    &> ::v-deep span {
-      color: mc('text-light', 'brand-primary')
-    }
-    &:hover {
-      background-color: mc('action-dark', 'primary-hover-on-heavy');
-    }
-  }
-}
+// #return-btn styling now uses global .hover-btn and .text-primary classes
 
 #load-more-btn {
   width: calc(100% - 24px);
+}
+
+.v-btn.rounded-button {
+  border-radius: 20px;
 }
 </style>
 
 // Global styling
 <style lang='scss'>
-ins {
-  background-color: mc('peacock', '600') !important;
+.v-btn.hover-btn {
+  &:hover {
+    background-color: mc('action-dark', 'highlight-on-lite') !important;
+  }
 }
 
-del {
-  background-color: mc('yellow', '700') !important;
+.text-primary {
+  color: mc("text-light", "primary") !important;
+
+  &.dark {
+    color: mc("text-dark", "primary") !important;
+  }
+}
+
+// Light theme ins/del colors
+.theme--light {
+  ins {
+    background-color: mc('green', '300') !important;
+  }
+
+  del {
+    background-color: mc('red', '100') !important;
+  }
+}
+
+// Dark theme ins/del colors - darker and more visible
+.theme--dark {
+  ins {
+    background-color: mc('green', '700') !important;
+    color: mc('green', '50') !important;
+  }
+
+  del {
+    background-color: mc('red', '600') !important;
+    color: mc('red', '50') !important;
+  }
 }
 
 .history {
@@ -730,46 +745,129 @@ del {
     border-top: 5px solid mc('blue', '700');
   }
 
-  .d2h-file-wrapper {
-    border: 1px solid #EEE;
-    border-left: none;
-  }
-
   .d2h-file-header {
     display: none;
   }
 
-  d2h-code-line-added {
-    background-color: rgba(mc('peacock', '500'), 0.2) !important;
+  // Light theme - complete styling
+  &.theme--light {
+    .d2h-file-wrapper {
+      border: 1px solid #EEE;
+      border-left: none;
+      background-color: #ffffff;
+    }
 
-    .d2h-code-line-ctn {
-      background-color: rgba(mc('peacock', '500'), 0.2) !important;
+    .d2h-code-line-added {
+      background-color: rgba(mc('green', '200'), 0.9) !important;
+
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('green', '200'), 0.9) !important;
+      }
+    }
+
+    .d2h-addition {
+      background-color: rgba(mc('green', '200'), 0.7) !important;
+    }
+
+    .d2h-ins {
+      background-color: rgba(mc('green', '200'), 1.0) !important;
+    }
+
+    .d2h-code-line-removed {
+      background-color: rgba(mc('red', '50'), 0.6) !important;
+
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('red', '50'), 0.6) !important;
+      }
+    }
+
+    .d2h-deletion {
+      background-color: rgba(mc('red', '50'), 0.4) !important;
+    }
+
+    .d2h-del {
+      background-color: rgba(mc('red', '100'), 0.7) !important;
     }
   }
 
-  .d2h-addition {
-    background-color: rgba(mc('peacock', '500'), 0.15) !important;
-  }
-
-  .d2h-ins {
-    background-color: rgba(mc('peacock', '500'), 0.4) !important;
-  }
-
-  .d2h-code-line-removed {
-    background-color: rgba(mc('yellow', '500'), 0.2) !important;
-
-    .d2h-code-line-ctn {
-      background-color: rgba(mc('yellow', '500'), 0.2) !important;
-
+  // Dark theme - complete styling
+  &.theme--dark {
+    .d2h-file-wrapper {
+      border: 1px solid mc('neutral', '600');
+      border-left: none;
+      background-color: mc('neutral', '750') !important;
+      color: mc('text-dark', 'primary') !important;
     }
-  }
 
-  .d2h-deletion {
-    background-color: rgba(mc('yellow', '600'), 0.15) !important;
-  }
+    // Override all diff2html backgrounds and text colors for dark theme
+    .d2h-code-wrapper,
+    .d2h-code-line,
+    .d2h-line-number,
+    .d2h-code-linenumber,
+    .d2h-info,
+    tbody tr,
+    tbody td {
+      color: mc('text-dark', 'primary') !important;
+      background-color: mc('neutral', '750') !important;
+    }
 
-  .d2h-del {
-    background-color: rgba(mc('yellow', '600'), 0.4) !important;
+    // Context lines only (not added/removed)
+    .d2h-context .d2h-code-line-ctn {
+      color: mc('text-dark', 'primary') !important;
+      background-color: mc('neutral', '750') !important;
+    }
+
+    // Line numbers on the left side
+    .d2h-code-linenumber {
+      background-color: mc('neutral', '700') !important;
+      color: mc('text-dark', 'secondary') !important;
+      border-right: 1px solid mc('neutral', '600') !important;
+    }
+
+    // Table structure
+    .d2h-diff-table {
+      background-color: mc('neutral', '750') !important;
+    }
+
+    .d2h-code-line-added {
+      background-color: rgba(mc('green', '600'), 0.3) !important;
+      color: mc('green', '100') !important;
+
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('green', '600'), 0.3) !important;
+        color: mc('green', '100') !important;
+      }
+    }
+
+    .d2h-addition {
+      background-color: rgba(mc('green', '600'), 0.2) !important;
+      color: mc('green', '100') !important;
+    }
+
+    .d2h-ins {
+      background-color: rgba(mc('green', '500'), 0.4) !important;
+      color: mc('green', '50') !important;
+    }
+
+    .d2h-code-line-removed {
+      background-color: rgba(mc('red', '500'), 0.4) !important;
+      color: mc('red', '100') !important;
+
+      .d2h-code-line-ctn {
+        background-color: rgba(mc('red', '500'), 0.4) !important;
+        color: mc('red', '100') !important;
+      }
+    }
+
+    .d2h-deletion {
+      background-color: rgba(mc('red', '500'), 0.3) !important;
+      color: mc('red', '100') !important;
+    }
+
+    .d2h-del {
+      background-color: rgba(mc('red', '400'), 0.7) !important;
+      color: mc('red', '50') !important;
+    }
   }
 
   // Make text in changed sections more readable
