@@ -146,7 +146,7 @@
     "nodemailer": "6.9.1",
     "objection": "2.2.18",
     "passport": "0.4.1",
-    "passport-auth0": "1.4.3",
+    "passport-auth0": "1.4.4",
     "passport-azure-ad": "4.3.4",
     "passport-discord": "0.1.4",
     "passport-facebook": "3.0.0",
