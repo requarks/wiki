@@ -396,6 +396,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 
 import colors from '@/themes/default/js/color-scheme'
+import { PAGE_DELETE_HAS_SUBPAGES_MSG } from '@/messages'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 import createFollowerMutation from 'gql/followers/create-follower.gql'
@@ -627,7 +628,18 @@ export default {
         this.$store.commit(`loadingStop`, 'page-move')
       }
     },
-    pageDelete () {
+    async pageDelete () {
+      // Check for subpages before allowing deletion
+      if (this.$store.get('page/hasChildren')) {
+        // Show notification instead of delete dialog
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: PAGE_DELETE_HAS_SUBPAGES_MSG,
+          icon: 'warning',
+          close: true
+        })
+        return
+      }
       this.deletePageModal = true
     },
     assets () {
