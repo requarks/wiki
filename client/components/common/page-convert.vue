@@ -7,9 +7,9 @@
     overlay-opacity='.7'
     )
     v-card
-      .dialog-header.is-short.is-dark
-        v-icon.mr-2(:color='$vuetify.theme.dark ? "white" : "black"') mdi-lightning-bolt
-        span {{$t('common:page.convert')}}
+      .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
+        v-icon.mr-2(color='white') mdi-lightning-bolt
+        span(style='color: white;') {{$t('common:page.convert')}}
       v-card-text.pt-5
         i18next.body-2(path='common:page.convertTitle', tag='div')
           span.blue-grey--text.text--darken-2(place='title') {{pageTitle}}

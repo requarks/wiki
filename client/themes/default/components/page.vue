@@ -437,21 +437,21 @@
       v-model='isExportModalVisible'
       max-width='750'
       persistent
-      overlay-color='blue darken-4'
+      overlay-color='black'
       overlay-opacity='.7'
     )
       v-card
-        .dialog-header.is-short.is-blue
+        .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
           v-icon.mr-2(
             v-if='exportFileType === `docx`'
-            :color='$vuetify.theme.dark ? "white" : "black"'
+            color='white'
             ) mdi-file-word-box
           v-icon.mr-2(
             v-else-if='exportFileType === `pdf`'
-            :color='$vuetify.theme.dark ? "white" : "black"'
+            color='white'
             ) mdi-file-pdf-box
-          span(v-if='exportFileType === `docx`') {{ messages.exportToWord }}
-          span(v-else-if='exportFileType === `pdf`') {{ messages.exportToPdf }}
+          span(v-if='exportFileType === `docx`', style='color: white;') {{ messages.exportToWord }}
+          span(v-else-if='exportFileType === `pdf`', style='color: white;') {{ messages.exportToPdf }}
         v-card-text.pt-5
           span {{ messages.exportModalSubtitle }}
         v-card-chin(
