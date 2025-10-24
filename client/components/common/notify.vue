@@ -4,7 +4,7 @@
     top
     multi-line
     v-model='notificationState'
-    :timeout='6000'
+    :timeout='10000'
     )
     .text-left
       v-icon.mr-3#notification-icon mdi-{{ notification.icon }}

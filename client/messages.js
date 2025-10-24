@@ -1,3 +1,5 @@
+export const PAGE_DELETE_HAS_SUBPAGES_MSG = 'This page cannot be deleted until all subpages are moved to another location.'
+
 export const messages = {
   printPage: 'Print Page',
   exportToWord: 'Export to Word',
