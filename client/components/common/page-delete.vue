@@ -5,7 +5,7 @@
     persistent
     :overlay-color='colors.white'
     overlay-opacity='.7'
-    )
+  )
     v-card
       .critical-bar
       .dialog-header.is-short
@@ -20,7 +20,7 @@
         i18next.body-1(path='common:page.deleteTitle', tag='div')
           span(place='title') {{pageTitle}}
         .caption {{$t('common:page.deleteSubtitle')}}
-      v-card-chink.button-bar
+      v-card-actions.button-bar
         v-spacer
         v-btn.cancel-btn(text, @click='discard', :disabled='loading')
           span Cancel
@@ -82,6 +82,8 @@ export default {
     isShown(newValue) {
       if (newValue) {
         document.body.classList.add('page-deleted-pending')
+      } else {
+        document.body.classList.remove('page-deleted-pending')
       }
     }
   },
