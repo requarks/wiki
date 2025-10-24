@@ -1,3 +1,12 @@
+  watch: {
+    isShown(newValue) {
+      if (newValue) {
+        document.body.classList.add('page-deleted-pending')
+      } else {
+        document.body.classList.remove('page-deleted-pending')
+      }
+    }
+  },
 <template lang='pug'>
   v-dialog(
     v-model='isShown'
