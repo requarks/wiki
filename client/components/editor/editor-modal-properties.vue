@@ -448,11 +448,11 @@ export default {
 // Force tabs background color - override dark theme
 .theme--dark.v-tabs > .v-tabs-bar,
 .v-tabs .v-tabs-bar {
-  background-color: mc('blue', '500') !important;
+  background-color: mc('surface-light', 'secondary-blue-heavy') !important;
 }
 
 .v-tabs {
-  background-color: mc('blue', '500') !important;
+  background-color: mc('surface-light', 'secondary-blue-heavy') !important;
 }
 
 .editor-props-codeeditor {

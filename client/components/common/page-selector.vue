@@ -5,7 +5,7 @@
     :overlay-color='colors.overlay.page'
     )
     v-card.page-selector
-      .dialog-header(:class='$vuetify.theme.dark ? `is-dark` : ``')
+      .dialog-header(:style='`background-color: ${colors.blue[500]} !important;`')
         v-icon.mr-3(color='white') mdi-page-next-outline
         .body-1(v-if='mode === `create`') {{$t('common:pageSelector.createTitle')}}
         .body-1(v-else-if='mode === `move`') {{$t('common:pageSelector.moveTitle')}}
@@ -399,13 +399,7 @@ export default {
     font-size: 13px;
   }
 
-  .dialog-header {
-    background-color: mc("surface-light", "primary-blue-heavy");
 
-    &.is-dark {
-      background-color: mc("surface-dark", "primary-blue-heavy");
-    }
-  }
 
   .v-treeview-node__content {
     cursor: pointer;
