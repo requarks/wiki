@@ -9,10 +9,10 @@
     v-card
       .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
         v-icon.mr-2(color='white') mdi-lightning-bolt
-        span(style='color: white;') {{$t('common:page.convert')}}
+        span(:style='`color: ${colors.textLight.inverse};`') {{$t('common:page.convert')}}
       v-card-text.pt-5
-        i18next.body-2(path='common:page.convertTitle', tag='div')
-          span.blue-grey--text.text--darken-2(place='title') {{pageTitle}}
+        i18next.body-2(path='common:page.convertTitle', tag='div', :style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`')
+          span(:style='`color: ${$vuetify.theme.dark ? colors.textDark.secondary : colors.textLight.secondary};`', place='title') {{pageTitle}}
         v-select.mt-5(
           :items=`[
             { value: 'markdown', text: 'Markdown' },
@@ -24,7 +24,7 @@
           hide-details
           v-model='newEditor'
         )
-        .caption.mt-5 {{$t('common:page.convertSubtitle')}}
+        .caption.mt-5(:style='`color: ${$vuetify.theme.dark ? colors.textDark.tertiary : colors.textLight.tertiary};`') {{$t('common:page.convertSubtitle')}}
       v-card-chin
         v-spacer
         v-btn.rounded-button(

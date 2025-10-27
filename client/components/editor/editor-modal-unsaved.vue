@@ -3,9 +3,9 @@
     v-card
       .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
         v-icon.mr-2(color='white') mdi-alert
-        span(style='color: white;') {{$t('editor:unsaved.title')}}
+        span(:style='`color: ${colors.textLight.inverse};`') {{$t('editor:unsaved.title')}}
       v-card-text.pt-4
-        .body-2 {{$t('editor:unsaved.body')}}
+        .body-2(:style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`') {{$t('editor:unsaved.body')}}
       v-card-chin
         v-spacer
         v-btn.rounded-button(
