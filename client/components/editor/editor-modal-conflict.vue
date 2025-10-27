@@ -11,7 +11,7 @@
           @click='useLocal'
           :title='$t(`editor:conflict.useLocalHint`)'
           )
-          v-icon(left, :color='$vuetify.theme.dark ? "black" : "white"') mdi-alpha-l-box
+          v-icon(left, :color='$vuetify.theme.dark ? "black" : colors.textLight.primary') mdi-alpha-l-box
           span.text-none {{$t('editor:conflict.useLocal')}}
         v-dialog(
           v-model='isRemoteConfirmDiagShown'
@@ -24,7 +24,7 @@
               v-on='on'
               :title='$t(`editor:conflict.useRemoteHint`)'
               )
-              v-icon(left, :color='$vuetify.theme.dark ? "black" : "white"') mdi-alpha-r-box
+              v-icon(left, :color='$vuetify.theme.dark ? "black" : colors.textLight.primary') mdi-alpha-r-box
               span.text-none {{$t('editor:conflict.useRemote')}}
           v-card
             .dialog-header.is-short.is-indigo
@@ -79,7 +79,7 @@
           i18next(tag='em', path='editor:conflict.rightPanelInfo', :style='`color: ${$vuetify.theme.dark ? colors.textDark.secondary : colors.textLight.secondary};`')
             strong(place='authorName') {{latest.authorName}}
             span(place='date', :title='$options.filters.moment(latest.updatedAt, `LLL`)') {{ latest.updatedAt | moment('from') }}
-      v-row.grey--text.text--darken-3(no-gutters, :style='`background-color: ${colors.blue[450]};`')
+      v-row.grey--text.text--darken-3(no-gutters, style='background-color: #1C4076;')
         v-col.pa-4
           .body-2
             strong(style='color: white;') {{$t('editor:conflict.pageTitle')}}
@@ -277,6 +277,22 @@ export default {
       color: mc('text-dark', 'primary') !important;
     }
     
+    // Fix heading colors - remove blue and make bold
+    .cm-header {
+      color: mc('text-dark', 'primary') !important;
+      font-weight: bold !important;
+    }
+    
+    .cm-header-1,
+    .cm-header-2,
+    .cm-header-3,
+    .cm-header-4,
+    .cm-header-5,
+    .cm-header-6 {
+      color: mc('text-dark', 'primary') !important;
+      font-weight: bold !important;
+    }
+    
     // Conflict highlighting - make it visible with white text
     .CodeMirror-merge-r-chunk {
       background-color: rgba(mc('yellow', '400'), 0.4) !important;
@@ -303,7 +319,7 @@ export default {
   // Merge view specific styling
   .CodeMirror-merge {
     .CodeMirror-merge-gap {
-      background-color: mc('neutral', '700') !important;
+      background-color: #3e3f4b !important;
     }
     
     .CodeMirror-merge-scrolllock {
@@ -366,6 +382,22 @@ export default {
       color: mc('text-light', 'secondary') !important;
     }
     
+    // Fix heading colors - remove blue and make bold
+    .cm-header {
+      color: mc('text-light', 'primary') !important;
+      font-weight: bold !important;
+    }
+    
+    .cm-header-1,
+    .cm-header-2,
+    .cm-header-3,
+    .cm-header-4,
+    .cm-header-5,
+    .cm-header-6 {
+      color: mc('text-light', 'primary') !important;
+      font-weight: bold !important;
+    }
+    
     // Conflict highlighting - visible with dark text
     .CodeMirror-merge-r-chunk {
       background-color: rgba(mc('yellow', '300'), 0.6) !important;
@@ -387,7 +419,7 @@ export default {
   // Merge view specific styling for light theme
   .CodeMirror-merge {
     .CodeMirror-merge-gap {
-      background-color: mc('neutral', '100') !important;
+      background-color: #d6d6d9 !important;
     }
     
     .CodeMirror-merge-scrolllock {
