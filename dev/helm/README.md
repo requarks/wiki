@@ -43,7 +43,7 @@ Wiki.js is an open source project that has been made possible due to the generou
 
 This chart bootstraps a Wiki.js deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also optionally packages the [PostgreSQL](https://github.com/kubernetes/charts/tree/master/stable/postgresql) as the database but you are free to bring your own.
+It also optionally deploys PostgreSQL as the database using the official PostgreSQL image from Docker Hub, but you are free to bring your own database.
 
 ## Prerequisites
 
@@ -132,7 +132,18 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.persistence.enabled`                | Enable postgres persistence using PVC                | `true`                                                     |
 | `postgresql.persistence.existingClaim`          | Provide an existing `PersistentVolumeClaim` for postgres | `nil`                                                      |
 | `postgresql.persistence.storageClass`           | Postgres PVC Storage Class (example: `nfs`)                           | `nil`                 |
-| `postgresql.persistence.size`                   | Postgers PVC Storage Request                         | `8Gi`                                                     |
+| `postgresql.persistence.size`                   | Postgres PVC Storage Request                         | `8Gi`                                                     |
+| `postgresql.persistence.accessMode`             | Postgres Persistent Volume Access Mode                     | `ReadWriteOnce`                                          |
+| `postgresql.image.repository`                   | PostgreSQL image repository                       | `postgres`                                               |
+| `postgresql.image.tag`                          | PostgreSQL image tag                              | `17.4`                                                   |
+| `postgresql.image.pullPolicy`                   | PostgreSQL image pull policy                      | `IfNotPresent`                                           |
+| `postgresql.resources`                          | PostgreSQL resource requests/limits             | `{}`                                                     |
+| `postgresql.nodeSelector`                       | PostgreSQL node selector labels                   | `{}`                                                     |
+| `postgresql.tolerations`                        | PostgreSQL toleration labels                      | `[]`                                                     |
+| `postgresql.affinity`                           | PostgreSQL affinity settings                      | `{}`                                                     |
+| `postgresql.service.type`                       | PostgreSQL service type                           | `ClusterIP`                                              |
+| `postgresql.service.port`                       | PostgreSQL service port                           | `5432`                                                   |
+| `postgresql.service.annotations`                | PostgreSQL service annotations                    | `{}`                                                     |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -150,9 +161,9 @@ $ helm install --name my-release -f values.yaml requarks/wiki
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
-## PostgresSQL
+## PostgreSQL
 
-By default, PostgreSQL is installed as part of the chart.
+By default, PostgreSQL is installed as part of the chart using the official PostgreSQL image from Docker Hub (version 17.4).
 
 ### Using an external PostgreSQL server
 

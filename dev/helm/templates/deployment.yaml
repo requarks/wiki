@@ -56,7 +56,7 @@ spec:
               value: {{ .Values.externalPostgresql.databaseURL }}
             - name: NODE_TLS_REJECT_UNAUTHORIZED
               value: {{ default "1" .Values.externalPostgresql.NODE_TLS_REJECT_UNAUTHORIZED | quote }}
-            {{- else }}
+            {{- else if .Values.postgresql.enabled }}
             - name: DB_HOST
               value: {{ template "wiki.postgresql.host" . }}
             - name: DB_PORT
@@ -64,7 +64,7 @@ spec:
             - name: DB_NAME
               value: {{ default "wiki" .Values.postgresql.postgresqlDatabase }}
             - name: DB_USER
-              value: {{ default "wiki" .Values.postgresql.postgresqlUser }}
+              value: {{ default "postgres" .Values.postgresql.postgresqlUser }}
             - name: DB_SSL
               value: "{{ default "false" .Values.postgresql.ssl }}"
             - name: DB_SSL_CA
@@ -72,12 +72,23 @@ spec:
             - name: DB_PASS
               valueFrom:
                 secretKeyRef:
-                {{- if .Values.postgresql.existingSecret }}
-                  name: {{ .Values.postgresql.existingSecret }}
-                {{- else }}
                   name: {{ template "wiki.postgresql.secret" . }}
-                {{- end }}
                   key: {{ template "wiki.postgresql.secretKey" . }}
+            {{- else if .Values.externalPostgresql }}
+            # External PostgreSQL configuration
+            - name: DB_HOST
+              value: {{ required "External PostgreSQL host is required when postgresql.enabled is false" .Values.externalPostgresql.host | quote }}
+            - name: DB_PORT
+              value: {{ required "External PostgreSQL port is required when postgresql.enabled is false" .Values.externalPostgresql.port | quote }}
+            - name: DB_NAME
+              value: {{ required "External PostgreSQL database name is required when postgresql.enabled is false" .Values.externalPostgresql.database | quote }}
+            - name: DB_USER
+              value: {{ required "External PostgreSQL user is required when postgresql.enabled is false" .Values.externalPostgresql.username | quote }}
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "External PostgreSQL secret name is required when postgresql.enabled is false" .Values.externalPostgresql.existingSecret | quote }}
+                  key: {{ required "External PostgreSQL secret key is required when postgresql.enabled is false" .Values.externalPostgresql.existingSecretKey | quote }}
             {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}

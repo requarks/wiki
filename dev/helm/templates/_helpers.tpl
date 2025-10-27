@@ -63,15 +63,18 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+PostgreSQL fullname
 */}}
 {{- define "wiki.postgresql.fullname" -}}
-{{- if .Values.postgresql.fullnameOverride -}}
-{{- .Values.postgresql.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{ printf "%s-%s" .Release.Name "postgresql"}}
+{{- printf "%s-%s" (include "wiki.fullname" .) "postgresql" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+PostgreSQL selector labels
+*/}}
+{{- define "wiki.postgresql.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "wiki.name" . }}-postgresql
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
@@ -79,9 +82,9 @@ Set postgres host
 */}}
 {{- define "wiki.postgresql.host" -}}
 {{- if .Values.postgresql.enabled -}}
-{{- template "wiki.postgresql.fullname" . -}}
+{{- include "wiki.postgresql.fullname" . -}}
 {{- else -}}
-{{- .Values.postgresql.postgresqlHost | quote -}}
+{{- .Values.postgresql.postgresqlHost | default "localhost" | quote -}}
 {{- end -}}
 {{- end -}}
 
@@ -90,7 +93,7 @@ Set postgres secret
 */}}
 {{- define "wiki.postgresql.secret" -}}
 {{- if .Values.postgresql.enabled -}}
-{{- template "wiki.postgresql.fullname" . -}}
+{{- include "wiki.postgresql.fullname" . -}}
 {{- else -}}
 {{- template "wiki.fullname" . -}}
 {{- end -}}
