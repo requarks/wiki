@@ -126,6 +126,8 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `postgresql.postgresqlPassword`        | External postgres password                  | `nil`                                                      |
 | `postgresql.existingSecret`            | Provide an existing `Secret` for postgres   | `nil`                                                      |
 | `postgresql.existingSecretKey`         | The postgres password key in the existing `Secret`   | `postgresql-password`                              |
+| `postgresql.existingSecretUserKey`     | The postgres username key in the existing `Secret`   | `postgresql-username`                            |
+| `postgresql.existingSecretDatabaseKey` | The postgres database name key in the existing `Secret` | `postgresql-database`                           |
 | `postgresql.postgresqlPort`            | External postgres port                      | `5432`                                                     |
 | `postgresql.ssl`                       | Enable external postgres SSL connection     | `false`                                                   |
 | `postgresql.ca`                        | Certificate of Authority content for postgres  | `nil`                                                     |
@@ -180,6 +182,29 @@ metadata:
   name: {{ template "wiki.postgresql.secret" . }}
 data:
   {{ template "wiki.postgresql.secretKey" . }}: "{{ .Values.postgresql.postgresqlPassword | b64enc }}"
+```
+
+### Using an existing PostgreSQL secret with built-in PostgreSQL
+
+When using the built-in PostgreSQL (default behavior with `postgresql.enabled: true`), you can still use an existing Kubernetes secret for the database credentials by setting:
+
+- `postgresql.existingSecret`: Name of the existing secret containing the credentials
+- `postgresql.existingSecretKey`: Key in the secret containing the password (defaults to `postgresql-password`)
+- `postgresql.existingSecretUserKey`: Key in the secret containing the username (defaults to `postgresql-username`)
+- `postgresql.existingSecretDatabaseKey`: Key in the secret containing the database name (defaults to `postgresql-database`)
+
+Example usage:
+```bash
+# Create your existing secret
+kubectl create secret generic my-postgres-secret \
+  --from-literal=postgresql-username=postgres \
+  --from-literal=postgresql-password=yourpassword \
+  --from-literal=postgresql-database=wiki
+
+# Deploy with existing secret
+helm install my-release requarks/wiki \
+  --set postgresql.enabled=true \
+  --set postgresql.existingSecret=my-postgres-secret
 ```
 
 ## Persistence

@@ -37,20 +37,41 @@ spec:
               name: postgresql
           env:
             - name: POSTGRES_DB
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote }}
+            {{- else }}
               valueFrom:
                 secretKeyRef:
                   name: {{ include "wiki.postgresql.fullname" . }}
                   key: postgresql-database
+            {{- end }}
             - name: POSTGRES_USER
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ default "postgresql-username" .Values.postgresql.existingSecretUserKey | quote }}
+            {{- else }}
               valueFrom:
                 secretKeyRef:
                   name: {{ include "wiki.postgresql.fullname" . }}
                   key: postgresql-username
+            {{- end }}
             - name: POSTGRES_PASSWORD
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ default "postgresql-password" .Values.postgresql.existingSecretKey | quote }}
+            {{- else }}
               valueFrom:
                 secretKeyRef:
                   name: {{ include "wiki.postgresql.fullname" . }}
                   key: postgresql-password
+            {{- end }}
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           livenessProbe:

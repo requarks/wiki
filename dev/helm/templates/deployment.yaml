@@ -62,9 +62,23 @@ spec:
             - name: DB_PORT
               value: "{{ default "5432" .Values.postgresql.postgresqlPort }}"
             - name: DB_NAME
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ template "wiki.postgresql.secretDatabaseKey" . }}
+            {{- else }}
               value: {{ default "wiki" .Values.postgresql.postgresqlDatabase }}
+            {{- end }}
             - name: DB_USER
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ template "wiki.postgresql.secretUserKey" . }}
+            {{- else }}
               value: {{ default "postgres" .Values.postgresql.postgresqlUser }}
+            {{- end }}
             - name: DB_SSL
               value: "{{ default "false" .Values.postgresql.ssl }}"
             - name: DB_SSL_CA

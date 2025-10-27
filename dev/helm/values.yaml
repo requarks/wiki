@@ -186,6 +186,23 @@ postgresql:
   ##
   postgresqlPassword: "postgres"
 
+  ## Use existing secret for PostgreSQL credentials
+  ## If set, the chart will not create a new secret and will use the existing one
+  ##
+  # existingSecret: "my-existing-postgres-secret"
+
+  ## Key in the existing secret containing the password
+  ##
+  # existingSecretKey: "postgresql-password"
+
+  ## Key in the existing secret containing the username (defaults to "postgresql-username")
+  ##
+  # existingSecretUserKey: "postgresql-username"
+
+  ## Key in the existing secret containing the database name (defaults to "postgresql-database")
+  ##
+  # existingSecretDatabaseKey: "postgresql-database"
+
   ## Persistent Volume Storage configuration.
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
   ##

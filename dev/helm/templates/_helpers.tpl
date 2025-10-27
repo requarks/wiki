@@ -92,10 +92,25 @@ Set postgres host
 Set postgres secret
 */}}
 {{- define "wiki.postgresql.secret" -}}
-{{- if .Values.postgresql.enabled -}}
-{{- include "wiki.postgresql.fullname" . -}}
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- .Values.postgresql.existingSecret -}}
+{{- else if .Values.postgresql.enabled -}}
+    {{- include "wiki.postgresql.fullname" . -}}
 {{- else -}}
-{{- template "wiki.fullname" . -}}
+    {{- template "wiki.fullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set postgres secretUserKey
+*/}}
+{{- define "wiki.postgresql.secretUserKey" -}}
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- default "postgresql-username" .Values.postgresql.existingSecretUserKey | quote -}}
+{{- else if .Values.postgresql.enabled -}}
+    "postgresql-username"
+{{- else -}}
+    {{- default "postgresql-username" .Values.postgresql.existingSecretUserKey | quote -}}
 {{- end -}}
 {{- end -}}
 
@@ -103,9 +118,24 @@ Set postgres secret
 Set postgres secretKey
 */}}
 {{- define "wiki.postgresql.secretKey" -}}
-{{- if .Values.postgresql.enabled -}}
-"postgresql-password"
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
+{{- else if .Values.postgresql.enabled -}}
+    "postgresql-password"
 {{- else -}}
-{{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
+    {{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set postgres secretDatabaseKey
+*/}}
+{{- define "wiki.postgresql.secretDatabaseKey" -}}
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote -}}
+{{- else if .Values.postgresql.enabled -}}
+    "postgresql-database"
+{{- else -}}
+    {{- default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote -}}
 {{- end -}}
 {{- end -}}
