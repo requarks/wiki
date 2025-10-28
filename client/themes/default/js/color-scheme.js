@@ -200,8 +200,8 @@ const colors = {
   },
 
   'textLight': {
-    'primary': '#272936',
-    'secondary': '#565862',
+    'primary': '#171a22',
+    'secondary': '#595e6a',
     'tertiary': '#6b6d76',
     'brandPrimary': '#00476d',
     'brandSecondary': '#005786',
@@ -209,7 +209,7 @@ const colors = {
     'inverse': '#ffffff',
     'disabled': '#9a9ba1',
     'white': '#ffffff',
-    'black': '#272936',
+    'black': '#171a22',
     'link': '#00324d',
     'linkHover': '#00476d',
     'linkPressed': '#005786',
@@ -224,8 +224,8 @@ const colors = {
   },
 
   'textDark': {
-    'primary': '#fafafa',
-    'secondary': '#c7c8cb',
+    'primary': '#f8fafc',
+    'secondary': '#f1f4f7',
     'tertiary': '#9a9ba1',
     'brandPrimary': '#94ceed',
     'brandSecondary': '#098dc4',

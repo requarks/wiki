@@ -437,11 +437,11 @@
       v-model='isExportModalVisible'
       max-width='750'
       persistent
-      overlay-color='blue darken-4'
+      overlay-color='black'
       overlay-opacity='.7'
     )
       v-card
-        .dialog-header.is-short.is-blue
+        .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
           v-icon.mr-2(
             v-if='exportFileType === `docx`'
             color='white'
@@ -450,37 +450,46 @@
             v-else-if='exportFileType === `pdf`'
             color='white'
             ) mdi-file-pdf-box
-          span(v-if='exportFileType === `docx`') {{ messages.exportToWord }}
-          span(v-else-if='exportFileType === `pdf`') {{ messages.exportToPdf }}
+          span(v-if='exportFileType === `docx`', style='color: white;') {{ messages.exportToWord }}
+          span(v-else-if='exportFileType === `pdf`', style='color: white;') {{ messages.exportToPdf }}
         v-card-text.pt-5
-          span {{ messages.exportModalSubtitle }}
+          span(:style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`') {{ messages.exportModalSubtitle }}
         v-card-chin(
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
           v-spacer
-          v-btn(
-            text
+          v-btn.rounded-button(
+            outlined
             rounded
+            :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
             @click='isExportModalVisible = false'
             ) {{ messages.cancel }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-if='exportFileType === `docx`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportSinglePageToWord()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-else-if='exportFileType === `pdf`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportSinglePageToPdf()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-if='exportFileType === `docx`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportPageTreeToWord()'
             ) {{ messages.exportPageTree }}
-          v-btn.px-4.action-btn.hover-btn(
+          v-btn.px-4.rounded-button(
             v-else-if='exportFileType === `pdf`'
             rounded
+            dark
+            :color='primaryActionBtnColor'
             @click='exportPageTreeToPdf()'
             ) {{ messages.exportPageTree }}
 </template>
@@ -770,6 +779,11 @@ export default {
         this.colors.teal[800]
     },
     actionBtnColor () {
+      return this.$vuetify.theme.dark ?
+        this.colors.surfaceDark.secondarySapHeavy :
+        this.colors.surfaceLight.secondaryBlueHeavy
+    },
+    primaryActionBtnColor () {
       return this.$vuetify.theme.dark ?
         this.colors.surfaceDark.secondarySapHeavy :
         this.colors.surfaceLight.secondaryBlueHeavy

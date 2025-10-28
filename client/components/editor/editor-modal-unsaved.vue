@@ -1,18 +1,32 @@
 <template lang="pug">
   v-dialog(v-model='isShown', max-width='550')
     v-card
-      .dialog-header.is-short.is-red
+      .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
         v-icon.mr-2(color='white') mdi-alert
-        span {{$t('editor:unsaved.title')}}
+        span(:style='`color: ${colors.textLight.inverse};`') {{$t('editor:unsaved.title')}}
       v-card-text.pt-4
-        .body-2 {{$t('editor:unsaved.body')}}
+        .body-2(:style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`') {{$t('editor:unsaved.body')}}
       v-card-chin
         v-spacer
-        v-btn(text, @click='isShown = false') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='red', @click='discard', dark) {{$t('common:actions.discardChanges')}}
+        v-btn.rounded-button(
+          outlined
+          rounded
+          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+          @click='isShown = false'
+          )
+          span.text-none.text-uppercase {{$t('common:actions.cancel')}}
+        v-btn.rounded-button(
+          rounded
+          dark
+          :color='colors.red[450]'
+          @click='discard'
+          )
+          v-icon(left, color='white') mdi-delete-forever
+          span.text-none.text-uppercase {{$t('common:actions.discardChanges')}}
 </template>
 
 <script>
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   props: {
@@ -22,7 +36,9 @@ export default {
     }
   },
   data() {
-    return { }
+    return {
+      colors
+    }
   },
   computed: {
     isShown: {
@@ -38,3 +54,27 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.v-btn.rounded-button {
+  border-radius: 20px;
+  
+  // Fix text rendering issues
+  span {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-weight: 500;
+  }
+}
+
+// Ensure dialog header has proper styling
+.dialog-header {
+  span {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-weight: 500;
+  }
+}
+</style>
