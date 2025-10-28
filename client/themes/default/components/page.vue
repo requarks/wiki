@@ -453,7 +453,7 @@
           span(v-if='exportFileType === `docx`', style='color: white;') {{ messages.exportToWord }}
           span(v-else-if='exportFileType === `pdf`', style='color: white;') {{ messages.exportToPdf }}
         v-card-text.pt-5
-          span {{ messages.exportModalSubtitle }}
+          span(:style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`') {{ messages.exportModalSubtitle }}
         v-card-chin(
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
