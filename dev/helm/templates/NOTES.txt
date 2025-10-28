@@ -19,3 +19,16 @@
   echo "Visit http://127.0.0.1:8080 to use your application"
   kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:80
 {{- end }}
+
+{{- if .Values.postgresql.enabled }}
+2. PostgreSQL database has been deployed as part of this release:
+   - Database: {{ .Values.postgresql.postgresqlDatabase }}
+   - User: {{ .Values.postgresql.postgresqlUser }}
+   - Service: {{ include "wiki.postgresql.fullname" . }}
+   - Version: {{ .Values.postgresql.image.tag }}
+   - Persistence: {{ .Values.postgresql.persistence.enabled | ternary "Enabled" "Disabled" }}
+{{- end }}
+
+{{- if not .Values.postgresql.enabled }}
+2. External PostgreSQL setup detected. Ensure your database is accessible at the configured host.
+{{- end }}
