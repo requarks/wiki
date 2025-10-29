@@ -780,7 +780,9 @@ class User extends Model {
       // Invalidate cache for all affected pages to ensure updated user info is reflected
       for (const page of affectedPages) {
         await WIKI.models.pages.deletePageFromCache(page.hash)
-        WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+        if (WIKI.events && WIKI.events.outbound) {
+          WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+        }
       }
 
       await WIKI.models.userKeys.query().delete().where('userId', id)

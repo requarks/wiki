@@ -78,8 +78,14 @@ async function anonymizePages(userSiteInactivity, anonymousUser) {
   // Invalidate cache for all affected pages to ensure updated user info is reflected
   for (const page of affectedPages) {
     await WIKI.models.pages.deletePageFromCache(page.hash)
-    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+    // Only emit cache invalidation event if events system is available (may not be in job worker context)
+    if (WIKI.events && WIKI.events.outbound) {
+      WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+    }
   }
+  
+  // Log completion for privacy compliance audit trail
+  WIKI.logger.info(`[PRIVACY] Anonymized ${affectedPages.length} pages for user ${userSiteInactivity.userId} on site ${userSiteInactivity.siteId}`)
 }
 
 async function removeInactivityEntry(userSiteInactivity) {
