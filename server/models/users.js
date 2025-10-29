@@ -762,11 +762,26 @@ class User extends Model {
   static async deleteUser(id, replaceId) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
+      // Get all pages where user was author or creator before updating (for cache invalidation)
+      const affectedPages = await WIKI.models.pages.query()
+        .select('hash')
+        .where(builder => {
+          builder
+            .where({ authorId: id })
+            .orWhere({ creatorId: id })
+        })
+
       await WIKI.models.assets.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.comments.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.pageHistory.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.pages.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.pages.query().patch({ creatorId: replaceId }).where('creatorId', id)
+
+      // Invalidate cache for all affected pages to ensure updated user info is reflected
+      for (const page of affectedPages) {
+        await WIKI.models.pages.deletePageFromCache(page.hash)
+        WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+      }
 
       await WIKI.models.userKeys.query().delete().where('userId', id)
       await WIKI.models.users.query().deleteById(id)
