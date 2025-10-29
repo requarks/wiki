@@ -1,7 +1,9 @@
 const graphHelper = require('../../helpers/graph')
 const safeRegex = require('safe-regex')
 const _ = require('lodash')
+const { ensureMail } = require('../../core/ensure-mail')
 const { handleUserSiteInactivityAfterUnassign, getSiteIdsFromGroups } = require('../services/userSiteInactivityService')
+const userService = require('../services/userService')
 
 const {
   getManagedSiteIdsFromGroups,
@@ -204,6 +206,17 @@ module.exports = {
 
       // Assign user to group
       await grp.$relatedQuery('users').relate(usr.id)
+
+      // Send notification email (backend enforced) - ignore errors to not block assignment
+      try {
+        ensureMail()
+        const sent = await userService.sendUserAddedToGroupEmail(usr, grp)
+        if (!sent) {
+          WIKI.logger.warn(`Group assignment email not sent for user ${usr.email} -> group ${grp.name}. Transport or template may be missing.`)
+        }
+      } catch (err) {
+        WIKI.logger.warn(`Failed to send user-added-to-group email to ${usr.email} for group ${grp.name}: ${err.message}`)
+      }
 
       // Revoke tokens for this user
       WIKI.auth.revokeUserTokens({ id: usr.id, kind: 'u' })

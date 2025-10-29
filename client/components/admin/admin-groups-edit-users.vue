@@ -63,11 +63,6 @@ import assignUserMutation from 'gql/admin/groups/groups-mutation-assign.gql'
 import unassignUserMutation from 'gql/admin/groups/groups-mutation-unassign.gql'
 import groupsQueryLastGroupOfSite from 'gql/admin/groups/groups-query-last-group-site.gql'
 import gql from 'graphql-tag'
-const SEND_USER_ADDED_TO_GROUP_EMAIL = gql`
-  mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!) {
-    sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId)
-  }
-`
 export default {
   props: {
     value: {
@@ -118,15 +113,6 @@ export default {
           variables: {
             groupId: this.group.id,
             userId: user.id
-          }
-        })
-
-        // Send the email via backend
-        await this.$apollo.mutate({
-          mutation: SEND_USER_ADDED_TO_GROUP_EMAIL,
-          variables: {
-            userId: user.id,
-            groupId: this.group.id
           }
         })
 
