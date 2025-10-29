@@ -149,7 +149,7 @@ jobs:
     repeat: true
   sendScriptUserWelcomeEmails:
     onInit: true
-    schedule: 0 * * * *
+    schedule: PT2M
     offlineSkip: false
     repeat: true
 groups:
