@@ -1,0 +1,7 @@
+key: markdownGithubAlerts
+title: GitHub-Style Alerts
+description: Parse GitHub-style alert syntax (> [!NOTE], > [!WARNING], etc.)
+author: requarks.io
+icon: mdi-alert-box-outline
+enabledDefault: true
+dependsOn: markdownCore
