@@ -586,7 +586,7 @@ class User extends Model {
    *
    * @param {Object} param0 User Fields
    */
-  static async createNewUser({ providerKey, email, passwordRaw, name, groups, mustChangePassword, sendWelcomeEmail }) {
+  static async createNewUser({ providerKey, email, passwordRaw, name, groups = [], mustChangePassword, sendWelcomeEmail = true, createdByScript = false }) {
     // Input sanitization
     email = _.toLower(email)
 
@@ -663,7 +663,10 @@ class User extends Model {
         isSystem: false,
         isActive: true,
         isVerified: true,
-        mustChangePwd: false
+        mustChangePwd: false,
+        // new flags introduced by migration 2.5.143
+        welcomeMailWasSent: false,
+        createdByScript: createdByScript === true
       }
 
       if (providerKey === `local`) {
@@ -679,7 +682,12 @@ class User extends Model {
       }
 
       if (sendWelcomeEmail) {
-        userService.sendWelcomeEmail(newUsr)
+        try {
+          await userService.sendWelcomeEmail(newUsr)
+          await WIKI.models.users.query().patch({ welcomeMailWasSent: true }).where({ id: newUsr.id })
+        } catch (err) {
+          WIKI.logger.warn(`Failed to send welcome email to ${newUsr.email}: ${err.message}`)
+        }
       }
     } else {
       throw new WIKI.Error.AuthAccountAlreadyExists()
@@ -717,17 +725,32 @@ class User extends Model {
       if (_.isArray(groups)) {
         const usrGroupsRaw = await usr.$relatedQuery('groups')
         const usrGroups = _.map(usrGroupsRaw, 'id')
-        // Relate added groups
+        // Determine added and removed groups
         const addUsrGroups = _.difference(groups, usrGroups)
-        for (const grp of addUsrGroups) {
-          await usr.$relatedQuery('groups').relate(grp)
-        }
-        // Unrelate removed groups
         const remUsrGroups = _.difference(usrGroups, groups)
-        for (const grp of remUsrGroups) {
-          await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
-          // Handle user inactivity after unassign
-          const groupObj = usrGroupsRaw.find(g => g.id === grp)
+
+        // Relate added groups and send notification email(s)
+        for (const grpId of addUsrGroups) {
+          await usr.$relatedQuery('groups').relate(grpId)
+          try {
+            const groupObj = await WIKI.models.groups.query().findById(grpId)
+            if (groupObj) {
+              const sent = await userService.sendUserAddedToGroupEmail(usr, groupObj)
+              if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+                WIKI.logger.info(`[mail][user.update] userId=${usr.id} email=${usr.email} addedToGroup=${groupObj.name} sent=${sent}`)
+              }
+            }
+          } catch (err) {
+            if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+              WIKI.logger.warn(`[mail][user.update] failed to send group-add email userId=${usr.id} groupId=${grpId}: ${err.message}`)
+            }
+          }
+        }
+
+        // Unrelate removed groups
+        for (const grpId of remUsrGroups) {
+          await usr.$relatedQuery('groups').unrelate().where('groupId', grpId)
+          const groupObj = usrGroupsRaw.find(g => g.id === grpId)
           if (groupObj) {
             await handleUserSiteInactivityAfterUnassign(groupObj, usr)
           }

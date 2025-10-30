@@ -50,8 +50,12 @@ module.exports = {
       WIKI.logger.warn('Cannot send email because mail is not setup in the administration area!')
       throw new WIKI.Error.MailNotConfigured()
     }
+    const diag = process.env.LOG_MAIL_DIAGNOSTICS === '1'
+    if (diag) {
+      WIKI.logger?.info?.(`[mail][core] preparing template='${opts.template}' to='${opts.to}' host='${WIKI.config.mail?.host}'`)
+    }
     await this.loadTemplate(opts.template)
-    return this.transport.sendMail({
+    const message = {
       headers: {
         'x-mailer': 'Wiki.js'
       },
@@ -66,7 +70,15 @@ module.exports = {
         copyright: WIKI.config.company.length > 0 ? WIKI.config.company : 'Powered by Wiki.js',
         ...opts.data
       })
-    })
+    }
+    try {
+      const res = await this.transport.sendMail(message)
+      if (diag) { WIKI.logger?.info?.(`[mail][core] sent template='${opts.template}' to='${opts.to}' messageId='${res.messageId || ''}'`) }
+      return res
+    } catch (err) {
+      if (diag) { WIKI.logger?.warn?.(`[mail][core] error template='${opts.template}' to='${opts.to}': ${err.message}`) }
+      throw err
+    }
   },
   async loadTemplate(key) {
     if (_.has(this.templates, key)) { return }

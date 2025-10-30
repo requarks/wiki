@@ -1,5 +1,6 @@
 const graphHelper = require('../../helpers/graph')
 const renderPage = require('../../jobs/render-page')
+const { ensureMail } = require('../../core/ensure-mail')
 
 /* global WIKI */
 
@@ -67,7 +68,13 @@ function handleDeleteError(err) {
 
 async function sendWelcomeEmail(user) {
   let companyName = WIKI.config.companyName || process.env.COMPANY_NAME || 'Dummy Company'
-
+  if (!ensureMail()) {
+    WIKI.logger && WIKI.logger.warn && WIKI.logger.warn(`Mail subsystem not initialized. Skipping welcome email for ${user.email}`)
+    return false
+  }
+  if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+    WIKI.logger?.info?.(`[mail][welcome] send attempt user=${user.email}`)
+  }
   await WIKI.mail.send({
     template: 'account-welcome',
     to: user.email,
@@ -82,22 +89,39 @@ async function sendWelcomeEmail(user) {
       supportLink: `${WIKI.config.host}/default/user-guide/SupportHub`
     }
   })
+  return true
 }
 
 async function sendUserAddedToGroupEmail(user, group) {
   const url = `${WIKI.config.host}`
-  await WIKI.mail.send({
-    template: 'user-added-to-group',
-    to: user.email,
-    subject: `You've been added to the group ${group.name}`,
-    data: {
-      username: user.name,
-      groupName: group.name,
-      groupDescription: group.description || '',
-      url: url,
-      mailLogoSrc: getMailLogoSource()
+  if (!ensureMail()) {
+    WIKI.logger?.warn?.(`Mail subsystem not initialized. Skipping group add email for ${user.email} -> ${group.name}`)
+    return false
+  }
+  try {
+    if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+      WIKI.logger?.info?.(`[mail][group] send attempt user=${user.email} group=${group.name}`)
     }
-  })
+    await WIKI.mail.send({
+      template: 'user-added-to-group',
+      to: user.email,
+      subject: `You've been added to the group ${group.name}`,
+      data: {
+        username: user.name,
+        groupName: group.name,
+        groupDescription: group.description || '',
+        url: url,
+        mailLogoSrc: getMailLogoSource()
+      }
+    })
+    if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+      WIKI.logger?.info?.(`[mail][group] send success user=${user.email} group=${group.name}`)
+    }
+    return true
+  } catch (err) {
+    WIKI.logger?.warn?.(`Failed to send group email to ${user.email}: ${err.message}`)
+    return false
+  }
 }
 
 function getMailLogoSource() {

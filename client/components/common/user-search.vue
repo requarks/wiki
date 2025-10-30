@@ -144,9 +144,6 @@ export default {
           }
         })
 
-        // Now send the "added to group" email
-        await this.sendUserAddedToGroupEmail(user, group)
-
         this.$store.commit('showNotification', {
           style: 'success',
           message: `${user.name} has been added to the group ${group.name} and notified by email.`,
@@ -161,28 +158,7 @@ export default {
         })
       }
     },
-    async sendUserAddedToGroupEmail(user, group) {
-      try {
-        await this.$apollo.mutate({
-          mutation: gql`
-            mutation SendUserAddedToGroupEmail($userId: Int!, $groupId: Int!) {
-              sendUserAddedToGroupEmail(userId: $userId, groupId: $groupId)
-            }
-          `,
-          variables: {
-            userId: user.id,
-            groupId: group.id
-          }
-        })
-      } catch (err) {
-        console.error('Failed to send user-added-to-group email:', err)
-        this.$store.commit('showNotification', {
-          style: 'error',
-          message: 'Failed to send group notification email.',
-          icon: 'alert'
-        })
-      }
-    },
+
     onUserCreated() {
       this.$store.commit('showNotification', {
         style: 'success',
