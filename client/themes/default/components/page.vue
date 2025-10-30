@@ -412,7 +412,7 @@
               .comments-main
                 slot(name='comments')
     loader(v-model='isLoading', :title='messages.exporting')
-    nav-footer
+    nav-footer(:is-home='path === "home"')
     notify
     search-results
     v-fab-transition
