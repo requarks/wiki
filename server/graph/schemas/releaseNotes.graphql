@@ -1,0 +1,30 @@
+# ===============================================
+# RELEASE NOTES (Read-Only Queries)
+# ===============================================
+
+extend type Query {
+  # List release infos, optionally filtering to display = true
+  releaseInfos(displayOnly: Boolean = true): [ReleaseInfo]
+  # Fetch notes for a specific version
+  releaseNotes(versionNumber: String!): [ReleaseNote]
+  # Latest release (by release_date desc)
+  latestReleaseInfo: ReleaseInfo
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type ReleaseInfo {
+  versionNumber: String!
+  releaseDate: Date
+  display: Boolean!
+  notes: [ReleaseNote]!
+}
+
+type ReleaseNote {
+  id: ID!
+  versionNumber: String!
+  notesEn: String!
+  notesDe: String!
+}

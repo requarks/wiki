@@ -1,0 +1,11 @@
+query ReleaseInfos($displayOnly: Boolean = true) {
+  releaseInfos(displayOnly: $displayOnly) {
+    versionNumber
+    releaseDate
+    notes {
+      id
+      notesEn
+      notesDe
+    }
+  }
+}
