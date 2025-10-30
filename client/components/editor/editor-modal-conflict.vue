@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-card.editor-modal-conflict.animated.fadeIn(flat, tile)
     .pa-4
-      v-toolbar.radius-7(flat, :color='$vuetify.theme.dark ? colors.surfaceDark.secondaryNeutralLite : colors.surfaceDark.secondaryNeutralLite', style='border-bottom-left-radius: 0; border-bottom-right-radius: 0;', dark)
+      v-toolbar.radius-7(flat, :color='colors.surfaceDark.secondaryNeutralLite', style='border-bottom-left-radius: 0; border-bottom-right-radius: 0;', dark)
         v-icon.mr-3 mdi-merge
         .subtitle-1 {{$t('editor:conflict.title')}}
         v-spacer

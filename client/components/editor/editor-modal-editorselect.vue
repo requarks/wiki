@@ -1,7 +1,7 @@
 <template lang='pug'>
   v-dialog(v-model='isShown', persistent, max-width='700', no-click-animation)
-    v-btn(fab, fixed, bottom, right, color='grey darken-3', dark, @click='goBack', style='width: 50px;'): v-icon mdi-undo-variant
-    v-card.radius-7(color='blue darken-3', dark)
+    v-btn(fab, fixed, bottom, right, color='grey darken-3', :dark='$vuetify.theme.dark', @click='goBack', style='width: 50px;'): v-icon mdi-undo-variant
+    v-card.radius-7(color='blue darken-3', :dark='$vuetify.theme.dark')
       v-card-text.text-center.py-4
         .subtitle-1.white--text {{$t('editor:select.title')}}
         v-container(grid-list-lg, fluid)
@@ -63,6 +63,7 @@
 <script>
 import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   props: {
@@ -73,7 +74,8 @@ export default {
   },
   data() {
     return {
-      templateDialogIsShown: false
+      templateDialogIsShown: false,
+      colors: colors
     }
   },
   computed: {

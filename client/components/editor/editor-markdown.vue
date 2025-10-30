@@ -1063,7 +1063,7 @@ $editor-bg: mc('surface-dark', 'page-background');
   }
 
   &-editor {
-    background-color: $editor-bg;
+    background-color: mc('surface-dark', 'page-background');
     flex: 1 1 50%;
     display: block;
     height: $editor-height;
@@ -1238,7 +1238,8 @@ $editor-bg: mc('surface-dark', 'page-background');
     height: auto;
     font-family: 'Ubuntu Mono', monospace;
     font-size: .9rem;
-    background-color: $editor-bg;
+    background-color: mc('surface-dark', 'page-background');
+    color: mc('text-dark', 'primary');
 
     .cm-header-1 {
       font-size: 1.5rem;
@@ -1262,7 +1263,8 @@ $editor-bg: mc('surface-dark', 'page-background');
 
   .CodeMirror-wrap pre.CodeMirror-line, .CodeMirror-wrap pre.CodeMirror-line-like {
     word-break: break-word;
-    background-color: $editor-bg;
+    background-color: mc('surface-dark', 'page-background');
+    color: mc('text-dark', 'primary');
 
     ::selection {
       background-color: mc('neutral', '750');
