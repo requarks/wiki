@@ -13,7 +13,8 @@ const WIKI = {
       query: jest.fn()
     },
     userSiteInactivity: { query: jest.fn() }
-  }
+  },
+  logger: { info: jest.fn() }
 }
 
 describe('anonymizeInactiveUsersHelpers', () => {
@@ -141,10 +142,22 @@ describe('anonymizeInactiveUsersHelpers', () => {
   })
 
   describe('anonymizePages', () => {
-    it('should patch authorId and creatorId for pages', async () => {
+    it('should patch authorId and creatorId for pages and invalidate cache', async () => {
       const patch = jest.fn()
       const where = jest.fn(() => ({ patch }))
-      WIKI.models.pages.query.mockReturnValue({ where, patch })
+      const affectedPages = [{ hash: 'hash1' }, { hash: 'hash2' }]
+      
+      // Mock chain: query() -> where(builder) -> select('hash') -> Promise
+      const select = jest.fn().mockResolvedValue(affectedPages)
+      const whereWithBuilder = jest.fn(() => ({ select }))
+      
+      // Mock the query to return affected pages first, then allow patching
+      WIKI.models.pages.query
+        .mockReturnValueOnce({ where: whereWithBuilder })  // First call for getting affected pages
+        .mockReturnValue({ where, patch }) // Subsequent calls for patching
+
+      WIKI.models.pages.deletePageFromCache = jest.fn()
+      WIKI.events = { outbound: { emit: jest.fn() } }
 
       await helpers.anonymizePages({ userId: 42, siteId: 'siteA' }, { id: 999 })
 
@@ -152,6 +165,12 @@ describe('anonymizeInactiveUsersHelpers', () => {
       expect(patch).toHaveBeenCalledWith({ authorId: 999 })
       expect(where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
       expect(patch).toHaveBeenCalledWith({ creatorId: 999 })
+      
+      // Verify cache invalidation
+      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledWith('hash1')
+      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledWith('hash2')
+      expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash1')
+      expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash2')
     })
   })
 
