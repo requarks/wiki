@@ -11,26 +11,34 @@ jest.mock('../../../graph/services/userSiteInactivityService', () => ({
 /* global WIKI */
 
 describe('users.update group-add email', () => {
+    let relatedGroups
+    let userObj
+
+    const createRelatedQueryMock = (groups) => {
+        return jest.fn().mockImplementation(rel => {
+            if (rel === 'groups') {
+                return {
+                    relate: async (gid) => { groups.push({ id: gid, name: 'Group ' + gid }) },
+                    unrelate: () => ({ where: () => Promise.resolve() }),
+                    then: (resolve) => resolve(groups)
+                }
+            }
+        })
+    }
+
     beforeAll(() => {
         global.WIKI = global.WIKI || {}
         WIKI.config = WIKI.config || { mail: { enabled: true } }
         WIKI.logger = WIKI.logger || { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
         WIKI.models = WIKI.models || {}
-        // Minimal groups + users model mocks
-        const relatedGroups = []
-        const userObj = {
+        
+        relatedGroups = []
+        userObj = {
             id: 123,
             email: 'test@example.com',
-            $relatedQuery: jest.fn().mockImplementation(rel => {
-                if (rel === 'groups') {
-                    return {
-                        relate: async (gid) => { relatedGroups.push({ id: gid, name: 'Group ' + gid }) },
-                        unrelate: () => ({ where: () => Promise.resolve() }),
-                        then: (resolve) => resolve(relatedGroups)
-                    }
-                }
-            })
+            $relatedQuery: createRelatedQueryMock(relatedGroups)
         }
+        
         WIKI.models.groups = {
             query: () => ({ findById: (id) => Promise.resolve({ id, name: 'Group ' + id }) })
         }
