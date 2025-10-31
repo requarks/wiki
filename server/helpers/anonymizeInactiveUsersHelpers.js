@@ -59,13 +59,18 @@ async function anonymizePageHistory(userSiteInactivity, anonymousUser, user) {
 
 async function anonymizePages(userSiteInactivity, anonymousUser) {
   // Get all pages where user was author or creator before updating
-  const affectedPages = await WIKI.models.pages.query()
-    .where(builder => {
-      builder
-        .where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
-        .orWhere({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
-    })
+  const authorPages = await WIKI.models.pages.query()
+    .where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
     .select('hash')
+  
+  const creatorPages = await WIKI.models.pages.query()
+    .where({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
+    .select('hash')
+  
+  // Combine and deduplicate the affected pages
+  const allHashes = [...authorPages.map(p => p.hash), ...creatorPages.map(p => p.hash)]
+  const uniqueHashes = [...new Set(allHashes)]
+  const affectedPages = uniqueHashes.map(hash => ({ hash }))
 
   // Update database records
   await WIKI.models.pages.query()
