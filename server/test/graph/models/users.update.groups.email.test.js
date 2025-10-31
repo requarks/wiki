@@ -4,6 +4,10 @@ jest.mock('../../../graph/services/userService', () => ({
     sendUserAddedToGroupEmail: jest.fn().mockResolvedValue(true)
 }))
 
+jest.mock('../../../graph/services/userSiteInactivityService', () => ({
+    handleUserSiteInactivityAfterUnassign: jest.fn().mockResolvedValue()
+}))
+
 /* global WIKI */
 
 describe('users.update group-add email', () => {
@@ -21,7 +25,8 @@ describe('users.update group-add email', () => {
                 if (rel === 'groups') {
                     return {
                         relate: async (gid) => { relatedGroups.push({ id: gid, name: 'Group ' + gid }) },
-                        unrelate: () => ({ where: () => Promise.resolve() })
+                        unrelate: () => ({ where: () => Promise.resolve() }),
+                        then: (resolve) => resolve(relatedGroups)
                     }
                 }
             })
