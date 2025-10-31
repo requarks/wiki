@@ -60,12 +60,12 @@ async function anonymizePageHistory(userSiteInactivity, anonymousUser, user) {
 async function anonymizePages(userSiteInactivity, anonymousUser) {
   // Get all pages where user was author or creator before updating
   const affectedPages = await WIKI.models.pages.query()
-    .column('hash')
     .where(builder => {
       builder
         .where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
         .orWhere({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
     })
+    .select('hash')
 
   // Update database records
   await WIKI.models.pages.query()
