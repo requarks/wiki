@@ -60,12 +60,11 @@ async function anonymizePageHistory(userSiteInactivity, anonymousUser, user) {
 async function anonymizePages(userSiteInactivity, anonymousUser) {
   // Get all pages where user was author or creator before updating
   const affectedPages = await WIKI.models.pages.query()
-    .select('hash')
     .where(builder => {
-      builder
-        .where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
+      builder.where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
         .orWhere({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
     })
+    .select('hash')
 
   // Update database records
   await WIKI.models.pages.query()
@@ -78,13 +77,11 @@ async function anonymizePages(userSiteInactivity, anonymousUser) {
   // Invalidate cache for all affected pages to ensure updated user info is reflected
   for (const page of affectedPages) {
     await WIKI.models.pages.deletePageFromCache(page.hash)
-    // Only emit cache invalidation event if events system is available (may not be in job worker context)
     if (WIKI.events && WIKI.events.outbound) {
       WIKI.events.outbound.emit('deletePageFromCache', page.hash)
     }
   }
-  
-  // Log completion for privacy compliance audit trail
+  // Log completion for privacy compliance
   WIKI.logger.info(`[PRIVACY] Anonymized ${affectedPages.length} pages for user ${userSiteInactivity.userId} on site ${userSiteInactivity.siteId}`)
 }
 
