@@ -61,15 +61,17 @@ jobs:
       - name: Create deploy bundle (Linux)
         run: |
           mkdir -p _dist/wiki
-          # copy compiled app (adjust paths if your repo structure differs)
-          rsync -a --exclude='.git' --exclude='.github' --exclude='node_modules' ./ _dist/wiki/
-          # keep only production deps to shrink bundle
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='.yarn/*' \
+            --exclude='.yarnrc*' \
+            --exclude='.yarn.lock.*' \
+            ./ _dist/wiki/
           (cd _dist/wiki && rm -rf node_modules && yarn --production --frozen-lockfile)
-          # config sample (don’t ship your real config)
           cp ./config.sample.yml _dist/wiki/config.sample.yml
-          # never ship a real config.yml in the tar
           rm -f _dist/wiki/config.yml
-          # create tarball
           find _dist/wiki/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C _dist/wiki/ -T -
 
       - name: Upload artifact
