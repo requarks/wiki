@@ -4,7 +4,7 @@
   "releaseDate": "2019-01-01T01:01:01.000Z",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
-  "dev": true,
+  
   "scripts": {
     "start": "node server",
     "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider node dev",
@@ -231,6 +231,7 @@
     "babel-plugin-prismjs": "2.0.1",
     "babel-plugin-transform-imports": "2.0.0",
     "cache-loader": "4.1.0",
+    "caniuse-lite": "^1.0.30001752",
     "canvas-confetti": "1.3.1",
     "cash-dom": "8.1.3",
     "chart.js": "2.9.4",
@@ -337,9 +338,7 @@
     "zxcvbn": "4.4.2"
   },
   "resolutions": {
-    "apollo-server-express/**/graphql-tools": "4.0.8",
-    "graphql": "15.3.0",
-    "passport-saml/**/xml-crypto": "2.1.6"
+    "graphql": "15.3.0"
   },
   "browserslist": [
     "> 1%",
