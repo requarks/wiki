@@ -221,8 +221,11 @@ deploy-to-staging:
   script:
     - |
       echo "Promoting image to staging..."
-      echo "Merge request source branch: ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
-      if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^(hotfix)/ ]]; then
+      echo "DEBUG: Merge request source branch: '${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}'"
+      echo "DEBUG: Built image tag: '${BUILT_IMAGE_TAG}'"
+      echo "DEBUG: Commit message: '${CI_COMMIT_MESSAGE}'"
+      # Detect hotfix branch using multiple methods
+      if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^hotfix/ ]] || [[ "${BUILT_IMAGE_TAG}" =~ ^hotfix- ]] || [[ "${CI_COMMIT_MESSAGE}" =~ hotfix ]]; then
         echo "Deploying hotfix branch image to staging..."
         if [ -n "${BUILT_IMAGE_TAG}" ]; then
           export HOTFIX_IMAGE_TAG="${BUILT_IMAGE_TAG}"
