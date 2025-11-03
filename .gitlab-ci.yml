@@ -161,18 +161,40 @@ docker-build:
     - bash scripts/build_images.sh
     - |
       if [ -f newimage.txt ]; then
+        echo "Image built and tagged successfully. Content of newimage.txt:"
+        cat newimage.txt
+        
         # Extract image tag for different branch types - detect hotfix using multiple methods
         if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_BRANCH" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_MESSAGE" =~ hotfix ]]; then
-          echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'hotfix-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
+          echo "Hotfix branch detected, extracting hotfix tag..."
+          # Try to extract the full tag after the colon from NEW_IMAGE
+          FULL_IMAGE=$(grep "NEW_IMAGE=" newimage.txt | cut -d'=' -f2)
+          if [ -n "${FULL_IMAGE}" ]; then
+            HOTFIX_TAG=$(echo "${FULL_IMAGE}" | awk -F':' '{print $2}')
+            echo "BUILT_IMAGE_TAG=${HOTFIX_TAG}" >> build.env
+            echo "Extracted hotfix tag: ${HOTFIX_TAG}"
+          else
+            echo "ERROR: Could not extract NEW_IMAGE from newimage.txt" >&2
+          fi
         else
           # For dev2 or other branches, extract the appropriate tag
           TAG=$(cat newimage.txt | grep -oE '(dev2-[^[:space:]]*|[^[:space:]]*-[^[:space:]]*)' | head -1 | sed 's/.*://')
           echo "BUILT_IMAGE_TAG=${TAG}" >> build.env
+          echo "Extracted non-hotfix tag: ${TAG}"
         fi
-        echo "Image built and tagged successfully. Content of newimage.txt:"
-        cat newimage.txt
-        echo "DEBUG: Commit message for tag extraction: '${CI_COMMIT_MESSAGE}'"
-        echo "DEBUG: Extracted BUILT_IMAGE_TAG will be saved to build.env"
+        
+        echo "DEBUG: Branch name: '${CI_COMMIT_BRANCH}'"
+        echo "DEBUG: Merge request source branch: '${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}'"
+        echo "DEBUG: Commit message: '${CI_COMMIT_MESSAGE}'"
+        echo "DEBUG: Commit SHA: '${CI_COMMIT_SHORT_SHA}'"
+        
+        if [ -f build.env ]; then
+          echo "Contents of build.env:"
+          cat build.env
+        fi
+      else
+        echo "ERROR: newimage.txt not found after build" >&2
+        exit 1
       fi
   artifacts:
     paths:
@@ -223,7 +245,9 @@ deploy-to-staging:
   stage: promote-prod-release-version
   needs:
     - job: docker-build
-      optional: true
+      optional: false
+    - job: push-docker-image
+      optional: false
   script:
     - |
       echo "Promoting image to staging..."
@@ -233,23 +257,42 @@ deploy-to-staging:
       # Detect hotfix branch using multiple methods
       if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^hotfix/ ]] || [[ "${BUILT_IMAGE_TAG}" =~ ^hotfix- ]] || [[ "${CI_COMMIT_MESSAGE}" =~ hotfix ]]; then
         echo "Deploying hotfix branch image to staging..."
+        
+        # Try multiple methods to get the correct hotfix tag
         if [ -n "${BUILT_IMAGE_TAG}" ]; then
           export HOTFIX_IMAGE_TAG="${BUILT_IMAGE_TAG}"
           echo "Using hotfix built image tag: ${HOTFIX_IMAGE_TAG}"
-        else
-          if [ -f newimage.txt ]; then
-            source newimage.txt || true
-            FALLBACK_TAG=$(echo "${NEW_IMAGE}" | awk -F':' '{print $2}')
-            if [ -n "${FALLBACK_TAG}" ]; then
-              export HOTFIX_IMAGE_TAG="${FALLBACK_TAG}"
-              echo "Using fallback parsed tag from NEW_IMAGE: ${HOTFIX_IMAGE_TAG}"
-            fi
+        elif [ -f newimage.txt ]; then
+          echo "Reading from newimage.txt:"
+          cat newimage.txt
+          # Extract the full image name and get just the tag part
+          FULL_IMAGE=$(grep "NEW_IMAGE=" newimage.txt | cut -d'=' -f2)
+          if [ -n "${FULL_IMAGE}" ]; then
+            export HOTFIX_IMAGE_TAG=$(echo "${FULL_IMAGE}" | awk -F':' '{print $2}')
+            echo "Extracted hotfix tag from NEW_IMAGE: ${HOTFIX_IMAGE_TAG}"
           fi
         fi
+        
+        # Final fallback: use current commit SHA with hotfix prefix
+        if [ -z "${HOTFIX_IMAGE_TAG}" ]; then
+          if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^hotfix/(.+)$ ]]; then
+            HOTFIX_NAME="${BASH_REMATCH[1]}"
+            export HOTFIX_IMAGE_TAG="hotfix-${HOTFIX_NAME}-${CI_COMMIT_SHORT_SHA}"
+          else
+            export HOTFIX_IMAGE_TAG="hotfix-${CI_COMMIT_SHORT_SHA}"
+          fi
+          echo "Using fallback hotfix tag: ${HOTFIX_IMAGE_TAG}"
+        fi
+        
         if [ -z "${HOTFIX_IMAGE_TAG}" ]; then
           echo "ERROR: Could not determine hotfix source image tag." >&2
+          echo "DEBUG: CI_MERGE_REQUEST_SOURCE_BRANCH_NAME=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
+          echo "DEBUG: CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}"
+          echo "DEBUG: BUILT_IMAGE_TAG=${BUILT_IMAGE_TAG}"
           exit 1
         fi
+        
+        echo "Final hotfix image tag: ${HOTFIX_IMAGE_TAG}"
         bash scripts/promote_hotfix_to_staging.sh
       else
         echo "Deploying dev2 branch image to staging..."
