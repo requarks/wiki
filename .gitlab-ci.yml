@@ -165,7 +165,9 @@ docker-build:
         if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_BRANCH" =~ ^hotfix/ ]]; then
           echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'hotfix-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
         else
-          echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
+          # For dev2 or other branches, extract the appropriate tag
+          TAG=$(cat newimage.txt | grep -oE '(dev2-[^[:space:]]*|[^[:space:]]*-[^[:space:]]*)' | head -1 | sed 's/.*://')
+          echo "BUILT_IMAGE_TAG=${TAG}" >> build.env
         fi
         echo "Image built and tagged successfully. Content of newimage.txt:"
         cat newimage.txt
@@ -217,28 +219,31 @@ deploy-to-staging:
     - job: docker-build
       optional: true
   script:
-    - echo "Promoting image to staging..."
-    - echo "Merge request source branch: ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
     - |
+      echo "Promoting image to staging..."
+      echo "Merge request source branch: ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
       if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^(hotfix)/ ]]; then
+        echo "Deploying hotfix branch image to staging..."
         if [ -n "${BUILT_IMAGE_TAG}" ]; then
-          export SOURCE_IMAGE_TAG="${BUILT_IMAGE_TAG}"
-          echo "Using hotfix built image tag: ${SOURCE_IMAGE_TAG}"
+          export HOTFIX_IMAGE_TAG="${BUILT_IMAGE_TAG}"
+          echo "Using hotfix built image tag: ${HOTFIX_IMAGE_TAG}"
         else
           if [ -f newimage.txt ]; then
             source newimage.txt || true
             FALLBACK_TAG=$(echo "${NEW_IMAGE}" | awk -F':' '{print $2}')
             if [ -n "${FALLBACK_TAG}" ]; then
-              export SOURCE_IMAGE_TAG="${FALLBACK_TAG}"
-              echo "Using fallback parsed tag from NEW_IMAGE: ${SOURCE_IMAGE_TAG}"
+              export HOTFIX_IMAGE_TAG="${FALLBACK_TAG}"
+              echo "Using fallback parsed tag from NEW_IMAGE: ${HOTFIX_IMAGE_TAG}"
             fi
           fi
         fi
-        if [ -z "${SOURCE_IMAGE_TAG}" ]; then
+        if [ -z "${HOTFIX_IMAGE_TAG}" ]; then
           echo "ERROR: Could not determine hotfix source image tag." >&2
           exit 1
         fi
+        bash scripts/promote_hotfix_to_staging.sh
       else
+        echo "Deploying dev2 branch image to staging..."
         if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
           export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
           echo "Using dev2 image (override): ${DEV2_IMAGE_TAG}"
@@ -255,9 +260,8 @@ deploy-to-staging:
           echo "ERROR: Unable to determine dev2 image tag." >&2
           exit 1
         fi
-        export SOURCE_IMAGE_TAG="${DEV2_IMAGE_TAG}"
+        bash scripts/promote_to_staging.sh
       fi
-    - bash scripts/promote_to_staging.sh
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       when: always
