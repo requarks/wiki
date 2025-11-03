@@ -200,19 +200,9 @@ deploy-to-staging:
       - |
         if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
           export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
-          echo "Using dev2 image (override): ${DEV2_IMAGE_TAG}"
+          echo "Using dev2 image: ${DEV2_IMAGE_TAG}"
         else
-          # Try to derive from build artifact newimage.txt
-          if [ -f newimage.txt ]; then
-            DERIVED_TAG=$(grep -o 'dev2-[^[:space:]]*' newimage.txt | head -1 | sed 's/.*://')
-            if [ -n "${DERIVED_TAG}" ]; then
-              export DEV2_IMAGE_TAG="${DERIVED_TAG}"
-              echo "Using dev2 image (derived): ${DEV2_IMAGE_TAG}"
-            fi
-          fi
-        fi
-        if [ -z "${DEV2_IMAGE_TAG}" ]; then
-          echo "ERROR: Unable to determine dev2 image tag. Set DEV2_IMAGE_TAG_OVERRIDE (e.g., dev2-6c24c269)." >&2
+          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-6c24c269)"
           exit 1
         fi
       - bash scripts/promote_to_staging.sh
@@ -232,8 +222,8 @@ deploy-to-production:
     # Manual for regular main merges
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
-    # Auto for hotfix or bugfix branches merged to main
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(hotfix|bugfix)\//
+    # Auto for hotfix branches merged to main
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//
       when: always
 
 
