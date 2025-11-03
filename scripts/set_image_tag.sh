@@ -16,7 +16,12 @@ determine_environment() {
       ENVIRONMENT="dev2"
       ;;
     main)
-      ENVIRONMENT="prod"
+      # Check if this is a hotfix merge to main
+      if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]]; then
+        ENVIRONMENT="hotfix"
+      else
+        ENVIRONMENT="prod"
+      fi
       ;;
     feature/*|task/*|hotfix/*|improvement/*|bugfix/*|docs/*)
       ENVIRONMENT="dev1"
@@ -52,6 +57,17 @@ case "$ENVIRONMENT" in
     else
       echo "ERROR: Branch name doesn't match allowed prefixes for dev2 environment"
       exit 1
+    fi
+    ;;
+  hotfix)
+    # For hotfix branches merged to main, create a hotfix-specific tag
+    if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/(.+)$ ]]; then
+      HOTFIX_NAME="${BASH_REMATCH[1]}"
+      IMAGE_TAG_BY_ENV="hotfix-${HOTFIX_NAME}-${IMAGE_TAG}"
+      echo "Hotfix branch detected: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+      echo "Generated hotfix IMAGE_TAG: $IMAGE_TAG_BY_ENV"
+    else
+      IMAGE_TAG_BY_ENV="hotfix-${IMAGE_TAG}"
     fi
     ;;
   prod)

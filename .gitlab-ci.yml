@@ -45,13 +45,13 @@ variables:
 
   VERSION:
      value: ""
-     description: "Update to next release version, it should be numeric value, ex: 1.8.0"
+     description: "Update to next release version, it should be numeric value, ex: 1.7.5"
 
 default:
   tags:
-    - runner_mar
+    - ubuntu-docker 
   before_script:
-     #- apt-get update && apt-get install -y nodejs npm
+     - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
   - environment-set
@@ -73,8 +73,8 @@ environment-set:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
-      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"' ## to prevent jobs from running when branch is created.
+      when: never
 
 build:
   stage: build
@@ -94,6 +94,8 @@ build:
     # Run for feature branches on push OR if ENVIRONMENT is dev1 (manual trigger)
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: always
 
@@ -117,6 +119,8 @@ test:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
 
@@ -142,6 +146,8 @@ sonarqube-scan:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
 
@@ -155,7 +161,16 @@ docker-build:
     - bash scripts/build_images.sh
     - |
       if [ -f newimage.txt ]; then
-        echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
+        # Extract image tag for different branch types
+        if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_BRANCH" =~ ^hotfix/ ]]; then
+          echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'hotfix-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
+        else
+          # For dev2 or other branches, extract the appropriate tag
+          TAG=$(cat newimage.txt | grep -oE '(dev2-[^[:space:]]*|[^[:space:]]*-[^[:space:]]*)' | head -1 | sed 's/.*://')
+          echo "BUILT_IMAGE_TAG=${TAG}" >> build.env
+        fi
+        echo "Image built and tagged successfully. Content of newimage.txt:"
+        cat newimage.txt
       fi
   artifacts:
     paths:
@@ -170,6 +185,10 @@ docker-build:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//'
+      when: always
+    - if: $ENVIRONMENT == "hotfix"
       when: always
     - if: $ENVIRONMENT == "production"
       when: never
@@ -186,29 +205,66 @@ push-docker-image:
       when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//'
+      when: on_success
+    - if: $ENVIRONMENT == "hotfix"
+      when: on_success
     - if: $ENVIRONMENT == "production"
       when: never
 
   # Deploy to staging after merging develop into main
 deploy-to-staging:
-    stage: promote-prod-release-version
-    needs:
-      - job: docker-build
-        optional: true
-    script:
-      - echo "Deploying dev2 branch image to staging..."
-      - |
-        if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
-          export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
-          echo "Using dev2 image: ${DEV2_IMAGE_TAG}"
+  stage: promote-prod-release-version
+  needs:
+    - job: docker-build
+      optional: true
+  script:
+    - |
+      echo "Promoting image to staging..."
+      echo "Merge request source branch: ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
+      if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^(hotfix)/ ]]; then
+        echo "Deploying hotfix branch image to staging..."
+        if [ -n "${BUILT_IMAGE_TAG}" ]; then
+          export HOTFIX_IMAGE_TAG="${BUILT_IMAGE_TAG}"
+          echo "Using hotfix built image tag: ${HOTFIX_IMAGE_TAG}"
         else
-          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-6c24c269)"
+          if [ -f newimage.txt ]; then
+            source newimage.txt || true
+            FALLBACK_TAG=$(echo "${NEW_IMAGE}" | awk -F':' '{print $2}')
+            if [ -n "${FALLBACK_TAG}" ]; then
+              export HOTFIX_IMAGE_TAG="${FALLBACK_TAG}"
+              echo "Using fallback parsed tag from NEW_IMAGE: ${HOTFIX_IMAGE_TAG}"
+            fi
+          fi
+        fi
+        if [ -z "${HOTFIX_IMAGE_TAG}" ]; then
+          echo "ERROR: Could not determine hotfix source image tag." >&2
           exit 1
         fi
-      - bash scripts/promote_to_staging.sh
-    rules:
-      - if: $CI_COMMIT_BRANCH == "main"
-        when: always
+        bash scripts/promote_hotfix_to_staging.sh
+      else
+        echo "Deploying dev2 branch image to staging..."
+        if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
+          export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
+          echo "Using dev2 image (override): ${DEV2_IMAGE_TAG}"
+        else
+          if [ -f newimage.txt ]; then
+            DERIVED_TAG=$(grep -o 'dev2-[^[:space:]]*' newimage.txt | head -1 | sed 's/.*://')
+            if [ -n "${DERIVED_TAG}" ]; then
+              export DEV2_IMAGE_TAG="${DERIVED_TAG}"
+              echo "Using dev2 image (derived): ${DEV2_IMAGE_TAG}"
+            fi
+          fi
+        fi
+        if [ -z "${DEV2_IMAGE_TAG}" ]; then
+          echo "ERROR: Unable to determine dev2 image tag." >&2
+          exit 1
+        fi
+        bash scripts/promote_to_staging.sh
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
 
   # Deploy to production after staging, manual trigger
 deploy-to-production:
