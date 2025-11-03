@@ -155,7 +155,15 @@ docker-build:
     - bash scripts/build_images.sh
     - |
       if [ -f newimage.txt ]; then
-        echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
+        # Source NEW_IMAGE and derive tag generically (works for dev1/dev2/prod patterns)
+        source newimage.txt || true
+        if [ -n "${NEW_IMAGE}" ]; then
+          GENERIC_TAG=$(echo "${NEW_IMAGE}" | awk -F':' '{print $2}')
+          if [ -n "${GENERIC_TAG}" ]; then
+            echo "BUILT_IMAGE_TAG=${GENERIC_TAG}" >> build.env
+            echo "Captured BUILT_IMAGE_TAG=${GENERIC_TAG}"
+          fi
+        fi
       fi
   artifacts:
     paths:
@@ -170,6 +178,8 @@ docker-build:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
     - if: $ENVIRONMENT == "production"
       when: never
@@ -196,24 +206,49 @@ deploy-to-staging:
       - job: docker-build
         optional: true
     script:
-      - echo "Deploying dev2 branch image to staging..."
+      - echo "Promoting image to staging..."
+      - echo "Merge request source branch: ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
       - |
-        if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
-          export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
-          echo "Using dev2 image (override): ${DEV2_IMAGE_TAG}"
-        else
-          # Try to derive from build artifact newimage.txt
-          if [ -f newimage.txt ]; then
-            DERIVED_TAG=$(grep -o 'dev2-[^[:space:]]*' newimage.txt | head -1 | sed 's/.*://')
-            if [ -n "${DERIVED_TAG}" ]; then
-              export DEV2_IMAGE_TAG="${DERIVED_TAG}"
-              echo "Using dev2 image (derived): ${DEV2_IMAGE_TAG}"
+        # If hotfix/bugfix source branch, use its own built image tag (BUILT_IMAGE_TAG) instead of dev2
+        if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^(hotfix|bugfix)/ ]]; then
+          if [ -n "${BUILT_IMAGE_TAG}" ]; then
+            export SOURCE_IMAGE_TAG="${BUILT_IMAGE_TAG}"
+            echo "Using hotfix/bugfix built image tag: ${SOURCE_IMAGE_TAG}"
+          else
+            # Fallback: attempt to parse from newimage.txt
+            if [ -f newimage.txt ]; then
+              source newimage.txt || true
+              FALLBACK_TAG=$(echo "${NEW_IMAGE}" | awk -F':' '{print $2}')
+              if [ -n "${FALLBACK_TAG}" ]; then
+                export SOURCE_IMAGE_TAG="${FALLBACK_TAG}"
+                echo "Using fallback parsed tag from NEW_IMAGE: ${SOURCE_IMAGE_TAG}"
+              fi
             fi
           fi
-        fi
-        if [ -z "${DEV2_IMAGE_TAG}" ]; then
-          echo "ERROR: Unable to determine dev2 image tag. Set DEV2_IMAGE_TAG_OVERRIDE (e.g., dev2-6c24c269)." >&2
-          exit 1
+          if [ -z "${SOURCE_IMAGE_TAG}" ]; then
+            echo "ERROR: Could not determine hotfix/bugfix source image tag (BUILT_IMAGE_TAG/NEW_IMAGE missing)." >&2
+            exit 1
+          fi
+        else
+          # Legacy dev2 promotion path
+          if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
+            export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
+            echo "Using dev2 image (override): ${DEV2_IMAGE_TAG}"
+          else
+            # Try derive from artifact
+            if [ -f newimage.txt ]; then
+              DERIVED_TAG=$(grep -o 'dev2-[^[:space:]]*' newimage.txt | head -1 | sed 's/.*://')
+              if [ -n "${DERIVED_TAG}" ]; then
+                export DEV2_IMAGE_TAG="${DERIVED_TAG}"
+                echo "Using dev2 image (derived): ${DEV2_IMAGE_TAG}"
+              fi
+            fi
+          fi
+          if [ -z "${DEV2_IMAGE_TAG}" ]; then
+            echo "ERROR: Unable to determine dev2 image tag. Set DEV2_IMAGE_TAG_OVERRIDE (e.g., dev2-6c24c269)." >&2
+            exit 1
+          fi
+          export SOURCE_IMAGE_TAG="${DEV2_IMAGE_TAG}"
         fi
       - bash scripts/promote_to_staging.sh
     rules:
