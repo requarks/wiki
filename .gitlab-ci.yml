@@ -161,8 +161,8 @@ docker-build:
     - bash scripts/build_images.sh
     - |
       if [ -f newimage.txt ]; then
-        # Extract image tag for different branch types
-        if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_BRANCH" =~ ^hotfix/ ]]; then
+        # Extract image tag for different branch types - detect hotfix using multiple methods
+        if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_BRANCH" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_MESSAGE" =~ hotfix ]]; then
           echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'hotfix-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
         else
           # For dev2 or other branches, extract the appropriate tag
@@ -171,6 +171,8 @@ docker-build:
         fi
         echo "Image built and tagged successfully. Content of newimage.txt:"
         cat newimage.txt
+        echo "DEBUG: Commit message for tag extraction: '${CI_COMMIT_MESSAGE}'"
+        echo "DEBUG: Extracted BUILT_IMAGE_TAG will be saved to build.env"
       fi
   artifacts:
     paths:
