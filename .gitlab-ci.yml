@@ -188,6 +188,8 @@ docker-build:
       when: always
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//'
       when: always
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /hotfix/'
+      when: always
     - if: $ENVIRONMENT == "hotfix"
       when: always
     - if: $ENVIRONMENT == "production"
@@ -206,6 +208,8 @@ push-docker-image:
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//'
+      when: on_success
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /hotfix/'
       when: on_success
     - if: $ENVIRONMENT == "hotfix"
       when: on_success
@@ -283,6 +287,8 @@ deploy-to-production:
       when: manual
     # Auto for hotfix branches merged to main
     - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /hotfix/
       when: always
 
 
