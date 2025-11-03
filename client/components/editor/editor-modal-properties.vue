@@ -17,7 +17,7 @@
         v-icon(left, :color='$vuetify.theme.dark ? "black" : colors.textLight.primary') mdi-check
         span.text-none {{ $t('common:actions.ok') }}
     v-card(tile)
-      v-tabs(color='white', :style='`background-color: ${colors.blue[500]} !important;`', dark, centered, v-model='currentTab')
+      v-tabs(color='white', :style='`background-color: ${colors.blue[500]} !important;`', :dark='$vuetify.theme.dark', centered, v-model='currentTab')
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
