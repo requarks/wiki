@@ -39,3 +39,10 @@ props:
       - ascii
     order: 4
     public: true
+  renderSvgAsObject:
+    type: Boolean
+    default: false
+    title: Render svg as object tag instead of img tag
+    hint: Allows for interactive content like links in plantuml graphs - it may have security implications
+    order: 5
+    public: true

@@ -13,6 +13,7 @@ module.exports = {
       const closeChar = closeMarker.charCodeAt(0)
       const imageFormat = opts.imageFormat || 'svg'
       const server = opts.server || 'https://plantuml.requarks.io'
+      const renderSvgAsObject = opts.renderSvgAsObject || false
 
       md.block.ruler.before('fence', 'uml_diagram', (state, startLine, endLine, silent) => {
         let nextLine
@@ -129,12 +130,22 @@ module.exports = {
       }, {
         alt: [ 'paragraph', 'reference', 'blockquote', 'list' ]
       })
-      md.renderer.rules.uml_diagram = md.renderer.rules.image
+      if (renderSvgAsObject && imageFormat === 'svg') {
+        md.renderer.rules.uml_diagram = (tokens, idx) => {
+          const currentToken = tokens[idx]
+          const src = currentToken.attrGet('src')
+          const clazz = currentToken.attrGet('class')
+          return `<object data='${src}' class="${clazz}"></object>`
+        }
+      } else {
+        md.renderer.rules.uml_diagram = md.renderer.rules.image
+      }
     }, {
       openMarker: conf.openMarker,
       closeMarker: conf.closeMarker,
       imageFormat: conf.imageFormat,
-      server: conf.server
+      server: conf.server,
+      renderSvgAsObject: conf.renderSvgAsObject
     })
   }
 }
