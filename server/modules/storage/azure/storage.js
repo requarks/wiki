@@ -41,14 +41,14 @@ module.exports = {
   async created (page) {
     WIKI.logger.info(`(STORAGE/AZURE) Creating file ${page.path}...`)
     const filePath = getFilePath(page, 'path')
-    const pageContent = page.injectMetadata()
+    const pageContent = page.storageContent()
     const blockBlobClient = this.container.getBlockBlobClient(filePath)
     await blockBlobClient.upload(pageContent, pageContent.length, { tier: this.config.storageTier })
   },
   async updated (page) {
     WIKI.logger.info(`(STORAGE/AZURE) Updating file ${page.path}...`)
     const filePath = getFilePath(page, 'path')
-    const pageContent = page.injectMetadata()
+    const pageContent = page.storageContent()
     const blockBlobClient = this.container.getBlockBlobClient(filePath)
     await blockBlobClient.upload(pageContent, pageContent.length, { tier: this.config.storageTier })
   },
@@ -134,7 +134,7 @@ module.exports = {
         transform: async (page, enc, cb) => {
           const filePath = getFilePath(page, 'path')
           WIKI.logger.info(`(STORAGE/AZURE) Adding page ${filePath}...`)
-          const pageContent = pageHelper.injectPageMetadata(page)
+          const pageContent = page.storageContent()
           const blockBlobClient = this.container.getBlockBlobClient(filePath)
           await blockBlobClient.upload(pageContent, pageContent.length, { tier: this.config.storageTier })
           cb()
