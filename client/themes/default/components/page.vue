@@ -5,6 +5,8 @@
       v-if='navMode !== `NONE`'
       :color='$vuetify.theme.dark ? colors.surfaceDark.black : colors.surfaceLight.white'
       :style='"border-right: 1px solid " + ($vuetify.theme.dark ? colors.borderDark.primary : colors.borderLight.primary)'
+      :width='sidebarWidth'
+      :class='{ resizing: isResizing }'
       dark
       app
       clipped
@@ -13,6 +15,14 @@
       v-model='navShown'
       :right='$vuetify.rtl'
       )
+      //- Resize handle
+      .sidebar-resize-handle(
+        v-if='!$vuetify.breakpoint.smAndDown'
+        :class='$vuetify.rtl ? "resize-handle-left" : "resize-handle-right"'
+        @mousedown='startResize'
+        @dblclick='resetSidebarWidth'
+      )
+
       //- scrollbar colors are set in 'scrollStyle'
       vue-scroll(:ops='scrollStyle')
         nav-sidebar(
@@ -657,6 +667,13 @@ export default {
       navExpanded: false,
       upBtnShown: false,
       pageEditFab: false,
+      sidebarWidth: 300,
+      sidebarMinWidth: 200,
+      sidebarMaxWidth: 600,
+      isResizing: false,
+      resizeStartX: 0,
+      resizeStartWidth: 0,
+
       isFollowing: null,
       scrollOpts: {
         duration: 1500,
@@ -706,6 +723,7 @@ export default {
     isFollower() {
       return this.isFollowing
     },
+
     breadcrumbs() {
       return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
         result.push({
@@ -846,6 +864,9 @@ export default {
       this.scrollStyle.bar.background = this.colors.surfaceLight.tertiaryNeutralLite
     }
 
+    // -> Load sidebar width from localStorage
+    this.loadSidebarWidth()
+
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
@@ -890,7 +911,64 @@ export default {
       window.boot.notify('page-ready')
     })
   },
+  beforeDestroy() {
+    // Clean up resize event listeners
+    if (this.isResizing) {
+      document.removeEventListener('mousemove', this.handleResize)
+      document.removeEventListener('mouseup', this.stopResize)
+      document.body.style.cursor = 'auto'
+      document.body.style.userSelect = 'auto'
+    }
+  },
   methods: {
+    startResize(e) {
+      if (this.$vuetify.breakpoint.smAndDown) return
+      
+      this.isResizing = true
+      this.resizeStartX = e.clientX
+      this.resizeStartWidth = this.sidebarWidth
+      
+      document.addEventListener('mousemove', this.handleResize)
+      document.addEventListener('mouseup', this.stopResize)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+      
+      e.preventDefault()
+    },
+    handleResize(e) {
+      if (!this.isResizing) return
+      
+      const deltaX = this.$vuetify.rtl ? 
+        (this.resizeStartX - e.clientX) : 
+        (e.clientX - this.resizeStartX)
+      
+      const newWidth = this.resizeStartWidth + deltaX
+      
+      if (newWidth >= this.sidebarMinWidth && newWidth <= this.sidebarMaxWidth) {
+        this.sidebarWidth = newWidth
+        localStorage.setItem('navSidebarWidth', newWidth)
+      }
+    },
+    stopResize() {
+      this.isResizing = false
+      document.removeEventListener('mousemove', this.handleResize)
+      document.removeEventListener('mouseup', this.stopResize)
+      document.body.style.cursor = 'auto'
+      document.body.style.userSelect = 'auto'
+    },
+    resetSidebarWidth() {
+      this.sidebarWidth = 300
+      localStorage.setItem('navSidebarWidth', 300)
+    },
+    loadSidebarWidth() {
+      const savedWidth = localStorage.getItem('navSidebarWidth')
+      if (savedWidth) {
+        const width = parseInt(savedWidth)
+        if (width >= this.sidebarMinWidth && width <= this.sidebarMaxWidth) {
+          this.sidebarWidth = width
+        }
+      }
+    },
     async checkIfFollowing() {
       try {
         const response = await this.$apollo.query({
@@ -1349,6 +1427,206 @@ export default {
 .v-tooltip__content{
   border-radius: 16px;
 }
+
+// Resizable sidebar styles
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: col-resize;
+  background: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  opacity: 0;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(
+      180deg, 
+      transparent 0%, 
+      mc('blue', '300') 20%, 
+      mc('blue', '400') 50%, 
+      mc('blue', '300') 80%, 
+      transparent 100%
+    );
+    border-radius: 2px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: scaleY(0);
+    left: 4.5px;
+  }
+
+  &::after {
+    content: '⋮⋮';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    line-height: 0.8;
+    letter-spacing: 2px;
+    color: mc('blue', '400');
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  &.resize-handle-right {
+    right: -6px;
+  }
+
+  &.resize-handle-left {
+    left: -6px;
+  }
+
+  .v-navigation-drawer:hover &,
+  &:hover {
+    opacity: 1;
+    
+    &::before {
+      transform: scaleY(1);
+    }
+    
+    &::after {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
+
+  &:hover {
+    background: mc('action-light', 'highlight-on-lite');
+    border-radius: 0 4px 4px 0;
+    
+    &::before {
+      background: linear-gradient(
+        180deg, 
+        mc('blue', '200') 0%, 
+        mc('blue', '500') 20%, 
+        mc('blue', '600') 50%, 
+        mc('blue', '500') 80%, 
+        mc('blue', '200') 100%
+      );
+      box-shadow: 0 0 8px mc('blue', '300');
+    }
+    
+    &::after {
+      color: mc('blue', '600');
+      text-shadow: 0 0 4px mc('blue', '400');
+    }
+  }
+
+  &:active {
+    background: mc('action-light', 'primary-hover-on-lite');
+    border-radius: 0 4px 4px 0;
+    
+    &::before {
+      background: linear-gradient(
+        180deg, 
+        mc('blue', '300') 0%, 
+        mc('blue', '600') 20%, 
+        mc('blue', '700') 50%, 
+        mc('blue', '600') 80%, 
+        mc('blue', '300') 100%
+      );
+      box-shadow: 0 0 12px mc('blue', '400');
+      transform: scaleY(1.05);
+    }
+    
+    &::after {
+      color: mc('blue', '700');
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+  }
+
+  &.resize-handle-left:hover,
+  &.resize-handle-left:active {
+    border-radius: 4px 0 0 4px;
+  }
+}
+
+.v-navigation-drawer {
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.resizing {
+    transition: none;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:hover .sidebar-resize-handle {
+    opacity: 1;
+    transition-delay: 0.3s;
+  }
+
+  .sidebar-resize-handle:hover {
+    transition-delay: 0s !important;
+  }
+}
+.theme--dark {
+  .sidebar-resize-handle {
+    &::before {
+      background: linear-gradient(
+        180deg, 
+        transparent 0%, 
+        mc('text-dark', 'brand-primary') 20%, 
+        mc('action-dark', 'active') 50%, 
+        mc('text-dark', 'brand-primary') 80%, 
+        transparent 100%
+      );
+    }
+
+    &::after {
+      color: mc('action-dark', 'active');
+    }
+
+    &:hover {
+      background: mc('action-dark', 'highlight-on-lite');
+      
+      &::before {
+        background: linear-gradient(
+          180deg, 
+          mc('text-dark', 'brand-primary') 0%, 
+          mc('action-dark', 'active') 20%, 
+          mc('blue', '200') 50%, 
+          mc('action-dark', 'active') 80%, 
+          mc('text-dark', 'brand-primary') 100%
+        );
+        box-shadow: 0 0 8px mc('action-dark', 'active');
+      }
+      
+      &::after {
+        color: mc('blue', '200');
+        text-shadow: 0 0 4px mc('action-dark', 'active');
+      }
+    }
+
+    &:active {
+      background: mc('action-dark', 'primary-hover-on-lite');
+      
+      &::before {
+        background: linear-gradient(
+          180deg, 
+          mc('action-dark', 'active') 0%, 
+          mc('blue', '200') 20%, 
+          mc('blue', '100') 50%, 
+          mc('blue', '200') 80%, 
+          mc('action-dark', 'active') 100%
+        );
+        box-shadow: 0 0 12px mc('blue', '200');
+      }
+      
+      &::after {
+        color: mc('blue', '100');
+      }
+    }
+  }
+}
+
+
 </style>
 
 // Global styles
