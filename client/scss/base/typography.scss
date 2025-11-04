@@ -53,11 +53,53 @@ $mdc-typography-styles-caption: (
 
 
 body,
-.v-application,
-.v-application * {
-  font-family: 'Ubuntu', sans-serif !important;
+.v-application {
+  font-family: 'Ubuntu', sans-serif;
+}
+
+/* Allow editors and rendered page content to apply their own inline/font styles */
+.ck-content,
+.ck-content * {
+  font-family: inherit;
 }
 
 .v-application code {
-  font-family: 'Ubuntu Mono', monospace !important;
+  font-family: 'Ubuntu Mono', monospace;
+}
+
+/* Optional utility classes for font families applied via CKEditor (class-based approach fallback) */
+.ck-content .font-family-arial {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.ck-content .font-family-times {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.ck-content .font-family-mono {
+  font-family: "Courier New", Courier, monospace;
+}
+
+.ck-content .font-family-ubuntu {
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.ck-content .font-family-georgia {
+  font-family: Georgia, serif;
+}
+
+.ck-content .font-family-lucida-sans-unicode {
+  font-family: 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
+}
+
+.ck-content .font-family-tahoma {
+  font-family: Tahoma, Geneva, sans-serif;
+}
+
+.ck-content .font-family-trebuchet-ms {
+  font-family: 'Trebuchet MS', Helvetica, sans-serif;
+}
+
+.ck-content .font-family-verdana {
+  font-family: Verdana, Geneva, sans-serif;
 }
