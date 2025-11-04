@@ -357,6 +357,7 @@
 </template>
 
 <script>
+/* global graphQL */
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
@@ -366,6 +367,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
+import gql from 'graphql-tag'
 
 Vue.component('Tabset', Tabset)
 
@@ -646,8 +648,96 @@ export default {
 
       window.boot.notify('page-ready')
     })
+
+    if (this.containsNavElement) {
+      const currentPagePath = this.$store.get('page/path')
+      this.getPageIdFromPath(currentPagePath).then((result) => {
+        if (result !== null) {
+          const childPages = this.getChildPages(result.id)
+          this.renderPageList(childPages)
+        }
+      })
+    }
   },
   methods: {
+    containsNavElement () {
+      const contents = document.getElementsByClassName('contents')
+      contents[0].firstChild.childNodes.forEach((child) => {
+        if (child.nodeType === 3 && child.nodeValue && child.nodeValue.indexOf('[nav]') !== -1) {
+          return true
+        } else if (child.nodeType === 1 && child.innerHTML === '[nav]') {
+          return true
+        }
+      })
+      return false
+    },
+    getPageIdFromPath (currentPagePath) {
+      const query = gql`
+        query ($path: String, $locale: String!) {
+          pages {
+            tree(path: $path, mode: ALL, locale: $locale) {
+              id
+              pageId
+              path
+            }
+          }
+        }`
+      return graphQL.query({
+        query: query,
+        variables: {
+          path: currentPagePath,
+          locale: this.locale
+        }
+      }).then(resp => {
+        const pageIds = resp.data.pages.tree.filter(item => item.path === currentPagePath)
+        if (pageIds.length > 0) {
+          return pageIds[0]
+        }
+        return null
+      }).catch(err => {
+        console.error(err)
+      })
+    },
+    getChildPages (currentPageID) {
+      const variables = {
+        parent: currentPageID,
+        locale: this.locale
+      }
+      const query = gql`
+        query Page($locale: String!, $parent: Int!) {
+          pages {
+            tree(mode: ALL, locale: $locale, parent: $parent) {
+              title
+              path
+              locale
+            }
+          }
+        }`
+      return graphQL.query({
+        query: query,
+        variables: variables
+      }).then(resp => {
+        const childPages = resp.data.pages.tree.filter(item => item.id !== currentPageID.toString())
+        return childPages
+      }).catch(err => {
+        console.error(err)
+      })
+    },
+    renderPageList (childPages) {
+      childPages.then((result) => {
+        const pageListMarkup = `<ul>${result.map(child => {
+          return `<li><a href="/${child.path}">${child.title}</a></li>`
+        }).join('')}</ul>`
+        const contents = document.getElementsByClassName('contents')
+        contents[0].firstChild.childNodes.forEach((child) => {
+          if (child.nodeType === 3 && child.nodeValue && child.nodeValue.indexOf('[nav]') !== -1) {
+            child.innerHTML = child.innerHTML.replace('[nav]', pageListMarkup)
+          } else if (child.nodeType === 1 && child.innerHTML === '[nav]') {
+            child.innerHTML = child.innerHTML.replace('[nav]', pageListMarkup)
+          }
+        })
+      })
+    },
     goHome () {
       window.location.assign('/')
     },
