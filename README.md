@@ -1,4 +1,5 @@
 <div align="center">
+  Added the functionality of sending a letter to the author of the article about a new (deleted/updated) comments. The mail settings are taken from the standard module. Created a separate template for notification emails.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://static.requarks.io/logo/wikijs-full-darktheme.svg">
