@@ -34,11 +34,30 @@ services:
       - MAILDEV_SMTP_PORT=1025
     volumes:
       - maildev_data:/data
-      
-      
-#  pandoc:
-#    container_name: capwiki-local-pandoc
-#    image: pandoc:latest
+  
+  pandoc:
+    container_name: capwiki-local-pandoc
+    build:
+      context: ./dev/pandoc
+    # Expose Pandoc conversion API (gunicorn binds to container port 80)
+    ports:
+      - "8090:80"
+    environment:
+      # These env vars allow overriding paths if needed
+      TEMPLATE_PATH: /app/template.tex
+      REFERENCE_DOC_PATH: /app/reference.docx
+      OUTPUT_DIR: /app
+      # Not used when running under gunicorn (port fixed by -b), kept for consistency
+      PANDOC_PORT: 8090
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo '<p>x</p>' > /tmp/h.html && curl -s -o /dev/null -w '%{http_code}' -F file=@/tmp/h.html http://localhost/convert-to-pdf | grep -q 200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 #    ports:
 #      - "80:80"
 
