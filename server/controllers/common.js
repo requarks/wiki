@@ -11,8 +11,10 @@ const { useClientDbPooling } = require('../core/db')
 
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
 
-const getSite = async (sitePath) => {
-  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: true })
+// Retrieve a site using cache. Optionally force reload if admin passes ?reload=1.
+const getSite = async (sitePath, req) => {
+  const shouldForce = req?.query?.reload === '1' && WIKI.auth?.checkAccess?.(req.user, ['manage:sites', 'manage:system'])
+  return WIKI.models.sites.getSiteByPath({ path: sitePath, forceReload: shouldForce })
 }
 
 const GUEST_ACCOUNT_ID = 2 // yes, it's hardcoded
@@ -43,6 +45,30 @@ router.get('/healthz', (req, res, next) => {
   } else {
     res.status(200).json({ ok: true }).end()
   }
+})
+
+/**
+ * Sites Cache Metrics (Admin Only)
+ * Returns reload count, version, age, and site count.
+ */
+router.get('/admin/metrics/sites-cache', (req, res) => {
+  if (!WIKI.auth.checkAccess(req.user, ['manage:system', 'manage:sites'])) {
+    return res.status(403).json({ ok: false, error: 'unauthorized' })
+  }
+  const meta = WIKI.sitesCacheMeta || {}
+  const ageMs = meta.loadedAt ? Date.now() - meta.loadedAt : null
+  res.json({
+    ok: true,
+    reloads: WIKI.__sitesReloadCount || 0,
+    hits: WIKI.__sitesCacheHits || 0,
+    misses: WIKI.__sitesCacheMisses || 0,
+    reloadIntervals: WIKI.__sitesReloadIntervals || [],
+    version: WIKI.models.sites.getCacheVersion(),
+    loadedAt: meta.loadedAt || null,
+    ageMs,
+    siteCount: WIKI.sites ? Object.keys(WIKI.sites).length : 0,
+    ttl: WIKI.config.sitesCacheTTL || 60000
+  })
 })
 
 /**
