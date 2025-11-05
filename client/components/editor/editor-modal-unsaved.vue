@@ -17,7 +17,7 @@
           span.text-none.text-uppercase {{$t('common:actions.cancel')}}
         v-btn.rounded-button(
           rounded
-          dark
+          :dark='$vuetify.theme.dark'
           :color='colors.red[450]'
           @click='discard'
           )

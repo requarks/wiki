@@ -723,7 +723,11 @@ class User extends Model {
         usrData.password = newPassword
       }
       if (_.isArray(groups)) {
-        const usrGroupsRaw = await usr.$relatedQuery('groups')
+        let usrGroupsRaw = await usr.$relatedQuery('groups')
+        // Normalize to array in case relatedQuery returns undefined/null or an object map in certain mocked contexts
+        if (!Array.isArray(usrGroupsRaw)) {
+          usrGroupsRaw = usrGroupsRaw ? Object.values(usrGroupsRaw) : []
+        }
         const usrGroups = _.map(usrGroupsRaw, 'id')
         // Determine added and removed groups
         const addUsrGroups = _.difference(groups, usrGroups)

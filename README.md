@@ -1,3 +1,7 @@
+## Site Configuration Caching
+
+The application maintains an in-memory cache of site configurations with TTL-based freshness, concurrency locking (to avoid duplicate reloads), mutation-triggered invalidation, and a version counter. This reduces database load for repeated site lookups. See `docs/caching.md` for detailed semantics (TTL behavior, forceReload usage, events, diagnostics accessor).
+
 <div align="center">
 
 <picture>

@@ -353,5 +353,22 @@ DecoupledEditor.defaultConfig = {
         minimumCharacters: 1
       }
     ]
+  },
+  fontFamily: {
+    options: [
+      // Order aligned with desired dropdown: Default, Arial, Courier New, Georgia,
+      // Lucida Sans Unicode, Tahoma, Times New Roman, Trebuchet MS, Verdana, Ubuntu.
+      'default',
+      'Arial, Helvetica, sans-serif',
+      'Courier New, Courier, monospace',
+      'Georgia, serif',
+      'Lucida Sans Unicode, Lucida Grande, sans-serif',
+      'Tahoma, Geneva, sans-serif',
+      'Times New Roman, Times, serif',
+      'Trebuchet MS, Helvetica, sans-serif',
+      'Verdana, Geneva, sans-serif',
+      'Ubuntu, sans-serif'
+    ],
+    supportAllValues: true
   }
 }
