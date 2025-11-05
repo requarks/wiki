@@ -9,7 +9,7 @@ const assetHelper = require('../helpers/asset')
 const Promise = require('bluebird')
 
 const getSite = async (siteId) => {
-  return WIKI.models.sites.getSiteById({ siteId, forceReload: true })
+  return WIKI.models.sites.getSiteById({ siteId })
 }
 
 /**
