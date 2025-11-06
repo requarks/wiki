@@ -83,7 +83,7 @@
                           v-btn(icon, v-on='on', tile, small, @click.left='currentFileId = props.item.id')
                             v-icon(color='grey darken-2') mdi-dots-horizontal
                         v-list(nav, style='border-top: 5px solid #444;')
-                          v-list-item(@click='', disabled)
+                          v-list-item(@click='openProperties(props.item)', :disabled='!props.item')
                             v-list-item-avatar(size='24')
                               v-icon(color='teal') mdi-text-short
                             v-list-item-content {{$t('common:actions.properties')}}
@@ -225,6 +225,49 @@
           v-spacer
           v-btn(text, @click='deleteDialog = false', :disabled='deleteAssetLoading') {{$t('common:actions.cancel')}}
           v-btn.px-3(color='red darken-2', @click='deleteAsset', :loading='deleteAssetLoading').white--text {{$t('common:actions.delete')}}
+
+    //- PROPERTIES DIALOG
+
+    v-dialog(v-model='propertiesDialog', max-width='600')
+      v-card
+        .dialog-header.is-short.is-teal
+          v-icon.mr-2(color='white') mdi-text-box-search-outline
+          span {{$t('common:actions.properties')}}
+        v-card-text.pt-5
+          template(v-if='selectedPropertiesAsset')
+            .body-2.mb-2
+              strong {{$t('editor:assets.headerFilename')}}:
+              span.ml-1 {{ selectedPropertiesAsset.filename }}
+            .caption.grey--text.text--darken-1.mb-4 {{ selectedPropertiesAsset.description ? selectedPropertiesAsset.description : $t('editor:assets.noDescription') }}
+            v-divider.mb-4
+            .properties-grid
+              .prop-row
+                .prop-label Kind:
+                .prop-value {{ selectedPropertiesAsset.kind }}
+              .prop-row
+                .prop-label Type:
+                .prop-value {{ displayExt(selectedPropertiesAsset) }}
+              .prop-row
+                .prop-label Size:
+                .prop-value {{ selectedPropertiesAsset.fileSize | prettyBytes }}
+              .prop-row
+                .prop-label Added:
+                .prop-value {{ selectedPropertiesAsset.createdAt | moment('LLL') }}
+              .prop-row(v-if='folderTree && folderTree.length')
+                .prop-label Path:
+                .prop-value /{{ folderTree.map(f => f.slug).join('/') }}
+              .prop-row
+                .prop-label ID:
+                .prop-value {{ selectedPropertiesAsset.id }}
+            template(v-if='selectedPropertiesAsset.kind === "IMAGE"')
+              v-divider.mb-4
+              .body-2.mb-2 Image Details
+              img(:src='imagePublicPath(selectedPropertiesAsset)', style='max-width:100%;height:auto;border:1px solid #ddd;padding:4px;border-radius:4px;')
+          template(v-else)
+            .caption.grey--text No asset selected.
+        v-card-chin
+          v-spacer
+          v-btn(text, @click='propertiesDialog = false') {{$t('common:actions.close')}}
 </template>
 
 <script>
@@ -280,7 +323,9 @@ export default {
       renameAssetLoading: false,
       deleteDialog: false,
       deleteAssetLoading: false,
-      siteId: ''
+      siteId: '',
+      propertiesDialog: false,
+      selectedPropertiesAsset: null
     }
   },
   computed: {
@@ -394,6 +439,7 @@ export default {
     insert () {
       const asset = _.find(this.assets, ['id', this.currentFileId])
       const assetPath = this.folderTree.map(f => f.slug).join('/')
+      // eslint-disable-next-line vue/custom-event-name-casing
       this.$root.$emit('editorInsert', {
         kind: asset.kind,
         path: this.currentFolderId > 0 ? `/${this.sitePath}/assets/${assetPath}/${asset.filename}` : `/${this.sitePath}/assets/${asset.filename}`,
@@ -540,6 +586,19 @@ export default {
     },
     cancel () {
       this.activeModal = ''
+    },
+    openProperties(asset) {
+      this.selectedPropertiesAsset = asset || this.currentAsset
+      this.propertiesDialog = true
+    },
+    imagePublicPath(asset) {
+      if (!asset) return ''
+      const assetPath = this.folderTree.map(f => f.slug).join('/')
+      return this.currentFolderId > 0 ? `/${this.sitePath}/assets/${assetPath}/${asset.filename}` : `/${this.sitePath}/assets/${asset.filename}`
+    },
+    displayExt(asset) {
+      if (!asset || !asset.ext) return ''
+      return asset.ext.replace(/^\./, '').toUpperCase()
     }
   },
   apollo: {

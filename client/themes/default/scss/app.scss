@@ -1122,6 +1122,15 @@
   img {
     max-width: 100%;
 
+    // Preserve aspect ratio when CKEditor sets width via style or attribute
+    &[style*='width'] {
+      height: auto !important;
+    }
+
+    &[width] {
+      height: auto !important;
+    }
+
     &.align-left {
       float: left;
       margin: 0 calc(var(--rem-factor) * 1rem) calc(var(--rem-factor) * 1rem) 0;
@@ -1171,6 +1180,7 @@
 
     img {
       margin: 0 auto;
+      height: auto !important; // Ensure resized images are not stretched vertically
     }
 
     figcaption {

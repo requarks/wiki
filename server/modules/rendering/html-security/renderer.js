@@ -7,7 +7,11 @@ module.exports = {
       const window = new JSDOM('').window
       const DOMPurify = createDOMPurify(window)
 
-      const allowedAttrs = ['v-pre', 'v-slot:tabs', 'v-slot:content', 'target']
+      // Allowed attributes extended to preserve image resize information.
+      // The CKEditor ImageResize plugin stores user-defined dimensions via inline styles (width) on <img>.
+      // Without allowing 'style', DOMPurify strips the width and images revert to original dimensions, appearing elongated.
+      // Security note: DOMPurify sanitizes CSS properties; allowing style here is a targeted UX fix.
+      const allowedAttrs = ['v-pre', 'v-slot:tabs', 'v-slot:content', 'target', 'style', 'width', 'height']
       const allowedTags = ['tabset', 'template']
 
       if (config.allowDrawIoUnsafe) {
