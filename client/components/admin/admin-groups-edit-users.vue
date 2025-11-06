@@ -52,7 +52,7 @@
       @user-created-and-assigned="refreshGroupPage"
     )
     page-last-group(
-      v-model='warningPageModel', :sites='affectedSites', @discard='resetUnassignState', @confirm='finalUnassignUser(pendingUnassignUser)'
+      v-model='warningPageModel', :sites='affectedSites', :user-name='pendingUnassignUserName', @discard='resetUnassignState', @confirm='finalUnassignUser(pendingUnassignUser)'
     )
 </template>
 
@@ -88,6 +88,7 @@ export default {
       search: '',
       warningPageModel: false,
       pendingUnassignUser: null,
+      pendingUnassignUserName: '',
       affectedSites: []
     }
   },
@@ -134,6 +135,8 @@ export default {
 
       if (lastGroupInfo.isLastGroupForAnySite) {
         this.pendingUnassignUser = id
+        const user = this.group.users.find(u => u.id === id)
+        this.pendingUnassignUserName = user ? user.name : 'The user'
         this.affectedSites = lastGroupInfo.affectedSites
         this.warningPageModel = true
         return
@@ -158,6 +161,7 @@ export default {
           icon: 'assignment_ind'
         })
         this.pendingUnassignUser = null
+        this.pendingUnassignUserName = ''
         this.affectedSites = []
         this.$emit('refresh')
       } catch (err) {
@@ -181,6 +185,7 @@ export default {
     resetUnassignState() {
       this.warningPageModel = false
       this.pendingUnassignUser = null
+      this.pendingUnassignUserName = ''
       this.affectedSites = []
     },
     async loadGroupData() {
