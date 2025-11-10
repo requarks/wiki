@@ -18,7 +18,7 @@ module.exports = {
         return { operation: generateSuccess(message), isFollowing: !!existingFollower }
       } catch (err) {
         WIKI.logger.warn(err)
-        return generateError(err)
+        return { operation: generateError(err, false), isFollowing: false }
       }
     }
   },

@@ -5,7 +5,7 @@
     persistent
     :overlay-color='colors.white'
     overlay-opacity='.7'
-    )
+  )
     v-card
       .critical-bar
       .dialog-header.is-short
@@ -20,24 +20,29 @@
         i18next.body-1(path='common:page.deleteTitle', tag='div')
           span(place='title') {{pageTitle}}
         .caption {{$t('common:page.deleteSubtitle')}}
-      v-card-chink.button-bar
+      v-card-actions.button-bar
         v-spacer
         v-btn.cancel-btn(text, @click='discard', :disabled='loading')
           span Cancel
-        v-btn.delete-notify-btn.px-4(
-          @click='deletePage(true)',
-          :loading='loading'
-        )
-          span.delete-notify-icon
-            v-icon.red--text mdi-exclamation
-          span.red--text Delete & Notify
-        v-btn.px-4.delete-btn(
-          @click='deletePage(false)',
-          :loading='loading'
-        )
-          span.delete-notify-icon-dark
-            v-icon.black--text mdi-exclamation
-          span.black--text {{$t('common:actions.delete')}}
+        template(v-if='!hasChildren')
+          v-btn.delete-notify-btn.px-4(
+            @click='deletePage(true)',
+            :loading='loading'
+          )
+            span.delete-notify-icon
+              v-icon.red--text mdi-exclamation
+            span.red--text Delete & Notify
+          v-btn.px-4.delete-btn(
+            @click='deletePage(false)',
+            :loading='loading'
+          )
+            span.delete-notify-icon-dark
+              v-icon.black--text mdi-exclamation
+            span.black--text {{$t('common:actions.delete')}}
+        template(v-else)
+          .body-2.red--text.text--darken-2(style='margin-top: 12px;')
+            v-icon(left, color='red') mdi-alert
+            | {{ PAGE_DELETE_HAS_SUBPAGES_MSG }}
 </template>
 
 <script>
@@ -60,6 +65,9 @@ export default {
     }
   },
   computed: {
+    PAGE_DELETE_HAS_SUBPAGES_MSG() {
+      return require('@/messages').PAGE_DELETE_HAS_SUBPAGES_MSG
+    },
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
@@ -67,12 +75,15 @@ export default {
     pageTitle: get('page/title'),
     pagePath: get('page/path'),
     pageLocale: get('page/locale'),
-    pageId: get('page/id')
+    pageId: get('page/id'),
+    hasChildren: get('page/hasChildren')
   },
   watch: {
     isShown(newValue) {
       if (newValue) {
         document.body.classList.add('page-deleted-pending')
+      } else {
+        document.body.classList.remove('page-deleted-pending')
       }
     }
   },

@@ -7,12 +7,12 @@
     overlay-opacity='.7'
     )
     v-card
-      .dialog-header.is-short.is-dark
+      .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
         v-icon.mr-2(color='white') mdi-lightning-bolt
-        span {{$t('common:page.convert')}}
+        span(:style='`color: ${colors.textLight.inverse};`') {{$t('common:page.convert')}}
       v-card-text.pt-5
-        i18next.body-2(path='common:page.convertTitle', tag='div')
-          span.blue-grey--text.text--darken-2(place='title') {{pageTitle}}
+        i18next.body-2(path='common:page.convertTitle', tag='div', :style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`')
+          span(:style='`color: ${$vuetify.theme.dark ? colors.textDark.secondary : colors.textLight.secondary};`', place='title') {{pageTitle}}
         v-select.mt-5(
           :items=`[
             { value: 'markdown', text: 'Markdown' },
@@ -24,17 +24,31 @@
           hide-details
           v-model='newEditor'
         )
-        .caption.mt-5 {{$t('common:page.convertSubtitle')}}
+        .caption.mt-5(:style='`color: ${$vuetify.theme.dark ? colors.textDark.tertiary : colors.textLight.tertiary};`') {{$t('common:page.convertSubtitle')}}
       v-card-chin
         v-spacer
-        v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
-        v-btn.px-4(color='grey darken-3', @click='convertPage', :loading='loading').white--text {{$t('common:actions.convert')}}
+        v-btn.rounded-button(
+          outlined
+          rounded
+          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+          @click='discard'
+          :disabled='loading'
+          ) {{$t('common:actions.cancel')}}
+        v-btn.px-4.rounded-button(
+          rounded
+          dark
+          :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
+          @click='convertPage'
+          :loading='loading'
+          )
+          span.text-none CONVERT
 </template>
 
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import gql from 'graphql-tag'
+import colors from '@/themes/default/js/color-scheme'
 
 export default {
   props: {
@@ -46,7 +60,8 @@ export default {
   data() {
     return {
       loading: false,
-      newEditor: ''
+      newEditor: '',
+      colors: colors
     }
   },
   computed: {
@@ -117,5 +132,7 @@ export default {
 </script>
 
 <style lang='scss'>
-
+.v-btn.rounded-button {
+  border-radius: 20px;
+}
 </style>

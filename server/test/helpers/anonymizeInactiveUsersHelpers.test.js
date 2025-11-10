@@ -3,7 +3,7 @@ const helpers = require('../../helpers/anonymizeInactiveUsersHelpers')
 const WIKI = {
   models: {
     users: { query: jest.fn() },
-    pages: { query: jest.fn() },
+    pages: { query: jest.fn(), deletePageFromCache: jest.fn() },
     comments: { query: jest.fn() },
     assets: { query: jest.fn() },
     pageHistory: { query: jest.fn(), anonymizeMentionsByPageIds: jest.fn() },
@@ -15,6 +15,8 @@ const WIKI = {
     userSiteInactivity: { query: jest.fn() }
   }
 }
+// Provide logger mock used in helper
+WIKI.logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() }
 
 describe('anonymizeInactiveUsersHelpers', () => {
   beforeEach(() => {
@@ -141,17 +143,85 @@ describe('anonymizeInactiveUsersHelpers', () => {
   })
 
   describe('anonymizePages', () => {
-    it('should patch authorId and creatorId for pages', async () => {
-      const patch = jest.fn()
-      const where = jest.fn(() => ({ patch }))
-      WIKI.models.pages.query.mockReturnValue({ where, patch })
+    it('should patch authorId and creatorId and invalidate cache', async () => {
+      // Arrange mocks for the three sequential query() calls in anonymizePages
+      const affectedPages = [{ hash: 'hash1' }, { hash: 'hash2' }]
+
+      // First query: builder pattern returning pages with hashes
+      const builderStub = {
+        where: jest.fn(function () { return builderStub }),
+        orWhere: jest.fn(function () { return builderStub }),
+        select: jest.fn(() => Promise.resolve(affectedPages))
+      }
+      const firstQuery = { where: jest.fn(fn => { fn(builderStub); return builderStub }) }
+
+      // Second query: patch authorId
+      const patchAuthor = jest.fn()
+      const secondQuery = { where: jest.fn(() => ({ patch: patchAuthor })) }
+
+      // Third query: patch creatorId
+      const patchCreator = jest.fn()
+      const thirdQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
+
+      // Stub deletePageFromCache + events emitter
+      WIKI.models.pages.deletePageFromCache = jest.fn()
+      WIKI.events = { outbound: { emit: jest.fn() } }
+
+      // Chain the mock returns for successive calls to WIKI.models.pages.query()
+      WIKI.models.pages.query
+        .mockReturnValueOnce(firstQuery)
+        .mockReturnValueOnce(secondQuery)
+        .mockReturnValueOnce(thirdQuery)
+
+      // Act
+      await helpers.anonymizePages({ userId: 42, siteId: 'siteA' }, { id: 999 })
+
+      // Assert author patch
+      expect(secondQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
+      expect(patchAuthor).toHaveBeenCalledWith({ authorId: 999 })
+      // Assert creator patch
+      expect(thirdQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
+      expect(patchCreator).toHaveBeenCalledWith({ creatorId: 999 })
+      // Cache invalidation + outbound events
+      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledTimes(2)
+      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledWith('hash1')
+      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledWith('hash2')
+      expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash1')
+      expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash2')
+    })
+
+    it('should not attempt cache invalidation or events when no pages are affected', async () => {
+      // First query returns empty array
+      const builderStub = {
+        where: jest.fn(function () { return builderStub }),
+        orWhere: jest.fn(function () { return builderStub }),
+        select: jest.fn(() => Promise.resolve([]))
+      }
+      const firstQuery = { where: jest.fn(fn => { fn(builderStub); return builderStub }) }
+
+      // Author + creator patch queries (still perform updates)
+      const patchAuthor = jest.fn()
+      const secondQuery = { where: jest.fn(() => ({ patch: patchAuthor })) }
+      const patchCreator = jest.fn()
+      const thirdQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
+
+      WIKI.models.pages.deletePageFromCache = jest.fn()
+      WIKI.events = { outbound: { emit: jest.fn() } }
+
+      WIKI.models.pages.query
+        .mockReturnValueOnce(firstQuery)
+        .mockReturnValueOnce(secondQuery)
+        .mockReturnValueOnce(thirdQuery)
 
       await helpers.anonymizePages({ userId: 42, siteId: 'siteA' }, { id: 999 })
 
-      expect(where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
-      expect(patch).toHaveBeenCalledWith({ authorId: 999 })
-      expect(where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
-      expect(patch).toHaveBeenCalledWith({ creatorId: 999 })
+      expect(secondQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
+      expect(patchAuthor).toHaveBeenCalledWith({ authorId: 999 })
+      expect(thirdQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
+      expect(patchCreator).toHaveBeenCalledWith({ creatorId: 999 })
+      // No cache invalidation or events
+      expect(WIKI.models.pages.deletePageFromCache).not.toHaveBeenCalled()
+      expect(WIKI.events.outbound.emit).not.toHaveBeenCalled()
     })
   })
 

@@ -5,7 +5,7 @@
     :overlay-color='colors.overlay.page'
     )
     v-card.page-selector
-      .dialog-header(:class='$vuetify.theme.dark ? `is-dark` : ``')
+      .dialog-header(:style='`background-color: ${colors.blue[500]} !important;`')
         v-icon.mr-3(color='white') mdi-page-next-outline
         .body-1(v-if='mode === `create`') {{$t('common:pageSelector.createTitle')}}
         .body-1(v-else-if='mode === `move`') {{$t('common:pageSelector.moveTitle')}}
@@ -84,7 +84,7 @@
           solo
           dark
           flat
-          :background-color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
+          :background-color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
           :class='$vuetify.theme.dark ? `is-dark` : ``'
           hide-details
           single-line
@@ -103,18 +103,21 @@
         )
       v-card-chin
         v-spacer
-        v-btn(text, rounded, @click='close') {{$t('common:actions.cancel')}}
-        v-btn.px-4(
-          :color='$vuetify.theme.dark ? colors.actionDark.active : colors.actionLight.active'
+        v-btn.rounded-button(
+          outlined
+          rounded
+          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+          @click='close'
+          ) {{$t('common:actions.cancel')}}
+        v-btn.px-4.rounded-button(
+          rounded
+          dark
+          :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
           @click='open'
           :disabled='!isValidPath'
-          rounded
           )
-          v-icon(
-            left
-            :color='$vuetify.theme.dark ? colors.textDark.inverse : colors.textLight.inverse'
-            ) mdi-check
-          span.select-btn-text(:class='$vuetify.theme.dark ? `is-dark` : ``') {{$t('common:actions.select')}}
+          v-icon(left, color='white') mdi-check
+          span.text-none SELECT
 </template>
 
 <script>
@@ -396,13 +399,7 @@ export default {
     font-size: 13px;
   }
 
-  .dialog-header {
-    background-color: mc("surface-light", "primary-blue-heavy");
 
-    &.is-dark {
-      background-color: mc("surface-dark", "primary-blue-heavy");
-    }
-  }
 
   .v-treeview-node__content {
     cursor: pointer;
@@ -428,13 +425,17 @@ export default {
 
   .v-select .v-select__selection {
     padding-left: 16px;
-    color: mc("text-light", "inverse");
+    color: white;
   }
 
   .v-select.is-dark .v-select__selection,
   .v-select.is-dark .theme--dark.v-icon.mdi
    {
-    color: mc("text-dark", "inverse");
+    color: white;
+  }
+
+  .v-btn.rounded-button {
+    border-radius: 20px;
   }
 }
 </style>

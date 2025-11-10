@@ -6,8 +6,14 @@ const config = {
     '/node_modules/',
     '/dev\/cypress\/'
   ],
+  transformIgnorePatterns: [
+    "/node_modules/(?!@paralleldrive/cuid2)"
+  ],
   rootDir: './',
-  testMatch: ['**/server/test/**/*.test.js']
+  testMatch: ['**/server/test/**/*.test.js'],
+  transform: {
+    "^.+\\.js$": "babel-jest"
+  }
 }
 
 module.exports = config

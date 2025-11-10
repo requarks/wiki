@@ -23,7 +23,7 @@ determine_environment() {
         ENVIRONMENT="prod"
       fi
       ;;
-    feature/*|task/*|hotfix/*|improvement/*|bugfix/*|docs/*)
+    feature/*|task/*|hotfix/*|improvement/*|bugfix/*|bug/*|docs/*)
       ENVIRONMENT="dev1"
       ;;
   esac
@@ -42,7 +42,7 @@ echo "Determined ENVIRONMENT=$ENVIRONMENT"
 # Determine image tag based on environment
 case "$ENVIRONMENT" in
   dev1)
-    if [[ "$CI_COMMIT_BRANCH" =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ]]; then
+    if [[ "$CI_COMMIT_BRANCH" =~ ^(feature|task|hotfix|improvement|bugfix|bug|docs)/ ]]; then
       IMAGE_TAG_BY_ENV="dev1-${IMAGE_TAG}"
     else
       echo "ERROR: Branch name doesn't match allowed prefixes for dev1 environment"
@@ -52,7 +52,7 @@ case "$ENVIRONMENT" in
   dev2)
     if [[ "$CI_COMMIT_BRANCH" == "develop" ]]; then
       IMAGE_TAG_BY_ENV="dev2-${IMAGE_TAG}"
-    elif [[ "$CI_COMMIT_BRANCH" =~ ^(feature|task|hotfix|improvement|bugfix|docs)/ ]]; then
+    elif [[ "$CI_COMMIT_BRANCH" =~ ^(feature|task|hotfix|improvement|bugfix|bug|docs)/ ]]; then
       IMAGE_TAG_BY_ENV="dev2-${IMAGE_TAG}"
     else
       echo "ERROR: Branch name doesn't match allowed prefixes for dev2 environment"

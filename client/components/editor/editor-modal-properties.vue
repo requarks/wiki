@@ -5,27 +5,27 @@
     width='1000'
     :fullscreen='$vuetify.breakpoint.smAndDown'
     )
-    .dialog-header
+    .dialog-header(:style='`background-color: ${colors.blue[500]} !important;`')
       v-icon(color='white') mdi-tag-text-outline
       .subtitle-1.white--text.ml-3 {{$t('editor:props.pageProperties')}}
       v-spacer
-      v-btn.mx-0(
-        outlined
-        dark
+      v-btn.rounded-button.hover-btn.text-primary.text-none(
+        :color='colors.actionLight.highlightOnLite'
+        rounded
         @click.native='close'
         )
-        v-icon(left) mdi-check
-        span {{ $t('common:actions.ok') }}
+        v-icon(left, :color='$vuetify.theme.dark ? "black" : colors.textLight.primary') mdi-check
+        span.text-none {{ $t('common:actions.ok') }}
     v-card(tile)
-      v-tabs(color='white', background-color='blue darken-1', dark, centered, v-model='currentTab')
+      v-tabs(color='white', :style='`background-color: ${colors.blue[500]} !important;`', :dark='$vuetify.theme.dark', centered, v-model='currentTab')
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
         v-tab(disabled) {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
-          v-card-text.pt-5
-            .overline.pb-5 {{$t('editor:props.pageInfo')}}
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
+            .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.pageInfo')}}
             v-text-field(
               ref='iptTitle'
               outlined
@@ -43,7 +43,7 @@
               )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
-            .overline.pb-5 {{$t('editor:props.path')}}
+            .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.path')}}
             v-container.pa-0(fluid, grid-list-lg)
               v-layout(row, wrap)
                 v-flex(xs12, md2)
@@ -68,7 +68,7 @@
                     )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
-            .overline.pb-5 {{$t('editor:props.categorization')}}
+            .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.categorization')}}
             v-chip-group.radius-5.mb-5(column, v-if='tags && tags.length > 0')
               v-chip(
                 v-for='tag of tags'
@@ -91,8 +91,8 @@
               :search-input.sync='newTagSearch'
               )
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
-          v-card-text
-            .overline {{$t('editor:props.publishState')}}
+          v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
+            .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.publishState')}}
             v-switch(
               :label='$t(`editor:props.publishToggle`)'
               v-model='isPublished'
@@ -248,6 +248,7 @@
 import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
 import gql from 'graphql-tag'
+import colors from '@/themes/default/js/color-scheme'
 
 import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
@@ -267,6 +268,7 @@ export default {
   },
   data () {
     return {
+      colors,
       isPublishStartShown: false,
       isPublishEndShown: false,
       pageSelectorShown: false,
@@ -424,6 +426,34 @@ export default {
 </script>
 
 <style lang='scss'>
+
+.v-btn.rounded-button {
+  border-radius: 20px;
+}
+
+.v-btn.hover-btn {
+  &:hover {
+    background-color: mc('action-dark', 'highlight-on-lite') !important;
+  }
+}
+
+.text-primary {
+  color: mc("text-light", "primary") !important;
+
+  &.dark {
+    color: mc("text-dark", "primary") !important;
+  }
+}
+
+// Force tabs background color - override dark theme
+.theme--dark.v-tabs > .v-tabs-bar,
+.v-tabs .v-tabs-bar {
+  background-color: mc('surface-light', 'secondary-blue-heavy') !important;
+}
+
+.v-tabs {
+  background-color: mc('surface-light', 'secondary-blue-heavy') !important;
+}
 
 .editor-props-codeeditor {
   background-color: mc('neutral', '900');

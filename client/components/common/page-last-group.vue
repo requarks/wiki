@@ -12,12 +12,15 @@
         span Data Privacy Notice – Site Access Removed
       v-card-text.pt-5
         div.body-2
-          | The user has been unassigned from their last group linked to the following site(s):
+          strong {{ userName }}
+          |  has been unassigned from their last group linked to the following site(s):
           strong {{ siteNames }}.
           br
           | As a result, access to the site(s) has been fully removed. If no new group assignment is made within 3 months, their data within the site(s) will be anonymized to protect privacy.
         div.caption.mt-5
-          | You can restore access by reassigning the user to one or more group(s) with access to the affected site(s) within the next 3 months.
+          | You can restore access by reassigning 
+          strong {{ userName }}
+          |  to one or more group(s) with access to the affected site(s) within the next 3 months.
       v-card-chin
         v-spacer
         v-btn(text, @click='discard', :disabled='loading') {{$t('common:actions.cancel')}}
@@ -40,6 +43,10 @@ export default {
     sites: {
       type: Array,
       default: () => []
+    },
+    userName: {
+      type: String,
+      default: 'The user'
     }
   },
   data() {

@@ -587,6 +587,7 @@ class User extends Model {
    * @param {Object} param0 User Fields
    */
   static async createNewUser({ providerKey, email, passwordRaw, name, groups = [], mustChangePassword, sendWelcomeEmail = true, createdByScript = false }) {
+  static async createNewUser({ providerKey, email, passwordRaw, name, groups = [], mustChangePassword, sendWelcomeEmail = true, createdByScript = false }) {
     // Input sanitization
     email = _.toLower(email)
 
@@ -667,6 +668,10 @@ class User extends Model {
         // new flags introduced by migration 2.5.143
         welcomeMailWasSent: false,
         createdByScript: createdByScript === true
+        mustChangePwd: false,
+        // new flags introduced by migration 2.5.143
+        welcomeMailWasSent: false,
+        createdByScript: createdByScript === true
       }
 
       if (providerKey === `local`) {
@@ -682,6 +687,12 @@ class User extends Model {
       }
 
       if (sendWelcomeEmail) {
+        try {
+          await userService.sendWelcomeEmail(newUsr)
+          await WIKI.models.users.query().patch({ welcomeMailWasSent: true }).where({ id: newUsr.id })
+        } catch (err) {
+          WIKI.logger.warn(`Failed to send welcome email to ${newUsr.email}: ${err.message}`)
+        }
         try {
           await userService.sendWelcomeEmail(newUsr)
           await WIKI.models.users.query().patch({ welcomeMailWasSent: true }).where({ id: newUsr.id })
@@ -723,8 +734,13 @@ class User extends Model {
         usrData.password = newPassword
       }
       if (_.isArray(groups)) {
-        const usrGroupsRaw = await usr.$relatedQuery('groups')
+        let usrGroupsRaw = await usr.$relatedQuery('groups')
+        // Normalize to array in case relatedQuery returns undefined/null or an object map in certain mocked contexts
+        if (!Array.isArray(usrGroupsRaw)) {
+          usrGroupsRaw = usrGroupsRaw ? Object.values(usrGroupsRaw) : []
+        }
         const usrGroups = _.map(usrGroupsRaw, 'id')
+        // Determine added and removed groups
         // Determine added and removed groups
         const addUsrGroups = _.difference(groups, usrGroups)
         const remUsrGroups = _.difference(usrGroups, groups)
@@ -747,7 +763,30 @@ class User extends Model {
           }
         }
 
+        const remUsrGroups = _.difference(usrGroups, groups)
+
+        // Relate added groups and send notification email(s)
+        for (const grpId of addUsrGroups) {
+          await usr.$relatedQuery('groups').relate(grpId)
+          try {
+            const groupObj = await WIKI.models.groups.query().findById(grpId)
+            if (groupObj) {
+              const sent = await userService.sendUserAddedToGroupEmail(usr, groupObj)
+              if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+                WIKI.logger.info(`[mail][user.update] userId=${usr.id} email=${usr.email} addedToGroup=${groupObj.name} sent=${sent}`)
+              }
+            }
+          } catch (err) {
+            if (process.env.LOG_MAIL_DIAGNOSTICS === '1') {
+              WIKI.logger.warn(`[mail][user.update] failed to send group-add email userId=${usr.id} groupId=${grpId}: ${err.message}`)
+            }
+          }
+        }
+
         // Unrelate removed groups
+        for (const grpId of remUsrGroups) {
+          await usr.$relatedQuery('groups').unrelate().where('groupId', grpId)
+          const groupObj = usrGroupsRaw.find(g => g.id === grpId)
         for (const grpId of remUsrGroups) {
           await usr.$relatedQuery('groups').unrelate().where('groupId', grpId)
           const groupObj = usrGroupsRaw.find(g => g.id === grpId)
@@ -785,11 +824,28 @@ class User extends Model {
   static async deleteUser(id, replaceId) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
+      // Get all pages where user was author or creator before updating (for cache invalidation)
+      const affectedPages = await WIKI.models.pages.query()
+        .select('hash')
+        .where(builder => {
+          builder
+            .where({ authorId: id })
+            .orWhere({ creatorId: id })
+        })
+
       await WIKI.models.assets.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.comments.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.pageHistory.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.pages.query().patch({ authorId: replaceId }).where('authorId', id)
       await WIKI.models.pages.query().patch({ creatorId: replaceId }).where('creatorId', id)
+
+      // Invalidate cache for all affected pages to ensure updated user info is reflected
+      for (const page of affectedPages) {
+        await WIKI.models.pages.deletePageFromCache(page.hash)
+        if (WIKI.events && WIKI.events.outbound) {
+          WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+        }
+      }
 
       await WIKI.models.userKeys.query().delete().where('userId', id)
       await WIKI.models.users.query().deleteById(id)
