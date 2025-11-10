@@ -19,37 +19,37 @@ variables:
   STAGING_IMAGE_TAG: 'latest-staging'
   STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
-
-
+ 
+ 
   IMAGE_TAG:
     value: ""
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
-
+ 
   DEV2_IMAGE_TAG_OVERRIDE:
     value: ""
     description: "Specify the dev2 image tag to promote to staging (e.g., dev2-caefcfeb). Required when merging to main."
-
+ 
   SONARQUBE:
     value: "true"
     options:
       - "true"
       - "false"
     description: "Choose false to skip code quality check"
-
+ 
   PANDOC:
     value: "false"
     options:
       - "true"
       - "false"
     description: "Choose false to skip build & push pandoc docker image stages"
-
+ 
   VERSION:
      value: ""
      description: "Update to next release version, it should be numeric value, ex: 1.7.5"
-
+ 
 default:
   tags:
-    - ubuntu-docker 
+    - ubuntu-docker
   before_script:
      - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
@@ -61,8 +61,8 @@ stages:
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
   - promote-prod-release-version
-
-
+ 
+ 
 environment-set:
   stage: environment-set
   script:
@@ -75,7 +75,7 @@ environment-set:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"' ## to prevent jobs from running when branch is created.
       when: never
-
+ 
 build:
   stage: build
   before_script:
@@ -98,8 +98,8 @@ build:
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: always
-
-
+ 
+ 
 test:
   stage: test
   dependencies:
@@ -123,7 +123,7 @@ test:
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
-
+ 
 sonarqube-scan:
   stage: sonarqube
   dependencies:
@@ -150,7 +150,7 @@ sonarqube-scan:
       when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
-
+ 
 docker-build:
   stage: docker-build
   before_script:
@@ -161,40 +161,7 @@ docker-build:
     - bash scripts/build_images.sh
     - |
       if [ -f newimage.txt ]; then
-        echo "Image built and tagged successfully. Content of newimage.txt:"
-        cat newimage.txt
-        
-        # Extract image tag for different branch types - detect hotfix using multiple methods
-        if [[ "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_BRANCH" =~ ^hotfix/ ]] || [[ "$CI_COMMIT_MESSAGE" =~ hotfix ]]; then
-          echo "Hotfix branch detected, extracting hotfix tag..."
-          # Try to extract the full tag after the colon from NEW_IMAGE
-          FULL_IMAGE=$(grep "NEW_IMAGE=" newimage.txt | cut -d'=' -f2)
-          if [ -n "${FULL_IMAGE}" ]; then
-            HOTFIX_TAG=$(echo "${FULL_IMAGE}" | awk -F':' '{print $2}')
-            echo "BUILT_IMAGE_TAG=${HOTFIX_TAG}" >> build.env
-            echo "Extracted hotfix tag: ${HOTFIX_TAG}"
-          else
-            echo "ERROR: Could not extract NEW_IMAGE from newimage.txt" >&2
-          fi
-        else
-          # For dev2 or other branches, extract the appropriate tag
-          TAG=$(cat newimage.txt | grep -oE '(dev2-[^[:space:]]*|[^[:space:]]*-[^[:space:]]*)' | head -1 | sed 's/.*://')
-          echo "BUILT_IMAGE_TAG=${TAG}" >> build.env
-          echo "Extracted non-hotfix tag: ${TAG}"
-        fi
-        
-        echo "DEBUG: Branch name: '${CI_COMMIT_BRANCH}'"
-        echo "DEBUG: Merge request source branch: '${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}'"
-        echo "DEBUG: Commit message: '${CI_COMMIT_MESSAGE}'"
-        echo "DEBUG: Commit SHA: '${CI_COMMIT_SHORT_SHA}'"
-        
-        if [ -f build.env ]; then
-          echo "Contents of build.env:"
-          cat build.env
-        fi
-      else
-        echo "ERROR: newimage.txt not found after build" >&2
-        exit 1
+        echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
       fi
   artifacts:
     paths:
@@ -210,15 +177,9 @@ docker-build:
       when: always
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//'
-      when: always
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /hotfix/'
-      when: always
-    - if: $ENVIRONMENT == "hotfix"
-      when: always
     - if: $ENVIRONMENT == "production"
       when: never
-
+ 
 push-docker-image:
   stage: docker-push
   needs:
@@ -231,93 +192,30 @@ push-docker-image:
       when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//'
-      when: on_success
-    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /hotfix/'
-      when: on_success
-    - if: $ENVIRONMENT == "hotfix"
-      when: on_success
     - if: $ENVIRONMENT == "production"
       when: never
-
+ 
   # Deploy to staging after merging develop into main
 deploy-to-staging:
-  stage: promote-prod-release-version
-  needs:
-    - job: docker-build
-      optional: false
-    - job: push-docker-image
-      optional: false
-  script:
-    - |
-      echo "Promoting image to staging..."
-      echo "DEBUG: Merge request source branch: '${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}'"
-      echo "DEBUG: Built image tag: '${BUILT_IMAGE_TAG}'"
-      echo "DEBUG: Commit message: '${CI_COMMIT_MESSAGE}'"
-      # Detect hotfix branch using multiple methods
-      if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^hotfix/ ]] || [[ "${BUILT_IMAGE_TAG}" =~ ^hotfix- ]] || [[ "${CI_COMMIT_MESSAGE}" =~ hotfix ]]; then
-        echo "Deploying hotfix branch image to staging..."
-        
-        # Try multiple methods to get the correct hotfix tag
-        if [ -n "${BUILT_IMAGE_TAG}" ]; then
-          export HOTFIX_IMAGE_TAG="${BUILT_IMAGE_TAG}"
-          echo "Using hotfix built image tag: ${HOTFIX_IMAGE_TAG}"
-        elif [ -f newimage.txt ]; then
-          echo "Reading from newimage.txt:"
-          cat newimage.txt
-          # Extract the full image name and get just the tag part
-          FULL_IMAGE=$(grep "NEW_IMAGE=" newimage.txt | cut -d'=' -f2)
-          if [ -n "${FULL_IMAGE}" ]; then
-            export HOTFIX_IMAGE_TAG=$(echo "${FULL_IMAGE}" | awk -F':' '{print $2}')
-            echo "Extracted hotfix tag from NEW_IMAGE: ${HOTFIX_IMAGE_TAG}"
-          fi
-        fi
-        
-        # Final fallback: use current commit SHA with hotfix prefix
-        if [ -z "${HOTFIX_IMAGE_TAG}" ]; then
-          if [[ "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}" =~ ^hotfix/(.+)$ ]]; then
-            HOTFIX_NAME="${BASH_REMATCH[1]}"
-            export HOTFIX_IMAGE_TAG="hotfix-${HOTFIX_NAME}-${CI_COMMIT_SHORT_SHA}"
-          else
-            export HOTFIX_IMAGE_TAG="hotfix-${CI_COMMIT_SHORT_SHA}"
-          fi
-          echo "Using fallback hotfix tag: ${HOTFIX_IMAGE_TAG}"
-        fi
-        
-        if [ -z "${HOTFIX_IMAGE_TAG}" ]; then
-          echo "ERROR: Could not determine hotfix source image tag." >&2
-          echo "DEBUG: CI_MERGE_REQUEST_SOURCE_BRANCH_NAME=${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
-          echo "DEBUG: CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}"
-          echo "DEBUG: BUILT_IMAGE_TAG=${BUILT_IMAGE_TAG}"
-          exit 1
-        fi
-        
-        echo "Final hotfix image tag: ${HOTFIX_IMAGE_TAG}"
-        bash scripts/promote_hotfix_to_staging.sh
-      else
-        echo "Deploying dev2 branch image to staging..."
+    stage: promote-prod-release-version
+    needs:
+      - job: docker-build
+        optional: true
+    script:
+      - echo "Deploying dev2 branch image to staging..."
+      - |
         if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
           export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
-          echo "Using dev2 image (override): ${DEV2_IMAGE_TAG}"
+          echo "Using dev2 image: ${DEV2_IMAGE_TAG}"
         else
-          if [ -f newimage.txt ]; then
-            DERIVED_TAG=$(grep -o 'dev2-[^[:space:]]*' newimage.txt | head -1 | sed 's/.*://')
-            if [ -n "${DERIVED_TAG}" ]; then
-              export DEV2_IMAGE_TAG="${DERIVED_TAG}"
-              echo "Using dev2 image (derived): ${DEV2_IMAGE_TAG}"
-            fi
-          fi
-        fi
-        if [ -z "${DEV2_IMAGE_TAG}" ]; then
-          echo "ERROR: Unable to determine dev2 image tag." >&2
+          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-6c24c269)"
           exit 1
         fi
-        bash scripts/promote_to_staging.sh
-      fi
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      when: always
-
+      - bash scripts/promote_to_staging.sh
+    rules:
+      - if: $CI_COMMIT_BRANCH == "main"
+        when: always
+ 
   # Deploy to production after staging, manual trigger
 deploy-to-production:
   stage: promote-prod-release-version
@@ -333,7 +231,3 @@ deploy-to-production:
     # Auto for hotfix branches merged to main
     - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//
       when: always
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_MESSAGE =~ /hotfix/
-      when: always
-
-
