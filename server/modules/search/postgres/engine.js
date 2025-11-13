@@ -86,18 +86,8 @@ module.exports = {
         try {
           const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
           suggestions = suggestResults.rows.map(r => r.word)
-        } catch (suggestionErr) {
-          WIKI.logger.warn('Search Engine Suggestion Error (pg_trgm extension may be missing):')
-          WIKI.logger.warn(suggestionErr.message)
-          // Fall back to basic word matching without similarity
-          try {
-            const fallbackResults = await WIKI.models.knex.raw(`SELECT word FROM "pagesWords" WHERE word ILIKE ? LIMIT 5;`, [`%${q}%`])
-            suggestions = fallbackResults.rows.map(r => r.word)
-          } catch (fallbackErr) {
-            WIKI.logger.warn('Search Engine Fallback Error:')
-            WIKI.logger.warn(fallbackErr.message)
-            suggestions = []
-          }
+        } catch (err) {
+          WIKI.logger.warn(`Search Engine Suggestion Error (pg_trgm extension may be missing): ${err.message}`)
         }
       }
       return {
