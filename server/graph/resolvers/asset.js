@@ -1,9 +1,18 @@
 const _ = require('lodash')
 const sanitize = require('sanitize-filename')
+const fs = require('fs-extra')
+const path = require('path')
+const mime = require('mime-types')
+const fetch = require('node-fetch')
+const { URL } = require('url')
+const FileType = require('file-type')
 const graphHelper = require('../../helpers/graph')
 const assetHelper = require('../../helpers/asset')
 
 /* global WIKI */
+
+const REMOTE_FETCH_TIMEOUT = 15000
+const REMOTE_ALLOWED_MIME_PREFIXES = ['image/', 'video/']
 
 module.exports = {
   Query: {
@@ -187,6 +196,161 @@ module.exports = {
         }
       } catch (err) {
         return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Fetch remote media and store as asset
+     */
+    async fetchRemoteAsset(obj, args, context) {
+      let tempFilePath = null
+      try {
+        const user = context.req.user
+        const remoteUrlRaw = _.trim(args.url)
+        if (!remoteUrlRaw) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
+        const maxFileSize = _.get(WIKI, 'config.uploads.maxFileSize', 0)
+        let targetFolderId = args.folderId === 0 ? null : args.folderId
+        let hierarchy = []
+        if (targetFolderId) {
+          hierarchy = await WIKI.models.assetFolders.getHierarchy(targetFolderId)
+          if (hierarchy.length < 1) {
+            throw new WIKI.Error.InputInvalid()
+          }
+        }
+        const folderPath = hierarchy.map(h => h.slug).join('/')
+
+        let parsedUrl
+        try {
+          parsedUrl = new URL(remoteUrlRaw)
+        } catch (err) {
+          throw new WIKI.Error.InputInvalid()
+        }
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          throw new WIKI.Error.InputInvalid()
+        }
+
+        const fetchOpts = {
+          timeout: REMOTE_FETCH_TIMEOUT
+        }
+        if (maxFileSize > 0) {
+          fetchOpts.size = maxFileSize + 1024
+        }
+
+        let response
+        try {
+          response = await fetch(remoteUrlRaw, fetchOpts)
+        } catch (err) {
+          throw new WIKI.Error.AssetFetchFailed()
+        }
+
+        if (!response.ok) {
+          throw new WIKI.Error.AssetFetchFailed()
+        }
+
+        const contentLengthHeader = response.headers.get('content-length')
+        if (contentLengthHeader && maxFileSize > 0 && _.toInteger(contentLengthHeader) > maxFileSize) {
+          throw new WIKI.Error.AssetFetchTooLarge()
+        }
+
+        let buffer
+        try {
+          buffer = await response.buffer()
+        } catch (err) {
+          if (err && err.type === 'max-size') {
+            throw new WIKI.Error.AssetFetchTooLarge()
+          }
+          throw new WIKI.Error.AssetFetchFailed()
+        }
+
+        if (!buffer || buffer.length < 1) {
+          throw new WIKI.Error.AssetFetchFailed()
+        }
+        if (maxFileSize > 0 && buffer.length > maxFileSize) {
+          throw new WIKI.Error.AssetFetchTooLarge()
+        }
+
+        let mimeType = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase()
+        const detectedType = await FileType.fromBuffer(buffer)
+        if (detectedType && detectedType.mime) {
+          mimeType = detectedType.mime
+        }
+        if (!mimeType || !_.some(REMOTE_ALLOWED_MIME_PREFIXES, prefix => mimeType.startsWith(prefix))) {
+          throw new WIKI.Error.AssetFetchInvalidType()
+        }
+
+        const rawUrlSegment = decodeURIComponent(parsedUrl.pathname || '').split('/').filter(Boolean).pop() || ''
+        const rawExt = path.extname(rawUrlSegment)
+        const rawBase = rawExt ? rawUrlSegment.slice(0, -rawExt.length) : rawUrlSegment
+        let sanitizedBase = sanitize(rawBase.toLowerCase().replace(/[\s,;#]+/g, '_'))
+        if (!sanitizedBase) {
+          sanitizedBase = `remote_asset_${Date.now()}`
+        }
+
+        const normalizedRawExt = rawExt.toLowerCase().replace(/^\./, '')
+        const mimeExt = mime.extension(mimeType)
+        const allowedExts = (mime.extensions && mime.extensions[mimeType]) || []
+        let finalExt = ''
+        if (
+          normalizedRawExt &&
+          normalizedRawExt.length <= 8 &&
+          (allowedExts.length === 0 || allowedExts.includes(normalizedRawExt))
+        ) {
+          finalExt = `.${normalizedRawExt}`
+        } else if (mimeExt) {
+          finalExt = `.${mimeExt}`
+        }
+        if (!finalExt) {
+          throw new WIKI.Error.AssetFetchInvalidType()
+        }
+
+        if (sanitizedBase.length + finalExt.length > 255) {
+          sanitizedBase = sanitizedBase.substring(0, 255 - finalExt.length)
+        }
+
+        let finalName = sanitize(`${sanitizedBase}${finalExt}`).toLowerCase()
+        if (!finalName || finalName === finalExt) {
+          finalName = `remote_asset_${Date.now()}${finalExt}`
+        }
+        if (!finalName.endsWith(finalExt)) {
+          finalName = `${finalName}${finalExt}`
+        }
+
+        const assetPath = folderPath ? `${folderPath}/${finalName}` : finalName
+        if (!WIKI.auth.checkAccess(user, ['write:assets'], { path: assetPath })) {
+          throw new WIKI.Error.AssetUploadForbidden()
+        }
+
+        const uploadsDir = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'uploads')
+        await fs.ensureDir(uploadsDir)
+        const tempFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${finalExt}`
+        tempFilePath = path.join(uploadsDir, tempFileName)
+        await fs.writeFile(tempFilePath, buffer)
+
+        await WIKI.models.assets.upload({
+          mode: 'remote',
+          originalname: finalName,
+          mimetype: mimeType,
+          size: buffer.length,
+          folderId: targetFolderId,
+          path: tempFilePath,
+          assetPath,
+          user
+        })
+
+        await fs.remove(tempFilePath)
+        tempFilePath = null
+
+        return {
+          responseResult: graphHelper.generateSuccess('Remote asset fetched successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      } finally {
+        if (tempFilePath) {
+          await fs.remove(tempFilePath).catch(() => {})
+        }
       }
     },
     /**

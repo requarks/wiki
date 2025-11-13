@@ -37,6 +37,22 @@ module.exports = {
     message: 'You are not authorized to rename this asset to the requested name.',
     code: 2009
   }),
+  AssetUploadForbidden: CustomError('AssetUploadForbidden', {
+    message: 'You are not authorized to upload files to this folder.',
+    code: 2010
+  }),
+  AssetFetchFailed: CustomError('AssetFetchFailed', {
+    message: 'Failed to download the remote file. Make sure the URL is correct and accessible.',
+    code: 2011
+  }),
+  AssetFetchInvalidType: CustomError('AssetFetchInvalidType', {
+    message: 'Remote file type is not supported for import.',
+    code: 2012
+  }),
+  AssetFetchTooLarge: CustomError('AssetFetchTooLarge', {
+    message: 'Remote file exceeds the maximum allowed size.',
+    code: 2013
+  }),
   AuthAccountBanned: CustomError('AuthAccountBanned', {
     message: 'Your account has been disabled.',
     code: 1013

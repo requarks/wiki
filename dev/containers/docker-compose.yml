@@ -52,6 +52,13 @@ services:
       - ../..:/wiki
       - /wiki/node_modules
       - /wiki/.git
+    tty: true
+    stdin_open: true
+    command: >
+      sh -c "
+        yarn install &&
+        yarn dev
+      "
 
 
 volumes:

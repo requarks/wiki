@@ -159,20 +159,26 @@
               v-toolbar.radius-7(:color='$vuetify.theme.dark ? `teal` : `teal lighten-5`', dense, flat)
                 v-icon.mr-3(:color='$vuetify.theme.dark ? `white` : `teal`') mdi-cloud-download
                 .body-2(:class='$vuetify.theme.dark ? `white--text` : `teal--text`') {{$t('editor:assets.fetchImage')}}
-                v-spacer
-                v-chip(label, color='white', small).teal--text coming soon
               v-text-field.mt-3(
                 v-model='remoteImageUrl'
                 outlined
                 color='teal'
                 single-line
                 placeholder='https://example.com/image.jpg'
+                :disabled='remoteImageLoading'
+                @keyup.enter='fetchRemoteAsset'
               )
             v-divider
             v-card-actions.pa-3
               .caption.grey--text.text-darken-2 Max 5 MB
               v-spacer
-              v-btn.px-4(color='teal', disabled) {{$t('common:actions.fetch')}}
+              v-btn.px-4(
+                color='teal'
+                dark
+                @click='fetchRemoteAsset'
+                :disabled='!remoteUrlIsValid || remoteImageLoading'
+                :loading='remoteImageLoading'
+              ) {{$t('common:actions.fetch')}}
 
           v-card.mt-3.radius-7.animated.fadeInRight.wait-p4s(:light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark')
             v-card-text.pb-0
@@ -239,6 +245,7 @@ import listFolderAssetQuery from 'gql/editor/editor-media-query-folder-list.gql'
 import createAssetFolderMutation from 'gql/editor/editor-media-mutation-folder-create.gql'
 import renameAssetMutation from 'gql/editor/editor-media-mutation-asset-rename.gql'
 import deleteAssetMutation from 'gql/editor/editor-media-mutation-asset-delete.gql'
+import fetchRemoteAssetMutation from 'gql/editor/editor-media-mutation-asset-fetch.gql'
 
 const FilePond = vueFilePond()
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
@@ -261,6 +268,7 @@ export default {
       assets: [],
       pagination: 1,
       remoteImageUrl: '',
+      remoteImageLoading: false,
       imageAlignments: [
         { text: 'None', value: '' },
         { text: 'Left', value: 'left' },
@@ -313,6 +321,21 @@ export default {
     },
     currentAsset () {
       return _.find(this.assets, ['id', this.currentFileId]) || {}
+    },
+    remoteUrlIsValid () {
+      if (!this.remoteImageUrl) {
+        return false
+      }
+      try {
+        const input = this.remoteImageUrl.trim()
+        if (!input) {
+          return false
+        }
+        const remoteUrl = new URL(input)
+        return ['http:', 'https:'].includes(remoteUrl.protocol)
+      } catch (err) {
+        return false
+      }
     },
     filePondServerOpts () {
       const jwtToken = Cookies.get('jwt')
@@ -381,6 +404,43 @@ export default {
     },
     browse () {
       this.$refs.pond.browse()
+    },
+    async fetchRemoteAsset () {
+      if (!this.remoteUrlIsValid || this.remoteImageLoading) {
+        return
+      }
+      const folderId = this.currentFolderId || 0
+      const remoteUrl = this.remoteImageUrl.trim()
+      this.remoteImageLoading = true
+      this.$store.commit('loadingStart', 'editor-media-fetchremote')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: fetchRemoteAssetMutation,
+          variables: {
+            folderId,
+            url: remoteUrl
+          }
+        })
+        const result = _.get(resp, 'data.assets.fetchRemoteAsset.responseResult', {})
+        if (result.succeeded) {
+          this.$store.commit('showNotification', {
+            message: result.message || 'Remote asset fetched successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+          this.remoteImageUrl = ''
+          await this.$apollo.queries.assets.refetch()
+        } else if (result.message) {
+          this.$store.commit('pushGraphError', new Error(result.message))
+        } else {
+          this.$store.commit('pushGraphError', new Error(this.$t('editor:assets.uploadFailed')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      } finally {
+        this.remoteImageLoading = false
+        this.$store.commit('loadingStop', 'editor-media-fetchremote')
+      }
     },
     async upload () {
       const files = this.$refs.pond.getFiles()

@@ -1,0 +1,12 @@
+mutation ($folderId: Int!, $url: String!) {
+  assets {
+    fetchRemoteAsset(folderId: $folderId, url: $url) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

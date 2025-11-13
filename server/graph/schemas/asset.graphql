@@ -45,6 +45,11 @@ type AssetMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
 
+  fetchRemoteAsset(
+    folderId: Int!
+    url: String!
+  ): DefaultResponse @auth(requires: ["manage:system", "write:assets"])
+
   flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
 }
 
