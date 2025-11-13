@@ -15,8 +15,8 @@ RUN fc-list | grep -i symbola
 # textlive (latex) by default now is 2025 but the latest pandoc/latex still use textlive 2024
 # we need to remove this cmnd when pandoc/latex has new version with texlive pointing 2025 repo 
 RUN tlmgr option repository http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final
-# Verify tlmgr is updated and install packages including newunicodechar for emoji support
-RUN tlmgr install newunicodechar svg transparent ragged2e
+# Verify tlmgr is updated and install packages including emoji package for emoji support
+RUN tlmgr install emoji newunicodechar svg transparent ragged2e
 
 WORKDIR /app
 COPY template.tex /app
