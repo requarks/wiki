@@ -9,7 +9,7 @@
       v-icon(color='white') mdi-tag-text-outline
       .subtitle-1.white--text.ml-3 {{$t('editor:props.pageProperties')}}
       v-spacer
-      v-btn.rounded-button.hover-btn.text-primary.text-none(
+      v-btn.btn-rounded.hover-btn.text-primary.text-none(
         :color='colors.actionLight.highlightOnLite'
         rounded
         @click.native='close'
@@ -427,7 +427,7 @@ export default {
 
 <style lang='scss'>
 
-.v-btn.rounded-button {
+.v-btn.btn-rounded {
   border-radius: 20px;
 }
 

@@ -468,34 +468,34 @@
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
           v-spacer
-          v-btn.rounded-button(
+          v-btn.btn-rounded(
             outlined
             rounded
-            :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+            :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
             @click='isExportModalVisible = false'
             ) {{ messages.cancel }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-if='exportFileType === `docx`'
             rounded
             dark
             :color='primaryActionBtnColor'
             @click='exportSinglePageToWord()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-else-if='exportFileType === `pdf`'
             rounded
             dark
             :color='primaryActionBtnColor'
             @click='exportSinglePageToPdf()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-if='exportFileType === `docx`'
             rounded
             dark
             :color='primaryActionBtnColor'
             @click='exportPageTreeToWord()'
             ) {{ messages.exportPageTree }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-else-if='exportFileType === `pdf`'
             rounded
             dark
