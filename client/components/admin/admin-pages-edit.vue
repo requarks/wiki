@@ -43,10 +43,14 @@
                 v-list-item-icon
                   v-icon(color='grey') mdi-cube-scan
                 v-list-item-title Re-Render
-              v-list-item(@click='', disabled)
+              v-list-item(v-if='page.isPublished', @click='unpublishPage')
                 v-list-item-icon
-                  v-icon(color='grey') mdi-earth-remove
+                  v-icon(color='red') mdi-earth-remove
                 v-list-item-title Unpublish
+              v-list-item(v-else, @click='publishPage')
+                v-list-item-icon
+                  v-icon(color='green') mdi-earth
+                v-list-item-title Publish
               v-list-item(:href='`/s/` + page.sitePath + `/` + page.locale + `/` + page.path')
                 v-list-item-icon
                   v-icon(color='indigo') mdi-code-tags
@@ -163,6 +167,7 @@
 <script>
 import _ from 'lodash'
 import { StatusIndicator } from 'vue-status-indicator'
+import gql from 'graphql-tag'
 
 import pageQuery from 'gql/admin/pages/pages-query-single.gql'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
@@ -203,6 +208,90 @@ export default {
         this.$store.commit('pushGraphError', err)
       }
       this.$store.commit(`loadingStop`, 'page-delete')
+    },
+    async unpublishPage() {
+      this.$store.commit('loadingStart', 'page-publish-toggle')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!, $content: String!, $editor: String!, $isPublished: Boolean!, $siteId: String!) {
+              pages {
+                update(id: $id, content: $content, editor: $editor, isPublished: $isPublished, siteId: $siteId) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.page.id,
+            content: this.page.content,
+            editor: this.page.editor,
+            isPublished: false,
+            siteId: this.page.siteId
+          }
+        })
+        
+        if (_.get(resp, 'data.pages.update.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: `"${this.page.title}" is now unpublished.`,
+            icon: 'earth-remove'
+          })
+          // Refresh page data to update status
+          this.$apollo.queries.page.refetch()
+        } else {
+          throw new Error(_.get(resp, 'data.pages.update.responseResult.message', this.$t('common:error.unexpected')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.$store.commit('loadingStop', 'page-publish-toggle')
+    },
+    async publishPage() {
+      this.$store.commit('loadingStart', 'page-publish-toggle')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ($id: Int!, $content: String!, $editor: String!, $isPublished: Boolean!, $siteId: String!) {
+              pages {
+                update(id: $id, content: $content, editor: $editor, isPublished: $isPublished, siteId: $siteId) {
+                  responseResult {
+                    succeeded
+                    errorCode
+                    message
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            id: this.page.id,
+            content: this.page.content,
+            editor: this.page.editor,
+            isPublished: true,
+            siteId: this.page.siteId
+          }
+        })
+        
+        if (_.get(resp, 'data.pages.update.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: `"${this.page.title}" is now published.`,
+            icon: 'earth'
+          })
+          // Refresh page data to update status
+          this.$apollo.queries.page.refetch()
+        } else {
+          throw new Error(_.get(resp, 'data.pages.update.responseResult.message', this.$t('common:error.unexpected')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.$store.commit('loadingStop', 'page-publish-toggle')
     },
     async rerenderPage() {
       this.$store.commit('showNotification', {
