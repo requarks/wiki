@@ -512,6 +512,150 @@ describe('Page Resolvers -> PageMutation', () => {
       })
       expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
     })
+
+    it('should unpublish a published page (isPublished: true → false)', async () => {
+      const args = {
+        id: 'page-id',
+        isPublished: false,
+        publishStartDate: '',
+        publishEndDate: '',
+        content: 'Test page content',
+        editor: 'markdown',
+        siteId: 'site-id',
+        title: 'Test Page',
+        path: 'test-page',
+        sitePath: 'site-path'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.updatePage.mockResolvedValue({
+        id: 'page-id',
+        siteId: args.siteId,
+        title: args.title,
+        path: args.path,
+        sitePath: args.sitePath,
+        isPublished: false,
+        publishStartDate: '',
+        publishEndDate: ''
+      })
+
+      const result = await PageMutation.update(null, args, context)
+
+      expect(WIKI.models.pages.updatePage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isPublished: false,
+          publishStartDate: '',
+          publishEndDate: ''
+        })
+      )
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+    })
+
+    it('should publish an unpublished page (isPublished: false → true)', async () => {
+      const args = {
+        id: 'page-id',
+        isPublished: true,
+        content: 'Test page content',
+        editor: 'markdown',
+        siteId: 'site-id',
+        title: 'Test Page',
+        path: 'test-page',
+        sitePath: 'site-path'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.updatePage.mockResolvedValue({
+        id: 'page-id',
+        siteId: args.siteId,
+        title: args.title,
+        path: args.path,
+        sitePath: args.sitePath,
+        isPublished: true
+      })
+
+      const result = await PageMutation.update(null, args, context)
+
+      expect(WIKI.models.pages.updatePage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isPublished: true
+        })
+      )
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+    })
+
+    it('should preserve content when toggling publish status', async () => {
+      const args = {
+        id: 'page-id',
+        isPublished: false,
+        content: 'Original page content that should be preserved',
+        editor: 'ckeditor',
+        siteId: 'site-id',
+        title: 'Test Page',
+        path: 'test-page',
+        sitePath: 'site-path'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.updatePage.mockResolvedValue({
+        id: 'page-id',
+        siteId: args.siteId,
+        title: args.title,
+        path: args.path,
+        sitePath: args.sitePath,
+        content: args.content,
+        editor: args.editor,
+        isPublished: false
+      })
+
+      const result = await PageMutation.update(null, args, context)
+
+      expect(WIKI.models.pages.updatePage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'Original page content that should be preserved',
+          editor: 'ckeditor',
+          isPublished: false
+        })
+      )
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+    })
+
+    it('should clear publish dates when unpublishing', async () => {
+      const args = {
+        id: 'page-id',
+        isPublished: false,
+        publishStartDate: '',
+        publishEndDate: '',
+        content: 'Test content',
+        editor: 'markdown',
+        siteId: 'site-id',
+        title: 'Test Page',
+        path: 'test-page',
+        sitePath: 'site-path'
+      }
+      const context = { req, WIKI }
+
+      WIKI.models.pages.updatePage.mockResolvedValue({
+        id: 'page-id',
+        siteId: args.siteId,
+        title: args.title,
+        path: args.path,
+        sitePath: args.sitePath,
+        isPublished: false,
+        publishStartDate: '',
+        publishEndDate: ''
+      })
+
+      const result = await PageMutation.update(null, args, context)
+
+      expect(WIKI.models.pages.updatePage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isPublished: false,
+          publishStartDate: '',
+          publishEndDate: ''
+        })
+      )
+      expect(result.responseResult).toEqual(graphHelper.generateSuccess('Page has been updated.'))
+    })
   })
 
   describe('delete', () => {
