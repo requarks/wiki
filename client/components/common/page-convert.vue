@@ -27,14 +27,14 @@
         .caption.mt-5(:style='`color: ${$vuetify.theme.dark ? colors.textDark.tertiary : colors.textLight.tertiary};`') {{$t('common:page.convertSubtitle')}}
       v-card-chin
         v-spacer
-        v-btn.rounded-button(
+        v-btn.btn-rounded(
           outlined
           rounded
-          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+          :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
           @click='discard'
           :disabled='loading'
           ) {{$t('common:actions.cancel')}}
-        v-btn.px-4.rounded-button(
+        v-btn.px-4.btn-rounded(
           rounded
           dark
           :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
@@ -132,7 +132,7 @@ export default {
 </script>
 
 <style lang='scss'>
-.v-btn.rounded-button {
+.v-btn.btn-rounded {
   border-radius: 20px;
 }
 </style>

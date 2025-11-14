@@ -52,7 +52,7 @@
         strong
           span {{ $t('common:comments.postingAs') || 'Posting As' }}
         | {{userDisplayName}}
-      v-btn.rounded-button(
+      v-btn.btn-rounded(
         dark
         :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
         @click='postComment'
@@ -110,7 +110,7 @@
                 v-spacer
                 v-btn.mr-3(
                   dark
-                  :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+                  :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
                   @click='editCommentCancel'
                   outlined
                   )
@@ -622,7 +622,7 @@ export default {
     color: mc('neutral', '100');
   }
 }
-.v-btn.rounded-button {
+.v-btn.btn-rounded {
   border-radius: 20px;
 }
 .comments-post {

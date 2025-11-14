@@ -5,7 +5,7 @@
         v-icon.mr-3 mdi-merge
         .subtitle-1 {{$t('editor:conflict.title')}}
         v-spacer
-        v-btn.rounded-button.hover-btn.text-primary.text-none(
+        v-btn.btn-rounded.hover-btn.text-primary.text-none(
           :color='colors.actionLight.highlightOnLite'
           rounded
           @click='useLocal'
@@ -18,7 +18,7 @@
           width='500'
           )
           template(v-slot:activator='{ on }')
-            v-btn.ml-3.rounded-button.hover-btn.text-primary.text-none(
+            v-btn.ml-3.btn-rounded.hover-btn.text-primary.text-none(
               :color='colors.actionLight.highlightOnLite'
               rounded
               v-on='on'
@@ -35,15 +35,15 @@
                 strong(place='refEditsLost') {{$t('editor:conflict.overwrite.editsLost')}}
             v-card-chin
               v-spacer
-              v-btn.rounded-button(
+              v-btn.btn-rounded(
                 outlined
                 rounded
-                :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+                :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
                 @click='isRemoteConfirmDiagShown = false'
                 )
                 v-icon(left) mdi-close
                 span.text-none {{$t('common:actions.cancel')}}
-              v-btn.rounded-button(
+              v-btn.btn-rounded(
                 rounded
                 dark
                 :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
@@ -52,10 +52,10 @@
                 v-icon(left, color='white') mdi-check
                 span.text-none {{$t('common:actions.confirm')}}
         v-divider.mx-3(vertical)
-        v-btn.rounded-button(
+        v-btn.btn-rounded(
           outlined
           rounded
-          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : "white"'
+          :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : "white"'
           @click='close'
           )
           v-icon(left) mdi-close
@@ -245,7 +245,7 @@ export default {
   overflow: auto;
 }
 
-.v-btn.rounded-button {
+.v-btn.btn-rounded {
   border-radius: 20px;
 }
 
