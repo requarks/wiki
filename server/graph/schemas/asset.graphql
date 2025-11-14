@@ -23,6 +23,8 @@ type AssetQuery {
   folders(
     parentFolderId: Int!
   ): [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
+
+  folderByPath(path: String!): AssetFolder @auth(requires: ["manage:system", "read:assets"])
 }
 
 # -----------------------------------------------
