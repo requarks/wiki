@@ -1,6 +1,6 @@
 {
   "name": "wiki",
-  "version": "2.0.0",
+  "version": "2.5.308",
   "releaseDate": "2019-01-01T01:01:01.000Z",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
@@ -71,7 +71,7 @@
     "dependency-graph": "0.11.0",
     "diff": "4.0.2",
     "diff2html": "3.1.14",
-    "dompurify": "3.2.6",
+    "dompurify": "3.3.0",
     "dotize": "0.3.0",
     "elasticsearch6": "npm:@elastic/elasticsearch@6",
     "elasticsearch7": "npm:@elastic/elasticsearch@7",

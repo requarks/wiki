@@ -152,6 +152,7 @@ import 'codemirror/addon/fold/foldcode.js'
 import 'codemirror/addon/fold/foldgutter.js'
 import 'codemirror/addon/fold/foldgutter.css'
 import cmFold from './common/cmFold'
+import drawioSanitize from './common/sanitize'
 
 // ========================================
 // INIT
@@ -227,9 +228,7 @@ export default {
         $(elm).parent().replaceWith(`<pre class="diagram">${diagramContent}</div>`)
       })
 
-      this.previewHTML = DOMPurify.sanitize($.html(), {
-        ADD_TAGS: ['foreignObject']
-      })
+      this.previewHTML = drawioSanitize($.html())
     },
     /**
      * Insert content at cursor
