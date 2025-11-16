@@ -20,13 +20,13 @@
         "Vue.volar",
         "oderwat.indent-rainbow",
         "redhat.vscode-yaml",
-        "VisualStudioExptTeam.vscodeintellicode",
         "editorconfig.editorconfig",
         "lokalise.i18n-ally",
         "mrmlnc.vscode-duplicate",
         "mutantdino.resourcemonitor",
         "wayou.vscode-todo-highlight",
-        "GraphQL.vscode-graphql"
+        "GraphQL.vscode-graphql",
+        "GitHub.copilot"
       ]
     }
   },
