@@ -65,6 +65,7 @@ type SiteMutation {
     uploadMaxFiles: Int
     uploadScanSVG: Boolean
     uploadForceDownload: Boolean
+    uploadAppendTimestampToFilename: Boolean
 
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -115,4 +116,5 @@ type SiteConfig {
   uploadMaxFiles: Int
   uploadScanSVG: Boolean
   uploadForceDownload: Boolean
+  uploadAppendTimestampToFilename: Boolean
 }
