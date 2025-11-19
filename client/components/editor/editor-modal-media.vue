@@ -150,7 +150,7 @@
               )
             v-divider
             v-card-actions.pa-3
-              .caption.grey--text.text-darken-2 Max 10 files, 5 MB each
+              .caption.grey--text.text-darken-2 Max {{uploadConfig.uploadMaxFiles}} files, {{uploadConfig.uploadMaxFileSize | prettyBytes}} each
               v-spacer
               v-btn.px-4(color='teal', dark, @click='upload') {{$t('common:actions.upload')}}
 
@@ -239,6 +239,7 @@ import listFolderAssetQuery from 'gql/editor/editor-media-query-folder-list.gql'
 import createAssetFolderMutation from 'gql/editor/editor-media-mutation-folder-create.gql'
 import renameAssetMutation from 'gql/editor/editor-media-mutation-asset-rename.gql'
 import deleteAssetMutation from 'gql/editor/editor-media-mutation-asset-delete.gql'
+import gql from 'graphql-tag'
 
 const FilePond = vueFilePond()
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
@@ -278,7 +279,11 @@ export default {
       renameAssetName: '',
       renameAssetLoading: false,
       deleteDialog: false,
-      deleteAssetLoading: false
+      deleteAssetLoading: false,
+      uploadConfig: {
+        uploadMaxFileSize: 0,
+        uploadMaxFiles: 0
+      }
     }
   },
   computed: {
@@ -545,6 +550,23 @@ export default {
       watchLoading (isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-list-refresh')
+      }
+    },
+    uploadConfig: {
+      query: gql`
+        {
+          site {
+            uploadConfig {
+              uploadMaxFileSize
+              uploadMaxFiles
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'network-only',
+      update: (data) => data.site.uploadConfig,
+      watchLoading (isLoading) {
+        this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-config-refresh')
       }
     }
   }
