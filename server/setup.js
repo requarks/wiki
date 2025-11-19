@@ -117,7 +117,13 @@ module.exports = () => {
         description: '',
         robots: ['index', 'follow'],
         analyticsService: '',
-        analyticsId: ''
+        analyticsId: '',
+        sitemap: {
+          enabled: false,
+          cacheExpireTime: 3600, // in seconds,
+          changefreq: 'weekly',
+          priority: 0.0
+        }
       })
       _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
       _.set(WIKI.config, 'telemetry', {
