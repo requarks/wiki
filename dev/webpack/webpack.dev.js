@@ -23,6 +23,7 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets'))
 
 module.exports = {
   mode: 'development',
+  devtool: 'source-map',
   entry: {
     app: ['./client/index-app.js', 'webpack-hot-middleware/client'],
     legacy: ['./client/index-legacy.js', 'webpack-hot-middleware/client'],
