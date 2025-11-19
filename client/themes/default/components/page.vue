@@ -537,13 +537,14 @@ export default {
       }
     },
     breadcrumbs() {
-      return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
-        result.push({
-          path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
-          name: value
-        })
-        return result
-      }, []))
+      return [{ path: `/${this.locale}`, name: 'Home' }].concat(
+        _.reduce(this.path.split('/'), (result, value) => {
+          result.push({
+            path: _.get(_.last(result), 'path') + `/${value}`,
+            name: value
+          })
+          return result
+        }, []))
     },
     pageUrl () { return window.location.href },
     upBtnPosition () {
