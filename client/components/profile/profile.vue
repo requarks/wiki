@@ -129,41 +129,43 @@
             //- v-btn(color='purple darken-4', disabled).ml-0 Enable 2FA
             //- v-btn(color='purple darken-4', dark, depressed, disabled).ml-0 Disable 2FA
             template(v-if='user.providerKey === `local`')
-              v-divider.mt-3
-              v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.changePassword')}}
-              v-text-field(
-                ref='iptCurrentPass'
-                v-model='currentPass'
-                outlined
-                :label='$t(`profile:auth.currentPassword`)'
-                type='password'
-                prepend-inner-icon='mdi-form-textbox-password'
-                )
-              v-text-field(
-                ref='iptNewPass'
-                v-model='newPass'
-                outlined
-                :label='$t(`profile:auth.newPassword`)'
-                type='password'
-                prepend-inner-icon='mdi-form-textbox-password'
-                autocomplete='off'
-                counter='255'
-                loading
-                )
-                password-strength(slot='progress', v-model='newPass')
-              v-text-field(
-                ref='iptVerifyPass'
-                v-model='verifyPass'
-                outlined
-                :label='$t(`profile:auth.verifyPassword`)'
-                type='password'
-                prepend-inner-icon='mdi-form-textbox-password'
-                autocomplete='off'
-                hide-details
-                )
+              form#change-password-form(@submit.prevent='changePassword')
+                v-divider.mt-3
+                v-subheader.pl-0: span.subtitle-2 {{$t('profile:auth.changePassword')}}
+                v-text-field(
+                  ref='iptCurrentPass'
+                  v-model='currentPass'
+                  outlined
+                  :label='$t(`profile:auth.currentPassword`)'
+                  type='password'
+                  prepend-inner-icon='mdi-form-textbox-password'
+                  autocomplete='current-password'
+                  )
+                v-text-field(
+                  ref='iptNewPass'
+                  v-model='newPass'
+                  outlined
+                  :label='$t(`profile:auth.newPassword`)'
+                  type='password'
+                  prepend-inner-icon='mdi-form-textbox-password'
+                  autocomplete='off'
+                  counter='255'
+                  loading
+                  )
+                  password-strength(slot='progress', v-model='newPass')
+                v-text-field(
+                  ref='iptVerifyPass'
+                  v-model='verifyPass'
+                  outlined
+                  :label='$t(`profile:auth.verifyPassword`)'
+                  type='password'
+                  prepend-inner-icon='mdi-form-textbox-password'
+                  autocomplete='off'
+                  hide-details
+                  )
           v-card-chin(v-if='user.providerKey === `local`')
             v-spacer
-            v-btn.px-4(color='purple darken-4', dark, depressed, @click='changePassword', :loading='changePassLoading')
+            v-btn.px-4(color='purple darken-4', dark, depressed, :loading='changePassLoading', type='submit', form='change-password-form')
               v-icon(left) mdi-progress-check
               span {{$t('profile:auth.changePassword')}}
       v-flex(lg6 xs12)
