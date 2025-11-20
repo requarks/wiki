@@ -19,7 +19,7 @@
         v-if='currentMode === `custom`'
         depressed
         :color='colors.actionLight.highlightOnLite'
-        style='flex: 1 1 100%;'
+        style='flex: 1 1 50%;'
         @click='switchMode(`browse`)'
         )
         v-icon(
@@ -31,7 +31,7 @@
         v-else-if='currentMode === `browse`'
         depressed
         :color='colors.actionLight.highlightOnLite'
-        :style='"flex: 1 1 100%; color:" + colors.textLight.primary'
+        :style='"flex: 1 1 50%; color:" + colors.textLight.primary'
         @click='switchMode(`custom`)'
         )
         v-icon(
@@ -154,12 +154,18 @@
                 :aria-label='item.title'
               ) {{ item.title }}
             span {{ item.title }}
+    //-> Tree View Navigation
+    nav-tree-view(
+      v-else-if='currentMode === `tree`'
+      :dark='dark'
+    )
 </template>
 
 <script>
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import colors from '@/themes/default/js/color-scheme'
+import NavTreeView from './nav-tree-view.vue'
 
 import pageTreeQuery from '@/graph/common/common-pages-query-tree.gql'
 import pageByPathQuery from '@/graph/common/common-pages-query-page-by-path.gql'
@@ -168,6 +174,9 @@ import childPagesQuery from '@/graph/common/common-pages-query-child-pages.gql'
 /* global siteLangs */
 
 export default {
+  components: {
+    NavTreeView
+  },
   props: {
     color: {
       type: String,
@@ -188,7 +197,7 @@ export default {
   },
   data() {
     return {
-      currentMode: 'custom',
+      currentMode: null, // Will be set in mounted based on navMode
       topLevelPageItems: [],
       currentParent: {
         id: 0,
@@ -367,13 +376,16 @@ export default {
   },
   mounted() {
     this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
+    
+    // Set default mode based on admin navigation setting
     if (this.navMode === 'TREE') {
-      this.currentMode = 'browse'
+      this.currentMode = 'tree'  // Default to tree view for Classic Site Tree navigation
     } else if (this.navMode === 'STATIC') {
       this.currentMode = 'custom'
     } else {
       this.currentMode = window.localStorage.getItem('navPref') || 'custom'
     }
+    
     if (this.currentMode === 'browse') {
       this.loadFromCurrentPath()
     }
