@@ -235,6 +235,14 @@ describe('Group Resolvers', () => {
         expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: TestGroup.SITE_ADMINS, kind: 'g' })
       })
 
+      it('should allow non-super admin to assign write:users permission', async () => {
+        WIKI.models.groups.query.mockReturnValue(getGroupQueryMock())
+        const result = await groupResolvers.GroupMutation.update(null, { id: TestGroup.SITE_ADMINS, name: 'Updated Group', permissions: ['write:users'], rules: [] }, { req })
+        expect(result.responseResult.message).toBe('Group has been updated.')
+        expect(WIKI.auth.revokeUserTokens).toHaveBeenCalledWith({ id: TestGroup.SITE_ADMINS, kind: 'g' })
+        expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('addAuthRevoke', { id: TestGroup.SITE_ADMINS, kind: 'g' })
+      })
+
       it('should throw error if user tries to update group with invalid site access', async () => {
         WIKI.models.groups.query.mockReturnValue(getGroupQueryMock())
         WIKI.auth.checkAccess.mockReturnValue(false)
