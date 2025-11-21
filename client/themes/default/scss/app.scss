@@ -1508,3 +1508,17 @@
   border: none !important;
   content: none !important;
 }
+
+// WORKAROUND: Override cached problematic CSS rule for dark theme buttons
+.theme--dark .v-dialog .v-btn.rounded-button {
+  color: mc('text-dark', 'primary') !important;
+  
+  &.v-btn--outlined {
+    color: mc('text-dark', 'primary') !important;
+    border-color: mc('border-dark', 'primary') !important;
+  }
+}
+
+.v-btn.btn-rounded {
+  border-radius: 20px;
+}

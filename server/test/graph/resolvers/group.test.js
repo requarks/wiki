@@ -293,14 +293,13 @@ describe('Group Resolvers', () => {
         WIKI.auth.checkExclusiveAccess.mockReturnValue(false)
         WIKI.auth.checkAccess.mockReturnValue(true)
 
+        const relateMock = jest.fn().mockResolvedValue(true)
         WIKI.models = {
           groups: {
             query: jest.fn(() => ({
               findById: jest.fn().mockResolvedValue({
                 id: TestGroup.SITE_ADMINS,
-                $relatedQuery: jest.fn(() => ({
-                  relate: jest.fn().mockResolvedValue(true)
-                }))
+                $relatedQuery: jest.fn(() => ({ relate: relateMock }))
               }),
               join: jest.fn().mockReturnThis(),
               where: jest.fn().mockReturnThis()
@@ -315,6 +314,9 @@ describe('Group Resolvers', () => {
             where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(null) }))
           }))
         }
+
+        // Expose relateMock for tests
+        WIKI.__tests = { relateMock }
 
         global.WIKI = WIKI
       })
@@ -364,14 +366,11 @@ describe('Group Resolvers', () => {
         await expect(assignUser(null, args, { req })).rejects.toThrow('Invalid User ID')
       })
 
-      it('throws an error if the user is already in the group', async () => {
-        WIKI.models.knex = jest.fn(() => ({
-          where: jest.fn(() => ({ first: jest.fn().mockResolvedValue(true) }))
-        }))
+      it('throws an error if the user is already in the group (unique constraint violation)', async () => {
+        // Simulate the relate call throwing a Postgres unique violation
+        WIKI.__tests.relateMock.mockRejectedValueOnce({ code: '23505', message: 'duplicate key value violates unique constraint "user_groups_user_group_unique"' })
         const args = { groupId: TestGroup.SITE_ADMINS, userId: 5 }
-        await expect(assignUser(null, args, { req })).rejects.toThrow(
-          'User is already assigned to group.'
-        )
+        await expect(assignUser(null, args, { req })).rejects.toThrow('User is already assigned to group.')
       })
     })
 
@@ -615,7 +614,6 @@ describe('Group Resolvers', () => {
         ])
       })
     })
-
 
     describe('create', () => {
       function getGroupCreateQueryMock({ findOneResult = null, insertAndFetchResult = { id: 999, name: 'Unique Group' } } = {}) {

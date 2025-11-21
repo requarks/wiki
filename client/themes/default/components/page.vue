@@ -7,7 +7,7 @@
       :style='"border-right: 1px solid " + ($vuetify.theme.dark ? colors.borderDark.primary : colors.borderLight.primary)'
       :width='sidebarWidth'
       :class='{ resizing: isResizing }'
-      dark
+      :dark='$vuetify.theme.dark'
       app
       clipped
       mobile-breakpoint='600'
@@ -56,9 +56,6 @@
           flat
           :color='$vuetify.theme.dark ? colors.surfaceDark.black : colors.surfaceLight.white'
           )
-          //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
-          //-   v-icon(color='grey darken-2', left) menu
-          //-   span Navigation
           v-breadcrumbs.breadcrumbs-nav.pl-0(
             :items='breadcrumbs'
             divider='/'
@@ -468,34 +465,34 @@
           :class='$vuetify.theme.dark ? `theme--dark` : ``'
           )
           v-spacer
-          v-btn.rounded-button(
+          v-btn.btn-rounded(
             outlined
             rounded
-            :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+            :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
             @click='isExportModalVisible = false'
             ) {{ messages.cancel }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-if='exportFileType === `docx`'
             rounded
             dark
             :color='primaryActionBtnColor'
             @click='exportSinglePageToWord()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-else-if='exportFileType === `pdf`'
             rounded
             dark
             :color='primaryActionBtnColor'
             @click='exportSinglePageToPdf()'
             ) {{ messages.exportSinglePage }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-if='exportFileType === `docx`'
             rounded
             dark
             :color='primaryActionBtnColor'
             @click='exportPageTreeToWord()'
             ) {{ messages.exportPageTree }}
-          v-btn.px-4.rounded-button(
+          v-btn.px-4.btn-rounded(
             v-else-if='exportFileType === `pdf`'
             rounded
             dark

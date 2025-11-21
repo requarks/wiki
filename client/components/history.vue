@@ -118,7 +118,7 @@
                       :disabled='isDiffTargetDisabled(ph.versionId)'
                       ): strong B
 
-            v-btn#load-more-btn.ml-8.rounded-button(
+            v-btn#load-more-btn.ml-8.btn-rounded(
               v-if='total > trail.length'
               dark
               :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
@@ -152,7 +152,7 @@
                         dark
                         rounded
                         outlined
-                        :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+                        :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
                         @click='toggleViewMode')
                         v-icon(left, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.inverse') mdi-eye
                         .overline.text-none View Mode
@@ -695,7 +695,7 @@ export default {
   width: calc(100% - 24px);
 }
 
-.v-btn.rounded-button {
+.v-btn.btn-rounded {
   border-radius: 20px;
 }
 </style>

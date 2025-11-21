@@ -56,7 +56,7 @@ services:
     container_name: pandoc
     image: pandoc:latest
     ports:
-      - "80:80"
+      - "8090:80"
 volumes:
   db-data:
   # solr-data:

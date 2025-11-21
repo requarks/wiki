@@ -26,6 +26,7 @@ $endif$
 \usepackage{fancyhdr}
 \usepackage{fontspec}
 \usepackage{emoji}
+\usepackage{newunicodechar}
 \usepackage{svg}
 \usepackage{amsmath,amssymb}
 \usepackage{longtable}      % For multipage tables
@@ -36,7 +37,168 @@ $endif$
 \usepackage{ragged2e}       % For better ragged text handling
 \renewcommand{\raggedright}{\RaggedRight}
 
+% Configure fonts with emoji support
 \setmainfont{Noto Serif}
+\newfontfamily\emojifont{Symbola}[Scale=MatchLowercase]
+\setemojifont{Symbola}
+% Faces
+\newunicodechar{😀}{\emojifont 😀}
+\newunicodechar{😁}{\emojifont 😁}
+\newunicodechar{😂}{\emojifont 😂}
+\newunicodechar{😃}{\emojifont 😃}
+\newunicodechar{😄}{\emojifont 😄}
+\newunicodechar{😅}{\emojifont 😅}
+\newunicodechar{😆}{\emojifont 😆}
+\newunicodechar{😇}{\emojifont 😇}
+\newunicodechar{😈}{\emojifont 😈}
+\newunicodechar{😉}{\emojifont 😉}
+\newunicodechar{😊}{\emojifont 😊}
+\newunicodechar{😋}{\emojifont 😋}
+\newunicodechar{😌}{\emojifont 😌}
+\newunicodechar{😍}{\emojifont 😍}
+\newunicodechar{😎}{\emojifont 😎}
+\newunicodechar{😏}{\emojifont 😏}
+\newunicodechar{😐}{\emojifont 😐}
+\newunicodechar{😑}{\emojifont 😑}
+\newunicodechar{😒}{\emojifont 😒}
+\newunicodechar{😓}{\emojifont 😓}
+\newunicodechar{😔}{\emojifont 😔}
+\newunicodechar{😕}{\emojifont 😕}
+\newunicodechar{😖}{\emojifont 😖}
+\newunicodechar{😗}{\emojifont 😗}
+\newunicodechar{😘}{\emojifont 😘}
+\newunicodechar{😙}{\emojifont 😙}
+\newunicodechar{😚}{\emojifont 😚}
+\newunicodechar{😛}{\emojifont 😛}
+\newunicodechar{😜}{\emojifont 😜}
+\newunicodechar{😝}{\emojifont 😝}
+\newunicodechar{😞}{\emojifont 😞}
+\newunicodechar{😟}{\emojifont 😟}
+\newunicodechar{😠}{\emojifont 😠}
+\newunicodechar{😡}{\emojifont 😡}
+\newunicodechar{😢}{\emojifont 😢}
+\newunicodechar{😣}{\emojifont 😣}
+\newunicodechar{😤}{\emojifont 😤}
+\newunicodechar{😥}{\emojifont 😥}
+\newunicodechar{😦}{\emojifont 😦}
+\newunicodechar{😧}{\emojifont 😧}
+\newunicodechar{😨}{\emojifont 😨}
+\newunicodechar{😩}{\emojifont 😩}
+\newunicodechar{😪}{\emojifont 😪}
+\newunicodechar{😫}{\emojifont 😫}
+\newunicodechar{😬}{\emojifont 😬}
+\newunicodechar{😭}{\emojifont 😭}
+\newunicodechar{😮}{\emojifont 😮}
+\newunicodechar{😯}{\emojifont 😯}
+\newunicodechar{😰}{\emojifont 😰}
+\newunicodechar{😱}{\emojifont 😱}
+\newunicodechar{😲}{\emojifont 😲}
+\newunicodechar{😳}{\emojifont 😳}
+\newunicodechar{😴}{\emojifont 😴}
+\newunicodechar{😵}{\emojifont 😵}
+\newunicodechar{😶}{\emojifont 😶}
+\newunicodechar{😷}{\emojifont 😷}
+\newunicodechar{🙁}{\emojifont 🙁}
+\newunicodechar{🙂}{\emojifont 🙂}
+\newunicodechar{🙃}{\emojifont 🙃}
+\newunicodechar{🙄}{\emojifont 🙄}
+\newunicodechar{🤐}{\emojifont 🤐}
+\newunicodechar{🤑}{\emojifont 🤑}
+\newunicodechar{🤒}{\emojifont 🤒}
+\newunicodechar{🤓}{\emojifont 🤓}
+\newunicodechar{🤔}{\emojifont 🤔}
+\newunicodechar{🤕}{\emojifont 🤕}
+\newunicodechar{🤠}{\emojifont 🤠}
+\newunicodechar{🤡}{\emojifont 🤡}
+\newunicodechar{🤢}{\emojifont 🤢}
+\newunicodechar{🤣}{\emojifont 🤣}
+\newunicodechar{🤤}{\emojifont 🤤}
+\newunicodechar{🤥}{\emojifont 🤥}
+\newunicodechar{🤧}{\emojifont 🤧}
+\newunicodechar{🤨}{\emojifont 🤨}
+\newunicodechar{🤩}{\emojifont 🤩}
+\newunicodechar{🤪}{\emojifont 🤪}
+\newunicodechar{🤫}{\emojifont 🤫}
+\newunicodechar{🤬}{\emojifont 🤬}
+\newunicodechar{🤭}{\emojifont 🤭}
+\newunicodechar{🤮}{\emojifont 🤮}
+\newunicodechar{🤯}{\emojifont 🤯}
+\newunicodechar{🥳}{\emojifont 🥳}
+\newunicodechar{🥴}{\emojifont 🥴}
+\newunicodechar{🥵}{\emojifont 🥵}
+\newunicodechar{🥶}{\emojifont 🥶}
+\newunicodechar{🥺}{\emojifont 🥺}
+\newunicodechar{🧐}{\emojifont 🧐}
+
+% Hands and gestures
+\newunicodechar{👋}{\emojifont 👋}
+\newunicodechar{🤚}{\emojifont 🤚}
+\newunicodechar{🖐}{\emojifont 🖐}
+\newunicodechar{✋}{\emojifont ✋}
+\newunicodechar{🖖}{\emojifont 🖖}
+\newunicodechar{👌}{\emojifont 👌}
+\newunicodechar{🤏}{\emojifont 🤏}
+\newunicodechar{✌}{\emojifont ✌}
+\newunicodechar{🤞}{\emojifont 🤞}
+\newunicodechar{🤟}{\emojifont 🤟}
+\newunicodechar{🤘}{\emojifont 🤘}
+\newunicodechar{🤙}{\emojifont 🤙}
+\newunicodechar{👈}{\emojifont 👈}
+\newunicodechar{👉}{\emojifont 👉}
+\newunicodechar{👆}{\emojifont 👆}
+\newunicodechar{🖕}{\emojifont 🖕}
+\newunicodechar{👇}{\emojifont 👇}
+\newunicodechar{☝}{\emojifont ☝}
+\newunicodechar{👍}{\emojifont 👍}
+\newunicodechar{👎}{\emojifont 👎}
+\newunicodechar{✊}{\emojifont ✊}
+\newunicodechar{👊}{\emojifont 👊}
+\newunicodechar{🤛}{\emojifont 🤛}
+\newunicodechar{🤜}{\emojifont 🤜}
+\newunicodechar{👏}{\emojifont 👏}
+\newunicodechar{🙌}{\emojifont 🙌}
+\newunicodechar{👐}{\emojifont 👐}
+\newunicodechar{🤲}{\emojifont 🤲}
+\newunicodechar{🤝}{\emojifont 🤝}
+\newunicodechar{🙏}{\emojifont 🙏}
+
+% People
+\newunicodechar{👼}{\emojifont 👼}
+\newunicodechar{👻}{\emojifont 👻}
+\newunicodechar{👶}{\emojifont 👶}
+\newunicodechar{👧}{\emojifont 👧}
+\newunicodechar{👦}{\emojifont 👦}
+\newunicodechar{👨}{\emojifont 👨}
+\newunicodechar{👩}{\emojifont 👩}
+\newunicodechar{👴}{\emojifont 👴}
+\newunicodechar{👵}{\emojifont 👵}
+
+% Common symbols
+\newunicodechar{❤}{\emojifont ❤}
+\newunicodechar{💙}{\emojifont 💙}
+\newunicodechar{💚}{\emojifont 💚}
+\newunicodechar{💛}{\emojifont 💛}
+\newunicodechar{💜}{\emojifont 💜}
+\newunicodechar{💔}{\emojifont 💔}
+\newunicodechar{💕}{\emojifont 💕}
+\newunicodechar{💖}{\emojifont 💖}
+\newunicodechar{💗}{\emojifont 💗}
+\newunicodechar{💘}{\emojifont 💘}
+\newunicodechar{💝}{\emojifont 💝}
+\newunicodechar{💞}{\emojifont 💞}
+\newunicodechar{💟}{\emojifont 💟}
+\newunicodechar{💡}{\emojifont 💡}
+\newunicodechar{💯}{\emojifont 💯}
+\newunicodechar{🔥}{\emojifont 🔥}
+\newunicodechar{✅}{\emojifont ✅}
+\newunicodechar{⭐}{\emojifont ⭐}
+\newunicodechar{🌟}{\emojifont 🌟}
+\newunicodechar{🎉}{\emojifont 🎉}
+\newunicodechar{🎊}{\emojifont 🎊}
+\newunicodechar{🎯}{\emojifont 🎯}
+\newunicodechar{🚀}{\emojifont 🚀}
+\newunicodechar{🎵}{\emojifont 🎵}
+\newunicodechar{🎶}{\emojifont 🎶}
 
 % Slightly tighter column padding
 \setlength{\tabcolsep}{4pt}

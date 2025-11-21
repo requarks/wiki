@@ -8,14 +8,14 @@
         .body-2(:style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`') {{$t('editor:unsaved.body')}}
       v-card-chin
         v-spacer
-        v-btn.rounded-button(
+        v-btn.btn-rounded(
           outlined
           rounded
-          :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite : colors.surfaceLight.primarySapHeavy'
+          :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
           @click='isShown = false'
           )
           span.text-none.text-uppercase {{$t('common:actions.cancel')}}
-        v-btn.rounded-button(
+        v-btn.btn-rounded(
           rounded
           :dark='$vuetify.theme.dark'
           :color='colors.red[450]'
@@ -56,7 +56,7 @@ export default {
 </script>
 
 <style lang="scss">
-.v-btn.rounded-button {
+.v-btn.btn-rounded {
   border-radius: 20px;
   
   // Fix text rendering issues

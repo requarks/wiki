@@ -10,6 +10,7 @@ query ($id: Int!) {
     privateNS
     publishStartDate
     publishEndDate
+    content
     contentType
     createdAt
     updatedAt

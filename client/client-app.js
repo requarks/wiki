@@ -159,7 +159,30 @@ Vue.use(VueClipboards)
 Vue.use(localization.VueI18Next)
 Vue.use(helpers)
 Vue.use(Vuetify)
+
 Vue.use(VueMoment, { moment })
+
+// Override the moment filter to properly handle UTC dates with timezone conversion
+Vue.filter('moment', function (value, ...args) {
+  if (!value) return ''
+  
+  const utcDate = moment.utc(value)
+  
+  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const localDate = utcDate.tz(browserTz)
+  
+  const format = args[0]
+  if (format === 'calendar') {
+    return localDate.calendar()
+  } else if (format === 'from') {
+    return localDate.fromNow()
+  } else if (format) {
+    return localDate.format(format)
+  } else {
+    return localDate.format()
+  }
+})
+
 Vue.use(Vuescroll)
 Vue.use(FloatingVue)
 

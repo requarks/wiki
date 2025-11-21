@@ -192,20 +192,16 @@ module.exports = {
         throw graphHelper.badRequest('Invalid User ID')
       }
 
-      // Check for existing relation
-      const relExist = await WIKI.models
-        .knex('userGroups')
-        .where({
-          userId: args.userId,
-          groupId: args.groupId
-        })
-        .first()
-      if (relExist) {
-        throw graphHelper.badRequest('User is already assigned to group.')
+      // Attempt to relate user to group. Rely on DB unique constraint for race-free duplicate prevention.
+      try {
+        await grp.$relatedQuery('users').relate(usr.id)
+      } catch (err) {
+        // Postgres unique violation error code
+        if (err && (err.code === '23505' || /unique/i.test(err.message))) {
+          throw graphHelper.badRequest('User is already assigned to group.')
+        }
+        throw err
       }
-
-      // Assign user to group
-      await grp.$relatedQuery('users').relate(usr.id)
 
       // Send notification email (backend enforced) - ignore errors to not block assignment
       try {
