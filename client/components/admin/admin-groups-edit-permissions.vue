@@ -45,7 +45,8 @@ export default {
         hint,
         warning: opts.warning || false,
         restrictedForSystem: opts.restrictedForSystem || false,
-        disabled: opts.disabled || false
+        disabled: opts.disabled || false,
+        userPerm: opts.userPerm || false
       }
     }
 
@@ -76,12 +77,10 @@ export default {
           ]
         },
         {
-          category: 'Administration',
+          category: 'Users',
           items: [
-            preparePermission('manage:navigation', 'Can manage the site navigation', { restrictedForSystem: true, disabled: true }),
-            preparePermission('manage:theme', 'Can manage and modify themes', { restrictedForSystem: true, disabled: true }),
-            preparePermission('manage:api', 'Can generate and revoke API keys', { warning: true, restrictedForSystem: true, disabled: true }),
-            preparePermission('manage:system', 'Can manage and access everything. Root administrator.', { warning: true, restrictedForSystem: true, disabled: true })
+            // User Management (assignable by those with group management capabilities or system admin)
+            preparePermission('write:users', 'Can create users (non-system operations)', { userPerm: true })
           ]
         }
       ]

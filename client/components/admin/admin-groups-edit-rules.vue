@@ -49,9 +49,9 @@
               v-list-item-title Export Rules
       v-card-text(:class='$vuetify.theme.dark ? `grey darken-4-l5` : `white`')
         .rules
-          .caption(v-if='group.rules.length === 0')
+          .caption(v-if='safeGroupRules.length === 0')
             em(:class='$vuetify.theme.dark ? `grey--text` : `blue-grey--text`') This group has no page rules yet.
-          .rule(v-for='rule of group.rules', :key='rule.id')
+          .rule(v-for='rule of safeGroupRules', :key='rule.id')
             v-btn.ma-0.radius-4.rule-deny-btn(
               solo
               :color='rule.deny ? "red" : "green"'
@@ -293,6 +293,10 @@ export default {
         this.$emit('input', val)
       }
     },
+    safeGroupRules() {
+      // Defensive: ensure rules is always an array for template rendering
+      return Array.isArray(this.group.rules) ? this.group.rules : []
+    },
     locales() {
       return siteLangs
     },
@@ -306,6 +310,10 @@ export default {
   },
   methods: {
     addRule(group) {
+      if (!Array.isArray(this.group.rules)) {
+        // Initialize rules array if missing to prevent undefined access errors
+        this.$set(this.group, 'rules', [])
+      }
       this.group.rules.push({
         id: nanoid(),
         path: '',
