@@ -64,7 +64,7 @@ stages:
 
 
 environment-set:
-  stage: environment-set
+  stage: environment-set # test new image"
   script:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
   environment:
