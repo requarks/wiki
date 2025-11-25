@@ -54,7 +54,7 @@ default:
      - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
-  - environment-set
+  - environment-set # to show the current env we are deploying to
   - build
   - test
   - sonarqube

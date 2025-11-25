@@ -50,6 +50,9 @@ export default {
         }
       }
     },
+    SET_PERMISSIONS(st, perms) {
+      st.permissions = Array.isArray(perms) ? perms : []
+    },
     SET_SITES(state, sites) {
       state.sites = sites
     }

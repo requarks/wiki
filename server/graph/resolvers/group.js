@@ -17,10 +17,12 @@ const {
 
 const GROUP_NAME_EXISTS_ERROR = 'A group with this name already exists.'
 
+// 'write:users' remains as user management permission and is NOT considered a system permission.
+// NOTE: 'groups', 'navigation', 'theme', 'api', 'system' remain protected system-level scopes.
 const isSystemAdminPermission = (permissions) => {
   return permissions.some(p => {
     const resType = _.last(p.split(':'))
-    return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
+    return ['groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
   })
 }
 
