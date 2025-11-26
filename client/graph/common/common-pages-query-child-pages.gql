@@ -12,5 +12,6 @@ query (
     parent
     locale
     siteId
+    child_position
   }
 }
