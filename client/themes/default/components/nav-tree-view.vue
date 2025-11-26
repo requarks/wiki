@@ -379,9 +379,9 @@ export default {
     },
 
     isCurrentPage(item) {
-      const currentPath = (this.currentPagePath || '').trim().replace(/^\/+|\/+$/g, '')
-      const itemPath = (item.path || '').trim().replace(/^\/+|\/+$/g, '')
-      
+      const currentPath = (this.currentPagePath || '').trim().replace(/(^\/+|\/+$)/g, '')
+      const itemPath = (item.path || '').trim().replace(/(^\/+|\/+$)/g, '')
+
       return currentPath && itemPath && currentPath === itemPath
     },
 

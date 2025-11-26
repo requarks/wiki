@@ -213,7 +213,7 @@ export default {
     currentPages() {
       return _.sortBy(
         _.filter(this.pages, ['parent', _.head(this.currentNode) || 0]),
-        ['title', 'path']
+        ['child_position']
       )
     },
     isValidPath() {
@@ -352,6 +352,7 @@ export default {
                 pageId
                 parent
                 siteId
+                child_position
               }
           }
         `,
@@ -372,13 +373,16 @@ export default {
         return itemSiteId === currentSiteId
       })
 
-      const itemFolders = _.filter(filteredItems, ['isFolder', true]).map(
+      // Sort by child_position
+      const sortedItems = _.sortBy(filteredItems, ['child_position'])
+
+      const itemFolders = _.filter(sortedItems, ['isFolder', true]).map(
         f => ({
           ...f,
           children: []
         })
       )
-      const itemPages = _.filter(filteredItems, i => i.pageId > 0)
+      const itemPages = _.filter(sortedItems, i => i.pageId > 0)
       if (itemFolders.length > 0) {
         item.children = itemFolders
       } else {
