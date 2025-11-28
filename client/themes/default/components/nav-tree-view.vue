@@ -1,45 +1,46 @@
 <template lang="pug">
   .tree-navigation
     vue-scroll(:ops='scrollStyle')
-      v-treeview(
-        v-if='pageTree.length > 0'
-        :key='`navTree-` + treeViewCacheId'
-        :active.sync='activeNodes'
-        :open.sync='openNodes'
-        :items='pageTree'
-        :load-children='loadChildren'
-        dense
-        open-on-click
-        item-key='path'
-        item-text='title'
-        item-children='children'
-        activatable
-        hoverable
-        return-object
-        @update:active='onNodeActivated'
-      )
-        template(v-slot:prepend='{ item, open }')
-          v-icon(
-            v-if='item.isFolder || item.hasChildren || (item.children && item.children.length > 0)'
-            :color='getIconColor(item)'
-            size='20'
-            @mouseenter='preloadChildren(item)'
-          ) {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-          v-icon(
-            v-else
-            :color='getIconColor(item)'
-            size='20'
-            @click.stop='navigateToPage(item)'
-          ) mdi-file-document-outline
-        
-        template(v-slot:label='{ item }')
-          .tree-node-label(
-            :class='getNodeClasses(item)'
-            :title='item.description || item.title'
-            @click.stop='handleLabelClick(item)'
-            @mouseenter='preloadChildren(item)'
-          )
-            span.node-title {{ item.title }}
+      .tree-content-wrapper
+        v-treeview(
+          v-if='pageTree.length > 0'
+          :key='`navTree-` + treeViewCacheId'
+          :active.sync='activeNodes'
+          :open.sync='openNodes'
+          :items='pageTree'
+          :load-children='loadChildren'
+          dense
+          open-on-click
+          item-key='path'
+          item-text='title'
+          item-children='children'
+          activatable
+          hoverable
+          return-object
+          @update:active='onNodeActivated'
+        )
+          template(v-slot:prepend='{ item, open }')
+            v-icon(
+              v-if='item.isFolder || item.hasChildren || (item.children && item.children.length > 0)'
+              :color='getIconColor(item)'
+              size='20'
+              @mouseenter='preloadChildren(item)'
+            ) {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
+            v-icon(
+              v-else
+              :color='getIconColor(item)'
+              size='20'
+              @click.stop='navigateToPage(item)'
+            ) mdi-file-document-outline
+          
+          template(v-slot:label='{ item }')
+            .tree-node-label(
+              :class='getNodeClasses(item)'
+              :title='item.description || item.title'
+              @click.stop='handleLabelClick(item)'
+              @mouseenter='preloadChildren(item)'
+            )
+              span.node-title {{ item.title }}
 </template>
 
 <script>
@@ -70,10 +71,20 @@ export default {
       isRestoringState: false, // Flag to prevent saving during restoration
       colors: colors,
         scrollStyle: {
+        vuescroll: {
+          mode: 'native'
+        },
+        scrollPanel: {
+          scrollingX: true,
+          scrollingY: true
+        },
+        rail: {
+          gutterOfEnds: '2px'
+        },
         bar: {
           background: this.dark ? colors.surfaceDark.secondaryNeutralLite : colors.neutral[300],
-          opacity: 0.3,
-          size: '6px',
+          opacity: 0.5,
+          size: '8px',
           keepShow: false
         }
       }
@@ -493,6 +504,13 @@ export default {
 
     setActivePage(targetPath) {
       this.activeNodes = [targetPath]
+      
+      // Set hasChildren in store for export functionality
+      const currentNode = this.findPageInTree(targetPath)
+      if (currentNode) {
+        const hasChildren = currentNode.isFolder || currentNode.hasChildren || (currentNode.children && currentNode.children.length > 0)
+        this.$store.set('page/hasChildren', hasChildren)
+      }
     },
 
     toggleNode(item) {
@@ -518,7 +536,12 @@ export default {
   
   .vue-scroll {
     flex: 1;
-    overflow: hidden;
+  }
+  
+  .tree-content-wrapper {
+    min-width: min-content;
+    display: inline-block;
+    width: 100%;
   }
   
   .tree-node-label {

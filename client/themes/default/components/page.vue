@@ -24,7 +24,7 @@
       )
 
       //- scrollbar colors are set in 'scrollStyle'
-      vue-scroll(:ops='scrollStyle')
+      vue-scroll.sidebar-scroll-container(:ops='scrollStyle')
         nav-sidebar(
           :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
           :items='sidebarDecoded'
@@ -864,6 +864,11 @@ export default {
     // -> Load sidebar width from localStorage
     this.loadSidebarWidth()
 
+    // -> Set footer margin based on navMode
+    if (this.navMode === 'NONE' || this.$vuetify.breakpoint.smAndDown) {
+      document.documentElement.style.setProperty('--sidebar-width', '0px')
+    }
+
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
@@ -944,6 +949,7 @@ export default {
       if (newWidth >= this.sidebarMinWidth && newWidth <= this.sidebarMaxWidth) {
         this.sidebarWidth = newWidth
         localStorage.setItem('navSidebarWidth', newWidth)
+        document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`)
       }
     },
     stopResize() {
@@ -956,6 +962,7 @@ export default {
     resetSidebarWidth() {
       this.sidebarWidth = 300
       localStorage.setItem('navSidebarWidth', 300)
+      document.documentElement.style.setProperty('--sidebar-width', '300px')
     },
     loadSidebarWidth() {
       const savedWidth = localStorage.getItem('navSidebarWidth')
@@ -963,7 +970,10 @@ export default {
         const width = parseInt(savedWidth)
         if (width >= this.sidebarMinWidth && width <= this.sidebarMaxWidth) {
           this.sidebarWidth = width
+          document.documentElement.style.setProperty('--sidebar-width', `${width}px`)
         }
+      } else {
+        document.documentElement.style.setProperty('--sidebar-width', '300px')
       }
     },
     async checkIfFollowing() {
@@ -1548,6 +1558,11 @@ export default {
 
 .v-navigation-drawer {
   transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Make scrollbar stick to bottom of sidebar
+  .sidebar-scroll-container {
+    height: 100% !important;
+  }
   
   &.resizing {
     transition: none;

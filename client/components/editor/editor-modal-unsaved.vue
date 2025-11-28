@@ -17,12 +17,12 @@
           span.text-none.text-uppercase {{$t('common:actions.cancel')}}
         v-btn.btn-rounded(
           rounded
-          :dark='$vuetify.theme.dark'
+          dark
           :color='colors.red[450]'
           @click='discard'
           )
           v-icon(left, color='white') mdi-delete-forever
-          span.text-none.text-uppercase {{$t('common:actions.discardChanges')}}
+          span.text-none.text-uppercase(:style='`color: ${colors.textLight.inverse};`') {{$t('common:actions.discardChanges')}}
 </template>
 
 <script>

@@ -1,6 +1,6 @@
 <template lang="pug">
-  v-footer.justify-center(:color='bgColor', inset)
-    .caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`')
+  v-footer.justify-center.nav-footer(:color='bgColor', inset)
+    .caption.grey--text.footer-content(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`')
       //- Dynamic / Configurable license or override
       template(v-if='footerOverride')
         span(v-html='footerOverrideRender + ` |&nbsp;`')
@@ -10,9 +10,8 @@
      
       .login-disclaimer.mt-6
         .body-2
-          template(v-if='isHome')
-            a.release-notes-link(@click='openReleaseNotes', href='javascript:void(0);', :aria-label='`Open Release Notes dialog`') Release Notes
-            |  |&nbsp;
+          a.release-notes-link(@click='openReleaseNotes', href='javascript:void(0);', :aria-label='`Open Release Notes dialog`') Release Notes
+          |  |&nbsp;
           | Please review the
           a(
             href='https://talent.capgemini.com/media_library/Medias/Group_IT/MURAL_Data_Protection_Notice-v2.pdf'
@@ -161,6 +160,20 @@ export default {
 </script>
 
 <style lang="scss">
+  .v-footer.nav-footer {
+    padding-right: 80px;
+    padding-left: var(--sidebar-width, 300px);
+    transition: padding-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    @media (max-width: 959px) {
+      padding-left: 0 !important;
+    }
+    
+    .footer-content {
+      margin-left: 16px;
+    }
+  }
+  
   .v-footer {
     a {
       text-decoration: none;
