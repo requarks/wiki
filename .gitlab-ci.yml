@@ -91,7 +91,7 @@ build:
       - assets/
     expire_in: 1 hour
   rules:
-    # Run for feature branches on push OR if ENVIRONMENT is dev1 (manual trigger)
+    # Run for feature branches on push OR if ENVIRONMENT is Dev1 (manual trigger)
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
