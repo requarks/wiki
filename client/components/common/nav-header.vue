@@ -261,6 +261,34 @@
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
 
+          //- Resources (GitHub & Release Notes)
+
+          template(v-if='isAuthenticated && path && mode !== `edit`')
+            v-menu(offset-y, bottom, min-width='200', transition='slide-y-transition', left)
+              template(v-slot:activator='{ on: menu, attrs }')
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on: tooltip }')
+                    v-btn.hover-icon(
+                      icon
+                      v-bind='attrs'
+                      v-on='{ ...menu, ...tooltip }'
+                      tile
+                      height='64'
+                      :aria-label='`Resources`'
+                    )
+                      v-icon(color='grey') mdi-information-outline
+                  span Resources
+              v-list(nav)
+                v-list-item(@click='goToRepo')
+                  v-list-item-icon
+                    v-icon mdi-github
+                  v-list-item-title {{$t('common:github.repository')}}
+                v-list-item(@click='openReleaseNotes')
+                  v-list-item-icon
+                    v-icon mdi-newspaper-variant-outline
+                  v-list-item-title Release Notes
+            v-divider(vertical)
+
           //- ADMIN
 
           template(v-if='isAuthenticated && isAdmin')
@@ -286,18 +314,6 @@
               )
               v-icon(left, color='grey') mdi-exit-to-app
               span {{$t('common:actions.exit')}}
-            v-divider(vertical)
-
-          //- GITHUB REPO
-
-          template
-            v-tooltip(bottom)
-              template(v-slot:activator='{ on }')
-                v-btn.hover-icon(
-                  icon, tile, height='64', v-on='on', @click="goToRepo", :aria-label='$t(`common:github.repository`)'
-                )
-                  v-icon(color='grey') mdi-github
-              span {{$t('common:github.repository')}}
             v-divider(vertical)
 
           //- ACCOUNT
@@ -383,6 +399,35 @@
     page-convert(
       v-model='convertPageModal', v-if='path && path.length'
     )
+    
+    //- Release Notes Dialog
+    v-dialog(v-model='releaseNotesDialog', max-width='60%', max-height='250', scrollable, :retain-focus='false')
+      v-card
+        v-card-title.d-flex.align-center(:style='{"background-color": $vuetify.theme.dark ? colors.surfaceDark.primaryBlueHeavy : colors.surfaceLight.primaryBlueHeavy, "color": colors.textDark.primary}')
+          span.headline.font-weight-medium Release Notes
+          v-spacer
+          v-btn.mr-3(icon, @click='closeReleaseNotes', :aria-label='`Close Release Notes dialog`', :style='{"color": colors.textDark.primary}')
+            v-icon mdi-close
+        v-divider
+        v-card-text
+          v-progress-linear(indeterminate, color='primary', class='mb-4', v-if='releaseNotesLoading')
+          v-alert(type='error', outlined, dense, v-if='releaseNotesError') {{ releaseNotesError }}
+          div(v-if='!releaseNotesLoading && !releaseNotesError')
+            div(v-if='releaseInfos.length === 0', class='body-2 grey--text text-center') No release notes available.
+            div(v-for='ri in releaseInfos' :key='ri.versionNumber' class='mb-6 release-info-block')
+              .body-1.font-weight-bold {{ ri.versionNumber }} · {{ formatReleaseDate(ri.releaseDate) }}
+              ul.release-notes-list
+                li(v-for='note in ri.notes' :key='note.id') {{ localizeReleaseNote(note) }}
+        v-card-actions.d-flex.justify-end.pr-4
+          v-btn.rounded-button(
+            rounded
+            depressed
+            :dark='!$vuetify.theme.dark'
+            :color='releaseNotesCloseColor'
+            @click='closeReleaseNotes'
+            :aria-label='`Close Release Notes dialog`'
+          )
+            span Close
 
     //- .nav-header-dev(v-if='isDevMode')
     //-  v-icon mdi-alert
@@ -431,6 +476,10 @@ export default {
       convertPageModal: false,
       deletePageModal: false,
       locales: siteLangs,
+      releaseNotesDialog: false,
+      releaseInfos: [],
+      releaseNotesLoading: false,
+      releaseNotesError: null,
       isDevMode: false,
       duplicateOpts: {
         locale: 'en',
@@ -514,6 +563,11 @@ export default {
       return this.$vuetify.theme.dark ?
         this.colors.warningActionDark.secondaryDefault :
         this.colors.warningActionLight.secondaryDefault
+    },
+    releaseNotesCloseColor() {
+      return this.$vuetify.theme.dark ? 
+        '#ffffff' : 
+        this.colors.surfaceLight.primaryBlueHeavy
     }
   },
   created () {
@@ -760,6 +814,45 @@ export default {
           message: 'An error occurred while trying to unfollow the site.',
           icon: 'error'
         })
+      }
+    },
+    async openReleaseNotes() {
+      this.releaseNotesDialog = true
+      if (this.releaseInfos.length > 0 || this.releaseNotesLoading) { return }
+      this.releaseNotesLoading = true
+      this.releaseNotesError = null
+      try {
+        const releaseInfosQuery = await import(/* webpackChunkName: \"release-infos\" */ '@/graph/common/common-release-infos.gql')
+        const { data } = await this.$apollo.query({
+          query: releaseInfosQuery.default,
+          fetchPolicy: 'network-only'
+        })
+        this.releaseInfos = (data.releaseInfos || []).map(ri => ({
+          versionNumber: ri.versionNumber,
+          releaseDate: ri.releaseDate,
+          notes: ri.notes || []
+        }))
+      } catch (err) {
+        this.releaseNotesError = err.message || 'Failed to load release notes.'
+      } finally {
+        this.releaseNotesLoading = false
+      }
+    },
+    closeReleaseNotes() {
+      this.releaseNotesDialog = false
+    },
+    localizeReleaseNote(note) {
+      const lang = (this.$i18n.locale || 'en').toLowerCase()
+      if (lang.startsWith('de')) { return note.notesDe }
+      return note.notesEn
+    },
+    formatReleaseDate(dateStr) {
+      if (!dateStr) { return '' }
+      try {
+        const dt = new Date(dateStr)
+        return dt.toLocaleDateString(this.$i18n.locale || 'en', { year: 'numeric', month: 'short', day: '2-digit' })
+      } catch (e) {
+        return dateStr
       }
     },
     goToRepo () {
@@ -1012,5 +1105,90 @@ export default {
 
 .v-tooltip__content {
   border-radius: 16px;
+}
+
+// Release Notes Dialog Styles
+.release-notes-list {
+  list-style-position: inside !important;
+  text-align: left !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  li { 
+    list-style: disc; 
+    margin-bottom: 4px;
+    font-family: 'Ubuntu', sans-serif;
+    font-weight: 500;
+    font-size: 1.125rem;
+    text-align: left !important;
+  }
+}
+
+.release-info-block {
+  .body-1 { 
+    font-family: 'Ubuntu', sans-serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+}
+
+.release-info-block:first-child {
+  margin-top: 0;
+}
+
+.theme--light .release-info-block .body-1 {
+  color: #565862;
+}
+.theme--light .release-notes-list li {
+  color: #565862;
+}
+
+.theme--dark .release-info-block .body-1 {
+  color: #c7c8cc;
+}
+.theme--dark .release-notes-list li {
+  color: #565862;
+}
+
+.v-btn.rounded-button {
+  border-radius: 20px;
+}
+
+.v-dialog {
+  .v-card {
+    .v-card__text {
+      padding-top: 24px !important;
+      padding-bottom: 8px !important;
+    }
+    .v-card__actions {
+      padding-top: 8px !important;
+      padding-bottom: 16px !important;
+    }
+  }
+}
+
+.theme--dark .v-dialog .v-card {
+  background-color: #1d1f29 !important;
+  
+  .v-card__actions {
+    background-color: #272936 !important;
+  }
+}
+
+.theme--light .v-dialog .v-card {
+  .v-card__actions {
+    background-color: #e0e0e0 !important;
+  }
+}
+
+.v-dialog .v-btn.rounded-button {
+  font-size: 1rem !important;
+  padding: 8px 24px !important;
+  height: 40px !important;
+  font-weight: normal !important;
+  text-transform: none !important;
+}
+
+.theme--dark .v-dialog .v-btn.rounded-button {
+  color: #272936 !important;
 }
 </style>
