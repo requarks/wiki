@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-dialog(
-    v-model='isShown'
+    v-model='internalShown'
     max-width='700'
     persistent
     :overlay-color='colors.white'
@@ -49,6 +49,7 @@
 import _ from 'lodash'
 import { get } from 'vuex-pathify'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
+import childPagesQuery from '@/graph/common/common-pages-query-child-pages.gql'
 import colors from '@/themes/default/js/color-scheme'
 
 export default {
@@ -61,6 +62,9 @@ export default {
   data() {
     return {
       loading: false,
+      // internalShown controls the dialog visibility locally to avoid
+      // opening the dialog before the server-side child check completes.
+      internalShown: false,
       colors
     }
   },
@@ -68,10 +72,9 @@ export default {
     PAGE_DELETE_HAS_SUBPAGES_MSG() {
       return require('@/messages').PAGE_DELETE_HAS_SUBPAGES_MSG
     },
-    isShown: {
-      get() { return this.value },
-      set(val) { this.$emit('input', val) }
-    },
+    // Expose the prop value as a read-only computed so we can watch it and
+    // decide when to open the internal dialog state.
+    isShown: function() { return this.value },
     pageTitle: get('page/title'),
     pagePath: get('page/path'),
     pageLocale: get('page/locale'),
@@ -79,18 +82,63 @@ export default {
     hasChildren: get('page/hasChildren')
   },
   watch: {
-    isShown(newValue) {
+    // Watch the incoming prop. When parent requests the dialog (prop -> true)
+    // perform the server-side check and only open the internal dialog if
+    // allowed. This prevents the v-dialog from briefly showing then closing.
+    isShown: async function(newValue) {
       if (newValue) {
-        document.body.classList.add('page-deleted-pending')
+        try {
+          const resp = await this.$apollo.query({
+            query: childPagesQuery,
+            variables: {
+              pageId: this.pageId,
+              locale: this.pageLocale,
+              siteId: this.$store.get('page/siteId')
+            },
+            fetchPolicy: 'network-only'
+          })
+          const children = (resp && resp.data && resp.data.childPages) || []
+          if (children && children.length > 0) {
+            this.$store.commit('showNotification', {
+              style: 'red',
+              message: this.PAGE_DELETE_HAS_SUBPAGES_MSG,
+              icon: 'warning',
+              close: true
+            })
+            this.$emit('input', false)
+            return
+          }
+          this.internalShown = true
+          document.body.classList.add('page-deleted-pending')
+        } catch (err) {
+          this.$store.commit('pushGraphError', err)
+          this.$store.commit('showNotification', {
+            style: 'red',
+            message: this.$t('common:error.unexpected'),
+            icon: 'alert',
+            close: true
+          })
+          this.$emit('input', false)
+        }
       } else {
+        this.internalShown = false
+      }
+    },
+
+    // Keep parent prop in sync when internal dialog is closed locally.
+    internalShown: function(newVal) {
+      if (!newVal) {
         document.body.classList.remove('page-deleted-pending')
+        this.$emit('input', false)
       }
     }
   },
+
   methods: {
     discard() {
       document.body.classList.remove('page-deleted-pending')
-      this.isShown = false
+      this.internalShown = false
+      this.$emit('input', false)
     },
     async deletePage(notifyFollowers = false) {
       this.loading = true
@@ -105,7 +153,7 @@ export default {
             }
           })
           if (_.get(resp, 'data.pages.delete.responseResult.succeeded', false)) {
-            this.isShown = false
+            this.internalShown = false
             _.delay(() => {
               document.body.classList.add('page-deleted')
               _.delay(() => {

@@ -27,9 +27,9 @@
               v-icon(left, :color='$vuetify.theme.dark ? "black" : colors.textLight.primary') mdi-alpha-r-box
               span.text-none {{$t('editor:conflict.useRemote')}}
           v-card
-            .dialog-header.is-short.is-indigo
+            .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
               v-icon.mr-3(color='white') mdi-alpha-r-box
-              span {{$t('editor:conflict.overwrite.title')}}
+              span(:style='`color: ${colors.textLight.inverse};`') {{$t('editor:conflict.overwrite.title')}}
             v-card-text.pa-4
               i18next.body-2(tag='div', path='editor:conflict.overwrite.description')
                 strong(place='refEditsLost') {{$t('editor:conflict.overwrite.editsLost')}}

@@ -15,7 +15,7 @@ function isEmptySiteId(siteId) {
 }
 
 async function getDefaultSiteIdIfNeeded(siteId) {
-  await getSiteIdByPath('default')
+  return getSiteIdByPath('default')
 }
 
 function buildPageTree(pages, defaultSiteId) {
@@ -42,7 +42,8 @@ function buildPageTree(pages, defaultSiteId) {
       parent: parentId,
       pageId: isFolder ? null : page.id,
       ancestors: JSON.stringify(ancestors),
-      siteId: page.siteId ? page.siteId : defaultSiteId
+      siteId: page.siteId ? page.siteId : defaultSiteId,
+      child_position: 0
     }
   }
 
@@ -86,6 +87,18 @@ function buildPageTree(pages, defaultSiteId) {
   for (const page of pages) {
     processPage(page)
   }
+
+  const groupedByParent = _.groupBy(tree, node => `${node.parent || 0}-${node.siteId}`)
+
+  for (const groupKey in groupedByParent) {
+    const siblings = groupedByParent[groupKey]
+
+    const sortedSiblings = _.orderBy(siblings, ['isFolder', 'title'], ['desc', 'asc'])
+    sortedSiblings.forEach((node, index) => {
+      node.child_position = index
+    })
+  }
+
   return tree
 }
 
@@ -141,3 +154,9 @@ module.exports = async (siteId) => {
     throw err
   }
 }
+
+module.exports.buildPageTree = buildPageTree
+module.exports.isEmptySiteId = isEmptySiteId
+module.exports.deletePageTree = deletePageTree
+module.exports.insertPageTree = insertPageTree
+module.exports.getDefaultSiteIdIfNeeded = getDefaultSiteIdIfNeeded

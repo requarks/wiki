@@ -1,4 +1,4 @@
-export const PAGE_DELETE_HAS_SUBPAGES_MSG = 'This page cannot be deleted until all subpages are moved to another location.'
+export const PAGE_DELETE_HAS_SUBPAGES_MSG = 'Delete not possible! Selected page has sub pages'
 
 export const messages = {
   printPage: 'Print Page',

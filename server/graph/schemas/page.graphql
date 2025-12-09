@@ -326,6 +326,7 @@ type PageTreeItem {
   pageId: Int
   locale: String!
   siteId: String!
+  child_position: Int!
 }
 
 type PageLinkItem {

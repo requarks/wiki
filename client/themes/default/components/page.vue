@@ -24,7 +24,7 @@
       )
 
       //- scrollbar colors are set in 'scrollStyle'
-      vue-scroll(:ops='scrollStyle')
+      vue-scroll.sidebar-scroll-container(:ops='scrollStyle')
         nav-sidebar(
           :color='$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.neutral[50]'
           :items='sidebarDecoded'
@@ -411,7 +411,13 @@
               )
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
-              slot(name='contents')
+                slot(name='contents')
+                // Image overlay viewer
+                div.image-overlay(v-if='isImageOverlayVisible' role='dialog' aria-modal='true' @click.self='closeImageOverlay')
+                  span.image-overlay-name {{ imageOverlayName }}
+                  button.image-overlay-close(@click='closeImageOverlay' aria-label='Close image')
+                    v-icon(color='black') mdi-close
+                  img.image-overlay-img(:src='imageOverlaySrc' :alt='imageOverlayName')
             .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read')
               .comments-header
                 v-icon.mr-2(dark, :color='$vuetify.theme.dark ? colors.surfaceLight.primaryNeutralLite :colors.surfaceLight.inverse') mdi-comment-text-outline
@@ -701,7 +707,11 @@ export default {
       isExportModalVisible: false,
       wordDocumentType: 'docx',
       pdfDocumentType: 'pdf',
-      exportFileType: ''
+      exportFileType: '',
+      // Image overlay viewer state
+      isImageOverlayVisible: false,
+      imageOverlaySrc: '',
+      imageOverlayName: ''
     }
   },
   computed: {
@@ -864,6 +874,11 @@ export default {
     // -> Load sidebar width from localStorage
     this.loadSidebarWidth()
 
+    // -> Set footer margin based on navMode
+    if (this.navMode === 'NONE' || this.$vuetify.breakpoint.smAndDown) {
+      document.documentElement.style.setProperty('--sidebar-width', '0px')
+    }
+
     // -> Check side navigation visibility
     this.handleSideNavVisibility()
     window.addEventListener('resize', _.debounce(() => {
@@ -879,7 +894,7 @@ export default {
       theme: this.$vuetify.theme.dark ? 'dark' : 'default'
     })
     document.addEventListener('DOMContentLoaded', () => {
-      mermaid.run();
+      mermaid.run()
     })
 
     // -> Handle anchor scrolling
@@ -905,8 +920,39 @@ export default {
         }
       })
 
+      // Delegated image click: open image source in a new tab (Confluence-like behavior)
+      const container = this.$refs.container
+      if (container) {
+        container.addEventListener('click', (ev) => {
+          const target = ev.target
+          if (target && target.tagName === 'IMG') {
+            if (target.closest('a')) return
+            const src = target.getAttribute('src') || target.dataset.src
+            if (src) {
+              ev.preventDefault()
+              ev.stopPropagation()
+              this.openImageOverlay(src, target.getAttribute('alt') || '')
+            }
+          }
+        })
+        // Add cursor hint
+        container.querySelectorAll('img').forEach(img => {
+          if (!img.closest('a')) {
+            img.style.cursor = 'zoom-in'
+          }
+        })
+      }
+
       window.boot.notify('page-ready')
     })
+
+    // ESC key closes image overlay
+    this._imageOverlayEscHandler = (e) => {
+      if (e.key === 'Escape' && this.isImageOverlayVisible) {
+        this.closeImageOverlay()
+      }
+    }
+    document.addEventListener('keydown', this._imageOverlayEscHandler)
   },
   beforeDestroy() {
     // Clean up resize event listeners
@@ -916,34 +962,38 @@ export default {
       document.body.style.cursor = 'auto'
       document.body.style.userSelect = 'auto'
     }
+    if (this._imageOverlayEscHandler) {
+      document.removeEventListener('keydown', this._imageOverlayEscHandler)
+    }
   },
   methods: {
     startResize(e) {
       if (this.$vuetify.breakpoint.smAndDown) return
-      
+
       this.isResizing = true
       this.resizeStartX = e.clientX
       this.resizeStartWidth = this.sidebarWidth
-      
+
       document.addEventListener('mousemove', this.handleResize)
       document.addEventListener('mouseup', this.stopResize)
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
-      
+
       e.preventDefault()
     },
     handleResize(e) {
       if (!this.isResizing) return
-      
-      const deltaX = this.$vuetify.rtl ? 
-        (this.resizeStartX - e.clientX) : 
+
+      const deltaX = this.$vuetify.rtl ?
+        (this.resizeStartX - e.clientX) :
         (e.clientX - this.resizeStartX)
-      
+
       const newWidth = this.resizeStartWidth + deltaX
-      
+
       if (newWidth >= this.sidebarMinWidth && newWidth <= this.sidebarMaxWidth) {
         this.sidebarWidth = newWidth
         localStorage.setItem('navSidebarWidth', newWidth)
+        document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`)
       }
     },
     stopResize() {
@@ -956,6 +1006,7 @@ export default {
     resetSidebarWidth() {
       this.sidebarWidth = 300
       localStorage.setItem('navSidebarWidth', 300)
+      document.documentElement.style.setProperty('--sidebar-width', '300px')
     },
     loadSidebarWidth() {
       const savedWidth = localStorage.getItem('navSidebarWidth')
@@ -963,7 +1014,10 @@ export default {
         const width = parseInt(savedWidth)
         if (width >= this.sidebarMinWidth && width <= this.sidebarMaxWidth) {
           this.sidebarWidth = width
+          document.documentElement.style.setProperty('--sidebar-width', `${width}px`)
         }
+      } else {
+        document.documentElement.style.setProperty('--sidebar-width', '300px')
       }
     },
     async checkIfFollowing() {
@@ -1146,6 +1200,23 @@ export default {
     },
     pageDelete () {
       this.$root.$emit('pageDelete')
+    },
+    openImageOverlay(src, alt = '') {
+      this.imageOverlaySrc = src
+      // derive a display name from src (strip query/hash, take filename)
+      try {
+        const clean = src.split(/[?#]/)[0]
+        this.imageOverlayName = clean.split('/').pop() || 'image'
+      } catch (e) {
+        this.imageOverlayName = 'image'
+      }
+      this.isImageOverlayVisible = true
+      document.documentElement.classList.add('image-overlay-active')
+    },
+    closeImageOverlay() {
+      this.isImageOverlayVisible = false
+      this.imageOverlaySrc = ''
+      document.documentElement.classList.remove('image-overlay-active')
     },
     handleSideNavVisibility () {
       if (window.innerWidth === this.winWidth) { return }
@@ -1436,7 +1507,7 @@ export default {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
   opacity: 0;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -1444,11 +1515,11 @@ export default {
     bottom: 0;
     width: 3px;
     background: linear-gradient(
-      180deg, 
-      transparent 0%, 
-      mc('blue', '300') 20%, 
-      mc('blue', '400') 50%, 
-      mc('blue', '300') 80%, 
+      180deg,
+      transparent 0%,
+      mc('blue', '300') 20%,
+      mc('blue', '400') 50%,
+      mc('blue', '300') 80%,
       transparent 100%
     );
     border-radius: 2px;
@@ -1484,11 +1555,11 @@ export default {
   .v-navigation-drawer:hover &,
   &:hover {
     opacity: 1;
-    
+
     &::before {
       transform: scaleY(1);
     }
-    
+
     &::after {
       opacity: 1;
       transform: translate(-50%, -50%) scale(1.1);
@@ -1498,19 +1569,19 @@ export default {
   &:hover {
     background: mc('action-light', 'highlight-on-lite');
     border-radius: 0 4px 4px 0;
-    
+
     &::before {
       background: linear-gradient(
-        180deg, 
-        mc('blue', '200') 0%, 
-        mc('blue', '500') 20%, 
-        mc('blue', '600') 50%, 
-        mc('blue', '500') 80%, 
+        180deg,
+        mc('blue', '200') 0%,
+        mc('blue', '500') 20%,
+        mc('blue', '600') 50%,
+        mc('blue', '500') 80%,
         mc('blue', '200') 100%
       );
       box-shadow: 0 0 8px mc('blue', '300');
     }
-    
+
     &::after {
       color: mc('blue', '600');
       text-shadow: 0 0 4px mc('blue', '400');
@@ -1520,20 +1591,20 @@ export default {
   &:active {
     background: mc('action-light', 'primary-hover-on-lite');
     border-radius: 0 4px 4px 0;
-    
+
     &::before {
       background: linear-gradient(
-        180deg, 
-        mc('blue', '300') 0%, 
-        mc('blue', '600') 20%, 
-        mc('blue', '700') 50%, 
-        mc('blue', '600') 80%, 
+        180deg,
+        mc('blue', '300') 0%,
+        mc('blue', '600') 20%,
+        mc('blue', '700') 50%,
+        mc('blue', '600') 80%,
         mc('blue', '300') 100%
       );
       box-shadow: 0 0 12px mc('blue', '400');
       transform: scaleY(1.05);
     }
-    
+
     &::after {
       color: mc('blue', '700');
       transform: translate(-50%, -50%) scale(1.2);
@@ -1546,9 +1617,79 @@ export default {
   }
 }
 
+// Image overlay styles
+.image-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000; // above drawers & tooltips
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  backdrop-filter: blur(6px);
+}
+.image-overlay-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  border-radius: 6px;
+}
+.image-overlay-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.2);
+  color: #000;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: box-shadow .15s ease, transform .15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.image-overlay-close:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  transform: scale(1.05);
+}
+.image-overlay-name {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.9);
+  color: #000;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-family: monospace;
+  border-radius: 4px;
+  max-width: 50vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+// Blur underlying app when overlay active
+.image-overlay-active .v-application--wrap {
+  filter: blur(3px) brightness(.8);
+  transition: filter .2s ease;
+}
+
 .v-navigation-drawer {
   transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
+  // Make scrollbar stick to bottom of sidebar
+  .sidebar-scroll-container {
+    height: 100% !important;
+  }
+
   &.resizing {
     transition: none;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
@@ -1567,11 +1708,11 @@ export default {
   .sidebar-resize-handle {
     &::before {
       background: linear-gradient(
-        180deg, 
-        transparent 0%, 
-        mc('text-dark', 'brand-primary') 20%, 
-        mc('action-dark', 'active') 50%, 
-        mc('text-dark', 'brand-primary') 80%, 
+        180deg,
+        transparent 0%,
+        mc('text-dark', 'brand-primary') 20%,
+        mc('action-dark', 'active') 50%,
+        mc('text-dark', 'brand-primary') 80%,
         transparent 100%
       );
     }
@@ -1582,19 +1723,19 @@ export default {
 
     &:hover {
       background: mc('action-dark', 'highlight-on-lite');
-      
+
       &::before {
         background: linear-gradient(
-          180deg, 
-          mc('text-dark', 'brand-primary') 0%, 
-          mc('action-dark', 'active') 20%, 
-          mc('blue', '200') 50%, 
-          mc('action-dark', 'active') 80%, 
+          180deg,
+          mc('text-dark', 'brand-primary') 0%,
+          mc('action-dark', 'active') 20%,
+          mc('blue', '200') 50%,
+          mc('action-dark', 'active') 80%,
           mc('text-dark', 'brand-primary') 100%
         );
         box-shadow: 0 0 8px mc('action-dark', 'active');
       }
-      
+
       &::after {
         color: mc('blue', '200');
         text-shadow: 0 0 4px mc('action-dark', 'active');
@@ -1603,27 +1744,25 @@ export default {
 
     &:active {
       background: mc('action-dark', 'primary-hover-on-lite');
-      
+
       &::before {
         background: linear-gradient(
-          180deg, 
-          mc('action-dark', 'active') 0%, 
-          mc('blue', '200') 20%, 
-          mc('blue', '100') 50%, 
-          mc('blue', '200') 80%, 
+          180deg,
+          mc('action-dark', 'active') 0%,
+          mc('blue', '200') 20%,
+          mc('blue', '100') 50%,
+          mc('blue', '200') 80%,
           mc('action-dark', 'active') 100%
         );
         box-shadow: 0 0 12px mc('blue', '200');
       }
-      
+
       &::after {
         color: mc('blue', '100');
       }
     }
   }
 }
-
-
 </style>
 
 // Global styles

@@ -1121,15 +1121,7 @@
 
   img {
     max-width: 100%;
-
-    // Preserve aspect ratio when CKEditor sets width via style or attribute
-    &[style*='width'] {
-      height: auto !important;
-    }
-
-    &[width] {
-      height: auto !important;
-    }
+    height: auto; // Default: maintain aspect ratio
 
     &.align-left {
       float: left;
@@ -1180,7 +1172,28 @@
 
     img {
       margin: 0 auto;
-      height: auto !important; // Ensure resized images are not stretched vertically
+      max-width: 100%; // Images respect figure's width
+      height: auto; // Maintain aspect ratio
+    }
+
+    // When figure has user-defined width (resized), allow it to exceed container
+    &[style*='width'] {
+      max-width: none !important;
+    }
+
+    // Support for image_unbounded class (set by server-side renderer)
+    &.image_unbounded {
+      max-width: none !important;
+      
+      > img {
+        max-width: none !important;
+        height: auto;
+      }
+    }
+
+    // Legacy support for width attribute on figure
+    &[width] {
+      max-width: none !important;
     }
 
     figcaption {

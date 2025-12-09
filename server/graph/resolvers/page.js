@@ -335,7 +335,7 @@ module.exports = {
             builder.where('parent', null)
           }
         })
-        .orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
+        .orderBy('child_position')
       return results
         .filter((r) => {
           return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
@@ -407,7 +407,7 @@ module.exports = {
             }
           }
         })
-        .orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
+        .orderBy('child_position')
       return results
         .filter((r) => {
           return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
@@ -867,7 +867,7 @@ module.exports = {
      */
     async rebuildTree() {
       try {
-        await WIKI.models.pages.rebuildTree()
+        await WIKI.models.pages.rebuildTree(null, 'full')
         return {
           responseResult: graphHelper.generateSuccess(
             'Page tree rebuilt successfully.'

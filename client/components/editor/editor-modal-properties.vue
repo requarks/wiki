@@ -17,12 +17,12 @@
         v-icon(left, :color='$vuetify.theme.dark ? "black" : colors.textLight.primary') mdi-check
         span.text-none {{ $t('common:actions.ok') }}
     v-card(tile)
-      v-tabs(color='white', :style='`background-color: ${colors.blue[500]} !important;`', :dark='$vuetify.theme.dark', centered, v-model='currentTab')
-        v-tab {{$t('editor:props.info')}}
-        v-tab {{$t('editor:props.scheduling')}}
-        v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
-        v-tab(disabled) {{$t('editor:props.social')}}
-        v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
+      v-tabs(color='white', :style='`background-color: ${colors.blue[500]} !important;`', centered, v-model='currentTab')
+        v-tab(:style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.info')}}
+        v-tab(:style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.scheduling')}}
+        v-tab(:disabled='!hasScriptPermission', :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.scripts')}}
+        v-tab(disabled, :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.social')}}
+        v-tab(:disabled='!hasStylePermission', :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.pageInfo')}}
