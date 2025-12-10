@@ -2,8 +2,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+
+# Prefer GitLab CI/CD variables if set, then arguments, then fallback
 ENVIRONMENT="${1:-none}"
-IMAGE_TAG="${2:-${CI_COMMIT_SHORT_SHA:-}}"
+IMAGE_TAG="${IMAGE_TAG:-${2:-${CI_COMMIT_SHORT_SHA:-}}}"
+VERSION="${VERSION:-}" # Only set if provided by CI/CD, otherwise empty
 
 IMAGE_TAG_BY_ENV=""
 
@@ -58,7 +61,11 @@ fi
 
 # Compute values used later
 export IMAGE_TAG_BY_ENV
-export VERSION="${IMAGE_TAG_BY_ENV}"
+# Use VERSION from CI/CD if set, otherwise fallback to IMAGE_TAG_BY_ENV
+if [[ -z "$VERSION" ]]; then
+  VERSION="$IMAGE_TAG_BY_ENV"
+fi
+export VERSION
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
 echo "IMAGE_TAG_BY_ENV=${IMAGE_TAG_BY_ENV}"
@@ -77,6 +84,7 @@ export NEW_IMAGE="${IMAGE}:${IMAGE_TAG_BY_ENV}"
 export NEW_PANDOC_IMAGE="${PANDOC_IMAGE}:${IMAGE_TAG_BY_ENV}"
 
 # Write a clean dotenv file
+
 cat > image_tag.env <<EOF
 ENVIRONMENT=${ENVIRONMENT}
 IMAGE_TAG=${IMAGE_TAG}

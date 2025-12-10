@@ -12,12 +12,7 @@ source image_tag.env
 echo "Building Docker image for environment $ENVIRONMENT"
 echo "VERSION=$VERSION"
 
-docker build --no-cache \
-  --build-arg NODE_IMAGE="${NODE_IMAGE:-node:18-alpine}" \
-  --build-arg VERSION="$VERSION" \
-  --build-arg RELEASE_DATE="$(date +'%d.%m.%Y')" \
-  -f Dockerfile -t "$NEW_IMAGE" .
-
+docker build --no-cache --build-arg NODE_IMAGE="$NODE_IMAGE" --build-arg VERSION="$VERSION" --build-arg RELEASE_DATE="$(date +'%d.%m.%Y')" -f Dockerfile -t "$NEW_IMAGE" .
 echo "NEW_IMAGE=$NEW_IMAGE" >> newimage.txt
 
 # Optional Pandoc
