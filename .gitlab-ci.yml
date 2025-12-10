@@ -156,7 +156,7 @@ docker-build:
   before_script:
     - df -h
     - export PANDOC="$PANDOC"
-    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
+    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG" "$VERSION"
   script:
     - bash scripts/build_images.sh
     - |
