@@ -44,7 +44,7 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
  
   VERSION:
-     value: ""
+     value: "1.9.1"
      description: "Update to next release version, it should be numeric value, ex: 1.7.5"
  
 default:
@@ -156,7 +156,7 @@ docker-build:
   before_script:
     - df -h
     - export PANDOC="$PANDOC"
-    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG"
+    - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG" "$VERSION"
   script:
     - bash scripts/build_images.sh
     - |
