@@ -888,40 +888,13 @@ export default {
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
 
-    document.documentElement.style.colorScheme = 'light'
-    if (this.$vuetify.theme.dark) {
-      document.documentElement.style.colorScheme = 'dark'
-    }
-
     // -> Render Mermaid diagrams (Mermaid v10)
-    const mermaidTheme = this.$vuetify.theme.dark ? 'dark' : 'default'
-    
     mermaid.initialize({
       startOnLoad: true,
-      theme: mermaidTheme,
-      securityLevel: 'loose'
+      theme: this.$vuetify.theme.dark ? 'dark' : 'default'
     })
-    
-    // Protect diagrams from browser color adjustments
-    this.$nextTick(() => {
-      this.applyColorSchemeProtection()
-    })
-    
-    // Re-apply after a delay to catch async rendering
-    setTimeout(() => {
-      this.applyColorSchemeProtection()
-    }, 500)
-    
     document.addEventListener('DOMContentLoaded', () => {
-      mermaid.run();
-      // Protect diagrams immediately after mermaid renders
-      setTimeout(() => {
-        this.applyColorSchemeProtection()
-      }, 100)
-      // Re-apply with delay for safety
-      setTimeout(() => {
-        this.applyColorSchemeProtection()
-      }, 500)
+      mermaid.run()
     })
 
     // -> Handle anchor scrolling
@@ -994,15 +967,6 @@ export default {
     }
   },
   methods: {
-    applyColorSchemeProtection() {
-      if (!this.$refs.container) return
-      
-      const diagramContainers = this.$refs.container.querySelectorAll('.mermaid')
-      diagramContainers.forEach(container => {
-        container.style.colorScheme = 'initial'
-        container.style.forcedColorAdjust = 'none'
-      })
-    },
     startResize(e) {
       if (this.$vuetify.breakpoint.smAndDown) return
 

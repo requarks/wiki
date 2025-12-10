@@ -639,21 +639,21 @@ export default {
     },
     renderMermaidDiagrams () {
       // Mermaid v10: initialize and run
-      const mermaidTheme = this.$vuetify.theme.dark ? 'dark' : 'default'
-      
       mermaid.initialize({
         startOnLoad: true,
-        theme: mermaidTheme,
-        securityLevel: 'loose'
-        // Removed darkMode to prevent browser color-scheme detection
+        theme: this.$vuetify.theme.dark ? 'dark' : 'default'
       })
       document.addEventListener('DOMContentLoaded', () => {
         mermaid.run();
-        // Apply color-scheme after mermaid renders
-        document.querySelectorAll('.mermaid').forEach(container => {
-          container.style.colorScheme = 'initial'
-        })
       })
+      // Optionally, if you need to render specific diagrams manually:
+      // document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
+      //   mermaidId++
+      //   const mermaidDef = elm.innerText
+      //   const mmElm = document.createElement('div')
+      //   mmElm.innerHTML = `<div class="mermaid">${mermaidDef}</div>`
+      //   elm.parentNode.replaceWith(mmElm)
+      // })
     },
     autocomplete (cm, change) {
       if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
@@ -851,7 +851,7 @@ export default {
       markerElm.className = 'CodeMirror-buttonmarker'
       markerElm.addEventListener('click', action)
       this.cm.markText(from, to, { replacedWith: markerElm, __kind: kind })
-    },
+    }
   },
   mounted() {
     setInterval(() => {
@@ -864,13 +864,9 @@ export default {
     }
 
     // Initialize Mermaid API
-    const mermaidTheme = this.$vuetify.theme.dark ? `dark` : `default`
-    
     mermaid.initialize({
       startOnLoad: false,
-      theme: mermaidTheme,
-      securityLevel: 'loose'
-      // Removed darkMode to prevent browser color-scheme detection
+      theme: this.$vuetify.theme.dark ? `dark` : `default`
     })
 
     // Initialize CodeMirror
