@@ -91,6 +91,7 @@ export NEW_PANDOC_IMAGE="${PANDOC_IMAGE}:${IMAGE_TAG_BY_ENV}"
 
 echo "NEW_IMAGE=${NEW_IMAGE}" >> image_tag.env
 echo "NEW_PANDOC_IMAGE=${NEW_PANDOC_IMAGE}" >> image_tag.env
+echo "VERSION=${VERSION}" >> image_tag.env
 
 echo "Successfully set image tags:"
 echo " - Application image: $NEW_IMAGE"
