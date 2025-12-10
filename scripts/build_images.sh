@@ -5,9 +5,13 @@ set -euo pipefail
 # Load vars from previous step
 source image_tag.env
 
+
 : "${ENVIRONMENT:?ENVIRONMENT is required}"
 : "${VERSION:?VERSION is required}"
 : "${NEW_IMAGE:?NEW_IMAGE is required}"
+
+echo "Building Docker image for environment $ENVIRONMENT"
+echo "VERSION=$VERSION (independent from IMAGE_TAG)"
 
 echo "Building Docker image for environment $ENVIRONMENT"
 echo "VERSION=$VERSION"

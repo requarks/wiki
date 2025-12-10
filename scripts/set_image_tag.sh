@@ -59,11 +59,12 @@ if [[ -z "${IMAGE_TAG_BY_ENV}" ]]; then
   echo "ERROR: Could not determine image tag for environment ${ENVIRONMENT} and branch ${CI_COMMIT_BRANCH:-<unset>}"; exit 1
 fi
 
+
 # Compute values used later
 export IMAGE_TAG_BY_ENV
-# Use VERSION from CI/CD if set, otherwise fallback to IMAGE_TAG_BY_ENV
+# VERSION and IMAGE_TAG are now independent; VERSION must be set explicitly
 if [[ -z "$VERSION" ]]; then
-  VERSION="$IMAGE_TAG_BY_ENV"
+  echo "ERROR: VERSION must be set independently from IMAGE_TAG_BY_ENV"; exit 1
 fi
 export VERSION
 
