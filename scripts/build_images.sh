@@ -27,5 +27,7 @@ if [[ "${PANDOC:-false}" == "true" ]]; then
   docker build --no-cache -f Dockerfile -t "$NEW_PANDOC_IMAGE" .
   cd ../..
   echo "NEW_PANDOC_IMAGE=$NEW_PANDOC_IMAGE" >> newimage.txt
+
 else
   echo "Skipping Pandoc Docker image build as PANDOC is not set to true."
+fi
