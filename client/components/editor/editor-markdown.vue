@@ -433,6 +433,26 @@ export default {
           this.$refs.editorPreview.focus()
         })
       }
+    },
+    '$vuetify.theme.dark' () {
+      // Re-render diagrams with new theme when theme changes
+      this.$nextTick(() => {
+        // Clear all processed mermaid diagrams and re-render
+        if (this.$refs.editorPreviewContainer) {
+          const mermaidDivs = this.$refs.editorPreviewContainer.querySelectorAll('.mermaid[data-processed="true"]')
+          mermaidDivs.forEach(div => {
+            // Save the original source code
+            const source = div.getAttribute('data-mermaid-source') || div.textContent
+            div.setAttribute('data-mermaid-source', source)
+            div.removeAttribute('data-processed')
+            div.innerHTML = source // Restore original mermaid code
+            div.classList.add('mermaid')
+          })
+        }
+        
+        // Re-render with new theme
+        this.renderMermaidDiagrams()
+      })
     }
   },
   methods: {
@@ -638,13 +658,42 @@ export default {
       })
     },
     renderMermaidDiagrams () {
-      // Mermaid v10: initialize and run
+      // Convert codeblock-mermaid to .mermaid elements that mermaid.js can process
+      if (this.$refs.editorPreviewContainer) {
+        const mermaidCodeBlocks = this.$refs.editorPreviewContainer.querySelectorAll('pre.codeblock-mermaid')
+        mermaidCodeBlocks.forEach(pre => {
+          const code = pre.querySelector('code')
+          if (code) {
+            const mermaidDiv = document.createElement('div')
+            mermaidDiv.className = 'mermaid'
+            mermaidDiv.textContent = code.textContent
+            mermaidDiv.setAttribute('data-mermaid-source', code.textContent) // Store source for re-rendering
+            mermaidDiv.removeAttribute('data-processed') // Force re-render
+            pre.replaceWith(mermaidDiv)
+          }
+        })
+      }
+      
+      // Initialize mermaid with correct theme
+      const mermaidTheme = this.$vuetify.theme.dark ? 'dark' : 'default'
+      
       mermaid.initialize({
-        startOnLoad: true,
-        theme: this.$vuetify.theme.dark ? 'dark' : 'default'
+        startOnLoad: false,
+        theme: mermaidTheme,
+        securityLevel: 'loose'
       })
-      document.addEventListener('DOMContentLoaded', () => {
-        mermaid.run();
+      
+      // Run mermaid on unprocessed diagrams
+      if (this.$refs.editorPreviewContainer) {
+        const mermaidDivs = this.$refs.editorPreviewContainer.querySelectorAll('.mermaid:not([data-processed])')
+        mermaidDivs.forEach(div => {
+          mermaid.run({ nodes: [div] })
+        })
+      }
+      
+      // Apply color-scheme protection after rendering
+      this.$nextTick(() => {
+        this.applyMermaidColorProtection()
       })
       // Optionally, if you need to render specific diagrams manually:
       // document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
@@ -654,6 +703,49 @@ export default {
       //   mmElm.innerHTML = `<div class="mermaid">${mermaidDef}</div>`
       //   elm.parentNode.replaceWith(mmElm)
       // })
+    },
+    applyMermaidColorProtection () {
+      // Apply color-scheme protection to mermaid diagrams in editor preview
+      // Use the appropriate color-scheme based on Vuetify theme, but prevent browser override
+      const colorScheme = this.$vuetify.theme.dark ? 'dark' : 'light'
+      
+      if (this.$refs.editorPreviewContainer) {
+        const mermaidContainers = this.$refs.editorPreviewContainer.querySelectorAll('.mermaid')
+        mermaidContainers.forEach(container => {
+          container.style.setProperty('color-scheme', colorScheme, 'important')
+          container.style.setProperty('forced-color-adjust', 'none', 'important')
+          container.style.setProperty('filter', 'none', 'important')
+          
+          // Also protect SVGs inside
+          const svgs = container.querySelectorAll('svg')
+          svgs.forEach(svg => {
+            svg.style.setProperty('color-scheme', colorScheme, 'important')
+            svg.style.setProperty('forced-color-adjust', 'none', 'important')
+            svg.style.setProperty('filter', 'none', 'important')
+          })
+        })
+        
+        // Also protect draw.io diagrams (pre.diagram)
+        const diagramContainers = this.$refs.editorPreviewContainer.querySelectorAll('pre.diagram')
+        diagramContainers.forEach(container => {
+          container.style.setProperty('color-scheme', colorScheme, 'important')
+          container.style.setProperty('forced-color-adjust', 'none', 'important')
+          container.style.setProperty('filter', 'none', 'important')
+          
+          const svgs = container.querySelectorAll('svg')
+          svgs.forEach(svg => {
+            svg.style.setProperty('color-scheme', colorScheme, 'important')
+            svg.style.setProperty('forced-color-adjust', 'none', 'important')
+            svg.style.setProperty('filter', 'none', 'important')
+            
+            // Remove color-scheme from inline style attribute if present
+            if (svg.style.colorScheme) {
+              svg.style.removeProperty('color-scheme')
+              svg.style.setProperty('color-scheme', colorScheme, 'important')
+            }
+          })
+        })
+      }
     },
     autocomplete (cm, change) {
       if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
@@ -1111,6 +1203,7 @@ $editor-bg: mc('surface-dark', 'page-background');
       width: calc(100% + 17px);
       position: relative;
       top: -1rem;
+      
       &.contents {
         padding-bottom: 1rem;
       }
@@ -1229,6 +1322,25 @@ $editor-bg: mc('surface-dark', 'page-background');
 $editor-bg: mc('surface-dark', 'page-background');
 
 .editor-markdown {
+
+  // ==========================================
+  // MERMAID DIAGRAM COLOR PROTECTION
+  // ==========================================
+  
+  .editor-markdown-preview-content {
+    .mermaid, .mermaid svg {
+      color-scheme: only light !important;
+      forced-color-adjust: none !important;
+      filter: none !important;
+    }
+    
+    // Also protect draw.io diagrams
+    pre.diagram, pre.diagram svg {
+      color-scheme: only light !important;
+      forced-color-adjust: none !important;
+      filter: none !important;
+    }
+  }
 
   // ==========================================
   // CODE MIRROR

@@ -890,11 +890,16 @@ export default {
 
     // -> Render Mermaid diagrams (Mermaid v10)
     mermaid.initialize({
-      startOnLoad: true,
-      theme: this.$vuetify.theme.dark ? 'dark' : 'default'
+      startOnLoad: false,
+      theme: mermaidTheme,
+      securityLevel: 'loose'
     })
-    document.addEventListener('DOMContentLoaded', () => {
-      mermaid.run()
+    
+    mermaid.run()
+    
+    // Protect diagrams from browser color adjustments
+    this.$nextTick(() => {
+      this.applyColorSchemeProtection()
     })
 
     // -> Handle anchor scrolling

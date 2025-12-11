@@ -57,48 +57,6 @@ export default {
     activeModal: sync('editor/activeModal'),
     sitePath: get('page/sitePath')
   },
-  methods: {
-    insertLink() {
-      this.insertLinkDialog = true
-    },
-    insertLinkHandler({ locale, path }) {
-      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
-    },
-    insertDiagram() {
-      this.isDiagramEdit = false
-      this.toggleModal('editorModalDrawio')
-    },
-    editDiagram(diagram) {
-      this.isDiagramEdit = true
-      this.$store.set('editor/activeModalData', diagram)
-      this.toggleModal('editorModalDrawio')
-    },
-    toggleModal(modalKey) {
-      this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
-    },
-    getSelectedWidget() {
-      return document.getElementsByClassName('ck-widget_selected').item(0)
-    },
-    getSelectedDiagram() {
-      const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('img').item(0).getAttribute('src')
-    },
-    getDiagramCaption() {
-      const selection = this.getSelectedWidget()
-      return selection.getElementsByTagName('figcaption')?.item(0)?.firstChild.data
-    },
-    setDiagramCaption(caption) {
-      this.editor.model.change(writer => {
-        const selectedElement = this.editor.model.document.selection.getSelectedElement()
-
-        if (selectedElement && selectedElement.name === 'imageBlock') {
-          const captionElement = writer.createElement('caption')
-          writer.insertText(caption, captionElement)
-          writer.append(captionElement, selectedElement)
-        }
-      })
-    }
-  },
   async mounted() {
     this.$store.set('editor/editorKey', 'ckeditor')
 
@@ -222,7 +180,108 @@ export default {
 
       // Set the mentions in the Vuex store
       this.$store.set('editor/mentions', Array.from(mergedMentions))
+      
+      // Apply mermaid color protection after content changes
+      this.$nextTick(() => {
+        this.applyMermaidColorProtection()
+      })
     })
+    
+    // Apply mermaid protection initially
+    this.$nextTick(() => {
+      this.applyMermaidColorProtection()
+    })
+    
+    // Watch for theme changes
+    this.$watch('$vuetify.theme.dark', () => {
+      this.$nextTick(() => {
+        this.applyMermaidColorProtection()
+      })
+    })
+  },
+  methods: {
+    applyMermaidColorProtection() {
+      // Apply color protection to mermaid diagrams in CKEditor content area
+      // In CKEditor, diagrams are embedded as images with SVG data URIs
+      // Use the appropriate color-scheme based on Vuetify theme, but prevent browser override
+      const colorScheme = this.$vuetify.theme.dark ? 'dark' : 'light'
+      
+      if (this.$refs.editor) {
+        // Protect .mermaid elements (if any exist)
+        const mermaidContainers = this.$refs.editor.querySelectorAll('.mermaid')
+        mermaidContainers.forEach(container => {
+          container.style.setProperty('color-scheme', colorScheme, 'important')
+          container.style.setProperty('forced-color-adjust', 'none', 'important')
+          container.style.setProperty('filter', 'none', 'important')
+          
+          const svgs = container.querySelectorAll('svg')
+          svgs.forEach(svg => {
+            svg.style.setProperty('color-scheme', colorScheme, 'important')
+            svg.style.setProperty('forced-color-adjust', 'none', 'important')
+            svg.style.setProperty('filter', 'none', 'important')
+          })
+        })
+        
+        // Protect all images (diagrams are inserted as base64 SVG images)
+        const images = this.$refs.editor.querySelectorAll('img')
+        images.forEach(img => {
+          // Apply to all images, but especially SVG data URIs
+          if (img.src && (img.src.startsWith('data:image/svg') || img.src.includes('diagram'))) {
+            img.style.setProperty('color-scheme', colorScheme, 'important')
+            img.style.setProperty('forced-color-adjust', 'none', 'important')
+            img.style.setProperty('filter', 'none', 'important')
+          }
+        })
+        
+        // Also protect figure elements that contain images (CKEditor wraps images in figures)
+        const figures = this.$refs.editor.querySelectorAll('figure')
+        figures.forEach(figure => {
+          figure.style.setProperty('color-scheme', colorScheme, 'important')
+          figure.style.setProperty('forced-color-adjust', 'none', 'important')
+          figure.style.setProperty('filter', 'none', 'important')
+        })
+      }
+    },
+    insertLink() {
+      this.insertLinkDialog = true
+    },
+    insertLinkHandler({ locale, path }) {
+      this.editor.execute('link', siteLangs.length > 0 ? `/${this.sitePath}/${locale}/${path}` : `/${this.sitePath}/${path}`)
+    },
+    insertDiagram() {
+      this.isDiagramEdit = false
+      this.toggleModal('editorModalDrawio')
+    },
+    editDiagram(diagram) {
+      this.isDiagramEdit = true
+      this.$store.set('editor/activeModalData', diagram)
+      this.toggleModal('editorModalDrawio')
+    },
+    toggleModal(modalKey) {
+      this.activeModal = (this.activeModal === modalKey) ? '' : modalKey
+    },
+    getSelectedWidget() {
+      return document.getElementsByClassName('ck-widget_selected').item(0)
+    },
+    getSelectedDiagram() {
+      const selection = this.getSelectedWidget()
+      return selection.getElementsByTagName('img').item(0).getAttribute('src')
+    },
+    getDiagramCaption() {
+      const selection = this.getSelectedWidget()
+      return selection.getElementsByTagName('figcaption')?.item(0)?.firstChild.data
+    },
+    setDiagramCaption(caption) {
+      this.editor.model.change(writer => {
+        const selectedElement = this.editor.model.document.selection.getSelectedElement()
+
+        if (selectedElement && selectedElement.name === 'imageBlock') {
+          const captionElement = writer.createElement('caption')
+          writer.insertText(caption, captionElement)
+          writer.append(captionElement, selectedElement)
+        }
+      })
+    }
   },
   beforeDestroy() {
     if (this.editor) {
@@ -297,9 +356,28 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     min-height: calc(100vh - 64px - 24px - 1rem - 40px);
     border-radius: 5px;
 
+    // Prevent browser from inverting colors on diagrams/images
+    img, figure, svg, .mermaid {
+      color-scheme: initial !important;
+      forced-color-adjust: none !important;
+      filter: none !important;
+    }
+    
+    // Specifically target SVG data URIs (diagrams)
+    img[src^="data:image/svg"] {
+      color-scheme: only light !important;
+      filter: none !important;
+    }
+
     @at-root .theme--dark & {
       background-color: mc('surface-dark', 'page-background');
       color: mc('text-dark', 'primary');
+      
+      // In dark mode, still prevent inversion of diagram images
+      img[src^="data:image/svg"] {
+        color-scheme: only light !important;
+        filter: none !important;
+      }
     }
 
     @include until($widescreen) {
