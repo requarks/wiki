@@ -55,17 +55,36 @@
                     v-model='locale'
                     hide-details
                   )
-                v-flex(xs12, md10)
+                v-flex(xs12, md7, v-if='mode === "create"')
                   v-text-field(
                     outlined
                     :label='$t(`editor:props.path`)'
-                    append-icon='mdi-folder-search'
-                    v-model='path'
-                    :hint='$t(`editor:props.pathHint`)'
+                    :value='displayFolderPath'
+                    readonly
+                    hint='Read Only'
                     persistent-hint
-                    @click:append='showPathSelector'
-                    :rules='[rules.required, rules.path]'
+                  )
+                v-flex(xs12, md7, v-else)
+                  v-text-field(
+                    outlined
+                    :label='$t(`editor:props.path`)'
+                    v-model='path'
+                    hint='Read Only'
+                    persistent-hint
+                    readonly
+                  )
+                v-flex(xs12, md3)
+                  v-btn.btn-rounded(
+                    rounded
+                    large
+                    block
+                    dark
+                    :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
+                    @click='showPathSelector'
+                    style='margin-top: 6px;'
                     )
+                    v-icon(left, color='white') mdi-folder-search
+                    span.text-none Select Path
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.categorization')}}
@@ -241,7 +260,7 @@
           .editor-props-codeeditor-hint
             .caption {{$t('editor:props.cssHint')}}
 
-    page-selector(:mode='pageSelectorMode', v-model='pageSelectorShown', :path='path', :locale='locale', :open-handler='setPath')
+    page-selector(:mode='pageSelectorMode', v-model='pageSelectorShown', :path='pageSelectorPath', :locale='locale', :open-handler='setPath', :currentPagePath='path')
 </template>
 
 <script>
@@ -278,6 +297,7 @@ export default {
       newTagSearch: '',
       currentTab: 0,
       cm: null,
+      folderPath: '',
       rules: {
         required: value => !!value || 'This field is required.',
         path: value => {
@@ -286,68 +306,43 @@ export default {
       }
     }
   },
-  computed: {
-    isShown: {
-      get() { return this.value },
-      set(val) { this.$emit('input', val) }
-    },
-    mode: get('editor/mode'),
-    title: sync('page/title'),
-    description: sync('page/description'),
-    locale: sync('page/locale'),
-    tags: sync('page/tags'),
-    path: sync('page/path'),
-    isPublished: sync('page/isPublished'),
-    publishStartDate: sync('page/publishStartDate'),
-    publishEndDate: sync('page/publishEndDate'),
-    scriptJs: sync('page/scriptJs'),
-    scriptCss: sync('page/scriptCss'),
-    hasScriptPermission: get('page/effectivePermissions@pages.script'),
-    hasStylePermission: get('page/effectivePermissions@pages.style'),
-    pageSelectorMode () {
-      return (this.mode === 'create') ? 'create' : 'move'
-    },
-    siteId: get('page/siteId')
-  },
-  watch: {
-    value (newValue, oldValue) {
-      if (newValue) {
-        _.delay(() => {
-          this.$refs.iptTitle.focus()
-        }, 500)
-      }
-    },
-    newTag (newValue, oldValue) {
-      const tagClean = _.trim(newValue || '').toLowerCase()
-      if (tagClean && tagClean.length > 0) {
-        if (!_.includes(this.tags, tagClean)) {
-          this.tags = [...this.tags, tagClean]
-        }
-        this.$nextTick(() => {
-          this.newTag = null
-        })
-      }
-    },
-    currentTab (newValue, oldValue) {
-      if (this.cm) {
-        this.cm.toTextArea()
-      }
-      if (newValue === 2) {
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.loadEditor(this.$refs.codejs, 'html')
-          }, 100)
-        })
-      } else if (newValue === 4) {
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.loadEditor(this.$refs.codecss, 'css')
-          }, 100)
-        })
-      }
-    }
-  },
   methods: {
+    generatePageName() {
+      // Get current unix timestamp (13 digits - milliseconds)
+      const timestamp = Date.now().toString()
+      
+      // Get title or use 'untitled' as fallback
+      const title = this.title ? this.title.trim() : ''
+      
+      if (title) {
+        // Take first 10 characters, replace special chars with '-'
+        let prefix = title
+          .substring(0, 10)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+        
+        // Remove leading and trailing dashes 
+        while (prefix.startsWith('-')) {
+          prefix = prefix.substring(1)
+        }
+        while (prefix.endsWith('-')) {
+          prefix = prefix.substring(0, prefix.length - 1)
+        }
+        
+        return prefix ? prefix + timestamp : 'untitled' + timestamp
+      } else {
+        return 'untitled' + timestamp
+      }
+    },
+    updatePath() {
+      // Update the full path in store
+      const pageName = this.generatePageName()
+      if (this.folderPath) {
+        this.path = this.folderPath + '/' + pageName
+      } else {
+        this.path = pageName
+      }
+    },
     removeTag (tag) {
       this.tags = _.without(this.tags, tag)
     },
@@ -359,7 +354,46 @@ export default {
     },
     setPath({ path, locale }) {
       this.locale = locale
-      this.path = path
+      if (this.mode === 'create') {
+        // In create mode, strip the temporary page name and store only the folder path
+        const pathSegments = path.split('/').filter(s => s.length > 0)
+        
+        // Check if last segment is a temporary page name (contains 13-digit timestamp)
+        if (pathSegments.length > 0) {
+          const lastSegment = pathSegments[pathSegments.length - 1]
+          // Match pattern: anything ending with 13 digits (timestamp)
+          if (/\d{13}$/.test(lastSegment)) {
+            // Remove the temporary page name segment
+            pathSegments.pop()
+          }
+        }
+        
+        // Store only the folder path
+        this.folderPath = pathSegments.join('/')
+        // Path will be auto-updated by folderPath watcher
+      } else {
+        const currentPathSegments = this.path.split('/').filter(s => s.length > 0)
+        const currentPageName = currentPathSegments.pop() || 'page'
+        
+        // Prevent selecting the current page as its own parent
+        // Check if the selected path is the same as the current full path
+        if (path === this.path) {
+          // User selected their own page - show warning notification
+          this.$store.commit('showNotification', {
+            style: 'orange',
+            message: 'Cannot move page into itself',
+            icon: 'alert'
+          })
+          return
+        }
+        
+        // Combine new folder path with existing page name
+        if (path) {
+          this.path = path + '/' + currentPageName
+        } else {
+          this.path = currentPageName
+        }
+      }
     },
     loadEditor(ref, mode) {
       this.cm = CodeMirror.fromTextArea(ref, {
@@ -396,6 +430,120 @@ export default {
         this.cm.refresh()
         this.cm.focus()
       })
+    }
+  },
+  computed: {
+    isShown: {
+      get() { return this.value },
+      set(val) { this.$emit('input', val) }
+    },
+    mode: get('editor/mode'),
+    title: sync('page/title'),
+    description: sync('page/description'),
+    locale: sync('page/locale'),
+    tags: sync('page/tags'),
+    path: sync('page/path'),
+    isPublished: sync('page/isPublished'),
+    publishStartDate: sync('page/publishStartDate'),
+    publishEndDate: sync('page/publishEndDate'),
+    scriptJs: sync('page/scriptJs'),
+    scriptCss: sync('page/scriptCss'),
+    hasScriptPermission: get('page/effectivePermissions@pages.script'),
+    hasStylePermission: get('page/effectivePermissions@pages.style'),
+    pageSelectorMode () {
+      // Use 'move' mode for edit, so it doesn't append temporary page names
+      // Use 'create' mode for create, so the auto-expand works properly
+      return this.mode === 'create' ? 'create' : 'move'
+    },
+    pageSelectorPath () {
+      // Always return the parent folder for the page-selector to navigate to
+      // Extract parent folder from the current path
+      const pathSegments = this.path.split('/').filter(s => s.length > 0)
+      if (pathSegments.length > 1) {
+        // Remove the last segment (page name) to get parent folder
+        pathSegments.pop()
+        return pathSegments.join('/')
+      } else if (pathSegments.length === 1) {
+        // Single segment means root level
+        return ''
+      }
+      return ''
+    },
+    displayFolderPath () {
+      // Show only the folder path with trailing slash - hide auto-generated name
+      if (this.mode === 'create') {
+        if (this.folderPath) {
+          return this.folderPath + '/'
+        }
+        return '/'
+      }
+      return ''
+    },
+    siteId: get('page/siteId')
+  },
+  watch: {
+    value (newValue, oldValue) {
+      if (newValue) {
+        // Initialize folder path from current path when dialog opens
+        if (this.mode === 'create') {
+          // Extract parent folder from current path
+          const pathSegments = this.path.split('/').filter(s => s.length > 0)
+          if (pathSegments.length > 1) {
+            // Remove the last segment (page name) to get parent folder
+            pathSegments.pop()
+            this.folderPath = pathSegments.join('/')
+          } else {
+            // Root level or single segment
+            this.folderPath = ''
+          }
+          // Update path with auto-generated name
+          this.updatePath()
+        }
+        _.delay(() => {
+          this.$refs.iptTitle.focus()
+        }, 500)
+      }
+    },
+    newTag (newValue, oldValue) {
+      const tagClean = _.trim(newValue || '').toLowerCase()
+      if (tagClean && tagClean.length > 0) {
+        if (!_.includes(this.tags, tagClean)) {
+          this.tags = [...this.tags, tagClean]
+        }
+        this.$nextTick(() => {
+          this.newTag = null
+        })
+      }
+    },
+    title (newValue, oldValue) {
+      // Auto-generate and update path when title changes in create mode
+      if (this.mode === 'create') {
+        this.updatePath()
+      }
+    },
+    folderPath (newValue, oldValue) {
+      // Update path when folder changes in create mode
+      if (this.mode === 'create') {
+        this.updatePath()
+      }
+    },
+    currentTab (newValue, oldValue) {
+      if (this.cm) {
+        this.cm.toTextArea()
+      }
+      if (newValue === 2) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.loadEditor(this.$refs.codejs, 'html')
+          }, 100)
+        })
+      } else if (newValue === 4) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.loadEditor(this.$refs.codecss, 'css')
+          }, 100)
+        })
+      }
     }
   },
   apollo: {
