@@ -374,6 +374,7 @@
       mode='create',
       v-model='newPageModal',
       :open-handler='pageNewCreate',
+      :path='path',
       :locale='locale'
     )
 
