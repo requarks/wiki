@@ -521,7 +521,7 @@ export default {
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
       this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
         ADD_TAGS: ['img'],
-        ADD_ATTR: ['src', 'alt']
+        ADD_ATTR: ['src', 'alt', 'class', 'id', 'target']
       })
       this.$nextTick(() => {
         tabsetHelper.format()
@@ -607,7 +607,15 @@ export default {
           return _.times(range, l => l + lowestLine)
         }))
       }
-      lines.forEach(ln => {
+
+      // For blockquotes with attributes, insert attribute marker at the beginning
+      if (after) {
+        const firstLine = lines[0]
+        this.cm.doc.replaceRange(`> <!--${after}-->\n`, { line: firstLine, ch: 0 })
+        lines = lines.map(ln => ln + 1)
+      }
+
+      lines.forEach((ln) => {
         let lineContent = this.cm.doc.getLine(ln)
         const lineLength = lineContent.length
         if (_.startsWith(lineContent, content)) {
@@ -616,10 +624,6 @@ export default {
 
         this.cm.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
       })
-      if (after) {
-        const lastLine = _.last(lines)
-        this.cm.doc.replaceRange(`\n${after}\n`, { line: lastLine, ch: this.cm.doc.getLine(lastLine).length + 1 })
-      }
     },
     /**
      * Update scroll sync
