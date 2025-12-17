@@ -1,38 +1,32 @@
+
 #!/bin/bash
-set -e  # Exit immediately on error
+# Script to promote staging image to production using dynamic VERSION tag
+set -e
+
+# VERSION should be set by CI/CD pipeline (from YAML)
+if [ -z "$VERSION" ]; then
+  echo "ERROR: VERSION not set. Cannot promote staging image to production.";
+  exit 1;
+fi
+echo "Promoting staging image to production with tag: $VERSION"
 
 
-docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
 
-export NEW_IMAGE="${IMAGE}:$IMAGE_TAG"
-echo "Promoting Docker image and capwiki app new to release version $VERSION"
-echo "Source Image (from staging): $STAGING_IMAGE"
+STAGING_TAG="staging-latest"
+PRODUCTION_IMAGE_TAG="$VERSION"
 
-if ! docker pull "$STAGING_IMAGE"; then
-  echo "Error: Source image $STAGING_IMAGE (from staging) does not exist or could not be pulled."
+if [ -z "$IMAGE" ]; then
+  echo "IMAGE is not set!"
   exit 1
 fi
 
-docker tag "$STAGING_IMAGE" "$NEW_IMAGE"
-docker push "$NEW_IMAGE"
+echo "Logging in to Docker registry..."
+docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+echo "Pulling $IMAGE:$STAGING_TAG from registry..."
+docker pull "$IMAGE:$STAGING_TAG"
 
-
-if [[ "$PANDOC" == "true" && "$ENVIRONMENT" == "production" ]]; then
-  export STAGING_PANDOC_IMAGE="${PANDOC_IMAGE}:${STAGING_IMAGE_TAG}"
-  echo "Pandoc Source Image (from staging): $STAGING_PANDOC_IMAGE"
-  export PROD_PANDOC_IMAGE="${PANDOC_IMAGE}:${IMAGE_TAG}"
-  echo "Promoting Pandoc image to release version $PROD_PANDOC_IMAGE"
-
-  if ! docker pull "$STAGING_PANDOC_IMAGE"; then
-    echo "Error: Source image $STAGING_PANDOC_IMAGE (from staging) does not exist or could not be pulled."
-    exit 1
-  fi
-
-  docker tag "$STAGING_PANDOC_IMAGE" "$PROD_PANDOC_IMAGE"
-  docker push "$PROD_PANDOC_IMAGE"
-  docker rmi "$STAGING_PANDOC_IMAGE" "$PROD_PANDOC_IMAGE"
-fi
-
-# Cleanup
-docker logout "$DOCKER_REGISTRY"
-docker rmi "$STAGING_IMAGE" "$NEW_IMAGE"
+echo "Retagging $IMAGE:$STAGING_TAG to $IMAGE:$PRODUCTION_IMAGE_TAG"
+docker tag "$IMAGE:$STAGING_TAG" "$IMAGE:$PRODUCTION_IMAGE_TAG"
+echo "Pushing $IMAGE:$PRODUCTION_IMAGE_TAG to registry..."
+docker push "$IMAGE:$PRODUCTION_IMAGE_TAG"
+echo "Promoted $IMAGE:$STAGING_TAG to $IMAGE:$PRODUCTION_IMAGE_TAG with version $VERSION"

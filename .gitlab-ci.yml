@@ -16,18 +16,17 @@ variables:
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
   PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
-  STAGING_IMAGE_TAG: 'latest-staging'
-  STAGING_IMAGE: "${IMAGE}:${STAGING_IMAGE_TAG}"
-  ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\//'
+  DEV2_IMAGE_TAG: "dev2-${VERSION}"
+  STAGING_IMAGE_TAG: "staging-latest"
+  PRODUCTION_IMAGE_TAG: "${VERSION}"
+  STAGING_IMAGE: "${IMAGE}:staging-latest"
+  ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\/'
+  GIT_DEPTH: "0"
 
 
   IMAGE_TAG:
     value: ""
     description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
-
-  DEV2_IMAGE_TAG_OVERRIDE:
-    value: ""
-    description: "Specify the dev2 image tag to promote to staging (e.g., dev2-caefcfeb). Required when merging to main."
 
   SONARQUBE:
     value: "true"
@@ -44,8 +43,9 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-     value: "1.9.1" # deploy this version
-     description: "Update to next release version, it should be numeric value, ex: 1.7.5"
+    value: "1.9.1"
+    description: "Update to next release version, it should be numeric value, ex: 1.7.5"
+
 
 default:
   tags:
@@ -54,17 +54,17 @@ default:
      - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
-  - environment-set # to show the current env we are deploying to
+  - environment-set
   - build
   - test
   - sonarqube
   - docker-build
   - docker-push #when this stage "docker push image" is success then argocd will do pull strategy to automate k8s cluster deployment based on docker image tag value
-  - promote-prod-release-version
+  - promote-prod-release-version # promote to production
 
 
 environment-set:
-  stage: environment-set # test new image"
+  stage: environment-set
   script:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
   environment:
@@ -73,8 +73,15 @@ environment-set:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$ENVIRONMENT == "dev1"'
+      when: always
+    # - if: $CI_COMMIT_BRANCH == "develop"
+    #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"' ## to prevent jobs from running when branch is created.
       when: never
+    # - if: '$CI_COMMIT_TAG'
+    #   when: always
+
 
 build:
   stage: build
@@ -82,6 +89,7 @@ build:
     - docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
   script:
     - export BUILD_IMAGE="codebase-build:$CI_COMMIT_SHORT_SHA"
+    - echo "NODE_IMAGE is $NODE_IMAGE"
     - docker image inspect "$NODE_IMAGE" > /dev/null 2>&1 || docker pull "$NODE_IMAGE"
     - docker build --no-cache -f Dockerfile.build --build-arg NODE_IMAGE="$NODE_IMAGE" -t $BUILD_IMAGE .
     - docker run --rm -v $(pwd)/assets:/wiki/assets $BUILD_IMAGE
@@ -91,14 +99,16 @@ build:
       - assets/
     expire_in: 1 hour
   rules:
-    # Run for feature branches on push OR if ENVIRONMENT is Dev1 (manual trigger)
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$ENVIRONMENT == "dev1"'
+      when: always
+    # - if: $CI_COMMIT_BRANCH == "develop"
+    #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
-      when: always
-
+    # - if: '$CI_COMMIT_TAG'
+    #   when: always
 
 test:
   stage: test
@@ -119,10 +129,15 @@ test:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
+    - if: '$ENVIRONMENT == "dev1"'
+      when: on_success
+    # - if: $CI_COMMIT_BRANCH == "develop"
+    #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
-      when: on_success
+    # - if: '$CI_COMMIT_TAG'
+    #   when: always
+
 
 sonarqube-scan:
   stage: sonarqube
@@ -135,7 +150,6 @@ sonarqube-scan:
     entrypoint: [""]
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0"
   cache:
     key: "${CI_JOB_NAME}"
     paths:
@@ -146,10 +160,14 @@ sonarqube-scan:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
+    - if: '$ENVIRONMENT == "dev1"'
+      when: always
+    # - if: $CI_COMMIT_BRANCH == "develop"
+    #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: never
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
-      when: on_success
+    # - if: '$CI_COMMIT_TAG'
+    #   when: always
 
 docker-build:
   stage: docker-build
@@ -175,52 +193,110 @@ docker-build:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: always
+    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
+      when: on_success
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: always
-    - if: $ENVIRONMENT == "production"
-      when: never
 
+
+
+#  Docker image push to registry
 push-docker-image:
   stage: docker-push
   needs:
-   - docker-build
+  - job: docker-build
+    artifacts: true
+    optional: true
+  before_script:
+      - |
+          # Dynamically set ENVIRONMENT based on branch if not already set
+          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" = "none" ]; then
+            if [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+              export ENVIRONMENT="dev2"
+            elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+              export ENVIRONMENT="staging"
+            fi
+          fi
+          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" = "none" ]; then
+            echo "ERROR: ENVIRONMENT variable is not set or is 'none'. Please set ENVIRONMENT to a valid value (e.g., dev1, dev2, staging, production)." >&2
+            exit 1
+          fi
+          if [ -z "$IMAGE_TAG" ]; then
+            export IMAGE_TAG="${ENVIRONMENT}-$CI_COMMIT_SHORT_SHA"
+          fi
+      - echo "Using ENVIRONMENT=$ENVIRONMENT"
+      - echo "Using VERSION=$VERSION"
+      - echo "Using IMAGE_TAG=$IMAGE_TAG"
+      - export PANDOC="$PANDOC"
   script:
-   - export PANDOC="$PANDOC"
-   - bash scripts/push_images.sh
+     - "if [ -z '$VERSION' ]; then echo 'ERROR: VERSION is not set!'; exit 1; fi"
+     - "bash scripts/push_images.sh --no-cleanup"
+     - "docker tag \"$IMAGE:$IMAGE_TAG\" \"$IMAGE:${ENVIRONMENT}-latest\""
+     - "docker login -u \"$DOCKER_REGISTRY_USER\" -p \"$DOCKER_REGISTRY_PASS\" \"$DOCKER_REGISTRY\""
+     - "docker push \"$IMAGE:${ENVIRONMENT}-latest\""
+     - "docker rmi \"$IMAGE:$IMAGE_TAG\" || true"
+     - "docker rmi \"$IMAGE:${ENVIRONMENT}-latest\" || true"
+  environment:
+    name: $ENVIRONMENT
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
       when: on_success
+    - if: '$ENVIRONMENT == "dev1"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"' # to prevent jobs from running when branch is created.
+      when: never
     - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
       when: on_success
-    - if: $ENVIRONMENT == "production"
-      when: never
 
-  # Deploy to staging after merging develop into main
+
+
+# Promote dev2 image to staging
 deploy-to-staging:
-    stage: promote-prod-release-version
-    needs:
-      - job: docker-build
-        optional: true
-    script:
-      - echo "Deploying dev2 branch image to staging..."
-      - |
-        if [ -n "${DEV2_IMAGE_TAG_OVERRIDE}" ]; then
-          export DEV2_IMAGE_TAG="${DEV2_IMAGE_TAG_OVERRIDE}"
-          echo "Using dev2 image: ${DEV2_IMAGE_TAG}"
-        else
-          echo "ERROR: Please set DEV2_IMAGE_TAG_OVERRIDE variable with the dev2 image tag to promote (e.g., dev2-6c24c269)"
-          exit 1
-        fi
-      - bash scripts/promote_to_staging.sh
-    rules:
-      - if: $CI_COMMIT_BRANCH == "main"
-        when: always
+  stage: promote-prod-release-version
+  needs:
+    - job: docker-build
+      artifacts: true
+      optional: true
+  before_script:
+     - "if [ -f build.env ]; then source build.env; fi"
+     - "echo 'Using VERSION from dev2 build: $VERSION'"
+  script:
+    - echo 'Retagging dev2-latest as staging image...'
+    - |
+      docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+      DEV2_TAG="dev2-latest"
+      STAGING_TAG="staging-latest"
+      docker pull "$IMAGE:$DEV2_TAG"
+      docker tag "$IMAGE:$DEV2_TAG" "$IMAGE:$STAGING_TAG"
+      docker push "$IMAGE:$STAGING_TAG"
+    - echo 'Deploying staging image...'
+    - bash scripts/promote_to_staging.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main" && ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^bugfix\// || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//)
+      when: always
 
-  # Deploy to production after staging, manual trigger
+
 deploy-to-production:
   stage: promote-prod-release-version
+  needs:
+    - job: docker-build
+      artifacts: true
+      optional: true
+  before_script:
+     - "if [ -f build.env ]; then source build.env; fi"
+     - "echo 'Using VERSION from dev2 build: $VERSION'"
   script:
-    - echo "Deploying staging branch image to production..."
+    - echo 'Retagging staging image as production image...'
+    - |
+        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+        STAGING_TAG="staging-latest"
+        PROD_TAG="$VERSION"
+        docker pull "$IMAGE:$STAGING_TAG"
+        docker tag "$IMAGE:$STAGING_TAG" "$IMAGE:$PROD_TAG"
+        docker push "$IMAGE:$PROD_TAG"
+    - echo 'Deploying production image...'
     - bash scripts/promote_to_prod.sh
   environment:
     name: production
@@ -228,8 +304,6 @@ deploy-to-production:
     # Manual for regular main merges
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
-    # Auto for hotfix branches merged to main
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//
+    # Auto for bugfix/hotfix merges into main
+    - if: $CI_COMMIT_BRANCH == "main" && ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^bugfix\// || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//)
       when: always
-
-
