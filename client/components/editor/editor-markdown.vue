@@ -125,19 +125,24 @@
           span {{$t('editor:markup.insertLink')}}
         v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='insertExternalLink', aria-label='Insert External Link').mx-0
+              v-icon mdi-open-in-new
+          span Insert External Link
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
               v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
-              v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
+              v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
                 v-icon mdi-arrow-expand-all
             span {{$t('editor:markup.distractionFreeMode')}}
           v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
@@ -169,6 +174,48 @@
 
     markdown-help(v-if='helpShown')
     page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
+    
+    v-dialog(v-model='insertExternalLinkDialog', max-width='550', persistent, overlay-color='blue-grey darken-4', overlay-opacity='.7')
+      v-card
+        .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
+          v-icon.mr-2(color='white') mdi-open-in-new
+          span(:style='`color: ${colors.textLight.inverse};`') Insert External Link
+        v-card-text.pt-5
+          v-text-field(
+            v-model='externalLinkUrl'
+            label='URL'
+            placeholder='https://example.com'
+            outlined
+            dense
+            autofocus
+            :rules='[v => !!v || "URL is required"]'
+            @keyup.enter='insertExternalLinkHandler'
+          )
+          v-text-field(
+            v-model='externalLinkText'
+            label='Link Text (optional)'
+            placeholder='Enter link text or leave blank to use URL'
+            outlined
+            dense
+            class='mt-5'
+            @keyup.enter='insertExternalLinkHandler'
+          )
+        v-card-chin
+          v-spacer
+          v-btn.btn-rounded(
+            outlined
+            rounded
+            :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
+            @click='insertExternalLinkDialog = false'
+          ) {{$t('common:actions.cancel')}}
+          v-btn.px-4.btn-rounded(
+            rounded
+            dark
+            :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
+            @click='insertExternalLinkHandler'
+            :disabled='!externalLinkUrl'
+          )
+            span.text-none Insert
 </template>
 
 <script>
@@ -399,6 +446,9 @@ export default {
       helpShown: false,
       spellModeActive: false,
       insertLinkDialog: false,
+      insertExternalLinkDialog: false,
+      externalLinkUrl: '',
+      externalLinkText: '',
       newMentions: new Map(),
       mentionCache: {},
       colors: colors
@@ -886,6 +936,27 @@ export default {
       this.insertAtCursor({
         content: siteLangs.length > 0 ? `[${lastPart}](/${this.sitePath}/${locale}/${path})` : `[${lastPart}](/${this.sitePath}/${path})`
       })
+    },
+    insertExternalLink () {
+      this.externalLinkUrl = ''
+      this.externalLinkText = ''
+      this.insertExternalLinkDialog = true
+    },
+    insertExternalLinkHandler () {
+      if (!this.externalLinkUrl) {
+        this.$store.commit('showNotification', {
+          message: 'URL is required',
+          style: 'warning'
+        })
+        return
+      }
+      const linkText = this.externalLinkText || this.externalLinkUrl
+      this.insertAtCursor({
+        content: `[${linkText}](${this.externalLinkUrl})`
+      })
+      this.insertExternalLinkDialog = false
+      this.externalLinkUrl = ''
+      this.externalLinkText = ''
     },
     processMarkers (from, to) {
       let found = null
