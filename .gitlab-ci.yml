@@ -231,11 +231,14 @@ push-docker-image:
   script:
      - "if [ -z '$VERSION' ]; then echo 'ERROR: VERSION is not set!'; exit 1; fi"
      - "bash scripts/push_images.sh --no-cleanup"
-     - "docker tag \"$IMAGE:$IMAGE_TAG\" \"$IMAGE:${ENVIRONMENT}-latest\""
-     - "docker login -u \"$DOCKER_REGISTRY_USER\" -p \"$DOCKER_REGISTRY_PASS\" \"$DOCKER_REGISTRY\""
-     - "docker push \"$IMAGE:${ENVIRONMENT}-latest\""
+     - |
+         if [ "$ENVIRONMENT" = "dev2" ]; then
+           docker tag "$IMAGE:$IMAGE_TAG" "$IMAGE:dev-latest"
+           docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+           docker push "$IMAGE:dev-latest"
+           docker rmi "$IMAGE:dev-latest" || true
+         fi
      - "docker rmi \"$IMAGE:$IMAGE_TAG\" || true"
-     - "docker rmi \"$IMAGE:${ENVIRONMENT}-latest\" || true"
   environment:
     name: $ENVIRONMENT
   rules:
@@ -264,10 +267,10 @@ deploy-to-staging:
     - echo 'Retagging dev2-latest as staging image...'
     - |
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-      DEV2_TAG="dev2-latest"
+      DEV_TAG="dev-latest"
       STAGING_TAG="staging-latest"
-      docker pull "$IMAGE:$DEV2_TAG"
-      docker tag "$IMAGE:$DEV2_TAG" "$IMAGE:$STAGING_TAG"
+      docker pull "$IMAGE:$DEV_TAG"
+      docker tag "$IMAGE:$DEV_TAG" "$IMAGE:$STAGING_TAG"
       docker push "$IMAGE:$STAGING_TAG"
     - echo 'Deploying staging image...'
     - bash scripts/promote_to_staging.sh
