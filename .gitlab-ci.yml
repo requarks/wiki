@@ -73,14 +73,12 @@ environment-set:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    - if: '$ENVIRONMENT == "dev1"'
-      when: always
+    # - if: '$ENVIRONMENT == "dev1"'
+    #   when: always
     # - if: $CI_COMMIT_BRANCH == "develop"
     #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"' ## to prevent jobs from running when branch is created.
       when: never
-    # - if: '$CI_COMMIT_TAG'
-    #   when: always
 
 
 build:
@@ -101,14 +99,12 @@ build:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    - if: '$ENVIRONMENT == "dev1"'
-      when: always
+    # - if: '$ENVIRONMENT == "dev1"'
+    #   when: always
     # - if: $CI_COMMIT_BRANCH == "develop"
     #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: never
-    # - if: '$CI_COMMIT_TAG'
-    #   when: always
 
 test:
   stage: test
@@ -129,14 +125,12 @@ test:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
-    - if: '$ENVIRONMENT == "dev1"'
-      when: on_success
+    # - if: '$ENVIRONMENT == "dev1"'
+    #   when: on_success
     # - if: $CI_COMMIT_BRANCH == "develop"
     #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: never
-    # - if: '$CI_COMMIT_TAG'
-    #   when: always
 
 
 sonarqube-scan:
@@ -160,14 +154,12 @@ sonarqube-scan:
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    - if: '$ENVIRONMENT == "dev1"'
-      when: always
+    # - if: '$ENVIRONMENT == "dev1"'
+    #   when: always
     # - if: $CI_COMMIT_BRANCH == "develop"
     #   when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: never
-    # - if: '$CI_COMMIT_TAG'
-    #   when: always
 
 docker-build:
   stage: docker-build
