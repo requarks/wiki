@@ -213,7 +213,6 @@
             dark
             :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
             @click='insertExternalLinkHandler'
-            :disabled='!externalLinkUrl'
           )
             span.text-none Insert
 </template>
