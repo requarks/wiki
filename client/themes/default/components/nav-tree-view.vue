@@ -390,8 +390,21 @@ export default {
     },
 
     isCurrentPage(item) {
-      const currentPath = (this.currentPagePath || '').trim().replace(/(^\/+|\/+$)/g, '')
-      const itemPath = (item.path || '').trim().replace(/(^\/+|\/+$)/g, '')
+      const normalize = (path) => {
+        if (!path) return ''
+        let normalized = (path || '').trim()
+        // Remove leading slashes
+        while (normalized.length > 0 && normalized[0] === '/') {
+          normalized = normalized.substring(1)
+        }
+        // Remove trailing slashes
+        while (normalized.length > 0 && normalized[normalized.length - 1] === '/') {
+          normalized = normalized.substring(0, normalized.length - 1)
+        }
+        return normalized
+      }
+      const currentPath = normalize(this.currentPagePath)
+      const itemPath = normalize(item.path)
 
       return currentPath && itemPath && currentPath === itemPath
     },

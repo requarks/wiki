@@ -684,10 +684,17 @@ export default {
       // Add folder to openNodes and wait for rendering
       if (!this.openNodes.includes(folderId)) {
         this.openNodes = [...this.openNodes, folderId]
+        
+        // Wait for DOM to update and node to be rendered
         await this.$nextTick()
-        await this.$nextTick()
-        await this.$nextTick()
-        await new Promise(resolve => setTimeout(resolve, 50))
+        const maxAttempts = 20 //1s
+        for (let i = 0; i < maxAttempts; i++) {
+          await new Promise(resolve => setTimeout(resolve, 50))
+          const treeNode = this.findTreeNode(this.tree[0], folderId)
+          if (treeNode && treeNode.children) {
+            break
+          }
+        }
       }
     },
     async preloadChildrenIfNeeded(folder, treeNode) {
