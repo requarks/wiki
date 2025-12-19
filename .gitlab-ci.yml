@@ -43,13 +43,13 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-    value: "1.9.1"
+    value: "1.10.0"
     description: "Update to next release version, it should be numeric value, ex: 1.7.5"
 
 
 default:
   tags:
-    - ubuntu-docker 
+    - ubuntu-docker
   before_script:
      - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
