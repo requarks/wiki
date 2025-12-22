@@ -60,6 +60,7 @@ const colors = {
     'secondarySapHeavy': '#338091',
     'primaryBlueHeavy': '#00476d',
     'secondaryBlueHeavy': '#0070ad',
+    'buttonPrimary': '#1D365A',
     'disabled': '#fafafa',
     'inverse': '#3e3f4b',
     'white': '#ffffff',
