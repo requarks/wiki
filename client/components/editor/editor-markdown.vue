@@ -104,6 +104,17 @@
             v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='insertAfter({ content: `---`, newLine: true })').mx-0
               v-icon mdi-minus
           span {{$t('editor:markup.horizontalBar')}}
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p12s(
+              icon
+              tile
+              v-on='on'
+              @click='insertExternalLink'
+              aria-label='Insert external link'
+            ).mx-0
+              v-icon mdi-open-in-new
+          span Insert external link
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy', v-if='previewShown')
@@ -181,24 +192,36 @@
           v-icon.mr-2(color='white') mdi-open-in-new
           span(:style='`color: ${colors.textLight.inverse};`') Insert External Link
         v-card-text.pt-5
+          .d-flex.align-center
+            span URL
+            v-tooltip(right, color='#424242')
+              template(v-slot:activator='{ on }')
+                v-icon.ml-2.grey--text(small, v-on='on') mdi-information-outline
+              span Enter a URL or domain. https:// is added automatically if missing.
           v-text-field(
             v-model='externalLinkUrl'
-            label='URL'
             placeholder='https://example.com'
             outlined
             dense
             autofocus
-            :rules='[v => !!v || "URL is required"]'
+            :error='externalLinkUrlError'
+            :error-messages='externalLinkUrlError ? "URL is required" : ""'
             @keyup.enter='insertExternalLinkHandler'
+            class='mt-1'
           )
           v-text-field(
             v-model='externalLinkText'
             label='Link Text (optional)'
-            placeholder='Enter link text or leave blank to use URL'
+            placeholder='Enter link text or leave blank to use the URL'
             outlined
             dense
-            class='mt-5'
+            class='mt-2'
             @keyup.enter='insertExternalLinkHandler'
+          )
+          v-checkbox(
+            v-model='externalLinkNewTab'
+            label='Open in new tab'
+            class='mt-1'
           )
         v-card-chin
           v-spacer
@@ -206,15 +229,16 @@
             outlined
             rounded
             :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
-            @click='insertExternalLinkDialog = false'
-          ) {{$t('common:actions.cancel')}}
+            @click='closeExternalLinkDialog'
+            ) {{$t('common:actions.cancel')}}
           v-btn.px-4.btn-rounded(
             rounded
-            dark
+            :dark='$vuetify.theme.dark'
             :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
             @click='insertExternalLinkHandler'
-          )
-            span.text-none Insert
+            :disabled='!externalLinkUrl'
+            )
+            span.text-none(:style='`color: ${colors.textLight.inverse};`') INSERT LINK
 </template>
 
 <script>
@@ -448,6 +472,8 @@ export default {
       insertExternalLinkDialog: false,
       externalLinkUrl: '',
       externalLinkText: '',
+      externalLinkNewTab: false,
+      externalLinkUrlError: false,
       newMentions: new Map(),
       mentionCache: {},
       colors: colors
@@ -939,23 +965,77 @@ export default {
     insertExternalLink () {
       this.externalLinkUrl = ''
       this.externalLinkText = ''
+      this.externalLinkNewTab = false
+      this.externalLinkUrlError = false
       this.insertExternalLinkDialog = true
     },
-    insertExternalLinkHandler () {
-      if (!this.externalLinkUrl) {
-        this.$store.commit('showNotification', {
-          message: 'URL is required',
-          style: 'warning'
-        })
-        return
-      }
-      const linkText = this.externalLinkText || this.externalLinkUrl
-      this.insertAtCursor({
-        content: `[${linkText}](${this.externalLinkUrl})`
-      })
+    closeExternalLinkDialog () {
       this.insertExternalLinkDialog = false
       this.externalLinkUrl = ''
       this.externalLinkText = ''
+      this.externalLinkNewTab = false
+      this.externalLinkUrlError = false
+    },
+    normalizeUrl (url) {
+      if (!url) return ''
+      url = url.trim()
+      // If URL doesn't start with a protocol, add https://
+      if (!url.match(/^[a-z][a-z0-9+.-]*:/i)) {
+        url = 'https://' + url
+      }
+      return url
+    },
+    validateUrl (url) {
+      if (!url || !url.trim()) return false
+      // Basic URL validation regex
+      const urlRegex = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/
+      return urlRegex.test(url)
+    },
+    insertExternalLinkHandler () {
+      const url = this.externalLinkUrl.trim()
+      
+      // Validate URL
+      if (!url) {
+        this.externalLinkUrlError = true
+        return
+      }
+      
+      // Normalize URL (add https:// if missing)
+      const normalizedUrl = this.normalizeUrl(url)
+      
+      // Validate the normalized URL
+      if (!this.validateUrl(normalizedUrl)) {
+        this.$store.commit('showNotification', {
+          message: 'Please enter a valid URL',
+          style: 'warning',
+          icon: 'warning'
+        })
+        return
+      }
+      
+      const linkText = this.externalLinkText || normalizedUrl
+      let content
+      
+      if (this.externalLinkNewTab) {
+        // Use HTML for new tab links
+        content = `<a href="${normalizedUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`
+      } else {
+        // Use standard Markdown syntax
+        content = `[${linkText}](${normalizedUrl})`
+      }
+      
+      // Track analytics
+      this.$store.commit('log', {
+        event: 'editor.external_link.insert',
+        openNewTab: this.externalLinkNewTab,
+        hasDisplayText: !!this.externalLinkText
+      })
+      
+      this.insertAtCursor({
+        content: content
+      })
+      
+      this.closeExternalLinkDialog()
     },
     processMarkers (from, to) {
       let found = null
