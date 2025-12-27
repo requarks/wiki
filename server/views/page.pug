@@ -21,7 +21,7 @@ block body
       author-name=page.authorName
       :author-id=page.authorId
       editor=page.editorKey
-      :is-published=page.isPublished.toString()
+      :is-published=(page.isPublished ? 'true' : 'false')
       toc=Buffer.from(page.toc).toString('base64')
       :page-id=page.id
       sidebar=Buffer.from(JSON.stringify(sidebar)).toString('base64')
@@ -30,6 +30,7 @@ block body
       effective-permissions=Buffer.from(JSON.stringify(effectivePermissions)).toString('base64')
       comments-external=comments.codeTemplate
       edit-shortcuts=Buffer.from(JSON.stringify(config.editShortcuts)).toString('base64')
+      initial-breadcrumbs=Buffer.from(JSON.stringify(breadcrumbs)).toString('base64')
       filename=pageFilename
       )
       template(slot='contents')

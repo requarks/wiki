@@ -489,6 +489,10 @@ export default {
     filename: {
       type: String,
       default: ''
+    },
+    initialBreadcrumbs: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -528,6 +532,7 @@ export default {
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/effectivePermissions@comments'),
     editShortcutsObj: get('page/editShortcuts'),
+    breadcrumbs: get('page/breadcrumbs'),
     rating: {
       get () {
         return 3.5
@@ -535,15 +540,6 @@ export default {
       set (val) {
 
       }
-    },
-    breadcrumbs() {
-      return [{ path: '/', name: 'Home' }].concat(_.reduce(this.path.split('/'), (result, value, key) => {
-        result.push({
-          path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
-          name: value
-        })
-        return result
-      }, []))
     },
     pageUrl () { return window.location.href },
     upBtnPosition () {
@@ -597,6 +593,9 @@ export default {
     }
     if (this.editShortcuts) {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
+    }
+    if (this.initialBreadcrumbs) {
+      this.$store.set('page/breadcrumbs', JSON.parse(Buffer.from(this.initialBreadcrumbs, 'base64').toString()))
     }
 
     this.$store.set('page/mode', 'view')
