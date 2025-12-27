@@ -1,0 +1,10 @@
+mutation($key: String!) {
+  theming {
+    deleteTheme(key: $key) {
+      responseResult {
+        succeeded
+        message
+      }
+    }
+  }
+}

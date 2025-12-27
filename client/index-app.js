@@ -17,10 +17,25 @@ switch (window.document.documentElement.lang) {
 require('modernizr')
 
 require('./scss/app.scss')
-import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/scss/app.scss')
+const getThemeKey = () => (siteConfig && siteConfig.theme) ? siteConfig.theme : 'default'
+const importThemeScss = (themeKey) => import(/* webpackChunkName: "theme" */ './themes/' + themeKey + '/scss/app.scss')
+const importThemeJs = (themeKey) => import(/* webpackChunkName: "theme" */ './themes/' + themeKey + '/js/app.js')
+
+importThemeScss(getThemeKey()).catch(() => {
+  if (getThemeKey() !== 'default') {
+    siteConfig.theme = 'default'
+    return importThemeScss('default')
+  }
+})
 
 import(/* webpackChunkName: "mdi" */ '@mdi/font/css/materialdesignicons.css')
 
 require('./helpers/compatibility.js')
 require('./client-app.js')
-import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/js/app.js')
+
+importThemeJs(getThemeKey()).catch(() => {
+  if (getThemeKey() !== 'default') {
+    siteConfig.theme = 'default'
+    return importThemeJs('default')
+  }
+})

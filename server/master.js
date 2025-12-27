@@ -9,6 +9,7 @@ const KnexSessionStore = require('connect-session-knex')(session)
 const favicon = require('serve-favicon')
 const path = require('path')
 const _ = require('lodash')
+const themingHelper = require('./helpers/theming')
 
 /* global WIKI */
 
@@ -145,9 +146,10 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(async (req, res, next) => {
+    const theme = await themingHelper.ensureValidThemeSelection({ fallbackTheme: 'default', persist: true })
     res.locals.siteConfig = {
       title: WIKI.config.title,
-      theme: WIKI.config.theming.theme,
+      theme,
       darkMode: WIKI.config.theming.darkMode,
       tocPosition: WIKI.config.theming.tocPosition || 'left',
       lang: WIKI.config.lang.code,
@@ -164,6 +166,7 @@ module.exports = async () => {
 
   app.use('/', ctrl.auth)
   app.use('/', ctrl.upload)
+  app.use('/', ctrl.theming)
   app.use('/', ctrl.common)
 
   // ----------------------------------------
