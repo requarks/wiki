@@ -91,6 +91,13 @@ module.exports = {
           dbConfig.ssl = sslOptions
         }
 
+        // Prune host and port if socketPath is configured
+        if (WIKI.config.db.socketPath) {
+            const { host, port, ...prunedConfig} = dbConfig
+            dbConfig = prunedConfig
+            dbConfig.socketPath = WIKI.config.db.socketPath.toString()
+        }
+
         // Fix mysql boolean handling...
         dbConfig.typeCast = (field, next) => {
           if (field.type === 'TINY' && field.length === 1) {
