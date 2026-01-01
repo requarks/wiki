@@ -46,7 +46,7 @@ module.exports = {
           WIKI.logger.info(`GitHub OAuth: Successfully authenticated user ${user.email}`)
           cb(null, user)
         } catch (err) {
-          WIKI.logger.error(`GitHub OAuth: Authentication failed for strategy ${req.params.strategy}:`, err)
+          WIKI.logger.warn(`GitHub OAuth: Authentication failed for strategy ${req.params.strategy}:`, err)
           // Provide more user-friendly error messages
           if (err.message && err.message.includes('email')) {
             cb(new Error('GitHub authentication failed: Email address is required but not available. Please ensure your GitHub account has a verified email address and grant email access permissions.'), null)
