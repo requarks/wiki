@@ -471,46 +471,50 @@ module.exports = {
   async syncUntracked() {
     WIKI.logger.info(`(STORAGE/GIT) Adding all untracked content...`)
 
-    // -> Pages
-    await pipeline(
-      WIKI.models.knex.column('id', 'path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt', 'editorKey').select().from('pages').where({
-        isPrivate: false
-      }).stream(),
-      new stream.Transform({
-        objectMode: true,
-        transform: async (page, enc, cb) => {
-          const pageObject = await WIKI.models.pages.query().findById(page.id)
-          page.tags = await pageObject.$relatedQuery('tags')
+    await WIKI.models.knex.transaction(async (trx) => {
+      // -> Pages
+      await pipeline(
+        trx.column('id', 'path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt', 'editorKey').select().from('pages').where({
+          isPrivate: false
+        }).stream(),
+        new stream.Transform({
+          objectMode: true,
+          transform: async (page, enc, cb) => {
+            const pageObject = await WIKI.models.pages.query(trx).findById(page.id)
+            page.tags = await pageObject.$relatedQuery('tags', trx)
 
-          let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-          if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
-            fileName = `${page.localeCode}/${fileName}`
+            let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+            if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
+              fileName = `${page.localeCode}/${fileName}`
+            }
+            WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)
+            const filePath = path.join(this.repoPath, fileName)
+            await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
+            await this.git.add(`./${fileName}`)
+            cb()
           }
-          WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)
-          const filePath = path.join(this.repoPath, fileName)
-          await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
-          await this.git.add(`./${fileName}`)
-          cb()
-        }
-      })
-    )
+        })
+      )
 
-    // -> Assets
-    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+      // -> Assets
+      const assetFolders = await WIKI.models.assetFolders.getAllPaths(trx)
 
-    await pipeline(
-      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
-      new stream.Transform({
-        objectMode: true,
-        transform: async (asset, enc, cb) => {
-          const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
-          WIKI.logger.info(`(STORAGE/GIT) Adding asset ${filename}...`)
-          await fs.outputFile(path.join(this.repoPath, filename), asset.data)
-          await this.git.add(`./${filename}`)
-          cb()
-        }
-      })
-    )
+      await pipeline(
+        trx.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+        new stream.Transform({
+          objectMode: true,
+          transform: async (asset, enc, cb) => {
+            const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
+            WIKI.logger.info(`(STORAGE/GIT) Adding asset ${filename}...`)
+            await fs.outputFile(path.join(this.repoPath, filename), asset.data)
+            await this.git.add(`./${filename}`)
+            cb()
+          }
+        })
+      )
+      await trx.commit()
+    })
+
 
     await this.git.commit(`docs: add all untracked content`)
     WIKI.logger.info('(STORAGE/GIT) All content is now tracked.')

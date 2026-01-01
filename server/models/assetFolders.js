@@ -1,4 +1,5 @@
 const Model = require('objection').Model
+const knex = require('knex')
 const _ = require('lodash')
 
 /* global WIKI */
@@ -60,9 +61,11 @@ module.exports = class AssetFolder extends Model {
 
   /**
    * Get full folder paths
+   *
+   * @param {knex.Transaction?} trx Currently running transaction (if any)
    */
-  static async getAllPaths () {
-    const all = await WIKI.models.assetFolders.query()
+  static async getAllPaths (trx) {
+    const all = await WIKI.models.assetFolders.query(trx)
     let folders = {}
     all.forEach(fld => {
       _.set(folders, fld.id, fld.slug)
