@@ -95,7 +95,7 @@ module.exports = {
         if (WIKI.config.db.socketPath) {
             const { host, port, ...prunedConfig} = dbConfig
             dbConfig = prunedConfig
-            dbConfig.socketPath = WIKI.config.db.socketPath.toString(),
+            dbConfig.socketPath = WIKI.config.db.socketPath.toString()
         }
 
         // Fix mysql boolean handling...
