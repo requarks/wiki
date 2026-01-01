@@ -31,7 +31,6 @@ module.exports = {
     let dbClient = null
     let dbConfig = (!_.isEmpty(process.env.DATABASE_URL)) ? process.env.DATABASE_URL : {
       host: WIKI.config.db.host.toString(),
-      socketPath: WIKI.config.db.socketPath.toString(),
       user: WIKI.config.db.user.toString(),
       password: WIKI.config.db.pass.toString(),
       database: WIKI.config.db.db.toString(),
@@ -93,9 +92,10 @@ module.exports = {
         }
 
         // Prune host and port if socketPath is configured
-        if (dbConfig.socketPath) {
-            const { host, port, ...prunedConfig} = dbConfig;
-            dbConfig = prunedConfig;
+        if (WIKI.config.db.socketPath) {
+            const { host, port, ...prunedConfig} = dbConfig
+            dbConfig = prunedConfig
+            dbConfig.socketPath = WIKI.config.db.socketPath.toString(),
         }
 
         // Fix mysql boolean handling...
