@@ -1,3 +1,4 @@
+
 import { make } from 'vuex-pathify'
 
 const state = {
@@ -16,6 +17,7 @@ const state = {
   updatedAt: '',
   editor: '',
   mode: '',
+  breadcrumbs: [],
   scriptJs: '',
   scriptCss: '',
   effectivePermissions: {
