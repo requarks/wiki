@@ -20,9 +20,7 @@ module.exports = {
         
         // Validate hosted domain if configured
         if (conf.hostedDomain && profile._json.hd !== conf.hostedDomain) {
-          const errorMsg = `Google authentication failed: User must be from domain ${conf.hostedDomain}, but got ${profile._json.hd || 'unknown'}`
-          WIKI.logger.warn(`Google OAuth: ${errorMsg}`)
-          throw new Error(errorMsg)
+          throw new Error(`Google authentication failed: User must be from domain ${conf.hostedDomain}, but got ${profile._json.hd || 'unknown'}`)
         }
 
         const user = await WIKI.models.users.processProfile({
@@ -36,7 +34,7 @@ module.exports = {
         WIKI.logger.info(`Google OAuth: Successfully authenticated user ${user.email}`)
         cb(null, user)
       } catch (err) {
-        WIKI.logger.error(`Google OAuth: Authentication failed for strategy ${req.params.strategy}:`, err)
+        WIKI.logger.warn(`Google OAuth: Authentication failed for strategy ${req.params.strategy}:`, err)
         // Provide more user-friendly error messages
         if (err.message && err.message.includes('domain')) {
           cb(new Error(`Google authentication failed: ${err.message}`), null)
