@@ -33,6 +33,7 @@ type ThemingMutation {
     injectHead: String
     injectBody: String
   ): DefaultResponse @auth(requires: ["manage:theme", "manage:system"])
+  deleteTheme(key: String!): DefaultResponse @auth(requires: ["manage:theme", "manage:system"])
 }
 
 # -----------------------------------------------

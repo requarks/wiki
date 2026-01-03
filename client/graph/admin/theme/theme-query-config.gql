@@ -1,5 +1,10 @@
 query {
   theming {
+    themes {
+      key
+      title
+      author
+    }
     config {
       theme
       iconset

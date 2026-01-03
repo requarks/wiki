@@ -170,8 +170,20 @@ Vue.component('v-card-chin', () => import(/* webpackPrefetch: true, webpackChunk
 Vue.component('v-card-info', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/v-card-info.vue'))
 Vue.component('welcome', () => import(/* webpackChunkName: "welcome" */ './components/welcome.vue'))
 
-Vue.component('nav-footer', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
-Vue.component('page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
+const getThemeKey = () => (siteConfig && siteConfig.theme) ? siteConfig.theme : 'default'
+const importThemeComponent = (componentPath) => {
+  const themeKey = getThemeKey()
+  return import(/* webpackChunkName: "theme" */ './themes/' + themeKey + '/components/' + componentPath).catch((err) => {
+    if (themeKey !== 'default') {
+      siteConfig.theme = 'default'
+      return import(/* webpackChunkName: "theme" */ './themes/default/components/' + componentPath)
+    }
+    throw err
+  })
+}
+
+Vue.component('nav-footer', () => importThemeComponent('nav-footer.vue'))
+Vue.component('page', () => importThemeComponent('page.vue'))
 
 let bootstrap = () => {
   // ====================================

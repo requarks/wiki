@@ -8,6 +8,10 @@
             .headline.primary--text.animated.fadeInLeft {{$t('admin:theme.title')}}
             .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{$t('admin:theme.subtitle')}}
           v-spacer
+          v-btn.animated.fadeInRight.mr-2(color='primary', depressed, @click='$refs.themeUpload.click()', large, :loading='uploading')
+            v-icon(left) mdi-cloud-upload
+            span Upload Theme
+          input(type='file', ref='themeUpload', style='display: none', accept='.zip', @change='onUpload')
           v-btn.animated.fadeInRight(color='success', depressed, @click='save', large, :loading='loading')
             v-icon(left) mdi-check
             span {{$t('common:actions.apply')}}
@@ -18,21 +22,24 @@
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t('admin:theme.title')}}
                 v-card-text
-                  v-select(
-                    :items='themes'
-                    outlined
-                    prepend-icon='mdi-palette'
-                    v-model='config.theme'
-                    :label='$t(`admin:theme.siteTheme`)'
-                    persistent-hint
-                    :hint='$t(`admin:theme.siteThemeHint`)'
-                    )
-                    template(slot='item', slot-scope='data')
-                      v-list-item-avatar
-                        v-icon.blue--text(dark) mdi-image-filter-frames
-                      v-list-item-content
-                        v-list-item-title(v-html='data.item.text')
-                        v-list-item-sub-title(v-html='data.item.author')
+                  .subtitle-2.mb-2 {{$t(`admin:theme.siteTheme`)}}
+                  v-list.theme-list(outlined, rounded, style='max-height: 300px; overflow-y: auto;')
+                    v-list-item-group(v-model='config.theme', color='primary', mandatory)
+                      template(v-for='theme in themes')
+                        v-list-item(:key='theme.value', :value='theme.value')
+                          template(v-slot:default='{ active }')
+                            v-list-item-action
+                              v-icon(color='primary') {{ active ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank' }}
+                            v-list-item-avatar
+                              v-icon.blue--text(dark) mdi-image-filter-frames
+                            v-list-item-content
+                              v-list-item-title(v-html='theme.text')
+                              v-list-item-sub-title(v-html='theme.author')
+                            v-list-item-action(v-if='theme.value !== "default"')
+                              v-btn(icon, @click.stop='confirmDelete(theme)')
+                                v-icon.red--text mdi-delete
+                  .caption.grey--text.mt-1 {{$t(`admin:theme.siteThemeHint`)}}
+
                   v-select.mt-3(
                     :items='iconsets'
                     outlined
@@ -126,6 +133,18 @@
                     :hint='$t(`admin:theme.bodyHtmlInjectionHint`)'
                     auto-grow
                     )
+
+    v-dialog(v-model='deleteDialog', max-width='400')
+      v-card
+        v-toolbar(color='error', dark, dense, flat)
+          v-toolbar-title.subtitle-1 Confirm Delete
+        v-card-text.pt-4
+          span Are you sure you want to delete the theme #[strong {{themeToDelete ? themeToDelete.text : ''}}]?
+          .mt-2.caption.red--text This will permanently delete the theme directory.
+        v-card-actions
+          v-spacer
+          v-btn(text, @click='deleteDialog = false') {{$t('common:actions.cancel')}}
+          v-btn(color='error', depressed, @click='deleteTheme', :loading='deleting') {{$t('common:actions.delete')}}
 </template>
 
 <script>
@@ -134,11 +153,16 @@ import { sync } from 'vuex-pathify'
 
 import themeConfigQuery from 'gql/admin/theme/theme-query-config.gql'
 import themeSaveMutation from 'gql/admin/theme/theme-mutation-save.gql'
+import themeDeleteMutation from 'gql/admin/theme/theme-mutation-delete.gql'
 
 export default {
   data() {
     return {
       loading: false,
+      uploading: false,
+      deleting: false,
+      deleteDialog: false,
+      themeToDelete: null,
       themes: [
         { text: 'Default', author: 'requarks.io', value: 'default', isInstalled: true, installDate: '', updatedAt: '' }
       ],
@@ -235,12 +259,96 @@ export default {
       }
       this.$store.commit(`loadingStop`, 'admin-theme-save')
       this.loading = false
+    },
+    confirmDelete (theme) {
+      this.themeToDelete = theme
+      this.deleteDialog = true
+    },
+    async deleteTheme () {
+      if (!this.themeToDelete) return
+      this.deleting = true
+      try {
+        const respRaw = await this.$apollo.mutate({
+          mutation: themeDeleteMutation,
+          variables: {
+            key: this.themeToDelete.value
+          }
+        })
+        const resp = _.get(respRaw, 'data.theming.deleteTheme.responseResult', {})
+        if (resp.succeeded) {
+          this.$store.commit('showNotification', {
+            message: 'Theme deleted successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+          this.deleteDialog = false
+          this.$apollo.queries.config.refetch()
+        } else {
+          throw new Error(resp.message)
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.deleting = false
+    },
+    async onUpload (e) {
+      const file = e.target.files[0]
+      if (!file) return
+
+      this.uploading = true
+      this.$store.commit(`loadingStart`, 'admin-theme-upload')
+
+      const formData = new FormData()
+      formData.append('theme', file)
+
+      try {
+        const respRaw = await fetch('/t/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        const resp = await respRaw.json()
+        if (resp.succeeded) {
+          this.$store.commit('showNotification', {
+            message: 'Theme uploaded successfully.',
+            style: 'success',
+            icon: 'check'
+          })
+          this.$apollo.queries.config.refetch()
+        } else {
+          throw new Error(resp.message)
+        }
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          message: err.message,
+          style: 'error',
+          icon: 'alert'
+        })
+      }
+
+      this.$refs.themeUpload.value = ''
+      this.$store.commit(`loadingStop`, 'admin-theme-upload')
+      this.uploading = false
     }
   },
   apollo: {
     config: {
       query: themeConfigQuery,
       fetchPolicy: 'network-only',
+      result ({ data }) {
+        console.log('Apollo result:', data)
+        if (data && data.theming && data.theming.themes) {
+          this.themes = data.theming.themes.map(theme => ({
+            text: theme.title,
+            author: theme.author,
+            value: theme.key,
+            isInstalled: true,
+            installDate: '',
+            updatedAt: ''
+          }))
+          console.log('Themes updated:', this.themes)
+        }
+      },
       update: (data) => data.theming.config,
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-theme-refresh')
@@ -256,5 +364,15 @@ export default {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
+}
+
+.theme-list {
+  background-color: #f5f5f5 !important;
+  border-color: #eee !important;
+
+  .theme--dark & {
+    background-color: #2a2a2a !important;
+    border-color: #333 !important;
+  }
 }
 </style>
