@@ -1,9 +1,7 @@
 const _ = require('lodash')
 const { SearchService, QueryType } = require('azure-search-client')
 const request = require('request-promise')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline, Transform } = require('stream')
 
 /* global WIKI */
 
@@ -215,7 +213,7 @@ module.exports = {
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: (chunk, enc, cb) => {
           cb(null, {

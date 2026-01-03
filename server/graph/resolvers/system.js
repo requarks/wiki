@@ -1,6 +1,5 @@
 const _ = require('lodash')
-const Promise = require('bluebird')
-const getos = Promise.promisify(require('getos'))
+const getos = require('getos')
 const os = require('os')
 const filesize = require('filesize')
 const path = require('path')
@@ -10,6 +9,8 @@ const graphHelper = require('../../helpers/graph')
 const request = require('request-promise')
 const crypto = require('crypto')
 const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
+
+const getosAsync = require('util').promisify(getos)
 
 /* global WIKI */
 
@@ -371,7 +372,7 @@ module.exports = {
     async operatingSystem () {
       let osLabel = `${os.type()} (${os.platform()}) ${os.release()} ${os.arch()}`
       if (os.platform() === 'linux') {
-        const osInfo = await getos()
+        const osInfo = await getosAsync()
         osLabel = `${os.type()} - ${osInfo.dist} (${osInfo.codename || os.platform()}) ${osInfo.release || os.release()} ${os.arch()}`
       }
       return osLabel

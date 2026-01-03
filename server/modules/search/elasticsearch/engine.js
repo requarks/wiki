@@ -1,8 +1,6 @@
 const _ = require('lodash')
-const stream = require('stream')
-const Promise = require('bluebird')
 const fs = require('fs')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline, Transform } = require('stream')
 
 /* global WIKI */
 
@@ -135,7 +133,7 @@ module.exports = {
         } catch (err) {
           WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
         }
-      } 
+      }
     } catch (err) {
       WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Index Check Error: `, _.get(err, 'meta.body.error', err))
     }
@@ -392,7 +390,7 @@ module.exports = {
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (chunk, enc, cb) => processDocument(cb, chunk),
         flush: async (cb) => processDocument(cb)

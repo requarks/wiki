@@ -5,12 +5,13 @@ const compression = require('compression')
 const express = require('express')
 const favicon = require('serve-favicon')
 const http = require('http')
-const Promise = require('bluebird')
 const fs = require('fs-extra')
 const _ = require('lodash')
-const crypto = Promise.promisifyAll(require('crypto'))
+const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
 const semver = require('semver')
+
+const randomBytesAsync = require('util').promisify(crypto.randomBytes)
 
 /* global WIKI */
 
@@ -119,7 +120,7 @@ module.exports = () => {
         analyticsService: '',
         analyticsId: ''
       })
-      _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+      _.set(WIKI.config, 'sessionSecret', (await randomBytesAsync(32)).toString('hex'))
       _.set(WIKI.config, 'telemetry', {
         isEnabled: req.body.telemetry === true,
         clientId: uuid()

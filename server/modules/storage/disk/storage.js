@@ -2,10 +2,8 @@ const fs = require('fs-extra')
 const path = require('path')
 const tar = require('tar-fs')
 const zlib = require('zlib')
-const stream = require('stream')
 const _ = require('lodash')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline, Transform } = require('stream')
 const moment = require('moment')
 
 const pageHelper = require('../../../helpers/page')
@@ -130,7 +128,7 @@ module.exports = {
       WIKI.models.knex.column('id', 'path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt', 'editorKey').select().from('pages').where({
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
           const pageObject = await WIKI.models.pages.query().findById(page.id)
@@ -153,7 +151,7 @@ module.exports = {
 
     await pipeline(
       WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (asset, enc, cb) => {
           const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename

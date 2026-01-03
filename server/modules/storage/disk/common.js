@@ -1,8 +1,6 @@
 const fs = require('fs-extra')
 const path = require('path')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline, Transform } = require('stream')
 const klaw = require('klaw')
 const mime = require('mime-types').lookup
 const _ = require('lodash')
@@ -22,7 +20,7 @@ module.exports = {
           return !_.includes(f, '.git')
         }
       }),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (file, enc, cb) => {
           const relPath = file.path.substr(fullPath.length + 1)

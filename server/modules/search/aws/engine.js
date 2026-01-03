@@ -1,8 +1,6 @@
 const _ = require('lodash')
 const AWS = require('aws-sdk')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline, Transform } = require('stream')
 
 /* global WIKI */
 
@@ -353,7 +351,7 @@ module.exports = {
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (chunk, enc, cb) => processDocument(cb, chunk),
         flush: async (cb) => processDocument(cb)

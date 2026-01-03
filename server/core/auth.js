@@ -4,9 +4,9 @@ const _ = require('lodash')
 const jwt = require('jsonwebtoken')
 const ms = require('ms')
 const { DateTime } = require('luxon')
-const Promise = require('bluebird')
-const crypto = Promise.promisifyAll(require('crypto'))
+const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
+const randomBytesAsync = require('util').promisify(crypto.randomBytes)
 
 const securityHelper = require('../helpers/security')
 
@@ -82,7 +82,7 @@ module.exports = {
           const strategy = require(`../modules/authentication/${stg.strategyKey}/authentication.js`)
 
           stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
-          stg.config.key = stg.key;
+          stg.config.key = stg.key
           strategy.init(passport, stg.config)
           strategy.config = stg.config
 
@@ -366,7 +366,7 @@ module.exports = {
   async regenerateCertificates () {
     WIKI.logger.info('Regenerating certificates...')
 
-    _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+    _.set(WIKI.config, 'sessionSecret', (await randomBytesAsync(32)).toString('hex'))
     const certs = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {
