@@ -2,7 +2,7 @@ apiVersion: v2
 name: wiki
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
-version: 2.3.0
+version: 2.4.0
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application.
 AppVersion: latest
@@ -23,11 +23,7 @@ keywords:
 # a dependency of application charts to inject those utilities and functions into the rendering
 # pipeline. Library charts do not define any templates and therefore cannot be deployed.
 type: application
-dependencies:
-  - name: postgresql
-    version: 8.10.14
-    repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled
+
 home: https://wiki.js.org
 icon: https://cdn.js.wiki/images/wikijs-butterfly.svg
 sources:
