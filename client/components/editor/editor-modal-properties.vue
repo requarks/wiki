@@ -21,7 +21,7 @@
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
-        v-tab(disabled) {{$t('editor:props.social')}}
+        //- v-tab(disabled) {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.pt-5
@@ -196,42 +196,42 @@
           .editor-props-codeeditor-hint
             .caption {{$t('editor:props.htmlHint')}}
 
-        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
-          v-card-text
-            .overline {{$t('editor:props.socialFeatures')}}
-            v-switch(
-              :label='$t(`editor:props.allowComments`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowCommentsHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.allowRatings`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowRatingsHint`)'
-              persistent-hint
-              disabled
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displayAuthor`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displayAuthorHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displaySharingBar`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displaySharingBarHint`)'
-              persistent-hint
-              inset
-              )
+        //- v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
+        //-   v-card-text
+        //-     .overline {{$t('editor:props.socialFeatures')}}
+        //-     v-switch(
+        //-       :label='$t(`editor:props.allowComments`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.allowCommentsHint`)'
+        //-       persistent-hint
+        //-       inset
+        //-       )
+        //-     v-switch(
+        //-       :label='$t(`editor:props.allowRatings`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.allowRatingsHint`)'
+        //-       persistent-hint
+        //-       disabled
+        //-       inset
+        //-       )
+        //-     v-switch(
+        //-       :label='$t(`editor:props.displayAuthor`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.displayAuthorHint`)'
+        //-       persistent-hint
+        //-       inset
+        //-       )
+        //-     v-switch(
+        //-       :label='$t(`editor:props.displaySharingBar`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.displaySharingBarHint`)'
+        //-       persistent-hint
+        //-       inset
+        //-       )
 
         v-tab-item(:transition='false', :reverse-transition='false')
           .editor-props-codeeditor-title
