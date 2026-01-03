@@ -113,6 +113,9 @@ defaults:
     search:
       maxHits: 100
     maintainerEmail: security@requarks.io
+    drawio:
+      baseUrl: https://embed.diagrams.net/
+      sanitizing: true
 localeNamespaces:
   - admin
   - auth

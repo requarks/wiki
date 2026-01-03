@@ -1,15 +1,11 @@
 const md = require('markdown-it')
 const { full: mdEmoji } = require('markdown-it-emoji')
-const { JSDOM } = require('jsdom')
-const createDOMPurify = require('dompurify')
 const _ = require('lodash')
 const { AkismetClient } = require('akismet-api')
 const moment = require('moment')
+const { sanitizer } = require('../../../helpers/sanitizer')
 
 /* global WIKI */
-
-const window = new JSDOM('').window
-const DOMPurify = createDOMPurify(window)
 
 let akismetClient = null
 
@@ -65,7 +61,7 @@ module.exports = {
     // -> Build New Comment
     const newComment = {
       content,
-      render: DOMPurify.sanitize(mkdown.render(content)),
+      render: sanitizer(mkdown.render(content), {htmlOnly: true}),
       replyTo,
       pageId: page.id,
       authorId: user.id,
@@ -124,7 +120,7 @@ module.exports = {
    * Update an existing comment
    */
   async update ({ id, content, user }) {
-    const renderedContent = DOMPurify.sanitize(mkdown.render(content))
+    const renderedContent = sanitizer(mkdown.render(content), {htmlOnly: true})
     await WIKI.models.comments.query().findById(id).patch({
       content,
       render: renderedContent

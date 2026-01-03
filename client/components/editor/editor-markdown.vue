@@ -226,6 +226,7 @@ import mermaid from 'mermaid'
 import katexHelper from './common/katex'
 import tabsetHelper from './markdown/tabset'
 import cmFold from './common/cmFold'
+import drawioSanitize from './common/sanitize'
 
 // ========================================
 // INIT
@@ -453,9 +454,7 @@ export default {
       linesMap = []
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
-      this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
-        ADD_TAGS: ['foreignObject']
-      })
+      this.previewHTML = drawioSanitize(md.render(newContent))
       this.$nextTick(() => {
         tabsetHelper.format()
         this.renderMermaidDiagrams()
