@@ -447,7 +447,11 @@ router.get('/*', async (req, res, next) => {
             maxAge: 15 * 60 * 1000
           })
         }
-        if (pageArgs.path === 'home' && req.user.id === 2) {
+
+        // If the user is the guest user (id 2) and either trying to access the home page for the wiki
+        // or the wiki is configured to not show unauthorized for the guest user,
+        // redirect to the login page for the wiki.
+        if ((pageArgs.path === 'home' || WIKI.config.auth.bypassUnauthorized) && req.user.id === 2) {
           return res.redirect('/login')
         }
         _.set(res.locals, 'pageMeta.title', 'Unauthorized')
