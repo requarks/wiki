@@ -50,7 +50,7 @@ module.exports = {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.config.path, fileName)
-    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
+    await fs.outputFile(filePath, page.storageContent(), 'utf8')
   },
   async updated(page) {
     WIKI.logger.info(`(STORAGE/DISK) Updating file [${page.localeCode}] ${page.path}...`)
@@ -59,7 +59,7 @@ module.exports = {
       fileName = `${page.localeCode}/${fileName}`
     }
     const filePath = path.join(this.config.path, fileName)
-    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
+    await fs.outputFile(filePath, page.storageContent(), 'utf8')
   },
   async deleted(page) {
     WIKI.logger.info(`(STORAGE/DISK) Deleting file [${page.localeCode}] ${page.path}...`)
@@ -140,7 +140,7 @@ module.exports = {
           }
           WIKI.logger.info(`(STORAGE/DISK) Dumping page ${fileName}...`)
           const filePath = path.join(this.config.path, fileName)
-          await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
+          await fs.outputFile(filePath, page.storageContent(), 'utf8')
           cb()
         }
       })
