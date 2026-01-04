@@ -10,9 +10,13 @@ module.exports = async (pageId) => {
     await WIKI.configSvc.loadFromDb()
     await WIKI.configSvc.applyFlags()
 
+    await WIKI.models.knex.table('pageTree').truncate()
     const pages = await WIKI.models.pages.query().select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS').orderBy(['localeCode', 'path'])
     let tree = []
     let pik = 0
+    let numberOfBatchesSaved = 0
+    // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)
+    let batchSize = (WIKI.config.db.type !== 'sqlite') ? 100 : 60
 
     for (const page of pages) {
       const pagePaths = page.path.split('/')
@@ -44,6 +48,12 @@ module.exports = async (pageId) => {
             ancestors: JSON.stringify(ancestors)
           })
           parentId = pik
+          if (tree.length % batchSize === 0) {
+            let chunk = tree.slice(numberOfBatchesSaved * batchSize, (numberOfBatchesSaved + 1) * batchSize)
+            // save the current chunk
+            await WIKI.models.knex.table('pageTree').insert(chunk)
+            numberOfBatchesSaved++
+          }
         } else if (isFolder && !found.isFolder) {
           found.isFolder = true
           parentId = found.id
@@ -54,18 +64,11 @@ module.exports = async (pageId) => {
       }
     }
 
-    await WIKI.models.knex.table('pageTree').truncate()
-    if (tree.length > 0) {
-      // -> Save in chunks, because of per query max parameters (35k Postgres, 2k MSSQL, 1k for SQLite)
-      if ((WIKI.config.db.type !== 'sqlite')) {
-        for (const chunk of _.chunk(tree, 100)) {
-          await WIKI.models.knex.table('pageTree').insert(chunk)
-        }
-      } else {
-        for (const chunk of _.chunk(tree, 60)) {
-          await WIKI.models.knex.table('pageTree').insert(chunk)
-        }
-      }
+    // if there are any additional records present after the latest batch was saved
+    if (tree.length % batchSize !== 0) {
+      let chunk = tree.slice(numberOfBatchesSaved * batchSize, tree.length)
+      // save the last chunk
+      await WIKI.models.knex.table('pageTree').insert(chunk)
     }
 
     await WIKI.models.knex.destroy()
