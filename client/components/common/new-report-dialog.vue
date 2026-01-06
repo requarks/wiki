@@ -131,6 +131,8 @@
 </template>
 
 <script>
+import { get } from 'vuex-pathify'
+
 export default {
   props: {
     value: {
@@ -143,17 +145,17 @@ export default {
       valid: true,
       loading: false,
       dateMenu: false,
-      attendees: ['Smith, John <john.smith@examplecompany.com>', 'Smith, Jane <jane.smith@examplecompany.com>'],
+      attendees: [],
       form: {
         snapshot: '',
         sg_snapshot: '',
         mobile: false,
         cao: false,
         book: {
-          author: 'Tayeb Chlyah',
+          author: '',
           couchbase: {
             customer: '',
-            email: 'tayeb.chlyah@couchbase.com',
+            email: '',
             role: 'Solutions Architect',
             service: 'Architecture Review',
             serviceDate: new Date().toISOString().substr(0, 10)
@@ -163,9 +165,19 @@ export default {
     }
   },
   computed: {
+    userName: get('user/name'),
+    userEmail: get('user/email'),
     isShown: {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
+    }
+  },
+  watch: {
+    isShown(val) {
+      if (val) {
+        this.form.book.author = this.userName
+        this.form.book.couchbase.email = this.userEmail
+      }
     }
   },
   methods: {
