@@ -540,7 +540,7 @@ export default {
       return [{ path: `/${this.locale}`, name: 'Home' }].concat(
         _.reduce(this.path.split('/'), (result, value) => {
           result.push({
-            path: _.get(_.last(result), 'path') + `/${value}`,
+            path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
             name: value
           })
           return result
