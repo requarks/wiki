@@ -1,5 +1,6 @@
 const S3 = require('aws-sdk/clients/s3')
-const { pipeline, Transform } = require('stream')
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 const _ = require('lodash')
 const pageHelper = require('../../../helpers/page.js')
 

@@ -1,7 +1,8 @@
 const _ = require('lodash')
 const { SearchService, QueryType } = require('azure-search-client')
 const request = require('request-promise')
-const { pipeline, Transform } = require('stream')
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 
 /* global WIKI */
 

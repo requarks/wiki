@@ -4,7 +4,8 @@ const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
 const zlib = require('zlib')
-const { pipeline, Readable, Transform } = require('stream')
+const { pipeline } = require('node:stream/promises')
+const { Readable, Transform } = require('node:stream')
 
 /* global WIKI */
 

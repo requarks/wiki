@@ -1,7 +1,8 @@
 const SSH2Promise = require('ssh2-promise')
 const _ = require('lodash')
 const path = require('path')
-const { pipeline, Transform } = require('stream')
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 const pageHelper = require('../../../helpers/page.js')
 
 /* global WIKI */

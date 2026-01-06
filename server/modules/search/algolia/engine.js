@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const algoliasearch = require('algoliasearch')
-const { pipeline, Transform } = require('stream')
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 
 /* global WIKI */
 

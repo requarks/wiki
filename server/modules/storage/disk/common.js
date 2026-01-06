@@ -1,6 +1,7 @@
 const fs = require('fs-extra')
 const path = require('path')
-const { pipeline, Transform } = require('stream')
+const { pipeline } = require('stream/promises')
+const { Transform } = require('stream')
 const klaw = require('klaw')
 const mime = require('mime-types').lookup
 const _ = require('lodash')
