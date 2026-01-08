@@ -8,6 +8,7 @@ const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
 const randomBytesAsync = require('util').promisify(crypto.randomBytes)
 
+const commonHelper = require('../helpers/common')
 const securityHelper = require('../helpers/security')
 
 /* global WIKI */
@@ -154,7 +155,7 @@ module.exports = {
           if (req.get('content-type') === 'application/json') {
             res.set('new-jwt', newToken.token)
           } else {
-            res.cookie('jwt', newToken.token, { expires: DateTime.utc().plus({ days: 365 }).toJSDate() })
+            res.cookie('jwt', newToken.token, commonHelper.getCookieOpts())
           }
 
           // Avoid caching this response

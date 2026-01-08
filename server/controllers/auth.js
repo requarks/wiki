@@ -4,8 +4,8 @@ const express = require('express')
 const ExpressBrute = require('express-brute')
 const BruteKnex = require('../helpers/brute-knex')
 const router = express.Router()
-const moment = require('moment')
 const _ = require('lodash')
+const commonHelper = require('../helpers/common')
 
 const bruteforce = new ExpressBrute(new BruteKnex({
   createTable: true,
@@ -70,7 +70,7 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
     const authResult = await WIKI.models.users.login({
       strategy: req.params.strategy
     }, { req, res })
-    res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
+    res.cookie('jwt', authResult.jwt, commonHelper.getCookieOpts())
 
     const loginRedirect = req.cookies['loginRedirect']
     if (loginRedirect === '/' && authResult.redirect) {
@@ -102,7 +102,7 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
         password: req.body.pass
       }, { req, res })
       req.brute.reset()
-      res.cookie('jwt', authResult.jwt, { expires: moment().add(1, 'y').toDate() })
+      res.cookie('jwt', authResult.jwt, commonHelper.getCookieOpts())
       res.redirect('/')
     } catch (err) {
       const { formStrategies, socialStrategies } = await WIKI.models.authentication.getStrategiesForLegacyClient()
@@ -152,7 +152,7 @@ router.get('/verify/:token', bruteforce.prevent, async (req, res, next) => {
       res.redirect('/login')
     } else {
       const result = await WIKI.models.users.refreshToken(usr)
-      res.cookie('jwt', result.token, { expires: moment().add(1, 'years').toDate() })
+      res.cookie('jwt', result.token, commonHelper.getCookieOpts())
       res.redirect('/')
     }
   } catch (err) {
