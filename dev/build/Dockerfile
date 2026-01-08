@@ -46,7 +46,7 @@ COPY --chown=node:node ./LICENSE ./LICENSE
 
 USER node
 
-VOLUME ["/wiki/data/content"]
+VOLUME ["/wiki/data"]
 
 EXPOSE 3000
 EXPOSE 3443
