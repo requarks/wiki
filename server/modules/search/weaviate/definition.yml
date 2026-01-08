@@ -1,0 +1,147 @@
+key: weaviate
+title: Weaviate
+description: Weaviate vector search engine with semantic search capabilities.
+author: YM
+logo: https://weaviate.io/img/site/weaviate-logo-light.png
+website: https://weaviate.io
+isAvailable: true
+props:
+  # === Connection ===
+  host:
+    type: String
+    title: Host
+    hint: 'Weaviate hostname without protocol (e.g., weaviate.example.com)'
+    default: 'localhost'
+    order: 1
+  httpPort:
+    type: Number
+    title: HTTP Port
+    hint: 'Weaviate HTTP port'
+    default: 18080
+    order: 2
+  httpSecure:
+    type: Boolean
+    title: HTTP Secure (HTTPS)
+    hint: 'Use HTTPS for HTTP connections'
+    default: true
+    order: 3
+  grpcPort:
+    type: Number
+    title: gRPC Port
+    hint: 'Weaviate gRPC port'
+    default: 50051
+    order: 4
+  grpcSecure:
+    type: Boolean
+    title: gRPC Secure (TLS)
+    hint: 'Use TLS for gRPC connections'
+    default: true
+    order: 5
+  skipTLSVerify:
+    type: Boolean
+    title: Skip TLS Verification
+    hint: 'Skip TLS certificate verification (for self-signed certs)'
+    default: false
+    order: 6
+  apiKey:
+    type: String
+    title: API Key
+    hint: 'API key for authentication'
+    sensitive: true
+    order: 7
+  timeout:
+    type: Number
+    title: Timeout (ms)
+    hint: 'Connection timeout in milliseconds (default: 10000)'
+    default: 10000
+    order: 8
+
+  # === Schema ===
+  className:
+    type: String
+    title: Class Name
+    hint: 'Weaviate class name (must exist with vectorizer pre-configured)'
+    default: 'WikiPage'
+    order: 9
+
+  # === Search Settings ===
+  searchType:
+    type: String
+    title: Search Type
+    hint: 'Type of search to perform'
+    default: 'hybrid'
+    enum:
+      - 'nearText'
+      - 'bm25'
+      - 'hybrid'
+    order: 10
+  alpha:
+    type: Number
+    title: Hybrid Alpha
+    hint: '0 = keyword only, 1 = semantic only'
+    default: 0.5
+    order: 11
+  searchLimit:
+    type: Number
+    title: Search Results Limit
+    hint: 'Maximum number of search results to return (default: 50)'
+    default: 50
+    order: 12
+  cacheTtl:
+    type: Number
+    title: Cache TTL (seconds)
+    hint: 'Time to live for search cache in seconds (default: 300 = 5 minutes)'
+    default: 300
+    order: 13
+
+  # === Boost Settings ===
+  boostTitle:
+    type: Number
+    title: Title Boost
+    hint: 'Boost factor for title field (default: 3)'
+    default: 3
+    order: 14
+  boostDescription:
+    type: Number
+    title: Description Boost
+    hint: 'Boost factor for description field (default: 2)'
+    default: 2
+    order: 15
+  boostTags:
+    type: Number
+    title: Tags Boost
+    hint: 'Boost factor for tags field (default: 1)'
+    default: 1
+    order: 16
+
+  # === Indexing Settings ===
+  batchSize:
+    type: Number
+    title: Batch Size
+    hint: 'Number of documents per batch during indexing (default: 100)'
+    default: 100
+    order: 17
+  batchDelayMs:
+    type: Number
+    title: Batch Delay (ms)
+    hint: 'Delay between batches to avoid rate limiting (default: 1000)'
+    default: 1000
+    order: 18
+  maxBatchBytes:
+    type: Number
+    title: Max Batch Size (bytes)
+    hint: 'Maximum batch size in bytes (default: 10485760 = 10MB)'
+    default: 10485760
+    order: 19
+  forceFullRebuild:
+    type: Boolean
+    title: Force Full Rebuild
+    hint: 'If enabled, rebuild will delete all and reindex. Otherwise, incremental rebuild (only changed pages).'
+    default: false
+    order: 20
+  debugSql:
+    type: Boolean
+    title: Debug SQL Queries
+    hint: 'Log all SQL queries to the sync status table (for debugging)'
+    default: false
+    order: 21
