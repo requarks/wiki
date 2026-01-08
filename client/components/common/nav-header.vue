@@ -476,7 +476,11 @@ export default {
       window.location.assign('/logout')
     },
     goHome () {
-      window.location.assign('/')
+      if (this.locales && this.locales.length > 0) {
+        window.location.assign(`/${this.locale}/home`)
+      } else {
+        window.location.assign('/')
+      }
     }
   }
 }

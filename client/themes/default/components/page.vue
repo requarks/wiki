@@ -367,6 +367,8 @@ import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
 
+/* global siteLangs */
+
 Vue.component('Tabset', Tabset)
 
 Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
@@ -493,6 +495,7 @@ export default {
   },
   data() {
     return {
+      locales: siteLangs,
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
@@ -537,10 +540,10 @@ export default {
       }
     },
     breadcrumbs() {
-      return [{ path: `/${this.locale}`, name: 'Home' }].concat(
+      return [{ path: '/', name: 'Home' }].concat(
         _.reduce(this.path.split('/'), (result, value) => {
           result.push({
-            path: _.get(_.last(result), 'path', `/${this.locale}`) + `/${value}`,
+            path: _.get(_.last(result), 'path', this.locales.length > 0 ? `/${this.locale}` : '') + `/${value}`,
             name: value
           })
           return result
@@ -650,7 +653,11 @@ export default {
   },
   methods: {
     goHome () {
-      window.location.assign('/')
+      if (this.locales && this.locales.length > 0) {
+        window.location.assign(`/${this.locale}/home`)
+      } else {
+        window.location.assign('/')
+      }
     },
     toggleNavigation () {
       this.navOpen = !this.navOpen
