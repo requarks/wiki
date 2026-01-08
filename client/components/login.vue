@@ -641,7 +641,7 @@ export default {
       } else {
         this.loaderColor = 'green darken-1'
         this.loaderTitle = this.$t('auth:loginSuccess')
-        Cookies.set('jwt', respObj.jwt, { expires: 365 })
+        Cookies.set('jwt', respObj.jwt, { expires: 365, secure: window.location.protocol === 'https:' })
         _.delay(() => {
           const loginRedirect = Cookies.get('loginRedirect')
           if (loginRedirect === '/' && respObj.redirect) {
