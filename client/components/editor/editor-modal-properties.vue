@@ -276,10 +276,10 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'This field is required.',
-          path: value => {
-            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
-          }
+        required: value => !!value || 'This field is required.',
+        path: value => {
+          return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+        }
       }
     }
   },
@@ -334,7 +334,7 @@ export default {
             this.loadEditor(this.$refs.codejs, 'html')
           }, 100)
         })
-      } else if (newValue === 4) {
+      } else if (newValue === 3) {
         this.$nextTick(() => {
           setTimeout(() => {
             this.loadEditor(this.$refs.codecss, 'css')
