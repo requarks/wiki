@@ -28,120 +28,101 @@ function isValidDelim (state, pos) {
 
 export default {
   katexInline (state, silent) {
-    let start, match, token, res, pos
+    if (state.src[state.pos] !== '$') return false;
 
-    if (state.src[state.pos] !== '$') { return false }
-
-    res = isValidDelim(state, state.pos)
-    if (!res.canOpen) {
-      if (!silent) { state.pending += '$' }
-      state.pos += 1
-      return true
+    if (!isValidDelim(state, state.pos).canOpen) {
+      return handleNoOpen(state, silent);
     }
 
-    // First check for and bypass all properly escaped delimieters
-    // This loop will assume that the first leading backtick can not
-    // be the first character in state.src, which is known since
-    // we have found an opening delimieter already.
-    start = state.pos + 1
-    match = start
-    while ((match = state.src.indexOf('$', match)) !== -1) {
-      // Found potential $, look for escapes, pos will point to
-      // first non escape when complete
-      pos = match - 1
-      while (state.src[pos] === '\\') { pos -= 1 }
+    const start = state.pos + 1;
+    const match = findClosingDelimiter(state.src, start);
 
-      // Even number of escapes, potential closing delimiter found
-      if (((match - pos) % 2) === 1) { break }
-      match += 1
-    }
-
-    // No closing delimter found.  Consume $ and continue.
     if (match === -1) {
-      if (!silent) { state.pending += '$' }
-      state.pos = start
-      return true
+      return handleNoMatch(state, silent, start);
     }
 
-    // Check if we have empty content, ie: $$.  Do not parse.
     if (match - start === 0) {
-      if (!silent) { state.pending += '$$' }
-      state.pos = start + 1
-      return true
+      return handleEmptyContent(state, silent, start);
     }
 
-    // Check for valid closing delimiter
-    res = isValidDelim(state, match)
-    if (!res.canClose) {
-      if (!silent) { state.pending += '$' }
-      state.pos = start
-      return true
+    if (!isValidDelim(state, match).canClose) {
+      return handleNoClose(state, silent, start);
     }
 
     if (!silent) {
-      token = state.push('katex_inline', 'math', 0)
-      token.markup = '$'
-      token.content = state.src
-        // Extract the math part without the $
-        .slice(start, match)
-        // Escape the curly braces since they will be interpreted as
-        // attributes by markdown-it-attrs (the "curly_attributes"
-        // core rule)
-        .replaceAll("{", "{{")
-        .replaceAll("}", "}}")
+      const token = state.push('katex_inline', 'math', 0);
+      token.markup = '$';
+      token.content = escapeCurlyBraces(state.src.slice(start, match));
     }
 
-    state.pos = match + 1
-    return true
+    state.pos = match + 1;
+    return true;
   },
-
   katexBlock (state, start, end, silent) {
-    let firstLine; let lastLine; let next; let lastPos; let found = false; let token
-    let pos = state.bMarks[start] + state.tShift[start]
-    let max = state.eMarks[start]
+    let pos = state.bMarks[start] + state.tShift[start];
+    let max = state.eMarks[start];
+    if (!isValidBlockStart(pos, max, state)) return false;
 
-    if (pos + 2 > max) { return false }
-    if (state.src.slice(pos, pos + 2) !== '$$') { return false }
+    pos += 2;
+    let firstLine = state.src.slice(pos, max);
+    if (silent) return true;
 
-    pos += 2
-    firstLine = state.src.slice(pos, max)
-
-    if (silent) { return true }
-    if (firstLine.trim().slice(-2) === '$$') {
-      // Single line expression
-      firstLine = firstLine.trim().slice(0, -2)
-      found = true
+    let found = false;
+    if (isSingleLineBlock(firstLine)) {
+      firstLine = firstLine.trim().slice(0, -2);
+      found = true;
     }
 
-    for (next = start; !found;) {
-      next++
+    let next = start, lastLine = '', lastPos;
+    ({ next, lastLine, found } = findBlockEnd(state, start, end, found));
 
-      if (next >= end) { break }
-
-      pos = state.bMarks[next] + state.tShift[next]
-      max = state.eMarks[next]
-
-      if (pos < max && state.tShift[next] < state.blkIndent) {
-        // non-empty line with negative indent should stop the list:
-        break
-      }
-
-      if (state.src.slice(pos, max).trim().slice(-2) === '$$') {
-        lastPos = state.src.slice(0, max).lastIndexOf('$$')
-        lastLine = state.src.slice(pos, lastPos)
-        found = true
-      }
-    }
-
-    state.line = next + 1
-
-    token = state.push('katex_block', 'math', 0)
-    token.block = true
+    state.line = next + 1;
+    const token = state.push('katex_block', 'math', 0);
+    token.block = true;
     token.content = (firstLine && firstLine.trim() ? firstLine + '\n' : '') +
-    state.getLines(start + 1, next, state.tShift[start], true) +
-    (lastLine && lastLine.trim() ? lastLine : '')
-    token.map = [ start, state.line ]
-    token.markup = '$$'
-    return true
+      state.getLines(start + 1, next, state.tShift[start], true) +
+      (lastLine && lastLine.trim() ? lastLine : '');
+    token.map = [ start, state.line ];
+    token.markup = '$$';
+    return true;
   }
+}
+
+function handleNoOpen(state, silent) {
+  if (!silent) state.pending += '$';
+  state.pos += 1;
+  return true;
+}
+
+function findClosingDelimiter(src, start) {
+  let match = start;
+  while ((match = src.indexOf('$', match)) !== -1) {
+    let pos = match - 1;
+    while (src[pos] === '\\') pos -= 1;
+    if (((match - pos) % 2) === 1) break;
+    match += 1;
+  }
+  return match;
+}
+
+function handleNoMatch(state, silent, start) {
+  if (!silent) state.pending += '$';
+  state.pos = start;
+  return true;
+}
+
+function handleEmptyContent(state, silent, start) {
+  if (!silent) state.pending += '$$';
+  state.pos = start + 1;
+  return true;
+}
+
+function handleNoClose(state, silent, start) {
+  if (!silent) state.pending += '$';
+  state.pos = start;
+  return true;
+}
+
+function escapeCurlyBraces(str) {
+  return str.replaceAll('{', '{{').replaceAll('}', '}}');
 }
