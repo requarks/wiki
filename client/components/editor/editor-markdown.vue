@@ -520,8 +520,9 @@ export default {
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
       this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
-        ADD_TAGS: ['img'],
-        ADD_ATTR: ['src', 'alt', 'class', 'id', 'target']
+        ADD_TAGS: ['img', 'foreignObject'],
+        ADD_ATTR: ['src', 'alt', 'class', 'id', 'target'],
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
       this.$nextTick(() => {
         tabsetHelper.format()
