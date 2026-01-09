@@ -597,33 +597,90 @@ export default {
      * Insert content before current line
      */
     insertBeforeEachLine({ content, after }) {
-      let lines = []
-      if (!this.cm.doc.somethingSelected()) {
-        lines.push(this.cm.doc.getCursor('head').line)
-      } else {
-        lines = _.flatten(this.cm.doc.listSelections().map(sl => {
-          const range = Math.abs(sl.anchor.line - sl.head.line) + 1
-          const lowestLine = (sl.anchor.line > sl.head.line) ? sl.head.line : sl.anchor.line
-          return _.times(range, l => l + lowestLine)
-        }))
+      const config = {
+        '- ': { pattern: /^- /, type: 'unordered' },
+        '1. ': { pattern: /^\d+\. /, type: 'ordered' },
+        '> ': { pattern: /^> /, type: 'blockquote' }
+      }[content]
+
+      const lines = this.cm.doc.somethingSelected() ?
+        _.range(
+          Math.min(this.cm.doc.listSelections()[0].from().line, this.cm.doc.listSelections()[0].to().line),
+          Math.max(this.cm.doc.listSelections()[0].from().line, this.cm.doc.listSelections()[0].to().line) + 1
+        ) : [this.cm.doc.getCursor('head').line]
+
+      const getLineText = (ln) => this.cm.doc.getLine(ln)
+      const hasPrefix = (text) => config.pattern.test(text)
+      const isAttr = (text) => /^(> )?<!--\{\.is-.*?\}-->/.test(text)
+      const buildPrefix = (text, needsAttr) => {
+        if (needsAttr) return `${content}<!--${after}-->\n${content}`
+        if (config.type === 'ordered') return '1. '
+        return content + text
       }
 
-      // For blockquotes with attributes, insert attribute marker at the beginning
-      if (after) {
-        const firstLine = lines[0]
-        this.cm.doc.replaceRange(`> <!--${after}-->\n`, { line: firstLine, ch: 0 })
-        lines = lines.map(ln => ln + 1)
+      const attrLineIdx = config.type === 'blockquote' ?
+        [lines[0] - 1, lines[0]].find(idx => idx >= 0 && isAttr(getLineText(idx))) ?? -1 : -1
+
+      const contentLines = lines.filter(ln => !isAttr(getLineText(ln)))
+      const nonEmptyContentLines = contentLines.filter(ln => getLineText(ln).trim())
+      const allHavePrefix = nonEmptyContentLines.length > 0 && nonEmptyContentLines.every(ln => hasPrefix(getLineText(ln)))
+
+      const state = {
+        isSingleEmpty: contentLines.length === 1 && !nonEmptyContentLines.length,
+        isToggleOff: allHavePrefix,
+        hasAttribute: attrLineIdx >= 0,
+        needsAttribute: after && config.type === 'blockquote'
       }
 
-      lines.forEach((ln) => {
-        let lineContent = this.cm.doc.getLine(ln)
-        const lineLength = lineContent.length
-        if (_.startsWith(lineContent, content)) {
-          lineContent = lineContent.substring(content.length)
+      const actions = {
+        'singleEmpty': {
+          match: () => state.isSingleEmpty && !hasPrefix(getLineText(contentLines[0])),
+          execute: () => {
+            const ln = contentLines[0]
+            const text = getLineText(ln)
+            const newText = buildPrefix(text, state.needsAttribute)
+            this.cm.doc.replaceRange(newText, { line: ln, ch: 0 }, { line: ln, ch: text.length })
+          }
+        },
+        'toggleOffWithAttr': {
+          match: () => state.isToggleOff && state.hasAttribute,
+          execute: () => {
+            this.cm.doc.replaceRange('', { line: attrLineIdx, ch: 0 }, { line: attrLineIdx + 1, ch: 0 })
+            contentLines.map(ln => ln > attrLineIdx ? ln - 1 : ln).forEach(ln => {
+              const text = getLineText(ln)
+              hasPrefix(text) && this.cm.doc.replaceRange(text.replace(config.pattern, ''), { line: ln, ch: 0 }, { line: ln, ch: text.length })
+            })
+          }
+        },
+        'toggleOff': {
+          match: () => state.isToggleOff,
+          execute: () => {
+            contentLines.forEach(ln => {
+              const text = getLineText(ln)
+              hasPrefix(text) && this.cm.doc.replaceRange(text.replace(config.pattern, ''), { line: ln, ch: 0 }, { line: ln, ch: text.length })
+            })
+          }
+        },
+        'toggleOn': {
+          match: () => true,
+          execute: () => {
+            state.needsAttribute && this.cm.doc.replaceRange(`${content}<!--${after}-->\n`, { line: lines[0], ch: 0 })
+            const workingLines = state.needsAttribute ? contentLines.map(ln => ln + 1) : contentLines
+            let counter = 1
+            workingLines.forEach(ln => {
+              const text = getLineText(ln)
+              if (hasPrefix(text)) {
+                config.type === 'ordered' && counter++
+              } else {
+                const prefix = config.type === 'ordered' ? `${counter++}. ` : content
+                this.cm.doc.replaceRange(prefix + text, { line: ln, ch: 0 }, { line: ln, ch: text.length })
+              }
+            })
+          }
         }
+      }
 
-        this.cm.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
-      })
+      Object.values(actions).find(action => action.match() && (action.execute(), true))
     },
     /**
      * Update scroll sync
@@ -1030,6 +1087,47 @@ export default {
       this.setHeaderLine(lvl - 1)
       return false
     })
+    // Add custom Enter key handler for blockquotes and lists
+    keyBindings['Enter'] = (cm) => {
+      const cursor = cm.getCursor()
+      const line = cm.getLine(cursor.line)
+      
+      // Define patterns for different line types
+      const patterns = [
+        { empty: /^>\s*$/, continue: /^(>\s*)/, next: (m) => m[1] },
+        { empty: /^-\s*$/, continue: /^(- )/, next: (m) => m[1] },
+        { empty: /^\d+\.\s*$/, continue: /^(\d+)\. /, next: (m) => `${parseInt(m[1]) + 1}. ` }
+      ]
+      
+      // Check if cursor is at end of line
+      const atLineEnd = cursor.ch === line.length
+      
+      // Check each pattern
+      for (const pattern of patterns) {
+        // Check if it's an empty marker line (exit the block/list)
+        if (pattern.empty.test(line) && atLineEnd) {
+          // Remove the empty marker and add newline
+          const lineStart = { line: cursor.line, ch: 0 }
+          const lineEnd = { line: cursor.line, ch: line.length }
+          cm.replaceRange('', lineStart, lineEnd)
+          cm.replaceSelection('\n')
+          return
+        }
+        
+        // Check if line continues the pattern (only at end of line)
+        if (atLineEnd) {
+          const match = line.match(pattern.continue)
+          if (match) {
+            cm.replaceSelection('\n' + pattern.next(match))
+            return
+          }
+        }
+      }
+      
+      // Default behavior
+      cm.execCommand('newlineAndIndent')
+    }
+
     this.cm.setOption('extraKeys', keyBindings)
 
     this.cm.on('inputRead', this.autocomplete)
