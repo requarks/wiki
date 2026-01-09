@@ -768,6 +768,51 @@ export default {
     @include until($tablet) {
       max-width: 100%;
     }
+
+    .v-text-field--outlined fieldset {
+      border-color: #CBD5E1;
+      border-width: 1px;
+      border-radius: 4px;
+    }
+    
+    .v-text-field--outlined:hover fieldset {
+      border-color: #a8b0bc;
+    }
+    
+    .v-input--is-focused fieldset {
+      border-width: 2px;
+      border-color: #2E5A88 !important;
+    }
+    
+    .login-input {
+      .v-input__prepend-inner .v-icon,
+      .v-input__append-inner .v-icon {
+        color: #9a9ba1 !important;
+      }
+      
+      &.v-input--is-focused {
+        .v-input__prepend-inner .v-icon {
+          color: #2E5A88 !important;
+        }
+        .v-input__append-inner .v-icon {
+          color: #9a9ba1 !important;
+        }
+      }
+      
+      .v-label {
+        color: #757575 !important;
+        font-size: 14px;
+      }
+      
+      &.v-input--is-focused .v-label {
+        color: #002b49 !important;
+      }
+      
+      input {
+        color: #272936 !important;
+        font-size: 14px;
+      }
+    }
   }
 
   .login-card-header {
@@ -840,53 +885,6 @@ export default {
       display: block;
       width: 100%;
       height: auto;
-    }
-  }
-
-  .login-card {
-    .v-text-field--outlined fieldset {
-      border-color: #CBD5E1;
-      border-width: 1px;
-      border-radius: 4px;
-    }
-    
-    .v-text-field--outlined:hover fieldset {
-      border-color: #a8b0bc;
-    }
-    
-    .v-input--is-focused fieldset {
-      border-width: 2px;
-      border-color: #2E5A88 !important;
-    }
-    
-    .login-input {
-      .v-input__prepend-inner .v-icon,
-      .v-input__append-inner .v-icon {
-        color: #9a9ba1 !important;
-      }
-      
-      &.v-input--is-focused {
-        .v-input__prepend-inner .v-icon {
-          color: #2E5A88 !important;
-        }
-        .v-input__append-inner .v-icon {
-          color: #9a9ba1 !important;
-        }
-      }
-      
-      .v-label {
-        color: #757575 !important;
-        font-size: 14px;
-      }
-      
-      &.v-input--is-focused .v-label {
-        color: #002b49 !important;
-      }
-      
-      input {
-        color: #272936 !important;
-        font-size: 14px;
-      }
     }
   }
   
