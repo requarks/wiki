@@ -237,7 +237,8 @@ export default {
       })
 
       this.previewHTML = DOMPurify.sanitize($.html(), {
-        ADD_TAGS: ['img']
+        ADD_TAGS: ['img', 'foreignObject'],
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
     },
     /**
