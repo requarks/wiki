@@ -175,6 +175,16 @@
               span {{$t('common:header.newPage')}}
             v-divider(vertical)
 
+          //- NEW REPORT
+
+          template(v-if='hasNewPagePermission && path && mode !== `edit`')
+            v-tooltip(bottom)
+              template(v-slot:activator='{ on }')
+                v-btn(icon, tile, height='64', v-on='on', @click='newReportModal = true', aria-label='New Report')
+                  v-icon(color='grey') mdi-file-chart-outline
+              span New Report
+            v-divider(vertical)
+
           //- ADMIN
 
           template(v-if='isAuthenticated && isAdmin')
@@ -237,6 +247,7 @@
             span {{$t('common:header.login')}}
 
     page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
+    new-report-dialog(v-model='newReportModal')
     page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
     page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
     page-delete(v-model='deletePageModal', v-if='path && path.length')
@@ -260,7 +271,8 @@ import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 export default {
   components: {
     PageDelete: () => import('./page-delete.vue'),
-    PageConvert: () => import('./page-convert.vue')
+    PageConvert: () => import('./page-convert.vue'),
+    NewReportDialog: () => import('./new-report-dialog.vue')
   },
   props: {
     dense: {
@@ -278,6 +290,7 @@ export default {
       searchIsShown: true,
       searchAdvMenuShown: false,
       newPageModal: false,
+      newReportModal: false,
       movePageModal: false,
       convertPageModal: false,
       deletePageModal: false,
