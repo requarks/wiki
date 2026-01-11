@@ -4,6 +4,7 @@
     "dbaeumer.vscode-eslint",
     "christian-kohler.path-intellisense",
     "mrmlnc.vscode-puglint",
-    "octref.vetur"
+    "octref.vetur",
+    "firefox-devtools.vscode-firefox-debug"
   ]
 }
