@@ -18,3 +18,15 @@ props:
       - safe
       - server
       - secure
+  enablePlantuml:
+    type: Boolean
+    default: false
+    title: enable plantuml extension
+    hint: 'enable rendering for [plantuml] block'
+    order: 2
+  plantumlServer:
+    type: String
+    default: https://plantuml.requarks.io
+    title: PlantUML Server
+    hint: PlantUML server used for image generation
+    order: 3
