@@ -114,14 +114,78 @@ module.exports = {
 
         const zippedCode = encode64(zlib.deflateRawSync('@startuml\n' + contents + '\n@enduml').toString('binary'))
 
-        token = state.push('uml_diagram', 'img', 0)
-        // alt is constructed from children. No point in populating it here.
-        token.attrs = [ [ 'src', `${server}/${imageFormat}/${zippedCode}` ], [ 'alt', '' ], ['class', 'uml-diagram prefetch-candidate'] ]
-        token.block = true
-        token.children = altToken
-        token.info = params
-        token.map = [ startLine, nextLine ]
-        token.markup = markup
+        //Interactive plantuml changes start here
+
+        //Global variables that will be used in html-security
+        pumlImageFormat = imageFormat
+        pumlServer = server
+        pumlObjectType = 'image/svg+xml'
+        pumlObjectStyle = 'max-width:100%;height:auto'
+        pumlObjectClass = 'uml-diagram prefetch-candidate'
+
+        if (imageFormat === 'png') {
+          //non-interactive and not searchable - use the img tag
+          token = state.push('uml_diagram', 'img', 0)
+          // alt is constructed from children. No point in populating it here.
+          token.attrs = [ [ 'src' , `${server}/${imageFormat}/${zippedCode}` ],
+                          [ 'alt' , '' ],
+                          ['class', pumlObjectClass ]
+                        ]
+          token.block = true
+          token.children = altToken
+          token.info = params
+          token.map = [ startLine, nextLine ]
+          token.markup = markup
+        }
+        else if (imageFormat === 'svg') {
+          // render svg interactively with object tag
+          /* <object data=<plantumlserver>/<format>/plantuml
+                alt='' class='uml-diagram prefetch-candidate'
+                style='max-width:100%;height:auto' type='image/svg+xml' > */
+          token = state.push('uml_diagram_obj', 'object', 0)
+          token.attrs = [ [ 'data' , `${server}/${imageFormat}/${zippedCode}`],
+                          [ 'alt'  ,  '' ],
+                          [ 'class', pumlObjectClass ],
+                          [ 'style', pumlObjectStyle ],
+                          [ 'type',  pumlObjectType  ]
+                        ]
+          token.block = true
+          token.children = altToken
+          token.info = params
+          token.map = [ startLine, nextLine ]
+          token.markup = markup
+
+          //backup img node for object render failure
+          //void element - doesn't need to be closed in html
+          /* <img src=data=<plantumlserver>/<format>/plantuml alt=''
+                  class='uml-diagram prefetch-candidate'
+                  type='image/svg+xml'> */
+          token = state.push('uml_diagram_img', 'img', 0)
+          // alt is constructed from children. No point in populating it here.
+          token.attrs = [ [ 'src' , `${server}/${imageFormat}/${zippedCode}` ],
+                          [ 'alt' , '' ],
+                          ['class', pumlObjectClass]
+                        ]
+          token.block = true
+          token.children = altToken
+          token.info = params
+          token.map = [ startLine, nextLine ]
+          token.markup = markup
+
+          //close object tag - </object>
+          token = state.push('uml_diagram_close', 'object', -1)
+        }
+
+        //Create hidden text inside html for wikijs search index
+        // text won't be visible or occupy any space but will be searchable
+        //i.e. <p style='display:none'>@startuml...@enduml</p>
+        token = state.push ('hidden', 'p', 0)
+        token.attrs = [ [ 'style', 'display:none'] ]
+        token = state.push ('text', '', 0)
+        token.content = contents
+        token = state.push('hidden_close', 'p', -1)
+
+        //Interactive plantuml changes end here
 
         state.line = nextLine + (autoClosed ? 1 : 0)
 
