@@ -298,21 +298,17 @@ export default {
         }
       })
       
-      // Sort children alphabetically at each level (folders first, then pages)
+      // Sort children by child_position to preserve custom order
       this.sortTreeNodes(tree)
       
       return tree
     },
     
-    // Recursively sort tree nodes (folders first, then alphabetically)
+    // Recursively sort tree nodes by child_position
     sortTreeNodes(nodes) {
       nodes.sort((a, b) => {
-        // Folders come before pages
-        if (a.isFolder && !b.isFolder) return -1
-        if (!a.isFolder && b.isFolder) return 1
-        
-        // Otherwise sort alphabetically
-        return (a.title || '').localeCompare(b.title || '')
+        // Sort by child_position only
+        return (a.child_position || 0) - (b.child_position || 0)
       })
       
       // Recursively sort children
