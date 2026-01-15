@@ -14,9 +14,9 @@ echo "Promoting dev2 image to staging with tag: $VERSION"
 
 
 
-# Promote dev2-latest to staging-latest
+# Promote dev2-latest to latest-staging
 DEV2_VERSION_TAG="dev-latest"
-STAGING_IMAGE_TAG="staging-latest"
+STAGING_IMAGE_TAG="latest-staging"
 
 if [ -z "$IMAGE" ]; then
   echo "IMAGE is not set!"
