@@ -54,7 +54,7 @@ case "$ENVIRONMENT" in
     DEV_LATEST_TAG="dev-latest"
     ;;
   staging)
-    IMAGE_TAG_BY_ENV="staging-latest"
+    IMAGE_TAG_BY_ENV="latest-staging"
     ;;
   prod|production)
     IMAGE_TAG_BY_ENV="$VERSION"
