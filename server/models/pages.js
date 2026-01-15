@@ -1371,7 +1371,7 @@ module.exports = class Page extends Model {
       const pathSegment = pagePaths.slice(0, i + 1).join('/')
 
       const folderNode = await WIKI.models.knex('pageTree')
-        .first('id')
+        .first('id', 'pageId')
         .where({
           path: pathSegment,
           localeCode: page.localeCode,
@@ -1380,6 +1380,24 @@ module.exports = class Page extends Model {
         })
 
       if (folderNode) {
+        // Check if this folder node is also a page (page-as-folder scenario)
+        // If it has a pageId, it means there's a page at this folder path, so keep it
+        if (folderNode.pageId) {
+          // This folder is also a page, keep it but check if it should remain isFolder
+          const childCount = await WIKI.models.knex('pageTree')
+            .count('* as count')
+            .where('parent', folderNode.id)
+            .first()
+
+          if (parseInt(childCount.count) === 0) {
+            // No children, update isFolder to false but keep the node
+            await WIKI.models.knex('pageTree')
+              .where('id', folderNode.id)
+              .update({ isFolder: false })
+          }
+          break
+        }
+
         // Check if this folder has any children
         const childCount = await WIKI.models.knex('pageTree')
           .count('* as count')

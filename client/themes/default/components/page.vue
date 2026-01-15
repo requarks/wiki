@@ -889,12 +889,26 @@ export default {
     Prism.highlightAllUnder(this.$refs.container)
 
     // -> Render Mermaid diagrams (Mermaid v10)
+    const mermaidTheme = this.$vuetify.theme.dark ? 'dark' : 'default'
     mermaid.initialize({
-      startOnLoad: true,
-      theme: this.$vuetify.theme.dark ? 'dark' : 'default'
+      startOnLoad: false,
+      theme: mermaidTheme,
+      securityLevel: 'loose'
     })
-    document.addEventListener('DOMContentLoaded', () => {
-      mermaid.run()
+
+    // Only run mermaid within this page container
+    if (this.$refs.container) {
+      const mermaidDivs = this.$refs.container.querySelectorAll('.mermaid:not([data-processed])')
+      if (mermaidDivs && mermaidDivs.length > 0) {
+        mermaid.run({ nodes: Array.from(mermaidDivs) })
+      }
+    }
+
+    // Protect diagrams from browser color adjustments
+    this.$nextTick(() => {
+      if (typeof this.applyColorSchemeProtection === 'function') {
+        this.applyColorSchemeProtection()
+      }
     })
 
     // -> Handle anchor scrolling
@@ -967,6 +981,40 @@ export default {
     }
   },
   methods: {
+    applyColorSchemeProtection () {
+      // Protect mermaid / svg diagrams from browser auto color adjustments (forced-colors / dark mode)
+      // Keep this scoped to the page container to avoid touching other parts of the DOM.
+      const colorScheme = this.$vuetify.theme.dark ? 'dark' : 'light'
+
+      const containerRoot = this.$refs.container
+      if (!containerRoot || !containerRoot.querySelectorAll) return
+
+      // Mermaid
+      containerRoot.querySelectorAll('.mermaid').forEach(container => {
+        container.style.setProperty('color-scheme', colorScheme, 'important')
+        container.style.setProperty('forced-color-adjust', 'none', 'important')
+        container.style.setProperty('filter', 'none', 'important')
+
+        container.querySelectorAll('svg').forEach(svg => {
+          svg.style.setProperty('color-scheme', colorScheme, 'important')
+          svg.style.setProperty('forced-color-adjust', 'none', 'important')
+          svg.style.setProperty('filter', 'none', 'important')
+        })
+      })
+
+      // Draw.io / other diagram blocks (same approach as editor preview)
+      containerRoot.querySelectorAll('pre.diagram').forEach(diagram => {
+        diagram.style.setProperty('color-scheme', colorScheme, 'important')
+        diagram.style.setProperty('forced-color-adjust', 'none', 'important')
+        diagram.style.setProperty('filter', 'none', 'important')
+
+        diagram.querySelectorAll('svg').forEach(svg => {
+          svg.style.setProperty('color-scheme', colorScheme, 'important')
+          svg.style.setProperty('forced-color-adjust', 'none', 'important')
+          svg.style.setProperty('filter', 'none', 'important')
+        })
+      })
+    },
     startResize(e) {
       if (this.$vuetify.breakpoint.smAndDown) return
 

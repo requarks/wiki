@@ -433,6 +433,26 @@ export default {
           this.$refs.editorPreview.focus()
         })
       }
+    },
+    '$vuetify.theme.dark' () {
+      // Re-render diagrams with new theme when theme changes
+      this.$nextTick(() => {
+        // Clear all processed mermaid diagrams and re-render
+        if (this.$refs.editorPreviewContainer) {
+          const mermaidDivs = this.$refs.editorPreviewContainer.querySelectorAll('.mermaid[data-processed="true"]')
+          mermaidDivs.forEach(div => {
+            // Save the original source code
+            const source = div.getAttribute('data-mermaid-source') || div.textContent
+            div.setAttribute('data-mermaid-source', source)
+            div.removeAttribute('data-processed')
+            div.innerHTML = source // Restore original mermaid code
+            div.classList.add('mermaid')
+          })
+        }
+        
+        // Re-render with new theme
+        this.renderMermaidDiagrams()
+      })
     }
   },
   methods: {
@@ -500,8 +520,9 @@ export default {
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
       this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
-        ADD_TAGS: ['img'],
-        ADD_ATTR: ['src', 'alt']
+        ADD_TAGS: ['img', 'foreignObject'],
+        ADD_ATTR: ['src', 'alt', 'class', 'id', 'target'],
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
       this.$nextTick(() => {
         tabsetHelper.format()
@@ -577,29 +598,90 @@ export default {
      * Insert content before current line
      */
     insertBeforeEachLine({ content, after }) {
-      let lines = []
-      if (!this.cm.doc.somethingSelected()) {
-        lines.push(this.cm.doc.getCursor('head').line)
-      } else {
-        lines = _.flatten(this.cm.doc.listSelections().map(sl => {
-          const range = Math.abs(sl.anchor.line - sl.head.line) + 1
-          const lowestLine = (sl.anchor.line > sl.head.line) ? sl.head.line : sl.anchor.line
-          return _.times(range, l => l + lowestLine)
-        }))
-      }
-      lines.forEach(ln => {
-        let lineContent = this.cm.doc.getLine(ln)
-        const lineLength = lineContent.length
-        if (_.startsWith(lineContent, content)) {
-          lineContent = lineContent.substring(content.length)
-        }
+      const config = {
+        '- ': { pattern: /^- /, type: 'unordered' },
+        '1. ': { pattern: /^\d+\. /, type: 'ordered' },
+        '> ': { pattern: /^> /, type: 'blockquote' }
+      }[content]
 
-        this.cm.doc.replaceRange(content + lineContent, { line: ln, ch: 0 }, { line: ln, ch: lineLength })
-      })
-      if (after) {
-        const lastLine = _.last(lines)
-        this.cm.doc.replaceRange(`\n${after}\n`, { line: lastLine, ch: this.cm.doc.getLine(lastLine).length + 1 })
+      const lines = this.cm.doc.somethingSelected() ?
+        _.range(
+          Math.min(this.cm.doc.listSelections()[0].from().line, this.cm.doc.listSelections()[0].to().line),
+          Math.max(this.cm.doc.listSelections()[0].from().line, this.cm.doc.listSelections()[0].to().line) + 1
+        ) : [this.cm.doc.getCursor('head').line]
+
+      const getLineText = (ln) => this.cm.doc.getLine(ln)
+      const hasPrefix = (text) => config.pattern.test(text)
+      const isAttr = (text) => /^(> )?<!--\{\.is-.*?\}-->/.test(text)
+      const buildPrefix = (text, needsAttr) => {
+        if (needsAttr) return `${content}<!--${after}-->\n${content}`
+        if (config.type === 'ordered') return '1. '
+        return content + text
       }
+
+      const attrLineIdx = config.type === 'blockquote' ?
+        [lines[0] - 1, lines[0]].find(idx => idx >= 0 && isAttr(getLineText(idx))) ?? -1 : -1
+
+      const contentLines = lines.filter(ln => !isAttr(getLineText(ln)))
+      const nonEmptyContentLines = contentLines.filter(ln => getLineText(ln).trim())
+      const allHavePrefix = nonEmptyContentLines.length > 0 && nonEmptyContentLines.every(ln => hasPrefix(getLineText(ln)))
+
+      const state = {
+        isSingleEmpty: contentLines.length === 1 && !nonEmptyContentLines.length,
+        isToggleOff: allHavePrefix,
+        hasAttribute: attrLineIdx >= 0,
+        needsAttribute: after && config.type === 'blockquote'
+      }
+
+      const actions = {
+        'singleEmpty': {
+          match: () => state.isSingleEmpty && !hasPrefix(getLineText(contentLines[0])),
+          execute: () => {
+            const ln = contentLines[0]
+            const text = getLineText(ln)
+            const newText = buildPrefix(text, state.needsAttribute)
+            this.cm.doc.replaceRange(newText, { line: ln, ch: 0 }, { line: ln, ch: text.length })
+          }
+        },
+        'toggleOffWithAttr': {
+          match: () => state.isToggleOff && state.hasAttribute,
+          execute: () => {
+            this.cm.doc.replaceRange('', { line: attrLineIdx, ch: 0 }, { line: attrLineIdx + 1, ch: 0 })
+            contentLines.map(ln => ln > attrLineIdx ? ln - 1 : ln).forEach(ln => {
+              const text = getLineText(ln)
+              hasPrefix(text) && this.cm.doc.replaceRange(text.replace(config.pattern, ''), { line: ln, ch: 0 }, { line: ln, ch: text.length })
+            })
+          }
+        },
+        'toggleOff': {
+          match: () => state.isToggleOff,
+          execute: () => {
+            contentLines.forEach(ln => {
+              const text = getLineText(ln)
+              hasPrefix(text) && this.cm.doc.replaceRange(text.replace(config.pattern, ''), { line: ln, ch: 0 }, { line: ln, ch: text.length })
+            })
+          }
+        },
+        'toggleOn': {
+          match: () => true,
+          execute: () => {
+            state.needsAttribute && this.cm.doc.replaceRange(`${content}<!--${after}-->\n`, { line: lines[0], ch: 0 })
+            const workingLines = state.needsAttribute ? contentLines.map(ln => ln + 1) : contentLines
+            let counter = 1
+            workingLines.forEach(ln => {
+              const text = getLineText(ln)
+              if (hasPrefix(text)) {
+                config.type === 'ordered' && counter++
+              } else {
+                const prefix = config.type === 'ordered' ? `${counter++}. ` : content
+                this.cm.doc.replaceRange(prefix + text, { line: ln, ch: 0 }, { line: ln, ch: text.length })
+              }
+            })
+          }
+        }
+      }
+
+      Object.values(actions).find(action => action.match() && (action.execute(), true))
     },
     /**
      * Update scroll sync
@@ -638,13 +720,42 @@ export default {
       })
     },
     renderMermaidDiagrams () {
-      // Mermaid v10: initialize and run
+      // Convert codeblock-mermaid to .mermaid elements that mermaid.js can process
+      if (this.$refs.editorPreviewContainer) {
+        const mermaidCodeBlocks = this.$refs.editorPreviewContainer.querySelectorAll('pre.codeblock-mermaid')
+        mermaidCodeBlocks.forEach(pre => {
+          const code = pre.querySelector('code')
+          if (code) {
+            const mermaidDiv = document.createElement('div')
+            mermaidDiv.className = 'mermaid'
+            mermaidDiv.textContent = code.textContent
+            mermaidDiv.setAttribute('data-mermaid-source', code.textContent) // Store source for re-rendering
+            mermaidDiv.removeAttribute('data-processed') // Force re-render
+            pre.replaceWith(mermaidDiv)
+          }
+        })
+      }
+      
+      // Initialize mermaid with correct theme
+      const mermaidTheme = this.$vuetify.theme.dark ? 'dark' : 'default'
+      
       mermaid.initialize({
-        startOnLoad: true,
-        theme: this.$vuetify.theme.dark ? 'dark' : 'default'
+        startOnLoad: false,
+        theme: mermaidTheme,
+        securityLevel: 'loose'
       })
-      document.addEventListener('DOMContentLoaded', () => {
-        mermaid.run();
+      
+      // Run mermaid on unprocessed diagrams
+      if (this.$refs.editorPreviewContainer) {
+        const mermaidDivs = this.$refs.editorPreviewContainer.querySelectorAll('.mermaid:not([data-processed])')
+        mermaidDivs.forEach(div => {
+          mermaid.run({ nodes: [div] })
+        })
+      }
+      
+      // Apply color-scheme protection after rendering
+      this.$nextTick(() => {
+        this.applyMermaidColorProtection()
       })
       // Optionally, if you need to render specific diagrams manually:
       // document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
@@ -654,6 +765,49 @@ export default {
       //   mmElm.innerHTML = `<div class="mermaid">${mermaidDef}</div>`
       //   elm.parentNode.replaceWith(mmElm)
       // })
+    },
+    applyMermaidColorProtection () {
+      // Apply color-scheme protection to mermaid diagrams in editor preview
+      // Use the appropriate color-scheme based on Vuetify theme, but prevent browser override
+      const colorScheme = this.$vuetify.theme.dark ? 'dark' : 'light'
+      
+      if (this.$refs.editorPreviewContainer) {
+        const mermaidContainers = this.$refs.editorPreviewContainer.querySelectorAll('.mermaid')
+        mermaidContainers.forEach(container => {
+          container.style.setProperty('color-scheme', colorScheme, 'important')
+          container.style.setProperty('forced-color-adjust', 'none', 'important')
+          container.style.setProperty('filter', 'none', 'important')
+          
+          // Also protect SVGs inside
+          const svgs = container.querySelectorAll('svg')
+          svgs.forEach(svg => {
+            svg.style.setProperty('color-scheme', colorScheme, 'important')
+            svg.style.setProperty('forced-color-adjust', 'none', 'important')
+            svg.style.setProperty('filter', 'none', 'important')
+          })
+        })
+        
+        // Also protect draw.io diagrams (pre.diagram)
+        const diagramContainers = this.$refs.editorPreviewContainer.querySelectorAll('pre.diagram')
+        diagramContainers.forEach(container => {
+          container.style.setProperty('color-scheme', colorScheme, 'important')
+          container.style.setProperty('forced-color-adjust', 'none', 'important')
+          container.style.setProperty('filter', 'none', 'important')
+          
+          const svgs = container.querySelectorAll('svg')
+          svgs.forEach(svg => {
+            svg.style.setProperty('color-scheme', colorScheme, 'important')
+            svg.style.setProperty('forced-color-adjust', 'none', 'important')
+            svg.style.setProperty('filter', 'none', 'important')
+            
+            // Remove color-scheme from inline style attribute if present
+            if (svg.style.colorScheme) {
+              svg.style.removeProperty('color-scheme')
+              svg.style.setProperty('color-scheme', colorScheme, 'important')
+            }
+          })
+        })
+      }
     },
     autocomplete (cm, change) {
       if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {
@@ -934,6 +1088,47 @@ export default {
       this.setHeaderLine(lvl - 1)
       return false
     })
+    // Add custom Enter key handler for blockquotes and lists
+    keyBindings['Enter'] = (cm) => {
+      const cursor = cm.getCursor()
+      const line = cm.getLine(cursor.line)
+      
+      // Define patterns for different line types
+      const patterns = [
+        { empty: /^>\s*$/, continue: /^(>\s*)/, next: (m) => m[1] },
+        { empty: /^-\s*$/, continue: /^(- )/, next: (m) => m[1] },
+        { empty: /^\d+\.\s*$/, continue: /^(\d+)\. /, next: (m) => `${parseInt(m[1]) + 1}. ` }
+      ]
+      
+      // Check if cursor is at end of line
+      const atLineEnd = cursor.ch === line.length
+      
+      // Check each pattern
+      for (const pattern of patterns) {
+        // Check if it's an empty marker line (exit the block/list)
+        if (pattern.empty.test(line) && atLineEnd) {
+          // Remove the empty marker and add newline
+          const lineStart = { line: cursor.line, ch: 0 }
+          const lineEnd = { line: cursor.line, ch: line.length }
+          cm.replaceRange('', lineStart, lineEnd)
+          cm.replaceSelection('\n')
+          return
+        }
+        
+        // Check if line continues the pattern (only at end of line)
+        if (atLineEnd) {
+          const match = line.match(pattern.continue)
+          if (match) {
+            cm.replaceSelection('\n' + pattern.next(match))
+            return
+          }
+        }
+      }
+      
+      // Default behavior
+      cm.execCommand('newlineAndIndent')
+    }
+
     this.cm.setOption('extraKeys', keyBindings)
 
     this.cm.on('inputRead', this.autocomplete)
@@ -1111,6 +1306,7 @@ $editor-bg: mc('surface-dark', 'page-background');
       width: calc(100% + 17px);
       position: relative;
       top: -1rem;
+      
       &.contents {
         padding-bottom: 1rem;
       }
@@ -1229,6 +1425,25 @@ $editor-bg: mc('surface-dark', 'page-background');
 $editor-bg: mc('surface-dark', 'page-background');
 
 .editor-markdown {
+
+  // ==========================================
+  // MERMAID DIAGRAM COLOR PROTECTION
+  // ==========================================
+  
+  .editor-markdown-preview-content {
+    .mermaid, .mermaid svg {
+      color-scheme: only light !important;
+      forced-color-adjust: none !important;
+      filter: none !important;
+    }
+    
+    // Also protect draw.io diagrams
+    pre.diagram, pre.diagram svg {
+      color-scheme: only light !important;
+      forced-color-adjust: none !important;
+      filter: none !important;
+    }
+  }
 
   // ==========================================
   // CODE MIRROR

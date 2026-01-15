@@ -23,6 +23,9 @@ module.exports = {
   async init() {
     WIKI.logger.info(`(SEARCH/POSTGRES) Initializing...`)
 
+    // -> Ensure pg_trgm extension is available (required for similarity search)
+    await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
+
     // -> Create Search Index
     const indexExists = await WIKI.models.knex.schema.hasTable('pagesVector')
     if (!indexExists) {
@@ -49,7 +52,6 @@ module.exports = {
             WHERE pages_vector_b."siteId" = ' || quote_literal(pages_vector_a."siteId")
             )
         `)
-      await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
       await WIKI.models.knex.raw(`CREATE INDEX "pageWords_idx" ON "pagesWords" USING GIN (word gin_trgm_ops)`)
     }
 
@@ -91,8 +93,12 @@ module.exports = {
         ${qryEnd}
       `, qryParams)
       if (results.rows.length < 5) {
-        const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 AND "siteId" = ? ORDER BY rank LIMIT 5;`, [q, q, opts.siteId])
-        suggestions = suggestResults.rows.map(r => r.word)
+        try {
+          const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 AND "siteId" = ? ORDER BY rank LIMIT 5;`, [q, q, opts.siteId])
+          suggestions = suggestResults.rows.map(r => r.word)
+        } catch (err) {
+          WIKI.logger.warn(`Search Engine Suggestion Error (pg_trgm extension may be missing): ${err.message}`)
+        }
       }
       return {
         results: results.rows,

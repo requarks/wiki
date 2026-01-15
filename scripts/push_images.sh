@@ -11,9 +11,6 @@ echo "Pushing Docker images to registry..."
 #   exit 1
 # fi
 
-echo "Pushing main Docker image: $NEW_IMAGE"
-docker push "$NEW_IMAGE"
-
 # Push Pandoc image if it is enabled
 if [[ "$PANDOC" == "true" ]]; then
   export NEW_PANDOC_IMAGE
@@ -22,7 +19,11 @@ if [[ "$PANDOC" == "true" ]]; then
   docker rmi "$NEW_PANDOC_IMAGE"
 fi
 
+
+echo "Pushing main Docker image: $NEW_IMAGE"
+docker push "$NEW_IMAGE"
+
+
 docker logout "$DOCKER_REGISTRY"
-docker rmi "$NEW_IMAGE"
 
 echo "Docker push completed successfully"

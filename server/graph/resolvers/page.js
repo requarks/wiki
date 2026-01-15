@@ -383,7 +383,11 @@ module.exports = {
           builder.where('siteId', args.siteId)
           switch (args.mode) {
             case 'FOLDERS':
-              builder.andWhere('isFolder', true)
+              // Include folders OR pages that are at folder paths (page-as-folder)
+              builder.andWhere((subBuilder) => {
+                subBuilder.where('isFolder', true)
+                  .orWhereNotNull('pageId')
+              })
               break
             case 'PAGES':
               builder.andWhereNotNull('pageId')

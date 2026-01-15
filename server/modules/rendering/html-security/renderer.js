@@ -36,7 +36,8 @@ module.exports = {
 
       input = DOMPurify.sanitize(input, {
         ADD_ATTR: allowedAttrs,
-        ADD_TAGS: allowedTags
+        ADD_TAGS: allowedTags,
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
 
       // Transform resized images to match rendering requirements

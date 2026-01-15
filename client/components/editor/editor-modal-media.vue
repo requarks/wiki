@@ -35,6 +35,19 @@
                       v-spacer
                       v-btn(text, @click='newFolderDialog = false') {{$t('common:actions.cancel')}}
                       v-btn.px-3(color='primary', @click='createFolder', :disabled='!isFolderNameValid', :loading='newFolderLoading') {{$t('common:actions.create')}}
+              .pa-2.d-flex.align-center.mt-3(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
+                v-text-field(
+                  solo
+                  flat
+                  v-model='search'
+                  prepend-inner-icon='mdi-file-search-outline'
+                  label='Search Assets (min 3 chars)...'
+                  hide-details
+                  dense
+                  clearable
+                  style='max-width: 400px;'
+                  )
+                
               v-toolbar(flat, dense, :color='$vuetify.theme.dark ? `grey darken-3` : `white`')
                 template(v-if='folderTree.length > 0')
                   .body-2
@@ -53,9 +66,12 @@
               v-data-table(
                 :items='assets'
                 :headers='headers'
+                :search='debouncedSearch'
+                :custom-filter='filterFilename'
                 :page.sync='pagination'
                 :items-per-page='15'
                 :loading='loading'
+                @page-count='pageCount = $event'
                 must-sort,
                 sort-by='ID',
                 sort-desc,
@@ -114,8 +130,10 @@
                             v-list-item-content {{$t('common:actions.delete')}}
                 template(slot='no-data')
                   v-alert.mt-3.radius-7(icon='mdi-folder-open-outline', :value='true', outlined, color='teal') {{$t('editor:assets.folderEmpty')}}
-              .text-xs-center.py-2(v-if='this.pageTotal > 1')
-                v-pagination(v-model='pagination', :length='pageTotal', color='teal')
+              v-card-chin(v-if='pageCount > 1')
+                v-spacer
+                v-pagination(v-model='pagination', :length='pageCount', color='teal')
+                v-spacer
               .d-flex.mt-3
                 v-toolbar.radius-7(flat, :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-4`', dense, height='44')
                   .body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{$t('editor:assets.fileCount', { count: assets.length })}}
@@ -304,6 +322,7 @@ export default {
       files: [],
       assets: [],
       pagination: 1,
+      pageCount: 0,
       remoteImageUrl: '',
       imageAlignments: [
         { text: 'None', value: '' },
@@ -325,7 +344,9 @@ export default {
       deleteAssetLoading: false,
       siteId: '',
       propertiesDialog: false,
-      selectedPropertiesAsset: null
+      selectedPropertiesAsset: null,
+      search: '',
+      debouncedSearch: ''
     }
   },
   computed: {
@@ -339,13 +360,6 @@ export default {
     currentFolderId: sync('editor/media@currentFolderId'),
     currentFileId: sync('editor/media@currentFileId'),
     sitePath: get('page/sitePath'),
-    pageTotal () {
-      if (!this.assets) {
-        return 0
-      }
-
-      return Math.ceil(this.assets.length / 15)
-    },
     headers() {
       return _.compact([
         this.$vuetify.breakpoint.smAndUp && { text: this.$t('editor:assets.headerId'), value: 'id', width: 80 },
@@ -381,7 +395,10 @@ export default {
           this.$refs.folderNameIpt.focus()
         })
       }
-    }
+    },
+    search: _.debounce(function(newValue) {
+      this.debouncedSearch = newValue
+    }, 300)
   },
   filters: {
     prettyBytes(num) {
@@ -408,6 +425,13 @@ export default {
     }
   },
   methods: {
+    filterFilename(_value, search, item) {
+      const term = (search ?? '').trim().toLowerCase()
+      if (term.length < 3) return true
+
+      const name = String(item?.filename ?? '').toLowerCase()
+      return name ? name.includes(term) : false
+    },
     async getSiteId() {
       let siteId = this.$store.get('page/siteId')
 
