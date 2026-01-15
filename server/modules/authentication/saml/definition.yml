@@ -47,7 +47,7 @@ props:
     hint: Signature algorithm used for signing requests
     maxWidth: 400
     order: 7
-    default: sha1
+    default: sha256
     enum:
       - sha1
       - sha256
@@ -58,7 +58,7 @@ props:
     hint: Digest algorithm used to provide a digest for the signed data object
     maxWidth: 400
     order: 8
-    default: sha1
+    default: sha256
     enum:
       - sha1
       - sha256
