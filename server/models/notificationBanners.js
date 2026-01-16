@@ -11,7 +11,7 @@ module.exports = class NotificationBanner extends Model {
   static get jsonSchema () {
     return {
       type: 'object',
-      required: ['text', 'urgency'],
+      required: ['text', 'urgency', 'startDate', 'endDate'],
 
       properties: {
         id: {type: 'integer'},
@@ -56,6 +56,25 @@ module.exports = class NotificationBanner extends Model {
       .first()
     
     return banner || null
+  }
+
+  /**
+   * Get all active banners for display
+   */
+  static async getActiveBanners() {
+    const now = new Date().toISOString()
+    
+    const banners = await WIKI.models.notificationBanners.query()
+      .where('isActive', true)
+      .where(function() {
+        this.whereNull('startDate').orWhere('startDate', '<=', now)
+      })
+      .where(function() {
+        this.whereNull('endDate').orWhere('endDate', '>=', now)
+      })
+      .orderBy('createdAt', 'desc')
+    
+    return banners || []
   }
 
   /**

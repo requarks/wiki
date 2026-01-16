@@ -1,28 +1,30 @@
 <template lang="pug">
-  v-slide-y-transition
-    v-banner.notification-banner(
-      v-if='activeBanner && !isDismissed'
-      :color='bannerColor'
-      :dark='bannerDark'
-      :icon='bannerIcon'
-      :class='bannerClass'
-      elevation='0'
-      sticky
-      )
-      template(v-slot:icon)
-        v-icon(:color='iconColor') {{ bannerIcon }}
-      
-      .notification-banner-content
-        .notification-banner-text {{ activeBanner.text }}
-      
-      template(v-slot:actions)
-        v-btn(
-          text
-          small
-          @click='dismissBanner'
-          :color='iconColor'
-          )
-          v-icon(small) mdi-close
+  div.notification-banners-container
+    v-slide-y-transition(group, tag='div')
+      v-banner.notification-banner(
+        v-for='banner in activeBanners'
+        :key='banner.id'
+        v-if='!isDismissed(banner.id)'
+        :color='getBannerColor(banner.urgency)'
+        :dark='getBannerDark(banner.urgency)'
+        :class='getBannerClass(banner.urgency)'
+        elevation='0'
+        sticky
+        )
+        template(v-slot:icon)
+          v-icon(:color='getIconColor(banner.urgency)') {{ getBannerIcon(banner.urgency) }}
+        
+        .notification-banner-content
+          .notification-banner-text {{ banner.text }}
+        
+        template(v-slot:actions)
+          v-btn(
+            text
+            small
+            @click='dismissBanner(banner.id)'
+            :color='getIconColor(banner.urgency)'
+            )
+            v-icon(small) mdi-close
 </template>
 
 <script>
@@ -35,28 +37,29 @@ export default {
   data() {
     return {
       colors: colors,
-      isDismissed: false,
       dismissedBanners: []
     }
   },
   computed: {
-    activeBanner() {
-      // This will be populated from the store/API
-      const banner = this.$store.state?.site?.notificationBanner || null
-      if (!banner) return null
+    activeBanners() {
+      // Get all banners from store
+      const banners = this.$store.state?.site?.notificationBanner || []
+      if (!Array.isArray(banners)) return []
       
-      // Check if banner is within active date range
-      if (!this.isBannerActive(banner)) return null
-      
-      // Check if user has dismissed this banner
-      if (this.dismissedBanners.includes(banner.id)) return null
-      
-      return banner
+      // Filter by active date range and not dismissed
+      return banners.filter(banner => {
+        if (!this.isBannerActive(banner)) return false
+        if (this.dismissedBanners.includes(banner.id)) return false
+        return true
+      })
+    }
+  },
+  methods: {
+    isDismissed(bannerId) {
+      return this.dismissedBanners.includes(bannerId)
     },
-    bannerColor() {
-      if (!this.activeBanner) return ''
-      
-      switch (this.activeBanner.urgency) {
+    getBannerColor(urgency) {
+      switch (urgency) {
         case 'error':
           return this.$vuetify.theme.dark ? colors.surfaceDark.negative : colors.surfaceLight.negative
         case 'success':
@@ -66,22 +69,13 @@ export default {
           return this.$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.surfaceLight.primaryBlueLite
       }
     },
-    bannerDark() {
-      if (!this.activeBanner) return false
+    getBannerDark(urgency) {
       return this.$vuetify.theme.dark
     },
-    bannerIcon() {
-      if (!this.activeBanner) return 'mdi-information'
-      
-      if (this.activeBanner.icon) {
-        return this.activeBanner.icon
-      }
-      
-      switch (this.activeBanner.urgency) {
+    getBannerIcon(urgency) {
+      switch (urgency) {
         case 'error':
-        case 'critical':
           return 'mdi-alert-circle'
-
         case 'success':
           return 'mdi-check-circle'
         case 'info':
@@ -89,10 +83,8 @@ export default {
           return 'mdi-information'
       }
     },
-    iconColor() {
-      if (!this.activeBanner) return ''
-      
-      switch (this.activeBanner.urgency) {
+    getIconColor(urgency) {
+      switch (urgency) {
         case 'error':
           return this.$vuetify.theme.dark ? colors.red[400] : colors.red[600]
         case 'success':
@@ -102,12 +94,9 @@ export default {
           return this.$vuetify.theme.dark ? colors.blue[400] : colors.blue[500]
       }
     },
-    bannerClass() {
-      if (!this.activeBanner) return ''
-      return `notification-banner--${this.activeBanner.urgency || 'info'}`
-    }
-  },
-  methods: {
+    getBannerClass(urgency) {
+      return `notification-banner--${urgency || 'info'}`
+    },
     isBannerActive(banner) {
       if (!banner || !banner.isActive) return false
       
@@ -148,15 +137,15 @@ export default {
         console.warn('Failed to load active banner', err)
       }
     },
-    dismissBanner() {
-      if (!this.activeBanner) return
+    dismissBanner(bannerId) {
+      if (!bannerId) return
       
       // Store in localStorage
       try {
         const stored = localStorage.getItem('wiki-dismissed-banners')
         const dismissed = stored ? JSON.parse(stored) : []
-        if (!dismissed.includes(this.activeBanner.id)) {
-          dismissed.push(this.activeBanner.id)
+        if (!dismissed.includes(bannerId)) {
+          dismissed.push(bannerId)
           localStorage.setItem('wiki-dismissed-banners', JSON.stringify(dismissed))
         }
         // Update local array to trigger reactivity
@@ -164,8 +153,6 @@ export default {
       } catch (e) {
         console.warn('Failed to save dismissed banner to localStorage', e)
       }
-      
-      this.isDismissed = true
     },
     loadDismissedBanners() {
       try {

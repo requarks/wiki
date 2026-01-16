@@ -40,14 +40,13 @@
               
               template(v-slot:item.dates='{ item }')
                 .caption
-                  div(v-if='item.startDate') Start: {{ formatDate(item.startDate) }}
-                  div(v-if='item.endDate') End: {{ formatDate(item.endDate) }}
-                  div(v-else-if='!item.startDate && !item.endDate') Always Active
+                  div Start: {{ formatDate(item.startDate) }}
+                  div End: {{ formatDate(item.endDate) }}
               
               template(v-slot:item.isActive='{ item }')
                 v-switch(
-                  v-model='item.isActive'
-                  @change='toggleActiveBanner(item)'
+                  :input-value='item.isActive'
+                  @click='toggleActiveBanner(item)'
                   color='primary'
                   hide-details
                   )
@@ -107,15 +106,16 @@
                   template(v-slot:activator='{ on, attrs }')
                     v-text-field(
                       v-model='currentBanner.startDate'
-                      label='Start Date (optional)'
+                      label='Start Date'
                       prepend-icon='mdi-calendar'
                       readonly
                       v-bind='attrs'
                       v-on='on'
-                      clearable
                       outlined
                       dense
-                      hide-details
+                      :rules='[rules.required]'
+                      hint='Required. Banner visible from this date'
+                      persistent-hint
                       )
                   v-date-picker(
                     v-model='currentBanner.startDate'
@@ -134,15 +134,16 @@
                   template(v-slot:activator='{ on, attrs }')
                     v-text-field(
                       v-model='currentBanner.endDate'
-                      label='End Date (optional)'
+                      label='End Date'
                       prepend-icon='mdi-calendar'
                       readonly
                       v-bind='attrs'
                       v-on='on'
-                      clearable
                       outlined
                       dense
-                      hide-details
+                      :rules='[rules.required]'
+                      hint='Required. Banner hidden after this date'
+                      persistent-hint
                       )
                   v-date-picker(
                     v-model='currentBanner.endDate'
@@ -170,7 +171,6 @@
             dark
             :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
             @click='saveBanner'
-            :disabled='!valid'
             :loading='saving'
             )
             span.text-none {{ editMode ? 'UPDATE' : 'CREATE' }}
@@ -225,7 +225,14 @@ export default {
       startDateMenu: false,
       endDateMenu: false,
       banners: [],
-      currentBanner: null,
+      currentBanner: {
+        id: null,
+        text: '',
+        urgency: 'info',
+        startDate: null,
+        endDate: null,
+        isActive: true
+      },
       bannerToDelete: null,
       nextId: 3,
       headers: [
@@ -251,6 +258,38 @@ export default {
     permissions: get('user/permissions')
   },
   methods: {
+    // Date helper methods - convert any date format to YYYY-MM-DD for VDatePicker
+    formatDateForPicker(date) {
+      if (!date) return null
+      
+      // Handle timestamp number (from GraphQL)
+      if (typeof date === 'number' || /^\d+$/.test(date)) {
+        const d = new Date(parseInt(date))
+        if (isNaN(d.getTime())) return null
+        return d.toISOString().split('T')[0]
+      }
+      
+      if (typeof date !== 'string') return null
+      
+      // Already in YYYY-MM-DD format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date
+      
+      // ISO timestamp (2026-01-20T00:00:00.000Z) - extract date part
+      if (date.includes('T')) {
+        return date.split('T')[0]
+      }
+      
+      // Invalid format
+      return null
+    },
+    
+    // Convert date for GraphQL mutation - return undefined to exclude from variables
+    formatDateForGraphQL(date) {
+      if (!date || date === '') return undefined
+      // VDatePicker already gives us YYYY-MM-DD
+      return date
+    },
+    
     isBannerActive(banner) {
       if (!banner || !banner.isActive) return false
       
@@ -264,12 +303,17 @@ export default {
       return true
     },
     getEmptyBanner() {
+      // Default dates: today for start, tomorrow for end - generate fresh each time
+      const today = new Date()
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
       return {
         id: null,
         text: '',
         urgency: 'info',
-        startDate: null,
-        endDate: null,
+        startDate: today.toISOString().split('T')[0],
+        endDate: tomorrow.toISOString().split('T')[0],
         isActive: true
       }
     },
@@ -297,7 +341,12 @@ export default {
           fetchPolicy: 'network-only'
         })
         
-        this.banners = resp.data.notificationBanners.list || []
+        const banners = resp.data.notificationBanners.list || []
+        this.banners = banners.map(b => ({
+          ...b,
+          startDate: this.formatDateForPicker(b.startDate),
+          endDate: this.formatDateForPicker(b.endDate)
+        }))
         this.updateStoreBanner()
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -308,20 +357,33 @@ export default {
     createBanner() {
       this.editMode = false
       this.currentBanner = this.getEmptyBanner()
+      // Force Vue to detect changes
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.resetValidation()
+        }
+      })
       this.dialog = true
     },
     editBanner(banner) {
       this.editMode = true
-      this.currentBanner = { ...banner }
+      this.currentBanner = { 
+        ...banner,
+        startDate: this.formatDateForPicker(banner.startDate),
+        endDate: this.formatDateForPicker(banner.endDate)
+      }
       this.dialog = true
     },
     async toggleActiveBanner(banner) {
       try {
+        // Don't mutate the banner object directly (Vuex error)
+        const newIsActive = !banner.isActive
+        
         const resp = await this.$apollo.mutate({
           mutation: gql`
-            mutation ($id: Int!, $isActive: Boolean!) {
+            mutation ($id: Int!, $text: String!, $urgency: NotificationBannerUrgency!, $startDate: String!, $endDate: String!, $isActive: Boolean!) {
               notificationBanners {
-                update(id: $id, isActive: $isActive) {
+                update(id: $id, text: $text, urgency: $urgency, startDate: $startDate, endDate: $endDate, isActive: $isActive) {
                   responseResult {
                     succeeded
                     errorCode
@@ -330,7 +392,13 @@ export default {
                   }
                   banner {
                     id
+                    text
+                    urgency
+                    startDate
+                    endDate
                     isActive
+                    createdAt
+                    updatedAt
                   }
                 }
               }
@@ -338,22 +406,28 @@ export default {
           `,
           variables: {
             id: banner.id,
-            isActive: banner.isActive
+            text: banner.text,
+            urgency: banner.urgency,
+            startDate: banner.startDate,
+            endDate: banner.endDate,
+            isActive: newIsActive
           }
         })
         
         if (resp.data.notificationBanners.update.responseResult.succeeded) {
-          // If activating, deactivate others locally
-          if (banner.isActive) {
-            this.banners.forEach(b => {
-              if (b.id !== banner.id) {
-                b.isActive = false
-              }
+          // Update banner with full response data to preserve dates
+          const updatedBanner = resp.data.notificationBanners.update.banner
+          const index = this.banners.findIndex(b => b.id === banner.id)
+          if (index !== -1) {
+            this.$set(this.banners, index, {
+              ...updatedBanner,
+              startDate: this.formatDateForPicker(updatedBanner.startDate),
+              endDate: this.formatDateForPicker(updatedBanner.endDate)
             })
           }
           
           this.$store.commit('showNotification', {
-            message: banner.isActive ? 'Banner activated' : 'Banner deactivated',
+            message: newIsActive ? 'Banner activated' : 'Banner deactivated',
             style: 'success',
             icon: 'check'
           })
@@ -372,16 +446,29 @@ export default {
       this.saving = true
       
       try {
+        // Build variables - all fields are required
+        const variables = {
+          text: this.currentBanner.text,
+          urgency: this.currentBanner.urgency,
+          isActive: this.currentBanner.isActive,
+          startDate: this.currentBanner.startDate,
+          endDate: this.currentBanner.endDate
+        }
+        
         if (this.editMode) {
-          // Update existing banner
+          variables.id = this.currentBanner.id
+        }
+        
+        if (this.editMode) {
+          // Update existing banner - all fields required
           const resp = await this.$apollo.mutate({
             mutation: gql`
               mutation (
                 $id: Int!
                 $text: String!
                 $urgency: NotificationBannerUrgency!
-                $startDate: Date
-                $endDate: Date
+                $startDate: String!
+                $endDate: String!
                 $isActive: Boolean!
               ) {
                 notificationBanners {
@@ -413,20 +500,19 @@ export default {
                 }
               }
             `,
-            variables: {
-              id: this.currentBanner.id,
-              text: this.currentBanner.text,
-              urgency: this.currentBanner.urgency.toUpperCase(),
-              startDate: this.currentBanner.startDate || null,
-              endDate: this.currentBanner.endDate || null,
-              isActive: this.currentBanner.isActive
-            }
+            variables
           })
           
           if (resp.data.notificationBanners.update.responseResult.succeeded) {
+            const updatedBanner = resp.data.notificationBanners.update.banner
             const index = this.banners.findIndex(b => b.id === this.currentBanner.id)
             if (index !== -1) {
-              this.$set(this.banners, index, resp.data.notificationBanners.update.banner)
+              // Format dates before setting
+              this.$set(this.banners, index, {
+                ...updatedBanner,
+                startDate: this.formatDateForPicker(updatedBanner.startDate),
+                endDate: this.formatDateForPicker(updatedBanner.endDate)
+              })
             }
             
             this.$store.commit('showNotification', {
@@ -438,14 +524,14 @@ export default {
             throw new Error(resp.data.notificationBanners.update.responseResult.message)
           }
         } else {
-          // Create new banner
+          // Create new banner - all fields required
           const resp = await this.$apollo.mutate({
             mutation: gql`
               mutation (
                 $text: String!
                 $urgency: NotificationBannerUrgency!
-                $startDate: Date
-                $endDate: Date
+                $startDate: String!
+                $endDate: String!
                 $isActive: Boolean!
               ) {
                 notificationBanners {
@@ -476,17 +562,17 @@ export default {
                 }
               }
             `,
-            variables: {
-              text: this.currentBanner.text,
-              urgency: this.currentBanner.urgency.toUpperCase(),
-              startDate: this.currentBanner.startDate || null,
-              endDate: this.currentBanner.endDate || null,
-              isActive: this.currentBanner.isActive
-            }
+            variables
           })
           
           if (resp.data.notificationBanners.create.responseResult.succeeded) {
-            this.banners.unshift(resp.data.notificationBanners.create.banner)
+            const createdBanner = resp.data.notificationBanners.create.banner
+            // Format dates before adding to array
+            this.banners.unshift({
+              ...createdBanner,
+              startDate: this.formatDateForPicker(createdBanner.startDate),
+              endDate: this.formatDateForPicker(createdBanner.endDate)
+            })
             
             this.$store.commit('showNotification', {
               message: 'Banner created successfully',

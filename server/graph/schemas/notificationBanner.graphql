@@ -15,8 +15,8 @@ extend type Mutation {
 # -----------------------------------------------
 
 type NotificationBannerQuery {
-  # Get currently active banner
-  active: NotificationBanner
+  # Get currently active banners
+  active: [NotificationBanner]
   
   # Get all banners (admin)
   list: [NotificationBanner]
@@ -34,11 +34,8 @@ type NotificationBannerMutation {
   create(
     text: String!
     urgency: NotificationBannerUrgency!
-    icon: String
-    backgroundColor: String
-    textColor: String
-    startDate: Date
-    endDate: Date
+    startDate: String!
+    endDate: String!
     isActive: Boolean
   ): NotificationBannerResponse
   
@@ -47,11 +44,8 @@ type NotificationBannerMutation {
     id: Int!
     text: String
     urgency: NotificationBannerUrgency
-    icon: String
-    backgroundColor: String
-    textColor: String
-    startDate: Date
-    endDate: Date
+    startDate: String!
+    endDate: String!
     isActive: Boolean
   ): NotificationBannerResponse
   
@@ -73,11 +67,11 @@ type NotificationBanner {
   icon: String
   backgroundColor: String
   textColor: String
-  startDate: Date
-  endDate: Date
+  startDate: String
+  endDate: String
   isActive: Boolean!
-  createdAt: Date
-  updatedAt: Date
+  createdAt: String
+  updatedAt: String
 }
 
 type NotificationBannerResponse {
@@ -86,7 +80,7 @@ type NotificationBannerResponse {
 }
 
 enum NotificationBannerUrgency {
-  INFO
-  SUCCESS
-  ERROR
+  info
+  success
+  error
 }

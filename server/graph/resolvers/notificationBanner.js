@@ -12,15 +12,15 @@ module.exports = {
   },
   NotificationBannerQuery: {
     /**
-     * GET ACTIVE BANNER
+     * GET ACTIVE BANNERS (multiple)
      */
     async active(obj, args, context) {
       try {
-        const banner = await WIKI.models.notificationBanners.getActiveBanner()
-        return banner
+        const banners = await WIKI.models.notificationBanners.getActiveBanners()
+        return banners
       } catch (err) {
         WIKI.logger.warn(err)
-        return null
+        return []
       }
     },
     
@@ -73,11 +73,8 @@ module.exports = {
         const bannerData = {
           text: args.text,
           urgency: args.urgency.toLowerCase(),
-          icon: args.icon || null,
-          backgroundColor: args.backgroundColor || null,
-          textColor: args.textColor || null,
-          startDate: args.startDate || null,
-          endDate: args.endDate || null,
+          startDate: args.startDate,
+          endDate: args.endDate,
           isActive: _.isBoolean(args.isActive) ? args.isActive : true
         }
         
@@ -90,7 +87,12 @@ module.exports = {
       } catch (err) {
         WIKI.logger.warn(err)
         return {
-          responseResult: generateError(err),
+          responseResult: {
+            succeeded: false,
+            errorCode: 1,
+            slug: 'notification-banner-create-error',
+            message: err.message || 'Failed to create notification banner'
+          },
           banner: null
         }
       }
@@ -108,11 +110,8 @@ module.exports = {
         const updateData = {}
         if (args.text) updateData.text = args.text
         if (args.urgency) updateData.urgency = args.urgency.toLowerCase()
-        if (args.icon !== undefined) updateData.icon = args.icon
-        if (args.backgroundColor !== undefined) updateData.backgroundColor = args.backgroundColor
-        if (args.textColor !== undefined) updateData.textColor = args.textColor
-        if (args.startDate !== undefined) updateData.startDate = args.startDate
-        if (args.endDate !== undefined) updateData.endDate = args.endDate
+        if (args.startDate) updateData.startDate = args.startDate
+        if (args.endDate) updateData.endDate = args.endDate
         if (_.isBoolean(args.isActive)) updateData.isActive = args.isActive
         
         const banner = await WIKI.models.notificationBanners.updateBanner(args.id, updateData)
@@ -124,7 +123,12 @@ module.exports = {
       } catch (err) {
         WIKI.logger.warn(err)
         return {
-          responseResult: generateError(err),
+          responseResult: {
+            succeeded: false,
+            errorCode: 1,
+            slug: 'notification-banner-update-error',
+            message: err.message || 'Failed to update notification banner'
+          },
           banner: null
         }
       }
@@ -147,7 +151,12 @@ module.exports = {
       } catch (err) {
         WIKI.logger.warn(err)
         return {
-          responseResult: generateError(err)
+          responseResult: {
+            succeeded: false,
+            errorCode: 1,
+            slug: 'notification-banner-delete-error',
+            message: err.message || 'Failed to delete notification banner'
+          }
         }
       }
     },
@@ -174,7 +183,12 @@ module.exports = {
       } catch (err) {
         WIKI.logger.warn(err)
         return {
-          responseResult: generateError(err),
+          responseResult: {
+            succeeded: false,
+            errorCode: 1,
+            slug: 'notification-banner-toggle-error',
+            message: err.message || 'Failed to toggle notification banner status'
+          },
           banner: null
         }
       }
