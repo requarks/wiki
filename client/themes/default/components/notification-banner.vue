@@ -4,7 +4,6 @@
       v-banner.notification-banner(
         v-for='banner in activeBanners'
         :key='banner.id'
-        v-if='!isDismissed(banner.id)'
         :color='getBannerColor(banner.urgency)'
         :dark='getBannerDark(banner.urgency)'
         :class='getBannerClass(banner.urgency)'
@@ -47,17 +46,12 @@ export default {
       if (!Array.isArray(banners)) return []
       
       // Filter by active date range and not dismissed
-      return banners.filter(banner => {
-        if (!this.isBannerActive(banner)) return false
-        if (this.dismissedBanners.includes(banner.id)) return false
-        return true
-      })
+      return banners.filter(banner => 
+        this.isBannerActive(banner) && !this.dismissedBanners.includes(banner.id)
+      )
     }
   },
   methods: {
-    isDismissed(bannerId) {
-      return this.dismissedBanners.includes(bannerId)
-    },
     getBannerColor(urgency) {
       switch (urgency) {
         case 'error':
