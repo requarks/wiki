@@ -5,6 +5,12 @@
 replicaCount: 1
 revisionHistoryLimit: 10
 
+strategy:
+  type: "RollingUpdate"
+  rollingUpdate:
+    maxSurge: "25%"
+    maxUnavailable: "25%"
+
 image:
   repository: requarks/wiki
   imagePullPolicy: IfNotPresent
