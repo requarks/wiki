@@ -1,0 +1,80 @@
+# ===============================================
+# NOTIFICATION BANNERS
+# ===============================================
+
+extend type Query {
+  notificationBanners: NotificationBannerQuery
+}
+
+extend type Mutation {
+  notificationBanners: NotificationBannerMutation
+}
+
+# -----------------------------------------------
+# QUERIES
+# -----------------------------------------------
+
+type NotificationBannerQuery {
+  # Get currently active banners
+  active: [NotificationBanner]
+  
+  # Get all banners (admin)
+  list: [NotificationBanner]
+  
+  # Get single banner by ID
+  single(id: Int!): NotificationBanner
+}
+
+# -----------------------------------------------
+# MUTATIONS
+# -----------------------------------------------
+
+type NotificationBannerMutation {
+  # Create new banner
+  create(
+    text: String!
+    urgency: NotificationBannerUrgency!
+    startDate: String!
+    endDate: String!
+    isActive: Boolean
+  ): NotificationBannerResponse
+  
+  # Update existing banner
+  update(
+    id: Int!
+    text: String
+    urgency: NotificationBannerUrgency
+    startDate: String!
+    endDate: String!
+    isActive: Boolean
+  ): NotificationBannerResponse
+  
+  # Delete banner
+  delete(id: Int!): DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type NotificationBanner {
+  id: Int!
+  text: String!
+  urgency: NotificationBannerUrgency!
+  startDate: String
+  endDate: String
+  isActive: Boolean!
+  createdAt: String
+  updatedAt: String
+}
+
+type NotificationBannerResponse {
+  responseResult: ResponseStatus
+  banner: NotificationBanner
+}
+
+enum NotificationBannerUrgency {
+  info
+  success
+  error
+}

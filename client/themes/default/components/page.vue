@@ -48,6 +48,7 @@
         v-icon(:color='$vuetify.theme.dark ? colors.actionLight.primaryDefaultOnLite : colors.actionLight.primaryDefaultOnHeavy') mdi-menu
 
     v-main(ref='content')
+      notification-banner
       template(v-if='path !== `home`')
         //- breadcrumbs toolbar
         v-toolbar(
@@ -511,6 +512,7 @@
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
+import NotificationBanner from './notification-banner.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get } from 'vuex-pathify'
@@ -565,6 +567,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
+    NotificationBanner,
     StatusIndicator,
     TreeItem
   },
