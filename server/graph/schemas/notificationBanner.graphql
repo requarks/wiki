@@ -51,9 +51,6 @@ type NotificationBannerMutation {
   
   # Delete banner
   delete(id: Int!): DefaultResponse
-  
-  # Toggle banner active status
-  toggle(id: Int!): NotificationBannerResponse
 }
 
 # -----------------------------------------------
@@ -64,9 +61,6 @@ type NotificationBanner {
   id: Int!
   text: String!
   urgency: NotificationBannerUrgency!
-  icon: String
-  backgroundColor: String
-  textColor: String
   startDate: String
   endDate: String
   isActive: Boolean!

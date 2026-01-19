@@ -5,13 +5,12 @@
         v-for='banner in activeBanners'
         :key='banner.id'
         :color='getBannerColor(banner.urgency)'
-        :dark='getBannerDark(banner.urgency)'
         :class='getBannerClass(banner.urgency)'
         elevation='0'
         sticky
         )
         template(v-slot:icon)
-          v-icon(:color='getIconColor(banner.urgency)') {{ getBannerIcon(banner.urgency) }}
+          v-icon {{ getBannerIcon(banner.urgency) }}
         
         .notification-banner-content
           .notification-banner-text {{ banner.text }}
@@ -21,13 +20,11 @@
             text
             small
             @click='dismissBanner(banner.id)'
-            :color='getIconColor(banner.urgency)'
             )
             v-icon(small) mdi-close
 </template>
 
 <script>
-import { get } from 'vuex-pathify'
 import colors from '@/themes/default/js/color-scheme'
 import gql from 'graphql-tag'
 
@@ -35,7 +32,6 @@ export default {
   name: 'NotificationBanner',
   data() {
     return {
-      colors: colors,
       dismissedBanners: []
     }
   },
@@ -55,16 +51,13 @@ export default {
     getBannerColor(urgency) {
       switch (urgency) {
         case 'error':
-          return this.$vuetify.theme.dark ? colors.surfaceDark.negative : colors.surfaceLight.negative
+          return this.$vuetify.theme.dark ? colors.surfaceDark.negative : colors.red[50]
         case 'success':
-          return this.$vuetify.theme.dark ? colors.surfaceDark.positive : colors.surfaceLight.positive
+          return this.$vuetify.theme.dark ? colors.surfaceDark.positive : colors.green[50]
         case 'info':
         default:
-          return this.$vuetify.theme.dark ? colors.surfaceDark.primaryBlueLite : colors.surfaceLight.primaryBlueLite
+          return this.$vuetify.theme.dark ? '#333647' : colors.blue[50]
       }
-    },
-    getBannerDark(urgency) {
-      return this.$vuetify.theme.dark
     },
     getBannerIcon(urgency) {
       switch (urgency) {
@@ -75,17 +68,6 @@ export default {
         case 'info':
         default:
           return 'mdi-information'
-      }
-    },
-    getIconColor(urgency) {
-      switch (urgency) {
-        case 'error':
-          return this.$vuetify.theme.dark ? colors.red[400] : colors.red[600]
-        case 'success':
-          return this.$vuetify.theme.dark ? colors.green[400] : colors.green[600]
-        case 'info':
-        default:
-          return this.$vuetify.theme.dark ? colors.blue[400] : colors.blue[500]
       }
     },
     getBannerClass(urgency) {
@@ -222,21 +204,57 @@ export default {
 .notification-banner--error {
   ::v-deep .v-banner__wrapper {
     border-left: 4px solid;
-    border-left-color: mc('red', '600');
+    border-left-color: mc('red', '200');
+    
+    @at-root .theme--dark & {
+      border-left-color: mc('red', '600');
+    }
+  }
+  
+  ::v-deep .v-banner__icon .v-icon {
+    color: mc('red', '800') !important;
+    
+    @at-root .theme--dark & {
+      color: mc('red', '400') !important;
+    }
   }
 }
 
 .notification-banner--success {
   ::v-deep .v-banner__wrapper {
     border-left: 4px solid;
-    border-left-color: mc('green', '600');
+    border-left-color: mc('green', '200');
+    
+    @at-root .theme--dark & {
+      border-left-color: mc('green', '600');
+    }
+  }
+  
+  ::v-deep .v-banner__icon .v-icon {
+    color: mc('green', '800') !important;
+    
+    @at-root .theme--dark & {
+      color: mc('green', '400') !important;
+    }
   }
 }
 
 .notification-banner--info {
   ::v-deep .v-banner__wrapper {
     border-left: 4px solid;
-    border-left-color: mc('blue', '500');
+    border-left-color: mc('blue', '200');
+    
+    @at-root .theme--dark & {
+      border-left-color: #4a5368;
+    }
+  }
+  
+  ::v-deep .v-banner__icon .v-icon {
+    color: mc('blue', '800') !important;
+    
+    @at-root .theme--dark & {
+      color: mc('blue', '400') !important;
+    }
   }
 }
 </style>

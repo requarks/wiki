@@ -4,10 +4,7 @@ exports.up = async knex => {
     .createTable('notificationBanners', table => {
       table.increments('id').primary()
       table.string('text', 500).notNullable()
-      table.string('urgency').notNullable().defaultTo('info') // info, success, warning, error, critical
-      table.string('icon').nullable()
-      table.string('backgroundColor').nullable()
-      table.string('textColor').nullable()
+      table.string('urgency').notNullable().defaultTo('info')
       table.string('startDate').notNullable()
       table.string('endDate').notNullable()
       table.boolean('isActive').notNullable().defaultTo(true)

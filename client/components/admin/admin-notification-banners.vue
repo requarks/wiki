@@ -207,14 +207,14 @@
 </template>
 
 <script>
-import { get, sync } from 'vuex-pathify'
+import { get } from 'vuex-pathify'
 import colors from '@/themes/default/js/color-scheme'
 import gql from 'graphql-tag'
 
 export default {
   data() {
     return {
-      colors: colors,
+      colors,
       loading: false,
       saving: false,
       deleting: false,
@@ -234,7 +234,6 @@ export default {
         isActive: true
       },
       bannerToDelete: null,
-      nextId: 3,
       headers: [
         { text: 'Text', value: 'text', width: '40%' },
         { text: 'Urgency', value: 'urgency', width: '10%' },
@@ -281,13 +280,6 @@ export default {
       
       // Invalid format
       return null
-    },
-    
-    // Convert date for GraphQL mutation - return undefined to exclude from variables
-    formatDateForGraphQL(date) {
-      if (!date || date === '') return undefined
-      // VDatePicker already gives us YYYY-MM-DD
-      return date
     },
     
     isBannerActive(banner) {
@@ -347,7 +339,10 @@ export default {
           startDate: this.formatDateForPicker(b.startDate),
           endDate: this.formatDateForPicker(b.endDate)
         }))
-        this.updateStoreBanner()
+        
+        // Update store with all active banners
+        const activeBanners = this.banners.filter(b => this.isBannerActive(b))
+        this.$store.commit('site/SET_NOTIFICATION_BANNER', activeBanners)
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
@@ -426,13 +421,9 @@ export default {
             })
           }
           
-          this.$store.commit('showNotification', {
-            message: newIsActive ? 'Banner activated' : 'Banner deactivated',
-            style: 'success',
-            icon: 'check'
-          })
-          
-          this.updateStoreBanner()
+          // Update store with all active banners
+          const activeBanners = this.banners.filter(b => this.isBannerActive(b))
+          this.$store.commit('site/SET_NOTIFICATION_BANNER', activeBanners)
         } else {
           throw new Error(resp.data.notificationBanners.update.responseResult.message)
         }
@@ -584,20 +575,15 @@ export default {
           }
         }
         
-        this.updateStoreBanner()
+        // Update store with all active banners
+        const activeBanners = this.banners.filter(b => this.isBannerActive(b))
+        this.$store.commit('site/SET_NOTIFICATION_BANNER', activeBanners)
         this.closeDialog()
       } catch (err) {
         this.$store.commit('pushGraphError', err)
       }
       
       this.saving = false
-    },
-    updateStoreBanner() {
-      // Find the first active banner and update the store
-      const activeBanner = this.banners.find(b => this.isBannerActive(b))
-      
-      // Update the store using pathify mutation
-      this.$store.commit('site/SET_NOTIFICATION_BANNER', activeBanner || null)
     },
     deleteBannerDialog(banner) {
       this.bannerToDelete = banner
@@ -639,7 +625,9 @@ export default {
             icon: 'check'
           })
           
-          this.updateStoreBanner()
+          // Update store with all active banners
+          const activeBanners = this.banners.filter(b => this.isBannerActive(b))
+          this.$store.commit('site/SET_NOTIFICATION_BANNER', activeBanners)
           this.deleteDialog = false
         } else {
           throw new Error(resp.data.notificationBanners.delete.responseResult.message)

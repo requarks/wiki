@@ -159,39 +159,6 @@ module.exports = {
           }
         }
       }
-    },
-    
-    /**
-     * TOGGLE BANNER STATUS
-     */
-    async toggle(obj, args, context) {
-      try {
-        if (!WIKI.auth.checkAccess(context.req.user, ['manage:system'])) {
-          throw new Error('ERR_FORBIDDEN')
-        }
-        
-        const banner = await WIKI.models.notificationBanners.toggleBannerStatus(args.id)
-        
-        if (!banner) {
-          throw new Error('Banner not found')
-        }
-        
-        return {
-          responseResult: generateSuccess('Notification banner status toggled successfully'),
-          banner
-        }
-      } catch (err) {
-        WIKI.logger.warn(err)
-        return {
-          responseResult: {
-            succeeded: false,
-            errorCode: 1,
-            slug: 'notification-banner-toggle-error',
-            message: err.message || 'Failed to toggle notification banner status'
-          },
-          banner: null
-        }
-      }
     }
   }
 }
