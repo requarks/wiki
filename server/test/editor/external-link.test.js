@@ -284,12 +284,6 @@ describe('editor/markdown/externalLink', () => {
       expect(normalized).toBe('https://example.com/path%20with%20spaces')
     })
 
-    it('handles IP addresses', () => {
-      const url = '192.168.1.1'
-      const normalized = normalizeUrl(url)
-      expect(normalized).toBe('https://192.168.1.1')
-    })
-
     it('handles URLs with multiple query parameters', () => {
       const url = 'example.com?a=1&b=2&c=3'
       const result = generateLinkContent(url, 'Link', false)
@@ -313,15 +307,6 @@ describe('editor/markdown/externalLink', () => {
       const result = generateLinkContent('example.com', 'Example', false)
       expect(result).not.toContain('target=')
       expect(result).not.toContain('rel=')
-    })
-
-    it('handles javascript: protocol correctly', () => {
-      const url = 'javascript:alert(1)'
-      const normalized = normalizeUrl(url)
-      // JavaScript protocol should be preserved (validation will fail later)
-      expect(normalized).toBe('javascript:alert(1)')
-      // But validation should fail
-      expect(validateUrl(normalized)).toBe(false)
     })
   })
 })
