@@ -986,9 +986,9 @@ export default {
       return url
     },
     validateUrl (url) {
-      if (!url || !url.trim()) return false
+      if (!url?.trim()) return false
       // Basic URL validation regex
-      const urlRegex = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/
+      const urlRegex = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)$/
       return urlRegex.test(url)
     },
     insertExternalLinkHandler () {
