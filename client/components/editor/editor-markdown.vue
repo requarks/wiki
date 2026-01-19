@@ -104,6 +104,17 @@
             v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='insertAfter({ content: `---`, newLine: true })').mx-0
               v-icon mdi-minus
           span {{$t('editor:markup.horizontalBar')}}
+        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
+          template(v-slot:activator='{ on }')
+            v-btn.animated.fadeIn.wait-p12s(
+              icon
+              tile
+              v-on='on'
+              @click='insertExternalLink'
+              aria-label='Insert external link'
+            ).mx-0
+              v-icon mdi-open-in-new
+          span Insert external link
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy', v-if='previewShown')
@@ -125,19 +136,24 @@
           span {{$t('editor:markup.insertLink')}}
         v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p1s(icon, tile, v-on='on', dark, @click='insertExternalLink', aria-label='Insert External Link').mx-0
+              v-icon mdi-open-in-new
+          span Insert External Link
+        v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalMedia`)').mx-0
               v-icon(:color='activeModal === `editorModalMedia` ? `teal` : ``') mdi-folder-multiple-image
           span {{$t('editor:markup.insertAssets')}}
         v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
           template(v-slot:activator='{ on }')
-            v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
+            v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
             template(v-slot:activator='{ on }')
-              v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
+              v-btn.mt-3.animated.fadeInLeft.wait-p4s(icon, tile, v-on='on', dark, @click='toggleFullscreen').mx-0
                 v-icon mdi-arrow-expand-all
             span {{$t('editor:markup.distractionFreeMode')}}
           v-tooltip(right, :color='colors.surfaceDark.infoHeavy')
@@ -169,6 +185,60 @@
 
     markdown-help(v-if='helpShown')
     page-selector(mode='select', v-model='insertLinkDialog', :open-handler='insertLinkHandler', :path='path', :locale='locale')
+    
+    v-dialog(v-model='insertExternalLinkDialog', max-width='550', persistent, overlay-color='blue-grey darken-4', overlay-opacity='.7')
+      v-card
+        .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
+          v-icon.mr-2(color='white') mdi-open-in-new
+          span(:style='`color: ${colors.textLight.inverse};`') Insert External Link
+        v-card-text.pt-5
+          .d-flex.align-center
+            span URL
+            v-tooltip(right, color='#424242')
+              template(v-slot:activator='{ on }')
+                v-icon.ml-2.grey--text(small, v-on='on') mdi-information-outline
+              span Enter a URL or domain. https:// is added automatically if missing.
+          v-text-field(
+            v-model='externalLinkUrl'
+            placeholder='https://example.com'
+            outlined
+            dense
+            autofocus
+            :error='externalLinkUrlError'
+            :error-messages='externalLinkUrlError ? "URL is required" : ""'
+            @keyup.enter='insertExternalLinkHandler'
+            class='mt-1'
+          )
+          v-text-field(
+            v-model='externalLinkText'
+            label='Link Text (optional)'
+            placeholder='Enter link text or leave blank to use the URL'
+            outlined
+            dense
+            class='mt-2'
+            @keyup.enter='insertExternalLinkHandler'
+          )
+          v-checkbox(
+            v-model='externalLinkNewTab'
+            label='Open in new tab'
+            class='mt-1'
+          )
+        v-card-chin
+          v-spacer
+          v-btn.btn-rounded(
+            outlined
+            rounded
+            :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
+            @click='closeExternalLinkDialog'
+            ) {{$t('common:actions.cancel')}}
+          v-btn.px-4.btn-rounded(
+            rounded
+            :dark='$vuetify.theme.dark'
+            :color='$vuetify.theme.dark ? colors.surfaceDark.secondarySapHeavy : colors.surfaceLight.secondaryBlueHeavy'
+            @click='insertExternalLinkHandler'
+            :disabled='!externalLinkUrl'
+            )
+            span.text-none(:style='`color: ${colors.textLight.inverse};`') INSERT LINK
 </template>
 
 <script>
@@ -399,6 +469,11 @@ export default {
       helpShown: false,
       spellModeActive: false,
       insertLinkDialog: false,
+      insertExternalLinkDialog: false,
+      externalLinkUrl: '',
+      externalLinkText: '',
+      externalLinkNewTab: false,
+      externalLinkUrlError: false,
       newMentions: new Map(),
       mentionCache: {},
       colors: colors
@@ -944,6 +1019,81 @@ export default {
       this.insertAtCursor({
         content: siteLangs.length > 0 ? `[${lastPart}](/${this.sitePath}/${locale}/${path})` : `[${lastPart}](/${this.sitePath}/${path})`
       })
+    },
+    insertExternalLink () {
+      this.externalLinkUrl = ''
+      this.externalLinkText = ''
+      this.externalLinkNewTab = false
+      this.externalLinkUrlError = false
+      this.insertExternalLinkDialog = true
+    },
+    closeExternalLinkDialog () {
+      this.insertExternalLinkDialog = false
+      this.externalLinkUrl = ''
+      this.externalLinkText = ''
+      this.externalLinkNewTab = false
+      this.externalLinkUrlError = false
+    },
+    normalizeUrl (url) {
+      if (!url) return ''
+      url = url.trim()
+      // If URL doesn't start with a protocol, add https://
+      if (!url.match(/^[a-z][a-z0-9+.-]*:/i)) {
+        url = 'https://' + url
+      }
+      return url
+    },
+    validateUrl (url) {
+      if (!url || !url.trim()) return false
+      // Basic URL validation regex
+      const urlRegex = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/
+      return urlRegex.test(url)
+    },
+    insertExternalLinkHandler () {
+      const url = this.externalLinkUrl.trim()
+      
+      // Validate URL
+      if (!url) {
+        this.externalLinkUrlError = true
+        return
+      }
+      
+      // Normalize URL (add https:// if missing)
+      const normalizedUrl = this.normalizeUrl(url)
+      
+      // Validate the normalized URL
+      if (!this.validateUrl(normalizedUrl)) {
+        this.$store.commit('showNotification', {
+          message: 'Please enter a valid URL',
+          style: 'warning',
+          icon: 'warning'
+        })
+        return
+      }
+      
+      const linkText = this.externalLinkText || normalizedUrl
+      let content
+      
+      if (this.externalLinkNewTab) {
+        // Use HTML for new tab links
+        content = `<a href="${normalizedUrl}" target="_blank" rel="noopener noreferrer">${linkText}</a>`
+      } else {
+        // Use standard Markdown syntax
+        content = `[${linkText}](${normalizedUrl})`
+      }
+      
+      // Track analytics
+      this.$store.commit('log', {
+        event: 'editor.external_link.insert',
+        openNewTab: this.externalLinkNewTab,
+        hasDisplayText: !!this.externalLinkText
+      })
+      
+      this.insertAtCursor({
+        content: content
+      })
+      
+      this.closeExternalLinkDialog()
     },
     processMarkers (from, to) {
       let found = null
