@@ -764,10 +764,6 @@
   .diagram {
     margin-top: 1rem;
     overflow: auto;
-    
-    svg:first-child {
-      direction: ltr;
-    }
 
     svg {
       color-scheme: light;
