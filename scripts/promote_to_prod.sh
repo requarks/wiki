@@ -12,7 +12,7 @@ echo "Promoting staging image to production with tag: $VERSION"
 
 
 
-STAGING_TAG="staging-latest"
+STAGING_TAG="latest-staging"
 PRODUCTION_IMAGE_TAG="$VERSION"
 
 if [ -z "$IMAGE" ]; then

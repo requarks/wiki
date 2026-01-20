@@ -690,7 +690,8 @@ export default {
         vuescroll: {},
         scrollPanel: {
           initialScrollX: 0.01, // fix scrollbar not disappearing on load
-          scrollingX: false,
+          scrollingX: true,
+          scrollingY: true,
           speed: 50
         },
         rail: {
@@ -892,17 +893,26 @@ export default {
     Prism.highlightAllUnder(this.$refs.container)
 
     // -> Render Mermaid diagrams (Mermaid v10)
+    const mermaidTheme = this.$vuetify.theme.dark ? 'dark' : 'default'
     mermaid.initialize({
       startOnLoad: false,
       theme: mermaidTheme,
       securityLevel: 'loose'
     })
-    
-    mermaid.run()
-    
+
+    // Only run mermaid within this page container
+    if (this.$refs.container) {
+      const mermaidDivs = this.$refs.container.querySelectorAll('.mermaid:not([data-processed])')
+      if (mermaidDivs && mermaidDivs.length > 0) {
+        mermaid.run({ nodes: Array.from(mermaidDivs) })
+      }
+    }
+
     // Protect diagrams from browser color adjustments
     this.$nextTick(() => {
-      this.applyColorSchemeProtection()
+      if (typeof this.applyColorSchemeProtection === 'function') {
+        this.applyColorSchemeProtection()
+      }
     })
 
     // -> Handle anchor scrolling
@@ -975,6 +985,40 @@ export default {
     }
   },
   methods: {
+    applyColorSchemeProtection () {
+      // Protect mermaid / svg diagrams from browser auto color adjustments (forced-colors / dark mode)
+      // Keep this scoped to the page container to avoid touching other parts of the DOM.
+      const colorScheme = this.$vuetify.theme.dark ? 'dark' : 'light'
+
+      const containerRoot = this.$refs.container
+      if (!containerRoot || !containerRoot.querySelectorAll) return
+
+      // Mermaid
+      containerRoot.querySelectorAll('.mermaid').forEach(container => {
+        container.style.setProperty('color-scheme', colorScheme, 'important')
+        container.style.setProperty('forced-color-adjust', 'none', 'important')
+        container.style.setProperty('filter', 'none', 'important')
+
+        container.querySelectorAll('svg').forEach(svg => {
+          svg.style.setProperty('color-scheme', colorScheme, 'important')
+          svg.style.setProperty('forced-color-adjust', 'none', 'important')
+          svg.style.setProperty('filter', 'none', 'important')
+        })
+      })
+
+      // Draw.io / other diagram blocks (same approach as editor preview)
+      containerRoot.querySelectorAll('pre.diagram').forEach(diagram => {
+        diagram.style.setProperty('color-scheme', colorScheme, 'important')
+        diagram.style.setProperty('forced-color-adjust', 'none', 'important')
+        diagram.style.setProperty('filter', 'none', 'important')
+
+        diagram.querySelectorAll('svg').forEach(svg => {
+          svg.style.setProperty('color-scheme', colorScheme, 'important')
+          svg.style.setProperty('forced-color-adjust', 'none', 'important')
+          svg.style.setProperty('filter', 'none', 'important')
+        })
+      })
+    },
     startResize(e) {
       if (this.$vuetify.breakpoint.smAndDown) return
 
@@ -1696,6 +1740,39 @@ export default {
   // Make scrollbar stick to bottom of sidebar
   .sidebar-scroll-container {
     height: 100% !important;
+    
+    // vuescroll container and panel should fill height
+    ::v-deep .__container,
+    ::v-deep .__panel {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    
+    // Content wrapper for horizontal scroll
+    ::v-deep .__view {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      min-width: min-content;
+      padding-bottom: 12px;
+    }
+    
+    // Pin horizontal scrollbar to bottom
+    ::v-deep .__rail-is-horizontal {
+      position: absolute !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      top: auto !important;
+      z-index: 10 !important;
+      margin: 0 !important;
+    }
+    
+    // Vertical scrollbar styling
+    ::v-deep .__rail-is-vertical {
+      top: 0 !important;
+      bottom: 0 !important;
+    }
   }
 
   &.resizing {

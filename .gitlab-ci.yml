@@ -17,9 +17,9 @@ variables:
   PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
   DEV2_IMAGE_TAG: "dev2-${VERSION}"
-  STAGING_IMAGE_TAG: "staging-latest"
+  STAGING_IMAGE_TAG: "latest-staging"
   PRODUCTION_IMAGE_TAG: "${VERSION}"
-  STAGING_IMAGE: "${IMAGE}:staging-latest"
+  STAGING_IMAGE: "${IMAGE}:latest-staging"
   ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\/'
   GIT_DEPTH: "0"
 
@@ -43,7 +43,7 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-    value: "1.10.0"
+    value: "1.9.3"
     description: "Update to next release version, it should be numeric value, ex: 1.7.5"
 
 
@@ -260,7 +260,7 @@ deploy-to-staging:
     - |
       docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
       DEV_TAG="dev-latest"
-      STAGING_TAG="staging-latest"
+      STAGING_TAG="latest-staging"
       docker pull "$IMAGE:$DEV_TAG"
       docker tag "$IMAGE:$DEV_TAG" "$IMAGE:$STAGING_TAG"
       docker push "$IMAGE:$STAGING_TAG"
@@ -286,7 +286,7 @@ deploy-to-production:
     - echo 'Retagging staging image as production image...'
     - |
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-        STAGING_TAG="staging-latest"
+        STAGING_TAG="latest-staging"
         PROD_TAG="$VERSION"
         docker pull "$IMAGE:$STAGING_TAG"
         docker tag "$IMAGE:$STAGING_TAG" "$IMAGE:$PROD_TAG"
