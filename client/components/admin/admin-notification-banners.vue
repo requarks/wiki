@@ -289,10 +289,7 @@ export default {
       const startDate = banner.startDate ? new Date(banner.startDate) : null
       const endDate = banner.endDate ? new Date(banner.endDate) : null
       
-      if (startDate && now < startDate) return false
-      if (endDate && now > endDate) return false
-      
-      return true
+      return (!startDate || now >= startDate) && (!endDate || now <= endDate)
     },
     getEmptyBanner() {
       // Default dates: today for start, tomorrow for end - generate fresh each time
