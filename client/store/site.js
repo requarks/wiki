@@ -16,7 +16,7 @@ const state = {
   searchIsLoading: false,
   searchRestrictLocale: false,
   searchRestrictPath: false,
-  notificationBanner: null
+  notificationBanner: []
 }
 
 export default {

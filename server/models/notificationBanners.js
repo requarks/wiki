@@ -39,15 +39,16 @@ module.exports = class NotificationBanner extends Model {
    * Get all active banners for display
    */
   static async getActiveBanners() {
-    const now = new Date().toISOString()
+    const now = new Date()
+    const nowDate = now.toISOString().split('T')[0] 
     
     const banners = await WIKI.models.notificationBanners.query()
       .where('isActive', true)
       .where(function() {
-        this.whereNull('startDate').orWhere('startDate', '<=', now)
+        this.whereNull('startDate').orWhere('startDate', '<=', nowDate)
       })
       .where(function() {
-        this.whereNull('endDate').orWhere('endDate', '>=', now)
+        this.whereNull('endDate').orWhere('endDate', '>=', nowDate)
       })
       .orderBy('createdAt', 'desc')
     

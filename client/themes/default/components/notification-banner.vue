@@ -40,8 +40,9 @@ export default {
       // Get all banners from store
       const banners = this.$store.state?.site?.notificationBanner || []
       if (!Array.isArray(banners)) return []
+
       // Filter by active date range and not dismissed
-      return banners.filter(banner => 
+      return banners.filter(banner =>
         this.isBannerActive(banner) && !this.dismissedBanners.includes(banner.id)
       )
     }
@@ -74,11 +75,17 @@ export default {
     },
     isBannerActive(banner) {
       if (!banner || !banner.isActive) return false
+
       const now = new Date()
       const startDate = banner.startDate ? new Date(banner.startDate) : null
       const endDate = banner.endDate ? new Date(banner.endDate) : null
 
-      return (!startDate || now >= startDate) && (!endDate || now <= endDate)
+      const isTooEarly = startDate && now < startDate
+      const isTooLate = endDate && now > endDate
+
+      if (isTooEarly || isTooLate) return false
+
+      return true
     },
     async loadActiveBanner() {
       try {
@@ -99,7 +106,7 @@ export default {
           `,
           fetchPolicy: 'network-only'
         })
-        
+
         const banner = resp.data.notificationBanners.active
         if (banner) {
           this.$store.commit('site/SET_NOTIFICATION_BANNER', banner)
