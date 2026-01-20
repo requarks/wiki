@@ -767,6 +767,16 @@
     svg:first-child {
       direction: ltr;
     }
+
+    // Apply color scheme from wiki.js
+    svg {
+      color-scheme: light !important;
+    }
+    @at-root .theme--dark & {
+      svg {
+        color-scheme: dark !important;
+      }
+    }
   }
 
   // ---------------------------------
