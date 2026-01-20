@@ -31,7 +31,7 @@
             v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
               v-icon(color="#ffffff") mdi-help-box
           div(style='height:400px;')
-            vue-scroll(:ops='scrollStyle')
+            vue-scroll(ref='treeScroll', :ops='scrollStyle')
               v-treeview(
                 v-if='tree && tree.length > 0'
                 :items='tree'
@@ -54,6 +54,7 @@
                   ) {{ getFolderIcon(item, open) }}
                 template(v-slot:label='{ item }')
                   span(
+                    :ref="'treeNode-' + item.id"
                     @click.stop='onFolderNameClick(item)'
                     style='cursor: pointer;'
                     :class='{ "primary--text font-weight-medium": item.id === selectedFolderId }'
@@ -407,6 +408,8 @@ export default {
           // Closed, open it
           this.openNodes = [...this.openNodes, item.id]
         }
+
+        this.scrollActiveNodeIntoView()
       }
     },
     onFolderIconClick(item) {
@@ -749,6 +752,7 @@ export default {
           await this.preloadChildrenIfNeeded(folder, treeNode)
         }
       }
+      await this.scrollActiveNodeIntoView()
       
       this.searchLoading = false
       this.isAutoExpanding = false
@@ -762,6 +766,21 @@ export default {
         }
       }
       return null
+    },
+    async scrollActiveNodeIntoView() {
+      if (!this.$refs.treeScroll || this.selectedFolderId === null) return
+      
+      await this.$nextTick()
+      const refKey = 'treeNode-' + this.selectedFolderId
+      const activeNodeRef = this.$refs[refKey]
+      const activeNode = Array.isArray(activeNodeRef) ? activeNodeRef[0] : activeNodeRef
+      
+      if (activeNode) {
+        this.$refs.treeScroll.scrollIntoView(activeNode, {
+          behavior: 'smooth',
+          block: 'center'
+        })
+      }
     }
   }
 }

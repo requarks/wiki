@@ -690,7 +690,8 @@ export default {
         vuescroll: {},
         scrollPanel: {
           initialScrollX: 0.01, // fix scrollbar not disappearing on load
-          scrollingX: false,
+          scrollingX: true,
+          scrollingY: true,
           speed: 50
         },
         rail: {
@@ -1739,6 +1740,39 @@ export default {
   // Make scrollbar stick to bottom of sidebar
   .sidebar-scroll-container {
     height: 100% !important;
+    
+    // vuescroll container and panel should fill height
+    ::v-deep .__container,
+    ::v-deep .__panel {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    
+    // Content wrapper for horizontal scroll
+    ::v-deep .__view {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      min-width: min-content;
+      padding-bottom: 12px;
+    }
+    
+    // Pin horizontal scrollbar to bottom
+    ::v-deep .__rail-is-horizontal {
+      position: absolute !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      top: auto !important;
+      z-index: 10 !important;
+      margin: 0 !important;
+    }
+    
+    // Vertical scrollbar styling
+    ::v-deep .__rail-is-vertical {
+      top: 0 !important;
+      bottom: 0 !important;
+    }
   }
 
   &.resizing {
