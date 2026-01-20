@@ -768,7 +768,7 @@ export default {
     @include until($tablet) {
       max-width: 100%;
     }
-
+    
     .v-text-field--outlined fieldset {
       border-color: #CBD5E1;
       border-width: 1px;
@@ -887,7 +887,7 @@ export default {
       height: auto;
     }
   }
-  
+
   .v-dialog {
     .login-input {
       .v-label {

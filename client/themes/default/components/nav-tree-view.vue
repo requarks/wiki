@@ -1,24 +1,23 @@
 <template lang="pug">
   .tree-navigation
-    vue-scroll(:ops='scrollStyle')
-      .tree-content-wrapper
-        v-treeview(
-          v-if='pageTree.length > 0'
-          :key='`navTree-` + treeViewCacheId'
-          :active.sync='activeNodes'
-          :open.sync='openNodes'
-          :items='pageTree'
-          :load-children='loadChildren'
-          dense
-          open-on-click
-          item-key='path'
-          item-text='title'
-          item-children='children'
-          activatable
-          hoverable
-          return-object
-          @update:active='onNodeActivated'
-        )
+    .tree-content-wrapper
+      v-treeview(
+        v-if='pageTree.length > 0'
+        :key='`navTree-` + treeViewCacheId'
+        :active.sync='activeNodes'
+        :open.sync='openNodes'
+        :items='pageTree'
+        :load-children='loadChildren'
+        dense
+        open-on-click
+        item-key='path'
+        item-text='title'
+        item-children='children'
+        activatable
+        hoverable
+        return-object
+        @update:active='onNodeActivated'
+      )
           template(v-slot:prepend='{ item, open }')
             v-icon(
               v-if='item.isFolder || item.hasChildren || (item.children && item.children.length > 0)'
@@ -69,25 +68,7 @@ export default {
       preloadTimeout: null,
       isLoading: false,
       isRestoringState: false, // Flag to prevent saving during restoration
-      colors: colors,
-        scrollStyle: {
-        vuescroll: {
-          mode: 'native'
-        },
-        scrollPanel: {
-          scrollingX: true,
-          scrollingY: true
-        },
-        rail: {
-          gutterOfEnds: '2px'
-        },
-        bar: {
-          background: this.dark ? colors.surfaceDark.secondaryNeutralLite : colors.neutral[300],
-          opacity: 0.5,
-          size: '8px',
-          keepShow: false
-        }
-      }
+      colors: colors
     }
   },
   computed: {
@@ -111,11 +92,10 @@ export default {
     },
     path: {
       immediate: false,
-      handler(newPath, oldPath) {
-        // Only update highlights and expansion, DON'T reload tree
+      async handler(newPath, oldPath) {
         if (newPath && newPath !== oldPath) {
-          this.expandToCurrentPage(newPath)
           this.setActivePage(newPath)
+          await this.scrollToActivePage()
         }
       }
     }
@@ -135,6 +115,7 @@ export default {
         if (this.path) {
           await this.expandToCurrentPage(this.path)
           this.setActivePage(this.path)
+          await this.scrollToActivePage()
         }
         
         this.isRestoringState = false // Re-enable watcher AFTER everything is done
@@ -171,6 +152,22 @@ export default {
           console.warn('Failed to save tree state to localStorage:', error)
         }
       }, 100)
+    },
+    
+    async scrollToActivePage() {
+      if (!this.currentPagePath) return
+      
+      // Ensure path is expanded first
+      await this.expandToCurrentPage(this.currentPagePath)
+      
+      // Wait for Vue to render the expanded nodes
+      await this.$nextTick()
+
+      // Find and scroll to element
+      const targetElement = this.$el.querySelector('.tree-node-current')
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
     },
     
     async loadChildrenForOpenNodes() {
@@ -542,15 +539,13 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  
-  .vue-scroll {
-    flex: 1;
-  }
+  position: relative;
   
   .tree-content-wrapper {
     min-width: min-content;
     display: inline-block;
     width: 100%;
+    flex: 1;
   }
   
   .tree-node-label {
