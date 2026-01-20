@@ -764,16 +764,19 @@
   .diagram {
     margin-top: 1rem;
     overflow: auto;
+    
     svg:first-child {
       direction: ltr;
     }
 
-    // Apply color scheme from wiki.js
     svg {
-      color-scheme: light !important;
-    }
-    @at-root .theme--dark & {
-      svg {
+      color-scheme: light;
+
+      &:first-child {
+        direction: ltr;
+      }
+
+      @at-root .theme--dark & {
         color-scheme: dark !important;
       }
     }
