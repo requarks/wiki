@@ -83,9 +83,7 @@ export default {
       const isTooEarly = startDate && now < startDate
       const isTooLate = endDate && now > endDate
 
-      if (isTooEarly || isTooLate) return false
-
-      return true
+      return !(isTooEarly || isTooLate)
     },
     async loadActiveBanner() {
       try {
