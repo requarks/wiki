@@ -766,7 +766,7 @@
     overflow: auto;
 
     svg {
-      color-scheme: light;
+      color-scheme: light !important;
 
       &:first-child {
         direction: ltr;
