@@ -22,13 +22,17 @@ module.exports = {
       state: conf.enableCSRFProtection
     }, async (req, accessToken, refreshToken, profile, cb) => {
       try {
+        const picture = _.get(profile, 'picture',
+          _.get(profile, 'avatar',
+            _.get(profile, 'profile.picture', _.get(profile, 'profile.avatar', ''))))
         const user = await WIKI.models.users.processProfile({
           providerKey: req.params.strategy,
           profile: {
             ...profile,
             id: _.get(profile, conf.userIdClaim),
             displayName: _.get(profile, conf.displayNameClaim, '???'),
-            email: _.get(profile, conf.emailClaim)
+            email: _.get(profile, conf.emailClaim),
+            picture
           }
         })
         if (conf.mapGroups) {
