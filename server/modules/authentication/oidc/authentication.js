@@ -24,6 +24,10 @@ module.exports = {
         acrValues: conf.acrValues
       }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
         const profile = Object.assign({}, idProfile, uiProfile)
+        const picture = _.get(profile, 'picture',
+          _.get(profile, '_json.picture',
+            _.get(profile, '_json.avatar',
+              _.get(profile, '_json.profile.picture', _.get(profile, '_json.profile.avatar', '')))))
 
         try {
           const user = await WIKI.models.users.processProfile({
@@ -31,7 +35,8 @@ module.exports = {
             profile: {
               ...profile,
               email: _.get(profile, '_json.' + conf.emailClaim),
-              displayName: _.get(profile, '_json.' + conf.displayNameClaim, '')
+              displayName: _.get(profile, '_json.' + conf.displayNameClaim, ''),
+              picture
             }
           })
           if (conf.mapGroups) {
