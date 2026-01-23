@@ -57,7 +57,7 @@ async function anonymizePageHistory(userSiteInactivity, anonymousUser, user) {
   )
 }
 
-async function anonymizePages(userSiteInactivity, anonymousUser) {
+async function anonymizePages(userSiteInactivity, anonymousUser, user) {
   // Get all pages where user was author or creator before updating
   const affectedPages = await WIKI.models.pages.query()
     .where(builder => {
@@ -73,6 +73,14 @@ async function anonymizePages(userSiteInactivity, anonymousUser) {
   await WIKI.models.pages.query()
     .where({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
     .patch({ creatorId: anonymousUser.id })
+
+  // Anonymize mentions in current page content
+  const sitePageIds = await getSitePageIds(userSiteInactivity.siteId)
+  await WIKI.models.pages.anonymizeMentionsByPageIds(
+    sitePageIds,
+    (content, contentType) => userService.anonymizeUserMentions(content, contentType, user.email),
+    user.email
+  )
 
   // Invalidate cache for all affected pages to ensure updated user info is reflected
   for (const page of affectedPages) {

@@ -1706,6 +1706,39 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Anonymize user mentions in page content for given pageIds
+   * @param {Array<string>} pageIds - IDs of pages where the user is mentioned
+   * @param {Function} anonymizeFn - Function to anonymize mentions in content of page
+   * @param {string} email - Email of the user to anonymize mentions for
+   */
+  static async anonymizeMentionsByPageIds(pageIds, anonymizeFn, email) {
+    const pages = await WIKI.models.pages.query()
+      .whereIn('id', pageIds)
+      .where(builder => {
+        builder
+          .where('content', 'like', `%@${email}%`)
+          .orWhere('content', 'like', `%data-mention="${email}"%`)
+      })
+    for (const page of pages) {
+      let newContent = page.content
+      if (typeof anonymizeFn === 'function') {
+        newContent = anonymizeFn(page.content, page.contentType)
+      }
+      if (newContent !== page.content) {
+        await WIKI.models.pages.query()
+          .patch({ content: newContent })
+          .where('id', page.id)
+        
+        // Invalidate cache for the updated page
+        await WIKI.models.pages.deletePageFromCache(page.hash)
+        if (WIKI.events && WIKI.events.outbound) {
+          WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+        }
+      }
+    }
+  }
+
+  /**
    * Subscribe to HA propagation events
    */
   static subscribeToEvents() {

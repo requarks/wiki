@@ -30,17 +30,18 @@ async function anonymizeComments(user, mentionedComments, userComments, anonymou
   for (const commentId of uniqueCommentIds) {
     const comment = await WIKI.models.comments.query().findById(commentId)
     if (comment) {
-      const page = await WIKI.models.pages.query().findById(comment.pageId)
       let updatedContent = comment.content
+      let updatedRender = comment.render
 
       if (mentionedComments.some(mention => mention.commentId === commentId)) {
-        updatedContent = updatedContent.replace(new RegExp(`@${user.email}`, 'g'), '@AnonymousUser')
+        // Anonymize mentions in both content (markdown) and render (html)
+        updatedContent = anonymizeUserMentions(comment.content, 'markdown', user.email)
+        updatedRender = anonymizeUserMentions(comment.render, 'html', user.email)
       }
 
       const updateData = {
-        id: comment.id,
         content: updatedContent,
-        page: page
+        render: updatedRender
       }
 
       if (userComments.some(userComment => userComment.id === commentId)) {
@@ -52,7 +53,8 @@ async function anonymizeComments(user, mentionedComments, userComments, anonymou
         updateData.authorId = anonymousUser.id
       }
 
-      await WIKI.data.commentProvider.update(updateData)
+      // Update directly in database to preserve our anonymized render
+      await WIKI.models.comments.query().findById(commentId).patch(updateData)
       await WIKI.models.userMentions.query().delete().where({ userId: user.id, pageId: comment.pageId, commentId: comment.id })
     }
   }
@@ -139,7 +141,7 @@ function getMailLogoSource() {
 /**
    * This function anonymizes user mentions in content for both markdown and HTML content types.
    * It replaces mentions of the user's email with '@AnonymousUser' in markdown,
-   * and replaces HTML span elements with the mention class with a generic anonymous mention.
+   * and replaces HTML span elements with the mention class with plain text '@AnonymousUser'.
    * Currently, there is no mention functionality for the 'ascii' editor
    * so this function returns the original content for ascii.
    * @param {*} content - The content of the page.
@@ -151,7 +153,7 @@ function anonymizeUserMentions(content, contentType, email) {
   if (contentType === 'markdown') {
     return content.replace(new RegExp(`@${email}`, 'g'), '@AnonymousUser')
   } else if (contentType === 'html') {
-    return content.replace(new RegExp(`<span class="mention" data-mention="${email}">@${email}</span>`, 'g'), '<span class="mention mention-anonymous">@AnonymousUser</span>')
+    return content.replace(new RegExp(`<span class="mention" data-mention="${email}">@${email}</span>`, 'g'), '@AnonymousUser')
   }
   return content
 }

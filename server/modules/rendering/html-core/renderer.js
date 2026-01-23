@@ -282,9 +282,8 @@ async function processMentions($, context) {
       $('span.mention').each((i, elm) => {
         const mention = $(elm).text().replace(/^@/, '')
         if (mentionsSet.has(mention)) {
-          $(elm).text('@AnonymousUser')
-          $(elm).removeAttr('data-mention')
-          $(elm).addClass('mention-anonymous')
+          // Replace the entire span with plain text @AnonymousUser
+          $(elm).replaceWith('@AnonymousUser')
         }
       })
       if (context.page.contentType === 'markdown') {
@@ -293,7 +292,7 @@ async function processMentions($, context) {
       } else if (context.page.contentType === 'html') {
         const mentionPattern = `<span class="mention" dat-mention="(${mentionsToAnonymize.map(m => _.escapeRegExp(m)).join('|')})">@(?:${mentionsToAnonymize.map(m => _.escapeRegExp(m)).join('|')})</span>`
         const regex = new RegExp(mentionPattern, 'g')
-        context.page.content = context.page.content.replace(regex, '<span class="mention mention-anonymous">@AnonymousUser</span>')
+        context.page.content = context.page.content.replace(regex, '@AnonymousUser')
       }
     }
   }

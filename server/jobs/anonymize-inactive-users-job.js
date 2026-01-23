@@ -35,7 +35,7 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
   await anonymizeAssets(userSiteInactivity, anonymousUser)
   await userService.anonymizeComments(user, mentionedCommentsOfSite, commentsOfSite, anonymousUser)
   await anonymizePageHistory(userSiteInactivity, anonymousUser, user)
-  await anonymizePages(userSiteInactivity, anonymousUser)
+  await anonymizePages(userSiteInactivity, anonymousUser, user)
 
   // Remove inactivity entry and user mentions
   await removeInactivityEntry(userSiteInactivity)
