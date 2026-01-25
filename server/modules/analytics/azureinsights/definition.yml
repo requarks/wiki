@@ -6,8 +6,20 @@ logo: https://static.requarks.io/logo/azure.svg
 website: https://azure.microsoft.com/en-us/services/monitor/
 isAvailable: true
 props:
-  instrumentationKey:
+  connectionString:
     type: String
-    title: Instrumentation Key
+    title: Connection String
     hint: Found in the Azure Portal in your Application Insights resource panel
     order: 1
+  crossOrigin:
+    type: String
+    title: Cross Origin
+    hint: When supplied this will add the provided value as the cross origin attribute on the script tag
+    default: anonymous
+    order: 2
+  loadDelay:
+    type: Number
+    title: Load Delay
+    hint: Defines the load delay (in ms) before attempting to load the sdk. -1 = block page load and add to head. (default) = 0ms load after timeout
+    default: 0
+    order: 3
