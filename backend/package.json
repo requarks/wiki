@@ -1,0 +1,83 @@
+{
+  "name": "wiki-backend",
+  "version": "3.0.0",
+  "releaseDate": "2026-01-01T01:01:01.000Z",
+  "description": "The most powerful and extensible open source Wiki software",
+  "main": "index.mjs",
+  "type": "module",
+  "private": true,
+  "dev": true,
+  "scripts": {
+    "start": "cd .. && node backend",
+    "dev": "cd .. && nodemon backend --watch backend --ext mjs,js,json",
+    "ncu": "ncu -i",
+    "ncu-u": "ncu -u",
+    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.mjs --out=./db/migrations --name=main"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/requarks/wiki.git"
+  },
+  "keywords": [
+    "wiki",
+    "wikis",
+    "docs",
+    "documentation",
+    "markdown",
+    "guides",
+    "knowledge base"
+  ],
+  "author": "Nicolas Giard",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/requarks/wiki/issues"
+  },
+  "homepage": "https://github.com/requarks/wiki#readme",
+  "engines": {
+    "node": ">=24.0"
+  },
+  "dependencies": {
+    "@fastify/compress": "8.3.1",
+    "@fastify/cookie": "11.0.2",
+    "@fastify/cors": "11.2.0",
+    "@fastify/formbody": "8.0.2",
+    "@fastify/helmet": "13.0.2",
+    "@fastify/passport": "3.0.2",
+    "@fastify/sensible": "6.0.4",
+    "@fastify/session": "11.1.1",
+    "@fastify/static": "9.0.0",
+    "@fastify/swagger": "9.6.1",
+    "@fastify/swagger-ui": "5.2.4",
+    "@fastify/view": "11.1.1",
+    "@gquittet/graceful-server": "6.0.2",
+    "ajv-formats": "3.0.1",
+    "bcryptjs": "3.0.3",
+    "drizzle-orm": "0.45.1",
+    "fastify": "5.7.1",
+    "fastify-favicon": "5.0.0",
+    "lodash-es": "4.17.22",
+    "luxon": "3.7.2",
+    "nanoid": "5.1.6",
+    "pem-jwk": "2.0.0",
+    "pg": "8.16.3",
+    "pg-pubsub": "0.8.1",
+    "pug": "3.0.3",
+    "semver": "7.7.3",
+    "uuid": "13.0.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.8",
+    "eslint": "9.32.0",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "7.2.1",
+    "neostandard": "0.12.2",
+    "nodemon": "3.1.10",
+    "npm-check-updates": "19.3.1"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/wikijs",
+    "logo": "https://opencollective.com/opencollective/logo.txt"
+  }
+}
