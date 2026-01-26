@@ -232,7 +232,6 @@ describe('anonymizeInactiveUsersHelpers', () => {
       const secondQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
 
       // Third query: get site page IDs
-      const sitePageIds = [1, 2, 3]
       const selectMockForSitePages = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
       const whereForSitePages = jest.fn(() => ({ select: selectMockForSitePages }))
       const thirdQuery = { where: whereForSitePages }
