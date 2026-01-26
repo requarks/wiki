@@ -58,15 +58,7 @@ async function anonymizePageHistory(userSiteInactivity, anonymousUser, user) {
 }
 
 async function anonymizePages(userSiteInactivity, anonymousUser, user) {
-  // Get all pages where user was author or creator before updating
-  const affectedPages = await WIKI.models.pages.query()
-    .where(builder => {
-      builder.where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
-        .orWhere({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
-    })
-    .select('hash')
-
-  // Update database records
+  // Update database records for authored pages
   await WIKI.models.pages.query()
     .where({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
     .patch({ authorId: anonymousUser.id })
@@ -74,23 +66,34 @@ async function anonymizePages(userSiteInactivity, anonymousUser, user) {
     .where({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
     .patch({ creatorId: anonymousUser.id })
 
-  // Anonymize mentions in current page content
+  // Anonymize mentions in current page content and get all pages that were modified
   const sitePageIds = await getSitePageIds(userSiteInactivity.siteId)
+  const modifiedPages = await WIKI.models.pages.query()
+    .whereIn('id', sitePageIds)
+    .where(builder => {
+      builder
+        .where('content', 'like', `%@${user.email}%`)
+        .orWhere('content', 'like', `%data-mention="${user.email}"%`)
+        .orWhere({ authorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
+        .orWhere({ creatorId: userSiteInactivity.userId, siteId: userSiteInactivity.siteId })
+    })
+    .select('hash', 'id')
+
   await WIKI.models.pages.anonymizeMentionsByPageIds(
     sitePageIds,
     (content, contentType) => userService.anonymizeUserMentions(content, contentType, user.email),
     user.email
   )
 
-  // Invalidate cache for all affected pages to ensure updated user info is reflected
-  for (const page of affectedPages) {
+  // Invalidate cache for all pages that had mentions or authorship changes
+  for (const page of modifiedPages) {
     await WIKI.models.pages.deletePageFromCache(page.hash)
     if (WIKI.events && WIKI.events.outbound) {
       WIKI.events.outbound.emit('deletePageFromCache', page.hash)
     }
   }
   // Log completion for privacy compliance
-  WIKI.logger.info(`[PRIVACY] Anonymized ${affectedPages.length} pages for user ${userSiteInactivity.userId} on site ${userSiteInactivity.siteId}`)
+  WIKI.logger.info(`[PRIVACY] Anonymized ${modifiedPages.length} pages for user ${userSiteInactivity.userId} on site ${userSiteInactivity.siteId}`)
 }
 
 async function removeInactivityEntry(userSiteInactivity) {

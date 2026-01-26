@@ -145,29 +145,36 @@ describe('anonymizeInactiveUsersHelpers', () => {
   describe('anonymizePages', () => {
     it('should patch authorId and creatorId, anonymize mentions, and invalidate cache', async () => {
       // Arrange mocks for the sequential query() calls in anonymizePages
-      const affectedPages = [{ hash: 'hash1' }, { hash: 'hash2' }]
+      
+      // First query: patch authorId
+      const patchAuthor = jest.fn()
+      const firstQuery = { where: jest.fn(() => ({ patch: patchAuthor })) }
 
-      // First query: builder pattern returning pages with hashes
+      // Second query: patch creatorId
+      const patchCreator = jest.fn()
+      const secondQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
+
+      // Third query: get site page IDs
+      const sitePageIds = [1, 2, 3]
+      const selectMockForSitePages = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
+      const whereForSitePages = jest.fn(() => ({ select: selectMockForSitePages }))
+      const thirdQuery = { where: whereForSitePages }
+
+      // Fourth query: get modified pages (pages with mentions + authored pages)
+      const modifiedPages = [{ hash: 'hash1', id: 1 }, { hash: 'hash2', id: 2 }]
       const builderStub = {
         where: jest.fn(function () { return builderStub }),
-        orWhere: jest.fn(function () { return builderStub }),
-        select: jest.fn(() => Promise.resolve(affectedPages))
+        orWhere: jest.fn(function () { return builderStub })
       }
-      const firstQuery = { where: jest.fn(fn => { fn(builderStub); return builderStub }) }
+      const selectMockForModified = jest.fn(() => Promise.resolve(modifiedPages))
+      const whereMockForModified = jest.fn(fn => { fn(builderStub); return { select: selectMockForModified } })
+      const whereInMockForModified = jest.fn(() => ({ where: whereMockForModified }))
+      const fourthQuery = { whereIn: whereInMockForModified }
 
-      // Second query: patch authorId
-      const patchAuthor = jest.fn()
-      const secondQuery = { where: jest.fn(() => ({ patch: patchAuthor })) }
-
-      // Third query: patch creatorId
-      const patchCreator = jest.fn()
-      const thirdQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
-
-      // Mock getSitePageIds
-      const sitePageIds = [1, 2, 3]
-      const selectMock = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
-      const whereForPages = jest.fn(() => ({ select: selectMock }))
-      const fourthQuery = { where: whereForPages }
+      // Fifth query: for getSitePageIds again (called by anonymizeMentionsByPageIds)
+      const selectMockForAnon = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
+      const whereForAnon = jest.fn(() => ({ select: selectMockForAnon }))
+      const fifthQuery = { where: whereForAnon }
 
       // Stub deletePageFromCache + events emitter
       WIKI.models.pages.deletePageFromCache = jest.fn()
@@ -180,6 +187,7 @@ describe('anonymizeInactiveUsersHelpers', () => {
         .mockReturnValueOnce(secondQuery)
         .mockReturnValueOnce(thirdQuery)
         .mockReturnValueOnce(fourthQuery)
+        .mockReturnValueOnce(fifthQuery)
 
       const user = { email: 'test@example.com' }
 
@@ -187,14 +195,16 @@ describe('anonymizeInactiveUsersHelpers', () => {
       await helpers.anonymizePages({ userId: 42, siteId: 'siteA' }, { id: 999 }, user)
 
       // Assert author patch
-      expect(secondQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
+      expect(firstQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
       expect(patchAuthor).toHaveBeenCalledWith({ authorId: 999 })
       // Assert creator patch
-      expect(thirdQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
+      expect(secondQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
       expect(patchCreator).toHaveBeenCalledWith({ creatorId: 999 })
       // Assert getSitePageIds was called
-      expect(whereForPages).toHaveBeenCalledWith({ siteId: 'siteA' })
-      expect(selectMock).toHaveBeenCalledWith('id')
+      expect(whereForSitePages).toHaveBeenCalledWith({ siteId: 'siteA' })
+      expect(selectMockForSitePages).toHaveBeenCalledWith('id')
+      // Assert modified pages query
+      expect(whereInMockForModified).toHaveBeenCalledWith('id', sitePageIds)
       // Assert anonymizeMentionsByPageIds was called
       expect(WIKI.models.pages.anonymizeMentionsByPageIds).toHaveBeenCalledWith(
         sitePageIds,
@@ -210,24 +220,37 @@ describe('anonymizeInactiveUsersHelpers', () => {
     })
 
     it('should not attempt cache invalidation or events when no pages are affected', async () => {
-      // First query returns empty array
+      // Explicitly reset the query mock implementation to clear any previous mockReturnValueOnce calls
+      WIKI.models.pages.query.mockReset()
+      
+      // First query: patch authorId  
+      const patchAuthor = jest.fn()
+      const firstQuery = { where: jest.fn(() => ({ patch: patchAuthor })) }
+
+      // Second query: patch creatorId
+      const patchCreator = jest.fn()
+      const secondQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
+
+      // Third query: get site page IDs
+      const sitePageIds = [1, 2, 3]
+      const selectMockForSitePages = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
+      const whereForSitePages = jest.fn(() => ({ select: selectMockForSitePages }))
+      const thirdQuery = { where: whereForSitePages }
+
+      // Fourth query: get modified pages (returns empty array)
       const builderStub = {
         where: jest.fn(function () { return builderStub }),
-        orWhere: jest.fn(function () { return builderStub }),
-        select: jest.fn(() => Promise.resolve([]))
+        orWhere: jest.fn(function () { return builderStub })
       }
-      const firstQuery = { where: jest.fn(fn => { fn(builderStub); return builderStub }) }
+      const selectMockForModified = jest.fn(() => Promise.resolve([]))
+      const whereMockForModified = jest.fn(fn => { fn(builderStub); return { select: selectMockForModified } })
+      const whereInMockForModified = jest.fn(() => ({ where: whereMockForModified }))
+      const fourthQuery = { whereIn: whereInMockForModified }
 
-      // Author + creator patch queries (still perform updates)
-      const patchAuthor = jest.fn()
-      const secondQuery = { where: jest.fn(() => ({ patch: patchAuthor })) }
-      const patchCreator = jest.fn()
-      const thirdQuery = { where: jest.fn(() => ({ patch: patchCreator })) }
-
-      // Mock getSitePageIds
-      const selectMock = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
-      const whereForPages = jest.fn(() => ({ select: selectMock }))
-      const fourthQuery = { where: whereForPages }
+      // Fifth query: for getSitePageIds again (called by anonymizeMentionsByPageIds)
+      const selectMockForAnon = jest.fn(() => Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }]))
+      const whereForAnon = jest.fn(() => ({ select: selectMockForAnon }))
+      const fifthQuery = { where: whereForAnon }
 
       WIKI.models.pages.deletePageFromCache = jest.fn()
       WIKI.models.pages.anonymizeMentionsByPageIds = jest.fn()
@@ -238,14 +261,15 @@ describe('anonymizeInactiveUsersHelpers', () => {
         .mockReturnValueOnce(secondQuery)
         .mockReturnValueOnce(thirdQuery)
         .mockReturnValueOnce(fourthQuery)
+        .mockReturnValueOnce(fifthQuery)
 
       const user = { email: 'test@example.com' }
 
       await helpers.anonymizePages({ userId: 42, siteId: 'siteA' }, { id: 999 }, user)
 
-      expect(secondQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
+      expect(firstQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
       expect(patchAuthor).toHaveBeenCalledWith({ authorId: 999 })
-      expect(thirdQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
+      expect(secondQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
       expect(patchCreator).toHaveBeenCalledWith({ creatorId: 999 })
       // anonymizeMentionsByPageIds should still be called
       expect(WIKI.models.pages.anonymizeMentionsByPageIds).toHaveBeenCalled()

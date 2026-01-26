@@ -28,14 +28,14 @@ async function anonymizeInactiveUser(userSiteInactivity, anonymousUser) {
   const mentionedCommentsOfSite = await getMentionedCommentsOfSite(userSiteInactivity.userId, sitePageIds)
   const commentsOfSite = await getUserCommentsOfSite(userSiteInactivity.userId, sitePageIds)
 
-  // Render mentioned pages
-  await userService.renderMentionedPagesWithoutScheduler(mentionedPagesOfSite)
-
-  // Anonymize assets, comments, page history, and pages
+  // Anonymize assets, comments, page history, and pages FIRST
   await anonymizeAssets(userSiteInactivity, anonymousUser)
   await userService.anonymizeComments(user, mentionedCommentsOfSite, commentsOfSite, anonymousUser)
   await anonymizePageHistory(userSiteInactivity, anonymousUser, user)
   await anonymizePages(userSiteInactivity, anonymousUser, user)
+
+  // THEN render mentioned pages to pick up the anonymized content
+  await userService.renderMentionedPagesWithoutScheduler(mentionedPagesOfSite)
 
   // Remove inactivity entry and user mentions
   await removeInactivityEntry(userSiteInactivity)

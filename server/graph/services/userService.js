@@ -172,14 +172,34 @@ function anonymizeUserMentions(content, contentType, email) {
     return result
   } else if (contentType === 'html') {
     // Use cheerio to properly handle HTML with varying attribute orders
-    const $ = cheerio.load(content, { decodeEntities: false })
+    // Don't wrap in html/body tags since page content is just fragments
+    const $ = cheerio.load(content, { 
+      decodeEntities: false,
+      _useHtmlParser2: true
+    })
+    
+    let hasChanges = false
     $('span.mention').each((i, elm) => {
       const mentionEmail = $(elm).attr('data-mention')
       if (mentionEmail === email) {
         $(elm).replaceWith('@AnonymousUser')
+        hasChanges = true
       }
     })
-    return $('body').html() || content
+    
+    // Only return modified content if we actually made changes
+    if (!hasChanges) {
+      return content
+    }
+    
+    // Get the HTML without the wrapper tags
+    const bodyContent = $('body').html()
+    if (bodyContent !== null) {
+      return bodyContent
+    }
+    
+    // Fallback: try to get root HTML if there's no body tag
+    return $.html()
   }
   return content
 }
