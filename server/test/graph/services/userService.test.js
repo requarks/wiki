@@ -46,7 +46,7 @@ function setupMocks(comments, pages) {
       if (comment) {
         return {
           ...comment,
-          patch: jest.fn().mockResolvedValue(comment)
+          patch: comment.patch || jest.fn().mockResolvedValue(comment)
         }
       }
       return null
