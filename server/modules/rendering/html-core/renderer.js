@@ -280,8 +280,10 @@ async function processMentions($, context) {
     if (mentionsToAnonymize.length > 0) {
       const mentionsSet = new Set(mentionsToAnonymize)
       $('span.mention').each((i, elm) => {
-        const mention = $(elm).text().replace(/^@/, '')
-        if (mentionsSet.has(mention)) {
+        const mentionEmail = $(elm).attr('data-mention')
+        // Check both the data-mention attribute and the text content
+        const mentionText = $(elm).text().replace(/^@/, '')
+        if (mentionsSet.has(mentionEmail) || mentionsSet.has(mentionText)) {
           // Replace the entire span with plain text @AnonymousUser
           $(elm).replaceWith('@AnonymousUser')
         }
@@ -297,6 +299,35 @@ async function processMentions($, context) {
     }
   }
 
+  // -> Remove highlighting from AnonymousUser mentions
+  function removeAnonymousUserHighlighting($, context) {
+    // Update DOM
+    $('span.mention').each((i, elm) => {
+      const mentionEmail = $(elm).attr('data-mention')
+      const mentionText = $(elm).text().replace(/^@/, '')
+      // Remove highlighting from @AnonymousUser and deleted@deleted.deleted
+      if (mentionEmail === 'AnonymousUser' || mentionText === 'AnonymousUser' || mentionText === 'deleted@deleted.deleted') {
+        $(elm).replaceWith('@AnonymousUser')
+      }
+    })
+
+    // Update stored content for both HTML and Markdown
+    if (context.page.contentType === 'markdown') {
+      // For markdown, replace any mention spans with plain text
+      context.page.content = context.page.content
+        .replace(/<span[^>]*class="mention"[^>]*data-mention="AnonymousUser"[^>]*>@AnonymousUser<\/span>/gi, '@AnonymousUser')
+        .replace(/<span[^>]*data-mention="AnonymousUser"[^>]*class="mention"[^>]*>@AnonymousUser<\/span>/gi, '@AnonymousUser')
+        .replace(/<span[^>]*class="mention"[^>]*>@AnonymousUser<\/span>/gi, '@AnonymousUser')
+        .replace(/<span[^>]*class="mention"[^>]*>@deleted@deleted\.deleted<\/span>/gi, '@AnonymousUser')
+    } else if (context.page.contentType === 'html') {
+      // For HTML/visual editor, remove span tags around AnonymousUser
+      context.page.content = context.page.content
+        .replace(/<span[^>]*class="mention"[^>]*data-mention="AnonymousUser"[^>]*>@AnonymousUser<\/span>/gi, '@AnonymousUser')
+        .replace(/<span[^>]*data-mention="AnonymousUser"[^>]*class="mention"[^>]*>@AnonymousUser<\/span>/gi, '@AnonymousUser')
+        .replace(/<span[^>]*class="mention"[^>]*>@AnonymousUser<\/span>/gi, '@AnonymousUser')
+    }
+  }
+
   // Main logic
   let mentions = collectMentions($)
   const existingMentions = await context.page.$relatedQuery('mentions')
@@ -305,6 +336,7 @@ async function processMentions($, context) {
   await removeOutdatedMentions(existingMentions, mentions)
   const mentionsToAnonymize = await getMentionsToAnonymize(mentions, context)
   anonymizeMentionsInDomAndContent($, mentionsToAnonymize, context)
+  removeAnonymousUserHighlighting($, context)
 }
 
 // --------------------------------

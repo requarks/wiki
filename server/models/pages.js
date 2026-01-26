@@ -1538,9 +1538,146 @@ module.exports = class Page extends Model {
         //   }
         // })
         .first()
+        .then(async (page) => {
+          if (page && page.content) {
+            // Clean up anonymized user mentions for editing
+            page.content = await WIKI.models.pages.cleanAnonymizedMentionsForEditing(page.content, page.contentType)
+          }
+          return page
+        })
     } catch (err) {
       WIKI.logger.warn(err)
       throw err
+    }
+  }
+
+  /**
+   * Clean anonymized user mentions from content for editing
+   * This ensures deleted user mentions appear as @AnonymousUser in the editor
+   *
+   * @param {String} content Page content
+   * @param {String} contentType Content type (html or markdown)
+   * @returns {Promise<String>} Cleaned content
+   */
+  static async cleanAnonymizedMentionsForEditing(content, contentType) {
+    try {
+      if (contentType === 'html') {
+        // Extract all mention emails from content
+        const $ = cheerio.load(content, { decodeEntities: false })
+        const mentionEmails = []
+        $('span.mention').each((i, elm) => {
+          const email = $(elm).attr('data-mention')
+          if (email && !mentionEmails.includes(email)) {
+            mentionEmails.push(email)
+          }
+        })
+
+        if (mentionEmails.length === 0) {
+          return content
+        }
+
+        // Check which emails still exist in the database
+        const existingUsers = await WIKI.models.users.query()
+          .select('email')
+          .whereIn('email', mentionEmails)
+          .andWhereNot('email', 'deleted@deleted.deleted')
+        
+        const existingEmails = new Set(existingUsers.map(u => u.email))
+
+        // Replace mentions for users that no longer exist or have deleted@deleted.deleted email
+        $('span.mention').each((i, elm) => {
+          const mentionEmail = $(elm).attr('data-mention')
+          const mentionText = $(elm).text()
+          
+          // Replace if:
+          // 1. Email is deleted@deleted.deleted (anonymized user)
+          // 2. Text is already @AnonymousUser
+          // 3. Email doesn't exist in the users table anymore (deleted user)
+          if (mentionEmail === 'deleted@deleted.deleted' || 
+              mentionText === '@AnonymousUser' ||
+              (mentionEmail && !existingEmails.has(mentionEmail))) {
+            $(elm).replaceWith('@AnonymousUser')
+          }
+        })
+        // Return only body content to avoid html/head/body wrapper tags
+        return $('body').html() || content
+      } else if (contentType === 'markdown') {
+        // For markdown, we need to handle HTML spans that might exist
+        // (happens when content was created in visual editor)
+        
+        // First, check if there are any mention spans in the content
+        if (!content.includes('<span') || !content.includes('class="mention"')) {
+          // No HTML spans, just check plain text mentions
+          const mentionRegex = /@([\w.-]+@[\w.-]+\.\w+)/g
+          const mentions = []
+          let match
+          while ((match = mentionRegex.exec(content)) !== null) {
+            if (!mentions.includes(match[1])) {
+              mentions.push(match[1])
+            }
+          }
+
+          if (mentions.length === 0) {
+            return content
+          }
+
+          const existingUsers = await WIKI.models.users.query()
+            .select('email')
+            .whereIn('email', mentions)
+            .andWhereNot('email', 'deleted@deleted.deleted')
+          
+          const existingEmails = new Set(existingUsers.map(u => u.email))
+
+          let cleanedContent = content
+          for (const email of mentions) {
+            if (email === 'deleted@deleted.deleted' || !existingEmails.has(email)) {
+              cleanedContent = cleanedContent.replace(new RegExp(`@${_.escapeRegExp(email)}`, 'g'), '@AnonymousUser')
+            }
+          }
+          return cleanedContent
+        }
+
+        // Content has HTML spans - use cheerio to parse and clean them
+        const $ = cheerio.load(content, { decodeEntities: false })
+        const mentionEmails = []
+        
+        $('span.mention').each((i, elm) => {
+          const email = $(elm).attr('data-mention')
+          if (email && !mentionEmails.includes(email)) {
+            mentionEmails.push(email)
+          }
+        })
+
+        if (mentionEmails.length === 0) {
+          return content
+        }
+
+        // Check which emails still exist
+        const existingUsers = await WIKI.models.users.query()
+          .select('email')
+          .whereIn('email', mentionEmails)
+          .andWhereNot('email', 'deleted@deleted.deleted')
+        
+        const existingEmails = new Set(existingUsers.map(u => u.email))
+
+        // Replace mention spans for deleted/anonymized users with plain text
+        $('span.mention').each((i, elm) => {
+          const mentionEmail = $(elm).attr('data-mention')
+          
+          if (mentionEmail === 'deleted@deleted.deleted' || 
+              mentionEmail === 'AnonymousUser' ||
+              (mentionEmail && !existingEmails.has(mentionEmail))) {
+            $(elm).replaceWith('@AnonymousUser')
+          }
+        })
+
+        return $('body').html() || content
+      }
+
+      return content
+    } catch (err) {
+      WIKI.logger.warn('Error cleaning anonymized mentions for editing:', err)
+      return content
     }
   }
 
