@@ -1593,6 +1593,15 @@ $editor-bg: mc('surface-dark', 'page-background');
       forced-color-adjust: none !important;
       filter: none !important;
     }
+
+    // Remove styling from anonymized user mentions
+    .mention[data-mention="AnonymousUser"] {
+      background: none;
+      color: inherit;
+      font-weight: inherit;
+      padding: 0;
+      border-radius: 0;
+    }
   }
 
   // ==========================================
