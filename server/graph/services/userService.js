@@ -150,10 +150,36 @@ function getMailLogoSource() {
    * @returns {string} Content with anonymized mentions, or the original content for ascii.
    */
 function anonymizeUserMentions(content, contentType, email) {
+  const _ = require('lodash')
+  const cheerio = require('cheerio')
+  
   if (contentType === 'markdown') {
-    return content.replace(new RegExp(`@${email}`, 'g'), '@AnonymousUser')
+    // Replace plain text mentions
+    let result = content.replace(new RegExp(`@${_.escapeRegExp(email)}`, 'g'), '@AnonymousUser')
+    
+    // Also handle HTML spans that might exist in markdown (from visual editor)
+    if (result.includes('<span') && result.includes('class="mention"')) {
+      const $ = cheerio.load(result, { decodeEntities: false })
+      $('span.mention').each((i, elm) => {
+        const mentionEmail = $(elm).attr('data-mention')
+        if (mentionEmail === email) {
+          $(elm).replaceWith('@AnonymousUser')
+        }
+      })
+      result = $('body').html() || result
+    }
+    
+    return result
   } else if (contentType === 'html') {
-    return content.replace(new RegExp(`<span class="mention" data-mention="${email}">@${email}</span>`, 'g'), '@AnonymousUser')
+    // Use cheerio to properly handle HTML with varying attribute orders
+    const $ = cheerio.load(content, { decodeEntities: false })
+    $('span.mention').each((i, elm) => {
+      const mentionEmail = $(elm).attr('data-mention')
+      if (mentionEmail === email) {
+        $(elm).replaceWith('@AnonymousUser')
+      }
+    })
+    return $('body').html() || content
   }
   return content
 }
