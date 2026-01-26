@@ -1539,7 +1539,7 @@ module.exports = class Page extends Model {
         // })
         .first()
         .then(async (page) => {
-          if (page && page.content) {
+          if (page?.content) {
             // Clean up anonymized user mentions for editing
             page.content = await WIKI.models.pages.cleanAnonymizedMentionsForEditing(page.content, page.contentType)
           }
@@ -1549,6 +1549,101 @@ module.exports = class Page extends Model {
       WIKI.logger.warn(err)
       throw err
     }
+  }
+
+  /**
+   * Extract unique mention emails from cheerio DOM
+   * @private
+   */
+  static _extractMentionEmails($) {
+    const mentionEmails = []
+    $('span.mention').each((i, elm) => {
+      const email = $(elm).attr('data-mention')
+      if (email && !mentionEmails.includes(email)) {
+        mentionEmails.push(email)
+      }
+    })
+    return mentionEmails
+  }
+
+  /**
+   * Get set of existing user emails from database
+   * @private
+   */
+  static async _getExistingUserEmails(emails) {
+    const existingUsers = await WIKI.models.users.query()
+      .select('email')
+      .whereIn('email', emails)
+      .andWhereNot('email', 'deleted@deleted.deleted')
+    return new Set(existingUsers.map(u => u.email))
+  }
+
+  /**
+   * Check if mention should be anonymized
+   * @private
+   */
+  static _shouldAnonymizeMention(mentionEmail, mentionText, existingEmails) {
+    return mentionEmail === 'deleted@deleted.deleted' ||
+           mentionEmail === 'AnonymousUser' ||
+           mentionText === '@AnonymousUser' ||
+           (mentionEmail && !existingEmails.has(mentionEmail))
+  }
+
+  /**
+   * Clean HTML content mentions
+   * @private
+   */
+  static async _cleanHtmlMentions(content) {
+    const $ = cheerio.load(content, { decodeEntities: false })
+    const mentionEmails = this._extractMentionEmails($)
+
+    if (mentionEmails.length === 0) {
+      return content
+    }
+
+    const existingEmails = await this._getExistingUserEmails(mentionEmails)
+
+    $('span.mention').each((i, elm) => {
+      const mentionEmail = $(elm).attr('data-mention')
+      const mentionText = $(elm).text()
+      
+      if (this._shouldAnonymizeMention(mentionEmail, mentionText, existingEmails)) {
+        $(elm).replaceWith('@AnonymousUser')
+      }
+    })
+
+    return $('body').html() || content
+  }
+
+  /**
+   * Clean plain text markdown mentions
+   * @private
+   */
+  static async _cleanMarkdownPlainTextMentions(content) {
+    const mentionRegex = /@([\w.-]+@[\w.-]+\.\w+)/g
+    const mentions = []
+    let match
+    
+    while ((match = mentionRegex.exec(content)) !== null) {
+      if (!mentions.includes(match[1])) {
+        mentions.push(match[1])
+      }
+    }
+
+    if (mentions.length === 0) {
+      return content
+    }
+
+    const existingEmails = await this._getExistingUserEmails(mentions)
+    let cleanedContent = content
+    
+    for (const email of mentions) {
+      if (email === 'deleted@deleted.deleted' || !existingEmails.has(email)) {
+        cleanedContent = cleanedContent.replace(new RegExp(`@${_.escapeRegExp(email)}`, 'g'), '@AnonymousUser')
+      }
+    }
+    
+    return cleanedContent
   }
 
   /**
@@ -1562,116 +1657,14 @@ module.exports = class Page extends Model {
   static async cleanAnonymizedMentionsForEditing(content, contentType) {
     try {
       if (contentType === 'html') {
-        // Extract all mention emails from content
-        const $ = cheerio.load(content, { decodeEntities: false })
-        const mentionEmails = []
-        $('span.mention').each((i, elm) => {
-          const email = $(elm).attr('data-mention')
-          if (email && !mentionEmails.includes(email)) {
-            mentionEmails.push(email)
-          }
-        })
-
-        if (mentionEmails.length === 0) {
-          return content
-        }
-
-        // Check which emails still exist in the database
-        const existingUsers = await WIKI.models.users.query()
-          .select('email')
-          .whereIn('email', mentionEmails)
-          .andWhereNot('email', 'deleted@deleted.deleted')
-        
-        const existingEmails = new Set(existingUsers.map(u => u.email))
-
-        // Replace mentions for users that no longer exist or have deleted@deleted.deleted email
-        $('span.mention').each((i, elm) => {
-          const mentionEmail = $(elm).attr('data-mention')
-          const mentionText = $(elm).text()
-          
-          // Replace if:
-          // 1. Email is deleted@deleted.deleted (anonymized user)
-          // 2. Text is already @AnonymousUser
-          // 3. Email doesn't exist in the users table anymore (deleted user)
-          if (mentionEmail === 'deleted@deleted.deleted' || 
-              mentionText === '@AnonymousUser' ||
-              (mentionEmail && !existingEmails.has(mentionEmail))) {
-            $(elm).replaceWith('@AnonymousUser')
-          }
-        })
-        // Return only body content to avoid html/head/body wrapper tags
-        return $('body').html() || content
-      } else if (contentType === 'markdown') {
-        // For markdown, we need to handle HTML spans that might exist
-        // (happens when content was created in visual editor)
-        
-        // First, check if there are any mention spans in the content
-        if (!content.includes('<span') || !content.includes('class="mention"')) {
-          // No HTML spans, just check plain text mentions
-          const mentionRegex = /@([\w.-]+@[\w.-]+\.\w+)/g
-          const mentions = []
-          let match
-          while ((match = mentionRegex.exec(content)) !== null) {
-            if (!mentions.includes(match[1])) {
-              mentions.push(match[1])
-            }
-          }
-
-          if (mentions.length === 0) {
-            return content
-          }
-
-          const existingUsers = await WIKI.models.users.query()
-            .select('email')
-            .whereIn('email', mentions)
-            .andWhereNot('email', 'deleted@deleted.deleted')
-          
-          const existingEmails = new Set(existingUsers.map(u => u.email))
-
-          let cleanedContent = content
-          for (const email of mentions) {
-            if (email === 'deleted@deleted.deleted' || !existingEmails.has(email)) {
-              cleanedContent = cleanedContent.replace(new RegExp(`@${_.escapeRegExp(email)}`, 'g'), '@AnonymousUser')
-            }
-          }
-          return cleanedContent
-        }
-
-        // Content has HTML spans - use cheerio to parse and clean them
-        const $ = cheerio.load(content, { decodeEntities: false })
-        const mentionEmails = []
-        
-        $('span.mention').each((i, elm) => {
-          const email = $(elm).attr('data-mention')
-          if (email && !mentionEmails.includes(email)) {
-            mentionEmails.push(email)
-          }
-        })
-
-        if (mentionEmails.length === 0) {
-          return content
-        }
-
-        // Check which emails still exist
-        const existingUsers = await WIKI.models.users.query()
-          .select('email')
-          .whereIn('email', mentionEmails)
-          .andWhereNot('email', 'deleted@deleted.deleted')
-        
-        const existingEmails = new Set(existingUsers.map(u => u.email))
-
-        // Replace mention spans for deleted/anonymized users with plain text
-        $('span.mention').each((i, elm) => {
-          const mentionEmail = $(elm).attr('data-mention')
-          
-          if (mentionEmail === 'deleted@deleted.deleted' || 
-              mentionEmail === 'AnonymousUser' ||
-              (mentionEmail && !existingEmails.has(mentionEmail))) {
-            $(elm).replaceWith('@AnonymousUser')
-          }
-        })
-
-        return $('body').html() || content
+        return await this._cleanHtmlMentions(content)
+      }
+      
+      if (contentType === 'markdown') {
+        const hasHtmlSpans = content.includes('<span') && content.includes('class="mention"')
+        return hasHtmlSpans 
+          ? await this._cleanHtmlMentions(content)
+          : await this._cleanMarkdownPlainTextMentions(content)
       }
 
       return content
