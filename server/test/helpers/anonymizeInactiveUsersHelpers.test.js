@@ -208,27 +208,6 @@ describe('anonymizeInactiveUsersHelpers', () => {
       expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash1')
       expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash2')
     })
-      WIKI.models.pages.query
-        .mockReturnValueOnce(firstQuery)
-        .mockReturnValueOnce(secondQuery)
-        .mockReturnValueOnce(thirdQuery)
-
-      // Act
-      await helpers.anonymizePages({ userId: 42, siteId: 'siteA' }, { id: 999 })
-
-      // Assert author patch
-      expect(secondQuery.where).toHaveBeenCalledWith({ authorId: 42, siteId: 'siteA' })
-      expect(patchAuthor).toHaveBeenCalledWith({ authorId: 999 })
-      // Assert creator patch
-      expect(thirdQuery.where).toHaveBeenCalledWith({ creatorId: 42, siteId: 'siteA' })
-      expect(patchCreator).toHaveBeenCalledWith({ creatorId: 999 })
-      // Cache invalidation + outbound events
-      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledTimes(2)
-      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledWith('hash1')
-      expect(WIKI.models.pages.deletePageFromCache).toHaveBeenCalledWith('hash2')
-      expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash1')
-      expect(WIKI.events.outbound.emit).toHaveBeenCalledWith('deletePageFromCache', 'hash2')
-    })
 
     it('should not attempt cache invalidation or events when no pages are affected', async () => {
       // First query returns empty array
