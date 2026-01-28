@@ -3,10 +3,10 @@ FROM ${NODE_IMAGE} AS test
 
 WORKDIR /wiki
 
-USER root
-
-# Install yarn and any build tools needed for native modules
-RUN apk add --no-cache g++ make python3 yarn
+# NOTE: CI runners may block outbound access to Alpine package repositories.
+# Avoid `apk add` here so Docker builds don't fail in restricted environments.
+# The provided NODE_IMAGE is expected to already contain the required toolchain
+# (node + yarn) and any build tooling needed for native dependencies.
 
 # Copy only dependency files first for better caching
 COPY package.json yarn.lock ./
@@ -19,8 +19,6 @@ COPY jest.config.js ./
 COPY ./server ./server
 
 #RUN mkdir -p /wiki/coverage && chown -R node:node /wiki/coverage
-
-USER node
 
 # Default command (can be overridden)
 CMD ["yarn", "jest", "--config=jest.config.js", "--coverage"]

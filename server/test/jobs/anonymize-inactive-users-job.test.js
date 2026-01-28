@@ -104,7 +104,11 @@ describe('runAnonymizationJob', () => {
       anonymousUser,
       { id: 1, email: 'test@example.com' }
     )
-    expect(helpers.anonymizePages).toHaveBeenCalledWith(inactivityEntry, anonymousUser)
+    expect(helpers.anonymizePages).toHaveBeenCalledWith(
+      inactivityEntry,
+      anonymousUser,
+      { id: 1, email: 'test@example.com' }
+    )
     expect(helpers.removeInactivityEntry).toHaveBeenCalledWith(inactivityEntry)
     expect(helpers.removeUserMentions).toHaveBeenCalledWith([{ pageId: 1 }], 1)
   })
