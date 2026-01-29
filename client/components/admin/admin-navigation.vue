@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-container(fluid, grid-list-lg)
+  v-container(fluid, grid-list-lg, :class="{ 'readonly-mode': readOnly }")
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
@@ -268,7 +268,6 @@
           v-btn.px-3(depressed, color='primary', @click='copyFromLocale')
             v-icon(left) mdi-chevron-right
             span {{$t('common:actions.copy')}}
-
     page-selector(mode='select', v-model='selectPageModal', :open-handler='selectPageHandle', path='home', :locale='currentLang')
 </template>
 
@@ -276,12 +275,8 @@
 import _ from 'lodash'
 import gql from 'graphql-tag'
 import { v4 as uuid } from 'uuid'
-
 import groupsQuery from 'gql/admin/users/users-query-groups.gql'
-
 import draggable from 'vuedraggable'
-
-/* global siteConfig, siteLangs */
 
 export default {
   components: {
@@ -289,6 +284,7 @@ export default {
   },
   data() {
     return {
+      readOnly: true, // Set read-only mode here
       selectPageModal: false,
       trees: [],
       current: {},
@@ -515,6 +511,11 @@ export default {
   &:hover {
     background-color: rgba(mc('blue', '500'), .25);
   }
+}
+
+.readonly-mode {
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 </style>
