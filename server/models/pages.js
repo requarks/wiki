@@ -326,6 +326,13 @@ module.exports = class Page extends Model {
 
     // -> Save Tags
     if (opts.tags && opts.tags.length > 0) {
+      if (!WIKI.auth.checkAccess(opts.user, ['write:tags'], {
+        locale: opts.locale,
+        path: opts.path,
+        tags: []
+      })) {
+        throw new WIKI.Error.PageTagsUpdateForbidden()
+      }
       await WIKI.models.tags.associateTags({ tags: opts.tags, page })
     }
 
@@ -387,6 +394,24 @@ module.exports = class Page extends Model {
       throw new WIKI.Error.PageEmptyContent()
     }
 
+    // -> Check for tag updates
+    const currentTagModels = await ogPage.$relatedQuery('tags').select('tag')
+    const currentTags = currentTagModels.map(tag => tag.tag)
+    const requestedTags = Array.isArray(opts.tags) ? opts.tags : currentTags
+    const normalizeTags = tags => _.uniq(tags
+      .map(tag => _.trim(tag).toLowerCase())
+      .filter(tag => tag.length > 0))
+      .sort()
+    if (!WIKI.auth.checkAccess(opts.user, ['write:tags'], {
+      locale: ogPage.localeCode,
+      path: ogPage.path,
+      tags: currentTagModels
+    })) {
+      if (!_.isEqual(normalizeTags(currentTags), normalizeTags(requestedTags))) {
+        throw new WIKI.Error.PageTagsUpdateForbidden()
+      }
+    }
+
     // -> Create version snapshot
     await WIKI.models.pageHistory.addVersion({
       ...ogPage,
@@ -440,7 +465,7 @@ module.exports = class Page extends Model {
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 
     // -> Save Tags
-    await WIKI.models.tags.associateTags({ tags: opts.tags, page })
+    await WIKI.models.tags.associateTags({ tags: requestedTags, page })
 
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)

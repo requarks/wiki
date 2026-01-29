@@ -193,6 +193,10 @@ module.exports = {
     message: 'You are not authorized to restore this page version.',
     code: 6011
   }),
+  PageTagsUpdateForbidden: CustomError('PageTagsUpdateForbidden', {
+    message: 'You are not authorized to modify tags on this page.',
+    code: 6014
+  }),
   PageUpdateForbidden: CustomError('PageUpdateForbidden', {
     message: 'You are not authorized to update this page.',
     code: 6009
