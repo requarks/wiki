@@ -364,7 +364,7 @@ module.exports = class Page extends Model {
     }
     await Promise.all([
       WIKI.models.pages.renderPage(page),
-      WIKI.models.pages.rebuildTree(page, 'create')
+      WIKI.models.pages.rebuildTree(page)
     ])
 
     await Promise.all([
@@ -892,12 +892,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Update page tree (preserves custom child_position order)
-    await WIKI.models.pages.rebuildTree(page, 'move', {
-      path: opts.destinationPath,
-      locale: opts.destinationLocale,
-      title: destinationTitle
-    })
+    // -> Rebuild page tree
+    await WIKI.models.pages.rebuildTree(page)
 
     // -> Rename in Search Index
     const pageContents = await WIKI.models.pages
@@ -988,8 +984,8 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Update page tree (preserves custom child_position order)
-    await WIKI.models.pages.rebuildTree(page, 'delete')
+    // -> Rebuild page tree
+    await WIKI.models.pages.rebuildTree(page)
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
@@ -1217,204 +1213,19 @@ module.exports = class Page extends Model {
   }
 
   /**
-   * Rebuild page tree using incremental updates to preserve child_position order
+   * Rebuild page tree for new/updated/deleted page
    *
-   * @param {Object} page Page Model Instance
-   * @param {String} action Action type: 'create', 'delete', 'move', or 'full' (default: 'create')
-   * @param {Object} moveData For move action: { path, locale, title }
    * @returns {Promise} Promise with no value
    */
-  static async rebuildTree(page, action = 'create', moveData = null) {
-    if (action === 'full') {
-      // Full rebuild for admin actions - uses the rebuild-tree job
-      await WIKI.scheduler.registerJob(
-        {
-          name: 'rebuild-tree',
-          immediate: true,
-          wait: true
-        },
-        page?.siteId
-      )
-      return
-    }
-
-    // Incremental updates for create/delete/move
-    switch (action) {
-      case 'create':
-        await WIKI.models.pages._addPageToTree(page)
-        break
-
-      case 'delete':
-        await WIKI.models.pages._removePageFromTree(page)
-        break
-
-      case 'move': {
-        // Remove old entries
-        await WIKI.models.pages._removePageFromTree(page)
-        // Add new entries with updated data
-        const updatedPage = {
-          ...page,
-          path: moveData.path,
-          localeCode: moveData.locale,
-          title: moveData.title
-        }
-        await WIKI.models.pages._addPageToTree(updatedPage)
-        break
-      }
-    }
-  }
-
-  /**
-   * Internal: Add page to tree incrementally
-   * @private
-   */
-  static async _addPageToTree(page) {
-    const pagePaths = page.path.split('/')
-    let currentPath = ''
-    let depth = 0
-    let parentId = null
-    let ancestors = []
-
-    for (const element of pagePaths) {
-      const part = element
-      depth++
-      const isFolder = (depth < pagePaths.length)
-      currentPath = currentPath ? `${currentPath}/${part}` : part
-
-      // Check if node already exists
-      const existing = await WIKI.models.knex('pageTree')
-        .first('id', 'isFolder')
-        .where({
-          path: currentPath,
-          localeCode: page.localeCode,
-          siteId: page.siteId
-        })
-
-      if (existing) {
-        // Node exists - just update if it should be a folder
-        if (isFolder && !existing.isFolder) {
-          await WIKI.models.knex('pageTree')
-            .where('id', existing.id)
-            .update({ isFolder: true })
-        }
-        parentId = existing.id
-      } else {
-        // Node doesn't exist - generate next ID and find max child_position for siblings
-        const maxIdResult = await WIKI.models.knex('pageTree')
-          .max('id as maxId')
-          .first()
-
-        const nextId = (maxIdResult?.maxId ?? 0) + 1
-
-        const maxPositionQuery = WIKI.models.knex('pageTree')
-          .max('child_position as maxPos')
-          .where({
-            siteId: page.siteId,
-            localeCode: page.localeCode
-          })
-
-        if (parentId) {
-          maxPositionQuery.where('parent', parentId)
-        } else {
-          maxPositionQuery.whereNull('parent')
-        }
-
-        const maxPositionResult = await maxPositionQuery.first()
-
-        const nextPosition = (maxPositionResult?.maxPos ?? -1) + 1
-
-        const nodeMeta = { nextId, depth, parentId, nextPosition, isFolder }
-
-        // Insert new node with explicit ID
-        await this.insertNewNodeWithExplictId(nodeMeta, page, currentPath, part, ancestors)
-
-        parentId = nextId
-      }
-
-      ancestors.push(parentId)
-    }
-  }
-
-  static async insertNewNodeWithExplictId(nodeMeta, page, currentPath, part, ancestors) {
-    const isFolder = nodeMeta.isFolder
-    await WIKI.models.knex('pageTree')
-      .insert({
-        id: nodeMeta.nextId,
-        localeCode: page.localeCode,
-        path: currentPath,
-        depth: nodeMeta.depth,
-        title: isFolder ? part : page.title,
-        isFolder: isFolder,
-        isPrivate: !isFolder && page.isPrivate,
-        privateNS: !isFolder ? page.privateNS : null,
-        parent: nodeMeta.parentId,
-        pageId: isFolder ? null : page.id,
-        ancestors: JSON.stringify(ancestors),
-        siteId: page.siteId,
-        child_position: nodeMeta.nextPosition
-      })
-  }
-
-  /**
-   * Internal: Remove page from tree incrementally
-   * @private
-   */
-  static async _removePageFromTree(page) {
-    // Delete the page tree entries for this page
-    await WIKI.models.knex('pageTree')
-      .where('pageId', page.id)
-      .del()
-
-    // Clean up empty folder nodes that have no children
-    const pagePaths = page.path.split('/')
-    for (let i = pagePaths.length - 1; i >= 0; i--) {
-      const pathSegment = pagePaths.slice(0, i + 1).join('/')
-
-      const folderNode = await WIKI.models.knex('pageTree')
-        .first('id', 'pageId')
-        .where({
-          path: pathSegment,
-          localeCode: page.localeCode,
-          siteId: page.siteId,
-          isFolder: true
-        })
-
-      if (folderNode) {
-        // Check if this folder node is also a page (page-as-folder scenario)
-        // If it has a pageId, it means there's a page at this folder path, so keep it
-        if (folderNode.pageId) {
-          // This folder is also a page, keep it but check if it should remain isFolder
-          const childCount = await WIKI.models.knex('pageTree')
-            .count('* as count')
-            .where('parent', folderNode.id)
-            .first()
-
-          if (parseInt(childCount.count) === 0) {
-            // No children, update isFolder to false but keep the node
-            await WIKI.models.knex('pageTree')
-              .where('id', folderNode.id)
-              .update({ isFolder: false })
-          }
-          break
-        }
-
-        // Check if this folder has any children
-        const childCount = await WIKI.models.knex('pageTree')
-          .count('* as count')
-          .where('parent', folderNode.id)
-          .first()
-
-        if (parseInt(childCount.count) === 0) {
-          // No children, delete this folder node
-          await WIKI.models.knex('pageTree')
-            .where('id', folderNode.id)
-            .del()
-        } else {
-          // Has children, stop cleanup
-          break
-        }
-      }
-    }
+  static async rebuildTree(page) {
+    await WIKI.scheduler.registerJob(
+      {
+        name: 'rebuild-tree',
+        immediate: true,
+        wait: true
+      },
+      page?.siteId
+    )
   }
 
   /**
@@ -1606,7 +1417,7 @@ module.exports = class Page extends Model {
     $('span.mention').each((i, elm) => {
       const mentionEmail = $(elm).attr('data-mention')
       const mentionText = $(elm).text()
-      
+
       if (this._shouldAnonymizeMention(mentionEmail, mentionText, existingEmails)) {
         $(elm).replaceWith('@AnonymousUser')
       }
@@ -1623,7 +1434,7 @@ module.exports = class Page extends Model {
     const mentionRegex = /@([\w.-]+@[\w.-]+\.\w+)/g
     const mentions = []
     let match
-    
+
     while ((match = mentionRegex.exec(content)) !== null) {
       if (!mentions.includes(match[1])) {
         mentions.push(match[1])
@@ -1636,13 +1447,13 @@ module.exports = class Page extends Model {
 
     const existingEmails = await this._getExistingUserEmails(mentions)
     let cleanedContent = content
-    
+
     for (const email of mentions) {
       if (email === 'deleted@deleted.deleted' || !existingEmails.has(email)) {
         cleanedContent = cleanedContent.replace(new RegExp(`@${_.escapeRegExp(email)}`, 'g'), '@AnonymousUser')
       }
     }
-    
+
     return cleanedContent
   }
 
@@ -1659,10 +1470,10 @@ module.exports = class Page extends Model {
       if (contentType === 'html') {
         return await this._cleanHtmlMentions(content)
       }
-      
+
       if (contentType === 'markdown') {
         const hasHtmlSpans = content.includes('<span') && content.includes('class="mention"')
-        return hasHtmlSpans 
+        return hasHtmlSpans
           ? await this._cleanHtmlMentions(content)
           : await this._cleanMarkdownPlainTextMentions(content)
       }
@@ -1858,7 +1669,7 @@ module.exports = class Page extends Model {
         await WIKI.models.pages.query()
           .patch({ content: newContent })
           .where('id', page.id)
-        
+
         // Invalidate cache for the updated page
         await WIKI.models.pages.deletePageFromCache(page.hash)
         if (WIKI.events && WIKI.events.outbound) {
