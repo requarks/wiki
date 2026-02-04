@@ -953,6 +953,43 @@
     max-width: 100%;
   }
 
+  // When content contains a bare <table> (common with migrated Confluence HTML and sometimes after editing),
+  // we still want the table to be able to exceed the content width and be horizontally scrollable.
+  // Most browsers only show a horizontal scrollbar when *the overflow container* is narrower than its contents.
+  // Since <table> cannot reliably act as its own overflow container across browsers, we use a safe CSS-only
+  // wrapper behavior by turning the table into a block formatting context.
+  //
+  // NOTE: We scope this to the main content area to avoid impacting admin/data tables.
+  .v-main .contents {
+    >table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+
+      // Allow the table to actually become wider than the container.
+      // If the table would shrink-to-fit, you won't ever get a scrollbar.
+      width: max-content;
+      min-width: 100%;
+    }
+
+    // Tables with images: enforce a minimum column width so image-only columns
+    // don't collapse to ~0px when the table gets constrained.
+    // Prefer :has(img) for accuracy; provide a fallback for browsers without :has.
+    >table td:has(img),
+    >table th:has(img) {
+      min-width: 25px;
+    }
+
+    // Fallback (less precise): if a cell contains an image, ensure the cell isn't smaller than 25px.
+    // Browsers without :has() will ignore the selector above.
+    >table td img,
+    >table th img {
+      min-width: 25px;
+    }
+  }
+
   table {
     margin: calc(var(--rem-factor)*.5rem) 0;
     border-spacing: 0;
@@ -1116,11 +1153,35 @@
   }
 
   // ---------------------------------
+  // CKEDITOR TABLES (VIEW MODE)
+  // ---------------------------------
+  // CKEditor outputs tables wrapped in `.ck-content .table` and may add `.ck-table-resized`
+  // with `table-layout: fixed` + `overflow: hidden` in its bundled styles. Those defaults can
+  // hide the horizontal scrollbar for existing wide tables.
+  //
+  // Override only in rendered content so wide/resized tables can scroll.
+  .v-main .contents .ck-content {
+    .table {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .table>table {
+      overflow: visible;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    .table>table.ck-table-resized {
+      table-layout: auto;
+    }
+  }
+
+  // ---------------------------------
   // IMAGES
   // ---------------------------------
 
   img {
-    max-width: 100%;
     height: auto; // Default: maintain aspect ratio
 
     &.align-left {
@@ -1184,8 +1245,8 @@
     // Support for image_unbounded class (set by server-side renderer)
     &.image_unbounded {
       max-width: none !important;
-      
-      > img {
+
+      >img {
         max-width: none !important;
         height: auto;
       }
@@ -1525,7 +1586,7 @@
 // WORKAROUND: Override cached problematic CSS rule for dark theme buttons
 .theme--dark .v-dialog .v-btn.rounded-button {
   color: mc('text-dark', 'primary') !important;
-  
+
   &.v-btn--outlined {
     color: mc('text-dark', 'primary') !important;
     border-color: mc('border-dark', 'primary') !important;
