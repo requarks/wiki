@@ -61,6 +61,7 @@
                     tile
                     height='64'
                     width='100'
+                    data-tour='site-selector'
                     )
                     span Sites
                     v-icon(:color='colors.textDark.primary')  {{ menuIsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'}}
@@ -162,8 +163,15 @@
           template(v-if='isAuthenticated && path && !isFollowingSite')
             v-tooltip(bottom)
               template( v-slot:activator='{ on }')
-                v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='followSite', :aria-label='$t(`common:header.followSite`)'
-                :class='{ "ml-3": $vuetify.rtl }'
+                v-btn.hover-icon(
+                  icon,
+                  tile,
+                  height='64',
+                  v-on='on',
+                  @click='followSite',
+                  :aria-label='$t(`common:header.followSite`)',
+                  :class='{ "ml-3": $vuetify.rtl }',
+                  data-tour='follow-site'
                 )
                   v-icon(color='grey') mdi-track-light
               span Follow Site
@@ -194,6 +202,7 @@
                       tile
                       height='64'
                       :aria-label='$t(`common:header.pageActions`)'
+                      data-tour='page-actions'
                       )
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
@@ -255,7 +264,8 @@
                   height='64',
                   v-on='on',
                   @click='pageNew',
-                  :aria-label='$t(`common:header.newPage`)'
+                  :aria-label='$t(`common:header.newPage`)',
+                  data-tour='new-page'
                   )
                   v-icon(color='grey') mdi-text-box-plus-outline
               span {{$t('common:header.newPage')}}
@@ -287,6 +297,10 @@
                   v-list-item-icon
                     v-icon mdi-newspaper-variant-outline
                   v-list-item-title Release Notes
+                v-list-item(@click='startTour')
+                  v-list-item-icon
+                    v-icon mdi-map-marker-path
+                  v-list-item-title Start Tour
             v-divider(vertical)
 
           //- ADMIN
@@ -430,6 +444,9 @@
           )
             span Close
 
+    //- Vue Tour Component
+    v-tour(name='appTour', :steps='tourSteps', :callbacks='tourCallbacks')
+
     //- .nav-header-dev(v-if='isDevMode')
     //-  v-icon mdi-alert
     //-  div
@@ -443,6 +460,7 @@ import _ from 'lodash'
 
 import colors from '@/themes/default/js/color-scheme'
 import { PAGE_DELETE_HAS_SUBPAGES_MSG } from '@/messages'
+import { appTour } from '@/helpers/tour-manager'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 import createFollowerMutation from 'gql/followers/create-follower.gql'
@@ -566,9 +584,15 @@ export default {
         this.colors.warningActionLight.secondaryDefault
     },
     releaseNotesCloseColor() {
-      return this.$vuetify.theme.dark ? 
-        '#ffffff' : 
+      return this.$vuetify.theme.dark ?
+        '#ffffff' :
         this.colors.surfaceLight.primaryBlueHeavy
+    },
+    tourSteps () {
+      return appTour.steps
+    },
+    tourCallbacks () {
+      return appTour.callbacks
     }
   },
   created () {
@@ -599,6 +623,7 @@ export default {
     this.$root.$on('pageDelete', () => {
       this.pageDelete()
     })
+    
     this.isDevMode = siteConfig.devMode === true
     this.fetchSitesFromUser()
   },
@@ -858,6 +883,9 @@ export default {
     },
     goToRepo () {
       window.open('https://github.com/mar-team/wiki', '_blank', 'noopener')
+    },
+    startTour () {
+      this.$tourManager.startAppTour()
     }
   }
 }

@@ -193,6 +193,7 @@
     "uuid": "9.0.0",
     "validate.js": "0.13.1",
     "vue-mention": "1.0.0-floating-vue1",
+    "vue-tour": "2.0.0",
     "winston": "3.8.2",
     "ws": "8.18.2",
     "xss": "1.0.15",
