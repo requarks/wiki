@@ -99,12 +99,14 @@
                 @click='followPage'
                 :color='colors.actionLight.highlightOnLite'
                 rounded
+                data-tour='follow-page'
                 ) Follow
               v-btn.mr-5.hover-btn.text-primary.text-none(
                 v-if='isAuthenticated && isFollower != null && isFollower'
                 @click='unfollowPage'
                 :color='colors.actionLight.highlightOnLite'
                 rounded
+                data-tour='unfollow-page'
                 ) Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -411,7 +413,7 @@
               dense
               )
               .caption {{$t('common:page.unpublishedWarning')}}
-            .contents(ref='container')
+            .contents(ref='container', data-tour='page-content')
                 slot(name='contents')
                 // Image overlay viewer
                 div.image-overlay(v-if='isImageOverlayVisible' role='dialog' aria-modal='true' @click.self='closeImageOverlay')
