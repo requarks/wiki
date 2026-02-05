@@ -963,7 +963,6 @@
   .v-main .contents {
     >table {
       display: block;
-      max-width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
@@ -1099,6 +1098,7 @@
       margin: 0;
       border-collapse: collapse;
       box-shadow: 0 0 5px 0 rgba(0, 0, 0, .07);
+      width: auto !important;
 
       @at-root .theme--dark & {
         background-color: mc('surface-dark', 'secondary-neutral-lite');
