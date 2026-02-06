@@ -365,6 +365,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
       display: block;
       max-width: 100%;
       overflow-x: auto;
+      overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -374,38 +375,6 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     .table-container > table {
       width: max-content;
       min-width: 100%;
-    }
-
-    // If the editor content includes a bare <table> (e.g., migrated HTML or pasted content),
-    // make it horizontally scrollable too.
-    table {
-      display: block;
-      max-width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      width: max-content;
-      min-width: 100%;
-    }
-
-    // CKEditor applies `table-layout: fixed` on resized tables via `.ck-table-resized`.
-    // That can cause content to clip or columns to collapse. Undo it so the browser can size
-    // columns naturally while still allowing horizontal scrolling.
-    // (Use `auto` rather than `unset` for best cross-browser CSS support.)
-    &.ck-content .ck-widget.table .ck-table-resized {
-      table-layout: auto;
-    }
-
-    // Tables with images: enforce a minimum column width so image-only columns
-    // don't collapse while editing.
-    td:has(img),
-    th:has(img) {
-      min-width: 25px;
-    }
-
-    // Fallback for browsers without :has().
-    td img,
-    th img {
-      min-width: 25px;
     }
 
     // Prevent browser from inverting colors on diagrams/images

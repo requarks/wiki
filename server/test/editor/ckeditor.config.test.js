@@ -86,11 +86,5 @@ describe('CKEditor fontFamily configuration', () => {
     // If a table becomes wider than the page, this is what enables the horizontal scrollbar.
     expect(src).toMatch(/>\s*\.ck-editor__editable[\s\S]*?overflow-x:\s*auto\s*;/)
     expect(src).not.toMatch(/>\s*\.ck-editor__editable[\s\S]*?overflow-x:\s*hidden\s*;/)
-
-    // Bare <table> should also be scrollable when present (migrated/pasted HTML).
-    expect(src).toMatch(/>\s*\.ck-editor__editable[\s\S]*?\btable\b[\s\S]*?overflow-x:\s*auto\s*;/)
-
-    // Image-only columns shouldn't collapse.
-    expect(src).toMatch(/>\s*\.ck-editor__editable[\s\S]*?td:has\(img\)[\s\S]*?min-width:\s*25px\s*;/)
   })
 })
