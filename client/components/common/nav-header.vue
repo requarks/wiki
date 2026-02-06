@@ -337,6 +337,20 @@
               span {{$t('common:actions.exit')}}
             v-divider(vertical)
 
+          //- PROFILE EXIT
+
+          template(v-if='isAuthenticated && mode === `profile`')
+            v-btn.hover-icon.hover-text(
+              text,
+              tile,
+              height='64',
+              @click='handleProfileExit',
+              :aria-label='$t(`common:actions.exit`)'
+              )
+              v-icon(left, color='grey') mdi-exit-to-app
+              span {{$t('common:actions.exit')}}
+            v-divider(vertical)
+
           //- ACCOUNT
 
           v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
@@ -890,6 +904,10 @@ export default {
     },
     goToRepo () {
       window.open('https://github.com/mar-team/wiki', '_blank', 'noopener')
+    },
+    handleProfileExit() {
+      // Emit event for profile component to handle exit logic
+      this.$root.$emit('profile-exit')
     },
     startTour () {
       this.$tourManager.startAppTour()
