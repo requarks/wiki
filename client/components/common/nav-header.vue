@@ -180,8 +180,15 @@
           template(v-if='isAuthenticated && path && isFollowingSite')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
-                v-btn.hover-icon(icon, tile, height='64', v-on='on', @click='unfollowSite', :aria-label='$t(`common:header.unfollowSite`)'
-                :class='{ "ml-3": $vuetify.rtl }'
+                v-btn.hover-icon(
+                  icon,
+                  tile,
+                  height='64',
+                  v-on='on',
+                  @click='unfollowSite',
+                  :aria-label='$t(`common:header.unfollowSite`)',
+                  :class='{ "ml-3": $vuetify.rtl }',
+                  data-tour='unfollow-site'
                 )
                   v-icon(color='grey') mdi-track-light-off
               span Unfollow Site
