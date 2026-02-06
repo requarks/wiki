@@ -24,9 +24,9 @@ export default {
       }
     },
 
-    // STEP 2: Follow sites button
+    // STEP 2: Follow/Unfollow sites button
     {
-      target: '[data-tour="follow-site"]',
+      target: '[data-tour="follow-site"], [data-tour="unfollow-site"]',
       header: {
         title: messages.appTour.followSite.title
       },
