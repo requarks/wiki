@@ -166,34 +166,6 @@ Vue.use(VueMoment, { moment })
 
 Vue.use(VueTour)
 
-// Add a global mixin to safely handle tour highlighting in production builds
-Vue.mixin({
-  mounted() {
-    if (this.$tours) {
-      Object.keys(this.$tours).forEach(tourName => {
-        const tour = this.$tours[tourName]
-        if (tour && tour.removeHighlight) {
-          const originalRemoveHighlight = tour.removeHighlight.bind(tour)
-          tour.removeHighlight = function() {
-            try {
-              // Check if the target element still exists before removing highlight
-              if (this.targetElement && this.targetElement.style) {
-                originalRemoveHighlight()
-              } else if (this.targetElement) {
-                // Element exists but no style property, try classList
-                this.targetElement.classList?.remove('v-tour__target--highlighted')
-              }
-            } catch (err) {
-              // Silently catch errors in production to prevent tour from breaking
-              console.debug('Tour highlight cleanup skipped:', err.message)
-            }
-          }
-        }
-      })
-    }
-  }
-})
-
 Vue.use(TourManager)
 
 // Override the moment filter to properly handle UTC dates with timezone conversion
