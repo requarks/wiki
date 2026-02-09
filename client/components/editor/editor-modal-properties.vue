@@ -335,6 +335,14 @@ export default {
       }
     },
     updatePath() {
+      // Don't auto generate path for home pages
+      const currentPath = this.$store.get('page/path')
+      if (currentPath && currentPath.toLowerCase() === 'home') {
+        // Keep the path as home
+        this.path = 'home'
+        return
+      }
+      
       // Update the full path in store
       const pageName = this.generatePageName()
       if (this.folderPath) {
