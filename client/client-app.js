@@ -224,6 +224,8 @@ Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './theme
 Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
+  
+
   // ====================================
   // Notifications
   // ====================================
