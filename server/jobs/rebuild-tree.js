@@ -14,14 +14,22 @@ function isEmptySiteId(siteId) {
   )
 }
 
-async function getDefaultSiteIdIfNeeded(siteId) {
+async function getDefaultSiteIdIfNeeded() {
   return getSiteIdByPath('default')
 }
 
-function buildPageTree(pages, defaultSiteId) {
+function buildPageTree(pages, pageTreeDataToRetain, defaultSiteId, noSiteSelected) {
   let tree = []
   let treeMap = new Map()
   let pik = 0
+  const isSiteSelected = !noSiteSelected
+  // Determine starting id. if a site is selected, that means pagetree is rebuilt for one
+  // individual site (a typical scenario when a page is added or deleted).
+  // in that case, the id is starting from max existing id
+  if (isSiteSelected && pageTreeDataToRetain.length > 0) { // site is selected and there are records to retain
+    pik = Math.max(...pageTreeDataToRetain.map(item => item.id))
+  }
+  WIKI.logger.info(`buildPageTree, noSiteSelected: ${noSiteSelected}, starting pik: ${pik}`)
 
   function getKey(page, currentPath) {
     return `${page.localeCode}:${page.siteId}:${currentPath}`
@@ -30,6 +38,21 @@ function buildPageTree(pages, defaultSiteId) {
   function createNode({
     id, page, currentPath, depth, isFolder, parentId, ancestors, defaultSiteId
   }) {
+    // locate existing record to apply the existing child_position
+    const existingPageTreeRecord = pageTreeDataToRetain.find(item =>
+      item.pageId === page.id && item.siteId === page.siteId
+    )
+
+    // next determine childPosition: which is for existing records the existing child_position otherwise
+    // for new records, the max child_position + 1 within the same folder
+    const childPosition = existingPageTreeRecord ? existingPageTreeRecord.child_position : (() => {
+      const matchingItems = pageTreeDataToRetain.filter(item => {
+        const itemPathFolder = item.path.substring(0, item.path.lastIndexOf('/') + 1) || item.path
+        const currentPathFolder = currentPath.substring(0, currentPath.lastIndexOf('/') + 1) || currentPath
+        return itemPathFolder === currentPathFolder && item.siteId === page.siteId
+      })
+      return matchingItems.length > 0 ? Math.max(...matchingItems.map(item => item.child_position)) + 1 : 0
+    })()
     return {
       id,
       localeCode: page.localeCode,
@@ -43,7 +66,7 @@ function buildPageTree(pages, defaultSiteId) {
       pageId: isFolder ? null : page.id,
       ancestors: JSON.stringify(ancestors),
       siteId: page.siteId ? page.siteId : defaultSiteId,
-      child_position: 0
+      child_position: childPosition
     }
   }
 
@@ -87,54 +110,47 @@ function buildPageTree(pages, defaultSiteId) {
   for (const page of pages) {
     processPage(page)
   }
-
-  const groupedByParent = _.groupBy(tree, node => `${node.parent || 0}-${node.siteId}`)
-
-  for (const groupKey in groupedByParent) {
-    const siblings = groupedByParent[groupKey]
-
-    const sortedSiblings = _.orderBy(siblings, ['isFolder', 'title'], ['desc', 'asc'])
-    sortedSiblings.forEach((node, index) => {
-      node.child_position = index
-    })
-  }
-
   return tree
 }
 
-async function deletePageTree(siteId) {
+async function deletePageTree(siteId, trx = null) {
+  const query = trx || WIKI.models.knex
   if (!isEmptySiteId(siteId)) {
-    await WIKI.models.knex.table('pageTree').where('siteId', '=', siteId).del()
+    await query.table('pageTree').where('siteId', '=', siteId).del()
   } else {
-    await WIKI.models.knex.table('pageTree').del()
+    await query.table('pageTree').del()
   }
 }
 
-async function insertPageTree(tree) {
+async function insertPageTree(tree, trx = null) {
   if (tree.length === 0) return
+  const query = trx || WIKI.models.knex
   const dbType = WIKI.config.db.type
   let chunkSize = 100
   if (dbType === 'postgres') chunkSize = 500
   else if (dbType === 'sqlite') chunkSize = 60
   for (const chunk of _.chunk(tree, chunkSize)) {
-    await WIKI.models.knex.table('pageTree').insert(chunk)
+    await query.table('pageTree').insert(chunk)
   }
 }
 
 module.exports = async (siteId) => {
-  WIKI.logger.info(`Rebuilding page tree...`)
+  WIKI.logger.info(`Rebuilding page tree for siteId: ${typeof siteId === 'object' ? JSON.stringify(siteId) : siteId}...`)
   await WIKI.configSvc.loadFromDb()
   await WIKI.configSvc.applyFlags()
   try {
     let defaultSiteId
     const noSiteSelected = isEmptySiteId(siteId)
     if (noSiteSelected) {
-      defaultSiteId = await getDefaultSiteIdIfNeeded(siteId)
+      defaultSiteId = await getDefaultSiteIdIfNeeded()
       WIKI.logger.info(`Rebuilding page tree for all sites`)
     } else {
       WIKI.logger.info(`Rebuilding page tree for siteId: ${typeof siteId === 'object' ? JSON.stringify(siteId) : siteId}`)
     }
 
+    const pageTreeDataToRetain = await WIKI.models.knex
+      .table('pageTree')
+      .select('id', 'pageId', 'path', 'child_position', 'siteId')
     const pages = await WIKI.models.pages
       .query()
       .select('id', 'path', 'localeCode', 'title', 'isPrivate', 'privateNS', 'siteId')
@@ -144,9 +160,14 @@ module.exports = async (siteId) => {
         }
       })
       .orderBy(['localeCode', 'path'])
-    const tree = buildPageTree(pages, defaultSiteId)
-    await deletePageTree(siteId)
-    await insertPageTree(tree)
+    const tree = buildPageTree(pages, pageTreeDataToRetain, defaultSiteId, noSiteSelected)
+
+    // Use transaction for atomic operations
+    await WIKI.models.knex.transaction(async (trx) => {
+      await deletePageTree(siteId, trx)
+      await insertPageTree(tree, trx)
+    })
+
     WIKI.logger.info(`Rebuilding page tree: [ COMPLETED ]`)
   } catch (err) {
     WIKI.logger.error(`Rebuilding page tree: [ FAILED ]`)

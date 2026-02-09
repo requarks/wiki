@@ -13,10 +13,21 @@ module.exports = {
    */
   async getMigrations() {
     const migrationFiles = await fs.readdir(baseMigrationPath)
-    return migrationFiles.map(m => m.replace('.js', '')).sort(semver.compare).map(m => ({
-      file: m,
-      directory: baseMigrationPath
-    }))
+
+    // Only include valid semver-like migration filenames.
+    // Migrations are stored as "X.Y.Z.js"; helper files like "_helpers.js" live
+    // alongside them and must be excluded, otherwise semver parsing throws.
+    const migrations = migrationFiles
+      .filter(f => f.toLowerCase().endsWith('.js'))
+      .map(f => f.replace(/\.js$/i, ''))
+      .filter(name => Boolean(semver.valid(name)))
+      .sort(semver.compare)
+      .map(name => ({
+        file: name,
+        directory: baseMigrationPath
+      }))
+
+    return migrations
   },
 
   getMigrationName(migration) {
