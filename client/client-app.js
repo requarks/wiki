@@ -32,7 +32,72 @@ import localization from './modules/localization'
 // ====================================
 
 import helpers from './helpers'
-import { getEffectiveDarkMode, onBrowserThemeChange } from './helpers/theme'
+
+// ====================================
+// Theme Detection Helpers
+// ====================================
+
+/**
+ * Determine effective dark mode based on user preference and browser preference
+ * @param {string} userAppearance - User's appearance setting ('', 'light', 'dark')
+ * @param {boolean} siteDefaultDark - Site's default dark mode setting
+ * @returns {boolean} Whether dark mode should be enabled
+ */
+function getEffectiveDarkMode(userAppearance, siteDefaultDark) {
+  if (userAppearance === 'dark') return true
+  if (userAppearance === 'light') return false
+  
+  // User has "Site Default" selected - check browser preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    return false
+  }
+  
+  // No browser preference, use site default
+  return siteDefaultDark
+}
+
+/**
+ * Listen for browser theme changes
+ * @param {Function} callback - Function to call when browser theme changes, receives boolean (prefersDark)
+ * @returns {Function} Unsubscribe function
+ */
+function onBrowserThemeChange(callback) {
+  if (!window.matchMedia) return () => {}
+  
+  const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const lightModeQuery = window.matchMedia('(prefers-color-scheme: light)')
+  
+  const handleChange = () => {
+    const prefersDark = darkModeQuery.matches
+    callback(prefersDark)
+  }
+  
+  // Modern browsers
+  if (darkModeQuery.addEventListener) {
+    darkModeQuery.addEventListener('change', handleChange)
+    lightModeQuery.addEventListener('change', handleChange)
+    
+    return () => {
+      darkModeQuery.removeEventListener('change', handleChange)
+      lightModeQuery.removeEventListener('change', handleChange)
+    }
+  }
+  // Legacy browsers
+  else if (darkModeQuery.addListener) {
+    darkModeQuery.addListener(handleChange)
+    lightModeQuery.addListener(handleChange)
+    
+    return () => {
+      darkModeQuery.removeListener(handleChange)
+      lightModeQuery.removeListener(handleChange)
+    }
+  }
+  
+  return () => {}
+}
 
 // ====================================
 // Initialize Global Vars

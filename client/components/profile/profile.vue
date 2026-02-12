@@ -350,9 +350,19 @@ import Cookies from 'js-cookie'
 import validate from 'validate.js'
 
 import PasswordStrength from '../common/password-strength.vue'
-import { getBrowserPrefersDark } from '@/helpers/theme'
 
 /* global WIKI, siteConfig */
+
+/**
+ * Get browser's dark mode preference
+ * @returns {boolean} Whether browser prefers dark mode
+ */
+function getBrowserPrefersDark() {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true
+  }
+  return false
+}
 
 export default {
   i18nOptions: {
