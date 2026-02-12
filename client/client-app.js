@@ -32,6 +32,7 @@ import localization from './modules/localization'
 // ====================================
 
 import helpers from './helpers'
+import { getEffectiveDarkMode, onBrowserThemeChange } from './helpers/theme'
 
 // ====================================
 // Initialize Global Vars
@@ -236,10 +237,9 @@ let bootstrap = () => {
 
   const i18n = localization.init()
 
-  let darkModeEnabled = siteConfig.darkMode
-  if ((store.get('user/appearance') || '').length > 0) {
-    darkModeEnabled = (store.get('user/appearance') === 'dark')
-  }
+  // Determine initial dark mode setting using browser preference when user has "Site Default"
+  const userAppearance = store.get('user/appearance') || ''
+  let darkModeEnabled = getEffectiveDarkMode(userAppearance, siteConfig.darkMode)
 
   window.WIKI = new Vue({
     el: '#root',
@@ -265,6 +265,21 @@ let bootstrap = () => {
       }
       if ((store.get('user/timezone') || '').length > 0) {
         this.$moment.tz.setDefault(store.get('user/timezone'))
+      }
+
+      // Listen for browser theme changes when user has "Site Default" selected
+      this._unsubscribeBrowserTheme = onBrowserThemeChange((prefersDark) => {
+        const currentAppearance = store.get('user/appearance') || ''
+        if (currentAppearance === '') {
+          // Only react to browser changes when user has "Site Default" selected
+          this.$vuetify.theme.dark = prefersDark
+        }
+      })
+    },
+    beforeDestroy() {
+      // Cleanup browser theme listener
+      if (this._unsubscribeBrowserTheme) {
+        this._unsubscribeBrowserTheme()
       }
     }
   })

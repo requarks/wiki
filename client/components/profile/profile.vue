@@ -350,6 +350,7 @@ import Cookies from 'js-cookie'
 import validate from 'validate.js'
 
 import PasswordStrength from '../common/password-strength.vue'
+import { getBrowserPrefersDark } from '@/helpers/theme'
 
 /* global WIKI, siteConfig */
 
@@ -685,7 +686,8 @@ export default {
   watch: {
     'user.appearance': (newValue, oldValue) => {
       if (newValue === '') {
-        WIKI.$vuetify.theme.dark = siteConfig.darkMode
+        // Site Default: use browser preference
+        WIKI.$vuetify.theme.dark = getBrowserPrefersDark()
       } else {
         WIKI.$vuetify.theme.dark = (newValue === 'dark')
       }
