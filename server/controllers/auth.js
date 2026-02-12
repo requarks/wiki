@@ -73,16 +73,22 @@ router.all('/login/:strategy/callback', async (req, res, next) => {
     res.cookie('jwt', authResult.jwt, commonHelper.getCookieOpts())
 
     const loginRedirect = req.cookies['loginRedirect']
+    const isValidRedirect = loginRedirect && loginRedirect.startsWith('/') && !loginRedirect.startsWith('//') && !loginRedirect.includes('://')
     if (loginRedirect === '/' && authResult.redirect) {
       res.clearCookie('loginRedirect')
       res.redirect(authResult.redirect)
-    } else if (loginRedirect) {
+    } else if (isValidRedirect) {
       res.clearCookie('loginRedirect')
       res.redirect(loginRedirect)
-    } else if (authResult.redirect) {
-      res.redirect(authResult.redirect)
     } else {
-      res.redirect('/')
+      if (loginRedirect) {
+        res.clearCookie('loginRedirect')
+      }
+      if (authResult.redirect) {
+        res.redirect(authResult.redirect)
+      } else {
+        res.redirect('/')
+      }
     }
   } catch (err) {
     next(err)

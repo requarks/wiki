@@ -644,16 +644,22 @@ export default {
         Cookies.set('jwt', respObj.jwt, { expires: 365, secure: window.location.protocol === 'https:' })
         _.delay(() => {
           const loginRedirect = Cookies.get('loginRedirect')
+          const isValidRedirect = loginRedirect && loginRedirect.startsWith('/') && !loginRedirect.startsWith('//') && !loginRedirect.includes('://')
           if (loginRedirect === '/' && respObj.redirect) {
             Cookies.remove('loginRedirect')
             window.location.replace(respObj.redirect)
-          } else if (loginRedirect) {
+          } else if (isValidRedirect) {
             Cookies.remove('loginRedirect')
             window.location.replace(loginRedirect)
-          } else if (respObj.redirect) {
-            window.location.replace(respObj.redirect)
           } else {
-            window.location.replace('/')
+            if (loginRedirect) {
+              Cookies.remove('loginRedirect')
+            }
+            if (respObj.redirect) {
+              window.location.replace(respObj.redirect)
+            } else {
+              window.location.replace('/')
+            }
           }
         }, 1000)
       }
