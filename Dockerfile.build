@@ -4,6 +4,9 @@
 ARG NODE_IMAGE
 FROM ${NODE_IMAGE} AS build
 
+ENV LANG=en_DE.UTF-8
+ENV LC_ALL=en_DE.UTF-8
+
 WORKDIR /wiki
 
 USER root
