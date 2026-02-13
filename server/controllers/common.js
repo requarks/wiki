@@ -114,6 +114,9 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
 
+  // -> Set Draw.IO url for editor-modal-drawio.vue
+  _.set(res, 'locals.siteConfig.drawioBaseUrl', WIKI.config.drawioBaseUrl)
+
   // -> Check for reserved path
   if (pageHelper.isReservedPath(pageArgs.path)) {
     return next(new Error('Cannot create this page because it starts with a system reserved path.'))

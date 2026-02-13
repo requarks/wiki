@@ -2,14 +2,13 @@
   v-card.editor-modal-drawio.animated.fadeIn(flat, tile)
     iframe(
       ref='drawio'
-      src='https://embed.diagrams.net/?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0'
+      :src='drawioBaseUrl'
       frameborder='0'
     )
 </template>
 
 <script>
 import { sync, get } from 'vuex-pathify'
-
 // const xmlTest = `<?xml version="1.0" encoding="UTF-8"?>
 // <mxfile version="13.4.2">
 //   <diagram id="SgbkCjxR32CZT1FvBvkp" name="Page-1">
@@ -34,7 +33,10 @@ export default {
   },
   computed: {
     editorKey: get('editor/editorKey'),
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    drawioBaseUrl() {
+      return `${siteConfig.drawioBaseUrl}?embed=1&proto=json&spin=1&saveAndExit=1&noSaveBtn=1&noExitBtn=0`
+    }
   },
   methods: {
     close () {
