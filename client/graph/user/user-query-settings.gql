@@ -1,0 +1,6 @@
+query userSettings {
+  userSettings {
+    userId
+    isReleaseInfoSeen
+  }
+}

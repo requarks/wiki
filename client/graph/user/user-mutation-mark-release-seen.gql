@@ -1,0 +1,10 @@
+mutation markReleaseInfoAsSeen {
+  markReleaseInfoAsSeen {
+    responseResult {
+      succeeded
+      errorCode
+      slug
+      message
+    }
+  }
+}

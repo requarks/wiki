@@ -445,6 +445,21 @@
           v-btn.mr-3(icon, @click='closeReleaseNotes', :aria-label='`Close Release Notes dialog`', :style='{"color": colors.textDark.primary}')
             v-icon mdi-close
         v-divider
+
+        //- Upgrade success message
+        v-alert(
+          v-if='isUpgradeNotification'
+          type='info'
+          colored-border
+          border='left'
+          elevation='2'
+          class='ma-4'
+        )
+          .d-flex.align-center
+            div
+              .text-h6.font-weight-bold {{ $t('common:release.upgradeTitle') }}
+              .body-2 {{ $t('common:release.upgradeBody') }}
+
         v-card-text
           v-progress-linear(indeterminate, color='primary', class='mb-4', v-if='releaseNotesLoading')
           v-alert(type='error', outlined, dense, v-if='releaseNotesError') {{ releaseNotesError }}
@@ -487,6 +502,8 @@ import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 import createFollowerMutation from 'gql/followers/create-follower.gql'
 import deleteFollowerMutation from 'gql/followers/delete-follower.gql'
 import isFollowingQuery from 'gql/followers/is-following.gql'
+import userSettingsQuery from 'gql/user/user-query-settings.gql'
+import markReleaseSeenMutation from 'gql/user/user-mutation-mark-release-seen.gql'
 
 /* global siteConfig, siteLangs */
 
@@ -520,6 +537,8 @@ export default {
       releaseInfos: [],
       releaseNotesLoading: false,
       releaseNotesError: null,
+      isUpgradeNotification: false,
+      releaseCheckInterval: null,
       isDevMode: false,
       duplicateOpts: {
         locale: 'en',
@@ -551,6 +570,9 @@ export default {
     sitesWithWriteAccess: get('user/sitesWithWriteAccess'),
     sitePath: get('page/sitePath'),
     siteId: get('page/siteId'),
+    RELEASE_CHECK_INTERVAL_MS() {
+      return 4 * 60 * 60 * 1000 // Check every 4 hours
+    },
     picture () {
       if (this.pictureUrl && this.pictureUrl.length > 1) {
         return {
@@ -647,8 +669,90 @@ export default {
     
     this.isDevMode = siteConfig.devMode === true
     this.fetchSitesFromUser()
+    this.startReleaseCheck()
+  },
+  beforeDestroy() {
+    this.stopReleaseCheck()
   },
   methods: {
+    startReleaseCheck() {
+      // Check immediately on mount
+      this.checkForNewRelease()
+
+      // Then check periodically
+      this.releaseCheckInterval = setInterval(() => {
+        this.checkForNewRelease()
+      }, this.RELEASE_CHECK_INTERVAL_MS)
+    },
+    stopReleaseCheck() {
+      if (this.releaseCheckInterval) {
+        clearInterval(this.releaseCheckInterval)
+        this.releaseCheckInterval = null
+      }
+    },
+    async checkForNewRelease() {
+      try {
+        // Only check if user is authenticated
+        if (!this.isAuthenticated) return
+
+        // Get user settings to check if release info was already seen
+        let isReleaseInfoSeen = false
+        try {
+          const userSettingsResult = await this.$apollo.query({
+            query: userSettingsQuery,
+            fetchPolicy: 'network-only',
+            errorPolicy: 'ignore' // Don't show error notifications
+          })
+          isReleaseInfoSeen = userSettingsResult.data.userSettings.isReleaseInfoSeen
+        } catch (settingsErr) {
+          // If user settings query fails, just continue with default (false)
+          console.warn('Could not fetch user settings, continuing with default:', settingsErr)
+        }
+
+        // Get latest release version from server
+        const releaseInfosQuery = await import(/* webpackChunkName: "release-infos" */ '@/graph/common/common-release-infos.gql')
+        const { data } = await this.$apollo.query({
+          query: releaseInfosQuery.default,
+          fetchPolicy: 'network-only',
+          notifyOnNetworkStatusChange: true
+        })
+
+        const releases = data.releaseInfos || []
+        if (releases.length === 0) return
+
+        // Get the latest release version from database
+        const latestRelease = releases[0]
+        const releaseVersionDb = latestRelease.versionNumber
+
+        // Get last seen version from localStorage
+        const releaseVersionLocalStorage = localStorage.getItem('release-version-local-storage')
+
+        // Check conditions:
+        // 1. Release version in DB is different from localStorage
+        // 2. AND is_release_info_seen flag is false
+        if (releaseVersionLocalStorage !== releaseVersionDb && !isReleaseInfoSeen) {
+          // New release detected and not yet seen!
+          
+          // Update localStorage IMMEDIATELY (before opening dialog)
+          localStorage.setItem('release-version-local-storage', releaseVersionDb)
+          
+          this.isUpgradeNotification = true
+          
+          // Store the release infos for display
+          this.releaseInfos = releases.map(ri => ({
+            versionNumber: ri.versionNumber,
+            releaseDate: ri.releaseDate,
+            notes: ri.notes || []
+          }))
+
+          // Auto-open dialog
+          await this.$nextTick()
+          this.releaseNotesDialog = true
+        }
+      } catch (err) {
+        console.error('Error checking for new release:', err)
+      }
+    },
     searchFocus () {
       this.searchIsFocused = true
     },
@@ -865,7 +969,14 @@ export default {
     },
     async openReleaseNotes() {
       this.releaseNotesDialog = true
-      if (this.releaseInfos.length > 0 || this.releaseNotesLoading) { return }
+      // When manually opened, set this to false (not an auto-notification)
+      this.isUpgradeNotification = false
+      
+      // If we already have release infos from polling, no need to fetch again
+      if (this.releaseInfos.length > 0) {
+        return
+      }
+      // Otherwise, fetch them (e.g., when user manually opens the dialog)
       this.releaseNotesLoading = true
       this.releaseNotesError = null
       try {
@@ -885,8 +996,26 @@ export default {
         this.releaseNotesLoading = false
       }
     },
-    closeReleaseNotes() {
+    async closeReleaseNotes() {
       this.releaseNotesDialog = false
+
+      // Only mark as seen in database if this was an auto-upgrade notification
+      if (this.isUpgradeNotification && this.releaseInfos.length > 0) {
+        const latestVersion = this.releaseInfos[0].versionNumber
+        
+        // Update database flag
+        try {
+          await this.$apollo.mutate({
+            mutation: markReleaseSeenMutation
+          })
+          
+          console.log(`Marked release ${latestVersion} as seen in database`)
+        } catch (err) {
+          console.error('Error marking release as seen:', err)
+        }
+        
+        this.isUpgradeNotification = false
+      }
     },
     localizeReleaseNote(note) {
       const lang = (this.$i18n.locale || 'en').toLowerCase()
@@ -1167,8 +1296,8 @@ export default {
   text-align: left !important;
   padding-left: 0 !important;
   margin-left: 0 !important;
-  li { 
-    list-style: disc; 
+  li {
+    list-style: disc;
     margin-bottom: 4px;
     font-family: 'Ubuntu', sans-serif;
     font-weight: 500;
@@ -1178,7 +1307,7 @@ export default {
 }
 
 .release-info-block {
-  .body-1 { 
+  .body-1 {
     font-family: 'Ubuntu', sans-serif;
     font-weight: 700;
     font-size: 1.25rem;

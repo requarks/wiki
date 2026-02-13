@@ -1,0 +1,20 @@
+# ===============================================
+# USER SETTINGS
+# ===============================================
+
+extend type Query {
+  userSettings: UserSettings
+}
+
+extend type Mutation {
+  markReleaseInfoAsSeen: DefaultResponse
+}
+
+# -----------------------------------------------
+# TYPES
+# -----------------------------------------------
+
+type UserSettings {
+  userId: Int!
+  isReleaseInfoSeen: Boolean!
+}
