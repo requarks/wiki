@@ -5,9 +5,12 @@ common:
   actions.saveNotify: "Save & Notify"
   actions.createNotify: "Create & Notify"
   actions.deleteNotify: "Delete & Notify"
+  release.upgradeTitle: "CapWiki is successfully upgraded!"
+  release.upgradeBody: "Check out the new features and improvements below."
 profile:
   unsaved.title: "Unsaved Changes"
   unsaved.body: "You have unsaved changes to your profile. Are you sure you want to discard them?"
 admin:
   mail.allowedDomains: "Add Allow Only Sending mails to domains"
   mail.allowedDomainsHint: "Add a list of domains that are allowed to send emails to users. If the list is empty, all domains are allowed. Separate domains with a comma."
+  
