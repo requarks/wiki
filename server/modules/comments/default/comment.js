@@ -130,13 +130,37 @@ module.exports = {
       render: renderedContent
     })
     return renderedContent
+    
+
   },
-  /**
+
+  
+
+
+  
+
+
+    /**
    * Delete an existing comment by ID
    */
-  async remove ({ id, user }) {
-    return WIKI.models.comments.query().findById(id).delete()
-  },
+     async remove ({ id, page, Comment, content,authorId, user,config}) {
+      await WIKI.mail.send({
+        template: 'coment',
+        to: page.authorEmail,
+        subject: `Коментарий удален`,
+        data: {
+          preheadertext: `ВАЖНО`,
+          title:  user.name + ` удалил коментарий к статье: ` + page.title,
+          content: `Вы получили это сообщение потому что являетесь автором этой статьи`,
+          buttonLink: WIKI.config.host+`/`+page.path,
+          buttonText: 'Перейти к странице',
+
+        },
+        text: `Молодец ты нашел этот текст сообщи о своей находке и ни чего не произойдет ` 
+      }) 
+      return WIKI.models.comments.query().findById(id).delete()
+    },
+  
   /**
    * Get the page ID from a comment ID
    */
