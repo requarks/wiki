@@ -36,6 +36,12 @@ module.exports = {
         uploadScanSVG: WIKI.config.uploads.scanSVG,
         uploadForceDownload: WIKI.config.uploads.forceDownload
       }
+    },
+    async uploadConfig(obj, args, context, info) {
+      return {
+        uploadMaxFileSize: WIKI.config.uploads.maxFileSize,
+        uploadMaxFiles: WIKI.config.uploads.maxFiles,
+      }
     }
   },
   SiteMutation: {
