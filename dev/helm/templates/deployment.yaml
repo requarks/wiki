@@ -24,8 +24,9 @@ spec:
       serviceAccountName: {{ include "wiki.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.sideload.enabled }}
+      {{- if or .Values.sideload.enabled .Values.initContainers }}
       initContainers:
+        {{- if or .Values.sideload.enabled }}
         - name: {{ .Chart.Name }}-sideload
           securityContext:
             {{- toYaml .Values.sideload.securityContext | nindent 12 }}
@@ -37,6 +38,10 @@ spec:
           args: [ "mkdir -p /wiki/data/sideload && git clone --depth=1 {{ .Values.sideload.repoURL }} /wiki/data/sideload/" ]
           resources:
             {{- toYaml .Values.sideload.resources | nindent 12 }}
+        {{- end }}
+        {{- with .Values.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
