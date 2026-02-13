@@ -189,6 +189,15 @@
                     )
                   v-switch(
                     inset
+                    :label='$t(`admin:security.bypassUnauthorized`)'
+                    color='primary'
+                    v-model='config.authBypassUnauthorized'
+                    prepend-icon='mdi-fast-forward'
+                    persistent-hint
+                    :hint='$t(`admin:security.bypassUnauthorizedHint`)'
+                    )
+                  v-switch(
+                    inset
                     :label='$t(`admin:security.hideLocalLogin`)'
                     color='primary'
                     v-model='config.authHideLocal'
@@ -272,6 +281,7 @@ export default {
         securityCSP: false,
         securityCSPDirectives: '',
         authAutoLogin: false,
+        authBypassUnauthorized: false,
         authHideLocal: false,
         authLoginBgUrl: '',
         authJwtAudience: 'urn:wiki.js',
@@ -298,6 +308,7 @@ export default {
           mutation: gql`
             mutation (
               $authAutoLogin: Boolean
+              $authBypassUnauthorized: Boolean
               $authEnforce2FA: Boolean
               $authHideLocal: Boolean
               $authLoginBgUrl: String
@@ -321,6 +332,7 @@ export default {
               site {
                 updateConfig(
                   authAutoLogin: $authAutoLogin,
+                  authBypassUnauthorized: $authBypassUnauthorized,
                   authEnforce2FA: $authEnforce2FA,
                   authHideLocal: $authHideLocal,
                   authLoginBgUrl: $authLoginBgUrl,
@@ -353,6 +365,7 @@ export default {
           `,
           variables: {
             authAutoLogin: _.get(this.config, 'authAutoLogin', false),
+            authBypassUnauthorized: _.get(this.config, 'authBypassUnauthorized', false),
             authEnforce2FA: _.get(this.config, 'authEnforce2FA', false),
             authHideLocal: _.get(this.config, 'authHideLocal', false),
             authLoginBgUrl: _.get(this.config, 'authLoginBgUrl', ''),
@@ -406,6 +419,7 @@ export default {
           site {
             config {
               authAutoLogin
+              authBypassUnauthorized
               authEnforce2FA
               authHideLocal
               authLoginBgUrl

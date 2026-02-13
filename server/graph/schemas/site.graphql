@@ -36,6 +36,7 @@ type SiteMutation {
     logoUrl: String
     pageExtensions: String
     authAutoLogin: Boolean
+    authBypassUnauthorized: Boolean
     authEnforce2FA: Boolean
     authHideLocal: Boolean
     authLoginBgUrl: String
@@ -86,6 +87,7 @@ type SiteConfig {
   logoUrl: String
   pageExtensions: String
   authAutoLogin: Boolean
+  authBypassUnauthorized: Boolean
   authEnforce2FA: Boolean
   authHideLocal: Boolean
   authLoginBgUrl: String
