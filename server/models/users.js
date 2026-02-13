@@ -312,8 +312,14 @@ module.exports = class User extends Model {
           session: !strInfo.useForm,
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
-          if (err) { return reject(err) }
-          if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
+          if (err) {
+            WIKI.logger.warn(`Error trying to authenticate with strategy ${selStrategy.key}: ${JSON.stringify({ err, info })}`)
+            return reject(err)
+          }
+          if (!user) {
+            WIKI.logger.info(`Authentication failed with strategy ${selStrategy.key}: ${JSON.stringify(info)}`)
+            return reject(new WIKI.Error.AuthLoginFailed())
+          }
 
           try {
             const resp = await WIKI.models.users.afterLoginChecks(user, context, {
