@@ -139,6 +139,11 @@ jobs:
     repeat: false
     immediate: true
     worker: true
+  sendCommentNotificationEmails:
+    onInit: true
+    schedule: P1D
+    offlineSkip: true
+    repeat: true
 groups:
   defaultPermissions:
     - 'read:pages'
