@@ -1,4 +1,4 @@
-const ACME = require('acme')
+const ACME = require('@root/acme')
 const Keypairs = require('@root/keypairs')
 const _ = require('lodash')
 const moment = require('moment')
