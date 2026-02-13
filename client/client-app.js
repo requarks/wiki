@@ -19,6 +19,7 @@ import VueMoment from 'vue-moment'
 import store from './store'
 import Cookies from 'js-cookie'
 import FloatingVue from 'floating-vue'
+import VueTour from 'vue-tour'
 
 // ====================================
 // Load Modules
@@ -32,6 +33,7 @@ import localization from './modules/localization'
 // ====================================
 
 import helpers from './helpers'
+import TourManager from './helpers/tour-manager'
 
 // ====================================
 // Theme Detection Helpers
@@ -228,6 +230,10 @@ Vue.use(Vuetify)
 
 Vue.use(VueMoment, { moment })
 
+Vue.use(VueTour)
+
+Vue.use(TourManager)
+
 // Override the moment filter to properly handle UTC dates with timezone conversion
 Vue.filter('moment', function (value, ...args) {
   if (!value) return ''
@@ -284,6 +290,8 @@ Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './theme
 Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
+  
+
   // ====================================
   // Notifications
   // ====================================
