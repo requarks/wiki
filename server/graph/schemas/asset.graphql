@@ -23,6 +23,8 @@ type AssetQuery {
   folders(
     parentFolderId: Int!
   ): [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
+
+  allFolders: [AssetFolder] @auth(requires: ["manage:system", "read:assets"])
 }
 
 # -----------------------------------------------
@@ -30,11 +32,19 @@ type AssetQuery {
 # -----------------------------------------------
 
 type AssetMutation {
-  createFolder(
+createFolder(
     parentFolderId: Int!
     slug: String!
     name: String
   ): DefaultResponse @auth(requires: ["manage:system", "write:assets"])
+
+  createFolderWithId(
+    parentFolderId: Int!
+    slug: String!
+    name: String
+  ): FolderCreationResponse @auth(requires: ["manage:system", "write:assets"])
+
+  # DefaultResponse @auth(requires: ["manage:system", "write:assets"])
 
   renameAsset(
     id: Int!
@@ -44,6 +54,11 @@ type AssetMutation {
   deleteAsset(
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+
+  deleteFolder(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system", "manage:assets"])
+
 
   flushTempUploads: DefaultResponse @auth(requires: ["manage:system"])
 }
@@ -70,10 +85,17 @@ type AssetFolder {
   id: Int!
   slug: String!
   name: String
+  parentId: Int
 }
 
 enum AssetKind {
   IMAGE
   BINARY
   ALL
+}
+
+type FolderCreationResponse {
+  folderId: Int
+  response: DefaultResponse
+  parentId: Int
 }
