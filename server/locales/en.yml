@@ -2,6 +2,7 @@ common:
   github.repository: 'Visit our GitHub Repository'
   header.followSite: "Follow Site"
   header.unfollowSite: "Unfollow Site"
+  header.move: "Move"
   actions.saveNotify: "Save & Notify"
   actions.createNotify: "Create & Notify"
   actions.deleteNotify: "Delete & Notify"

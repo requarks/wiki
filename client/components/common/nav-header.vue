@@ -418,7 +418,8 @@
       v-model='movePageModal',
       :open-handler='pageMoveRename',
       :path='path',
-      :locale='locale'
+      :locale='locale',
+      :currentPagePath='path'
     )
 
     page-selector(mode='create',
