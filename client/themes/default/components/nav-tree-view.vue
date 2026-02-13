@@ -124,8 +124,72 @@ export default {
         this.saveTreeState()
       })
     }
+    
+    // Listen for page tree refresh events
+    this.$root.$on('reloadPageTree', this.reloadTree)
+  },
+  beforeDestroy() {
+    this.$root.$off('reloadPageTree', this.reloadTree)
   },
   methods: {
+    async reloadTree(options = {}) {
+      try {
+        // Save current expanded paths before reload (openNodes contains objects due to return-object)
+        const savedPaths = this.openNodes.map(node => {
+          if (typeof node === 'string') return node
+          if (node && typeof node === 'object') return node.path || ''
+          return ''
+        }).filter(p => p !== '')
+        
+        // Add the expand path from options if provided (for page moves)
+        if (options.expandPath && !savedPaths.includes(options.expandPath)) {
+          savedPaths.push(options.expandPath)
+        }
+        
+        this.isRestoringState = true
+        
+        // Reset loaded paths so children will reload
+        this.loadedPaths.clear()
+        
+        // Clear open nodes before reload
+        this.openNodes = []
+        
+        // Reload the tree (loadInitialTree uses network-only already)
+        await this.loadInitialTree()
+        
+        // Wait for tree to render
+        await this.$nextTick()
+        
+        // Restore expanded nodes by finding nodes with matching paths
+        const nodesToOpen = []
+        for (const path of savedPaths) {
+          const node = this.findPageInTree(path)
+          if (node) {
+            nodesToOpen.push(node)
+            // Also load children for this node with force network to get fresh data
+            if (node.pageId && (node.isFolder || node.hasChildren)) {
+              await this.loadChildren(node, true) // Force network fetch
+            }
+          }
+        }
+        
+        // Set open nodes with the new node references
+        this.openNodes = nodesToOpen
+        
+        // Restore active page
+        if (this.path) {
+          this.setActivePage(this.path)
+        }
+        
+        this.isRestoringState = false
+        
+        // Trigger a re-render by incrementing cache ID
+        this.treeViewCacheId++
+      } catch (error) {
+        console.error('Nav tree view reload failed:', error)
+        this.isRestoringState = false
+      }
+    },
     saveTreeState() {
       if (this.saveStateTimeout) {
         clearTimeout(this.saveStateTimeout)
@@ -316,9 +380,9 @@ export default {
       })
     },
 
-    async loadChildren(node) {
-      // Smart lazy loading - only load if not already loaded
-      if (this.loadedPaths.has(node.path)) {
+    async loadChildren(node, forceNetwork = false) {
+      // Smart lazy loading - only load if not already loaded (unless force)
+      if (!forceNetwork && this.loadedPaths.has(node.path)) {
         return Promise.resolve()
       }
       
@@ -329,7 +393,7 @@ export default {
       try {
         const childrenResp = await this.$apollo.query({
           query: childPagesQuery,
-          fetchPolicy: 'cache-first',
+          fetchPolicy: forceNetwork ? 'network-only' : 'cache-first',
           variables: {
             pageId: node.pageId,
             locale: this.locale,

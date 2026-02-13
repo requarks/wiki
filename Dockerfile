@@ -1,16 +1,16 @@
 # ====================
 # --- Build Assets ---
 # ====================
-ARG NODE_IMAGE
+ARG NODE_IMAGE=node:20-alpine
 FROM ${NODE_IMAGE} AS assets
 
-ENV LANG=en_DE.UTF-8
-ENV LC_ALL=en_DE.UTF-8
+# Re-declare ARG to make it available in this build stage
+ARG NODE_IMAGE
 
 WORKDIR /wiki
 
 USER root
-
+RUN echo "Building wiki with Node image: ${NODE_IMAGE}"
 RUN apk add yarn g++ make cmake python3 --no-cache && \
     chown -R node:node /wiki
 
@@ -37,13 +37,12 @@ RUN yarn patch-package
 # ===============
 # --- Release ---
 # ===============
-ARG NODE_IMAGE
+ARG NODE_IMAGE=node:20-alpine
 FROM ${NODE_IMAGE}
 LABEL maintainer="capgemini"
 
-ENV LANG=en_DE.UTF-8
-ENV LC_ALL=en_DE.UTF-8
-
+# Re-declare ARG to make it available in this build stage
+ARG NODE_IMAGE
 ARG VERSION
 ARG RELEASE_DATE
 

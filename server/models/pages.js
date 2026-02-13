@@ -875,6 +875,10 @@ module.exports = class Page extends Model {
       opts.isPrivate
     )
 
+    // Store original path before updating (for child page queries)
+    const originalPath = page.path
+    const originalLocale = page.localeCode
+
     // -> Move page
     const destinationTitle =
       page.title === _.last(page.path.split('/')) ?
@@ -891,6 +895,52 @@ module.exports = class Page extends Model {
       .findById(page.id)
     await WIKI.models.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+
+    // -> Move child pages (pages with paths starting with originalPath/)
+    const childPages = await WIKI.models.pages
+      .query()
+      .where('localeCode', originalLocale)
+      .where('siteId', page.siteId)
+      .where('path', 'like', `${originalPath}/%`)
+    
+    for (const childPage of childPages) {
+      // Calculate new path for child page
+      const childRelativePath = childPage.path.substring(originalPath.length)  // e.g., "/subpage" or "/folder/subpage"
+      const newChildPath = opts.destinationPath + childRelativePath
+      
+      const childDestHash = await WIKI.models.pages.generatePageHash(
+        childPage.siteId,
+        newChildPath,
+        opts.destinationLocale,
+        childPage.isPrivate
+      )
+      
+      // Update child page path
+      await WIKI.models.pages
+        .query()
+        .patch({
+          path: newChildPath,
+          localeCode: opts.destinationLocale,
+          hash: childDestHash
+        })
+        .findById(childPage.id)
+      
+      // Clear cache for child page
+      await WIKI.models.pages.deletePageFromCache(childPage.hash)
+      WIKI.events.outbound.emit('deletePageFromCache', childPage.hash)
+      
+      // Update search index for child page
+      try {
+        await WIKI.data.searchEngine.renamed({
+          ...childPage,
+          destinationPath: newChildPath,
+          destinationLocaleCode: opts.destinationLocale,
+          destinationHash: childDestHash
+        })
+      } catch (err) {
+        WIKI.logger.warn(`Failed to update search index for child page ${childPage.path}: ${err.message}`)
+      }
+    }
 
     // -> Rebuild page tree
     await WIKI.models.pages.rebuildTree(page)

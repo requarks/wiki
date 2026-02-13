@@ -66,7 +66,7 @@
               v-list-item(@click='', disabled)
                 v-list-item-icon
                   v-icon(color='grey') mdi-content-save-move-outline
-                v-list-item-title Move / Rename
+                v-list-item-title Move/Reorder
               v-dialog(v-model='deletePageDialog', max-width='500')
                 template(v-slot:activator='{ on }')
                   v-list-item(v-on='on')

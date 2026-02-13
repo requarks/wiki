@@ -170,6 +170,12 @@ type PageMutation {
 
   purgeHistory(olderThan: String!): DefaultResponse
     @auth(requires: ["manage:system"])
+
+  reorderPages(
+    parentId: Int!
+    orders: [PageReorderInput!]!
+  ): DefaultResponse
+    @auth(requires: ["manage:pages", "manage:system", "manage:sites"])
 }
 
 # -----------------------------------------------
@@ -364,6 +370,10 @@ enum PageOrderByDirection {
   DESC
 }
 
+input PageReorderInput {
+  pageId: Int!
+  position: Int!
+}
 enum PageTreeMode {
   FOLDERS
   PAGES
