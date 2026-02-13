@@ -110,6 +110,19 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
 
   req.i18n.changeLanguage(pageArgs.locale)
 
+  // -> Set Markdown Editor config for preview rendering
+  const renderers = await WIKI.models.renderers.getRenderers()
+  const md = _.find(renderers, ['key', 'markdownCore'])
+
+  const keyMaps = { allowHTML: 'html', linebreaks: 'breaks' }
+  const config = _.transform(md.config, (res, value, key) => {
+    if (_.has(keyMaps, key)) {
+      key = keyMaps[key]
+    }
+    res[key] = value
+  }, {})
+  _.set(res, 'locals.siteConfig.mdEditorConfig', config)
+
   // -> Set Editor Lang
   _.set(res, 'locals.siteConfig.lang', pageArgs.locale)
   _.set(res, 'locals.siteConfig.rtl', req.i18n.dir() === 'rtl')
