@@ -379,6 +379,17 @@ import colors from '@/themes/default/js/color-scheme'
 
 /* global WIKI, siteConfig */
 
+/**
+ * Get browser's dark mode preference
+ * @returns {boolean} Whether browser prefers dark mode
+ */
+function getBrowserPrefersDark() {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true
+  }
+  return false
+}
+
 export default {
   i18nOptions: {
     namespaces: ['profile', 'auth']
@@ -727,9 +738,13 @@ export default {
     }
   },
   watch: {
-    'user.appearance': function (newValue, oldValue) {
-      // Apply theme immediately when appearance changes (live preview)
-      this.applyTheme(newValue)
+    'user.appearance': (newValue, oldValue) => {
+      if (newValue === '') {
+        // Site Default: use browser preference
+        WIKI.$vuetify.theme.dark = getBrowserPrefersDark()
+      } else {
+        WIKI.$vuetify.theme.dark = (newValue === 'dark')
+      }
     },
     'user.dateFormat': function (newValue, oldValue) {
       if (newValue === '') {
