@@ -228,6 +228,20 @@ export default {
     }
   },
   methods: {
+    async reloadTree() {
+      // Reset local state
+      this.loadedCache = []
+      this.hasFetchedChildren = false
+      this.cachedPageItems = []
+      
+      // Reload based on current mode - force network fetch
+      if (this.currentMode === 'browse') {
+        await this.loadFromCurrentPath(true)
+      }
+      if (this.isReadyToFetchPageChildren) {
+        await this.fetchChildPageItems(true)
+      }
+    },
     switchMode(mode) {
       this.currentMode = mode
       window.localStorage.setItem('navPref', mode)
@@ -238,10 +252,10 @@ export default {
     getHref(item) {
       return item.path ? `/${this.sitePath}/${item.locale}/${item.path}` : `/${this.sitePath}/`
     },
-    async fetchPageTree() {
+    async fetchPageTree(forceNetwork = false) {
       const pageTreeResp = await this.$apollo.query({
         query: pageTreeQuery,
-        fetchPolicy: 'cache-first',
+        fetchPolicy: forceNetwork ? 'network-only' : 'cache-first',
         variables: {
           path: this.path,
           mode: 'ALL',
@@ -297,10 +311,10 @@ export default {
         this.parents
       this.$store.commit('page/SET_HAS_CHILDREN', curPage.isFolder)
     },
-    async loadFromCurrentPath() {
+    async loadFromCurrentPath(forceNetwork = false) {
       this.$store.commit(`loadingStart`, 'browse-load')
 
-      const pageTreeItems = await this.fetchPageTree()
+      const pageTreeItems = await this.fetchPageTree(forceNetwork)
       const curPage = _.find(pageTreeItems, [
         'pageId',
         this.$store.get('page/id')
@@ -336,7 +350,7 @@ export default {
       }
       return styles + 'background-color' + this.colors.neutral[100] + '!important;'
     },
-    async fetchChildPageItems() {
+    async fetchChildPageItems(forceNetwork = false) {
       this.$store.commit(`loadingStart`, 'browse-load')
 
       if (!this.isParentPage) {
@@ -354,7 +368,7 @@ export default {
 
       const resp = await this.$apollo.query({
         query: childPagesQuery,
-        fetchPolicy: 'cache-first',
+        fetchPolicy: forceNetwork ? 'network-only' : 'cache-first',
         variables: {
           pageId: this.pageId,
           locale: this.locale,
@@ -392,6 +406,12 @@ export default {
     if (this.isReadyToFetchPageChildren && !this.hasFetchedChildren) {
       this.fetchChildPageItems()
     }
+    
+    // Listen for page tree refresh events
+    this.$root.$on('reloadPageTree', this.reloadTree)
+  },
+  beforeDestroy() {
+    this.$root.$off('reloadPageTree', this.reloadTree)
   }
 }
 </script>

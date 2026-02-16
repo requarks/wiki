@@ -20,6 +20,7 @@ require('./scss/app.scss')
 import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/scss/app.scss')
 
 import(/* webpackChunkName: "mdi" */ '@mdi/font/css/materialdesignicons.css')
+import(/* webpackChunkName: "vue-tour" */ 'vue-tour/dist/vue-tour.css')
 
 require('./helpers/compatibility.js')
 require('./client-app.js')

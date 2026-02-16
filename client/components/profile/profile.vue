@@ -340,6 +340,31 @@
             .body-2: strong {{ user.pagesTotal }}
             .caption.grey--text.mt-3 {{$t('profile:activity.commentsPosted')}}
             .body-2: strong 0
+
+    v-dialog(v-model='showUnsavedModal', max-width='550')
+      v-card
+        .dialog-header.is-short(:style='`background-color: ${colors.blue[500]} !important;`')
+          v-icon.mr-2(color='white') mdi-alert
+          span(:style='`color: ${colors.textLight.inverse};`') {{$t('profile:unsaved.title')}}
+        v-card-text.pt-4
+          .body-2(:style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`') {{$t('profile:unsaved.body')}}
+        v-card-chin
+          v-spacer
+          v-btn.btn-rounded(
+            outlined
+            rounded
+            :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
+            @click='showUnsavedModal = false'
+            )
+            span.text-none.text-uppercase {{$t('common:actions.cancel')}}
+          v-btn.btn-rounded(
+            rounded
+            dark
+            :color='colors.red[450]'
+            @click='discardAndExit'
+            )
+            v-icon(left, color='white') mdi-delete-forever
+            span.text-none.text-uppercase(:style='`color: ${colors.textLight.inverse};`') {{$t('common:actions.discardChanges')}}
 </template>
 
 <script>
@@ -350,8 +375,20 @@ import Cookies from 'js-cookie'
 import validate from 'validate.js'
 
 import PasswordStrength from '../common/password-strength.vue'
+import colors from '@/themes/default/js/color-scheme'
 
 /* global WIKI, siteConfig */
+
+/**
+ * Get browser's dark mode preference
+ * @returns {boolean} Whether browser prefers dark mode
+ */
+function getBrowserPrefersDark() {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true
+  }
+  return false
+}
 
 export default {
   i18nOptions: {
@@ -364,7 +401,21 @@ export default {
     return {
       saveLoading: false,
       changePassLoading: false,
+      showUnsavedModal: false,
+      userLoaded: false,
+      appearanceChanged: false,
       user: {
+        name: 'unknown',
+        location: '',
+        jobTitle: '',
+        timezone: '',
+        dateFormat: '',
+        appearance: '',
+        createdAt: '1970-01-01',
+        updatedAt: '1970-01-01',
+        groups: []
+      },
+      originalUser: {
         name: 'unknown',
         location: '',
         jobTitle: '',
@@ -637,11 +688,15 @@ export default {
         { text: '(GMT+13:00) Tongatapu', value: 'Pacific/Tongatapu' },
         { text: '(GMT+14:00) Apia', value: 'Pacific/Apia' },
         { text: '(GMT+14:00) Kiritimati', value: 'Pacific/Kiritimati' }
-      ]
+      ],
+      colors: colors
     }
   },
   computed: {
     permissions: get('user/permissions'),
+    hasChanges() {
+      return !_.isEqual(this.user, this.originalUser)
+    },
     dateFormats () {
       return [
         { text: this.$t('profile:localeDefault'), value: '' },
@@ -685,12 +740,13 @@ export default {
   watch: {
     'user.appearance': (newValue, oldValue) => {
       if (newValue === '') {
-        WIKI.$vuetify.theme.dark = siteConfig.darkMode
+        // Site Default: use browser preference
+        WIKI.$vuetify.theme.dark = getBrowserPrefersDark()
       } else {
         WIKI.$vuetify.theme.dark = (newValue === 'dark')
       }
     },
-    'user.dateFormat': (newValue, oldValue) => {
+    'user.dateFormat': function (newValue, oldValue) {
       if (newValue === '') {
         WIKI.$moment.updateLocale(WIKI.$moment.locale(), null)
       } else {
@@ -701,7 +757,7 @@ export default {
         })
       }
     },
-    'user.timezone': (newValue, oldValue) => {
+    'user.timezone': function (newValue, oldValue) {
       if (newValue === '') {
         WIKI.$moment.tz.setDefault()
       } else {
@@ -709,7 +765,25 @@ export default {
       }
     }
   },
+  mounted() {
+    // Register exit handler with root for nav-header to access
+    this.$root.$on('profile-exit', this.handleExit)
+  },
+  beforeDestroy() {
+    // Clean up event listener
+    this.$root.$off('profile-exit', this.handleExit)
+  },
   methods: {
+    /**
+     * Apply theme based on appearance value
+     */
+    applyTheme(appearance) {
+      if (appearance === '') {
+        WIKI.$vuetify.theme.dark = siteConfig.darkMode
+      } else {
+        WIKI.$vuetify.theme.dark = (appearance === 'dark')
+      }
+    },
     hasPermission(prm) {
       if (_.isArray(prm)) {
         return _.some(prm, p => {
@@ -718,6 +792,71 @@ export default {
       } else {
         return _.includes(this.permissions, prm)
       }
+    },
+    /**
+     * Handle exit button click
+     */
+    handleExit() {
+      if (this.hasChanges) {
+        this.showUnsavedModal = true
+      } else {
+        // Even if no unsaved changes, check if appearance was previously saved
+        if (this.appearanceChanged) {
+          // Force reload when exiting after a saved appearance change
+          const targetUrl = (window.history.length > 1 && document.referrer) ? document.referrer : '/'
+          window.location.href = targetUrl
+        } else {
+          this.exitProfile()
+        }
+      }
+    },
+    /**
+     * Discard changes and exit
+     */
+    discardAndExit() {
+      // Revert theme to original saved appearance
+      this.applyTheme(this.originalUser.appearance)
+      
+      this.showUnsavedModal = false
+      this.exitProfile()
+    },
+    /**
+     * Navigate back to previous page
+     */
+    exitProfile() {
+      // If appearance was changed and saved, force a full page reload to apply the theme
+      if (this.appearanceChanged) {
+        // Use history.back() with a full reload to ensure theme is applied
+        if (window.history.length > 1) {
+          // Get the referrer or previous page from history state
+          const referrer = document.referrer
+          
+          if (referrer && referrer.includes(window.location.origin)) {
+            // Navigate to the referrer with a full page load
+            window.location.href = referrer
+          } else {
+            // Fallback to going back in history, then force reload
+            window.history.back()
+            // Force reload after a brief delay to allow history navigation
+            setTimeout(() => {
+              window.location.reload()
+            }, 10)
+          }
+        } else {
+          // No history, go to home
+          window.location.href = '/'
+        }
+        return
+      }
+      
+      // Normal navigation without reload - use history.back() if available
+      if (window.history.length > 1) {
+        window.history.back()
+        return
+      }
+      
+      // Fallback to home
+      window.location.href = '/'
     },
     /**
      * Focus an input after delay
@@ -764,13 +903,30 @@ export default {
         })
         const resp = _.get(respRaw, 'data.users.updateProfile.responseResult', {})
         if (resp.succeeded) {
+          const appearanceChanged = this.originalUser.appearance !== this.user.appearance
+
           Cookies.set('jwt', _.get(respRaw, 'data.users.updateProfile.jwt', ''), { expires: 365 })
           this.$store.set('user/name', this.user.name)
+          this.$store.set('user/appearance', this.user.appearance)
+          // Refresh auth state to pick up all updated user preferences from JWT
+          this.$store.commit('user/REFRESH_AUTH')
+
+          // Update the global Vuetify theme immediately
+          this.applyTheme(this.user.appearance)
+
+          // Update original user data after successful save
+          this.originalUser = _.cloneDeep(this.user)
+          
           this.$store.commit('showNotification', {
             message: this.$t('profile:save.success'),
             style: 'success',
             icon: 'check'
           })
+
+          // If appearance changed, mark it so we reload when navigating away
+          if (appearanceChanged) {
+            this.appearanceChanged = true
+          }
         } else {
           throw new Error(resp.message)
         }
@@ -915,7 +1071,17 @@ export default {
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.profile),
+      update: (data) => {
+        const clonedData = _.cloneDeep(data.profile)
+        return clonedData
+      },
+      result ({ data, loading }) {
+        // Only set originalUser on first successful load
+        if (!loading && data && data.profile && !this.userLoaded) {
+          this.originalUser = _.cloneDeep(data.profile)
+          this.userLoaded = true
+        }
+      },
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'profile-refresh')
       }
@@ -925,5 +1091,25 @@ export default {
 </script>
 
 <style lang='scss'>
+.v-btn.btn-rounded {
+  border-radius: 20px;
+  
+  // Fix text rendering issues
+  span {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-weight: 500;
+  }
+}
 
+// Ensure dialog header has proper styling
+.dialog-header {
+  span {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-weight: 500;
+  }
+}
 </style>

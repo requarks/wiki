@@ -180,18 +180,18 @@ export default {
 
       // Set the mentions in the Vuex store
       this.$store.set('editor/mentions', Array.from(mergedMentions))
-      
+
       // Apply mermaid color protection after content changes
       this.$nextTick(() => {
         this.applyMermaidColorProtection()
       })
     })
-    
+
     // Apply mermaid protection initially
     this.$nextTick(() => {
       this.applyMermaidColorProtection()
     })
-    
+
     // Watch for theme changes
     this.$watch('$vuetify.theme.dark', () => {
       this.$nextTick(() => {
@@ -205,7 +205,7 @@ export default {
       // In CKEditor, diagrams are embedded as images with SVG data URIs
       // Use the appropriate color-scheme based on Vuetify theme, but prevent browser override
       const colorScheme = this.$vuetify.theme.dark ? 'dark' : 'light'
-      
+
       if (this.$refs.editor) {
         // Protect .mermaid elements (if any exist)
         const mermaidContainers = this.$refs.editor.querySelectorAll('.mermaid')
@@ -213,7 +213,7 @@ export default {
           container.style.setProperty('color-scheme', colorScheme, 'important')
           container.style.setProperty('forced-color-adjust', 'none', 'important')
           container.style.setProperty('filter', 'none', 'important')
-          
+
           const svgs = container.querySelectorAll('svg')
           svgs.forEach(svg => {
             svg.style.setProperty('color-scheme', colorScheme, 'important')
@@ -221,7 +221,7 @@ export default {
             svg.style.setProperty('filter', 'none', 'important')
           })
         })
-        
+
         // Protect all images (diagrams are inserted as base64 SVG images)
         const images = this.$refs.editor.querySelectorAll('img')
         images.forEach(img => {
@@ -232,7 +232,7 @@ export default {
             img.style.setProperty('filter', 'none', 'important')
           }
         })
-        
+
         // Also protect figure elements that contain images (CKEditor wraps images in figures)
         const figures = this.$refs.editor.querySelectorAll('figure')
         figures.forEach(figure => {
@@ -348,7 +348,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     background-color: mc('surface-light', 'page-background');
     color: mc('text-light', 'primary');
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     padding: 2rem;
     box-shadow: 0 0 5px hsla(0, 0, 0, .1);
     margin: 1rem auto 0;
@@ -356,13 +356,65 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     min-height: calc(100vh - 64px - 24px - 1rem - 40px);
     border-radius: 5px;
 
+    // Allow wide tables to scroll horizontally inside the editor.
+    // CKEditor renders tables in wrappers like `figure.table` or `div.table-wrap` (and sometimes `.table-container`).
+    // In view mode these wrappers already have horizontal scrolling, but while editing we must not hide overflow.
+    figure.table,
+    div.table-wrap,
+    .table-container {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    // Ensure the table can exceed the wrapper width so scrolling actually appears.
+    figure.table > table,
+    div.table-wrap > table,
+    .table-container > table {
+      width: max-content;
+      min-width: 100%;
+    }
+
+    // If the editor content includes a bare <table> (e.g., migrated HTML or pasted content),
+    // make it horizontally scrollable too.
+    table {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    // CKEditor applies `table-layout: fixed` on resized tables via `.ck-table-resized`.
+    // That can cause content to clip or columns to collapse. Undo it so the browser can size
+    // columns naturally while still allowing horizontal scrolling.
+    // (Use `auto` rather than `unset` for best cross-browser CSS support.)
+    &.ck-content .ck-widget.table .ck-table-resized {
+      table-layout: auto;
+    }
+
+    // Tables with images: enforce a minimum column width so image-only columns
+    // don't collapse while editing.
+    td:has(img),
+    th:has(img) {
+      min-width: 25px;
+    }
+
+    // Fallback for browsers without :has().
+    td img,
+    th img {
+      min-width: 25px;
+    }
+
     // Prevent browser from inverting colors on diagrams/images
     img, figure, svg, .mermaid {
       color-scheme: initial !important;
       forced-color-adjust: none !important;
       filter: none !important;
     }
-    
+
     // Specifically target SVG data URIs (diagrams)
     img[src^="data:image/svg"] {
       color-scheme: only light !important;
@@ -372,7 +424,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     @at-root .theme--dark & {
       background-color: mc('surface-dark', 'page-background');
       color: mc('text-dark', 'primary');
-      
+
       // In dark mode, still prevent inversion of diagram images
       img[src^="data:image/svg"] {
         color-scheme: only light !important;

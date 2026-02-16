@@ -1,24 +1,23 @@
 <template lang="pug">
   .tree-navigation
-    vue-scroll(:ops='scrollStyle')
-      .tree-content-wrapper
-        v-treeview(
-          v-if='pageTree.length > 0'
-          :key='`navTree-` + treeViewCacheId'
-          :active.sync='activeNodes'
-          :open.sync='openNodes'
-          :items='pageTree'
-          :load-children='loadChildren'
-          dense
-          open-on-click
-          item-key='path'
-          item-text='title'
-          item-children='children'
-          activatable
-          hoverable
-          return-object
-          @update:active='onNodeActivated'
-        )
+    .tree-content-wrapper
+      v-treeview(
+        v-if='pageTree.length > 0'
+        :key='`navTree-` + treeViewCacheId'
+        :active.sync='activeNodes'
+        :open.sync='openNodes'
+        :items='pageTree'
+        :load-children='loadChildren'
+        dense
+        open-on-click
+        item-key='path'
+        item-text='title'
+        item-children='children'
+        activatable
+        hoverable
+        return-object
+        @update:active='onNodeActivated'
+      )
           template(v-slot:prepend='{ item, open }')
             v-icon(
               v-if='item.isFolder || item.hasChildren || (item.children && item.children.length > 0)'
@@ -69,25 +68,7 @@ export default {
       preloadTimeout: null,
       isLoading: false,
       isRestoringState: false, // Flag to prevent saving during restoration
-      colors: colors,
-        scrollStyle: {
-        vuescroll: {
-          mode: 'native'
-        },
-        scrollPanel: {
-          scrollingX: true,
-          scrollingY: true
-        },
-        rail: {
-          gutterOfEnds: '2px'
-        },
-        bar: {
-          background: this.dark ? colors.surfaceDark.secondaryNeutralLite : colors.neutral[300],
-          opacity: 0.5,
-          size: '8px',
-          keepShow: false
-        }
-      }
+      colors: colors
     }
   },
   computed: {
@@ -111,11 +92,10 @@ export default {
     },
     path: {
       immediate: false,
-      handler(newPath, oldPath) {
-        // Only update highlights and expansion, DON'T reload tree
+      async handler(newPath, oldPath) {
         if (newPath && newPath !== oldPath) {
-          this.expandToCurrentPage(newPath)
           this.setActivePage(newPath)
+          await this.scrollToActivePage()
         }
       }
     }
@@ -135,6 +115,7 @@ export default {
         if (this.path) {
           await this.expandToCurrentPage(this.path)
           this.setActivePage(this.path)
+          await this.scrollToActivePage()
         }
         
         this.isRestoringState = false // Re-enable watcher AFTER everything is done
@@ -143,8 +124,72 @@ export default {
         this.saveTreeState()
       })
     }
+    
+    // Listen for page tree refresh events
+    this.$root.$on('reloadPageTree', this.reloadTree)
+  },
+  beforeDestroy() {
+    this.$root.$off('reloadPageTree', this.reloadTree)
   },
   methods: {
+    async reloadTree(options = {}) {
+      try {
+        // Save current expanded paths before reload (openNodes contains objects due to return-object)
+        const savedPaths = this.openNodes.map(node => {
+          if (typeof node === 'string') return node
+          if (node && typeof node === 'object') return node.path || ''
+          return ''
+        }).filter(p => p !== '')
+        
+        // Add the expand path from options if provided (for page moves)
+        if (options.expandPath && !savedPaths.includes(options.expandPath)) {
+          savedPaths.push(options.expandPath)
+        }
+        
+        this.isRestoringState = true
+        
+        // Reset loaded paths so children will reload
+        this.loadedPaths.clear()
+        
+        // Clear open nodes before reload
+        this.openNodes = []
+        
+        // Reload the tree (loadInitialTree uses network-only already)
+        await this.loadInitialTree()
+        
+        // Wait for tree to render
+        await this.$nextTick()
+        
+        // Restore expanded nodes by finding nodes with matching paths
+        const nodesToOpen = []
+        for (const path of savedPaths) {
+          const node = this.findPageInTree(path)
+          if (node) {
+            nodesToOpen.push(node)
+            // Also load children for this node with force network to get fresh data
+            if (node.pageId && (node.isFolder || node.hasChildren)) {
+              await this.loadChildren(node, true) // Force network fetch
+            }
+          }
+        }
+        
+        // Set open nodes with the new node references
+        this.openNodes = nodesToOpen
+        
+        // Restore active page
+        if (this.path) {
+          this.setActivePage(this.path)
+        }
+        
+        this.isRestoringState = false
+        
+        // Trigger a re-render by incrementing cache ID
+        this.treeViewCacheId++
+      } catch (error) {
+        console.error('Nav tree view reload failed:', error)
+        this.isRestoringState = false
+      }
+    },
     saveTreeState() {
       if (this.saveStateTimeout) {
         clearTimeout(this.saveStateTimeout)
@@ -171,6 +216,22 @@ export default {
           console.warn('Failed to save tree state to localStorage:', error)
         }
       }, 100)
+    },
+    
+    async scrollToActivePage() {
+      if (!this.currentPagePath) return
+      
+      // Ensure path is expanded first
+      await this.expandToCurrentPage(this.currentPagePath)
+      
+      // Wait for Vue to render the expanded nodes
+      await this.$nextTick()
+
+      // Find and scroll to element
+      const targetElement = this.$el.querySelector('.tree-node-current')
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
     },
     
     async loadChildrenForOpenNodes() {
@@ -319,9 +380,9 @@ export default {
       })
     },
 
-    async loadChildren(node) {
-      // Smart lazy loading - only load if not already loaded
-      if (this.loadedPaths.has(node.path)) {
+    async loadChildren(node, forceNetwork = false) {
+      // Smart lazy loading - only load if not already loaded (unless force)
+      if (!forceNetwork && this.loadedPaths.has(node.path)) {
         return Promise.resolve()
       }
       
@@ -332,7 +393,7 @@ export default {
       try {
         const childrenResp = await this.$apollo.query({
           query: childPagesQuery,
-          fetchPolicy: 'cache-first',
+          fetchPolicy: forceNetwork ? 'network-only' : 'cache-first',
           variables: {
             pageId: node.pageId,
             locale: this.locale,
@@ -542,15 +603,13 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
-  
-  .vue-scroll {
-    flex: 1;
-  }
+  position: relative;
   
   .tree-content-wrapper {
     min-width: min-content;
     display: inline-block;
     width: 100%;
+    flex: 1;
   }
   
   .tree-node-label {

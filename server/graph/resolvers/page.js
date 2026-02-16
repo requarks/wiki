@@ -871,7 +871,7 @@ module.exports = {
      */
     async rebuildTree() {
       try {
-        await WIKI.models.pages.rebuildTree(null, 'full')
+        await WIKI.models.pages.rebuildTree()
         return {
           responseResult: graphHelper.generateSuccess(
             'Page tree rebuilt successfully.'
@@ -959,6 +959,35 @@ module.exports = {
           )
         }
       } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * Reorder pages
+     */
+    async reorderPages(obj, args, context) {
+      try {
+        // Verify user has manage:pages permission
+        if (!WIKI.auth.checkAccess(context.req.user, ['manage:pages'], {
+          siteId: context.req.user.siteId
+        })) {
+          throw new WIKI.Error.PageUpdateForbidden()
+        }
+
+        // Update child_position for each page
+        for (const order of args.orders) {
+          await WIKI.models.knex('pageTree')
+            .where('id', order.pageId)
+            .update({ child_position: order.position })
+        }
+
+        return {
+          responseResult: graphHelper.generateSuccess(
+            'Pages reordered successfully.'
+          )
+        }
+      } catch (err) {
+        WIKI.logger.error('Failed to reorder pages:', err)
         return graphHelper.generateError(err)
       }
     }

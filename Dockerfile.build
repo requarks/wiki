@@ -1,13 +1,17 @@
 # ====================
 # --- Build Stage Only ---
 # ====================
-ARG NODE_IMAGE
+ARG NODE_IMAGE=node:20-alpine
 FROM ${NODE_IMAGE} AS build
+
+# Re-declare ARG to make it available in this build stage
+ARG NODE_IMAGE
 
 WORKDIR /wiki
 
 USER root
 
+RUN echo "Building wiki with Node image: ${NODE_IMAGE}"
 # Install build dependencies (explicit versions recommended for production)
 RUN apk add --no-cache g++ make python3 yarn && \
   chown -R node:node /wiki

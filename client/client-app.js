@@ -19,6 +19,7 @@ import VueMoment from 'vue-moment'
 import store from './store'
 import Cookies from 'js-cookie'
 import FloatingVue from 'floating-vue'
+import VueTour from 'vue-tour'
 
 // ====================================
 // Load Modules
@@ -32,6 +33,73 @@ import localization from './modules/localization'
 // ====================================
 
 import helpers from './helpers'
+import TourManager from './helpers/tour-manager'
+
+// ====================================
+// Theme Detection Helpers
+// ====================================
+
+/**
+ * Determine effective dark mode based on user preference and browser preference
+ * @param {string} userAppearance - User's appearance setting ('', 'light', 'dark')
+ * @param {boolean} siteDefaultDark - Site's default dark mode setting
+ * @returns {boolean} Whether dark mode should be enabled
+ */
+function getEffectiveDarkMode(userAppearance, siteDefaultDark) {
+  if (userAppearance === 'dark') return true
+  if (userAppearance === 'light') return false
+  
+  // User has "Site Default" selected - check browser preference
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return true
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    return false
+  }
+  
+  // No browser preference, use site default
+  return siteDefaultDark
+}
+
+/**
+ * Listen for browser theme changes
+ * @param {Function} callback - Function to call when browser theme changes, receives boolean (prefersDark)
+ * @returns {Function} Unsubscribe function
+ */
+function onBrowserThemeChange(callback) {
+  if (!window.matchMedia) return () => {}
+  
+  const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  const lightModeQuery = window.matchMedia('(prefers-color-scheme: light)')
+  
+  const handleChange = () => {
+    const prefersDark = darkModeQuery.matches
+    callback(prefersDark)
+  }
+  
+  // Modern browsers
+  if (darkModeQuery.addEventListener) {
+    darkModeQuery.addEventListener('change', handleChange)
+    lightModeQuery.addEventListener('change', handleChange)
+    
+    return () => {
+      darkModeQuery.removeEventListener('change', handleChange)
+      lightModeQuery.removeEventListener('change', handleChange)
+    }
+  }
+  // Legacy browsers
+  else if (darkModeQuery.addListener) {
+    darkModeQuery.addListener(handleChange)
+    lightModeQuery.addListener(handleChange)
+    
+    return () => {
+      darkModeQuery.removeListener(handleChange)
+      lightModeQuery.removeListener(handleChange)
+    }
+  }
+  
+  return () => {}
+}
 
 // ====================================
 // Initialize Global Vars
@@ -162,6 +230,10 @@ Vue.use(Vuetify)
 
 Vue.use(VueMoment, { moment })
 
+Vue.use(VueTour)
+
+Vue.use(TourManager)
+
 // Override the moment filter to properly handle UTC dates with timezone conversion
 Vue.filter('moment', function (value, ...args) {
   if (!value) return ''
@@ -218,6 +290,8 @@ Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './theme
 Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
 let bootstrap = () => {
+  
+
   // ====================================
   // Notifications
   // ====================================
@@ -236,10 +310,9 @@ let bootstrap = () => {
 
   const i18n = localization.init()
 
-  let darkModeEnabled = siteConfig.darkMode
-  if ((store.get('user/appearance') || '').length > 0) {
-    darkModeEnabled = (store.get('user/appearance') === 'dark')
-  }
+  // Determine initial dark mode setting using browser preference when user has "Site Default"
+  const userAppearance = store.get('user/appearance') || ''
+  let darkModeEnabled = getEffectiveDarkMode(userAppearance, siteConfig.darkMode)
 
   window.WIKI = new Vue({
     el: '#root',
@@ -265,6 +338,21 @@ let bootstrap = () => {
       }
       if ((store.get('user/timezone') || '').length > 0) {
         this.$moment.tz.setDefault(store.get('user/timezone'))
+      }
+
+      // Listen for browser theme changes when user has "Site Default" selected
+      this._unsubscribeBrowserTheme = onBrowserThemeChange((prefersDark) => {
+        const currentAppearance = store.get('user/appearance') || ''
+        if (currentAppearance === '') {
+          // Only react to browser changes when user has "Site Default" selected
+          this.$vuetify.theme.dark = prefersDark
+        }
+      })
+    },
+    beforeDestroy() {
+      // Cleanup browser theme listener
+      if (this._unsubscribeBrowserTheme) {
+        this._unsubscribeBrowserTheme()
       }
     }
   })

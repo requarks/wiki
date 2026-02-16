@@ -119,6 +119,22 @@ class User extends Model {
     await this.generateHash()
   }
 
+  async $afterInsert(queryContext) {
+    await super.$afterInsert(queryContext)
+
+    // Auto-create user_settings for new user
+    try {
+      await WIKI.models.userSettings.query().insert({
+        user_id: this.id,
+        is_release_info_seen: false
+      }).onConflict('user_id').ignore()
+
+      WIKI.logger.debug(`✓ Created user_settings for new user ${this.id}`)
+    } catch (err) {
+      WIKI.logger.warn(`⚠ Failed to create user_settings for user ${this.id}: ${err.message}`)
+    }
+  }
+
   // ------------------------------------------------
   // Instance Methods
   // ------------------------------------------------

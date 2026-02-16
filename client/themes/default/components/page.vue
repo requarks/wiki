@@ -48,6 +48,7 @@
         v-icon(:color='$vuetify.theme.dark ? colors.actionLight.primaryDefaultOnLite : colors.actionLight.primaryDefaultOnHeavy') mdi-menu
 
     v-main(ref='content')
+      notification-banner
       template(v-if='path !== `home`')
         //- breadcrumbs toolbar
         v-toolbar(
@@ -98,12 +99,14 @@
                 @click='followPage'
                 :color='colors.actionLight.highlightOnLite'
                 rounded
+                data-tour='follow-page'
                 ) Follow
               v-btn.mr-5.hover-btn.text-primary.text-none(
                 v-if='isAuthenticated && isFollower != null && isFollower'
                 @click='unfollowPage'
                 :color='colors.actionLight.highlightOnLite'
                 rounded
+                data-tour='unfollow-page'
                 ) Unfollow
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -410,7 +413,7 @@
               dense
               )
               .caption {{$t('common:page.unpublishedWarning')}}
-            .contents(ref='container')
+            .contents(ref='container', data-tour='page-content')
                 slot(name='contents')
                 // Image overlay viewer
                 div.image-overlay(v-if='isImageOverlayVisible' role='dialog' aria-modal='true' @click.self='closeImageOverlay')
@@ -511,6 +514,7 @@
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
+import NotificationBanner from './notification-banner.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get } from 'vuex-pathify'
@@ -565,6 +569,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
+    NotificationBanner,
     StatusIndicator,
     TreeItem
   },
@@ -687,7 +692,8 @@ export default {
         vuescroll: {},
         scrollPanel: {
           initialScrollX: 0.01, // fix scrollbar not disappearing on load
-          scrollingX: false,
+          scrollingX: true,
+          scrollingY: true,
           speed: 50
         },
         rail: {
@@ -1736,6 +1742,39 @@ export default {
   // Make scrollbar stick to bottom of sidebar
   .sidebar-scroll-container {
     height: 100% !important;
+    
+    // vuescroll container and panel should fill height
+    ::v-deep .__container,
+    ::v-deep .__panel {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    
+    // Content wrapper for horizontal scroll
+    ::v-deep .__view {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      min-width: min-content;
+      padding-bottom: 12px;
+    }
+    
+    // Pin horizontal scrollbar to bottom
+    ::v-deep .__rail-is-horizontal {
+      position: absolute !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      top: auto !important;
+      z-index: 10 !important;
+      margin: 0 !important;
+    }
+    
+    // Vertical scrollbar styling
+    ::v-deep .__rail-is-vertical {
+      top: 0 !important;
+      bottom: 0 !important;
+    }
   }
 
   &.resizing {
