@@ -26,7 +26,7 @@ variables:
 
   IMAGE_TAG:
     value: ""
-    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.1 etc."
+    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
 
   SONARQUBE:
     value: "true"
@@ -34,7 +34,7 @@ variables:
       - "true"
       - "false"
     description: "Choose false to skip code quality check"
-
+ 
   PANDOC:
     value: "false"
     options:
