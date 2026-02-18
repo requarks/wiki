@@ -1720,10 +1720,20 @@ module.exports = class Page extends Model {
           .patch({ content: newContent })
           .where('id', page.id)
 
-        // Invalidate cache for the updated page
+        // Invalidate cache FIRST so stale render is never served
         await WIKI.models.pages.deletePageFromCache(page.hash)
         if (WIKI.events && WIKI.events.outbound) {
           WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+        }
+
+        // Re-render the page so the render column is also updated.
+        // Wrapped in try-catch so a single page render failure does not
+        // abort the loop or prevent the backup renderMentionedPages call.
+        try {
+          const renderPageJob = require('../jobs/render-page')
+          await renderPageJob(page.id)
+        } catch (renderErr) {
+          WIKI.logger.warn(`[anonymize] Failed to re-render page ${page.id} after anonymization (will be retried by renderMentionedPages): ${renderErr.message}`)
         }
       }
     }
