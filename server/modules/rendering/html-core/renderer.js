@@ -292,9 +292,15 @@ async function processMentions($, context) {
         const regex = new RegExp('@(' + mentionsToAnonymize.map(m => _.escapeRegExp(m)).join('|') + ')', 'g')
         context.page.content = context.page.content.replace(regex, '@AnonymousUser')
       } else if (context.page.contentType === 'html') {
-        const mentionPattern = `<span class="mention" dat-mention="(${mentionsToAnonymize.map(m => _.escapeRegExp(m)).join('|')})">@(?:${mentionsToAnonymize.map(m => _.escapeRegExp(m)).join('|')})</span>`
-        const regex = new RegExp(mentionPattern, 'g')
-        context.page.content = context.page.content.replace(regex, '@AnonymousUser')
+        const $content = cheerio.load(context.page.content, { decodeEntities: false })
+        $content('span.mention').each((i, elm) => {
+          const mentionEmail = $content(elm).attr('data-mention')
+          const mentionText = $content(elm).text().replace(/^@/, '')
+          if (mentionsSet.has(mentionEmail) || mentionsSet.has(mentionText)) {
+            $content(elm).replaceWith('@AnonymousUser')
+          }
+        })
+        context.page.content = $content('body').html() || context.page.content
       }
     }
   }
