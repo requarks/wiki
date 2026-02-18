@@ -548,7 +548,8 @@ export default {
       },
       sites: [],
       menuIsOpen: false,
-      colors: colors
+      colors: colors,
+      tourStepsFiltered: [] // Will be populated when tour starts
     }
   },
   computed: {
@@ -633,6 +634,12 @@ export default {
         this.colors.surfaceLight.primaryBlueHeavy
     },
     tourSteps () {
+      // Return filtered steps if available, otherwise return empty to prevent errors
+      // Steps will be filtered when tour is actually started
+      if (this.tourStepsFiltered && this.tourStepsFiltered.length > 0) {
+        return this.tourStepsFiltered
+      }
+      // Return all steps initially (will be filtered before tour starts)
       return appTour.steps
     },
     tourCallbacks () {
@@ -1040,6 +1047,19 @@ export default {
       this.$root.$emit('profile-exit')
     },
     startTour () {
+      // Filter steps based on current DOM before starting tour
+      this.tourStepsFiltered = appTour.getAvailableSteps()
+      
+      if (this.tourStepsFiltered.length === 0) {
+        this.$store.commit('showNotification', {
+          style: 'orange',
+          message: 'No tour steps available for your current permissions.',
+          icon: 'information'
+        })
+        return
+      }
+      
+      // Start tour with filtered steps
       this.$tourManager.startAppTour()
     }
   }
