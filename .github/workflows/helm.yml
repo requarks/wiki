@@ -16,11 +16,12 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       
       - name: Package and Push Chart
         run: |
+          export CHARTVER=$(yq '.version' dev/helm/Chart.yaml)
           helm plugin install https://github.com/chartmuseum/helm-push.git
           helm repo add chartmuseum https://charts.js.wiki
-          helm cm-push --version="2.2.${{github.run_number}}" --username="${{secrets.HELM_REPO_USERNAME}}" --password="${{secrets.HELM_REPO_PASSWORD}}" dev/helm/ chartmuseum
+          helm cm-push --version="$CHARTVER" --username="${{secrets.HELM_REPO_USERNAME}}" --password="${{secrets.HELM_REPO_PASSWORD}}" dev/helm/ chartmuseum
           helm repo remove chartmuseum
