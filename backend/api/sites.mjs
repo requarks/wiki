@@ -20,24 +20,70 @@ async function routes (app, options) {
     return { hello: 'world' }
   })
 
+  /**
+   * CREATE SITE
+   */
   app.post('/', {
+    config: {
+      // permissions: ['create:sites', 'manage:sites']
+    },
     schema: {
       summary: 'Create a new site',
       tags: ['Sites'],
       body: {
         type: 'object',
-        required: ['name', 'hostname'],
+        required: ['hostname', 'title'],
         properties: {
-          name: { type: 'string' },
-          hostname: { type: 'string' }
+          hostname: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255,
+            pattern: '^(\\*|[a-z0-9.-]+)$'
+          },
+          title: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 255
+          }
+        },
+        examples: [
+          {
+            hostname: 'wiki.example.org',
+            title: 'My Wiki Site'
+          }
+        ]
+      },
+      response: {
+        200: {
+          description: 'Site created successfully',
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string'
+            },
+            id: {
+              type: 'string',
+              format: 'uuid'
+            }
+          }
         }
       }
     }
   }, async (req, reply) => {
-    return { hello: 'world' }
+    const result = await WIKI.models.sites.createSite(req.body.hostname, { title: req.body.title })
+    return {
+      message: 'Site created successfully.',
+      id: result.id
+    }
   })
 
+  /**
+   * UPDATE SITE
+   */
   app.put('/:siteId', {
+    config: {
+      permissions: ['manage:sites']
+    },
     schema: {
       summary: 'Update a site',
       tags: ['Sites']
@@ -50,6 +96,9 @@ async function routes (app, options) {
    * DELETE SITE
    */
   app.delete('/:siteId', {
+    config: {
+      permissions: ['manage:sites']
+    },
     schema: {
       summary: 'Delete a site',
       tags: ['Sites'],
@@ -71,7 +120,9 @@ async function routes (app, options) {
     }
   }, async (req, reply) => {
     try {
-      if (await WIKI.models.sites.deleteSite(req.params.siteId)) {
+      if (await WIKI.models.sites.countSites() <= 1) {
+        reply.conflict('Cannot delete the last site. At least 1 site must exist at all times.')
+      } else if (await WIKI.models.sites.deleteSite(req.params.siteId)) {
         reply.code(204)
       } else {
         reply.badRequest('Site does not exist.')

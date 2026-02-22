@@ -84,27 +84,41 @@ WIKI.logger.info('=======================================')
 WIKI.logger.info('Initializing...')
 WIKI.logger.info(`Running node.js ${process.version} [ OK ]`)
 
-WIKI.dbManager = (await import('./core/db.mjs')).default
-WIKI.db = await dbManager.init()
-WIKI.models = (await import('./models/index.mjs')).default
+// ----------------------------------------
+// Pre-Boot Sequence
+// ----------------------------------------
 
-try {
-  if (await WIKI.configSvc.loadFromDb()) {
-    WIKI.logger.info('Settings merged with DB successfully [ OK ]')
-  } else {
-    WIKI.logger.warn('No settings found in DB. Initializing with defaults...')
-    await WIKI.configSvc.initDbValues()
+async function preBoot () {
+  WIKI.dbManager = (await import('./core/db.mjs')).default
+  WIKI.db = await dbManager.init()
+  WIKI.models = (await import('./models/index.mjs')).default
 
-    if (!(await WIKI.configSvc.loadFromDb())) {
-      throw new Error('Settings table is empty! Could not initialize [ ERROR ]')
+  try {
+    if (await WIKI.configSvc.loadFromDb()) {
+      WIKI.logger.info('Settings merged with DB successfully [ OK ]')
+    } else {
+      WIKI.logger.warn('No settings found in DB. Initializing with defaults...')
+      await WIKI.configSvc.initDbValues()
+
+      if (!(await WIKI.configSvc.loadFromDb())) {
+        throw new Error('Settings table is empty! Could not initialize [ ERROR ]')
+      }
     }
+  } catch (err) {
+    WIKI.logger.error('Database Initialization Error: ' + err.message)
+    if (WIKI.IS_DEBUG) {
+      WIKI.logger.error(err)
+    }
+    process.exit(1)
   }
-} catch (err) {
-  WIKI.logger.error('Database Initialization Error: ' + err.message)
-  if (WIKI.IS_DEBUG) {
-    WIKI.logger.error(err)
-  }
-  process.exit(1)
+}
+
+// ----------------------------------------
+// Post-Boot Sequence
+// ----------------------------------------
+
+async function postBoot () {
+  await WIKI.models.sites.reloadCache()
 }
 
 // ----------------------------------------
@@ -131,7 +145,9 @@ async function initHTTPServer () {
       ]
     },
     bodyLimit: WIKI.config.bodyParserLimit || 5242880, // 5mb
-    logger: true,
+    logger: {
+      level: 'error'
+    },
     trustProxy: WIKI.config.security.securityTrustProxy ?? false,
     routerOptions: {
       ignoreTrailingSlash: true
@@ -152,7 +168,7 @@ async function initHTTPServer () {
   // ----------------------------------------
 
   WIKI.server.on(gracefulServer.SHUTTING_DOWN, () => {
-    WIKI.logger.info('Shutting down HTTP Server... [ PENDING ]')
+    WIKI.logger.info('Shutting down HTTP Server... [ STOPPING ]')
   })
 
   WIKI.server.on(gracefulServer.SHUTDOWN, (err) => {
@@ -272,11 +288,40 @@ async function initHTTPServer () {
   })
 
   // ----------------------------------------
+  // Permissions
+  // ----------------------------------------
+
+  app.addHook('preHandler', (req, reply, done) => {
+    if (req.routeOptions.config?.permissions?.length > 0) {
+      // Unauthenticated / No Permissions
+      if (!req.user?.isAuthenticated || !(req.user.permissions?.length > 0)) {
+        return reply.unauthorized()
+      }
+      // Is Root Admin?
+      if (!req.user.permissions.includes('manage:system')) {
+        // Check for at least 1 permission
+        const isAllowed = req.routeOptions.config.permissions.some(perms => {
+          // Check for all permissions
+          if (Array.isArray(perms)) {
+            return perms.every(perm => req.user.permissions?.some(p => p === perm))
+          } else {
+            return req.user.permissions?.some(p => p === perms)
+          }
+        })
+        // Forbidden
+        if (!isAllowed) {
+          return reply.forbidden()
+        }
+      }
+    }
+    done()
+  })
+
+  // ----------------------------------------
   // SEO
   // ----------------------------------------
 
   app.addHook('onRequest', (req, reply, done) => {
-    console.log(req.raw.url)
     const [urlPath, urlQuery] = req.raw.url.split('?')
     if (urlPath.length > 1 && urlPath.endsWith('/')) {
       const newPath = urlPath.slice(0, -1)
@@ -366,7 +411,7 @@ async function initHTTPServer () {
     WIKI.logger.info('HTTP Server: [ RUNNING ]')
     WIKI.server.setReady()
   } catch (err) {
-    app.log.error(err)
+    WIKI.logger.error(err)
     process.exit(1)
   }
 }
@@ -385,7 +430,9 @@ async function initHTTPServer () {
 // })
 
 // ----------------------------------------
-// Start HTTP Server
+// Initialization Sequence
 // ----------------------------------------
 
-initHTTPServer()
+await preBoot()
+await initHTTPServer()
+await postBoot()

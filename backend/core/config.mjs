@@ -140,6 +140,7 @@ export default {
     await WIKI.models.sites.init(ids)
     await WIKI.models.groups.init(ids)
     await WIKI.models.authentication.init(ids)
+    await WIKI.models.users.init(ids)
   },
   /**
    * Subscribe to HA propagation events

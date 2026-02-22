@@ -12,7 +12,8 @@
     "dev": "cd .. && nodemon backend --watch backend --ext mjs,js,json",
     "ncu": "ncu -i",
     "ncu-u": "ncu -u",
-    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.mjs --out=./db/migrations --name=main"
+    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.mjs --out=./db/migrations --name=main",
+    "db-up": "drizzle-kit up --dialect=postgresql --out=./db/migrations"
   },
   "repository": {
     "type": "git",
@@ -49,30 +50,30 @@
     "@fastify/swagger": "9.6.1",
     "@fastify/swagger-ui": "5.2.4",
     "@fastify/view": "11.1.1",
-    "@gquittet/graceful-server": "6.0.2",
+    "@gquittet/graceful-server": "6.0.3",
     "ajv-formats": "3.0.1",
     "bcryptjs": "3.0.3",
-    "drizzle-orm": "0.45.1",
+    "drizzle-orm": "1.0.0-beta.15-859cf75",
     "fastify": "5.7.1",
     "fastify-favicon": "5.0.0",
-    "lodash-es": "4.17.22",
+    "lodash-es": "4.17.23",
     "luxon": "3.7.2",
     "nanoid": "5.1.6",
     "pem-jwk": "2.0.0",
-    "pg": "8.16.3",
+    "pg": "8.17.2",
     "pg-pubsub": "0.8.1",
     "pug": "3.0.3",
     "semver": "7.7.3",
     "uuid": "13.0.0"
   },
   "devDependencies": {
-    "drizzle-kit": "0.31.8",
-    "eslint": "9.32.0",
+    "drizzle-kit": "1.0.0-beta.15-859cf75",
+    "eslint": "9.39.2",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "7.2.1",
     "neostandard": "0.12.2",
-    "nodemon": "3.1.10",
+    "nodemon": "3.1.11",
     "npm-check-updates": "19.3.1"
   },
   "collective": {

@@ -1,5 +1,5 @@
 import { defaultsDeep, keyBy } from 'lodash-es'
-import { sitesTable } from '../db/schema.mjs'
+import { sites as sitesTable } from '../db/schema.mjs'
 import { eq } from 'drizzle-orm'
 
 /**
@@ -8,7 +8,7 @@ import { eq } from 'drizzle-orm'
 class Sites {
   async getSiteByHostname ({ hostname, forceReload = false }) {
     if (forceReload) {
-      await WIKI.db.sites.reloadCache()
+      await WIKI.models.sites.reloadCache()
     }
     const siteId = WIKI.sitesMappings[hostname] || WIKI.sitesMappings['*']
     if (siteId) {
@@ -19,7 +19,7 @@ class Sites {
 
   async reloadCache () {
     WIKI.logger.info('Reloading site configurations...')
-    const sites = await WIKI.db.sites.query().orderBy('id')
+    const sites = await WIKI.db.select().from(sitesTable).orderBy(sitesTable.id)
     WIKI.sites = keyBy(sites, 'id')
     WIKI.sitesMappings = {}
     for (const site of sites) {
@@ -29,7 +29,7 @@ class Sites {
   }
 
   async createSite (hostname, config) {
-    const newSite = await WIKI.db.sites.query().insertAndFetch({
+    const result = await WIKI.db.insert(sitesTable).values({
       hostname,
       isEnabled: true,
       config: defaultsDeep(config, {
@@ -126,34 +126,36 @@ class Sites {
           normalizeFilename: true
         }
       })
-    })
+    }).returning({ id: sitesTable.id })
 
-    WIKI.logger.debug(`Creating new root navigation for site ${newSite.id}`)
+    const newSite = result[0]
 
-    await WIKI.db.navigation.query().insert({
-      id: newSite.id,
-      siteId: newSite.id,
-      items: []
-    })
+    // WIKI.logger.debug(`Creating new root navigation for site ${newSite.id}`)
 
-    WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)
+    // await WIKI.db.navigation.query().insert({
+    //   id: newSite.id,
+    //   siteId: newSite.id,
+    //   items: []
+    // })
 
-    await WIKI.db.storage.query().insert({
-      module: 'db',
-      siteId: newSite.id,
-      isEnabled: true,
-      contentTypes: {
-        activeTypes: ['pages', 'images', 'documents', 'others', 'large'],
-        largeThreshold: '5MB'
-      },
-      assetDelivery: {
-        streaming: true,
-        directAccess: false
-      },
-      state: {
-        current: 'ok'
-      }
-    })
+    // WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)
+
+    // await WIKI.db.storage.query().insert({
+    //   module: 'db',
+    //   siteId: newSite.id,
+    //   isEnabled: true,
+    //   contentTypes: {
+    //     activeTypes: ['pages', 'images', 'documents', 'others', 'large'],
+    //     largeThreshold: '5MB'
+    //   },
+    //   assetDelivery: {
+    //     streaming: true,
+    //     directAccess: false
+    //   },
+    //   state: {
+    //     current: 'ok'
+    //   }
+    // })
 
     return newSite
   }
@@ -166,6 +168,10 @@ class Sites {
     // await WIKI.db.storage.query().delete().where('siteId', id)
     const deletedResult = await WIKI.db.delete(sitesTable).where(eq(sitesTable.id, id))
     return Boolean(deletedResult.rowCount > 0)
+  }
+
+  async countSites () {
+    return WIKI.db.$count(sitesTable)
   }
 
   async init (ids) {

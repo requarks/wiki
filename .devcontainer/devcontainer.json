@@ -33,9 +33,13 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or with the host.
-	"forwardPorts": [5432, 8000],
+	"forwardPorts": [3000, 5432, 8000],
 
   "portsAttributes": {
+    "3000": {
+      "label": "Application",
+      "onAutoForward": "silent"
+    },
     "5432": {
       "label": "PostgreSQL",
       "onAutoForward": "silent"

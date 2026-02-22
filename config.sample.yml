@@ -13,7 +13,7 @@ port: 3000
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
-# PostgreSQL 12 or later required
+# PostgreSQL 16 or later required
 
 db:
   host: localhost
@@ -40,37 +40,6 @@ db:
 # ADVANCED OPTIONS                                                    #
 #######################################################################
 # Do not change unless you know what you are doing!
-
-# ---------------------------------------------------------------------
-# SSL/TLS Settings
-# ---------------------------------------------------------------------
-# Consider using a reverse proxy (e.g. nginx) if you require more
-# advanced options than those provided below.
-
-ssl:
-  enabled: false
-  port: 3443
-
-  # Provider to use, possible values: custom, letsencrypt
-  provider: custom
-
-  # ++++++ For custom only ++++++
-  # Certificate format, either 'pem' or 'pfx':
-  format: pem
-  # Using PEM format:
-  key: path/to/key.pem
-  cert: path/to/cert.pem
-  # Using PFX format:
-  pfx: path/to/cert.pfx
-  # Passphrase when using encrypted PEM / PFX keys (default: null):
-  passphrase: null
-  # Diffie Hellman parameters, with key length being greater or equal
-  # to 1024 bits (default: null):
-  dhparam: null
-
-  # ++++++ For letsencrypt only ++++++
-  domain: wiki.yourdomain.com
-  subscriberEmail: admin@example.com
 
 # ---------------------------------------------------------------------
 # Database Pool Options
@@ -116,10 +85,10 @@ dataPath: ./data
 # ---------------------------------------------------------------------
 # Body Parser Limit
 # ---------------------------------------------------------------------
-# Maximum size of API requests body that can be parsed. Does not affect
-# file uploads.
+# Maximum size of API requests body that can be parsed, in bytes.
+# Does not affect file uploads. (default: 5242880 (5mb))
 
-bodyParserLimit: 5mb
+bodyParserLimit: 5242880
 
 # ---------------------------------------------------------------------
 # Scheduler

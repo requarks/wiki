@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import yaml from 'js-yaml'
 import { parseModuleProps } from '../helpers/common.mjs'
-import { authenticationTable } from '../db/schema.mjs'
+import { authentication as authenticationTable } from '../db/schema.mjs'
 
 /**
  * Authentication model

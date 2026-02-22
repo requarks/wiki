@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import { groupsTable } from '../db/schema.mjs'
+import { groups as groupsTable } from '../db/schema.mjs'
 
 /**
  * Groups model

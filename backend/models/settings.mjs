@@ -1,4 +1,4 @@
-import { settingsTable } from '../db/schema.mjs'
+import { settings as settingsTable } from '../db/schema.mjs'
 import { has, reduce, set } from 'lodash-es'
 import { pem2jwk } from 'pem-jwk'
 import crypto from 'node:crypto'
