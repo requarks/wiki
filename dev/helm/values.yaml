@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-revisionHistoryLimit: 10
+revisionHistoryLimit: 2
 
 image:
   repository: requarks/wiki
@@ -61,7 +61,6 @@ service:
   # Annotations applied for services such as externalDNS or
   # service type LoadBalancer
   # type: LoadBalancer
-  # httpsPort: 443
   # annotations: {}
   # loadBalancerIP: 172.16.0.1
 
@@ -108,7 +107,7 @@ volumes: []
 sideload:
   enabled: false
   # Git-Repo containing all locales.json-files you need:
-  repoURL: https://github.com/Requarks/wiki-localization
+  repoURL: https://github.com/requarks/wiki-localization
 
   ## This can be helpfull if you have internet access over a http proxy:
   env: []
@@ -156,7 +155,7 @@ extraEnvVars: []
 #   # For self signed CAs, like DigitalOcean
 #   NODE_TLS_REJECT_UNAUTHORIZED: "0"
 
-## Configuration for the custom PostgreSQL 17.4 deployment
+## Configuration for the custom PostgreSQL 18 deployment
 ##
 postgresql:
   enabled: true
@@ -199,10 +198,6 @@ postgresql:
   ##
   # existingSecretUserKey: "postgresql-username"
 
-  ## Key in the existing secret containing the database name (defaults to "postgresql-database")
-  ##
-  # existingSecretDatabaseKey: "postgresql-database"
-
   ## Persistent Volume Storage configuration.
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
   ##
@@ -228,7 +223,7 @@ postgresql:
   ## PostgreSQL Image Configuration
   image:
     repository: postgres
-    tag: "17.4"
+    tag: "18"
     pullPolicy: IfNotPresent
 
   ## PostgreSQL Resources Configuration

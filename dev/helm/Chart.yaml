@@ -1,11 +1,7 @@
 apiVersion: v2
-name: wiki
-# This is the chart version. This version number should be incremented each time you make changes
-# to the chart and its templates, including the app version.
-version: 2.4.0
-# This is the version number of the application being deployed. This version number should be
-# incremented each time you make changes to the application.
-AppVersion: latest
+name: wiki-js
+version: '3.0.0'
+appVersion: '2'
 description: The most powerful and extensible open source Wiki software.
 keywords:
   - wiki
@@ -14,25 +10,8 @@ keywords:
   - docs
   - reference
   - editor
-# A chart can be either an 'application' or a 'library' chart.
-#
-# Application charts are a collection of templates that can be packaged into versioned archives
-# to be deployed.
-#
-# Library charts provide useful utilities or functions for the chart developer. They're included as
-# a dependency of application charts to inject those utilities and functions into the rendering
-# pipeline. Library charts do not define any templates and therefore cannot be deployed.
 type: application
-
-home: https://wiki.js.org
+home: https://js.wiki
 icon: https://cdn.js.wiki/images/wikijs-butterfly.svg
 sources:
-  - https://github.com/Requarks/wiki
-maintainers:
-  - name: Nicolas Giard
-    email: github@ngpixel.com
-    url: https://github.com/NGPixel
-  - name: James Greenhill
-    email: james@fuziontech.net
-    url: https://github.com/fuziontech
-engine: gotpl
+  - https://github.com/requarks/wiki

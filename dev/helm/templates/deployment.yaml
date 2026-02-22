@@ -29,7 +29,7 @@ spec:
         - name: {{ .Chart.Name }}-sideload
           securityContext:
             {{- toYaml .Values.sideload.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ default "2" .Values.image.tag }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
           env:
             {{- toYaml .Values.sideload.env | nindent 12 }}
@@ -42,7 +42,7 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ default "latest" .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ default "2" .Values.image.tag }}"
           imagePullPolicy: {{ default "IfNotPresent" .Values.image.imagePullPolicy }}
           env:
             {{- if .Values.nodeExtraCaCerts }}
@@ -62,14 +62,7 @@ spec:
             - name: DB_PORT
               value: "{{ default "5432" .Values.postgresql.postgresqlPort }}"
             - name: DB_NAME
-            {{- if .Values.postgresql.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgresql.existingSecret }}
-                  key: {{ template "wiki.postgresql.secretDatabaseKey" . }}
-            {{- else }}
-              value: {{ default "wiki" .Values.postgresql.postgresqlDatabase }}
-            {{- end }}
+              value: {{ default "wiki" .Values.postgresql.postgresqlDatabase | quote }}
             - name: DB_USER
             {{- if .Values.postgresql.existingSecret }}
               valueFrom:
@@ -103,6 +96,10 @@ spec:
                 secretKeyRef:
                   name: {{ required "External PostgreSQL secret name is required when postgresql.enabled is false" .Values.externalPostgresql.existingSecret | quote }}
                   key: {{ required "External PostgreSQL secret key is required when postgresql.enabled is false" .Values.externalPostgresql.existingSecretKey | quote }}
+            - name: DB_SSL
+              value: "{{ default "false" .Values.externalPostgresql.ssl }}"
+            - name: DB_SSL_CA
+              value: "{{ default "" .Values.externalPostgresql.ca }}"
             {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}

@@ -37,17 +37,7 @@ spec:
               name: postgresql
           env:
             - name: POSTGRES_DB
-            {{- if .Values.postgresql.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.postgresql.existingSecret }}
-                  key: {{ default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote }}
-            {{- else }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "wiki.postgresql.fullname" . }}
-                  key: postgresql-database
-            {{- end }}
+              value: {{ .Values.postgresql.postgresqlDatabase | quote }}
             - name: POSTGRES_USER
             {{- if .Values.postgresql.existingSecret }}
               valueFrom:
