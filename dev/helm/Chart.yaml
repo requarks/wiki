@@ -1,5 +1,5 @@
 apiVersion: v2
-name: wiki-js
+name: wiki
 version: '3.0.0'
 appVersion: '2'
 description: The most powerful and extensible open source Wiki software.
