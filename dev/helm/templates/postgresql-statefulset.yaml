@@ -1,0 +1,111 @@
+{{- if .Values.postgresql.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "wiki.postgresql.fullname" . }}
+  labels:
+    {{- include "wiki.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "wiki.postgresql.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "wiki.postgresql.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "wiki.postgresql.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.postgresql.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postgresql.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postgresql.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}
+          imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          env:
+            - name: POSTGRES_DB
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote }}
+            {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wiki.postgresql.fullname" . }}
+                  key: postgresql-database
+            {{- end }}
+            - name: POSTGRES_USER
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ default "postgresql-username" .Values.postgresql.existingSecretUserKey | quote }}
+            {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wiki.postgresql.fullname" . }}
+                  key: postgresql-username
+            {{- end }}
+            - name: POSTGRES_PASSWORD
+            {{- if .Values.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgresql.existingSecret }}
+                  key: {{ default "postgresql-password" .Values.postgresql.existingSecretKey | quote }}
+            {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wiki.postgresql.fullname" . }}
+                  key: postgresql-password
+            {{- end }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - exec pg_isready -U {{ .Values.postgresql.postgresqlUser }} -d {{ .Values.postgresql.postgresqlDatabase }}
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - exec pg_isready -U {{ .Values.postgresql.postgresqlUser }} -d {{ .Values.postgresql.postgresqlDatabase }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql/data
+              subPath: postgresql
+      volumes:
+        - name: postgresql-data
+        {{- if .Values.postgresql.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "wiki.postgresql.fullname" . }}
+        {{- else }}
+          emptyDir: {}
+        {{- end }}
+{{- end }}
