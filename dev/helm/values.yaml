@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 replicaCount: 1
-revisionHistoryLimit: 10
+revisionHistoryLimit: 2
 
 image:
   repository: requarks/wiki
@@ -61,7 +61,6 @@ service:
   # Annotations applied for services such as externalDNS or
   # service type LoadBalancer
   # type: LoadBalancer
-  # httpsPort: 443
   # annotations: {}
   # loadBalancerIP: 172.16.0.1
 
@@ -108,7 +107,7 @@ volumes: []
 sideload:
   enabled: false
   # Git-Repo containing all locales.json-files you need:
-  repoURL: https://github.com/Requarks/wiki-localization
+  repoURL: https://github.com/requarks/wiki-localization
 
   ## This can be helpfull if you have internet access over a http proxy:
   env: []
@@ -156,47 +155,52 @@ extraEnvVars: []
 #   # For self signed CAs, like DigitalOcean
 #   NODE_TLS_REJECT_UNAUTHORIZED: "0"
 
-## Configuration values for the postgresql dependency.
-## ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
+## Configuration for the custom PostgreSQL 18 deployment
 ##
 postgresql:
-  ## Use the PostgreSQL chart dependency.
-  ## Set to false if bringing your own PostgreSQL, and set secret value postgresql-uri.
-  ##
   enabled: true
   ## ssl enforce SSL communication with PostgresSQL
   ## Default to false
   ##
-  # ssl: false
+  ssl: false
   ## ca Certificate of Authority
   ## Default to empty, point to location of CA
   ##
   # ca: "path to ca"
   ## postgresqlHost override postgres database host
-  ## Default to postgres
+  ## Default to the service name of the custom PostgreSQL deployment
   ##
-  # postgresqlHost: postgres
+  postgresqlHost: "{{ include \"wiki.postgresql.fullname\" . }}"
   ## postgresqlPort port for postgres
   ## Default to 5432
   ##
-  # postgresqlPort: 5432
-  ## PostgreSQL fullname Override
-  ## Default to wiki-postgresql unless fullname override is set for Chart
-  ##
-  fullnameOverride: ""
+  postgresqlPort: 5432
   ## PostgreSQL User to create.
   ##
   postgresqlUser: postgres
   ## PostgreSQL Database to create.
   ##
   postgresqlDatabase: wiki
+  ## PostgreSQL password (will be stored in a secret)
+  ##
+  postgresqlPassword: "postgres"
+
+  ## Use existing secret for PostgreSQL credentials
+  ## If set, the chart will not create a new secret and will use the existing one
+  ##
+  # existingSecret: "my-existing-postgres-secret"
+
+  ## Key in the existing secret containing the password
+  ##
+  # existingSecretKey: "postgresql-password"
+
+  ## Key in the existing secret containing the username (defaults to "postgresql-username")
+  ##
+  # existingSecretUserKey: "postgresql-username"
+
   ## Persistent Volume Storage configuration.
   ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes
   ##
-  replication:
-    ## Enable PostgreSQL replication (primary/secondary)
-    ##
-    enabled: false
   persistence:
     ## Enable PostgreSQL persistence using Persistent Volume Claims.
     ##
@@ -215,3 +219,34 @@ postgresql:
     ## Persistent Volume Storage Size.
     ##
     size: 8Gi
+
+  ## PostgreSQL Image Configuration
+  image:
+    repository: postgres
+    tag: "18"
+    pullPolicy: IfNotPresent
+
+  ## PostgreSQL Resources Configuration
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  ## PostgreSQL Node Selector, Tolerations and Affinity
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  ## PostgreSQL Service Configuration
+  service:
+    type: ClusterIP
+    port: 5432
+    # Additional service annotations
+    annotations: {}

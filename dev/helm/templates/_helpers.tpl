@@ -63,15 +63,18 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+PostgreSQL fullname
 */}}
 {{- define "wiki.postgresql.fullname" -}}
-{{- if .Values.postgresql.fullnameOverride -}}
-{{- .Values.postgresql.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{ printf "%s-%s" .Release.Name "postgresql"}}
+{{- printf "%s-%s" (include "wiki.fullname" .) "postgresql" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+PostgreSQL selector labels
+*/}}
+{{- define "wiki.postgresql.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "wiki.name" . }}-postgresql
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
@@ -79,9 +82,9 @@ Set postgres host
 */}}
 {{- define "wiki.postgresql.host" -}}
 {{- if .Values.postgresql.enabled -}}
-{{- template "wiki.postgresql.fullname" . -}}
+{{- include "wiki.postgresql.fullname" . -}}
 {{- else -}}
-{{- .Values.postgresql.postgresqlHost | quote -}}
+{{- .Values.postgresql.postgresqlHost | default "localhost" | quote -}}
 {{- end -}}
 {{- end -}}
 
@@ -89,10 +92,25 @@ Set postgres host
 Set postgres secret
 */}}
 {{- define "wiki.postgresql.secret" -}}
-{{- if .Values.postgresql.enabled -}}
-{{- template "wiki.postgresql.fullname" . -}}
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- .Values.postgresql.existingSecret -}}
+{{- else if .Values.postgresql.enabled -}}
+    {{- include "wiki.postgresql.fullname" . -}}
 {{- else -}}
-{{- template "wiki.fullname" . -}}
+    {{- template "wiki.fullname" . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set postgres secretUserKey
+*/}}
+{{- define "wiki.postgresql.secretUserKey" -}}
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- default "postgresql-username" .Values.postgresql.existingSecretUserKey | quote -}}
+{{- else if .Values.postgresql.enabled -}}
+    "postgresql-username"
+{{- else -}}
+    {{- default "postgresql-username" .Values.postgresql.existingSecretUserKey | quote -}}
 {{- end -}}
 {{- end -}}
 
@@ -100,9 +118,24 @@ Set postgres secret
 Set postgres secretKey
 */}}
 {{- define "wiki.postgresql.secretKey" -}}
-{{- if .Values.postgresql.enabled -}}
-"postgresql-password"
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
+{{- else if .Values.postgresql.enabled -}}
+    "postgresql-password"
 {{- else -}}
-{{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
+    {{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set postgres secretDatabaseKey
+*/}}
+{{- define "wiki.postgresql.secretDatabaseKey" -}}
+{{- if and .Values.postgresql.enabled .Values.postgresql.existingSecret -}}
+    {{- default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote -}}
+{{- else if .Values.postgresql.enabled -}}
+    "postgresql-database"
+{{- else -}}
+    {{- default "postgresql-database" .Values.postgresql.existingSecretDatabaseKey | quote -}}
 {{- end -}}
 {{- end -}}
