@@ -20,8 +20,8 @@
       v-tabs(color='white', :style='`background-color: ${colors.blue[500]} !important;`', centered, v-model='currentTab')
         v-tab(:style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.info')}}
         v-tab(:style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.scheduling')}}
-        v-tab(:disabled='!hasScriptPermission', :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.scripts')}}
-        v-tab(disabled, :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.social')}}
+        v-tab(v-if='false', :disabled='!hasScriptPermission', :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.scripts')}}
+        v-tab(v-if='false', disabled, :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission', :style='`color: ${colors.textLight.inverse} !important;`') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
@@ -207,7 +207,7 @@
                         @click='$refs.menuPublishEnd.save(publishEndDate)'
                         ) {{$t('common:actions.ok')}}
 
-        v-tab-item(:transition='false', :reverse-transition='false')
+        v-tab-item(v-if='false', :transition='false', :reverse-transition='false')
           .editor-props-codeeditor-title
             .overline {{$t('editor:props.html')}}
           .editor-props-codeeditor
@@ -215,7 +215,7 @@
           .editor-props-codeeditor-hint
             .caption {{$t('editor:props.htmlHint')}}
 
-        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
+        v-tab-item(v-if='false', transition='fade-transition', reverse-transition='fade-transition')
           v-card-text
             .overline {{$t('editor:props.socialFeatures')}}
             v-switch(
