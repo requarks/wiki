@@ -31,14 +31,14 @@
           span.toolbar-btn-text.dark(
             v-else-if='$vuetify.breakpoint.lgAndUp'
             ) {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
-        v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && mode === `create` || isDirty'
+        v-btn.animated.fadeInDown(v-if='$vuetify.breakpoint.lgAndUp && (mode === `create` || isDirty)'
           text
           :style='"color: " + colors.alert.success'
           @click.exact='save(true)'
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown }'
           )
           v-icon(:style='"color: " + colors.alert.success', :left='$vuetify.breakpoint.lgAndUp') mdi-check
-          span.toolbar-btn-text.dark {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
+          span.toolbar-btn-text.dark(v-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? "Create & Notify" : "Save & Notify" }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'

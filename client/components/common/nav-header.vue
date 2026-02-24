@@ -75,7 +75,7 @@
               v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;" :id='site.value === sitePath ? `selected-site-item` : ``')
                 v-list-item-title.body-2 {{ site.text }}
 
-      v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
+      v-flex(:md4='mode !== `edit`', :md3='mode === `edit`', v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(:color='colors.surfaceDark.primaryBlueLite', flat)
           slot(name='mid')
 
@@ -116,8 +116,8 @@
                   )
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
-      v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(:color='colors.surfaceDark.primaryBlueLite', flat)
+      v-flex(xs7, :md4='mode !== `edit`', :md5='mode === `edit`')
+        v-toolbar.nav-header-inner(:class='mode !== `edit` ? `pr-4` : ``', :color='colors.surfaceDark.primaryBlueLite', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -160,7 +160,7 @@
 
           //- Follow Site
 
-          template(v-if='isAuthenticated && path && !isFollowingSite')
+          template(v-if='isAuthenticated && path && !isFollowingSite && mode !== `edit`')
             v-tooltip(bottom)
               template( v-slot:activator='{ on }')
                 v-btn.hover-icon(
@@ -177,7 +177,7 @@
               span Follow Site
             v-divider(vertical)
 
-          template(v-if='isAuthenticated && path && isFollowingSite')
+          template(v-if='isAuthenticated && path && isFollowingSite && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.hover-icon(
