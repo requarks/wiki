@@ -43,7 +43,7 @@
               )
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d3` : `lighten-5`')
-            .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.path')}}
+            .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') Selected path
             v-container.pa-0(fluid, grid-list-lg)
               v-layout(row, wrap)
                 v-flex(xs12, md2)
@@ -58,7 +58,7 @@
                 v-flex(xs12, md7, v-if='mode === "create"')
                   v-text-field(
                     outlined
-                    :label='$t(`editor:props.path`)'
+                    :label='"Selected path"'
                     :value='displayFolderPath'
                     readonly
                     hint='Read Only'
@@ -67,7 +67,7 @@
                 v-flex(xs12, md7, v-else)
                   v-text-field(
                     outlined
-                    :label='$t(`editor:props.path`)'
+                    :label='"Selected path"'
                     v-model='path'
                     hint='Read Only'
                     persistent-hint
@@ -84,7 +84,7 @@
                     style='margin-top: 6px;'
                     )
                     v-icon(left, color='white') mdi-folder-search
-                    span.text-none Select Path
+                    span.text-none Change path
           v-divider
           v-card-text.grey.pt-5(:class='$vuetify.theme.dark ? `darken-3-d5` : `lighten-4`')
             .overline.pb-5(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-2`') {{$t('editor:props.categorization')}}
