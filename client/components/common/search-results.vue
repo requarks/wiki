@@ -26,7 +26,11 @@
                 v-list-item-subtitle.caption(v-text='item.description')
                 .caption.blue-grey--text.text--lighten-3(v-text='item.path')
               v-list-item-action
-                v-chip(label, small, :color='colors.surfaceDark.tertiaryBlueLite', dark) {{item.locale.toUpperCase()}}
+                .d-flex.align-center
+                  v-chip.mr-2(v-if='item.source === "comment"', label, small, color='amber darken-2', dark)
+                    v-icon(left, small) mdi-comment-text-outline
+                    | Comment
+                  v-chip(label, small, :color='colors.surfaceDark.tertiaryBlueLite', dark) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
         v-pagination.mt-3(
           v-if='paginationLength > 1'
@@ -273,8 +277,10 @@ export default {
   }
 
   &-suggestions {
+    background-color: #272936 !important;
+
     .highlighted {
-      background: mc('surface-light', 'primary-blue-lite');
+      background: mc('surface-light', 'secondary-sap-heavy');
     }
   }
 }
