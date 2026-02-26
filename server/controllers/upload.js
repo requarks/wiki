@@ -46,14 +46,23 @@ router.post('/u', (req, res, next) => {
   // Get folder Id
   let folderId = null
   try {
-    const folderRaw = _.get(req, 'body.mediaUpload', false)
-    if (folderRaw) {
-      folderId = _.get(JSON.parse(folderRaw), 'folderId', null)
-      if (folderId === 0) {
+    const rawFolderId = _.get(req, 'body.folderId', null)
+    if (!_.isNil(rawFolderId) && _.toString(rawFolderId) !== '') {
+      folderId = _.toInteger(rawFolderId)
+      if (!_.isFinite(folderId) || folderId <= 0) {
         folderId = null
       }
     } else {
-      throw new Error('Missing File Metadata')
+      const folderRawInput = _.get(req, 'body.mediaUpload', false)
+      const folderRaw = _.isArray(folderRawInput) ? _.find(folderRawInput, _.isString) : folderRawInput
+      if (folderRaw) {
+        folderId = _.get(JSON.parse(folderRaw), 'folderId', null)
+        if (folderId === 0) {
+          folderId = null
+        }
+      } else {
+        throw new Error('Missing File Metadata')
+      }
     }
   } catch (err) {
     return res.status(400).json({

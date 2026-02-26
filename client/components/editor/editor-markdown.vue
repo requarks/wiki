@@ -171,6 +171,7 @@ import { get, sync } from 'vuex-pathify'
 import markdownHelp from './markdown/help.vue'
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
+import Cookies from 'js-cookie'
 
 /* global siteConfig, siteLangs */
 
@@ -367,6 +368,29 @@ md.renderer.rules.emoji = (token, idx) => {
 // ========================================
 
 let mermaidId = 0
+const CLIPBOARD_ROOT_FOLDER = 'clipboard_pictures'
+const listAssetFoldersByParentQuery = gql`
+  query ($parentFolderId: Int!) {
+    assets {
+      folders(parentFolderId: $parentFolderId) {
+        id
+        slug
+      }
+    }
+  }
+`
+const createAssetFolderMutation = gql`
+  mutation ($parentFolderId: Int!, $slug: String!) {
+    assets {
+      createFolder(parentFolderId: $parentFolderId, slug: $slug) {
+        responseResult {
+          succeeded
+          message
+        }
+      }
+    }
+  }
+`
 
 export default {
   components: {
@@ -432,22 +456,257 @@ export default {
     onCmInput: _.debounce(function (newContent) {
       this.processContent(newContent)
     }, 600),
-    onCmPaste (cm, ev) {
-      // const clipItems = (ev.clipboardData || ev.originalEvent.clipboardData).items
-      // for (let clipItem of clipItems) {
-      //   if (_.startsWith(clipItem.type, 'image/')) {
-      //     const file = clipItem.getAsFile()
-      //     const reader = new FileReader()
-      //     reader.onload = evt => {
-      //       this.$store.commit(`loadingStart`, 'editor-paste-image')
-      //       this.insertAfter({
-      //         content: `![${file.name}](${evt.target.result})`,
-      //         newLine: true
-      //       })
-      //     }
-      //     reader.readAsDataURL(file)
-      //   }
-      // }
+    async onCmPaste (cm, ev) {
+      const clipboardData = ev.clipboardData || _.get(ev, 'originalEvent.clipboardData', null)
+      let file = null
+      if (clipboardData) {
+        const imageItem = _.find(Array.from(clipboardData.items || []), item => {
+          return item.kind === 'file' && _.startsWith(item.type, 'image/')
+        })
+        if (imageItem && imageItem.getAsFile) {
+          file = imageItem.getAsFile()
+        }
+
+        if (!file) {
+          const imageFile = _.find(Array.from(clipboardData.files || []), f => _.startsWith(f.type, 'image/'))
+          if (imageFile) {
+            file = imageFile
+          }
+        }
+      }
+
+      if (!file && navigator.clipboard && navigator.clipboard.read) {
+        try {
+          const clipItems = await navigator.clipboard.read()
+          for (const clipItem of clipItems) {
+            const imgType = _.find(clipItem.types || [], t => _.startsWith(t, 'image/'))
+            if (imgType) {
+              file = await clipItem.getType(imgType)
+              break
+            }
+          }
+        } catch (err) {}
+      }
+
+      if (!file) {
+        return
+      }
+
+      ev.preventDefault()
+      ev.stopPropagation()
+
+      if (!file) {
+        return this.$store.commit('showNotification', {
+          message: 'Clipboard image could not be read.',
+          style: 'warning',
+          icon: 'warning'
+        })
+      }
+
+      let uploadTarget
+      try {
+        uploadTarget = await this.resolveClipboardUploadTarget()
+      } catch (err) {
+        uploadTarget = this.getCurrentEditorUploadTarget()
+        this.$store.commit('showNotification', {
+          message: `Clipboard target folder not available, using current folder. ${err.message}`,
+          style: 'warning',
+          icon: 'warning'
+        })
+      }
+
+      const jwtToken = Cookies.get('jwt')
+      if (!jwtToken) {
+        return this.$store.commit('showNotification', {
+          message: 'Clipboard image upload failed: missing auth token.',
+          style: 'error',
+          icon: 'warning'
+        })
+      }
+
+      const ext = this.getClipboardImageExt(file)
+      const filename = `clipboard-${Date.now()}.${ext}`
+      const fallbackTarget = this.getCurrentEditorUploadTarget()
+      const canFallbackUpload = uploadTarget.folderId !== fallbackTarget.folderId || uploadTarget.folderPath !== fallbackTarget.folderPath
+
+      this.$store.commit('loadingStart', 'editor-paste-image')
+      try {
+        let finalTarget = uploadTarget
+        try {
+          await this.uploadClipboardFile({
+            file,
+            filename,
+            folderId: uploadTarget.folderId,
+            jwtToken
+          })
+        } catch (primaryErr) {
+          if (!canFallbackUpload) {
+            throw primaryErr
+          }
+          try {
+            await this.uploadClipboardFile({
+              file,
+              filename,
+              folderId: fallbackTarget.folderId,
+              jwtToken
+            })
+            finalTarget = fallbackTarget
+            this.$store.commit('showNotification', {
+              message: 'Upload target not allowed, fallback to current folder.',
+              style: 'warning',
+              icon: 'warning'
+            })
+          } catch (fallbackErr) {
+            throw fallbackErr
+          }
+        }
+
+        const assetPath = finalTarget.folderId > 0 && finalTarget.folderPath ? `/${finalTarget.folderPath}/${filename}` : `/${filename}`
+        this.insertAtCursor({
+          content: `![${filename}](${assetPath})`
+        })
+        this.$store.commit('showNotification', {
+          message: 'Image pasted and uploaded successfully.',
+          style: 'success',
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          message: err.message,
+          style: 'error',
+          icon: 'warning'
+        })
+      }
+      this.$store.commit('loadingStop', 'editor-paste-image')
+    },
+    getCurrentEditorUploadTarget () {
+      const folderId = _.toInteger(_.get(this.$store.state, 'editor.media.currentFolderId', 0))
+      const folderTree = _.get(this.$store.state, 'editor.media.folderTree', [])
+      const folderPath = folderId > 0 ? _.map(folderTree, 'slug').join('/') : ''
+      return {
+        folderId,
+        folderPath
+      }
+    },
+    async uploadClipboardFile ({ file, filename, folderId, jwtToken }) {
+      const formData = new FormData()
+      formData.append('folderId', `${_.toInteger(folderId)}`)
+      formData.append('mediaUpload', file, filename)
+
+      const resp = await fetch('/u', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${jwtToken}`
+        },
+        credentials: 'same-origin',
+        body: formData
+      })
+      if (resp.ok) {
+        return
+      }
+
+      let errMsg = `Image upload failed (HTTP ${resp.status}).`
+      try {
+        const contentType = _.toString(resp.headers.get('content-type'))
+        if (_.includes(contentType, 'application/json')) {
+          const errBody = await resp.json()
+          errMsg = _.get(errBody, 'message', errMsg)
+        } else {
+          const errTxt = _.trim(await resp.text())
+          if (errTxt) {
+            errMsg = errTxt
+          }
+        }
+      } catch (err) {}
+      throw new Error(errMsg)
+    },
+    getClipboardImageExt (file) {
+      const mimeExtMap = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/bmp': 'bmp',
+        'image/svg+xml': 'svg'
+      }
+      return _.get(mimeExtMap, file.type, 'png')
+    },
+    sanitizeAssetFolderSlug (value) {
+      return _.toString(value)
+        .trim()
+        .toLowerCase()
+        .replace(/[\s,;#]+/g, '_')
+        .replace(/[^a-z0-9_-]/g, '')
+    },
+    getClipboardFolderSegments () {
+      return [CLIPBOARD_ROOT_FOLDER]
+    },
+    async ensureAssetFolder ({ parentFolderId, slug }) {
+      const parentId = _.toInteger(parentFolderId)
+      const safeSlug = this.sanitizeAssetFolderSlug(slug)
+      if (!safeSlug) {
+        throw new Error('Invalid asset folder slug.')
+      }
+
+      const findFolder = async () => {
+        const folderResp = await this.$apollo.query({
+          query: listAssetFoldersByParentQuery,
+          variables: {
+            parentFolderId: parentId
+          },
+          fetchPolicy: 'network-only'
+        })
+        const folders = _.get(folderResp, 'data.assets.folders', [])
+        return _.find(folders, ['slug', safeSlug])
+      }
+
+      const existingFolder = await findFolder()
+      if (existingFolder) {
+        return existingFolder
+      }
+
+      const createResp = await this.$apollo.mutate({
+        mutation: createAssetFolderMutation,
+        variables: {
+          parentFolderId: parentId,
+          slug: safeSlug
+        }
+      })
+      const succeeded = _.get(createResp, 'data.assets.createFolder.responseResult.succeeded', false)
+      if (!succeeded) {
+        const folderAfterFailedCreate = await findFolder()
+        if (folderAfterFailedCreate) {
+          return folderAfterFailedCreate
+        }
+        const message = _.get(createResp, 'data.assets.createFolder.responseResult.message', 'Failed to create asset folder.')
+        throw new Error(message)
+      }
+
+      const createdFolder = await findFolder()
+      if (!createdFolder) {
+        throw new Error(`Failed to resolve created folder "${safeSlug}".`)
+      }
+      return createdFolder
+    },
+    async resolveClipboardUploadTarget () {
+      const segments = this.getClipboardFolderSegments()
+      let parentFolderId = 0
+      const resolvedSlugs = []
+
+      for (const segment of segments) {
+        const folder = await this.ensureAssetFolder({
+          parentFolderId,
+          slug: segment
+        })
+        parentFolderId = folder.id
+        resolvedSlugs.push(folder.slug)
+      }
+
+      return {
+        folderId: parentFolderId,
+        folderPath: resolvedSlugs.join('/')
+      }
     },
     processContent (newContent) {
       linesMap = []
