@@ -2,10 +2,9 @@
   "variables": {
     "do_api_token": "{{env `DIGITALOCEAN_API_TOKEN`}}",
     "image_name": "wikijs-snapshot-{{timestamp}}",
-    "apt_packages": "apt-transport-https ca-certificates curl jq linux-image-extra-virtual software-properties-common gnupg-agent openssl ",
+    "apt_packages": "software-properties-common",
     "application_name": "Wiki.js",
-    "application_version": "{{env `WIKI_APP_VERSION`}}",
-    "docker_compose_version": "1.29.2"
+    "application_version": "{{env `WIKI_APP_VERSION`}}"
   },
   "sensitive-variables": [
     "do_api_token"
@@ -14,7 +13,7 @@
     {
       "type": "digitalocean",
       "api_token": "{{user `do_api_token`}}",
-      "image": "ubuntu-20-04-x64",
+      "image": "ubuntu-24-04-x64",
       "region": "tor1",
       "size": "s-1vcpu-1gb",
       "ssh_username": "root",
@@ -73,11 +72,8 @@
       ],
       "scripts": [
         "scripts/010-docker.sh",
-        "scripts/011-docker-compose.sh",
-        "scripts/012-grub-opts.sh",
-        "scripts/013-docker-dns.sh",
-        "scripts/014-ufw-docker.sh",
-        "scripts/020-application-tag.sh",
+        "scripts/011-ufw-docker.sh",
+        "scripts/020-force-ssh-logout.sh",
         "scripts/900-cleanup.sh",
         "scripts/999-img-check.sh"
       ]
