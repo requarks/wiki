@@ -4,6 +4,7 @@ query Sites($showAdminOnly: Boolean) {
         path
         isEnabled
         name
+        showRecentActivities
         createdAt
     }
 }
