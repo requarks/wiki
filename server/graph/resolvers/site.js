@@ -165,7 +165,7 @@ module.exports = {
         await WIKI.models.sites.updateSite(args.id, {
           isEnabled: args.patch.isEnabled ?? site.isEnabled,
           name: args.patch.name ?? site.name,
-          show_recent_activities: (args.patch.hasOwnProperty('showRecentActivities') ? args.patch.showRecentActivities : site.show_recent_activities)
+          show_recent_activities: _.has(args.patch, 'showRecentActivities') ? args.patch.showRecentActivities : site.show_recent_activities
         })
 
         return {
