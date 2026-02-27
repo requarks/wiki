@@ -54,6 +54,12 @@
                 dense
               )
               v-text-field(
+                v-model='form.book.couchbase.project'
+                label='Project (Optional)'
+                outlined
+                dense
+              )
+              v-text-field(
                 v-model='form.book.author'
                 label='Author'
                 :rules='[v => !!v || "Author is required"]'
@@ -155,6 +161,7 @@ export default {
           author: '',
           couchbase: {
             customer: '',
+            project: '',
             email: '',
             role: 'Solutions Architect',
             service: 'Architecture Review',
@@ -200,6 +207,7 @@ export default {
           author: this.form.book.author,
           couchbase: {
             ...this.form.book.couchbase,
+            project: (this.form.book.couchbase.project && this.form.book.couchbase.project.trim()) || null,
             attendees: this.attendees
           }
         }
