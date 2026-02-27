@@ -314,6 +314,7 @@ type PageListItem {
   privateNS: String
   createdAt: Date!
   updatedAt: Date!
+  authorName: String
   tags: [String]
   siteId: String
   siteName: String

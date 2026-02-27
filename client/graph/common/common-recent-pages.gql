@@ -1,0 +1,10 @@
+query RecentPages($siteId: String!, $limit: Int!) {
+  listPages(siteId: $siteId, limit: $limit, orderBy: UPDATED, orderByDirection: DESC) {
+    id
+    title
+    path
+    createdAt
+    updatedAt
+    authorName
+  }
+}

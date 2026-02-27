@@ -87,7 +87,7 @@ module.exports = {
         .column([
           'pages.id',
           'pages.path',
-          { locale: 'localeCode' },
+          { locale: 'pages.localeCode' },
           'pages.title',
           'pages.description',
           'pages.isPublished',
@@ -96,11 +96,13 @@ module.exports = {
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
+          'author.name as authorName',
           'pages.siteId',
           'sites.name as siteName',
           'sites.path as sitePath'
         ])
         .leftJoin('sites', 'pages.siteId', 'sites.id')
+        .leftJoin('users as author', 'pages.authorId', 'author.id')
         .withGraphJoined('tags')
         .modifyGraph('tags', (builder) => {
           builder.select('tag')
