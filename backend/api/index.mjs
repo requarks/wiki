@@ -2,6 +2,9 @@
  * API Routes
  */
 async function routes (app, options) {
+  app.register(import('./authentication.mjs'))
+  app.register(import('./locales.mjs'), { prefix: '/locales' })
+  app.register(import('./pages.mjs'))
   app.register(import('./sites.mjs'), { prefix: '/sites' })
   app.register(import('./system.mjs'), { prefix: '/system' })
   app.register(import('./users.mjs'), { prefix: '/users' })

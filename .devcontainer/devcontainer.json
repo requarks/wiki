@@ -33,11 +33,15 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or with the host.
-	"forwardPorts": [3000, 5432, 8000],
+	"forwardPorts": [3000, 3001, 5432, 8000],
 
   "portsAttributes": {
     "3000": {
-      "label": "Application",
+      "label": "Application Backend",
+      "onAutoForward": "silent"
+    },
+    "3001": {
+      "label": "Application Frontend",
       "onAutoForward": "silent"
     },
     "5432": {

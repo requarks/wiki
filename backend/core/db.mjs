@@ -8,6 +8,7 @@ import { Pool } from 'pg'
 import PGPubSub from 'pg-pubsub'
 import semver from 'semver'
 
+import { relations } from '../db/relations.mjs'
 import { createDeferred } from '../helpers/common.mjs'
 // import migrationSource from '../db/migrator-source.mjs'
 // const migrateFromLegacy = require('../db/legacy')
@@ -93,7 +94,7 @@ export default {
       options: `-c search_path=${WIKI.config.db.schema}`
     })
 
-    const db = drizzle({ client: this.pool })
+    const db = drizzle({ client: this.pool, relations })
 
     // Connect
     await this.connect(db)

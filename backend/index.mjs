@@ -27,6 +27,7 @@ import fastifyView from '@fastify/view'
 import gracefulServer from '@gquittet/graceful-server'
 import ajvFormats from 'ajv-formats'
 import pug from 'pug'
+import NodeCache from 'node-cache'
 
 import configSvc from './core/config.mjs'
 import dbManager from './core/db.mjs'
@@ -111,6 +112,8 @@ async function preBoot () {
     }
     process.exit(1)
   }
+
+  WIKI.cache = new NodeCache({ checkperiod: 0 })
 }
 
 // ----------------------------------------
@@ -118,6 +121,9 @@ async function preBoot () {
 // ----------------------------------------
 
 async function postBoot () {
+  await WIKI.models.locales.refreshFromDisk()
+
+  await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
 }
 

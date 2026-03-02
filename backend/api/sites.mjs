@@ -1,3 +1,5 @@
+import { validate as uuidValidate } from 'uuid'
+
 /**
  * Sites API Routes
  */
@@ -11,13 +13,23 @@ async function routes (app, options) {
     return { hello: 'world' }
   })
 
-  app.get('/:siteId', {
+  app.get('/:siteIdorHostname', {
     schema: {
       summary: 'Get site info',
       tags: ['Sites']
     }
   }, async (req, reply) => {
-    return { hello: 'world' }
+    const site = (uuidValidate(req.params.siteId))
+      ? await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      : await WIKI.models.sites.getSiteByHostname({ hostname: req.params.siteId })
+    return site
+      ? {
+          ...site.config,
+          id: site.id,
+          hostname: site.hostname,
+          isEnabled: site.isEnabled
+        }
+      : null
   })
 
   /**

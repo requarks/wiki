@@ -6,6 +6,13 @@ import { eq } from 'drizzle-orm'
  * Sites model
  */
 class Sites {
+  async getSiteById ({ id, forceReload = false }) {
+    if (forceReload) {
+      await WIKI.models.sites.reloadCache()
+    }
+    return WIKI.sites[id]
+  }
+
   async getSiteByHostname ({ hostname, forceReload = false }) {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()

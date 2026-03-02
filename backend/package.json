@@ -59,6 +59,7 @@
     "lodash-es": "4.17.23",
     "luxon": "3.7.2",
     "nanoid": "5.1.6",
+    "node-cache": "5.1.2",
     "pem-jwk": "2.0.0",
     "pg": "8.17.2",
     "pg-pubsub": "0.8.1",

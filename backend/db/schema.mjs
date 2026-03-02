@@ -1,4 +1,4 @@
-import { defineRelations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { bigint, boolean, bytea, customType, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 
 // == CUSTOM TYPES =====================
@@ -325,19 +325,3 @@ export const userGroups = pgTable('userGroups', {
   index('userGroups_groupId_idx').on(table.groupId),
   index('userGroups_composite_idx').on(table.userId, table.groupId)
 ])
-
-// == RELATIONS ========================
-
-export const relations = defineRelations({ users, groups, userGroups },
-  r => ({
-    users: {
-      groups: r.many.groups({
-        from: r.users.id.through(r.userGroups.userId),
-        to: r.groups.id.through(r.userGroups.groupId)
-      })
-    },
-    groups: {
-      members: r.many.users()
-    }
-  })
-)
