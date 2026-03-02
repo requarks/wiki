@@ -11,8 +11,8 @@
     {
       "label": "Create terminals",
       "dependsOn": [
-        "Server",
-        "UX"
+        "Backend",
+        "Frontend"
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
@@ -26,14 +26,14 @@
     },
     {
       // The name that shows up in terminal tab
-      "label": "Server",
+      "label": "Backend",
       // The task will launch a shell
       "type": "shell",
       "command": "/bin/zsh",
       "args": [],
       // Set the shell type
       "options": {
-        "cwd": "/workspace/server"
+        "cwd": "/workspace/backend"
       },
       // Mark as a background task to avoid the spinner animation on the terminal tab
       "isBackground": true,
@@ -44,12 +44,12 @@
       }
     },
     {
-      "label": "UX",
+      "label": "Frontend",
       "type": "shell",
       "command": "/bin/zsh",
       "args": [],
       "options": {
-        "cwd": "/workspace/ux",
+        "cwd": "/workspace/frontend",
       },
       "isBackground": true,
       "problemMatcher": [],

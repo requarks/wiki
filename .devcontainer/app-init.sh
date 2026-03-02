@@ -11,13 +11,13 @@ echo "Waiting for DB container to come online..."
 /usr/local/bin/wait-for localhost:5432 -- echo "DB ready"
 
 echo "Installing dependencies..."
-cd server
-pnpm install
-cd ../ux
-pnpm install
+cd backend
+npm install
+cd ../frontend
+npm install
 cd ../blocks
-pnpm install
-pnpm build
+npm install
+npm build
 cd ..
 
 echo "Ready!"

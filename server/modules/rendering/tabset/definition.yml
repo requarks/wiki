@@ -1,7 +1,0 @@
-title: Tabsets
-description: Transform headers into tabs
-author: requarks.io
-icon: mdi-tab
-enabledDefault: true
-dependsOn: core
-props: {}
