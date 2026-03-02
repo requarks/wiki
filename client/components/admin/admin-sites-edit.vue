@@ -58,6 +58,14 @@
                     :disabled='!hasPermission("manage:system")'
                     )
 
+                  v-switch.mt-0.ml-1(
+                    inset
+                    :label='$t(`Display recent site activity`)'
+                    color='primary'
+                    v-model='site.showRecentActivities'
+                    :disabled='!hasPermission("manage:system")'
+                    )
+
 </template>
 
 <script>
@@ -88,7 +96,8 @@ export default {
           variables: {
             id: this.site.id,
             name: this.site.name,
-            isEnabled: this.site.isEnabled
+            isEnabled: this.site.isEnabled,
+            showRecentActivities: this.site.showRecentActivities
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-sites-update')
