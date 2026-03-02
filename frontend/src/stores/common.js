@@ -13,7 +13,7 @@ export const useCommonStore = defineStore('common', {
   actions: {
     async fetchLocaleStrings (locale) {
       try {
-        return API_CLIENT.get(`locales/${locale}/strings`)
+        return API_CLIENT.get(`locales/${locale}/strings`).json()
       } catch (err) {
         console.warn(err)
         throw err

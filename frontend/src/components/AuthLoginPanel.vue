@@ -983,7 +983,7 @@ async function finishSetupTFA () {
 // MOUNTED
 
 onMounted(async () => {
-  await fetchStrategies()
+  // await fetchStrategies()
 })
 
 </script>

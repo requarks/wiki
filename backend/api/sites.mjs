@@ -16,12 +16,32 @@ async function routes (app, options) {
   app.get('/:siteIdorHostname', {
     schema: {
       summary: 'Get site info',
-      tags: ['Sites']
+      tags: ['Sites'],
+      params: {
+        type: 'object',
+        properties: {
+          siteId: {
+            type: 'string',
+            description: 'Either a site ID, hostname or "current" to use the request hostname.',
+            oneOf: [
+              { format: 'uuid' },
+              { enum: ['current'] },
+              { pattern: '^[a-f0-9]+$' }
+            ]
+          }
+        },
+        required: ['siteIdorHostname']
+      },
     }
   }, async (req, reply) => {
-    const site = (uuidValidate(req.params.siteId))
-      ? await WIKI.models.sites.getSiteById({ id: req.params.siteId })
-      : await WIKI.models.sites.getSiteByHostname({ hostname: req.params.siteId })
+    let site
+    if (req.params.siteId === 'current' && req.hostname) {
+      site = await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+    } else if (uuidValidate(req.params.siteId)) {
+      site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+    } else {
+      site = await WIKI.models.sites.getSiteByHostname({ hostname: req.params.siteId })
+    }
     return site
       ? {
           ...site.config,

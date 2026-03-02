@@ -393,6 +393,7 @@ async function initHTTPServer () {
   // })
 
   app.register(import('./api/index.mjs'), { prefix: '/_api' })
+  app.register(import('./controllers/site.mjs'), { prefix: '/_site' })
 
   // ----------------------------------------
   // Error handling

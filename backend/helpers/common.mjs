@@ -1,5 +1,7 @@
 import { isNil, isPlainObject, set, startCase, transform } from 'lodash-es'
 import crypto from 'node:crypto'
+import mime from 'mime'
+import fs from 'node:fs'
 
 /* eslint-disable promise/param-names */
 export function createDeferred () {
@@ -109,4 +111,10 @@ export function getDictNameFromLocale (locale) {
   } else {
     return WIKI.data.tsDictMappings[loc] ?? 'simple'
   }
+}
+
+export function replyWithFile (reply, filePath) {
+  const stream = fs.createReadStream(filePath)
+  reply.header('Content-Type', mime.getType(filePath))
+  return reply.send(stream)
 }

@@ -143,9 +143,8 @@ router.beforeEach(async (to, from) => {
   // -> Locale
   if (!commonStore.desiredLocale || !siteStore.locales.active.some(l => l.code === commonStore.desiredLocale)) {
     commonStore.setLocale(siteStore.locales.primary)
-  } else {
-    applyLocale(commonStore.desiredLocale)
   }
+  applyLocale(commonStore.desiredLocale)
 
   // -> User Profile
   if (userStore.authenticated && !userStore.profileLoaded) {
