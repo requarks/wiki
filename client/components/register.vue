@@ -88,7 +88,7 @@
                 v-card-actions.py-3.grey(:class='$vuetify.theme.dark ? `darken-4-l1` : `lighten-4`')
                   v-spacer
                   i18next.caption(path='auth:switchToLogin.text', tag='div')
-                    a.caption(href='/login', place='link') {{ $t('auth:switchToLogin.link') }}
+                    a.caption(:href='withBaseUrl(`/login`)', place='link') {{ $t('auth:switchToLogin.link') }}
                   v-spacer
 
     loader(v-model='isLoading', :mode='loaderMode', :icon='loaderIcon', :color='loaderColor', :title='loaderTitle', :subtitle='loaderSubtitle')
@@ -109,6 +109,12 @@ export default {
   i18nOptions: { namespaces: 'auth' },
   components: {
     PasswordStrength
+  },
+  props: {
+    baseUrl: {
+      type: String,
+      default: ''
+    }
   },
   data () {
     return {
@@ -138,6 +144,12 @@ export default {
     })
   },
   methods: {
+    withBaseUrl (path) {
+      if (!this.baseUrl) {
+        return path
+      }
+      return `${this.baseUrl}${path}`
+    },
     /**
      * REGISTER
      */

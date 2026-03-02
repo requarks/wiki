@@ -3,6 +3,7 @@ extends master.pug
 block body
   #root.is-fullscreen
     login(
+      base-url=baseUrl
       bg-url=bgUrl
       hide-local=hideLocal
       change-pwd-continuation-token=changePwdContinuationToken

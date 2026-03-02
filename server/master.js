@@ -12,6 +12,30 @@ const _ = require('lodash')
 
 /* global WIKI */
 
+const normalizeBaseUrl = (input) => {
+  if (!input || typeof input !== 'string') {
+    return ''
+  }
+  let value = input.trim()
+  if (!value) {
+    return ''
+  }
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    try {
+      value = new URL(value).pathname
+    } catch (err) {
+      value = ''
+    }
+  }
+  if (!value || value === '/') {
+    return ''
+  }
+  if (!value.startsWith('/')) {
+    value = `/${value}`
+  }
+  return value.replace(/\/+$/, '')
+}
+
 module.exports = async () => {
   // ----------------------------------------
   // Load core modules
@@ -145,6 +169,9 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(async (req, res, next) => {
+    const siteUrl = _.get(WIKI, 'config.host', '') || _.get(WIKI, 'config.siteUrl', '')
+    const baseUrl = normalizeBaseUrl(siteUrl)
+
     res.locals.siteConfig = {
       title: WIKI.config.title,
       theme: WIKI.config.theming.theme,
@@ -155,8 +182,10 @@ module.exports = async () => {
       company: WIKI.config.company,
       contentLicense: WIKI.config.contentLicense,
       footerOverride: WIKI.config.footerOverride,
-      logoUrl: WIKI.config.logoUrl
+      logoUrl: WIKI.config.logoUrl,
+      baseUrl
     }
+    res.locals.baseUrl = baseUrl
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
     res.locals.analyticsCode = await WIKI.models.analytics.getCode({ cache: true })
     next()

@@ -94,7 +94,7 @@
                 color='indigo darken-2'
                 text
                 rounded
-                href='/register'
+                :href='withBaseUrl(`/register`)'
                 ): .caption {{ $t('auth:switchToRegister.link') }}
         //-------------------------------------------------
         //- FORGOT PASSWORD FORM
@@ -185,7 +185,7 @@
     v-dialog(v-model='isTFAShown', max-width='500', persistent)
       v-card
         .login-tfa.text-center.pa-5.grey--text.text--darken-3
-          img(src='_assets/svg/icon-pin-pad.svg')
+          img(src= (baseUrl + '/_assets/svg/icon-pin-pad.svg'))
           .subtitle-2 {{$t('auth:tfaFormTitle')}}
           v-text-field.login-tfa-field.mt-2(
             solo
@@ -260,6 +260,10 @@ import { sync } from 'vuex-pathify'
 export default {
   i18nOptions: { namespaces: 'auth' },
   props: {
+    baseUrl: {
+      type: String,
+      default: ''
+    },
     bgUrl: {
       type: String,
       default: ''
@@ -333,7 +337,7 @@ export default {
       this.screen = 'login'
       if (!this.selectedStrategy.strategy.useForm) {
         this.isLoading = true
-        window.location.assign('/login/' + newValue)
+        window.location.assign(this.withBaseUrl('/login/' + newValue))
       } else {
         this.$nextTick(() => {
           this.$refs.iptEmail.focus()
@@ -349,6 +353,12 @@ export default {
     }
   },
   methods: {
+    withBaseUrl (path) {
+      if (!this.baseUrl) {
+        return path
+      }
+      return `${this.baseUrl}${path}`
+    },
     /**
      * LOGIN
      */

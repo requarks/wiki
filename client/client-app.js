@@ -177,6 +177,68 @@ Vue.component('Welcome', () => import(/* webpackChunkName: "welcome" */ './compo
 Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
 Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
 
+const normalizedBaseUrl = (siteConfig.baseUrl || '').replace(/\/+$/, '')
+
+const prefixUrlPath = (url) => {
+  if (!normalizedBaseUrl || typeof url !== 'string') {
+    return url
+  }
+  if (!url.startsWith('/') || url.startsWith('//')) {
+    return url
+  }
+  if (url === normalizedBaseUrl || url.startsWith(`${normalizedBaseUrl}/`)) {
+    return url
+  }
+  return `${normalizedBaseUrl}${url}`
+}
+
+const applyBaseUrlToRenderedUrls = () => {
+  if (!normalizedBaseUrl) {
+    return
+  }
+  const attrs = ['href', 'src', 'action']
+  const patchElement = (el) => {
+    if (!el || el.nodeType !== Node.ELEMENT_NODE) {
+      return
+    }
+    attrs.forEach((attr) => {
+      const value = el.getAttribute(attr)
+      if (!value) {
+        return
+      }
+      const patchedValue = prefixUrlPath(value)
+      if (patchedValue !== value) {
+        el.setAttribute(attr, patchedValue)
+      }
+    })
+  }
+  const patchTree = (root) => {
+    patchElement(root)
+    if (root.querySelectorAll) {
+      root.querySelectorAll('[href],[src],[action]').forEach(patchElement)
+    }
+  }
+
+  patchTree(document.documentElement)
+
+  const observer = new MutationObserver((records) => {
+    records.forEach((record) => {
+      if (record.type === 'attributes') {
+        patchElement(record.target)
+        return
+      }
+      record.addedNodes.forEach(patchTree)
+    })
+  })
+
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: attrs
+  })
+}
+
 let bootstrap = () => {
   // ====================================
   // Notifications
@@ -215,6 +277,7 @@ let bootstrap = () => {
       }
     }),
     mounted () {
+      applyBaseUrlToRenderedUrls()
       this.$moment.locale(siteConfig.lang)
       if ((store.get('user/dateFormat') || '').length > 0) {
         this.$moment.updateLocale(this.$moment.locale(), {

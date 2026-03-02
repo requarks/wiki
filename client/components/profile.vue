@@ -34,11 +34,14 @@
 <script>
 import VueRouter from 'vue-router'
 
-/* global WIKI */
+/* global WIKI, siteConfig */
+
+const normalizedBaseUrl = siteConfig.baseUrl ? siteConfig.baseUrl.replace(/\/+$/, '') : ''
+const profileRouterBase = `${normalizedBaseUrl}/p`
 
 const router = new VueRouter({
   mode: 'history',
-  base: '/p',
+  base: profileRouterBase,
   routes: [
     { path: '/', redirect: '/profile' },
     { path: '/profile', component: () => import(/* webpackChunkName: "profile" */ './profile/profile.vue') },
@@ -58,6 +61,12 @@ router.afterEach((to, from) => {
 
 export default {
   i18nOptions: { namespaces: 'profile' },
+  props: {
+    baseUrl: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
       profileDrawerShown: true

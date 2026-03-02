@@ -13,10 +13,10 @@ block body
       span.header-deprecated!= t('outdatedBrowserWarning', { modernBrowser: '<a href="https://bestvpn.org/outdatedbrowser/en" rel="nofollow">' + t('modernBrowser') + '</a>', interpolation: { escapeValue: false } })
       span.header-login
         if !isAuthenticated
-          a(href='/login', title='Login')
+          a(href=baseUrl + '/login', title='Login')
             i.mdi.mdi-account-circle
         else
-          a(href='/logout', title='Logout')
+          a(href=baseUrl + '/logout', title='Logout')
             i.mdi.mdi-logout
     .main
       .sidebar

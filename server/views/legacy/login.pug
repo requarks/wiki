@@ -7,7 +7,7 @@ block body
       .login-dialog
         if err
           .login-error= err.message
-        form(method='post', action='/login')
+        form(method='post', action=baseUrl + '/login')
           h1= config.title
           select(name='strategy')
             each str in formStrategies
@@ -19,5 +19,5 @@ block body
           .login-social
             h2= t('auth:orLoginUsingStrategy')
             each str in socialStrategies
-              a.login-social-icon(href='/login/' + str.key, class=str.color)
+              a.login-social-icon(href=baseUrl + '/login/' + str.key, class=str.color)
                 != str.icon
