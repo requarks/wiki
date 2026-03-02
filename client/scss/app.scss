@@ -30,3 +30,11 @@
 @import 'pages/error';
 
 @import 'layout/_rtl';
+
+/* Hide vuescroll horizontal bar to prevent horizontal auto-scroll */
+.__bar-is-horizontal,
+.__bar-wrap-is-horizontal {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
