@@ -3,6 +3,7 @@ query RecentPages($siteId: String!, $limit: Int!) {
     id
     title
     path
+    locale
     updatedAt
     authorName
   }

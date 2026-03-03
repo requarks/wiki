@@ -23,6 +23,7 @@ extend type Query {
 
   listPages(
     limit: Int
+    offset: Int
     orderBy: PageOrderBy
     orderByDirection: PageOrderByDirection
     tags: [String!]

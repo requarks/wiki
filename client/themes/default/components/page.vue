@@ -415,6 +415,17 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container', data-tour='page-content')
                 slot(name='contents')
+                // Recent Site Activities
+                div(v-if='recentActivitiesDecoded')
+                  h2: strong Site recent activities
+                  ul
+                    li(v-for='page in recentActivitiesDecoded.pages', :key='page.id')
+                      a(:href='buildPageUrl(page)') {{ page.title }}
+                      |
+                      |  - updated {{ page.updatedAt | moment('calendar') }} by {{ page.authorName }}
+                    (v-if='showMoreActivitiesBtn')
+                      span(@click='loadMoreActivities', style='cursor: pointer; color: #b4dbf1;') {{ loadingMoreActivities ? 'Loading...' : 'More...' }}
+                  div(style='clear: both;', id='content-clear-div')
                 // Image overlay viewer
                 div.image-overlay(v-if='isImageOverlayVisible' role='dialog' aria-modal='true' @click.self='closeImageOverlay')
                   span.image-overlay-name {{ imageOverlayName }}
@@ -665,6 +676,10 @@ export default {
     sitePath: {
       type: String,
       default: ''
+    },
+    recentActivities: {
+      type: String,
+      default: null
     }
   },
   data() {
@@ -683,6 +698,8 @@ export default {
       resizeStartWidth: 0,
 
       isFollowing: null,
+      loadingMoreActivities: false,
+      hasMorePages: true,
       scrollOpts: {
         duration: 1500,
         offset: 0,
@@ -770,6 +787,22 @@ export default {
       addUniqueId(toc)
       return toc
     },
+    recentActivitiesDecoded () {
+      if (!this.recentActivities || this.recentActivities === '') return null
+      try {
+        return JSON.parse(Buffer.from(this.recentActivities, 'base64').toString())
+      } catch (e) {
+        console.error('Failed to decode recent activities:', e)
+        return null
+      }
+    },
+    showMoreActivitiesBtn () {
+      // Only show "More..." button if we have exactly 5 pages (or multiples of 5) and more pages are available
+      return this.recentActivitiesDecoded &&
+             this.recentActivitiesDecoded.pages &&
+             this.recentActivitiesDecoded.pages.length >= 5 &&
+             this.hasMorePages
+    },
     tocPosition: get('site/tocPosition'),
     hasSuperAdminPermission: get('page/effectivePermissions@system.manage'),
     hasSiteAdminPermission: get('page/effectivePermissions@sites.manage'),
@@ -849,6 +882,7 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/editor', this.editor)
     this.$store.set('page/updatedAt', this.updatedAt)
+    
     if (this.effectivePermissions) {
       this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
@@ -1271,6 +1305,62 @@ export default {
       this.isImageOverlayVisible = false
       this.imageOverlaySrc = ''
       document.documentElement.classList.remove('image-overlay-active')
+    },
+    buildPageUrl(page) {
+      const locale = this.recentActivitiesDecoded.useNamespacing ? `/${page.locale}` : ''
+      return `/${this.recentActivitiesDecoded.sitePath}${locale}/${page.path}`
+    },
+    async loadMoreActivities() {
+      if (!this.recentActivitiesDecoded || this.loadingMoreActivities) return
+
+      this.loadingMoreActivities = true
+      const currentOffset = this.recentActivitiesDecoded.pages.length
+      
+      try {
+        const response = await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            query: `
+              query {
+                listPages(
+                  siteId: "${this.recentActivitiesDecoded.siteId}",
+                  limit: 5,
+                  offset: ${currentOffset},
+                  orderBy: UPDATED,
+                  orderByDirection: DESC
+                ) {
+                  id
+                  title
+                  path
+                  locale
+                  updatedAt
+                  authorName
+                }
+              }
+            `
+          })
+        })
+        
+        const result = await response.json()
+        const newPages = result.data?.listPages || []
+
+        if (newPages.length > 0) {
+          this.recentActivitiesDecoded.pages.push(...newPages)
+        }
+
+        // Hide "More..." button if we got less than 5 pages (meaning no more pages available)
+        if (newPages.length < 5) {
+          this.hasMorePages = false
+        }
+      } catch (err) {
+        console.error('Failed to load more activities:', err)
+      } finally {
+        this.loadingMoreActivities = false
+      }
     },
     handleSideNavVisibility () {
       if (window.innerWidth === this.winWidth) { return }

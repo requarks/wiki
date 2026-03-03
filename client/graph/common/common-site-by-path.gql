@@ -1,0 +1,9 @@
+query SiteByPath($path: String!) {
+  siteByPath(path: $path, exact: false) {
+    id
+    path
+    name
+    isEnabled
+    showRecentActivities
+  }
+}

@@ -4,6 +4,7 @@ const pageHelper = require('../helpers/page')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
+const pageResolver = require('../graph/resolvers/page')
 const qs = require('querystring')
 const { useClientDbPooling } = require('../core/db')
 
@@ -665,6 +666,44 @@ const renderPage = async (req, res, next) => {
         page.toc = JSON.stringify(page.toc)
       }
 
+      // -> Prepare Recent Activities Data for Home Page
+      let recentActivities = null
+      
+      if ((pageArgs.path === 'home' || pageArgs.path === '') && site.show_recent_activities) {
+        try {
+          
+          const recentPages = await pageResolver.Query.listPages(
+            null,
+            {
+              siteId: site.id,
+              limit: 5,
+              orderBy: 'UPDATED',
+              orderByDirection: 'DESC'
+            },
+            { req },
+            null
+          )
+
+          if (recentPages && recentPages.length > 0) {
+            recentActivities = {
+              pages: recentPages.map(p => ({
+                id: p.id,
+                title: p.title,
+                path: p.path,
+                locale: p.locale,
+                updatedAt: p.updatedAt,
+                authorName: p.authorName || 'Unknown'
+              })),
+              siteId: site.id,
+              sitePath: site.path,
+              useNamespacing: WIKI.config.lang.namespacing
+            }
+          }
+        } catch (err) {
+          WIKI.logger.warn('Failed to load recent activities:', err)
+        }
+      }
+
       // -> Inject comments variables
       const commentTmpl = {
         codeTemplate: WIKI.data.commentProvider.codeTemplate,
@@ -695,7 +734,8 @@ const renderPage = async (req, res, next) => {
         comments: commentTmpl,
         effectivePermissions,
         pageFilename,
-        site
+        site,
+        recentActivities
       })
     } catch (err) {
       next(err)

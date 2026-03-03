@@ -111,6 +111,9 @@ module.exports = {
           if (args.limit) {
             queryBuilder.limit(args.limit)
           }
+          if (args.offset) {
+            queryBuilder.offset(args.offset)
+          }
           if (args.locale) {
             queryBuilder.where('localeCode', args.locale)
           }
