@@ -300,25 +300,25 @@ export default {
     },
     canMoveCurrentPage() {
       if (!this.currentPagePath || this.selectedFolderId === null) return false
-      
+
       // Find current page from all pages, not just visible ones
       const currentPage = this.pages.find(p => p.path === this.currentPagePath)
       if (!currentPage) return false
-      
+
       // Get the selected folder
       const targetFolder = this.findFolderById(this.selectedFolderId)
       if (!targetFolder) return false
-      
+
       // Calculate new path
       const pageName = this.currentPagePath.split('/').pop()
       const newPath = targetFolder.path ? `${targetFolder.path}/${pageName}` : pageName
-      
+
       // Don't allow move to same location
       if (this.currentPagePath === newPath) return false
-      
+
       // Don't allow moving into itself or its children
       if (newPath.startsWith(this.currentPagePath + '/')) return false
-      
+
       return true
     },
     currentPages() {
@@ -391,15 +391,15 @@ export default {
       if (newValue && !oldValue) {
         // Reset clicked page path
         this.clickedPagePath = null
-        
+
         const pathSegments = this.path.split('/').filter(s => s.length > 0)
-        
+
         if (this.mode === 'create') {
           await this.handleCreateModeOpen(pathSegments)
         } else {
           await this.handleMoveSelectModeOpen(pathSegments)
         }
-        
+
         this.currentLocale = this.locale
       }
     },
@@ -411,7 +411,7 @@ export default {
         this.pages = []
         this.all = []
         this.treeDataLoaded = false
-        
+
         // Reload tree data
         await this.loadTreeData()
       }
@@ -433,23 +433,23 @@ export default {
       // If current page was moved, redirect to new location
       if (this.currentPageMovedTo) {
         const { isEditMode, sitePath } = this.parseCurrentUrl()
-        
-        const newUrl = isEditMode 
+
+        const newUrl = isEditMode
           ? `/e/${sitePath}/${this.currentLocale}/${this.currentPageMovedTo}`
           : `/${sitePath}/${this.currentLocale}/${this.currentPageMovedTo}`
-        
+
         this.$store.commit('showNotification', {
           style: 'info',
           message: 'Redirecting to new page location...',
           icon: 'refresh'
         })
-        
+
         setTimeout(() => {
           window.location.replace(newUrl)
         }, 300)
         return
       }
-      
+
       // If current page was reordered, reload to refresh
       if (this.currentPageReordered) {
         this.$store.commit('showNotification', {
@@ -457,13 +457,13 @@ export default {
           message: 'Refreshing page...',
           icon: 'refresh'
         })
-        
+
         setTimeout(() => {
           window.location.reload()
         }, 300)
         return
       }
-      
+
       this.isShown = false
     },
     parseCurrentUrl() {
@@ -473,33 +473,33 @@ export default {
       const isEditMode = urlParts[0] === 'e'
       const sitePathIndex = isEditMode ? 1 : 0
       const sitePath = urlParts[sitePathIndex] || ''
-      
+
       return { isEditMode, sitePath, urlParts }
     },
     async handleCreateModeOpen(pathSegments) {
       // Generate temp name with 13-digit timestamp
       const tempName = 'unnamedpage-' + Date.now()
       this.pageName = tempName
-      
+
       await this.loadTreeData()
-      
+
       if (pathSegments.length >= 1) {
         await this.tryExpandToPath(pathSegments)
       } else {
         this.selectedFolderId = 0
       }
-      
+
       // Load pages for initial folder
       await this.fetchPages()
     },
     async handleMoveSelectModeOpen(pathSegments) {
       // For move/select mode, the path is already the folder path
       await this.loadTreeData()
-      
+
       if (pathSegments.length >= 1) {
         const folderPath = pathSegments.join('/')
         await this.expandToFolder(folderPath)
-        
+
         // If expansion didn't work, try parent folder
         if (!this.selectedFolderId && pathSegments.length > 1) {
           const parentPath = pathSegments.slice(0, -1).join('/')
@@ -510,7 +510,7 @@ export default {
       } else {
         this.selectedFolderId = 0
       }
-      
+
       // Load pages for initial folder
       await this.fetchPages()
     },
@@ -518,7 +518,7 @@ export default {
       // Try to expand to the full path first
       const fullPath = pathSegments.join('/')
       await this.expandToFolder(fullPath)
-      
+
       // If expansion failed, try parent folder
       if (!this.selectedFolderId) {
         const parentPath = pathSegments.slice(0, -1).join('/')
@@ -539,12 +539,12 @@ export default {
     onDragStart(evt) {
       const pageId = parseInt(evt.item.dataset.pageId)
       const page = this.draggablePages.find(p => p.id === pageId)
-      
+
       this.draggedPage = page
       this.initialOrder = this.draggablePages.map(p => p.id)
       this.lastMouseX = 0
       this.lastMouseY = 0
-      
+
       // Track mouse position over folder tree for drag-to-folder functionality
       document.addEventListener('mousemove', this.onGlobalMouseMove)
     },
@@ -552,7 +552,7 @@ export default {
       // Store last known mouse position for use in dragEnd
       this.lastMouseX = evt.clientX
       this.lastMouseY = evt.clientY
-      
+
       // Delegate to shared folder detection logic
       if (this.draggedPage) {
         this.checkFolderTreeHover(evt.clientX, evt.clientY)
@@ -572,16 +572,16 @@ export default {
     checkFolderTreeHover(clientX, clientY) {
       const treeContainer = this.$refs.folderTreeContainer
       if (!treeContainer) return
-      
+
       const rect = treeContainer.getBoundingClientRect()
       const isOverTree = clientX >= rect.left && clientX <= rect.right &&
                         clientY >= rect.top && clientY <= rect.bottom
-      
+
       if (isOverTree) {
         // Find which folder element we're over
         const folderLabels = treeContainer.querySelectorAll('.tree-folder-label')
         let foundFolder = null
-        
+
         for (const label of folderLabels) {
           const labelRect = label.getBoundingClientRect()
           if (clientY >= labelRect.top && clientY <= labelRect.bottom &&
@@ -593,7 +593,7 @@ export default {
             }
           }
         }
-        
+
         if (foundFolder) {
           // Check if this is a valid drop target (not self or child of dragged page)
           const isInvalidTarget = this.draggedPage && (
@@ -601,7 +601,7 @@ export default {
             this.draggedPage.path === foundFolder.path ||
             (foundFolder.path && foundFolder.path.startsWith(this.draggedPage.path + '/'))
           )
-          
+
           if (!isInvalidTarget) {
             this.dropTargetFolder = foundFolder
           } else {
@@ -626,7 +626,7 @@ export default {
         }
         return null
       }
-      
+
       for (const root of this.tree) {
         const found = searchTree(root)
         if (found) return found
@@ -636,45 +636,45 @@ export default {
     async onDragEnd(evt) {
       // Remove global listener first
       document.removeEventListener('mousemove', this.onGlobalMouseMove)
-      
+
       // Try to detect folder at final position if not already detected
       if (!this.dropTargetFolder && this.lastMouseX && this.lastMouseY) {
         this.checkFolderTreeHover(this.lastMouseX, this.lastMouseY)
       }
-      
+
       // Capture values before resetting
       const draggedPage = this.draggedPage
       const movedToFolder = this.dropTargetFolder
       const isDraggingCurrentPage = draggedPage && this.isCurrentPage(draggedPage)
-      
+
       // Check if current page is a child of the dragged page/folder
-      const isCurrentPageChildOfDragged = draggedPage && this.currentPagePath && 
+      const isCurrentPageChildOfDragged = draggedPage && this.currentPagePath &&
         this.currentPagePath.startsWith(draggedPage.path + '/')
-      
+
       const currentOrder = this.draggablePages.map(p => p.id)
       const orderChanged = this.initialOrder && JSON.stringify(this.initialOrder) !== JSON.stringify(currentOrder)
-      
+
       // Reset state first to prevent interference with next drag
       this.dropTargetFolder = null
       this.draggedPage = null
       this.initialOrder = null
-      
+
       // Get current URL context
       const { isEditMode, sitePath } = this.parseCurrentUrl()
-      
+
       // If dropped on a folder, move the page
       if (movedToFolder && draggedPage) {
         const moveSuccess = await this.movePageToFolder(draggedPage, movedToFolder, true)
-        
+
         if (moveSuccess) {
           // Navigate to target folder to show the moved page (for all moves)
           await this.navigateToFolderAfterMove(movedToFolder)
-          
+
           // If we moved the current page OR current page is a child of moved page
           if (isDraggingCurrentPage || isCurrentPageChildOfDragged) {
             const pageName = draggedPage.path.split('/').pop()
             const newParentPath = movedToFolder.path ? `${movedToFolder.path}/${pageName}` : pageName
-            
+
             let newPath
             if (isDraggingCurrentPage) {
               // Moving the exact page we're on
@@ -684,10 +684,10 @@ export default {
               const relativePath = this.currentPagePath.substring(draggedPage.path.length)
               newPath = newParentPath + relativePath
             }
-            
+
             // Track the move for redirect on close (both edit and view mode)
             this.currentPageMovedTo = newPath
-            
+
             this.$store.commit('showNotification', {
               style: 'success',
               message: 'Page moved. Close dialog to navigate to new location.',
@@ -704,12 +704,12 @@ export default {
       } else if (orderChanged) {
         // Reorder within same folder (array order changed)
         await this.savePageOrder()
-        
+
         // If reordering the current page, track that we need to reload on close
         if (isDraggingCurrentPage) {
           // Set a flag to reload on close (reordering doesn't change path)
           this.currentPageReordered = true
-          
+
           this.$store.commit('showNotification', {
             style: 'success',
             message: 'Page reordered. Close dialog to refresh.',
@@ -745,23 +745,23 @@ export default {
     },
     async onTreeDrop(evt, folder) {
       if (!this.draggedPage) return
-      
+
       const targetFolder = folder || { id: 0, path: '', name: 'Root' }
-      
+
       // Prevent dropping a page onto itself
       if (this.draggedPage.id === targetFolder.id || this.draggedPage.path === targetFolder.path) {
         this.dropTargetFolder = null
         return
       }
-      
+
       // Prevent dropping into own children
       if (targetFolder.path && targetFolder.path.startsWith(this.draggedPage.path + '/')) {
         this.dropTargetFolder = null
         return
       }
-      
+
       this.dropTargetFolder = null
-      
+
       await this.movePageToFolder(this.draggedPage, targetFolder)
       this.draggedPage = null
     },
@@ -799,11 +799,11 @@ export default {
     },
     async moveCurrentPageToSelectedFolder() {
       if (!this.canMoveCurrentPage) return
-      
+
       // Find current page from all pages, not just visible ones
       const currentPage = this.pages.find(p => p.path === this.currentPagePath)
       const targetFolder = this.findFolderById(this.selectedFolderId)
-      
+
       if (!currentPage || !targetFolder) {
         this.$store.commit('showNotification', {
           style: 'error',
@@ -812,18 +812,18 @@ export default {
         })
         return
       }
-      
+
       const newPath = targetFolder.path ? `${targetFolder.path}/${this.currentPagePath.split('/').pop()}` : this.currentPagePath.split('/').pop()
-      
+
       const moveSuccess = await this.movePageToFolder(currentPage, targetFolder, true)
-      
+
       if (moveSuccess) {
         // Store the new path for redirect on close
         this.currentPageMovedTo = newPath
-        
+
         // Navigate to the target folder in the dialog so user can verify/reorder
         await this.navigateToFolderAfterMove(targetFolder)
-        
+
         this.$store.commit('showNotification', {
           style: 'success',
           message: 'Page moved successfully. Close dialog to navigate to new location.',
@@ -841,11 +841,11 @@ export default {
         })
         return false
       }
-      
+
       // Calculate new path
       const pageName = page.path.split('/').pop()
       const newPath = targetFolder.path ? `${targetFolder.path}/${pageName}` : pageName
-      
+
       // Don't move if same location
       if (page.path === newPath) {
         this.$store.commit('showNotification', {
@@ -855,7 +855,7 @@ export default {
         })
         return false
       }
-      
+
       // Check if page is being moved into itself or its children
       if (newPath.startsWith(page.path + '/')) {
         this.$store.commit('showNotification', {
@@ -865,12 +865,12 @@ export default {
         })
         return false
       }
-      
+
       // Check if this is the current page being edited
       const isMovingCurrentPage = this.currentPagePath && page.path === this.currentPagePath
-      
+
       this.searchLoading = true
-      
+
       try {
         const resp = await this.$apollo.mutate({
           mutation: gql`
@@ -896,7 +896,7 @@ export default {
           refetchQueries: ['pages', 'tree'],
           awaitRefetchQueries: false
         })
-        
+
         if (resp?.data?.pages?.move?.responseResult?.succeeded) {
           // Clear Apollo cache to prevent stale data issues
           try {
@@ -904,7 +904,7 @@ export default {
           } catch (e) {
             console.warn('Failed to clear Apollo cache:', e)
           }
-          
+
           // Don't show notification if called from button (button will show its own message)
           if (!fromButtonClick) {
             this.$store.commit('showNotification', {
@@ -913,13 +913,13 @@ export default {
               icon: 'check'
             })
           }
-          
+
           // If moving current page in view mode, we still need to refresh the tree
           // but we stay in the current dialog (don't navigate away)
           // The redirect will happen on close
           if (isMovingCurrentPage && !fromButtonClick) {
             const { isEditMode } = this.parseCurrentUrl()
-            
+
             // In view mode, refresh tree but stay in dialog
             // In edit mode, do nothing here (redirect handled in onDragEnd)
             if (!isEditMode) {
@@ -929,7 +929,7 @@ export default {
             // Not moving current page - navigate to target folder and refresh
             await this.navigateToFolderAfterMove(targetFolder)
           }
-          
+
           return true
         } else {
           const errMsg = resp?.data?.pages?.move?.responseResult?.message || 'Move failed'
@@ -981,19 +981,19 @@ export default {
             message: 'Pages reordered successfully',
             icon: 'check'
           })
-          
+
           // Update local page positions without full refresh
           this.draggablePages.forEach((page, index) => {
             page.child_position = index
           })
-          
+
           // Update the pages array to match new order
           const parentId = this.selectedFolderId !== null ? this.selectedFolderId : 0
           this.pages = this.pages.filter(p => p.parent !== parentId).concat(this.draggablePages)
-          
+
           // Trigger sidebar tree refresh
           this.$root.$emit('reloadPageTree')
-          
+
           return true
         } else {
           const errorMsg = resp?.data?.pages?.reorderPages?.responseResult?.message || 'Failed to reorder pages'
@@ -1016,7 +1016,7 @@ export default {
       this.all = []
       this.pages = []
       await this.loadTreeData()
-      
+
       // Navigate to target folder by path (since IDs may change after tree rebuild)
       if (!targetFolder.path) {
         // Root folder
@@ -1030,7 +1030,7 @@ export default {
         // and fetchFolders, but we need to also fetch pages
         await this.fetchPages()
       }
-      
+
       // Trigger sidebar tree refresh with target folder path so it gets expanded
       this.$root.$emit('reloadPageTree', { expandPath: targetFolder.path })
     },
@@ -1066,7 +1066,7 @@ export default {
         this.selectedFolderId = nodeId
         // Reset clicked page when navigating folders
         this.clickedPagePath = null
-        
+
         // Load children if not loaded yet
         const item = this.all.find(i => i.id === nodeId)
         if (item && item.isFolder) {
@@ -1075,7 +1075,7 @@ export default {
             this.fetchFolders(item, treeNode)
           }
         }
-        
+
         // Load pages for this folder
         this.fetchPages()
       }
@@ -1084,28 +1084,28 @@ export default {
       // Handle clicking the folder name directly
       if (item && item.id !== undefined) {
         const isAlreadySelected = this.selectedFolderId === item.id
-        
+
         // Select the folder
         this.selectedFolderId = item.id
         this.activeNodes = [item.id]
-        
+
         // Reset clicked page
         this.clickedPagePath = null
-        
+
         // Load pages for this folder
         this.fetchPages()
-        
+
         // Only toggle open/close if clicking the already selected folder
         // Otherwise, just open it (single-click to open behavior)
         const isOpen = this.openNodes.includes(item.id)
-        
+
         if (isAlreadySelected && isOpen) {
           // Clicking selected open folder -> close it
           this.openNodes = this.openNodes.filter(id => id !== item.id)
         } else if (!isOpen) {
           // Folder is closed -> open it and load children
           this.openNodes = [...this.openNodes, item.id]
-          
+
           const folderData = this.all.find(i => i.id === item.id)
           if (folderData && folderData.isFolder) {
             const treeNode = this.findTreeNode(this.tree[0], item.id)
@@ -1135,7 +1135,7 @@ export default {
               await this.fetchFolders(folderData, treeNode)
             }
           }
-          
+
           // Now open it (after children are loaded)
           this.openNodes = [...this.openNodes, item.id]
         }
@@ -1195,9 +1195,9 @@ export default {
     },
     async loadTreeData() {
       if (this.treeDataLoaded) return
-      
+
       this.searchLoading = true
-      
+
       try {
         // Fetch root level folders
         const resp = await this.$apollo.query({
@@ -1260,11 +1260,11 @@ export default {
           children: [],
           icon: f.pageId ? 'mdi-file-document-outline' : 'mdi-folder'
         }))
-        
+
         // Store pages separately
         const rootPages = _.filter(sortedItems, i => i.pageId > 0)
         this.pages = rootPages
-        
+
         // In move mode, also add non-folder pages to the tree as drop targets
         let rootTreeItems = [...rootFolders]
         if (this.showPagesInTree) {
@@ -1294,10 +1294,10 @@ export default {
             icon: 'mdi-home'
           }
         ]
-        
+
         // Open root by default
         this.openNodes = [0]
-        
+
         this.treeDataLoaded = true
       } catch (error) {
         console.error('Error loading tree data:', error)
@@ -1360,7 +1360,7 @@ export default {
         })
 
         const items = _.get(resp, 'data.tree', [])
-        
+
         // Filter by siteId
         const filteredItems = items.filter(i => {
           const itemSiteId = String(i.siteId)
@@ -1371,7 +1371,7 @@ export default {
         // Update pages - only keep pages from this folder
         const parentId = this.selectedFolderId !== null ? this.selectedFolderId : 0
         const otherPages = this.pages.filter(p => p.parent !== parentId)
-        
+
         // Get pages with child count
         // Include items that have a pageId (actual pages), even if they're also folders (page-as-folder)
         const newPages = filteredItems.filter(i => i.pageId > 0).map(p => {
@@ -1383,12 +1383,12 @@ export default {
             hasSubpages: p.isFolder  // Mark if this page has subpages
           }
         })
-        
+
         this.pages = [...otherPages, ...newPages]
-        
+
         // Update all array
         this.all = _.unionBy(this.all, filteredItems, 'id')
-        
+
       } catch (error) {
         console.error('Error loading pages:', error)
       } finally {
@@ -1399,7 +1399,7 @@ export default {
       if (!item || item.id === undefined) {
         return
       }
-      
+
       this.searchLoading = true
       const resp = await this.$apollo.query({
         query: gql`
@@ -1456,9 +1456,9 @@ export default {
         children: [],
         icon: f.pageId ? 'mdi-file-document-outline' : 'mdi-folder'
       }))
-      
+
       const itemPages = _.filter(sortedItems, i => i.pageId > 0)
-      
+
       // In move mode, also add non-folder pages as drop targets
       let treeChildren = [...itemFolders]
       if (this.showPagesInTree) {
@@ -1476,12 +1476,12 @@ export default {
           }))
         treeChildren = [...itemFolders, ...pagesForTree]
       }
-      
+
       // Update the tree node's children if treeNode provided
       if (treeNode && treeChildren.length > 0) {
         this.$set(treeNode, 'children', treeChildren)
       }
-      
+
       // Store in flat arrays
       this.pages = _.unionBy(this.pages, itemPages, 'id')
       this.all = _.unionBy(this.all, sortedItems, 'id')
@@ -1502,11 +1502,11 @@ export default {
       // Try to load the folder from parent if not in cache
       const parentPathSegments = targetPath.split('/').slice(0, -1)
       const parentPath = parentPathSegments.join('/')
-      
-      const parentFolder = parentPath 
+
+      const parentFolder = parentPath
         ? this.all.find(item => item.path === parentPath && item.isFolder)
         : { id: 0, path: '', isFolder: true }
-      
+
       if (parentFolder) {
         const parentNode = this.findTreeNode(this.tree[0], parentFolder.id || 0)
         if (parentNode) {
@@ -1519,7 +1519,7 @@ export default {
       // Add folder to openNodes and wait for rendering
       if (!this.openNodes.includes(folderId)) {
         this.openNodes = [...this.openNodes, folderId]
-        
+
         // Wait for DOM to update and node to be rendered
         await this.$nextTick()
         const maxAttempts = 20 //1s
@@ -1556,28 +1556,28 @@ export default {
 
       this.isAutoExpanding = true
       this.searchLoading = true
-      
+
       const pathHierarchy = this.buildPathHierarchy(folderPath)
-      
+
       // Expand each level sequentially
       for (let i = 0; i < pathHierarchy.length; i++) {
         const targetPath = pathHierarchy[i]
         let folder = this.all.find(item => item.path === targetPath && item.isFolder)
-        
+
         if (!folder) {
           await this.loadFolderIfNeeded(targetPath)
           folder = this.all.find(item => item.path === targetPath && item.isFolder)
         }
-        
+
         if (!folder) {
           break // Could not find folder, stop expansion
         }
-        
+
         await this.expandFolderNode(folder.id)
-        
+
         const treeNode = this.findTreeNode(this.tree[0], folder.id)
         const isLastInHierarchy = (i === pathHierarchy.length - 1)
-        
+
         if (isLastInHierarchy) {
           await this.selectFinalFolder(folder, treeNode)
         } else if (treeNode) {
@@ -1585,7 +1585,7 @@ export default {
         }
       }
       await this.scrollActiveNodeIntoView()
-      
+
       this.searchLoading = false
       this.isAutoExpanding = false
     },
@@ -1601,17 +1601,54 @@ export default {
     },
     async scrollActiveNodeIntoView() {
       if (!this.$refs.treeScroll || this.selectedFolderId === null) return
-      
+
       await this.$nextTick()
       const refKey = 'treeNode-' + this.selectedFolderId
       const activeNodeRef = this.$refs[refKey]
       const activeNode = Array.isArray(activeNodeRef) ? activeNodeRef[0] : activeNodeRef
-      
-      if (activeNode) {
-        this.$refs.treeScroll.scrollIntoView(activeNode, {
-          behavior: 'smooth',
-          block: 'center'
-        })
+
+      if (!activeNode) return
+
+      // Find nearest scrollable container (fall back to vuescroll element)
+      let container = activeNode.parentNode
+      while (container && container !== document && container !== this.$el) {
+        try {
+          const style = window.getComputedStyle(container)
+          if (style && (style.overflowY === 'auto' || style.overflowY === 'scroll')) break
+        } catch (e) {
+          // ignore cross-origin or other errors
+        }
+        container = container.parentNode
+      }
+      if (!container || container === document) {
+        container = this.$refs.treeScroll && this.$refs.treeScroll.$el ? this.$refs.treeScroll.$el : this.$el
+      }
+
+      const rect = activeNode.getBoundingClientRect()
+      const crect = container.getBoundingClientRect()
+      const targetTop = rect.top - crect.top + container.scrollTop - (crect.height / 2 - rect.height / 2)
+
+      // Preserve horizontal scroll position
+      const prevLeft = container.scrollLeft || 0
+
+      if (container && typeof container.scrollTo === 'function') {
+        container.scrollTo({ top: targetTop, behavior: 'smooth' })
+      } else if (container) {
+        container.scrollTop = targetTop
+      }
+
+      // Restore horizontal scroll after vertical scroll completes
+      try {
+        setTimeout(() => {
+          if (!container) return
+          if (typeof container.scrollTo === 'function') {
+            container.scrollTo({ left: prevLeft })
+          } else {
+            container.scrollLeft = prevLeft
+          }
+        }, 60)
+      } catch (e) {
+        /* noop */
       }
     }
   }
@@ -1622,7 +1659,7 @@ export default {
   // Folder tree drop zone
   .folder-tree-container {
     position: relative;
-    
+
     &.drop-target-active::after {
       content: '';
       position: absolute;
@@ -1633,19 +1670,19 @@ export default {
       z-index: 1;
       animation: pulse-border 1s infinite;
     }
-    
+
     &.drop-target-folder-selected::after {
       border-color: #12abdb;
       border-style: solid;
       animation: none;
     }
   }
-  
+
   @keyframes pulse-border {
     0%, 100% { opacity: 0.5; }
     50% { opacity: 1; }
   }
-  
+
   // Drop hint indicator
   .drop-hint {
     position: absolute;
@@ -1665,83 +1702,83 @@ export default {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     white-space: nowrap;
   }
-  
+
   // Folder tree labels
   .tree-folder-label {
     cursor: pointer;
     padding: 2px 8px;
     border-radius: 4px;
     transition: all 0.2s ease;
-    
+
     &.drop-target-highlight {
       background-color: rgba(18, 171, 219, 0.15);
       box-shadow: 0 0 0 2px #12abdb;
     }
   }
-  
+
   // Pages list container
   .pages-container {
     overflow-y: auto;
-    
+
     &::-webkit-scrollbar {
       width: 8px;
     }
-    
+
     &::-webkit-scrollbar-track {
       background: #f1f1f1;
       border-radius: 4px;
     }
-    
+
     &::-webkit-scrollbar-thumb {
       background: #999;
       border-radius: 4px;
-      
+
       &:hover {
         background: #64B5F6;
       }
     }
   }
-  
+
   .page-list {
     min-height: 50px;
   }
-  
+
   .page-item {
     transition: transform 0.3s ease;
   }
-  
+
   // Drag and drop styles
   .drag-item {
     transition: background-color 0.2s ease, box-shadow 0.2s ease;
     border-radius: 4px;
     margin: 2px 4px;
-    
+
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);
     }
   }
-  
+
   .page-being-dragged {
     opacity: 0.5;
   }
-  
+
   // Sortable.js states
   .ghost {
     opacity: 0.5;
     background: #e9f4fc !important;
     border: 2px dashed #12abdb !important;
     border-radius: 4px;
-    
+
     * {
       visibility: hidden;
     }
   }
-  
+
   .chosen {
     background: #fff8eb;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
-  
+
   .dragging {
     opacity: 1;
     background: white !important;
@@ -1750,40 +1787,40 @@ export default {
     transform: rotate(1deg) scale(1.02);
     z-index: 9999;
   }
-  
+
   .sortable-fallback {
     opacity: 1 !important;
     background: white !important;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
   }
-  
+
   .drag-handle {
     cursor: grab !important;
     opacity: 0.6;
     transition: opacity 0.2s ease;
-    
+
     &:hover {
       opacity: 1;
     }
-    
+
     &:active {
       cursor: grabbing !important;
     }
   }
-  
+
   // List item spacing
   .v-list-item__icon {
     margin-right: 12px !important;
   }
-  
+
   .v-list-item__content .v-list-item__title {
     margin-bottom: 2px;
   }
-  
+
   // Page targets in tree (pages that can accept children)
   .tree-page-target {
     opacity: 0.9;
-    
+
     &::before {
       content: '';
       display: inline-block;
@@ -1795,32 +1832,32 @@ export default {
       vertical-align: middle;
     }
   }
-  
+
   // Invalid drop target (dragging page onto itself)
   .invalid-drop-target {
     opacity: 0.4;
     cursor: not-allowed !important;
     text-decoration: line-through;
-    
+
     &:hover {
       background-color: rgba(244, 67, 54, 0.1) !important;
     }
   }
-  
+
   // Current page indicator
   .current-page-item .current-page-editing {
     background-color: rgba(0, 112, 173, 0.08) !important;
     border-left: 3px solid #0070ad;
-    
+
     &:hover {
       background-color: rgba(0, 112, 173, 0.12) !important;
     }
   }
-  
+
   // Move instruction alert compact padding
   .move-instruction-alert {
     padding: 10px !important;
-    
+
     .v-alert__content {
       padding: 0 !important;
     }
@@ -1829,15 +1866,15 @@ export default {
   .v-btn.v-btn--disabled.theme--dark {
     .theme--light & {
       color: rgba(0, 0, 0, 0.5) !important;
-      
+
       .v-icon {
         color: rgba(0, 0, 0, 0.5) !important;
       }
     }
-    
+
     .theme--dark & {
       color: rgba(255, 255, 255, 0.5) !important;
-      
+
       .v-icon {
         color: rgba(255, 255, 255, 0.5) !important;
       }

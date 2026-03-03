@@ -13,10 +13,24 @@ export default {
     Vue.prototype.$tourManager = {
       /**
        * Start the main application tour
+       * Steps are pre-filtered by the nav-header computed property
        */
       startAppTour () {
         if (window.WIKI && window.WIKI.$tours && window.WIKI.$tours['appTour']) {
-          window.WIKI.$tours['appTour'].start()
+          
+            if (window.WIKI && window.WIKI.$tours && window.WIKI.$tours['appTour']) {
+              const tour = window.WIKI.$tours['appTour']
+              
+              // Check if there are any steps available
+              if (!tour.steps || tour.steps.length === 0) {
+                console.warn('App tour: No available steps for current user permissions')
+                return
+              }
+              
+            
+              tour.start()
+            }
+        
         } else {
           console.warn('App tour not available')
         }
