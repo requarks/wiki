@@ -140,7 +140,15 @@ module.exports = {
 
         return {
           responseResult: generateSuccess('Site created successfully'),
-          site: newSite
+          site: {
+            ...newSite.config,
+            id: newSite.id,
+            name: newSite.name,
+            path: newSite.path,
+            isEnabled: newSite.isEnabled,
+            showRecentActivities: newSite.show_recent_activities,
+            createdAt: newSite.createdAt
+          }
         }
       } catch (err) {
         WIKI.logger.warn(err)
