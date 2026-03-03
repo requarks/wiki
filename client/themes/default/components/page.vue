@@ -423,7 +423,7 @@
                       a(:href='buildPageUrl(page)') {{ page.title }}
                       |
                       |  - updated {{ page.updatedAt | moment('calendar') }} by {{ page.authorName }}
-                    (v-if='showMoreActivitiesBtn')
+                    li(v-if='showMoreActivitiesBtn')
                       span(@click='loadMoreActivities', style='cursor: pointer; color: #b4dbf1;') {{ loadingMoreActivities ? 'Loading...' : 'More...' }}
                   div(style='clear: both;', id='content-clear-div')
                 // Image overlay viewer
