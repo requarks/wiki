@@ -753,6 +753,7 @@
       display: block;
       font-size: .85rem;
       font-family: 'Roboto Mono', monospace;
+      text-shadow: none;
 
       &:after, &:before {
         content: initial;
