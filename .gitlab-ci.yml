@@ -63,8 +63,6 @@ environment-set:
   stage: environment-set
   script:
     - echo "environment used for this pipeline is ${ENVIRONMENT}"
-  environment:
-    name: ${ENVIRONMENT}
   # Run only on the following branches when there are commits (not just branch creation)
   rules:
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
@@ -168,9 +166,6 @@ docker-build:
     reports:
       dotenv: build.env
     expire_in: 15 days
-  environment:
-    name: $ENVIRONMENT
-    url: $NEW_IMAGE
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
       when: always
@@ -220,8 +215,6 @@ push-docker-image:
            docker rmi "$IMAGE:dev-latest" || true
          fi
      - "docker rmi \"$IMAGE:$IMAGE_TAG\" || true"
-  environment:
-    name: $ENVIRONMENT
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
       when: on_success
@@ -250,20 +243,13 @@ deploy-to-staging:
         echo "Tagging hotfix image as staging..."
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
-        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.3.1)
+        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.4)
         docker tag "$IMAGE:$VERSION" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
       else
-        echo "Regular main merge - retagging dev-latest as staging image..."
-        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-        DEV_TAG="dev-latest"
-        STAGING_TAG="latest-staging"
-        docker pull "$IMAGE:$DEV_TAG"
-        docker tag "$IMAGE:$DEV_TAG" "$IMAGE:$STAGING_TAG"
-        docker push "$IMAGE:$STAGING_TAG"
+        echo "Regular main merge - promoting dev-latest to staging..."
+        bash scripts/promote_to_staging.sh
       fi
-    - echo 'Deploying staging image...'
-    - bash scripts/promote_to_staging.sh
   environment:
     name: staging
   rules:
