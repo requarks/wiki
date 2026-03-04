@@ -1,14 +1,10 @@
 variables:
   PROJECT_NAME: 'mar'
   ENVIRONMENT:
-    value: "none"
+    value: "dev1"
     options:
-      - "none"
       - "dev1"
-      - "dev2"
-      - "staging"
-      - "production"
-    description: "Choose on which environment should pipeline run"
+    description: "Choose dev1 environment for custom branch deployment (only available for manual pipeline runs)"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
   DEPLOY_USER: 'capwiki'
@@ -34,7 +30,7 @@ variables:
       - "true"
       - "false"
     description: "Choose false to skip code quality check"
- 
+
   PANDOC:
     value: "false"
     options:
@@ -44,7 +40,7 @@ variables:
 
   VERSION:
     value: "1.9.3"
-    description: "Update to next release version, it should be numeric value, ex: 1.7.5"
+    description: "Release version (e.g., 1.9.3, 1.9.4). Always increment by one for any new release, including hotfixes. Developer must update manually before merging to main."
 
 
 default:
@@ -71,14 +67,12 @@ environment-set:
     name: ${ENVIRONMENT}
   # Run only on the following branches when there are commits (not just branch creation)
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    # - if: '$ENVIRONMENT == "dev1"'
-    #   when: always
-    # - if: $CI_COMMIT_BRANCH == "develop"
-    #   when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"' ## to prevent jobs from running when branch is created.
+    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
       when: never
+    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
+      when: always
 
 
 build:
@@ -97,14 +91,12 @@ build:
       - assets/
     expire_in: 1 hour
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    # - if: '$ENVIRONMENT == "dev1"'
-    #   when: always
-    # - if: $CI_COMMIT_BRANCH == "develop"
-    #   when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
       when: never
+    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
+      when: always
 
 test:
   stage: test
@@ -123,14 +115,12 @@ test:
     paths:
       - coverage
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: on_success
-    # - if: '$ENVIRONMENT == "dev1"'
-    #   when: on_success
-    # - if: $CI_COMMIT_BRANCH == "develop"
-    #   when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
       when: never
+    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
+      when: on_success
 
 
 sonarqube-scan:
@@ -152,14 +142,12 @@ sonarqube-scan:
     - sonar-scanner
   # Run on feature branches only when there are commits
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
-    # - if: '$ENVIRONMENT == "dev1"'
-    #   when: always
-    # - if: $CI_COMMIT_BRANCH == "develop"
-    #   when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
       when: never
+    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
+      when: always
 
 docker-build:
   stage: docker-build
@@ -173,6 +161,7 @@ docker-build:
       if [ -f newimage.txt ]; then
         echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
       fi
+    - echo "VERSION=$VERSION" >> build.env
   artifacts:
     paths:
       - newimage.txt
@@ -183,11 +172,11 @@ docker-build:
     name: $ENVIRONMENT
     url: $NEW_IMAGE
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
       when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
-      when: on_success
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main"
       when: always
 
 
@@ -202,15 +191,15 @@ push-docker-image:
   before_script:
       - |
           # Dynamically set ENVIRONMENT based on branch if not already set
-          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" = "none" ]; then
+          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" != "dev1" ]; then
             if [ "$CI_COMMIT_BRANCH" = "develop" ]; then
               export ENVIRONMENT="dev2"
             elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
               export ENVIRONMENT="staging"
             fi
           fi
-          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" = "none" ]; then
-            echo "ERROR: ENVIRONMENT variable is not set or is 'none'. Please set ENVIRONMENT to a valid value (e.g., dev1, dev2, staging, production)." >&2
+          if [ -z "$ENVIRONMENT" ]; then
+            echo "ERROR: ENVIRONMENT variable is not set. Please set ENVIRONMENT to a valid value (e.g., dev1, dev2, staging, production)." >&2
             exit 1
           fi
           if [ -z "$IMAGE_TAG" ]; then
@@ -234,18 +223,16 @@ push-docker-image:
   environment:
     name: $ENVIRONMENT
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|hotfix|improvement|bugfix|docs)\// && $ENVIRONMENT == "dev1"'
+    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
       when: on_success
-    - if: '$ENVIRONMENT == "dev1"'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"' # to prevent jobs from running when branch is created.
-      when: never
-    - if: $CI_COMMIT_BRANCH == "develop" || $ENVIRONMENT == "dev2"
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: on_success
+    - if: $CI_COMMIT_BRANCH == "main"
       when: on_success
 
 
 
-# Promote dev2 image to staging
+# Promote dev2 image to staging OR promote hotfix image to staging
 deploy-to-staging:
   stage: promote-prod-release-version
   needs:
@@ -254,22 +241,33 @@ deploy-to-staging:
       optional: true
   before_script:
      - "if [ -f build.env ]; then source build.env; fi"
-     - "echo 'Using VERSION from dev2 build: $VERSION'"
+     - "echo 'Using VERSION: $VERSION'"
   script:
-    - echo 'Retagging dev2-latest as staging image...'
     - |
-      docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-      DEV_TAG="dev-latest"
-      STAGING_TAG="latest-staging"
-      docker pull "$IMAGE:$DEV_TAG"
-      docker tag "$IMAGE:$DEV_TAG" "$IMAGE:$STAGING_TAG"
-      docker push "$IMAGE:$STAGING_TAG"
+      # Check if this is a hotfix merge (check commit message)
+      if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
+        echo "Hotfix detected - using manually set version $VERSION"
+        echo "Tagging hotfix image as staging..."
+        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+        STAGING_TAG="latest-staging"
+        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.3.1)
+        docker tag "$IMAGE:$VERSION" "$IMAGE:$STAGING_TAG"
+        docker push "$IMAGE:$STAGING_TAG"
+      else
+        echo "Regular main merge - retagging dev-latest as staging image..."
+        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+        DEV_TAG="dev-latest"
+        STAGING_TAG="latest-staging"
+        docker pull "$IMAGE:$DEV_TAG"
+        docker tag "$IMAGE:$DEV_TAG" "$IMAGE:$STAGING_TAG"
+        docker push "$IMAGE:$STAGING_TAG"
+      fi
     - echo 'Deploying staging image...'
     - bash scripts/promote_to_staging.sh
+  environment:
+    name: staging
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
-      when: always
-    - if: $CI_COMMIT_BRANCH == "main" && ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^bugfix\// || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//)
       when: always
 
 
@@ -281,8 +279,13 @@ deploy-to-production:
       optional: true
   before_script:
      - "if [ -f build.env ]; then source build.env; fi"
-     - "echo 'Using VERSION from dev2 build: $VERSION'"
+     - "echo 'Using VERSION: $VERSION'"
   script:
+    - |
+      # Check if this is a hotfix merge
+      if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
+        echo "Hotfix deployment detected - using manually set version $VERSION"
+      fi
     - echo 'Retagging staging image as production image...'
     - |
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
@@ -296,9 +299,6 @@ deploy-to-production:
   environment:
     name: production
   rules:
-    # Manual for regular main merges
+    # Manual for all main merges (including hotfixes) - safer approach
     - if: $CI_COMMIT_BRANCH == "main"
       when: manual
-    # Auto for bugfix/hotfix merges into main
-    - if: $CI_COMMIT_BRANCH == "main" && ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^bugfix\// || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^hotfix\//)
-      when: always
