@@ -185,16 +185,18 @@ push-docker-image:
     optional: true
   before_script:
       - |
-          # Dynamically set ENVIRONMENT based on branch if not already set
-          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" != "dev1" ]; then
-            if [ "$CI_COMMIT_BRANCH" = "develop" ]; then
-              export ENVIRONMENT="dev2"
-            elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
-              export ENVIRONMENT="staging"
-            fi
-          fi
-          if [ -z "$ENVIRONMENT" ]; then
-            echo "ERROR: ENVIRONMENT variable is not set. Please set ENVIRONMENT to a valid value (e.g., dev1, dev2, staging, production)." >&2
+          # Determine ENVIRONMENT based on pipeline source and branch
+          if [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
+            # Manual trigger with dev1 - keep it
+            export ENVIRONMENT="dev1"
+          elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+            # Automatic push to develop branch
+            export ENVIRONMENT="dev2"
+          elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+            # Automatic push to main branch
+            export ENVIRONMENT="staging"
+          else
+            echo "ERROR: Could not determine ENVIRONMENT for branch $CI_COMMIT_BRANCH" >&2
             exit 1
           fi
           if [ -z "$IMAGE_TAG" ]; then
