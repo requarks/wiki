@@ -152,6 +152,27 @@ docker-build:
   before_script:
     - df -h
     - export PANDOC="$PANDOC"
+    - |
+        # For main branch, check if this is a hotfix merge
+        if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+          if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
+            echo "Hotfix merge detected - will build image"
+            export ENVIRONMENT="prod"
+          else
+            echo "Regular main merge - skipping build (will promote dev-latest in deploy-to-staging)"
+            exit 0
+          fi
+        elif [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
+          # Manual trigger with dev1 - keep it
+          export ENVIRONMENT="dev1"
+        elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+          # Automatic push to develop branch
+          export ENVIRONMENT="dev2"
+        else
+          echo "ERROR: Could not determine ENVIRONMENT for branch $CI_COMMIT_BRANCH" >&2
+          exit 1
+        fi
+    - echo "Building with ENVIRONMENT=$ENVIRONMENT"
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG" "$VERSION"
   script:
     - bash scripts/build_images.sh
@@ -185,16 +206,23 @@ push-docker-image:
     optional: true
   before_script:
       - |
-          # Dynamically set ENVIRONMENT based on branch if not already set
-          if [ -z "$ENVIRONMENT" ] || [ "$ENVIRONMENT" != "dev1" ]; then
-            if [ "$CI_COMMIT_BRANCH" = "develop" ]; then
-              export ENVIRONMENT="dev2"
-            elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
-              export ENVIRONMENT="staging"
+          # For main branch, check if this is a hotfix merge
+          if [ "$CI_COMMIT_BRANCH" = "main" ]; then
+            if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
+              echo "Hotfix merge detected - will push image"
+              export ENVIRONMENT="prod"
+            else
+              echo "Regular main merge - skipping push (will promote dev-latest in deploy-to-staging)"
+              exit 0
             fi
-          fi
-          if [ -z "$ENVIRONMENT" ]; then
-            echo "ERROR: ENVIRONMENT variable is not set. Please set ENVIRONMENT to a valid value (e.g., dev1, dev2, staging, production)." >&2
+          elif [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
+            # Manual trigger with dev1 - keep it
+            export ENVIRONMENT="dev1"
+          elif [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+            # Automatic push to develop branch
+            export ENVIRONMENT="dev2"
+          else
+            echo "ERROR: Could not determine ENVIRONMENT for branch $CI_COMMIT_BRANCH" >&2
             exit 1
           fi
           if [ -z "$IMAGE_TAG" ]; then
@@ -271,16 +299,10 @@ deploy-to-production:
       # Check if this is a hotfix merge
       if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
         echo "Hotfix deployment detected - using manually set version $VERSION"
+      else
+        echo "Regular deployment - promoting staging to production with version $VERSION"
       fi
-    - echo 'Retagging staging image as production image...'
-    - |
-        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-        STAGING_TAG="latest-staging"
-        PROD_TAG="$VERSION"
-        docker pull "$IMAGE:$STAGING_TAG"
-        docker tag "$IMAGE:$STAGING_TAG" "$IMAGE:$PROD_TAG"
-        docker push "$IMAGE:$PROD_TAG"
-    - echo 'Deploying production image...'
+    - echo 'Promoting staging image to production...'
     - bash scripts/promote_to_prod.sh
   environment:
     name: production
