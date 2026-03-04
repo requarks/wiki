@@ -250,20 +250,13 @@ deploy-to-staging:
         echo "Tagging hotfix image as staging..."
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
-        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.3)
+        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.4)
         docker tag "$IMAGE:$VERSION" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
       else
-        echo "Regular main merge - retagging dev-latest as staging image..."
-        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-        DEV_TAG="dev-latest"
-        STAGING_TAG="latest-staging"
-        docker pull "$IMAGE:$DEV_TAG"
-        docker tag "$IMAGE:$DEV_TAG" "$IMAGE:$STAGING_TAG"
-        docker push "$IMAGE:$STAGING_TAG"
+        echo "Regular main merge - promoting dev-latest to staging..."
+        bash scripts/promote_to_staging.sh
       fi
-    - echo 'Deploying staging image...'
-    - bash scripts/promote_to_staging.sh
   environment:
     name: staging
   rules:
