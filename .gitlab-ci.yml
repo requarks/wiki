@@ -250,7 +250,7 @@ deploy-to-staging:
         echo "Tagging hotfix image as staging..."
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
-        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.3.1)
+        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.3)
         docker tag "$IMAGE:$VERSION" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
       else
