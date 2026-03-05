@@ -1,11 +1,7 @@
 name: Build + Publish
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 env:
   BASE_DEV_VERSION: 2.5.0
