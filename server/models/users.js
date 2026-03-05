@@ -603,7 +603,6 @@ class User extends Model {
    * @param {Object} param0 User Fields
    */
   static async createNewUser({ providerKey, email, passwordRaw, name, groups = [], mustChangePassword, sendWelcomeEmail = true, createdByScript = false }) {
-  static async createNewUser({ providerKey, email, passwordRaw, name, groups = [], mustChangePassword, sendWelcomeEmail = true, createdByScript = false }) {
     // Input sanitization
     email = _.toLower(email)
 
