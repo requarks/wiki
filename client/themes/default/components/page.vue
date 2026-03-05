@@ -422,7 +422,8 @@
                     li(v-for='page in recentActivitiesDecoded.pages', :key='page.id', style='margin-bottom: 0.75rem; line-height: 1.6;')
                       a(:href='buildPageUrl(page)') {{ page.title }}
                       span.body-2(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-3`')
-                        |  - updated {{ page.updatedAt | moment('calendar') }} by {{ page.authorName }}
+                        |  - updated {{ page.updatedAt | moment('calendar') }} by 
+                        span.cw-mention-details {{ page.authorName }}
                     li(v-if='showMoreActivitiesBtn', style='list-style: none; margin-top: 1rem;')
                       a(@click='loadMoreActivities', style='cursor: pointer; font-weight: 500; text-decoration: none;', href='#') {{ loadingMoreActivities ? 'Loading...' : 'More...' }}
                 // Image overlay viewer
