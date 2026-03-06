@@ -648,7 +648,7 @@ export default {
       tocObserver: null,
       showToc: true,
       tocCollapsed: false,
-      tocTop: 220
+      tocTop: 220,
       // Image overlay viewer state
       isImageOverlayVisible: false,
       imageOverlaySrc: '',
