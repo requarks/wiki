@@ -1181,8 +1181,19 @@
   // IMAGES
   // ---------------------------------
 
+  .img-fit-100percent {
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+  }
+
+  .img-fit-table-visible {
+    max-width: none !important;
+    max-height: none !important;
+
+  }
+
   img {
-    height: auto; // Default: maintain aspect ratio
     max-width: 100%;
     max-height: 100%;
 
