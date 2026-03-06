@@ -60,6 +60,7 @@
               tr.is-clickable(:active='props.selected', @click='$router.push("/sites/" + props.item.id)')
                 td {{ props.item.name }}
                 td: strong {{ props.item.path }}
+                td {{ props.item.pageCount }}
                 td {{ props.item.createdAt | moment('calendar') }}
 
             template(slot='no-data')
@@ -89,6 +90,7 @@ export default {
       headers: [
         { text: 'Name', value: 'name' },
         { text: 'Path', value: 'path' },
+        { text: 'Pages', value: 'pageCount', width: 100 },
         { text: 'Created', value: 'createdAt', width: 250 },
         { text: '', value: 'isSystem', width: 20, sortable: false }
       ],
@@ -145,6 +147,7 @@ export default {
               const apolloData = store.readQuery({ query: sitesQuery, variables: { showAdminOnly: true } })
               const newSite = {
                 ...data.site,
+                pageCount: 0,
                 showAdminOnly: true
               }
               const newApolloData = {
@@ -180,7 +183,7 @@ export default {
       variables: {
         showAdminOnly: true
       },
-      fetchPolicy: 'network-only',
+      fetchPolicy: 'cache-first',
       update: (data) => { return data.sites },
       watchLoading (isLoading) {
         this.loading = isLoading
