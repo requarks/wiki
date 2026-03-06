@@ -714,10 +714,17 @@ export default {
       wordDocumentType: 'docx',
       pdfDocumentType: 'pdf',
       exportFileType: '',
+      activeTocAnchor: '',
+      tocObserver: null,
+      showToc: true,
+      tocCollapsed: false,
+      tocTop: 220,
       // Image overlay viewer state
       isImageOverlayVisible: false,
       imageOverlaySrc: '',
-      imageOverlayName: ''
+      imageOverlayName: '',
+      imageClassObserver: null,
+      imageClassTimers: []
     }
   },
   computed: {
@@ -946,6 +953,7 @@ export default {
         container.addEventListener('click', (ev) => {
           const target = ev.target
           if (target && target.tagName === 'IMG') {
+            this.applyImageFitClass(target)
             if (target.closest('a')) return
             const src = target.getAttribute('src') || target.dataset.src
             if (src) {
@@ -955,12 +963,7 @@ export default {
             }
           }
         })
-        // Add cursor hint
-        container.querySelectorAll('img').forEach(img => {
-          if (!img.closest('a')) {
-            img.style.cursor = 'zoom-in'
-          }
-        })
+        this.startImageClassSync(container)
       }
 
       window.boot.notify('page-ready')
@@ -985,8 +988,94 @@ export default {
     if (this._imageOverlayEscHandler) {
       document.removeEventListener('keydown', this._imageOverlayEscHandler)
     }
+    if (this.imageClassObserver) {
+      this.imageClassObserver.disconnect()
+      this.imageClassObserver = null
+    }
+    if (this.imageClassTimers && this.imageClassTimers.length > 0) {
+      this.imageClassTimers.forEach(timerId => clearTimeout(timerId))
+      this.imageClassTimers = []
+    }
   },
   methods: {
+    applyImageFitClass(img) {
+      if (!img || img.tagName !== 'IMG') return
+
+      const inTable = !!img.closest('table')
+
+      if (inTable) {
+        if (!img.classList.contains('img-fit-table-visible')) {
+          img.classList.add('img-fit-table-visible')
+        }
+        if (img.classList.contains('img-fit-100percent')) {
+          img.classList.remove('img-fit-100percent')
+        }
+      } else {
+        if (!img.classList.contains('img-fit-100percent')) {
+          img.classList.add('img-fit-100percent')
+        }
+        if (img.classList.contains('img-fit-table-visible')) {
+          img.classList.remove('img-fit-table-visible')
+        }
+      }
+
+      if (!img.closest('a')) {
+        img.style.cursor = 'zoom-in'
+      }
+    },
+
+    applyImageFitClasses(container) {
+      if (!container || !container.querySelectorAll) return
+      container.querySelectorAll('img').forEach(img => this.applyImageFitClass(img))
+    },
+
+    startImageClassSync(container) {
+      this.applyImageFitClasses(container)
+
+      const schedule = (delay) => {
+        const timerId = setTimeout(() => {
+          this.applyImageFitClasses(container)
+        }, delay)
+        this.imageClassTimers.push(timerId)
+      }
+
+      schedule(120)
+      schedule(700)
+      schedule(2000)
+
+      if (typeof MutationObserver !== 'undefined') {
+        if (this.imageClassObserver) {
+          this.imageClassObserver.disconnect()
+        }
+
+        this.imageClassObserver = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (!node || node.nodeType !== 1) return
+              if (node.tagName === 'IMG') {
+                this.applyImageFitClass(node)
+              } else if (node.querySelectorAll) {
+                node.querySelectorAll('img').forEach(img => this.applyImageFitClass(img))
+              }
+            })
+          })
+        })
+
+        this.imageClassObserver.observe(container, {
+          childList: true,
+          subtree: true
+        })
+
+        const observerStopTimer = setTimeout(() => {
+          if (this.imageClassObserver) {
+            this.imageClassObserver.disconnect()
+            this.imageClassObserver = null
+          }
+        }, 5000)
+        this.imageClassTimers.push(observerStopTimer)
+      }
+    },
+
     applyColorSchemeProtection () {
       // Protect mermaid / svg diagrams from browser auto color adjustments (forced-colors / dark mode)
       // Keep this scoped to the page container to avoid touching other parts of the DOM.
@@ -1742,14 +1831,14 @@ export default {
   // Make scrollbar stick to bottom of sidebar
   .sidebar-scroll-container {
     height: 100% !important;
-    
+
     // vuescroll container and panel should fill height
     ::v-deep .__container,
     ::v-deep .__panel {
       height: 100% !important;
       min-height: 0 !important;
     }
-    
+
     // Content wrapper for horizontal scroll
     ::v-deep .__view {
       display: flex;
@@ -1758,7 +1847,7 @@ export default {
       min-width: min-content;
       padding-bottom: 12px;
     }
-    
+
     // Pin horizontal scrollbar to bottom
     ::v-deep .__rail-is-horizontal {
       position: absolute !important;
@@ -1769,7 +1858,7 @@ export default {
       z-index: 10 !important;
       margin: 0 !important;
     }
-    
+
     // Vertical scrollbar styling
     ::v-deep .__rail-is-vertical {
       top: 0 !important;
