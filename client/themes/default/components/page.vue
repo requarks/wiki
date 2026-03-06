@@ -417,15 +417,15 @@
                 slot(name='contents')
                 // Recent Site Activities
                 div(v-if='recentActivitiesDecoded', style='margin-top: 2rem; padding-top: 2rem;')
-                  h2(style='font-size: 1.5rem; margin-bottom: 1rem;'): strong Site recent activities
+                  h2(style='font-size: 1.5rem; margin-bottom: 1rem;'): strong {{$t('common:page.recentActivities')}}
                   ul(style='margin-left: 1.5rem; font-size: 1rem;')
                     li(v-for='page in recentActivitiesDecoded.pages', :key='page.id', style='margin-bottom: 0.75rem; line-height: 1.6;')
                       a(:href='buildPageUrl(page)') {{ page.title }}
                       span.body-2(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-3`')
-                        |  - updated {{ page.updatedAt | moment('calendar') }} by 
-                        span.cw-mention-details {{ page.authorName }}
+                        | &nbsp;- {{$t('common:page.updated')}} {{ page.updatedAt | moment('calendar') }} {{$t('common:page.by')}}
+                        span.cw-mention-details &nbsp;{{ page.authorName }}
                     li(v-if='showMoreActivitiesBtn', style='list-style: none; margin-top: 1rem;')
-                      a(@click='loadMoreActivities', style='cursor: pointer; font-weight: 500; text-decoration: none;', href='#') {{ loadingMoreActivities ? 'Loading...' : 'More...' }}
+                      a(@click='loadMoreActivities', style='cursor: pointer; font-weight: 500; text-decoration: none;', href='#') {{ loadingMoreActivities ? $t('common:page.loading') : $t('common:page.loadMore') }}
                 // Image overlay viewer
                 div.image-overlay(v-if='isImageOverlayVisible' role='dialog' aria-modal='true' @click.self='closeImageOverlay')
                   span.image-overlay-name {{ imageOverlayName }}

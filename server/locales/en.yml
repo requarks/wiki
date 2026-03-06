@@ -8,6 +8,11 @@ common:
   actions.deleteNotify: "Delete & Notify"
   release.upgradeTitle: "CapWiki is successfully upgraded!"
   release.upgradeBody: "Check out the new features and improvements below."
+  page.recentActivities: "Site recent activities"
+  page.updated: "updated"
+  page.by: "by"
+  page.loading: "Loading..."
+  page.loadMore: "More..."
 profile:
   unsaved.title: "Unsaved Changes"
   unsaved.body: "You have unsaved changes to your profile. Are you sure you want to discard them?"
