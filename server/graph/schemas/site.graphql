@@ -92,6 +92,7 @@ type Site {
   isEnabled: Boolean
   name: String
   createdAt: Date
+  pageCount: Int
 }
 
 type SiteCreateResponse {

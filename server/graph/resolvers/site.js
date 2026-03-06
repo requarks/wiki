@@ -51,13 +51,40 @@ module.exports = {
         )
       })
 
+      // Build a map of page counts per site, filtered by user permissions
+      const pageCountMap = {}
+      for (const site of sites) {
+        pageCountMap[site.id] = 0
+      }
+
+      // If no sites accessible, return early
+      if (sites.length === 0) {
+        return []
+      }
+      const siteIds = sites.map(s => s.id)
+
+      const pages = await WIKI.models.pages.query().select('pages.id', 'pages.path', 'pages.siteId', {locale: 'pages.localeCode'}).whereIn('pages.siteId', siteIds)
+
+      // Count only pages user has read permission for
+      for (const page of pages) {
+        if (WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: page.path,
+          locale: page.locale,
+          siteId: page.siteId
+          
+        })) {
+          pageCountMap[page.siteId]++
+        }
+      }
+
       return sites.map(s => ({
         ...s.config,
         id: s.id,
         name: s.name,
         path: s.path,
         isEnabled: s.isEnabled,
-        createdAt: s.createdAt
+        createdAt: s.createdAt,
+        pageCount: pageCountMap[s.id]
       }))
     },
     async siteById(obj, args) {
