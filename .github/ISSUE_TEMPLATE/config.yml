@@ -1,4 +1,4 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: Help / Questions
     url: https://github.com/Requarks/wiki/discussions/categories/help-questions
