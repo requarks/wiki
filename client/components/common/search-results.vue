@@ -99,8 +99,7 @@ export default {
       ), term => -term.length)
     },
     results() {
-      const currentIndex = (this.pagination - 1) * this.perPage
-      return this.response.results ? _.slice(this.response.results, currentIndex, currentIndex + this.perPage) : []
+      return this.response.results ? this.response.results : []
     },
     hits() {
       return this.response.totalHits ? this.response.totalHits : 0
@@ -115,6 +114,7 @@ export default {
   watch: {
     search(newValue, oldValue) {
       this.cursor = 0
+      this.pagination = 1
       if (!newValue || (newValue && newValue.length < 2)) {
         this.searchIsLoading = false
       } else {
@@ -225,7 +225,9 @@ export default {
       query: searchPagesQuery,
       variables() {
         return {
-          query: this.search
+          query: this.search,
+          page: this.pagination,
+          limit: this.perPage
         }
       },
       fetchPolicy: 'network-only',
@@ -233,9 +235,6 @@ export default {
       throttle: 1000,
       skip() {
         return !this.search || this.search.length < 2
-      },
-      result() {
-        this.pagination = 1
       },
       update: (data) => _.get(data, 'pages.search', {}),
       watchLoading (isLoading) {

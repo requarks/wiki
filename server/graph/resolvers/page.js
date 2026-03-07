@@ -92,13 +92,38 @@ module.exports = {
             tags: r.tags // Tags are needed since access permissions can be limited by page tags too
           })
         })
+        const limit = _.clamp(_.toSafeInteger(args.limit) || 10, 1, 50)
+        const page = Math.max(_.toSafeInteger(args.page) || 1, 1)
+        const currentIndex = (page - 1) * limit
+        const pagedResults = filteredResults.slice(currentIndex, currentIndex + limit)
+
+        let pageContentByKey = {}
+        if (pagedResults.length > 0) {
+          const pages = await WIKI.models.pages.query()
+            .select('path', { locale: 'localeCode' }, 'render', 'description', 'title')
+            .where(builder => {
+              pagedResults.forEach((result, idx) => {
+                builder[idx === 0 ? 'where' : 'orWhere'](qb => {
+                  qb.where('path', result.path).andWhere('localeCode', result.locale)
+                })
+              })
+            })
+
+          pageContentByKey = _.fromPairs(pages.map(pageResult => ([
+            `${pageResult.locale}:${pageResult.path}`,
+            WIKI.models.pages.buildSearchContent(pageResult.render) || pageResult.description || pageResult.title || ''
+          ])))
+        }
 
         return {
           ...resp,
-          results: filteredResults.map(r => {
+          results: pagedResults.map(r => {
             return {
               ...r,
-              snippet: buildSearchSnippet(r.snippet || r.content || r.description || r.title || r.path || '', args.query)
+              snippet: buildSearchSnippet(
+                pageContentByKey[`${r.locale}:${r.path}`] || r.snippet || r.content || r.description || r.title || r.path || '',
+                args.query
+              )
             }
           }),
           totalHits: filteredResults.length
