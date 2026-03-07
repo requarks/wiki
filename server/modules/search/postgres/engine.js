@@ -62,19 +62,21 @@ module.exports = {
     try {
       let suggestions = []
       let qry = `
-        SELECT id, path, locale, title, description, content
-        FROM "pagesVector", to_tsquery(?,?) query
-        WHERE (query @@ "tokens" OR path ILIKE ?)
+        SELECT pv.id, pv.path, pv.locale, pv.title, pv.description, pv.content
+        FROM "pagesVector" pv
+        INNER JOIN "pages" p ON p.path = pv.path AND p."localeCode" = pv.locale
+        CROSS JOIN to_tsquery(?,?) query
+        WHERE (query @@ pv.tokens OR pv.path ILIKE ?)
       `
-      let qryEnd = `ORDER BY ts_rank(tokens, query) DESC`
+      let qryEnd = `ORDER BY p."updatedAt" DESC, ts_rank(pv.tokens, query) DESC`
       let qryParams = [this.config.dictLanguage, tsquery(q), `%${q.toLowerCase()}%`]
 
       if (opts.locale) {
-        qry = `${qry} AND locale = ?`
+        qry = `${qry} AND pv.locale = ?`
         qryParams.push(opts.locale)
       }
       if (opts.path) {
-        qry = `${qry} AND path ILIKE ?`
+        qry = `${qry} AND pv.path ILIKE ?`
         qryParams.push(`%${opts.path}`)
       }
       const results = await WIKI.models.knex.raw(`

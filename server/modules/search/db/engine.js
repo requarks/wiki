@@ -20,6 +20,7 @@ module.exports = {
    * @param {Object} opts Additional options
    */
   async query(q, opts) {
+    const normalizedQuery = q.toLowerCase()
     const results = await WIKI.models.pages.query()
       .column('pages.id', 'title', 'description', 'path', 'localeCode as locale')
       .withGraphJoined('tags') // Adding page tags since they can be used to check resource access permissions
@@ -46,6 +47,21 @@ module.exports = {
           }
         })
       })
+      .orderBy('pages.updatedAt', 'desc')
+      .orderByRaw(`
+        CASE
+          WHEN LOWER(title) = ? THEN 400
+          WHEN LOWER(title) LIKE ? THEN 300
+          WHEN LOWER(description) LIKE ? THEN 200
+          WHEN LOWER(path) LIKE ? THEN 100
+          ELSE 0
+        END DESC
+      `, [
+        normalizedQuery,
+        `%${normalizedQuery}%`,
+        `%${normalizedQuery}%`,
+        `%${normalizedQuery}%`
+      ])
       .limit(WIKI.config.search.maxHits)
     return {
       results,
