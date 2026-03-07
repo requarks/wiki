@@ -214,10 +214,10 @@ export default {
       this.search = term
     },
     goToPage(item) {
-      window.location.assign(`/${item.locale}/${item.path}`)
+      window.location.assign(`/${item.locale}/${item.path}${item.anchor || ''}`)
     },
     goToPageInNewTab(item) {
-      window.open(`/${item.locale}/${item.path}`, '_blank')
+      window.open(`/${item.locale}/${item.path}${item.anchor || ''}`, '_blank')
     }
   },
   apollo: {

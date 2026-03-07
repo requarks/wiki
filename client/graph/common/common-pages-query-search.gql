@@ -6,6 +6,7 @@ query ($query: String!, $page: Int, $limit: Int) {
         title
         description
         snippet
+        anchor
         path
         locale
       }

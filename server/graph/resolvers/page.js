@@ -1,5 +1,8 @@
 const _ = require('lodash')
+const cheerio = require('cheerio')
 const graphHelper = require('../../helpers/graph')
+const he = require('he')
+const striptags = require('striptags')
 
 /* global WIKI */
 
@@ -34,6 +37,95 @@ function buildSnippetExcerpt(source = '', query = '', snippetLength = 160) {
 
 function buildSearchSnippet(source = '', query = '') {
   return buildSnippetExcerpt(source, query)
+}
+
+function normalizeSearchBlockText(value = '') {
+  return he.decode(striptags(value, [], ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function extractSearchSegments(rawHtml = '') {
+  if (!rawHtml) {
+    return []
+  }
+
+  const $ = cheerio.load(rawHtml)
+  const blocks = []
+  let currentAnchor = ''
+
+  $('h1,h2,h3,h4,h5,h6,p,li,td,th,blockquote,pre').each((idx, el) => {
+    const isHeader = /^h[1-6]$/i.test(el.name)
+    const anchor = isHeader
+      ? ($('.toc-anchor', el).first().attr('href') || ($(el).attr('id') ? `#${$(el).attr('id')}` : ''))
+      : currentAnchor
+    const textNode = isHeader ? $(el).clone().find('.toc-anchor').remove().end() : $(el)
+    const text = normalizeSearchBlockText(textNode.text())
+
+    if (!text) {
+      return
+    }
+
+    if (isHeader) {
+      currentAnchor = anchor
+    }
+
+    if (_.last(blocks)?.text === text && _.last(blocks)?.anchor === anchor) {
+      return
+    }
+
+    blocks.push({
+      text,
+      isHeader,
+      anchor
+    })
+  })
+
+  const segments = []
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i]
+    const nextBlock = blocks[i + 1]
+
+    if (block.isHeader && nextBlock && !nextBlock.isHeader) {
+      segments.push({
+        text: `${block.text}: ${nextBlock.text}`,
+        anchor: block.anchor
+      })
+      i++
+    } else {
+      segments.push({
+        text: block.text,
+        anchor: block.anchor
+      })
+    }
+  }
+
+  return segments
+}
+
+function buildSearchTarget(rawHtml = '', fallbackText = '', query = '') {
+  const segments = extractSearchSegments(rawHtml)
+  const terms = getSearchTerms(query)
+  const matchedSegment = _.find(segments, segment => {
+    if (_.isEmpty(terms)) {
+      return false
+    }
+
+    const normalizedText = segment.text.toLowerCase()
+    return _.some(terms, term => normalizedText.includes(term.toLowerCase()))
+  }) || _.first(segments)
+
+  if (matchedSegment) {
+    return {
+      snippet: buildSnippetExcerpt(matchedSegment.text, query),
+      anchor: matchedSegment.anchor || ''
+    }
+  }
+
+  return {
+    snippet: buildSearchSnippet(fallbackText, query),
+    anchor: ''
+  }
 }
 
 module.exports = {
@@ -111,19 +203,22 @@ module.exports = {
 
           pageContentByKey = _.fromPairs(pages.map(pageResult => ([
             `${pageResult.locale}:${pageResult.path}`,
-            WIKI.models.pages.buildSearchContent(pageResult.render) || pageResult.description || pageResult.title || ''
+            buildSearchTarget(pageResult.render, pageResult.description || pageResult.title || '', args.query)
           ])))
         }
 
         return {
           ...resp,
           results: pagedResults.map(r => {
+            const searchTarget = pageContentByKey[`${r.locale}:${r.path}`] || {
+              snippet: buildSearchSnippet(r.snippet || r.content || r.description || r.title || r.path || '', args.query),
+              anchor: ''
+            }
+
             return {
               ...r,
-              snippet: buildSearchSnippet(
-                pageContentByKey[`${r.locale}:${r.path}`] || r.snippet || r.content || r.description || r.title || r.path || '',
-                args.query
-              )
+              snippet: searchTarget.snippet,
+              anchor: searchTarget.anchor
             }
           }),
           totalHits: filteredResults.length

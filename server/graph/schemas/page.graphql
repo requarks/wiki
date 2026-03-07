@@ -267,6 +267,7 @@ type PageSearchResult {
   title: String!
   description: String!
   snippet: String!
+  anchor: String
   path: String!
   locale: String!
 }
