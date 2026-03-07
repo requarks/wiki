@@ -198,7 +198,7 @@ module.exports = {
             path: page.path,
             title: page.title,
             description: page.description,
-            content: page.safeContent
+            content: page.searchContent || page.safeContent
           }
         }
       ])
@@ -221,7 +221,7 @@ module.exports = {
             path: page.path,
             title: page.title,
             description: page.description,
-            content: page.safeContent
+            content: page.searchContent || page.safeContent
           }
         }
       ])
@@ -269,7 +269,7 @@ module.exports = {
             path: page.destinationPath,
             title: page.title,
             description: page.description,
-            content: page.safeContent
+            content: page.searchContent || page.safeContent
           }
         }
       ])
@@ -336,7 +336,7 @@ module.exports = {
               path: doc.path,
               title: doc.title,
               description: doc.description,
-              content: WIKI.models.pages.cleanHTML(doc.render)
+              content: WIKI.models.pages.buildSearchContent(doc.render)
             }
           })))
         }).promise()

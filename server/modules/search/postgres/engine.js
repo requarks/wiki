@@ -62,7 +62,7 @@ module.exports = {
     try {
       let suggestions = []
       let qry = `
-        SELECT id, path, locale, title, description
+        SELECT id, path, locale, title, description, content
         FROM "pagesVector", to_tsquery(?,?) query
         WHERE (query @@ "tokens" OR path ILIKE ?)
       `
@@ -106,10 +106,10 @@ module.exports = {
    */
   async created(page) {
     await WIKI.models.knex.raw(`
-      INSERT INTO "pagesVector" (path, locale, title, description, "tokens") VALUES (
-        ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
+      INSERT INTO "pagesVector" (path, locale, title, description, "tokens", content) VALUES (
+        ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?
       )
-    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent])
+    `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, page.safeContent, page.searchContent || page.safeContent])
   },
   /**
    * UPDATE
@@ -121,11 +121,12 @@ module.exports = {
       UPDATE "pagesVector" SET
         title = ?,
         description = ?,
+        content = ?,
         tokens = (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') ||
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') ||
         setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C'))
       WHERE path = ? AND locale = ?
-    `, [page.title, page.description, page.title, page.description, page.safeContent, page.path, page.localeCode])
+    `, [page.title, page.description, page.searchContent || page.safeContent, page.title, page.description, page.safeContent, page.path, page.localeCode])
   },
   /**
    * DELETE
@@ -169,11 +170,12 @@ module.exports = {
         objectMode: true,
         transform: async (page, enc, cb) => {
           const content = WIKI.models.pages.cleanHTML(page.render)
+          const searchContent = WIKI.models.pages.buildSearchContent(page.render)
           await WIKI.models.knex.raw(`
             INSERT INTO "pagesVector" (path, locale, title, description, "tokens", content) VALUES (
               ?, ?, ?, ?, (setweight(to_tsvector('${this.config.dictLanguage}', ?), 'A') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'B') || setweight(to_tsvector('${this.config.dictLanguage}', ?), 'C')), ?
             )
-          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, content])
+          `, [page.path, page.localeCode, page.title, page.description, page.title, page.description, content, searchContent || content])
           cb()
         }
       })

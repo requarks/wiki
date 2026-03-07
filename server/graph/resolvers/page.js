@@ -3,6 +3,39 @@ const graphHelper = require('../../helpers/graph')
 
 /* global WIKI */
 
+function getSearchTerms(query = '') {
+  return _.sortBy(_.uniq(query.split(/\s+/).reduce((acc, term) => {
+    acc.push(term, term.replace(/^[*+"'():|&!<>\-]+|[*+"'():|&!<>\-]+$/g, ''))
+    return acc
+  }, []).map(term => _.trim(term)).filter(term => term.length > 1)), term => -term.length)
+}
+
+function buildSnippetExcerpt(source = '', query = '', snippetLength = 160) {
+  const text = _.trim(source)
+  if (!text) {
+    return ''
+  }
+
+  const terms = getSearchTerms(query)
+  const normalizedText = text.toLowerCase()
+  const matchIndex = _.find(terms.map(term => normalizedText.indexOf(term.toLowerCase())), idx => idx >= 0) ?? -1
+  const start = matchIndex >= 0 ? Math.max(0, matchIndex - 48) : 0
+  let snippet = text.slice(start, start + snippetLength).trim()
+
+  if (start > 0) {
+    snippet = `...${snippet}`
+  }
+  if (start + snippetLength < text.length) {
+    snippet = `${snippet}...`
+  }
+
+  return snippet
+}
+
+function buildSearchSnippet(source = '', query = '') {
+  return buildSnippetExcerpt(source, query)
+}
+
 module.exports = {
   Query: {
     async pages() { return {} }
@@ -52,15 +85,23 @@ module.exports = {
     async search (obj, args, context) {
       if (WIKI.data.searchEngine) {
         const resp = await WIKI.data.searchEngine.query(args.query, args)
+        const filteredResults = _.filter(resp.results, r => {
+          return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+            path: r.path,
+            locale: r.locale,
+            tags: r.tags // Tags are needed since access permissions can be limited by page tags too
+          })
+        })
+
         return {
           ...resp,
-          results: _.filter(resp.results, r => {
-            return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
-              path: r.path,
-              locale: r.locale,
-              tags: r.tags // Tags are needed since access permissions can be limited by page tags too
-            })
-          })
+          results: filteredResults.map(r => {
+            return {
+              ...r,
+              snippet: buildSearchSnippet(r.snippet || r.content || r.description || r.title || r.path || '', args.query)
+            }
+          }),
+          totalHits: filteredResults.length
         }
       } else {
         return {

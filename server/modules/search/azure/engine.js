@@ -95,7 +95,7 @@ module.exports = {
         count: true,
         scoringProfile: 'fieldWeights',
         search: q,
-        select: 'id, locale, path, title, description',
+        select: 'id, locale, path, title, description, content',
         queryType: QueryType.simple,
         top: 50
       })
@@ -147,7 +147,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.safeContent
+        content: page.searchContent || page.safeContent
       }
     ])
   },
@@ -164,7 +164,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.safeContent
+        content: page.searchContent || page.safeContent
       }
     ])
   },
@@ -200,7 +200,7 @@ module.exports = {
         path: page.destinationPath,
         title: page.title,
         description: page.description,
-        content: page.safeContent
+        content: page.searchContent || page.safeContent
       }
     ])
   },
@@ -223,7 +223,7 @@ module.exports = {
             locale: chunk.locale,
             title: chunk.title,
             description: chunk.description,
-            content: WIKI.models.pages.cleanHTML(chunk.render)
+            content: WIKI.models.pages.buildSearchContent(chunk.render)
           })
         }
       }),

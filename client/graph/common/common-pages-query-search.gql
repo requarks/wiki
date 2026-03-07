@@ -5,6 +5,7 @@ query ($query: String!) {
         id
         title
         description
+        snippet
         path
         locale
       }

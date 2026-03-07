@@ -160,7 +160,7 @@ module.exports = {
           },
           from: 0,
           size: 50,
-          _source: ['title', 'description', 'path', 'locale'],
+          _source: ['title', 'description', 'path', 'locale', 'content'],
           suggest: {
             suggestions: {
               text: q,
@@ -180,7 +180,8 @@ module.exports = {
           locale: r._source.locale,
           path: r._source.path,
           title: r._source.title,
-          description: r._source.description
+          description: r._source.description,
+          content: r._source.content
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
         totalHits: _.get(results, this.config.apiVersion === '8.x' ? 'hits.total.value' : 'body.hits.total.value', _.get(results, this.config.apiVersion === '8.x' ? 'hits.total' : 'body.hits.total', 0))
@@ -236,7 +237,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.safeContent,
+        content: page.searchContent || page.safeContent,
         tags: await this.buildTags(page.id)
       },
       refresh: true
@@ -258,7 +259,7 @@ module.exports = {
         path: page.path,
         title: page.title,
         description: page.description,
-        content: page.safeContent,
+        content: page.searchContent || page.safeContent,
         tags: await this.buildTags(page.id)
       },
       refresh: true
@@ -299,7 +300,7 @@ module.exports = {
         path: page.destinationPath,
         title: page.title,
         description: page.description,
-        content: page.safeContent,
+        content: page.searchContent || page.safeContent,
         tags: await this.buildTags(page.id)
       },
       refresh: true
@@ -365,6 +366,7 @@ module.exports = {
               }
             })
             doc.safeContent = WIKI.models.pages.cleanHTML(doc.render)
+            doc.searchContent = WIKI.models.pages.buildSearchContent(doc.render)
             result.push({
               suggest: this.buildSuggest(doc),
               tags: doc.tags,
@@ -372,7 +374,7 @@ module.exports = {
               path: doc.path,
               title: doc.title,
               description: doc.description,
-              content: doc.safeContent
+              content: doc.searchContent || doc.safeContent
             })
             return result
           }, []),

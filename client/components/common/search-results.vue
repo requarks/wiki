@@ -16,15 +16,15 @@
         .subheading {{$t('common:header.searchNoResult')}}
       template(v-if='search && search.length >= 2 && results && results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
-        v-list.search-results-items.radius-7.py-0(two-line, dense)
+        v-list.search-results-items.radius-7.py-0(three-line, dense)
           template(v-for='(item, idx) of results')
             v-list-item(@click='goToPage(item)', @click.middle="goToPageInNewTab(item)", :key='item.id', :class='idx === cursor ? `highlighted` : ``')
               v-list-item-avatar(tile)
                 img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
-                v-list-item-title(v-text='item.title')
-                v-list-item-subtitle.caption(v-text='item.description')
-                .caption.grey--text(v-text='item.path')
+                v-list-item-title.search-results-title(v-html='highlightMatch(item.title)')
+                .search-results-snippet(v-html='formatSnippet(item.snippet || buildSnippet(item))')
+                .caption.grey--text.search-results-path(v-html='highlightMatch(item.path)')
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
@@ -83,6 +83,21 @@ export default {
     searchIsLoading: sync('site/searchIsLoading'),
     searchRestrictLocale: sync('site/searchRestrictLocale'),
     searchRestrictPath: sync('site/searchRestrictPath'),
+    searchTerms() {
+      if (!this.search) {
+        return []
+      }
+
+      const terms = this.search.split(/\s+/).reduce((acc, term) => {
+        acc.push(term, term.replace(/^[*+"'():|&!<>\-]+|[*+"'():|&!<>\-]+$/g, ''))
+        return acc
+      }, [])
+
+      return _.sortBy(_.uniq(terms
+        .map(term => _.trim(term))
+        .filter(term => term.length > 1)
+      ), term => -term.length)
+    },
     results() {
       const currentIndex = (this.pagination - 1) * this.perPage
       return this.response.results ? _.slice(this.response.results, currentIndex, currentIndex + this.perPage) : []
@@ -132,6 +147,69 @@ export default {
     })
   },
   methods: {
+    escapeHtml(value = '') {
+      return _.escape(value)
+    },
+    findFirstMatchIndex(value = '') {
+      const text = _.toString(value)
+      const normalizedText = text.toLowerCase()
+
+      for (const term of this.searchTerms) {
+        const idx = normalizedText.indexOf(term.toLowerCase())
+        if (idx >= 0) {
+          return idx
+        }
+      }
+
+      return -1
+    },
+    highlightMatch(value = '') {
+      const escapedValue = this.escapeHtml(value)
+
+      if (_.isEmpty(this.searchTerms)) {
+        return escapedValue
+      }
+
+      const pattern = this.searchTerms.map(term => _.escapeRegExp(term)).join('|')
+      if (!pattern) {
+        return escapedValue
+      }
+
+      return escapedValue.replace(new RegExp(`(${pattern})`, 'gi'), '<mark>$1</mark>')
+    },
+    formatSnippet(value = '') {
+      const highlightedValue = this.highlightMatch(value)
+
+      return highlightedValue.replace(/^(\.{3})?([^:|]{2,72}:)(\s+)/, (match, prefix = '', heading, spacing) => {
+        return `${prefix}<strong>${heading}</strong>${spacing}`
+      })
+    },
+    buildSnippet(item) {
+      const source = _.trim(item.description || item.title || item.path || '')
+
+      if (!source) {
+        return ''
+      }
+
+      const snippetLength = 120
+      const matchIndex = this.findFirstMatchIndex(source)
+      let start = 0
+
+      if (matchIndex >= 0) {
+        start = Math.max(0, matchIndex - 36)
+      }
+
+      let snippet = source.slice(start, start + snippetLength).trim()
+
+      if (start > 0) {
+        snippet = `...${snippet}`
+      }
+      if (start + snippetLength < source.length) {
+        snippet = `${snippet}...`
+      }
+
+      return snippet
+    },
     setSearchTerm(term) {
       this.search = term
     },
@@ -223,6 +301,16 @@ export default {
   &-items {
     text-align: left;
 
+    .v-list-item {
+      align-items: flex-start;
+    }
+
+    .v-list-item__content {
+      overflow: hidden;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
     .highlighted {
       background: #FFF linear-gradient(to bottom, #FFF, mc('orange', '100'));
 
@@ -230,6 +318,42 @@ export default {
         background: mc('grey', '900') linear-gradient(to bottom, mc('orange', '900'), darken(mc('orange', '900'), 15%));
       }
     }
+  }
+
+  &-title {
+    margin-bottom: 2px;
+  }
+
+  &-snippet {
+    display: block;
+    font-size: .8rem;
+    white-space: normal;
+    line-height: 1.05rem;
+    overflow-wrap: anywhere;
+    color: rgba(0, 0, 0, .72);
+    margin-bottom: 2px;
+  }
+
+  &-path {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  mark {
+    background-color: #ffd54f;
+    color: inherit;
+    border-radius: 3px;
+    padding: 0 2px;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .08);
+  }
+
+  .theme--dark & mark {
+    background-color: #ef6c00;
+    color: #fff;
+  }
+
+  .theme--dark &-snippet {
+    color: rgba(255, 255, 255, .72);
   }
 
   &-suggestions {

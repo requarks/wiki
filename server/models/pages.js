@@ -338,6 +338,7 @@ module.exports = class Page extends Model {
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
     page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    page.searchContent = WIKI.models.pages.buildSearchContent(pageContents.render)
     await WIKI.data.searchEngine.created(page)
 
     // -> Add to Storage
@@ -449,6 +450,7 @@ module.exports = class Page extends Model {
     // -> Update Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
     page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    page.searchContent = WIKI.models.pages.buildSearchContent(pageContents.render)
     await WIKI.data.searchEngine.updated(page)
 
     // -> Update on Storage
@@ -741,6 +743,7 @@ module.exports = class Page extends Model {
     // -> Rename in Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
     page.safeContent = WIKI.models.pages.cleanHTML(pageContents.render)
+    page.searchContent = WIKI.models.pages.buildSearchContent(pageContents.render)
     await WIKI.data.searchEngine.renamed({
       ...page,
       destinationPath: opts.destinationPath,
@@ -1158,6 +1161,55 @@ module.exports = class Page extends Model {
       .replace(/(\r\n|\n|\r)/gm, ' ')
       .replace(/\s\s+/g, ' ')
       .split(' ').filter(w => w.length > 1).join(' ').toLowerCase()
+  }
+
+  static buildSearchContent(rawHTML = '') {
+    const $ = cheerio.load(rawHTML || '', {
+      decodeEntities: true
+    })
+
+    $('.toc-anchor').remove()
+
+    const blocks = []
+    $('h1,h2,h3,h4,h5,h6,p,li,td,th,blockquote,pre').each((idx, el) => {
+      const text = he.decode(striptags($(el).text(), [], ' '))
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      if (!text) {
+        return
+      }
+
+      if (_.last(blocks)?.text === text) {
+        return
+      }
+
+      blocks.push({
+        text,
+        isHeader: /^h[1-6]$/i.test(el.name)
+      })
+    })
+
+    if (blocks.length < 1) {
+      return he.decode(striptags(rawHTML || '', [], ' '))
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
+    const segments = []
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      const nextBlock = blocks[i + 1]
+
+      if (block.isHeader && nextBlock && !nextBlock.isHeader) {
+        segments.push(`${block.text}: ${nextBlock.text}`)
+        i++
+      } else {
+        segments.push(block.text)
+      }
+    }
+
+    return segments.join(' | ')
   }
 
   /**
