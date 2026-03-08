@@ -1,0 +1,3 @@
+project_id  = "example-project"
+region      = "us-central1"
+environment = "dev"

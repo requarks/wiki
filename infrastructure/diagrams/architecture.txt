@@ -1,0 +1,23 @@
+                 Users
+                   |
+                   v
+            HTTPS Endpoint
+                   |
+                   v
+               Cloud Run
+             (Wiki.js App)
+                   |
+        -----------------------
+        |                     |
+        v                     v
+   Cloud SQL             Cloud Storage
+   PostgreSQL            Assets / files
+        |
+        v
+  Secret Manager
+ (DB credentials)
+
+Logs & Metrics
+   |
+   v
+Cloud Logging / Monitoring
