@@ -89,6 +89,8 @@
     "autoprefixer": "10.4.27",
     "browserlist": "latest",
     "npm-check-updates": "19.6.3",
+    "oxfmt": "0.36.0",
+    "oxlint": "1.51.0",
     "sass": "1.97.3",
     "vite-plugin-vue-devtools": "8.0.6"
   },

@@ -1,5 +1,3 @@
-import { replace } from 'lodash-es'
-
 const isoDurationReg = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/
 
 export default {
@@ -14,11 +12,7 @@ export default {
    * @returns Parse configuration value
    */
   parseConfigValue (cfg) {
-    return replace(
-      cfg,
-      /\$\(([A-Z0-9_]+)(?::(.+))?\)/g,
-      (fm, m, d) => { return process.env[m] || d }
-    )
+    return cfg.replaceAll(/\$\(([A-Z0-9_]+)(?::(.+))?\)/g, (fm, m, d) => { return process.env[m] || d })
   },
 
   isValidDurationString (val) {

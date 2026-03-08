@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "unicorn", "oxc"],
+  "env": {
+    "node": true
+  },
+  "globals": {
+    "WIKI": "readonly"
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": [
+    "node_modules/**",
+    "**/*.min.js",
+    "repo/**",
+    "data/**",
+    "logs/**",
+    "locales/**"
+  ]
+}

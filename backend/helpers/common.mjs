@@ -1,4 +1,5 @@
-import { isNil, isPlainObject, set, startCase, transform } from 'lodash-es'
+import { isNil, isPlainObject } from 'es-toolkit/predicate'
+import { startCase } from 'es-toolkit/string'
 import crypto from 'node:crypto'
 import mime from 'mime'
 import fs from 'node:fs'
@@ -80,14 +81,15 @@ export function getTypeDefaultValue (type) {
 }
 
 export function parseModuleProps (props) {
-  return transform(props, (result, value, key) => {
+  const result = {}
+  for (const [key, value] of Object.entries(props)) {
     let defaultValue = ''
     if (isPlainObject(value)) {
       defaultValue = !isNil(value.default) ? value.default : getTypeDefaultValue(value.type)
     } else {
       defaultValue = getTypeDefaultValue(value)
     }
-    set(result, key, {
+    result[key] = {
       default: defaultValue,
       type: (value.type || value).toLowerCase(),
       title: value.title || startCase(key),
@@ -99,9 +101,9 @@ export function parseModuleProps (props) {
       icon: value.icon || 'rename',
       order: value.order || 100,
       if: value.if ?? []
-    })
-    return result
-  }, {})
+    }
+  }
+  return result
 }
 
 export function getDictNameFromLocale (locale) {

@@ -1,17 +1,9 @@
 {
-  "eslint.enable": true,
-  "puglint.enable": true,
+  "eslint.enable": false,
   "editor.formatOnSave": false,
   "editor.tabSize": 2,
-  "eslint.validate": [
-    "javascript",
-    "vue"
-  ],
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
   "i18n-ally.localesPaths": [
-    "server/locales",
+    "backend/locales",
   ],
   "i18n-ally.pathMatcher": "{locale}.json",
   "i18n-ally.keystyle": "flat",

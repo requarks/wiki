@@ -171,6 +171,14 @@ CREATE TABLE "pages" (
 	"siteId" uuid NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "sessions" (
+	"id" varchar(255) PRIMARY KEY,
+	"userId" uuid,
+	"data" jsonb DEFAULT '{}' NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "settings" (
 	"key" varchar(255) PRIMARY KEY,
 	"value" jsonb DEFAULT '{}' NOT NULL
@@ -259,6 +267,7 @@ CREATE INDEX "pages_siteId_idx" ON "pages" ("siteId");--> statement-breakpoint
 CREATE INDEX "pages_ts_idx" ON "pages" USING gin ("ts");--> statement-breakpoint
 CREATE INDEX "pages_tags_idx" ON "pages" USING gin ("tags");--> statement-breakpoint
 CREATE INDEX "pages_isSearchableComputed_idx" ON "pages" ("isSearchableComputed");--> statement-breakpoint
+CREATE INDEX "sessions_userId_idx" ON "sessions" ("userId");--> statement-breakpoint
 CREATE INDEX "tags_siteId_idx" ON "tags" ("siteId");--> statement-breakpoint
 CREATE UNIQUE INDEX "tags_composite_idx" ON "tags" ("siteId","tag");--> statement-breakpoint
 CREATE INDEX "tree_folderpath_idx" ON "tree" ("folderPath");--> statement-breakpoint
@@ -284,6 +293,7 @@ ALTER TABLE "pages" ADD CONSTRAINT "pages_authorId_users_id_fkey" FOREIGN KEY ("
 ALTER TABLE "pages" ADD CONSTRAINT "pages_creatorId_users_id_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_ownerId_users_id_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "tags" ADD CONSTRAINT "tags_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "tree" ADD CONSTRAINT "tree_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "userGroups" ADD CONSTRAINT "userGroups_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint

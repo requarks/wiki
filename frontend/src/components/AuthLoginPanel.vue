@@ -595,44 +595,18 @@ async function login () {
     if (!isFormValid) {
       throw new Error(t('auth.errors.login'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation(
-          $username: String!
-          $password: String!
-          $strategyId: UUID!
-          $siteId: UUID!
-          ) {
-          login(
-            username: $username
-            password: $password
-            strategyId: $strategyId
-            siteId: $siteId
-            ) {
-            operation {
-              succeeded
-              message
-            }
-            jwt
-            nextAction
-            continuationToken
-            redirect
-            tfaQRImage
-          }
-        }
-      `,
-      variables: {
-        username: state.username,
-        password: state.password,
+    const resp = await API_CLIENT.post(`sites/${siteStore.id}/auth/login`, {
+      json: {
         strategyId: state.selectedStrategyId,
-        siteId: siteStore.id
+        username: state.username,
+        password: state.password
       }
-    })
-    if (resp.data?.login?.operation?.succeeded) {
+    }).json()
+    if (resp.operation?.succeeded) {
       state.password = ''
-      handleLoginResponse(resp.data.login)
+      handleLoginResponse(resp)
     } else {
-      throw new Error(resp.data?.login?.operation?.message || t('auth.errors.loginError'))
+      throw new Error(resp.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
     $q.loading.hide()
@@ -983,7 +957,7 @@ async function finishSetupTFA () {
 // MOUNTED
 
 onMounted(async () => {
-  // await fetchStrategies()
+  await fetchStrategies()
 })
 
 </script>

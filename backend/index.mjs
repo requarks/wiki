@@ -8,7 +8,6 @@ import path from 'node:path'
 import { DateTime } from 'luxon'
 import semver from 'semver'
 import { customAlphabet } from 'nanoid'
-import { padEnd } from 'lodash-es'
 
 import fastify from 'fastify'
 import fastifyCompress from '@fastify/compress'
@@ -80,7 +79,7 @@ WIKI.logger = logger.init()
 // ----------------------------------------
 
 WIKI.logger.info('=======================================')
-WIKI.logger.info(`= Wiki.js ${padEnd(WIKI.version + ' ', 29, '=')}`)
+WIKI.logger.info(`= Wiki.js ${(WIKI.version + ' ').padEnd(29, '=')}`)
 WIKI.logger.info('=======================================')
 WIKI.logger.info('Initializing...')
 WIKI.logger.info(`Running node.js ${process.version} [ OK ]`)
@@ -122,6 +121,8 @@ async function preBoot () {
 
 async function postBoot () {
   await WIKI.models.locales.refreshFromDisk()
+
+  await WIKI.models.authentication.refreshStrategiesFromDisk()
 
   await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
@@ -179,6 +180,9 @@ async function initHTTPServer () {
 
   WIKI.server.on(gracefulServer.SHUTDOWN, (err) => {
     WIKI.logger.info(`HTTP Server has exited: [ STOPPED ] (${err.message})`)
+    if (err.message !== 'SIGINT') {
+      WIKI.logger.warn(err)
+    }
   })
 
   // ----------------------------------------
@@ -237,12 +241,17 @@ async function initHTTPServer () {
   })
   app.register(fastifySession, {
     secret: WIKI.config.auth.secret,
+    cookieName: 'wikiSession',
+    cookie: {
+      httpOnly: true,
+      secure: 'auto'
+    },
     saveUninitialized: false,
     store: {
       get (sessionId, clb) {
 
       },
-      set (sessionId, clb) {
+      set (sessionId, sessionData, clb) {
 
       },
       destroy (sessionId, clb) {

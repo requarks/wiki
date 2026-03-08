@@ -1,4 +1,5 @@
-import { defaultsDeep, keyBy } from 'lodash-es'
+import { toMerged } from 'es-toolkit/object'
+import { keyBy } from 'es-toolkit/array'
 import { sites as sitesTable } from '../db/schema.mjs'
 import { eq } from 'drizzle-orm'
 
@@ -27,7 +28,7 @@ class Sites {
   async reloadCache () {
     WIKI.logger.info('Reloading site configurations...')
     const sites = await WIKI.db.select().from(sitesTable).orderBy(sitesTable.id)
-    WIKI.sites = keyBy(sites, 'id')
+    WIKI.sites = keyBy(sites, s => s.id)
     WIKI.sitesMappings = {}
     for (const site of sites) {
       WIKI.sitesMappings[site.hostname] = site.id
@@ -39,7 +40,7 @@ class Sites {
     const result = await WIKI.db.insert(sitesTable).values({
       hostname,
       isEnabled: true,
-      config: defaultsDeep(config, {
+      config: toMerged({
         title: 'My Wiki Site',
         description: '',
         company: '',
@@ -132,7 +133,7 @@ class Sites {
           conflictBehavior: 'overwrite',
           normalizeFilename: true
         }
-      })
+      }, config)
     }).returning({ id: sitesTable.id })
 
     const newSite = result[0]

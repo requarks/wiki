@@ -1,4 +1,3 @@
-import { find } from 'lodash-es'
 import { stat, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { DateTime } from 'luxon'
@@ -12,7 +11,7 @@ class Locales {
   async refreshFromDisk ({ force = false } = {}) {
     try {
       const localesMeta = (await import('../locales/metadata.mjs')).default
-      WIKI.logger.info(`Found ${localesMeta.languages.length} locales: [ OK ]`)
+      WIKI.logger.info(`Found ${localesMeta.languages.length} locales [ OK ]`)
 
       const dbLocales = await WIKI.db.select({
         code: localesTable.code,
@@ -32,7 +31,7 @@ class Locales {
         const langFilename = langFilenameParts.join('-')
 
         // -> Get DB version
-        const dbLang = find(dbLocales, ['code', langFilename])
+        const dbLang = dbLocales.find(l => l.code === langFilename)
 
         // -> Get File version
         const flPath = path.join(WIKI.SERVERPATH, `locales/${langFilename}.json`)

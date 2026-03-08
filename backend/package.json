@@ -53,10 +53,12 @@
     "@gquittet/graceful-server": "6.0.3",
     "ajv-formats": "3.0.1",
     "bcryptjs": "3.0.3",
+    "chalk": "5.6.2",
     "drizzle-orm": "1.0.0-beta.15-859cf75",
+    "es-toolkit": "1.45.1",
     "fastify": "5.7.1",
     "fastify-favicon": "5.0.0",
-    "lodash-es": "4.17.23",
+    "js-yaml": "4.1.1",
     "luxon": "3.7.2",
     "mime": "4.1.0",
     "nanoid": "5.1.6",
@@ -70,13 +72,10 @@
   },
   "devDependencies": {
     "drizzle-kit": "1.0.0-beta.15-859cf75",
-    "eslint": "9.39.2",
-    "eslint-plugin-import": "2.32.0",
-    "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-promise": "7.2.1",
-    "neostandard": "0.12.2",
     "nodemon": "3.1.11",
-    "npm-check-updates": "19.3.1"
+    "npm-check-updates": "19.3.1",
+    "oxfmt": "0.36.0",
+    "oxlint": "1.51.0"
   },
   "collective": {
     "type": "opencollective",

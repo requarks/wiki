@@ -71,6 +71,48 @@ class Users {
       }
     ])
   }
+
+  async login ({ siteId, strategyId, username, password, ip }) {
+    if (strategyId in WIKI.auth.strategies) {
+      const selStrategy = WIKI.auth.strategies[strategyId]
+      if (!selStrategy.isEnabled) {
+        throw new Error('Inactive Strategy ID')
+      }
+
+      const strInfo = WIKI.data.authentication.find(a => a.key === selStrategy.module)
+
+      // Inject form user/pass
+      if (strInfo.useForm) {
+        set(context.req, 'body.email', username)
+        set(context.req, 'body.password', password)
+        set(context.req.params, 'strategy', strategyId)
+      }
+
+      // Authenticate
+      return new Promise((resolve, reject) => {
+        WIKI.auth.passport.authenticate(selStrategy.id, {
+          session: !strInfo.useForm,
+          scope: strInfo.scopes ? strInfo.scopes : null
+        }, async (err, user, info) => {
+          if (err) { return reject(err) }
+          if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
+
+          try {
+            const resp = await WIKI.db.users.afterLoginChecks(user, selStrategy.id, context, {
+              siteId,
+              skipTFA: !strInfo.useForm,
+              skipChangePwd: !strInfo.useForm
+            })
+            resolve(resp)
+          } catch (err) {
+            reject(err)
+          }
+        })(context.req, context.res, () => {})
+      })
+    } else {
+      throw new Error('Invalid Strategy ID')
+    }
+  }
 }
 
 export const users = new Users()

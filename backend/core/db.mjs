@@ -1,4 +1,4 @@
-import { get, has, isEmpty, isPlainObject } from 'lodash-es'
+import { isPlainObject } from 'es-toolkit/predicate'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
@@ -32,7 +32,7 @@ export default {
 
     // Fetch DB Config
 
-    this.config = (!isEmpty(process.env.DATABASE_URL))
+    this.config = (process.env.DATABASE_URL)
       ? {
           connectionString: process.env.DATABASE_URL
         }
@@ -48,7 +48,7 @@ export default {
 
     let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
     let sslOptions = null
-    if (dbUseSSL && isPlainObject(this.config) && get(WIKI.config.db, 'sslOptions.auto', null) === false) {
+    if (dbUseSSL && isPlainObject(this.config) && WIKI.config.db?.sslOptions?.auto === false) {
       sslOptions = WIKI.config.db.sslOptions
       sslOptions.rejectUnauthorized = sslOptions.rejectUnauthorized !== false
       if (sslOptions.ca && sslOptions.ca.indexOf('-----') !== 0) {
@@ -68,7 +68,7 @@ export default {
     }
 
     // Handle inline SSL CA Certificate mode
-    if (!isEmpty(process.env.DB_SSL_CA)) {
+    if (process.env.DB_SSL_CA) {
       const chunks = []
       for (let i = 0, charsLength = process.env.DB_SSL_CA.length; i < charsLength; i += 64) {
         chunks.push(process.env.DB_SSL_CA.substring(i, i + 64))
@@ -146,7 +146,7 @@ export default {
     // -> Outbound events handling
 
     this.listener.addChannel('wiki', payload => {
-      if (has(payload, 'event') && payload.source !== WIKI.INSTANCE_ID) {
+      if (('event' in payload) && payload.source !== WIKI.INSTANCE_ID) {
         WIKI.logger.info(`Received event ${payload.event} from instance ${payload.source}: [ OK ]`)
         WIKI.events.inbound.emit(payload.event, payload.value)
       }

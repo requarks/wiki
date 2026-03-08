@@ -18,15 +18,14 @@
         "dbaeumer.vscode-eslint",
         "eamodio.gitlens",
         "Vue.volar",
+        "oxc.oxc-vscode",
         "oderwat.indent-rainbow",
         "redhat.vscode-yaml",
         "editorconfig.editorconfig",
         "lokalise.i18n-ally",
         "mrmlnc.vscode-duplicate",
         "mutantdino.resourcemonitor",
-        "wayou.vscode-todo-highlight",
-        "GraphQL.vscode-graphql",
-        "GitHub.copilot"
+        "wayou.vscode-todo-highlight"
       ]
     }
   },

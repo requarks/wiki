@@ -1,4 +1,5 @@
-import { defaultsDeep, get, isPlainObject } from 'lodash-es'
+import { toMerged } from 'es-toolkit/object'
+import { isPlainObject } from 'es-toolkit/predicate'
 import chalk from 'chalk'
 import cfgHelper from '../helpers/config.mjs'
 import fs from 'node:fs/promises'
@@ -47,7 +48,7 @@ export default {
 
     // Merge with defaults
 
-    appconfig = defaultsDeep(appconfig, appdata.defaults.config)
+    appconfig = toMerged(appdata.defaults.config, appconfig)
 
     // Override port
 
@@ -91,7 +92,7 @@ export default {
     WIKI.logger.info('Loading settings from DB...')
     const conf = await WIKI.models.settings.getConfig()
     if (conf) {
-      WIKI.config = defaultsDeep(conf, WIKI.config)
+      WIKI.config = toMerged(WIKI.config, conf)
       return true
     } else {
       return false
@@ -106,7 +107,7 @@ export default {
   async saveToDb (keys, propagate = true) {
     try {
       for (const key of keys) {
-        let value = get(WIKI.config, key, null)
+        let value = WIKI.config[key] ?? null
         if (!isPlainObject(value)) {
           value = { v: value }
         }

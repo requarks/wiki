@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import yaml from 'js-yaml'
+import { eq } from 'drizzle-orm'
 import { parseModuleProps } from '../helpers/common.mjs'
 import { authentication as authenticationTable } from '../db/schema.mjs'
 
@@ -9,11 +10,11 @@ import { authentication as authenticationTable } from '../db/schema.mjs'
  */
 class Authentication {
   async getStrategy (module) {
-    return WIKI.db.authentication.query().findOne({ module })
+    return WIKI.db.select().from(authenticationTable).where(eq(authenticationTable.module, module))
   }
 
   async getStrategies ({ enabledOnly = false } = {}) {
-    return WIKI.db.authentication.query().where(enabledOnly ? { isEnabled: true } : {})
+    return WIKI.db.select().from(authenticationTable).where(enabledOnly ? eq(authenticationTable.isEnabled, true) : undefined)
   }
 
   async refreshStrategiesFromDisk () {
@@ -28,12 +29,12 @@ class Authentication {
         defParsed.key = dir
         defParsed.props = parseModuleProps(defParsed.props)
         WIKI.data.authentication.push(defParsed)
-        WIKI.logger.debug(`Loaded authentication module definition ${dir}: [ OK ]`)
+        WIKI.logger.debug(`Loaded authentication module definition ${dir} [ OK ]`)
       }
 
-      WIKI.logger.info(`Loaded ${WIKI.data.authentication.length} authentication module definitions: [ OK ]`)
+      WIKI.logger.info(`Loaded ${WIKI.data.authentication.length} authentication module definitions [ OK ]`)
     } catch (err) {
-      WIKI.logger.error('Failed to scan or load authentication providers: [ FAILED ]')
+      WIKI.logger.error('Failed to scan or load authentication providers [ FAILED ]')
       WIKI.logger.error(err)
     }
   }

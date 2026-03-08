@@ -221,6 +221,17 @@ export const settings = pgTable('settings', {
   value: jsonb().notNull().default({})
 })
 
+// SESSIONS ----------------------------
+export const sessions = pgTable('sessions', {
+  id: varchar({ length: 255 }).primaryKey(),
+  userId: uuid().references(() => users.id),
+  data: jsonb().notNull().default({}),
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp().notNull().defaultNow(),
+}, (table) => [
+  index('sessions_userId_idx').on(table.userId)
+])
+
 // SITES -------------------------------
 export const sites = pgTable('sites', {
   id: uuid().primaryKey().defaultRandom(),

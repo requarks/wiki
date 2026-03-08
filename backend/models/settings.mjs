@@ -1,5 +1,4 @@
 import { settings as settingsTable } from '../db/schema.mjs'
-import { has, reduce, set } from 'lodash-es'
 import { pem2jwk } from 'pem-jwk'
 import crypto from 'node:crypto'
 
@@ -14,8 +13,8 @@ class Settings {
   async getConfig () {
     const settings = await WIKI.db.select().from(settingsTable)
     if (settings.length > 0) {
-      return reduce(settings, (res, val, key) => {
-        set(res, val.key, (has(val.value, 'v')) ? val.value.v : val.value)
+      return settings.reduce((res, val) => {
+        res[val.key] = ('v' in val.value) ? val.value.v : val.value
         return res
       }, {})
     } else {
