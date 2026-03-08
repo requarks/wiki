@@ -47,3 +47,11 @@ test-results/
 
 # Localization Resources
 /server/locales/**/*.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
