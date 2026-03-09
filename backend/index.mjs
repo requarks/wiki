@@ -49,6 +49,10 @@ const WIKI = {
   ROOTPATH: process.cwd(),
   INSTANCE_ID: nanoid(10),
   SERVERPATH: path.join(process.cwd(), 'backend'),
+  auth: {
+    groups: {},
+    strategies: {}
+  },
   configSvc,
   sites: {},
   sitesMappings: {},
@@ -88,7 +92,7 @@ WIKI.logger.info(`Running node.js ${process.version} [ OK ]`)
 // Pre-Boot Sequence
 // ----------------------------------------
 
-async function preBoot () {
+async function preBoot() {
   WIKI.dbManager = (await import('./core/db.mjs')).default
   WIKI.db = await dbManager.init()
   WIKI.models = (await import('./models/index.mjs')).default
@@ -119,11 +123,12 @@ async function preBoot () {
 // Post-Boot Sequence
 // ----------------------------------------
 
-async function postBoot () {
+async function postBoot() {
   await WIKI.models.locales.refreshFromDisk()
 
   await WIKI.models.authentication.refreshStrategiesFromDisk()
 
+  await WIKI.models.authentication.activateStrategies()
   await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
 }
@@ -132,7 +137,7 @@ async function postBoot () {
 // Init HTTP Server
 // ----------------------------------------
 
-async function initHTTPServer () {
+async function initHTTPServer() {
   // ----------------------------------------
   // Load core modules
   // ----------------------------------------
@@ -147,9 +152,7 @@ async function initHTTPServer () {
 
   const app = fastify({
     ajv: {
-      plugins: [
-        [ajvFormats, {}]
-      ]
+      plugins: [[ajvFormats, {}]]
     },
     bodyLimit: WIKI.config.bodyParserLimit || 5242880, // 5mb
     logger: {
@@ -232,7 +235,7 @@ async function initHTTPServer () {
   })
 
   // ----------------------------------------
-  // Passport Authentication
+  // Sessions
   // ----------------------------------------
 
   app.register(fastifyCookie, {
@@ -244,18 +247,31 @@ async function initHTTPServer () {
     cookieName: 'wikiSession',
     cookie: {
       httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       secure: 'auto'
     },
     saveUninitialized: false,
     store: {
-      get (sessionId, clb) {
-
+      async get(sessionId, clb) {
+        try {
+          clb(null, await WIKI.models.sessions.get(sessionId))
+        } catch (err) {
+          clb(err, null)
+        }
       },
-      set (sessionId, sessionData, clb) {
-
+      async set(sessionId, sessionData, clb) {
+        try {
+          clb(null, await WIKI.models.sessions.set(sessionId, sessionData))
+        } catch (err) {
+          clb(err, null)
+        }
       },
-      destroy (sessionId, clb) {
-
+      async destroy(sessionId, clb) {
+        try {
+          clb(null, await WIKI.models.sessions.destroy(sessionId))
+        } catch (err) {
+          clb(err, null)
+        }
       }
     }
   })
@@ -292,10 +308,7 @@ async function initHTTPServer () {
           }
         }
       },
-      security: [
-        { apiKeyAuth: [] },
-        { bearerAuth: [] }
-      ]
+      security: [{ apiKeyAuth: [] }, { bearerAuth: [] }]
     }
   })
   app.register(fastifySwaggerUi, {
@@ -309,18 +322,18 @@ async function initHTTPServer () {
   app.addHook('preHandler', (req, reply, done) => {
     if (req.routeOptions.config?.permissions?.length > 0) {
       // Unauthenticated / No Permissions
-      if (!req.user?.isAuthenticated || !(req.user.permissions?.length > 0)) {
+      if (!req.session?.authenticated || !(req.session?.permissions?.length > 0)) {
         return reply.unauthorized()
       }
       // Is Root Admin?
-      if (!req.user.permissions.includes('manage:system')) {
+      if (!req.session.permissions.includes('manage:system')) {
         // Check for at least 1 permission
-        const isAllowed = req.routeOptions.config.permissions.some(perms => {
+        const isAllowed = req.routeOptions.config.permissions.some((perms) => {
           // Check for all permissions
           if (Array.isArray(perms)) {
-            return perms.every(perm => req.user.permissions?.some(p => p === perm))
+            return perms.every((perm) => req.session.permissions?.some((p) => p === perm))
           } else {
-            return req.user.permissions?.some(p => p === perms)
+            return req.session.permissions?.some((p) => p === perms)
           }
         })
         // Forbidden

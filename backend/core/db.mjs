@@ -27,12 +27,12 @@ export default {
   /**
    * Initialize DB
    */
-  async init (workerMode = false) {
+  async init(workerMode = false) {
     WIKI.logger.info('Checking DB configuration...')
 
     // Fetch DB Config
 
-    this.config = (process.env.DATABASE_URL)
+    this.config = process.env.DATABASE_URL
       ? {
           connectionString: process.env.DATABASE_URL
         }
@@ -46,7 +46,11 @@ export default {
 
     // Handle SSL Options
 
-    let dbUseSSL = (WIKI.config.db.ssl === true || WIKI.config.db.ssl === 'true' || WIKI.config.db.ssl === 1 || WIKI.config.db.ssl === '1')
+    let dbUseSSL =
+      WIKI.config.db.ssl === true ||
+      WIKI.config.db.ssl === 'true' ||
+      WIKI.config.db.ssl === 1 ||
+      WIKI.config.db.ssl === '1'
     let sslOptions = null
     if (dbUseSSL && isPlainObject(this.config) && WIKI.config.db?.sslOptions?.auto === false) {
       sslOptions = WIKI.config.db.sslOptions
@@ -82,7 +86,7 @@ export default {
     }
 
     if (dbUseSSL && isPlainObject(this.config)) {
-      this.config.ssl = (sslOptions === true) ? { rejectUnauthorized: true } : sslOptions
+      this.config.ssl = sslOptions === true ? { rejectUnauthorized: true } : sslOptions
     }
 
     // Initialize Postgres Pool
@@ -90,11 +94,15 @@ export default {
     this.pool = new Pool({
       application_name: 'Wiki.js',
       ...this.config,
-      ...workerMode ? { min: 0, max: 1 } : WIKI.config.pool,
+      ...(workerMode ? { min: 0, max: 1 } : WIKI.config.pool),
       options: `-c search_path=${WIKI.config.db.schema}`
     })
 
-    const db = drizzle({ client: this.pool, relations })
+    const db = drizzle({
+      client: this.pool,
+      relations,
+      ...(WIKI.config.dev?.logQueries && { logger: true })
+    })
 
     // Connect
     await this.connect(db)
@@ -104,7 +112,9 @@ export default {
     const dbVersion = semver.coerce(resVersion.rows[0].server_version, { loose: true })
     this.VERSION = dbVersion.version
     if (dbVersion.major < 16) {
-      WIKI.logger.error(`Your PostgreSQL database version (${dbVersion.major}) is too old and unsupported by Wiki.js. Requires >= 16. Exiting...`)
+      WIKI.logger.error(
+        `Your PostgreSQL database version (${dbVersion.major}) is too old and unsupported by Wiki.js. Requires >= 16. Exiting...`
+      )
       process.exit(1)
     }
     WIKI.logger.info(`Using PostgreSQL v${dbVersion.version} [ OK ]`)
@@ -125,7 +135,7 @@ export default {
   /**
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
-  async subscribeToNotifications () {
+  async subscribeToNotifications() {
     let connSettings = this.knex.client.connectionSettings
     if (typeof connSettings === 'string') {
       const encodedName = encodeURIComponent(`Wiki.js - ${WIKI.INSTANCE_ID}:PSUB`)
@@ -138,15 +148,15 @@ export default {
       connSettings.application_name = `Wiki.js - ${WIKI.INSTANCE_ID}:PSUB`
     }
     this.listener = new PGPubSub(connSettings, {
-      log (ev) {
+      log(ev) {
         WIKI.logger.debug(ev)
       }
     })
 
     // -> Outbound events handling
 
-    this.listener.addChannel('wiki', payload => {
-      if (('event' in payload) && payload.source !== WIKI.INSTANCE_ID) {
+    this.listener.addChannel('wiki', (payload) => {
+      if ('event' in payload && payload.source !== WIKI.INSTANCE_ID) {
         WIKI.logger.info(`Received event ${payload.event} from instance ${payload.source}: [ OK ]`)
         WIKI.events.inbound.emit(payload.event, payload.value)
       }
@@ -164,7 +174,7 @@ export default {
   /**
    * Unsubscribe from database LISTEN / NOTIFY
    */
-  async unsubscribeToNotifications () {
+  async unsubscribeToNotifications() {
     if (this.listener) {
       WIKI.events.outbound.offAny(this.notifyViaDB)
       WIKI.events.inbound.removeAllListeners()
@@ -177,7 +187,7 @@ export default {
    * @param {string} event Event fired
    * @param {object} value Payload of the event
    */
-  notifyViaDB (event, value) {
+  notifyViaDB(event, value) {
     WIKI.db.listener.publish('wiki', {
       source: WIKI.INSTANCE_ID,
       event,
@@ -187,7 +197,7 @@ export default {
   /**
    * Attempt initial connection
    */
-  async connect (db) {
+  async connect(db) {
     try {
       WIKI.logger.info('Connecting to database...')
       await db.execute('SELECT 1 + 1;')
@@ -211,7 +221,7 @@ export default {
   /**
    * Migrate DB Schemas
    */
-  async syncSchemas (db) {
+  async syncSchemas(db) {
     WIKI.logger.info('Ensuring DB schema exists...')
     await db.execute(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schema}`)
     WIKI.logger.info('Ensuring DB migrations have been applied...')

@@ -556,7 +556,6 @@ async function handleLoginResponse (resp) {
       $q.loading.show({
         message: t('auth.loginSuccess')
       })
-      Cookies.set('jwt', resp.jwt, { expires: 365, path: '/', sameSite: 'Lax' })
       setTimeout(() => {
         const loginRedirect = Cookies.get('loginRedirect')
         if (loginRedirect === '/' && resp.redirect) {
@@ -595,20 +594,22 @@ async function login () {
     if (!isFormValid) {
       throw new Error(t('auth.errors.login'))
     }
-    const resp = await API_CLIENT.post(`sites/${siteStore.id}/auth/login`, {
+    const resp = await API_CLIENT.put(`sites/${siteStore.id}/auth/login`, {
       json: {
         strategyId: state.selectedStrategyId,
         username: state.username,
         password: state.password
-      }
+      },
+      throwHttpErrors: (statusNumber) => statusNumber > 400 // Don't throw for 400
     }).json()
-    if (resp.operation?.succeeded) {
+    if (resp.ok) {
       state.password = ''
       handleLoginResponse(resp)
     } else {
-      throw new Error(resp.operation?.message || t('auth.errors.loginError'))
+      throw new Error(resp.message || t('auth.errors.loginError'))
     }
   } catch (err) {
+    console.warn(err)
     $q.loading.hide()
     $q.notify({
       type: 'negative',
@@ -778,48 +779,23 @@ async function changePwd () {
     if (!isFormValid) {
       throw new Error(t('auth.errors.register'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation (
-          $continuationToken: String
-          $newPassword: String!
-          $strategyId: UUID!
-          $siteId: UUID!
-        ) {
-          changePassword (
-            continuationToken: $continuationToken
-            newPassword: $newPassword
-            strategyId: $strategyId
-            siteId: $siteId
-          ) {
-            operation {
-              succeeded
-              message
-            }
-            jwt
-            nextAction
-            continuationToken
-            redirect
-            tfaQRImage
-          }
-        }
-      `,
-      variables: {
-        continuationToken: state.continuationToken,
-        newPassword: state.newPassword,
+    const resp = await API_CLIENT.put(`sites/${siteStore.id}/auth/changePassword`, {
+      json: {
         strategyId: state.selectedStrategyId,
-        siteId: siteStore.id
-      }
-    })
-    if (resp.data?.changePassword?.operation?.succeeded) {
+        continuationToken: state.continuationToken,
+        newPassword: state.newPassword
+      },
+      throwHttpErrors: (statusNumber) => statusNumber > 400 // Don't throw for 400
+    }).json()
+    if (resp.ok) {
       state.password = ''
       $q.notify({
         type: 'positive',
         message: t('auth.changePwd.success')
       })
-      await handleLoginResponse(resp.data.changePassword)
+      await handleLoginResponse(resp)
     } else {
-      throw new Error(resp.data?.changePassword?.operation?.message || t('auth.errors.loginError'))
+      throw new Error(resp.message || t('auth.errors.loginError'))
     }
   } catch (err) {
     $q.notify({

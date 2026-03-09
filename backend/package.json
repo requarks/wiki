@@ -58,6 +58,7 @@
     "es-toolkit": "1.45.1",
     "fastify": "5.7.1",
     "fastify-favicon": "5.0.0",
+    "filesize": "11.0.13",
     "js-yaml": "4.1.1",
     "luxon": "3.7.2",
     "mime": "4.1.0",

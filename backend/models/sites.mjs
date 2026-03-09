@@ -7,14 +7,14 @@ import { eq } from 'drizzle-orm'
  * Sites model
  */
 class Sites {
-  async getSiteById ({ id, forceReload = false }) {
+  async getSiteById({ id, forceReload = false }) {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()
     }
     return WIKI.sites[id]
   }
 
-  async getSiteByHostname ({ hostname, forceReload = false }) {
+  async getSiteByHostname({ hostname, forceReload = false }) {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()
     }
@@ -25,10 +25,14 @@ class Sites {
     return null
   }
 
-  async reloadCache () {
+  async getAllSites() {
+    return WIKI.db.select().from(sitesTable).orderBy(sitesTable.hostname)
+  }
+
+  async reloadCache() {
     WIKI.logger.info('Reloading site configurations...')
     const sites = await WIKI.db.select().from(sitesTable).orderBy(sitesTable.id)
-    WIKI.sites = keyBy(sites, s => s.id)
+    WIKI.sites = keyBy(sites, (s) => s.id)
     WIKI.sitesMappings = {}
     for (const site of sites) {
       WIKI.sitesMappings[site.hostname] = site.id
@@ -36,105 +40,111 @@ class Sites {
     WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
   }
 
-  async createSite (hostname, config) {
-    const result = await WIKI.db.insert(sitesTable).values({
-      hostname,
-      isEnabled: true,
-      config: toMerged({
-        title: 'My Wiki Site',
-        description: '',
-        company: '',
-        contentLicense: '',
-        footerExtra: '',
-        pageExtensions: ['md', 'html', 'txt'],
-        pageCasing: true,
-        discoverable: false,
-        defaults: {
-          tocDepth: {
-            min: 1,
-            max: 2
-          }
-        },
-        features: {
-          browse: true,
-          ratings: false,
-          ratingsMode: 'off',
-          comments: false,
-          contributions: false,
-          profile: true,
-          search: true
-        },
-        logoUrl: '',
-        logoText: true,
-        sitemap: true,
-        robots: {
-          index: true,
-          follow: true
-        },
-        locales: {
-          primary: 'en',
-          active: ['en']
-        },
-        assets: {
-          logo: false,
-          logoExt: 'svg',
-          favicon: false,
-          faviconExt: 'svg',
-          loginBg: false
-        },
-        theme: {
-          dark: false,
-          codeBlocksTheme: 'github-dark',
-          colorPrimary: '#1976D2',
-          colorSecondary: '#02C39A',
-          colorAccent: '#FF9800',
-          colorHeader: '#000000',
-          colorSidebar: '#1976D2',
-          injectCSS: '',
-          injectHead: '',
-          injectBody: '',
-          contentWidth: 'full',
-          sidebarPosition: 'left',
-          tocPosition: 'right',
-          showSharingMenu: true,
-          showPrintBtn: true,
-          baseFont: 'roboto',
-          contentFont: 'roboto'
-        },
-        editors: {
-          asciidoc: {
-            isActive: true,
-            config: {}
-          },
-          markdown: {
-            isActive: true,
-            config: {
-              allowHTML: true,
-              kroki: false,
-              krokiServerUrl: 'https://kroki.io',
-              latexEngine: 'katex',
-              lineBreaks: true,
-              linkify: true,
-              multimdTable: true,
-              plantuml: false,
-              plantumlServerUrl: 'https://www.plantuml.com/plantuml/',
-              quotes: 'english',
-              tabWidth: 2,
-              typographer: false,
-              underline: true
+  async createSite(hostname, config) {
+    const result = await WIKI.db
+      .insert(sitesTable)
+      .values({
+        hostname,
+        isEnabled: true,
+        config: toMerged(
+          {
+            title: 'My Wiki Site',
+            description: '',
+            company: '',
+            contentLicense: '',
+            footerExtra: '',
+            pageExtensions: ['md', 'html', 'txt'],
+            pageCasing: true,
+            discoverable: false,
+            defaults: {
+              tocDepth: {
+                min: 1,
+                max: 2
+              }
+            },
+            features: {
+              browse: true,
+              ratings: false,
+              ratingsMode: 'off',
+              comments: false,
+              contributions: false,
+              profile: true,
+              search: true
+            },
+            logoUrl: '',
+            logoText: true,
+            sitemap: true,
+            robots: {
+              index: true,
+              follow: true
+            },
+            locales: {
+              primary: 'en',
+              active: ['en']
+            },
+            assets: {
+              logo: false,
+              logoExt: 'svg',
+              favicon: false,
+              faviconExt: 'svg',
+              loginBg: false
+            },
+            theme: {
+              dark: false,
+              codeBlocksTheme: 'github-dark',
+              colorPrimary: '#1976D2',
+              colorSecondary: '#02C39A',
+              colorAccent: '#FF9800',
+              colorHeader: '#000000',
+              colorSidebar: '#1976D2',
+              injectCSS: '',
+              injectHead: '',
+              injectBody: '',
+              contentWidth: 'full',
+              sidebarPosition: 'left',
+              tocPosition: 'right',
+              showSharingMenu: true,
+              showPrintBtn: true,
+              baseFont: 'roboto',
+              contentFont: 'roboto'
+            },
+            editors: {
+              asciidoc: {
+                isActive: true,
+                config: {}
+              },
+              markdown: {
+                isActive: true,
+                config: {
+                  allowHTML: true,
+                  kroki: false,
+                  krokiServerUrl: 'https://kroki.io',
+                  latexEngine: 'katex',
+                  lineBreaks: true,
+                  linkify: true,
+                  multimdTable: true,
+                  plantuml: false,
+                  plantumlServerUrl: 'https://www.plantuml.com/plantuml/',
+                  quotes: 'english',
+                  tabWidth: 2,
+                  typographer: false,
+                  underline: true
+                }
+              },
+              wysiwyg: {
+                isActive: true,
+                config: {}
+              }
+            },
+            uploads: {
+              conflictBehavior: 'overwrite',
+              normalizeFilename: true
             }
           },
-          wysiwyg: {
-            isActive: true,
-            config: {}
-          }
-        },
-        uploads: {
-          conflictBehavior: 'overwrite',
-          normalizeFilename: true
-        }
-      }, config)
-    }).returning({ id: sitesTable.id })
+          config
+        )
+      })
+      .returning({ id: sitesTable.id })
 
     const newSite = result[0]
 
@@ -168,21 +178,21 @@ class Sites {
     return newSite
   }
 
-  async updateSite (id, patch) {
+  async updateSite(id, patch) {
     return WIKI.db.sites.query().findById(id).patch(patch)
   }
 
-  async deleteSite (id) {
+  async deleteSite(id) {
     // await WIKI.db.storage.query().delete().where('siteId', id)
     const deletedResult = await WIKI.db.delete(sitesTable).where(eq(sitesTable.id, id))
     return Boolean(deletedResult.rowCount > 0)
   }
 
-  async countSites () {
+  async countSites() {
     return WIKI.db.$count(sitesTable)
   }
 
-  async init (ids) {
+  async init(ids) {
     WIKI.logger.info('Inserting default site...')
 
     await WIKI.db.insert(sitesTable).values({

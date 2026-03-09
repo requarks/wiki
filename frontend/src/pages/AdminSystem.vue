@@ -260,7 +260,7 @@ const platformLogo = computed(() => {
     case 'darwin':
       return 'apple-logo'
     case 'linux':
-      if (this.info.operatingSystem.indexOf('Ubuntu') >= 0) {
+      if (state.info.operatingSystem.indexOf('Ubuntu') >= 0) {
         return 'ubuntu'
       } else {
         return 'linux'
@@ -292,30 +292,7 @@ const clientViewport = computed(() => {
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getSystemInfo {
-        systemInfo {
-          configFile
-          cpuCores
-          currentVersion
-          dbHost
-          dbVersion
-          hostname
-          latestVersion
-          latestVersionReleaseDate
-          nodeVersion
-          operatingSystem
-          platform
-          ramTotal
-          upgradeCapable
-          workingDirectory
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.info = cloneDeep(resp?.data?.systemInfo)
+  state.info = await API_CLIENT.get('system/info').json()
   $q.loading.hide()
   state.loading--
 }

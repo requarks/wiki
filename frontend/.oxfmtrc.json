@@ -1,9 +1,0 @@
-{
-  "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "semi": false,
-  "singleQuote": true,
-  "trailingComma": "none",
-  "bracketSameLine": true,
-  "endOfLine": "lf",
-  "insertFinalNewline": true
-}

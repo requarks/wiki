@@ -3,8 +3,6 @@ import { defineStore } from 'pinia'
 import { clone, cloneDeep, sortBy } from 'lodash-es'
 import semverGte from 'semver/functions/gte'
 
-/* global APOLLO_CLIENT */
-
 export const useAdminStore = defineStore('admin', {
   state: () => ({
     currentSiteId: null,
@@ -23,80 +21,41 @@ export const useAdminStore = defineStore('admin', {
     overlay: null,
     overlayOpts: {},
     sites: [],
-    locales: [
-      { code: 'en', name: 'English' }
-    ]
+    locales: [{ code: 'en', name: 'English' }]
   }),
   getters: {
     isVersionLatest: (state) => {
-      if (!state.info.currentVersion || !state.info.latestVersion || state.info.currentVersion === 'n/a' || state.info.latestVersion === 'n/a') {
+      if (
+        !state.info.currentVersion ||
+        !state.info.latestVersion ||
+        state.info.currentVersion === 'n/a' ||
+        state.info.latestVersion === 'n/a'
+      ) {
         return false
       }
       return semverGte(state.info.currentVersion, state.info.latestVersion)
     }
   },
   actions: {
-    async fetchLocales () {
-      const resp = await APOLLO_CLIENT.query({
-        query: `
-          query getAdminLocales {
-            locales {
-              code
-              language
-              name
-              nativeName
-            }
-          }
-        `
-      })
-      this.locales = sortBy(cloneDeep(resp?.data?.locales ?? []), ['nativeName', 'name'])
+    async fetchLocales() {
+      const resp = await API_CLIENT.get('locales').json()
+      this.locales = sortBy(cloneDeep(resp ?? []), ['nativeName', 'name'])
     },
-    async fetchInfo () {
-      const resp = await APOLLO_CLIENT.query({
-        query: `
-          query getAdminInfo {
-            apiState
-            metricsState
-            systemInfo {
-              groupsTotal
-              tagsTotal
-              usersTotal
-              loginsPastDay
-              currentVersion
-              latestVersion
-              isMailConfigured
-              isSchedulerHealthy
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      this.info.groupsTotal = clone(resp?.data?.systemInfo?.groupsTotal ?? 0)
-      this.info.tagsTotal = clone(resp?.data?.systemInfo?.tagsTotal ?? 0)
-      this.info.usersTotal = clone(resp?.data?.systemInfo?.usersTotal ?? 0)
-      this.info.loginsPastDay = clone(resp?.data?.systemInfo?.loginsPastDay ?? 0)
-      this.info.currentVersion = clone(resp?.data?.systemInfo?.currentVersion ?? 'n/a')
-      this.info.latestVersion = clone(resp?.data?.systemInfo?.latestVersion ?? 'n/a')
-      this.info.isApiEnabled = clone(resp?.data?.apiState ?? false)
-      this.info.isMetricsEnabled = clone(resp?.data?.metricsState ?? false)
-      this.info.isMailConfigured = clone(resp?.data?.systemInfo?.isMailConfigured ?? false)
-      this.info.isSchedulerHealthy = clone(resp?.data?.systemInfo?.isSchedulerHealthy ?? false)
+    async fetchInfo() {
+      const resp = await API_CLIENT.get('system/info').json()
+      this.info.groupsTotal = clone(resp?.groupsTotal ?? 0)
+      this.info.tagsTotal = clone(resp?.tagsTotal ?? 0)
+      this.info.usersTotal = clone(resp?.usersTotal ?? 0)
+      this.info.loginsPastDay = clone(resp?.loginsPastDay ?? 0)
+      this.info.currentVersion = clone(resp?.currentVersion ?? 'n/a')
+      this.info.latestVersion = clone(resp?.latestVersion ?? 'n/a')
+      this.info.isApiEnabled = clone(resp?.apiState ?? false)
+      this.info.isMetricsEnabled = clone(resp?.metricsState ?? false)
+      this.info.isMailConfigured = clone(resp?.isMailConfigured ?? false)
+      this.info.isSchedulerHealthy = clone(resp?.isSchedulerHealthy ?? false)
     },
-    async fetchSites () {
-      const resp = await APOLLO_CLIENT.query({
-        query: `
-          query getSites {
-            sites {
-              id
-              hostname
-              isEnabled
-              title
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      this.sites = cloneDeep(resp?.data?.sites ?? [])
+    async fetchSites() {
+      this.sites = (await API_CLIENT.get('sites').json()) ?? []
       if (!this.currentSiteId) {
         this.currentSiteId = this.sites[0].id
       }

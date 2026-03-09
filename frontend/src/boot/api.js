@@ -2,7 +2,7 @@ import ky from 'ky'
 
 import { useUserStore } from '@/stores/user'
 
-export function initializeApi (store) {
+export function initializeApi(store) {
   const userStore = useUserStore(store)
 
   let refreshPromise = null
@@ -10,7 +10,7 @@ export function initializeApi (store) {
 
   const client = ky.create({
     prefixUrl: '/_api',
-    credentials: 'omit',
+    credentials: 'same-origin',
     hooks: {
       beforeRequest: [
         async (request) => {
@@ -24,7 +24,7 @@ export function initializeApi (store) {
           if (!userStore.isTokenValid({ minutes: 1 })) {
             if (!fetching) {
               refreshPromise = new Promise((resolve, reject) => {
-                (async () => {
+                ;(async () => {
                   fetching = true
                   try {
                     await userStore.refreshToken()

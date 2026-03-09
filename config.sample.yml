@@ -105,5 +105,7 @@ scheduler:
 # Settings when running in dev mode only
 
 dev:
+  dropSchema: false
+  logQueries: false
   port: 3001
   hmrClientPort: 3001

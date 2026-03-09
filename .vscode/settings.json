@@ -1,14 +1,14 @@
 {
   "eslint.enable": false,
-  "editor.formatOnSave": false,
   "editor.tabSize": 2,
-  "i18n-ally.localesPaths": [
-    "backend/locales",
-  ],
+  "i18n-ally.localesPaths": ["backend/locales"],
   "i18n-ally.pathMatcher": "{locale}.json",
   "i18n-ally.keystyle": "flat",
   "i18n-ally.sortKeys": true,
-  "i18n-ally.enabledFrameworks": [
-    "vue"
-  ]
+  "i18n-ally.enabledFrameworks": ["vue"],
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file"
+  }
 }

@@ -124,9 +124,9 @@ router.beforeEach(async (to, from) => {
   commonStore.routerLoading = true
 
   // -> Init Auth Token
-  if (userStore.token && !userStore.authenticated) {
-    userStore.loadToken()
-  }
+  // if (userStore.token && !userStore.authenticated) {
+  //   userStore.loadToken()
+  // }
 
   // -> System Flags
   if (!flagsStore.loaded) {
@@ -147,8 +147,8 @@ router.beforeEach(async (to, from) => {
   applyLocale(commonStore.desiredLocale)
 
   // -> User Profile
-  if (userStore.authenticated && !userStore.profileLoaded) {
-    console.info(`Refreshing user ${userStore.id} profile...`)
+  if (!userStore.profileLoaded) {
+    console.info(`Refreshing user profile...`)
     await userStore.refreshProfile()
   }
 
