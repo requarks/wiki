@@ -155,8 +155,9 @@ docker-build:
         # For main branch, check if this is a hotfix merge
         if [ "$CI_COMMIT_BRANCH" = "main" ]; then
           if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-            echo "Hotfix merge detected - will build image"
-            export ENVIRONMENT="prod"
+            echo "Hotfix merge detected - will build candidate image for staging"
+            export ENVIRONMENT="dev1"
+            export IMAGE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
           else
             echo "Regular main merge - skipping build (will promote dev-latest in deploy-to-staging)"
             exit 0
@@ -208,8 +209,9 @@ push-docker-image:
           # For main branch, check if this is a hotfix merge
           if [ "$CI_COMMIT_BRANCH" = "main" ]; then
             if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-              echo "Hotfix merge detected - will push image"
-              export ENVIRONMENT="prod"
+              echo "Hotfix merge detected - will push candidate image for staging"
+              export ENVIRONMENT="dev1"
+              export IMAGE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
             else
               echo "Regular main merge - skipping push (will promote dev-latest in deploy-to-staging)"
               exit 0
@@ -232,7 +234,13 @@ push-docker-image:
       - echo "Using IMAGE_TAG=$IMAGE_TAG"
       - export PANDOC="$PANDOC"
   script:
-     - "if [ -z '$VERSION' ]; then echo 'ERROR: VERSION is not set!'; exit 1; fi"
+     - 'if [ -z "$VERSION" ]; then echo "ERROR: VERSION is not set!"; exit 1; fi'
+     - |
+         source newimage.txt
+         if echo "$NEW_IMAGE" | grep -Eq ':[0-9]+\.[0-9]+\.[0-9]+$'; then
+           echo "ERROR: Blocking semver image push in CI build/push stage. Production version tags must be pushed only by manual deploy-to-production job."
+           exit 1
+         fi
      - "bash scripts/push_images.sh --no-cleanup"
      - |
          if [ "$ENVIRONMENT" = "dev2" ]; then
@@ -266,12 +274,12 @@ deploy-to-staging:
     - |
       # Check if this is a hotfix merge (check commit message)
       if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-        echo "Hotfix detected - using manually set version $VERSION"
-        echo "Tagging hotfix image as staging..."
+        echo "Hotfix detected - promoting hotfix candidate image to staging..."
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
-        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.4)
-        docker tag "$IMAGE:$VERSION" "$IMAGE:$STAGING_TAG"
+        HOTFIX_CANDIDATE_TAG="dev1-hotfix-$CI_COMMIT_SHORT_SHA"
+        docker pull "$IMAGE:$HOTFIX_CANDIDATE_TAG"
+        docker tag "$IMAGE:$HOTFIX_CANDIDATE_TAG" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
       else
         echo "Regular main merge - promoting dev-latest to staging..."
