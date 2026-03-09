@@ -732,10 +732,9 @@ export default {
       }
     },
     showMoreActivitiesBtn () {
-      // Only show "More..." button if we have exactly 5 pages (or multiples of 5) and more pages are available
-      return this.recentActivitiesDecoded &&
-             this.recentActivitiesDecoded.pages &&
-             this.recentActivitiesDecoded.pages.length >= 5 &&
+      // Only show "More..." button if we have a multiple of 5 pages and more pages are available
+      return this.recentActivitiesDecoded?.pages?.length > 0 &&
+             this.recentActivitiesDecoded.pages.length % 5 === 0 &&
              this.hasMorePages
     },
     tocPosition: get('site/tocPosition'),
@@ -857,6 +856,14 @@ export default {
       this.scrollStyle.bar.background = this.colors.surfaceDark.tertiaryNeutralLite
     } else {
       this.scrollStyle.bar.background = this.colors.surfaceLight.tertiaryNeutralLite
+    }
+
+    // -> Initialize hasMorePages from backend data
+    if (this.recentActivitiesDecoded?.hasMore !== undefined) {
+      this.hasMorePages = this.recentActivitiesDecoded.hasMore
+    } else {
+      // Fallback for backward compatibility
+      this.hasMorePages = false
     }
 
     // -> Load sidebar width from localStorage
@@ -1362,7 +1369,7 @@ export default {
               query {
                 listPages(
                   siteId: "${this.recentActivitiesDecoded.siteId}",
-                  limit: 5,
+                  limit: 6,
                   offset: ${currentOffset},
                   orderBy: UPDATED,
                   orderByDirection: DESC
@@ -1382,14 +1389,19 @@ export default {
         const result = await response.json()
         const newPages = result.data?.listPages || []
 
-        if (newPages.length > 0) {
-          this.recentActivitiesDecoded.pages.push(...newPages)
+        // Check if there are more pages by fetching limit+1
+        // If we got more than 5, there are more pages available
+        const hasMore = newPages.length > 5
+        
+        // Only add the first 5 pages to display
+        const pagesToAdd = newPages.slice(0, 5)
+        if (pagesToAdd.length > 0) {
+          this.recentActivitiesDecoded.pages.push(...pagesToAdd)
         }
 
-        // Hide "More..." button if we got less than 5 pages (meaning no more pages available)
-        if (newPages.length < 5) {
-          this.hasMorePages = false
-        }
+        // Use $nextTick to ensure the computed property sees the updated state
+        await this.$nextTick()
+        this.hasMorePages = hasMore
       } catch (err) {
         console.error('Failed to load more activities:', err)
       } finally {
