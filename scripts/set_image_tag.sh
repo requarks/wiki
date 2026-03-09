@@ -27,7 +27,7 @@ determine_environment() {
       ENVIRONMENT="dev1"
       ;;
   esac
-  if [[ "$CI_COMMIT_REF_NAME" =~ ^(hotfix|release)/(.+)$ ]]; then
+  if [[ "$CI_COMMIT_REF_NAME" =~ ^release/(.+)$ ]]; then
     ENVIRONMENT="prod"
   fi
 }
