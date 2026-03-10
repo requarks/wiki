@@ -284,6 +284,12 @@ deploy-to-staging:
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
         HOTFIX_CANDIDATE_TAG="dev1-hotfix-$CI_COMMIT_SHORT_SHA"
+        if ! docker manifest inspect "$IMAGE:$HOTFIX_CANDIDATE_TAG" > /dev/null 2>&1; then
+          echo "ERROR: Expected candidate image $IMAGE:$HOTFIX_CANDIDATE_TAG is missing."
+          echo "ERROR: For main changes that are not develop->main, promotion from dev-latest is forbidden."
+          echo "ERROR: Ensure docker-build and push-docker-image produced and pushed the candidate tag first."
+          exit 1
+        fi
         docker pull "$IMAGE:$HOTFIX_CANDIDATE_TAG"
         docker tag "$IMAGE:$HOTFIX_CANDIDATE_TAG" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
