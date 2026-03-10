@@ -7,22 +7,22 @@ variables:
     description: "Choose dev1 environment for custom branch deployment (only available for manual pipeline runs)"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
-  DEPLOY_USER: 'capwiki'
-  TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
+  # DEPLOY_USER: 'capwiki'
+  # TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
-  PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
+  # PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
-  DEV2_IMAGE_TAG: "dev2-${VERSION}"
-  STAGING_IMAGE_TAG: "latest-staging"
-  PRODUCTION_IMAGE_TAG: "${VERSION}"
-  STAGING_IMAGE: "${IMAGE}:latest-staging"
-  ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\/'
+  # DEV2_IMAGE_TAG: "dev2-${VERSION}"
+  # STAGING_IMAGE_TAG: "latest-staging"
+  # PRODUCTION_IMAGE_TAG: "${VERSION}"
+  # STAGING_IMAGE: "${IMAGE}:latest-staging"
+  # ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\/'
   GIT_DEPTH: "0"
 
 
   IMAGE_TAG:
     value: ""
-    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
+    description: "Optional custom suffix for dev1 image tags (manual web runs). For main candidate flow, tag is generated automatically."
 
   SONARQUBE:
     value: "true"
@@ -49,7 +49,7 @@ default:
      - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
-  - environment-set
+  # - environment-set
   - build
   - test
   - sonarqube
@@ -58,18 +58,18 @@ stages:
   - promote-prod-release-version # promote to production
 
 
-environment-set:
-  stage: environment-set
-  script:
-    - echo "environment used for this pipeline is ${ENVIRONMENT}"
-  # Run only on the following branches when there are commits (not just branch creation)
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
-      when: always
+# environment-set:
+#   stage: environment-set
+#   script:
+#     - echo "environment used for this pipeline is ${ENVIRONMENT}"
+#   # Run only on the following branches when there are commits (not just branch creation)
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+#       when: always
+#     - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
+#       when: never
+#     - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
+#       when: always
 
 
 build:
@@ -139,6 +139,8 @@ sonarqube-scan:
     - sonar-scanner
   # Run on feature branches only when there are commits
   rules:
+    - if: '$SONARQUBE == "false"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
@@ -177,10 +179,6 @@ docker-build:
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG" "$VERSION"
   script:
     - bash scripts/build_images.sh
-    - |
-      if [ -f newimage.txt ]; then
-        echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
-      fi
     - echo "VERSION=$VERSION" >> build.env
   artifacts:
     paths:
@@ -288,7 +286,7 @@ deploy-to-staging:
         echo "Main change not from develop->main - promoting candidate image to staging..."
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
-        HOTFIX_CANDIDATE_TAG="dev1-hotfix-$CI_COMMIT_SHORT_SHA"
+        HOTFIX_CANDIDATE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
         pull_ok="false"
         for attempt in 1 2 3 4 5 6; do
           echo "Checking candidate image availability (attempt $attempt/6): $IMAGE:$HOTFIX_CANDIDATE_TAG"
@@ -321,8 +319,8 @@ deploy-to-production:
       artifacts: true
       optional: true
   before_script:
-     - "if [ -f build.env ]; then source build.env; fi"
-     - "echo 'Using VERSION: $VERSION'"
+    - "if [ -f build.env ]; then source build.env; fi"
+    - 'echo "Using VERSION: $VERSION"'
   script:
     - |
       if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
