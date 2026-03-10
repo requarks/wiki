@@ -251,7 +251,12 @@ push-docker-image:
            docker push "$IMAGE:dev-latest"
            docker rmi "$IMAGE:dev-latest" || true
          fi
-     - "docker rmi \"$IMAGE:$IMAGE_TAG\" || true"
+     - |
+         if [ -n "$NEW_IMAGE" ]; then
+           docker rmi "$NEW_IMAGE" || true
+         else
+           docker rmi "$IMAGE:$IMAGE_TAG" || true
+         fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
       when: on_success
