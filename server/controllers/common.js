@@ -672,11 +672,12 @@ const renderPage = async (req, res, next) => {
       if ((pageArgs.path === 'home' || pageArgs.path === '') && site.show_recent_activities) {
         try {
           
+          // Fetch 6 pages to check if there are more than 5
           const recentPages = await pageResolver.Query.listPages(
             null,
             {
               siteId: site.id,
-              limit: 5,
+              limit: 6,
               orderBy: 'UPDATED',
               orderByDirection: 'DESC'
             },
@@ -685,8 +686,14 @@ const renderPage = async (req, res, next) => {
           )
 
           if (recentPages && recentPages.length > 0) {
+            // Check if there are more than 5 pages
+            const hasMore = recentPages.length > 5
+            
+            // Only send the first 5 pages to the client
+            const pagesToSend = recentPages.slice(0, 5)
+            
             recentActivities = {
-              pages: recentPages.map(p => ({
+              pages: pagesToSend.map(p => ({
                 id: p.id,
                 title: p.title,
                 path: p.path,
@@ -694,6 +701,7 @@ const renderPage = async (req, res, next) => {
                 updatedAt: p.updatedAt,
                 authorName: p.authorName || 'Unknown'
               })),
+              hasMore: hasMore,
               siteId: site.id,
               sitePath: site.path,
               useNamespacing: WIKI.config.lang.namespacing
