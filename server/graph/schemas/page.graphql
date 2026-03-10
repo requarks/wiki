@@ -300,6 +300,7 @@ type PageSearchResult {
   locale: String!
   # the siteId field must not be non-nullable even though the entries in the database are non-null...
   siteId: String
+  source: String
 }
 
 type PageListItem {
