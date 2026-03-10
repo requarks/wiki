@@ -79,4 +79,3 @@ echo "VERSION=$VERSION" >> build.env
 if [ "$ENVIRONMENT" = "dev2" ]; then
   echo "DEV_LATEST_TAG=$DEV_LATEST_TAG" >> build.env
 fi
-

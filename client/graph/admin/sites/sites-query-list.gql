@@ -6,5 +6,6 @@ query Sites($showAdminOnly: Boolean) {
         name
         showRecentActivities
         createdAt
+        pageCount
     }
 }

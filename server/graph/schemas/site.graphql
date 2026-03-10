@@ -93,6 +93,7 @@ type Site {
   name: String
   createdAt: Date
   showRecentActivities: Boolean
+  pageCount: Int
 }
 
 type SiteCreateResponse {
