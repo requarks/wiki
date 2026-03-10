@@ -9,13 +9,13 @@ exports.up = async function (knex) {
     const hasColumn = await trx.schema.hasColumn('sites', 'show_recent_activities')
     if (!hasColumn) {
       await knex.schema.alterTable('sites', (table) => {
-        table.boolean('show_recent_activities').defaultTo(false)
+        table.boolean('show_recent_activities').defaultTo(true)
       })
 
       // Safety: ensure any NULLs (if present) are set to false
       await trx.raw(`
         UPDATE sites
-        SET show_recent_activities = false
+        SET show_recent_activities = true
         WHERE show_recent_activities IS NULL
       `)
     }
