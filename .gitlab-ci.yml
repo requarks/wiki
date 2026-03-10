@@ -270,8 +270,8 @@ deploy-to-staging:
       artifacts: true
       optional: true
   before_script:
-     - "if [ -f build.env ]; then source build.env; fi"
-     - "echo 'Using VERSION: $VERSION'"
+    - "if [ -f build.env ]; then source build.env; fi"
+    - 'echo "Using VERSION: $VERSION"'
   script:
     - |
       # Only develop->main uses dev-latest promotion.
@@ -284,13 +284,21 @@ deploy-to-staging:
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
         HOTFIX_CANDIDATE_TAG="dev1-hotfix-$CI_COMMIT_SHORT_SHA"
-        if ! docker manifest inspect "$IMAGE:$HOTFIX_CANDIDATE_TAG" > /dev/null 2>&1; then
-          echo "ERROR: Expected candidate image $IMAGE:$HOTFIX_CANDIDATE_TAG is missing."
+        pull_ok="false"
+        for attempt in 1 2 3 4 5 6; do
+          echo "Checking candidate image availability (attempt $attempt/6): $IMAGE:$HOTFIX_CANDIDATE_TAG"
+          if docker pull "$IMAGE:$HOTFIX_CANDIDATE_TAG"; then
+            pull_ok="true"
+            break
+          fi
+          sleep 10
+        done
+        if [ "$pull_ok" != "true" ]; then
+          echo "ERROR: Expected candidate image $IMAGE:$HOTFIX_CANDIDATE_TAG could not be pulled after retries."
           echo "ERROR: For main changes that are not develop->main, promotion from dev-latest is forbidden."
           echo "ERROR: Ensure docker-build and push-docker-image produced and pushed the candidate tag first."
           exit 1
         fi
-        docker pull "$IMAGE:$HOTFIX_CANDIDATE_TAG"
         docker tag "$IMAGE:$HOTFIX_CANDIDATE_TAG" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
       fi
