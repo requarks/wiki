@@ -8,9 +8,15 @@ if [ -f build.env ]; then
     grep -E '^[A-Za-z_][A-Za-z0-9_]*=.*$' build.env > build.env.tmp && mv build.env.tmp build.env
     source build.env
 fi
+
+DOCKER_BUILD_FLAGS=""
+if [ "${FORCE_NO_CACHE:-false}" = "true" ]; then
+    DOCKER_BUILD_FLAGS="--no-cache"
+fi
+
 echo "Building Docker image for environment $ENVIRONMENT"
 NEW_IMAGE="$IMAGE:$IMAGE_TAG"
-docker build --no-cache \
+docker build $DOCKER_BUILD_FLAGS \
         --build-arg NODE_IMAGE="$NODE_IMAGE" \
         --build-arg VERSION="$VERSION" \
         --build-arg RELEASE_DATE="$(date +'%d.%m.%Y')" \
@@ -22,7 +28,7 @@ echo "NEW_IMAGE=$NEW_IMAGE" > newimage.txt
 if git diff --name-only HEAD~1 | grep -q '^dev/pandoc/'; then
     echo "Building Pandoc Docker image..."
     cd dev/pandoc
-    docker build --no-cache -f Dockerfile -t "$NEW_PANDOC_IMAGE" .
+    docker build $DOCKER_BUILD_FLAGS -f Dockerfile -t "$NEW_PANDOC_IMAGE" .
     cd ../..
     echo "NEW_PANDOC_IMAGE=$NEW_PANDOC_IMAGE" >> newimage.txt
 else
