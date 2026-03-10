@@ -152,15 +152,16 @@ docker-build:
     - df -h
     - export PANDOC="$PANDOC"
     - |
-        # For main branch, check if this is a hotfix merge
+        # For main branch, treat only develop->main as regular release.
+        # Any other main change (hotfix/task/cherrypick/direct) is handled as candidate build from main commit.
         if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-          if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-            echo "Hotfix merge detected - will build candidate image for staging"
+          if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
+            echo "Regular main merge from develop detected - skipping build (will promote dev-latest in deploy-to-staging)"
+            exit 0
+          else
+            echo "Main change not from develop->main - building candidate image from main commit for staging"
             export ENVIRONMENT="dev1"
             export IMAGE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
-          else
-            echo "Regular main merge - skipping build (will promote dev-latest in deploy-to-staging)"
-            exit 0
           fi
         elif [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
           # Manual trigger with dev1 - keep it
@@ -206,15 +207,16 @@ push-docker-image:
     optional: true
   before_script:
       - |
-          # For main branch, check if this is a hotfix merge
+          # For main branch, treat only develop->main as regular release.
+          # Any other main change (hotfix/task/cherrypick/direct) is handled as candidate push from main commit.
           if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-            if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-              echo "Hotfix merge detected - will push candidate image for staging"
+            if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
+              echo "Regular main merge from develop detected - skipping push (will promote dev-latest in deploy-to-staging)"
+              exit 0
+            else
+              echo "Main change not from develop->main - pushing candidate image for staging"
               export ENVIRONMENT="dev1"
               export IMAGE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
-            else
-              echo "Regular main merge - skipping push (will promote dev-latest in deploy-to-staging)"
-              exit 0
             fi
           elif [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
             # Manual trigger with dev1 - keep it
@@ -272,18 +274,25 @@ deploy-to-staging:
      - "echo 'Using VERSION: $VERSION'"
   script:
     - |
-      # Check if this is a hotfix merge (check commit message)
-      if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-        echo "Hotfix detected - promoting hotfix candidate image to staging..."
+      # Only develop->main uses dev-latest promotion.
+      # Any other main change promotes candidate image built from main commit.
+      if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
+        echo "Regular main merge - promoting dev-latest to staging..."
+        bash scripts/promote_to_staging.sh
+      else
+        echo "Main change not from develop->main - promoting candidate image to staging..."
         docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
         STAGING_TAG="latest-staging"
         HOTFIX_CANDIDATE_TAG="dev1-hotfix-$CI_COMMIT_SHORT_SHA"
+        if ! docker manifest inspect "$IMAGE:$HOTFIX_CANDIDATE_TAG" > /dev/null 2>&1; then
+          echo "ERROR: Expected candidate image $IMAGE:$HOTFIX_CANDIDATE_TAG is missing."
+          echo "ERROR: For main changes that are not develop->main, promotion from dev-latest is forbidden."
+          echo "ERROR: Ensure docker-build and push-docker-image produced and pushed the candidate tag first."
+          exit 1
+        fi
         docker pull "$IMAGE:$HOTFIX_CANDIDATE_TAG"
         docker tag "$IMAGE:$HOTFIX_CANDIDATE_TAG" "$IMAGE:$STAGING_TAG"
         docker push "$IMAGE:$STAGING_TAG"
-      else
-        echo "Regular main merge - promoting dev-latest to staging..."
-        bash scripts/promote_to_staging.sh
       fi
   environment:
     name: staging
@@ -303,11 +312,10 @@ deploy-to-production:
      - "echo 'Using VERSION: $VERSION'"
   script:
     - |
-      # Check if this is a hotfix merge
-      if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-        echo "Hotfix deployment detected - using manually set version $VERSION"
-      else
+      if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
         echo "Regular deployment - promoting staging to production with version $VERSION"
+      else
+        echo "Main change not from develop->main - manual production promotion with version $VERSION"
       fi
     - echo 'Promoting staging image to production...'
     - bash scripts/promote_to_prod.sh
