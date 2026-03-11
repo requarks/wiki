@@ -99,21 +99,10 @@ module.exports = {
           'author.name as authorName',
           'pages.siteId',
           'sites.name as siteName',
-          'sites.path as sitePath',
-          'historyCount.pageId as hasHistoryUpdates'
+          'sites.path as sitePath'
         ])
         .leftJoin('sites', 'pages.siteId', 'sites.id')
         .leftJoin('users as author', 'pages.authorId', 'author.id')
-        .leftJoin(
-          WIKI.models.knex('pageHistory')
-            .select('pageId')
-            .count('* as cnt')
-            .groupBy('pageId')
-            .having(WIKI.models.knex.raw('count(*) > 0'))
-            .as('historyCount'),
-          'pages.id',
-          'historyCount.pageId'
-        )
         .withGraphJoined('tags')
         .modifyGraph('tags', (builder) => {
           builder.select('tag')
@@ -196,8 +185,7 @@ module.exports = {
         )
       }).map((r) => ({
         ...r,
-        tags: _.map(r.tags, 'tag'),
-        isNewlyCreated: !r.hasHistoryUpdates
+        tags: _.map(r.tags, 'tag')
       }))
       if (args.tags && args.tags.length > 0) {
         results = _.filter(results, (r) =>

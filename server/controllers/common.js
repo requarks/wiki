@@ -688,7 +688,7 @@ const renderPage = async (req, res, next) => {
             // Check if there are more than 5 pages
             const hasMore = recentPages.length > 5
             
-            // Only send the first 5 pages to the client (isNewlyCreated already calculated in page.js resolver)
+            // Only send the first 5 pages to the client
             const pagesToSend = recentPages.slice(0, 5)
             
             recentActivities = {
@@ -699,8 +699,7 @@ const renderPage = async (req, res, next) => {
                 locale: p.locale,
                 createdAt: p.createdAt,
                 updatedAt: p.updatedAt,
-                authorName: p.authorName || 'Unknown',
-                isNewlyCreated: p.isNewlyCreated
+                authorName: p.authorName || 'Unknown'
               })),
               hasMore: hasMore,
               siteId: site.id,

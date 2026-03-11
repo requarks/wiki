@@ -1470,7 +1470,6 @@ export default {
                   createdAt
                   updatedAt
                   authorName
-                  isNewlyCreated
                 }
               }
             `,
@@ -1495,14 +1494,11 @@ export default {
         // Check if there are more pages by fetching limit+1
         // If we got more than 5, there are more pages available
         const hasMore = newPages.length > 5
-        
-        // Only add the first 5 pages to display (backend already set isNewlyCreated flag)
         const pagesToAdd = newPages.slice(0, 5)
         
         if (pagesToAdd.length > 0) {
           this.recentActivitiesDecoded.pages.push(...pagesToAdd)
         }
-
         // Use $nextTick to ensure the computed property sees the updated state
         await this.$nextTick()
         this.hasMorePages = hasMore
@@ -1522,12 +1518,12 @@ export default {
       }
     },
     isPageNewlyCreated(page) {
-      // Use the backend flag if available
-      if (page.hasOwnProperty('isNewlyCreated')) {
-        return page.isNewlyCreated
-      }
-      // Fallback: assume not newly created if flag is missing
-      return false
+      const createdMs = new Date(page.createdAt).getTime()
+      const updatedMs = new Date(page.updatedAt).getTime()
+      // Page is newly created if timestamps are within 3 seconds of each other
+      // This accounts for millisecond delays in database transactions and processing
+      const diffSeconds = Math.abs(updatedMs - createdMs) / 1000
+      return diffSeconds <= 3
     },
     goToComments (focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)
