@@ -43,11 +43,14 @@ module.exports = {
     if (!wordsExists) {
       WIKI.logger.info(`(SEARCH/POSTGRES) Creating Words Suggestion Index...`)
       await WIKI.models.knex.raw(`
-        CREATE TABLE "pagesWords" AS SELECT word, pages_vector_a."siteId" FROM  "pagesVector" AS pages_vector_a, LATERAL ts_stat(
-          ' SELECT (to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content")) as tsvector_word
-            FROM "pagesVector AS pages_vector_b"
-            WHERE pages_vector_b."siteId" = ' || quote_literal(pages_vector_a."siteId")
-            )
+        CREATE TABLE "pagesWords" AS
+        SELECT word, sites."siteId"
+        FROM (SELECT DISTINCT "siteId" FROM "pagesVector") AS sites,
+        LATERAL ts_stat(
+          'SELECT (to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content")) AS tsvector_word
+           FROM "pagesVector"
+           WHERE "siteId" = ' || quote_literal(sites."siteId")
+        )
         `)
       await WIKI.models.knex.raw(`CREATE INDEX "pageWords_idx" ON "pagesWords" USING GIN (word gin_trgm_ops)`)
     }
@@ -248,13 +251,13 @@ module.exports = {
 
     await WIKI.models.knex.raw(`
       INSERT INTO "pagesWords" (word, "siteId")
-            SELECT DISTINCT word, pages_vector_a."siteId"
-            FROM "pagesVector" AS pages_vector_a,
-            LATERAL ts_stat(
-              'SELECT (to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content")) as tsvector_word
-              FROM "pagesVector" AS pages_vector_b
-              WHERE pages_vector_b."siteId" = ' || quote_literal(pages_vector_a."siteId")
-            )
+      SELECT word, sites."siteId"
+      FROM (SELECT DISTINCT "siteId" FROM "pagesVector") AS sites,
+      LATERAL ts_stat(
+        'SELECT (to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content")) AS tsvector_word
+        FROM "pagesVector"
+        WHERE "siteId" = ' || quote_literal(sites."siteId")
+      )
       `)
 
     WIKI.logger.info(`(SEARCH/POSTGRES) Index rebuilt successfully.`)
