@@ -671,7 +671,6 @@ const renderPage = async (req, res, next) => {
       
       if ((pageArgs.path === 'home' || pageArgs.path === '') && site.show_recent_activities) {
         try {
-          
           // Fetch 6 pages to check if there are more than 5
           const recentPages = await pageResolver.Query.listPages(
             null,
@@ -689,7 +688,7 @@ const renderPage = async (req, res, next) => {
             // Check if there are more than 5 pages
             const hasMore = recentPages.length > 5
             
-            // Only send the first 5 pages to the client
+            // Only send the first 5 pages to the client (isNewlyCreated already calculated in page.js resolver)
             const pagesToSend = recentPages.slice(0, 5)
             
             recentActivities = {
@@ -698,8 +697,10 @@ const renderPage = async (req, res, next) => {
                 title: p.title,
                 path: p.path,
                 locale: p.locale,
+                createdAt: p.createdAt,
                 updatedAt: p.updatedAt,
-                authorName: p.authorName || 'Unknown'
+                authorName: p.authorName || 'Unknown',
+                isNewlyCreated: p.isNewlyCreated
               })),
               hasMore: hasMore,
               siteId: site.id,

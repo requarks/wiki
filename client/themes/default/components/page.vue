@@ -330,7 +330,10 @@
                     li(v-for='page in recentActivitiesDecoded.pages', :key='page.id', style='margin-bottom: 0.75rem; line-height: 1.6;')
                       a(:href='buildPageUrl(page)') {{ page.title }}
                       span.body-2(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-3`')
-                        | &nbsp;- {{$t('common:page.updated')}} {{ page.updatedAt | moment('calendar') }} {{$t('common:page.by')}}
+                        template(v-if='isPageNewlyCreated(page)')
+                          | &nbsp;- {{$t('common:page.created')}} {{ page.createdAt | moment('calendar') }} {{$t('common:page.by')}}
+                        template(v-else)
+                          | &nbsp;- {{$t('common:page.updated')}} {{ page.updatedAt | moment('calendar') }} {{$t('common:page.by')}}
                         span.cw-mention-details &nbsp;{{ page.authorName }}
                     li(v-if='showMoreActivitiesBtn', style='list-style: none; margin-top: 1rem;')
                       a(@click='loadMoreActivities', style='cursor: pointer; font-weight: 500; text-decoration: none;', href='#') {{ loadingMoreActivities ? $t('common:page.loading') : $t('common:page.loadMore') }}
@@ -1442,6 +1445,8 @@ export default {
       const currentOffset = this.recentActivitiesDecoded.pages.length
       
       try {
+        console.log('[loadMoreActivities] Fetching with offset:', currentOffset, 'siteId:', this.recentActivitiesDecoded.siteId)
+        
         const response = await fetch('/graphql', {
           method: 'POST',
           headers: {
@@ -1450,35 +1455,50 @@ export default {
           credentials: 'include',
           body: JSON.stringify({
             query: `
-              query {
+              query listPagesQuery($siteId: String, $limit: Int, $offset: Int) {
                 listPages(
-                  siteId: "${this.recentActivitiesDecoded.siteId}",
-                  limit: 6,
-                  offset: ${currentOffset},
-                  orderBy: UPDATED,
+                  siteId: $siteId
+                  limit: $limit
+                  offset: $offset
+                  orderBy: UPDATED
                   orderByDirection: DESC
                 ) {
                   id
                   title
                   path
                   locale
+                  createdAt
                   updatedAt
                   authorName
+                  isNewlyCreated
                 }
               }
-            `
+            `,
+            variables: {
+              siteId: this.recentActivitiesDecoded.siteId,
+              limit: 6,
+              offset: currentOffset
+            }
           })
         })
         
         const result = await response.json()
+        console.log('[loadMoreActivities] Response:', result)
+        
+        if (result.errors) {
+          console.error('[loadMoreActivities] GraphQL errors:', result.errors)
+          return
+        }
+        
         const newPages = result.data?.listPages || []
 
         // Check if there are more pages by fetching limit+1
         // If we got more than 5, there are more pages available
         const hasMore = newPages.length > 5
         
-        // Only add the first 5 pages to display
+        // Only add the first 5 pages to display (backend already set isNewlyCreated flag)
         const pagesToAdd = newPages.slice(0, 5)
+        
         if (pagesToAdd.length > 0) {
           this.recentActivitiesDecoded.pages.push(...pagesToAdd)
         }
@@ -1500,6 +1520,14 @@ export default {
       } else {
         this.navShown = false
       }
+    },
+    isPageNewlyCreated(page) {
+      // Use the backend flag if available
+      if (page.hasOwnProperty('isNewlyCreated')) {
+        return page.isNewlyCreated
+      }
+      // Fallback: assume not newly created if flag is missing
+      return false
     },
     goToComments (focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)

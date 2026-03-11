@@ -99,10 +99,20 @@ module.exports = {
           'author.name as authorName',
           'pages.siteId',
           'sites.name as siteName',
-          'sites.path as sitePath'
+          'sites.path as sitePath',
+          WIKI.models.knex.raw('COALESCE("historyCount"."count", 0) as "historyCount"')
         ])
         .leftJoin('sites', 'pages.siteId', 'sites.id')
         .leftJoin('users as author', 'pages.authorId', 'author.id')
+        .leftJoin(
+          WIKI.models.knex('pageHistory')
+            .select('pageId')
+            .count('* as count')
+            .groupBy('pageId')
+            .as('historyCount'),
+          'pages.id',
+          'historyCount.pageId'
+        )
         .withGraphJoined('tags')
         .modifyGraph('tags', (builder) => {
           builder.select('tag')
@@ -185,13 +195,15 @@ module.exports = {
         )
       }).map((r) => ({
         ...r,
-        tags: _.map(r.tags, 'tag')
+        tags: _.map(r.tags, 'tag'),
+        isNewlyCreated: parseInt(r.historyCount, 10) === 0
       }))
       if (args.tags && args.tags.length > 0) {
         results = _.filter(results, (r) =>
           _.every(args.tags, (t) => _.includes(r.tags, t))
         )
       }
+      
       return results
     },
     /**

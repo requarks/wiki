@@ -239,6 +239,7 @@ type Page {
   siteId: String!
   sitePath: String
   siteName: String
+  isNewlyCreated: Boolean
 }
 
 type PageTag {
@@ -321,6 +322,7 @@ type PageListItem {
   siteId: String
   siteName: String
   sitePath: String
+  isNewlyCreated: Boolean
 }
 
 type PageTreeItem {
