@@ -124,7 +124,7 @@ module.exports = {
 
     function initKnex(dbClient, dbConfig) {
       const clientPoolUsed = useClientDbPooling()
-      WIKI.logger.info(`[db] Client Connection pool ${clientPoolUsed ? 'ENABLED' : 'DISABLED'} (host: ${process.env.DB_HOST || process.env.DATABASE_URL || WIKI.config.db.host?.toString()})`)
+      WIKI.logger.info(`[db] Client Connection pool ${clientPoolUsed ? 'ENABLED' : 'DISABLED'} (host: ${process.env.DB_HOST || process.env.DATABASE_URL || WIKI.config.db.host?.toString()}) Pool size increased min:2 and max:10`)
       return Knex({
         client: dbClient,
         useNullAsDefault: true,
@@ -153,7 +153,7 @@ module.exports = {
             }
           }
         } : {
-          pool: { min: 0, max: 1 }
+          pool: { min: 2, max: 10 }
         }),
         debug: WIKI.IS_DEBUG
       })
