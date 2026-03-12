@@ -961,6 +961,12 @@
   //
   // NOTE: We scope this to the main content area to avoid impacting admin/data tables.
   .v-main .contents {
+
+    .img_fit_100percent {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
     >table {
       display: block;
       overflow-x: auto;
@@ -1194,6 +1200,7 @@
   }
 
   img {
+
     max-width: 100%;
     max-height: 100%;
 
