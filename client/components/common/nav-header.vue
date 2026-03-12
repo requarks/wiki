@@ -75,7 +75,7 @@
               v-list-item.pl-4(v-for='site in sites' :key='site.id', @click='goToSite(site.value)' style="white-space: nowrap; overflow: hidden; text-overflow: ellipses;" :id='site.value === sitePath ? `selected-site-item` : ``')
                 v-list-item-title.body-2 {{ site.text }}
 
-      v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
+      v-flex(:md4='mode !== `edit`', :md3='mode === `edit`', v-if='$vuetify.breakpoint.mdAndUp')
         v-toolbar.nav-header-inner(:color='colors.surfaceDark.primaryBlueLite', flat)
           slot(name='mid')
 
@@ -116,8 +116,8 @@
                   )
                   v-icon(color='grey') mdi-tag-multiple
               span {{$t('common:header.browseTags')}}
-      v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(:color='colors.surfaceDark.primaryBlueLite', flat)
+      v-flex(xs7, :md4='mode !== `edit`', :md5='mode === `edit`')
+        v-toolbar.nav-header-inner(:class='mode !== `edit` ? `pr-4` : ``', :color='colors.surfaceDark.primaryBlueLite', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -160,7 +160,7 @@
 
           //- Follow Site
 
-          template(v-if='isAuthenticated && path && !isFollowingSite')
+          template(v-if='isAuthenticated && path && !isFollowingSite && mode !== `edit`')
             v-tooltip(bottom)
               template( v-slot:activator='{ on }')
                 v-btn.hover-icon(
@@ -177,7 +177,7 @@
               span Follow Site
             v-divider(vertical)
 
-          template(v-if='isAuthenticated && path && isFollowingSite')
+          template(v-if='isAuthenticated && path && isFollowingSite && mode !== `edit`')
             v-tooltip(bottom)
               template(v-slot:activator='{ on }')
                 v-btn.hover-icon(
@@ -255,6 +255,11 @@
                     ) mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
+                v-list-item.pl-4(@click='pageShare')
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='getPageActionIconColor'
+                    ) mdi-share-variant-outline
+                  v-list-item-title.body-2 Share Page
                 v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(:color='trashCanColor') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
@@ -548,7 +553,8 @@ export default {
       },
       sites: [],
       menuIsOpen: false,
-      colors: colors
+      colors: colors,
+      tourStepsFiltered: [] // Will be populated when tour starts
     }
   },
   computed: {
@@ -633,6 +639,12 @@ export default {
         this.colors.surfaceLight.primaryBlueHeavy
     },
     tourSteps () {
+      // Return filtered steps if available, otherwise return empty to prevent errors
+      // Steps will be filtered when tour is actually started
+      if (this.tourStepsFiltered && this.tourStepsFiltered.length > 0) {
+        return this.tourStepsFiltered
+      }
+      // Return all steps initially (will be filtered before tour starts)
       return appTour.steps
     },
     tourCallbacks () {
@@ -833,6 +845,22 @@ export default {
         this.$store.commit('pushGraphError', err)
         this.$store.commit(`loadingStop`, 'page-move')
       }
+    },
+    pageShare () {
+      const pageUrl = window.location.href
+      navigator.clipboard.writeText(pageUrl).then(() => {
+        this.$store.commit('showNotification', {
+          style: 'green',
+          message: 'Page link copied to clipboard.',
+          icon: 'link'
+        })
+      }).catch(() => {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Failed to copy link.',
+          icon: 'alert'
+        })
+      })
     },
     async pageDelete () {
       // Check for subpages before allowing deletion
@@ -1040,6 +1068,19 @@ export default {
       this.$root.$emit('profile-exit')
     },
     startTour () {
+      // Filter steps based on current DOM before starting tour
+      this.tourStepsFiltered = appTour.getAvailableSteps()
+      
+      if (this.tourStepsFiltered.length === 0) {
+        this.$store.commit('showNotification', {
+          style: 'orange',
+          message: 'No tour steps available for your current permissions.',
+          icon: 'information'
+        })
+        return
+      }
+      
+      // Start tour with filtered steps
       this.$tourManager.startAppTour()
     }
   }

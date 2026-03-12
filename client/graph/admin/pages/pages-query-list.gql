@@ -12,6 +12,7 @@ query ($siteId: String) {
     createdAt
     updatedAt
     siteId
+    authorName
     siteName
     sitePath
   }

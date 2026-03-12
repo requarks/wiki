@@ -51,13 +51,41 @@ module.exports = {
         )
       })
 
+      // Build a map of page counts per site, filtered by user permissions
+      const pageCountMap = {}
+      for (const site of sites) {
+        pageCountMap[site.id] = 0
+      }
+
+      // If no sites accessible, return early
+      if (sites.length === 0) {
+        return []
+      }
+      const siteIds = sites.map(s => s.id)
+
+      const pages = await WIKI.models.pages.query().select('pages.id', 'pages.path', 'pages.siteId', {locale: 'pages.localeCode'}).whereIn('pages.siteId', siteIds)
+
+      // Count only pages user has read permission for
+      for (const page of pages) {
+        if (WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+          path: page.path,
+          locale: page.locale,
+          siteId: page.siteId
+          
+        })) {
+          pageCountMap[page.siteId]++
+        }
+      }
+
       return sites.map(s => ({
         ...s.config,
         id: s.id,
         name: s.name,
         path: s.path,
         isEnabled: s.isEnabled,
-        createdAt: s.createdAt
+        showRecentActivities: s.show_recent_activities,
+        createdAt: s.createdAt,
+        pageCount: pageCountMap[s.id]
       }))
     },
     async siteById(obj, args) {
@@ -67,7 +95,8 @@ module.exports = {
         id: site.id,
         name: site.name,
         path: site.path,
-        isEnabled: site.isEnabled
+        isEnabled: site.isEnabled,
+        showRecentActivities: site.show_recent_activities
       } : null
     },
     async siteByPath(obj, args) {
@@ -84,7 +113,8 @@ module.exports = {
         id: site.id,
         name: site.name,
         path: site.path,
-        isEnabled: site.isEnabled
+        isEnabled: site.isEnabled,
+        showRecentActivities: site.show_recent_activities
       } : null
     },
     async siteCount(obj, args, context) { // Count sites site manager has access to
@@ -137,7 +167,15 @@ module.exports = {
 
         return {
           responseResult: generateSuccess('Site created successfully'),
-          site: newSite
+          site: {
+            ...newSite.config,
+            id: newSite.id,
+            name: newSite.name,
+            path: newSite.path,
+            isEnabled: newSite.isEnabled,
+            showRecentActivities: newSite.show_recent_activities,
+            createdAt: newSite.createdAt
+          }
         }
       } catch (err) {
         WIKI.logger.warn(err)
@@ -161,7 +199,8 @@ module.exports = {
         // -> Update site
         await WIKI.models.sites.updateSite(args.id, {
           isEnabled: args.patch.isEnabled ?? site.isEnabled,
-          name: args.patch.name ?? site.name
+          name: args.patch.name ?? site.name,
+          show_recent_activities: _.has(args.patch, 'showRecentActivities') ? args.patch.showRecentActivities : site.show_recent_activities
         })
 
         return {

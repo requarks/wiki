@@ -35,6 +35,18 @@
                 v-btn(text, @click='newGroupDialog = false') Cancel
                 v-btn(color='primary', @click='createGroup') Create
         v-card.mt-3.animated.fadeInUp
+          .pa-2.d-flex.align-center(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
+            v-text-field(
+              solo
+              flat
+              v-model='search'
+              prepend-inner-icon='mdi-account-group'
+              label='Search Groups...'
+              hide-details
+              style='max-width: 400px;'
+              dense
+            )
+          v-divider
           v-data-table(
             :items='groups'
             :headers='headers'

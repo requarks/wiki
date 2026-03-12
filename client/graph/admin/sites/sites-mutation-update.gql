@@ -1,7 +1,7 @@
-mutation UpdateSite ($id: String!, $isEnabled: Boolean!, $name: String!) {
+mutation UpdateSite ($id: String!, $isEnabled: Boolean!, $name: String!, $showRecentActivities: Boolean) {
     updateSite(
         id: $id,
-        patch: { isEnabled: $isEnabled, name: $name}
+        patch: { isEnabled: $isEnabled, name: $name, showRecentActivities: $showRecentActivities }
     ) {
         responseResult {
             succeeded

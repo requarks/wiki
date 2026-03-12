@@ -19,10 +19,11 @@
       v-toolbar(color='primary', dark, flat, height='58')
         template(v-if='selection.length > 0')
           .overline.mr-3.animated.fadeInLeft {{$t('tags:currentSelection')}}
-          v-chip.mr-3.primary--text(
+          v-chip.mr-3(
             v-for='tag of tagsSelected'
             :key='`tagSelected-` + tag.tag'
-            color='white'
+            color='blue darken-3'
+            dark
             close
             @click:close='toggleTag(tag.tag)'
             ) {{tag.title}}
@@ -30,7 +31,7 @@
           v-btn.animated.fadeIn(
             small
             outlined
-            color='blue lighten-4'
+            color='white'
             rounded
             @click='selection = []'
             )

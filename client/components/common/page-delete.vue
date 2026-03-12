@@ -1,48 +1,52 @@
 <template lang='pug'>
   v-dialog(
     v-model='internalShown'
-    max-width='700'
+    max-width='550'
     persistent
-    :overlay-color='colors.white'
-    overlay-opacity='.7'
   )
-    v-card
-      .critical-bar
-      .dialog-header.is-short
+    v-card(v-if='internalShown')
+      .dialog-header.is-short(:style='`background-color: ${colors.red[450]} !important;`')
         v-icon.mr-2(color='white') mdi-file-document-box-remove-outline
-        span {{$t('common:page.delete')}}
-        v-icon.close-btn(
-          @click='discard',
-          :class="$vuetify.theme.dark ? 'white--text' : 'black--text'",
-          style="position: absolute; top: 16px; right: 16px; cursor: pointer;"
-        ) mdi-close
+        span(:style='`color: ${colors.textLight.inverse};`') {{$t('common:page.delete')}}
       v-card-text.pt-5
-        i18next.body-1(path='common:page.deleteTitle', tag='div')
-          span(place='title') {{pageTitle}}
-        .caption {{$t('common:page.deleteSubtitle')}}
-      v-card-actions.button-bar
+        i18next.body-2(path='common:page.deleteTitle', tag='div', :style='`color: ${$vuetify.theme.dark ? colors.textDark.primary : colors.textLight.primary};`')
+          span(:style='`color: ${$vuetify.theme.dark ? colors.textDark.secondary : colors.textLight.secondary};`', place='title') {{pageTitle}}
+        .caption.mt-3(:style='`color: ${$vuetify.theme.dark ? colors.textDark.tertiary : colors.textLight.tertiary};`') {{$t('common:page.deleteSubtitle')}}
+        template(v-if='hasChildren')
+          v-alert.mt-4(
+            type='error',
+            outlined,
+            dense
+          )
+            .body-2 {{ PAGE_DELETE_HAS_SUBPAGES_MSG }}
+      v-card-chin
         v-spacer
-        v-btn.cancel-btn(text, @click='discard', :disabled='loading')
-          span Cancel
+        v-btn.btn-rounded(
+          outlined
+          rounded
+          :color='$vuetify.theme.dark ? colors.surfaceDark.inverse : colors.surfaceLight.primarySapHeavy'
+          @click='discard'
+          :disabled='loading'
+          ) {{$t('common:actions.cancel')}}
         template(v-if='!hasChildren')
-          v-btn.delete-notify-btn.px-4(
-            @click='deletePage(true)',
+          v-btn.btn-rounded(
+            rounded
+            dark
+            :color='colors.red[300]'
+            @click='deletePage(true)'
             :loading='loading'
           )
-            span.delete-notify-icon
-              v-icon.red--text mdi-exclamation
-            span.red--text Delete & Notify
-          v-btn.px-4.delete-btn(
-            @click='deletePage(false)',
+            v-icon(left, color='white') mdi-bell-alert
+            span.text-none.text-uppercase(:style='`color: ${colors.textLight.inverse};`') {{$t('common:actions.deleteNotify')}}
+          v-btn.btn-rounded(
+            rounded
+            dark
+            :color='colors.red[450]'
+            @click='deletePage(false)'
             :loading='loading'
           )
-            span.delete-notify-icon-dark
-              v-icon.black--text mdi-exclamation
-            span.black--text {{$t('common:actions.delete')}}
-        template(v-else)
-          .body-2.red--text.text--darken-2(style='margin-top: 12px;')
-            v-icon(left, color='red') mdi-alert
-            | {{ PAGE_DELETE_HAS_SUBPAGES_MSG }}
+            v-icon(left, color='white') mdi-delete-forever
+            span.text-none.text-uppercase(:style='`color: ${colors.textLight.inverse};`') {{$t('common:actions.delete')}}
 </template>
 
 <script>

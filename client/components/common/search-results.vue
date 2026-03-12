@@ -16,15 +16,15 @@
         .subheading {{$t('common:header.searchNoResult')}}
       template(v-if='search && search.length >= 2 && results && results.length > 0')
         v-subheader.white--text {{$t('common:header.searchResultsCount', { total: response.totalHits })}}
-        v-list.search-results-items.radius-7.py-0(two-line, dense)
+        v-list.search-results-items.radius-7.py-0(two-line, dense, dark)
           template(v-for='(item, idx) of results')
-            v-list-item(@click='goToPage(item)', @click.middle="goToPageInNewTab(item)", :key='item.id', :class='idx === cursor ? `highlighted` : ``')
+            v-list-item(@click='goToPage(item)', @click.middle="goToPageInNewTab(item)", :key='item.id', :class='{ highlighted: idx === cursor, "first-result": idx === 0 }')
               v-list-item-avatar(tile)
                 img(src='/_assets/svg/icon-selective-highlighting.svg')
               v-list-item-content
                 v-list-item-title(v-text='item.title')
                 v-list-item-subtitle.caption(v-text='item.description')
-                .caption.grey--text(v-text='item.path')
+                .caption.blue-grey--text.text--lighten-3(v-text='item.path')
               v-list-item-action
                 .d-flex.align-center
                   v-chip.mr-2(v-if='item.source === "comment"', label, small, color='amber darken-2', dark)
@@ -53,7 +53,7 @@
         //- v-btn.mx-2(outlined, color='orange', @click='search = ``', v-if='results.length > 0')
         //-   v-icon(left) mdi-content-save
         //-   span {{$t('common:header.searchCopyLink')}}
-        v-btn.mx-2(outlined, color='pink', @click='search = ``')
+        v-btn.mx-2.btn-rounded(outlined, color='pink', @click='search = ``')
           v-icon(left) mdi-close
           span {{$t('common:header.searchClose')}}
 </template>
@@ -62,6 +62,7 @@
 import _ from 'lodash'
 import { sync, get } from 'vuex-pathify'
 import { OrbitSpinner } from 'epic-spinners'
+import colors from '@/themes/default/js/color-scheme'
 
 import searchPagesQuery from 'gql/common/common-pages-query-search.gql'
 
@@ -80,6 +81,7 @@ export default {
         totalHits: 0
       },
       sites: [],
+      colors
     }
   },
   computed: {
@@ -258,6 +260,16 @@ export default {
 
   &-items {
     text-align: left;
+    background-color: #272936 !important;
+
+    .first-result {
+      background-color: rgba(0, 112, 173, 0.12) !important;
+      border-left: 4px solid #0070ad;
+
+      .v-list-item__title {
+        font-weight: 600;
+      }
+    }
 
     .highlighted {
       background: mc('surface-light', 'secondary-sap-heavy');

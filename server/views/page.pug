@@ -34,6 +34,7 @@ block body
       site-path=site.path
       site-id=site.id
       site-name=site.name
+      recent-activities=(recentActivities ? Buffer.from(JSON.stringify(recentActivities)).toString('base64') : '')
       )
       template(slot='contents')
         div!= page.render

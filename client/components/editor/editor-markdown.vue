@@ -9,7 +9,7 @@
       )
       template(v-if='isModalShown')
         v-spacer
-        v-btn.animated.fadeInRight(text, @click='closeAllModal')
+        v-btn.animated.fadeInRight(outlined, @click='closeAllModal')
           v-icon(left) mdi-arrow-left-circle
           span {{$t('editor:backToEditor')}}
       template(v-else)
@@ -104,17 +104,6 @@
             v-btn.animated.fadeIn.wait-p11s(icon, tile, v-on='on', @click='insertAfter({ content: `---`, newLine: true })').mx-0
               v-icon mdi-minus
           span {{$t('editor:markup.horizontalBar')}}
-        v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy')
-          template(v-slot:activator='{ on }')
-            v-btn.animated.fadeIn.wait-p12s(
-              icon
-              tile
-              v-on='on'
-              @click='insertExternalLink'
-              aria-label='Insert external link'
-            ).mx-0
-              v-icon mdi-open-in-new
-          span Insert external link
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(bottom, :color='colors.surfaceDark.infoHeavy', v-if='previewShown')
