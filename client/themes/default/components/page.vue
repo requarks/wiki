@@ -297,6 +297,21 @@
                           :color='pageActionIconColor'
                           ) mdi-content-save-move-outline
                     span {{$t('common:header.move')}}
+                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl')
+                    template(v-slot:activator='{ on }')
+                      v-btn.border-btn.hover-btn(
+                        fab
+                        small
+                        :color='pageActionBgColor'
+                        :class='$vuetify.theme.dark ? `dark` : ``'
+                        v-on='on'
+                        @click='pageShare'
+                        )
+                        v-icon(
+                          size='20'
+                          :color='pageActionIconColor'
+                          ) mdi-share-variant-outline
+                    span {{messages.sharePage}}
                   v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
                     template(v-slot:activator='{ on }')
                       v-btn.border-btn.hover-btn.delete-btn(
@@ -1369,6 +1384,22 @@ export default {
     },
     pageDelete () {
       this.$root.$emit('pageDelete')
+    },
+    pageShare () {
+      const pageUrl = window.location.href
+      navigator.clipboard.writeText(pageUrl).then(() => {
+        this.$store.commit('showNotification', {
+          style: 'green',
+          message: 'Page link copied to clipboard.',
+          icon: 'link'
+        })
+      }).catch(() => {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Failed to copy link.',
+          icon: 'alert'
+        })
+      })
     },
     openImageOverlay(src, alt = '') {
       this.imageOverlaySrc = src

@@ -255,6 +255,11 @@
                     ) mdi-content-save-move-outline
                   v-list-item-content
                     v-list-item-title.body-2 {{$t('common:header.move')}}
+                v-list-item.pl-4(@click='pageShare')
+                  v-list-item-avatar(size='24', tile): v-icon(
+                    :color='getPageActionIconColor'
+                    ) mdi-share-variant-outline
+                  v-list-item-title.body-2 Share Page
                 v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
                   v-list-item-avatar(size='24', tile): v-icon(:color='trashCanColor') mdi-trash-can-outline
                   v-list-item-title.body-2 {{$t('common:header.delete')}}
@@ -840,6 +845,22 @@ export default {
         this.$store.commit('pushGraphError', err)
         this.$store.commit(`loadingStop`, 'page-move')
       }
+    },
+    pageShare () {
+      const pageUrl = window.location.href
+      navigator.clipboard.writeText(pageUrl).then(() => {
+        this.$store.commit('showNotification', {
+          style: 'green',
+          message: 'Page link copied to clipboard.',
+          icon: 'link'
+        })
+      }).catch(() => {
+        this.$store.commit('showNotification', {
+          style: 'red',
+          message: 'Failed to copy link.',
+          icon: 'alert'
+        })
+      })
     },
     async pageDelete () {
       // Check for subpages before allowing deletion
