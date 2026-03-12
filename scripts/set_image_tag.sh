@@ -27,7 +27,7 @@ determine_environment() {
       ENVIRONMENT="dev1"
       ;;
   esac
-  if [[ "$CI_COMMIT_REF_NAME" =~ ^(hotfix|release)/(.+)$ ]]; then
+  if [[ "$CI_COMMIT_REF_NAME" =~ ^release/(.+)$ ]]; then
     ENVIRONMENT="prod"
   fi
 }
@@ -47,7 +47,11 @@ fi
 # Set image tag by environment logic
 case "$ENVIRONMENT" in
   dev1)
-    IMAGE_TAG_BY_ENV="dev1-${IMAGE_TAG}"
+    if [[ "$IMAGE_TAG" =~ ^hotfix- ]]; then
+      IMAGE_TAG_BY_ENV="$IMAGE_TAG"
+    else
+      IMAGE_TAG_BY_ENV="dev1-${IMAGE_TAG}"
+    fi
     ;;
   dev2)
     IMAGE_TAG_BY_ENV="dev2-${IMAGE_TAG}"
@@ -79,3 +83,4 @@ echo "VERSION=$VERSION" >> build.env
 if [ "$ENVIRONMENT" = "dev2" ]; then
   echo "DEV_LATEST_TAG=$DEV_LATEST_TAG" >> build.env
 fi
+

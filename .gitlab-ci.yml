@@ -7,22 +7,22 @@ variables:
     description: "Choose dev1 environment for custom branch deployment (only available for manual pipeline runs)"
   APP_NAME: 'capwiki'
   DOCKER_REGISTRY: 'docker-registry-pt-support-shared.pl.s2-eu.capgemini.com'
-  DEPLOY_USER: 'capwiki'
-  TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
+  # DEPLOY_USER: 'capwiki'
+  # TARGET_DIR: "/home/${DEPLOY_USER}/${PROJECT_NAME}"
   IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/${APP_NAME}'
-  PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
+  # PANDOC_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/pandoc'
   NODE_IMAGE: '${DOCKER_REGISTRY}/${PROJECT_NAME}/node:20-alpine'
-  DEV2_IMAGE_TAG: "dev2-${VERSION}"
-  STAGING_IMAGE_TAG: "latest-staging"
-  PRODUCTION_IMAGE_TAG: "${VERSION}"
-  STAGING_IMAGE: "${IMAGE}:latest-staging"
-  ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\/'
+  # DEV2_IMAGE_TAG: "dev2-${VERSION}"
+  # STAGING_IMAGE_TAG: "latest-staging"
+  # PRODUCTION_IMAGE_TAG: "${VERSION}"
+  # STAGING_IMAGE: "${IMAGE}:latest-staging"
+  # ALLOWED_BRANCH_PREFIXES: '/^(feature|task|hotfix|improvement|bugfix|docs)\/'
   GIT_DEPTH: "0"
 
 
   IMAGE_TAG:
     value: ""
-    description: "Specify the image tag for dev, use MAR-<Jira-ticket-nr> for staging (ignore i.e has default value latest-staging), for prod, use tags ex. 1.0.0 etc"
+    description: "Optional custom suffix for dev1 image tags (manual web runs). For main candidate flow, tag is generated automatically."
 
   SONARQUBE:
     value: "true"
@@ -39,7 +39,7 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-    value: "1.9.3"
+    value: "1.9.4" # hotfix release
     description: "Release version (e.g., 1.9.3, 1.9.4). Always increment by one for any new release, including hotfixes. Developer must update manually before merging to main."
 
 default:
@@ -49,7 +49,7 @@ default:
      - apt-get update && apt-get install -y nodejs npm
      - source scripts/setup_yarn.sh
 stages:
-  - environment-set
+  # - environment-set
   - build
   - test
   - sonarqube
@@ -58,18 +58,18 @@ stages:
   - promote-prod-release-version # promote to production
 
 
-environment-set:
-  stage: environment-set
-  script:
-    - echo "environment used for this pipeline is ${ENVIRONMENT}"
-  # Run only on the following branches when there are commits (not just branch creation)
-  rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
-      when: always
-    - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
-      when: always
+# environment-set:
+#   stage: environment-set
+#   script:
+#     - echo "environment used for this pipeline is ${ENVIRONMENT}"
+#   # Run only on the following branches when there are commits (not just branch creation)
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
+#       when: always
+#     - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
+#       when: never
+#     - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
+#       when: always
 
 
 build:
@@ -139,6 +139,8 @@ sonarqube-scan:
     - sonar-scanner
   # Run on feature branches only when there are commits
   rules:
+    - if: '$SONARQUBE == "false"'
+      when: never
     - if: '$CI_COMMIT_BRANCH =~ /^(feature|task|improvement|docs)\// && $CI_PIPELINE_SOURCE == "push"'
       when: always
     - if: '$CI_COMMIT_BRANCH =~ /^(hotfix|bugfix)\// && $CI_PIPELINE_SOURCE == "push"'
@@ -152,14 +154,16 @@ docker-build:
     - df -h
     - export PANDOC="$PANDOC"
     - |
-        # For main branch, check if this is a hotfix merge
+        # For main branch, treat only develop->main as regular release.
+        # Any other main change (hotfix/task/cherrypick/direct) is handled as candidate build from main commit.
         if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-          if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-            echo "Hotfix merge detected - will build image"
-            export ENVIRONMENT="prod"
-          else
-            echo "Regular main merge - skipping build (will promote dev-latest in deploy-to-staging)"
+          if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
+            echo "Regular main merge from develop detected - skipping build (will promote dev-latest in deploy-to-staging)"
             exit 0
+          else
+            echo "Main change not from develop->main - building candidate image from main commit for staging"
+            export ENVIRONMENT="dev1"
+            export IMAGE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
           fi
         elif [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
           # Manual trigger with dev1 - keep it
@@ -175,10 +179,6 @@ docker-build:
     - bash scripts/set_image_tag.sh "$ENVIRONMENT" "$IMAGE_TAG" "$VERSION"
   script:
     - bash scripts/build_images.sh
-    - |
-      if [ -f newimage.txt ]; then
-        echo "BUILT_IMAGE_TAG=$(cat newimage.txt | grep -o 'dev2-[^[:space:]]*' | head -1 | sed 's/.*://')" >> build.env
-      fi
     - echo "VERSION=$VERSION" >> build.env
   artifacts:
     paths:
@@ -205,14 +205,16 @@ push-docker-image:
     optional: true
   before_script:
       - |
-          # For main branch, check if this is a hotfix merge
+          # For main branch, treat only develop->main as regular release.
+          # Any other main change (hotfix/task/cherrypick/direct) is handled as candidate push from main commit.
           if [ "$CI_COMMIT_BRANCH" = "main" ]; then
-            if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-              echo "Hotfix merge detected - will push image"
-              export ENVIRONMENT="prod"
-            else
-              echo "Regular main merge - skipping push (will promote dev-latest in deploy-to-staging)"
+            if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
+              echo "Regular main merge from develop detected - skipping push (will promote dev-latest in deploy-to-staging)"
               exit 0
+            else
+              echo "Main change not from develop->main - pushing candidate image for staging"
+              export ENVIRONMENT="dev1"
+              export IMAGE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
             fi
           elif [ "$CI_PIPELINE_SOURCE" = "web" ] && [ "$ENVIRONMENT" = "dev1" ]; then
             # Manual trigger with dev1 - keep it
@@ -232,7 +234,13 @@ push-docker-image:
       - echo "Using IMAGE_TAG=$IMAGE_TAG"
       - export PANDOC="$PANDOC"
   script:
-     - "if [ -z '$VERSION' ]; then echo 'ERROR: VERSION is not set!'; exit 1; fi"
+     - 'if [ -z "$VERSION" ]; then echo "ERROR: VERSION is not set!"; exit 1; fi'
+     - |
+         source newimage.txt
+         if echo "$NEW_IMAGE" | grep -Eq ':[0-9]+\.[0-9]+\.[0-9]+$'; then
+           echo "ERROR: Blocking semver image push in CI build/push stage. Production version tags must be pushed only by manual deploy-to-production job."
+           exit 1
+         fi
      - "bash scripts/push_images.sh --no-cleanup"
      - |
          if [ "$ENVIRONMENT" = "dev2" ]; then
@@ -241,7 +249,12 @@ push-docker-image:
            docker push "$IMAGE:dev-latest"
            docker rmi "$IMAGE:dev-latest" || true
          fi
-     - "docker rmi \"$IMAGE:$IMAGE_TAG\" || true"
+     - |
+         if [ -n "$NEW_IMAGE" ]; then
+           docker rmi "$NEW_IMAGE" || true
+         else
+           docker rmi "$IMAGE:$IMAGE_TAG" || true
+         fi
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web" && $ENVIRONMENT == "dev1"'
       when: on_success
@@ -260,22 +273,37 @@ deploy-to-staging:
       artifacts: true
       optional: true
   before_script:
-     - "if [ -f build.env ]; then source build.env; fi"
-     - "echo 'Using VERSION: $VERSION'"
+    - "if [ -f build.env ]; then source build.env; fi"
+    - 'echo "Using VERSION: $VERSION"'
   script:
     - |
-      # Check if this is a hotfix merge (check commit message)
-      if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-        echo "Hotfix detected - using manually set version $VERSION"
-        echo "Tagging hotfix image as staging..."
-        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
-        STAGING_TAG="latest-staging"
-        # For hotfix, the image was built with manually set VERSION (e.g., 1.9.4)
-        docker tag "$IMAGE:$VERSION" "$IMAGE:$STAGING_TAG"
-        docker push "$IMAGE:$STAGING_TAG"
-      else
+      # Only develop->main uses dev-latest promotion.
+      # Any other main change promotes candidate image built from main commit.
+      if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
         echo "Regular main merge - promoting dev-latest to staging..."
         bash scripts/promote_to_staging.sh
+      else
+        echo "Main change not from develop->main - promoting candidate image to staging..."
+        docker login -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY"
+        STAGING_TAG="latest-staging"
+        HOTFIX_CANDIDATE_TAG="hotfix-$CI_COMMIT_SHORT_SHA"
+        pull_ok="false"
+        for attempt in 1 2 3 4 5 6; do
+          echo "Checking candidate image availability (attempt $attempt/6): $IMAGE:$HOTFIX_CANDIDATE_TAG"
+          if docker pull "$IMAGE:$HOTFIX_CANDIDATE_TAG"; then
+            pull_ok="true"
+            break
+          fi
+          sleep 10
+        done
+        if [ "$pull_ok" != "true" ]; then
+          echo "ERROR: Expected candidate image $IMAGE:$HOTFIX_CANDIDATE_TAG could not be pulled after retries."
+          echo "ERROR: For main changes that are not develop->main, promotion from dev-latest is forbidden."
+          echo "ERROR: Ensure docker-build and push-docker-image produced and pushed the candidate tag first."
+          exit 1
+        fi
+        docker tag "$IMAGE:$HOTFIX_CANDIDATE_TAG" "$IMAGE:$STAGING_TAG"
+        docker push "$IMAGE:$STAGING_TAG"
       fi
   environment:
     name: staging
@@ -291,15 +319,14 @@ deploy-to-production:
       artifacts: true
       optional: true
   before_script:
-     - "if [ -f build.env ]; then source build.env; fi"
-     - "echo 'Using VERSION: $VERSION'"
+    - "if [ -f build.env ]; then source build.env; fi"
+    - 'echo "Using VERSION: $VERSION"'
   script:
     - |
-      # Check if this is a hotfix merge
-      if echo "$CI_COMMIT_MESSAGE" | grep -qE "Merge branch '(hotfix|bugfix)/"; then
-        echo "Hotfix deployment detected - using manually set version $VERSION"
-      else
+      if echo "$CI_COMMIT_TITLE" | grep -qE "^Merge branch 'develop' into 'main'$"; then
         echo "Regular deployment - promoting staging to production with version $VERSION"
+      else
+        echo "Main change not from develop->main - manual production promotion with version $VERSION"
       fi
     - echo 'Promoting staging image to production...'
     - bash scripts/promote_to_prod.sh
