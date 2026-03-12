@@ -39,7 +39,7 @@ variables:
     description: "Choose false to skip build & push pandoc docker image stages"
 
   VERSION:
-    value: "1.9.4" # hotfix release
+    value: "1.9.5"
     description: "Release version (e.g., 1.9.3, 1.9.4). Always increment by one for any new release, including hotfixes. Developer must update manually before merging to main."
 
 default:
