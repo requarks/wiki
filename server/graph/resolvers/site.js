@@ -83,6 +83,7 @@ module.exports = {
         name: s.name,
         path: s.path,
         isEnabled: s.isEnabled,
+        showRecentActivities: s.show_recent_activities,
         createdAt: s.createdAt,
         pageCount: pageCountMap[s.id]
       }))
@@ -94,7 +95,8 @@ module.exports = {
         id: site.id,
         name: site.name,
         path: site.path,
-        isEnabled: site.isEnabled
+        isEnabled: site.isEnabled,
+        showRecentActivities: site.show_recent_activities
       } : null
     },
     async siteByPath(obj, args) {
@@ -111,7 +113,8 @@ module.exports = {
         id: site.id,
         name: site.name,
         path: site.path,
-        isEnabled: site.isEnabled
+        isEnabled: site.isEnabled,
+        showRecentActivities: site.show_recent_activities
       } : null
     },
     async siteCount(obj, args, context) { // Count sites site manager has access to
@@ -164,7 +167,15 @@ module.exports = {
 
         return {
           responseResult: generateSuccess('Site created successfully'),
-          site: newSite
+          site: {
+            ...newSite.config,
+            id: newSite.id,
+            name: newSite.name,
+            path: newSite.path,
+            isEnabled: newSite.isEnabled,
+            showRecentActivities: newSite.show_recent_activities,
+            createdAt: newSite.createdAt
+          }
         }
       } catch (err) {
         WIKI.logger.warn(err)
@@ -188,7 +199,8 @@ module.exports = {
         // -> Update site
         await WIKI.models.sites.updateSite(args.id, {
           isEnabled: args.patch.isEnabled ?? site.isEnabled,
-          name: args.patch.name ?? site.name
+          name: args.patch.name ?? site.name,
+          show_recent_activities: _.has(args.patch, 'showRecentActivities') ? args.patch.showRecentActivities : site.show_recent_activities
         })
 
         return {

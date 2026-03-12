@@ -323,6 +323,20 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container', data-tour='page-content')
                 slot(name='contents')
+                // Recent Site Activities
+                div(v-if='recentActivitiesDecoded', style='margin-top: 2rem; padding-top: 2rem;')
+                  h2(style='font-size: 1.5rem; margin-bottom: 1rem;'): strong {{$t('common:page.recentActivities')}}
+                  ul(style='margin-left: 1.5rem; font-size: 1rem;')
+                    li(v-for='page in recentActivitiesDecoded.pages', :key='page.id', style='margin-bottom: 0.75rem; line-height: 1.6;')
+                      a(:href='buildPageUrl(page)') {{ page.title }}
+                      span.body-2(:class='$vuetify.theme.dark ? `white--text` : `grey--text text--darken-3`')
+                        template(v-if='isPageNewlyCreated(page)')
+                          | &nbsp;- {{$t('common:page.created')}} {{ page.createdAt | moment('calendar') }} {{$t('common:page.by')}}
+                        template(v-else)
+                          | &nbsp;- {{$t('common:page.updated')}} {{ page.updatedAt | moment('calendar') }} {{$t('common:page.by')}}
+                        span.cw-mention-details &nbsp;{{ page.authorName }}
+                    li(v-if='showMoreActivitiesBtn', style='list-style: none; margin-top: 1rem;')
+                      a(@click='loadMoreActivities', style='cursor: pointer; font-weight: 500; text-decoration: none;', href='#') {{ loadingMoreActivities ? $t('common:page.loading') : $t('common:page.loadMore') }}
                 // Image overlay viewer
                 div.image-overlay(v-if='isImageOverlayVisible' role='dialog' aria-modal='true' @click.self='closeImageOverlay')
                   span.image-overlay-name {{ imageOverlayName }}
@@ -595,6 +609,10 @@ export default {
     sitePath: {
       type: String,
       default: ''
+    },
+    recentActivities: {
+      type: String,
+      default: null
     }
   },
   data() {
@@ -613,6 +631,8 @@ export default {
       resizeStartWidth: 0,
 
       isFollowing: null,
+      loadingMoreActivities: false,
+      hasMorePages: true,
       scrollOpts: {
         duration: 1500,
         offset: 0,
@@ -707,6 +727,21 @@ export default {
       addUniqueId(toc)
       return toc
     },
+    recentActivitiesDecoded () {
+      if (!this.recentActivities || this.recentActivities === '') return null
+      try {
+        return JSON.parse(Buffer.from(this.recentActivities, 'base64').toString())
+      } catch (e) {
+        console.error('Failed to decode recent activities:', e)
+        return null
+      }
+    },
+    showMoreActivitiesBtn () {
+      // Only show "More..." button if we have a multiple of 5 pages and more pages are available
+      return this.recentActivitiesDecoded?.pages?.length > 0 &&
+             this.recentActivitiesDecoded.pages.length % 5 === 0 &&
+             this.hasMorePages
+    },
     tocPosition: get('site/tocPosition'),
     tocFlat () {
       const flat = []
@@ -799,6 +834,7 @@ export default {
     this.$store.set('page/title', this.title)
     this.$store.set('page/editor', this.editor)
     this.$store.set('page/updatedAt', this.updatedAt)
+    
     if (this.effectivePermissions) {
       this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
     }
@@ -825,6 +861,14 @@ export default {
       this.scrollStyle.bar.background = this.colors.surfaceDark.tertiaryNeutralLite
     } else {
       this.scrollStyle.bar.background = this.colors.surfaceLight.tertiaryNeutralLite
+    }
+
+    // -> Initialize hasMorePages from backend data
+    if (this.recentActivitiesDecoded?.hasMore !== undefined) {
+      this.hasMorePages = this.recentActivitiesDecoded.hasMore
+    } else {
+      // Fallback for backward compatibility
+      this.hasMorePages = false
     }
 
     // -> Load sidebar width from localStorage
@@ -886,7 +930,10 @@ export default {
         el.onclick = ev => {
           ev.preventDefault()
           ev.stopPropagation()
-          this.$vuetify.goTo(decodeURIComponent(ev.currentTarget.hash), this.scrollOpts)
+          const hash = decodeURIComponent(ev.currentTarget.hash)
+          if (hash && hash.length > 1) {
+            this.$vuetify.goTo(hash, this.scrollOpts)
+          }
         }
       })
 
@@ -1387,6 +1434,80 @@ export default {
       this.imageOverlaySrc = ''
       document.documentElement.classList.remove('image-overlay-active')
     },
+    buildPageUrl(page) {
+      const locale = this.recentActivitiesDecoded.useNamespacing ? `/${page.locale}` : ''
+      return `/${this.recentActivitiesDecoded.sitePath}${locale}/${page.path}`
+    },
+    async loadMoreActivities() {
+      if (!this.recentActivitiesDecoded || this.loadingMoreActivities) return
+
+      this.loadingMoreActivities = true
+      const currentOffset = this.recentActivitiesDecoded.pages.length
+      
+      try {
+        console.log('[loadMoreActivities] Fetching with offset:', currentOffset, 'siteId:', this.recentActivitiesDecoded.siteId)
+        
+        const response = await fetch('/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            query: `
+              query listPagesQuery($siteId: String, $limit: Int, $offset: Int) {
+                listPages(
+                  siteId: $siteId
+                  limit: $limit
+                  offset: $offset
+                  orderBy: UPDATED
+                  orderByDirection: DESC
+                ) {
+                  id
+                  title
+                  path
+                  locale
+                  createdAt
+                  updatedAt
+                  authorName
+                }
+              }
+            `,
+            variables: {
+              siteId: this.recentActivitiesDecoded.siteId,
+              limit: 6,
+              offset: currentOffset
+            }
+          })
+        })
+        
+        const result = await response.json()
+        console.log('[loadMoreActivities] Response:', result)
+        
+        if (result.errors) {
+          console.error('[loadMoreActivities] GraphQL errors:', result.errors)
+          return
+        }
+        
+        const newPages = result.data?.listPages || []
+
+        // Check if there are more pages by fetching limit+1
+        // If we got more than 5, there are more pages available
+        const hasMore = newPages.length > 5
+        const pagesToAdd = newPages.slice(0, 5)
+        
+        if (pagesToAdd.length > 0) {
+          this.recentActivitiesDecoded.pages.push(...pagesToAdd)
+        }
+        // Use $nextTick to ensure the computed property sees the updated state
+        await this.$nextTick()
+        this.hasMorePages = hasMore
+      } catch (err) {
+        console.error('Failed to load more activities:', err)
+      } finally {
+        this.loadingMoreActivities = false
+      }
+    },
     handleSideNavVisibility () {
       if (window.innerWidth === this.winWidth) { return }
       this.winWidth = window.innerWidth
@@ -1395,6 +1516,14 @@ export default {
       } else {
         this.navShown = false
       }
+    },
+    isPageNewlyCreated(page) {
+      const createdMs = new Date(page.createdAt).getTime()
+      const updatedMs = new Date(page.updatedAt).getTime()
+      // Page is newly created if timestamps are within 3 seconds of each other
+      // This accounts for millisecond delays in database transactions and processing
+      const diffSeconds = Math.abs(updatedMs - createdMs) / 1000
+      return diffSeconds <= 3
     },
     goToComments (focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)

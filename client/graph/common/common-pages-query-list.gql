@@ -21,6 +21,7 @@ query (
     description
     createdAt
     updatedAt
+    authorName
     tags
     siteId
     sitePath

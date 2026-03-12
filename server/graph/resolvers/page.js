@@ -87,7 +87,7 @@ module.exports = {
         .column([
           'pages.id',
           'pages.path',
-          { locale: 'localeCode' },
+          { locale: 'pages.localeCode' },
           'pages.title',
           'pages.description',
           'pages.isPublished',
@@ -96,11 +96,13 @@ module.exports = {
           'pages.contentType',
           'pages.createdAt',
           'pages.updatedAt',
+          'author.name as authorName',
           'pages.siteId',
           'sites.name as siteName',
           'sites.path as sitePath'
         ])
         .leftJoin('sites', 'pages.siteId', 'sites.id')
+        .leftJoin('users as author', 'pages.authorId', 'author.id')
         .withGraphJoined('tags')
         .modifyGraph('tags', (builder) => {
           builder.select('tag')
@@ -108,6 +110,9 @@ module.exports = {
         .modify((queryBuilder) => {
           if (args.limit) {
             queryBuilder.limit(args.limit)
+          }
+          if (args.offset) {
+            queryBuilder.offset(args.offset)
           }
           if (args.locale) {
             queryBuilder.where('localeCode', args.locale)
@@ -187,6 +192,7 @@ module.exports = {
           _.every(args.tags, (t) => _.includes(r.tags, t))
         )
       }
+      
       return results
     },
     /**

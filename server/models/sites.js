@@ -141,6 +141,7 @@ module.exports = class Site extends Model {
       name,
       isEnabled: true,
       path,
+      show_recent_activities: true,
       config: {}
     })
     await WIKI.models.sites.reloadCache()

@@ -4,5 +4,6 @@ query SiteById($id: String!) {
         path
         isEnabled
         name
+        showRecentActivities
     }
 }

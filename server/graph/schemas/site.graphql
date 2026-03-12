@@ -92,6 +92,7 @@ type Site {
   isEnabled: Boolean
   name: String
   createdAt: Date
+  showRecentActivities: Boolean
   pageCount: Int
 }
 
@@ -103,6 +104,7 @@ type SiteCreateResponse {
 input SiteUpdateInput {
   isEnabled: Boolean
   name: String
+  showRecentActivities: Boolean
 }
 
 type SiteCount {

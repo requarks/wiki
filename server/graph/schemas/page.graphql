@@ -23,6 +23,7 @@ extend type Query {
 
   listPages(
     limit: Int
+    offset: Int
     orderBy: PageOrderBy
     orderByDirection: PageOrderByDirection
     tags: [String!]
@@ -315,6 +316,7 @@ type PageListItem {
   privateNS: String
   createdAt: Date!
   updatedAt: Date!
+  authorName: String
   tags: [String]
   siteId: String
   siteName: String

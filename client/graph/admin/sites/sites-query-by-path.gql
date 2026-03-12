@@ -4,5 +4,6 @@ query SiteByPath($path: String!, $exact: Boolean!) {
     path
     isEnabled
     name
+    showRecentActivities
   }
 }
