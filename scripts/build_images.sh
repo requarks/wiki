@@ -8,6 +8,7 @@ if [ -f build.env ]; then
     grep -E '^[A-Za-z_][A-Za-z0-9_]*=.*$' build.env > build.env.tmp && mv build.env.tmp build.env
     source build.env
 fi
+
 echo "Building Docker image for environment $ENVIRONMENT"
 NEW_IMAGE="$IMAGE:$IMAGE_TAG"
 docker build --no-cache \
