@@ -114,7 +114,11 @@ const graphQLWSLink = new WebSocketLink({
   uri: graphQLWSEndpoint,
   options: {
     reconnect: true,
-    lazy: true
+    lazy: true,
+    connectionParams: () => {
+      const token = Cookies.get('jwt')
+      return token ? { token } : {}
+    }
   }
 })
 
