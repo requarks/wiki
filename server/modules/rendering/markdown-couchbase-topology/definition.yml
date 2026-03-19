@@ -1,0 +1,36 @@
+key: markdownCouchbaseTopology
+title: Couchbase Topology
+description: Render Couchbase topology diagrams from JSON or JavaScript object literal blocks
+author: Couchbase
+icon: mdi-server-network
+enabledDefault: true
+dependsOn: markdownCore
+props:
+  assetRoot:
+    type: String
+    default: /_assets/topology-ui/images
+    title: Asset Root
+    hint: Base URL used by topology-ui image references.
+    order: 1
+    public: true
+  openMarker:
+    type: String
+    default: "```couchbase-topology"
+    title: Open Marker
+    hint: String to use as opening delimiter.
+    order: 2
+    public: true
+  closeMarker:
+    type: String
+    default: "```"
+    title: Close Marker
+    hint: String to use as closing delimiter.
+    order: 3
+    public: true
+  allowJavaScript:
+    type: Boolean
+    default: true
+    title: Allow JavaScript Object Literals
+    hint: When disabled, only strict JSON payloads are accepted.
+    order: 4
+    public: true

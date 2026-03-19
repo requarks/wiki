@@ -2794,6 +2794,11 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
+"@couchbaselabs/topology-ui@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@couchbaselabs/topology-ui/-/topology-ui-1.0.0.tgz"
+  integrity sha512-YKN1Dnmkj8xPt0NuJMaPVa+KIbSW4iXQ1Qp39rK0Tizr8l5KUmQzzzATTUB2HAeUR9mOGi2lapdqBMLUG3aQWA==
+
 "@csstools/convert-colors@^1.4.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@csstools/convert-colors/-/convert-colors-1.4.0.tgz#ad495dc41b12e75d588c6db8b9834f08fa131eb7"

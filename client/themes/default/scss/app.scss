@@ -994,6 +994,27 @@
   // IMAGES
   // ---------------------------------
 
+  .cb-topology-renderer-host {
+    &.align-left {
+      text-align: left;
+    }
+    &.align-right {
+      text-align: right;
+    }
+    &.align-center {
+      text-align: center;
+    }
+
+    &.align-left > .cb-topology-renderer,
+    &.align-right > .cb-topology-renderer,
+    &.align-center > .cb-topology-renderer {
+      display: inline-block;
+      max-width: none;
+      text-align: left;
+      vertical-align: top;
+    }
+  }
+
   img {
     max-width: 100%;
 

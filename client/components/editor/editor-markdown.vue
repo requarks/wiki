@@ -215,6 +215,7 @@ import underline from '../../libs/markdown-it-underline'
 import 'katex/dist/contrib/mhchem'
 import twemoji from 'twemoji'
 import plantuml from './markdown/plantuml'
+import topology from './markdown/topology'
 
 // Prism (Syntax Highlighting)
 import Prism from 'prismjs'
@@ -319,6 +320,12 @@ cmFold.register('markdown')
 
 // TODO: Use same options as defined in backend
 plantuml.init(md, {})
+topology.init(md, {
+  allowJavaScript: true,
+  assetRoot: '/_assets/topology-ui/images',
+  openMarker: '```couchbase-topology',
+  closeMarker: '```'
+})
 
 // ========================================
 // KATEX
@@ -915,6 +922,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
 
     &-content {
       height: $editor-height;
+      overflow-x: auto;
       overflow-y: scroll;
       padding: 0;
       width: calc(100% + 17px);
