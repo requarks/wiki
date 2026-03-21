@@ -77,6 +77,7 @@ import 'codemirror/addon/display/fullscreen.js'
 import 'codemirror/addon/display/fullscreen.css'
 import 'codemirror/addon/selection/mark-selection.js'
 import 'codemirror/addon/search/searchcursor.js'
+import { getCodeMirrorInputStyle } from '../../helpers/codemirror'
 
 // ========================================
 // INIT
@@ -193,7 +194,7 @@ export default {
         annotateScrollbar: true
       },
       viewportMargin: 50,
-      inputStyle: 'contenteditable',
+      inputStyle: getCodeMirrorInputStyle(),
       allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif']
     })
     this.cm.setValue(this.$store.get('editor/content'))
