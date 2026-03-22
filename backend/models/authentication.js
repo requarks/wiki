@@ -2,8 +2,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import yaml from 'js-yaml'
 import { eq } from 'drizzle-orm'
-import { parseModuleProps } from '../helpers/common.mjs'
-import { authentication as authenticationTable } from '../db/schema.mjs'
+import { parseModuleProps } from '../helpers/common.js'
+import { authentication as authenticationTable } from '../db/schema.js'
 
 /**
  * Authentication model
@@ -72,7 +72,7 @@ class Authentication {
     for (const stg of enabledStrategies) {
       try {
         const StrategyModule = (
-          await import(`../modules/authentication/${stg.module}/authentication.mjs`)
+          await import(`../modules/authentication/${stg.module}/authentication.js`)
         ).default
         WIKI.auth.strategies[stg.id] = new StrategyModule(stg.id, stg.config)
         WIKI.auth.strategies[stg.id].module = stg.module

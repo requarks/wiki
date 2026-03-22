@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { userGroups, users as usersTable, userKeys } from '../db/schema.mjs'
+import { userGroups, users as usersTable, userKeys } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { DateTime } from 'luxon'

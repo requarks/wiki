@@ -9,7 +9,7 @@ import {
   pages as pagesTable,
   tags as tagsTable,
   users as usersTable
-} from '../db/schema.mjs'
+} from '../db/schema.js'
 
 /**
  * System API Routes
@@ -19,7 +19,7 @@ async function routes(app, options) {
     '/info',
     {
       config: {
-        permissions: ['read:dashboard', 'manage:sites']
+        permissions: ['read:dashboard']
       },
       schema: {
         summary: 'System Info',
@@ -67,6 +67,32 @@ async function routes(app, options) {
     },
     async (request, reply) => {
       return WIKI.config.flags
+    }
+  )
+
+  app.get(
+    '/checkForUpdate',
+    {
+      config: {
+        permissions: ['read:dashboard']
+      },
+      schema: {
+        summary: 'Check for Updates',
+        tags: ['System']
+      }
+    },
+    async (request, reply) => {
+      const renderJob = await WIKI.scheduler.addJob({
+        task: 'checkVersion',
+        maxRetries: 0,
+        promise: true
+      })
+      await renderJob.promise
+      return {
+        current: WIKI.version,
+        latest: WIKI.config.update.version,
+        latestDate: WIKI.config.update.versionDate
+      }
     }
   )
 }

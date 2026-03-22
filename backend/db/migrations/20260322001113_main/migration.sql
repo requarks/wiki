@@ -73,7 +73,7 @@ CREATE TABLE "jobHistory" (
 	"state" "jobHistoryState" NOT NULL,
 	"useWorker" boolean DEFAULT false NOT NULL,
 	"wasScheduled" boolean DEFAULT false NOT NULL,
-	"payload" jsonb NOT NULL,
+	"payload" jsonb,
 	"attempt" integer DEFAULT 1 NOT NULL,
 	"maxRetries" integer DEFAULT 0 NOT NULL,
 	"lastErrorMessage" text,
@@ -94,7 +94,7 @@ CREATE TABLE "jobSchedule" (
 	"task" varchar(255) NOT NULL,
 	"cron" varchar(255) NOT NULL,
 	"type" varchar(255) DEFAULT 'system' NOT NULL,
-	"payload" jsonb NOT NULL,
+	"payload" jsonb,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
@@ -103,7 +103,7 @@ CREATE TABLE "jobs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"task" varchar(255) NOT NULL,
 	"useWorker" boolean DEFAULT false NOT NULL,
-	"payload" jsonb NOT NULL,
+	"payload" jsonb,
 	"retries" integer DEFAULT 0 NOT NULL,
 	"maxRetries" integer DEFAULT 0 NOT NULL,
 	"waitUntil" timestamp,

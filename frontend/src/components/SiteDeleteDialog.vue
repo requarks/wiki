@@ -77,22 +77,8 @@ const state = reactive({
 async function confirm () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation deleteSite ($id: UUID!) {
-          deleteSite(id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.site.id
-      }
-    })
-    if (resp?.data?.deleteSite?.operation?.succeeded) {
+    const resp = await API_CLIENT.delete(`sites/${props.site.id}`)
+    if (resp?.ok) {
       $q.notify({
         type: 'positive',
         message: t('admin.sites.deleteSuccess')
@@ -102,7 +88,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.deleteSite?.operation?.message || 'An unexpected error occured.')
+      throw new Error(t(`admin.sites.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
   } catch (err) {
     $q.notify({

@@ -1,11 +1,11 @@
 import { v4 as uuid } from 'uuid'
-import { groups as groupsTable } from '../db/schema.mjs'
+import { groups as groupsTable } from '../db/schema.js'
 
 /**
  * Groups model
  */
 class Groups {
-  async init (ids) {
+  async init(ids) {
     WIKI.logger.info('Inserting default groups...')
 
     await WIKI.db.insert(groupsTable).values([

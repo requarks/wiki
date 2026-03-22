@@ -42,15 +42,6 @@ db:
 # Do not change unless you know what you are doing!
 
 # ---------------------------------------------------------------------
-# Database Pool Options
-# ---------------------------------------------------------------------
-# Refer to https://github.com/vincit/tarn.js for all possible options
-
-pool:
-  # min: 2
-  # max: 10
-
-# ---------------------------------------------------------------------
 # IP address the server should listen to
 # ---------------------------------------------------------------------
 # Leave 0.0.0.0 for all interfaces

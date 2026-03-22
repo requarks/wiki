@@ -1,4 +1,4 @@
-import { settings as settingsTable } from '../db/schema.mjs'
+import { settings as settingsTable } from '../db/schema.js'
 import { pem2jwk } from 'pem-jwk'
 import crypto from 'node:crypto'
 
@@ -10,11 +10,11 @@ class Settings {
    * Fetch settings from DB
    * @returns {Promise<Object>} Settings
    */
-  async getConfig () {
+  async getConfig() {
     const settings = await WIKI.db.select().from(settingsTable)
     if (settings.length > 0) {
       return settings.reduce((res, val) => {
-        res[val.key] = ('v' in val.value) ? val.value.v : val.value
+        res[val.key] = 'v' in val.value ? val.value.v : val.value
         return res
       }, {})
     } else {
@@ -27,8 +27,9 @@ class Settings {
    * @param {string} key Setting key
    * @param {Object} value Setting value object
    */
-  async updateConfig (key, value) {
-    await WIKI.models.insert(settingsTable)
+  async updateConfig(key, value) {
+    await WIKI.models
+      .insert(settingsTable)
       .values({ key, value })
       .onConflictDoUpdate({ target: settingsTable.key, set: { value } })
   }
@@ -37,7 +38,7 @@ class Settings {
    * Initialize settings table
    * @param {Object} ids Generated IDs
    */
-  async init (ids) {
+  async init(ids) {
     WIKI.logger.info('Generating certificates...')
     const secret = crypto.randomBytes(32).toString('hex')
     const certs = crypto.generateKeyPairSync('rsa', {

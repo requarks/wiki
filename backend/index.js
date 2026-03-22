@@ -26,11 +26,13 @@ import fastifyView from '@fastify/view'
 import gracefulServer from '@gquittet/graceful-server'
 import ajvFormats from 'ajv-formats'
 import pug from 'pug'
+import eventemitter2 from 'eventemitter2'
 import NodeCache from 'node-cache'
 
-import configSvc from './core/config.mjs'
-import dbManager from './core/db.mjs'
-import logger from './core/logger.mjs'
+import configSvc from './core/config.js'
+import dbManager from './core/db.js'
+import logger from './core/logger.js'
+import scheduler from './core/scheduler.js'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
 
@@ -93,9 +95,9 @@ WIKI.logger.info(`Running node.js ${process.version} [ OK ]`)
 // ----------------------------------------
 
 async function preBoot() {
-  WIKI.dbManager = (await import('./core/db.mjs')).default
+  WIKI.dbManager = (await import('./core/db.js')).default
   WIKI.db = await dbManager.init()
-  WIKI.models = (await import('./models/index.mjs')).default
+  WIKI.models = (await import('./models/index.js')).default
 
   try {
     if (await WIKI.configSvc.loadFromDb()) {
@@ -117,6 +119,11 @@ async function preBoot() {
   }
 
   WIKI.cache = new NodeCache({ checkperiod: 0 })
+  WIKI.scheduler = await scheduler.init()
+  WIKI.events = {
+    inbound: new eventemitter2.EventEmitter2(),
+    outbound: new eventemitter2.EventEmitter2()
+  }
 }
 
 // ----------------------------------------
@@ -131,6 +138,9 @@ async function postBoot() {
   await WIKI.models.authentication.activateStrategies()
   await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
+
+  await WIKI.dbManager.subscribeToNotifications()
+  await WIKI.scheduler.start()
 }
 
 // ----------------------------------------
@@ -179,6 +189,7 @@ async function initHTTPServer() {
 
   WIKI.server.on(gracefulServer.SHUTTING_DOWN, () => {
     WIKI.logger.info('Shutting down HTTP Server... [ STOPPING ]')
+    WIKI.dbManager.unsubscribeFromNotifications()
   })
 
   WIKI.server.on(gracefulServer.SHUTDOWN, (err) => {
@@ -414,17 +425,31 @@ async function initHTTPServer() {
   //   done()
   // })
 
-  app.register(import('./api/index.mjs'), { prefix: '/_api' })
-  app.register(import('./controllers/site.mjs'), { prefix: '/_site' })
+  app.register(import('./api/index.js'), { prefix: '/_api' })
+  app.register(import('./controllers/site.js'), { prefix: '/_site' })
 
   // ----------------------------------------
   // Error handling
   // ----------------------------------------
 
   app.setErrorHandler((error, req, reply) => {
-    if (error instanceof fastify.errorCodes.FST_ERR_BAD_STATUS_CODE) {
-      WIKI.logger.warn(error)
-      reply.status(500).send({ ok: false })
+    if (req.url.includes('/_api/')) {
+      if (error.statusCode) {
+        reply.code(error.statusCode).type('application/json').send({
+          ok: false,
+          error: error.name,
+          statusCode: error.statusCode,
+          message: error.message
+        })
+      } else {
+        WIKI.logger.warn(error)
+        reply.code(500).type('application/json').send({
+          ok: false,
+          error: 'Internal Server Error',
+          statusCode: 500,
+          message: 'Internal Server error'
+        })
+      }
     } else {
       reply.send(error)
     }

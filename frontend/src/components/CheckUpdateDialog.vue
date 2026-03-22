@@ -88,27 +88,13 @@ const isLatest = computed(() => {
 async function check () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation checkForUpdates {
-          checkForUpdates {
-            operation {
-              succeeded
-              message
-            }
-            current
-            latest
-            latestDate
-          }
-        }
-      `
-    })
-    if (resp?.data?.checkForUpdates?.operation?.succeeded) {
-      state.current = resp?.data?.checkForUpdates?.current
-      state.latest = resp?.data?.checkForUpdates?.latest
-      state.latestDate = DateTime.fromISO(resp?.data?.checkForUpdates?.latestDate).toFormat(userStore.preferredDateFormat)
+    const resp = await API_CLIENT.post('system/checkForUpdate').json()
+    if (resp?.current) {
+      state.current = resp.current
+      state.latest = resp.latest
+      state.latestDate = DateTime.fromISO(resp.latestDate).toFormat(userStore.preferredDateFormat)
     } else {
-      throw new Error(resp?.data?.checkForUpdates?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
   } catch (err) {
     $q.notify({

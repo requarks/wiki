@@ -1,9 +1,10 @@
 import { validate as uuidValidate } from 'uuid'
+import { CustomError } from '../helpers/common.js'
 
 /**
  * Sites API Routes
  */
-async function routes(app, options) {
+async function routes(app) {
   app.get(
     '/',
     {
@@ -15,7 +16,7 @@ async function routes(app, options) {
         tags: ['Sites']
       }
     },
-    async (req, reply) => {
+    async () => {
       const sites = await WIKI.models.sites.getAllSites()
       return sites.map((s) => ({
         ...s.config,
@@ -46,7 +47,7 @@ async function routes(app, options) {
         }
       }
     },
-    async (req, reply) => {
+    async (req) => {
       let site
       if (req.params.siteId === 'current' && req.hostname) {
         site = await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
@@ -73,7 +74,7 @@ async function routes(app, options) {
     '/',
     {
       config: {
-        // permissions: ['create:sites', 'manage:sites']
+        permissions: ['create:sites', 'manage:sites']
       },
       schema: {
         summary: 'Create a new site',
@@ -106,6 +107,9 @@ async function routes(app, options) {
             description: 'Site created successfully',
             type: 'object',
             properties: {
+              ok: {
+                type: 'boolean'
+              },
               message: {
                 type: 'string'
               },
@@ -119,12 +123,46 @@ async function routes(app, options) {
       }
     },
     async (req, reply) => {
-      const result = await WIKI.models.sites.createSite(req.body.hostname, {
-        title: req.body.title
-      })
-      return {
-        message: 'Site created successfully.',
-        id: result.id
+      // -> Validate inputs
+      if (
+        !req.body.hostname ||
+        req.body.hostname.length < 1 ||
+        !/^(\\*)|([a-z0-9\-.:]+)$/.test(req.body.hostname)
+      ) {
+        throw new CustomError('siteCreateInvalidHostname', 'Invalid Site Hostname')
+      }
+      if (!req.body.title || req.body.title.length < 1 || !/^[^<>"]+$/.test(req.body.title)) {
+        throw new CustomError('siteCreateInvalidTitle', 'Invalid Site Title')
+      }
+
+      // -> Check for duplicate hostname
+      if (!(await WIKI.models.sites.isHostnameUnique(req.body.hostname))) {
+        if (req.body.hostname === '*') {
+          throw new CustomError(
+            'siteCreateDuplicateCatchAll',
+            'A site with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.'
+          )
+        } else {
+          throw new CustomError(
+            'siteCreateDuplicateHostname',
+            'A site with a this hostname already exists! Cannot have duplicate hostnames.'
+          )
+        }
+      }
+
+      // -> Create site
+      try {
+        const result = await WIKI.models.sites.createSite(req.body.hostname, {
+          title: req.body.title
+        })
+        return {
+          ok: true,
+          message: 'Site created successfully.',
+          id: result.id
+        }
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return reply.internalServerError()
       }
     }
   )

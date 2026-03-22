@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "ded00708-02ea-49a3-8d2b-647fe5fcda7e",
+  "id": "1491778a-3cba-43df-815f-398b66d95ed5",
   "prevIds": [
     "061e8c84-e05e-40b0-a074-7a56bd794fc7"
   ],
@@ -890,7 +890,7 @@
     {
       "type": "jsonb",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -1085,7 +1085,7 @@
     {
       "type": "jsonb",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
@@ -1163,7 +1163,7 @@
     {
       "type": "jsonb",
       "typeSchema": null,
-      "notNull": true,
+      "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,

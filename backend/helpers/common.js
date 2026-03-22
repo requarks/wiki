@@ -5,21 +5,29 @@ import mime from 'mime'
 import fs from 'node:fs'
 
 /* eslint-disable promise/param-names */
-export function createDeferred () {
+export function createDeferred() {
   let result, resolve, reject
   return {
     resolve: function (value) {
       if (resolve) {
         resolve(value)
       } else {
-        result = result || new Promise(function (r) { r(value) })
+        result =
+          result ||
+          new Promise(function (r) {
+            r(value)
+          })
       }
     },
     reject: function (reason) {
       if (reject) {
         reject(reason)
       } else {
-        result = result || new Promise(function (x, j) { j(reason) })
+        result =
+          result ||
+          new Promise(function (x, j) {
+            j(reason)
+          })
       }
     },
     promise: new Promise(function (r, j) {
@@ -39,7 +47,7 @@ export function createDeferred () {
  * @param {string} str String to decode
  * @returns Decoded tree path
  */
-export function decodeTreePath (str) {
+export function decodeTreePath(str) {
   return str?.replaceAll('.', '/')
 }
 
@@ -49,7 +57,7 @@ export function decodeTreePath (str) {
  * @param {string} str String to encode
  * @returns Encoded tree path
  */
-export function encodeTreePath (str) {
+export function encodeTreePath(str) {
   return str?.toLowerCase()?.replaceAll('/', '.') || ''
 }
 
@@ -59,7 +67,7 @@ export function encodeTreePath (str) {
  * @param {string} str String to hash
  * @returns Hashed string
  */
-export function generateHash (str) {
+export function generateHash(str) {
   return crypto.createHash('sha1').update(str).digest('hex')
 }
 
@@ -69,7 +77,7 @@ export function generateHash (str) {
  * @param {any} type primitive type name
  * @returns Default value
  */
-export function getTypeDefaultValue (type) {
+export function getTypeDefaultValue(type) {
   switch (type.toLowerCase()) {
     case 'string':
       return ''
@@ -80,7 +88,7 @@ export function getTypeDefaultValue (type) {
   }
 }
 
-export function parseModuleProps (props) {
+export function parseModuleProps(props) {
   const result = {}
   for (const [key, value] of Object.entries(props)) {
     let defaultValue = ''
@@ -106,7 +114,7 @@ export function parseModuleProps (props) {
   return result
 }
 
-export function getDictNameFromLocale (locale) {
+export function getDictNameFromLocale(locale) {
   const loc = locale.length > 2 ? locale.substring(0, 2) : locale
   if (loc in WIKI.config.search.dictOverrides) {
     return WIKI.config.search.dictOverrides[loc]
@@ -115,8 +123,16 @@ export function getDictNameFromLocale (locale) {
   }
 }
 
-export function replyWithFile (reply, filePath) {
+export function replyWithFile(reply, filePath) {
   const stream = fs.createReadStream(filePath)
   reply.header('Content-Type', mime.getType(filePath))
   return reply.send(stream)
+}
+
+export class CustomError extends Error {
+  constructor(name, message, statusCode = 400) {
+    super(message)
+    this.name = name
+    this.statusCode = statusCode
+  }
 }

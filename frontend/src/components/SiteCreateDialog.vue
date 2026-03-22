@@ -111,29 +111,13 @@ async function create () {
     if (!isFormValid) {
       throw new Error(t('admin.sites.createInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation createSite (
-          $hostname: String!
-          $title: String!
-          ) {
-          createSite(
-            hostname: $hostname
-            title: $title
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
+    const resp = await API_CLIENT.post('sites', {
+      json: {
         hostname: state.siteHostname,
         title: state.siteName
       }
-    })
-    if (resp?.data?.createSite?.operation?.succeeded) {
+    }).json()
+    if (resp?.ok) {
       $q.notify({
         type: 'positive',
         message: t('admin.sites.createSuccess')
@@ -141,7 +125,7 @@ async function create () {
       await adminStore.fetchSites()
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.createSite?.operation?.message || 'An unexpected error occured.')
+      throw new Error(t(`admin.sites.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
   } catch (err) {
     $q.notify({

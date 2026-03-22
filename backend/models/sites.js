@@ -1,6 +1,6 @@
 import { toMerged } from 'es-toolkit/object'
 import { keyBy } from 'es-toolkit/array'
-import { sites as sitesTable } from '../db/schema.mjs'
+import { sites as sitesTable } from '../db/schema.js'
 import { eq } from 'drizzle-orm'
 
 /**
@@ -25,6 +25,10 @@ class Sites {
     return null
   }
 
+  async isHostnameUnique(hostname) {
+    return (await WIKI.db.$count(sitesTable, eq(sitesTable.hostname, hostname))) === 0
+  }
+
   async getAllSites() {
     return WIKI.db.select().from(sitesTable).orderBy(sitesTable.hostname)
   }
@@ -40,7 +44,7 @@ class Sites {
     WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
   }
 
-  async createSite(hostname, config) {
+  async createSite(hostname, config = {}) {
     const result = await WIKI.db
       .insert(sitesTable)
       .values({

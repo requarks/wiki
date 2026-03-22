@@ -1,11 +1,11 @@
 import { validate as uuidValidate } from 'uuid'
-import { replyWithFile } from '../helpers/common.mjs'
+import { replyWithFile } from '../helpers/common.js'
 import path from 'node:path'
 
 /**
  * _site Routes
  */
-async function routes (app, options) {
+async function routes(app, options) {
   const siteAssetsPath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'assets')
 
   app.get('/:siteId/:resource', async (req, reply) => {
@@ -24,7 +24,10 @@ async function routes (app, options) {
       case 'logo': {
         if (site.config.assets.logo) {
           // TODO: Fetch from db if not in disk cache
-          return replyWithFile(reply, path.join(siteAssetsPath, `logo-${site.id}.${site.config.assets.logoExt}`))
+          return replyWithFile(
+            reply,
+            path.join(siteAssetsPath, `logo-${site.id}.${site.config.assets.logoExt}`)
+          )
         } else {
           return replyWithFile(reply, path.join(WIKI.ROOTPATH, 'assets/_assets/logo-wikijs.svg'))
         }
@@ -32,7 +35,10 @@ async function routes (app, options) {
       case 'favicon': {
         if (site.config.assets.favicon) {
           // TODO: Fetch from db if not in disk cache
-          return replyWithFile(reply, path.join(siteAssetsPath, `favicon-${site.id}.${site.config.assets.faviconExt}`))
+          return replyWithFile(
+            reply,
+            path.join(siteAssetsPath, `favicon-${site.id}.${site.config.assets.faviconExt}`)
+          )
         } else {
           return replyWithFile(reply, path.join(WIKI.ROOTPATH, 'assets/_assets/logo-wikijs.svg'))
         }

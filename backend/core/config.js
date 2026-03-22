@@ -1,7 +1,7 @@
 import { toMerged } from 'es-toolkit/object'
 import { isPlainObject } from 'es-toolkit/predicate'
 import chalk from 'chalk'
-import cfgHelper from '../helpers/config.mjs'
+import cfgHelper from '../helpers/config.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import yaml from 'js-yaml'
@@ -11,7 +11,7 @@ export default {
   /**
    * Load root config from disk
    */
-  async init (silent = false) {
+  async init(silent = false) {
     const confPaths = {
       config: path.join(WIKI.ROOTPATH, 'config.yml'),
       data: path.join(WIKI.SERVERPATH, 'base.yml')
@@ -29,11 +29,7 @@ export default {
     let appdata = {}
 
     try {
-      appconfig = yaml.load(
-        cfgHelper.parseConfigValue(
-          await fs.readFile(confPaths.config, 'utf8')
-        )
-      )
+      appconfig = yaml.load(cfgHelper.parseConfigValue(await fs.readFile(confPaths.config, 'utf8')))
       appdata = yaml.load(await fs.readFile(confPaths.data, 'utf8'))
       if (!silent) {
         console.info(chalk.green.bold('OK'))
@@ -42,7 +38,9 @@ export default {
       console.error(chalk.red.bold('FAILED'))
       console.error(err.message)
 
-      console.error(chalk.red.bold('>>> Unable to read configuration file! Did you create the config.yml file?'))
+      console.error(
+        chalk.red.bold('>>> Unable to read configuration file! Did you create the config.yml file?')
+      )
       process.exit(1)
     }
 
@@ -62,7 +60,9 @@ export default {
 
     // Load package info
 
-    const packageInfo = JSON.parse(await fs.readFile(path.join(WIKI.SERVERPATH, 'package.json'), 'utf-8'))
+    const packageInfo = JSON.parse(
+      await fs.readFile(path.join(WIKI.SERVERPATH, 'package.json'), 'utf-8')
+    )
 
     // Load DB Password from Docker Secret File
     if (process.env.DB_PASS_FILE) {
@@ -72,7 +72,11 @@ export default {
       try {
         appconfig.db.pass = await fs.readFile(process.env.DB_PASS_FILE, 'utf8').trim()
       } catch (err) {
-        console.error(chalk.red.bold('>>> Failed to read Docker Secret File using path defined in DB_PASS_FILE env variable!'))
+        console.error(
+          chalk.red.bold(
+            '>>> Failed to read Docker Secret File using path defined in DB_PASS_FILE env variable!'
+          )
+        )
         console.error(err.message)
         process.exit(1)
       }
@@ -82,13 +86,13 @@ export default {
     WIKI.data = appdata
     WIKI.version = packageInfo.version
     WIKI.releaseDate = packageInfo.releaseDate
-    WIKI.devMode = (packageInfo.dev === true)
+    WIKI.devMode = packageInfo.dev === true
   },
 
   /**
    * Load config from DB
    */
-  async loadFromDb () {
+  async loadFromDb() {
     WIKI.logger.info('Loading settings from DB...')
     const conf = await WIKI.models.settings.getConfig()
     if (conf) {
@@ -104,7 +108,7 @@ export default {
    * @param {Array} keys Array of keys to save
    * @returns Promise
    */
-  async saveToDb (keys, propagate = true) {
+  async saveToDb(keys, propagate = true) {
     try {
       for (const key of keys) {
         let value = WIKI.config[key] ?? null
@@ -126,7 +130,7 @@ export default {
   /**
    * Initialize DB tables with default values
    */
-  async initDbValues () {
+  async initDbValues() {
     const ids = {
       groupAdminId: uuid(),
       groupUserId: WIKI.data.systemIds.usersGroupId,
@@ -142,11 +146,12 @@ export default {
     await WIKI.models.groups.init(ids)
     await WIKI.models.authentication.init(ids)
     await WIKI.models.users.init(ids)
+    await WIKI.models.jobs.init()
   },
   /**
    * Subscribe to HA propagation events
    */
-  subscribeToEvents () {
+  subscribeToEvents() {
     WIKI.events.inbound.on('reloadConfig', async () => {
       await WIKI.configSvc.loadFromDb()
     })

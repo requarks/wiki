@@ -5,12 +5,11 @@ import { setTimeout } from 'node:timers/promises'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool } from 'pg'
-import PGPubSub from 'pg-pubsub'
 import semver from 'semver'
 
-import { relations } from '../db/relations.mjs'
-import { createDeferred } from '../helpers/common.mjs'
-// import migrationSource from '../db/migrator-source.mjs'
+import { relations } from '../db/relations.js'
+import { createDeferred } from '../helpers/common.js'
+// import migrationSource from '../db/migrator-source.js'
 // const migrateFromLegacy = require('../db/legacy')
 
 /**
@@ -18,7 +17,7 @@ import { createDeferred } from '../helpers/common.mjs'
  */
 export default {
   pool: null,
-  listener: null,
+  pubsubClient: null,
   config: null,
   VERSION: null,
   LEGACY: false,
@@ -92,7 +91,7 @@ export default {
     // Initialize Postgres Pool
 
     this.pool = new Pool({
-      application_name: 'Wiki.js',
+      application_name: `Wiki.js - ${WIKI.INSTANCE_ID}:MAIN`,
       ...this.config,
       ...(workerMode ? { min: 0, max: 1 } : WIKI.config.pool),
       options: `-c search_path=${WIKI.config.db.schema}`
@@ -136,49 +135,45 @@ export default {
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
   async subscribeToNotifications() {
-    let connSettings = this.knex.client.connectionSettings
-    if (typeof connSettings === 'string') {
-      const encodedName = encodeURIComponent(`Wiki.js - ${WIKI.INSTANCE_ID}:PSUB`)
-      if (connSettings.indexOf('?') > 0) {
-        connSettings = `${connSettings}&ApplicationName=${encodedName}`
-      } else {
-        connSettings = `${connSettings}?ApplicationName=${encodedName}`
-      }
-    } else {
-      connSettings.application_name = `Wiki.js - ${WIKI.INSTANCE_ID}:PSUB`
-    }
-    this.listener = new PGPubSub(connSettings, {
-      log(ev) {
-        WIKI.logger.debug(ev)
-      }
-    })
+    const connectionAppName = `Wiki.js - ${WIKI.INSTANCE_ID}:EVENTS`
+    this.pubsubClient = await this.pool.connect()
+    await this.pubsubClient.query(`SET application_name = '${connectionAppName}'`)
 
     // -> Outbound events handling
 
-    this.listener.addChannel('wiki', (payload) => {
-      if ('event' in payload && payload.source !== WIKI.INSTANCE_ID) {
-        WIKI.logger.info(`Received event ${payload.event} from instance ${payload.source}: [ OK ]`)
-        WIKI.events.inbound.emit(payload.event, payload.value)
+    this.pubsubClient.query('LISTEN wiki')
+    this.pubsubClient.on('notification', (msg) => {
+      if (msg.channel !== 'wiki') {
+        return
       }
+      try {
+        const decoded = JSON.parse(msg.payload)
+        if ('event' in decoded && decoded.source !== WIKI.INSTANCE_ID) {
+          WIKI.logger.info(
+            `Received event ${decoded.event} from instance ${decoded.source}: [ OK ]`
+          )
+          WIKI.events.inbound.emit(decoded.event, decoded.value)
+        }
+      } catch {}
     })
     WIKI.events.outbound.onAny(this.notifyViaDB)
 
     // -> Listen to inbound events
 
-    WIKI.auth.subscribeToEvents()
+    // WIKI.auth.subscribeToEvents()
     WIKI.configSvc.subscribeToEvents()
-    WIKI.db.pages.subscribeToEvents()
+    // WIKI.db.pages.subscribeToEvents()
 
-    WIKI.logger.info('PG PubSub Listener initialized successfully: [ OK ]')
+    WIKI.logger.info('Event Listener initialized successfully: [ OK ]')
   },
   /**
    * Unsubscribe from database LISTEN / NOTIFY
    */
-  async unsubscribeToNotifications() {
-    if (this.listener) {
+  async unsubscribeFromNotifications() {
+    if (this.pubsubClient) {
       WIKI.events.outbound.offAny(this.notifyViaDB)
       WIKI.events.inbound.removeAllListeners()
-      this.listener.close()
+      this.pubsubClient.release(true)
     }
   },
   /**
@@ -188,11 +183,14 @@ export default {
    * @param {object} value Payload of the event
    */
   notifyViaDB(event, value) {
-    WIKI.db.listener.publish('wiki', {
-      source: WIKI.INSTANCE_ID,
-      event,
-      value
-    })
+    this.pubsubClient.query(`SELECT pg_notify($1, $2)`, [
+      'wiki',
+      JSON.stringify({
+        source: WIKI.INSTANCE_ID,
+        event,
+        value
+      })
+    ])
   },
   /**
    * Attempt initial connection

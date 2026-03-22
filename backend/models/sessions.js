@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm'
-import { sessions as sessionsTable } from '../db/schema.mjs'
+import { sessions as sessionsTable } from '../db/schema.js'
 
 /**
  * Sessions model
