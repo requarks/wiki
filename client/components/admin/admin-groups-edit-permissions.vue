@@ -59,6 +59,13 @@ export default {
               disabled: false
             },
             {
+              permission: 'write:tags',
+              hint: 'Can add, edit and remove page tags, as specified in the Page Rules',
+              warning: false,
+              restrictedForSystem: true,
+              disabled: false
+            },
+            {
               permission: 'manage:pages',
               hint: 'Can move existing pages as specified in the Page Rules',
               warning: false,
