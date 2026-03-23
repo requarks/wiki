@@ -31,7 +31,6 @@
 - [Feature Requests](https://feedback.js.wiki/wiki)
 - Chat with us on [Discord](https://discord.gg/rcxt9QS2jd)
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
-- [E2E Testing Results](https://dashboard.cypress.io/projects/r7qxah/runs)
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
 
@@ -511,9 +510,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Icons8](https://static.requarks.io/logo/icons8-text-h40.png)  
 [Icons8](https://icons8.com/) for providing access to their beautiful icon sets.
-
-![Localazy](https://static.requarks.io/logo/localazy-h40.png)  
-[Localazy](https://localazy.com/) for providing access to their great localization service.
 
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
 [Lokalise](https://lokalise.com/) for providing access to their great localization tool.
