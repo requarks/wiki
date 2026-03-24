@@ -1,5 +1,22 @@
 /* THEME SPECIFIC STYLES */
-
+  // ---------------------------------
+  // FIX VUETIFY BROKEN RTL MARGIN
+  // ---------------------------------
+.is-rtl {
+  @for $i from 1 through 8 {
+    .ml-#{$i} {
+      margin-left: 0px !important;
+      margin-right: ($i * 4px) !important;
+    }
+    .mr-#{$i} {
+      margin-left: ($i * 4px) !important;
+      margin-right: 0px !important;
+    }
+  }
+  .text-left {
+    text-align: right !important;
+  }
+}
 .v-main .contents {
   color: mc('grey', '800');
   padding: .5rem 0 50px;
@@ -72,6 +89,11 @@
       font-size: 1.25rem;
       text-decoration: none;
       color: mc('grey', '500');
+
+      @at-root .is-rtl & {
+        right: unset;
+        left: 1rem;
+      }
     }
 
     & + h2, & + h3, & + h4, & + h5, & + h6 {
@@ -162,6 +184,10 @@
       width: 100%;
       height: 1px;
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 90%);
+
+      @at-root .is-rtl & {
+        background: linear-gradient(to left, mc('grey', '500'), rgba(mc('grey', '500'), 0) 90%);
+      }
     }
   }
   h4, h5, h6 {
@@ -182,16 +208,28 @@
       width: 100%;
       height: 1px;
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 70%);
+
+      @at-root .is-rtl & {
+        background: linear-gradient(to left, mc('grey', '500'), rgba(mc('grey', '500'), 0) 70%);
+      }
     }
   }
   h5 {
     &::after {
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 50%);
+
+      @at-root .is-rtl & {
+        background: linear-gradient(to left, mc('grey', '500'), rgba(mc('grey', '500'), 0) 50%);
+      }
     }
   }
   h6 {
     &::after {
       background: linear-gradient(to right, mc('grey', '500'), rgba(mc('grey', '500'), 0) 30%);
+
+      @at-root .is-rtl & {
+        background: linear-gradient(to left, mc('grey', '500'), rgba(mc('grey', '500'), 0) 30%);
+      }
     }
   }
 
