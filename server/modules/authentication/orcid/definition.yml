@@ -1,0 +1,25 @@
+key: orcid
+title: ORCiD
+description: ORCiD is an identity service targeting the academic community.
+author: Jeb Rosen
+logo: https://orcid.org/assets/vectors/orcid.logo.icon.svg
+color: green darken-1
+website: https://www.orcid.org
+isAvailable: true
+useForm: false
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret
+    order: 2
+  callbackURL:
+    type: String
+    title: Redirect URI
+    hint: Application Redirect URI
+    order: 3

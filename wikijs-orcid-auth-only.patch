@@ -1,0 +1,113 @@
+diff --git a/server/modules/authentication/orcid/authentication.js b/server/modules/authentication/orcid/authentication.js
+new file mode 100644
+index 00000000..bfe1a998
+--- /dev/null
++++ b/server/modules/authentication/orcid/authentication.js
+@@ -0,0 +1,61 @@
++const _ = require('lodash')
++
++/* global WIKI */
++
++// ------------------------------------
++// ORCID Account
++// ------------------------------------
++
++const OAuth2Strategy = require('passport-oauth2').Strategy
++
++module.exports = {
++  init (passport, conf) {
++    var client = new OAuth2Strategy({
++      authorizationURL: 'https://orcid.org/oauth/authorize',
++      tokenURL: 'https://orcid.org/oauth/token',
++      clientID: conf.clientId,
++      clientSecret: conf.clientSecret,
++      callbackURL: conf.callbackURL,
++      passReqToCallback: true,
++      scope: '/authenticate',
++    }, async (req, accessToken, refreshToken, params, profile, cb) => {
++      try {
++        const user = await WIKI.models.users.processProfile({
++          providerKey: req.params.strategy,
++          profile: {
++            ...profile,
++            id: params.orcid,
++            displayName: params.name,
++            email: params.orcid + "@tehub.org",
++          }
++        })
++        cb(null, user)
++      } catch (err) {
++        cb(err, null)
++      }
++    })
++
++    client.userProfile = function (accesstoken, done) {
++      this._oauth2._useAuthorizationHeaderForGET = !conf.useQueryStringForAccessToken
++      this._oauth2.get('https://orcid.org/oauth/userinfo', accesstoken, (err, data) => {
++        if (err) {
++          return done(err)
++        }
++        try {
++          data = JSON.parse(data)
++        } catch (e) {
++          return done(e)
++        }
++        done(null, data)
++      })
++    }
++    passport.use(conf.key, client)
++  },
++  logout (conf) {
++    if (!conf.logoutURL) {
++      return '/'
++    } else {
++      return conf.logoutURL
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/server/modules/authentication/orcid/definition.yml b/server/modules/authentication/orcid/definition.yml
+new file mode 100644
+index 00000000..0febe2d7
+--- /dev/null
++++ b/server/modules/authentication/orcid/definition.yml
+@@ -0,0 +1,25 @@
++key: orcid
++title: ORCiD
++description: ORCiD is an identity service targeting the academic community.
++author: Jeb Rosen
++logo: https://orcid.org/assets/vectors/orcid.logo.icon.svg
++color: green darken-1
++website: https://www.orcid.org
++isAvailable: true
++useForm: false
++props:
++  clientId:
++    type: String
++    title: Client ID
++    hint: Application Client ID
++    order: 1
++  clientSecret:
++    type: String
++    title: Client Secret
++    hint: Application Client Secret
++    order: 2
++  callbackURL:
++    type: String
++    title: Redirect URI
++    hint: Application Redirect URI
++    order: 3
+\ No newline at end of file
+diff --git a/server/modules/rendering/html-security/renderer.js b/server/modules/rendering/html-security/renderer.js
+index 3bf9b2dc..f66625ba 100644
+--- a/server/modules/rendering/html-security/renderer.js
++++ b/server/modules/rendering/html-security/renderer.js
+@@ -8,7 +8,7 @@ module.exports = {
+       const DOMPurify = createDOMPurify(window)
+ 
+       const allowedAttrs = ['v-pre', 'v-slot:tabs', 'v-slot:content', 'target']
+-      const allowedTags = ['tabset', 'template']
++      const allowedTags = ['tabset', 'template', 'better-table']
+ 
+       if (config.allowDrawIoUnsafe) {
+         allowedTags.push('foreignObject')
