@@ -21,7 +21,7 @@
         v-tab {{$t('editor:props.info')}}
         v-tab {{$t('editor:props.scheduling')}}
         v-tab(:disabled='!hasScriptPermission') {{$t('editor:props.scripts')}}
-        v-tab(disabled) {{$t('editor:props.social')}}
+        //- v-tab(disabled) {{$t('editor:props.social')}}
         v-tab(:disabled='!hasStylePermission') {{$t('editor:props.styles')}}
         v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
           v-card-text.pt-5
@@ -196,42 +196,42 @@
           .editor-props-codeeditor-hint
             .caption {{$t('editor:props.htmlHint')}}
 
-        v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
-          v-card-text
-            .overline {{$t('editor:props.socialFeatures')}}
-            v-switch(
-              :label='$t(`editor:props.allowComments`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowCommentsHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.allowRatings`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.allowRatingsHint`)'
-              persistent-hint
-              disabled
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displayAuthor`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displayAuthorHint`)'
-              persistent-hint
-              inset
-              )
-            v-switch(
-              :label='$t(`editor:props.displaySharingBar`)'
-              v-model='isPublished'
-              color='primary'
-              :hint='$t(`editor:props.displaySharingBarHint`)'
-              persistent-hint
-              inset
-              )
+        //- v-tab-item(transition='fade-transition', reverse-transition='fade-transition')
+        //-   v-card-text
+        //-     .overline {{$t('editor:props.socialFeatures')}}
+        //-     v-switch(
+        //-       :label='$t(`editor:props.allowComments`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.allowCommentsHint`)'
+        //-       persistent-hint
+        //-       inset
+        //-       )
+        //-     v-switch(
+        //-       :label='$t(`editor:props.allowRatings`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.allowRatingsHint`)'
+        //-       persistent-hint
+        //-       disabled
+        //-       inset
+        //-       )
+        //-     v-switch(
+        //-       :label='$t(`editor:props.displayAuthor`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.displayAuthorHint`)'
+        //-       persistent-hint
+        //-       inset
+        //-       )
+        //-     v-switch(
+        //-       :label='$t(`editor:props.displaySharingBar`)'
+        //-       v-model='isPublished'
+        //-       color='primary'
+        //-       :hint='$t(`editor:props.displaySharingBarHint`)'
+        //-       persistent-hint
+        //-       inset
+        //-       )
 
         v-tab-item(:transition='false', :reverse-transition='false')
           .editor-props-codeeditor-title
@@ -276,10 +276,10 @@ export default {
       currentTab: 0,
       cm: null,
       rules: {
-          required: value => !!value || 'This field is required.',
-          path: value => {
-            return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
-          }
+        required: value => !!value || 'This field is required.',
+        path: value => {
+          return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
+        }
       }
     }
   },
@@ -334,7 +334,7 @@ export default {
             this.loadEditor(this.$refs.codejs, 'html')
           }, 100)
         })
-      } else if (newValue === 4) {
+      } else if (newValue === 3) {
         this.$nextTick(() => {
           setTimeout(() => {
             this.loadEditor(this.$refs.codecss, 'css')

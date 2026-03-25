@@ -70,13 +70,13 @@
           v-model='mustChangePwd'
           hide-details
         )
-        v-checkbox(
-          color='primary'
-          label='Send a welcome email'
-          hide-details
-          v-model='sendWelcomeEmail'
-          disabled
-        )
+        //- v-checkbox(
+        //-   color='primary'
+        //-   label='Send a welcome email'
+        //-   hide-details
+        //-   v-model='sendWelcomeEmail'
+        //-   disabled
+        //- )
       v-card-chin
         v-spacer
         v-btn(text, @click='isShown = false') Cancel

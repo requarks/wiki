@@ -81,6 +81,9 @@ spec:
             {{- end }}
             - name: HA_ACTIVE
               value: {{ .Values.replicaCount | int | le 2 | quote }}
+            {{- with .Values.extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
     {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

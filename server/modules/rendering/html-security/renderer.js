@@ -34,7 +34,8 @@ module.exports = {
 
       input = DOMPurify.sanitize(input, {
         ADD_ATTR: allowedAttrs,
-        ADD_TAGS: allowedTags
+        ADD_TAGS: allowedTags,
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
     }
     return input

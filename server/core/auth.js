@@ -4,10 +4,11 @@ const _ = require('lodash')
 const jwt = require('jsonwebtoken')
 const ms = require('ms')
 const { DateTime } = require('luxon')
-const Promise = require('bluebird')
-const crypto = Promise.promisifyAll(require('crypto'))
+const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
+const randomBytesAsync = require('util').promisify(crypto.randomBytes)
 
+const commonHelper = require('../helpers/common')
 const securityHelper = require('../helpers/security')
 
 /* global WIKI */
@@ -82,7 +83,7 @@ module.exports = {
           const strategy = require(`../modules/authentication/${stg.strategyKey}/authentication.js`)
 
           stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
-          stg.config.key = stg.key;
+          stg.config.key = stg.key
           strategy.init(passport, stg.config)
           strategy.config = stg.config
 
@@ -154,7 +155,7 @@ module.exports = {
           if (req.get('content-type') === 'application/json') {
             res.set('new-jwt', newToken.token)
           } else {
-            res.cookie('jwt', newToken.token, { expires: DateTime.utc().plus({ days: 365 }).toJSDate() })
+            res.cookie('jwt', newToken.token, commonHelper.getCookieOpts())
           }
 
           // Avoid caching this response
@@ -366,7 +367,7 @@ module.exports = {
   async regenerateCertificates () {
     WIKI.logger.info('Regenerating certificates...')
 
-    _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+    _.set(WIKI.config, 'sessionSecret', (await randomBytesAsync(32)).toString('hex'))
     const certs = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {

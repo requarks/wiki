@@ -138,6 +138,17 @@ sideload:
 ## Append extra trusted certificates for node process from extra volume via NODE_EXTRA_CA_CERTS variable
 # nodeExtraCaCerts: "/path/to/certs.pem"
 
+## Additional environment variables to set
+extraEnvVars: []
+# extraEnvVars:
+#   - name: CUSTOM_VAR
+#     value: "custom_value"
+#   - name: SECRET_VAR
+#     valueFrom:
+#       secretKeyRef:
+#         name: my-secret
+#         key: secret-key
+
 ## This will override the postgresql chart values
 # externalPostgresql:
 #   # note: ?sslmode=require => ?ssl=true

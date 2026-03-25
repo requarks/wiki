@@ -91,68 +91,74 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://acceleanation.com/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/alexksso" target="_blank">
           Alexander Casassovici<br />(@alexksso)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/broxen" target="_blank">
           Broxen<br />(@broxen)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/xDacon" target="_blank">
           Dacon<br />(@xDacon)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
+        <a href="https://github.com/DonNabla" target="_blank">
+          Maxime Pierre<br />(@DonNabla)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/GigabiteLabs" target="_blank">
           <img src="https://static.requarks.io/sponsors/gigabitelabs-148x129.png">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://www.hostwiki.com/" target="_blank">
           <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
         </a>
       </td>
     </tr>
     <tr>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/JayDaley" target="_blank">
           Jay Daley<br />(@JayDaley)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/idokka" target="_blank">
           Oleksii<br />(@idokka)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://www.openhost-network.com/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114218287?s=200&v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://www.prevo.ch/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114394792?v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/shanekearney" target="_blank">
           Shane Kearney<br />(@shanekearney)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="http://www.taicep.org/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/160072306?v=4">
         </a>
       </td>
+      <td align="center" valign="middle" width="130"></td>
     </tr>
   </tbody>
 </table>

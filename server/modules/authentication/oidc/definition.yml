@@ -62,26 +62,33 @@ props:
     default: displayName
     maxWidth: 500
     order: 9
+  pictureClaim:
+    type: String
+    title: Picture Claim
+    hint: Field containing the user avatar URL
+    default: picture
+    maxWidth: 500
+    order: 10
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Map groups matching names from the groups claim value
     default: false
-    order: 10
+    order: 11
   groupsClaim:
     type: String
     title: Groups Claim
     hint: Field containing the group names
     default: groups
     maxWidth: 500
-    order: 11
+    order: 12
   logoutURL:
     type: String
     title: Logout URL
     hint: (optional) Logout URL on the OAuth2 provider where the user will be redirected to complete the logout process.
-    order: 12
+    order: 13
   acrValues:
     type: String
     title: ACR Values
     hint: (optional) Authentication Context Class Reference
-    order: 13
+    order: 14
