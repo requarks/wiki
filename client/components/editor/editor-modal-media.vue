@@ -316,6 +316,7 @@ export default {
       set(val) { this.$emit('input', val) }
     },
     editorKey: get('editor/editorKey'),
+    pagePath: get('page/path'),
     activeModal: sync('editor/activeModal'),
     folderTree: get('editor/media@folderTree'),
     currentFolderId: sync('editor/media@currentFolderId'),
@@ -392,6 +393,108 @@ export default {
     resetFolderPicker() {
       this.selectedFolder = null
       this.folderSearch = ''
+    },
+    resetFolderNavigation() {
+      this.resetFolderPicker()
+      this.currentFileId = null
+      this.currentFolderId = 0
+
+      while (this.folderTree.length > 0) {
+        this.$store.commit('editor/popMediaFolderTree')
+      }
+    },
+    async fetchFolders(parentFolderId) {
+      const resp = await this.$apollo.query({
+        query: listFolderAssetQuery,
+        variables: {
+          parentFolderId
+        },
+        fetchPolicy: 'network-only'
+      })
+
+      return _.get(resp, 'data.assets.folders', [])
+    },
+    findFolderBySegment(availableFolders, segment) {
+      const normalizedSegment = _.toLower(segment)
+
+      return _.find(availableFolders, folder => {
+        return _.toLower(folder.slug) === normalizedSegment || _.toLower(folder.name) === normalizedSegment
+      })
+    },
+    async ensureFolder(parentFolderId, segment) {
+      let availableFolders = await this.fetchFolders(parentFolderId)
+      let matchingFolder = this.findFolderBySegment(availableFolders, segment)
+
+      if (matchingFolder) {
+        return matchingFolder
+      }
+
+      const normalizedSegment = _.toLower(segment)
+      const resp = await this.$apollo.mutate({
+        mutation: createAssetFolderMutation,
+        variables: {
+          parentFolderId,
+          slug: normalizedSegment
+        }
+      })
+
+      if (!_.get(resp, 'data.assets.createFolder.responseResult.succeeded', false)) {
+        availableFolders = await this.fetchFolders(parentFolderId)
+        matchingFolder = this.findFolderBySegment(availableFolders, segment)
+
+        if (matchingFolder) {
+          return matchingFolder
+        }
+
+        throw new Error(_.get(resp, 'data.assets.createFolder.responseResult.message', 'Unable to create asset folder.'))
+      }
+
+      availableFolders = await this.fetchFolders(parentFolderId)
+      matchingFolder = this.findFolderBySegment(availableFolders, segment)
+
+      if (!matchingFolder) {
+        throw new Error(`Unable to resolve asset folder: ${normalizedSegment}`)
+      }
+
+      return matchingFolder
+    },
+    async initializeFolderFromPagePath() {
+      this.resetFolderNavigation()
+
+      if (this.editorKey === 'common' || _.isEmpty(this.pagePath)) {
+        return
+      }
+
+      const pathSegments = this.pagePath
+        .split('/')
+        .map(segment => _.trim(segment))
+        .filter(Boolean)
+
+      if (_.isEmpty(pathSegments)) {
+        return
+      }
+
+      let parentFolderId = 0
+      const matchedFolders = []
+
+      for (const segment of pathSegments) {
+        let matchingFolder
+        try {
+          matchingFolder = await this.ensureFolder(parentFolderId, segment)
+        } catch (err) {
+          this.$store.commit('pushGraphError', err)
+          break
+        }
+
+        matchedFolders.push(matchingFolder)
+        parentFolderId = matchingFolder.id
+      }
+
+      matchedFolders.forEach(folder => {
+        this.$store.commit('editor/pushMediaFolderTree', folder)
+      })
+
+      this.currentFolderId = matchedFolders.length > 0 ? _.last(matchedFolders).id : 0
     },
     async refresh() {
       await this.$apollo.queries.assets.refetch()
@@ -589,6 +692,9 @@ export default {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'editor-media-list-refresh')
       }
     }
+  },
+  mounted() {
+    this.initializeFolderFromPagePath()
   }
 }
 </script>
