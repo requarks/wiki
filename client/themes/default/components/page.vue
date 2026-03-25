@@ -218,6 +218,11 @@
                     v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
                       v-icon(:color='printView ? `primary` : `grey`') mdi-printer
                   span {{$t('common:page.printFormat')}}
+                v-tooltip(bottom)
+                  template(v-slot:activator='{ on }')
+                    v-btn(icon, tile, v-on='on', @click='downloadPdf', aria-label='Download PDF')
+                      v-icon(color='grey') mdi-file-pdf-box
+                  span Download PDF
                 v-spacer
 
           v-flex.page-col-content(
@@ -675,6 +680,10 @@ export default {
           window.print()
         })
       }
+    },
+    downloadPdf () {
+      const url = `/n8n/webhook/pdf?path=${encodeURIComponent(window.location.pathname)}`
+      window.open(url, '_blank')
     },
     pageEdit () {
       this.$root.$emit('pageEdit')
