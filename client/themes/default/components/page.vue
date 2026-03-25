@@ -332,6 +332,21 @@
             v-alert.mb-5(v-if='!isPublished', color='red', outlined, icon='mdi-minus-circle', dense)
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
+              .print-toc-inline.cb-toc-wrapper(v-if='tocDecoded.length')
+                h1.cb-toc-title Table of Contents
+                v-card.page-toc-card.mb-5.cb-toc-card-inline
+                  .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
+                  v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+                    template(v-for='(tocItem, tocIdx) in tocDecoded')
+                      v-list-item(:key='`print-toc-${tocIdx}`')
+                        v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+                        v-list-item-title.px-3
+                          a(:href='tocItem.anchor') {{tocItem.title}}
+                      template(v-for='(tocSubItem, tocSubIdx) in tocItem.children')
+                        v-list-item(:key='`print-toc-${tocIdx}-${tocSubIdx}`')
+                          v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+                          v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`')
+                            a(:href='tocSubItem.anchor') {{tocSubItem.title}}
               slot(name='contents')
             .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
               .comments-header
@@ -803,6 +818,25 @@ export default {
         border-bottom-right-radius: 5px;
       }
     }
+  }
+}
+
+// Baseline print TOC styling lives with the component so the feature
+// still works even without external theme overrides.
+.print-toc-inline {
+  display: none;
+}
+
+@media print {
+  .print-toc-inline {
+    display: block;
+  }
+
+  .v-main .contents .print-toc-inline .v-list-item__title a,
+  .v-main .contents .print-toc-inline .caption a {
+    color: inherit !important;
+    text-decoration: none !important;
+    display: block;
   }
 }
 
