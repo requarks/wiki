@@ -44,11 +44,38 @@
                       span.mx-1 /
                 .body-2(v-else) / #[em root]
               template(v-if='folders.length > 0 || currentFolderId > 0')
-                v-btn.is-icon.mx-1(:color='$vuetify.theme.dark ? `grey lighten-1` : `grey darken-2`', outlined, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
-                  v-icon mdi-folder-upload
-                v-btn.btn-normalcase.mx-1(v-for='folder of folders', :key='folder.id', depressed,  color='grey darken-2', dark, @click='downFolder(folder)')
-                  v-icon(left) mdi-folder
-                  span.caption(style='text-transform: none;') {{ folder.name }}
+                .folder-picker.mt-2
+                  v-btn.is-icon.folder-picker__up(:color='$vuetify.theme.dark ? `grey lighten-1` : `grey darken-2`', outlined, :dark='currentFolderId > 0', @click='upFolder()', :disabled='currentFolderId === 0')
+                    v-icon mdi-folder-upload
+                  v-autocomplete.folder-picker__input(
+                    :key='currentFolderId'
+                    v-model='selectedFolder'
+                    :search-input.sync='folderSearch'
+                    :items='folders'
+                    return-object
+                    item-text='name'
+                    outlined
+                    dense
+                    clearable
+                    hide-details
+                    hide-no-data
+                    color='teal'
+                    prepend-inner-icon='mdi-folder-search-outline'
+                    append-icon='mdi-chevron-down'
+                    :menu-props='{ offsetY: true, maxHeight: 320 }'
+                    :disabled='folders.length < 1'
+                    label='Open folder'
+                    placeholder='Search folders in this location'
+                    @change='openSelectedFolder'
+                  )
+                    template(v-slot:selection='{ item }')
+                      .folder-picker__selection
+                        v-icon.mr-2(color='teal') mdi-folder
+                        span {{ item.name }}
+                    template(v-slot:item='{ item }')
+                      .folder-picker__option
+                        v-icon.mr-2(color='teal') mdi-folder
+                        span {{ item.name }}
                 v-divider.mt-2
               v-data-table(
                 :items='assets'
@@ -259,6 +286,8 @@ export default {
       folders: [],
       files: [],
       assets: [],
+      selectedFolder: null,
+      folderSearch: '',
       pagination: 1,
       remoteImageUrl: '',
       imageAlignments: [
@@ -360,6 +389,10 @@ export default {
     }
   },
   methods: {
+    resetFolderPicker() {
+      this.selectedFolder = null
+      this.folderSearch = ''
+    },
     async refresh() {
       await this.$apollo.queries.assets.refetch()
       this.$store.commit('showNotification', {
@@ -412,12 +445,21 @@ export default {
 
       await this.$apollo.queries.assets.refetch()
     },
+    openSelectedFolder(folder) {
+      if (!folder) {
+        return
+      }
+
+      this.downFolder(folder)
+    },
     downFolder(folder) {
+      this.resetFolderPicker()
       this.$store.commit('editor/pushMediaFolderTree', folder)
       this.currentFolderId = folder.id
       this.currentFileId = null
     },
     upFolder() {
+      this.resetFolderPicker()
       this.$store.commit('editor/popMediaFolderTree')
       const parentFolder = _.last(this.folderTree)
       this.currentFolderId = parentFolder ? parentFolder.id : 0
@@ -624,6 +666,27 @@ export default {
 
   .v-btn--icon {
     padding: 0 20px;
+  }
+
+  .folder-picker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .folder-picker__up {
+    flex: 0 0 auto;
+  }
+
+  .folder-picker__input {
+    flex: 1 1 auto;
+  }
+
+  .folder-picker__selection,
+  .folder-picker__option {
+    display: flex;
+    align-items: center;
+    min-width: 0;
   }
 }
 </style>
