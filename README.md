@@ -525,3 +525,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Porkbun](https://static.requarks.io/logo/porkbun.png)  
 [Porkbun](https://www.porkbun.com) for providing domain registration services.
+
+[![Deploy](https://pub-da36157c854648669813f3f76c526c2b.r2.dev/deploy-on-elestio-black.png)](https://elest.io/open-source/wikijs)<br/>
+[Elestio](https://elest.io/) for providing their fully managed service along with security, backups, migrations and support to the project over revenue share.
