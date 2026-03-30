@@ -26,7 +26,7 @@ import fastifyView from '@fastify/view'
 import gracefulServer from '@gquittet/graceful-server'
 import ajvFormats from 'ajv-formats'
 import pug from 'pug'
-import eventemitter2 from 'eventemitter2'
+import Emittery from 'emittery'
 import NodeCache from 'node-cache'
 
 import configSvc from './core/config.js'
@@ -121,8 +121,8 @@ async function preBoot() {
   WIKI.cache = new NodeCache({ checkperiod: 0 })
   WIKI.scheduler = await scheduler.init()
   WIKI.events = {
-    inbound: new eventemitter2.EventEmitter2(),
-    outbound: new eventemitter2.EventEmitter2()
+    inbound: new Emittery(),
+    outbound: new Emittery()
   }
 }
 

@@ -70,7 +70,7 @@ async function routes(app, options) {
     }
   )
 
-  app.get(
+  app.post(
     '/checkForUpdate',
     {
       config: {

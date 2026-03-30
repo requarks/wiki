@@ -28,7 +28,7 @@ class Settings {
    * @param {Object} value Setting value object
    */
   async updateConfig(key, value) {
-    await WIKI.models
+    await WIKI.db
       .insert(settingsTable)
       .values({ key, value })
       .onConflictDoUpdate({ target: settingsTable.key, set: { value } })

@@ -172,7 +172,7 @@ export default {
   async unsubscribeFromNotifications() {
     if (this.pubsubClient) {
       WIKI.events.outbound.offAny(this.notifyViaDB)
-      WIKI.events.inbound.removeAllListeners()
+      WIKI.events.inbound.clearListeners()
       this.pubsubClient.release(true)
     }
   },
@@ -182,15 +182,19 @@ export default {
    * @param {string} event Event fired
    * @param {object} value Payload of the event
    */
-  notifyViaDB(event, value) {
-    this.pubsubClient.query(`SELECT pg_notify($1, $2)`, [
-      'wiki',
-      JSON.stringify({
-        source: WIKI.INSTANCE_ID,
-        event,
-        value
-      })
-    ])
+  notifyViaDB({ name, data }) {
+    try {
+      WIKI.dbManager.pubsubClient.query(`SELECT pg_notify($1, $2)`, [
+        'wiki',
+        JSON.stringify({
+          source: WIKI.INSTANCE_ID,
+          event: name,
+          value: data ?? null
+        })
+      ])
+    } catch (err) {
+      WIKI.logger.warn(err)
+    }
   },
   /**
    * Attempt initial connection
