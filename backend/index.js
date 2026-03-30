@@ -162,7 +162,12 @@ async function initHTTPServer() {
 
   const app = fastify({
     ajv: {
-      plugins: [[ajvFormats, {}]]
+      plugins: [[ajvFormats, {}]],
+      onCreate: (ajv) => {
+        ajv.addFormat('hexcolor', (data) => {
+          return typeof data === 'string' && data.test(/#[a-fA-F0-9]{6}/)
+        })
+      }
     },
     bodyLimit: WIKI.config.bodyParserLimit || 5242880, // 5mb
     logger: {
@@ -320,10 +325,37 @@ async function initHTTPServer() {
         }
       },
       security: [{ apiKeyAuth: [] }, { bearerAuth: [] }]
+    },
+    transform: ({ schema, url, route }) => {
+      // Add permissions to the route schema description
+      const permissions = route?.config?.permissions ?? []
+      const transformedSchema = { ...schema }
+      const currentDescription = transformedSchema.description || ''
+
+      if (permissions?.length > 0) {
+        const nestedPermissions = []
+        for (const perm of permissions) {
+          if (Array.isArray(perm)) {
+            nestedPermissions.push(`\`${perm.join(' + ')}\``)
+          } else {
+            nestedPermissions.push(`\`${perm}\``)
+          }
+        }
+        nestedPermissions.push('`manage:system`')
+        transformedSchema.description =
+          `${currentDescription}\n\n**Required Permissions:** ${nestedPermissions.join(' or ')}`.trim()
+        transformedSchema['x-permissions'] = permissions
+      } else {
+        transformedSchema.description =
+          `${currentDescription}\n\n**This API is public.** No special permissions required.`.trim()
+      }
+
+      return { schema: transformedSchema, url }
     }
   })
   app.register(fastifySwaggerUi, {
-    routePrefix: '/_swagger'
+    routePrefix: '/_api',
+    logo: {}
   })
 
   // ----------------------------------------

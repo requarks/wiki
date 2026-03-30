@@ -5,6 +5,9 @@ async function routes(app, options) {
   app.get(
     '/',
     {
+      config: {
+        permissions: ['read:users', 'manage:users']
+      },
       schema: {
         summary: 'List all users',
         tags: ['Users']
@@ -42,6 +45,9 @@ async function routes(app, options) {
   app.get(
     '/:userId',
     {
+      config: {
+        permissions: ['read:users', 'manage:users']
+      },
       schema: {
         summary: 'Get user info',
         tags: ['Users']
@@ -55,6 +61,9 @@ async function routes(app, options) {
   app.post(
     '/',
     {
+      config: {
+        permissions: ['create:users', 'manage:users']
+      },
       schema: {
         summary: 'Create a new user',
         tags: ['Users']
@@ -68,6 +77,9 @@ async function routes(app, options) {
   app.put(
     '/:userId',
     {
+      config: {
+        permissions: ['manage:users']
+      },
       schema: {
         summary: 'Update a user',
         tags: ['Users']
@@ -81,6 +93,9 @@ async function routes(app, options) {
   app.delete(
     '/:userId',
     {
+      config: {
+        permissions: ['manage:users']
+      },
       schema: {
         summary: 'Delete a user',
         tags: ['Users']

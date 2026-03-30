@@ -5,6 +5,9 @@ async function routes(app, options) {
   app.get(
     '/sites/:siteId/pages',
     {
+      config: {
+        permissions: ['read:pages', 'manage:pages']
+      },
       schema: {
         summary: 'List all pages',
         tags: ['Pages'],
@@ -28,7 +31,7 @@ async function routes(app, options) {
     '/sites/:siteId/pages/:pageIdOrHash',
     {
       schema: {
-        summary: 'List all pages',
+        summary: 'Get a single page',
         tags: ['Pages'],
         params: {
           type: 'object',

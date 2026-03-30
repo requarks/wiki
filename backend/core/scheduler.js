@@ -11,7 +11,8 @@ import { remove } from 'es-toolkit/array'
 import {
   jobs as jobsTable,
   jobLock as jobLockTable,
-  jobSchedule as jobScheduleTable
+  jobSchedule as jobScheduleTable,
+  jobHistory as jobHistoryTable
 } from '../db/schema.js'
 import { eq, inArray, sql } from 'drizzle-orm'
 
@@ -192,8 +193,8 @@ export default {
             WIKI.logger.info(`Processing new job ${job.id}: ${job.task}...`)
             // -> Add to Job History
             await WIKI.db
-              .knex('jobHistory')
-              .insert({
+              .insert(jobHistoryTable)
+              .values({
                 id: job.id,
                 task: job.task,
                 state: 'active',
@@ -205,10 +206,9 @@ export default {
                 executedBy: WIKI.INSTANCE_ID,
                 createdAt: job.createdAt
               })
-              .onConflict('id')
-              .merge({
-                executedBy: WIKI.INSTANCE_ID,
-                startedAt: new Date()
+              .onConflictDoUpdate({
+                target: jobHistoryTable.id,
+                set: { executedBy: WIKI.INSTANCE_ID, startedAt: sql`now()` }
               })
             jobIds.push(job.id)
 
@@ -224,14 +224,12 @@ export default {
               }
               // -> Update job history (success)
               await WIKI.db
-                .knex('jobHistory')
-                .where({
-                  id: job.id
-                })
-                .update({
+                .update(jobHistoryTable)
+                .set({
                   state: 'completed',
-                  completedAt: new Date()
+                  completedAt: sql`now()`
                 })
+                .where(eq(jobHistoryTable.id, job.id))
               WIKI.logger.info(`Completed job ${job.id}: ${job.task}`)
               this.pubsubClient.query(`SELECT pg_notify($1, $2)`, [
                 'scheduler',
@@ -247,15 +245,13 @@ export default {
               WIKI.logger.warn(err)
               // -> Update job history (fail)
               await WIKI.db
-                .knex('jobHistory')
-                .where({
-                  id: job.id
-                })
-                .update({
+                .update(jobHistoryTable)
+                .set({
                   attempt: job.retries + 1,
                   state: 'failed',
                   lastErrorMessage: err.message
                 })
+                .where(eq(jobHistoryTable.id, job.id))
               this.pubsubClient.query(`SELECT pg_notify($1, $2)`, [
                 'scheduler',
                 JSON.stringify({
@@ -269,7 +265,7 @@ export default {
               // -> Reschedule for retry
               if (job.retries < job.maxRetries) {
                 const backoffDelay = 2 ** job.retries * WIKI.config.scheduler.retryBackoff
-                await trx('jobs').insert({
+                await trx.insert(jobsTable).values({
                   ...job,
                   retries: job.retries + 1,
                   waitUntil: DateTime.utc().plus({ seconds: backoffDelay }).toJSDate(),
@@ -284,10 +280,13 @@ export default {
     } catch (err) {
       WIKI.logger.warn(err)
       if (jobIds && jobIds.length > 0) {
-        WIKI.db.knex('jobHistory').whereIn('id', jobIds).update({
-          state: 'interrupted',
-          lastErrorMessage: err.message
-        })
+        WIKI.db
+          .update(jobHistoryTable)
+          .set({
+            state: 'interrupted',
+            lastErrorMessage: err.message
+          })
+          .where(inArray(jobsTable.id, jobIds))
       }
     }
   },

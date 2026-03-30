@@ -616,60 +616,11 @@ watch(() => adminStore.currentSiteId, (newValue) => {
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getSite (
-        $id: UUID!
-      ) {
-        siteById(
-          id: $id
-        ) {
-          id
-          hostname
-          isEnabled
-          title
-          description
-          company
-          contentLicense
-          footerExtra
-          pageExtensions
-          pageCasing
-          logoText
-          sitemap
-          uploads {
-            conflictBehavior
-            normalizeFilename
-          }
-          robots {
-            index
-            follow
-          }
-          features {
-            browse
-            comments
-            contributions
-            profile
-            ratings
-            ratingsMode
-            reasonForChange
-            search
-          }
-          discoverable
-          defaults {
-            tocDepth {
-              min
-              max
-            }
-          }
-        }
-      }
-    `,
-    variables: {
-      id: adminStore.currentSiteId
-    },
-    fetchPolicy: 'network-only'
-  })
-  state.config = cloneDeep(resp?.data?.siteById)
+  const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
+  state.config = {
+    ...resp,
+    pageExtensions: resp.pageExtensions.join(',')
+  }
   $q.loading.hide()
   state.loading--
 }

@@ -78,9 +78,9 @@ CREATE TABLE "jobHistory" (
 	"maxRetries" integer DEFAULT 0 NOT NULL,
 	"lastErrorMessage" text,
 	"executedBy" varchar(255),
-	"createdAt" timestamp DEFAULT now() NOT NULL,
-	"updatedAt" timestamp DEFAULT now() NOT NULL,
-	"completedAt" timestamp NOT NULL
+	"createdAt" timestamp NOT NULL,
+	"startedAt" timestamp DEFAULT now() NOT NULL,
+	"completedAt" timestamp
 );
 --> statement-breakpoint
 CREATE TABLE "jobLock" (

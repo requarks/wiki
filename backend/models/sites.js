@@ -14,11 +14,13 @@ class Sites {
     return WIKI.sites[id]
   }
 
-  async getSiteByHostname({ hostname, forceReload = false }) {
+  async getSiteByHostname({ hostname, forceReload = false, strict = false }) {
     if (forceReload) {
       await WIKI.models.sites.reloadCache()
     }
-    const siteId = WIKI.sitesMappings[hostname] || WIKI.sitesMappings['*']
+    const siteId = strict
+      ? WIKI.sitesMappings[hostname]
+      : WIKI.sitesMappings[hostname] || WIKI.sitesMappings['*']
     if (siteId) {
       return WIKI.sites[siteId]
     }

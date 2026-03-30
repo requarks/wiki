@@ -80,31 +80,12 @@ const state = reactive({
 async function confirm () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation updateSite (
-          $id: UUID!
-          $newState: Boolean
-          ) {
-          updateSite(
-            id: $id
-            patch: {
-              isEnabled: $newState
-            }
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.site.id,
-        newState: props.targetState
+    const resp = await API_CLIENT.put(`sites/${props.site.id}`, {
+      json: {
+        isEnabled: props.targetState
       }
     })
-    if (resp?.data?.updateSite?.operation?.succeeded) {
+    if (resp?.ok) {
       $q.notify({
         type: 'positive',
         message: t('admin.sites.updateSuccess')
@@ -122,7 +103,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+      throw new Error(t(`admin.sites.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
   } catch (err) {
     $q.notify({

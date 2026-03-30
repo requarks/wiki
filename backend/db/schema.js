@@ -134,9 +134,9 @@ export const jobHistory = pgTable('jobHistory', {
   maxRetries: integer().notNull().default(0),
   lastErrorMessage: text(),
   executedBy: varchar({ length: 255 }),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
-  completedAt: timestamp().notNull()
+  createdAt: timestamp().notNull(),
+  startedAt: timestamp().notNull().defaultNow(),
+  completedAt: timestamp()
 })
 
 // JOB SCHEDULE ------------------------

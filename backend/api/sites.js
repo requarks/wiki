@@ -5,6 +5,226 @@ import { CustomError } from '../helpers/common.js'
  * Sites API Routes
  */
 async function routes(app) {
+  app.addSchema({
+    $id: 'siteSchema',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        format: 'uuid'
+      },
+      hostname: {
+        type: 'string',
+        format: 'hostname'
+      },
+      isEnabled: {
+        type: 'boolean'
+      },
+      title: {
+        type: 'string'
+      },
+      description: {
+        type: 'string'
+      },
+      company: {
+        type: 'string'
+      },
+      contentLicense: {
+        type: 'string'
+      },
+      footerExtra: {
+        type: 'string'
+      },
+      pageExtensions: {
+        type: 'array',
+        items: {
+          type: 'string'
+        }
+      },
+      pageCasing: {
+        type: 'boolean'
+      },
+      discoverable: {
+        type: 'boolean'
+      },
+      defaults: {
+        type: 'object',
+        properties: {
+          tocDepth: {
+            type: 'object',
+            properties: {
+              min: {
+                type: 'number'
+              },
+              max: {
+                type: 'number'
+              }
+            }
+          }
+        }
+      },
+      features: {
+        type: 'object',
+        properties: {
+          browse: {
+            type: 'boolean'
+          },
+          ratings: {
+            type: 'boolean'
+          },
+          ratingsMode: {
+            type: 'string',
+            enum: ['off', 'stars', 'thumbs']
+          },
+          comments: {
+            type: 'boolean'
+          },
+          contributions: {
+            type: 'boolean'
+          },
+          profile: {
+            type: 'boolean'
+          },
+          search: {
+            type: 'boolean'
+          }
+        }
+      },
+      logoUrl: {
+        type: 'string'
+      },
+      logoText: {
+        type: 'boolean'
+      },
+      sitemap: {
+        type: 'boolean'
+      },
+      robots: {
+        type: 'object',
+        properties: {
+          index: {
+            type: 'boolean'
+          },
+          follow: {
+            type: 'boolean'
+          }
+        }
+      },
+      locales: {
+        type: 'object',
+        properties: {
+          primary: {
+            type: 'string'
+          },
+          active: {
+            type: 'array',
+            items: {
+              type: 'string'
+            }
+          }
+        }
+      },
+      assets: {
+        type: 'object',
+        properties: {
+          logo: {
+            type: 'boolean'
+          },
+          logoExt: {
+            type: 'string'
+          },
+          favicon: {
+            type: 'boolean'
+          },
+          faviconExt: {
+            type: 'string'
+          },
+          loginBg: {
+            type: 'boolean'
+          }
+        }
+      },
+      editors: {
+        type: 'object',
+        properties: {
+          asciidoc: {
+            type: 'boolean'
+          },
+          markdown: {
+            type: 'boolean'
+          },
+          wysiwyg: {
+            type: 'boolean'
+          }
+        }
+      },
+      theme: {
+        type: 'object',
+        properties: {
+          dark: {
+            type: 'boolean'
+          },
+          codeBlocksTheme: {
+            type: 'string',
+            format: 'hexcolor'
+          },
+          colorPrimary: {
+            type: 'string',
+            format: 'hexcolor'
+          },
+          colorSecondary: {
+            type: 'string',
+            format: 'hexcolor'
+          },
+          colorAccent: {
+            type: 'string',
+            format: 'hexcolor'
+          },
+          colorHeader: {
+            type: 'string',
+            format: 'hexcolor'
+          },
+          colorSidebar: {
+            type: 'string',
+            format: 'hexcolor'
+          },
+          injectCSS: {
+            type: 'string'
+          },
+          injectHead: {
+            type: 'string'
+          },
+          injectBody: {
+            type: 'string'
+          },
+          contentWidth: {
+            type: 'string',
+            enum: ['centered', 'full']
+          },
+          sidebarPosition: {
+            type: 'string',
+            enum: ['off', 'left', 'right']
+          },
+          tocPosition: {
+            type: 'string',
+            enum: ['off', 'left', 'right']
+          },
+          showSharingMenu: {
+            type: 'boolean'
+          },
+          showPrintBtn: {
+            type: 'boolean'
+          },
+          baseFont: {
+            type: 'string'
+          },
+          contentFont: {
+            type: 'string'
+          }
+        }
+      }
+    }
+  })
   app.get(
     '/',
     {
@@ -13,7 +233,14 @@ async function routes(app) {
       },
       schema: {
         summary: 'List all sites',
-        tags: ['Sites']
+        tags: ['Sites'],
+        response: {
+          200: {
+            description: 'List of all sites',
+            type: 'array',
+            items: { $ref: 'siteSchema#' }
+          }
+        }
       }
     },
     async () => {
@@ -23,7 +250,11 @@ async function routes(app) {
         id: s.id,
         hostname: s.hostname,
         isEnabled: s.isEnabled,
-        pageExtensions: s.config.pageExtensions.join(', ')
+        editors: {
+          asciidoc: s.config.editors?.asciidoc?.isActive ?? false,
+          markdown: s.config.editors?.markdown?.isActive ?? false,
+          wysiwyg: s.config.editors?.wysiwyg?.isActive ?? false
+        }
       }))
     }
   )
@@ -37,33 +268,64 @@ async function routes(app) {
         params: {
           type: 'object',
           properties: {
-            siteId: {
+            siteIdorHostname: {
               type: 'string',
               description: 'Either a site ID, hostname or "current" to use the request hostname.',
-              oneOf: [{ format: 'uuid' }, { enum: ['current'] }, { pattern: '^[a-f0-9]+$' }]
+              anyOf: [{ format: 'uuid' }, { enum: ['current'] }, { pattern: '^[a-z0-9.-]+$' }]
             }
           },
           required: ['siteIdorHostname']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            strict: {
+              type: 'boolean',
+              description:
+                'Whether to only return a site that exactly matches the hostname. Wildcard sites will not be matched.',
+              default: false
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Site info',
+            type: 'object',
+            $ref: 'siteSchema#'
+          }
         }
       }
     },
-    async (req) => {
+    async (req, reply) => {
       let site
-      if (req.params.siteId === 'current' && req.hostname) {
-        site = await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
-      } else if (uuidValidate(req.params.siteId)) {
-        site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (req.params.siteIdorHostname === 'current' && req.hostname) {
+        site = await WIKI.models.sites.getSiteByHostname({
+          hostname: req.hostname,
+          strict: req.querystring?.strict ?? false
+        })
+      } else if (uuidValidate(req.params.siteIdorHostname)) {
+        site = await WIKI.models.sites.getSiteById({ id: req.params.siteIdorHostname })
       } else {
-        site = await WIKI.models.sites.getSiteByHostname({ hostname: req.params.siteId })
+        site = await WIKI.models.sites.getSiteByHostname({
+          hostname: req.params.siteIdorHostname,
+          strict: req.querystring?.strict ?? false
+        })
       }
-      return site
-        ? {
-            ...site.config,
-            id: site.id,
-            hostname: site.hostname,
-            isEnabled: site.isEnabled
+      if (site) {
+        return {
+          ...site.config,
+          id: site.id,
+          hostname: site.hostname,
+          isEnabled: site.isEnabled,
+          editors: {
+            asciidoc: site.config.editors?.asciidoc?.isActive ?? false,
+            markdown: site.config.editors?.markdown?.isActive ?? false,
+            wysiwyg: site.config.editors?.wysiwyg?.isActive ?? false
           }
-        : null
+        }
+      } else {
+        return reply.notFound('Site does not exist.')
+      }
     }
   )
 
@@ -178,7 +440,32 @@ async function routes(app) {
       },
       schema: {
         summary: 'Update a site',
-        tags: ['Sites']
+        tags: ['Sites'],
+        body: {
+          type: 'object',
+          properties: {
+            isEnabled: {
+              type: 'boolean'
+            },
+            hostname: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              pattern: '^(\\*|[a-z0-9.-]+)$'
+            },
+            title: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            }
+          },
+          examples: [
+            {
+              hostname: 'wiki.example.org',
+              title: 'My Wiki Site'
+            }
+          ]
+        }
       }
     },
     async (req, reply) => {
