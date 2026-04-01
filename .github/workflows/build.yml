@@ -1,144 +1,80 @@
-name: Build + Publish
+name: Build & Push Docker Image
 
 on:
   push:
     branches:
       - vega
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/gmowses/wiki
 
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: vega
 
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
 
-    - name: Enable pnpm
-      run: |
-        corepack enable
-        corepack prepare pnpm@latest --activate
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+          cache-dependency-path: |
+            blocks/pnpm-lock.yaml
+            ux/pnpm-lock.yaml
 
-    - name: Set Build Variables
-      run: |
-        echo "REL_VERSION=3.0.0-alpha.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+      - name: Build blocks
+        working-directory: blocks
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
 
-    - name: Disable DEV Flag + Set Version
-      working-directory: server
-      run: |
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> /home/runner/.bashrc
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        brew install jq
-        mv package.json pkg-temp.json
-        jq --arg vs "$REL_VERSION_STRICT" -r '. + {dev:false, version:$vs}' pkg-temp.json > package.json
-        rm pkg-temp.json
-        cat package.json
+      - name: Build UX (frontend)
+        working-directory: ux
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
 
-    - name: Fetch Latest Locales
-      uses: localazy/download@v1
-      with:
-        read_key: ${{ secrets.LOCALAZY_KEY_READ }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build Assets
-      working-directory: ux
-      run: |
-        pnpm install --frozen-lockfile --shamefully-hoist
-        NODE_OPTIONS=--max-old-space-size=8192 pnpm build
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build Blocks
-      working-directory: blocks
-      run: |
-        pnpm install --frozen-lockfile
-        pnpm build
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=vega-,format=short
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build and push Docker images
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: dev/build/Dockerfile
-        push: true
-        platforms: linux/amd64,linux/arm64
-        tags: |
-          ghcr.io/requarks/wiki:3.0.0-alpha
-          ghcr.io/requarks/wiki:${{ env.REL_VERSION }}
-
-    - name: Prepare build archive
-      run: |
-        mkdir -p _dist
-        cp -R assets _dist/assets
-        cp -R server _dist/server
-        cp LICENSE _dist/LICENSE
-        cp config.sample.yml _dist/config.sample.yml
-        cd _dist/server
-        pnpm install --prod --frozen-lockfile
-        cd -
-        find ./_dist/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C ./_dist/ -T -
-
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: wiki-js.tar.gz
-
-  windows:
-    name: Windows Build
-    runs-on: windows-latest
-    needs: [build]
-
-    steps:
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-
-    - name: Enable pnpm
-      run: |
-        corepack enable
-        corepack prepare pnpm@latest --activate
-
-    - name: Download Build Artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: build
-
-    - name: Extract Build
-      run: |
-        mkdir -p win
-        tar -xzf $env:GITHUB_WORKSPACE\build\wiki-js.tar.gz -C $env:GITHUB_WORKSPACE\win --exclude=server/node_modules
-
-    - name: Install Dependencies
-      run: pnpm install --prod --frozen-lockfile
-      working-directory: win\server
-
-    - name: Create Bundle
-      shell: pwsh
-      run: Compress-Archive -Path $env:GITHUB_WORKSPACE\win\* -DestinationPath wiki-js-windows.zip
-
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-win
-        path: wiki-js-windows.zip
-
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dev/build/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
