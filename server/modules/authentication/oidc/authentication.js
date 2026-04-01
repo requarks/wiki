@@ -17,7 +17,9 @@ module.exports = {
         issuer: conf.issuer,
         userInfoURL: conf.userInfoURL,
         callbackURL: conf.callbackURL,
-        passReqToCallback: true
+        passReqToCallback: true,
+        skipUserProfile: false,
+        store: { verify: (req, state, cb) => cb(null, true), store: (req, ctx, appState, meta, cb) => cb(null, ctx.state) }
       }, async (req, iss, sub, profile, cb) => {
         try {
           const user = await WIKI.db.users.processProfile({

@@ -275,8 +275,11 @@ export class User extends Model {
           session: !strInfo.useForm,
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
-          if (err) { return reject(err) }
-          if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
+          if (err) { WIKI.logger.error(`Auth error: ${err.message}`); return reject(err) }
+          if (!user) {
+            WIKI.logger.error(`Auth failed - no user returned. Info: ${JSON.stringify(info)}`)
+            return reject(new Error('ERR_LOGIN_FAILED'))
+          }
 
           try {
             const resp = await WIKI.db.users.afterLoginChecks(user, selStrategy.id, context, {
@@ -291,7 +294,7 @@ export class User extends Model {
         })(context.req, context.res, () => {})
       })
     } else {
-      throw new WIKI.Error.AuthProviderInvalid()
+      throw new Error('ERR_AUTH_PROVIDER_INVALID')
     }
   }
 
