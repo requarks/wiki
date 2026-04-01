@@ -74,7 +74,9 @@ export default function () {
         res.redirect('/')
       }
     } catch (err) {
-      next(err)
+      WIKI.logger.error(`OAuth callback error: ${err.message}`)
+      WIKI.logger.error(err.stack)
+      res.redirect('/login?error=' + encodeURIComponent(err.message))
     }
   })
 
