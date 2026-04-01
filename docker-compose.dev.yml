@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: wikijs
+      POSTGRES_USER: wikijs
+      POSTGRES_DB: wikijs
+    volumes:
+      - wikijs-dev-data:/var/lib/postgresql/data
+
+volumes:
+  wikijs-dev-data:
