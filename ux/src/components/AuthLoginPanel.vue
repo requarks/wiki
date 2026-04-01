@@ -618,7 +618,7 @@ function selectStrategy (str) {
   state.selectedStrategyId = str.id
   // If strategy doesn't use a form (e.g. OIDC/OAuth), redirect to provider
   if (!str.activeStrategy.strategy.useForm) {
-    window.location.assign(`/login/${str.activeStrategy.id}/redirect`)
+    window.location.assign(`/login/${str.activeStrategy.id}`)
   }
 }
 
