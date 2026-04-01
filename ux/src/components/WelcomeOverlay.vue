@@ -3,9 +3,9 @@
   .welcome-bg
   .welcome-content
     .welcome-logo
-      img(src='/_assets/logo-wikijs.svg')
-    .welcome-title {{ t('welcome.title') }}
-    .welcome-subtitle {{ t('welcome.subtitle') }}
+      img(src='/_assets/cultbr.svg')
+    .welcome-title CultBR Wiki
+    .welcome-subtitle Plataforma de Gestão Cultural — Base de Conhecimento
     .welcome-actions
       q-btn(
         push

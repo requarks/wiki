@@ -3,11 +3,12 @@
   .auth-content
     .auth-logo
       img(:src='`/_site/logo`' :alt='siteStore.title')
-    h2.auth-site-title(v-if='siteStore.logoText') {{ siteStore.title }}
-    p.text-grey-7 Login to continue
+    h2.auth-site-title CultBR Wiki
+    p.text-grey-7.auth-subtitle Plataforma de Gestão Cultural do Ministério da Cultura
     auth-login-panel
+    .auth-footer
+      span.text-grey-5 Mantido por NEES/UFAL
   .auth-bg(aria-hidden="true")
-    img(:src='`/_site/loginbg`' alt='')
 </template>
 
 <script setup>
@@ -413,47 +414,57 @@ onMounted(() => {
 
 <style lang="scss">
  .auth {
-    background-color: #FFF;
+    background: linear-gradient(135deg, #19191C 0%, #1A2744 40%, #006FEE 100%);
     display: flex;
-
-    @at-root .body--dark & {
-      background-color: $dark-6;
-    }
+    min-height: 100vh;
 
     &-content {
       flex: 1 0 100%;
       width: 100%;
-      max-width: 500px;
-      padding: 3rem 4rem;
+      max-width: 460px;
+      padding: 3rem 3.5rem;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: stretch;
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px);
+      box-shadow: 20px 0 60px rgba(0,0,0,0.3);
 
       @media (max-width: $breakpoint-xs-max) {
-        padding: 1rem 2rem;
+        padding: 2rem;
         max-width: 100vw;
       }
     }
 
     &-logo {
-      margin-bottom: 6px;
+      margin-bottom: 12px;
 
       img {
-        height: 72px;
+        height: 56px;
       }
     }
 
     &-site-title {
-      font-size: 1.875rem;
-      line-height: 2.25rem;
+      font-size: 1.6rem;
+      line-height: 2rem;
       font-weight: 700;
-      margin: 0;
-      color: $blue-grey-9;
+      margin: 0 0 2px 0;
+      color: #19191C;
+      font-family: 'Poppins', sans-serif;
+    }
 
-      @at-root .body--dark & {
-        color: $blue-grey-1;
-      }
+    &-subtitle {
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    &-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #ECECEC;
+      text-align: center;
+      font-size: 0.8rem;
     }
 
     &-strategies {
@@ -468,18 +479,18 @@ onMounted(() => {
       position: relative;
       height: 100vh;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-      img {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: 0;
-        padding: 0;
+      &::after {
+        content: 'CultBR';
+        font-family: 'Poppins', sans-serif;
+        font-size: 8rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.06);
+        position: absolute;
+        user-select: none;
       }
     }
   }

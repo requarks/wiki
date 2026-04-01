@@ -1,89 +1,60 @@
 <template lang="pug">
-q-header.bg-header.text-white.site-header(
-  height-hint='64'
+q-header.site-header(
+  height-hint='56'
+  bordered
   )
-  .row.no-wrap
-    q-toolbar(
-      style='height: 64px;'
-      dark
+  q-toolbar(style='height: 56px; max-width: 1400px; margin: 0 auto; width: 100%;')
+    q-btn.q-mr-sm.lt-lg(
+      dense
+      flat
+      round
+      icon='las la-bars'
+      @click='$emit(`toggle-sidebar`)'
       )
-      q-btn(
-        dense
-        flat
-        to='/'
-        )
-        q-avatar(
-          v-if='siteStore.logoText'
-          size='34px'
-          square
-          )
-          img(:src='`/_site/logo`')
-        img(
-          v-else
-          :src='`/_site/logo`'
-          style='height: 34px'
-          )
-      q-toolbar-title.text-h6(v-if='siteStore.logoText') {{siteStore.title}}
+    q-btn(
+      dense
+      flat
+      no-caps
+      to='/'
+      style='gap: 10px;'
+      )
+      img(:src='`/_site/logo`' style='height: 28px;')
+      span.text-weight-bold.text-body1(v-if='siteStore.logoText' style='letter-spacing: -0.3px;') {{siteStore.title}}
+    q-space
     header-search
-    q-toolbar(
-      style='height: 64px;'
-      dark
+    q-space
+    q-btn.q-ml-sm(
+      v-if='userStore.can(`write:pages`)'
+      flat
+      dense
+      no-caps
+      icon='las la-plus'
+      label='New'
+      size='sm'
+      style='border-radius: 8px; padding: 4px 12px;'
       )
-      q-space
-      transition(name='syncing')
-        q-spinner-tail(
-          v-show='commonStore.routerLoading'
-          color='accent'
-          size='24px'
-        )
-      q-btn.q-ml-md(
-        v-if='userStore.can(`write:pages`)'
-        flat
-        round
-        dense
-        icon='las la-plus-circle'
-        color='blue-4'
-        aria-label='Create New Page'
-        )
-        q-tooltip Create New Page
-        new-menu
-      q-btn.q-ml-md(
-        v-if='userStore.can(`browse:fileman`)'
-        flat
-        round
-        dense
-        icon='las la-folder-open'
-        color='positive'
-        aria-label='File Manager'
-        @click='openFileManager'
-        )
-        q-tooltip File Manager
-      q-btn.q-ml-md(
-        v-if='userStore.can(`access:admin`)'
-        flat
-        round
-        dense
-        icon='las la-tools'
-        color='pink'
-        to='/_admin'
-        :aria-label='t(`common.header.admin`)'
-        )
-        q-tooltip {{ t('common.header.admin') }}
-
-      //- USER BUTTON / DROPDOWN
-      account-menu(v-if='userStore.authenticated')
-      q-btn.q-ml-md(
-        v-else
-        flat
-        rounded
-        icon='las la-sign-in-alt'
-        color='white'
-        :label='$t(`common.actions.login`)'
-        :aria-label='$t(`common.actions.login`)'
-        to='/login'
-        padding='sm'
-        no-caps
+      new-menu
+    q-btn.q-ml-sm(
+      v-if='userStore.can(`access:admin`)'
+      flat
+      dense
+      round
+      icon='las la-cog'
+      size='sm'
+      to='/_admin'
       )
+    account-menu.q-ml-sm(v-if='userStore.authenticated')
+    q-btn.q-ml-sm(
+      v-else
+      flat
+      dense
+      no-caps
+      icon='las la-sign-in-alt'
+      :label='$t(`common.actions.login`)'
+      to='/login'
+      size='sm'
+      style='border-radius: 8px;'
+    )
 </template>
 
 <script setup>
@@ -100,28 +71,43 @@ import AccountMenu from '@/components/AccountMenu.vue'
 import NewMenu from '@/components/PageNewMenu.vue'
 import HeaderSearch from '@/components/HeaderSearch.vue'
 
-// QUASAR
-
 const $q = useQuasar()
-
-// STORES
-
 const commonStore = useCommonStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
-
-// ROUTER
-
 const router = useRouter()
 const route = useRoute()
-
-// I18N
-
 const { t } = useI18n()
-
-// METHODS
-
-function openFileManager () {
-  siteStore.openFileManager()
-}
 </script>
+
+<style lang="scss">
+.site-header {
+  background: white !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  box-shadow: none !important;
+
+  .q-toolbar {
+    color: #19191C;
+  }
+
+  .q-btn {
+    color: #4B4B53;
+
+    &:hover {
+      color: #006FEE;
+      background: #E6F1FE;
+    }
+  }
+
+  @at-root .body--dark & {
+    background: $dark-5 !important;
+    border-bottom-color: $dark-3 !important;
+
+    .q-toolbar { color: #E2E8F0; }
+    .q-btn {
+      color: #9CA3AF;
+      &:hover { color: #5BA7FF; background: rgba(0,111,238,0.1); }
+    }
+  }
+}
+</style>

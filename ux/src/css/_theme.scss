@@ -1,34 +1,22 @@
-// Quasar SCSS (& Sass) Variables
-// --------------------------------------------------
-// To customize the look and feel of this app, you can override
-// the Sass/SCSS variables found in Quasar's source Sass/SCSS files.
+// CultBR Design System - Quasar Theme Override
 
-// Check documentation for full list of Quasar variables
+$primary   : #006FEE;
+$secondary : #39DDA2;
+$accent    : #FFCF00;
 
-// Your own variables (that are declared here) and Quasar's own
-// ones will be available out of the box in your .vue/.scss/.sass files
+$dark      : #19191C;
 
-// It's highly recommended to change the default colors
-// to match your app's branding.
-// Tip: Use the "Theme Builder" on Quasar's documentation website.
+$positive  : #39DDA2;
+$negative  : #FF385C;
+$info      : #5BA7FF;
+$warning   : #FFD361;
 
-$primary   : #1976D2;
-$secondary : #02C39A;
-$accent    : #f03a47;
+$header : #19191C;
+$sidebar: #19191C;
 
-$dark      : #0d1117;
-
-$positive  : #02C39A;
-$negative  : #f03a47;
-$info      : #3e6990;
-$warning   : #f99d4d;
-
-$header : #000;
-$sidebar: $primary;
-
-$dark-6: #070a0d;
-$dark-5: #0d1117;
-$dark-4: #161b22;
-$dark-3: #1e232a;
-$dark-2: #292f39;
-$dark-1: #343b48;
+$dark-6: #0D0D0E;
+$dark-5: #19191C;
+$dark-4: #1A2744;
+$dark-3: #2A3550;
+$dark-2: #3A4560;
+$dark-1: #4B5570;

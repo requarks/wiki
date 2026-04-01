@@ -6,14 +6,13 @@ q-scroll-area.sidebar-nav(
   q-list.sidebar-nav-list(
     clickable
     dense
-    dark
     )
     template(v-for='item of siteStore.nav.items', :key='item.id')
-      q-item-label.sidebar-nav-header.text-caption.text-wordbreak-all(
+      q-item-label.sidebar-nav-header(
         v-if='item.type === `header`'
         header
         ) {{ item.label }}
-      q-expansion-item(
+      q-expansion-item.sidebar-nav-expand(
         v-else-if='item.type === `link` && item.children?.length > 0'
         :icon='item.icon'
         :label='item.label'
@@ -22,26 +21,22 @@ q-scroll-area.sidebar-nav(
         q-list(
           clickable
           dense
-          dark
           )
           q-item(
             v-for='itemChild of item.children'
             :to='itemChild.target'
             :key='itemChild.id'
             )
-            q-item-section(side)
-              q-icon(:name='itemChild.icon', color='white')
-            q-item-section.text-wordbreak-all.text-white {{ itemChild.label }}
+            q-item-section.text-wordbreak-all {{ itemChild.label }}
       q-item(
         v-else-if='item.type === `link`'
         :to='item.target'
         )
         q-item-section(side)
-          q-icon(:name='item.icon', color='white')
-        q-item-section.text-wordbreak-all.text-white {{ item.label }}
-      q-separator(
+          q-icon(:name='item.icon')
+        q-item-section.text-wordbreak-all {{ item.label }}
+      q-separator.sidebar-nav-sep(
         v-else-if='item.type === `separator`'
-        dark
         )
 </template>
 
@@ -54,40 +49,25 @@ import { useI18n } from 'vue-i18n'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
-
 const $q = useQuasar()
-
-// STORES
-
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
-
-// ROUTER
-
 const router = useRouter()
 const route = useRoute()
-
-// I18N
-
 const { t } = useI18n()
-
-// DATA
 
 const thumbStyle = {
   right: '2px',
-  borderRadius: '5px',
-  backgroundColor: '#FFF',
-  width: '5px',
-  opacity: 0.5
+  borderRadius: '3px',
+  backgroundColor: '#CBD5E1',
+  width: '4px',
+  opacity: 0.6
 }
 const barStyle = {
-  backgroundColor: '#000',
-  width: '9px',
+  backgroundColor: 'transparent',
+  width: '8px',
   opacity: 0.1
 }
-
-// WATCHERS
 
 watch(() => pageStore.navigationId, (newValue) => {
   if (newValue && newValue !== siteStore.nav.currentId) {
@@ -99,86 +79,87 @@ watch(() => pageStore.navigationId, (newValue) => {
 
 <style lang="scss">
 .sidebar-nav {
-  border-top: 1px solid rgba(255,255,255,.15);
-  height: calc(100% - 38px - 24px);
+  height: 100%;
 
   &-list > .q-separator {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin: 8px 16px;
+    background: #E2E8F0;
   }
 
-  .q-list {
-    .q-separator + .q-item__label {
-      padding-top: 10px;
-    }
+  &-header {
+    color: #94A3B8 !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 16px 16px 6px !important;
+  }
 
-    .q-item__section--avatar {
-      min-width: auto;
-    }
+  &-expand {
+    .q-expansion-item__container > .q-item {
+      padding: 6px 12px;
+      margin: 1px 8px;
+      border-radius: 6px;
+      min-height: 34px;
+      color: #334155;
+      font-weight: 500;
+      font-size: 0.875rem;
 
-    .q-expansion-item > .q-expansion-item__container {
-      > .q-item {
-        &::before {
-          content: '';
-          display: block;
-          position: absolute;
-          bottom: 0;
-          left: 0px;
-          width: 10px;
-          height: 10px;
-          border-style: solid;
-          border-color: transparent transparent rgba(255,255,255,.25) rgba(255,255,255,.25);
-          transition: all .4s ease;
-        }
-      }
+      .q-icon { font-size: 18px; color: #94A3B8; }
 
-      &::after {
-        content: '';
-        display: block;
-        position: absolute;
-        bottom: -20px;
-        left: 0;
-        width: 10px;
-        height: 10px;
-        border-style: solid;
-        border-color: rgba(255,255,255,.25) transparent transparent rgba(255,255,255,.25);
-        transition: all .4s ease;
-      }
-    }
-
-    .q-expansion-item--collapsed > .q-expansion-item__container {
-      > .q-item {
-        &::before {
-          border-width: 0 0 0 0;
-        }
-      }
-
-      &::after {
-        bottom: 0px;
-        border-width: 0 0 0 0;
-      }
-    }
-
-    .q-expansion-item--expanded > .q-expansion-item__container {
-      > .q-item {
-        &::before {
-          border-width: 0 10px 10px 0;
-        }
-      }
-
-      &::after {
-        bottom: -20px;
-        border-width: 10px 10px 10px 0;
+      &:hover {
+        background: #F1F5F9;
       }
     }
 
     .q-expansion-item__content {
-      border-left: 10px solid rgba(255,255,255,.25);
+      border-left: none;
+      padding-left: 12px;
+
+      .q-item {
+        padding: 4px 12px 4px 36px;
+        margin: 1px 8px;
+        border-radius: 6px;
+        min-height: 30px;
+        font-size: 0.825rem;
+        color: #64748B;
+
+        &:hover {
+          background: #F1F5F9;
+          color: #334155;
+        }
+
+        &.q-router-link--active {
+          background: #E6F1FE;
+          color: #006FEE;
+          font-weight: 600;
+        }
+      }
     }
   }
 
-  &-header {
-    color: rgba(255,255,255,.75) !important;
+  .q-list > .q-item {
+    padding: 6px 12px;
+    margin: 1px 8px;
+    border-radius: 6px;
+    min-height: 34px;
+    color: #334155;
+    font-size: 0.875rem;
+
+    .q-icon { font-size: 18px; color: #94A3B8; }
+
+    &:hover {
+      background: #F1F5F9;
+      color: #1E293B;
+    }
+
+    &.q-router-link--active {
+      background: #E6F1FE !important;
+      color: #006FEE !important;
+      font-weight: 600;
+
+      .q-icon { color: #006FEE; }
+    }
   }
 }
 </style>
