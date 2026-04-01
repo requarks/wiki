@@ -34,11 +34,11 @@ RUN cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs.svg && \
     cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs-full.svg && \
     mkdir -p ./data/assets
 
-# Fix CJS -> ESM for auth/storage modules (vega branch uses ESM imports)
+# Fix CJS modules: rename .js to .cjs and create ESM wrappers
 RUN find ./server/modules/authentication -name "authentication.js" -exec sh -c \
-    'echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./authentication.js\"); export default m;" > "$(dirname {})"/authentication.mjs' \; && \
+    'mv "{}" "$(dirname {})"/authentication.cjs && echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./authentication.cjs\"); export default m;" > "$(dirname {})"/authentication.mjs' \; && \
     find ./server/modules/storage -name "storage.js" -exec sh -c \
-    'echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./storage.js\"); export default m;" > "$(dirname {})"/storage.mjs' \;
+    'mv "{}" "$(dirname {})"/storage.cjs && echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./storage.cjs\"); export default m;" > "$(dirname {})"/storage.mjs' \;
 
 USER node
 
