@@ -34,9 +34,11 @@ RUN cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs.svg && \
     cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs-full.svg && \
     mkdir -p ./data/assets
 
-# Fix .js -> .mjs for auth/storage modules (vega branch bug)
-RUN find ./server/modules/authentication -name "authentication.js" -exec sh -c 'ln -sf "$(basename {})" "$(dirname {})"/authentication.mjs' \; && \
-    find ./server/modules/storage -name "storage.js" -exec sh -c 'ln -sf "$(basename {})" "$(dirname {})"/storage.mjs' \;
+# Fix CJS -> ESM for auth/storage modules (vega branch uses ESM imports)
+RUN find ./server/modules/authentication -name "authentication.js" -exec sh -c \
+    'echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./authentication.js\"); export default m;" > "$(dirname {})"/authentication.mjs' \; && \
+    find ./server/modules/storage -name "storage.js" -exec sh -c \
+    'echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./storage.js\"); export default m;" > "$(dirname {})"/storage.mjs' \;
 
 USER node
 
