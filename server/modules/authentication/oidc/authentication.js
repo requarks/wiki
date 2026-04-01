@@ -19,7 +19,10 @@ module.exports = {
         callbackURL: conf.callbackURL,
         passReqToCallback: true,
         skipUserProfile: false,
-        store: { verify: (req, state, cb) => cb(null, true), store: (req, ctx, appState, meta, cb) => cb(null, ctx.state) }
+        store: new (class {
+          store(req, ctx, appState, meta, cb) { cb(null, ctx.state || 'state') }
+          verify(req, providedState, cb) { cb(null, true) }
+        })()
       }, async (req, iss, sub, profile, cb) => {
         try {
           const user = await WIKI.db.users.processProfile({

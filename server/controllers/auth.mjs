@@ -45,7 +45,8 @@ export default function () {
         strategyId: req.params.strategy
       }, { req, res })
     } catch (err) {
-      next(err)
+      WIKI.logger.error(`OAuth login error: ${err.message}`)
+      res.redirect('/login?error=' + encodeURIComponent(err.message))
     }
   })
 
