@@ -42,7 +42,7 @@ export default function () {
   router.get('/login/:strategy', async (req, res, next) => {
     try {
       await WIKI.db.users.login({
-        strategy: req.params.strategy
+        strategyId: req.params.strategy
       }, { req, res })
     } catch (err) {
       next(err)
@@ -57,7 +57,7 @@ export default function () {
 
     try {
       const authResult = await WIKI.db.users.login({
-        strategy: req.params.strategy
+        strategyId: req.params.strategy
       }, { req, res })
       res.cookie('jwt', authResult.jwt, { expires: DateTime.now().plus({ years: 1 }).toJSDate() })
 
