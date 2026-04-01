@@ -15,7 +15,7 @@
           no-caps
           :color='str.id === state.selectedStrategyId ? `primary` : ($q.dark.isActive ? `blue-grey-9` : `grey-1`)'
           :text-color='str.id === state.selectedStrategyId || $q.dark.isActive ? `white` : `blue-grey-9`'
-          @click='state.selectedStrategyId = str.id'
+          @click='selectStrategy(str)'
           )
     q-form(ref='loginForm', @submit='login')
       q-input(
@@ -608,6 +608,17 @@ async function handleLoginResponse (resp) {
         message: 'Unexpected Authentication Response'
       })
     }
+  }
+}
+
+/**
+ * SELECT STRATEGY
+ */
+function selectStrategy (str) {
+  state.selectedStrategyId = str.id
+  // If strategy doesn't use a form (e.g. OIDC/OAuth), redirect to provider
+  if (!str.activeStrategy.strategy.useForm) {
+    window.location.assign(`/login/${str.activeStrategy.id}/redirect`)
   }
 }
 
