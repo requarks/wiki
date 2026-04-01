@@ -30,8 +30,8 @@ RUN sed -i 's|</head>|<link href="https://fonts.googleapis.com/css2?family=Inter
 
 # Replace Wiki.js branding and logo
 RUN sed -i 's/Wiki\.js/CultBR Wiki/g' ./assets/index.html
-RUN cp ./assets/_assets/cultbr.svg ./assets/_assets/logo-wikijs.svg && \
-    cp ./assets/_assets/cultbr.svg ./assets/_assets/logo-wikijs-full.svg && \
+RUN cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs.svg && \
+    cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs-full.svg && \
     mkdir -p ./data/assets
 
 USER node
