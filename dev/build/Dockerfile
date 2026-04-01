@@ -34,11 +34,11 @@ RUN cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs.svg && \
     cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs-full.svg && \
     mkdir -p ./data/assets
 
-# Fix CJS modules: rename .js to .cjs and create ESM wrappers
+# Fix CJS modules: rename .js to .cjs and create ESM wrappers with 3-arg adapter
 RUN find ./server/modules/authentication -name "authentication.js" -exec sh -c \
-    'mv "{}" "$(dirname {})"/authentication.cjs && echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./authentication.cjs\"); export default m;" > "$(dirname {})"/authentication.mjs' \; && \
+    'mv "{}" "$(dirname {})"/authentication.cjs && printf "import{createRequire}from\"module\";const require=createRequire(import.meta.url);const m=require(\"./authentication.cjs\");const w={...m,init(p,id,c){return m.init(p,{...c,key:id})}};export default w;\n" > "$(dirname {})"/authentication.mjs' \; && \
     find ./server/modules/storage -name "storage.js" -exec sh -c \
-    'mv "{}" "$(dirname {})"/storage.cjs && echo "import { createRequire } from \"module\"; const require = createRequire(import.meta.url); const m = require(\"./storage.cjs\"); export default m;" > "$(dirname {})"/storage.mjs' \;
+    'mv "{}" "$(dirname {})"/storage.cjs && printf "import{createRequire}from\"module\";const require=createRequire(import.meta.url);const m=require(\"./storage.cjs\");export default m;\n" > "$(dirname {})"/storage.mjs' \;
 
 USER node
 
