@@ -34,6 +34,10 @@ RUN cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs.svg && \
     cp ./assets/cultbr.svg ./assets/_assets/logo-wikijs-full.svg && \
     mkdir -p ./data/assets
 
+# Fix .js -> .mjs for auth/storage modules (vega branch bug)
+RUN find ./server/modules/authentication -name "authentication.js" -exec sh -c 'ln -sf "$(basename {})" "$(dirname {})"/authentication.mjs' \; && \
+    find ./server/modules/storage -name "storage.js" -exec sh -c 'ln -sf "$(basename {})" "$(dirname {})"/storage.mjs' \;
+
 USER node
 
 ENV NODE_ENV=production
