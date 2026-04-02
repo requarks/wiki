@@ -1108,7 +1108,6 @@ async function refreshUsers () {
 }
 
 async function assignUser () {
-  // Fetch all users
   $q.loading.show()
   let allUsers = []
   try {
@@ -1117,7 +1116,7 @@ async function assignUser () {
       fetchPolicy: 'network-only'
     })
     allUsers = resp?.data?.users?.users || []
-    // Filter out already assigned users
+    // Filter out already assigned and guest
     const assignedIds = state.users.map(u => u.id)
     allUsers = allUsers.filter(u => !assignedIds.includes(u.id) && u.email !== 'guest@example.com')
   } catch (err) {
@@ -1128,16 +1127,16 @@ async function assignUser () {
   $q.loading.hide()
 
   if (allUsers.length === 0) {
-    $q.notify({ type: 'info', message: 'No users available to assign' })
+    $q.notify({ type: 'info', message: 'All users are already in this group' })
     return
   }
 
   $q.dialog({
-    title: 'Assign User to Group',
-    message: 'Select a user:',
+    title: 'Assign Users to Group',
+    message: 'Select users to add:',
     options: {
-      model: '',
-      type: 'radio',
+      model: [],
+      type: 'checkbox',
       items: allUsers.map(u => ({
         label: `${u.name || 'No name'} (${u.email})`,
         value: u.id
@@ -1145,23 +1144,24 @@ async function assignUser () {
     },
     cancel: true,
     persistent: false
-  }).onOk(async (userId) => {
-    if (!userId) return
-    try {
-      const result = await APOLLO_CLIENT.mutate({
-        mutation: gql`mutation($g:UUID!,$u:UUID!){assignUserToGroup(groupId:$g,userId:$u){operation{succeeded message}}}`,
-        variables: { g: state.group.id, u: userId }
-      })
-      if (result?.data?.assignUserToGroup?.operation?.succeeded) {
-        const user = allUsers.find(u => u.id === userId)
-        $q.notify({ type: 'positive', message: `${user?.name || user?.email} added to group` })
-        refreshUsers()
-      } else {
-        throw new Error(result?.data?.assignUserToGroup?.operation?.message || 'Failed')
+  }).onOk(async (userIds) => {
+    if (!userIds || userIds.length === 0) return
+    let added = 0
+    for (const userId of userIds) {
+      try {
+        const result = await APOLLO_CLIENT.mutate({
+          mutation: gql`mutation($g:UUID!,$u:UUID!){assignUserToGroup(groupId:$g,userId:$u){operation{succeeded message}}}`,
+          variables: { g: state.group.id, u: userId }
+        })
+        if (result?.data?.assignUserToGroup?.operation?.succeeded) {
+          added++
+        }
+      } catch (err) {
+        console.warn('Failed to assign user:', err.message)
       }
-    } catch (err) {
-      $q.notify({ type: 'negative', message: err.message })
     }
+    $q.notify({ type: 'positive', message: `${added} user(s) added to group` })
+    refreshUsers()
   })
 }
 
