@@ -94,18 +94,8 @@ export default {
     // Initialize collaboration server
     try {
       WIKI.collab = collaboration
-      await WIKI.collab.init()
-
-      // Handle WebSocket upgrade for collaboration
       const httpServer = WIKI.servers.http || WIKI.servers.https
-      if (httpServer) {
-        httpServer.on('upgrade', (request, socket, head) => {
-          if (request.url && request.url.startsWith('/_collab')) {
-            WIKI.collab.handleUpgrade(request, socket, head)
-          }
-        })
-        WIKI.logger.info('Collaboration WebSocket on /_collab: [ OK ]')
-      }
+      await WIKI.collab.init(httpServer)
     } catch (err) {
       WIKI.logger.warn(`Collaboration server init failed: ${err.message}`)
     }

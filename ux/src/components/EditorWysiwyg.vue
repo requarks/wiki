@@ -677,18 +677,27 @@ function init () {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const collabUrl = `${wsProtocol}://${window.location.host}/_collab`
 
+  console.info(`[Collab] Connecting to ${collabUrl} for document ${pageStore.id}`)
   try {
     collabProvider = new HocuspocusProvider({
       url: collabUrl,
       name: pageStore.id || 'default',
       document: ydoc,
       token: document.cookie.match(/jwt=([^;]+)/)?.[1] || 'anonymous',
-      onConnect() { state.collabEnabled = true },
-      onDisconnect() { state.collabEnabled = false },
-      onSynced() { console.info('Collaboration synced') }
+      onConnect() {
+        state.collabEnabled = true
+        console.info('[Collab] Connected!')
+      },
+      onDisconnect() {
+        state.collabEnabled = false
+        console.warn('[Collab] Disconnected')
+      },
+      onSynced() { console.info('[Collab] Synced with server') },
+      onStatus(event) { console.info('[Collab] Status:', event.status) },
+      onClose(event) { console.warn('[Collab] Closed:', event.event?.code, event.event?.reason) }
     })
   } catch (err) {
-    console.warn('Collaboration unavailable:', err.message)
+    console.warn('[Collab] Init failed:', err.message)
   }
 
   // -> Build extensions list
