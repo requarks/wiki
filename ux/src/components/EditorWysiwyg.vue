@@ -702,6 +702,11 @@ function init () {
           if (html) {
             console.info('[Collab] Y.Doc empty, inserting page content:', html.length, 'chars')
             editor.value.commands.setContent(html)
+            // Update page store so save works
+            pageStore.$patch({
+              content: JSON.stringify(editor.value.getJSON()),
+              render: editor.value.getHTML()
+            })
           }
         }
       },
@@ -766,6 +771,15 @@ function init () {
       TextStyle,
       Typography
     ],
+    onCreate: ({ editor }) => {
+      // Ensure content is populated on editor creation
+      if (editor && !editor.isEmpty) {
+        pageStore.$patch({
+          content: JSON.stringify(editor.getJSON()),
+          render: editor.getHTML()
+        })
+      }
+    },
     onUpdate: ({ editor }) => {
       editorStore.$patch({
         lastChangeTimestamp: DateTime.utc()
