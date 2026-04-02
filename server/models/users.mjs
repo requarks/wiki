@@ -127,13 +127,6 @@ export class User extends Model {
 
   static async processProfile({ profile, providerKey }) {
     const provider = get(WIKI.auth.strategies, providerKey, {})
-    provider.info = find(WIKI.data.authentication, ['key', provider.stategyKey])
-
-    // Find existing user
-    let user = await WIKI.db.users.query().findOne({
-      providerId: toString(profile.id),
-      providerKey
-    })
 
     // Parse email
     let primaryEmail = ''
@@ -153,19 +146,8 @@ export class User extends Model {
     }
     primaryEmail = primaryEmail.toLowerCase()
 
-    // Find pending social user
-    if (!user) {
-      user = await WIKI.db.users.query().findOne({
-        email: primaryEmail,
-        providerId: null,
-        providerKey
-      })
-      if (user) {
-        user = await user.$query().patchAndFetch({
-          providerId: toString(profile.id)
-        })
-      }
-    }
+    // Find existing user by email (Wiki.js 3.0 schema)
+    let user = await WIKI.db.users.query().findOne({ email: primaryEmail })
 
     // Parse display name
     let displayName = ''
@@ -191,45 +173,27 @@ export class User extends Model {
     // Update existing user
     if (user) {
       if (!user.isActive) {
-        throw new WIKI.Error.AuthAccountBanned()
+        throw new Error('ERR_ACCOUNT_BANNED')
       }
       if (user.isSystem) {
         throw new Error('This is a system reserved account and cannot be used.')
       }
 
       user = await user.$query().patchAndFetch({
-        email: primaryEmail,
-        name: displayName,
-        pictureUrl: pictureUrl
+        name: displayName
       })
-
-      if (pictureUrl === 'internal') {
-        await WIKI.db.users.updateUserAvatarData(user.id, profile.picture)
-      }
 
       return user
     }
 
-    // Self-registration
-    if (provider.selfRegistration) {
-      // Check if email domain is whitelisted
-      if (get(provider, 'domainWhitelist', []).length > 0) {
-        const emailDomain = last(primaryEmail.split('@'))
-        if (!provider.domainWhitelist.includes(emailDomain)) {
-          throw new WIKI.Error.AuthRegistrationDomainUnauthorized()
-        }
-      }
-
-      // Create account
+    // Create new user (auto-register from OAuth)
+    {
       user = await WIKI.db.users.query().insertAndFetch({
-        providerKey: providerKey,
-        providerId: toString(profile.id),
         email: primaryEmail,
         name: displayName,
-        pictureUrl: pictureUrl,
-        locale: WIKI.config.lang.code,
-        defaultEditor: 'markdown',
-        tfaIsActive: false,
+        auth: JSON.stringify({ [providerKey]: { provider: true } }),
+        prefs: JSON.stringify({}),
+        meta: JSON.stringify({}),
         isSystem: false,
         isActive: true,
         isVerified: true
