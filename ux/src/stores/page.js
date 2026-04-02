@@ -538,7 +538,11 @@ export const usePageStore = defineStore('page', {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
 
-      // Ensure content is not null before saving
+      // For WYSIWYG editor: save HTML as content (not Tiptap JSON)
+      // The server rendering pipeline expects HTML/markdown, not JSON
+      if (editorStore.editor === 'wysiwyg' && this.render) {
+        this.content = this.render
+      }
       if (!this.content && this.render) {
         this.content = this.render
       }
