@@ -694,7 +694,17 @@ function init () {
         state.collabEnabled = false
         console.warn('[Collab] Disconnected')
       },
-      onSynced() { console.info('[Collab] Synced with server') },
+      onSynced({ state: syncState }) {
+        console.info('[Collab] Synced with server')
+        // If Y.Doc is empty after sync, populate with page content
+        if (editor && editor.value && editor.value.isEmpty) {
+          const html = pageStore.render || pageStore.content || ''
+          if (html) {
+            console.info('[Collab] Y.Doc empty, inserting page content:', html.length, 'chars')
+            editor.value.commands.setContent(html)
+          }
+        }
+      },
       onStatus(event) { console.info('[Collab] Status:', event.status) },
       onClose(event) { console.warn('[Collab] Closed:', event.event?.code, event.event?.reason) }
     })
