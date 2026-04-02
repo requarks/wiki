@@ -68,9 +68,11 @@ export default {
   },
   async loadTemplate(key, opts = {}) {
     try {
-      return this.vueEmail.render(`${key}.vue`, {
+      const result = await this.vueEmail.render(`${key}.vue`, {
         props: opts
       })
+      // vue-email render returns { html, text } - extract html string
+      return typeof result === 'object' ? result.html : result
     } catch (err) {
       WIKI.logger.warn(err)
       throw new Error('ERR_MAIL_RENDER_FAILED')
