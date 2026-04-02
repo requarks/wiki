@@ -30,6 +30,7 @@ q-layout(view='hHh lpR fFf', container)
         text-color='white'
         :label='t(`common.actions.save`)'
         icon='las la-check'
+        @click='saveGroup'
       )
   q-drawer.bg-dark-6(:model-value='true', :width='250', dark)
     q-list(padding, v-show='!state.isLoading')
@@ -792,6 +793,61 @@ watch(() => route.params.section, checkRoute)
 watch([() => state.usersPage, () => state.usersFilter], refreshUsers)
 
 // METHODS
+
+async function saveGroup () {
+  $q.loading.show()
+  try {
+    const resp = await APOLLO_CLIENT.mutate({
+      mutation: gql`
+        mutation updateGroup (
+          $id: UUID!
+          $name: String!
+          $redirectOnLogin: String!
+          $permissions: [String]!
+          $rules: [GroupRuleInput]!
+        ) {
+          updateGroup(
+            id: $id
+            name: $name
+            redirectOnLogin: $redirectOnLogin
+            permissions: $permissions
+            rules: $rules
+          ) {
+            operation {
+              succeeded
+              message
+            }
+          }
+        }
+      `,
+      variables: {
+        id: state.group.id,
+        name: state.group.name,
+        redirectOnLogin: state.group.redirectOnLogin || '/',
+        permissions: state.group.permissions || [],
+        rules: (state.group.rules || []).map(r => ({
+          id: r.id,
+          name: r.name,
+          path: r.path || '',
+          roles: r.roles || [],
+          match: r.match || 'START',
+          mode: r.mode || 'ALLOW',
+          locales: r.locales || [],
+          sites: r.sites || []
+        }))
+      }
+    })
+    const result = resp?.data?.updateGroup?.operation ?? {}
+    if (result.succeeded) {
+      $q.notify({ type: 'positive', message: 'Group saved successfully.' })
+    } else {
+      throw new Error(result.message || 'Save failed')
+    }
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err.message })
+  }
+  $q.loading.hide()
+}
 
 function close () {
   adminStore.$patch({ overlay: '' })
