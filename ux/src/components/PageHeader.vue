@@ -1,7 +1,20 @@
 <template lang="pug">
 .page-header-clean(v-if='!editorStore.isActive')
-  h1.page-header-title {{ pageStore.title }}
-  p.page-header-desc(v-if='pageStore.description') {{ pageStore.description }}
+  .page-header-row
+    .page-header-text
+      h1.page-header-title {{ pageStore.title }}
+      p.page-header-desc(v-if='pageStore.description') {{ pageStore.description }}
+    q-btn.page-header-edit(
+      v-if='userStore.authenticated && userStore.can(`write:pages`)'
+      flat
+      no-caps
+      icon='las la-edit'
+      label='Editar'
+      color='primary'
+      size='sm'
+      style='border-radius: 8px; padding: 4px 14px;'
+      @click='editPage'
+    )
 .page-header.row(v-else)
   .col-auto.q-pl-md.flex.items-center
     q-icon.rounded-borders(:name='pageStore.icon' size='64px' color='primary')
@@ -119,6 +132,12 @@ async function createPage () {
   })
 }
 
+async function editPage () {
+  $q.loading.show()
+  await pageStore.pageEdit()
+  $q.loading.hide()
+}
+
 function printPage () { window.print() }
 </script>
 
@@ -128,6 +147,22 @@ function printPage () { window.print() }
   max-width: 860px;
   margin: 0 auto;
   width: 100%;
+}
+
+.page-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-header-text {
+  flex: 1;
+}
+
+.page-header-edit {
+  flex-shrink: 0;
+  margin-top: 4px;
 }
 
 .page-header-title {
