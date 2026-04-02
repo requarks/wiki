@@ -716,7 +716,13 @@ function init () {
 
   // -> Initialize TipTap
   editor = useEditor({
-    content: pageStore.content && pageStore.content.startsWith('{') ? JSON.parse(pageStore.content) : (pageStore.render || pageStore.content || ''),
+    content: (() => {
+      const c = pageStore.content
+      const r = pageStore.render
+      console.info('[Editor] content:', c ? c.length + ' chars' : 'NULL', '| render:', r ? r.length + ' chars' : 'NULL')
+      if (c && c.startsWith('{')) return JSON.parse(c)
+      return r || c || '<p>Carregando...</p>'
+    })(),
     extensions: [
       StarterKit.configure({
         codeBlock: false,
