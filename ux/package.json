@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@apollo/client": "3.13.8",
+    "@hocuspocus/provider": "3.4.4",
     "@lezer/common": "1.2.3",
     "@mdi/font": "7.4.47",
     "@quasar/extras": "1.17.0",
@@ -19,6 +20,8 @@
     "@tiptap/core": "2.11.5",
     "@tiptap/extension-code-block": "2.11.5",
     "@tiptap/extension-code-block-lowlight": "2.11.5",
+    "@tiptap/extension-collaboration": "2.11.5",
+    "@tiptap/extension-collaboration-cursor": "2.11.5",
     "@tiptap/extension-color": "2.11.5",
     "@tiptap/extension-dropcursor": "2.11.5",
     "@tiptap/extension-font-family": "2.11.5",
@@ -104,6 +107,7 @@
     "vue-router": "4.5.1",
     "vue3-otp-input": "0.5.40",
     "vuedraggable": "4.1.0",
+    "yjs": "13.6.30",
     "zxcvbn": "4.4.2"
   },
   "devDependencies": {

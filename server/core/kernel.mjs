@@ -3,6 +3,7 @@ import eventemitter2 from 'eventemitter2'
 import NodeCache from 'node-cache'
 
 import asar from './asar.mjs'
+import collaboration from './collaboration.mjs'
 import db from './db.mjs'
 import extensions from './extensions.mjs'
 import scheduler from './scheduler.mjs'
@@ -89,6 +90,25 @@ export default {
 
     await WIKI.db.subscribeToNotifications()
     await WIKI.scheduler.start()
+
+    // Initialize collaboration server
+    try {
+      WIKI.collab = collaboration
+      await WIKI.collab.init()
+
+      // Handle WebSocket upgrade for collaboration
+      const httpServer = WIKI.servers.http || WIKI.servers.https
+      if (httpServer) {
+        httpServer.on('upgrade', (request, socket, head) => {
+          if (request.url && request.url.startsWith('/_collab')) {
+            WIKI.collab.handleUpgrade(request, socket, head)
+          }
+        })
+        WIKI.logger.info('Collaboration WebSocket on /_collab: [ OK ]')
+      }
+    } catch (err) {
+      WIKI.logger.warn(`Collaboration server init failed: ${err.message}`)
+    }
   },
   /**
    * Graceful shutdown

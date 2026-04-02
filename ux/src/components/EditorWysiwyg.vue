@@ -89,7 +89,8 @@
 <script setup>
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
-// import Collaboration from '@tiptap/extension-collaboration'
+import Collaboration from '@tiptap/extension-collaboration'
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Color } from '@tiptap/extension-color'
 import FontFamily from '@tiptap/extension-font-family'
@@ -108,9 +109,8 @@ import TextStyle from '@tiptap/extension-text-style'
 import Typography from '@tiptap/extension-typography'
 import { common, createLowlight } from 'lowlight'
 import { onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
-// import * as Y from 'yjs'
-// import { IndexeddbPersistence } from 'y-indexeddb'
-// import { WebsocketProvider } from 'y-websocket'
+import * as Y from 'yjs'
+import { HocuspocusProvider } from '@hocuspocus/provider'
 
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
@@ -139,11 +139,12 @@ const { t } = useI18n()
 // STATE
 
 const state = reactive({
-  // editor: null,
-  ydoc: null
+  collabEnabled: false
 })
 
 let editor = null
+let ydoc = null
+let collabProvider = null
 
 const thumbStyle = {
   right: '2px',
@@ -672,12 +673,32 @@ function init () {
   })
 
   // -> Init Live Collab
-  // this.ydoc = new Y.Doc()
+  ydoc = new Y.Doc()
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const collabUrl = `${wsProtocol}://${window.location.host}/_collab`
 
-  /* eslint-disable no-unused-vars */
-  // const dbProvider = new IndexeddbPersistence('example-document', this.ydoc)
-  // const wsProvider = new WebsocketProvider('ws://127.0.0.1:1234', 'example-document', this.ydoc)
-  /* eslint-enable no-unused-vars */
+  try {
+    collabProvider = new HocuspocusProvider({
+      url: collabUrl,
+      name: pageStore.id || 'default',
+      document: ydoc,
+      token: document.cookie.match(/jwt=([^;]+)/)?.[1] || 'anonymous',
+      onConnect() { state.collabEnabled = true },
+      onDisconnect() { state.collabEnabled = false },
+      onSynced() { console.info('Collaboration synced') }
+    })
+  } catch (err) {
+    console.warn('Collaboration unavailable:', err.message)
+  }
+
+  // -> Build extensions list
+  const collabExtensions = ydoc ? [
+    Collaboration.configure({ document: ydoc }),
+    ...(collabProvider ? [CollaborationCursor.configure({
+      provider: collabProvider,
+      user: { name: 'Editor', color: '#006FEE' }
+    })] : [])
+  ] : []
 
   // -> Initialize TipTap
   editor = useEditor({
@@ -685,17 +706,13 @@ function init () {
     extensions: [
       StarterKit.configure({
         codeBlock: false,
-        history: {
-          depth: 500
-        }
+        history: ydoc ? false : { depth: 500 }
       }),
       CodeBlockLowlight.configure({
         lowlight
       }),
       Color,
-      // Collaboration.configure({
-      //   document: this.ydoc
-      // }),
+      ...collabExtensions,
       FontFamily,
       Highlight.configure({
         multicolor: true
@@ -745,6 +762,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (collabProvider) { collabProvider.destroy(); collabProvider = null }
+  if (ydoc) { ydoc.destroy(); ydoc = null }
   editor.value.destroy()
 })
 

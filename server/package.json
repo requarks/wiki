@@ -43,6 +43,8 @@
     "@graphql-tools/schema": "10.0.25",
     "@graphql-tools/utils": "10.9.1",
     "@hexagon/base64": "2.0.4",
+    "@hocuspocus/extension-database": "3.4.4",
+    "@hocuspocus/server": "3.4.4",
     "@joplin/turndown-plugin-gfm": "1.0.62",
     "@node-saml/passport-saml": "5.1.0",
     "@root/csr": "0.8.1",
@@ -173,7 +175,8 @@
     "uuid": "11.1.0",
     "validate.js": "0.13.1",
     "vue": "3.5.18",
-    "xss": "1.0.15"
+    "xss": "1.0.15",
+    "yjs": "13.6.30"
   },
   "devDependencies": {
     "eslint": "9.32.0",
