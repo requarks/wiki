@@ -23,28 +23,52 @@ module.exports = {
           store(req, ctx, appState, meta, cb) { cb(null, ctx.state || 'state') }
           verify(req, providedState, cb) { cb(null, true) }
         })()
-      }, async (req, iss, sub, profile, cb) => {
+      }, async (req, iss, sub, profile, accessToken, refreshToken, params, cb) => {
         try {
-          // Extract email from multiple possible locations
-          const email = _.get(profile, '_json.' + conf.emailClaim) ||
-            _.get(profile, '_json.email') ||
-            _.get(profile, 'emails[0].value') ||
-            _.get(profile, 'email') ||
-            _.get(profile, conf.emailClaim)
+          // passport-openidconnect may not populate profile properly
+          // Fetch user info manually using the access token
+          const https = require('https')
+          const url = require('url')
 
-          const displayName = _.get(profile, '_json.' + (conf.displayNameClaim || 'name')) ||
-            _.get(profile, 'displayName') ||
-            _.get(profile, '_json.name') ||
-            _.get(profile, 'name.givenName', '') + ' ' + _.get(profile, 'name.familyName', '')
+          const fetchUserInfo = (infoUrl, token) => new Promise((resolve, reject) => {
+            const parsed = url.parse(infoUrl)
+            const opts = { hostname: parsed.hostname, path: parsed.path, port: parsed.port || 443, headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' } }
+            https.get(opts, (res) => {
+              let data = ''
+              res.on('data', chunk => data += chunk)
+              res.on('end', () => { try { resolve(JSON.parse(data)) } catch(e) { reject(e) } })
+            }).on('error', reject)
+          })
 
-          WIKI.logger.info('OIDC profile: ' + JSON.stringify({ id: profile.id, email, displayName, keys: Object.keys(profile) }))
+          // Try userinfo endpoint first, then GitLab API
+          let userInfo = {}
+          try {
+            userInfo = await fetchUserInfo(conf.userInfoURL, accessToken)
+          } catch(e) {
+            WIKI.logger.warn('OIDC userinfo fetch failed: ' + e.message)
+          }
+
+          // Fallback to GitLab API if no email
+          if (!userInfo.email && conf.baseUrl) {
+            try {
+              userInfo = await fetchUserInfo(conf.baseUrl + '/api/v4/user', accessToken)
+            } catch(e) {
+              WIKI.logger.warn('GitLab API user fetch failed: ' + e.message)
+            }
+          }
+
+          const email = userInfo.email || _.get(profile, '_json.email') || _.get(profile, 'email')
+          const displayName = userInfo.name || userInfo.username || _.get(profile, 'displayName') || ''
+
+          WIKI.logger.info('OIDC user: ' + JSON.stringify({ email, name: displayName, username: userInfo.username }))
 
           const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,
+              id: userInfo.id || profile.id || sub,
               email: email,
-              displayName: displayName.trim()
+              displayName: displayName
             }
           })
           cb(null, user)
