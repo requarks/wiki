@@ -1107,12 +1107,58 @@ async function refreshUsers () {
   state.isLoadingUsers = false
 }
 
-function assignUser () {
-
+async function assignUser () {
+  $q.dialog({
+    title: 'Assign User',
+    message: 'Enter user email:',
+    prompt: { model: '', type: 'email' },
+    cancel: true,
+    persistent: false
+  }).onOk(async (email) => {
+    try {
+      // Find user by email
+      const resp = await APOLLO_CLIENT.query({
+        query: gql`query($q:String!){users(query:$q){id name email}}`,
+        variables: { q: email },
+        fetchPolicy: 'network-only'
+      })
+      const user = resp?.data?.users?.[0]
+      if (!user) {
+        $q.notify({ type: 'negative', message: 'User not found' })
+        return
+      }
+      // Assign to group
+      const result = await APOLLO_CLIENT.mutate({
+        mutation: gql`mutation($g:UUID!,$u:UUID!){assignUserToGroup(groupId:$g,userId:$u){operation{succeeded message}}}`,
+        variables: { g: state.group.id, u: user.id }
+      })
+      if (result?.data?.assignUserToGroup?.operation?.succeeded) {
+        $q.notify({ type: 'positive', message: `${user.name || user.email} added to group` })
+        refreshUsers()
+      } else {
+        throw new Error(result?.data?.assignUserToGroup?.operation?.message || 'Failed')
+      }
+    } catch (err) {
+      $q.notify({ type: 'negative', message: err.message })
+    }
+  })
 }
 
-function unassignUser () {
-
+async function unassignUser (row) {
+  try {
+    const result = await APOLLO_CLIENT.mutate({
+      mutation: gql`mutation($g:UUID!,$u:UUID!){unassignUserFromGroup(groupId:$g,userId:$u){operation{succeeded message}}}`,
+      variables: { g: state.group.id, u: row.id }
+    })
+    if (result?.data?.unassignUserFromGroup?.operation?.succeeded) {
+      $q.notify({ type: 'positive', message: `${row.name || row.email} removed from group` })
+      refreshUsers()
+    } else {
+      throw new Error(result?.data?.unassignUserFromGroup?.operation?.message || 'Failed')
+    }
+  } catch (err) {
+    $q.notify({ type: 'negative', message: err.message })
+  }
 }
 
 // MOUNTED
