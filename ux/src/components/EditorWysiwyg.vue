@@ -708,7 +708,7 @@ function init () {
     ...(collabProvider ? [CollaborationCursor.configure({
       provider: collabProvider,
       user: {
-        name: userStore.name || userStore.email || 'Anônimo',
+        name: userStore.name && userStore.name !== 'Unknown User' ? userStore.name : (userStore.email?.split('@')[0] || 'Anônimo'),
         color: '#' + ['006FEE', '39DDA2', 'FFCF00', 'FF385C', '7C3AED', '4CAC33'][Math.floor(Math.random() * 6)]
       }
     })] : [])

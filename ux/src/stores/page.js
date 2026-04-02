@@ -89,6 +89,7 @@ const gqlQueries = {
       ) {
         ...PageRead,
         content
+        render
       }
     }
     ${pagePropsFragment}
@@ -104,6 +105,7 @@ const gqlQueries = {
       ) {
         ...PageRead,
         content
+        render
       }
     }
     ${pagePropsFragment}
