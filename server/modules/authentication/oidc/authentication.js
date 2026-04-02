@@ -23,7 +23,8 @@ module.exports = {
           store(req, ctx, appState, meta, cb) { cb(null, ctx.state || 'state') }
           verify(req, providedState, cb) { cb(null, true) }
         })()
-      }, async (req, iss, sub, profile, accessToken, refreshToken, params, cb) => {
+      }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
+        const profile = uiProfile || idProfile || {}
         try {
           // passport-openidconnect may not populate profile properly
           // Fetch user info manually using the access token
