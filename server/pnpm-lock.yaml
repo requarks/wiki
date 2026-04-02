@@ -425,6 +425,9 @@ importers:
       vue:
         specifier: 3.5.18
         version: 3.5.18(typescript@5.6.3)
+      ws:
+        specifier: 8.20.0
+        version: 8.20.0
       xss:
         specifier: 1.0.15
         version: 1.0.15
@@ -5136,8 +5139,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.18.3:
-    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
+  ws@8.20.0:
+    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -5656,7 +5659,7 @@ snapshots:
       async-mutex: 0.5.0
       kleur: 4.1.5
       lib0: 0.2.117
-      ws: 8.18.3
+      ws: 8.20.0
       y-protocols: 1.0.7(yjs@13.6.30)
       yjs: 13.6.30
     transitivePeerDependencies:
@@ -8597,7 +8600,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.18.3
+      ws: 8.20.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -8624,7 +8627,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.2.0
-      ws: 8.18.3
+      ws: 8.20.0
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -9527,7 +9530,7 @@ snapshots:
       debug: 4.4.1(supports-color@5.5.0)
       devtools-protocol: 0.0.1464554
       typed-query-selector: 2.12.0
-      ws: 8.18.3
+      ws: 8.20.0
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
@@ -10588,7 +10591,7 @@ snapshots:
 
   ws@8.17.1: {}
 
-  ws@8.18.3: {}
+  ws@8.20.0: {}
 
   xml-crypto@6.1.2:
     dependencies:

@@ -1,16 +1,17 @@
-import { Server as HocuspocusServer } from '@hocuspocus/server'
+import { Hocuspocus } from '@hocuspocus/server'
 import { Database } from '@hocuspocus/extension-database'
-import * as Y from 'yjs'
+import { WebSocketServer } from 'ws'
 
 export default {
   server: null,
+  wss: null,
 
   async init(httpServer) {
-    this.server = HocuspocusServer.configure({
+    this.server = new Hocuspocus({
+      port: null,
       quiet: true,
 
       async onAuthenticate({ token }) {
-        // Allow all authenticated users (token is passed from frontend)
         if (!token || token === 'anonymous') {
           throw new Error('Not authenticated')
         }
@@ -20,30 +21,27 @@ export default {
       extensions: [
         new Database({
           async fetch({ documentName }) {
-            try {
-              WIKI.logger.debug(`Collab: fetching document ${documentName}`)
-              return null // Let Hocuspocus create fresh doc, editor loads content from store
-            } catch (err) {
-              WIKI.logger.warn(`Collab fetch error: ${err.message}`)
-              return null
-            }
+            WIKI.logger.debug(`Collab: fetch doc ${documentName}`)
+            return null
           },
           async store({ documentName, state }) {
-            try {
-              WIKI.logger.debug(`Collab: storing state for ${documentName}`)
-            } catch (err) {
-              WIKI.logger.warn(`Collab store error: ${err.message}`)
-            }
+            WIKI.logger.debug(`Collab: store doc ${documentName}`)
           }
         })
       ]
     })
 
-    // Attach to HTTP server for WebSocket upgrade
+    // Create a WebSocket server without its own HTTP server
+    this.wss = new WebSocketServer({ noServer: true })
+
+    // Handle upgrade on the main HTTP server
     if (httpServer) {
       httpServer.on('upgrade', (request, socket, head) => {
         if (request.url && request.url.startsWith('/_collab')) {
-          this.server.handleUpgrade(request, socket, head)
+          this.wss.handleUpgrade(request, socket, head, (ws) => {
+            WIKI.logger.info(`Collab: WebSocket client connected for ${request.url}`)
+            this.server.handleConnection(ws, request)
+          })
         }
       })
     }
