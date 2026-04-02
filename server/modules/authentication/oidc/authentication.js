@@ -25,11 +25,26 @@ module.exports = {
         })()
       }, async (req, iss, sub, profile, cb) => {
         try {
+          // Extract email from multiple possible locations
+          const email = _.get(profile, '_json.' + conf.emailClaim) ||
+            _.get(profile, '_json.email') ||
+            _.get(profile, 'emails[0].value') ||
+            _.get(profile, 'email') ||
+            _.get(profile, conf.emailClaim)
+
+          const displayName = _.get(profile, '_json.' + (conf.displayNameClaim || 'name')) ||
+            _.get(profile, 'displayName') ||
+            _.get(profile, '_json.name') ||
+            _.get(profile, 'name.givenName', '') + ' ' + _.get(profile, 'name.familyName', '')
+
+          WIKI.logger.info('OIDC profile: ' + JSON.stringify({ id: profile.id, email, displayName, keys: Object.keys(profile) }))
+
           const user = await WIKI.db.users.processProfile({
             providerKey: req.params.strategy,
             profile: {
               ...profile,
-              email: _.get(profile, '_json.' + conf.emailClaim)
+              email: email,
+              displayName: displayName.trim()
             }
           })
           cb(null, user)
