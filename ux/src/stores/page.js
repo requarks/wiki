@@ -537,6 +537,15 @@ export const usePageStore = defineStore('page', {
     async pageSave () {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
+
+      // Ensure content is not null before saving
+      if (!this.content && this.render) {
+        this.content = this.render
+      }
+      if (!this.content) {
+        this.content = '<p></p>'
+      }
+
       try {
         if (editorStore.mode === 'create') {
           const resp = await APOLLO_CLIENT.mutate({
