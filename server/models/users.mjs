@@ -191,7 +191,7 @@ export class User extends Model {
     // Update existing user
     if (user) {
       if (!user.isActive) {
-        throw new WIKI.Error.AuthAccountBanned()
+        throw new Error('ERR_ACCOUNT_BANNED')
       }
       if (user.isSystem) {
         throw new Error('This is a system reserved account and cannot be used.')
@@ -216,7 +216,7 @@ export class User extends Model {
       if (get(provider, 'domainWhitelist', []).length > 0) {
         const emailDomain = last(primaryEmail.split('@'))
         if (!provider.domainWhitelist.includes(emailDomain)) {
-          throw new WIKI.Error.AuthRegistrationDomainUnauthorized()
+          throw new Error('ERR_AUTH_REGISTRATION_DOMAIN_UNAUTHORIZED')
         }
       }
 
@@ -257,7 +257,7 @@ export class User extends Model {
     if (has(WIKI.auth.strategies, strategyId)) {
       const selStrategy = WIKI.auth.strategies[strategyId]
       if (!selStrategy.isEnabled) {
-        throw new WIKI.Error.AuthProviderInvalid()
+        throw new Error('ERR_AUTH_PROVIDER_INVALID')
       }
 
       const strInfo = find(WIKI.data.authentication, ['key', selStrategy.module])
@@ -276,7 +276,10 @@ export class User extends Model {
           scope: strInfo.scopes ? strInfo.scopes : null
         }, async (err, user, info) => {
           if (err) { return reject(err) }
-          if (!user) { return reject(new WIKI.Error.AuthLoginFailed()) }
+          if (!user) {
+            WIKI.logger.error('Auth failed - no user returned. Info: ' + JSON.stringify(info))
+            return reject(new Error('ERR_LOGIN_FAILED'))
+          }
 
           try {
             const resp = await WIKI.db.users.afterLoginChecks(user, selStrategy.id, context, {
@@ -291,7 +294,7 @@ export class User extends Model {
         })(context.req, context.res, () => {})
       })
     } else {
-      throw new WIKI.Error.AuthProviderInvalid()
+      throw new Error('ERR_AUTH_PROVIDER_INVALID')
     }
   }
 
@@ -411,7 +414,7 @@ export class User extends Model {
       }
       if (!user.isActive) {
         WIKI.logger.warn(`Failed to refresh token for user ${user}: Inactive.`)
-        throw new WIKI.Error.AuthAccountBanned()
+        throw new Error('ERR_ACCOUNT_BANNED')
       }
     } else if (isNil(user.groups)) {
       user.groups = await user.$relatedQuery('groups').select('groups.id', 'permissions')
@@ -829,7 +832,7 @@ export class User extends Model {
     if (context.req.user.strategyId && has(WIKI.auth.strategies, context.req.user.strategyId)) {
       const selStrategy = WIKI.auth.strategies[context.req.user.strategyId]
       if (!selStrategy.isEnabled) {
-        throw new WIKI.Error.AuthProviderInvalid()
+        throw new Error('ERR_AUTH_PROVIDER_INVALID')
       }
       const provider = find(WIKI.data.authentication, ['key', selStrategy.module])
       if (provider.logout) {

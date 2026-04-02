@@ -430,7 +430,7 @@ export class Page extends Model {
 
     // -> Basic fields
     if ('title' in opts.patch) {
-      patch.title = opts.patch.title.trim()
+      patch.title = (opts.patch.title ?? '').trim()
       historyData.affectedFields.push('title')
       shouldUpdateSearch = true
 
@@ -440,18 +440,18 @@ export class Page extends Model {
     }
 
     if ('description' in opts.patch) {
-      patch.description = opts.patch.description.trim()
+      patch.description = (opts.patch.description ?? '').trim()
       historyData.affectedFields.push('description')
       shouldUpdateSearch = true
     }
 
     if ('icon' in opts.patch) {
-      patch.icon = opts.patch.icon.trim()
+      patch.icon = (opts.patch.icon ?? '').trim()
       historyData.affectedFields.push('icon')
     }
 
     if ('alias' in opts.patch) {
-      patch.alias = opts.patch.alias.trim()
+      patch.alias = (opts.patch.alias ?? '').trim()
       historyData.affectedFields.push('alias')
 
       if (patch.alias.length > 255) {
