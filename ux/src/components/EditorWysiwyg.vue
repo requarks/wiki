@@ -119,6 +119,7 @@ import { DateTime } from 'luxon'
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 const lowlight = createLowlight(common)
 
@@ -131,6 +132,7 @@ const $q = useQuasar()
 const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -705,13 +707,16 @@ function init () {
     Collaboration.configure({ document: ydoc }),
     ...(collabProvider ? [CollaborationCursor.configure({
       provider: collabProvider,
-      user: { name: 'Editor', color: '#006FEE' }
+      user: {
+        name: userStore.name || userStore.email || 'Anônimo',
+        color: '#' + ['006FEE', '39DDA2', 'FFCF00', 'FF385C', '7C3AED', '4CAC33'][Math.floor(Math.random() * 6)]
+      }
     })] : [])
   ] : []
 
   // -> Initialize TipTap
   editor = useEditor({
-    content: pageStore.content && pageStore.content.startsWith('{') ? JSON.parse(pageStore.content) : `<p>${pageStore.content}</p>`,
+    content: pageStore.content && pageStore.content.startsWith('{') ? JSON.parse(pageStore.content) : (pageStore.render || pageStore.content || ''),
     extensions: [
       StarterKit.configure({
         codeBlock: false,
