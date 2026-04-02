@@ -1108,32 +1108,53 @@ async function refreshUsers () {
 }
 
 async function assignUser () {
+  // Fetch all users
+  $q.loading.show()
+  let allUsers = []
+  try {
+    const resp = await APOLLO_CLIENT.query({
+      query: gql`query { users(pageSize: 100) { users { id name email } } }`,
+      fetchPolicy: 'network-only'
+    })
+    allUsers = resp?.data?.users?.users || []
+    // Filter out already assigned users
+    const assignedIds = state.users.map(u => u.id)
+    allUsers = allUsers.filter(u => !assignedIds.includes(u.id) && u.email !== 'guest@example.com')
+  } catch (err) {
+    $q.notify({ type: 'negative', message: 'Failed to load users: ' + err.message })
+    $q.loading.hide()
+    return
+  }
+  $q.loading.hide()
+
+  if (allUsers.length === 0) {
+    $q.notify({ type: 'info', message: 'No users available to assign' })
+    return
+  }
+
   $q.dialog({
-    title: 'Assign User',
-    message: 'Enter user email:',
-    prompt: { model: '', type: 'email' },
+    title: 'Assign User to Group',
+    message: 'Select a user:',
+    options: {
+      model: '',
+      type: 'radio',
+      items: allUsers.map(u => ({
+        label: `${u.name || 'No name'} (${u.email})`,
+        value: u.id
+      }))
+    },
     cancel: true,
     persistent: false
-  }).onOk(async (email) => {
+  }).onOk(async (userId) => {
+    if (!userId) return
     try {
-      // Find user by email
-      const resp = await APOLLO_CLIENT.query({
-        query: gql`query($q:String!){users(query:$q){id name email}}`,
-        variables: { q: email },
-        fetchPolicy: 'network-only'
-      })
-      const user = resp?.data?.users?.[0]
-      if (!user) {
-        $q.notify({ type: 'negative', message: 'User not found' })
-        return
-      }
-      // Assign to group
       const result = await APOLLO_CLIENT.mutate({
         mutation: gql`mutation($g:UUID!,$u:UUID!){assignUserToGroup(groupId:$g,userId:$u){operation{succeeded message}}}`,
-        variables: { g: state.group.id, u: user.id }
+        variables: { g: state.group.id, u: userId }
       })
       if (result?.data?.assignUserToGroup?.operation?.succeeded) {
-        $q.notify({ type: 'positive', message: `${user.name || user.email} added to group` })
+        const user = allUsers.find(u => u.id === userId)
+        $q.notify({ type: 'positive', message: `${user?.name || user?.email} added to group` })
         refreshUsers()
       } else {
         throw new Error(result?.data?.assignUserToGroup?.operation?.message || 'Failed')
