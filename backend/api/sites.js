@@ -468,7 +468,7 @@ async function routes(app) {
         }
       }
     },
-    async (req, reply) => {
+    async () => {
       return { hello: 'world' }
     }
   )

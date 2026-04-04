@@ -1,5 +1,10 @@
 import { DateTime } from 'luxon'
-import { jobSchedule as jobScheduleTable, jobLock as jobLockTable } from '../db/schema.js'
+import {
+  jobSchedule as jobScheduleTable,
+  jobLock as jobLockTable,
+  jobHistory as jobHistoryTable
+} from '../db/schema.js'
+import { and, eq, lte, not } from 'drizzle-orm'
 
 /**
  * Jobs model
@@ -39,6 +44,23 @@ class Jobs {
       lastCheckedBy: 'init',
       lastCheckedAt: DateTime.utc().minus({ hours: 1 }).toISO()
     })
+  }
+
+  /**
+   * Purge old job history
+   */
+  async cleanHistory() {
+    await WIKI.db
+      .delete(jobHistoryTable)
+      .where(
+        and(
+          not(eq(jobHistoryTable.state, 'active')),
+          lte(
+            jobHistoryTable.startedAt,
+            DateTime.utc().minus({ seconds: WIKI.config.scheduler.historyExpiration }).toJSDate()
+          )
+        )
+      )
   }
 }
 

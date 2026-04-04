@@ -177,23 +177,7 @@ function humanizeDuration (start, end) {
 async function load () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getSystemInstances {
-          systemInstances {
-            id
-            activeConnections
-            activeListeners
-            dbUser
-            dbFirstSeen
-            dbLastSeen
-            ip
-          }
-        }
-      `,
-      fetchPolicy: 'network-only'
-    })
-    state.instances = resp?.data?.systemInstances
+    state.instances = await API_CLIENT.get('system/instances').json()
   } catch (err) {
     $q.notify({
       type: 'negative',

@@ -3,7 +3,7 @@ import { kebabCase } from 'es-toolkit/string'
 import path from 'node:path'
 import configSvc from './core/config.js'
 import logger from './core/logger.js'
-import db from './core/db.js'
+import dbManager from './core/db.js'
 
 // ----------------------------------------
 // Init Minimal Core
@@ -20,11 +20,10 @@ const WIKI = {
       return true
     }
 
-    WIKI.db = await db.init(true)
+    WIKI.db = await dbManager.init(true)
 
     try {
       await WIKI.configSvc.loadFromDb()
-      await WIKI.configSvc.applyFlags()
     } catch (err) {
       WIKI.logger.error('Database Initialization Error: ' + err.message)
       if (WIKI.IS_DEBUG) {

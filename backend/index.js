@@ -8,6 +8,7 @@ import path from 'node:path'
 import { DateTime } from 'luxon'
 import semver from 'semver'
 import { customAlphabet } from 'nanoid'
+import { uniq } from 'es-toolkit/array'
 
 import fastify from 'fastify'
 import fastifyCompress from '@fastify/compress'
@@ -343,7 +344,7 @@ async function initHTTPServer() {
         }
         nestedPermissions.push('`manage:system`')
         transformedSchema.description =
-          `${currentDescription}\n\n**Required Permissions:** ${nestedPermissions.join(' or ')}`.trim()
+          `${currentDescription}\n\n**Required Permissions:** ${uniq(nestedPermissions).join(' or ')}`.trim()
         transformedSchema['x-permissions'] = permissions
       } else {
         transformedSchema.description =

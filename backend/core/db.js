@@ -5,6 +5,7 @@ import { setTimeout } from 'node:timers/promises'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool } from 'pg'
+import { parse } from 'pg-connection-string'
 import semver from 'semver'
 
 import { relations } from '../db/relations.js'
@@ -19,6 +20,7 @@ export default {
   pool: null,
   pubsubClient: null,
   config: null,
+  dbName: null,
   VERSION: null,
   LEGACY: false,
   onReady: createDeferred(),
@@ -31,17 +33,21 @@ export default {
 
     // Fetch DB Config
 
-    this.config = process.env.DATABASE_URL
-      ? {
-          connectionString: process.env.DATABASE_URL
-        }
-      : {
-          host: WIKI.config.db.host.toString(),
-          user: WIKI.config.db.user.toString(),
-          password: WIKI.config.db.pass.toString(),
-          database: WIKI.config.db.db.toString(),
-          port: WIKI.config.db.port
-        }
+    if (process.env.DATABASE_URL) {
+      this.config = {
+        connectionString: process.env.DATABASE_URL
+      }
+      this.dbName = parse(process.env.DATABASE_URL).database
+    } else {
+      this.config = {
+        host: WIKI.config.db.host.toString(),
+        user: WIKI.config.db.user.toString(),
+        password: WIKI.config.db.pass.toString(),
+        database: WIKI.config.db.db.toString(),
+        port: WIKI.config.db.port
+      }
+      this.dbName = this.config.database
+    }
 
     // Handle SSL Options
 
@@ -91,7 +97,7 @@ export default {
     // Initialize Postgres Pool
 
     this.pool = new Pool({
-      application_name: `Wiki.js - ${WIKI.INSTANCE_ID}:MAIN`,
+      application_name: `Wiki.js - ${WIKI.INSTANCE_ID}:${workerMode ? 'WORKER' : 'MAIN'}`,
       ...this.config,
       ...(workerMode ? { min: 0, max: 1 } : WIKI.config.pool),
       options: `-c search_path=${WIKI.config.db.schema}`
