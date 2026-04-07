@@ -803,7 +803,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load storage configuration.',
+      message: t('admin.storage.loadFailed'),
       caption: err.message,
       timeout: 20000
     })
@@ -870,7 +870,7 @@ async function save ({ silent }) {
         })
       }
     } else {
-      throw new Error(resp?.data?.updateStorageTargets?.operation?.message || 'Unexpected error')
+      throw new Error(resp?.data?.updateStorageTargets?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
@@ -991,7 +991,7 @@ async function setupDestroy () {
           })
         }, 2000)
       } else {
-        throw new Error(resp?.data?.destroyStorageTargetSetup?.operation?.message || 'Unexpected error')
+        throw new Error(resp?.data?.destroyStorageTargetSetup?.operation?.message || t('common.error.unexpected'))
       }
     } catch (err) {
       $q.notify({
@@ -1137,7 +1137,7 @@ async function setupGitHubStep (step, code) {
         }
       }
     } else {
-      throw new Error(resp?.data?.setupStorageTarget?.operation?.message || 'Unexpected error')
+      throw new Error(resp?.data?.setupStorageTarget?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.loading.hide()

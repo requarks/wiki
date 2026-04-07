@@ -81,7 +81,7 @@ q-page.admin-webhooks
               q-btn.acrylic-btn.q-mr-sm(
                 color='indigo'
                 icon='las la-pen'
-                label='Edit'
+                :label='t(`common.actions.edit`)'
                 flat
                 no-caps
                 @click='editHook(hook.id)'

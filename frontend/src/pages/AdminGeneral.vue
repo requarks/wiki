@@ -283,7 +283,7 @@ q-page.admin-general
                 q-item-label(caption) {{t(`admin.general.logoUplHint`)}}
               q-item-section.col-auto
                 q-btn(
-                  label='Upload'
+                  :label='t(`common.actions.upload`)'
                   unelevated
                   icon='las la-upload'
                   color='primary'
@@ -331,7 +331,7 @@ q-page.admin-general
                 q-item-label(caption) {{t(`admin.general.faviconHint`)}}
               q-item-section.col-auto
                 q-btn(
-                  label='Upload'
+                  :label='t(`common.actions.upload`)'
                   unelevated
                   icon='las la-upload'
                   color='primary'
@@ -697,7 +697,7 @@ async function save () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save site configuration.',
+      message: t('admin.general.saveFailed'),
       caption: err.message
     })
   }
@@ -743,12 +743,12 @@ async function uploadLogo () {
         })
         state.assetTimestamp = (new Date()).toISOString()
       } else {
-        throw new Error(resp?.data?.uploadSiteLogo?.operation?.message || 'An unexpected error occured.')
+        throw new Error(resp?.data?.uploadSiteLogo?.operation?.message || t('common.error.unexpected'))
       }
     } catch (err) {
       $q.notify({
         type: 'negative',
-        message: 'Failed to upload site logo.',
+        message: t('admin.general.logoUploadFailed'),
         caption: err.message
       })
     }
@@ -797,12 +797,12 @@ async function uploadFavicon () {
         })
         state.assetTimestamp = (new Date()).toISOString()
       } else {
-        throw new Error(resp?.data?.uploadSiteFavicon?.operation?.message || 'An unexpected error occured.')
+        throw new Error(resp?.data?.uploadSiteFavicon?.operation?.message || t('common.error.unexpected'))
       }
     } catch (err) {
       $q.notify({
         type: 'negative',
-        message: 'Failed to upload site favicon.',
+        message: t('admin.general.faviconUploadFailed'),
         caption: err.message
       })
     }

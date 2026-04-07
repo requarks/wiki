@@ -12,33 +12,33 @@ q-layout(view='hHh Lpr lff')
         flat
         icon='las la-globe'
         color='white'
-        aria-label='Switch Locale'
+        :aria-label='t(`common.header.switchLocale`)'
         )
         locale-selector-menu(anchor='top right' self='top left')
-        q-tooltip(anchor='center right' self='center left') Switch Locale
+        q-tooltip(anchor='center right' self='center left') {{ t('common.header.switchLocale') }}
       q-btn.q-py-md(
         flat
         icon='las la-sitemap'
         color='white'
-        aria-label='Browse'
+        :aria-label='t(`common.header.browse`)'
         @click='notImplemented'
         )
-        q-tooltip(anchor='center right' self='center left') Browse
+        q-tooltip(anchor='center right' self='center left') {{ t('common.header.browse') }}
       q-separator.q-my-sm(inset, dark)
       q-btn.q-py-md(
         flat
         icon='las la-bookmark'
         color='white'
-        aria-label='Bookmarks'
+        :aria-label='t(`common.header.bookmarks`)'
         @click='notImplemented'
         )
-        q-tooltip(anchor='center right' self='center left') Bookmarks
+        q-tooltip(anchor='center right' self='center left') {{ t('common.header.bookmarks') }}
       q-space
       q-btn.q-py-xs(
         flat
         icon='las la-dharmachakra'
         color='white'
-        aria-label='Edit Nav'
+        :aria-label='t(`common.header.editNavigation`)'
         size='sm'
         )
         q-menu(
@@ -50,7 +50,7 @@ q-layout(view='hHh Lpr lff')
             :menu-hide-handler='navEditMenuMini.hide'
             :update-position-handler='navEditMenuMini.updatePosition'
             )
-        q-tooltip(anchor='center right' self='center left') Edit Nav
+        q-tooltip(anchor='center right' self='center left') {{ t('common.header.editNavigation') }}
     template(v-else)
       .sidebar-actions.flex.items-stretch
         q-btn.q-px-sm.col(
@@ -71,8 +71,8 @@ q-layout(view='hHh Lpr lff')
           icon='las la-sitemap'
           color='blue-7'
           text-color='custom-color'
-          label='Browse'
-          aria-label='Browse'
+          :label='t(`common.header.browse`)'
+          :aria-label='t(`common.header.browse`)'
           size='sm'
           @click='notImplemented'
           )
@@ -83,7 +83,7 @@ q-layout(view='hHh Lpr lff')
         )
         q-btn.col(
           icon='las la-dharmachakra'
-          label='Edit Nav'
+          :label='t(`common.header.editNavigation`)'
           flat
           )
           q-menu(
@@ -99,7 +99,7 @@ q-layout(view='hHh Lpr lff')
         q-separator(vertical)
         q-btn.col(
           icon='las la-bookmark'
-          label='Bookmarks'
+          :label='t(`common.header.bookmarks`)'
           flat
           @click='notImplemented'
         )
@@ -190,7 +190,7 @@ const isSidebarMini = computed(() => {
 function notImplemented () {
   $q.notify({
     type: 'negative',
-    message: 'Not implemented'
+    message: t('common.error.notImplemented')
   })
 }
 

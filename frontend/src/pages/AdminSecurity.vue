@@ -505,7 +505,7 @@ async function save () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save security config',
+      message: t('admin.security.saveFailed'),
       caption: err.message
     })
   }

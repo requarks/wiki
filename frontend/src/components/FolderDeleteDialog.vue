@@ -96,7 +96,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.deleteFolder?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.deleteFolder?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

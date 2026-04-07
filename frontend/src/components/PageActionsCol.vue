@@ -5,26 +5,26 @@
       flat
       icon='las la-pen-nib'
       :color='editorStore.isActive ? `white` : `deep-orange-9`'
-      aria-label='Page Properties'
+      :aria-label='t(`editor.props.pageProperties`)'
       @click='togglePageProperties'
       )
-      q-tooltip(anchor='center left' self='center right') Page Properties
+      q-tooltip(anchor='center left' self='center right') {{ t('editor.props.pageProperties') }}
     q-btn.q-py-md(
       v-if='flagsStore.experimental'
       flat
       icon='las la-project-diagram'
       :color='editorStore.isActive ? `white` : `deep-orange-9`'
-      aria-label='Page Data'
+      :aria-label='t(`editor.pageData.title`)'
       @click='togglePageData'
       disable
       )
-      q-tooltip(anchor='center left' self='center right') Page Data
+      q-tooltip(anchor='center left' self='center right') {{ t('editor.pageData.title') }}
     q-btn.q-py-md(
       v-if='editorStore.isActive'
       flat
       color='white'
       :text-color='hasPendingAssets ? `white` : `deep-orange-3`'
-      aria-label='Pending Asset Uploads'
+      :aria-label='t(`pageActions.pendingAssetUploads`)'
       )
       q-icon(name='mdi-image-sync-outline')
         q-badge.page-actions-pending-badge(
@@ -35,7 +35,7 @@
           floating
           )
           strong {{ editorStore.pendingAssets.length * 1 }}
-      q-tooltip(anchor='center left' self='center right') Pending Asset Uploads
+      q-tooltip(anchor='center left' self='center right') {{ t('pageActions.pendingAssetUploads') }}
       q-menu(
         ref='menuPendingAssets'
         anchor='top left'
@@ -45,8 +45,8 @@
         q-card(style='width: 450px;')
           q-card-section.card-header
             q-icon(name='img:/_assets/icons/color-data-pending.svg', left, size='sm')
-            span Pending Asset Uploads
-          q-card-section(v-if='!hasPendingAssets') There are no assets pending uploads.
+            span {{ t('pageActions.pendingAssetUploads') }}
+          q-card-section(v-if='!hasPendingAssets') {{ t('pageActions.noPendingAssetUploads') }}
           q-list(v-else, separator)
             q-item(
               v-for='item of editorStore.pendingAssets'
@@ -65,33 +65,33 @@
                   @click='removePendingAsset(item)'
                   )
           q-card-section.card-actions
-            em.text-caption Assets that are pasted or dropped onto this page will be held here until the page is saved.
+            em.text-caption {{ t('pageActions.pendingAssetUploadsHint') }}
     q-separator.q-my-sm(inset)
   q-btn.q-py-md(
     flat
     icon='las la-history'
     :color='editorStore.isActive ? `white` : `grey`'
-    aria-label='Page History'
+    :aria-label='t(`common.header.history`)'
     @click='notImplemented'
     )
-    q-tooltip(anchor='center left' self='center right') Page History
+    q-tooltip(anchor='center left' self='center right') {{ t('common.header.history') }}
   q-btn.q-py-md(
     flat
     icon='las la-code'
     :color='editorStore.isActive ? `white` : `grey`'
-    aria-label='Page Source'
+    :aria-label='t(`common.header.viewSource`)'
     @click='viewPageSource'
     )
-    q-tooltip(anchor='center left' self='center right') Page Source
+    q-tooltip(anchor='center left' self='center right') {{ t('common.header.viewSource') }}
   template(v-if='!(editorStore.isActive && editorStore.mode === `create`)')
     q-separator.q-my-sm(inset)
     q-btn.q-py-sm(
       flat
       icon='las la-ellipsis-h'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
-      aria-label='Page Actions'
+      :aria-label='t(`common.header.pageActions`)'
       )
-      q-tooltip(anchor='center left' self='center right') Page Actions
+      q-tooltip(anchor='center left' self='center right') {{ t('common.header.pageActions') }}
       q-menu.translucent-menu(
         anchor='top left'
         self='top right'
@@ -103,17 +103,17 @@
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-atom', size='sm')
             q-item-section
-              q-item-label Convert Page
+              q-item-label {{ t('pageActions.convertPage') }}
           q-item(clickable, v-if='userStore.can(`edit:pages`)', @click='rerenderPage')
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-magic', size='sm')
             q-item-section
-              q-item-label Rerender Page
+              q-item-label {{ t('common.actions.rerender') }}
           q-item(clickable, disabled)
             q-item-section.items-center(avatar)
               q-icon(color='deep-orange-9', name='las la-sun', size='sm')
             q-item-section
-              q-item-label View Backlinks
+              q-item-label {{ t('pageActions.viewBacklinks') }}
   q-space
   template(v-if='!(editorStore.isActive && editorStore.mode === `create`)')
     q-btn.q-py-sm(
@@ -121,29 +121,29 @@
       flat
       icon='las la-copy'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
-      aria-label='Duplicate Page'
+      :aria-label='t(`pageActions.duplicatePage`)'
       @click='duplicatePage'
       )
-      q-tooltip(anchor='center left' self='center right') Duplicate Page
+      q-tooltip(anchor='center left' self='center right') {{ t('pageActions.duplicatePage') }}
     q-btn.q-py-sm(
       v-if='userStore.can(`manage:pages`)'
       flat
       icon='las la-share'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
-      aria-label='Rename / Move Page'
+      :aria-label='t(`pageActions.renameMovePage`)'
       @click='renamePage'
       )
-      q-tooltip(anchor='center left' self='center right') Rename / Move Page
+      q-tooltip(anchor='center left' self='center right') {{ t('pageActions.renameMovePage') }}
     q-btn.q-py-sm(
       v-if='userStore.can(`delete:pages`)'
       flat
       icon='las la-trash'
       :color='editorStore.isActive ? `deep-orange-2` : `grey`'
-      aria-label='Delete Page'
+      :aria-label='t(`common.page.delete`)'
       @click='deletePage'
       :class='editorStore.isActive ? `q-pb-md` : ``'
       )
-      q-tooltip(anchor='center left' self='center right') Delete Page
+      q-tooltip(anchor='center left' self='center right') {{ t('common.page.delete') }}
   span.page-actions-mode(v-else) {{ t('common.actions.newPage') }}
 </template>
 
@@ -250,13 +250,13 @@ function renamePage () {
         await pageStore.pageRename({ id: pageStore.id, title: renamedPageOpts.title })
         $q.notify({
           type: 'positive',
-          message: 'Page renamed successfully.'
+          message: t('page.notify.renameSuccess')
         })
       } else {
         await pageStore.pageMove({ id: pageStore.id, path: renamedPageOpts.path, title: renamedPageOpts.title })
         $q.notify({
           type: 'positive',
-          message: 'Page moved successfully.'
+          message: t('page.notify.moveSuccess')
         })
       }
     } catch (err) {
@@ -291,7 +291,7 @@ function removePendingAsset (item) {
 function notImplemented () {
   $q.notify({
     type: 'negative',
-    message: 'Not implemented'
+    message: t('common.error.notImplemented')
   })
 }
 </script>

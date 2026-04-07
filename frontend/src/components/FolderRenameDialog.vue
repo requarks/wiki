@@ -173,7 +173,7 @@ async function rename () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.renameFolder?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.renameFolder?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
@@ -210,7 +210,7 @@ onMounted(async () => {
       }
     })
     if (resp?.data?.folderById?.id !== props.folderId) {
-      throw new Error('Failed to fetch folder data.')
+      throw new Error(t('fileman.fetchFolderDataFailed'))
     }
     state.path = resp.data.folderById.fileName
     state.title = resp.data.folderById.title

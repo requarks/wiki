@@ -499,12 +499,12 @@ async function save () {
     })
     if (resp?.data.navigation.updateTree.responseResult.succeeded && resp?.data.navigation.updateConfig.responseResult.succeeded) {
       this.$store.commit('showNotification', {
-        message: t('navigation.saveSuccess'),
+        message: t('admin.navigation.saveSuccess'),
         style: 'success',
         icon: 'check'
       })
     } else {
-      throw new Error(resp?.data.navigation.updateTree.operation.message || 'An unexpected error occurred.')
+      throw new Error(resp?.data.navigation.updateTree.operation.message || t('common.error.unexpected'))
     }
   } catch (err) {
     this.$store.commit('pushGraphError', err)
@@ -516,7 +516,7 @@ async function refresh () {
   load()
   state.current = {}
   this.$store.commit('showNotification', {
-    message: 'Navigation has been refreshed.',
+    message: t('admin.navigation.refreshSuccess'),
     style: 'success',
     icon: 'cached'
   })

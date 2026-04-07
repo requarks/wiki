@@ -308,7 +308,7 @@ async function fetchHook (id) {
     if (resp?.data?.hookById) {
       state.hook = cloneDeep(resp.data.hookById)
     } else {
-      throw new Error('Failed to fetch webhook configuration.')
+      throw new Error(t('admin.webhooks.fetchConfigFailed'))
     }
   } catch (err) {
     $q.notify({
@@ -363,7 +363,7 @@ async function create () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.createHook?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.createHook?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
@@ -418,7 +418,7 @@ async function save () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.updateHook?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.updateHook?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

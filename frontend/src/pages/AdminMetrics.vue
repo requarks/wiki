@@ -165,12 +165,12 @@ async function globalSwitch () {
       })
       await load()
     } else {
-      throw new Error(resp?.data?.setMetricsState?.operation?.message || 'An unexpected error occurred.')
+      throw new Error(resp?.data?.setMetricsState?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to switch metrics endpoint state.',
+      message: t('admin.metrics.switchStateFailed'),
       caption: err.message
     })
   }

@@ -124,7 +124,7 @@ async function load () {
       state.tfaQRImage = resp.data.setupTFA.tfaQRImage
       state.isInit = true
     } else {
-      throw new Error(resp?.data?.setupTFA?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.setupTFA?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

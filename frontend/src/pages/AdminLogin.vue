@@ -50,7 +50,7 @@ q-page.admin-login
             q-item-label(caption) {{t(`admin.login.backgroundHint`)}}
           q-item-section.col-auto
             q-btn(
-              label='Upload'
+              :label='t(`common.actions.upload`)'
               unelevated
               icon='las la-upload'
               color='primary'
@@ -309,7 +309,7 @@ async function save () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save login configuration.',
+      message: t('admin.login.saveFailed'),
       caption: err.message
     })
   }
@@ -359,12 +359,12 @@ async function uploadBg () {
           message: t('admin.login.bgUploadSuccess')
         })
       } else {
-        throw new Error(resp?.data?.uploadSiteLoginBg?.operation?.message || 'An unexpected error occured.')
+        throw new Error(resp?.data?.uploadSiteLoginBg?.operation?.message || t('common.error.unexpected'))
       }
     } catch (err) {
       $q.notify({
         type: 'negative',
-        message: 'Failed to upload login background image.',
+        message: t('admin.login.bgUploadFailed'),
         caption: err.message
       })
     }

@@ -115,7 +115,7 @@ async function rename () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.renameAsset?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.renameAsset?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
@@ -150,7 +150,7 @@ onMounted(async () => {
       }
     })
     if (resp?.data?.assetById?.id !== props.assetId) {
-      throw new Error('Failed to fetch asset data.')
+      throw new Error(t('fileman.fetchAssetDataFailed'))
     }
     state.path = resp.data.assetById.fileName
   } catch (err) {

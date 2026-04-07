@@ -30,7 +30,7 @@ q-page.admin-system
         ref='copySysInfoBtn'
         flat
         icon='mdi-clipboard-text-outline'
-        label='Copy System Info'
+        :label='t(`admin.system.copySystemInfo`)'
         color='primary'
         :disabled='state.loading > 0'
       )
@@ -324,14 +324,14 @@ Total RAM: ${state.info.ramTotal}`
   clip.on('success', () => {
     $q.notify({
       type: 'positive',
-      message: 'Info copied successfully',
+      message: t('admin.system.copyInfoSuccess'),
       icon: 'las la-clipboard'
     })
   })
   clip.on('error', () => {
     $q.notify({
       type: 'negative',
-      message: 'Failed to copy system info'
+      message: t('admin.system.copyInfoFailed')
     })
   })
 })
