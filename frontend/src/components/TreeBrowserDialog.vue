@@ -49,7 +49,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         q-item-section
           q-input(
             v-model='state.title'
-            label='Page Title'
+            :label='t(`editor.props.title`)'
             dense
             outlined
             autofocus
@@ -60,7 +60,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         q-item-section
           q-input(
             v-model='state.path'
-            label='Path Name'
+            :label='t(`pageSaveDialog.pathName`)'
             dense
             outlined
             @focus='state.pathDirty = true; state.currentFileId = null'
@@ -74,7 +74,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         padding='xs sm'
         flat
         )
-        q-tooltip(anchor='center right' self='center left') Display Options
+        q-tooltip(anchor='center right' self='center left') {{ t('pageSaveDialog.displayOptions') }}
         q-menu(
           auto-close
           transition-show='jump-down'
@@ -367,7 +367,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load folder tree.',
+      message: t('pageSaveDialog.loadTreeFailed'),
       caption: err.message
     })
   }

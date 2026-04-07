@@ -131,7 +131,7 @@ async function uploadImage () {
           hasAvatar: true
         })
       } else {
-        throw new Error(resp?.data?.uploadUserAvatar?.operation?.message || 'An unexpected error occured.')
+        throw new Error(resp?.data?.uploadUserAvatar?.operation?.message || t('common.error.unexpected'))
       }
     } catch (err) {
       $q.notify({
@@ -178,7 +178,7 @@ async function clearImage () {
         hasAvatar: false
       })
     } else {
-      throw new Error(resp?.data?.uploadUserAvatar?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.uploadUserAvatar?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

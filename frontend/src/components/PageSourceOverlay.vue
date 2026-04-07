@@ -2,7 +2,7 @@
 q-layout(view='hHh lpR fFf', container)
   q-header.card-header.q-px-md.q-py-sm
     q-icon(name='img:/_assets/icons/fluent-code.svg', left, size='md')
-    span Page Source
+    span {{ t('common.header.viewSource') }}
     q-space
     transition(name='syncing')
       q-spinner-tail.q-mr-sm(

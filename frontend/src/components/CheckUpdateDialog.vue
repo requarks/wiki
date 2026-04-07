@@ -94,7 +94,7 @@ async function check () {
       state.latest = resp.latest
       state.latestDate = DateTime.fromISO(resp.latestDate).toFormat(userStore.preferredDateFormat)
     } else {
-      throw new Error(resp?.message || 'An unexpected error occured.')
+      throw new Error(resp?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

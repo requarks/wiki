@@ -195,7 +195,7 @@ async function install (ext) {
       ext.isInstalled = true
       // this.$forceUpdate()
     } else {
-      throw new Error(respRaw.data?.installExtension?.operation?.message || 'An unexpected error occured')
+      throw new Error(respRaw.data?.installExtension?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

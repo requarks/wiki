@@ -81,7 +81,7 @@ q-page.admin-locale
       q-card.q-pb-sm.q-mt-md
         q-card-section
           .text-subtitle1 {{t('admin.locale.active')}}
-          .text-caption(:class='$q.dark.isActive ? `text-grey-4` : `text-grey-7`') Select the locales that can be used on this site.
+          .text-caption(:class='$q.dark.isActive ? `text-grey-4` : `text-grey-7`') {{ t('admin.locale.activeHint') }}
 
         q-item(
           v-for='lc of state.locales'
@@ -246,7 +246,7 @@ async function save () {
   if (resp.succeeded) {
     $q.notify({
       type: 'positive',
-      message: 'Locale settings updated successfully.'
+      message: t('admin.locale.saveSuccess')
     })
   } else {
     $q.notify({

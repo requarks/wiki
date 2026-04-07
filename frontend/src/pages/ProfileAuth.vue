@@ -238,7 +238,7 @@ function disableTfa (strategyId) {
       $q.notify({
         type: 'negative',
         message: t('profile.authDisableTfaFailed'),
-        caption: err.message ?? 'An unexpected error occured.'
+        caption: err.message ?? t('common.error.unexpected')
       })
     }
     await fetchAuthMethods()
@@ -355,7 +355,7 @@ async function setupPasskey () {
     $q.notify({
       type: 'negative',
       message: t('profile.passkeysSetupFailed'),
-      caption: err.message ?? 'An unexpected error occured.'
+      caption: err.message ?? t('common.error.unexpected')
     })
   }
   await fetchAuthMethods()
@@ -401,7 +401,7 @@ async function deactivatePasskey (pkey) {
       $q.notify({
         type: 'negative',
         message: t('profile.passkeysDeactivateFailed'),
-        caption: err.message ?? 'An unexpected error occured.'
+        caption: err.message ?? t('common.error.unexpected')
       })
     }
     await fetchAuthMethods()

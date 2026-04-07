@@ -555,7 +555,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load scheduled jobs.',
+      message: t('admin.scheduler.loadFailed'),
       caption: err.message
     })
   }
@@ -587,12 +587,12 @@ async function cancelJob (jobId) {
         message: t('admin.scheduler.cancelJobSuccess')
       })
     } else {
-      throw new Error(resp?.data?.cancelJob?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.cancelJob?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to cancel job.',
+      message: t('admin.scheduler.cancelJobFailed'),
       caption: err.message
     })
   }
@@ -624,12 +624,12 @@ async function retryJob (jobId) {
         message: t('admin.scheduler.retryJobSuccess')
       })
     } else {
-      throw new Error(resp?.data?.retryJob?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.retryJob?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to retry the job.',
+      message: t('admin.scheduler.retryJobFailed'),
       caption: err.message
     })
   }

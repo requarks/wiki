@@ -301,7 +301,7 @@ q-page.admin-mail
           flat
           color='negative'
           :disable='state.strategy.strategy.key === `local`'
-          label='Delete Strategy'
+          :label='t(`admin.auth.deleteStrategy`)'
           @click='deleteStrategy(state.strategy.id)'
           )
 </template>
@@ -564,7 +564,7 @@ async function save () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save site theme config',
+      message: t('admin.auth.saveFailed'),
       caption: err.message
     })
   }

@@ -353,7 +353,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch markdown editor configuration.'
+      message: t('editor.markup.fetchConfigFailed')
     })
   }
   $q.loading.hide()
@@ -398,12 +398,12 @@ async function save () {
       editorStore.$patch({ configIsLoaded: false })
       close()
     } else {
-      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+      throw new Error(respRaw?.data?.updateSite?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save Markdown editor config',
+      message: t('editor.markup.saveConfigFailed'),
       caption: err.message
     })
   }

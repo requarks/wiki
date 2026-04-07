@@ -298,7 +298,7 @@ async function save () {
       })
       userStore.$patch(state.config)
     } else {
-      throw new Error(respRaw.data?.updateProfile?.operation?.message || 'An unexpected error occured')
+      throw new Error(respRaw.data?.updateProfile?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

@@ -26,7 +26,7 @@
               v-if='flagsStore.experimental && siteStore.editors.wysiwyg'
               )
               blueprint-icon(icon='google-presentation')
-              q-item-section.q-pr-sm Using the Visual Editor
+              q-item-section.q-pr-sm {{ t('welcome.usingVisualEditor') }}
               q-item-section(side): q-icon(name='mdi-chevron-right')
             q-item(
               clickable
@@ -34,7 +34,7 @@
               v-if='siteStore.editors.markdown'
               )
               blueprint-icon(icon='markdown')
-              q-item-section.q-pr-sm Using the Markdown Editor
+              q-item-section.q-pr-sm {{ t('welcome.usingMarkdownEditor') }}
               q-item-section(side): q-icon(name='mdi-chevron-right')
             q-item(
               clickable
@@ -42,7 +42,7 @@
               v-if='flagsStore.experimental && siteStore.editors.asciidoc'
               )
               blueprint-icon(icon='asciidoc')
-              q-item-section.q-pr-sm Using the AsciiDoc Editor
+              q-item-section.q-pr-sm {{ t('welcome.usingAsciiDocEditor') }}
               q-item-section(side): q-icon(name='mdi-chevron-right')
       q-btn(
         push

@@ -80,29 +80,29 @@
         dense
         icon='las la-bell'
         color='grey'
-        aria-label='Watch Page'
+        :aria-label='t(`common.page.watch`)'
         @click='notImplemented'
         )
-        q-tooltip Watch Page
+        q-tooltip {{ t('common.page.watch') }}
       q-btn.q-ml-md(
         v-if='userStore.authenticated'
         flat
         dense
         icon='las la-bookmark'
         color='grey'
-        aria-label='Bookmark Page'
+        :aria-label='t(`common.page.bookmark`)'
         @click='notImplemented'
         )
-        q-tooltip Bookmark Page
+        q-tooltip {{ t('common.page.bookmark') }}
       q-btn.q-ml-md(
         v-if='siteStore.theme.showSharingMenu'
         flat
         dense
         icon='las la-share-alt'
         color='grey'
-        aria-label='Share'
+        :aria-label='t(`common.page.share`)'
         )
-        q-tooltip Share
+        q-tooltip {{ t('common.page.share') }}
         social-sharing-menu
       q-btn.q-ml-md(
         v-if='siteStore.theme.showPrintBtn'
@@ -110,10 +110,10 @@
         dense
         icon='las la-print'
         color='grey'
-        aria-label='Print'
+        :aria-label='t(`common.page.print`)'
         @click='printPage'
         )
-        q-tooltip Print
+        q-tooltip {{ t('common.page.print') }}
     template(v-if='editorStore.isActive')
       q-btn.q-ml-md.acrylic-btn(
         icon='las la-question-circle'
@@ -261,13 +261,13 @@ async function discardChanges () {
     if (hadPendingChanges) {
       $q.notify({
         type: 'positive',
-        message: 'Page has been reverted to the last saved state.'
+        message: t('page.notify.reverted')
       })
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to reload page state.'
+      message: t('page.notify.reloadFailed')
     })
   }
   $q.loading.hide()
@@ -298,7 +298,7 @@ async function saveChangesCommit (closeAfter = false) {
     await pageStore.pageSave()
     $q.notify({
       type: 'positive',
-      message: 'Page saved successfully.'
+      message: t('page.notify.saveSuccess')
     })
     if (closeAfter) {
       editorStore.$patch({
@@ -309,7 +309,7 @@ async function saveChangesCommit (closeAfter = false) {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save page changes.',
+      message: t('page.notify.saveFailed'),
       caption: err.message
     })
   }
@@ -325,7 +325,7 @@ async function createPage () {
       await pageStore.pageSave()
       $q.notify({
         type: 'positive',
-        message: 'Homepage created successfully.'
+        message: t('page.notify.createHomeSuccess')
       })
       editorStore.$patch({
         isActive: false
@@ -334,7 +334,7 @@ async function createPage () {
     } catch (err) {
       $q.notify({
         type: 'negative',
-        message: 'Failed to create homepage.',
+        message: t('page.notify.createHomeFailed'),
         caption: err.message
       })
     }
@@ -363,7 +363,7 @@ async function createPage () {
       await pageStore.pageSave()
       $q.notify({
         type: 'positive',
-        message: 'Page created successfully.'
+        message: t('editor.save.createSuccess')
       })
       editorStore.$patch({
         isActive: false
@@ -371,7 +371,7 @@ async function createPage () {
     } catch (err) {
       $q.notify({
         type: 'negative',
-        message: 'Failed to create page.',
+        message: t('page.notify.createFailed'),
         caption: err.message
       })
     }
@@ -403,7 +403,7 @@ function printPage () {
 function notImplemented () {
   $q.notify({
     type: 'negative',
-    message: 'Not implemented'
+    message: t('common.error.notImplemented')
   })
 }
 </script>
