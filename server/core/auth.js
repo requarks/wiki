@@ -318,6 +318,49 @@ module.exports = {
   },
 
   /**
+   * Check if user can perform assignment to a group with elevated permissions
+   *
+   * @param {User} user
+   * @param {Array<Number>} groupIds
+   * @returns {Boolean}
+   */
+  async checkAssignUserToGroupAccess(user, groupIds = []) {
+    if (!groupIds || groupIds.length < 1) {
+      return true
+    }
+
+    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+
+    // System Admin
+    if (userPermissions.includes('manage:system')) {
+      return true
+    }
+
+    // Ensure basic user management permission
+    if (!userPermissions.some(p => ['write:users', 'manage:users', 'write:groups', 'manage:groups'].includes(p))) {
+      return false
+    }
+
+    const groups = await WIKI.models.groups.query().whereIn('id', groupIds)
+    return !groups.some(grp => {
+      // Check for manage:system permission
+      if (grp.permissions.includes('manage:system') && !userPermissions.includes('manage:groups')) {
+        return false
+      }
+
+      // Check for elevated permissions
+      if (grp.permissions.some(p => {
+        const permType = _.last(p.split(':'))
+        return ['users', 'groups', 'navigation', 'theme', 'api'].includes(permType)
+      }) && !(userPermissions.includes('write:groups') || userPermissions.includes('manage:groups'))) {
+        return false
+      }
+
+      return true
+    })
+  },
+
+  /**
    * Check and apply Page Rule specificity
    *
    * @access private

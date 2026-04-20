@@ -56,6 +56,14 @@ module.exports = {
         throw new gql.GraphQLError('You are not authorized to assign a user to this elevated group.')
       }
 
+      // Check assigned permissions for manage:groups
+      if (
+        WIKI.auth.checkExclusiveAccess(req.user, ['manage:groups'], ['manage:system']) &&
+        grp.permissions.some(p => _.last(p.split(':')) === 'system')
+      ) {
+        throw new gql.GraphQLError('You are not authorized to assign a user to a group with the manage:system permission.')
+      }
+
       // Check for valid user
       const usr = await WIKI.models.users.query().findById(args.userId)
       if (!usr) {
