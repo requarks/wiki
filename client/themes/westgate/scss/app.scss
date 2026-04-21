@@ -1,0 +1,718 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Jost:wght@400;500;600;700&display=swap");
+
+/* ==========================================================================
+   WESTGATE FOR WIKI.JS
+   Best-effort SCSS theme derived from the live NodeBB theme tokens/patterns.
+   This ports the visual language, not the NodeBB DOM structure.
+   ========================================================================== */
+
+/* =========================================================
+   CORE TOKENS
+   ========================================================= */
+
+$wg-bg: #0f0d12;
+$wg-panel: #141219;
+$wg-panel-2: #110f15;
+$wg-panel-3: #1a161d;
+$wg-border: #2a252d;
+$wg-border-soft: rgba(194, 163, 90, 0.1);
+$wg-border-mid: rgba(194, 163, 90, 0.18);
+$wg-gold: #c2a35a;
+$wg-gold-soft: #a8893f;
+$wg-text: #e6e0d6;
+$wg-text-soft: #b9b2a6;
+$wg-text-muted: #9a9086;
+$wg-plum-hover: #2b232d;
+$wg-chip: #231b17;
+
+$wg-danger-bg: rgba(71, 18, 24, 0.72);
+$wg-danger-border: rgba(153, 58, 58, 0.45);
+$wg-danger-text: #ddb8b8;
+
+$wg-link: #d8c28a;
+$wg-link-hover: #e0c878;
+$wg-selection: rgba(194, 163, 90, 0.32);
+
+$wg-font-ui: "Jost", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+$wg-font-display: "Cinzel", Georgia, "Times New Roman", serif;
+$wg-font-reading: "Jost", Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+$wg-velvet-panel: linear-gradient(
+  100deg,
+  rgba(42, 18, 34, 0.42) 0%,
+  rgba(25, 22, 31, 0.94) 22%,
+  rgba(18, 16, 23, 0.98) 58%,
+  rgba(14, 13, 18, 0.96) 100%
+);
+
+$wg-velvet-panel-hover: linear-gradient(
+  100deg,
+  rgba(58, 24, 48, 0.52) 0%,
+  rgba(30, 25, 38, 0.98) 24%,
+  rgba(20, 18, 27, 1) 62%,
+  rgba(15, 14, 20, 0.98) 100%
+);
+
+$wg-velvet-border: rgba(194, 163, 90, 0.13);
+$wg-velvet-shadow:
+  inset 0 1px 0 rgba(255, 255, 255, 0.025),
+  inset 0 0 34px rgba(96, 32, 68, 0.1),
+  0 10px 26px rgba(0, 0, 0, 0.22);
+
+@mixin velvet-panel {
+  background: $wg-velvet-panel !important;
+  border: 1px solid $wg-velvet-border !important;
+  box-shadow: $wg-velvet-shadow !important;
+}
+
+@mixin velvet-panel-hover {
+  background: $wg-velvet-panel-hover !important;
+  border-color: rgba(194, 163, 90, 0.2) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 0 38px rgba(120, 36, 84, 0.13),
+    0 12px 30px rgba(0, 0, 0, 0.28) !important;
+}
+
+@mixin gold-chip {
+  background: $wg-chip !important;
+  color: $wg-link !important;
+  border: 1px solid rgba(194, 163, 90, 0.2) !important;
+  border-radius: 999px;
+}
+
+@mixin display-heading {
+  font-family: $wg-font-display !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.036em !important;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(104, 32, 76, 0.18);
+}
+
+/* =========================================================
+   ROOT / BASE
+   ========================================================= */
+
+:root {
+  --wg-bg: #{$wg-bg};
+  --wg-panel: #{$wg-panel};
+  --wg-panel-2: #{$wg-panel-2};
+  --wg-panel-3: #{$wg-panel-3};
+  --wg-border: #{$wg-border};
+  --wg-border-soft: #{$wg-border-soft};
+  --wg-border-mid: #{$wg-border-mid};
+  --wg-gold: #{$wg-gold};
+  --wg-gold-soft: #{$wg-gold-soft};
+  --wg-text: #{$wg-text};
+  --wg-text-soft: #{$wg-text-soft};
+  --wg-text-muted: #{$wg-text-muted};
+  --wg-chip: #{$wg-chip};
+}
+
+html,
+body {
+  background: $wg-bg !important;
+  color: $wg-text-soft !important;
+  font-family: $wg-font-ui !important;
+}
+
+body,
+.v-application {
+  font-family: $wg-font-ui !important;
+}
+
+::selection {
+  background: $wg-selection;
+  color: #fff4dd;
+}
+
+/* =========================================================
+   GLOBAL TEXT
+   ========================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+.page-col-sd h2,
+.v-toolbar__title,
+.contents-header,
+.page-header,
+.page-title {
+  @include display-heading;
+  color: $wg-text !important;
+}
+
+h1 { font-size: clamp(1.9rem, 2.7vw, 2.45rem); }
+h2 { font-size: clamp(1.45rem, 2.1vw, 1.85rem); }
+h3 { font-size: clamp(1.18rem, 1.6vw, 1.4rem); }
+
+p,
+li,
+td,
+th,
+label,
+.v-label,
+.caption,
+.subtitle-1,
+.subtitle-2 {
+  color: $wg-text-soft !important;
+  font-family: $wg-font-reading !important;
+}
+
+small,
+.text--secondary,
+.theme--dark.v-application .text--secondary,
+.theme--light.v-application .text--secondary,
+.breadcrumbs,
+.v-breadcrumbs__item,
+.v-breadcrumbs__divider {
+  color: $wg-text-muted !important;
+}
+
+a {
+  color: $wg-link !important;
+  text-decoration-color: rgba(216, 194, 138, 0.35);
+
+  &:hover,
+  &:focus {
+    color: $wg-link-hover !important;
+    text-decoration-color: rgba(224, 200, 120, 0.65);
+  }
+}
+
+/* =========================================================
+   APP CHROME
+   ========================================================= */
+
+.v-application,
+.application--wrap,
+.v-main,
+.v-content,
+.v-content__wrap {
+  background: $wg-bg !important;
+}
+
+.v-app-bar,
+.v-toolbar,
+header,
+nav {
+  background: linear-gradient(to bottom, rgba(20, 18, 25, 0.96), rgba(16, 14, 20, 0.98)) !important;
+  border-bottom: 1px solid $wg-velvet-border !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 8px 18px rgba(0, 0, 0, 0.18) !important;
+}
+
+.v-toolbar__title,
+nav .title,
+header .title {
+  color: $wg-text !important;
+  letter-spacing: 0.04em;
+}
+
+.v-navigation-drawer,
+aside,
+.page-col-sd,
+.sidebar {
+  background: #121015 !important;
+  border-color: $wg-border !important;
+  box-shadow: inset -1px 0 0 rgba(194, 163, 90, 0.12) !important;
+}
+
+.v-navigation-drawer .v-list,
+.v-navigation-drawer .v-list-item,
+.v-list,
+aside .menu,
+.sidebar .menu {
+  background: transparent !important;
+}
+
+.v-navigation-drawer .v-list-item,
+.v-list-item,
+aside .menu li,
+.sidebar .menu li,
+.sidebar a {
+  border-radius: 8px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.v-navigation-drawer .v-list-item,
+.v-list-item {
+  margin-bottom: 0.35rem;
+  background: $wg-panel-3 !important;
+  border: 1px solid $wg-border !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.v-navigation-drawer .v-list-item:hover,
+.v-list-item:hover,
+.v-list-item--active,
+.v-list-item--link:hover {
+  background: $wg-plum-hover !important;
+  color: #f0e6d8 !important;
+  border-color: $wg-gold !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 0 8px rgba(194, 163, 90, 0.18);
+}
+
+.v-list-item__icon .v-icon,
+.v-navigation-drawer .v-icon {
+  color: $wg-gold !important;
+}
+
+/* =========================================================
+   PAGE SURFACES
+   ========================================================= */
+
+.page-col-content,
+.page-content,
+.page-editor,
+.page-history,
+.page-properties,
+.v-card,
+.card,
+.theme--dark.v-card,
+.theme--light.v-card,
+.v-sheet,
+.editor-markdown-container,
+.editor-visual-container,
+.page-block,
+.page-section {
+  @include velvet-panel;
+  border-radius: 10px !important;
+  color: $wg-text-soft !important;
+}
+
+.v-card:hover,
+.card:hover,
+.page-block:hover,
+.page-section:hover {
+  @include velvet-panel-hover;
+}
+
+.page-col-content,
+.page-content,
+.editor-markdown-container,
+.editor-visual-container {
+  padding: clamp(1rem, 1.6vw, 1.35rem) !important;
+}
+
+/* =========================================================
+   PAGE HEADER / BREADCRUMBS
+   ========================================================= */
+
+.v-breadcrumbs,
+.breadcrumbs,
+.page-header,
+.page-meta {
+  background: linear-gradient(90deg, rgba(18, 16, 23, 0.42), rgba(23, 20, 29, 0.24), transparent 82%) !important;
+  border: 1px solid rgba(194, 163, 90, 0.08) !important;
+  border-radius: 6px !important;
+}
+
+.page-header,
+.page-meta {
+  padding: 0.75rem 0.95rem !important;
+}
+
+.page-header {
+  position: relative;
+
+  &::after {
+    content: "";
+    display: block;
+    margin-top: 0.7rem;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(194, 163, 90, 0.26), transparent);
+  }
+}
+
+/* =========================================================
+   BUTTONS / CHIPS / TABS
+   ========================================================= */
+
+.v-btn,
+button,
+.btn {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: $wg-text-soft !important;
+  box-shadow: none !important;
+}
+
+.v-btn:hover,
+button:hover,
+.btn:hover {
+  background: #241e26 !important;
+  border-color: $wg-gold !important;
+  color: $wg-text !important;
+}
+
+.v-btn.primary,
+.v-btn.v-btn--has-bg.primary,
+.v-btn.blue,
+.v-btn.indigo,
+button.primary,
+.btn-primary,
+.theme--dark .primary {
+  background: linear-gradient(to bottom, #5a4a1a 0%, #473914 100%) !important;
+  border: 1px solid #a8893f !important;
+  color: #f0e6d8 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.22) !important;
+
+  &:hover {
+    background: linear-gradient(to bottom, #6a5720 0%, #53431a 100%) !important;
+    border-color: $wg-gold !important;
+    color: #fff4dd !important;
+  }
+}
+
+.v-chip,
+.v-chip--label,
+.tag,
+.badge,
+.page-tag {
+  @include gold-chip;
+  font-weight: 500;
+}
+
+.v-tabs,
+.v-tabs-bar,
+.v-slide-group__content {
+  background: transparent !important;
+}
+
+.v-tab {
+  color: $wg-text-muted !important;
+  border-bottom: 1px solid transparent !important;
+
+  &.v-tab--active {
+    color: $wg-link-hover !important;
+    border-bottom-color: rgba(194, 163, 90, 0.55) !important;
+  }
+}
+
+/* =========================================================
+   TABLES / LISTS
+   ========================================================= */
+
+table,
+.v-data-table,
+.theme--dark.v-data-table,
+.theme--light.v-data-table {
+  background: transparent !important;
+  color: $wg-text-soft !important;
+}
+
+thead th,
+.v-data-table-header th {
+  color: $wg-text !important;
+  font-family: $wg-font-ui !important;
+  border-bottom: 1px solid rgba(194, 163, 90, 0.18) !important;
+}
+
+tbody tr,
+.v-data-table tbody tr {
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+tbody tr:nth-child(even),
+.v-data-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.012) !important;
+}
+
+tbody tr:hover,
+.v-data-table tbody tr:hover {
+  background: linear-gradient(to right, rgba(194, 163, 90, 0.075), rgba(194, 163, 90, 0.025) 28%, transparent 100%) !important;
+  box-shadow: inset 2px 0 0 rgba(194, 163, 90, 0.42);
+}
+
+ul:not(.v-list):not(.contains-task-list),
+ol {
+  padding-left: 1.4rem;
+}
+
+li::marker {
+  color: $wg-gold-soft;
+}
+
+/* =========================================================
+   FORMS / INPUTS
+   ========================================================= */
+
+input,
+textarea,
+select,
+.v-input__slot,
+.v-text-field > .v-input__control > .v-input__slot,
+.v-textarea > .v-input__control > .v-input__slot,
+.v-select > .v-input__control > .v-input__slot,
+.v-autocomplete > .v-input__control > .v-input__slot {
+  background: linear-gradient(to bottom, $wg-panel, $wg-panel-2) !important;
+  border: 1px solid $wg-border !important;
+  color: $wg-text !important;
+  border-radius: 8px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8f877d !important;
+}
+
+.v-label,
+.v-input input,
+.v-input textarea {
+  color: $wg-text !important;
+}
+
+.v-input--is-focused .v-input__slot,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(194, 163, 90, 0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 0 0.18rem rgba(194, 163, 90, 0.12) !important;
+}
+
+/* =========================================================
+   CONTENT / READING
+   ========================================================= */
+
+.page-content,
+.contents,
+.contents-body,
+.page-view-mode,
+.markdown-body,
+.viewer {
+  color: $wg-text !important;
+  font-family: $wg-font-reading !important;
+  font-size: 1.02rem;
+  line-height: 1.68;
+  letter-spacing: 0.005em;
+}
+
+.page-content p,
+.page-content li,
+.markdown-body p,
+.markdown-body li {
+  color: $wg-text-soft !important;
+}
+
+.page-content h1,
+.page-content h2,
+.page-content h3,
+.page-content h4,
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  font-family: $wg-font-display !important;
+  color: #e8ded0 !important;
+  letter-spacing: 0.03em;
+}
+
+blockquote,
+.page-content blockquote,
+.markdown-body blockquote {
+  background: rgba(35, 27, 23, 0.45) !important;
+  border-left: 3px solid rgba(194, 163, 90, 0.35) !important;
+  border-radius: 6px !important;
+  padding: 0.75rem 0.9rem !important;
+  color: #d9cec0 !important;
+}
+
+code,
+.page-content code,
+.markdown-body code {
+  background: #1b171d !important;
+  color: $wg-link-hover !important;
+  padding: 0.12rem 0.35rem !important;
+  border-radius: 4px !important;
+}
+
+pre,
+.page-content pre,
+.markdown-body pre,
+.cm-editor,
+.cm-scroller {
+  background: #151219 !important;
+  border: 1px solid $wg-border !important;
+  border-radius: 8px !important;
+  color: $wg-text-soft !important;
+}
+
+/* =========================================================
+   TOC / RIGHT RAIL / INDEX BLOCKS
+   ========================================================= */
+
+.toc,
+.table-of-contents,
+.page-toc,
+.nav-toc,
+.contents-sidebar,
+.page-col-sd .v-card {
+  @include velvet-panel;
+  border-radius: 8px !important;
+}
+
+.toc a,
+.table-of-contents a,
+.page-toc a {
+  color: $wg-text-soft !important;
+  text-decoration: none !important;
+
+  &:hover {
+    color: $wg-link-hover !important;
+  }
+}
+
+.toc .active,
+.table-of-contents .active,
+.page-toc .active {
+  color: $wg-link-hover !important;
+}
+
+/* =========================================================
+   ALERTS / CALLOUTS
+   ========================================================= */
+
+.v-alert,
+.alert,
+.message,
+.notification {
+  border-radius: 8px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    0 4px 12px rgba(0, 0, 0, 0.18) !important;
+}
+
+.v-alert.info,
+.alert-info,
+.message.info,
+.notification.info {
+  background: linear-gradient(to bottom, rgba(20, 18, 25, 0.78), rgba(16, 14, 20, 0.9)) !important;
+  border: 1px solid rgba(194, 163, 90, 0.22) !important;
+  color: $wg-text-soft !important;
+}
+
+.v-alert.error,
+.v-alert.warning,
+.alert-error,
+.alert-warning {
+  background: linear-gradient(to bottom, $wg-danger-bg, rgba(48, 12, 18, 0.78)) !important;
+  border: 1px solid $wg-danger-border !important;
+  color: $wg-danger-text !important;
+}
+
+/* =========================================================
+   DIALOGS / MENUS
+   ========================================================= */
+
+.v-menu__content,
+.v-dialog,
+.v-dialog > .v-card,
+.v-sheet.v-card,
+.v-menu__content .v-list {
+  @include velvet-panel;
+  border-radius: 8px !important;
+  color: $wg-text-soft !important;
+}
+
+.v-menu__content .v-list-item:hover,
+.v-dialog .v-list-item:hover {
+  background: rgba(255, 255, 255, 0.018) !important;
+}
+
+/* =========================================================
+   DIVIDERS / HR
+   ========================================================= */
+
+hr,
+.v-divider {
+  border-color: rgba(194, 163, 90, 0.12) !important;
+  opacity: 1 !important;
+}
+
+/* =========================================================
+   LOGIN / AUTH / ADMIN SURFACES
+   ========================================================= */
+
+.login-screen,
+.auth-screen,
+.admin-screen,
+.admin-area .v-card,
+.page-admin .v-card {
+  @include velvet-panel;
+  border-radius: 10px !important;
+}
+
+.login-screen .headline,
+.auth-screen .headline,
+.admin-screen .headline {
+  @include display-heading;
+  color: $wg-text !important;
+}
+
+/* =========================================================
+   OPTIONAL WESTGATE NOTE BLOCK
+   ========================================================= */
+
+.wg-category-note,
+.wg-note-banner,
+.wg-westgate-note {
+  margin: 10px 0 16px 0;
+  padding: 10px 14px;
+  border-left: 3px solid $wg-gold;
+  background: rgba(20, 18, 25, 0.6);
+  border-radius: 6px;
+  font-size: 16px;
+  color: $wg-text-soft;
+}
+
+/* =========================================================
+   SMALL SCREEN TUNING
+   ========================================================= */
+
+@media (max-width: 959px) {
+  .page-col-content,
+  .page-content,
+  .editor-markdown-container,
+  .editor-visual-container {
+    padding: 0.95rem !important;
+  }
+
+  h1 { font-size: 1.75rem; }
+  h2 { font-size: 1.4rem; }
+  h3 { font-size: 1.15rem; }
+}
+
+@media (max-width: 767.98px) {
+  .v-navigation-drawer,
+  aside,
+  .page-col-sd {
+    box-shadow: none !important;
+  }
+
+  .page-header,
+  .page-meta,
+  .v-breadcrumbs {
+    padding: 0.65rem 0.75rem !important;
+  }
+}
