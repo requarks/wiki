@@ -6,17 +6,16 @@ requirements:
   minimum: '>= 2.0.0'
   maximum: '< 3.0.0'
 props:
-  sdPosition:
+  tocPosition:
     type: String
-    default: 'left'
     title: Table of Contents Position
-    hint: Should the content sidebar be shown on the left or right.
-    enum:
-      - 'hidden'
-      - 'left'
-      - 'right'
+    hint: Select whether the table of contents is shown on the left, right or not at all.
     order: 1
-    icon: mdi-border-vertical
+    default: left
+    enum:
+      - left
+      - right
+      - off
   showTOC:
     type: Boolean
     default: true
@@ -27,12 +26,12 @@ props:
     default: true
     title: Display the Page Tags
     order: 3
-  showTags:
+  showAuthor:
     type: Boolean
     default: true
     title: Display the Page Author and Date
     order: 4
-  showTags:
+  showRating:
     type: Boolean
     default: true
     title: Display the Page Rating
@@ -48,4 +47,3 @@ props:
     title: Display the Edit Speed Dial
     hint: Shown in the lower right corner of the page.
     order: 7
-

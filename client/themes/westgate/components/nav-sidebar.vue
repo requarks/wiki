@@ -1,9 +1,9 @@
 <template lang="pug">
   div
-    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
+    .westgate-sidebar-modebar.pa-3.d-flex(v-if='navMode === `MIXED`')
       v-btn(
+        class='westgate-sidebar-modebtn'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='min-width:0;'
         @click='goHome'
         :aria-label='$t(`common:header.home`)'
@@ -11,8 +11,8 @@
         v-icon(size='20') mdi-home
       v-btn.ml-3(
         v-if='currentMode === `custom`'
+        class='westgate-sidebar-modebtn'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='flex: 1 1 100%;'
         @click='switchMode(`browse`)'
         )
@@ -20,8 +20,8 @@
         .body-2.text-none {{$t('common:sidebar.browse')}}
       v-btn.ml-3(
         v-else-if='currentMode === `browse`'
+        class='westgate-sidebar-modebtn'
         depressed
-        :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
         style='flex: 1 1 100%;'
         @click='switchMode(`custom`)'
         )

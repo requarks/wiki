@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
+  v-app.westgate-theme(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(v-if='!printView')
     v-navigation-drawer(
       v-if='navMode !== `NONE` && !printView'
@@ -11,9 +11,10 @@
       :temporary='$vuetify.breakpoint.smAndDown'
       v-model='navShown'
       :right='$vuetify.rtl'
+      class='westgate-nav-drawer'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`', :items='sidebarDecoded', :nav-mode='navMode')
+        nav-sidebar(color='westgate-sidebar-list', :items='sidebarDecoded', :nav-mode='navMode')
 
     v-fab-transition(v-if='navMode !== `NONE`')
       v-btn(
@@ -32,7 +33,7 @@
 
     v-main(ref='content')
       template(v-if='path !== `home`')
-        v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
+        v-toolbar.westgate-breadcrumb-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
           //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
           //-   v-icon(color='grey darken-2', left) menu
           //-   span Navigation
@@ -48,8 +49,8 @@
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
-      v-container.grey.pa-0(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
-        v-row.page-header-section(no-gutters, align-content='center', style='height: 90px;')
+      v-container.westgate-page-title-band.pa-0(fluid)
+        v-row.page-header-section(no-gutters, align-content='center')
           v-col.page-col-content.is-page-header(
             :offset-xl='tocPosition === `left` ? 2 : 0'
             :offset-lg='tocPosition === `left` ? 3 : 0'
@@ -59,8 +60,8 @@
             :class='$vuetify.rtl ? `pr-4` : `pl-4`'
             )
             .page-header-headings
-              .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
-              .caption.grey--text.text--darken-1 {{description}}
+              .headline.westgate-page-title {{title}}
+              .caption.westgate-page-description {{description}}
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
               :class='tocPosition === `right` ? `is-right` : ``'
@@ -83,7 +84,7 @@
                 v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
                 span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
       v-divider
-      v-container.pl-5.pt-4(fluid, grid-list-xl)
+      v-container.westgate-page-body(fluid, grid-list-xl)
         v-layout(row)
           v-flex.page-col-sd(
             v-if='tocPosition !== `off` && $vuetify.breakpoint.lgAndUp'
@@ -93,62 +94,49 @@
             xl2
             )
             v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
-              .overline.pa-5.pb-0(:class='$vuetify.theme.dark ? `blue--text text--lighten-2` : `primary--text`') {{$t('common:page.toc')}}
+              .overline.westgate-card-title.pa-5.pb-0 {{$t('common:page.toc')}}
               v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
                 template(v-for='(tocItem, tocIdx) in tocDecoded')
-                  v-list-item(@click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
+                  v-list-item(v-if='tocItem.title', @click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
                     v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
                     v-list-item-title.px-3 {{tocItem.title}}
                   //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
                   template(v-for='tocSubItem in tocItem.children')
-                    v-list-item(@click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
+                    v-list-item(v-if='tocSubItem.title', @click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
                       v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                      v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
+                      v-list-item-title.px-3.caption.westgate-muted-text {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
             v-card.page-tags-card.mb-5(v-if='tags.length > 0')
               .pa-5
-                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
+                .overline.westgate-card-title.pb-2 {{$t('common:page.tags')}}
                 v-chip.mr-1.mb-1(
                   label
-                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   v-for='(tag, idx) in tags'
                   :href='`/t/` + tag.tag'
                   :key='`tag-` + tag.tag'
                   )
-                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
-                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
+                  v-icon(left, small) mdi-tag
+                  span {{tag.title}}
                 v-chip.mr-1.mb-1(
                   label
-                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
                   :href='`/t/` + tags.map(t => t.tag).join(`/`)'
                   :aria-label='$t(`common:page.tagsMatching`)'
                   )
-                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
+                  v-icon(size='20') mdi-tag-multiple
 
             v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
-                .overline.pb-2.blue-grey--text.d-flex.align-center(:class='$vuetify.theme.dark ? `text--lighten-3` : `text--darken-2`')
+                .overline.westgate-card-title.pb-2.d-flex.align-center
                   span {{$t('common:comments.sdTitle')}}
-                  //- v-spacer
-                  //- v-chip.text-center(
-                  //-   v-if='!commentsExternal'
-                  //-   label
-                  //-   x-small
-                  //-   :color='$vuetify.theme.dark ? `blue-grey darken-3` : `blue-grey darken-2`'
-                  //-   dark
-                  //-   style='min-width: 50px; justify-content: center;'
-                  //-   )
-                  //-   span {{commentsCount}}
                 .d-flex
                   v-btn.text-none(
                     @click='goToComments()'
-                    :color='$vuetify.theme.dark ? `blue-grey` : `blue-grey darken-2`'
                     outlined
                     style='flex: 1 1 100%;'
                     small
                     )
-                    span.blue-grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') {{$t('common:comments.viewDiscussion')}}
+                    span {{$t('common:comments.viewDiscussion')}}
                   v-tooltip(right, v-if='commentsPerms.write')
                     template(v-slot:activator='{ on }')
                       v-btn.ml-2(
@@ -156,15 +144,14 @@
                         v-on='on'
                         outlined
                         small
-                        :color='$vuetify.theme.dark ? `blue-grey` : `blue-grey darken-2`'
                         :aria-label='$t(`common:comments.newComment`)'
                         )
-                        v-icon(:color='$vuetify.theme.dark ? `blue-grey lighten-1` : `blue-grey darken-2`', dense) mdi-comment-plus
+                        v-icon(dense) mdi-comment-plus
                     span {{$t('common:comments.newComment')}}
 
             v-card.page-author-card.mb-5
               .pa-5
-                .overline.indigo--text.d-flex(:class='$vuetify.theme.dark ? `text--lighten-3` : ``')
+                .overline.westgate-card-title.d-flex
                   span {{$t('common:page.lastEditedBy')}}
                   v-spacer
                   v-tooltip(right, v-if='isAuthenticated')
@@ -177,10 +164,10 @@
                         v-if='hasReadHistoryPermission'
                         :aria-label='$t(`common:header.history`)'
                         )
-                        v-icon(color='indigo', dense) mdi-history
+                        v-icon(dense) mdi-history
                     span {{$t('common:header.history')}}
-                .page-author-card-name.body-2.grey--text(:class='$vuetify.theme.dark ? `` : `text--darken-3`') {{ authorName }}
-                .page-author-card-date.caption.grey--text.text--darken-1 {{ updatedAt | moment('calendar') }}
+                .page-author-card-name.body-2 {{ authorName }}
+                .page-author-card-date.caption.westgate-muted-text {{ updatedAt | moment('calendar') }}
 
             //- v-card.mb-5
             //-   .pa-5
@@ -196,7 +183,7 @@
             //-       .caption.grey--text 5 votes
 
             v-card.page-shortcuts-card(flat)
-              v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
+              v-toolbar.westgate-shortcuts-toolbar(flat, dense)
                 v-spacer
                 //- v-tooltip(bottom)
                 //-   template(v-slot:activator='{ on }')
@@ -517,9 +504,9 @@ export default {
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: '#42A5F5',
+          background: '#c2a35a',
           hoverStyle: {
-            background: '#64B5F6'
+            background: '#e0c878'
           }
         }
       },
@@ -607,7 +594,7 @@ export default {
   },
   mounted () {
     if (this.$vuetify.theme.dark) {
-      this.scrollStyle.bar.background = '#424242'
+      this.scrollStyle.bar.background = '#a8893f'
     }
 
     // -> Check side navigation visibility
@@ -734,7 +721,7 @@ export default {
 }
 
 .page-col-sd {
-  margin-top: -90px;
+  margin-top: 0;
   align-self: flex-start;
   position: sticky;
   top: 64px;
@@ -781,7 +768,7 @@ export default {
       }
 
       .v-icon {
-        color: mc('blue', '700');
+        color: #c2a35a;
       }
 
       &:first-child {

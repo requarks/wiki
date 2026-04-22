@@ -57,7 +57,11 @@ $wg-velvet-border: rgba(194, 163, 90, 0.13);
 $wg-velvet-shadow:
   inset 0 1px 0 rgba(255, 255, 255, 0.025),
   inset 0 0 34px rgba(96, 32, 68, 0.1),
-  0 10px 26px rgba(0, 0, 0, 0.22);
+  0 8px 20px rgba(0, 0, 0, 0.2);
+
+$wg-silk-sheen:
+  linear-gradient(105deg, rgba(194, 163, 90, 0.08) 0%, transparent 18%, transparent 76%, rgba(74, 28, 54, 0.16) 100%),
+  linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(0, 0, 0, 0.22));
 
 @mixin velvet-panel {
   background: $wg-velvet-panel !important;
@@ -84,7 +88,7 @@ $wg-velvet-shadow:
 @mixin display-heading {
   font-family: $wg-font-display !important;
   font-weight: 600 !important;
-  letter-spacing: 0.036em !important;
+  letter-spacing: 0 !important;
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.9),
     0 0 10px rgba(104, 32, 76, 0.18);
@@ -145,9 +149,9 @@ h5,
   color: $wg-text !important;
 }
 
-h1 { font-size: clamp(1.9rem, 2.7vw, 2.45rem); }
-h2 { font-size: clamp(1.45rem, 2.1vw, 1.85rem); }
-h3 { font-size: clamp(1.18rem, 1.6vw, 1.4rem); }
+h1 { font-size: 2.3rem; }
+h2 { font-size: 1.72rem; }
+h3 { font-size: 1.32rem; }
 
 p,
 li,
@@ -199,18 +203,104 @@ a {
 .v-toolbar,
 header,
 nav {
-  background: linear-gradient(to bottom, rgba(20, 18, 25, 0.96), rgba(16, 14, 20, 0.98)) !important;
+  background:
+    $wg-silk-sheen,
+    linear-gradient(to bottom, rgba(20, 18, 25, 0.96), rgba(16, 14, 20, 0.98)) !important;
   border-bottom: 1px solid $wg-velvet-border !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.02),
     0 8px 18px rgba(0, 0, 0, 0.18) !important;
 }
 
+.nav-header,
+.nav-header .nav-header-inner,
+.nav-header .v-toolbar__content,
+.nav-header .v-toolbar__extension {
+  background:
+    linear-gradient(90deg, rgba(44, 18, 36, 0.34), rgba(17, 15, 22, 0.96) 34%, rgba(12, 11, 16, 0.98)) !important;
+  border-color: rgba(194, 163, 90, 0.16) !important;
+}
+
+.nav-header {
+  border-bottom: 1px solid rgba(194, 163, 90, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    0 6px 14px rgba(0, 0, 0, 0.22) !important;
+
+  .org-logo {
+    filter: drop-shadow(0 0 8px rgba(194, 163, 90, 0.18));
+  }
+
+  .v-toolbar__content,
+  .v-toolbar__extension,
+  .nav-header-inner {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .nav-header-inner {
+    background: transparent !important;
+  }
+
+  .v-toolbar__title {
+    font-family: $wg-font-ui !important;
+  }
+
+  .v-btn {
+    border-radius: 0 !important;
+    color: $wg-text-soft !important;
+
+    &:hover,
+    &:focus {
+      background: rgba(194, 163, 90, 0.08) !important;
+      border-color: rgba(194, 163, 90, 0.18) !important;
+    }
+  }
+
+  .v-icon {
+    color: $wg-gold !important;
+  }
+
+  .v-divider {
+    border-color: rgba(194, 163, 90, 0.14) !important;
+  }
+
+  .navHeaderLoading .v-progress-circular {
+    color: $wg-gold !important;
+  }
+
+  .v-text-field.v-text-field--solo {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .v-text-field.v-text-field--solo,
+  .v-text-field.v-text-field--solo .v-input__control,
+  .v-text-field.v-text-field--solo .v-input__slot,
+  .v-text-field.v-text-field--solo fieldset {
+    outline: 0 !important;
+  }
+
+  .v-text-field.v-text-field--solo .v-input__slot {
+    min-height: 42px !important;
+    background: rgba(10, 9, 13, 0.56) !important;
+    border: 1px solid rgba(194, 163, 90, 0.16) !important;
+    border-radius: 5px !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
+  }
+
+  .v-text-field.v-text-field--solo fieldset {
+    border: 0 !important;
+  }
+}
+
 .v-toolbar__title,
 nav .title,
 header .title {
   color: $wg-text !important;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 
 .v-navigation-drawer,
@@ -235,7 +325,7 @@ aside .menu,
 aside .menu li,
 .sidebar .menu li,
 .sidebar a {
-  border-radius: 8px;
+  border-radius: 5px;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
@@ -245,9 +335,9 @@ aside .menu li,
 
 .v-navigation-drawer .v-list-item,
 .v-list-item {
-  margin-bottom: 0.35rem;
-  background: $wg-panel-3 !important;
-  border: 1px solid $wg-border !important;
+  margin-bottom: 0.25rem;
+  background: rgba(26, 22, 29, 0.52) !important;
+  border: 1px solid rgba(194, 163, 90, 0.08) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     inset 0 -1px 0 rgba(0, 0, 0, 0.4);
@@ -271,11 +361,16 @@ aside .menu li,
   color: $wg-gold !important;
 }
 
+.v-navigation-drawer .v-list-item--active,
+.v-navigation-drawer .v-list-item--active:hover {
+  background: linear-gradient(90deg, rgba(194, 163, 90, 0.16), rgba(35, 28, 37, 0.84)) !important;
+  border-color: rgba(194, 163, 90, 0.28) !important;
+}
+
 /* =========================================================
    PAGE SURFACES
    ========================================================= */
 
-.page-col-content,
 .page-content,
 .page-editor,
 .page-history,
@@ -290,7 +385,7 @@ aside .menu li,
 .page-block,
 .page-section {
   @include velvet-panel;
-  border-radius: 10px !important;
+  border-radius: 6px !important;
   color: $wg-text-soft !important;
 }
 
@@ -301,11 +396,17 @@ aside .menu li,
   @include velvet-panel-hover;
 }
 
-.page-col-content,
+.westgate-theme {
+  .page-col-sd .v-card:hover,
+  .comments-container:hover {
+    @include velvet-panel;
+  }
+}
+
 .page-content,
 .editor-markdown-container,
 .editor-visual-container {
-  padding: clamp(1rem, 1.6vw, 1.35rem) !important;
+  padding: 1.2rem !important;
 }
 
 /* =========================================================
@@ -316,9 +417,9 @@ aside .menu li,
 .breadcrumbs,
 .page-header,
 .page-meta {
-  background: linear-gradient(90deg, rgba(18, 16, 23, 0.42), rgba(23, 20, 29, 0.24), transparent 82%) !important;
-  border: 1px solid rgba(194, 163, 90, 0.08) !important;
-  border-radius: 6px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
 }
 
 .page-header,
@@ -357,6 +458,15 @@ button:hover,
   background: #241e26 !important;
   border-color: $wg-gold !important;
   color: $wg-text !important;
+}
+
+.v-btn:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgba(224, 200, 120, 0.72) !important;
+  outline-offset: 2px;
 }
 
 .v-btn.primary,
@@ -405,6 +515,20 @@ button.primary,
   }
 }
 
+.v-pagination .v-pagination__item,
+.v-pagination .v-pagination__navigation {
+  background: $wg-panel-3 !important;
+  border: 1px solid rgba(194, 163, 90, 0.16) !important;
+  color: $wg-text-soft !important;
+  box-shadow: none !important;
+}
+
+.v-pagination .v-pagination__item--active {
+  background: linear-gradient(to bottom, #5a4a1a 0%, #473914 100%) !important;
+  border-color: $wg-gold !important;
+  color: #fff4dd !important;
+}
+
 /* =========================================================
    TABLES / LISTS
    ========================================================= */
@@ -415,6 +539,9 @@ table,
 .theme--light.v-data-table {
   background: transparent !important;
   color: $wg-text-soft !important;
+  border: 1px solid rgba(194, 163, 90, 0.12) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
 }
 
 thead th,
@@ -464,7 +591,7 @@ select,
   background: linear-gradient(to bottom, $wg-panel, $wg-panel-2) !important;
   border: 1px solid $wg-border !important;
   color: $wg-text !important;
-  border-radius: 8px !important;
+  border-radius: 5px !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.025),
     0 4px 12px rgba(0, 0, 0, 0.15) !important;
@@ -505,7 +632,7 @@ select:focus {
   font-family: $wg-font-reading !important;
   font-size: 1.02rem;
   line-height: 1.68;
-  letter-spacing: 0.005em;
+  letter-spacing: 0;
 }
 
 .page-content p,
@@ -525,7 +652,7 @@ select:focus {
 .markdown-body h4 {
   font-family: $wg-font-display !important;
   color: #e8ded0 !important;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
 }
 
 blockquote,
@@ -554,8 +681,37 @@ pre,
 .cm-scroller {
   background: #151219 !important;
   border: 1px solid $wg-border !important;
-  border-radius: 8px !important;
+  border-radius: 5px !important;
   color: $wg-text-soft !important;
+}
+
+.CodeMirror pre,
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like,
+.editor-markdown .CodeMirror pre {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+
+.page-content img,
+.markdown-body img,
+.contents img {
+  border: 1px solid rgba(194, 163, 90, 0.14);
+  border-radius: 6px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+}
+
+.page-content kbd,
+.markdown-body kbd,
+kbd {
+  background: linear-gradient(to bottom, #211b23, #151219) !important;
+  border: 1px solid rgba(194, 163, 90, 0.22) !important;
+  border-radius: 4px;
+  color: $wg-link-hover !important;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.55);
 }
 
 /* =========================================================
@@ -569,7 +725,7 @@ pre,
 .contents-sidebar,
 .page-col-sd .v-card {
   @include velvet-panel;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
 }
 
 .toc a,
@@ -597,7 +753,7 @@ pre,
 .alert,
 .message,
 .notification {
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.025),
     0 4px 12px rgba(0, 0, 0, 0.18) !important;
@@ -631,13 +787,31 @@ pre,
 .v-sheet.v-card,
 .v-menu__content .v-list {
   @include velvet-panel;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   color: $wg-text-soft !important;
 }
 
 .v-menu__content .v-list-item:hover,
 .v-dialog .v-list-item:hover {
   background: rgba(255, 255, 255, 0.018) !important;
+}
+
+.v-menu__content {
+  .overline,
+  .v-subheader {
+    color: $wg-gold !important;
+    letter-spacing: 0 !important;
+  }
+
+  .v-list-item__title,
+  .v-list-item__subtitle {
+    color: $wg-text-soft !important;
+  }
+
+  .v-list-item__avatar .v-icon,
+  .v-list-item__action .v-icon {
+    color: $wg-gold !important;
+  }
 }
 
 /* =========================================================
@@ -660,7 +834,7 @@ hr,
 .admin-area .v-card,
 .page-admin .v-card {
   @include velvet-panel;
-  border-radius: 10px !important;
+  border-radius: 6px !important;
 }
 
 .login-screen .headline,
@@ -668,6 +842,197 @@ hr,
 .admin-screen .headline {
   @include display-heading;
   color: $wg-text !important;
+}
+
+.login {
+  background:
+    linear-gradient(110deg, rgba(15, 13, 18, 0.98) 0%, rgba(20, 14, 21, 0.92) 42%, rgba(6, 5, 8, 0.98) 100%) !important;
+
+  &-sd {
+    background:
+      $wg-silk-sheen,
+      linear-gradient(to bottom, rgba(23, 20, 29, 0.94), rgba(14, 12, 18, 0.96)) !important;
+    border-left: 1px solid rgba(194, 163, 90, 0.22) !important;
+    border-right: 1px solid rgba(194, 163, 90, 0.18) !important;
+    box-shadow: 18px 0 42px rgba(0, 0, 0, 0.36) !important;
+  }
+
+  &-logo {
+    background: #111016 !important;
+    border: 1px solid rgba(194, 163, 90, 0.2);
+    border-top: 0;
+  }
+
+  &-title,
+  &-subtitle {
+    color: $wg-text !important;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.85) !important;
+  }
+
+  &-subtitle {
+    background: linear-gradient(to bottom, transparent, rgba(194, 163, 90, 0.08)) !important;
+    border-bottom: 1px solid rgba(194, 163, 90, 0.16) !important;
+  }
+
+  &-info,
+  &-form,
+  &-list {
+    border-color: rgba(194, 163, 90, 0.14) !important;
+    color: $wg-text-soft !important;
+  }
+
+  &-tfa {
+    background: $wg-panel !important;
+    border-color: rgba(194, 163, 90, 0.22) !important;
+    color: $wg-text-soft !important;
+  }
+}
+
+.search-results {
+  background:
+    linear-gradient(to bottom, rgba(10, 9, 13, 0.96), rgba(14, 10, 16, 0.98)),
+    linear-gradient(105deg, rgba(56, 22, 44, 0.24), transparent 44%, rgba(194, 163, 90, 0.08)) !important;
+
+  &-container {
+    @include velvet-panel;
+    border-radius: 6px;
+    padding: 14px;
+  }
+
+  &-help,
+  &-loader,
+  &-none {
+    color: $wg-text-soft !important;
+  }
+
+  &-items,
+  &-suggestions {
+    background: transparent !important;
+
+    .v-list-item {
+      background: rgba(26, 22, 29, 0.58) !important;
+
+      &.highlighted,
+      &:hover {
+        background: linear-gradient(to right, rgba(194, 163, 90, 0.12), rgba(43, 35, 45, 0.92)) !important;
+        box-shadow: inset 3px 0 0 rgba(194, 163, 90, 0.5);
+      }
+    }
+  }
+}
+
+.editor,
+.editor-markdown,
+.editor-visual,
+.editor-redirect,
+.newpage-content,
+.profile,
+.tags,
+.history,
+.source {
+  background: $wg-bg !important;
+  color: $wg-text-soft !important;
+}
+
+.editor-markdown {
+  &-toolbar {
+    background:
+      linear-gradient(90deg, rgba(86, 72, 24, 0.88), rgba(74, 61, 19, 0.94)) !important;
+    border-bottom: 1px solid rgba(194, 163, 90, 0.28) !important;
+    box-shadow: none !important;
+
+    .v-btn {
+      border-radius: 0 !important;
+    }
+  }
+
+  .nav-header .v-text-field.v-text-field--solo {
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  &-main {
+    background: #0d0c11 !important;
+  }
+
+  &-sidebar {
+    background: #101015 !important;
+    border-right: 1px solid rgba(194, 163, 90, 0.12);
+
+    .v-btn {
+      border-radius: 5px !important;
+      color: $wg-text-soft !important;
+
+      .v-icon {
+        color: $wg-text-soft !important;
+      }
+
+      &:hover .v-icon {
+        color: $wg-gold !important;
+      }
+    }
+  }
+
+  &-editor,
+  &-preview {
+    background: #121015 !important;
+  }
+
+  &-preview {
+    border-left: 1px solid rgba(194, 163, 90, 0.12);
+    padding: 0 !important;
+
+    &-content {
+      background:
+        linear-gradient(100deg, rgba(32, 18, 29, 0.22), rgba(15, 13, 19, 0.9)) !important;
+      color: $wg-text-soft !important;
+      padding: 1.35rem 1.55rem !important;
+    }
+  }
+
+  &-sysbar {
+    background: #1b1920 !important;
+    border-top: 1px solid rgba(194, 163, 90, 0.12);
+    color: $wg-text-muted !important;
+  }
+
+  .CodeMirror {
+    background: #121015 !important;
+    color: $wg-text-soft !important;
+    font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace !important;
+  }
+
+  .CodeMirror-gutters {
+    background: #0d0c11 !important;
+    border-right: 1px solid rgba(194, 163, 90, 0.1) !important;
+  }
+
+  .CodeMirror-linenumber {
+    color: rgba(185, 178, 166, 0.28) !important;
+  }
+
+  .CodeMirror-activeline-background {
+    background: rgba(194, 163, 90, 0.055) !important;
+  }
+
+  .CodeMirror-selected {
+    background: rgba(194, 163, 90, 0.18) !important;
+  }
+
+  .CodeMirror-cursor {
+    border-left-color: $wg-link-hover !important;
+  }
+
+  .cm-header {
+    color: $wg-text !important;
+    font-family: $wg-font-display !important;
+  }
+
+  .cm-quote,
+  .cm-link,
+  .cm-url {
+    color: $wg-link !important;
+  }
 }
 
 /* =========================================================
@@ -691,7 +1056,6 @@ hr,
    ========================================================= */
 
 @media (max-width: 959px) {
-  .page-col-content,
   .page-content,
   .editor-markdown-container,
   .editor-visual-container {
@@ -714,5 +1078,331 @@ hr,
   .page-meta,
   .v-breadcrumbs {
     padding: 0.65rem 0.75rem !important;
+  }
+}
+
+/* =========================================================
+   WESTGATE CONTENT PAGE FIRST PASS
+   ========================================================= */
+
+.westgate-theme {
+  .v-main {
+    background:
+      linear-gradient(120deg, rgba(84, 28, 62, 0.08), transparent 34%),
+      $wg-bg !important;
+  }
+
+  .westgate-page-title-band {
+    background: rgba(16, 14, 20, 0.42) !important;
+    border-bottom: 0;
+    box-shadow: none !important;
+  }
+
+  .page-header-section {
+    min-height: 64px !important;
+    height: auto !important;
+  }
+
+  .westgate-page-body {
+    background: transparent !important;
+    padding: 0.75rem 1rem 2rem !important;
+
+    > .layout {
+      align-items: flex-start;
+    }
+  }
+
+  .is-page-header.page-col-content,
+  .page-col-content {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    color: $wg-text-soft !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .is-page-header.page-col-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .westgate-page-title {
+    @include display-heading;
+    color: $wg-text !important;
+    font-size: 1.72rem !important;
+    line-height: 1.16;
+  }
+
+  .westgate-page-description,
+  .westgate-muted-text {
+    color: $wg-text-muted !important;
+  }
+
+  .westgate-card-title {
+    color: $wg-gold !important;
+    font-family: $wg-font-ui !important;
+    letter-spacing: 0 !important;
+  }
+
+  .westgate-nav-drawer {
+    background:
+      linear-gradient(to bottom, #151219, #100e14 72%, #0d0b10) !important;
+    border-right: 1px solid rgba(194, 163, 90, 0.09) !important;
+    box-shadow: none !important;
+  }
+
+  .westgate-sidebar-list {
+    background: transparent !important;
+
+    .v-list-item {
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+      margin: 0.15rem 0.45rem;
+
+      &:hover,
+      &:focus,
+      &.v-list-item--active {
+        background: rgba(194, 163, 90, 0.08) !important;
+        border-color: rgba(194, 163, 90, 0.14) !important;
+        box-shadow: inset 2px 0 0 rgba(194, 163, 90, 0.32) !important;
+      }
+    }
+  }
+
+  .westgate-sidebar-modebar {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(194, 163, 90, 0.14);
+    padding: 0.75rem !important;
+  }
+
+  .westgate-sidebar-modebtn {
+    background: rgba(31, 25, 34, 0.76) !important;
+    border: 1px solid rgba(194, 163, 90, 0.14) !important;
+    border-radius: 5px !important;
+    color: $wg-text-soft !important;
+
+    .v-icon {
+      color: $wg-gold !important;
+    }
+  }
+
+  .page-col-sd {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding-right: 1rem !important;
+  }
+
+  .page-toc-card,
+  .page-tags-card,
+  .page-comments-card,
+  .page-author-card,
+  .page-shortcuts-card {
+    background: transparent !important;
+    border: 0 !important;
+    border-top: 1px solid rgba(194, 163, 90, 0.12) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden;
+
+    .v-list-item {
+      background: rgba(13, 12, 17, 0.42) !important;
+      min-height: 40px !important;
+    }
+  }
+
+  .page-col-content > .contents {
+    @include velvet-panel;
+    border-radius: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    margin-bottom: 1.35rem;
+    margin-top: 0;
+    min-height: 34vh;
+    padding: 1.55rem 1.55rem !important;
+  }
+
+  .page-toc-card {
+    border-top: 0 !important;
+
+    .v-list {
+      padding: 0.45rem !important;
+    }
+
+    .westgate-card-title {
+      padding: 1rem 1.2rem 0.45rem !important;
+    }
+
+    .v-list-item {
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+      margin-bottom: 0.1rem;
+      min-height: 34px !important;
+
+      &:hover,
+      &:focus {
+        background: rgba(194, 163, 90, 0.07) !important;
+        border-color: rgba(194, 163, 90, 0.12) !important;
+        box-shadow: inset 2px 0 0 rgba(194, 163, 90, 0.34) !important;
+      }
+
+      .v-icon {
+        margin-right: 0.45rem;
+      }
+
+      .v-list-item__title {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+    }
+  }
+
+  .page-comments-card,
+  .page-author-card,
+  .page-shortcuts-card {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .page-shortcuts-card {
+    background: transparent !important;
+
+    .v-toolbar__content {
+      justify-content: center;
+    }
+  }
+
+  .page-tags-card .v-chip {
+    background: $wg-chip !important;
+    color: $wg-link !important;
+    border-color: rgba(194, 163, 90, 0.24) !important;
+
+    .v-icon {
+      color: $wg-gold !important;
+    }
+  }
+
+  .page-comments-card .v-btn,
+  .page-shortcuts-card .v-btn,
+  .page-edit-shortcuts .v-btn {
+    background: rgba(31, 25, 34, 0.76) !important;
+    border: 1px solid rgba(194, 163, 90, 0.18) !important;
+    color: $wg-text-soft !important;
+  }
+
+  .page-edit-shortcuts {
+    .v-btn {
+      border-radius: 6px !important;
+      margin-left: 4px;
+
+      .v-icon {
+        color: $wg-gold !important;
+      }
+    }
+  }
+
+  .westgate-shortcuts-toolbar {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .btn-animate-edit.primary,
+  .v-speed-dial .primary,
+  .v-btn.primary {
+    background: linear-gradient(to bottom, #5a4a1a 0%, #473914 100%) !important;
+    border: 1px solid #a8893f !important;
+    color: #f0e6d8 !important;
+  }
+
+  .comments-container {
+    @include velvet-panel;
+    border-radius: 6px;
+    margin-top: 2rem;
+    overflow: hidden;
+  }
+
+  .comments-header {
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid rgba(194, 163, 90, 0.14);
+    color: $wg-gold;
+    display: flex;
+    font-family: $wg-font-ui;
+    font-weight: 600;
+    letter-spacing: 0;
+    padding: 0.8rem 1rem;
+    text-transform: uppercase;
+
+    .v-icon {
+      color: $wg-gold !important;
+    }
+  }
+
+  .comments-main {
+    padding: 1rem 1rem 1.15rem;
+  }
+
+  .westgate-footer {
+    background: linear-gradient(to bottom, rgba(20, 18, 25, 0.94), rgba(15, 13, 19, 0.98)) !important;
+    border-top: 1px solid rgba(194, 163, 90, 0.14);
+    color: $wg-text-muted !important;
+
+    a {
+      color: $wg-link !important;
+    }
+  }
+}
+
+.v-main .contents {
+  > div > *:first-child {
+    margin-top: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    position: relative;
+
+    .toc-anchor {
+      color: rgba(194, 163, 90, 0.7) !important;
+      text-decoration: none !important;
+      opacity: 0.72;
+      position: absolute;
+      left: -0.78em;
+      width: 0.7em;
+      transition: opacity 0.16s ease, color 0.16s ease;
+    }
+
+    &:hover .toc-anchor,
+    .toc-anchor:focus {
+      opacity: 1;
+      color: $wg-link-hover !important;
+    }
+  }
+
+  h1,
+  h2 {
+    padding-bottom: 0.25rem;
+
+    &::after {
+      content: "";
+      display: block;
+      height: 1px;
+      margin-top: 0.35rem;
+      background: linear-gradient(to right, rgba(194, 163, 90, 0.42), rgba(194, 163, 90, 0.08), transparent 72%);
+    }
+  }
+
+  a.is-external-link::after {
+    color: $wg-text-muted !important;
   }
 }

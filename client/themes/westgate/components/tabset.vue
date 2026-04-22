@@ -104,101 +104,79 @@ export default {
 </script>
 
 <style lang="scss">
-.tabset {
-  border-radius: 5px;
-  margin-top: 10px;
+$wg-bg: #0f0d12;
+$wg-panel: #141219;
+$wg-panel-2: #110f15;
+$wg-panel-3: #1a161d;
+$wg-border: #2a252d;
+$wg-gold: #c2a35a;
+$wg-link-hover: #e0c878;
+$wg-text: #e6e0d6;
+$wg-text-soft: #b9b2a6;
+$wg-text-muted: #9a9086;
 
-  @at-root .theme--dark & {
-    background-color: #292929;
-  }
+.tabset {
+  background: linear-gradient(100deg, rgba(42, 18, 34, 0.38), rgba(18, 16, 23, 0.96) 58%, rgba(14, 13, 18, 0.98));
+  border: 1px solid rgba(194, 163, 90, 0.14);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    inset 0 0 34px rgba(96, 32, 68, 0.1),
+    0 10px 26px rgba(0, 0, 0, 0.22);
+  margin-top: 16px;
+  overflow: hidden;
 
   > .tabset-tabs {
     padding-left: 0;
     margin: 0;
     display: flex;
     align-items: stretch;
-    background: linear-gradient(to bottom, #FFF, #FAFAFA);
-    box-shadow: inset 0 -1px 0 0 #DDD;
-    border-radius: 5px 5px 0 0;
+    background: linear-gradient(to bottom, rgba(20, 18, 25, 0.96), rgba(16, 14, 20, 0.98));
+    border-bottom: 1px solid rgba(194, 163, 90, 0.16);
     overflow: auto;
-
-    @at-root .theme--dark & {
-      background: linear-gradient(to bottom, #424242, #333);
-      box-shadow: inset 0 -1px 0 0 #555;
-    }
 
     > li {
       display: block;
-      padding: 16px;
+      padding: 14px 16px;
       margin-top: 0;
       cursor: pointer;
-      transition: color 1s ease;
-      border-right: 1px solid #FFF;
+      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+      border-right: 1px solid rgba(194, 163, 90, 0.1);
+      color: $wg-text-muted;
       font-size: 14px;
       font-weight: 500;
-      margin-bottom: 1px;
       user-select: none;
 
-      @at-root .theme--dark & {
-        border-right-color: #555;
-      }
-
       &.is-active {
-        background-color: #FFF;
-        margin-bottom: 0;
-        padding-bottom: 17px;
-        padding-top: 13px;
-        color: mc('blue', '700');
-        border-top: 3px solid mc('blue', '700');
-
-        @at-root .theme--dark & {
-          background-color: #292929;
-          color: mc('blue', '300');
-        }
+        background: linear-gradient(to bottom, rgba(194, 163, 90, 0.13), rgba(35, 27, 23, 0.48));
+        box-shadow: inset 0 3px 0 $wg-gold;
+        color: $wg-link-hover;
       }
 
       &:last-child {
         border-right: none;
-
-        &.is-active {
-          border-right: 1px solid #EEE;
-
-          @at-root .theme--dark & {
-            border-right-color: #555;
-          }
-        }
       }
 
       &:hover {
-        background-color: rgba(#CCC, .1);
-
-        @at-root .theme--dark & {
-          background-color: rgba(#222, .25);
-        }
+        background: rgba(194, 163, 90, 0.08);
+        color: $wg-text;
 
         &.is-active {
-          background-color: #FFF;
-
-          @at-root .theme--dark & {
-            background-color: #292929;
-          }
+          background: linear-gradient(to bottom, rgba(194, 163, 90, 0.16), rgba(35, 27, 23, 0.54));
         }
       }
 
       & + li {
-        border-left: 1px solid #EEE;
-
-        @at-root .theme--dark & {
-          border-left-color: #222;
-        }
+        border-left: 1px solid rgba(0, 0, 0, 0.32);
       }
     }
   }
 
   > .tabset-content {
     .tabset-panel {
-      padding: 2px 16px 16px;
+      color: $wg-text-soft;
       display: none;
+      padding: 18px 18px 20px;
 
       &.is-active {
         display: block;
