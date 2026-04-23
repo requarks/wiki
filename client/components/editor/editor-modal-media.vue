@@ -553,13 +553,15 @@ export default {
 
 <style lang='scss'>
 .editor-modal-media {
+  /* Opaque base; the Westgate theme’s global `.v-card` velvet `background` would otherwise
+   override component `background-color` and let the editor chrome show through. */
   position: fixed !important;
   top: 112px;
   left: 64px;
-  z-index: 10;
+  z-index: 200;
   width: calc(100vw - 64px - 17px);
   height: calc(100vh - 112px - 24px);
-  background-color: rgba(darken(mc('grey', '900'), 3%), .9) !important;
+  background: #0f0d12 !important;
   overflow: auto;
 
   @include until($tablet) {

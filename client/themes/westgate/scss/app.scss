@@ -1065,12 +1065,221 @@ hr,
   color: $wg-text-soft !important;
 }
 
-/* FilePond ships a light drop surface; our global `body` text color is light, so the hint
-   text in the “Browse / drop” label became low-contrast. Use a Westgate panel + matching type. */
-.editor,
+/* -------------------------------------------------------------------------
+   Editor — Assets modal (`.editor-modal-media` on a root `v-card`)
+   Global `velvet-panel` on all `.v-card` uses a gradient + inset “silk” shadows that
+   (1) override a semi-transparent `background-color` in the component,
+   (2) look like a pale band on toolbars, and
+   (3) read as low-contrast/see-through over the editor UI. Use solid panels, plain
+   elevation shadows, comfortable padding, and no velvet hover on this overlay.
+   ------------------------------------------------------------------------- */
+.v-card.editor-modal-media,
+.editor .v-card.editor-modal-media {
+  z-index: 200 !important;
+  background: $wg-bg !important;
+  background-color: $wg-bg !important;
+  background-image: none !important;
+  border: 1px solid $wg-velvet-border !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 24px 56px rgba(0, 0, 0, 0.55) !important;
+}
+
+.v-card.editor-modal-media:hover,
+.editor .v-card.editor-modal-media:hover {
+  background: $wg-bg !important;
+  background-image: none !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 24px 56px rgba(0, 0, 0, 0.55) !important;
+}
+
 .editor-modal-media {
+  .container,
+  .v-container {
+    padding: 1.5rem 1.75rem 1.75rem !important;
+  }
+
+  .v-card {
+    background: $wg-panel !important;
+    background-color: $wg-panel !important;
+    background-image: none !important;
+    border: 1px solid $wg-velvet-border !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.38) !important;
+  }
+
+  .v-card:hover {
+    background: $wg-panel-2 !important;
+    background-image: none !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .v-card__text {
+    padding: 1.25rem 1.35rem 1.4rem !important;
+  }
+
+  .v-card__text > .d-flex:not(:last-child) {
+    margin-bottom: 0.75rem;
+  }
+
+  .layout .flex {
+    padding: 0.45rem 0.55rem;
+  }
+
+  /* Filled / colored actions: global Westgate sets `.v-btn { background: transparent }`. */
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).teal,
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).teal.darken-1,
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).teal.darken-2 {
+    background: #00695c !important;
+    border-color: #00695c !important;
+    color: #fff4f0 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).red,
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).red.darken-2,
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).red.darken-3,
+  .v-btn:not(.v-btn--text):not(.v-btn--outlined).red.darken-4 {
+    background: #b71c1c !important;
+    border-color: #b71c1c !important;
+    color: #ffebef !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .v-data-table th,
+  .v-data-table td {
+    padding-left: 0.9rem !important;
+    padding-right: 0.9rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .v-data-table {
+    border-radius: 4px;
+    margin-top: 0.5rem;
+  }
+
+  /* Section + path toolbars: stock Vuetify `teal` / `white` / `grey lighten-*` are too loud
+     for Westgate. Use dark panels, muted gold titles, and no bright mint or white strip. */
+  /* Vuetify injects e.g. `.v-application .teal.lighten-5 { border-color: #e0f2f1 !important; }` —
+     higher specificity is required so the mint “frame” is replaced with Westgate line color. */
+  .v-application .editor-modal-media .v-toolbar,
+  .v-application .editor-modal-media .v-toolbar.teal,
+  .v-application .editor-modal-media .v-toolbar.teal.lighten-3,
+  .v-application .editor-modal-media .v-toolbar.teal.lighten-4,
+  .v-application .editor-modal-media .v-toolbar.teal.lighten-5 {
+    background: $wg-panel-2 !important;
+    background-image: none !important;
+    background-repeat: no-repeat !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-bottom: 1px solid $wg-velvet-border !important;
+    color: $wg-text-soft !important;
+  }
+
+  .v-toolbar .v-toolbar__content {
+    padding: 0 0.8rem 0 0.9rem !important;
+  }
+
+  .v-toolbar.teal,
+  .v-toolbar.primary,
+  .v-application .editor-modal-media .v-toolbar.teal,
+  .v-application .editor-modal-media .v-toolbar.teal.lighten-3,
+  .v-application .editor-modal-media .v-toolbar.teal.lighten-4,
+  .v-application .editor-modal-media .v-toolbar.teal.lighten-5 {
+    background: linear-gradient(180deg, #1a1720 0%, #111018 100%) !important;
+    color: $wg-gold !important;
+  }
+
+  .v-toolbar.teal .body-2,
+  .v-toolbar.teal .white--text,
+  .v-toolbar.teal .teal--text,
+  .v-toolbar.teal .teal--text.text--lighten-3,
+  .v-toolbar.primary .body-2 {
+    color: $wg-gold !important;
+  }
+
+  .v-toolbar.teal .v-icon,
+  .v-toolbar.primary .v-icon,
+  .v-toolbar.teal .v-btn--icon .v-icon {
+    color: $wg-gold !important;
+  }
+
+  .v-toolbar.white,
+  .v-toolbar.grey,
+  .v-toolbar.blue-grey {
+    background: $wg-panel-2 !important;
+    color: $wg-text-soft !important;
+  }
+
+  .v-toolbar .body-2,
+  .v-toolbar .grey--text,
+  .v-toolbar .grey--text.text--lighten-1,
+  .v-toolbar .grey--text.text--darken-1 {
+    color: $wg-text-soft !important;
+  }
+
+  .v-toolbar .v-btn {
+    /* Avoid global transparent `.v-btn` in this panel feeling flush against edges. */
+    margin-left: 0.1rem;
+    margin-right: 0.1rem;
+  }
+
+  /* Outlined v-select / v-text-field: parent `v-card` can be `theme--light` while the panel
+     is still Westgate-dark, so Vuetify sets `.theme--light .v-select__selection--comma` to
+     near-black — illegible. Force light-on-dark for selection, label, and placeholder. */
+  .v-text-field,
+  .v-select,
+  .v-input {
+    .v-label {
+      color: $wg-text-muted !important;
+    }
+
+    .v-label--active,
+    &.v-input--is-focused .v-label,
+    &.v-input--is-label-active .v-label {
+      color: $wg-gold !important;
+    }
+
+    .v-select__selection,
+    .v-select__selection--comma,
+    .v-text-field__slot input,
+    input {
+      color: $wg-text !important;
+    }
+  }
+
+  .theme--light.v-select,
+  .theme--light.v-text-field,
+  .v-select.theme--light,
+  .v-text-field.theme--light {
+    .v-select__selection--comma,
+    .v-select__selection,
+    .v-text-field__slot input,
+    input,
+    textarea {
+      color: $wg-text !important;
+    }
+  }
+
+  .v-text-field input::placeholder,
+  .v-select .v-select__slot input::placeholder,
+  .v-text-field .v-text-field__slot input::placeholder {
+    color: $wg-text-muted !important;
+    opacity: 1 !important;
+  }
+
+  .v-text-field--outlined fieldset,
+  .v-select--outlined fieldset {
+    border-color: $wg-velvet-border !important;
+  }
+
+  .v-text-field--outlined.v-input--is-focused fieldset,
+  .v-select--outlined.v-input--is-focused fieldset {
+    border-color: rgba(194, 163, 90, 0.45) !important;
+  }
+
   .filepond--root {
-    /* `filepond.css` sets this to #f1f0ef; with global light text, the hint was invisible. */
     .filepond--panel-root {
       background-color: rgba(20, 18, 25, 0.95) !important;
     }
