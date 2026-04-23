@@ -2,13 +2,13 @@
   v-app.westgate-theme(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(v-if='!printView')
     v-navigation-drawer(
-      v-if='navMode !== `NONE` && !printView'
+      v-if='navMode !== `NONE` && !printView && !$vuetify.breakpoint.lgAndUp'
       :class='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`'
       dark
       app
       clipped
       mobile-breakpoint='600'
-      :temporary='$vuetify.breakpoint.smAndDown'
+      :temporary='!$vuetify.breakpoint.lgAndUp'
       v-model='navShown'
       :right='$vuetify.rtl'
       class='westgate-nav-drawer'
@@ -26,21 +26,18 @@
         :left='!$vuetify.rtl'
         small
         @click='navShown = !navShown'
-        v-if='$vuetify.breakpoint.mdAndDown'
+        v-if='!$vuetify.breakpoint.lgAndUp'
         v-show='!navShown'
         )
         v-icon mdi-menu
 
     v-main(ref='content')
       template(v-if='path !== `home`')
-        v-toolbar.westgate-breadcrumb-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
-          //- v-btn.pl-0(v-if='$vuetify.breakpoint.xsOnly', flat, @click='toggleNavigation')
-          //-   v-icon(color='grey darken-2', left) menu
-          //-   span Navigation
+        .westgate-reading-shell-inner.breadcrumbs-container(v-if='$vuetify.breakpoint.smAndUp')
           v-breadcrumbs.breadcrumbs-nav.pl-0(
             :items='breadcrumbs'
             divider='/'
-            )
+          )
             template(slot='item', slot-scope='props')
               v-icon(v-if='props.item.path === "/"', small, @click='goHome') mdi-home
               v-btn.ma-0(v-else, :href='props.item.path', small, text) {{props.item.name}}
@@ -48,279 +45,252 @@
             v-spacer
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
-        v-divider
       v-container.westgate-page-title-band.pa-0(fluid)
-        v-row.page-header-section(no-gutters, align-content='center')
-          v-col.page-col-content.is-page-header(
-            :offset-xl='tocPosition === `left` ? 2 : 0'
-            :offset-lg='tocPosition === `left` ? 3 : 0'
-            :xl='tocPosition === `right` ? 10 : false'
-            :lg='tocPosition === `right` ? 9 : false'
-            style='margin-top: auto; margin-bottom: auto;'
-            :class='$vuetify.rtl ? `pr-4` : `pl-4`'
-            )
-            .page-header-headings
-              .headline.westgate-page-title {{title}}
-              .caption.westgate-page-description {{description}}
-            .page-edit-shortcuts(
-              v-if='editShortcutsObj.editMenuBar'
-              :class='tocPosition === `right` ? `is-right` : ``'
-              )
-              v-btn(
-                v-if='editShortcutsObj.editMenuBtn'
-                @click='pageEdit'
-                depressed
-                small
+        .westgate-reading-shell-inner
+          v-row.page-header-section(no-gutters, align-content='center')
+            v-col.page-col-content.is-page-header(cols='12', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')
+              .page-header-headings
+                .headline.westgate-page-title {{title}}
+                .caption.westgate-page-description {{description}}
+              .page-edit-shortcuts(
+                v-if='editShortcutsObj.editMenuBar'
+                :class='tocPosition !== `off` ? `is-right` : ``'
                 )
-                v-icon.mr-2(small) mdi-pencil
-                span.text-none {{$t(`common:actions.edit`)}}
-              v-btn(
-                v-if='editShortcutsObj.editMenuExternalBtn'
-                :href='editMenuExternalUrl'
-                target='_blank'
-                depressed
-                small
-                )
-                v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
-                span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
-      v-divider
+                v-btn(
+                  v-if='editShortcutsObj.editMenuBtn'
+                  @click='pageEdit'
+                  depressed
+                  small
+                  )
+                  v-icon.mr-2(small) mdi-pencil
+                  span.text-none {{$t(`common:actions.edit`)}}
+                v-btn(
+                  v-if='editShortcutsObj.editMenuExternalBtn'
+                  :href='editMenuExternalUrl'
+                  target='_blank'
+                  depressed
+                  small
+                  )
+                  v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
+                  span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
       v-container.westgate-page-body(fluid, grid-list-xl)
-        v-layout(row)
-          v-flex.page-col-sd(
-            v-if='tocPosition !== `off` && $vuetify.breakpoint.lgAndUp'
-            :order-xs1='tocPosition !== `right`'
-            :order-xs2='tocPosition === `right`'
-            lg3
-            xl2
-            )
-            v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
-              .overline.westgate-card-title.pa-5.pb-0 {{$t('common:page.toc')}}
-              v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
-                template(v-for='(tocItem, tocIdx) in tocDecoded')
-                  v-list-item(v-if='tocItem.title', @click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
-                    v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                    v-list-item-title.px-3 {{tocItem.title}}
-                  //- v-divider(v-if='tocIdx < toc.length - 1 || tocItem.children.length')
-                  template(v-for='tocSubItem in tocItem.children')
-                    v-list-item(v-if='tocSubItem.title', @click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
-                      v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
-                      v-list-item-title.px-3.caption.westgate-muted-text {{tocSubItem.title}}
-                    //- v-divider(inset, v-if='tocIdx < toc.length - 1')
-
-            v-card.page-tags-card.mb-5(v-if='tags.length > 0')
-              .pa-5
-                .overline.westgate-card-title.pb-2 {{$t('common:page.tags')}}
-                v-chip.mr-1.mb-1(
-                  label
-                  v-for='(tag, idx) in tags'
-                  :href='`/t/` + tag.tag'
-                  :key='`tag-` + tag.tag'
-                  )
-                  v-icon(left, small) mdi-tag
-                  span {{tag.title}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :href='`/t/` + tags.map(t => t.tag).join(`/`)'
-                  :aria-label='$t(`common:page.tagsMatching`)'
-                  )
-                  v-icon(size='20') mdi-tag-multiple
-
-            v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
-              .pa-5
-                .overline.westgate-card-title.pb-2.d-flex.align-center
-                  span {{$t('common:comments.sdTitle')}}
-                .d-flex
-                  v-btn.text-none(
-                    @click='goToComments()'
-                    outlined
-                    style='flex: 1 1 100%;'
-                    small
+        .westgate-reading-shell-inner
+          .westgate-reading-row(:class='readingRowClass')
+            aside.westgate-read-nav.westgate-inline-nav(
+              v-if='navMode !== `NONE` && !printView && $vuetify.breakpoint.lgAndUp'
+              aria-label='Site navigation'
+              )
+              vue-scroll(:ops='scrollStyle')
+                nav-sidebar(color='westgate-sidebar-list', :items='sidebarDecoded', :nav-mode='navMode')
+            .westgate-read-main.page-col-content
+              v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions && editShortcutsObj.editFab')
+                template(v-slot:activator='{ on: onEditActivator }')
+                  v-speed-dial(
+                    v-model='pageEditFab'
+                    direction='top'
+                    open-on-hover
+                    transition='scale-transition'
+                    bottom
+                    :right='!$vuetify.rtl'
+                    :left='$vuetify.rtl'
+                    fixed
+                    dark
                     )
-                    span {{$t('common:comments.viewDiscussion')}}
-                  v-tooltip(right, v-if='commentsPerms.write')
-                    template(v-slot:activator='{ on }')
-                      v-btn.ml-2(
-                        @click='goToComments(true)'
-                        v-on='on'
-                        outlined
-                        small
-                        :aria-label='$t(`common:comments.newComment`)'
-                        )
-                        v-icon(dense) mdi-comment-plus
-                    span {{$t('common:comments.newComment')}}
-
-            v-card.page-author-card.mb-5
-              .pa-5
-                .overline.westgate-card-title.d-flex
-                  span {{$t('common:page.lastEditedBy')}}
-                  v-spacer
-                  v-tooltip(right, v-if='isAuthenticated')
-                    template(v-slot:activator='{ on }')
+                    template(v-slot:activator)
                       v-btn.btn-animate-edit(
-                        icon
-                        :href='"/h/" + locale + "/" + path'
-                        v-on='on'
-                        x-small
-                        v-if='hasReadHistoryPermission'
-                        :aria-label='$t(`common:header.history`)'
+                        fab
+                        color='primary'
+                        v-model='pageEditFab'
+                        @click='pageEdit'
+                        v-on='onEditActivator'
+                        :disabled='!hasWritePagesPermission'
+                        :aria-label='$t(`common:page.editPage`)'
                         )
-                        v-icon(dense) mdi-history
-                    span {{$t('common:header.history')}}
-                .page-author-card-name.body-2 {{ authorName }}
-                .page-author-card-date.caption.westgate-muted-text {{ updatedAt | moment('calendar') }}
+                        v-icon mdi-pencil
+                    v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission')
+                      template(v-slot:activator='{ on }')
+                        v-btn(
+                          fab
+                          small
+                          color='white'
+                          light
+                          v-on='on'
+                          @click='pageHistory'
+                          )
+                          v-icon(size='20') mdi-history
+                      span {{$t('common:header.history')}}
+                    v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
+                      template(v-slot:activator='{ on }')
+                        v-btn(
+                          fab
+                          small
+                          color='white'
+                          light
+                          v-on='on'
+                          @click='pageSource'
+                          )
+                          v-icon(size='20') mdi-code-tags
+                      span {{$t('common:header.viewSource')}}
+                    v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
+                      template(v-slot:activator='{ on }')
+                        v-btn(
+                          fab
+                          small
+                          color='white'
+                          light
+                          v-on='on'
+                          @click='pageConvert'
+                          )
+                          v-icon(size='20') mdi-lightning-bolt
+                      span {{$t('common:header.convert')}}
+                    v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
+                      template(v-slot:activator='{ on }')
+                        v-btn(
+                          fab
+                          small
+                          color='white'
+                          light
+                          v-on='on'
+                          @click='pageDuplicate'
+                          )
+                          v-icon(size='20') mdi-content-duplicate
+                      span {{$t('common:header.duplicate')}}
+                    v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
+                      template(v-slot:activator='{ on }')
+                        v-btn(
+                          fab
+                          small
+                          color='white'
+                          light
+                          v-on='on'
+                          @click='pageMove'
+                          )
+                          v-icon(size='20') mdi-content-save-move-outline
+                      span {{$t('common:header.move')}}
+                    v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
+                      template(v-slot:activator='{ on }')
+                        v-btn(
+                          fab
+                          dark
+                          small
+                          color='red'
+                          v-on='on'
+                          @click='pageDelete'
+                          )
+                          v-icon(size='20') mdi-trash-can-outline
+                      span {{$t('common:header.delete')}}
+                span {{$t('common:page.editPage')}}
+              v-alert.mb-5(v-if='!isPublished', color='red', outlined, icon='mdi-minus-circle', dense)
+                .caption {{$t('common:page.unpublishedWarning')}}
+              .contents(ref='container')
+                slot(name='contents')
+              div(style='margin: 20px 0;')
+              .westgate-page-meta
+                v-card.page-comments-card.mb-5.meta-card(v-if='commentsEnabled && commentsPerms.read')
+                  .pa-5
+                    .overline.westgate-card-title.pb-2.d-flex.align-center
+                      span {{$t('common:comments.sdTitle')}}
+                    .d-flex
+                      v-btn.text-none(
+                        @click='goToComments()'
+                        outlined
+                        style='flex: 1 1 100%;'
+                        small
+                        )
+                        span {{$t('common:comments.viewDiscussion')}}
+                      v-tooltip(right, v-if='commentsPerms.write')
+                        template(v-slot:activator='{ on }')
+                          v-btn.ml-2(
+                            @click='goToComments(true)'
+                            v-on='on'
+                            outlined
+                            small
+                            :aria-label='$t(`common:comments.newComment`)'
+                            )
+                            v-icon(dense) mdi-comment-plus
+                        span {{$t('common:comments.newComment')}}
 
-            //- v-card.mb-5
-            //-   .pa-5
-            //-     .overline.pb-2.yellow--text(:class='$vuetify.theme.dark ? `text--darken-3` : `text--darken-4`') Rating
-            //-     .text-center
-            //-       v-rating(
-            //-         v-model='rating'
-            //-         color='yellow darken-3'
-            //-         background-color='grey lighten-1'
-            //-         half-increments
-            //-         hover
-            //-       )
-            //-       .caption.grey--text 5 votes
+                v-card.page-author-card.mb-5.meta-card
+                  .pa-5
+                    .overline.westgate-card-title.d-flex
+                      span {{$t('common:page.lastEditedBy')}}
+                      v-spacer
+                      v-tooltip(right, v-if='isAuthenticated')
+                        template(v-slot:activator='{ on }')
+                          v-btn.btn-animate-edit(
+                            icon
+                            :href='"/h/" + locale + "/" + path'
+                            v-on='on'
+                            x-small
+                            v-if='hasReadHistoryPermission'
+                            :aria-label='$t(`common:header.history`)'
+                            )
+                            v-icon(dense) mdi-history
+                        span {{$t('common:header.history')}}
+                    .page-author-card-name.body-2 {{ authorName }}
+                    .page-author-card-date.caption.westgate-muted-text {{ updatedAt | moment('calendar') }}
 
-            v-card.page-shortcuts-card(flat)
-              v-toolbar.westgate-shortcuts-toolbar(flat, dense)
-                v-spacer
-                //- v-tooltip(bottom)
-                //-   template(v-slot:activator='{ on }')
-                //-     v-btn(icon, tile, v-on='on', :aria-label='$t(`common:page.bookmark`)'): v-icon(color='grey') mdi-bookmark
-                //-   span {{$t('common:page.bookmark')}}
-                v-menu(offset-y, bottom, min-width='300')
-                  template(v-slot:activator='{ on: menu }')
-                    v-tooltip(bottom)
-                      template(v-slot:activator='{ on: tooltip }')
-                        v-btn(icon, tile, v-on='{ ...menu, ...tooltip }', :aria-label='$t(`common:page.share`)'): v-icon(color='grey') mdi-share-variant
-                      span {{$t('common:page.share')}}
-                  social-sharing(
-                    :url='pageUrl'
-                    :title='title'
-                    :description='description'
-                  )
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
-                      v-icon(:color='printView ? `primary` : `grey`') mdi-printer
-                  span {{$t('common:page.printFormat')}}
-                v-spacer
-
-          v-flex.page-col-content(
-            xs12
-            :lg9='tocPosition !== `off`'
-            :xl10='tocPosition !== `off`'
-            :order-xs1='tocPosition === `right`'
-            :order-xs2='tocPosition !== `right`'
-            )
-            v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions && editShortcutsObj.editFab')
-              template(v-slot:activator='{ on: onEditActivator }')
-                v-speed-dial(
-                  v-model='pageEditFab'
-                  direction='top'
-                  open-on-hover
-                  transition='scale-transition'
-                  bottom
-                  :right='!$vuetify.rtl'
-                  :left='$vuetify.rtl'
-                  fixed
-                  dark
-                  )
-                  template(v-slot:activator)
-                    v-btn.btn-animate-edit(
-                      fab
-                      color='primary'
-                      v-model='pageEditFab'
-                      @click='pageEdit'
-                      v-on='onEditActivator'
-                      :disabled='!hasWritePagesPermission'
-                      :aria-label='$t(`common:page.editPage`)'
+                v-card.page-shortcuts-card(flat).meta-card
+                  v-toolbar.westgate-shortcuts-toolbar.westgate-meta-buttons(flat, dense)
+                    v-menu(offset-y, bottom, min-width='300')
+                      template(v-slot:activator='{ on: menu }')
+                        v-tooltip(bottom)
+                          template(v-slot:activator='{ on: tooltip }')
+                            v-btn(icon, tile, v-on='{ ...menu, ...tooltip }', :aria-label='$t(`common:page.share`)'): v-icon(color='grey') mdi-share-variant
+                          span {{$t('common:page.share')}}
+                      social-sharing(
+                        :url='pageUrl'
+                        :title='title'
+                        :description='description'
                       )
-                      v-icon mdi-pencil
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadHistoryPermission')
-                    template(v-slot:activator='{ on }')
-                      v-btn(
-                        fab
-                        small
-                        color='white'
-                        light
-                        v-on='on'
-                        @click='pageHistory'
-                        )
-                        v-icon(size='20') mdi-history
-                    span {{$t('common:header.history')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasReadSourcePermission')
-                    template(v-slot:activator='{ on }')
-                      v-btn(
-                        fab
-                        small
-                        color='white'
-                        light
-                        v-on='on'
-                        @click='pageSource'
-                        )
-                        v-icon(size='20') mdi-code-tags
-                    span {{$t('common:header.viewSource')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
-                    template(v-slot:activator='{ on }')
-                      v-btn(
-                        fab
-                        small
-                        color='white'
-                        light
-                        v-on='on'
-                        @click='pageConvert'
-                        )
-                        v-icon(size='20') mdi-lightning-bolt
-                    span {{$t('common:header.convert')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasWritePagesPermission')
-                    template(v-slot:activator='{ on }')
-                      v-btn(
-                        fab
-                        small
-                        color='white'
-                        light
-                        v-on='on'
-                        @click='pageDuplicate'
-                        )
-                        v-icon(size='20') mdi-content-duplicate
-                    span {{$t('common:header.duplicate')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasManagePagesPermission')
-                    template(v-slot:activator='{ on }')
-                      v-btn(
-                        fab
-                        small
-                        color='white'
-                        light
-                        v-on='on'
-                        @click='pageMove'
-                        )
-                        v-icon(size='20') mdi-content-save-move-outline
-                    span {{$t('common:header.move')}}
-                  v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasDeletePagesPermission')
-                    template(v-slot:activator='{ on }')
-                      v-btn(
-                        fab
-                        dark
-                        small
-                        color='red'
-                        v-on='on'
-                        @click='pageDelete'
-                        )
-                        v-icon(size='20') mdi-trash-can-outline
-                    span {{$t('common:header.delete')}}
-              span {{$t('common:page.editPage')}}
-            v-alert.mb-5(v-if='!isPublished', color='red', outlined, icon='mdi-minus-circle', dense)
-              .caption {{$t('common:page.unpublishedWarning')}}
-            .contents(ref='container')
-              slot(name='contents')
-            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
-              .comments-header
-                v-icon.mr-2(dark) mdi-comment-text-outline
-                span {{$t('common:comments.title')}}
-              .comments-main
-                slot(name='comments')
+                    v-tooltip(bottom)
+                      template(v-slot:activator='{ on }')
+                        v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
+                          v-icon(:color='printView ? `primary` : `grey`') mdi-printer
+                      span {{$t('common:page.printFormat')}}
+
+              .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
+                .comments-header
+                  v-icon.mr-2(dark) mdi-comment-text-outline
+                  span {{$t('common:comments.title')}}
+                .comments-main
+                  slot(name='comments')
+
+            //- TOC + tags rail (right of article; gated by tocPosition !== off in tocRailVisible)
+            aside.westgate-read-rail.westgate-read-rail--toc(
+              v-if='tocPosition !== `off` && $vuetify.breakpoint.lgAndUp'
+              )
+              v-card.page-toc-card.mb-5(v-if='tocDecoded.length')
+                .overline.westgate-card-title.pa-5.pb-0 {{$t('common:page.toc')}}
+                v-list.pb-3(dense, nav, :class='$vuetify.theme.dark ? `darken-3-d3` : ``')
+                  template(v-for='(tocItem, tocIdx) in tocDecoded')
+                    v-list-item(v-if='tocItem.title', @click='$vuetify.goTo(tocItem.anchor, scrollOpts)')
+                      v-icon(color='grey', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+                      v-list-item-title.px-3 {{tocItem.title}}
+                    template(v-for='tocSubItem in tocItem.children')
+                      v-list-item(v-if='tocSubItem.title', @click='$vuetify.goTo(tocSubItem.anchor, scrollOpts)')
+                        v-icon.px-3(color='grey lighten-1', small) {{ $vuetify.rtl ? `mdi-chevron-left` : `mdi-chevron-right` }}
+                        v-list-item-title.px-3.caption.westgate-muted-text {{tocSubItem.title}}
+
+              .westgate-read-rail__toc-placeholder.mb-5(v-else, aria-hidden='true')
+
+              v-card.page-tags-card.mb-5(v-if='tags.length > 0')
+                .pa-5
+                  .overline.westgate-card-title.pb-2 {{$t('common:page.tags')}}
+                  v-chip.mr-1.mb-1(
+                    label
+                    v-for='(tag, idx) in tags'
+                    :href='`/t/` + tag.tag'
+                    :key='`tag-tr-` + tag.tag'
+                    )
+                    v-icon(left, small) mdi-tag
+                    span {{tag.title}}
+                  v-chip.mr-1.mb-1(
+                    label
+                    :href='`/t/` + tags.map(t => t.tag).join(`/`)'
+                    :aria-label='$t(`common:page.tagsMatching`)'
+                    )
+                    v-icon(size='20') mdi-tag-multiple
     nav-footer
     notify
     search-results
@@ -538,11 +508,13 @@ export default {
     },
     pageUrl () { return window.location.href },
     upBtnPosition () {
+      if (this.$vuetify.breakpoint.lgAndUp) {
+        return this.$vuetify.rtl ? `left: 24px; right: auto;` : `right: 24px; left: auto;`
+      }
       if (this.$vuetify.breakpoint.mdAndUp) {
         return this.$vuetify.rtl ? `right: 235px;` : `left: 235px;`
-      } else {
-        return this.$vuetify.rtl ? `right: 65px;` : `left: 65px;`
       }
+      return this.$vuetify.rtl ? `right: 65px;` : `left: 65px;`
     },
     sidebarDecoded () {
       return JSON.parse(Buffer.from(this.sidebar, 'base64').toString())
@@ -567,6 +539,13 @@ export default {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
       } else {
         return ''
+      }
+    },
+    readingRowClass () {
+      return {
+        'westgate-reading-row--toc-off': this.tocPosition === 'off',
+        'westgate-reading-row--toc-right': this.tocPosition !== 'off',
+        'is-rtl': this.$vuetify.rtl
       }
     }
   },
@@ -687,10 +666,12 @@ export default {
     handleSideNavVisibility () {
       if (window.innerWidth === this.winWidth) { return }
       this.winWidth = window.innerWidth
-      if (this.$vuetify.breakpoint.mdAndUp) {
-        this.navShown = true
-      } else {
-        this.navShown = false
+      if (!this.$vuetify.breakpoint.lgAndUp) {
+        if (this.$vuetify.breakpoint.mdAndUp) {
+          this.navShown = true
+        } else {
+          this.navShown = false
+        }
       }
     },
     goToComments (focusNewComment = false) {
@@ -720,7 +701,8 @@ export default {
   }
 }
 
-.page-col-sd {
+.westgate-read-nav,
+.westgate-read-rail--toc {
   margin-top: 0;
   align-self: flex-start;
   position: sticky;
@@ -730,8 +712,20 @@ export default {
   -ms-overflow-style: none;
 }
 
-.page-col-sd::-webkit-scrollbar {
+.westgate-read-nav::-webkit-scrollbar,
+.westgate-read-rail--toc::-webkit-scrollbar {
   display: none;
+}
+
+@media print {
+  .westgate-read-nav,
+  .westgate-read-rail--toc {
+    display: none !important;
+  }
+
+  .westgate-read-main {
+    max-width: none !important;
+  }
 }
 
 .page-header-section {

@@ -11,7 +11,7 @@ props:
     title: Table of Contents Position
     hint: Select whether the table of contents is shown on the left, right or not at all.
     order: 1
-    default: left
+    default: right
     enum:
       - left
       - right
