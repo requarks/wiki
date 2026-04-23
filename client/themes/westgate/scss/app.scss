@@ -129,6 +129,17 @@ body,
   font-family: $wg-font-ui !important;
 }
 
+/* MDI must win over global UI fonts (Jost !important on body / tables / captions). */
+.v-application .v-icon.mdi,
+.v-application .mdi::before,
+.v-application .v-icon.mdi::before {
+  font-family: "Material Design Icons", sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 ::selection {
   background: $wg-selection;
   color: #fff4dd;
@@ -169,8 +180,6 @@ h3 { font-size: 1.32rem; }
 
 p,
 li,
-td,
-th,
 label,
 .v-label,
 .caption,
@@ -214,10 +223,19 @@ a {
   background: $wg-bg !important;
 }
 
-.v-app-bar,
-.v-toolbar,
-header,
-nav {
+/* Unqualified `.grey` matched Vuetify `color="grey … "` on toolbars, chips, and other
+   components (e.g. the editor asset manager), replacing intended surfaces with the wiki
+   background. Scope to page-chrome class stacks only, excluding those surfaces. */
+.v-application
+  .grey:not(.v-toolbar):not(.v-bottom-navigation):not(.v-btn):not(.v-chip) {
+  background-color: $wg-bg !important;
+  background: $wg-bg !important;
+  border-color: $wg-bg !important;
+}
+
+/* Only the primary app bar uses the Westgate sheen. Editor/admin toolbars (teal, grey, …)
+   rely on the `color` prop and would otherwise get an extra silk layer that washes them out. */
+.v-app-bar {
   background:
     $wg-silk-sheen,
     linear-gradient(to bottom, rgba(20, 18, 25, 0.96), rgba(16, 14, 20, 0.98)) !important;
@@ -681,6 +699,14 @@ select:focus {
   color: $wg-text-soft !important;
 }
 
+.page-content td,
+.page-content th,
+.markdown-body td,
+.markdown-body th {
+  color: $wg-text-soft !important;
+  font-family: $wg-font-reading !important;
+}
+
 .page-content h1,
 .page-content h2,
 .page-content h3,
@@ -881,6 +907,75 @@ hr,
   color: $wg-text !important;
 }
 
+/* =========================================================
+   ADMIN (/a) — grid, chips, toolbars
+   Westgate globals must not collapse Vuetify admin layout or chips.
+   ========================================================= */
+
+.v-application.admin {
+  /* Legacy v-layout grid: explicit flex-basis if a-la-carte Vuetify omitted grid CSS */
+  .container .layout.row.wrap > .flex.xs12 {
+    flex: 0 1 100% !important;
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
+
+  @media (min-width: 960px) {
+    .container .layout.row.wrap > .flex.md6 {
+      flex: 0 1 50% !important;
+      flex-basis: 50% !important;
+      max-width: 50% !important;
+    }
+  }
+
+  @media (min-width: 1264px) {
+    .container .layout.row.wrap > .flex.lg4 {
+      flex: 0 1 33.3333333333% !important;
+      flex-basis: 33.3333333333% !important;
+      max-width: 33.3333333333% !important;
+    }
+  }
+
+  @media (min-width: 1904px) {
+    .container .layout.row.wrap > .flex.xl3 {
+      flex: 0 1 25% !important;
+      flex-basis: 25% !important;
+      max-width: 25% !important;
+    }
+  }
+
+  .container .layout.row.wrap > .flex.d-flex {
+    display: flex !important;
+    min-width: 0;
+  }
+
+  .container .layout.row.wrap > .flex.d-flex > .v-card {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .v-toolbar.grey {
+    background: rgba(18, 16, 22, 0.92) !important;
+  }
+
+  .v-chip.v-size--x-small,
+  .v-chip.v-size--small {
+    background: $wg-chip !important;
+    border: 1px solid rgba(194, 163, 90, 0.24) !important;
+    color: $wg-link !important;
+  }
+
+  .v-chip.v-size--x-small .v-chip__content,
+  .v-chip.v-size--small .v-chip__content {
+    color: $wg-link !important;
+  }
+
+  .v-chip .caption.grey--text {
+    color: rgba(224, 208, 168, 0.92) !important;
+  }
+}
+
 .login {
   background:
     linear-gradient(110deg, rgba(15, 13, 18, 0.98) 0%, rgba(20, 14, 21, 0.92) 42%, rgba(6, 5, 8, 0.98) 100%) !important;
@@ -968,6 +1063,28 @@ hr,
 .source {
   background: $wg-bg !important;
   color: $wg-text-soft !important;
+}
+
+/* FilePond ships a light drop surface; our global `body` text color is light, so the hint
+   text in the “Browse / drop” label became low-contrast. Use a Westgate panel + matching type. */
+.editor,
+.editor-modal-media {
+  .filepond--root {
+    /* `filepond.css` sets this to #f1f0ef; with global light text, the hint was invisible. */
+    .filepond--panel-root {
+      background-color: rgba(20, 18, 25, 0.95) !important;
+    }
+
+    .filepond--drop-label,
+    .filepond--drop-label label {
+      color: $wg-text-soft !important;
+    }
+
+    .filepond--label-action {
+      color: $wg-link !important;
+      text-decoration: underline;
+    }
+  }
 }
 
 .editor-markdown {
@@ -1271,7 +1388,7 @@ hr,
 .westgate-theme {
   .v-main {
     background:
-      linear-gradient(120deg, rgba(84, 28, 62, 0.08), transparent 34%),
+      linear-gradient(120deg, rgba(167, 151, 160, 0.08), transparent 34%),
       $wg-bg !important;
   }
 
