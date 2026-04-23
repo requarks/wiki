@@ -45,7 +45,7 @@
             v-spacer
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
-      v-container.westgate-page-title-band.pa-0(fluid)
+      v-container.pa-0(fluid)
         .westgate-reading-shell-inner
           v-row.page-header-section(no-gutters, align-content='center')
             v-col.page-col-content.is-page-header(cols='12', style='margin-top: auto; margin-bottom: auto;', :class='$vuetify.rtl ? `pr-4` : `pl-4`')

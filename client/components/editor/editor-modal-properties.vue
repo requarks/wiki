@@ -3,6 +3,7 @@
     v-model='isShown'
     persistent
     width='1000'
+    content-class='editor-modal-properties'
     :fullscreen='$vuetify.breakpoint.smAndDown'
     )
     .dialog-header

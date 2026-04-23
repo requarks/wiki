@@ -635,16 +635,18 @@ li::marker {
 
 /* =========================================================
    FORMS / INPUTS
+   Vuetify outlined fields draw the notched `fieldset` — do not add a second border,
+   background, or inset shadow on `.v-input__slot` or the native `input` inside.
    ========================================================= */
 
 input,
 textarea,
 select,
-.v-input__slot,
-.v-text-field > .v-input__control > .v-input__slot,
-.v-textarea > .v-input__control > .v-input__slot,
-.v-select > .v-input__control > .v-input__slot,
-.v-autocomplete > .v-input__control > .v-input__slot {
+.v-text-field:not(.v-text-field--outlined) > .v-input__control > .v-input__slot,
+.v-textarea:not(.v-textarea--outlined) > .v-input__control > .v-input__slot,
+.v-select:not(.v-text-field--outlined) > .v-input__control > .v-input__slot,
+.v-autocomplete:not(.v-text-field--outlined) > .v-input__control > .v-input__slot,
+.v-combobox:not(.v-text-field--outlined) > .v-input__control > .v-input__slot {
   background: linear-gradient(to bottom, $wg-panel, $wg-panel-2) !important;
   border: 1px solid $wg-border !important;
   color: $wg-text !important;
@@ -652,6 +654,33 @@ select,
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.025),
     0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.v-text-field--outlined .v-input__slot,
+.v-textarea--outlined .v-input__slot,
+.v-select.v-text-field--outlined .v-input__slot,
+.v-combobox.v-text-field--outlined .v-input__slot,
+.v-autocomplete.v-text-field--outlined .v-input__slot {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.v-text-field--outlined .v-text-field__slot input,
+.v-text-field--outlined .v-text-field__slot textarea,
+.v-textarea--outlined .v-text-field__slot textarea,
+.v-select.v-text-field--outlined input,
+.v-combobox.v-text-field--outlined .v-text-field__slot input,
+.v-autocomplete.v-text-field--outlined .v-text-field__slot input,
+/* v-select / v-combobox / v-autocomplete place the control under `.v-select__slot`, not `.v-text-field__slot`. */
+.v-select.v-text-field--outlined .v-select__slot input,
+.v-combobox.v-text-field--outlined .v-select__slot input,
+.v-autocomplete.v-text-field--outlined .v-select__slot input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 input::placeholder,
@@ -665,7 +694,6 @@ textarea::placeholder {
   color: $wg-text !important;
 }
 
-.v-input--is-focused .v-input__slot,
 input:focus,
 textarea:focus,
 select:focus {
@@ -673,6 +701,54 @@ select:focus {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
     0 0 0 0.18rem rgba(194, 163, 90, 0.12) !important;
+}
+
+/* Outlined: focus is on the fieldset only — strip glow/border on the inner field. */
+.v-text-field--outlined .v-text-field__slot input:focus,
+.v-text-field--outlined .v-text-field__slot textarea:focus,
+.v-textarea--outlined .v-text-field__slot textarea:focus,
+.v-select.v-text-field--outlined input:focus,
+.v-combobox.v-text-field--outlined .v-text-field__slot input:focus,
+.v-text-field--outlined .v-text-field__slot input:active,
+.v-textarea--outlined .v-text-field__slot textarea:active,
+.v-select.v-text-field--outlined input:active,
+.v-combobox.v-text-field--outlined .v-select__slot input:focus,
+.v-combobox.v-text-field--outlined .v-select__slot input:active,
+.v-select.v-text-field--outlined .v-select__slot input:focus,
+.v-select.v-text-field--outlined .v-select__slot input:active,
+.v-autocomplete.v-text-field--outlined .v-select__slot input:focus,
+.v-autocomplete.v-text-field--outlined .v-select__slot input:active,
+.v-text-field--outlined .v-text-field__slot input,
+.v-text-field--outlined .v-text-field__slot textarea,
+.v-combobox.v-text-field--outlined .v-select__slot input,
+.v-select.v-text-field--outlined .v-select__slot input,
+.v-autocomplete.v-text-field--outlined .v-select__slot input {
+  box-shadow: none !important;
+  outline: none !important;
+  border: 0 !important;
+}
+
+/* Non-outlined: keep slot focus glow; outlined: strip inner slot so only the notch shows. */
+.v-text-field:not(.v-text-field--outlined).v-input--is-focused .v-input__slot,
+.v-textarea:not(.v-textarea--outlined).v-input--is-focused .v-input__slot,
+.v-select:not(.v-text-field--outlined).v-input--is-focused .v-input__slot,
+.v-autocomplete:not(.v-text-field--outlined).v-input--is-focused .v-input__slot,
+.v-combobox:not(.v-text-field--outlined).v-input--is-focused .v-input__slot {
+  border-color: rgba(194, 163, 90, 0.42) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 0 0.18rem rgba(194, 163, 90, 0.12) !important;
+}
+
+.v-text-field--outlined.v-input--is-focused .v-input__slot,
+.v-textarea--outlined.v-input--is-focused .v-input__slot,
+.v-select.v-text-field--outlined.v-input--is-focused .v-input__slot,
+.v-combobox.v-text-field--outlined.v-input--is-focused .v-input__slot,
+.v-autocomplete.v-text-field--outlined.v-input--is-focused .v-input__slot {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
 }
 
 /* =========================================================
@@ -1270,12 +1346,12 @@ hr,
   }
 
   .v-text-field--outlined fieldset,
-  .v-select--outlined fieldset {
+  .v-select.v-text-field--outlined fieldset {
     border-color: $wg-velvet-border !important;
   }
 
   .v-text-field--outlined.v-input--is-focused fieldset,
-  .v-select--outlined.v-input--is-focused fieldset {
+  .v-select.v-text-field--outlined.v-input--is-focused fieldset {
     border-color: rgba(194, 163, 90, 0.45) !important;
   }
 
@@ -1293,6 +1369,188 @@ hr,
       color: $wg-link !important;
       text-decoration: underline;
     }
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Editor — Page properties dialog (`content-class` on v-dialog in
+   `editor-modal-properties.vue`)
+   Replaces the stock white / blue tab row and Vuetify greys with Westgate panels,
+   and fixes light-theme text tokens on dark surfaces.
+   ------------------------------------------------------------------------- */
+.v-dialog.editor-modal-properties,
+.v-application .v-dialog.editor-modal-properties {
+  & > .dialog-header,
+  & .dialog-header {
+    background: linear-gradient(180deg, #1c1622 0%, #121018 100%) !important;
+    background-image: none !important;
+    border-bottom: 1px solid $wg-velvet-border !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .v-card {
+    background: $wg-bg !important;
+    background-color: $wg-bg !important;
+    background-image: none !important;
+    color: $wg-text-soft !important;
+  }
+
+  .v-card__text {
+    background: $wg-panel !important;
+    color: $wg-text-soft !important;
+  }
+
+  .v-card__text.grey,
+  .v-card__text.grey--text {
+    background: $wg-panel-2 !important;
+    color: $wg-text-soft !important;
+  }
+
+  .v-tabs {
+    background: transparent !important;
+  }
+
+  .v-tabs-bar {
+    background: linear-gradient(180deg, #1a1720 0%, #0f0e14 100%) !important;
+    border-bottom: 1px solid $wg-velvet-border !important;
+  }
+
+  .v-tabs-items,
+  .v-tab-item {
+    background: transparent !important;
+  }
+
+  .v-tabs-slider,
+  .v-tabs__slider,
+  .v-tabs__slider-pressed {
+    background: $wg-gold !important;
+  }
+
+  .v-tabs .v-tab:not(:disabled),
+  .v-tab:not(:disabled) {
+    color: $wg-text-muted !important;
+  }
+
+  .v-tabs .v-tab--active,
+  .v-tab--active {
+    color: $wg-gold !important;
+  }
+
+  .v-tab:disabled,
+  .v-tab--disabled {
+    color: rgba(154, 144, 134, 0.4) !important;
+  }
+
+  .v-divider {
+    border-color: $wg-velvet-border !important;
+    background-color: transparent !important;
+  }
+
+  .v-card__text .overline,
+  .v-card__text .subtitle-1,
+  .v-card__text--primary .overline,
+  .overline,
+  .dialog-header .subtitle-1,
+  .subtitle-1 {
+    color: $wg-gold !important;
+  }
+
+  .v-text-field,
+  .v-select,
+  .v-combobox,
+  .v-input {
+    .v-label {
+      color: $wg-text-muted !important;
+    }
+
+    .v-label--active,
+    &.v-input--is-focused .v-label,
+    &.v-input--is-label-active .v-label {
+      color: $wg-gold !important;
+    }
+
+    .v-select__selection,
+    .v-select__selection--comma,
+    .v-text-field__slot input,
+    input,
+    .v-text-field__slot,
+    .v-text-field__slot * {
+      color: $wg-text !important;
+    }
+  }
+
+  .theme--light.v-select,
+  .theme--light.v-text-field,
+  .v-select.theme--light,
+  .v-text-field.theme--light,
+  .v-combobox.theme--light,
+  .v-input.theme--light,
+  .v-input--checkbox.theme--light {
+    .v-select__selection--comma,
+    .v-select__selection,
+    .v-text-field__slot input,
+    input,
+    textarea {
+      color: $wg-text !important;
+    }
+  }
+
+  .v-messages,
+  .v-messages__message,
+  .v-messages__message *,
+  .v-messages--hint,
+  .v-input__icon .v-messages * {
+    color: $wg-text-muted !important;
+  }
+
+  .v-text-field--outlined fieldset,
+  .v-select.v-text-field--outlined fieldset,
+  .v-combobox.v-text-field--outlined fieldset {
+    border-color: $wg-velvet-border !important;
+  }
+
+  .v-text-field--outlined.v-input--is-focused fieldset,
+  .v-select.v-text-field--outlined.v-input--is-focused fieldset,
+  .v-combobox.v-text-field--outlined.v-input--is-focused fieldset {
+    border-color: rgba(194, 163, 90, 0.45) !important;
+  }
+
+  .v-input--is-disabled * {
+    color: rgba(185, 178, 166, 0.45) !important;
+  }
+
+  .v-switch,
+  .v-input--checkbox {
+    .v-label,
+    .v-messages * {
+      color: $wg-text-muted !important;
+    }
+  }
+
+  .v-chip--label,
+  .v-chip[label] {
+    background: $wg-panel-3 !important;
+    color: $wg-gold !important;
+    border-color: $wg-velvet-border !important;
+  }
+
+  .v-chip .v-icon {
+    color: $wg-gold !important;
+  }
+
+  .v-card__text .v-counter,
+  .v-input__icon .v-icon,
+  .v-text-field--outlined .v-input__append-inner .v-icon {
+    color: $wg-gold !important;
+  }
+
+  .editor-props-codeeditor-title {
+    color: $wg-gold !important;
+    background: $wg-bg !important;
+  }
+
+  .editor-props-codeeditor-hint {
+    color: $wg-text-muted !important;
   }
 }
 
