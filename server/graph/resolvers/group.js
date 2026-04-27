@@ -45,15 +45,15 @@ module.exports = {
         throw new gql.GraphQLError('Invalid Group ID')
       }
 
-      // Check assigned permissions for write:groups
+      // Check assigned permissions for manage:users / write:groups
       if (
-        WIKI.auth.checkExclusiveAccess(req.user, ['write:groups'], ['manage:groups', 'manage:system']) &&
+        WIKI.auth.checkExclusiveAccess(req.user, ['manage:users', 'write:groups'], ['manage:groups', 'manage:system']) &&
         grp.permissions.some(p => {
           const resType = _.last(p.split(':'))
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
         })
       ) {
-        throw new gql.GraphQLError('You are not authorized to assign a user to this elevated group.')
+        throw new gql.GraphQLError('You are not authorized to assign a user to this administrative group.')
       }
 
       // Check assigned permissions for manage:groups
@@ -178,7 +178,7 @@ module.exports = {
           return ['users', 'groups', 'navigation', 'theme', 'api', 'system'].includes(resType)
         })
       ) {
-        throw new gql.GraphQLError('You are not authorized to manage this group or assign these permissions.')
+        throw new gql.GraphQLError('You are not authorized to manage this group or assign these administrative permissions.')
       }
 
       // Check assigned permissions for manage:groups

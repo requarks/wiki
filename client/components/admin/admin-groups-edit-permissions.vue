@@ -149,28 +149,28 @@ export default {
           items: [
             {
               permission: 'write:users',
-              hint: 'Can create or authorize new users, but not modify existing ones',
+              hint: 'Can create or authorize new users, but not modify existing ones. Can only assign to non-administrative groups',
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:users',
-              hint: 'Can manage all users (but not users with administrative permissions)',
+              hint: 'Can create, authorize and modify ANY users. Can only assign to non-administrative groups',
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'write:groups',
-              hint: 'Can manage groups and assign CONTENT permissions / page rules',
+              hint: 'Can manage groups and set CONTENT permissions / page rules. Can only assign users to non-administrative groups',
               warning: false,
               restrictedForSystem: true,
               disabled: false
             },
             {
               permission: 'manage:groups',
-              hint: 'Can manage groups and assign ANY permissions (but not manage:system) / page rules',
+              hint: 'Can manage groups and set ANY permissions (but not manage:system) / page rules. Can assign users to ANY groups (except groups with the manage:system permission)',
               warning: true,
               restrictedForSystem: true,
               disabled: false
@@ -203,7 +203,7 @@ export default {
             },
             {
               permission: 'manage:system',
-              hint: 'Can manage and access everything. Root administrator.',
+              hint: 'Can manage and access everything. Root administrator',
               warning: true,
               restrictedForSystem: true,
               disabled: true

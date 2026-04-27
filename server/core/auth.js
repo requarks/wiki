@@ -318,41 +318,41 @@ module.exports = {
   },
 
   /**
-   * Check if user can perform assignment to a group with elevated permissions
+   * Check if user (requester) can perform user assignment to a group with elevated permissions
    *
-   * @param {User} user
-   * @param {Array<Number>} groupIds
+   * @param {User} requester The user attempting to perform the assignment
+   * @param {Array<Number>} groupIds List of group IDs to be assigned
    * @returns {Boolean}
    */
-  async checkAssignUserToGroupAccess(user, groupIds = []) {
+  async checkAssignUserToGroupAccess(requester, groupIds = []) {
     if (!groupIds || groupIds.length < 1) {
       return true
     }
 
-    const userPermissions = user.permissions ? user.permissions : user.getGlobalPermissions()
+    const requesterPermissions = requester.permissions ? requester.permissions : requester.getGlobalPermissions()
 
     // System Admin
-    if (userPermissions.includes('manage:system')) {
+    if (requesterPermissions.includes('manage:system')) {
       return true
     }
 
     // Ensure basic user management permission
-    if (!userPermissions.some(p => ['write:users', 'manage:users', 'write:groups', 'manage:groups'].includes(p))) {
+    if (!requesterPermissions.some(p => ['write:users', 'manage:users', 'write:groups', 'manage:groups'].includes(p))) {
       return false
     }
 
     const groups = await WIKI.models.groups.query().whereIn('id', groupIds)
-    return !groups.some(grp => {
-      // Check for manage:system permission
-      if (grp.permissions.includes('manage:system') && !userPermissions.includes('manage:groups')) {
+    return groups.every(grp => {
+      // Check group for manage:system permission
+      if (grp.permissions.includes('manage:system')) {
         return false
       }
 
-      // Check for elevated permissions
+      // Check group for administrative permissions
       if (grp.permissions.some(p => {
         const permType = _.last(p.split(':'))
         return ['users', 'groups', 'navigation', 'theme', 'api'].includes(permType)
-      }) && !(userPermissions.includes('write:groups') || userPermissions.includes('manage:groups'))) {
+      }) && !requesterPermissions.includes('manage:groups')) {
         return false
       }
 
