@@ -362,7 +362,7 @@ jobs:
     #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
     - name: Notify Telegram Channel
-      uses: appleboy/telegram-action@v0.1.1
+      uses: appleboy/telegram-action@v1.0.1
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
@@ -384,7 +384,7 @@ jobs:
   #   needs: [release]
 
   #   steps:
-  #   - uses: actions/checkout@v4
+  #   - uses: actions/checkout@v6
 
   #   - name: Set Version Variables
   #     run: |
