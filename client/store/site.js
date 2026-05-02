@@ -11,6 +11,8 @@ const state = {
   mascot: true,
   title: siteConfig.title,
   logoUrl: siteConfig.logoUrl,
+  uploadMaxFileSize: siteConfig.uploadMaxFileSize,
+  uploadMaxFiles: siteConfig.uploadMaxFiles,
   search: '',
   searchIsFocused: false,
   searchIsLoading: false,
