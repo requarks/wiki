@@ -127,6 +127,11 @@
             v-btn.mt-3.animated.fadeInLeft.wait-p2s(icon, tile, v-on='on', dark, @click='toggleModal(`editorModalDrawio`)').mx-0
               v-icon mdi-chart-multiline
           span {{$t('editor:markup.insertDiagram')}}
+        v-tooltip(right, color='teal')
+          template(v-slot:activator='{ on }')
+            v-btn.mt-3.animated.fadeInLeft.wait-p3s(icon, tile, v-on='on', dark, @click='openMaturityMatrix').mx-0
+              v-icon mdi-table-check
+          span Insert Maturity Matrix
         template(v-if='$vuetify.breakpoint.mdAndUp')
           v-spacer
           v-tooltip(right, color='teal')
@@ -459,7 +464,7 @@ export default {
     processContent (newContent) {
       linesMap = []
       // this.$store.set('editor/content', newContent)
-      this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
+      this.processMarkers(this.cm.firstLine(), this.cm.lastLine() + 1)
       this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
         ADD_TAGS: ['foreignObject'],
         HTML_INTEGRATION_POINTS: { foreignobject: true }
@@ -663,6 +668,10 @@ export default {
     insertLink () {
       this.insertLinkDialog = true
     },
+    openMaturityMatrix () {
+      this.$store.set('editor/activeModalData', null)
+      this.toggleModal(`editorModalMaturityMatrix`)
+    },
     insertLinkHandler ({ locale, path }) {
       const lastPart = _.last(path.split('/'))
       this.insertAtCursor({
@@ -682,7 +691,33 @@ export default {
         if (ln.text.startsWith('```diagram')) {
           found = 'diagram'
           foundStart = line
-        } else if (ln.text === '```' && found) {
+        } else if (ln.text === '<!--maturity-matrix-->') {
+          found = 'maturity-matrix'
+          foundStart = line
+        } else if (ln.text === '<!--/maturity-matrix-->' && found === 'maturity-matrix') {
+          const startLine = foundStart
+          const endLine = line
+          const startLineLen = this.cm.doc.getLine(startLine).length
+          this.addMarker({
+            kind: 'maturity-matrix',
+            from: { line: startLine, ch: 0 },
+            to: { line: startLine, ch: startLineLen },
+            text: 'Edit Maturity Matrix',
+            action: ((start, end) => {
+              return (ev) => {
+                const endLen = this.cm.doc.getLine(end).length
+                this.cm.doc.setSelection({ line: start, ch: 0 }, { line: end, ch: endLen })
+                const innerLines = []
+                for (let i = start + 1; i < end; i++) {
+                  innerLines.push(this.cm.doc.getLine(i))
+                }
+                this.$store.set('editor/activeModalData', innerLines.join('\n'))
+                this.toggleModal(`editorModalMaturityMatrix`)
+              }
+            })(startLine, endLine)
+          })
+          found = null
+        } else if (ln.text === '```' && found === 'diagram') {
           switch (found) {
             // ------------------------------
             // -> DIAGRAM
@@ -851,6 +886,15 @@ export default {
           this.cm.doc.replaceSelection('```diagram\n' + opts.text + '\n```\n', 'start')
           this.processMarkers(selStartLine, selEndLine)
           break
+        case 'MATURITY_MATRIX': {
+          const mmStart = this.cm.getCursor('from').line
+          const wrapped = '<!--maturity-matrix-->\n' + opts.markdown + '\n<!--/maturity-matrix-->\n'
+          const wrappedLineCount = wrapped.split('\n').length
+          this.cm.doc.replaceSelection(wrapped, 'start')
+          // replaceSelection(_, 'start') leaves cursor at start; compute end from inserted line count
+          this.processMarkers(mmStart, mmStart + wrappedLineCount + 1)
+          break
+        }
       }
     })
 

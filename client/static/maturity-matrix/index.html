@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Use Case Maturity Assessment Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F6FA;
+  --surface: #FFFFFF;
+  --surface2: #F0F2F8;
+  --border: #E2E6F0;
+  --text: #1A1D2E;
+  --muted: #6B7280;
+  --accent: #C0392B;
+  --accent2: #1A2035;
+  --red: #E53935;
+  --red-bg: #FDECEA;
+  --amber: #F59E0B;
+  --amber-bg: #FFFBEB;
+  --green: #16A34A;
+  --green-bg: #DCFCE7;
+  --blue: #2563EB;
+  --blue-bg: #EFF6FF;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --serif: 'DM Serif Display', serif;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(26,29,46,0.07);
+  --shadow-lg: 0 8px 32px rgba(26,29,46,0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ─── TOP BAR ─── */
+.topbar {
+  background: var(--accent2);
+  color: #fff;
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.topbar-brand { display: flex; align-items: center; gap: 12px; }
+.topbar-logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  display: grid; place-items: center;
+  font-family: var(--mono);
+  font-weight: 600; font-size: 13px;
+  color: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+}
+.topbar-title { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 6px; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; border: none; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #a93226; }
+.btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.25); }
+.btn-secondary:hover { background: rgba(255,255,255,0.25); }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--surface2); }
+.btn-danger { background: var(--red); color: #fff; font-size: 11px; padding: 4px 10px; }
+.btn-danger:hover { background: #c62828; }
+.btn-sm { font-size: 11px; padding: 4px 10px; border-radius: 5px; }
+.btn-add { background: var(--blue-bg); color: var(--blue); border: 1px solid #BFDBFE; font-size: 12px; padding: 5px 12px; }
+.btn-add:hover { background: #DBEAFE; }
+
+/* ─── MAIN LAYOUT ─── */
+.wrapper { max-width: 1400px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* ─── HEADER META ─── */
+.meta-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 24px; margin-bottom: 24px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; box-shadow: var(--shadow);
+}
+.meta-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+.meta-field label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.meta-field input {
+  font-family: var(--sans); font-size: 14px; font-weight: 500; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; background: var(--surface2); outline: none; transition: border 0.15s;
+}
+.meta-field input:focus { border-color: var(--blue); background: #fff; }
+
+/* ─── SCORE CARDS ─── */
+.score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+@media (max-width: 900px) { .score-grid { grid-template-columns: repeat(2,1fr); } }
+.score-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.score-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.score-card.perf::before { background: #2563EB; }
+.score-card.avail::before { background: #7C3AED; }
+.score-card.excel::before { background: #0891B2; }
+.score-card.overall::before { background: var(--accent); }
+.score-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 8px; }
+.score-value { font-family: var(--mono); font-size: 32px; font-weight: 600; line-height: 1; margin-bottom: 8px; }
+.score-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease, background 0.4s ease; }
+.score-sub { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+/* Status colour helpers */
+.clr-red { color: var(--red); } .clr-amber { color: var(--amber); } .clr-green { color: var(--green); }
+.bg-red { background: var(--red); } .bg-amber { background: var(--amber); } .bg-green { background: var(--green); }
+.bg-blue { background: #2563EB; } .bg-purple { background: #7C3AED; } .bg-cyan { background: #0891B2; }
+
+/* ─── CHARTS ─── */
+.chart-row {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; box-shadow: var(--shadow); overflow: visible; }
+.chart-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 16px; text-align: center; }
+canvas { max-width: 100%; display: block; margin: 0 auto; }
+
+/* ─── SECTIONS ─── */
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); overflow: hidden; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; user-select: none; border-bottom: 1px solid transparent; transition: background 0.15s; }
+.section-header:hover { background: var(--surface2); }
+.section-header.open { border-bottom-color: var(--border); }
+.section-hd-left { display: flex; align-items: center; gap: 14px; }
+.section-pill { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 20px; color: #fff; }
+.section-name { font-size: 16px; font-weight: 700; color: var(--text); }
+.section-score-badge { font-family: var(--mono); font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+.section-hd-right { display: flex; align-items: center; gap: 12px; }
+.chevron { width: 20px; height: 20px; transition: transform 0.25s; color: var(--muted); }
+.chevron.open { transform: rotate(180deg); }
+
+/* ─── TABLE ─── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
+thead th { background: var(--surface2); padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #FAFBFF; }
+tbody td { padding: 10px 12px; vertical-align: middle; }
+
+.cell-input { font-family: var(--sans); font-size: 13px; color: var(--text); border: 1px solid transparent; border-radius: 5px; padding: 5px 8px; background: transparent; width: 100%; transition: border 0.15s, background 0.15s; outline: none; }
+.cell-input:focus { border-color: var(--blue); background: var(--blue-bg); }
+.cell-input[type="number"] { width: 60px; font-family: var(--mono); }
+select.cell-input { cursor: pointer; }
+
+.score-badge { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 5px; display: inline-block; min-width: 36px; text-align: center; transition: background 0.3s, color 0.3s; }
+.score-badge.red { background: var(--red-bg); color: var(--red); border: 1px solid #FECACA; }
+.score-badge.amber { background: var(--amber-bg); color: #B45309; border: 1px solid #FDE68A; }
+.score-badge.green { background: var(--green-bg); color: var(--green); border: 1px solid #BBF7D0; }
+.score-badge.na { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+.toggle { position: relative; display: inline-block; width: 38px; height: 20px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #CBD5E1; border-radius: 20px; cursor: pointer; transition: 0.25s; }
+.toggle-slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.25s; }
+.toggle input:checked + .toggle-slider { background: var(--green); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+.action-cell { position: relative; }
+.action-text { font-family: var(--sans); font-size: 12px; color: var(--text); border: 1px solid transparent; border-radius: 5px; padding: 5px 8px; background: transparent; width: 100%; resize: none; min-height: 38px; outline: none; transition: border 0.15s, background 0.15s; line-height: 1.4; }
+.action-text:focus { border-color: var(--blue); background: var(--blue-bg); }
+
+.totals-row td { background: var(--surface2); font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); border-top: 2px solid var(--border); }
+
+/* ─── NOTIFICATION & MODALS ─── */
+.toast { position: fixed; bottom: 28px; right: 28px; background: var(--accent2); color: #fff; padding: 14px 22px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index: 999; display: flex; align-items: center; gap: 10px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+
+.legend-bar { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; padding: 12px 20px; background: var(--surface2); border-top: 1px solid var(--border); }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(26,29,46,0.45); z-index: 200; display: none; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 12px; padding: 28px; width: 520px; max-width: 95vw; box-shadow: var(--shadow-lg); animation: slideUp 0.2s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.form-row { margin-bottom: 14px; }
+.form-row label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 5px; }
+.form-row input, .form-row select, .form-row textarea { width: 100%; font-family: var(--sans); font-size: 13px; border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; outline: none; background: var(--surface2); transition: border 0.15s, background 0.15s; }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: var(--blue); background: #fff; }
+.form-row textarea { resize: vertical; min-height: 70px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-modal-ok { background: var(--blue); color: #fff; }
+.btn-modal-ok:hover { background: #1D4ED8; }
+.btn-modal-cancel { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-modal-cancel:hover { background: var(--border); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">CB</div>
+    <div class="topbar-title">Use Case Maturity Assessment Matrix</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-primary" onclick="saveToWiki()">💾 Save</button>
+    <button class="btn btn-secondary" onclick="exitToWiki()">✕ Close</button>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <div class="meta-bar">
+    <div class="meta-field">
+      <label>Customer Name</label>
+      <input type="text" id="customerName" placeholder="Enter customer name…">
+    </div>
+    <div class="meta-field">
+      <label>Use Case Name</label>
+      <input type="text" id="useCaseName" placeholder="Enter use case…">
+    </div>
+  </div>
+
+  <div class="score-grid">
+    <div class="score-card perf">
+      <div class="score-label">Performance</div>
+      <div class="score-value" id="sc-perf">—%</div>
+      <div class="score-bar"><div class="score-bar-fill bg-blue" id="bar-perf" style="width:0%"></div></div>
+      <div class="score-sub" id="sub-perf">0 / 0 pts</div>
+    </div>
+    <div class="score-card avail">
+      <div class="score-label">Availability</div>
+      <div class="score-value" id="sc-avail">—%</div>
+      <div class="score-bar"><div class="score-bar-fill bg-purple" id="bar-avail" style="width:0%"></div></div>
+      <div class="score-sub" id="sub-avail">0 / 0 pts</div>
+    </div>
+    <div class="score-card excel">
+      <div class="score-label">Excellence</div>
+      <div class="score-value" id="sc-excel">—%</div>
+      <div class="score-bar"><div class="score-bar-fill bg-cyan" id="bar-excel" style="width:0%"></div></div>
+      <div class="score-sub" id="sub-excel">0 / 0 pts</div>
+    </div>
+    <div class="score-card overall">
+      <div class="score-label">Overall Maturity</div>
+      <div class="score-value" id="sc-overall">—%</div>
+      <div class="score-bar"><div class="score-bar-fill" id="bar-overall" style="width:0%"></div></div>
+      <div class="score-sub" id="sub-overall">All sections combined</div>
+    </div>
+  </div>
+
+  <div class="chart-row" id="charts-container">
+     </div>
+
+  <div id="sections-container"></div>
+
+</div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Add New KPI</div>
+    <div class="form-row">
+      <label>KPI Name</label>
+      <input type="text" id="m-kpi" placeholder="e.g. Cache Hit Ratio">
+    </div>
+    <div class="form-row">
+      <label>Score (0=Not Started, 1=In Progress, 2=Complete)</label>
+      <select id="m-score">
+        <option value="0">0 — Not Started</option>
+        <option value="1">1 — In Progress</option>
+        <option value="2">2 — Complete</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Weighting (1=Low, 2=Medium, 3=High)</label>
+      <select id="m-weight">
+        <option value="1">1 — Low</option>
+        <option value="2" selected>2 — Medium</option>
+        <option value="3">3 — High</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Applicable</label>
+      <select id="m-applicable">
+        <option value="y">Yes</option>
+        <option value="n">No</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Notes</label>
+      <textarea id="m-notes" placeholder="Current progress notes…"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Action Plan</label>
+      <textarea id="m-action" placeholder="Describe the action plan…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-modal-ok" onclick="confirmAdd()">Add KPI</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const THRESHOLDS = { red: [0, 0.49], amber: [0.5, 0.79], green: [0.8, 1.0] };
+const SCORE_LEGEND = { 0: 'Not Started', 1: 'In Progress', 2: 'Complete' };
+const WEIGHT_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High' };
+
+/* __STATE_START__ */
+let state = {
+  customer: '',
+  useCase: '',
+  sections: [
+    {
+      id: 'perf',
+      name: 'Performance',
+      color: '#2563EB',
+      pill: 'bg-blue',
+      kpis: [
+        { id:1, kpi:'Sizing Optimised',                score:2, weight:3, applicable:'y', notes:'', action:'Sizing review and configuration changes' },
+        { id:2, kpi:'Backup effectiveness',            score:1, weight:2, applicable:'y', notes:'', action:'Define Backup Policy with retention' },
+        { id:3, kpi:'Data Retention Defined',          score:2, weight:2, applicable:'y', notes:'', action:'Defined TTL, Archive Policy' },
+        { id:4, kpi:'Performance Load Testing',        score:2, weight:2, applicable:'y', notes:'Not in place at the moment', action:'Strategy and solution for up to a minimum 3x load testing for peak' },
+        { id:5, kpi:'Optimisation data access pattern',score:1, weight:1, applicable:'y', notes:'Not implemented yet', action:'Understand & document access pattern and specific tuning requirements' },
+        { id:6, kpi:'Query performance',               score:1, weight:2, applicable:'y', notes:'', action:'SLA defined for Query and average over time, measure in monitoring' },
+        { id:7, kpi:'Index performance',               score:1, weight:2, applicable:'y', notes:'Check implementation', action:'Observe index stats, ensure measurement and validate within expected norms' },
+        { id:8, kpi:'KV performance',                  score:2, weight:3, applicable:'y', notes:'', action:'SLA defined for KV, measure in monitoring' },
+        { id:9, kpi:'XDCR performance',                score:0, weight:2, applicable:'y', notes:'', action:'Observe XDCR stats and validate within expected norms' },
+        { id:10,kpi:'FTS performance',                 score:1, weight:3, applicable:'n', notes:'', action:'SLA defined for search response, define measurement and threshold' },
+        { id:11,kpi:'Eventing performance',            score:1, weight:3, applicable:'n', notes:'', action:'SLA defined for eventing response, define measurement and threshold' },
+        { id:12,kpi:'Analytics performance',           score:1, weight:2, applicable:'n', notes:'', action:'SLA defined for analytics response, define measurement and threshold' },
+      ]
+    },
+    {
+      id: 'avail',
+      name: 'Availability',
+      color: '#7C3AED',
+      pill: 'bg-purple',
+      kpis: [
+        { id:101,kpi:'RPO Defined',                  score:1, weight:3, applicable:'y', notes:'Tier 0 = < 1 minute data loss', action:'Validate current backup solution against target RPO' },
+        { id:102,kpi:'RTO Defined',                  score:1, weight:3, applicable:'y', notes:'Tier 0 = <15 minutes to recover system', action:'Validate current backup solution against target RTO' },
+        { id:103,kpi:'Availability Objective defined',score:1, weight:3, applicable:'y', notes:'0.999', action:'Define how the scope of the availability objective is measured and maintenance window' },
+        { id:104,kpi:'Backup strategy',              score:1, weight:3, applicable:'y', notes:'', action:'Update backup strategy to resolve gap in Tier 0 solution' },
+        { id:105,kpi:'Backup/Restore Test',          score:2, weight:2, applicable:'y', notes:'', action:'Review & Document last test' },
+        { id:106,kpi:'Availability Zones',           score:1, weight:3, applicable:'y', notes:'', action:'Validate last AZ failover test results and remediation tasks' },
+        { id:107,kpi:'Replicas (D&I)',               score:1, weight:2, applicable:'y', notes:'', action:'Missing index replicas need to be resolved' },
+        { id:108,kpi:'DR Planning',                  score:1, weight:2, applicable:'y', notes:'', action:'XDCR missing documents investigation' },
+        { id:109,kpi:'DR Drills',                    score:0, weight:2, applicable:'y', notes:'', action:'DR Drills not conducted' },
+        { id:110,kpi:'DR Infrastructure',            score:2, weight:2, applicable:'y', notes:'', action:'No action required' },
+        { id:111,kpi:'Multi region DR',              score:2, weight:2, applicable:'y', notes:'Ireland, London', action:'No action required' },
+      ]
+    },
+    {
+      id: 'excel',
+      name: 'Excellence',
+      color: '#0891B2',
+      pill: 'bg-cyan',
+      kpis: [
+        { id:201,kpi:'Data Model Optimised',           score:1, weight:3, applicable:'y', notes:'', action:'Review data model optimisation findings with client and ensure plan for implementation' },
+        { id:202,kpi:'Patch and Release Management',   score:1, weight:3, applicable:'y', notes:'Currently running 6.0 - out of full maintenance and EOL Oct 2022', action:'Completion of upgrade to the latest version' },
+        { id:203,kpi:'Upgrade process',                score:1, weight:2, applicable:'y', notes:'', action:'Review current upgrade process with recommendations and tasks to complete' },
+        { id:204,kpi:'Observability Stack implemented', score:1, weight:2, applicable:'y', notes:'Building New Relic dashboards', action:'Define thresholds for alerting and dashboard inclusion' },
+        { id:205,kpi:'Code Review (SDK) + exception handling', score:0, weight:3, applicable:'y', notes:'', action:'Schedule meeting for code review' },
+        { id:206,kpi:'Failover testing',               score:0, weight:2, applicable:'y', notes:'', action:'Document current failover test, highlight gaps and plan to remediate' },
+        { id:207,kpi:'Stress Testing (Combine load and failover) x10', score:0, weight:3, applicable:'y', notes:'', action:'Setup call to define success criteria and plan' },
+        { id:208,kpi:'UAT testing',                    score:2, weight:2, applicable:'y', notes:'', action:'Document last UAT test and ensure remediation actions have been implemented' },
+        { id:209,kpi:'Integration testing',            score:2, weight:2, applicable:'y', notes:'', action:'Document last integration test and ensure remediation actions have been implemented' },
+        { id:210,kpi:'Golden Master Standards',        score:0, weight:2, applicable:'y', notes:'', action:'Define and document the standard for instances and gap analysis against existing workloads' },
+        { id:211,kpi:'Standard automation build scripts', score:2, weight:2, applicable:'y', notes:'', action:'Validating custom automation scripts against the defined standard' },
+        { id:212,kpi:'Support Matrix (Server, SDK, Connectors, frameworks etc)', score:2, weight:3, applicable:'y', notes:'', action:'Document current versions and plan for upgrade' },
+        { id:213,kpi:'Storage subsystem (e.g. iops, total allocated, type, connectivity)', score:2, weight:2, applicable:'y', notes:'', action:'No action required' },
+        { id:214,kpi:'Networking review (speed, jumbo frame packets, vpn)', score:0, weight:2, applicable:'y', notes:'', action:'Schedule meeting for networking review' },
+        { id:215,kpi:'External system integration, setup review (e.g. Kafka)', score:2, weight:2, applicable:'n', notes:'', action:'No action required' },
+        { id:216,kpi:'Bucket configuration',           score:2, weight:2, applicable:'y', notes:'', action:'No action required' },
+      ]
+    }
+  ]
+};
+/* __STATE_END__ */
+let nextId = 300;
+let modalTargetSection = null;
+let sectionCharts = {}; 
+
+// ═══════════════════════════════════════════════════
+// CALCULATIONS
+// ═══════════════════════════════════════════════════
+function calcSection(section) {
+  const active = section.kpis.filter(k => k.applicable === 'y');
+  const finalScore = active.reduce((s, k) => s + k.score * k.weight, 0);
+  const maxScore   = active.reduce((s, k) => s + 2 * k.weight, 0);
+  const ratio = maxScore > 0 ? finalScore / maxScore : 0;
+  return { finalScore, maxScore, ratio };
+}
+
+function calcOverall() {
+  let total = 0, maxTotal = 0;
+  state.sections.forEach(s => {
+    const { finalScore, maxScore } = calcSection(s);
+    total += finalScore; maxTotal += maxScore;
+  });
+  return maxTotal > 0 ? total / maxTotal : 0;
+}
+
+function statusForRatio(ratio) {
+  if (ratio <= 0.49) return 'red';
+  if (ratio <= 0.79) return 'amber';
+  return 'green';
+}
+
+function scoreStatus(score) {
+  if (score === 0) return 'red';
+  if (score === 1) return 'amber';
+  return 'green';
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function render() {
+  renderSections();
+  updateScoreCards();
+  updateCharts();
+}
+
+function renderSections() {
+  const container = document.getElementById('sections-container');
+  container.innerHTML = '';
+  state.sections.forEach(section => {
+    container.appendChild(buildSectionEl(section));
+  });
+}
+
+function buildSectionEl(section) {
+  const { finalScore, maxScore, ratio } = calcSection(section);
+  const status = statusForRatio(ratio);
+  const pct = (ratio * 100).toFixed(1);
+
+  const el = document.createElement('div');
+  el.className = 'section';
+  el.id = `sec-${section.id}`;
+
+  const statusColors = { red: '#E53935', amber: '#F59E0B', green: '#16A34A' };
+  const statusBg = { red: '#FDECEA', amber: '#FFFBEB', green: '#DCFCE7' };
+
+  el.innerHTML = `
+    <div class="section-header open" onclick="toggleSection('${section.id}')">
+      <div class="section-hd-left">
+        <span class="section-pill" style="background:${section.color}">${section.name}</span>
+        <span class="section-name">${section.name}</span>
+      </div>
+      <div class="section-hd-right">
+        <span class="section-score-badge" style="background:${statusBg[status]};color:${statusColors[status]};border:1px solid ${statusColors[status]}30">
+          ${pct}% &nbsp;·&nbsp; ${finalScore}/${maxScore} pts
+        </span>
+        <button class="btn btn-add" onclick="openAddModal('${section.id}');event.stopPropagation()">+ Add KPI</button>
+        <svg class="chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="chev-${section.id}">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </div>
+    </div>
+    <div id="body-${section.id}">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:220px">KPI</th>
+              <th>Score</th>
+              <th>Weight</th>
+              <th>Final</th>
+              <th>Max</th>
+              <th>Applicable</th>
+              <th style="width:160px">Notes</th>
+              <th style="width:220px">Action Plan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-${section.id}">
+          </tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td colspan="3" style="padding-left:20px;">TOTALS (applicable KPIs only)</td>
+              <td id="tot-final-${section.id}">${finalScore}</td>
+              <td id="tot-max-${section.id}">${maxScore}</td>
+              <td colspan="4"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="legend-bar">
+        <div class="legend-item"><span class="legend-dot" style="background:#E53935"></span>RED: 0–49%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#F59E0B"></span>AMBER: 50–79%</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#16A34A"></span>GREEN: 80–100%</div>
+        <div class="legend-item" style="margin-left:auto;"><span class="legend-dot" style="background:#94A3B8"></span>Weight: 1=Low 2=Med 3=High</div>
+      </div>
+    </div>
+  `;
+
+  const tbody = el.querySelector(`#tbody-${section.id}`);
+  section.kpis.forEach(kpi => {
+    tbody.appendChild(buildKpiRow(section.id, kpi));
+  });
+
+  return el;
+}
+
+function buildKpiRow(sectionId, kpi) {
+  const tr = document.createElement('tr');
+  tr.id = `row-${kpi.id}`;
+  if (kpi.applicable === 'n') tr.style.opacity = '0.55';
+
+  const finalScore = kpi.applicable === 'y' ? kpi.score * kpi.weight : 0;
+  const maxScore   = kpi.applicable === 'y' ? 2 * kpi.weight : 0;
+  const status = kpi.applicable === 'y' ? scoreStatus(kpi.score) : 'na';
+
+  // FIX: Added id="ms-${kpi.id}" to the Max Score td
+  tr.innerHTML = `
+    <td>
+      <input class="cell-input" type="text" value="${escHtml(kpi.kpi)}"
+        onchange="updateKpi('${sectionId}',${kpi.id},'kpi',this.value)">
+    </td>
+    <td>
+      <select class="cell-input" style="width:110px" onchange="updateKpi('${sectionId}',${kpi.id},'score',+this.value)">
+        <option value="0" ${kpi.score===0?'selected':''}>0 – Not Started</option>
+        <option value="1" ${kpi.score===1?'selected':''}>1 – In Progress</option>
+        <option value="2" ${kpi.score===2?'selected':''}>2 – Complete</option>
+      </select>
+    </td>
+    <td>
+      <select class="cell-input" style="width:90px" onchange="updateKpi('${sectionId}',${kpi.id},'weight',+this.value)">
+        <option value="1" ${kpi.weight===1?'selected':''}>1 – Low</option>
+        <option value="2" ${kpi.weight===2?'selected':''}>2 – Med</option>
+        <option value="3" ${kpi.weight===3?'selected':''}>3 – High</option>
+      </select>
+    </td>
+    <td>
+      <span class="score-badge ${status}" id="fs-${kpi.id}">${finalScore}</span>
+    </td>
+    <td id="ms-${kpi.id}" style="font-family:var(--mono);font-size:12px;color:var(--muted)">${maxScore}</td>
+    <td>
+      <label class="toggle">
+        <input type="checkbox" ${kpi.applicable==='y'?'checked':''}
+          onchange="updateKpi('${sectionId}',${kpi.id},'applicable',this.checked?'y':'n')">
+        <span class="toggle-slider"></span>
+      </label>
+    </td>
+    <td>
+      <textarea class="action-text" rows="2"
+        onchange="updateKpi('${sectionId}',${kpi.id},'notes',this.value)">${escHtml(kpi.notes)}</textarea>
+    </td>
+    <td>
+      <textarea class="action-text" rows="2"
+        onchange="updateKpi('${sectionId}',${kpi.id},'action',this.value)">${escHtml(kpi.action)}</textarea>
+    </td>
+    <td>
+      <button class="btn btn-danger" onclick="removeKpi('${sectionId}',${kpi.id})">✕</button>
+    </td>
+  `;
+  return tr;
+}
+
+// ═══════════════════════════════════════════════════
+// UPDATES
+// ═══════════════════════════════════════════════════
+function updateKpi(sectionId, kpiId, field, value) {
+  const section = state.sections.find(s => s.id === sectionId);
+  const kpi = section.kpis.find(k => k.id === kpiId);
+  kpi[field] = value;
+
+  const finalScore = kpi.applicable === 'y' ? kpi.score * kpi.weight : 0;
+  const maxScore   = kpi.applicable === 'y' ? 2 * kpi.weight : 0;
+  const status = kpi.applicable === 'y' ? scoreStatus(kpi.score) : 'na';
+
+  const badge = document.getElementById(`fs-${kpiId}`);
+  if (badge) {
+    badge.textContent = finalScore;
+    badge.className = `score-badge ${status}`;
+  }
+
+  // FIX: Dynamically update Max Score column
+  const maxBadge = document.getElementById(`ms-${kpiId}`);
+  if (maxBadge) {
+    maxBadge.textContent = maxScore;
+  }
+
+  const row = document.getElementById(`row-${kpiId}`);
+  if (row) row.style.opacity = kpi.applicable === 'n' ? '0.55' : '1';
+
+  const { finalScore: sf, maxScore: sm } = calcSection(section);
+  const tfEl = document.getElementById(`tot-final-${sectionId}`);
+  const tmEl = document.getElementById(`tot-max-${sectionId}`);
+  if (tfEl) tfEl.textContent = sf;
+  if (tmEl) tmEl.textContent = sm;
+
+  updateSectionBadge(sectionId);
+  updateScoreCards();
+  updateCharts();
+}
+
+function updateSectionBadge(sectionId) {
+  const section = state.sections.find(s => s.id === sectionId);
+  const { finalScore, maxScore, ratio } = calcSection(section);
+  const status = statusForRatio(ratio);
+  const pct = (ratio * 100).toFixed(1);
+  const statusColors = { red: '#E53935', amber: '#F59E0B', green: '#16A34A' };
+  const statusBg = { red: '#FDECEA', amber: '#FFFBEB', green: '#DCFCE7' };
+
+  const badge = document.querySelector(`#sec-${sectionId} .section-score-badge`);
+  if (badge) {
+    badge.style.background = statusBg[status];
+    badge.style.color = statusColors[status];
+    badge.style.border = `1px solid ${statusColors[status]}30`;
+    badge.textContent = `${pct}%  ·  ${finalScore}/${maxScore} pts`;
+  }
+}
+
+function updateScoreCards() {
+  const map = [
+    { key: 'perf',  id: 'sc-perf',  bar: 'bar-perf',  sub: 'sub-perf',  sidx: 0 },
+    { key: 'avail', id: 'sc-avail', bar: 'bar-avail', sub: 'sub-avail', sidx: 1 },
+    { key: 'excel', id: 'sc-excel', bar: 'bar-excel', sub: 'sub-excel', sidx: 2 },
+  ];
+
+  const statusColors = { red: '#E53935', amber: '#F59E0B', green: '#16A34A' };
+
+  map.forEach(m => {
+    const section = state.sections[m.sidx];
+    const { finalScore, maxScore, ratio } = calcSection(section);
+    const pct = (ratio * 100).toFixed(1);
+    const status = statusForRatio(ratio);
+    const color = statusColors[status];
+
+    document.getElementById(m.id).textContent = `${pct}%`;
+    document.getElementById(m.id).style.color = color;
+    document.getElementById(m.bar).style.width = `${pct}%`;
+    document.getElementById(m.bar).style.background = color;
+    document.getElementById(m.sub).textContent = `${finalScore} / ${maxScore} pts`;
+  });
+
+  const overall = calcOverall();
+  const oPct = (overall * 100).toFixed(1);
+  const oStatus = statusForRatio(overall);
+  const oColor = statusColors[oStatus];
+  document.getElementById('sc-overall').textContent = `${oPct}%`;
+  document.getElementById('sc-overall').style.color = oColor;
+  document.getElementById('bar-overall').style.width = `${oPct}%`;
+  document.getElementById('bar-overall').style.background = oColor;
+}
+
+// ═══════════════════════════════════════════════════
+// ADD / REMOVE
+// ═══════════════════════════════════════════════════
+function openAddModal(sectionId) {
+  modalTargetSection = sectionId;
+  document.getElementById('m-kpi').value = '';
+  document.getElementById('m-score').value = '0';
+  document.getElementById('m-weight').value = '2';
+  document.getElementById('m-applicable').value = 'y';
+  document.getElementById('m-notes').value = '';
+  document.getElementById('m-action').value = '';
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('m-kpi').focus();
+}
+
+function closeModal() {
+  document.getElementById('addModal').classList.remove('open');
+  modalTargetSection = null;
+}
+
+function confirmAdd() {
+  const kpiName = document.getElementById('m-kpi').value.trim();
+  if (!kpiName) { showToast('Please enter a KPI name', 'error'); return; }
+
+  const section = state.sections.find(s => s.id === modalTargetSection);
+  const newKpi = {
+    id: nextId++, kpi: kpiName, score: +document.getElementById('m-score').value, weight: +document.getElementById('m-weight').value,
+    applicable: document.getElementById('m-applicable').value, notes: document.getElementById('m-notes').value, action: document.getElementById('m-action').value,
+  };
+  section.kpis.push(newKpi);
+
+  const tbody = document.getElementById(`tbody-${modalTargetSection}`);
+  if (tbody) tbody.appendChild(buildKpiRow(modalTargetSection, newKpi));
+
+  updateSectionBadge(modalTargetSection);
+  updateTotals(modalTargetSection);
+  updateScoreCards();
+  updateCharts();
+  closeModal();
+  showToast('KPI added successfully', 'success');
+}
+
+function updateTotals(sectionId) {
+  const section = state.sections.find(s => s.id === sectionId);
+  const { finalScore, maxScore } = calcSection(section);
+  const tfEl = document.getElementById(`tot-final-${sectionId}`);
+  const tmEl = document.getElementById(`tot-max-${sectionId}`);
+  if (tfEl) tfEl.textContent = finalScore;
+  if (tmEl) tmEl.textContent = maxScore;
+}
+
+function removeKpi(sectionId, kpiId) {
+  const section = state.sections.find(s => s.id === sectionId);
+  section.kpis = section.kpis.filter(k => k.id !== kpiId);
+  const row = document.getElementById(`row-${kpiId}`);
+  if (row) row.remove();
+  updateSectionBadge(sectionId);
+  updateTotals(sectionId);
+  updateScoreCards();
+  updateCharts();
+}
+
+function toggleSection(sectionId) {
+  const body = document.getElementById(`body-${sectionId}`);
+  const chev = document.getElementById(`chev-${sectionId}`);
+  const hdr = document.querySelector(`#sec-${sectionId} .section-header`);
+  const isOpen = chev.classList.contains('open');
+  if (isOpen) { body.style.display = 'none'; chev.classList.remove('open'); hdr.classList.remove('open'); } 
+  else { body.style.display = ''; chev.classList.add('open'); hdr.classList.add('open'); }
+}
+
+// ═══════════════════════════════════════════════════
+// INDIVIDUAL RADAR CHARTS
+// ═══════════════════════════════════════════════════
+// ── Shared Chart.js radar options factory ──────────────────────────────────
+function radarOptions() {
+  return {
+    responsive: false,
+    animation: { duration: 400 },
+    scales: {
+      r: {
+        min: 0,
+        suggestedMax: 6,
+        ticks: { stepSize: 1, font: { family: 'IBM Plex Mono', size: 11 }, color: '#94A3B8', backdropColor: 'transparent' },
+        grid: { color: '#E2E6F0' },
+        angleLines: { color: '#E2E6F0' },
+        pointLabels: {
+          font: { family: 'DM Sans', size: 13, weight: '500' },
+          color: '#1A1D2E',
+          padding: 14,
+          callback: function(label) {
+            const MAX = 22;
+            if (label.length <= MAX) return label;
+            const words = label.split(' ');
+            const lines = []; let cur = '';
+            for (const w of words) {
+              const next = cur ? cur + ' ' + w : w;
+              if (next.length <= MAX) { cur = next; }
+              else { if (cur) lines.push(cur); cur = w; }
+            }
+            if (cur) lines.push(cur);
+            if (lines.length > 3) {
+              const rest = lines.slice(2).join(' ');
+              lines[2] = rest.length > MAX ? rest.substring(0, MAX - 1) + '…' : rest;
+              lines.length = 3;
+            }
+            return lines;
+          }
+        }
+      }
+    },
+    plugins: { legend: { display: false } }
+  };
+}
+
+function initCharts() {
+  const container = document.getElementById('charts-container');
+  container.innerHTML = '';
+  sectionCharts = {};
+
+  state.sections.forEach(section => {
+    // Size the canvas based on KPI count so labels always have room
+    const kpiCount = section.kpis.filter(k => k.applicable === 'y').length;
+    const SIZE = Math.max(700, kpiCount * 62);
+
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    // Wrapper keeps the fixed-size canvas centred inside the full-width card
+    card.innerHTML = `
+      <div class="chart-title">${section.name} KPIs</div>
+      <div style="display:flex;justify-content:center;overflow:auto;">
+        <canvas id="chart-${section.id}" width="${SIZE}" height="${SIZE}" style="width:${SIZE}px;height:${SIZE}px;"></canvas>
+      </div>
+    `;
+    container.appendChild(card);
+
+    const ctx = document.getElementById(`chart-${section.id}`).getContext('2d');
+    sectionCharts[section.id] = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Final Score',
+          data: [],
+          backgroundColor: section.color + '33',
+          borderColor: section.color,
+          borderWidth: 2,
+          pointBackgroundColor: section.color,
+          pointRadius: 5,
+        }]
+      },
+      options: radarOptions()
+    });
+  });
+
+  updateCharts();
+}
+
+function updateCharts() {
+  state.sections.forEach(section => {
+    const chart = sectionCharts[section.id];
+    if (!chart) return;
+
+    const labels = [];
+    const finals = [];
+    section.kpis.filter(k => k.applicable === 'y').forEach(k => {
+      labels.push(k.kpi);
+      finals.push(k.score * k.weight);
+    });
+
+    // If KPI count changed, the canvas needs to be resized — reinit this section
+    const kpiCount = labels.length;
+    const SIZE = Math.max(700, kpiCount * 62);
+    const canvas = document.getElementById(`chart-${section.id}`);
+    if (canvas && (parseInt(canvas.width) !== SIZE)) {
+      // Destroy old chart, resize canvas, recreate
+      chart.destroy();
+      canvas.width  = SIZE;
+      canvas.height = SIZE;
+      canvas.style.width  = SIZE + 'px';
+      canvas.style.height = SIZE + 'px';
+      const ctx = canvas.getContext('2d');
+      sectionCharts[section.id] = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Final Score', data: finals,
+            backgroundColor: section.color + '33',
+            borderColor: section.color,
+            borderWidth: 2,
+            pointBackgroundColor: section.color,
+            pointRadius: 5,
+          }]
+        },
+        options: radarOptions()
+      });
+      return;
+    }
+
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = finals;
+    chart.update();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// SAVE / EXIT (postMessage to parent)
+// ═══════════════════════════════════════════════════
+function saveToWiki() {
+  state.customer = document.getElementById('customerName').value;
+  state.useCase  = document.getElementById('useCaseName').value;
+  const markdown = buildMarkdown();
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ event: 'save', markdown }, '*');
+  }
+}
+
+function exitToWiki() {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ event: 'exit' }, '*');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// EXPORT MARKDOWN w/ VEGA RADAR CHARTS
+// ═══════════════════════════════════════════════════
+
+/**
+ * Builds a full Vega v6 radar (spider) chart spec for a section.
+ *
+ * NOTE: Radar charts are NOT supported in Vega-Lite — they require the full
+ * Vega grammar (signals, scales, marks with polar math). The code fence in
+ * Markdown must be ```vega (not ```vega-lite) so viewers render it correctly.
+ *
+ * Structure follows the official Vega radar-chart example:
+ *   https://vega.github.io/vega/examples/radar-chart/
+ *
+ * One series per chart (single category = this section's KPI scores).
+ * The radial scale is fixed 0–6 to match the original Chart.js suggestedMax.
+ */
+function buildVegaRadarSpec(section) {
+  const activeKpis = section.kpis.filter(k => k.applicable === 'y');
+  if (activeKpis.length === 0) return null;
+
+  const n = activeKpis.length;
+
+  // Word-wrap labels into max 2 lines of ≤28 chars each
+  function wrapLabel(text) {
+    const MAX = 28;
+    if (text.length <= MAX) return [text];
+    const words = text.split(' ');
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+      const candidate = cur ? cur + ' ' + w : w;
+      if (candidate.length <= MAX) {
+        cur = candidate;
+      } else {
+        if (cur) lines.push(cur);
+        cur = w.length > MAX ? w.substring(0, MAX - 1) + '\u2026' : w;
+      }
+    }
+    if (cur) lines.push(cur);
+    if (lines.length > 2) {
+      let l2 = lines.slice(1).join(' ');
+      if (l2.length > MAX) l2 = l2.substring(0, MAX - 1) + '\u2026';
+      return [lines[0], l2];
+    }
+    return lines;
+  }
+
+  // Build table: one row per KPI, label = first line (second stored in label2)
+  const tableValues = activeKpis.map(k => {
+    const lines = wrapLabel(k.kpi);
+    return {
+      key:    lines[0],
+      label2: lines[1] || '',
+      value:  k.score * k.weight,
+      category: 0
+    };
+  });
+
+  // Canvas grows with KPI count so spoke labels never crowd each other
+  const canvasSize = Math.max(680, n * 72);
+  const radarRadius = Math.floor(canvasSize * 0.27);
+  const labelOffset = 22;
+
+  const spec = {
+    "$schema": "https://vega.github.io/schema/vega/v6.json",
+    "description": `${section.name} KPI Radar Chart`,
+    "width":  canvasSize,
+    "height": canvasSize,
+    "padding": { "top": 190, "bottom": 190, "left": 270, "right": 270 },
+    "autosize": { "type": "none", "contains": "padding" },
+
+    "signals": [
+      { "name": "radius", "value": radarRadius },
+      { "name": "cx", "update": "width / 2" },
+      { "name": "cy", "update": "height / 2" }
+    ],
+
+    "data": [
+      { "name": "table", "values": tableValues },
+      {
+        "name": "keys",
+        "source": "table",
+        "transform": [{ "type": "aggregate", "groupby": ["key", "label2"] }]
+      },
+      {
+        "name": "grid-levels",
+        "values": [1,2,3,4,5,6].map(v => ({ "level": v }))
+      }
+    ],
+
+    "scales": [
+      {
+        "name": "angular",
+        "type": "point",
+        "range": { "signal": "[-PI, PI]" },
+        "padding": 0.5,
+        "domain": { "data": "table", "field": "key" }
+      },
+      {
+        "name": "radial",
+        "type": "linear",
+        "range": { "signal": "[0, radius]" },
+        "zero": true, "nice": false,
+        "domain": [0, 6], "domainMin": 0
+      },
+      {
+        "name": "color",
+        "type": "ordinal",
+        "domain": { "data": "table", "field": "category" },
+        "range": [section.color]
+      }
+    ],
+
+    "encode": {
+      "enter": {
+        "x": { "signal": "cx" },
+        "y": { "signal": "cy" }
+      }
+    },
+
+    "marks": [
+      // ── Concentric grid rings ──
+      {
+        "type": "group",
+        "name": "grid-rings",
+        "zindex": 0,
+        "from": {
+          "facet": { "data": "grid-levels", "name": "level-facet", "groupby": ["level"] }
+        },
+        "marks": [{
+          "type": "line",
+          "from": { "data": "keys" },
+          "encode": {
+            "enter": {
+              "interpolate": { "value": "linear-closed" },
+              "x": { "signal": "scale('radial', parent.level) * cos(scale('angular', datum.key))" },
+              "y": { "signal": "scale('radial', parent.level) * sin(scale('angular', datum.key))" },
+              "stroke": { "value": "#CBD5E1" },
+              "strokeWidth": { "value": 0.8 },
+              "fill": { "value": "transparent" }
+            }
+          }
+        }]
+      },
+      // ── Radial spokes ──
+      {
+        "type": "rule",
+        "name": "radial-grid",
+        "from": { "data": "keys" },
+        "zindex": 0,
+        "encode": {
+          "enter": {
+            "x": { "value": 0 }, "y": { "value": 0 },
+            "x2": { "signal": "radius * cos(scale('angular', datum.key))" },
+            "y2": { "signal": "radius * sin(scale('angular', datum.key))" },
+            "stroke": { "value": "#CBD5E1" },
+            "strokeWidth": { "value": 0.8 }
+          }
+        }
+      },
+      // ── Data polygon + points ──
+      {
+        "type": "group",
+        "name": "categories",
+        "zindex": 1,
+        "from": {
+          "facet": { "data": "table", "name": "facet", "groupby": ["category"] }
+        },
+        "marks": [
+          {
+            "type": "line",
+            "name": "category-line",
+            "from": { "data": "facet" },
+            "encode": {
+              "enter": {
+                "interpolate": { "value": "linear-closed" },
+                "x": { "signal": "scale('radial', datum.value) * cos(scale('angular', datum.key))" },
+                "y": { "signal": "scale('radial', datum.value) * sin(scale('angular', datum.key))" },
+                "stroke": { "scale": "color", "field": "category" },
+                "strokeWidth": { "value": 2 },
+                "fill":  { "scale": "color", "field": "category" },
+                "fillOpacity": { "value": 0.18 }
+              }
+            }
+          },
+          {
+            "type": "symbol",
+            "name": "category-point",
+            "from": { "data": "facet" },
+            "encode": {
+              "enter": {
+                "x": { "signal": "scale('radial', datum.value) * cos(scale('angular', datum.key))" },
+                "y": { "signal": "scale('radial', datum.value) * sin(scale('angular', datum.key))" },
+                "fill": { "scale": "color", "field": "category" },
+                "size": { "value": 55 },
+                "tooltip": { "signal": "{'KPI': datum.key + (datum.label2 ? ' ' + datum.label2 : ''), 'Final Score': datum.value}" }
+              }
+            }
+          }
+        ]
+      },
+      // ── Label line 1 ──
+      {
+        "type": "text",
+        "name": "key-label",
+        "from": { "data": "keys" },
+        "zindex": 2,
+        "encode": {
+          "enter": {
+            "x": { "signal": `(radius + ${labelOffset}) * cos(scale('angular', datum.key))` },
+            "y": { "signal": `(radius + ${labelOffset}) * sin(scale('angular', datum.key))` },
+            "text": { "field": "key" },
+            "align": [
+              { "test": "cos(scale('angular', datum.key)) < -0.1", "value": "right" },
+              { "test": "cos(scale('angular', datum.key)) > 0.1",  "value": "left"  },
+              { "value": "center" }
+            ],
+            "baseline": [
+              { "test": "sin(scale('angular', datum.key)) > 0.1",  "value": "top"    },
+              { "test": "sin(scale('angular', datum.key)) < -0.1", "value": "bottom" },
+              { "value": "middle" }
+            ],
+            "dy": [
+              { "test": "datum.label2 !== '' && sin(scale('angular', datum.key)) > 0.1",  "value": 0   },
+              { "test": "datum.label2 !== '' && sin(scale('angular', datum.key)) < -0.1", "value": -8  },
+              { "value": 0 }
+            ],
+            "fill": { "value": "#1A1D2E" },
+            "fontSize": { "value": 12 },
+            "fontWeight": { "value": "500" }
+          }
+        }
+      },
+      // ── Label line 2 (second wrapped line, only rendered when non-empty) ──
+      {
+        "type": "text",
+        "name": "key-label2",
+        "from": { "data": "keys" },
+        "zindex": 2,
+        "encode": {
+          "enter": {
+            "x": { "signal": `(radius + ${labelOffset}) * cos(scale('angular', datum.key))` },
+            "y": { "signal": `(radius + ${labelOffset}) * sin(scale('angular', datum.key))` },
+            "text": { "signal": "datum.label2" },
+            "opacity": { "signal": "datum.label2 !== '' ? 1 : 0" },
+            "align": [
+              { "test": "cos(scale('angular', datum.key)) < -0.1", "value": "right" },
+              { "test": "cos(scale('angular', datum.key)) > 0.1",  "value": "left"  },
+              { "value": "center" }
+            ],
+            "baseline": [
+              { "test": "sin(scale('angular', datum.key)) > 0.1",  "value": "top"    },
+              { "test": "sin(scale('angular', datum.key)) < -0.1", "value": "bottom" },
+              { "value": "middle" }
+            ],
+            "dy": [
+              { "test": "sin(scale('angular', datum.key)) > 0.1",  "value": 18  },
+              { "test": "sin(scale('angular', datum.key)) < -0.1", "value": 9   },
+              { "value": 18 }
+            ],
+            "fill": { "value": "#1A1D2E" },
+            "fontSize": { "value": 12 },
+            "fontWeight": { "value": "500" }
+          }
+        }
+      }
+    ]
+  };
+
+  return JSON.stringify(spec, null, 2);
+}
+
+function buildMarkdown() {
+  const customer = document.getElementById('customerName').value || 'Customer';
+  const useCase  = document.getElementById('useCaseName').value || 'Use Case';
+  const ts = new Date().toLocaleString();
+
+  let md = `# Use Case Maturity Assessment Matrix\n\n`;
+  md += `**Customer:** ${customer}  \n`;
+  md += `**Use Case:** ${useCase}  \n`;
+  md += `**Generated:** ${ts}\n\n`;
+  md += `---\n\n`;
+  md += `## Summary Scores\n\n`;
+  md += `| Section | Score | Status |\n`;
+  md += `|---------|-------|--------|\n`;
+
+  state.sections.forEach(section => {
+    const { finalScore, maxScore, ratio } = calcSection(section);
+    const pct = (ratio * 100).toFixed(1);
+    const status = statusForRatio(ratio);
+    const statusEmoji = status === 'red' ? '🔴' : status === 'amber' ? '🟡' : '🟢';
+    md += `| ${section.name} | ${pct}% (${finalScore}/${maxScore}) | ${statusEmoji} **${status.toUpperCase()}** |\n`;
+  });
+
+  const overall = calcOverall();
+  const overallStatus = statusForRatio(overall);
+  const overallEmoji = overallStatus === 'red' ? '🔴' : overallStatus === 'amber' ? '🟡' : '🟢';
+  md += `| **Overall** | **${(overall*100).toFixed(1)}%** | ${overallEmoji} **${overallStatus.toUpperCase()}** |\n\n`;
+
+  state.sections.forEach(section => {
+    const { finalScore, maxScore, ratio } = calcSection(section);
+    md += `---\n\n## ${section.name}\n\n`;
+    md += `**Section Score:** ${(ratio*100).toFixed(1)}% (${finalScore}/${maxScore} pts)\n\n`;
+
+    const vegaSpec = buildVegaRadarSpec(section);
+    if (vegaSpec) {
+      md += `\`\`\`vega\n${vegaSpec}\n\`\`\`\n\n`;
+    }
+
+    md += `| KPI | Score | Weight | Final | Max | Applicable | Notes | Action Plan |\n`;
+    md += `|-----|-------|--------|-------|-----|------------|-------|-------------|\n`;
+    section.kpis.forEach(k => {
+      const fs = k.applicable==='y' ? k.score*k.weight : 0;
+      const ms = k.applicable==='y' ? 2*k.weight : 0;
+      const sl = ['Not Started','In Progress','Complete'][k.score];
+      const wl = ['','Low','Medium','High'][k.weight];
+      md += `| ${k.kpi} | ${k.score} (${sl}) | ${k.weight} (${wl}) | ${fs} | ${ms} | ${k.applicable.toUpperCase()} | ${k.notes||'—'} | ${k.action||'—'} |\n`;
+    });
+    md += `\n`;
+  });
+
+  return md;
+}
+
+// ═══════════════════════════════════════════════════
+// PARSE MARKDOWN
+// ═══════════════════════════════════════════════════
+const SECTION_TEMPLATES = {
+  'Performance':  { id: 'perf',  color: '#2563EB', pill: 'bg-blue'   },
+  'Availability': { id: 'avail', color: '#7C3AED', pill: 'bg-purple' },
+  'Excellence':   { id: 'excel', color: '#0891B2', pill: 'bg-cyan'   }
+};
+
+function parseMarkdown(markdownString) {
+  const lines = markdownString.split(/\r?\n/);
+  const newState = { customer: '', useCase: '', sections: [] };
+  let currentSection = null;
+  let inVegaBlock = false;
+  let inSummary = false;
+  let inKpiTable = false;
+  let kpiHeaderSeen = false;
+  let maxKpiId = 0;
+
+  function parseScoreCell(cell) {
+    const m = cell.match(/^\s*(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```vega')) { inVegaBlock = true; continue; }
+    if (inVegaBlock) {
+      if (trimmed === '```') inVegaBlock = false;
+      continue;
+    }
+
+    let m;
+    if ((m = trimmed.match(/^\*\*Customer:\*\*\s*(.*?)\s*$/))) {
+      newState.customer = m[1].replace(/\s+$/,'');
+      continue;
+    }
+    if ((m = trimmed.match(/^\*\*Use Case:\*\*\s*(.*?)\s*$/))) {
+      newState.useCase = m[1].replace(/\s+$/,'');
+      continue;
+    }
+
+    if ((m = trimmed.match(/^##\s+(.+?)\s*$/))) {
+      const name = m[1].trim();
+      if (name === 'Summary Scores') {
+        inSummary = true;
+        currentSection = null;
+        inKpiTable = false;
+        kpiHeaderSeen = false;
+        continue;
+      }
+      inSummary = false;
+      const tpl = SECTION_TEMPLATES[name];
+      if (tpl) {
+        currentSection = { id: tpl.id, name, color: tpl.color, pill: tpl.pill, kpis: [] };
+      } else {
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `section-${newState.sections.length + 1}`;
+        currentSection = { id: slug, name, color: '#6B7280', pill: 'bg-blue', kpis: [] };
+      }
+      newState.sections.push(currentSection);
+      inKpiTable = false;
+      kpiHeaderSeen = false;
+      continue;
+    }
+
+    if (inSummary || !currentSection) continue;
+
+    if (trimmed.startsWith('|')) {
+      if (!kpiHeaderSeen && /^\|\s*KPI\s*\|/i.test(trimmed)) {
+        kpiHeaderSeen = true;
+        inKpiTable = true;
+        continue;
+      }
+      if (kpiHeaderSeen && /^\|[\s:|-]+$/.test(trimmed)) {
+        continue;
+      }
+      if (inKpiTable) {
+        const inner = trimmed.replace(/^\|/, '').replace(/\|\s*$/, '');
+        const cells = inner.split('|').map(c => c.trim());
+        if (cells.length >= 8) {
+          const [kpiName, scoreCell, weightCell, finalCell, maxCell, applicableCell, notesCell, actionCell] = cells;
+          const id = ++nextId;
+          if (id > maxKpiId) maxKpiId = id;
+          const kpi = {
+            id,
+            kpi: kpiName,
+            score: parseScoreCell(scoreCell),
+            weight: parseScoreCell(weightCell),
+            applicable: applicableCell.toLowerCase().startsWith('y') ? 'y' : 'n',
+            notes:  notesCell  === '—' ? '' : notesCell,
+            action: actionCell === '—' ? '' : actionCell
+          };
+          currentSection.kpis.push(kpi);
+        }
+        continue;
+      }
+    } else {
+      inKpiTable = false;
+    }
+  }
+
+  if (newState.sections.length > 0) {
+    state = newState;
+    nextId = Math.max(maxKpiId + 1, 300);
+  } else {
+    state.customer = newState.customer;
+    state.useCase  = newState.useCase;
+  }
+
+  const cn = document.getElementById('customerName');
+  const uc = document.getElementById('useCaseName');
+  if (cn) cn.value = state.customer;
+  if (uc) uc.value = state.useCase;
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+document.getElementById('addModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveToWiki(); } });
+
+// ═══════════════════════════════════════════════════
+// INIT — wait for parent init message before render
+// ═══════════════════════════════════════════════════
+let didInit = false;
+function doInit(markdown) {
+  if (didInit) return;
+  didInit = true;
+  if (typeof markdown === 'string' && markdown.length > 0) {
+    try {
+      parseMarkdown(markdown);
+    } catch (err) {
+      console.error('parseMarkdown failed', err);
+    }
+  }
+  render();
+  initCharts();
+}
+
+window.addEventListener('message', (evt) => {
+  const data = evt.data;
+  if (!data || typeof data !== 'object') return;
+  if (data.action === 'init') {
+    doInit(data.markdown);
+  }
+});
+
+// localStorage harmless default for example state (used only for input prefill)
+try {
+  const latest = localStorage.getItem('maturity_latest');
+  if (latest) {
+    const parsed = JSON.parse(latest);
+    const cn = document.getElementById('customerName');
+    const uc = document.getElementById('useCaseName');
+    if (cn && parsed.customer) cn.value = parsed.customer;
+    if (uc && parsed.useCase)  uc.value = parsed.useCase;
+  }
+} catch(e) {}
+
+// Signal ready to parent
+if (window.parent && window.parent !== window) {
+  window.parent.postMessage({ event: 'ready' }, '*');
+}
+
+// Fallback: standalone page (no parent) — render default state
+setTimeout(() => { if (!didInit) doInit(null); }, 500);
+</script>
+</body>
+</html>

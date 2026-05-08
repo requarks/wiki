@@ -14,7 +14,13 @@ module.exports = function (req, res, next) {
 
   // -> Disable Frame Embedding
   if (WIKI.config.security.securityIframe) {
-    res.set('X-Frame-Options', 'deny')
+    // Allow same-origin embedding for the Maturity Matrix editor asset
+    // (loaded inside the editor as an iframe). Everything else stays denied.
+    if (req.path.startsWith('/_assets/maturity-matrix/')) {
+      res.set('X-Frame-Options', 'sameorigin')
+    } else {
+      res.set('X-Frame-Options', 'deny')
+    }
   }
 
   // -> Re-enable XSS Fitler if disabled
