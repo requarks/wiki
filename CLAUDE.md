@@ -16,6 +16,7 @@
 - `node server` — start production server (requires built assets + `config.yml`)
 
 ## Workflow
+- **PRs always target `couchbase-ps/wiki` (the fork), never `requarks/wiki` (upstream).** Use `gh pr create --repo couchbase-ps/wiki` or ensure `gh repo set-default couchbase-ps/wiki` is set.
 - Client code lives in `client/` (Vue 2 + Vuetify 2 + Apollo). Server in `server/`.
 - GraphQL API defined in `server/graph/schemas/` (SDL) and `server/graph/resolvers/`.
 - New rendering modules go in `server/modules/rendering/` — see existing modules for pattern.
