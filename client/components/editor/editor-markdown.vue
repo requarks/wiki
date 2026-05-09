@@ -228,6 +228,9 @@ import Prism from 'prismjs'
 // Mermaid
 import mermaid from 'mermaid'
 
+// Vega
+import { hydrateVega } from '../vega/hydrate'
+
 // Helpers
 import katexHelper from './common/katex'
 import tabsetHelper from './markdown/tabset'
@@ -419,6 +422,7 @@ export default {
       if (newValue && !oldValue) {
         this.$nextTick(() => {
           this.renderMermaidDiagrams()
+          hydrateVega(this.$refs.editorPreview, { darkMode: this.$vuetify.theme.dark })
           Prism.highlightAllUnder(this.$refs.editorPreview)
           Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         })
@@ -472,6 +476,7 @@ export default {
       this.$nextTick(() => {
         tabsetHelper.format()
         this.renderMermaidDiagrams()
+        hydrateVega(this.$refs.editorPreview, { darkMode: this.$vuetify.theme.dark })
         Prism.highlightAllUnder(this.$refs.editorPreview)
         Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         this.scrollSync(this.cm)

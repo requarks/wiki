@@ -382,6 +382,7 @@ import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
+import { hydrateVega } from '../../../components/vega/hydrate'
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
@@ -644,6 +645,9 @@ export default {
       startOnLoad: true,
       theme: this.$vuetify.theme.dark ? `dark` : `default`
     })
+
+    // -> Render Vega / Vega-Lite charts
+    hydrateVega(this.$refs.container, { darkMode: this.$vuetify.theme.dark })
 
     // -> Handle anchor scrolling
     if (window.location.hash && window.location.hash.length > 1) {

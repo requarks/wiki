@@ -1,0 +1,8 @@
+key: htmlVegaLite
+title: Vega-Lite
+description: Render Vega-Lite visualization specs from fenced code blocks
+author: couchbase-ps
+icon: mdi-chart-bar
+enabledDefault: true
+dependsOn: htmlCore
+props: {}

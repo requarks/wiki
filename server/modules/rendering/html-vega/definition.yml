@@ -1,0 +1,8 @@
+key: htmlVega
+title: Vega
+description: Render Vega visualization specs from fenced code blocks
+author: couchbase-ps
+icon: mdi-chart-scatter-plot
+enabledDefault: true
+dependsOn: htmlCore
+props: {}
