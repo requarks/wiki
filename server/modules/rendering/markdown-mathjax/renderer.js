@@ -2,6 +2,25 @@ const mjax = require('mathjax')
 
 /* global WIKI */
 
+// Unicode Private Use Area characters to temporarily replace special
+// characters during markdown parsing:
+// - braces: prevent markdown-it-attrs from interpreting them as attribute
+//   delimiters.
+// - pipe: prevent markdown table parser from interpreting them as cell
+//   delimiters.
+const BRACE_OPEN_PLACEHOLDER = '\uE000'
+const BRACE_CLOSE_PLACEHOLDER = '\uE001'
+const PIPE_PLACEHOLDER = '\uE002'
+const AMPERSAND_PLACEHOLDER = '\uE003'
+
+function restoreBraces (str) {
+  return str
+    .replaceAll(BRACE_OPEN_PLACEHOLDER, '{')
+    .replaceAll(BRACE_CLOSE_PLACEHOLDER, '}')
+    .replaceAll(PIPE_PLACEHOLDER, '|')
+    .replaceAll(AMPERSAND_PLACEHOLDER, '&')
+}
+
 // ------------------------------------
 // Markdown - MathJax Renderer
 // ------------------------------------
@@ -38,7 +57,7 @@ module.exports = {
       mdinst.inline.ruler.after('escape', 'mathjax_inline', mathjaxInline)
       mdinst.renderer.rules.mathjax_inline = (tokens, idx) => {
         try {
-          const result = MathJax.tex2svg(tokens[idx].content, {
+          const result = MathJax.tex2svg(restoreBraces(tokens[idx].content), {
             display: false
           })
           return MathJax.startup.adaptor.innerHTML(result)
@@ -54,7 +73,7 @@ module.exports = {
       })
       mdinst.renderer.rules.mathjax_block = (tokens, idx) => {
         try {
-          const result = MathJax.tex2svg(tokens[idx].content, {
+          const result = MathJax.tex2svg(restoreBraces(tokens[idx].content), {
             display: true
           })
           return `<p>` + MathJax.startup.adaptor.innerHTML(result) + `</p>`
@@ -149,7 +168,15 @@ function mathjaxInline (state, silent) {
   if (!silent) {
     token = state.push('mathjax_inline', 'math', 0)
     token.markup = '$'
-    token.content = state.src.slice(start, match)
+    token.content = state.src
+      .slice(start, match)
+      // Replace curly braces with temporary placeholders to prevent
+      // markdown-it-attrs from interpreting them as attribute delimiters.
+      .replaceAll('{', BRACE_OPEN_PLACEHOLDER)
+      .replaceAll('}', BRACE_CLOSE_PLACEHOLDER)
+      // Replace pipe with temporary placeholder to prevent markdown
+      // table parser from interpreting it as a cell delimiter.
+      .replaceAll('|', PIPE_PLACEHOLDER)
   }
 
   state.pos = match + 1
@@ -198,9 +225,16 @@ function mathjaxBlock (state, start, end, silent) {
 
   token = state.push('mathjax_block', 'math', 0)
   token.block = true
-  token.content = (firstLine && firstLine.trim() ? firstLine + '\n' : '') +
+  token.content = ((firstLine && firstLine.trim() ? firstLine + '\n' : '') +
   state.getLines(start + 1, next, state.tShift[start], true) +
-  (lastLine && lastLine.trim() ? lastLine : '')
+  (lastLine && lastLine.trim() ? lastLine : ''))
+    // Replace curly braces with temporary placeholders to prevent
+    // markdown-it-attrs from interpreting them as attribute delimiters.
+    .replaceAll('{', BRACE_OPEN_PLACEHOLDER)
+    .replaceAll('}', BRACE_CLOSE_PLACEHOLDER)
+    // Replace pipe with temporary placeholder to prevent markdown
+    // table parser from interpreting it as a cell delimiter.
+    .replaceAll('|', PIPE_PLACEHOLDER)
   token.map = [ start, state.line ]
   token.markup = '$$'
   return true
