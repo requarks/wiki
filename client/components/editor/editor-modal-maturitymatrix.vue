@@ -2,7 +2,7 @@
   v-card.editor-modal-maturitymatrix.animated.fadeIn(flat, tile)
     iframe(
       ref='matrix'
-      src='/_assets/maturity-matrix/index.html'
+      :src='iframeSrc'
       frameborder='0'
     )
 </template>
@@ -12,7 +12,10 @@ import { sync } from 'vuex-pathify'
 
 export default {
   computed: {
-    activeModal: sync('editor/activeModal')
+    activeModal: sync('editor/activeModal'),
+    iframeSrc () {
+      return `/_assets/maturity-matrix/index.html?v=${Date.now()}`
+    }
   },
   methods: {
     close () {

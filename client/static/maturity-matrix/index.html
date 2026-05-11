@@ -210,6 +210,7 @@ select.cell-input { cursor: pointer; }
     <div class="topbar-title">Use Case Maturity Assessment Matrix</div>
   </div>
   <div class="topbar-actions">
+    <button class="btn btn-secondary" onclick="resetToInitial()">↺ Reset</button>
     <button class="btn btn-primary" onclick="saveToWiki()">💾 Save</button>
     <button class="btn btn-secondary" onclick="exitToWiki()">✕ Close</button>
   </div>
@@ -254,9 +255,6 @@ select.cell-input { cursor: pointer; }
       <div class="score-sub" id="sub-overall">All sections combined</div>
     </div>
   </div>
-
-  <div class="chart-row" id="charts-container">
-     </div>
 
   <div id="sections-container"></div>
 
@@ -389,7 +387,9 @@ let state = {
   ]
 };
 /* __STATE_END__ */
-let nextId = 300;
+const INITIAL_STATE_JSON = JSON.stringify(state);
+const INITIAL_NEXT_ID = 300;
+let nextId = INITIAL_NEXT_ID;
 let modalTargetSection = null;
 let sectionCharts = {}; 
 
@@ -471,6 +471,12 @@ function buildSectionEl(section) {
       </div>
     </div>
     <div id="body-${section.id}">
+      <div class="chart-card" style="margin:16px;">
+        <div class="chart-title">${section.name} KPIs</div>
+        <div style="display:flex;justify-content:center;overflow:auto;">
+          <canvas id="chart-${section.id}"></canvas>
+        </div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -774,27 +780,20 @@ function radarOptions() {
 }
 
 function initCharts() {
-  const container = document.getElementById('charts-container');
-  container.innerHTML = '';
   sectionCharts = {};
 
   state.sections.forEach(section => {
-    // Size the canvas based on KPI count so labels always have room
+    const canvas = document.getElementById(`chart-${section.id}`);
+    if (!canvas) return;
+
     const kpiCount = section.kpis.filter(k => k.applicable === 'y').length;
     const SIZE = Math.max(700, kpiCount * 62);
+    canvas.width  = SIZE;
+    canvas.height = SIZE;
+    canvas.style.width  = SIZE + 'px';
+    canvas.style.height = SIZE + 'px';
 
-    const card = document.createElement('div');
-    card.className = 'chart-card';
-    // Wrapper keeps the fixed-size canvas centred inside the full-width card
-    card.innerHTML = `
-      <div class="chart-title">${section.name} KPIs</div>
-      <div style="display:flex;justify-content:center;overflow:auto;">
-        <canvas id="chart-${section.id}" width="${SIZE}" height="${SIZE}" style="width:${SIZE}px;height:${SIZE}px;"></canvas>
-      </div>
-    `;
-    container.appendChild(card);
-
-    const ctx = document.getElementById(`chart-${section.id}`).getContext('2d');
+    const ctx = canvas.getContext('2d');
     sectionCharts[section.id] = new Chart(ctx, {
       type: 'radar',
       data: {
@@ -880,6 +879,19 @@ function exitToWiki() {
   if (window.parent && window.parent !== window) {
     window.parent.postMessage({ event: 'exit' }, '*');
   }
+}
+
+function resetToInitial() {
+  if (!confirm('Reset to the initial template? All current edits will be discarded.')) return;
+  state = JSON.parse(INITIAL_STATE_JSON);
+  nextId = INITIAL_NEXT_ID;
+  const cn = document.getElementById('customerName');
+  const uc = document.getElementById('useCaseName');
+  if (cn) cn.value = state.customer;
+  if (uc) uc.value = state.useCase;
+  render();
+  initCharts();
+  showToast('Reset to initial template', 'success');
 }
 
 // ═══════════════════════════════════════════════════
@@ -1166,21 +1178,42 @@ function buildMarkdown() {
   md += `**Generated:** ${ts}\n\n`;
   md += `---\n\n`;
   md += `## Summary Scores\n\n`;
-  md += `| Section | Score | Status |\n`;
-  md += `|---------|-------|--------|\n`;
+  md += `\`\`\`infographic height=300\n`;
+  md += `infographic list-grid-progress-card\n`;
+  md += `data\n`;
+  md += `  lists\n`;
+
+  const SECTION_ICONS = {
+    'Performance':  'speedometer',
+    'Availability': 'shield check',
+    'Excellence':   'star'
+  };
+  const palette = [];
+  let totalFinal = 0, totalMax = 0;
 
   state.sections.forEach(section => {
     const { finalScore, maxScore, ratio } = calcSection(section);
+    totalFinal += finalScore;
+    totalMax   += maxScore;
     const pct = (ratio * 100).toFixed(1);
-    const status = statusForRatio(ratio);
-    const statusEmoji = status === 'red' ? '🔴' : status === 'amber' ? '🟡' : '🟢';
-    md += `| ${section.name} | ${pct}% (${finalScore}/${maxScore}) | ${statusEmoji} **${status.toUpperCase()}** |\n`;
+    const icon = SECTION_ICONS[section.name] || 'chart line';
+    md += `    - label ${section.name}\n`;
+    md += `      value ${pct}\n`;
+    md += `      desc ${finalScore} / ${maxScore} pts\n`;
+    md += `      icon ${icon}\n`;
+    palette.push(section.color || '#6B7280');
   });
 
   const overall = calcOverall();
-  const overallStatus = statusForRatio(overall);
-  const overallEmoji = overallStatus === 'red' ? '🔴' : overallStatus === 'amber' ? '🟡' : '🟢';
-  md += `| **Overall** | **${(overall*100).toFixed(1)}%** | ${overallEmoji} **${overallStatus.toUpperCase()}** |\n\n`;
+  md += `    - label Overall\n`;
+  md += `      value ${(overall * 100).toFixed(1)}\n`;
+  md += `      desc ${totalFinal} / ${totalMax} pts\n`;
+  md += `      icon trophy\n`;
+  palette.push('#C0392B');
+
+  md += `theme\n`;
+  md += `  palette ${palette.join(' ')}\n`;
+  md += `\`\`\`\n\n`;
 
   state.sections.forEach(section => {
     const { finalScore, maxScore, ratio } = calcSection(section);
@@ -1194,12 +1227,24 @@ function buildMarkdown() {
 
     md += `| KPI | Score | Weight | Final | Max | Applicable | Notes | Action Plan |\n`;
     md += `|-----|-------|--------|-------|-----|------------|-------|-------------|\n`;
+    const SCORE_COLOR = ['red', 'orange', 'green'];
     section.kpis.forEach(k => {
-      const fs = k.applicable==='y' ? k.score*k.weight : 0;
-      const ms = k.applicable==='y' ? 2*k.weight : 0;
+      const applicable = k.applicable === 'y';
+      const fs = applicable ? k.score * k.weight : 0;
+      const ms = applicable ? 2 * k.weight : 0;
       const sl = ['Not Started','In Progress','Complete'][k.score];
       const wl = ['','Low','Medium','High'][k.weight];
-      md += `| ${k.kpi} | ${k.score} (${sl}) | ${k.weight} (${wl}) | ${fs} | ${ms} | ${k.applicable.toUpperCase()} | ${k.notes||'—'} | ${k.action||'—'} |\n`;
+      const color = SCORE_COLOR[k.score];
+      const wrap = (s) => applicable ? s : `~~${s}~~`;
+      const scoreCell  = wrap(`<font color="${color}">${k.score} (${sl})</font>`);
+      const weightCell = `${k.weight} (${wl})`;
+      const finalCell  = wrap(`<font color="${color}"><b>${fs}</b></font>`);
+      const maxCell    = wrap(`${ms}`);
+      const kpiCell    = wrap(`**${k.kpi}**`);
+      const notesCell  = wrap(k.notes || '—');
+      const actionCell = wrap(k.action || '—');
+      const appCell    = applicable ? '✅' : '❌';
+      md += `| ${kpiCell} | ${scoreCell} | ${weightCell} | ${finalCell} | ${maxCell} | ${appCell} | ${notesCell} | ${actionCell} |\n`;
     });
     md += `\n`;
   });
@@ -1227,8 +1272,22 @@ function parseMarkdown(markdownString) {
   let maxKpiId = 0;
 
   function parseScoreCell(cell) {
-    const m = cell.match(/^\s*(\d+)/);
+    // Cell may be prefixed with emoji (🔴/🟡/🟢/⚪/⬇️/➡️/⬆️) or wrapped in markdown emphasis.
+    const m = cell.match(/(\d+)/);
     return m ? parseInt(m[1], 10) : 0;
+  }
+  function stripEmphasis(cell) {
+    return cell
+      .replace(/^~~(.+)~~$/, '$1')
+      .replace(/^\*\*(.+)\*\*$/, '$1')
+      .replace(/^_(.+)_$/, '$1')
+      .trim();
+  }
+  function isApplicable(cell) {
+    const t = cell.trim();
+    if (t.includes('✅')) return true;
+    if (t.includes('❌')) return false;
+    return t.toLowerCase().startsWith('y');
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -1292,14 +1351,16 @@ function parseMarkdown(markdownString) {
           const [kpiName, scoreCell, weightCell, finalCell, maxCell, applicableCell, notesCell, actionCell] = cells;
           const id = ++nextId;
           if (id > maxKpiId) maxKpiId = id;
+          const notesStripped  = stripEmphasis(notesCell);
+          const actionStripped = stripEmphasis(actionCell);
           const kpi = {
             id,
-            kpi: kpiName,
+            kpi: stripEmphasis(kpiName),
             score: parseScoreCell(scoreCell),
             weight: parseScoreCell(weightCell),
-            applicable: applicableCell.toLowerCase().startsWith('y') ? 'y' : 'n',
-            notes:  notesCell  === '—' ? '' : notesCell,
-            action: actionCell === '—' ? '' : actionCell
+            applicable: isApplicable(applicableCell) ? 'y' : 'n',
+            notes:  notesStripped  === '—' ? '' : notesStripped,
+            action: actionStripped === '—' ? '' : actionStripped
           };
           currentSection.kpis.push(kpi);
         }
