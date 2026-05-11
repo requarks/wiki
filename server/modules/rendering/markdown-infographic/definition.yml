@@ -1,0 +1,8 @@
+key: markdownInfographic
+title: AntV Infographic
+description: Render AntV Infographic diagrams from fenced code blocks
+author: couchbase-ps
+icon: mdi-chart-tree
+enabledDefault: true
+dependsOn: markdownCore
+props: {}

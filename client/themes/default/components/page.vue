@@ -383,6 +383,7 @@ import NavSidebar from './nav-sidebar.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { hydrateVega } from '../../../components/vega/hydrate'
+import { hydrateInfographic } from '../../../components/infographic/hydrate'
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
@@ -648,6 +649,9 @@ export default {
 
     // -> Render Vega / Vega-Lite charts
     hydrateVega(this.$refs.container, { darkMode: this.$vuetify.theme.dark })
+
+    // -> Render AntV Infographic diagrams
+    hydrateInfographic(this.$refs.container, { darkMode: this.$vuetify.theme.dark })
 
     // -> Handle anchor scrolling
     if (window.location.hash && window.location.hash.length > 1) {

@@ -231,6 +231,10 @@ import mermaid from 'mermaid'
 // Vega
 import { hydrateVega } from '../vega/hydrate'
 
+// AntV Infographic
+import { hydrateInfographic } from '../infographic/hydrate'
+import infographicPlugin from '../../../server/modules/rendering/markdown-infographic/plugin'
+
 // Helpers
 import katexHelper from './common/katex'
 import tabsetHelper from './markdown/tabset'
@@ -285,6 +289,7 @@ const md = new MarkdownIt({
   .use(mdMark)
   .use(mdFootnote)
   .use(mdImsize)
+  .use(infographicPlugin)
 
 // DOMPurify fix for draw.io
 DOMPurify.addHook('uponSanitizeElement', (elm) => {
@@ -423,6 +428,7 @@ export default {
         this.$nextTick(() => {
           this.renderMermaidDiagrams()
           hydrateVega(this.$refs.editorPreview, { darkMode: this.$vuetify.theme.dark })
+          hydrateInfographic(this.$refs.editorPreview, { darkMode: this.$vuetify.theme.dark })
           Prism.highlightAllUnder(this.$refs.editorPreview)
           Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         })
@@ -477,6 +483,7 @@ export default {
         tabsetHelper.format()
         this.renderMermaidDiagrams()
         hydrateVega(this.$refs.editorPreview, { darkMode: this.$vuetify.theme.dark })
+        hydrateInfographic(this.$refs.editorPreview, { darkMode: this.$vuetify.theme.dark })
         Prism.highlightAllUnder(this.$refs.editorPreview)
         Array.from(this.$refs.editorPreview.querySelectorAll('pre.line-numbers')).forEach(pre => pre.classList.add('prismjs'))
         this.scrollSync(this.cm)
