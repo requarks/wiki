@@ -1,7 +1,7 @@
 <template lang='pug'>
-  v-app-bar.nav-header(color='black', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
-    v-toolbar(color='deep-purple', flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
-      v-text-field(
+  v-app-bar.nav-header(color='white', app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat, :extended='searchIsShown && $vuetify.breakpoint.smAndDown')
+    v-toolbar(flat, slot='extension', v-if='searchIsShown && $vuetify.breakpoint.smAndDown')
+      v-text-field.nav-header-search-field(
         ref='searchFieldMobile'
         v-model='search'
         clearable
@@ -19,7 +19,7 @@
       )
     v-layout(row)
       v-flex(xs5, md4)
-        v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
+        v-toolbar.nav-header-inner(color='white', flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
           v-avatar(tile, size='34', @click='goHome')
             v-img.org-logo(:src='logoUrl')
           //- v-menu(open-on-hover, offset-y, bottom, left, min-width='250', transition='slide-y-transition')
@@ -46,19 +46,17 @@
           v-toolbar-title(:class='{ "mx-3": $vuetify.breakpoint.mdAndUp, "mx-1": $vuetify.breakpoint.smAndDown }')
             span.subheading {{title}}
       v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
-        v-toolbar.nav-header-inner(color='black', dark, flat)
+        v-toolbar.nav-header-inner(flat)
           slot(name='mid')
             transition(name='navHeaderSearch', v-if='searchIsShown')
-              v-text-field(
+              v-text-field.nav-header-search-field(
                 ref='searchField',
                 v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
                 v-model='search',
-                color='white',
                 :label='$t(`common:header.search`)',
                 single-line,
                 solo
                 flat
-                rounded
                 hide-details,
                 prepend-inner-icon='mdi-magnify',
                 :loading='searchIsLoading',
@@ -70,13 +68,13 @@
                 @keyup.up='searchMove(`up`)'
                 autocomplete='off'
               )
-            v-tooltip(bottom)
-              template(v-slot:activator='{ on }')
-                v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
-                  v-icon(color='grey') mdi-tag-multiple
-              span {{$t('common:header.browseTags')}}
+            //- v-tooltip(bottom)
+            //-   template(v-slot:activator='{ on }')
+            //-     v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
+            //-       v-icon(color='grey') mdi-tag-multiple
+            //-   span {{$t('common:header.browseTags')}}
       v-flex(xs7, md4)
-        v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
+        v-toolbar.nav-header-inner.pr-4(color='white', flat)
           v-spacer
           .navHeaderLoading.mr-3
             v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
@@ -135,7 +133,7 @@
                       )
                       v-icon(color='grey') mdi-file-document-edit-outline
                   span {{$t('common:header.pageActions')}}
-              v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+              v-list.page-actions-menu(nav, light)
                 .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
                 v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
                   v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-outline
@@ -241,6 +239,7 @@
     page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
     page-delete(v-model='deletePageModal', v-if='path && path.length')
     page-convert(v-model='convertPageModal', v-if='path && path.length')
+    v-divider(style='position: absolute; bottom: 0; left: 0; right: 0;')
 
     .nav-header-dev(v-if='isDevMode')
       v-icon mdi-alert
@@ -488,6 +487,13 @@ export default {
 
 <style lang='scss'>
 
+.page-actions-menu.v-list .v-list-item__title.white--text,
+.page-actions-menu.v-list .v-list-item.white--text,
+.page-actions-menu.v-list .v-list-item__title,
+.page-actions-menu.v-list .v-list-item {
+  color: rgba(0, 0, 0, 0.87) !important;
+}
+
 .nav-header {
   //z-index: 1000;
 
@@ -497,10 +503,12 @@ export default {
     .v-toolbar__content {
       padding: 0;
     }
+
     .v-text-field .v-input__prepend-inner {
       padding: 0 14px 0 5px;
       padding-right: 14px;
     }
+
   }
 
   .org-logo {
@@ -511,6 +519,11 @@ export default {
     .v-toolbar__content {
       padding: 0;
     }
+  }
+
+  .nav-header-search-field.v-text-field--solo .v-input__slot {
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px;
   }
 
   &-search-adv {

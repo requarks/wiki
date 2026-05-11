@@ -39,9 +39,9 @@ html {
 #root .v-application {
   .overline {
     line-height: 1rem;
-    font-size: .625rem!important;
+    font-size: .625rem;
     font-weight: 400;
-    letter-spacing: .1666666667em!important;
+    letter-spacing: .1666666667em;
   }
 
   @for $i from 0 through 25 {

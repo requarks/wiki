@@ -25,7 +25,7 @@
           )
           v-icon(color='green', :left='$vuetify.breakpoint.lgAndUp') mdi-check
           span.grey--text(v-if='$vuetify.breakpoint.lgAndUp && mode !== `create` && !isDirty') {{ $t('editor:save.saved') }}
-          span.white--text(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
+          span(v-else-if='$vuetify.breakpoint.lgAndUp') {{ mode === 'create' ? $t('common:actions.create') : $t('common:actions.save') }}
         v-btn.animated.fadeInDown.wait-p1s(
           text
           color='blue'
@@ -33,7 +33,7 @@
           :class='{ "is-icon": $vuetify.breakpoint.mdAndDown, "mx-0": !welcomeMode, "ml-0": welcomeMode }'
           )
           v-icon(color='blue', :left='$vuetify.breakpoint.lgAndUp') mdi-tag-text-outline
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.page') }}
+          span(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.page') }}
         v-btn.animated.fadeInDown.wait-p2s(
           v-if='!welcomeMode'
           text
@@ -42,7 +42,7 @@
           @click='exit'
           )
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
-          span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
+          span(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
         v-divider.ml-3(vertical)
     v-main
       component(:is='currentEditor', :save='save')
