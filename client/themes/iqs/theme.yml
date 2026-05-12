@@ -1,6 +1,6 @@
-name: Default
-author: requarks.io
-site: https://wiki.requarks.io/
+name: iQuant Knowledge Base
+author: iQuant Devs
+site: https://wiki.iquantsolutions.com/
 version: 1.0.0
 requirements:
   minimum: '>= 2.0.0'
