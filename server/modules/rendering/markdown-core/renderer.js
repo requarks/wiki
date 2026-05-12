@@ -49,10 +49,13 @@ function protectMathPipes (text) {
         continue
       }
     }
-    // Check for inline math ($...$)
+    // Check for inline math ($...$) - must not span multiple lines
     if (text[i] === '$' && text[i + 1] !== '$') {
+      // Only search for closing $ on the same line
+      const lineEnd = text.indexOf('\n', i + 1)
+      const searchEnd = lineEnd === -1 ? text.length : lineEnd
       const end = text.indexOf('$', i + 1)
-      if (end !== -1) {
+      if (end !== -1 && end < searchEnd) {
         result += text.slice(i, end + 1)
           .replace(/\|/g, PIPE_PLACEHOLDER)
           .replace(/&/g, AMPERSAND_PLACEHOLDER)
