@@ -5,7 +5,6 @@
         ref='searchFieldMobile'
         v-model='search'
         clearable
-        background-color='deep-purple'
         color='white'
         :label='$t(`common:header.search`)'
         single-line
