@@ -135,7 +135,7 @@
     "node-2fa": "1.1.2",
     "node-cache": "5.1.2",
     "nodemailer": "6.9.1",
-    "objection": "2.2.18",
+    "objection": "3.0.5",
     "passport": "0.4.1",
     "passport-auth0": "1.4.5",
     "passport-azure-ad": "4.3.5",
