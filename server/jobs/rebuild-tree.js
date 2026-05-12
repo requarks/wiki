@@ -73,7 +73,7 @@ module.exports = async (pageId) => {
     WIKI.logger.info(`Rebuilding page tree: [ COMPLETED ]`)
   } catch (err) {
     WIKI.logger.error(`Rebuilding page tree: [ FAILED ]`)
-    WIKI.logger.error(err.message)
+    WIKI.logger.error(err)
     // exit process with error code
     throw err
   }

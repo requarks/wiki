@@ -27,6 +27,6 @@ module.exports = async () => {
     WIKI.logger.info('Purging orphaned upload files: [ COMPLETED ]')
   } catch (err) {
     WIKI.logger.error('Purging orphaned upload files: [ FAILED ]')
-    WIKI.logger.error(err.message)
+    WIKI.logger.error(err)
   }
 }
