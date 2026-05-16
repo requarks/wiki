@@ -282,12 +282,70 @@ module.exports = {
           }
         }
       }).orderBy([{ column: 'isFolder', order: 'desc' }, 'title'])
-      return results.filter(r => {
+
+      const pageIds = results.filter(r => r.pageId).map(r => r.pageId)
+      let tagsByPageId = {}
+      if (pageIds.length > 0) {
+        const tagRows = await WIKI.models.knex('pageTags')
+          .join('tags', 'pageTags.tagId', 'tags.id')
+          .whereIn('pageTags.pageId', pageIds)
+          .select('pageTags.pageId', 'tags.tag')
+        tagRows.forEach(row => {
+          if (!tagsByPageId[row.pageId]) { tagsByPageId[row.pageId] = [] }
+          tagsByPageId[row.pageId].push({ tag: row.tag })
+        })
+      }
+
+      const visibleItems = results.filter(r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.localeCode
+          locale: r.localeCode,
+          tags: r.pageId ? (tagsByPageId[r.pageId] || []) : []
         })
-      }).map(r => ({
+      })
+
+      const visibleIds = new Set(visibleItems.map(r => r.id))
+      const deniedFolders = results.filter(r => r.isFolder && !visibleIds.has(r.id))
+
+      if (deniedFolders.length > 0) {
+        const descendantPages = await WIKI.models.knex('pages')
+          .select('id', 'path', 'localeCode')
+          .where('localeCode', args.locale)
+          .where(builder => {
+            deniedFolders.forEach((folder, i) => {
+              if (i === 0) { builder.where('path', 'like', `${folder.path}/%`) }
+              else { builder.orWhere('path', 'like', `${folder.path}/%`) }
+            })
+          })
+
+        const descPageIds = descendantPages.map(p => p.id)
+        const descTagsByPageId = {}
+        if (descPageIds.length > 0) {
+          const descTagRows = await WIKI.models.knex('pageTags')
+            .join('tags', 'pageTags.tagId', 'tags.id')
+            .whereIn('pageTags.pageId', descPageIds)
+            .select('pageTags.pageId', 'tags.tag')
+          descTagRows.forEach(row => {
+            if (!descTagsByPageId[row.pageId]) { descTagsByPageId[row.pageId] = [] }
+            descTagsByPageId[row.pageId].push({ tag: row.tag })
+          })
+        }
+
+        for (const folder of deniedFolders) {
+          const hasVisibleDescendant = descendantPages.some(p => {
+            return p.path.startsWith(folder.path + '/') && WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
+              path: p.path,
+              locale: p.localeCode,
+              tags: descTagsByPageId[p.id] || []
+            })
+          })
+          if (hasVisibleDescendant) {
+            visibleItems.push(folder)
+          }
+        }
+      }
+
+      return visibleItems.map(r => ({
         ...r,
         parent: r.parent || 0,
         locale: r.localeCode
