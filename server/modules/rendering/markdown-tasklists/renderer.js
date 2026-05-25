@@ -6,6 +6,6 @@ const mdTaskLists = require('markdown-it-task-lists')
 
 module.exports = {
   init (md, conf) {
-    md.use(mdTaskLists, { label: false, labelAfter: false })
+    md.use(mdTaskLists, { enabled: true, label: false, labelAfter: false })
   }
 }

@@ -790,12 +790,13 @@
     position: relative;
     list-style-type: none;
 
-    &-checkbox[disabled] {
+    &-checkbox {
       width: 1.1rem;
       height: 1.1rem;
       top: 2px;
       position: relative;
       margin-right: 2px;
+      cursor: pointer;
 
       &::after {
         position: absolute;
@@ -819,7 +820,8 @@
         }
       }
 
-      &[checked]::after  {
+      &[checked]::after,
+      &:checked::after {
         content: '✓';
       }
     }
