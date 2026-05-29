@@ -104,7 +104,7 @@ export default {
         const truncatePath = path => _.take(path.split('/'), depth).join('/')
         const descendantsByChild =
           Object.entries(_.groupBy(descendants, page => truncatePath(page.path)))
-            .map(([childPath, descendantsGroup]) => [getPage(childPath), descendantsGroup])
+            .map(([childPath, descendantsGroup]) => [getPage(childPath), _.sortBy(descendantsGroup, child => child.path)])
             .map(([child, descendantsGroup]) =>
               [child, _.filter(descendantsGroup, d => d.path !== child.path)])
         return {

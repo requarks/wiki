@@ -1,8 +1,7 @@
 const _ = require('lodash')
-const stream = require('stream')
-const Promise = require('bluebird')
 const fs = require('fs')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 
 /* global WIKI */
 
@@ -19,6 +18,16 @@ module.exports = {
   async init() {
     WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Initializing...`)
     switch (this.config.apiVersion) {
+      case '8.x':
+        const { Client: Client8 } = require('elasticsearch8')
+        this.client = new Client8({
+          nodes: this.config.hosts.split(',').map(_.trim),
+          sniffOnStart: this.config.sniffOnStart,
+          sniffInterval: (this.config.sniffInterval > 0) ? this.config.sniffInterval : false,
+          tls: getTlsOptions(this.config),
+          name: 'wiki-js'
+        })
+        break
       case '7.x':
         const { Client: Client7 } = require('elasticsearch7')
         this.client = new Client7({
@@ -54,7 +63,8 @@ module.exports = {
   async createIndex() {
     try {
       const indexExists = await this.client.indices.exists({ index: this.config.indexName })
-      if (!indexExists.body) {
+      // Elasticsearch 6.x / 7.x
+      if (this.config.apiVersion !== '8.x' && !indexExists.body) {
         WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
         try {
           const idxBody = {
@@ -68,12 +78,48 @@ module.exports = {
               tags: { type: 'text', boost: 8.0 }
             }
           }
+
           await this.client.indices.create({
             index: this.config.indexName,
             body: {
               mappings: (this.config.apiVersion === '6.x') ? {
                 _doc: idxBody
               } : idxBody,
+              settings: {
+                analysis: {
+                  analyzer: {
+                    default: {
+                      type: this.config.analyzer
+                    }
+                  }
+                }
+              }
+            }
+          })
+        } catch (err) {
+          WIKI.logger.error(`(SEARCH/ELASTICSEARCH) Create Index Error: `, _.get(err, 'meta.body.error', err))
+        }
+      // Elasticsearch 8.x
+      } else if (this.config.apiVersion === '8.x' && !indexExists) {
+        WIKI.logger.info(`(SEARCH/ELASTICSEARCH) Creating index...`)
+        try {
+          // 8.x Doesn't support boost in mappings, so we will need to boost at query time.
+          const idxBody = {
+            properties: {
+              suggest: { type: 'completion' },
+              title: { type: 'text' },
+              description: { type: 'text' },
+              content: { type: 'text' },
+              locale: { type: 'keyword' },
+              path: { type: 'text' },
+              tags: { type: 'text' }
+            }
+          }
+
+          await this.client.indices.create({
+            index: this.config.indexName,
+            body: {
+              mappings: idxBody,
               settings: {
                 analysis: {
                   analyzer: {
@@ -129,7 +175,7 @@ module.exports = {
         }
       })
       return {
-        results: _.get(results, 'body.hits.hits', []).map(r => ({
+        results: _.get(results, this.config.apiVersion === '8.x' ? 'hits.hits' : 'body.hits.hits', []).map(r => ({
           id: r._id,
           locale: r._source.locale,
           path: r._source.path,
@@ -137,7 +183,7 @@ module.exports = {
           description: r._source.description
         })),
         suggestions: _.reject(_.get(results, 'suggest.suggestions', []).map(s => _.get(s, 'options[0].text', false)), s => !s),
-        totalHits: _.get(results, 'body.hits.total.value', _.get(results, 'body.hits.total', 0))
+        totalHits: _.get(results, this.config.apiVersion === '8.x' ? 'hits.total.value' : 'body.hits.total.value', _.get(results, this.config.apiVersion === '8.x' ? 'hits.total' : 'body.hits.total', 0))
       }
     } catch (err) {
       WIKI.logger.warn('Search Engine Error: ', _.get(err, 'meta.body.error', err))
@@ -182,7 +228,7 @@ module.exports = {
   async created(page) {
     await this.client.index({
       index: this.config.indexName,
-      type: '_doc',
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -204,7 +250,7 @@ module.exports = {
   async updated(page) {
     await this.client.index({
       index: this.config.indexName,
-      type: '_doc',
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       body: {
         suggest: this.buildSuggest(page),
@@ -226,7 +272,7 @@ module.exports = {
   async deleted(page) {
     await this.client.delete({
       index: this.config.indexName,
-      type: '_doc',
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       refresh: true
     })
@@ -239,13 +285,13 @@ module.exports = {
   async renamed(page) {
     await this.client.delete({
       index: this.config.indexName,
-      type: '_doc',
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.hash,
       refresh: true
     })
     await this.client.index({
       index: this.config.indexName,
-      type: '_doc',
+      ...(this.config.apiVersion !== '8.x' && { type: '_doc' }),
       id: page.destinationHash,
       body: {
         suggest: this.buildSuggest(page),
@@ -314,8 +360,8 @@ module.exports = {
             result.push({
               index: {
                 _index: this.config.indexName,
-                _type: '_doc',
-                _id: doc.id
+                _id: doc.id,
+                ...(this.config.apiVersion !== '8.x' && { _type: '_doc' })
               }
             })
             doc.safeContent = WIKI.models.pages.cleanHTML(doc.render)
@@ -345,7 +391,7 @@ module.exports = {
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (chunk, enc, cb) => processDocument(cb, chunk),
         flush: async (cb) => processDocument(cb)

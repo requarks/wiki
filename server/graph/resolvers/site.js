@@ -17,6 +17,7 @@ module.exports = {
         title: WIKI.config.title,
         company: WIKI.config.company,
         contentLicense: WIKI.config.contentLicense,
+        footerOverride: WIKI.config.footerOverride,
         logoUrl: WIKI.config.logoUrl,
         pageExtensions: WIKI.config.pageExtensions.join(', '),
         ...WIKI.config.seo,
@@ -58,6 +59,10 @@ module.exports = {
 
         if (args.hasOwnProperty('contentLicense')) {
           WIKI.config.contentLicense = args.contentLicense
+        }
+
+        if (args.hasOwnProperty('footerOverride')) {
+          WIKI.config.footerOverride = args.footerOverride
         }
 
         if (args.hasOwnProperty('logoUrl')) {
@@ -120,7 +125,7 @@ module.exports = {
           forceDownload: _.get(args, 'uploadForceDownload', WIKI.config.uploads.forceDownload)
         }
 
-        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'seo', 'logoUrl', 'pageExtensions', 'auth', 'editShortcuts', 'features', 'security', 'uploads'])
+        await WIKI.configSvc.saveToDb(['host', 'title', 'company', 'contentLicense', 'footerOverride', 'seo', 'logoUrl', 'pageExtensions', 'auth', 'editShortcuts', 'features', 'security', 'uploads'])
 
         if (WIKI.config.security.securityTrustProxy) {
           WIKI.app.enable('trust proxy')

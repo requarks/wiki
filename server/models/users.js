@@ -499,6 +499,10 @@ module.exports = class User extends Model {
     })
 
     if (usr) {
+      if (!usr.isActive) {
+        throw new WIKI.Error.AuthAccountBanned()
+      }
+
       await WIKI.models.users.query().patch({
         password: newPassword,
         mustChangePwd: false
@@ -526,6 +530,9 @@ module.exports = class User extends Model {
     }).first()
     if (!usr) {
       WIKI.logger.debug(`Password reset attempt on nonexistant local account ${email}: [DISCARDED]`)
+      return
+    } else if (!usr.isActive) {
+      WIKI.logger.debug(`Password reset attempt on disabled local account ${email}: [DISCARDED]`)
       return
     }
     const resetToken = await WIKI.models.userKeys.generateToken({
@@ -866,7 +873,7 @@ module.exports = class User extends Model {
     }
     const usr = await WIKI.models.users.query().findById(context.req.user.id).select('providerKey')
     const provider = _.find(WIKI.auth.strategies, ['key', usr.providerKey])
-    return provider.logout ? provider.logout(provider.config) : '/'
+    return provider.logout ? provider.logout(provider.config, context) : '/'
   }
 
   static async getGuestUser () {

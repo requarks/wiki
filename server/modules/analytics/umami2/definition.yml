@@ -1,0 +1,17 @@
+key: umami2
+title: Umami Analytics v2
+description: Umami is a simple, fast, privacy-focused alternative to Google Analytics.
+author: CDN18
+logo: https://static.requarks.io/logo/umami.svg
+website: https://umami.is
+isAvailable: true
+props:
+  websiteID:
+    type: String
+    title: Website ID
+    order: 1
+  url:
+    type: String
+    title: Umami Server URL
+    hint: The URL of your Umami instance. It should start with http/https and omit the trailing slash. (e.g. https://umami.example.com)
+    order: 2

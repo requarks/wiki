@@ -43,7 +43,7 @@ Wiki.js is an open source project that has been made possible due to the generou
 
 This chart bootstraps a Wiki.js deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also optionally packages the [PostgreSQL](https://github.com/kubernetes/charts/tree/master/stable/postgresql) as the database but you are free to bring your own.
+It also optionally deploys PostgreSQL as the database using the official PostgreSQL image from Docker Hub, but you are free to bring your own database.
 
 ## Prerequisites
 
@@ -59,7 +59,7 @@ $ helm repo add requarks https://charts.js.wiki
 
 To install the chart with the release name `my-release` run the following:
 
-### Using Helm 3:
+### Using Helm 3/4:
 ```console
 $ helm install my-release requarks/wiki
 ```
@@ -95,18 +95,18 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | Parameter                            | Description                                 | Default                                                    |
 | -------------------------------      | -------------------------------             | ---------------------------------------------------------- |
 | `image.repository`                   | Wiki.js image                                | `requarks/wiki`                                           |
-| `image.tag`                          | Wiki.js image tag                            | `latest`                                                      |
+| `image.tag`                          | Wiki.js image tag                            | `2`                                                      |
 | `imagePullPolicy`                    | Image pull policy                           | `IfNotPresent`                                             |
-| `replicacount`                   | Amount of wiki.js service pods to run                   | `1`                                                        |
-| `revisionHistoryLimit`                   | Total amount of revision history points                   | `10`                                        |
-| `resources.limits`               | wiki.js service resource limits                         | `nil`                               |
-| `resources.requests`             | wiki.js service resource requests                       | `nil`                               |
-| `nodeSelector`                   | Node labels for wiki.js pod assignment          | `{}`                                                       |
-| `affinity`                       | Affinity settings for wiki.js pod assignment    | `{}`                                                       |
-| `schedulerName`                  | Name of an alternate scheduler for wiki.js pod  | `nil`                                                      |
-| `tolerations`                    | Toleration labels for wiki.jsk pod assignment    | `[]`                                                       |
-| `volumeMounts`                   | Volume mounts for Wiki.js container              | `[]`                                                       |
-| `volumes`                        | Volumes for Wiki.js Pod                          | `[]`                                                       |
+| `replicacount`                       | Number of Wiki.js pods to run                   | `1`                                                        |
+| `revisionHistoryLimit`               | Total number of revision history points                   | `10`                                        |
+| `resources.limits`               | Wiki.js service resource limits                         | `nil`                               |
+| `resources.requests`             | Wiki.js service resource requests                       | `nil`                               |
+| `nodeSelector`                   | Node labels for the Wiki.js pod assignment          | `{}`                                                       |
+| `affinity`                       | Affinity settings for the Wiki.js pod assignment    | `{}`                                                       |
+| `schedulerName`                  | Name of an alternate scheduler for the Wiki.js pod  | `nil`                                                      |
+| `tolerations`                    | Toleration labels for the Wiki.js pod assignment    | `[]`                                                       |
+| `volumeMounts`                   | Volume mounts for the Wiki.js container              | `[]`                                                       |
+| `volumes`                        | Volumes for the Wiki.js pod                          | `[]`                                                       |
 | `ingress.enabled`                    | Enable ingress controller resource          | `false`                                                    |
 | `ingress.className`                  | Ingress class name                          | `""`                                                       |
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
@@ -114,21 +114,38 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `ingress.tls`                        | Ingress TLS configuration                   | `[]`                                                       |
 | `sideload.enabled`                   | Enable sideloading of locale files from git | `false`                                                    |
 | `sideload.repoURL`                   | Git repository URL containing locale files  | `https://github.com/Requarks/wiki-localization`            |
-| `sideload.env`                       | Environment variables for sideload Container | `{}`                                                      |
+| `sideload.env`                       | Environment variables for the sideload container | `{}`                                                      |
+| `sideload.securityContext`           | Security context for the sideload container     | `nil`                                                      |
+| `sideload.resources.limits`          | Resource limits for the sideload container      | `nil`                                                      |
+| `sideload.resources.requests`        | Resource requests for the sideload container    | `nil`                                                      |
+| `nodeExtraCaCerts`                   | Trusted certificates path                   | `nil`                                                      |
+| `externalPostgresql.databaseURL`     | External postgres connection string         | `nil`                                                  |
 | `postgresql.enabled`                 | Deploy postgres server (see below)          | `true`                                                     |
 | `postgresql.postgresqlDatabase`        | Postgres database name                      | `wiki`                                                   |
 | `postgresql.postgresqlUser`            | Postgres username                           | `postgres`                                                   |
-| `postgresql.postgresqlHost`            | External postgres host                      | `nil`                                                      |
-| `postgresql.postgresqlPassword`        | External postgres password                  | `nil`                                                      |
+| `postgresql.postgresqlHost`            | Postgres host                      | `nil`                                                      |
+| `postgresql.postgresqlPassword`        | Postgres password                  | `nil`                                                      |
 | `postgresql.existingSecret`            | Provide an existing `Secret` for postgres   | `nil`                                                      |
-| `postgresql.existingSecretKey`          | The postgres password key in the existing `Secret`   | `postgresql-password`                              |
-| `postgresql.postgresqlPort`            | External postgres port                      | `5432`                                                     |
+| `postgresql.existingSecretKey`         | The postgres password key in the existing `Secret`   | `postgresql-password`                              |
+| `postgresql.existingSecretUserKey`     | The postgres username key in the existing `Secret`   | `postgresql-username`                            |
+| `postgresql.postgresqlPort`            | Postgres port                      | `5432`                                                     |
 | `postgresql.ssl`                       | Enable external postgres SSL connection     | `false`                                                   |
 | `postgresql.ca`                        | Certificate of Authority content for postgres  | `nil`                                                     |
 | `postgresql.persistence.enabled`                | Enable postgres persistence using PVC                | `true`                                                     |
 | `postgresql.persistence.existingClaim`          | Provide an existing `PersistentVolumeClaim` for postgres | `nil`                                                      |
 | `postgresql.persistence.storageClass`           | Postgres PVC Storage Class (example: `nfs`)                           | `nil`                 |
-| `postgresql.persistence.size`                   | Postgers PVC Storage Request                         | `8Gi`                                                     |
+| `postgresql.persistence.size`                   | Postgres PVC Storage Request                         | `8Gi`                                                     |
+| `postgresql.persistence.accessMode`             | Postgres Persistent Volume Access Mode                     | `ReadWriteOnce`                                          |
+| `postgresql.image.repository`                   | PostgreSQL image repository                       | `postgres`                                               |
+| `postgresql.image.tag`                          | PostgreSQL image tag                              | `18`                                                   |
+| `postgresql.image.pullPolicy`                   | PostgreSQL image pull policy                      | `IfNotPresent`                                           |
+| `postgresql.resources`                          | PostgreSQL resource requests/limits             | `{}`                                                     |
+| `postgresql.nodeSelector`                       | PostgreSQL node selector labels                   | `{}`                                                     |
+| `postgresql.tolerations`                        | PostgreSQL toleration labels                      | `[]`                                                     |
+| `postgresql.affinity`                           | PostgreSQL affinity settings                      | `{}`                                                     |
+| `postgresql.service.type`                       | PostgreSQL service type                           | `ClusterIP`                                              |
+| `postgresql.service.port`                       | PostgreSQL service port                           | `5432`                                                   |
+| `postgresql.service.annotations`                | PostgreSQL service annotations                    | `{}`                                                     |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
@@ -146,25 +163,44 @@ $ helm install --name my-release -f values.yaml requarks/wiki
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
-## PostgresSQL
+## PostgreSQL
 
-By default, PostgreSQL is installed as part of the chart.
+By default, PostgreSQL is installed as part of the chart using the official PostgreSQL image from Docker Hub (version 18).
 
 ### Using an external PostgreSQL server
 
-To use an external PostgreSQL server, set `postgresql.enabled` to `false` and then set `postgresql.postgresqlHost` and `postgresql.postgresqlPassword`. To use an existing `Secret`, set `postgresql.existingSecret`. The other options (`postgresql.postgresqlDatabase`, `postgresql.postgresqlUser`, `postgresql.postgresqlPort` and `postgresql.existingSecretKey`) may also want changing from their default values.
+To use an external PostgreSQL server, set `postgresql.enabled` to `false`, then use either:
 
-To use an SSL connection you can set `postgresql.ssl` to `true` and if needed the path to a Certificate of Authority can be set using `postgresql.ca` to `/path/to/ca`. Default `postgresql.ssl` value is `false`.
+#### Connection String
 
-If `postgresql.existingSecret` is not specified, you also need to add the following Helm template to your deployment in order to create the postgresql `Secret`:
+Set `externalPostgresql.databaseURL` to the full PostgreSQL connection string.
 
-```yaml
-kind: Secret
-apiVersion: v1
-metadata:
-  name: {{ template "wiki.postgresql.secret" . }}
-data:
-  {{ template "wiki.postgresql.secretKey" . }}: "{{ .Values.postgresql.postgresqlPassword | b64enc }}"
+#### Connection Parameters
+
+Set `externalPostgresql.host`, `externalPostgres.port`, `externalPostgres.database`, `externalPostgres.username`, `externalPostgres.existingSecret` *(secret name)* and `externalPostgres.existingSecretKey` *(key in the secret containing the password)*
+
+Ensure the secret specified in `externalPostgresql.existingSecret` already exists, with a password set at the path specified in `externalPostgres.existingSecretKey`.
+
+To use an SSL connection you can set `externalPostgresql.ssl` to `true` and if needed the path to a Certificate of Authority can be set using `externalPostgresql.ca` to `/path/to/ca`. Default `externalPostgresql.ssl` value is `false`.
+
+### Using an existing PostgreSQL secret with built-in PostgreSQL
+
+When using the built-in PostgreSQL (default behavior with `postgresql.enabled: true`), you can still use an existing Kubernetes secret for the database credentials by setting:
+
+- `postgresql.existingSecret`: Name of the existing secret containing the credentials
+- `postgresql.existingSecretKey`: Key in the secret containing the password (defaults to `postgresql-password`)
+- `postgresql.existingSecretUserKey`: Key in the secret containing the username (defaults to `postgresql-username`)
+Example usage:
+```bash
+# Create your existing secret
+kubectl create secret generic my-postgres-secret \
+  --from-literal=postgresql-username=postgres \
+  --from-literal=postgresql-password=yourpassword
+
+# Deploy with existing secret
+helm install my-release requarks/wiki \
+  --set postgresql.enabled=true \
+  --set postgresql.existingSecret=my-postgres-secret
 ```
 
 ## Persistence
@@ -175,3 +211,38 @@ See the [Configuration](#configuration) section to configure the PVC or to disab
 ## Ingress
 
 This chart provides support for Ingress resource. If you have an available Ingress Controller such as Nginx or Traefik you maybe want to set `ingress.enabled` to true and add `ingress.hosts` for the URL. Then, you should be able to access the installation using that address.
+
+## Extra Trusted Certificates
+
+To append extra CA Certificates:
+
+1. Create a ConfigMap with CAs in PEM format, e.g.:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca
+  namespace: your-wikijs-namespace
+data:
+  certs.pem: |-
+    -----BEGIN CERTIFICATE-----
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    -----END CERTIFICATE-----
+```
+
+2. Mount your CAs from the ConfigMap to the Wiki.js pod and set `nodeExtraCaCerts` helm variable. Insert the following lines to your Wiki.js `values.yaml`, e.g.:
+
+```yaml
+volumeMounts:
+  - name: ca
+    mountPath: /cas.pem
+    subPath: certs.pem
+
+volumes:
+  - name: ca
+    configMap:
+      name: ca
+
+nodeExtraCaCerts: "/cas.pem"
+```

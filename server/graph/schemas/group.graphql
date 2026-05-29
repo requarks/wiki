@@ -18,7 +18,7 @@ type GroupQuery {
   list(
     filter: String
     orderBy: String
-  ): [GroupMinimal] @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): [GroupMinimal] @auth(requires: ["write:users", "manage:users", "write:groups", "manage:groups", "manage:system"])
 
   single(
     id: Int!
@@ -49,12 +49,12 @@ type GroupMutation {
   assignUser(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse @auth(requires: ["manage:users", "write:groups", "manage:groups", "manage:system"])
 
   unassignUser(
     groupId: Int!
     userId: Int!
-  ): DefaultResponse @auth(requires: ["write:groups", "manage:groups", "manage:system"])
+  ): DefaultResponse @auth(requires: ["manage:users", "write:groups", "manage:groups", "manage:system"])
 }
 
 # -----------------------------------------------

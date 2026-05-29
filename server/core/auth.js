@@ -4,10 +4,11 @@ const _ = require('lodash')
 const jwt = require('jsonwebtoken')
 const ms = require('ms')
 const { DateTime } = require('luxon')
-const Promise = require('bluebird')
-const crypto = Promise.promisifyAll(require('crypto'))
+const crypto = require('crypto')
 const pem2jwk = require('pem-jwk').pem2jwk
+const randomBytesAsync = require('util').promisify(crypto.randomBytes)
 
+const commonHelper = require('../helpers/common')
 const securityHelper = require('../helpers/security')
 
 /* global WIKI */
@@ -82,7 +83,7 @@ module.exports = {
           const strategy = require(`../modules/authentication/${stg.strategyKey}/authentication.js`)
 
           stg.config.callbackURL = `${WIKI.config.host}/login/${stg.key}/callback`
-          stg.config.key = stg.key;
+          stg.config.key = stg.key
           strategy.init(passport, stg.config)
           strategy.config = stg.config
 
@@ -154,8 +155,11 @@ module.exports = {
           if (req.get('content-type') === 'application/json') {
             res.set('new-jwt', newToken.token)
           } else {
-            res.cookie('jwt', newToken.token, { expires: DateTime.utc().plus({ days: 365 }).toJSDate() })
+            res.cookie('jwt', newToken.token, commonHelper.getCookieOpts())
           }
+
+          // Avoid caching this response
+          res.set('Cache-Control', 'no-store')
         } catch (errc) {
           WIKI.logger.warn(errc)
           return next()
@@ -314,6 +318,49 @@ module.exports = {
   },
 
   /**
+   * Check if user (requester) can perform user assignment to a group with elevated permissions
+   *
+   * @param {User} requester The user attempting to perform the assignment
+   * @param {Array<Number>} groupIds List of group IDs to be assigned
+   * @returns {Boolean}
+   */
+  async checkAssignUserToGroupAccess(requester, groupIds = []) {
+    if (!groupIds || groupIds.length < 1) {
+      return true
+    }
+
+    const requesterPermissions = requester.permissions ? requester.permissions : requester.getGlobalPermissions()
+
+    // System Admin
+    if (requesterPermissions.includes('manage:system')) {
+      return true
+    }
+
+    // Ensure basic user management permission
+    if (!requesterPermissions.some(p => ['write:users', 'manage:users', 'write:groups', 'manage:groups'].includes(p))) {
+      return false
+    }
+
+    const groups = await WIKI.models.groups.query().whereIn('id', groupIds)
+    return groups.every(grp => {
+      // Check group for manage:system permission
+      if (grp.permissions.includes('manage:system')) {
+        return false
+      }
+
+      // Check group for administrative permissions
+      if (grp.permissions.some(p => {
+        const permType = _.last(p.split(':'))
+        return ['users', 'groups', 'navigation', 'theme', 'api'].includes(permType)
+      }) && !requesterPermissions.includes('manage:groups')) {
+        return false
+      }
+
+      return true
+    })
+  },
+
+  /**
    * Check and apply Page Rule specificity
    *
    * @access private
@@ -363,7 +410,7 @@ module.exports = {
   async regenerateCertificates () {
     WIKI.logger.info('Regenerating certificates...')
 
-    _.set(WIKI.config, 'sessionSecret', (await crypto.randomBytesAsync(32)).toString('hex'))
+    _.set(WIKI.config, 'sessionSecret', (await randomBytesAsync(32)).toString('hex'))
     const certs = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {

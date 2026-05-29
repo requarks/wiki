@@ -62,8 +62,12 @@ module.exports = {
     }
   },
   UserMutation: {
-    async create (obj, args) {
+    async create (obj, args, context) {
       try {
+        if (!(await WIKI.auth.checkAssignUserToGroupAccess(context.req.user, args.groups))) {
+          throw new Error('You are not authorized to create a user with an assignment to an administrative group.')
+        }
+
         await WIKI.models.users.createNewUser(args)
 
         return {
@@ -94,12 +98,16 @@ module.exports = {
         }
       }
     },
-    async update (obj, args) {
+    async update (obj, args, context) {
       try {
+        if (!(await WIKI.auth.checkAssignUserToGroupAccess(context.req.user, args.groups))) {
+          throw new Error('You are not authorized to modify / assign a user from / to an administrative group.')
+        }
+
         await WIKI.models.users.updateUser(args)
 
         return {
-          responseResult: graphHelper.generateSuccess('User created successfully')
+          responseResult: graphHelper.generateSuccess('User updated successfully')
         }
       } catch (err) {
         return graphHelper.generateError(err)

@@ -44,6 +44,7 @@ defaults:
     title: Wiki.js
     company: ''
     contentLicense: ''
+    footerOverride: ''
     logoUrl: https://static.requarks.io/logo/wikijs-butterfly.svg
     pageExtensions:
       - md
@@ -84,7 +85,7 @@ defaults:
       securityOpenRedirect: true
       securityIframe: true
       securityReferrerPolicy: true
-      securityTrustProxy: true
+      securityTrustProxy: false
       securitySRI: true
       securityHSTS: false
       securityHSTSDuration: 300

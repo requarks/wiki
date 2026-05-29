@@ -91,6 +91,13 @@ module.exports = {
           dbConfig.ssl = sslOptions
         }
 
+        // Prune host and port if socketPath is configured
+        if (WIKI.config.db.socketPath) {
+          const { host, port, ...prunedConfig } = dbConfig
+          dbConfig = prunedConfig
+          dbConfig.socketPath = WIKI.config.db.socketPath.toString()
+        }
+
         // Fix mysql boolean handling...
         dbConfig.typeCast = (field, next) => {
           if (field.type === 'TINY' && field.length === 1) {
@@ -138,7 +145,7 @@ module.exports = {
           switch (WIKI.config.db.type) {
             case 'postgres':
               await conn.query(`set application_name = 'Wiki.js'`)
-              // -> Set schema if it's not public             
+              // -> Set schema if it's not public
               if (WIKI.config.db.schema && WIKI.config.db.schema !== 'public') {
                 await conn.query(`set search_path TO ${WIKI.config.db.schema}, public;`)
               }
@@ -222,7 +229,7 @@ module.exports = {
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
   async subscribeToNotifications () {
-    const useHA = (WIKI.config.ha === true || WIKI.config.ha === 'true' || WIKI.config.ha === 1 || WIKI.config.ha === '1')
+    const useHA = (WIKI.config.ha === true || (typeof WIKI.config.ha === 'string' && WIKI.config.ha.toLowerCase() === 'true') || WIKI.config.ha === 1 || WIKI.config.ha === '1')
     if (!useHA) {
       return
     } else if (WIKI.config.db.type !== 'postgres') {

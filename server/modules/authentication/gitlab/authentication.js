@@ -15,6 +15,8 @@ module.exports = {
         clientSecret: conf.clientSecret,
         callbackURL: conf.callbackURL,
         baseURL: conf.baseUrl,
+        authorizationURL: conf.authorizationURL || (conf.baseUrl + '/oauth/authorize'),
+        tokenURL: conf.tokenURL || (conf.baseUrl + '/oauth/token'),
         scope: ['read_user'],
         passReqToCallback: true
       }, async (req, accessToken, refreshToken, profile, cb) => {

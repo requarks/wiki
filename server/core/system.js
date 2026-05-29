@@ -4,8 +4,8 @@ const Promise = require('bluebird')
 const fs = require('fs-extra')
 const path = require('path')
 const zlib = require('zlib')
-const stream = require('stream')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline } = require('node:stream/promises')
+const { Readable, Transform } = require('node:stream')
 
 /* global WIKI */
 
@@ -121,7 +121,7 @@ module.exports = {
 
             await pipeline(
               WIKI.models.knex.select('filename', 'folderId', 'data').from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
-              new stream.Transform({
+              new Transform({
                 objectMode: true,
                 transform: async (asset, enc, cb) => {
                   const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
@@ -150,7 +150,7 @@ module.exports = {
             const commentsProgressMultiplier = progressMultiplier / Math.ceil(commentsCount / 50)
             WIKI.logger.info(`Found ${commentsCount} comments to export. Streaming to file...`)
 
-            const rs = stream.Readable({ objectMode: true })
+            const rs = Readable({ objectMode: true })
             rs._read = () => {}
 
             const fetchCommentsBatch = async (offset) => {
@@ -177,7 +177,7 @@ module.exports = {
             let marker = 0
             await pipeline(
               rs,
-              new stream.Transform({
+              new Transform({
                 objectMode: true,
                 transform (chunk, encoding, callback) {
                   marker++
@@ -225,7 +225,7 @@ module.exports = {
             const pagesProgressMultiplier = progressMultiplier / Math.ceil(pagesCount / 10)
             WIKI.logger.info(`Found ${pagesCount} pages history to export. Streaming to file...`)
 
-            const rs = stream.Readable({ objectMode: true })
+            const rs = Readable({ objectMode: true })
             rs._read = () => {}
 
             const fetchPagesBatch = async (offset) => {
@@ -255,7 +255,7 @@ module.exports = {
             let marker = 0
             await pipeline(
               rs,
-              new stream.Transform({
+              new Transform({
                 objectMode: true,
                 transform (chunk, encoding, callback) {
                   marker++
@@ -307,7 +307,7 @@ module.exports = {
             const pagesProgressMultiplier = progressMultiplier / Math.ceil(pagesCount / 10)
             WIKI.logger.info(`Found ${pagesCount} pages to export. Streaming to file...`)
 
-            const rs = stream.Readable({ objectMode: true })
+            const rs = Readable({ objectMode: true })
             rs._read = () => {}
 
             const fetchPagesBatch = async (offset) => {
@@ -337,7 +337,7 @@ module.exports = {
             let marker = 0
             await pipeline(
               rs,
-              new stream.Transform({
+              new Transform({
                 objectMode: true,
                 transform (chunk, encoding, callback) {
                   marker++
@@ -400,7 +400,7 @@ module.exports = {
             const usersProgressMultiplier = progressMultiplier / Math.ceil(usersCount / 50)
             WIKI.logger.info(`Found ${usersCount} users to export. Streaming to file...`)
 
-            const rs = stream.Readable({ objectMode: true })
+            const rs = Readable({ objectMode: true })
             rs._read = () => {}
 
             const fetchUsersBatch = async (offset) => {
@@ -427,7 +427,7 @@ module.exports = {
             let marker = 0
             await pipeline(
               rs,
-              new stream.Transform({
+              new Transform({
                 objectMode: true,
                 transform (chunk, encoding, callback) {
                   marker++

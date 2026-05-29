@@ -200,7 +200,7 @@ import 'codemirror/addon/fold/foldgutter.css'
 import MarkdownIt from 'markdown-it'
 import mdAttrs from 'markdown-it-attrs'
 import mdDecorate from 'markdown-it-decorate'
-import mdEmoji from 'markdown-it-emoji'
+import { full as mdEmoji } from 'markdown-it-emoji'
 import mdTaskLists from 'markdown-it-task-lists'
 import mdExpandTabs from 'markdown-it-expand-tabs'
 import mdAbbr from 'markdown-it-abbr'
@@ -454,7 +454,8 @@ export default {
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
       this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
-        ADD_TAGS: ['foreignObject']
+        ADD_TAGS: ['foreignObject'],
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
       this.$nextTick(() => {
         tabsetHelper.format()

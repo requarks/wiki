@@ -87,6 +87,12 @@ props:
     default: './data/repo'
     hint: 'Path where the local git repository will be created.'
     order: 30
+  alwaysNamespace:
+    type: Boolean
+    title: Always Locale Namespace
+    default: false
+    hint: 'Whether to put content from the primary language into a subfolder.'
+    order: 40
   gitBinaryPath:
     type: String
     title: Git Binary Path

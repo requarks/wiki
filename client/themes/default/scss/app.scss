@@ -282,7 +282,7 @@
         content: "\F02FC";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('blue', '50');
         color: mc('blue', '800');
       }
@@ -302,7 +302,7 @@
         content: "\F0026";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('orange', '50');
         color: mc('orange', '800');
       }
@@ -323,7 +323,7 @@
         content: "\F0159";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('red', '50');
         color: mc('red', '800');
       }
@@ -343,7 +343,7 @@
         content: "\F0E1E";
       }
 
-      code {
+      code:not([class^="language-"]) {
         background-color: mc('green', '50');
         color: mc('green', '800');
       }
@@ -685,6 +685,10 @@
         display:inline-block;
         vertical-align:top;
         padding-top:0;
+
+        &:first-child {
+          width: 100%;
+        }
       }
     }
   }
@@ -760,8 +764,17 @@
   .diagram {
     margin-top: 1rem;
     overflow: auto;
-    svg:first-child {
-      direction: ltr;
+
+    svg {
+      color-scheme: light !important;
+
+      &:first-child {
+        direction: ltr;
+      }
+
+      @at-root .theme--dark & {
+        color-scheme: dark !important;
+      }
     }
   }
 
@@ -1271,6 +1284,8 @@
         color: #000;
         box-shadow: none;
         text-shadow: none;
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
       }
     }
   }

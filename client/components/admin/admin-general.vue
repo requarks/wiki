@@ -82,6 +82,15 @@
                       :return-object='false'
                       :hint='$t(`admin:general.contentLicenseHint`)'
                       persistent-hint
+                    )
+                    v-text-field.mt-3(
+                      outlined
+                      :label='$t(`admin:general.footerOverride`)'
+                      v-model='config.footerOverride'
+                      prepend-icon='mdi-page-layout-footer'
+                      append-icon='mdi-language-markdown'
+                      persistent-hint
+                      :hint='$t(`admin:general.footerOverrideHint`)'
                       )
                   v-divider
                   .overline.grey--text.pa-4 SEO
@@ -280,6 +289,7 @@ export default {
         analyticsId: '',
         company: '',
         contentLicense: '',
+        footerOverride: '',
         logoUrl: '',
         featureAnalytics: false,
         featurePageRatings: false,
@@ -308,6 +318,7 @@ export default {
     logoUrl: sync('site/logoUrl'),
     company: sync('site/company'),
     contentLicense: sync('site/contentLicense'),
+    footerOverride: sync('site/footerOverride'),
     activeModal: sync('editor/activeModal'),
     contentLicenses () {
       return [
@@ -346,6 +357,7 @@ export default {
               $analyticsId: String
               $company: String
               $contentLicense: String
+              $footerOverride: String
               $logoUrl: String
               $pageExtensions: String
               $featurePageRatings: Boolean
@@ -369,6 +381,7 @@ export default {
                   analyticsId: $analyticsId
                   company: $company
                   contentLicense: $contentLicense
+                  footerOverride: $footerOverride
                   logoUrl: $logoUrl
                   pageExtensions: $pageExtensions
                   featurePageRatings: $featurePageRatings
@@ -401,6 +414,7 @@ export default {
             analyticsId: _.get(this.config, 'analyticsId', ''),
             company: _.get(this.config, 'company', ''),
             contentLicense: _.get(this.config, 'contentLicense', ''),
+            footerOverride: _.get(this.config, 'footerOverride', ''),
             logoUrl: _.get(this.config, 'logoUrl', ''),
             pageExtensions: _.get(this.config, 'pageExtensions', ''),
             featurePageRatings: _.get(this.config, 'featurePageRatings', false),
@@ -426,6 +440,7 @@ export default {
         this.siteTitle = this.config.title
         this.company = this.config.company
         this.contentLicense = this.config.contentLicense
+        this.footerOverride = this.config.footerOverride
         this.logoUrl = this.config.logoUrl
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -461,6 +476,7 @@ export default {
               analyticsId
               company
               contentLicense
+              footerOverride
               logoUrl
               pageExtensions
               featurePageRatings

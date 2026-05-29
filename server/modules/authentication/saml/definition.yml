@@ -162,3 +162,15 @@ props:
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/picture'
     hint: The field storing the user avatar picture. Can be a variable name or a URI-formatted string.
     order: 43
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Map groups matching names from the provider user groups. User Groups Field Mapping must also be defined for this to work. Note this will remove any groups the user has that doesn't match any group from the provider.
+    default: false
+    order: 44
+  mappingGroups:
+    title: User Groups Field Mapping
+    type: String
+    default: 'memberOf'
+    hint: The field storing the user groups attribute (when Map Groups is enabled). Can be a variable name or a URI-formatted string.
+    order: 45
