@@ -10,9 +10,9 @@
           v-spacer
           v-btn.animated.fadeInDown.wait-p1s(icon, color='grey', outlined, @click='refresh')
             v-icon.grey--text mdi-refresh
-          v-btn.animated.fadeInDown.mx-3(color='primary', outlined, @click='recyclebin', disabled)
-            v-icon(left) mdi-delete-outline
-            span Recycle Bin
+          //- v-btn.animated.fadeInDown.mx-3(color='primary', outlined, @click='recyclebin', disabled)
+          //-   v-icon(left) mdi-delete-outline
+          //-   span Recycle Bin
           v-btn.animated.fadeInDown(color='primary', depressed, large, to='pages/visualize')
             v-icon(left) mdi-graph
             span Visualize

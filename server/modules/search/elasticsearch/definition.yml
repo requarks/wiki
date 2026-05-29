@@ -12,9 +12,10 @@ props:
     hint: Should match the version of the Elasticsearch nodes you are connecting to
     order: 1
     enum:
+      - '8.x'
       - '7.x'
       - '6.x'
-    default: '6.x'
+    default: '7.x'
   hosts:
     type: String
     title: Host(s)

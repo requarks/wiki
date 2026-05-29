@@ -92,6 +92,7 @@ module.exports = class Authentication extends Model {
       }
 
       for (const strategy of dbStrategies) {
+        let newProps = false
         const strategyDef = _.find(WIKI.data.authentication, ['key', strategy.strategyKey])
         if (!strategyDef) {
           await WIKI.models.authentication.query().delete().where('key', strategy.key)
@@ -101,6 +102,8 @@ module.exports = class Authentication extends Model {
         strategy.config = _.transform(strategyDef.props, (result, value, key) => {
           if (!_.has(result, key)) {
             _.set(result, key, value.default)
+            // we have some new properties added to an existing auth strategy to write to the database
+            newProps = true
           }
           return result
         }, strategy.config)
@@ -109,6 +112,12 @@ module.exports = class Authentication extends Model {
         if (!strategy.displayName) {
           await WIKI.models.authentication.query().patch({
             displayName: strategyDef.title
+          }).where('key', strategy.key)
+        }
+        // write existing auth model to database with new properties and defaults
+        if (newProps) {
+          await WIKI.models.authentication.query().patch({
+            config: strategy.config
           }).where('key', strategy.key)
         }
       }

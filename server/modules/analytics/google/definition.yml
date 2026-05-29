@@ -9,5 +9,5 @@ props:
   propertyTrackingId:
     type: String
     title: Property Tracking ID
-    hint: UA-XXXXXXX-X
+    hint: G-XXXXXXXXXX
     order: 1

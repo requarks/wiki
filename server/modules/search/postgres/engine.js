@@ -1,7 +1,6 @@
 const tsquery = require('pg-tsquery')()
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 
 /* global WIKI */
 
@@ -22,6 +21,9 @@ module.exports = {
    */
   async init() {
     WIKI.logger.info(`(SEARCH/POSTGRES) Initializing...`)
+
+    // -> Ensure pg_trgm extension is available (required for similarity search)
+    await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
 
     // -> Create Search Index
     const indexExists = await WIKI.models.knex.schema.hasTable('pagesVector')
@@ -45,7 +47,6 @@ module.exports = {
         CREATE TABLE "pagesWords" AS SELECT word FROM ts_stat(
           'SELECT to_tsvector(''simple'', "title") || to_tsvector(''simple'', "description") || to_tsvector(''simple'', "content") FROM "pagesVector"'
         )`)
-      await WIKI.models.knex.raw('CREATE EXTENSION IF NOT EXISTS pg_trgm')
       await WIKI.models.knex.raw(`CREATE INDEX "pageWords_idx" ON "pagesWords" USING GIN (word gin_trgm_ops)`)
     }
 
@@ -81,8 +82,12 @@ module.exports = {
         ${qryEnd}
       `, qryParams)
       if (results.rows.length < 5) {
-        const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
-        suggestions = suggestResults.rows.map(r => r.word)
+        try {
+          const suggestResults = await WIKI.models.knex.raw(`SELECT word, word <-> ? AS rank FROM "pagesWords" WHERE similarity(word, ?) > 0.2 ORDER BY rank LIMIT 5;`, [q, q])
+          suggestions = suggestResults.rows.map(r => r.word)
+        } catch (err) {
+          WIKI.logger.warn(`Search Engine Suggestion Error (pg_trgm extension may be missing): ${err.message}`)
+        }
       }
       return {
         results: results.rows,
@@ -160,7 +165,7 @@ module.exports = {
         isPublished: true,
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
           const content = WIKI.models.pages.cleanHTML(page.render)

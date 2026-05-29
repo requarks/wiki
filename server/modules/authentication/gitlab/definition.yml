@@ -24,3 +24,13 @@ props:
     hint: For self-managed GitLab instances, define the base URL (e.g. https://gitlab.example.com). Leave default for GitLab.com SaaS (https://gitlab.com).
     default: https://gitlab.com
     order: 3
+  authorizationURL:
+    type: String
+    title: Authorization URL
+    hint: For self-managed GitLab instances, define an alternate authorization URL (e.g. http://example.com/oauth/authorize). Leave empty otherwise.
+    order: 4
+  tokenURL:
+    type: String
+    title: Token URL
+    hint: For self-managed GitLab instances, define an alternate token URL (e.g. http://example.com/oauth/token). Leave empty otherwise.
+    order: 5

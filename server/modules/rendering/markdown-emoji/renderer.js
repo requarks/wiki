@@ -1,4 +1,4 @@
-const mdEmoji = require('markdown-it-emoji')
+const { full: mdEmoji } = require('markdown-it-emoji')
 const twemoji = require('twemoji')
 
 // ------------------------------------

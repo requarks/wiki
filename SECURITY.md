@@ -13,15 +13,10 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 
 ## Reporting a Vulnerability
 
-**DO NOT CREATE AN ISSUE ON GITHUB** to report a potential vulnerability / security problem. Instead, choose one of these options:
+> [!CAUTION]
+> **DO NOT CREATE A GITHUB ISSUE / DISCUSSION** to report a potential vulnerability / security problem. Instead, use the process below:
 
-### A) Disclose on Huntr.dev
-
-Disclose the vulnerability on [Huntr.dev](https://huntr.dev/bounties/disclose) for the repository `https://github.com/Requarks/wiki`.
-
-### B) Send an email
-
-Send an email to security@requarks.io.
+Submit a Vulnerability Report by filling in the form on https://github.com/requarks/wiki/security/advisories/new
 
 Include as much details as possible, such as:
 - The version(s) of Wiki.js that are impacted
@@ -31,3 +26,6 @@ Include as much details as possible, such as:
 - Your GitHub username if you'd like to be included as a collaborator on the private fix branch
 
 The vulnerability will be investigated ASAP. If deemed valid, a draft security advisory will be created on GitHub and you will be included as a collaborator. A fix will be worked on in a private branch to resolves the issue. Once a fix is available, the advisory will be published.
+
+> [!NOTE]
+> There's no reward for submitting a report. As this is open source project and not corporate owned, we are not able to provide monetary rewards. You will however be credited as the bug reporter in the release notes.

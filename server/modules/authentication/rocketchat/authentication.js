@@ -12,7 +12,26 @@ module.exports = {
   init (passport, conf) {
     const siteURL = conf.siteURL.slice(-1) === '/' ? conf.siteURL.slice(0, -1) : conf.siteURL
 
-    OAuth2Strategy.prototype.userProfile = function (accessToken, cb) {
+    const strategyInstance = new OAuth2Strategy({
+      authorizationURL: `${siteURL}/oauth/authorize`,
+      tokenURL: `${siteURL}/oauth/token`,
+      clientID: conf.clientId,
+      clientSecret: conf.clientSecret,
+      callbackURL: conf.callbackURL,
+      passReqToCallback: true
+    }, async (req, accessToken, refreshToken, profile, cb) => {
+      try {
+        const user = await WIKI.models.users.processProfile({
+          providerKey: req.params.strategy,
+          profile
+        })
+        cb(null, user)
+      } catch (err) {
+        cb(err, null)
+      }
+    })
+
+    strategyInstance.userProfile = function (accessToken, cb) {
       this._oauth2.get(`${siteURL}/api/v1/me`, accessToken, (err, body, res) => {
         if (err) {
           WIKI.logger.warn('Rocket.chat - Failed to fetch user profile.')
@@ -33,26 +52,7 @@ module.exports = {
       })
     }
 
-    passport.use(conf.key,
-      new OAuth2Strategy({
-        authorizationURL: `${siteURL}/oauth/authorize`,
-        tokenURL: `${siteURL}/oauth/token`,
-        clientID: conf.clientId,
-        clientSecret: conf.clientSecret,
-        callbackURL: conf.callbackURL,
-        passReqToCallback: true
-      }, async (req, accessToken, refreshToken, profile, cb) => {
-        try {
-          const user = await WIKI.models.users.processProfile({
-            providerKey: req.params.strategy,
-            profile
-          })
-          cb(null, user)
-        } catch (err) {
-          cb(err, null)
-        }
-      })
-    )
+    passport.use(conf.key, strategyInstance)
   },
   logout (conf) {
     if (!conf.logoutURL) {
