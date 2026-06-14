@@ -158,7 +158,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch blocks state.'
+      message: t('admin.blocks.fetchFailed')
     })
   }
   $q.loading.hide()
@@ -197,12 +197,12 @@ async function save () {
         message: t('admin.blocks.saveSuccess')
       })
     } else {
-      throw new Error(respRaw?.data?.setBlocksState?.operation?.message || 'An unexpected error occured.')
+      throw new Error(respRaw?.data?.setBlocksState?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save site blocks state',
+      message: t('admin.blocks.saveFailed'),
       caption: err.message
     })
   }

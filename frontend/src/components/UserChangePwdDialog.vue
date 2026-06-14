@@ -34,7 +34,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                   @click='randomizePassword'
                   )
                   q-icon(name='las la-dice-d6')
-                  .q-pl-xs.text-caption: strong Generate
+                  .q-pl-xs.text-caption: strong {{ t('common.actions.generate') }}
       q-item(tag='label', v-ripple)
         blueprint-icon(icon='password-reset')
         q-item-section
@@ -206,7 +206,7 @@ async function save () {
         mustChangePassword: state.userMustChangePassword
       })
     } else {
-      throw new Error(resp?.data?.changeUserPassword?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.changeUserPassword?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

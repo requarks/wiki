@@ -10,11 +10,11 @@ q-menu(
     q-item(clickable, ref='copyUrlButton')
       q-item-section.items-center(avatar)
         q-icon(color='grey', name='las la-clipboard', size='sm')
-      q-item-section.q-pr-md Copy URL
+      q-item-section.q-pr-md {{ t('common.actions.copyURL') }}
     q-item(clickable, tag='a', :href='`mailto:?subject=` + encodeURIComponent(props.title) + `&body=` + encodeURIComponent(urlFormatted) + `%0D%0A%0D%0A` + encodeURIComponent(props.description)', target='_blank')
       q-item-section.items-center(avatar)
         q-icon(color='grey', name='las la-envelope', size='sm')
-      q-item-section.q-pr-md Email
+      q-item-section.q-pr-md {{ t('common.actions.email') }}
 </template>
 
 <script setup>
@@ -32,7 +32,7 @@ const props = defineProps({
   },
   title: {
     type: String,
-    default: 'Untitled Page'
+    default: ''
   },
   description: {
     type: String,
@@ -89,14 +89,14 @@ function menuShown (ev) {
 
   clip.on('success', () => {
     $q.notify({
-      message: 'URL copied successfully',
+      message: t('common.clipboard.success'),
       icon: 'las la-clipboard'
     })
   })
   clip.on('error', () => {
     $q.notify({
       type: 'negative',
-      message: 'Failed to copy to clipboard'
+      message: t('common.clipboard.failure')
     })
   })
 }

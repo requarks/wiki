@@ -88,7 +88,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(t(`admin.sites.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(t(`admin.sites.${resp?.error}`, resp?.message || t('common.error.unexpected')))
     }
   } catch (err) {
     $q.notify({

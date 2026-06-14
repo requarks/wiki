@@ -210,7 +210,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load groups.',
+      message: t('admin.groups.loadFailed'),
       caption: err.message
     })
   }

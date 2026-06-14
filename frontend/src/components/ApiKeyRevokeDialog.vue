@@ -91,7 +91,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.revokeApiKey?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.revokeApiKey?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

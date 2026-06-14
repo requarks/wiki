@@ -250,9 +250,9 @@ const orderByOptions = computed(() => {
 const editors = computed(() => {
   return [
     { label: t('search.editorAny'), value: '' },
-    { label: 'AsciiDoc', value: 'asciidoc' },
-    { label: 'Markdown', value: 'markdown' },
-    { label: 'Visual Editor', value: 'wysiwyg' }
+    { label: t('admin.editors.asciidocName'), value: 'asciidoc' },
+    { label: t('admin.editors.markdownName'), value: 'markdown' },
+    { label: t('admin.editors.wysiwygName'), value: 'wysiwyg' }
   ]
 })
 
@@ -402,7 +402,7 @@ async function performSearch () {
       fetchPolicy: 'network-only'
     })
     if (!resp?.data?.searchPages) {
-      throw new Error('Unexpected error')
+      throw new Error(t('common.error.unexpected'))
     }
     state.results = cloneDeep(resp.data.searchPages.results).map(r => { r.tags.sort(); return r })
     state.total = resp.data.searchPages.totalHits
@@ -410,7 +410,7 @@ async function performSearch () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to perform search query.',
+      message: t('search.failedQuery'),
       caption: err.message
     })
   }

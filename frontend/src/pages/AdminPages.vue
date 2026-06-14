@@ -3,19 +3,19 @@
     v-layout(row wrap)
       v-flex(xs12)
         .admin-header
-          img.animated.fadeInUp(src='/_assets/svg/icon-file.svg', alt='Page', style='width: 80px;')
+          img.animated.fadeInUp(src='/_assets/svg/icon-file.svg', :alt='$t(`admin.pages.title`)', style='width: 80px;')
           .admin-header-title
-            .headline.blue--text.text--darken-2.animated.fadeInLeft Pages
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Manage pages
+            .headline.blue--text.text--darken-2.animated.fadeInLeft {{ $t('admin.pages.title') }}
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s {{ $t('admin.pages.subtitle') }}
           v-spacer
           v-btn.animated.fadeInDown.wait-p1s(icon, color='grey', outlined, @click='refresh')
             v-icon.grey--text mdi-refresh
           v-btn.animated.fadeInDown.mx-3(color='primary', outlined, @click='recyclebin', disabled)
             v-icon(left) mdi-delete-outline
-            span Recycle Bin
+            span {{ $t('admin.pages.recycleBin') }}
           v-btn.animated.fadeInDown(color='primary', depressed, large, to='pages/visualize')
             v-icon(left) mdi-graph
-            span Visualize
+            span {{ $t('admin.pages.visualize') }}
         v-card.mt-3.animated.fadeInUp
           .pa-2.d-flex.align-center(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
             v-text-field(
@@ -23,7 +23,7 @@
               flat
               v-model='search'
               prepend-inner-icon='mdi-file-search-outline'
-              label='Search Pages...'
+              :label='$t(`admin.pages.searchPlaceholder`)'
               hide-details
               dense
               style='max-width: 400px;'
@@ -34,7 +34,7 @@
               flat
               hide-details
               dense
-              label='Locale'
+              :label='$t(`admin.pages.locale`)'
               :items='langs'
               v-model='selectedLang'
               style='max-width: 250px;'
@@ -44,7 +44,7 @@
               flat
               hide-details
               dense
-              label='Publish State'
+              :label='$t(`admin.pages.publishState`)'
               :items='states'
               v-model='selectedState'
               style='max-width: 250px;'
@@ -74,7 +74,7 @@
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
-              v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
+              v-alert.ma-3(icon='mdi-alert', :value='true', outlined) {{ $t('admin.pages.none') }}
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
             v-pagination(v-model='pagination', :length='pageTotal')
 </template>
@@ -89,25 +89,22 @@ export default {
       selectedPage: {},
       pagination: 1,
       pages: [],
-      headers: [
-        { text: 'ID', value: 'id', width: 80, sortable: true },
-        { text: 'Title', value: 'title' },
-        { text: 'Path', value: 'path' },
-        { text: 'Created', value: 'createdAt', width: 250 },
-        { text: 'Last Updated', value: 'updatedAt', width: 250 }
-      ],
       search: '',
       selectedLang: null,
       selectedState: null,
-      states: [
-        { text: 'All Publishing States', value: null },
-        { text: 'Published', value: true },
-        { text: 'Not Published', value: false }
-      ],
       loading: false
     }
   },
   computed: {
+    headers () {
+      return [
+        { text: this.$t('common.field.id'), value: 'id', width: 80, sortable: true },
+        { text: this.$t('common.field.title'), value: 'title' },
+        { text: this.$t('common.field.path'), value: 'path' },
+        { text: this.$t('common.field.created'), value: 'createdAt', width: 250 },
+        { text: this.$t('common.field.lastUpdated'), value: 'updatedAt', width: 250 }
+      ]
+    },
     pageTotal () {
       return Math.ceil(this.filteredPages.length / 15)
     },
@@ -122,9 +119,16 @@ export default {
         return true
       })
     },
+    states () {
+      return [
+        { text: this.$t('admin.pages.publishStateAll'), value: null },
+        { text: this.$t('admin.pages.publishStatePublished'), value: true },
+        { text: this.$t('admin.pages.publishStateUnpublished'), value: false }
+      ]
+    },
     langs () {
       return _.concat({
-        text: 'All Locales',
+        text: this.$t('admin.pages.localeAll'),
         value: null
       }, _.uniqBy(this.pages, 'locale').map(pg => ({
         text: pg.locale,
@@ -136,7 +140,7 @@ export default {
     async refresh() {
       await this.$apollo.queries.pages.refetch()
       this.$store.commit('showNotification', {
-        message: 'Page list has been refreshed.',
+        message: this.$t('admin.pages.refreshSuccess'),
         style: 'success',
         icon: 'cached'
       })

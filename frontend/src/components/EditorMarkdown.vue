@@ -26,7 +26,7 @@
               q-item-section(side)
                 q-icon(name='las la-folder-open', color='positive')
               q-item-section
-                q-item-label From File Manager...
+                q-item-label {{ t('editor.markup.fromFileManager') }}
             q-item(
               clickable
               @click='getAssetFromClipboard'
@@ -35,7 +35,7 @@
               q-item-section(side)
                 q-icon(name='las la-clipboard', color='brown')
               q-item-section
-                q-item-label From Clipboard...
+                q-item-label {{ t('editor.markup.fromClipboard') }}
             q-item(
               clickable
               @click='notImplemented'
@@ -44,7 +44,7 @@
               q-item-section(side)
                 q-icon(name='las la-cloud-download-alt', color='blue')
               q-item-section
-                q-item-label From Remote URL...
+                q-item-label {{ t('editor.markup.fromRemoteURL') }}
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertAssets') }}
       q-btn(
         icon='mdi-code-json'
@@ -103,7 +103,7 @@
         )
         q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertHorizontalBar') }}
       q-space
-      span.editor-markdown-type Markdown
+      span.editor-markdown-type {{ t('editor.markup.markdown') }}
     .editor-markdown-mid
       //--------------------------------------------------------
       //- TOP TOOLBAR
@@ -506,7 +506,7 @@ async function getAssetFromClipboard () {
       name: 'clipboard-read'
     })
     if (permission.state === 'denied') {
-      throw new Error('Not allowed to read clipboard.')
+      throw new Error(t('editor.markup.clipboardReadDenied'))
     }
     const clipboardContents = await navigator.clipboard.read()
     let hasValidItem = false
@@ -522,12 +522,12 @@ async function getAssetFromClipboard () {
       }
     }
     if (!hasValidItem) {
-      throw new Error('No supported content found in the Clipboard.')
+      throw new Error(t('editor.markup.clipboardUnsupported'))
     }
   } catch (err) {
     return $q.notify({
       type: 'negative',
-      message: 'Unable to copy from Clipboard',
+      message: t('editor.markup.clipboardError'),
       caption: err.message
     })
   }
@@ -592,7 +592,7 @@ onMounted(async () => {
     contextMenuOrder: 0,
     id: 'markdown.extension.editing.toggleBold',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB],
-    label: 'Toggle bold',
+    label: t('editor.markup.toggleBold'),
     precondition: '',
     run (ed) {
       toggleMarkup({ start: '**' })
@@ -604,7 +604,7 @@ onMounted(async () => {
     contextMenuOrder: 0,
     id: 'markdown.extension.editing.toggleItalic',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
-    label: 'Toggle italic',
+    label: t('editor.markup.toggleItalic'),
     precondition: '',
     run (ed) {
       toggleMarkup({ start: '*' })
@@ -614,7 +614,7 @@ onMounted(async () => {
   editor.addAction({
     id: 'markdown.extension.editing.increaseHeaderLevel',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.RightArrow],
-    label: 'Increase Header Level',
+    label: t('editor.markup.increaseHeaderLevel'),
     precondition: '',
     run (ed) {
       let lvl = getHeaderLevel()
@@ -625,7 +625,7 @@ onMounted(async () => {
   editor.addAction({
     id: 'markdown.extension.editing.decreaseHeaderLevel',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.LeftArrow],
-    label: 'Decrease Header Level',
+    label: t('editor.markup.decreaseHeaderLevel'),
     precondition: '',
     run (ed) {
       let lvl = getHeaderLevel()
@@ -637,7 +637,7 @@ onMounted(async () => {
   editor.addAction({
     id: 'save',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-    label: 'Save',
+    label: t('common.actions.save'),
     precondition: '',
     run (ed) {
     }
@@ -754,7 +754,7 @@ onBeforeUnmount(() => {
 function notImplemented () {
   $q.notify({
     type: 'negative',
-    message: 'Not implemented'
+    message: t('common.error.notImplemented')
   })
 }
 </script>

@@ -206,7 +206,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch editors state.'
+      message: t('admin.editors.fetchFailed')
     })
   }
   $q.loading.hide()
@@ -260,12 +260,12 @@ async function save () {
         message: t('admin.editors.saveSuccess')
       })
     } else {
-      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+      throw new Error(respRaw?.data?.updateSite?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save site editors config',
+      message: t('admin.editors.saveFailed'),
       caption: err.message
     })
   }
@@ -288,7 +288,7 @@ function openConfig (editorId) {
     default: {
       $q.notify({
         type: 'negative',
-        message: 'Invalid Editor Config Call'
+        message: t('admin.editors.invalidConfigCall')
       })
     }
   }

@@ -141,7 +141,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch Markdown editor settings.'
+      message: t('editor.markup.fetchUserSettingsFailed')
     })
   }
   $q.loading.hide()
@@ -179,12 +179,12 @@ async function save () {
       })
       close()
     } else {
-      throw new Error(respRaw?.data?.saveUserEditorSettings?.operation?.message || 'An unexpected error occured.')
+      throw new Error(respRaw?.data?.saveUserEditorSettings?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save Markdown editor settings.',
+      message: t('editor.markup.saveUserSettingsFailed'),
       caption: err.message
     })
   }

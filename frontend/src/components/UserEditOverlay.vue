@@ -449,7 +449,7 @@ q-layout(view='hHh lpR fFf', container)
                   span {{t('admin.users.invalidJSON')}}
                 q-badge.q-py-xs(
                   v-else
-                  label='JSON'
+                  :label='t(`common.field.json`)'
                   color='positive'
                 )
               q-item
@@ -676,7 +676,7 @@ async function fetchUser () {
     if (resp?.data?.userById) {
       state.user = cloneDeep(resp.data.userById)
     } else {
-      throw new Error('An unexpected error occured while fetching user details.')
+      throw new Error(t('admin.users.fetchDetailsFailed'))
     }
   } catch (err) {
     $q.notify({
@@ -786,7 +786,7 @@ async function save (patch, { silent, keepOpen } = { silent: false, keepOpen: fa
         close()
       }
     } else {
-      throw new Error(resp?.data?.updateUser?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.updateUser?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

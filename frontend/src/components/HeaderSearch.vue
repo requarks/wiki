@@ -12,7 +12,7 @@ q-toolbar(
     rounded
     ref='searchField'
     style='width: 100%;'
-    label='Search...'
+    :label='t(`headerSearch.placeholder`)'
     @keyup.enter='onSearchEnter'
     @focus='state.searchIsFocused = true'
     @blur='checkSearchFocus'
@@ -37,7 +37,7 @@ q-toolbar(
         )
       q-badge.q-mr-sm(
         v-else-if='siteStore.search && siteStore.search !== siteStore.searchLastQuery'
-        label='Press Enter'
+        :label='t(`headerSearch.pressEnter`)'
         color='grey-7'
         outline
         @click='searchField.focus()'
@@ -55,11 +55,11 @@ q-toolbar(
     )
     template(v-if='siteStore.tagsLoaded && siteStore.tags.length > 0')
       .searchpanel-header
-        span Popular Tags
+        span {{ t('headerSearch.popularTags') }}
         q-space
         q-btn.acrylic-btn(
           flat
-          label='View All'
+          :label='t(`common.actions.viewAll`)'
           rounded
           size='xs'
         )
@@ -75,11 +75,11 @@ q-toolbar(
           clickable
           @click='addTag(tag)'
           ) {{ tag }}
-    .searchpanel-header Search Operators
-    .searchpanel-tip #[code !foo] or #[code -bar] to exclude "foo" and "bar".
-    .searchpanel-tip #[code bana*] for to match any term starting with "bana" (e.g. banana).
-    .searchpanel-tip #[code foo,bar] or #[code foo|bar] to search for "foo" OR "bar".
-    .searchpanel-tip #[code "foo bar"] to match exactly the phrase "foo bar".
+    .searchpanel-header {{ t('headerSearch.operators') }}
+    .searchpanel-tip {{ t('headerSearch.operatorExclude') }}
+    .searchpanel-tip {{ t('headerSearch.operatorStartsWith') }}
+    .searchpanel-tip {{ t('headerSearch.operatorOr') }}
+    .searchpanel-tip {{ t('headerSearch.operatorExact') }}
 </template>
 
 <script setup>

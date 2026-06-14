@@ -41,11 +41,11 @@ q-card.page-data-dialog(style='width: 750px;')
     )
     q-tab(
       name='visual'
-      label='Visual'
+      :label='t(`editor.pageData.visual`)'
       )
     q-tab(
       name='code'
-      label='YAML'
+      :label='t(`editor.pageData.yaml`)'
       )
   q-scroll-area(
     :thumb-style='siteStore.thumbStyle'
@@ -55,14 +55,14 @@ q-card.page-data-dialog(style='width: 750px;')
     q-card-section(v-if='state.mode === `visual`')
       .q-gutter-sm
         q-input(
-          label='Attribute Text'
+          :label='t(`editor.pageData.attributeText`)'
           dense
           outlined
           )
           template(v-slot:before)
             q-icon(name='las la-font', color='primary')
         q-input(
-          label='Attribute Number'
+          :label='t(`editor.pageData.attributeNumber`)'
           dense
           outlined
           type='number'
@@ -71,7 +71,7 @@ q-card.page-data-dialog(style='width: 750px;')
             q-icon(name='las la-infinity', color='primary')
         .q-py-xs
           q-checkbox(
-            label='Attribute Boolean'
+            :label='t(`editor.pageData.attributeBoolean`)'
             color='primary'
             dense
             size='lg'
@@ -92,7 +92,7 @@ q-card.page-data-dialog(style='width: 750px;')
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import PageDataTemplateDialog from './PageDataTemplateDialog.vue'
 
@@ -121,19 +121,19 @@ const state = reactive({
   mode: 'visual'
 })
 
-const templates = [
+const templates = computed(() => ([
   {
     id: '',
-    label: 'None',
+    label: t('common.field.none'),
     data: []
   },
   ...siteStore.pageDataTemplates,
   {
     id: 'basic',
-    label: 'Basic',
+    label: t('common.field.basic'),
     data: []
   }
-]
+]))
 
 // METHODS
 

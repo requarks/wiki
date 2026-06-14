@@ -192,7 +192,7 @@ async function disconnectWS () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to disconnect WS connections.',
+      message: t('admin.utilities.disconnectWSFailed'),
       caption: err.message
     })
   }

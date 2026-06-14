@@ -396,14 +396,14 @@ async function load () {
       fetchPolicy: 'network-only'
     })
     if (!resp?.data?.mailConfig) {
-      throw new Error('Failed to fetch mail config.')
+      throw new Error(t('admin.mail.fetchConfigFailed'))
     }
     state.config = cloneDeep(resp.data.mailConfig)
     adminStore.info.isMailConfigured = state.config?.host?.length > 2
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch mail config',
+      message: t('admin.mail.fetchConfigFailed'),
       caption: err.message
     })
   }
@@ -519,7 +519,7 @@ async function sendTest () {
       }
     })
     if (!resp?.data?.sendMailTest?.operation?.succeeded) {
-      throw new Error(resp?.data?.sendMailTest?.operation?.message || 'An unexpected error occurred.')
+      throw new Error(resp?.data?.sendMailTest?.operation?.message || t('common.error.unexpected'))
     }
 
     state.testEmail = ''

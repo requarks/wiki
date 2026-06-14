@@ -84,7 +84,7 @@ async function confirm () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.deleteGroup?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.deleteGroup?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

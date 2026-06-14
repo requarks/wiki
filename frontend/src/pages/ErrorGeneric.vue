@@ -10,7 +10,7 @@
         v-if='error.showHomeBtn'
         push
         color='primary'
-        label='Go to home'
+        :label='t(`common.newpage.goback`)'
         icon='las la-home'
         to='/'
       )
@@ -18,7 +18,7 @@
         v-if='error.showLoginBtn'
         push
         color='primary'
-        label='Login As...'
+        :label='t(`common.unauthorized.login`)'
         icon='las la-sign-in-alt'
         to='/login'
       )

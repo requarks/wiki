@@ -204,12 +204,12 @@ async function globalSwitch () {
       })
       await load()
     } else {
-      throw new Error(resp?.data?.setApiState?.operation?.message || 'An unexpected error occurred.')
+      throw new Error(resp?.data?.setApiState?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to switch API state.',
+      message: t('admin.api.switchStateFailed'),
       caption: err.message
     })
   }

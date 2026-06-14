@@ -12,8 +12,8 @@ q-page.column
           q-icon(
             name='las la-angle-right'
           )
-        q-breadcrumbs-el(icon='las la-home', to='/', aria-label='Home')
-          q-tooltip Home
+        q-breadcrumbs-el(icon='las la-home', to='/', :aria-label='t(`common.header.home`)')
+          q-tooltip {{ t('common.header.home') }}
         q-breadcrumbs-el(
           v-for='brd of pageStore.breadcrumbs'
           :key='brd.id'
@@ -24,9 +24,9 @@ q-page.column
           )
     .col-auto.flex.items-center.justify-end
       template(v-if='!pageStore.publishState === `draft`')
-        .text-caption.text-accent: strong Unpublished
+        .text-caption.text-accent: strong {{ t('common.page.unpublished') }}
         q-separator.q-mx-sm(vertical)
-      .text-caption.text-grey-6 Last modified on #[strong {{lastModified}}]
+      .text-caption.text-grey-6 {{ t('common.page.lastModifiedOn') }} #[strong {{lastModified}}]
   page-header
   .page-container.row.no-wrap.items-stretch(style='flex: 1 1 100%;')
     .col(
@@ -92,7 +92,7 @@ q-page.column
         //- TOC
         .q-pa-md.flex.items-center
           q-icon.q-mr-sm(name='las la-stream', color='grey')
-          .text-caption.text-grey-7 Contents
+          .text-caption.text-grey-7 {{ t('common.page.toc') }}
         .q-px-md.q-pb-sm
           q-tree.page-toc(
             :nodes='pageStore.toc'
@@ -111,7 +111,7 @@ q-page.column
           )
           .flex.items-center
             q-icon.q-mr-sm(name='las la-tags', color='grey')
-            .text-caption.text-grey-7 Tags
+            .text-caption.text-grey-7 {{ t('common.page.tags') }}
             q-space
             transition(name='fade')
               q-btn(
@@ -121,7 +121,7 @@ q-page.column
                 icon='las la-pen'
                 color='deep-orange-9'
                 flat
-                label='Edit'
+                :label='t(`common.actions.edit`)'
                 no-caps
                 @click='state.tagEditMode = !state.tagEditMode'
               )
@@ -131,7 +131,7 @@ q-page.column
         //- Rating
         .q-pa-md.flex.items-center
           q-icon.q-mr-sm(name='las la-star-half-alt', color='grey')
-          .text-caption.text-grey-7 Rate this page
+          .text-caption.text-grey-7 {{ t('common.page.rate') }}
         .q-px-md
           q-rating(
             v-if='siteStore.features.ratingsMode === `stars`'
@@ -277,7 +277,7 @@ watch(() => route.path, async (newValue) => {
     if (!route.params.editor) {
       $q.notify({
         type: 'negative',
-        message: 'No editor specified!'
+        message: t('common.page.noEditorSpecified')
       })
       return router.replace('/')
     }
@@ -335,7 +335,7 @@ watch(() => route.path, async (newValue) => {
       } else {
         $q.notify({
           type: 'negative',
-          message: 'This page does not exist (yet)!'
+          message: t('common.newpage.title')
         })
       }
     } else {

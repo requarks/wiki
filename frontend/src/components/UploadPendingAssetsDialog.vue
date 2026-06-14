@@ -96,7 +96,7 @@ onMounted(async () => {
         }
       })
       if (!resp?.data?.uploadAssets?.operation?.succeeded) {
-        throw new Error(resp?.data?.uploadAssets?.operation?.message || 'An unexpected error occured.')
+        throw new Error(resp?.data?.uploadAssets?.operation?.message || t('common.error.unexpected'))
       }
       pageStore.content = pageStore.content.replaceAll(item.blobUrl, `/${item.fileName}`)
       URL.revokeObjectURL(item.blobUrl)

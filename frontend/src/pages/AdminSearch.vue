@@ -143,7 +143,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load search config',
+      message: t('admin.search.loadFailed'),
       caption: err.message
     })
   }
@@ -186,7 +186,7 @@ async function save () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save search config',
+      message: t('admin.search.saveFailed'),
       caption: err.message
     })
   }
@@ -221,7 +221,7 @@ async function rebuild () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to initiate a search index rebuild',
+      message: t('admin.search.rebuildFailed'),
       caption: err.message
     })
   }

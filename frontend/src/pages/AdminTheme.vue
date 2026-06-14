@@ -85,7 +85,7 @@ q-page.admin-theme
                 text-color='white'
                 )
                 q-icon(name='las la-fill', size='xs', left)
-                span Pick...
+                span {{ t('common.actions.pick') }}
                 q-menu
                   q-color(
                     v-model='state.config[`color` + startCase(cl)]'
@@ -705,13 +705,13 @@ async function load () {
       fetchPolicy: 'network-only'
     })
     if (!resp?.data?.siteById?.theme) {
-      throw new Error('Failed to fetch theme config.')
+      throw new Error(t('admin.theme.fetchFailed'))
     }
     state.config = cloneDeep(resp.data.siteById.theme)
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch site theme config'
+      message: t('admin.theme.fetchFailed')
     })
   }
   $q.loading.hide()
@@ -777,12 +777,12 @@ async function save () {
         message: t('admin.theme.saveSuccess')
       })
     } else {
-      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+      throw new Error(respRaw?.data?.updateSite?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save site theme config',
+      message: t('admin.theme.saveFailed'),
       caption: err.message
     })
   }

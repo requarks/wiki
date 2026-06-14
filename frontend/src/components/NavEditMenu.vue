@@ -9,45 +9,45 @@ q-card(style='min-width: 350px')
         q-item-section(side)
           q-radio(v-model='state.mode', val='inherit')
         q-item-section
-          q-item-label Show
-          q-item-label(caption) Show the left sidebar navigaiton menu items.
+          q-item-label {{ t('navEdit.mode.show.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.show.hint') }}
       q-item(tag='label')
         q-item-section(side)
           q-radio(v-model='state.mode', val='hide')
         q-item-section
-          q-item-label Hide
-          q-item-label(caption) Completely hide the left sidebar navigation.
+          q-item-label {{ t('navEdit.mode.hide.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.hide.hint') }}
     template(v-else)
       q-item(tag='label')
         q-item-section(side)
           q-radio(v-model='state.mode', val='inherit')
         q-item-section
-          q-item-label Inherit
-          q-item-label(caption) Use the menu items and settings from the parent path.
+          q-item-label {{ t('navEdit.mode.inherit.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.inherit.hint') }}
       q-item(tag='label')
         q-item-section(side)
           q-radio(v-model='state.mode', val='override')
         q-item-section
-          q-item-label Override Current + Descendants
-          q-item-label(caption) Set menu items and settings for this path and all descendants.
+          q-item-label {{ t('navEdit.mode.override.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.override.hint') }}
       q-item(tag='label')
         q-item-section(side)
           q-radio(v-model='state.mode', val='overrideExact')
         q-item-section
-          q-item-label Override Current Only
-          q-item-label(caption) Set menu items and settings only for this path.
+          q-item-label {{ t('navEdit.mode.overrideExact.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.overrideExact.hint') }}
       q-item(tag='label')
         q-item-section(side)
           q-radio(v-model='state.mode', val='hide')
         q-item-section
-          q-item-label Hide Current + Descendants
-          q-item-label(caption) Completely hide the left sidebar navigation for this path and all descendants.
+          q-item-label {{ t('navEdit.mode.hideDescendants.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.hideDescendants.hint') }}
       q-item(tag='label')
         q-item-section(side)
           q-radio(v-model='state.mode', val='hideExact')
         q-item-section
-          q-item-label Hide Current Only
-          q-item-label(caption) Completely hide the left sidebar navigation only for this path.
+          q-item-label {{ t('navEdit.mode.hideCurrent.label') }}
+          q-item-label(caption) {{ t('navEdit.mode.hideCurrent.hint') }}
 
   template(v-if='canEditMenuItems')
     q-separator(inset)
@@ -190,7 +190,7 @@ async function save () {
 
       props.menuHideHandler()
     } else {
-      throw new Error(resp?.data?.updateNavigation?.operation?.message || 'Unexpected error occured.')
+      throw new Error(resp?.data?.updateNavigation?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

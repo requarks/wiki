@@ -181,7 +181,7 @@ async function load () {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load list of instances.',
+      message: t('admin.instances.loadFailed'),
       caption: err.message
     })
   }

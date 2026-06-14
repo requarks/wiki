@@ -134,7 +134,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                   q-item(clickable)
                     q-item-section(side)
                       q-icon(name='las la-list', color='grey', size='xs')
-                    q-item-section.q-pr-sm Browse using...
+                    q-item-section.q-pr-sm {{ t('fileman.browseUsing') }}
                     q-item-section(side)
                       q-icon(name='las la-angle-right', color='grey', size='xs')
                     q-menu(
@@ -149,7 +149,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                               :color='state.displayMode === `path` ? `positive` : `grey`'
                               size='xs'
                               )
-                          q-item-section.q-pr-sm Browse Using Paths
+                          q-item-section.q-pr-sm {{ t('pageSaveDialog.displayModePath') }}
                         q-item(clickable, @click='state.displayMode = `title`')
                           q-item-section(side)
                             q-icon(
@@ -157,7 +157,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                               :color='state.displayMode === `title` ? `positive` : `grey`'
                               size='xs'
                               )
-                          q-item-section.q-pr-sm Browse Using Titles
+                          q-item-section.q-pr-sm {{ t('pageSaveDialog.displayModeTitle') }}
                   q-item(clickable, @click='state.isCompact = !state.isCompact')
                     q-item-section(side)
                       q-icon(
@@ -165,7 +165,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                         :color='state.isCompact ? `positive` : `grey`'
                         size='xs'
                       )
-                    q-item-section.q-pr-sm Compact List
+                    q-item-section.q-pr-sm {{ t('fileman.compactList') }}
                   q-item(clickable, @click='state.shouldShowFolders = !state.shouldShowFolders')
                     q-item-section(side)
                       q-icon(
@@ -173,7 +173,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                         :color='state.shouldShowFolders ? `positive` : `grey`'
                         size='xs'
                       )
-                    q-item-section.q-pr-sm Show Folders
+                    q-item-section.q-pr-sm {{ t('fileman.showFolders') }}
           q-btn.q-mr-sm(
             flat
             dense
@@ -221,10 +221,10 @@ q-layout.fileman(view='hHh lpR lFr', container)
             )
             .fileman-loadinglist(v-if='state.fileListLoading')
               q-spinner.q-mr-sm(color='primary', size='64px', :thickness='1')
-              span.text-primary Fetching folder contents...
+              span.text-primary {{ t('fileman.fetchingFolderContents') }}
             .fileman-emptylist(v-else-if='files.length < 1')
               img(src='/_assets/icons/carbon-copy-empty-box.svg')
-              span This folder is empty.
+              span {{ t('common.pageSelector.folderEmptyWarning') }}
             q-list.fileman-filelist(
               v-else
               :class='state.isCompact && `is-compact`'
@@ -689,7 +689,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load folder tree.',
+      message: t('fileman.loadTreeFailed'),
       caption: err.message
     })
   }
@@ -900,7 +900,7 @@ async function uploadNewFiles () {
             }
           })
           if (!resp?.data?.uploadAssets?.operation?.succeeded) {
-            throw new Error(resp?.data?.uploadAssets?.operation?.message || 'An unexpected error occured.')
+            throw new Error(resp?.data?.uploadAssets?.operation?.message || t('common.error.unexpected'))
           }
         }
         state.uploadPercentage = 100
@@ -912,7 +912,7 @@ async function uploadNewFiles () {
       } catch (err) {
         $q.notify({
           type: 'negative',
-          message: 'Failed to upload file.',
+          message: t('fileman.uploadFailed'),
           caption: err.message
         })
       }
@@ -995,7 +995,7 @@ async function copyItemURL (item) {
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to copy URL to clipboard.',
+      message: t('fileman.copyURLFailed'),
       caption: err.message
     })
   }

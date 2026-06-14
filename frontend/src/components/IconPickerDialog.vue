@@ -9,12 +9,12 @@ q-card.icon-picker(flat, style='width: 400px')
     q-tab(
       name='icon'
       icon='las la-icons'
-      label='Icon'
+      :label='t(`iconPicker.iconTab`)'
       )
     q-tab(
       name='img'
       icon='las la-image'
-      label='Image'
+      :label='t(`iconPicker.imageTab`)'
       )
   q-separator
   q-tab-panels(
@@ -56,7 +56,7 @@ q-card.icon-picker(flat, style='width: 400px')
       q-input.q-mt-md(
         v-model='state.selIcon'
         outlined
-        label='Icon Name'
+        :label='t(`iconPicker.iconName`)'
         dense
       )
       .row.q-gutter-md.q-mt-none
@@ -72,19 +72,23 @@ q-card.icon-picker(flat, style='width: 400px')
               size='64px'
             )
         .col
-          .text-caption Learn how to #[a(href='https://docs.requarks.io') use icons].
-          .text-caption.q-mt-sm View #[a(:href='iconPackRefWebsite', target='_blank') Icon Pack reference] for all possible options.
+          i18n-t.text-caption(keypath='iconPicker.docsHint' tag='div')
+            template(#docsLink)
+              a(href='https://docs.requarks.io', target='_blank', rel='noopener noreferrer') {{ t('iconPicker.useIconsLink') }}
+          i18n-t.text-caption.q-mt-sm(keypath='iconPicker.referenceHint' tag='div')
+            template(#referenceLink)
+              a(:href='iconPackRefWebsite', target='_blank', rel='noopener noreferrer') {{ t('iconPicker.referenceLink') }}
     q-tab-panel(name='img')
       .row.q-gutter-sm
         q-btn.col(
-          label='Browse...'
+          :label='t(`common.actions.browse`)'
           color='secondary'
           icon='las la-file-image'
           unelevated
           no-caps
         )
         q-btn.col(
-          label='Upload...'
+          :label='t(`common.actions.upload`)'
           color='secondary'
           icon='las la-upload'
           unelevated
@@ -105,14 +109,14 @@ q-card.icon-picker(flat, style='width: 400px')
     q-space
     q-btn(
       icon='las la-times'
-      label='Discard'
+      :label='t(`common.actions.discard`)'
       outline
       color='grey-7'
       v-close-popup
     )
     q-btn(
       icon='las la-check'
-      label='Apply'
+      :label='t(`common.actions.apply`)'
       unelevated
       color='secondary'
       @click='apply'
@@ -121,6 +125,7 @@ q-card.icon-picker(flat, style='width: 400px')
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { find } from 'lodash-es'
 import { computed, onMounted, reactive } from 'vue'
 
@@ -136,6 +141,10 @@ const props = defineProps({
 // EMITS
 
 const emit = defineEmits(['update:modelValue'])
+
+// I18N
+
+const { t } = useI18n()
 
 // DATA
 

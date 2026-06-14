@@ -64,7 +64,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                   @click='randomizePassword'
                   )
                   q-icon(name='las la-dice-d6')
-                  .q-pl-xs.text-caption: strong Generate
+                  .q-pl-xs.text-caption: strong {{ t('common.actions.generate') }}
       q-item
         blueprint-icon(icon='team')
         q-item-section
@@ -378,7 +378,7 @@ async function create () {
         onDialogOK()
       }
     } else {
-      throw new Error(resp?.data?.createUser?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.createUser?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

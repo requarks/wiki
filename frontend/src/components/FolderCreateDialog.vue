@@ -177,7 +177,7 @@ async function create () {
       })
       onDialogOK()
     } else {
-      throw new Error(resp?.data?.createFolder?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.createFolder?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({

@@ -43,9 +43,9 @@ q-header.bg-header.text-white.site-header(
         dense
         icon='las la-plus-circle'
         color='blue-4'
-        aria-label='Create New Page'
+        :aria-label='t(`common.header.newPage`)'
         )
-        q-tooltip Create New Page
+        q-tooltip {{ t('common.header.newPage') }}
         new-menu
       q-btn.q-ml-md(
         v-if='userStore.can(`browse:fileman`)'
@@ -54,10 +54,10 @@ q-header.bg-header.text-white.site-header(
         dense
         icon='las la-folder-open'
         color='positive'
-        aria-label='File Manager'
+        :aria-label='t(`fileman.title`)'
         @click='openFileManager'
         )
-        q-tooltip File Manager
+        q-tooltip {{ t('fileman.title') }}
       q-btn.q-ml-md(
         v-if='userStore.can(`access:admin`)'
         flat

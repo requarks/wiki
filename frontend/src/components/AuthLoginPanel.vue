@@ -510,7 +510,7 @@ function switchTo (screen) {
       break
     }
     default: {
-      throw new Error('Invalid Screen')
+      throw new Error(t('common.error.unexpected'))
     }
   }
 }
@@ -576,7 +576,7 @@ async function handleLoginResponse (resp) {
       $q.loading.hide()
       $q.notify({
         type: 'negative',
-        message: 'Unexpected Authentication Response'
+        message: t('auth.errors.unexpectedResponse')
       })
     }
   }
@@ -705,7 +705,7 @@ async function forgotPassword () {
     // TODO: Implement forgot password
     $q.notify({
       type: 'negative',
-      message: 'Not implemented yet.'
+      message: t('auth.forgotPasswordUnavailable')
     })
   } catch (err) {
     $q.notify({

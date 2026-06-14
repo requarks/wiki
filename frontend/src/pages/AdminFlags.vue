@@ -214,7 +214,7 @@ async function save () {
         message: t('admin.flags.saveSuccess')
       })
     } else {
-      throw new Error(resp?.data?.updateSystemFlags?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.updateSystemFlags?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
@@ -238,14 +238,14 @@ onMounted(async () => {
   clip.on('success', () => {
     $q.notify({
       type: 'positive',
-      message: 'Token copied successfully',
+      message: t('admin.flags.tokenCopySuccess'),
       icon: 'las la-clipboard'
     })
   })
   clip.on('error', () => {
     $q.notify({
       type: 'negative',
-      message: 'Failed to copy token'
+      message: t('admin.flags.tokenCopyFailed')
     })
   })
 })

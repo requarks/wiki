@@ -236,7 +236,7 @@ async function create () {
         onDialogOK()
       })
     } else {
-      throw new Error(resp?.data?.createApiKey?.operation?.message || 'An unexpected error occured.')
+      throw new Error(resp?.data?.createApiKey?.operation?.message || t('common.error.unexpected'))
     }
   } catch (err) {
     $q.notify({
