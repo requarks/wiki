@@ -620,7 +620,7 @@ export default {
     Prism.highlightAllUnder(this.$refs.container)
 
     // -> Render Mermaid diagrams
-    mermaid.mermaidAPI.initialize({
+    mermaid.initialize({
       startOnLoad: true,
       theme: this.$vuetify.theme.dark ? `dark` : `default`
     })
