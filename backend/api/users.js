@@ -10,7 +10,29 @@ async function routes(app, options) {
       },
       schema: {
         summary: 'List all users',
-        tags: ['Users']
+        tags: ['Users'],
+        querystring: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
+          }
+        },
+        response: {
+          200: {
+            description: 'List of Users',
+            type: 'object',
+            properties: {
+              page: { type: 'integer' },
+              limit: { type: 'integer' },
+              total: { type: 'integer' },
+              users: {
+                type: 'array',
+                items: { $ref: 'UserCore#' }
+              }
+            }
+          }
+        }
       }
     },
     async (request, reply) => {
@@ -32,7 +54,7 @@ async function routes(app, options) {
         return {
           authenticated: true,
           ...req.session.user,
-          permissions: ['manage:system']
+          permissions: ['manage:system'] // TODO: pull actual permissions
         }
       } else {
         return {
@@ -50,7 +72,23 @@ async function routes(app, options) {
       },
       schema: {
         summary: 'Get user info',
-        tags: ['Users']
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'User info',
+            type: 'object',
+            $ref: 'User#'
+          }
+        }
       }
     },
     async (request, reply) => {

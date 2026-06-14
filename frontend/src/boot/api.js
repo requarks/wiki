@@ -9,12 +9,12 @@ export function initializeApi(store) {
   let fetching = false
 
   const client = ky.create({
-    prefixUrl: '/_api',
+    prefix: '/_api',
     credentials: 'same-origin',
     throwHttpErrors: (statusNumber) => statusNumber > 400, // Don't throw for 400
     hooks: {
       beforeRequest: [
-        async (request) => {
+        async ({ request }) => {
           // -> Guest
           if (!userStore.token) {
             request.headers.set('Authorization', '')
