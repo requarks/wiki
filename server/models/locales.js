@@ -21,13 +21,10 @@ module.exports = class Locale extends Model {
         nativeName: {type: 'string'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'},
-        availability: {type: 'integer'}
+        availability: {type: 'integer'},
+        strings: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['strings']
   }
 
   $beforeUpdate() {

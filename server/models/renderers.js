@@ -22,13 +22,10 @@ module.exports = class Renderer extends Model {
 
       properties: {
         key: {type: 'string'},
-        isEnabled: {type: 'boolean'}
+        isEnabled: {type: 'boolean'},
+        config: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config']
   }
 
   static async getRenderers() {

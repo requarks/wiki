@@ -22,13 +22,10 @@ module.exports = class SearchEngine extends Model {
       properties: {
         key: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        level: {type: 'string'}
+        level: {type: 'string'},
+        config: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config']
   }
 
   static async getSearchEngines() {

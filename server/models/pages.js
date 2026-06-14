@@ -49,13 +49,10 @@ module.exports = class Page extends Model {
         contentType: {type: 'string'},
 
         createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        updatedAt: {type: 'string'},
+        extra: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['extra']
   }
 
   static get relationMappings() {

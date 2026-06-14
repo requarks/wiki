@@ -17,14 +17,11 @@ module.exports = class Setting extends Model {
 
       properties: {
         key: {type: 'string'},
+        value: {type: 'object'},
         createdAt: {type: 'string'},
         updatedAt: {type: 'string'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['value']
   }
 
   $beforeUpdate() {

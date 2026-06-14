@@ -181,8 +181,8 @@ module.exports = {
 
                   const newGroup = await WIKI.models.groups.query().insert({
                     name: `Import_${curDateISO}_${groupsCount + 1}`,
-                    permissions: JSON.stringify(perms),
-                    pageRules: JSON.stringify(pageRules)
+                    permissions: perms,
+                    pageRules: pageRules
                   })
                   reuseGroups.push({
                     groupId: newGroup.id,

@@ -21,13 +21,12 @@ module.exports = class Authentication extends Model {
 
       properties: {
         key: {type: 'string'},
-        selfRegistration: {type: 'boolean'}
+        selfRegistration: {type: 'boolean'},
+        config: {type: 'object'},
+        domainWhitelist: {type: 'object'},
+        autoEnrollGroups: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config', 'domainWhitelist', 'autoEnrollGroups']
   }
 
   static async getStrategy(key) {

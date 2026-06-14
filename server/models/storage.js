@@ -22,13 +22,11 @@ module.exports = class Storage extends Model {
       properties: {
         key: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        mode: {type: 'string'}
+        mode: {type: 'string'},
+        config: {type: 'object'},
+        state: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config', 'state']
   }
 
   static async getTargets() {
