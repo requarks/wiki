@@ -92,7 +92,10 @@ module.exports = {
           if (process.env.UPGRADE_COMPANION_REF) {
             upgradeUrl.searchParams.set('container', process.env.UPGRADE_COMPANION_REF)
           }
-          await fetch(upgradeUrl, { method: 'POST' })
+          const upgradeResp = await fetch(upgradeUrl, { method: 'POST', signal: AbortSignal.timeout(30000) })
+          if (!upgradeResp.ok) {
+            throw new Error(`Upgrade companion returned ${upgradeResp.status}`)
+          }
           return {
             responseResult: graphHelper.generateSuccess('Upgrade has started.')
           }
@@ -131,8 +134,8 @@ module.exports = {
           if (args.groupMode === `SINGLE`) {
             const singleGroup = await WIKI.models.groups.query().insert({
               name: `Import_${curDateISO}`,
-              permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-              pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules)
+              permissions: WIKI.data.groups.defaultPermissions,
+              pageRules: WIKI.data.groups.defaultPageRules
             })
             groupsCount++
             assignableGroups.push(singleGroup.id)

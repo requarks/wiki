@@ -113,8 +113,12 @@ module.exports = {
               autocompleteMode: 'oneTermWithContext',
               search: q,
               suggesterName: 'suggestions'
-            })
+            }),
+            signal: AbortSignal.timeout(10000)
           })
+          if (!suggestResp.ok) {
+            throw new Error(`Azure autocomplete returned ${suggestResp.status}`)
+          }
           const suggestResults = await suggestResp.json()
           suggestions = suggestResults.value.map(s => s.queryPlusText)
         } catch (err) {
