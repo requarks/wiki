@@ -40,7 +40,7 @@ module.exports = class Renderer extends Model {
     let diskRenderers = []
     for (let dir of rendererDirs) {
       const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/rendering', dir, 'definition.yml'), 'utf8')
-      diskRenderers.push(yaml.safeLoad(def))
+      diskRenderers.push(yaml.load(def))
     }
     WIKI.data.renderers = diskRenderers.map(renderer => ({
       ...renderer,

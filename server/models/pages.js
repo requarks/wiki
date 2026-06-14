@@ -199,7 +199,7 @@ module.exports = class Page extends Model {
           result = frontmatterRegex.markdown.exec(raw)
           if (result[2]) {
             return {
-              ...yaml.safeLoad(result[2]),
+              ...yaml.load(result[2]),
               content: result[3]
             }
           } else {
@@ -218,7 +218,7 @@ module.exports = class Page extends Model {
           result = frontmatterRegex.html.exec(raw)
           if (result[2]) {
             return {
-              ...yaml.safeLoad(result[2]),
+              ...yaml.load(result[2]),
               content: result[3]
             }
           }

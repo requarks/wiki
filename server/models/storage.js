@@ -45,7 +45,7 @@ module.exports = class Storage extends Model {
       let diskTargets = []
       for (let dir of storageDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/storage', dir, 'definition.yml'), 'utf8')
-        diskTargets.push(yaml.safeLoad(def))
+        diskTargets.push(yaml.load(def))
       }
       WIKI.data.storage = diskTargets.map(target => ({
         ...target,
