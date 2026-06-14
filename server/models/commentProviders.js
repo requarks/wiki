@@ -49,7 +49,7 @@ module.exports = class CommentProvider extends Model {
       let diskProviders = []
       for (let dir of commentDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/comments', dir, 'definition.yml'), 'utf8')
-        diskProviders.push(yaml.safeLoad(def))
+        diskProviders.push(yaml.load(def))
       }
       WIKI.data.commentProviders = diskProviders.map(provider => ({
         ...provider,
@@ -111,7 +111,7 @@ module.exports = class CommentProvider extends Model {
 
       if (WIKI.data.commentProvider.codeTemplate) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/comments', commentProvider.key, 'code.yml'), 'utf8')
-        let code = yaml.safeLoad(def)
+        let code = yaml.load(def)
         code.head = _.defaultTo(code.head, '')
         code.body = _.defaultTo(code.body, '')
         code.main = _.defaultTo(code.main, '')

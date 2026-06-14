@@ -45,7 +45,7 @@ module.exports = class Logger extends Model {
       let diskLoggers = []
       for (let dir of loggersDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/logging', dir, 'definition.yml'), 'utf8')
-        diskLoggers.push(yaml.safeLoad(def))
+        diskLoggers.push(yaml.load(def))
       }
       WIKI.data.loggers = diskLoggers.map(logger => ({
         ...logger,

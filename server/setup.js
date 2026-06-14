@@ -392,7 +392,9 @@ module.exports = () => {
       error: WIKI.IS_DEBUG ? err : {}
     })
     WIKI.logger.error(err.message)
-    WIKI.telemetry.sendError(err)
+    if (WIKI.telemetry) {
+      WIKI.telemetry.sendError(err)
+    }
   })
 
   // ----------------------------------------
