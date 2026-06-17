@@ -663,7 +663,7 @@
     }
   }
 
-  ul:not(.tabset-tabs):not(.contains-task-list) {
+  ul:not(.tabset-tabs):not(.contains-task-list):not(.todo-list) {
     list-style: none;
     > li::before {
       position: absolute;
