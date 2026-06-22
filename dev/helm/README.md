@@ -112,6 +112,10 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `ingress.annotations`                | Ingress annotations                         | `{}`                                                       |
 | `ingress.hosts`                      | List of ingress rules                        | `[{"host": "wiki.local", "paths": ["/"]}]`                |
 | `ingress.tls`                        | Ingress TLS configuration                   | `[]`                                                       |
+| `httpRoute.enabled`                  | Enable Gateway API HTTPRoute resource       | `false`                                                    |
+| `httpRoute.annotations`              | HTTPRoute annotations                       | `{}`                                                       |
+| `httpRoute.hostnames`                | Hostnames the route matches (empty = all)   | `[]`                                                       |
+| `httpRoute.parentRefs`               | Gateway(s) the route attaches to            | `[]`                                                       |
 | `sideload.enabled`                   | Enable sideloading of locale files from git | `false`                                                    |
 | `sideload.repoURL`                   | Git repository URL containing locale files  | `https://github.com/Requarks/wiki-localization`            |
 | `sideload.env`                       | Environment variables for the sideload container | `{}`                                                      |
@@ -211,6 +215,22 @@ See the [Configuration](#configuration) section to configure the PVC or to disab
 ## Ingress
 
 This chart provides support for Ingress resource. If you have an available Ingress Controller such as Nginx or Traefik you maybe want to set `ingress.enabled` to true and add `ingress.hosts` for the URL. Then, you should be able to access the installation using that address.
+
+## HTTPRoute (Gateway API)
+
+As an alternative to Ingress, the chart can expose Wiki.js through a [Gateway API](https://gateway-api.sigs.k8s.io/) `HTTPRoute`. Set `httpRoute.enabled` to true and provide at least one entry in `httpRoute.parentRefs` pointing to your `Gateway`:
+
+```yaml
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: my-gateway
+      namespace: gateway-system
+  hostnames:
+    - wiki.example.com
+```
+
+This requires the Gateway API CRDs and a Gateway controller to be installed in the cluster. The resource is disabled by default, so clusters without the Gateway API are unaffected.
 
 ## Extra Trusted Certificates
 
