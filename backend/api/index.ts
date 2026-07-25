@@ -8,6 +8,7 @@ async function routes(app: FastifyInstance) {
   await import('./schemas/block.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/group.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/mail.ts').then((m) => m.registerSchemas(app))
+  await import('./schemas/scheduler.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/site.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/user.ts').then((m) => m.registerSchemas(app))
 
@@ -18,6 +19,7 @@ async function routes(app: FastifyInstance) {
   app.register(import('./locales.ts'), { prefix: '/locales' })
   app.register(import('./mail.ts'), { prefix: '/mail' })
   app.register(import('./pages.ts'))
+  app.register(import('./scheduler.ts'), { prefix: '/scheduler' })
   app.register(import('./sites.ts'), { prefix: '/sites' })
   app.register(import('./system.ts'), { prefix: '/system' })
   app.register(import('./users.ts'), { prefix: '/users' })

@@ -301,13 +301,17 @@ export default {
     } catch (err: any) {
       WIKI.logger.warn(err)
       if (jobIds && jobIds.length > 0) {
-        WIKI.db
+        // -> The filter must name the table being updated: `jobs.id` here produced
+        //    `UPDATE "jobHistory" ... WHERE "jobs"."id" IN (...)`, which postgres rejects with
+        //    "missing FROM-clause entry", and the statement was not awaited so the rejection was
+        //    lost. Interrupted jobs were therefore never recorded as such.
+        await WIKI.db
           .update(jobHistoryTable)
           .set({
             state: 'interrupted',
             lastErrorMessage: err.message
           })
-          .where(inArray(jobsTable.id, jobIds))
+          .where(inArray(jobHistoryTable.id, jobIds))
       }
     }
   },

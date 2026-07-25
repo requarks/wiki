@@ -58,6 +58,11 @@ q-page.admin-api
               template(#endpoint)
                 strong.font-robotomono /metrics
             .text-caption {{ t('admin.metrics.endpointWarning') }}
+            //- The state is stored, but no route serves it yet — say so rather than let the card
+            //- above read as a promise
+            i18n-t.text-caption.text-orange(tag='div', keypath='admin.metrics.notImplemented', scope='global')
+              template(#endpoint)
+                strong.font-robotomono /metrics
       q-card.rounded-borders.q-mt-md(
         flat
         :class='$q.dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`'
@@ -78,10 +83,9 @@ q-page.admin-api
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -118,16 +122,18 @@ const state = reactive({
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getMetricsState {
-        metricsState
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.enabled = resp?.data?.metricsState === true
-  adminStore.info.isMetricsEnabled = state.enabled
+  try {
+    const resp = await API_CLIENT.get('system/metrics').json()
+    state.enabled = resp?.isEnabled === true
+    // -> Keeps the status light in the admin sidebar in step without another round trip
+    adminStore.info.isMetricsEnabled = state.enabled
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.metrics.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
@@ -142,36 +148,25 @@ async function refresh () {
 
 async function globalSwitch () {
   state.isToggleLoading = true
+  const wanted = !state.enabled
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation ($enabled: Boolean!) {
-          setMetricsState (enabled: $enabled) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        enabled: !state.enabled
-      }
-    })
-    if (resp?.data?.setMetricsState?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: state.enabled ? t('admin.metrics.toggleStateDisabledSuccess') : t('admin.metrics.toggleStateEnabledSuccess')
-      })
-      await load()
-    } else {
-      throw new Error(resp?.data?.setMetricsState?.operation?.message || 'An unexpected error occurred.')
+    const resp = await API_CLIENT.put('system/metrics', {
+      json: { isEnabled: wanted }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occurred.')
     }
+    $q.notify({
+      type: 'positive',
+      message: wanted ? t('admin.metrics.toggleStateEnabledSuccess') : t('admin.metrics.toggleStateDisabledSuccess')
+    })
+    await load()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to switch metrics endpoint state.',
-      caption: err.message
+      message: t('admin.metrics.toggleStateFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.isToggleLoading = false

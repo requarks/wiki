@@ -56,8 +56,14 @@ async function routes(app: FastifyInstance) {
               isMailConfigured: {
                 type: 'boolean'
               },
+              isMetricsEnabled: {
+                type: 'boolean',
+                description: 'Whether the Prometheus metrics endpoint is turned on.'
+              },
               isSchedulerHealthy: {
-                type: 'boolean'
+                type: 'boolean',
+                description:
+                  'False when no instance has refreshed the scheduler cron lock recently, i.e. scheduled jobs are no longer being queued.'
               },
               latestVersion: {
                 type: 'string'
@@ -112,7 +118,8 @@ async function routes(app: FastifyInstance) {
         hostname: os.hostname(),
         httpPort: 0,
         isMailConfigured: WIKI.config?.mail?.host?.length > 2,
-        isSchedulerHealthy: true, // TODO:
+        isMetricsEnabled: WIKI.config.metrics.isEnabled === true,
+        isSchedulerHealthy: await WIKI.models.jobs.isHealthy(),
         latestVersion: WIKI.config.update.version,
         latestVersionReleaseDate: WIKI.config.update.versionDate,
         loginsPastDay: await WIKI.db.$count(
@@ -162,6 +169,99 @@ async function routes(app: FastifyInstance) {
     },
     async () => {
       return WIKI.config.flags
+    }
+  )
+
+  /**
+   * GET METRICS ENDPOINT STATE
+   */
+  app.get(
+    '/metrics',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the metrics endpoint state',
+        description:
+          'Whether the Prometheus metrics endpoint is turned on. The endpoint itself is not implemented yet — see the description of the PUT counterpart.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'Metrics endpoint state',
+            type: 'object',
+            properties: {
+              isEnabled: {
+                type: 'boolean'
+              }
+            }
+          }
+        }
+      }
+    },
+    async () => {
+      return { isEnabled: WIKI.config.metrics.isEnabled === true }
+    }
+  )
+
+  /**
+   * SET METRICS ENDPOINT STATE
+   */
+  app.put<{ Body: { isEnabled: boolean } }>(
+    '/metrics',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Turn the metrics endpoint on or off',
+        description:
+          'Stores the state and nothing more, for now: the `/metrics` endpoint it governs is not implemented, and its documented `read:metrics` bearer authentication depends on API keys, which are not implemented either.',
+        tags: ['System'],
+        body: {
+          type: 'object',
+          required: ['isEnabled'],
+          properties: {
+            isEnabled: {
+              type: 'boolean'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Metrics endpoint state updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              isEnabled: {
+                type: 'boolean'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const previousConfig = WIKI.config.metrics
+      WIKI.config.metrics = { ...previousConfig, isEnabled: req.body.isEnabled }
+
+      if (!(await WIKI.configSvc.saveToDb(['metrics']))) {
+        WIKI.config.metrics = previousConfig
+        return reply.internalServerError('Failed to save the metrics endpoint state.')
+      }
+
+      return {
+        ok: true,
+        message: req.body.isEnabled
+          ? 'Metrics endpoint enabled successfully.'
+          : 'Metrics endpoint disabled successfully.',
+        isEnabled: req.body.isEnabled
+      }
     }
   )
 

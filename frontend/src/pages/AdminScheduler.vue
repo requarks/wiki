@@ -60,7 +60,7 @@ q-page.admin-terminal
         q-table(
           :rows='state.scheduledJobs'
           :columns='scheduledJobsHeaders'
-          row-key='name'
+          row-key='id'
           flat
           hide-bottom
           :rows-per-page-options='[0]'
@@ -103,6 +103,16 @@ q-page.admin-terminal
             q-td(:props='props')
               span {{props.value}}
               div: small.text-grey {{humanizeDate(props.row.updatedAt)}}
+          template(v-slot:body-cell-run='props')
+            q-td(:props='props')
+              q-btn.acrylic-btn.q-px-sm(
+                flat
+                icon='las la-play'
+                color='positive'
+                :aria-label='t(`admin.scheduler.runNow`)'
+                @click='runNow(props.row)'
+                )
+                q-tooltip(anchor='center left', self='center right') {{ t('admin.scheduler.runNow') }}
     template(v-else-if='state.displayMode === `upcoming`')
       q-card.rounded-borders(
         v-if='state.upcomingJobs.length < 1'
@@ -117,7 +127,7 @@ q-page.admin-terminal
         q-table(
           :rows='state.upcomingJobs'
           :columns='upcomingJobsHeaders'
-          row-key='name'
+          row-key='id'
           flat
           hide-bottom
           :rows-per-page-options='[0]'
@@ -175,7 +185,7 @@ q-page.admin-terminal
         q-table(
           :rows='state.jobs'
           :columns='jobsHeaders'
-          row-key='name'
+          row-key='id'
           flat
           hide-bottom
           :rows-per-page-options='[0]'
@@ -253,15 +263,20 @@ q-page.admin-terminal
                     strong {{props.row.executedBy}}
           template(v-slot:body-cell-actions='props')
             q-td(:props='props')
+              //- Only withheld while the scheduler still owes the job an automatic attempt
+              //- (`attempt` counts from 1, `maxRetries` is how many *extra* attempts it gets)
               q-btn.acrylic-btn.q-px-sm(
                 v-if='props.row.state !== `active`'
                 flat
                 icon='las la-undo-alt'
                 color='orange'
+                :aria-label='t(`admin.scheduler.retryJob`)'
                 @click='retryJob(props.row.id)'
-                :disable='props.row.state === `interrupted` || props.row.state === `failed` && props.row.attempt < props.row.maxRetries'
+                :disable='props.row.state === `failed` && props.row.attempt <= props.row.maxRetries'
                 )
                 q-tooltip(anchor='center left', self='center right') {{ t('admin.scheduler.retryJob') }}
+      .text-caption.text-grey(v-if='state.jobsTotal > state.jobs.length')
+        | {{ t('admin.scheduler.historyCapped', { shown: state.jobs.length, total: state.jobsTotal }) }}
 
 </template>
 
@@ -269,8 +284,6 @@ q-page.admin-terminal
 import { onMounted, reactive, watch } from 'vue'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-
-import { DateTime, Duration, Interval } from 'luxon'
 
 import { useSiteStore } from '@/stores/site'
 
@@ -299,8 +312,20 @@ const state = reactive({
   scheduledJobs: [],
   upcomingJobs: [],
   jobs: [],
+  jobsTotal: 0,
   loading: 0
 })
+
+/** How many history entries a tab shows. The API caps this at 500. */
+const HISTORY_LIMIT = 100
+
+/** The history states behind each display mode. */
+const MODE_STATES = {
+  active: ['active'],
+  completed: ['completed'],
+  // -> An interrupted job never reported a result of its own, so it belongs with the failures
+  failed: ['failed', 'interrupted']
+}
 
 const scheduledJobsHeaders = [
   {
@@ -337,7 +362,7 @@ const scheduledJobsHeaders = [
     field: 'createdAt',
     name: 'created',
     sortable: true,
-    format: v => DateTime.fromISO(v).toRelative()
+    format: relativeDate
   },
   {
     label: t('admin.scheduler.updatedAt'),
@@ -345,7 +370,14 @@ const scheduledJobsHeaders = [
     field: 'updatedAt',
     name: 'updated',
     sortable: true,
-    format: v => DateTime.fromISO(v).toRelative()
+    format: relativeDate
+  },
+  {
+    align: 'center',
+    field: 'id',
+    name: 'run',
+    sortable: false,
+    style: 'width: 15px;'
   }
 ]
 
@@ -370,7 +402,7 @@ const upcomingJobsHeaders = [
     field: 'waitUntil',
     name: 'waituntil',
     sortable: true,
-    format: v => DateTime.fromISO(v).toRelative()
+    format: relativeDate
   },
   {
     label: t('admin.scheduler.attempt'),
@@ -392,7 +424,7 @@ const upcomingJobsHeaders = [
     field: 'createdAt',
     name: 'date',
     sortable: true,
-    format: v => DateTime.fromISO(v).toRelative()
+    format: relativeDate
   },
   {
     align: 'center',
@@ -445,7 +477,7 @@ const jobsHeaders = [
     field: 'startedAt',
     name: 'date',
     sortable: true,
-    format: v => DateTime.fromISO(v).toRelative()
+    format: relativeDate
   },
   {
     align: 'center',
@@ -458,105 +490,114 @@ const jobsHeaders = [
 
 // WATCHERS
 
-watch(() => state.displayMode, (newValue) => {
+watch(() => state.displayMode, () => {
   load()
 })
 
 // METHODS
 
-function humanizeDate (val) {
-  return DateTime.fromISO(val).toFormat('fff')
+/** Largest-first. `week` is deliberately absent, so output reads e.g. "21 days ago". */
+const RELATIVE_UNITS = [
+  ['year', 31536000],
+  ['month', 2592000],
+  ['day', 86400],
+  ['hour', 3600],
+  ['minute', 60],
+  ['second', 1]
+]
+const relativeTimeFormat = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+
+/** Reads both ways: past for history, future for a job still waiting its turn. */
+function relativeDate (val) {
+  if (!val) { return '---' }
+  const seconds = Temporal.Instant.from(val).until(Temporal.Now.instant()).total('seconds')
+  for (const [unit, secondsPerUnit] of RELATIVE_UNITS) {
+    if (Math.abs(seconds) >= secondsPerUnit || unit === 'second') {
+      return relativeTimeFormat.format(-Math.round(seconds / secondsPerUnit), unit)
+    }
+  }
 }
 
+function humanizeDate (val) {
+  if (!val) { return '---' }
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  })
+}
+
+/** Narrow, largest-first and skipping empty units — "1h 4m 32s", or "820ms" for a quick job. */
+const DURATION_UNITS = ['hour', 'minute', 'second', 'millisecond']
+const durationListFormat = new Intl.ListFormat(undefined, { style: 'narrow', type: 'unit' })
+
 function humanizeDuration (start, end) {
-  const dur = Interval.fromDateTimes(DateTime.fromISO(start), DateTime.fromISO(end))
-    .toDuration(['hours', 'minutes', 'seconds', 'milliseconds'])
-  return Duration.fromObject({
-    ...dur.hours > 0 && { hours: dur.hours },
-    ...dur.minutes > 0 && { minutes: dur.minutes },
-    ...dur.seconds > 0 && { seconds: dur.seconds },
-    ...dur.milliseconds > 0 && { milliseconds: dur.milliseconds }
-  }).toHuman({ unitDisplay: 'narrow', listStyle: 'short' })
+  if (!start || !end) { return '---' }
+  const dur = Temporal.Instant.from(start).until(Temporal.Instant.from(end)).round({
+    largestUnit: 'hour',
+    smallestUnit: 'millisecond'
+  })
+  const parts = DURATION_UNITS
+    .filter(unit => dur[`${unit}s`] > 0)
+    .map(unit => new Intl.NumberFormat(undefined, {
+      style: 'unit',
+      unit,
+      unitDisplay: 'narrow'
+    }).format(dur[`${unit}s`]))
+  // -> A job that took under a millisecond still has to render as something
+  return parts.length > 0 ? durationListFormat.format(parts) : '0ms'
 }
 
 async function load () {
   state.loading++
   try {
     if (state.displayMode === 'scheduled') {
-      const resp = await APOLLO_CLIENT.query({
-        query: `
-          query getSystemJobsScheduled {
-            systemJobsScheduled {
-              id
-              task
-              cron
-              type
-              createdAt
-              updatedAt
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      state.scheduledJobs = resp?.data?.systemJobsScheduled
+      state.scheduledJobs = await API_CLIENT.get('scheduler/schedule').json() ?? []
     } else if (state.displayMode === 'upcoming') {
-      const resp = await APOLLO_CLIENT.query({
-        query: `
-          query getSystemJobsUpcoming {
-            systemJobsUpcoming {
-              id
-              task
-              useWorker
-              retries
-              maxRetries
-              waitUntil
-              isScheduled
-              createdBy
-              createdAt
-              updatedAt
-            }
-          }
-        `,
-        fetchPolicy: 'network-only'
-      })
-      state.upcomingJobs = resp?.data?.systemJobsUpcoming
+      state.upcomingJobs = await API_CLIENT.get('scheduler/upcoming').json() ?? []
     } else {
-      const states = state.displayMode === 'failed' ? ['FAILED', 'INTERRUPTED'] : [state.displayMode.toUpperCase()]
-      const resp = await APOLLO_CLIENT.query({
-        query: `
-          query getSystemJobs (
-            $states: [SystemJobState]
-          ) {
-            systemJobs (
-              states: $states
-              ) {
-                id
-                task
-                state
-                useWorker
-                wasScheduled
-                attempt
-                maxRetries
-                lastErrorMessage
-                executedBy
-                createdAt
-                startedAt
-                completedAt
-            }
-          }
-        `,
-        variables: {
-          states
-        },
-        fetchPolicy: 'network-only'
-      })
-      state.jobs = resp?.data?.systemJobs?.map(j => ({ ...j, state: j.state.toLowerCase() }))
+      // -> Repeated `states` params rather than a comma-joined value: that is what the route's
+      //    array schema validates against
+      const searchParams = new URLSearchParams(
+        MODE_STATES[state.displayMode].map(s => ['states', s])
+      )
+      searchParams.set('limit', HISTORY_LIMIT)
+      const resp = await API_CLIENT.get('scheduler/jobs', { searchParams }).json()
+      state.jobs = resp?.jobs ?? []
+      state.jobsTotal = resp?.total ?? 0
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load scheduled jobs.',
+      message: t('admin.scheduler.loadFailed'),
       caption: err.message
+    })
+  }
+  state.loading--
+}
+
+async function runNow (entry) {
+  state.loading++
+  try {
+    const resp = await API_CLIENT.post(`scheduler/schedule/${entry.id}/run`).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    // -> Nothing on this tab changes: the job it queued shows up under upcoming, then in the history
+    $q.notify({
+      type: 'positive',
+      message: t('admin.scheduler.runNowSuccess', { task: entry.task })
+    })
+  } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
+    $q.notify({
+      type: 'negative',
+      message: t('admin.scheduler.runNowFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.loading--
@@ -565,35 +606,22 @@ async function load () {
 async function cancelJob (jobId) {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation cancelJob ($id: UUID!) {
-          cancelJob(id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: jobId
-      }
-    })
-    if (resp?.data?.cancelJob?.operation?.succeeded) {
-      load()
-      $q.notify({
-        type: 'positive',
-        message: t('admin.scheduler.cancelJobSuccess')
-      })
-    } else {
-      throw new Error(resp?.data?.cancelJob?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.delete(`scheduler/upcoming/${jobId}`)
+    if (!resp?.ok) {
+      throw new Error((await resp.json())?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.scheduler.cancelJobSuccess')
+    })
+    await load()
   } catch (err) {
+    // -> ky throws above 400 — a job picked up between the render and the click answers 404
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to cancel job.',
-      caption: err.message
+      message: t('admin.scheduler.cancelJobFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.loading--
@@ -602,35 +630,21 @@ async function cancelJob (jobId) {
 async function retryJob (jobId) {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation retryJob ($id: UUID!) {
-          retryJob(id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: jobId
-      }
-    })
-    if (resp?.data?.retryJob?.operation?.succeeded) {
-      this.load()
-      $q.notify({
-        type: 'positive',
-        message: t('admin.scheduler.retryJobSuccess')
-      })
-    } else {
-      throw new Error(resp?.data?.retryJob?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.post(`scheduler/jobs/${jobId}/retry`).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.scheduler.retryJobSuccess')
+    })
+    await load()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to retry the job.',
-      caption: err.message
+      message: t('admin.scheduler.retryJobFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.loading--
