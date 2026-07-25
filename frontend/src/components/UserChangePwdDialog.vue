@@ -69,7 +69,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 
-import { sampleSize } from 'lodash-es'
+import { sampleSize } from 'es-toolkit/array'
 import zxcvbn from 'zxcvbn'
 
 import { useI18n } from 'vue-i18n'
@@ -172,42 +172,22 @@ async function save () {
     if (!isFormValid) {
       throw new Error(t('admin.users.createInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation adminUpdateUserPwd (
-          $id: UUID!
-          $newPassword: String!
-          $mustChangePassword: Boolean
-          ) {
-          changeUserPassword (
-            id: $id
-            newPassword: $newPassword
-            mustChangePassword: $mustChangePassword
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.userId,
+    const resp = await API_CLIENT.put(`users/${props.userId}/password`, {
+      json: {
         newPassword: state.userPassword,
         mustChangePassword: state.userMustChangePassword
       }
-    })
-    if (resp?.data?.changeUserPassword?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.users.changePasswordSuccess')
-      })
-      onDialogOK({
-        mustChangePassword: state.userMustChangePassword
-      })
-    } else {
-      throw new Error(resp?.data?.changeUserPassword?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.users.changePasswordSuccess')
+    })
+    onDialogOK({
+      mustChangePassword: state.userMustChangePassword
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',

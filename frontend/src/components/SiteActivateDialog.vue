@@ -30,7 +30,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
+import { cloneDeep } from 'es-toolkit/object'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { reactive, ref } from 'vue'
@@ -84,7 +84,7 @@ async function confirm () {
       json: {
         isEnabled: props.targetState
       }
-    })
+    }).json()
     if (resp?.ok) {
       $q.notify({
         type: 'positive',

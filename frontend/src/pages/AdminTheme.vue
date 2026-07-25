@@ -304,9 +304,10 @@ q-page.admin-theme
 
 <script setup>
 
-import { cloneDeep, startCase } from 'lodash-es'
+import { toMerged } from 'es-toolkit/object'
+import { startCase } from 'es-toolkit/string'
 import { useI18n } from 'vue-i18n'
-import { setCssVar, useMeta, useQuasar } from 'quasar'
+import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
@@ -337,27 +338,35 @@ useMeta({
 
 // DATA
 
-const state = reactive({
-  loading: 0,
-  config: {
+/**
+ * Fallbacks for theme keys a site may not have stored yet, so that every control renders with a
+ * defined value. Must mirror the theme defaults used by the backend when creating a site.
+ */
+function defaultConfig () {
+  return {
     dark: false,
     injectCSS: '',
     injectHead: '',
     injectBody: '',
     colorPrimary: '#1976D2',
     colorSecondary: '#02C39A',
-    colorAccent: '#f03a47',
-    colorHeader: '#000',
+    colorAccent: '#FF9800',
+    colorHeader: '#000000',
     colorSidebar: '#1976D2',
-    codeBlocksTheme: '',
+    codeBlocksTheme: 'github-dark',
     contentWidth: 'full',
     sidebarPosition: 'left',
     tocPosition: 'right',
     showSharingMenu: true,
     showPrintBtn: true,
-    baseFont: '',
-    contentFont: ''
+    baseFont: 'roboto',
+    contentFont: 'roboto'
   }
+}
+
+const state = reactive({
+  loading: 0,
+  config: defaultConfig()
 })
 
 const colorKeys = [
@@ -669,45 +678,11 @@ async function load () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query fetchThemeConfig (
-          $id: UUID!
-        ) {
-          siteById(
-            id: $id
-          ) {
-            theme {
-              baseFont
-              codeBlocksTheme
-              contentFont
-              colorPrimary
-              colorSecondary
-              colorAccent
-              colorHeader
-              colorSidebar
-              dark
-              injectCSS
-              injectHead
-              injectBody
-              contentWidth
-              sidebarPosition
-              tocPosition
-              showSharingMenu
-              showPrintBtn
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.currentSiteId
-      },
-      fetchPolicy: 'network-only'
-    })
-    if (!resp?.data?.siteById?.theme) {
+    const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
+    if (!resp?.theme) {
       throw new Error('Failed to fetch theme config.')
     }
-    state.config = cloneDeep(resp.data.siteById.theme)
+    state.config = toMerged(defaultConfig(), resp.theme)
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -740,45 +715,24 @@ async function save () {
       baseFont: state.config.baseFont,
       contentFont: state.config.contentFont
     }
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveTheme (
-          $id: UUID!
-          $patch: SiteUpdateInput!
-          ) {
-          updateSite (
-            id: $id,
-            patch: $patch
-            ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.currentSiteId,
-        patch: {
-          theme: patchTheme
-        }
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
+      json: {
+        theme: patchTheme
       }
-    })
-    if (respRaw?.data?.updateSite?.operation?.succeeded) {
-      if (adminStore.currentSiteId === siteStore.id) {
-        siteStore.$patch({
-          theme: patchTheme
-        })
-        EVENT_BUS.emit('applyTheme')
-      }
-      $q.notify({
-        type: 'positive',
-        message: t('admin.theme.saveSuccess')
-      })
-    } else {
-      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.theme.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    if (adminStore.currentSiteId === siteStore.id) {
+      siteStore.$patch({
+        theme: patchTheme
+      })
+      EVENT_BUS.emit('applyTheme')
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.theme.saveSuccess')
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',

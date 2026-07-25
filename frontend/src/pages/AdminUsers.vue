@@ -126,8 +126,7 @@ q-page.admin-groups
 
 <script setup>
 
-import { cloneDeep, debounce } from 'lodash-es'
-import { DateTime } from 'luxon'
+import { debounce } from 'es-toolkit/function'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
@@ -237,46 +236,46 @@ watch(() => state.currentPage, (newValue) => {
 async function load ({ page } = {}) {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getUsers(
-        $page: Int
-        $pageSize: Int
-        $filter: String
-      ) {
-        users(
-          page: $page
-          pageSize: $pageSize
-          filter: $filter
-        ) {
-          total
-          users {
-            id
-            name
-            email
-            isSystem
-            isActive
-            createdAt
-            lastLoginAt
-          }
-        }
+  try {
+    const resp = await API_CLIENT.get('users', {
+      searchParams: {
+        ...(state.search ? { filter: state.search } : {}),
+        page: page ?? state.currentPage ?? 1,
+        limit: state.pageSize ?? 20
       }
-    `,
-    fetchPolicy: 'network-only',
-    variables: {
-      page: page ?? state.currentPage ?? 1,
-      pageSize: state.pageSize ?? 20,
-      filter: state.search ?? ''
-    }
-  })
-  state.totalPages = Math.ceil((resp?.data?.users?.total || 1) / state.pageSize)
-  state.users = cloneDeep(resp?.data?.users?.users)
+    }).json()
+    state.totalPages = Math.ceil((resp?.total || 1) / state.pageSize)
+    state.users = resp?.users ?? []
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.users.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
 
+/** Largest-first. `week` is deliberately absent, so output reads e.g. "21 days ago". */
+const RELATIVE_UNITS = [
+  ['year', 31536000],
+  ['month', 2592000],
+  ['day', 86400],
+  ['hour', 3600],
+  ['minute', 60],
+  ['second', 1]
+]
+const relativeTimeFormat = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+
 function humanizeDate (val) {
-  return DateTime.fromISO(val).toRelative()
+  if (!val) { return '---' }
+  const seconds = Temporal.Instant.from(val).until(Temporal.Now.instant()).total('seconds')
+  for (const [unit, secondsPerUnit] of RELATIVE_UNITS) {
+    if (Math.abs(seconds) >= secondsPerUnit || unit === 'second') {
+      return relativeTimeFormat.format(-Math.round(seconds / secondsPerUnit), unit)
+    }
+  }
 }
 function formattedDate (val) {
   return userStore.formatDateTime(t, val)

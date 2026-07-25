@@ -111,11 +111,11 @@ q-page.admin-locale
 
 <script setup>
 
-import { cloneDeep, sortBy } from 'lodash-es'
+import { sortBy } from 'es-toolkit/array'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -154,9 +154,10 @@ const state = reactive({
 watch(() => adminStore.currentSiteId, (newValue) => {
   load()
 })
-watch(() => state.selectedLocale, (newValue) => {
-  if (!state.namespaces.includes(newValue)) {
-    state.namespaces.push(newValue)
+// -> Selecting a primary locale that isn't active yet activates it, since its toggle is disabled
+watch(() => state.primary, (newValue) => {
+  if (newValue && !state.active.includes(newValue)) {
+    state.active.push(newValue)
   }
 })
 
@@ -165,96 +166,68 @@ watch(() => state.selectedLocale, (newValue) => {
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getLocales ($siteId: UUID!) {
-        locales {
-          completeness
-          code
-          createdAt
-          isRTL
-          language
-          name
-          nativeName
-          region
-          script
-          updatedAt
-        }
-        siteById(
-          id: $siteId
-        ) {
-          id
-          locales {
-            primary
-            active {
-              code
-            }
-          }
-        }
-      }
-    `,
-    variables: {
-      siteId: adminStore.currentSiteId
-    },
-    fetchPolicy: 'network-only'
-  })
-  state.locales = sortBy(cloneDeep(resp?.data?.locales), ['nativeName', 'name'])
-  state.primary = cloneDeep(resp?.data?.siteById?.locales?.primary)
-  state.active = cloneDeep(resp?.data?.siteById?.locales?.active ?? []).map(l => l.code)
-  if (!state.active.includes(state.primary)) {
-    state.active.push(state.primary)
+  try {
+    const [locales, site] = await Promise.all([
+      API_CLIENT.get('locales').json(),
+      API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
+    ])
+    state.locales = sortBy(locales ?? [], ['nativeName', 'name'])
+    state.primary = site?.locales?.primary ?? 'en'
+    state.forcePrefix = site?.locales?.forcePrefix ?? false
+    state.active = [...(site?.locales?.active ?? [])]
+    // -> The primary locale is always active, and its toggle is disabled to keep it that way
+    if (!state.active.includes(state.primary)) {
+      state.active.push(state.primary)
+    }
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.locale.loadFailed'),
+      caption: err.message
+    })
   }
   $q.loading.hide()
   state.loading--
 }
 
 async function save () {
-  state.loading = true
-  const respRaw = await APOLLO_CLIENT.mutate({
-    mutation: `
-      mutation saveLocaleSettings (
-        $locale: String!
-        $autoUpdate: Boolean!
-        $namespacing: Boolean!
-        $namespaces: [String]!
-        ) {
-        localization {
-          updateLocale(
-            locale: $locale
-            autoUpdate: $autoUpdate
-            namespacing: $namespacing
-            namespaces: $namespaces
-            ) {
-            responseResult {
-              succeeded
-              errorCode
-              slug
-              message
-            }
-          }
+  if (state.loading > 0) { return }
+
+  state.loading++
+  try {
+    // -> The primary locale is always active, even if the user just switched to an inactive one
+    const active = [...new Set(state.active)]
+    if (!active.includes(state.primary)) {
+      active.push(state.primary)
+    }
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
+      json: {
+        locales: {
+          primary: state.primary,
+          active,
+          forcePrefix: state.forcePrefix
         }
       }
-    `,
-    variables: {
-      locale: state.selectedLocale,
-      autoUpdate: state.autoUpdate,
-      namespacing: state.namespacing,
-      namespaces: state.namespaces
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.locale.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
-  })
-  const resp = respRaw?.data?.localization?.updateLocale?.responseResult || {}
-  if (resp.succeeded) {
+    state.active = active
     $q.notify({
       type: 'positive',
-      message: 'Locale settings updated successfully.'
+      message: t('admin.locale.saveSuccess')
     })
-  } else {
+    await adminStore.fetchSites()
+    if (adminStore.currentSiteId === siteStore.id) {
+      siteStore.loadSite(window.location.hostname)
+    }
+  } catch (err) {
     $q.notify({
       type: 'negative',
-      message: resp.message
+      message: err.message
     })
   }
-  state.loading = false
+  state.loading--
 }
 
 // MOUNTED

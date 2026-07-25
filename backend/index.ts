@@ -141,6 +141,10 @@ async function postBoot() {
   await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
 
+  // -> Must follow the sites cache: every site gets a row per installed block
+  await WIKI.models.blocks.refreshFromDisk()
+  await WIKI.models.blocks.syncAllSites()
+
   await WIKI.dbManager.subscribeToNotifications()
   await WIKI.scheduler.start()
 }
@@ -174,11 +178,13 @@ async function initHTTPServer() {
       //    its `Plugin` type is not importable to state this more precisely.)
       plugins: [[ajvFormats.default, {}] as any],
       onCreate: (ajv: any) => {
+        // -> Accepts the shorthand, alpha and full forms a color picker can produce:
+        //    #RGB, #RGBA, #RRGGBB and #RRGGBBAA
         ajv.addFormat('hexcolor', (data: unknown) => {
-          // FIXME: pre-existing bug — this is inverted: strings have no `.test()` method, it
-          // belongs to RegExp. Any value reaching this format validator throws a TypeError.
-          // Preserved as-is; the fix is `/#[a-fA-F0-9]{6}/.test(data)`.
-          return typeof data === 'string' && (data as any).test(/#[a-fA-F0-9]{6}/)
+          return (
+            typeof data === 'string' &&
+            /^#(?:[a-fA-F0-9]{3,4}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})$/.test(data)
+          )
         })
       }
     },

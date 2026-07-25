@@ -315,12 +315,11 @@ q-page.admin-mail
 </template>
 
 <script setup>
-import { cloneDeep, toSafeInteger } from 'lodash-es'
-
+import { toMerged } from 'es-toolkit/object'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
@@ -348,22 +347,31 @@ useMeta({
 
 // DATA
 
-const state = reactive({
-  config: {
+/**
+ * Fallbacks for config keys the API may not return yet, so that every control renders with a
+ * defined value. Must mirror the mail defaults seeded by the backend.
+ */
+function defaultConfig () {
+  return {
     senderName: '',
     senderEmail: '',
     defaultBaseURL: '',
     host: '',
-    port: 0,
-    secure: false,
-    verifySSL: false,
+    port: 465,
+    name: '',
+    secure: true,
+    verifySSL: true,
     user: '',
     pass: '',
     useDKIM: false,
     dkimDomainName: '',
     dkimKeySelector: '',
     dkimPrivateKey: ''
-  },
+  }
+}
+
+const state = reactive({
+  config: defaultConfig(),
   testEmail: '',
   testLoading: false,
   loading: 0
@@ -373,32 +381,11 @@ const state = reactive({
 async function load () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getMailConfig {
-          mailConfig {
-            senderName
-            senderEmail
-            defaultBaseURL
-            host
-            port
-            secure
-            verifySSL
-            user
-            pass
-            useDKIM
-            dkimDomainName
-            dkimKeySelector
-            dkimPrivateKey
-          }
-        }
-      `,
-      fetchPolicy: 'network-only'
-    })
-    if (!resp?.data?.mailConfig) {
+    const resp = await API_CLIENT.get('mail/config').json()
+    if (!resp) {
       throw new Error('Failed to fetch mail config.')
     }
-    state.config = cloneDeep(resp.data.mailConfig)
+    state.config = toMerged(defaultConfig(), resp)
     adminStore.info.isMailConfigured = state.config?.host?.length > 2
   } catch (err) {
     $q.notify({
@@ -415,54 +402,13 @@ async function save () {
 
   state.loading++
   try {
-    await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveMailConfig (
-          $senderName: String!
-          $senderEmail: String!
-          $defaultBaseURL: String!
-          $host: String!
-          $port: Int!
-          $name: String!
-          $secure: Boolean!
-          $verifySSL: Boolean!
-          $user: String!
-          $pass: String!
-          $useDKIM: Boolean!
-          $dkimDomainName: String!
-          $dkimKeySelector: String!
-          $dkimPrivateKey: String!
-        ) {
-          updateMailConfig (
-            senderName: $senderName
-            senderEmail: $senderEmail
-            defaultBaseURL: $defaultBaseURL
-            host: $host
-            port: $port
-            name: $name
-            secure: $secure
-            verifySSL: $verifySSL
-            user: $user
-            pass: $pass
-            useDKIM: $useDKIM
-            dkimDomainName: $dkimDomainName
-            dkimKeySelector: $dkimKeySelector
-            dkimPrivateKey: $dkimPrivateKey
-          ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
+    const resp = await API_CLIENT.put('mail/config', {
+      json: {
         senderName: state.config.senderName || '',
         senderEmail: state.config.senderEmail || '',
         defaultBaseURL: state.config.defaultBaseURL || '',
         host: state.config.host || '',
-        port: toSafeInteger(state.config.port) || 0,
+        port: Number.parseInt(state.config.port, 10) || 465,
         name: state.config.name || '',
         secure: state.config.secure ?? false,
         verifySSL: state.config.verifySSL ?? false,
@@ -473,7 +419,10 @@ async function save () {
         dkimKeySelector: state.config.dkimKeySelector || '',
         dkimPrivateKey: state.config.dkimPrivateKey || ''
       }
-    })
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.mail.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+    }
     $q.notify({
       type: 'positive',
       message: t('admin.mail.saveSuccess')
@@ -495,45 +444,13 @@ function editTemplate (tmplId) {
   })
 }
 
-async function sendTest () {
-  state.loading++
-  try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation sentMailTest (
-          $recipientEmail: String!
-          ) {
-          sendMailTest(
-            recipientEmail: $recipientEmail
-          ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        recipientEmail: state.testEmail
-      }
-    })
-    if (!resp?.data?.sendMailTest?.operation?.succeeded) {
-      throw new Error(resp?.data?.sendMailTest?.operation?.message || 'An unexpected error occurred.')
-    }
-
-    state.testEmail = ''
-    $q.notify({
-      type: 'positive',
-      message: t('admin.mail.sendTestSuccess')
-    })
-  } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: err.message
-    })
-  }
-  state.loading--
+function sendTest () {
+  // TODO: the backend has no SMTP transport yet, so there is nothing to send the test email with.
+  // Only the mail configuration itself is wired up (GET / PUT /_api/mail/config).
+  $q.notify({
+    type: 'warning',
+    message: t('admin.mail.sendTestUnavailable')
+  })
 }
 
 // MOUNTED

@@ -79,16 +79,15 @@ q-page.admin-flags
               unchecked-icon='las la-times'
               :label='t(`admin.blocks.isEnabled`)'
               :aria-label='t(`admin.blocks.isEnabled`)'
-              disable
               )
 </template>
 
 <script setup>
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { defineAsyncComponent, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, watch } from 'vue'
 
-import { cloneDeep, pick } from 'lodash-es'
+import { pick } from 'es-toolkit/object'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
@@ -131,34 +130,12 @@ watch(() => adminStore.currentSiteId, (newValue) => {
 async function load () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getSiteBlocks (
-          $siteId: UUID!
-        ) {
-        blocks (
-          siteId: $siteId
-        ) {
-          id
-          block
-          name
-          description
-          icon
-          isEnabled
-          isCustom
-          config
-        }
-      }`,
-      variables: {
-        siteId: adminStore.currentSiteId
-      },
-      fetchPolicy: 'network-only'
-    })
-    state.blocks = cloneDeep(resp?.data?.blocks)
+    state.blocks = await API_CLIENT.get(`sites/${adminStore.currentSiteId}/blocks`).json() ?? []
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to fetch blocks state.'
+      message: t('admin.blocks.loadFailed'),
+      caption: err.message
     })
   }
   $q.loading.hide()
@@ -168,41 +145,22 @@ async function load () {
 async function save () {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveSiteBlocks (
-          $siteId: UUID!
-          $states: [BlockStateInput]!
-          ) {
-          setBlocksState (
-            siteId: $siteId,
-            states: $states
-            ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        siteId: adminStore.currentSiteId,
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/blocks`, {
+      json: {
         states: state.blocks.map(bl => pick(bl, ['id', 'isEnabled']))
       }
-    })
-    if (respRaw?.data?.setBlocksState?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.blocks.saveSuccess')
-      })
-    } else {
-      throw new Error(respRaw?.data?.setBlocksState?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.blocks.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.blocks.saveSuccess')
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to save site blocks state',
+      message: t('admin.blocks.saveFailed'),
       caption: err.message
     })
   }
@@ -214,11 +172,43 @@ async function refresh () {
 }
 
 function addBlock () {
-
+  // TODO: registering a custom block means uploading a compiled component, which needs an upload
+  // endpoint that does not exist yet. Built-in blocks come from the compiled block manifest.
+  $q.notify({
+    type: 'warning',
+    message: t('admin.blocks.addUnavailable')
+  })
 }
 
 function deleteBlock (id) {
-
+  const block = state.blocks.find(bl => bl.id === id)
+  $q.dialog({
+    title: t('admin.blocks.delete'),
+    message: t('admin.blocks.deleteConfirm', { blockName: block?.name ?? '' }),
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    state.loading++
+    try {
+      const resp = await API_CLIENT.delete(`sites/${adminStore.currentSiteId}/blocks/${id}`)
+      if (!resp?.ok) {
+        throw new Error((await resp.json())?.message || 'An unexpected error occured.')
+      }
+      $q.notify({
+        type: 'positive',
+        message: t('admin.blocks.deleteSuccess')
+      })
+      await load()
+    } catch (err) {
+      // -> ky throws above 400 (e.g. 409 for a built-in block), with the reason in the body
+      const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
+      $q.notify({
+        type: 'negative',
+        message: apiMessage || err.message
+      })
+    }
+    state.loading--
+  })
 }
 
 // MOUNTED

@@ -57,6 +57,30 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * USER DEFAULTS - Instance-wide defaults applied to new users
+   */
+  app.addSchema({
+    $id: 'UserDefaults',
+    type: 'object',
+    properties: {
+      timezone: {
+        type: 'string',
+        description: 'IANA time zone name, e.g. `America/New_York`.',
+        maxLength: 255
+      },
+      dateFormat: {
+        type: 'string',
+        description: 'Empty string means the locale default.',
+        enum: ['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD']
+      },
+      timeFormat: {
+        type: 'string',
+        enum: ['12h', '24h']
+      }
+    }
+  })
+
+  /**
    * USER - All fields
    */
   app.addSchema({
@@ -77,10 +101,47 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             additionalProperties: true
           },
           auth: {
-            type: 'string'
+            type: 'array',
+            description:
+              'Authentication providers linked to this user. Secrets are never included — `config.isPasswordSet` and `config.tfaIsActive` report their state instead.',
+            items: {
+              type: 'object',
+              properties: {
+                authId: {
+                  type: 'string',
+                  format: 'uuid'
+                },
+                authName: {
+                  type: 'string'
+                },
+                strategyKey: {
+                  type: 'string'
+                },
+                strategyIcon: {
+                  type: 'string'
+                },
+                config: {
+                  type: 'object',
+                  additionalProperties: true
+                }
+              }
+            }
           },
-          passkeys: {
-            type: 'string'
+          groups: {
+            type: 'array',
+            description: 'Groups this user belongs to.',
+            items: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid'
+                },
+                name: {
+                  type: 'string'
+                }
+              }
+            }
           }
         }
       }

@@ -12,6 +12,8 @@ async function routes(app: FastifyInstance) {
     {
       schema: {
         summary: 'List all site authentication strategies',
+        description:
+          'Ordered by the position configured for the site. `activeStrategy` holds the per-instance settings, nested under it `strategy` holds the module definition.',
         tags: ['Authentication'],
         params: {
           type: 'object',
@@ -20,7 +22,8 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               format: 'uuid'
             }
-          }
+          },
+          required: ['siteId']
         },
         querystring: {
           type: 'object',
@@ -28,6 +31,61 @@ async function routes(app: FastifyInstance) {
             visibleOnly: {
               type: 'boolean',
               default: false
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'List of site authentication strategies',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid'
+                },
+                order: {
+                  type: 'integer'
+                },
+                isVisible: {
+                  type: 'boolean'
+                },
+                activeStrategy: {
+                  type: 'object',
+                  properties: {
+                    displayName: {
+                      type: 'string'
+                    },
+                    registration: {
+                      type: 'boolean'
+                    },
+                    strategy: {
+                      type: 'object',
+                      properties: {
+                        key: {
+                          type: 'string'
+                        },
+                        title: {
+                          type: 'string'
+                        },
+                        icon: {
+                          type: 'string'
+                        },
+                        color: {
+                          type: 'string'
+                        },
+                        useForm: {
+                          type: 'boolean'
+                        },
+                        usernameType: {
+                          type: 'string'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -39,19 +97,28 @@ async function routes(app: FastifyInstance) {
         return reply.badRequest('Invalid Site ID')
       }
       const activeStrategies = await WIKI.models.authentication.getStrategies({ enabledOnly: true })
+      // -> A site created before it had strategies configured has no list at all
+      const configuredStrategies = site.config.authStrategies ?? []
       const siteStrategies = activeStrategies
         .map((str: any) => {
           const authModule = WIKI.data.authentication.find((m: any) => m.key === str.module)
-          const siteStr = site.config.authStrategies.find((s: any) => s.id === str.id) || {}
+          const siteStr = configuredStrategies.find((s: any) => s.id === str.id) || {}
           return {
             id: str.id,
-            displayName: str.displayName,
-            useForm: authModule.useForm,
-            usernameType: authModule.usernameType,
-            color: authModule.color,
-            icon: authModule.icon,
             order: siteStr.order ?? 0,
-            isVisible: siteStr.isVisible ?? false
+            isVisible: siteStr.isVisible ?? false,
+            activeStrategy: {
+              displayName: str.displayName,
+              registration: str.registration,
+              strategy: {
+                key: authModule?.key ?? str.module,
+                title: authModule?.title ?? str.module,
+                icon: authModule?.icon ?? '',
+                color: authModule?.color ?? 'primary',
+                useForm: authModule?.useForm ?? false,
+                usernameType: authModule?.usernameType ?? 'email'
+              }
+            }
           }
         })
         .sort((a: any, b: any) => a.order - b.order)

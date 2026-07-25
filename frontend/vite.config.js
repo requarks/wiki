@@ -18,28 +18,10 @@ export default defineConfig(({ mode }) => {
       assetsDir: '_assets',
       chunkSizeWarningLimit: 5000,
       dynamicImportVarsOptions: {
-        warnOnError: true,
         include: ['!/_blocks/**']
       },
       outDir: '../assets',
-      target: 'es2022',
-      ...(mode === 'production') && {
-        rollupOptions: {
-          output: {
-            manualChunks (id) {
-              if (id.includes('lodash')) {
-                return 'lodash'
-              // } else if (id.includes('quasar')) {
-              //   return 'quasar'
-              } else if (id.includes('pages/Admin')) {
-                return 'admin'
-              } else if (id.includes('pages/Profile')) {
-                return 'profile'
-              }
-            }
-          }
-        }
-      }
+      target: 'es2022'
     },
     optimizeDeps: {
       include: [

@@ -30,6 +30,8 @@ q-layout(view='hHh lpR fFf', container)
         text-color='white'
         :label='t(`common.actions.save`)'
         icon='las la-check'
+        :loading='state.isLoading'
+        @click='save'
       )
   q-drawer.bg-dark-6(:model-value='true', :width='250', dark)
     q-list(padding, v-show='!state.isLoading')
@@ -483,13 +485,17 @@ q-layout(view='hHh lpR fFf', container)
                   :label='t(`common.actions.edit`)'
                   no-caps
                   )
+                //- Hidden for system users: the guest account's membership is fixed, and the API
+                //- refuses to change it either way
                 q-btn.acrylic-btn(
                   v-if='!props.row.isSystem'
                   flat
                   icon='las la-user-minus'
                   color='accent'
+                  :aria-label='t(`admin.groups.unassignUser`)'
                   @click='unassignUser(props.row)'
                   )
+                  q-tooltip(anchor='center left' self='center right') {{ t('admin.groups.unassignUser') }}
 
         .flex.flex-center.q-mt-md(v-if='usersTotalPages > 1')
           q-pagination(
@@ -503,9 +509,7 @@ q-layout(view='hHh lpR fFf', container)
 
 <script setup>
 
-import { DateTime } from 'luxon'
 import { v4 as uuid } from 'uuid'
-import { cloneDeep, some } from 'lodash-es'
 import { fileOpen } from 'browser-fs-access'
 
 import { useI18n } from 'vue-i18n'
@@ -515,6 +519,8 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
+
+import UserSearchDialog from '@/components/UserSearchDialog.vue'
 
 // QUASAR
 
@@ -807,7 +813,14 @@ function checkRoute () {
 
 function humanizeDate (val) {
   if (!val) { return '---' }
-  return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_FULL)
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  })
 }
 
 function getRuleModeColor (mode) {
@@ -862,48 +875,41 @@ function refresh () {
 async function fetchGroup () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query adminFetchGroup (
-          $id: UUID!
-          ) {
-          groupById(
-            id: $id
-          ) {
-            id
-            name
-            redirectOnLogin
-            redirectOnFirstLogin
-            redirectOnLogout
-            isSystem
-            permissions
-            rules {
-              id
-              name
-              path
-              roles
-              match
-              mode
-              locales
-              sites
-            }
-            userCount
-            createdAt
-            updatedAt
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.overlayOpts.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    if (resp?.data?.groupById) {
-      state.group = cloneDeep(resp.data.groupById)
-      state.usersTotal = state.group.userCount ?? 0
-    } else {
+    const resp = await API_CLIENT.get(`groups/${adminStore.overlayOpts.id}`).json()
+    if (!resp?.id) {
       throw new Error('An unexpected error occured while fetching group details.')
     }
+    state.group = resp
+    state.usersTotal = state.group.userCount ?? 0
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: err.message
+    })
+  }
+  state.isLoading = false
+}
+
+async function save () {
+  state.isLoading = true
+  try {
+    const resp = await API_CLIENT.put(`groups/${state.group.id}`, {
+      json: {
+        name: state.group.name,
+        redirectOnLogin: state.group.redirectOnLogin ?? '',
+        redirectOnFirstLogin: state.group.redirectOnFirstLogin ?? '',
+        redirectOnLogout: state.group.redirectOnLogout ?? '',
+        permissions: state.group.permissions ?? [],
+        rules: state.group.rules ?? []
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.groups.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.groups.saveSuccess')
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -979,8 +985,8 @@ async function importRules () {
           match: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match) ? r.match : 'START',
           roles: r.roles || [],
           path: r.path || '',
-          locales: r.locales.filter(l => some(adminStore.locales, ['code', l])),
-          sites: r.sites.filter(s => some(adminStore.sites, ['id', s]))
+          locales: r.locales.filter(l => adminStore.locales.some(loc => loc.code === l)),
+          sites: r.sites.filter(s => adminStore.sites.some(site => site.id === s))
         }))
       ]
       $q.notify({
@@ -999,49 +1005,18 @@ async function importRules () {
 async function refreshUsers () {
   state.isLoadingUsers = true
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query adminFetchGroupUsers (
-          $filter: String
-          $page: Int
-          $pageSize: Int
-          $groupId: UUID!
-          ) {
-          groupById (
-            id: $groupId
-          ) {
-            id
-            userCount
-            users (
-              filter: $filter
-              page: $page
-              pageSize: $pageSize
-            ) {
-              id
-              name
-              email
-              isSystem
-              isActive
-              createdAt
-              lastLoginAt
-            }
-          }
-        }
-      `,
-      variables: {
-        filter: state.usersFilter,
+    const resp = await API_CLIENT.get(`groups/${adminStore.overlayOpts.id}/users`, {
+      searchParams: {
+        ...(state.usersFilter ? { filter: state.usersFilter } : {}),
         page: state.usersPage,
-        pageSize: state.usersPageSize,
-        groupId: adminStore.overlayOpts.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    if (resp?.data?.groupById?.users) {
-      state.usersTotal = resp.data.groupById.userCount ?? 0
-      state.users = cloneDeep(resp.data.groupById.users)
-    } else {
+        limit: state.usersPageSize
+      }
+    }).json()
+    if (!Array.isArray(resp?.users)) {
       throw new Error('An unexpected error occured while fetching group users.')
     }
+    state.usersTotal = resp.total ?? 0
+    state.users = resp.users
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -1052,11 +1027,73 @@ async function refreshUsers () {
 }
 
 function assignUser () {
-
+  $q.dialog({
+    component: UserSearchDialog,
+    componentProps: {
+      title: t('admin.groups.assignUserTitle'),
+      // -> Only offer users the API would actually accept: not already members, not system users
+      assignableToGroupId: state.group.id
+    }
+  }).onOk(async (users) => {
+    state.isLoadingUsers = true
+    // -> Assignment is one user per request, so a failure partway through still leaves the
+    //    successful ones assigned; report both sides rather than a single all-or-nothing message.
+    let assigned = 0
+    for (const usr of users) {
+      try {
+        const resp = await API_CLIENT.post(`groups/${state.group.id}/users/${usr.id}`).json()
+        if (!resp?.ok) {
+          throw new Error(resp?.message || 'An unexpected error occured.')
+        }
+        assigned++
+      } catch (err) {
+        // -> ky throws above 400, with the reason in the body
+        const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
+        $q.notify({
+          type: 'negative',
+          message: t('admin.groups.assignUserFailed', { userName: usr.name }),
+          caption: apiMessage || err.message
+        })
+      }
+    }
+    if (assigned > 0) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.groups.assignUserSuccess', { count: assigned })
+      })
+    }
+    await refreshUsers()
+  })
 }
 
-function unassignUser () {
-
+async function unassignUser (user) {
+  $q.dialog({
+    title: t('admin.groups.unassignUser'),
+    message: t('admin.groups.unassignUserConfirm', { userName: user.name }),
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    state.isLoadingUsers = true
+    try {
+      const resp = await API_CLIENT.delete(`groups/${state.group.id}/users/${user.id}`)
+      if (!resp?.ok) {
+        throw new Error((await resp.json())?.message || 'An unexpected error occured.')
+      }
+      $q.notify({
+        type: 'positive',
+        message: t('admin.groups.unassignUserSuccess')
+      })
+      await refreshUsers()
+    } catch (err) {
+      // -> ky throws above 400 (e.g. 409 for the last root admin), with the reason in the body
+      const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
+      $q.notify({
+        type: 'negative',
+        message: apiMessage || err.message
+      })
+    }
+    state.isLoadingUsers = false
+  })
 }
 
 // MOUNTED

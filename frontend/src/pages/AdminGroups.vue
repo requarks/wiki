@@ -97,10 +97,9 @@ q-page.admin-groups
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useAdminStore } from '@/stores/admin'
@@ -191,22 +190,7 @@ async function load () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getGroups {
-          groups {
-            id
-            name
-            isSystem
-            userCount
-            createdAt
-            updatedAt
-          }
-        }
-      `,
-      fetchPolicy: 'network-only'
-    })
-    state.groups = cloneDeep(resp?.data?.groups)
+    state.groups = await API_CLIENT.get('groups').json()
   } catch (err) {
     $q.notify({
       type: 'negative',

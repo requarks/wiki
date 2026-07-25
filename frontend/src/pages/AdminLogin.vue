@@ -65,7 +65,7 @@ q-page.admin-login
             q-item-label(caption) {{t(`admin.login.bypassScreenHint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='state.config.authAutoLogin'
+              v-model='state.config.autoLogin'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
@@ -79,7 +79,7 @@ q-page.admin-login
             q-item-label(caption) {{t(`admin.login.bypassUnauthorizedHint`)}}
           q-item-section(avatar)
             q-toggle(
-              v-model='state.config.authBypassUnauthorized'
+              v-model='state.config.bypassUnauthorized'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
@@ -180,13 +180,13 @@ q-page.admin-login
 </template>
 
 <script setup>
-import { cloneDeep } from 'lodash-es'
+import { toMerged } from 'es-toolkit/object'
 
 import { Sortable } from 'sortablejs-vue3'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -212,17 +212,25 @@ useMeta({
 
 // DATA
 
-const state = reactive({
-  invalidCharsRegex: /^[^<>"]+$/,
-  loading: 0,
-  config: {
-    authAutoLogin: false,
-    authHideLocal: false,
-    authBypassUnauthorized: false,
+/**
+ * Fallbacks for keys a site may not have stored yet, so that every control renders with a defined
+ * value. Must mirror the `auth` defaults used by the backend when creating a site.
+ */
+function defaultConfig () {
+  return {
+    autoLogin: false,
+    bypassUnauthorized: false,
+    hideLocal: false,
     loginRedirect: '/',
     welcomeRedirect: '/',
     logoutRedirect: '/'
-  },
+  }
+}
+
+const state = reactive({
+  invalidCharsRegex: /^[^<>"]+$/,
+  loading: 0,
+  config: defaultConfig(),
   providers: []
 })
 
@@ -242,34 +250,22 @@ watch(() => adminStore.currentSiteId, (newValue) => {
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getSiteAuthStrategies (
-        $siteId: UUID!
-      ) {
-        authSiteStrategies(
-          siteId: $siteId
-          visibleOnly: false
-        ) {
-          id
-          activeStrategy {
-            displayName
-            strategy {
-              key
-              title
-              icon
-            }
-          }
-          isVisible
-        }
-      }
-    `,
-    variables: {
-      siteId: adminStore.currentSiteId
-    },
-    fetchPolicy: 'network-only'
-  })
-  state.providers = cloneDeep(resp?.data?.authSiteStrategies)
+  try {
+    const [site, providers] = await Promise.all([
+      API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json(),
+      API_CLIENT.get(`sites/${adminStore.currentSiteId}/auth/strategies`, {
+        searchParams: { visibleOnly: false }
+      }).json()
+    ])
+    state.config = toMerged(defaultConfig(), site?.auth ?? {})
+    state.providers = providers ?? []
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.login.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
@@ -277,31 +273,27 @@ async function load () {
 async function save () {
   state.loading++
   try {
-    await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveLoginConfig (
-          $id: UUID!
-          $patch: SiteUpdateInput!
-        ) {
-          updateSite (
-            id: $id
-            patch: $patch
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.currentSiteId,
-        patch: {
-          authAutoLogin: state.config.authAutoLogin ?? false,
-          authEnforce2FA: state.config.authEnforce2FA ?? false
-        }
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
+      json: {
+        auth: {
+          autoLogin: state.config.autoLogin ?? false,
+          bypassUnauthorized: state.config.bypassUnauthorized ?? false,
+          hideLocal: state.config.hideLocal ?? false,
+          loginRedirect: state.config.loginRedirect ?? '/',
+          welcomeRedirect: state.config.welcomeRedirect ?? '/',
+          logoutRedirect: state.config.logoutRedirect ?? '/'
+        },
+        // -> Order comes from the current position in the drag-sortable list
+        authStrategies: state.providers.map((provider, index) => ({
+          id: provider.id,
+          order: index,
+          isVisible: provider.isVisible ?? false
+        }))
       }
-    })
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.login.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+    }
     $q.notify({
       type: 'positive',
       message: t('admin.login.saveSuccess')
@@ -321,57 +313,13 @@ function updateAuthPosition (ev) {
   state.providers.splice(ev.newIndex, 0, item)
 }
 
-async function uploadBg () {
-  const input = document.createElement('input')
-  input.type = 'file'
-
-  input.onchange = async e => {
-    state.loading++
-    try {
-      const resp = await APOLLO_CLIENT.mutate({
-        context: {
-          uploadMode: true
-        },
-        mutation: `
-          mutation uploadLoginBg (
-            $id: UUID!
-            $image: Upload!
-          ) {
-            uploadSiteLoginBg (
-              id: $id
-              image: $image
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          id: adminStore.currentSiteId,
-          image: e.target.files[0]
-        }
-      })
-      if (resp?.data?.uploadSiteLoginBg?.operation?.succeeded) {
-        $q.notify({
-          type: 'positive',
-          message: t('admin.login.bgUploadSuccess')
-        })
-      } else {
-        throw new Error(resp?.data?.uploadSiteLoginBg?.operation?.message || 'An unexpected error occured.')
-      }
-    } catch (err) {
-      $q.notify({
-        type: 'negative',
-        message: 'Failed to upload login background image.',
-        caption: err.message
-      })
-    }
-    state.loading--
-  }
-
-  input.click()
+function uploadBg () {
+  // TODO: needs a multipart upload endpoint for site assets, which does not exist yet — the same
+  // blocker as the logo and favicon uploads in the general view.
+  $q.notify({
+    type: 'warning',
+    message: t('admin.login.bgUploadUnavailable')
+  })
 }
 
 // MOUNTED

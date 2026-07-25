@@ -257,7 +257,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
-import { cloneDeep } from 'lodash-es'
+import { toMerged } from 'es-toolkit/object'
 
 import { useAdminStore } from '@/stores/admin'
 import { useEditorStore } from '@/stores/editor'
@@ -279,22 +279,30 @@ const { t } = useI18n()
 
 // DATA
 
-const state = reactive({
-  config: {
-    allowHTML: false,
-    linkify: false,
-    lineBreaks: false,
+/**
+ * Fallbacks for options a site may not have stored yet, so that every control renders with a
+ * defined value. Must mirror the markdown defaults used by the backend when creating a site.
+ */
+function defaultConfig () {
+  return {
+    allowHTML: true,
+    linkify: true,
+    lineBreaks: true,
     typographer: false,
     quotes: 'english',
-    underline: false,
+    underline: true,
     tabWidth: 2,
     latexEngine: 'katex',
-    multimdTable: false,
+    multimdTable: true,
     plantuml: false,
-    plantumlServerUrl: 'https://',
+    plantumlServerUrl: 'https://www.plantuml.com/plantuml/',
     kroki: false,
-    krokiServerUrl: 'https://'
-  },
+    krokiServerUrl: 'https://kroki.io'
+  }
+}
+
+const state = reactive({
+  config: defaultConfig(),
   loading: 0
 })
 
@@ -328,28 +336,11 @@ async function load () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getEditorsState (
-          $siteId: UUID!
-        ) {
-        siteById (
-          id: $siteId
-        ) {
-          id
-          editors {
-            markdown {
-              config
-            }
-          }
-        }
-      }`,
-      variables: {
-        siteId: adminStore.currentSiteId
-      },
-      fetchPolicy: 'network-only'
-    })
-    state.config = cloneDeep(resp?.data?.siteById?.editors?.markdown?.config)
+    const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
+    if (!resp?.editors?.markdown?.config) {
+      throw new Error('Failed to fetch markdown editor configuration.')
+    }
+    state.config = toMerged(defaultConfig(), resp.editors.markdown.config)
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -363,43 +354,23 @@ async function load () {
 async function save () {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveEditorState (
-          $id: UUID!
-          $patch: SiteUpdateInput!
-          ) {
-          updateSite (
-            id: $id,
-            patch: $patch
-            ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.currentSiteId,
-        patch: {
-          editors: {
-            markdown: { config: state.config }
-          }
+    // -> Only `config` is sent, so the editor's active state is left untouched by the merge
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
+      json: {
+        editors: {
+          markdown: { config: state.config }
         }
       }
-    })
-    if (respRaw?.data?.updateSite?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.editors.markdown.saveSuccess')
-      })
-      editorStore.$patch({ configIsLoaded: false })
-      close()
-    } else {
-      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.editors.markdown.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.editors.markdown.saveSuccess')
+    })
+    editorStore.$patch({ configIsLoaded: false })
+    close()
   } catch (err) {
     $q.notify({
       type: 'negative',

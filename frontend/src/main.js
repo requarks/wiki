@@ -7,6 +7,7 @@ import { initializeComponents } from './boot/components'
 import { initializeEventBus } from './boot/eventbus'
 import { initializeExternals } from './boot/externals'
 import { initializeI18n } from './boot/i18n'
+import { initializeTemporal } from './boot/temporal'
 import quasarIconSet from 'quasar/icon-set/mdi-v7'
 
 // Import icon libraries
@@ -19,6 +20,9 @@ import 'quasar/src/css/index.sass'
 import './css/app.scss'
 
 import RootApp from './App.vue'
+
+// Must come first: everything below may use Temporal, directly or indirectly.
+await initializeTemporal()
 
 const router = initializeRouter()
 const store = initializeStore(router)

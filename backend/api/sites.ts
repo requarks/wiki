@@ -3,6 +3,32 @@ import { CustomError } from '../helpers/common.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
+ * Site properties stored in the `config` JSONB column rather than as their own table column.
+ * Anything listed here is merged into the existing config on update.
+ */
+const SITE_CONFIG_KEYS = [
+  'title',
+  'description',
+  'company',
+  'contentLicense',
+  'footerExtra',
+  'pageExtensions',
+  'pageCasing',
+  'logoText',
+  'sitemap',
+  'discoverable',
+  'auth',
+  'authStrategies',
+  'defaults',
+  'editors',
+  'features',
+  'locales',
+  'robots',
+  'theme',
+  'uploads'
+] as const
+
+/**
  * Sites API Routes
  */
 async function routes(app: FastifyInstance) {
@@ -30,12 +56,7 @@ async function routes(app: FastifyInstance) {
         ...s.config,
         id: s.id,
         hostname: s.hostname,
-        isEnabled: s.isEnabled,
-        editors: {
-          asciidoc: s.config.editors?.asciidoc?.isActive ?? false,
-          markdown: s.config.editors?.markdown?.isActive ?? false,
-          wysiwyg: s.config.editors?.wysiwyg?.isActive ?? false
-        }
+        isEnabled: s.isEnabled
       }))
     }
   )
@@ -101,12 +122,7 @@ async function routes(app: FastifyInstance) {
           ...site.config,
           id: site.id,
           hostname: site.hostname,
-          isEnabled: site.isEnabled,
-          editors: {
-            asciidoc: site.config.editors?.asciidoc?.isActive ?? false,
-            markdown: site.config.editors?.markdown?.isActive ?? false,
-            wysiwyg: site.config.editors?.wysiwyg?.isActive ?? false
-          }
+          isEnabled: site.isEnabled
         }
       } else {
         return reply.notFound('Site does not exist.')
@@ -219,7 +235,29 @@ async function routes(app: FastifyInstance) {
    */
   app.put<{
     Params: { siteId: string }
-    Body: { isEnabled?: boolean; hostname?: string; title?: string }
+    Body: {
+      isEnabled?: boolean
+      hostname?: string
+      title?: string
+      description?: string
+      company?: string
+      contentLicense?: string
+      footerExtra?: string
+      pageExtensions?: string[]
+      pageCasing?: boolean
+      logoText?: boolean
+      sitemap?: boolean
+      discoverable?: boolean
+      auth?: Record<string, any>
+      authStrategies?: Array<{ id: string; order?: number; isVisible?: boolean }>
+      defaults?: Record<string, any>
+      editors?: Record<string, { isActive?: boolean; config?: Record<string, any> }>
+      features?: Record<string, any>
+      locales?: { primary?: string; active?: string[]; forcePrefix?: boolean }
+      robots?: Record<string, any>
+      theme?: Record<string, any>
+      uploads?: Record<string, any>
+    }
   }>(
     '/:siteId',
     {
@@ -229,6 +267,16 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Update a site',
         tags: ['Sites'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
         body: {
           type: 'object',
           properties: {
@@ -245,6 +293,64 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               minLength: 1,
               maxLength: 255
+            },
+            description: {
+              type: 'string'
+            },
+            company: {
+              type: 'string'
+            },
+            contentLicense: {
+              type: 'string'
+            },
+            footerExtra: {
+              type: 'string'
+            },
+            pageExtensions: {
+              type: 'array',
+              items: {
+                type: 'string',
+                pattern: '^[a-z0-9]+$'
+              }
+            },
+            pageCasing: {
+              type: 'boolean'
+            },
+            logoText: {
+              type: 'boolean'
+            },
+            sitemap: {
+              type: 'boolean'
+            },
+            discoverable: {
+              type: 'boolean'
+            },
+            auth: {
+              $ref: 'Site#/properties/auth'
+            },
+            authStrategies: {
+              $ref: 'Site#/properties/authStrategies'
+            },
+            defaults: {
+              $ref: 'Site#/properties/defaults'
+            },
+            editors: {
+              $ref: 'Site#/properties/editors'
+            },
+            features: {
+              $ref: 'Site#/properties/features'
+            },
+            locales: {
+              $ref: 'Site#/properties/locales'
+            },
+            robots: {
+              $ref: 'Site#/properties/robots'
+            },
+            theme: {
+              $ref: 'Site#/properties/theme'
+            },
+            uploads: {
+              $ref: 'Site#/properties/uploads'
             }
           },
           examples: [
@@ -253,11 +359,111 @@ async function routes(app: FastifyInstance) {
               title: 'My Wiki Site'
             }
           ]
+        },
+        response: {
+          200: {
+            description: 'Site updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
         }
       }
     },
-    async () => {
-      return { hello: 'world' }
+    async (req, reply) => {
+      // -> Validate inputs
+      if (req.body.title !== undefined && !/^[^<>"]+$/.test(req.body.title)) {
+        throw new CustomError('siteUpdateInvalidTitle', 'Invalid Site Title')
+      }
+
+      const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (!site) {
+        return reply.notFound('Site does not exist.')
+      }
+
+      // -> Check for duplicate hostname
+      if (
+        req.body.hostname !== undefined &&
+        req.body.hostname !== site.hostname &&
+        !(await WIKI.models.sites.isHostnameUnique(req.body.hostname))
+      ) {
+        if (req.body.hostname === '*') {
+          throw new CustomError(
+            'siteUpdateDuplicateCatchAll',
+            'A site with a catch-all hostname already exists! Cannot have 2 catch-all hostnames.'
+          )
+        } else {
+          throw new CustomError(
+            'siteUpdateDuplicateHostname',
+            'A site with a this hostname already exists! Cannot have duplicate hostnames.'
+          )
+        }
+      }
+
+      // -> Validate locales against the installed ones, and against what the site ends up with once
+      //    the patch is merged, so that a partial update cannot leave the primary locale inactive
+      if (req.body.locales) {
+        const installedCodes = (await WIKI.models.locales.getLocales()).map((lc: any) => lc.code)
+        const active = req.body.locales.active ?? site.config.locales?.active ?? []
+        const primary = req.body.locales.primary ?? site.config.locales?.primary
+
+        if (active.length < 1) {
+          throw new CustomError(
+            'siteUpdateNoActiveLocale',
+            'At least one active locale is required.'
+          )
+        }
+        const unknownCodes = [...active, primary].filter(
+          (code) => code && !installedCodes.includes(code)
+        )
+        if (unknownCodes.length > 0) {
+          throw new CustomError(
+            'siteUpdateUnknownLocale',
+            `Locale is not installed: ${[...new Set(unknownCodes)].join(', ')}`
+          )
+        }
+        if (!active.includes(primary)) {
+          throw new CustomError(
+            'siteUpdatePrimaryLocaleNotActive',
+            'The primary locale must be one of the active locales.'
+          )
+        }
+      }
+
+      // -> Split the patch between real columns and the config JSONB blob
+      const config: Record<string, any> = {}
+      for (const key of SITE_CONFIG_KEYS) {
+        if (req.body[key] !== undefined) {
+          config[key] = req.body[key]
+        }
+      }
+
+      // -> Keep the legacy `features.ratings` flag in sync with the ratings mode
+      if (config.features?.ratingsMode !== undefined) {
+        config.features.ratings = config.features.ratingsMode !== 'off'
+      }
+
+      // -> Update site
+      try {
+        await WIKI.models.sites.updateSite(req.params.siteId, {
+          hostname: req.body.hostname,
+          isEnabled: req.body.isEnabled,
+          ...(Object.keys(config).length < 1 ? {} : { config })
+        })
+        return {
+          ok: true,
+          message: 'Site updated successfully.'
+        }
+      } catch (err: any) {
+        WIKI.logger.warn(err)
+        return reply.internalServerError()
+      }
     }
   )
 
@@ -300,6 +506,14 @@ async function routes(app: FastifyInstance) {
           reply.badRequest('Site does not exist.')
         }
       } catch (err: any) {
+        // -> Pages, assets, navigation, tags and the page tree all reference the site without a
+        //    cascade, so a site still holding content cannot be removed. That is a conflict to
+        //    report, not a server fault.
+        if (err.cause?.code === '23503' || err.code === '23503') {
+          return reply.conflict(
+            'Cannot delete a site that still holds content. Delete its pages and assets first.'
+          )
+        }
         reply.send(err)
       }
     }

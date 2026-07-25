@@ -62,34 +62,22 @@ const { t } = useI18n()
 
 async function confirm () {
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation deleteGroup ($id: UUID!) {
-          deleteGroup(id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.group.id
-      }
-    })
-    if (resp?.data?.deleteGroup?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.groups.deleteSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.deleteGroup?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.delete(`groups/${props.group.id}`)
+    if (!resp?.ok) {
+      throw new Error((await resp.json())?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.groups.deleteSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    // -> ky throws for statuses above 400 (e.g. 409 for a system group), where the reason the API
+    //    gave is in the response body rather than in the error message
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
 }

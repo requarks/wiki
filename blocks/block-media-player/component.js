@@ -4,6 +4,17 @@ import { LitElement, html, css } from 'lit'
  * Block Media Player
  */
 export class BlockMediaPlayerElement extends LitElement {
+  /**
+   * Metadata for the admin area. Collected at build time into `compiled/blocks.manifest.json`,
+   * which the server reads to register the block. Values must be plain literals.
+   */
+  static definition = {
+    block: 'media-player',
+    name: 'Media Player',
+    description: 'Plays an audio or video file inline.',
+    icon: 'widescreen'
+  }
+
   static get styles() {
     return css`
       :host {

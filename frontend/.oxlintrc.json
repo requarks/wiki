@@ -13,7 +13,8 @@
     "process": "readonly",
     "chrome": "readonly",
     "API_CLIENT": "readonly",
-    "EVENT_BUS": "readonly"
+    "EVENT_BUS": "readonly",
+    "Temporal": "readonly"
   },
   "ignorePatterns": [
     "dist/**",

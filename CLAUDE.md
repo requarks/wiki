@@ -73,7 +73,8 @@ Quasar app on plain Vite (not Quasar CLI). `src/main.js` wires it up manually: r
 
 - `src/boot/` — one-time app initializers: `api.js` (creates the `ky` client with JWT refresh, exposed
   as the `API_CLIENT` global), `components.js` (global components), `eventbus.js` (`EVENT_BUS` global,
-  mitt), `externals.js`, `i18n.js`, `monaco.js`.
+  mitt), `externals.js`, `i18n.js`, `monaco.js`, `temporal.js` (conditionally polyfills `Temporal`,
+  awaited before anything else in `main.js`).
 - `src/router/` — `index.js` (router factory) and `routes.js` (the full route table; page components
   are lazily imported).
 - `src/layouts/` — `MainLayout`, `AdminLayout`, `AuthLayout`, `ProfileLayout`.
@@ -210,11 +211,30 @@ the standard-style space before parens (`function initializeRouter ()`); new and
 be oxfmt-formatted, but don't reformat untouched files as drive-by changes.
 
 Each workspace has its own `.oxlintrc.json` — the backend declares the `WIKI` global and node env;
-the frontend adds the `vue` plugin and the `API_CLIENT` / `EVENT_BUS` globals. Only the `correctness`
-category is an error.
+the frontend adds the `vue` plugin and the `API_CLIENT` / `EVENT_BUS` / `Temporal` globals. Only the
+`correctness` category is an error.
 
 Both tools handle `.ts` with no extra configuration, and the backend's oxlint config already enables
 the `typescript` plugin. oxlint does not type-check — run `npm run typecheck` for that.
+
+### Utilities and dates
+
+These apply to **every workspace**, `frontend/` included — not just the backend.
+
+- **Use `es-toolkit`, not `lodash-es`.** Installed in both `backend/` and `frontend/`.
+- **Use the native `Temporal` API, not luxon.** See [Backend patterns](#backend-patterns) for the
+  Temporal gotchas worth knowing; they apply on the frontend too.
+- **luxon and lodash-es are being removed entirely.** The migration is gradual: when you touch a file
+  that imports either one, convert that file's usages as part of the same change — but don't sweep
+  through untouched files as a drive-by. Once the last usage is gone, both dependencies get dropped.
+- Prefer real es-toolkit subpath exports (`es-toolkit/object`, `es-toolkit/array`,
+  `es-toolkit/predicate`) over `es-toolkit/compat`. Two lodash helpers are compat-only and have direct
+  equivalents: `defaultsDeep(source, defaults)` → `toMerged(defaults, source)` (note the argument
+  order flips) and `toSafeInteger(x)` → `Number.parseInt(x, 10)`.
+- On the frontend `Temporal` is a global, declared in `.oxlintrc.json`. `src/boot/temporal.js`
+  dynamically imports `temporal-polyfill` for browsers without native support (Safari, as of
+  mid-2026) and is awaited first in `main.js`. The polyfill is a lazy chunk (~21 kB gzipped) that
+  browsers with native `Temporal` never download.
 
 ### Backend patterns
 
@@ -236,10 +256,8 @@ the `typescript` plugin. oxlint does not type-check — run `npm run typecheck` 
   failures into `{ ok, error, statusCode, message }` JSON.
 - **Schema changes**: edit `db/schema.ts`, then `npm run db-generate` and commit the generated
   migration. Never hand-edit an existing migration.
-- Prefer **es-toolkit** over lodash on the backend.
-- **Dates use the native `Temporal` API**, not luxon (which is no longer a backend dependency —
-  `frontend/` still uses it). `Temporal` is a global in Node 26 and is typed by the TS 7 lib, so it
-  needs no import. Three things to know:
+- **Dates use the native `Temporal` API**, not luxon (no longer a backend dependency). `Temporal` is a
+  global in Node 26 and is typed by the TS 7 lib, so it needs no import. Four things to know:
   - `Temporal.Instant` accepts **exact time units only** — `add({ days: 1 })` throws. Since these are
     all UTC instants, use `{ hours: 24 }`.
   - Temporal types have no `valueOf`, so `a < b` **throws**. Compare with
@@ -260,7 +278,9 @@ the `typescript` plugin. oxlint does not type-check — run `npm run typecheck` 
   config, so no import needed) — e.g. `await API_CLIENT.get('sites').json()`. It handles the `/_api`
   prefix and JWT refresh.
 - Cross-component messaging uses the `EVENT_BUS` global (mitt).
-- State lives in Pinia option stores; `lodash-es` is the utility library here.
+- State lives in Pinia option stores. For utilities and dates use `es-toolkit` and `Temporal` — see
+  [Utilities and dates](#utilities-and-dates); the `lodash-es` and `luxon` still present in older
+  files are on their way out.
 
 ### GraphQL is being removed
 

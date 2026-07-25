@@ -149,6 +149,38 @@ class Groups {
   }
 
   /**
+   * Create a new (non-system) group, seeded with the same starting permissions and default rule as
+   * the `Users` group.
+   *
+   * @param name Group name
+   * @returns The new group's ID
+   */
+  async createGroup(name: string): Promise<string> {
+    const startingPermissions = ['read:pages', 'read:assets', 'read:comments']
+    const result = await WIKI.db
+      .insert(groupsTable)
+      .values({
+        name,
+        permissions: startingPermissions,
+        rules: [
+          {
+            id: uuid(),
+            name: 'Default Rule',
+            roles: startingPermissions,
+            match: 'START',
+            mode: 'ALLOW',
+            path: '',
+            locales: [],
+            sites: []
+          }
+        ],
+        isSystem: false
+      })
+      .returning({ id: groupsTable.id })
+    return result[0].id
+  }
+
+  /**
    * Fetch all groups, ordered by name
    */
   async getAllGroups(): Promise<GroupWithUserCount[]> {

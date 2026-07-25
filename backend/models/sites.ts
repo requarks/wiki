@@ -1,6 +1,6 @@
-import { toMerged } from 'es-toolkit/object'
+import { mergeWith, toMerged } from 'es-toolkit/object'
 import { keyBy } from 'es-toolkit/array'
-import { sites as sitesTable } from '../db/schema.ts'
+import { blocks as blocksTable, sites as sitesTable } from '../db/schema.ts'
 import { eq } from 'drizzle-orm'
 import type { SystemIds } from './types.ts'
 
@@ -84,6 +84,7 @@ class Sites {
               comments: false,
               contributions: false,
               profile: true,
+              reasonForChange: 'required',
               search: true
             },
             logoUrl: '',
@@ -93,9 +94,20 @@ class Sites {
               index: true,
               follow: true
             },
+            // -> Local authentication is the only strategy guaranteed to exist at this point
+            authStrategies: [{ id: WIKI.data.systemIds.localAuthId, order: 0, isVisible: true }],
+            auth: {
+              autoLogin: false,
+              bypassUnauthorized: false,
+              hideLocal: false,
+              loginRedirect: '/',
+              welcomeRedirect: '/',
+              logoutRedirect: '/'
+            },
             locales: {
               primary: 'en',
-              active: ['en']
+              active: ['en'],
+              forcePrefix: false
             },
             assets: {
               logo: false,
@@ -190,20 +202,71 @@ class Sites {
     //   }
     // })
 
+    // -> Site lookups by id / hostname are served from cache, which must know about the new site
+    await WIKI.models.sites.reloadCache()
+
+    // -> Otherwise the new site would have no blocks until the next restart
+    await WIKI.models.blocks.syncSite(newSite.id)
+
     return newSite
   }
 
-  async updateSite(id: string, patch: Record<string, any>) {
-    // FIXME: pre-existing bug — `WIKI.db.sites.query()` is leftover Objection.js API that does not
-    // exist on a Drizzle instance, so this method always throws. Needs rewriting as a Drizzle
-    // `update(sitesTable).set(patch).where(eq(sitesTable.id, id))`.
-    return (WIKI.db as any).sites.query().findById(id).patch(patch)
+  async updateSite(
+    id: string,
+    patch: { hostname?: string; isEnabled?: boolean; config?: Record<string, any> }
+  ): Promise<boolean> {
+    const values: Partial<typeof sitesTable.$inferInsert> = {}
+    if (patch.hostname !== undefined) {
+      values.hostname = patch.hostname
+    }
+    if (patch.isEnabled !== undefined) {
+      values.isEnabled = patch.isEnabled
+    }
+    if (patch.config) {
+      // -> Config is a JSONB blob, so it must be read and merged rather than partially assigned.
+      // Arrays are replaced rather than merged index-wise, otherwise removing an entry (e.g. a page
+      // extension) would leave the original value in place.
+      const current = await WIKI.db
+        .select({ config: sitesTable.config })
+        .from(sitesTable)
+        .where(eq(sitesTable.id, id))
+      if (current.length < 1) {
+        return false
+      }
+      values.config = mergeWith(
+        current[0].config as Record<string, any>,
+        patch.config,
+        (_targetValue, sourceValue) => (Array.isArray(sourceValue) ? sourceValue : undefined)
+      )
+    }
+    if (Object.keys(values).length < 1) {
+      return false
+    }
+
+    const updatedResult = await WIKI.db.update(sitesTable).set(values).where(eq(sitesTable.id, id))
+    if ((updatedResult.rowCount ?? 0) < 1) {
+      return false
+    }
+
+    await WIKI.models.sites.reloadCache()
+    return true
   }
 
   async deleteSite(id: string): Promise<boolean> {
     // await WIKI.db.storage.query().delete().where('siteId', id)
+
+    // -> Block rows are registration metadata derived from disk, and their FK has no cascade, so
+    //    they would otherwise block the delete. Content tables (pages, assets, ...) deliberately
+    //    still do — see the conflict handling in the route.
+    await WIKI.db.delete(blocksTable).where(eq(blocksTable.siteId, id))
+
     const deletedResult = await WIKI.db.delete(sitesTable).where(eq(sitesTable.id, id))
-    return Boolean((deletedResult.rowCount ?? 0) > 0)
+    if ((deletedResult.rowCount ?? 0) < 1) {
+      return false
+    }
+
+    await WIKI.models.sites.reloadCache()
+    return true
   }
 
   async countSites() {
@@ -249,9 +312,18 @@ class Sites {
           follow: true
         },
         authStrategies: [{ id: ids.authModuleId, order: 0, isVisible: true }],
+        auth: {
+          autoLogin: false,
+          bypassUnauthorized: false,
+          hideLocal: false,
+          loginRedirect: '/',
+          welcomeRedirect: '/',
+          logoutRedirect: '/'
+        },
         locales: {
           primary: 'en',
-          active: ['en']
+          active: ['en'],
+          forcePrefix: false
         },
         assets: {
           logo: false,

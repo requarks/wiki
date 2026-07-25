@@ -529,8 +529,6 @@ q-layout(view='hHh lpR fFf', container)
 
 <script setup>
 
-import { cloneDeep, find, map, some } from 'lodash-es'
-import { DateTime } from 'luxon'
 
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
@@ -605,11 +603,11 @@ const metadata = computed({
 
 const localAuth = computed({
   get () {
-    return find(state.user?.auth, ['strategyKey', 'local'])?.config ?? {}
+    return state.user?.auth?.find(prv => prv.strategyKey === 'local')?.config ?? {}
   },
   set (val) {
     if (localAuth.value.authId) {
-      find(state.user.auth, ['strategyKey', 'local']).config = val
+      state.user.auth.find(prv => prv.strategyKey === 'local').config = val
     }
   }
 })
@@ -630,54 +628,15 @@ async function fetchUser () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query adminFetchUser (
-          $id: UUID!
-          ) {
-          groups {
-            id
-            name
-          }
-          userById(
-            id: $id
-          ) {
-            id
-            email
-            name
-            isSystem
-            isVerified
-            isActive
-            auth {
-              authId
-              authName
-              strategyKey
-              strategyIcon
-              config
-            }
-            meta
-            prefs
-            lastLoginAt
-            createdAt
-            updatedAt
-            groups {
-              id
-              name
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.overlayOpts.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    state.groups = resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? []
-    if (resp?.data?.userById) {
-      state.user = cloneDeep(resp.data.userById)
-    } else {
+    const [groups, user] = await Promise.all([
+      API_CLIENT.get('groups').json(),
+      API_CLIENT.get(`users/${adminStore.overlayOpts.id}`).json()
+    ])
+    state.groups = (groups ?? []).filter(g => g.id !== '10000000-0000-4000-8000-000000000001')
+    if (!user?.id) {
       throw new Error('An unexpected error occured while fetching user details.')
     }
+    state.user = user
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -703,7 +662,14 @@ function checkRoute () {
 
 function formattedDate (val) {
   if (!val) { return '---' }
-  return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_FULL)
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  })
 }
 
 function assignGroup () {
@@ -712,13 +678,13 @@ function assignGroup () {
       type: 'negative',
       message: t('admin.users.noGroupSelected')
     })
-  } else if (some(state.user.groups, gr => gr.id === state.groupToAdd)) {
+  } else if (state.user.groups.some(gr => gr.id === state.groupToAdd)) {
     $q.notify({
       type: 'warning',
       message: t('admin.users.groupAlreadyAssigned')
     })
   } else {
-    const newGroup = find(state.groups, ['id', state.groupToAdd])
+    const newGroup = state.groups.find(gr => gr.id === state.groupToAdd)
     state.user.groups = [...state.user.groups, newGroup]
   }
 }
@@ -753,40 +719,20 @@ async function save (patch, { silent, keepOpen } = { silent: false, keepOpen: fa
     }
   }
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation adminSaveUser (
-          $id: UUID!
-          $patch: UserUpdateInput!
-          ) {
-          updateUser (
-            id: $id
-            patch: $patch
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.overlayOpts.id,
-        patch
-      }
-    })
-    if (resp?.data?.updateUser?.operation?.succeeded) {
-      if (!silent) {
-        $q.notify({
-          type: 'positive',
-          message: t('admin.users.saveSuccess')
-        })
-      }
-      if (!keepOpen) {
-        close()
-      }
-    } else {
-      throw new Error(resp?.data?.updateUser?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.put(`users/${adminStore.overlayOpts.id}`, {
+      json: patch
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+    }
+    if (!silent) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.users.saveSuccess')
+      })
+    }
+    if (!keepOpen) {
+      close()
     }
   } catch (err) {
     $q.notify({

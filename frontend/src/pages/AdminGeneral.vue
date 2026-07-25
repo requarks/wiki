@@ -499,7 +499,7 @@ q-page.admin-general
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
+import { toMerged } from 'es-toolkit/object'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
@@ -528,10 +528,12 @@ useMeta({
 
 // DATA
 
-const state = reactive({
-  loading: 0,
-  assetTimestamp: (new Date()).toISOString(),
-  config: {
+/**
+ * Fallbacks for config keys a site may not have stored yet, so that every control renders with a
+ * defined value. Must mirror the defaults used by the backend when creating a site.
+ */
+function defaultConfig () {
+  return {
     hostname: '',
     title: '',
     description: '',
@@ -550,7 +552,7 @@ const state = reactive({
       ratingsMode: 'off',
       comments: false,
       contributions: false,
-      reasonForChange: 'off',
+      reasonForChange: 'required',
       profile: false
     },
     discoverable: false,
@@ -569,6 +571,12 @@ const state = reactive({
     },
     sitemap: false
   }
+}
+
+const state = reactive({
+  loading: 0,
+  assetTimestamp: (new Date()).toISOString(),
+  config: defaultConfig()
 })
 
 const contentLicenses = [
@@ -617,75 +625,66 @@ async function load () {
   state.loading++
   $q.loading.show()
   const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
-  state.config = {
+  state.config = toMerged(defaultConfig(), {
     ...resp,
     pageExtensions: resp.pageExtensions.join(',')
-  }
+  })
   $q.loading.hide()
   state.loading--
+}
+
+/**
+ * The form holds page extensions as a comma-separated string, while the API expects an array.
+ */
+function parsePageExtensions (value) {
+  const extensions = Array.isArray(value) ? value : String(value ?? '').split(',')
+  return [...new Set(extensions.map(ext => ext.trim().toLowerCase()).filter(ext => ext.length > 0))]
 }
 
 async function save () {
   state.loading++
   try {
-    await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveSite (
-          $id: UUID!
-          $patch: SiteUpdateInput!
-        ) {
-          updateSite (
-            id: $id
-            patch: $patch
-          ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.currentSiteId,
-        patch: {
-          hostname: state.config.hostname ?? '',
-          title: state.config.title ?? '',
-          description: state.config.description ?? '',
-          company: state.config.company ?? '',
-          contentLicense: state.config.contentLicense ?? '',
-          footerExtra: state.config.footerExtra ?? '',
-          pageExtensions: state.config.pageExtensions ?? '',
-          pageCasing: state.config.pageCasing ?? false,
-          logoText: state.config.logoText ?? false,
-          sitemap: state.config.sitemap ?? false,
-          uploads: {
-            conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite',
-            normalizeFilename: state.config.uploads?.normalizeFilename ?? false
-          },
-          robots: {
-            index: state.config.robots?.index ?? false,
-            follow: state.config.robots?.follow ?? false
-          },
-          features: {
-            browse: state.config.features?.browse ?? false,
-            comments: state.config.features?.comments ?? false,
-            ratings: (state.config.features?.ratings || 'off') !== 'off',
-            ratingsMode: state.config.features?.ratingsMode ?? 'off',
-            contributions: state.config.features?.contributions ?? false,
-            profile: state.config.features?.profile ?? false,
-            search: state.config.features?.search ?? false
-          },
-          discoverable: state.config.discoverable ?? false,
-          defaults: {
-            tocDepth: {
-              min: state.config.defaults?.tocDepth?.min ?? 1,
-              max: state.config.defaults?.tocDepth?.max ?? 2
-            }
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
+      json: {
+        hostname: state.config.hostname ?? '',
+        title: state.config.title ?? '',
+        description: state.config.description ?? '',
+        company: state.config.company ?? '',
+        contentLicense: state.config.contentLicense ?? '',
+        footerExtra: state.config.footerExtra ?? '',
+        pageExtensions: parsePageExtensions(state.config.pageExtensions),
+        pageCasing: state.config.pageCasing ?? false,
+        logoText: state.config.logoText ?? false,
+        sitemap: state.config.sitemap ?? false,
+        uploads: {
+          conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite',
+          normalizeFilename: state.config.uploads?.normalizeFilename ?? false
+        },
+        robots: {
+          index: state.config.robots?.index ?? false,
+          follow: state.config.robots?.follow ?? false
+        },
+        features: {
+          browse: state.config.features?.browse ?? false,
+          comments: state.config.features?.comments ?? false,
+          ratingsMode: state.config.features?.ratingsMode ?? 'off',
+          contributions: state.config.features?.contributions ?? false,
+          profile: state.config.features?.profile ?? false,
+          reasonForChange: state.config.features?.reasonForChange ?? 'required',
+          search: state.config.features?.search ?? false
+        },
+        discoverable: state.config.discoverable ?? false,
+        defaults: {
+          tocDepth: {
+            min: state.config.defaults?.tocDepth?.min ?? 1,
+            max: state.config.defaults?.tocDepth?.max ?? 2
           }
         }
       }
-    })
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.general.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+    }
     $q.notify({
       type: 'positive',
       message: t('admin.general.saveSuccess')

@@ -42,6 +42,71 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * CREATE GROUP
+   */
+  app.post<{ Body: { name: string } }>(
+    '/',
+    {
+      config: {
+        permissions: ['write:groups', 'manage:groups']
+      },
+      schema: {
+        summary: 'Create a new group',
+        description:
+          'Creates a non-system group, seeded with the same starting permissions and default rule as the built-in `Users` group.',
+        tags: ['Groups'],
+        body: {
+          type: 'object',
+          required: ['name'],
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            }
+          },
+          examples: [{ name: 'Editors' }]
+        },
+        response: {
+          200: {
+            description: 'Group created successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              id: {
+                type: 'string',
+                format: 'uuid'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (!/^[^<>"]+$/.test(req.body.name)) {
+        throw new CustomError('groupCreateInvalidName', 'Invalid Group Name')
+      }
+
+      try {
+        const id = await WIKI.models.groups.createGroup(req.body.name)
+        return {
+          ok: true,
+          message: 'Group created successfully.',
+          id
+        }
+      } catch (err: any) {
+        WIKI.logger.warn(err)
+        return reply.internalServerError()
+      }
+    }
+  )
+
+  /**
    * GET SINGLE GROUP
    */
   app.get<{ Params: { groupId: string } }>(
@@ -192,12 +257,18 @@ async function routes(app: FastifyInstance) {
       }
 
       // -> The root administrators group must keep its permissions, or the instance becomes
-      //    unmanageable with no way to grant `manage:system` back.
+      //    unmanageable with no way to grant `manage:system` back. Resending the current set is
+      //    allowed, so that a client editing other fields can still submit the whole group.
       if (patch.permissions && group.id === WIKI.config.auth.rootAdminGroupId) {
-        throw new CustomError(
-          'groupUpdateRootAdminPermissions',
-          'Cannot modify the permissions of the root administrators group.'
-        )
+        const isUnchanged =
+          patch.permissions.length === group.permissions.length &&
+          patch.permissions.every((p) => group.permissions.includes(p))
+        if (!isUnchanged) {
+          throw new CustomError(
+            'groupUpdateRootAdminPermissions',
+            'Cannot modify the permissions of the root administrators group.'
+          )
+        }
       }
 
       // -> Rule IDs must be unique within the group, as they address the rule client-side
@@ -355,6 +426,8 @@ async function routes(app: FastifyInstance) {
       },
       schema: {
         summary: 'Assign a user to a group',
+        description:
+          'System users (the guest account) cannot be assigned: their group membership is fixed at install time.',
         tags: ['Groups'],
         params: {
           type: 'object',
@@ -391,8 +464,14 @@ async function routes(app: FastifyInstance) {
       if (!group) {
         return reply.notFound('Group does not exist.')
       }
-      if (!(await WIKI.models.users.getById(req.params.userId))) {
+      const user = await WIKI.models.users.getById(req.params.userId)
+      if (!user) {
         return reply.notFound('User does not exist.')
+      }
+      // -> The guest account is the only system user, and it must stay in the guests group alone:
+      //    its permissions are what anonymous visitors get.
+      if (user.isSystem) {
+        return reply.conflict('Cannot assign a system user to a group.')
       }
 
       const assigned = await WIKI.models.groups.assignUserToGroup(group.id, req.params.userId)
@@ -419,7 +498,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Unassign a user from a group',
         description:
-          'Removes the user from the group. The last remaining user cannot be removed from the root administrators group.',
+          'Removes the user from the group. The last remaining user cannot be removed from the root administrators group, and system users (the guest account) cannot be unassigned at all.',
         tags: ['Groups'],
         params: {
           type: 'object',
@@ -449,6 +528,13 @@ async function routes(app: FastifyInstance) {
       }
       if (!(await WIKI.models.groups.isUserInGroup(group.id, req.params.userId))) {
         return reply.notFound('User is not assigned to this group.')
+      }
+
+      // -> Removing the guest account from the guests group would strip anonymous visitors of the
+      //    permissions that group carries, with no way to put it back
+      const user = await WIKI.models.users.getById(req.params.userId)
+      if (user?.isSystem) {
+        return reply.conflict('Cannot unassign a system user from a group.')
       }
 
       // -> Emptying the root administrators group would lock everyone out of system management

@@ -76,9 +76,7 @@ q-page.admin-flags
 <script setup>
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { defineAsyncComponent, onMounted, reactive, watch } from 'vue'
-
-import { cloneDeep } from 'lodash-es'
+import { onMounted, reactive, watch } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
@@ -172,34 +170,8 @@ watch(() => adminStore.currentSiteId, (newValue) => {
 async function load () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getEditorsState (
-          $siteId: UUID!
-        ) {
-        siteById (
-          id: $siteId
-        ) {
-          id
-          editors {
-            asciidoc {
-              isActive
-            }
-            markdown {
-              isActive
-            }
-            wysiwyg  {
-              isActive
-            }
-          }
-        }
-      }`,
-      variables: {
-        siteId: adminStore.currentSiteId
-      },
-      fetchPolicy: 'network-only'
-    })
-    const data = cloneDeep(resp?.data?.siteById?.editors)
+    const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
+    const data = resp?.editors
     state.config.asciidoc = data?.asciidoc?.isActive ?? false
     state.config.markdown = data?.markdown?.isActive ?? false
     state.config.wysiwyg = data?.wysiwyg?.isActive ?? false
@@ -216,52 +188,32 @@ async function load () {
 async function save () {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveEditorState (
-          $id: UUID!
-          $patch: SiteUpdateInput!
-          ) {
-          updateSite (
-            id: $id,
-            patch: $patch
-            ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: adminStore.currentSiteId,
-        patch: {
-          editors: {
-            asciidoc: { isActive: state.config.asciidoc },
-            markdown: { isActive: state.config.markdown },
-            wysiwyg: { isActive: state.config.wysiwyg }
-          }
+    // -> Only `isActive` is sent, so each editor's own `config` is left untouched by the merge
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
+      json: {
+        editors: {
+          asciidoc: { isActive: state.config.asciidoc },
+          markdown: { isActive: state.config.markdown },
+          wysiwyg: { isActive: state.config.wysiwyg }
         }
       }
-    })
-    if (respRaw?.data?.updateSite?.operation?.succeeded) {
-      if (adminStore.currentSiteId === siteStore.id) {
-        siteStore.$patch({
-          editors: {
-            asciidoc: state.config.asciidoc,
-            markdown: state.config.markdown,
-            wysiwyg: state.config.wysiwyg
-          }
-        })
-      }
-      $q.notify({
-        type: 'positive',
-        message: t('admin.editors.saveSuccess')
-      })
-    } else {
-      throw new Error(respRaw?.data?.updateSite?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.editors.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    if (adminStore.currentSiteId === siteStore.id) {
+      siteStore.$patch({
+        editors: {
+          asciidoc: state.config.asciidoc,
+          markdown: state.config.markdown,
+          wysiwyg: state.config.wysiwyg
+        }
+      })
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.editors.saveSuccess')
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',

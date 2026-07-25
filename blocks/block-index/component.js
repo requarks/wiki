@@ -5,6 +5,17 @@ import treeQuery from './tree.graphql'
  * Block Index
  */
 export class BlockIndexElement extends LitElement {
+  /**
+   * Metadata for the admin area. Collected at build time into `compiled/blocks.manifest.json`,
+   * which the server reads to register the block. Values must be plain literals.
+   */
+  static definition = {
+    block: 'index',
+    name: 'Index',
+    description: 'Displays a list of pages contained in a folder.',
+    icon: 'index'
+  }
+
   static get styles() {
     return css`
       :host {

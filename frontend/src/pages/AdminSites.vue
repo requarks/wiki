@@ -163,7 +163,6 @@ function editSite (st) {
   })
 }
 function toggleSiteState (st, newState) {
-  console.info(newState)
   $q.dialog({
     component: SiteActivateDialog,
     componentProps: {

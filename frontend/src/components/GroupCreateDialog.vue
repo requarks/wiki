@@ -86,34 +86,19 @@ async function create () {
     if (!isFormValid) {
       throw new Error(t('admin.groups.createInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation createGroup (
-          $name: String!
-          ) {
-          createGroup(
-            name: $name
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
+    const resp = await API_CLIENT.post('groups', {
+      json: {
         name: state.groupName
       }
-    })
-    if (resp?.data?.createGroup?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.groups.createSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.createGroup?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.groups.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.groups.createSuccess')
+    })
+    onDialogOK()
   } catch (err) {
     $q.notify({
       type: 'negative',

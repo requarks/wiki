@@ -84,19 +84,9 @@ import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { onMounted, reactive, ref } from 'vue'
 
-import { cloneDeep } from 'lodash-es'
-
-import { usePageStore } from '@/stores/page'
-import { useSiteStore } from '@/stores/site'
-
 // QUASAR
 
 const $q = useQuasar()
-
-// STORES
-
-const pageStore = usePageStore()
-const siteStore = useSiteStore()
 
 // I18N
 
@@ -132,41 +122,21 @@ const timezones = Intl.supportedValuesOf('timeZone')
 async function save () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveSite (
-          $timezone: String!
-          $dateFormat: String!
-          $timeFormat: String!
-        ) {
-          updateUserDefaults (
-            timezone: $timezone
-            dateFormat: $dateFormat
-            timeFormat: $timeFormat
-          ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
+    const resp = await API_CLIENT.put('users/defaults', {
+      json: {
         timezone: state.timezone,
         dateFormat: state.dateFormat,
         timeFormat: state.timeFormat
       }
-    })
-    if (resp?.data?.updateUserDefaults?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.users.defaultsSaveSuccess')
-      })
-      menuRef.value.hide()
-    } else {
-      throw new Error(resp?.data?.updateUserDefaults?.operation?.message)
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.users.defaultsSaveSuccess')
+    })
+    menuRef.value.hide()
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -182,22 +152,10 @@ async function save () {
 onMounted(async () => {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getUserDefaults {
-          userDefaults {
-            timezone
-            dateFormat
-            timeFormat
-          }
-        }
-      `,
-      fetchPolicy: 'network-only'
-    })
-    const respData = cloneDeep(resp?.data?.userDefaults)
-    state.timezone = respData.timezone
-    state.dateFormat = respData.dateFormat
-    state.timeFormat = respData.timeFormat
+    const resp = await API_CLIENT.get('users/defaults').json()
+    state.timezone = resp?.timezone ?? 'America/New_York'
+    state.dateFormat = resp?.dateFormat ?? 'YYYY-MM-DD'
+    state.timeFormat = resp?.timeFormat ?? '12h'
   } catch (err) {
     $q.notify({
       type: 'negative',

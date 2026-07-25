@@ -84,7 +84,23 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           profile: {
             type: 'boolean'
           },
+          reasonForChange: {
+            type: 'string',
+            enum: ['off', 'optional', 'required']
+          },
           search: {
+            type: 'boolean'
+          }
+        }
+      },
+      uploads: {
+        type: 'object',
+        properties: {
+          conflictBehavior: {
+            type: 'string',
+            enum: ['overwrite', 'reject', 'new']
+          },
+          normalizeFilename: {
             type: 'boolean'
           }
         }
@@ -109,6 +125,53 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           }
         }
       },
+      auth: {
+        type: 'object',
+        description: 'Login experience for this site. Redirects can be overridden per group.',
+        properties: {
+          autoLogin: {
+            type: 'boolean'
+          },
+          bypassUnauthorized: {
+            type: 'boolean'
+          },
+          hideLocal: {
+            type: 'boolean'
+          },
+          loginRedirect: {
+            type: 'string',
+            maxLength: 255
+          },
+          welcomeRedirect: {
+            type: 'string',
+            maxLength: 255
+          },
+          logoutRedirect: {
+            type: 'string',
+            maxLength: 255
+          }
+        }
+      },
+      authStrategies: {
+        type: 'array',
+        description: 'Which authentication strategies this site offers, in display order.',
+        items: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              format: 'uuid'
+            },
+            order: {
+              type: 'integer',
+              minimum: 0
+            },
+            isVisible: {
+              type: 'boolean'
+            }
+          }
+        }
+      },
       locales: {
         type: 'object',
         properties: {
@@ -120,6 +183,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             items: {
               type: 'string'
             }
+          },
+          forcePrefix: {
+            type: 'boolean'
           }
         }
       },
@@ -145,15 +211,44 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       editors: {
         type: 'object',
+        description:
+          'Per-editor state. `config` is free-form and specific to each editor implementation.',
         properties: {
           asciidoc: {
-            type: 'boolean'
+            type: 'object',
+            properties: {
+              isActive: {
+                type: 'boolean'
+              },
+              config: {
+                type: 'object',
+                additionalProperties: true
+              }
+            }
           },
           markdown: {
-            type: 'boolean'
+            type: 'object',
+            properties: {
+              isActive: {
+                type: 'boolean'
+              },
+              config: {
+                type: 'object',
+                additionalProperties: true
+              }
+            }
           },
           wysiwyg: {
-            type: 'boolean'
+            type: 'object',
+            properties: {
+              isActive: {
+                type: 'boolean'
+              },
+              config: {
+                type: 'object',
+                additionalProperties: true
+              }
+            }
           }
         }
       },
@@ -165,7 +260,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           },
           codeBlocksTheme: {
             type: 'string',
-            format: 'hexcolor'
+            description: 'Name of a highlight.js stylesheet, e.g. `github-dark`.',
+            maxLength: 255
           },
           colorPrimary: {
             type: 'string',

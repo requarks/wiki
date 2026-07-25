@@ -179,7 +179,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 
-import { cloneDeep, sample, sampleSize } from 'lodash-es'
+import { sample, sampleSize } from 'es-toolkit/array'
 import zxcvbn from 'zxcvbn'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
@@ -295,18 +295,16 @@ const userGroupsValidation = [
 async function loadGroups () {
   state.loading++
   state.loadingGroups = true
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getGroupsForCreateUser {
-        groups {
-          id
-          name
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.groups = cloneDeep(resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? [])
+  try {
+    const groups = await API_CLIENT.get('groups').json()
+    state.groups = (groups ?? []).filter(g => g.id !== '10000000-0000-4000-8000-000000000001')
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.users.groupsLoadFailed'),
+      caption: err.message
+    })
+  }
   state.loadingGroups = false
   state.loading--
 }
@@ -327,58 +325,33 @@ async function create () {
     if (state.userSendWelcomeEmail && !state.userSendWelcomeEmailFromSiteId) {
       throw new Error(t('admin.users.createSendEmailMissingSiteId'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation createUser (
-          $name: String!
-          $email: String!
-          $password: String!
-          $groups: [UUID]!
-          $mustChangePassword: Boolean!
-          $sendWelcomeEmail: Boolean!
-          $sendWelcomeEmailFromSiteId: UUID
-          ) {
-          createUser (
-            name: $name
-            email: $email
-            password: $password
-            groups: $groups
-            mustChangePassword: $mustChangePassword
-            sendWelcomeEmail: $sendWelcomeEmail
-            sendWelcomeEmailFromSiteId: $sendWelcomeEmailFromSiteId
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
+    const resp = await API_CLIENT.post('users', {
+      json: {
         name: state.userName,
         email: state.userEmail,
         password: state.userPassword,
         groups: state.userGroups,
         mustChangePassword: state.userMustChangePassword,
         sendWelcomeEmail: state.userSendWelcomeEmail,
-        sendWelcomeEmailFromSiteId: state.userSendWelcomeEmailFromSiteId
+        ...(state.userSendWelcomeEmailFromSiteId
+          ? { sendWelcomeEmailFromSiteId: state.userSendWelcomeEmailFromSiteId }
+          : {})
       }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.users.createSuccess')
     })
-    if (resp?.data?.createUser?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.users.createSuccess')
-      })
-      if (state.keepOpened) {
-        state.userName = ''
-        state.userEmail = ''
-        state.userPassword = ''
-        iptName.value.focus()
-      } else {
-        onDialogOK()
-      }
+    if (state.keepOpened) {
+      state.userName = ''
+      state.userEmail = ''
+      state.userPassword = ''
+      iptName.value.focus()
     } else {
-      throw new Error(resp?.data?.createUser?.operation?.message || 'An unexpected error occured.')
+      onDialogOK()
     }
   } catch (err) {
     $q.notify({

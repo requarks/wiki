@@ -24,6 +24,7 @@
     "codemirror": "5.65.11",
     "codemirror-asciidoc": "1.0.4",
     "dependency-graph": "1.0.0",
+    "es-toolkit": "1.50.0",
     "filesize": "11.0.17",
     "filesize-parser": "1.5.1",
     "fuse.js": "7.4.2",
@@ -68,6 +69,7 @@
     "sortablejs": "1.15.7",
     "sortablejs-vue3": "1.3.0",
     "tabulator-tables": "6.4.0",
+    "temporal-polyfill": "1.0.1",
     "tippy.js": "6.3.7",
     "twemoji": "14.0.2",
     "typescript": "6.0.3",
@@ -85,6 +87,7 @@
     "@quasar/app-vite": "2.6.2",
     "@quasar/vite-plugin": "1.12.0",
     "@types/lodash": "4.17.24",
+    "@vitejs/plugin-vue": "6.0.8",
     "@vue/language-plugin-pug": "3.3.5",
     "autoprefixer": "10.5.0",
     "browserlist": "latest",
@@ -92,6 +95,7 @@
     "oxfmt": "0.54.0",
     "oxlint": "1.69.0",
     "sass": "1.101.0",
+    "vite": "8.1.5",
     "vite-plugin-vue-devtools": "8.1.2"
   },
   "engines": {
