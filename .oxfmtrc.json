@@ -5,5 +5,13 @@
   "trailingComma": "none",
   "bracketSameLine": true,
   "endOfLine": "lf",
-  "insertFinalNewline": true
+  "insertFinalNewline": true,
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "backend/db/migrations/**",
+    "backend/locales/**",
+    "blocks/compiled/**",
+    "assets/**",
+    "frontend/dist/**"
+  ]
 }

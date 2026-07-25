@@ -1,0 +1,66 @@
+import { setTimeout } from 'node:timers/promises'
+
+export async function task(): Promise<void> {
+  if (WIKI.config.update?.locales === false) {
+    return
+  }
+
+  WIKI.logger.info('Fetching latest localization data...')
+
+  try {
+    interface LocaleMetadata {
+      languages: {
+        language: string
+        region?: string
+        script?: string
+        name: string
+        localizedName: string
+        isRtl: boolean
+      }[]
+    }
+    const metadata = await fetch(
+      'https://github.com/requarks/wiki-locales/raw/main/locales/metadata.json'
+    ).then((r) => r.json() as Promise<LocaleMetadata>)
+    for (const lang of metadata.languages) {
+      // -> Build filename
+      const langFilenameParts = [lang.language]
+      if (lang.region) {
+        langFilenameParts.push(lang.region)
+      }
+      if (lang.script) {
+        langFilenameParts.push(lang.script)
+      }
+      const langFilename = langFilenameParts.join('-')
+
+      WIKI.logger.debug(`Fetching updates for language ${langFilename}...`)
+
+      // TODO: Adapt for v3
+      // const strings = await fetch(`https://github.com/requarks/wiki-locales/raw/main/locales/${langFilename}.json`).then(r => r.json())
+      // if (strings) {
+      //   await WIKI.db.knex('locales').insert({
+      //     code: langFilename,
+      //     name: lang.name,
+      //     nativeName: lang.localizedName,
+      //     language: lang.language,
+      //     region: lang.region,
+      //     script: lang.script,
+      //     isRTL: lang.isRtl,
+      //     strings
+      //   }).onConflict('code').merge({
+      //     strings,
+      //     updatedAt: new Date()
+      //   })
+      // }
+
+      WIKI.logger.debug(`Updated strings for language ${langFilename}.`)
+
+      await setTimeout(100)
+    }
+
+    WIKI.logger.info('Fetched latest localization data: [ COMPLETED ]')
+  } catch (err: any) {
+    WIKI.logger.error('Fetching latest localization data: [ FAILED ]')
+    WIKI.logger.error(err.message)
+    throw err
+  }
+}

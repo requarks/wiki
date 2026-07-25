@@ -17,7 +17,7 @@ cd ../frontend
 npm install
 cd ../blocks
 npm install
-npm build
+npm run build
 cd ..
 
 echo "Ready!"

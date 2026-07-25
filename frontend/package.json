@@ -95,7 +95,6 @@
     "vite-plugin-vue-devtools": "8.1.2"
   },
   "engines": {
-    "node": ">= 18.0",
-    "npm": ">= 6.13.4"
+    "node": ">= 26.0"
   }
 }

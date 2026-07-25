@@ -113,7 +113,7 @@ The server **dev** should already be available under **Servers**. If that's not 
 ### Requirements
 
 - PostgreSQL **16** or later
-- Node.js **24.x** or later
+- Node.js **26.x** or later
 
 ### Usage
 

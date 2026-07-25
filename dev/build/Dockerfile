@@ -1,4 +1,4 @@
-FROM node:24
+FROM node:26
 LABEL maintainer="requarks.io"
 
 RUN apt-get update && apt-get install -qy --no-install-recommends \
@@ -14,8 +14,6 @@ RUN mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \
     chown -R node:node /wiki /logs
-RUN corepack enable && \
-    corepack prepare pnpm@latest --activate
 
 WORKDIR /wiki
 

@@ -1,0 +1,538 @@
+// ===========================================
+// Wiki.js Server
+// Licensed under AGPLv3
+// ===========================================
+
+import { existsSync } from 'node:fs'
+import path from 'node:path'
+import semver from 'semver'
+import { customAlphabet } from 'nanoid'
+import { uniq } from 'es-toolkit/array'
+
+import fastify from 'fastify'
+import fastifyCompress from '@fastify/compress'
+import fastifyCors from '@fastify/cors'
+import fastifyCookie from '@fastify/cookie'
+import fastifyFavicon from 'fastify-favicon'
+import fastifyFormBody from '@fastify/formbody'
+import fastifyHelmet from '@fastify/helmet'
+import { Authenticator } from '@fastify/passport'
+import fastifySensible from '@fastify/sensible'
+import fastifySession from '@fastify/session'
+import fastifyStatic from '@fastify/static'
+import fastifySwagger from '@fastify/swagger'
+import fastifySwaggerUi from '@fastify/swagger-ui'
+import fastifyView from '@fastify/view'
+import gracefulServer from '@gquittet/graceful-server'
+import ajvFormats from 'ajv-formats'
+import pug from 'pug'
+import Emittery from 'emittery'
+import NodeCache from 'node-cache'
+
+import configSvc from './core/config.ts'
+import dbManager from './core/db.ts'
+import logger from './core/logger.ts'
+import scheduler from './core/scheduler.ts'
+
+const nanoid = customAlphabet('1234567890abcdef', 10)
+
+if (!semver.satisfies(process.version, '>=26')) {
+  console.error('ERROR: Node.js 26.x or later required!')
+  process.exit(1)
+}
+
+if (existsSync('./package.json')) {
+  console.error('ERROR: Must run server from the parent directory!')
+  process.exit(1)
+}
+
+// The global is assembled progressively: the literal below holds what is known at startup, and
+// preBoot()/initHTTPServer() fill in db, models, cache, scheduler, events, app and server.
+const WIKI = {
+  IS_DEBUG: process.env.NODE_ENV === 'development',
+  ROOTPATH: process.cwd(),
+  INSTANCE_ID: nanoid(10),
+  SERVERPATH: path.join(process.cwd(), 'backend'),
+  auth: {
+    groups: {},
+    strategies: {}
+  },
+  configSvc,
+  sites: {},
+  sitesMappings: {},
+  startedAt: Temporal.Now.instant(),
+  storage: {
+    defs: [],
+    modules: []
+  }
+} as unknown as WikiGlobal
+global.WIKI = WIKI
+
+if (WIKI.IS_DEBUG) {
+  process.on('warning', (warning: Error) => {
+    console.log(warning.stack)
+  })
+}
+
+await WIKI.configSvc.init()
+
+// ----------------------------------------
+// Init Logger
+// ----------------------------------------
+
+WIKI.logger = logger.init()
+
+// ----------------------------------------
+// Init Server
+// ----------------------------------------
+
+WIKI.logger.info('=======================================')
+WIKI.logger.info(`= Wiki.js ${(WIKI.version + ' ').padEnd(29, '=')}`)
+WIKI.logger.info('=======================================')
+WIKI.logger.info('Initializing...')
+WIKI.logger.info(`Running node.js ${process.version} [ OK ]`)
+
+// ----------------------------------------
+// Pre-Boot Sequence
+// ----------------------------------------
+
+async function preBoot() {
+  WIKI.dbManager = (await import('./core/db.ts')).default
+  WIKI.db = await dbManager.init()
+  WIKI.models = (await import('./models/index.ts')).default
+
+  try {
+    if (await WIKI.configSvc.loadFromDb()) {
+      WIKI.logger.info('Settings merged with DB successfully [ OK ]')
+    } else {
+      WIKI.logger.warn('No settings found in DB. Initializing with defaults...')
+      await WIKI.configSvc.initDbValues()
+
+      if (!(await WIKI.configSvc.loadFromDb())) {
+        throw new Error('Settings table is empty! Could not initialize [ ERROR ]')
+      }
+    }
+  } catch (err: any) {
+    WIKI.logger.error('Database Initialization Error: ' + err.message)
+    if (WIKI.IS_DEBUG) {
+      WIKI.logger.error(err)
+    }
+    process.exit(1)
+  }
+
+  WIKI.cache = new NodeCache({ checkperiod: 0 })
+  WIKI.scheduler = await scheduler.init()
+  WIKI.events = {
+    inbound: new Emittery(),
+    outbound: new Emittery()
+  }
+}
+
+// ----------------------------------------
+// Post-Boot Sequence
+// ----------------------------------------
+
+async function postBoot() {
+  await WIKI.models.locales.refreshFromDisk()
+
+  await WIKI.models.authentication.refreshStrategiesFromDisk()
+
+  await WIKI.models.authentication.activateStrategies()
+  await WIKI.models.locales.reloadCache()
+  await WIKI.models.sites.reloadCache()
+
+  await WIKI.dbManager.subscribeToNotifications()
+  await WIKI.scheduler.start()
+}
+
+// ----------------------------------------
+// Init HTTP Server
+// ----------------------------------------
+
+async function initHTTPServer() {
+  // ----------------------------------------
+  // Load core modules
+  // ----------------------------------------
+
+  // WIKI.auth = auth.init()
+  // WIKI.mail = mail.init()
+  // WIKI.system = system.init()
+
+  // ----------------------------------------
+  // Initialize Fastify App
+  // ----------------------------------------
+
+  const app = fastify({
+    ajv: {
+      // -> `ajv-formats` is CJS: the default import resolves to `module.exports`, so the callable
+      //    plugin is reached via `.default` (verified identical at runtime: `f === f.default`).
+      //    The tuple assertion is load-bearing twice over: it stops the element from widening
+      //    (which makes fastify's overload resolution fall through to the HTTP/2 signature), and
+      //    it bridges an upstream variance mismatch — @fastify/ajv-compiler declares plugin
+      //    options as `unknown`, while ajv-formats declares its own narrower options type, and the
+      //    two are contravariantly incompatible. (`ajv` itself is only a nested dependency here, so
+      //    its `Plugin` type is not importable to state this more precisely.)
+      plugins: [[ajvFormats.default, {}] as any],
+      onCreate: (ajv: any) => {
+        ajv.addFormat('hexcolor', (data: unknown) => {
+          // FIXME: pre-existing bug — this is inverted: strings have no `.test()` method, it
+          // belongs to RegExp. Any value reaching this format validator throws a TypeError.
+          // Preserved as-is; the fix is `/#[a-fA-F0-9]{6}/.test(data)`.
+          return typeof data === 'string' && (data as any).test(/#[a-fA-F0-9]{6}/)
+        })
+      }
+    },
+    bodyLimit: WIKI.config.bodyParserLimit || 5242880, // 5mb
+    logger: {
+      level: 'error'
+    },
+    trustProxy: WIKI.config.security.securityTrustProxy ?? false,
+    routerOptions: {
+      ignoreTrailingSlash: true
+    }
+  })
+  WIKI.app = app
+  WIKI.server = gracefulServer(app.server, {
+    livenessEndpoint: '/_live',
+    readinessEndpoint: '/_ready',
+    kubernetes: Boolean(process.env.KUBERNETES_SERVICE_HOST)
+  })
+
+  app.register(fastifySensible)
+  app.register(fastifyCompress, { global: true })
+
+  // ----------------------------------------
+  // Handle graceful server shutdown
+  // ----------------------------------------
+
+  WIKI.server.on(gracefulServer.SHUTTING_DOWN, () => {
+    WIKI.logger.info('Shutting down HTTP Server... [ STOPPING ]')
+    WIKI.dbManager.unsubscribeFromNotifications()
+  })
+
+  WIKI.server.on(gracefulServer.SHUTDOWN, (err: Error) => {
+    WIKI.logger.info(`HTTP Server has exited: [ STOPPED ] (${err.message})`)
+    if (err.message !== 'SIGINT') {
+      WIKI.logger.warn(err)
+    }
+  })
+
+  // ----------------------------------------
+  // Security
+  // ----------------------------------------
+
+  app.register(fastifyHelmet, {
+    contentSecurityPolicy: false, // TODO: Make it configurable
+    strictTransportSecurity: WIKI.config.security.securityHSTS
+      ? {
+          maxAge: WIKI.config.security.securityHSTSDuration,
+          includeSubDomains: true
+        }
+      : false
+  })
+
+  app.register(fastifyCors, {
+    origin: '*', // TODO: Make it configurable
+    methods: ['GET', 'HEAD', 'POST', 'OPTIONS']
+  })
+
+  // ----------------------------------------
+  // Public Assets
+  // ----------------------------------------
+
+  app.register(fastifyFavicon, {
+    path: path.join(WIKI.ROOTPATH, 'assets'),
+    name: 'favicon.ico'
+  })
+  app.register(fastifyStatic, {
+    prefix: '/_assets/',
+    root: path.join(WIKI.ROOTPATH, 'assets/_assets'),
+    index: false,
+    maxAge: '7d',
+    decorateReply: false
+  })
+
+  // ----------------------------------------
+  // Blocks
+  // ----------------------------------------
+
+  app.register(fastifyStatic, {
+    prefix: '/_blocks/',
+    root: path.join(WIKI.ROOTPATH, 'blocks/compiled'),
+    index: false,
+    maxAge: '7d'
+  })
+
+  // ----------------------------------------
+  // Sessions
+  // ----------------------------------------
+
+  app.register(fastifyCookie, {
+    secret: WIKI.config.auth.secret,
+    hook: 'onRequest'
+  })
+  app.register(fastifySession, {
+    secret: WIKI.config.auth.secret,
+    cookieName: 'wikiSession',
+    cookie: {
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: 'auto'
+    },
+    saveUninitialized: false,
+    store: {
+      async get(sessionId: string, clb: (err: any, result?: any) => void) {
+        try {
+          clb(null, await WIKI.models.sessions.get(sessionId))
+        } catch (err: any) {
+          clb(err, null)
+        }
+      },
+      async set(sessionId: string, sessionData: any, clb: (err: any, result?: any) => void) {
+        try {
+          clb(null, await WIKI.models.sessions.set(sessionId, sessionData))
+        } catch (err: any) {
+          clb(err, null)
+        }
+      },
+      async destroy(sessionId: string, clb: (err: any, result?: any) => void) {
+        try {
+          clb(null, await WIKI.models.sessions.destroy(sessionId))
+        } catch (err: any) {
+          clb(err, null)
+        }
+      }
+    }
+  })
+  const fastifyPassport = new Authenticator()
+  app.register(fastifyPassport.initialize())
+  app.register(fastifyPassport.secureSession())
+
+  // app.use(WIKI.auth.passport.initialize())
+  // app.use(WIKI.auth.authenticate)
+
+  // ----------------------------------------
+  // API Routes
+  // ----------------------------------------
+
+  app.register(fastifySwagger, {
+    hideUntagged: true,
+    openapi: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Wiki.js API',
+        version: WIKI.config.version
+      },
+      components: {
+        securitySchemes: {
+          apiKeyAuth: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'X-API-Key'
+          },
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT'
+          }
+        }
+      },
+      security: [{ apiKeyAuth: [] }, { bearerAuth: [] }]
+    },
+    transform: ({ schema, url, route }: any) => {
+      // Add permissions to the route schema description
+      const permissions = route?.config?.permissions ?? []
+      const transformedSchema = { ...schema }
+      const currentDescription = transformedSchema.description || ''
+
+      if (permissions?.length > 0) {
+        const nestedPermissions: string[] = []
+        for (const perm of permissions) {
+          if (Array.isArray(perm)) {
+            nestedPermissions.push(`\`${perm.join(' + ')}\``)
+          } else {
+            nestedPermissions.push(`\`${perm}\``)
+          }
+        }
+        nestedPermissions.push('`manage:system`')
+        transformedSchema.description =
+          `${currentDescription}\n\n**Required Permissions:** ${uniq(nestedPermissions).join(' or ')}`.trim()
+        transformedSchema['x-permissions'] = permissions
+      } else {
+        transformedSchema.description =
+          `${currentDescription}\n\n**This API is public.** No special permissions required.`.trim()
+      }
+
+      return { schema: transformedSchema, url }
+    }
+  })
+  app.register(fastifySwaggerUi, {
+    routePrefix: '/_api',
+    logo: {} as any
+  })
+
+  // ----------------------------------------
+  // Permissions
+  // ----------------------------------------
+
+  app.addHook('preHandler', (req, reply, done) => {
+    const routePermissions = req.routeOptions.config?.permissions
+    if (routePermissions && routePermissions.length > 0) {
+      // Unauthenticated / No Permissions
+      if (!req.session?.authenticated || !(req.session?.permissions?.length ?? 0)) {
+        return reply.unauthorized()
+      }
+      // Is Root Admin?
+      if (!req.session.permissions!.includes('manage:system')) {
+        // Check for at least 1 permission
+        const isAllowed = routePermissions.some((perms) => {
+          // Check for all permissions
+          if (Array.isArray(perms)) {
+            return perms.every((perm) => req.session.permissions?.some((p) => p === perm))
+          } else {
+            return req.session.permissions?.some((p) => p === perms)
+          }
+        })
+        // Forbidden
+        if (!isAllowed) {
+          return reply.forbidden()
+        }
+      }
+    }
+    done()
+  })
+
+  // ----------------------------------------
+  // SEO
+  // ----------------------------------------
+
+  app.addHook('onRequest', (req, reply, done) => {
+    const [urlPath, urlQuery] = req.raw.url!.split('?')
+    if (urlPath!.length > 1 && urlPath!.endsWith('/')) {
+      const newPath = urlPath!.slice(0, -1)
+      reply.redirect(urlQuery ? `${newPath}?${urlQuery}` : newPath, 301)
+      return
+    }
+    done()
+  })
+
+  // ----------------------------------------
+  // View Engine Setup
+  // ----------------------------------------
+
+  app.register(fastifyView, {
+    engine: {
+      pug
+    }
+  })
+  app.register(fastifyFormBody, {
+    bodyLimit: 1048576 // 1mb
+  })
+
+  // ----------------------------------------
+  // View accessible data
+  // ----------------------------------------
+
+  // app.locals.analyticsCode = {}
+  // app.locals.basedir = WIKI.ROOTPATH
+  // app.locals.config = WIKI.config
+  // app.locals.pageMeta = {
+  //   title: '',
+  //   description: WIKI.config.description,
+  //   image: '',
+  //   url: '/'
+  // }
+  // app.locals.devMode = WIKI.devMode
+
+  // ----------------------------------------
+  // Routing
+  // ----------------------------------------
+
+  // app.addHook('onRequest', async (req, reply, done) => {
+  //   const currentSite = await WIKI.db.sites.getSiteByHostname({ hostname: req.hostname })
+  //   if (!currentSite) {
+  //     return reply.code(404).send('Site Not Found')
+  //   }
+
+  //   req.locals.siteConfig = {
+  //     id: currentSite.id,
+  //     title: currentSite.config.title,
+  //     darkMode: currentSite.config.theme.dark,
+  //     lang: currentSite.config.locales.primary,
+  //     rtl: false, // TODO: handle RTL
+  //     company: currentSite.config.company,
+  //     contentLicense: currentSite.config.contentLicense
+  //   }
+  //   req.locals.theming = {
+
+  //   }
+  //   req.locals.langs = await WIKI.db.locales.getNavLocales({ cache: true })
+  //   req.locals.analyticsCode = await WIKI.db.analytics.getCode({ cache: true })
+  //   done()
+  // })
+
+  app.register(import('./api/index.ts'), { prefix: '/_api' })
+  app.register(import('./controllers/site.ts'), { prefix: '/_site' })
+
+  // ----------------------------------------
+  // Error handling
+  // ----------------------------------------
+
+  app.setErrorHandler((error: any, req, reply) => {
+    if (req.url.includes('/_api/')) {
+      if (error.statusCode) {
+        reply.code(error.statusCode).type('application/json').send({
+          ok: false,
+          error: error.name,
+          statusCode: error.statusCode,
+          message: error.message
+        })
+      } else {
+        WIKI.logger.warn(error)
+        reply.code(500).type('application/json').send({
+          ok: false,
+          error: 'Internal Server Error',
+          statusCode: 500,
+          message: 'Internal Server error'
+        })
+      }
+    } else {
+      reply.send(error)
+    }
+  })
+
+  // ----------------------------------------
+  // Bind HTTP Server
+  // ----------------------------------------
+
+  try {
+    WIKI.logger.info(`Starting HTTP Server on port ${WIKI.config.port} [ STARTING ]`)
+    await app.listen({ port: WIKI.config.port, host: WIKI.config.bindIP })
+    WIKI.logger.info('HTTP Server: [ RUNNING ]')
+    WIKI.server.setReady()
+  } catch (err: any) {
+    WIKI.logger.error(err)
+    process.exit(1)
+  }
+}
+
+// ----------------------------------------
+// Register exit handler
+// ----------------------------------------
+
+// process.on('SIGINT', () => {
+//   WIKI.kernel.shutdown()
+// })
+// process.on('message', (msg) => {
+//   if (msg === 'shutdown') {
+//     WIKI.kernel.shutdown()
+//   }
+// })
+
+// ----------------------------------------
+// Initialization Sequence
+// ----------------------------------------
+
+await preBoot()
+await initHTTPServer()
+await postBoot()

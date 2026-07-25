@@ -15,7 +15,6 @@
       },
       "extensions": [
         "arcanis.vscode-zipfs",
-        "dbaeumer.vscode-eslint",
         "eamodio.gitlens",
         "Vue.volar",
         "oxc.oxc-vscode",
@@ -66,7 +65,11 @@
 			"upgradePackages": "true"
 		},
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "24"
+      "nodeGypDependencies": true,
+      "version": "26",
+      "npmVersion": "none",
+      "pnpmVersion": "none",
+      "nvmVersion": "latest"
     },
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/joedmck/devcontainer-features/cloudflared:1": {}

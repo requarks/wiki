@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    // -> Node 26 runs TypeScript directly by stripping types at load time, so there is
+    //    no build step. `tsc` is only ever used as a type checker (see `npm run typecheck`).
+    "noEmit": true,
+
+    // -> Module resolution matching Node's own ESM resolver
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "types": ["node"],
+    "resolveJsonModule": true,
+
+    // -> Required for type stripping:
+    //    Node needs the real on-disk specifier, so relative imports must say `.ts`.
+    "allowImportingTsExtensions": true,
+    //    Node can only erase types, never transform them. Bans enums, namespaces,
+    //    parameter properties and anything else that emits runtime code.
+    "erasableSyntaxOnly": true,
+    //    Forces `import type` for type-only imports, so nothing survives erasure.
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+
+    // -> The backend is fully TypeScript; the only remaining .js is generated/vendored content
+    //    (locales/metadata.js), which is excluded below.
+    "allowJs": false,
+
+    // -> Correctness
+    "strict": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "db/migrations", "locales"]
+}

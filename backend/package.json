@@ -1,41 +1,38 @@
 {
   "name": "wiki-backend",
   "version": "3.0.0",
-  "releaseDate": "2026-01-01T01:01:01.000Z",
-  "description": "The most powerful and extensible open source Wiki software",
-  "main": "index.js",
-  "type": "module",
   "private": true,
-  "dev": true,
-  "scripts": {
-    "start": "cd .. && node backend",
-    "dev": "cd .. && nodemon backend --watch backend --ext mjs,js,json",
-    "ncu": "ncu -i",
-    "ncu-u": "ncu -u",
-    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.js --out=./db/migrations --name=main",
-    "db-up": "drizzle-kit up --dialect=postgresql --out=./db/migrations"
+  "description": "The most powerful and extensible open source Wiki software",
+  "keywords": [
+    "docs",
+    "documentation",
+    "guides",
+    "knowledge base",
+    "markdown",
+    "wiki",
+    "wikis"
+  ],
+  "homepage": "https://github.com/requarks/wiki#readme",
+  "bugs": {
+    "url": "https://github.com/requarks/wiki/issues"
   },
+  "license": "AGPL-3.0",
+  "author": "Nicolas Giard",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/requarks/wiki.git"
   },
-  "keywords": [
-    "wiki",
-    "wikis",
-    "docs",
-    "documentation",
-    "markdown",
-    "guides",
-    "knowledge base"
-  ],
-  "author": "Nicolas Giard",
-  "license": "AGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/requarks/wiki/issues"
-  },
-  "homepage": "https://github.com/requarks/wiki#readme",
-  "engines": {
-    "node": ">=24.0"
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "start": "cd .. && node backend",
+    "dev": "cd .. && nodemon backend --watch backend --ext js,ts,json",
+    "typecheck": "tsc",
+    "typecheck:watch": "tsc --watch",
+    "ncu": "ncu -i",
+    "ncu-u": "ncu -u",
+    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.ts --out=./db/migrations --name=main",
+    "db-up": "drizzle-kit up --dialect=postgresql --out=./db/migrations"
   },
   "dependencies": {
     "@fastify/compress": "9.0.0",
@@ -63,7 +60,6 @@
     "filesize": "11.0.17",
     "fs-extra": "11.3.5",
     "js-yaml": "4.2.0",
-    "luxon": "3.7.2",
     "mime": "4.1.0",
     "nanoid": "5.1.11",
     "node-cache": "5.1.2",
@@ -75,15 +71,28 @@
     "uuid": "14.0.0"
   },
   "devDependencies": {
+    "@types/fs-extra": "11.0.4",
+    "@types/js-yaml": "4.0.9",
+    "@types/node": "26.1.1",
+    "@types/pem-jwk": "2.0.2",
+    "@types/pg": "8.20.0",
+    "@types/pug": "2.0.10",
+    "@types/semver": "7.7.1",
     "drizzle-kit": "1.0.0-beta.15-859cf75",
     "nodemon": "3.1.14",
     "npm-check-updates": "22.2.3",
     "oxfmt": "0.54.0",
-    "oxlint": "1.69.0"
+    "oxlint": "1.69.0",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=26.0"
   },
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/wikijs",
     "logo": "https://opencollective.com/opencollective/logo.txt"
-  }
+  },
+  "dev": true,
+  "releaseDate": "2026-01-01T01:01:01.000Z"
 }
