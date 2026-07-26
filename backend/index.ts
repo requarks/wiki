@@ -33,6 +33,7 @@ import configSvc from './core/config.ts'
 import dbManager from './core/db.ts'
 import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
+import { corsOrigin, parseCspDirectives } from './helpers/security.ts'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
 
@@ -145,6 +146,11 @@ async function postBoot() {
   await WIKI.models.blocks.refreshFromDisk()
   await WIKI.models.blocks.syncAllSites()
 
+  // -> Optional third-party tooling: report what is available, since features silently degrade
+  //    without it
+  await WIKI.models.extensions.refreshFromDisk()
+  await WIKI.models.extensions.logState()
+
   await WIKI.dbManager.subscribeToNotifications()
   await WIKI.scheduler.start()
 }
@@ -192,7 +198,9 @@ async function initHTTPServer() {
     logger: {
       level: 'error'
     },
-    trustProxy: WIKI.config.security.securityTrustProxy ?? false,
+    // -> `securityTrustProxy` was the 2.x name: the setting is `trustProxy`, so this read never
+    //    matched and the option was permanently off no matter what the admin area showed
+    trustProxy: WIKI.config.security.trustProxy ?? false,
     routerOptions: {
       ignoreTrailingSlash: true
     }
@@ -227,20 +235,42 @@ async function initHTTPServer() {
   // Security
   // ----------------------------------------
 
+  // -> Every setting below comes from the admin area's security view. They are read once, here, so a
+  //    change takes effect on the next restart — the view says as much.
+  const security = WIKI.config.security
+
   app.register(fastifyHelmet, {
-    contentSecurityPolicy: false, // TODO: Make it configurable
-    strictTransportSecurity: WIKI.config.security.securityHSTS
-      ? {
-          maxAge: WIKI.config.security.securityHSTSDuration,
-          includeSubDomains: true
-        }
-      : false
+    contentSecurityPolicy:
+      security.enforceCsp && security.cspDirectives
+        ? { directives: parseCspDirectives(security.cspDirectives), useDefaults: false }
+        : false,
+    strictTransportSecurity:
+      security.enforceHsts && security.hstsDuration > 0
+        ? {
+            maxAge: security.hstsDuration,
+            includeSubDomains: true
+          }
+        : false,
+    // -> Helmet's own default is `sameorigin`, which is also what this setting turned off means
+    xFrameOptions: { action: security.disallowIframe ? 'deny' : 'sameorigin' },
+    referrerPolicy: security.enforceSameOriginReferrerPolicy
+      ? { policy: 'same-origin' }
+      : { policy: 'no-referrer' }
   })
 
   app.register(fastifyCors, {
-    origin: '*', // TODO: Make it configurable
+    origin: corsOrigin(security),
     methods: ['GET', 'HEAD', 'POST', 'OPTIONS']
   })
+
+  if (security.disallowFloc) {
+    // -> Helmet dropped its FLoC helper once the proposal was withdrawn, but opting out still costs
+    //    one header and the setting exists
+    app.addHook('onSend', (req, reply, payload, done) => {
+      reply.header('Permissions-Policy', 'interest-cohort=()')
+      done(null, payload)
+    })
+  }
 
   // ----------------------------------------
   // Public Assets
@@ -378,25 +408,62 @@ async function initHTTPServer() {
   })
 
   // ----------------------------------------
+  // API Key Authentication
+  // ----------------------------------------
+
+  app.decorateRequest('apiKey', null)
+
+  app.addHook('onRequest', async (req, reply) => {
+    // -> Bearer tokens authenticate API calls only; everything else is cookie-authenticated. Note
+    //    that the session is deliberately left untouched: writing to it would have @fastify/session
+    //    persist a session row for every scraped request.
+    if (!req.url.startsWith('/_api/')) {
+      return
+    }
+    const header = req.headers.authorization
+    if (!header?.startsWith('Bearer ')) {
+      return
+    }
+    const token = header.slice('Bearer '.length).trim()
+    if (!token) {
+      return
+    }
+    try {
+      req.apiKey = await WIKI.models.apiKeys.verify(token)
+    } catch (err: any) {
+      // -> Say why: the caller holds the credential and can act on "revoked" or "expired"
+      WIKI.logger.debug(`Rejected an API key: ${err.message}`)
+      return reply.unauthorized(err.message)
+    }
+  })
+
+  // ----------------------------------------
   // Permissions
   // ----------------------------------------
 
   app.addHook('preHandler', (req, reply, done) => {
     const routePermissions = req.routeOptions.config?.permissions
     if (routePermissions && routePermissions.length > 0) {
+      // -> A verified API key stands in for a session, carrying the permissions of the groups it was
+      //    issued for
+      const permissions = req.apiKey
+        ? req.apiKey.permissions
+        : req.session?.authenticated
+          ? req.session.permissions
+          : null
       // Unauthenticated / No Permissions
-      if (!req.session?.authenticated || !(req.session?.permissions?.length ?? 0)) {
+      if (!permissions || permissions.length < 1) {
         return reply.unauthorized()
       }
       // Is Root Admin?
-      if (!req.session.permissions!.includes('manage:system')) {
+      if (!permissions.includes('manage:system')) {
         // Check for at least 1 permission
         const isAllowed = routePermissions.some((perms) => {
           // Check for all permissions
           if (Array.isArray(perms)) {
-            return perms.every((perm) => req.session.permissions?.some((p) => p === perm))
+            return perms.every((perm) => permissions.some((p) => p === perm))
           } else {
-            return req.session.permissions?.some((p) => p === perms)
+            return permissions.some((p) => p === perms)
           }
         })
         // Forbidden

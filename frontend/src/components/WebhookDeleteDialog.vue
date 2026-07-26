@@ -71,34 +71,21 @@ const state = reactive({
 async function confirm () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation deleteHook ($id: UUID!) {
-          deleteHook(id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.hook.id
-      }
-    })
-    if (resp?.data?.deleteHook?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.webhooks.deleteSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.deleteHook?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.delete(`hooks/${props.hook.id}`)
+    if (!resp?.ok) {
+      throw new Error((await resp.json())?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.webhooks.deleteSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    // -> ky throws above 400 — a webhook deleted from another tab answers 404
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.isLoading = false

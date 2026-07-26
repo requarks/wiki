@@ -1,5 +1,5 @@
 <template lang='pug'>
-q-page.admin-mail
+q-page.admin-auth
   .row.q-pa-md.items-center
     .col-auto
       img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-security-lock.svg')
@@ -17,6 +17,15 @@ q-page.admin-mail
         type='a'
         )
         q-tooltip {{ t(`common.actions.viewDocs`) }}
+      q-btn.q-mr-sm.acrylic-btn(
+        icon='las la-redo-alt'
+        flat
+        color='secondary'
+        :loading='state.loading > 0'
+        :aria-label='t(`common.actions.refresh`)'
+        @click='refresh'
+        )
+        q-tooltip {{ t(`common.actions.refresh`) }}
       q-btn(
         unelevated
         icon='mdi-check'
@@ -57,6 +66,10 @@ q-page.admin-mail
         )
         q-menu(auto-close, fit, max-width='300px')
           q-list(separator)
+            //- Only the local module ships with the wiki so far, and it is already configured
+            q-item(v-if='availableStrategies.length < 1')
+              q-item-section
+                q-item-label(caption) {{ t('admin.auth.noModulesToAdd') }}
             q-item(
               v-for='str of availableStrategies'
               :key='str.key'
@@ -75,7 +88,7 @@ q-page.admin-mail
               q-item-section
                 q-item-label: strong {{ str.title }}
                 q-item-label(caption, lines='2') {{str.description}}
-    .col
+    .col(v-if='state.strategy.id')
       q-card.q-pb-sm
         q-card-section
           .text-subtitle1 {{ t('admin.auth.info') }}
@@ -98,11 +111,11 @@ q-page.admin-mail
           q-item-section
             q-item-label {{ t(`admin.auth.enabled`) }}
             q-item-label(caption) {{ t(`admin.auth.enabledHint`) }}
-            q-item-label.text-deep-orange(v-if='state.strategy.strategy.key === `local`', caption) {{ t(`admin.auth.enabledForced`) }}
+            q-item-label.text-deep-orange(v-if='isBuiltInLocal', caption) {{ t(`admin.auth.enabledForced`) }}
           q-item-section(avatar)
             q-toggle(
               v-model='state.strategy.isEnabled'
-              :disable='state.strategy.strategy.key === `local`'
+              :disable='isBuiltInLocal'
               color='primary'
               checked-icon='las la-check'
               unchecked-icon='las la-times'
@@ -114,6 +127,9 @@ q-page.admin-mail
           q-item-section
             q-item-label {{ t(`admin.auth.registration`) }}
             q-item-label(caption) {{ state.strategy.strategy.key === `local` ? t(`admin.auth.registrationLocalHint`) : t(`admin.auth.registrationHint`) }}
+            //- Saved, but there is no self-registration path in the server yet — say so rather than
+            //- let the toggle read as a working setting
+            q-item-label.text-orange(caption) {{ t(`admin.auth.registrationNotEnforced`) }}
           q-item-section(avatar)
             q-toggle(
               v-model='state.strategy.registration'
@@ -203,11 +219,11 @@ q-page.admin-mail
             v-if='configIfCheck(cfg.if)'
             )
             q-separator.q-my-sm(inset, v-if='idx > 0')
-            q-item(v-if='cfg.type === `boolean`', tag='label')
+            q-item(v-if='cfg.type === `boolean`', :tag='cfg.readOnly ? `div` : `label`')
               blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
               q-item-section
                 q-item-label {{ cfg.title }}
-                q-item-label(caption) {{ cfg.hint }}
+                q-item-label(:class='cfg.readOnly ? `text-orange` : ``', caption) {{ cfg.hint }}
               q-item-section(avatar)
                 q-toggle(
                   v-model='cfg.value'
@@ -221,7 +237,7 @@ q-page.admin-mail
               blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
               q-item-section
                 q-item-label {{ cfg.title }}
-                q-item-label(caption) {{ cfg.hint }}
+                q-item-label(:class='cfg.readOnly ? `text-orange` : ``', caption) {{ cfg.hint }}
               q-item-section(
                 :style='cfg.type === `number` ? `flex: 0 0 150px;` : ``'
                 :class='{ "col-auto": cfg.enum && cfg.enumDisplay === `buttons` }'
@@ -253,7 +269,7 @@ q-page.admin-mail
                   outlined
                   v-model='cfg.value'
                   dense
-                  :type='cfg.multiline ? `textarea` : (cfg.sensitive ? `password` : `input`)'
+                  :type='inputTypeFor(cfg)'
                   :aria-label='cfg.title'
                   :disable='cfg.readOnly'
                   )
@@ -264,6 +280,7 @@ q-page.admin-mail
       q-card.q-pb-sm.q-mt-md(v-if='strategyRefs.length > 0')
         q-card-section
           .text-subtitle1 {{ t('admin.auth.configReference') }}
+          .text-caption.text-grey {{ t('admin.auth.configReferenceSubtitle') }}
         q-item(v-for='strRef of strategyRefs', :key='strRef.key')
           blueprint-icon(:icon='strRef.icon', :hue-rotate='-45')
           q-item-section
@@ -300,22 +317,19 @@ q-page.admin-mail
           icon='las la-trash-alt'
           flat
           color='negative'
-          :disable='state.strategy.strategy.key === `local`'
-          label='Delete Strategy'
-          @click='deleteStrategy(state.strategy.id)'
+          :disable='isBuiltInLocal'
+          :label='t(`admin.auth.deleteStrategy`)'
+          @click='confirmDelete'
           )
+          q-tooltip(v-if='isBuiltInLocal') {{ t('admin.auth.deleteLocalForbidden') }}
 </template>
 
 <script setup>
 
-import { cloneDeep, find, reject, transform } from 'lodash-es'
-import { v4 as uuid } from 'uuid'
-
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch, nextTick } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 
-import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
@@ -325,7 +339,6 @@ const $q = useQuasar()
 
 // STORES
 
-const adminStore = useAdminStore()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
@@ -339,6 +352,13 @@ useMeta({
   title: t('admin.auth.title')
 })
 
+// CONSTANTS
+
+const GUESTS_GROUP_ID = '10000000-0000-4000-8000-000000000001'
+// -> The strategy every account's password is stored against, hence the one that cannot be disabled
+//    or deleted. A second instance of the local module is an ordinary strategy.
+const BUILTIN_LOCAL_STRATEGY_ID = '5a528c4c-0a82-4ad2-96a5-2b23811e6588'
+
 // DATA
 
 const state = reactive({
@@ -348,7 +368,6 @@ const state = reactive({
   strategies: [],
   activeStrategies: [],
   selectedStrategy: '',
-  host: '',
   strategy: {
     strategy: {}
   }
@@ -356,6 +375,9 @@ const state = reactive({
 
 // COMPUTED
 
+const isBuiltInLocal = computed(() => {
+  return state.strategy.id === BUILTIN_LOCAL_STRATEGY_ID
+})
 const availableStrategies = computed(() => {
   return state.strategies.filter(str => str.key !== 'local')
 })
@@ -364,114 +386,98 @@ const selectedGroupName = computed(() => {
 })
 const strategyRefs = computed(() => {
   if (!state.selectedStrategy) { return [] }
-  const str = find(state.strategies, ['key', state.strategy?.strategy.key])
-  if (!str || !str.refs) { return [] }
-  return Object.entries(str.refs).map(([k, v]) => {
+  const str = state.strategies.find(s => s.key === state.strategy?.strategy?.key)
+  if (!str?.refs) { return [] }
+  return Object.entries(str.refs).map(([key, ref]) => {
     return {
-      ...v,
-      key: k,
-      value: v.value.replaceAll('{host}', window.location.origin).replaceAll('{id}', state.selectedStrategy)
+      ...ref,
+      key,
+      value: ref.value.replaceAll('{host}', window.location.origin).replaceAll('{id}', state.selectedStrategy)
     }
-  }) ?? []
+  })
 })
 
 // WATCHERS
 
-watch(() => state.selectedStrategy, (newValue, oldValue) => {
-  state.strategy = find(state.activeStrategies, ['id', newValue]) || {}
+watch(() => state.selectedStrategy, (newValue) => {
+  state.strategy = state.activeStrategies.find(str => str.id === newValue) || { strategy: {} }
 })
-watch(() => state.activeStrategies, (newValue, oldValue) => {
-  state.selectedStrategy = newValue[0]?.id
+watch(() => state.activeStrategies, (newValue) => {
+  // -> Keep the current selection across a reload, falling back to the first strategy
+  state.selectedStrategy = newValue.some(str => str.id === state.selectedStrategy)
+    ? state.selectedStrategy
+    : newValue[0]?.id
+  state.strategy = newValue.find(str => str.id === state.selectedStrategy) || { strategy: {} }
 })
 
 // METHODS
 
-async function loadGroups () {
-  state.loading++
-  state.loadingGroups = true
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getGroupsForAdminAuth {
-        groups {
-          id
-          name
-        }
+/**
+ * Turn a module prop declaration and its stored value into the shape the config editor renders,
+ * expanding `value|label` enum entries into options.
+ */
+function buildConfigEditor (props, values) {
+  const config = {}
+  for (const [key, prop] of Object.entries(props ?? {})) {
+    config[key] = {
+      ...prop,
+      value: values?.[key] ?? prop.default,
+      ...prop.enum && {
+        enum: prop.enum.map(entry => {
+          const [value, label] = entry.split('|')
+          return { value, label: label ?? value }
+        })
       }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.groups = cloneDeep(resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? [])
-  state.loadingGroups = false
-  state.loading--
+    }
+  }
+  return config
+}
+
+function inputTypeFor (cfg) {
+  if (cfg.multiline) { return 'textarea' }
+  if (cfg.sensitive) { return 'password' }
+  return cfg.type === 'number' ? 'number' : 'text'
 }
 
 async function load () {
   state.loading++
+  state.loadingGroups = true
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query adminFetchAuthStrategies {
-        authStrategies {
-          key
-          props
-          refs
-          title
-          description
-          isAvailable
-          useForm
-          usernameType
-          logo
-          color
-          vendor
-          website
-          icon
-        }
-        authActiveStrategies {
-          id
-          strategy {
-            key
-          }
-          displayName
-          isEnabled
-          config
-          registration
-          allowedEmailRegex
-          autoEnrollGroups
-        }
+  try {
+    const [modules, strategies, groups] = await Promise.all([
+      API_CLIENT.get('authentication/modules').json(),
+      API_CLIENT.get('authentication/strategies').json(),
+      API_CLIENT.get('groups').json()
+    ])
+    state.strategies = modules ?? []
+    state.activeStrategies = (strategies ?? []).map(str => {
+      const mod = state.strategies.find(m => m.key === str.module) ?? { key: str.module, title: str.module }
+      return {
+        ...str,
+        strategy: mod,
+        config: buildConfigEditor(mod.props, str.config)
       }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.strategies = resp?.data?.authStrategies || []
-  state.activeStrategies = (cloneDeep(resp?.data?.authActiveStrategies) || []).map(a => {
-    const str = cloneDeep(find(state.strategies, ['key', a.strategy.key])) || {}
-    a.strategy = str
-    a.config = transform(str.props, (r, v, k) => {
-      r[k] = {
-        ...v,
-        value: a.config?.[k],
-        ...v.enum && {
-          enum: v.enum.map(o => {
-            if (o.indexOf('|') > 0) {
-              const oParsed = o.split('|')
-              return {
-                value: oParsed[0],
-                label: oParsed[1]
-              }
-            } else {
-              return {
-                value: o,
-                label: o
-              }
-            }
-          })
-        }
-      }
-    }, {})
-    return a
-  })
+    })
+    // -> Guests cannot be enrolled into, being the group of users who never logged in
+    state.groups = (groups ?? []).filter(g => g.id !== GUESTS_GROUP_ID)
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.auth.loadFailed'),
+      caption: err.message
+    })
+  }
+  state.loadingGroups = false
   $q.loading.hide()
   state.loading--
+}
+
+async function refresh () {
+  await load()
+  $q.notify({
+    type: 'positive',
+    message: t('admin.auth.refreshSuccess')
+  })
 }
 
 function configIfCheck (ifs) {
@@ -479,193 +485,135 @@ function configIfCheck (ifs) {
   return ifs.every(s => state.strategy.config[s.key]?.value === s.eq)
 }
 
-function addStrategy (str) {
-  const newStr = {
-    id: uuid(),
-    strategy: str,
-    config: transform(str.props, (r, v, k) => {
-      r[k] = {
-        ...v,
-        value: v.default,
-        ...v.enum && {
-          enum: v.enum.map(o => {
-            if (o.indexOf('|') > 0) {
-              const oParsed = o.split('|')
-              return {
-                value: oParsed[0],
-                label: oParsed[1]
-              }
-            } else {
-              return {
-                value: o,
-                label: o
-              }
-            }
-          })
-        }
-      }
-    }, {}),
-    isEnabled: true,
-    displayName: str.title,
-    registration: true,
-    allowedEmailRegex: '',
-    autoEnrollGroups: []
+/**
+ * The strategy as the API expects it. Read-only props are left out: the server keeps whatever is
+ * stored for them, so sending them back would be pretending they can be set.
+ */
+function payloadFor (str) {
+  const config = {}
+  for (const [key, cfg] of Object.entries(str.config ?? {})) {
+    if (cfg.readOnly) { continue }
+    config[key] = cfg.type === 'number' ? Number(cfg.value) : cfg.value
   }
-  state.activeStrategies = [...state.activeStrategies, newStr]
-  nextTick(() => {
-    state.selectedStrategy = newStr.id
-  })
+  return {
+    displayName: str.displayName,
+    isEnabled: str.isEnabled,
+    registration: str.registration,
+    allowedEmailRegex: str.allowedEmailRegex ?? '',
+    autoEnrollGroups: str.autoEnrollGroups ?? [],
+    config
+  }
 }
 
-function deleteStrategy (id) {
-  state.activeStrategies = reject(state.activeStrategies, ['id', id])
+/**
+ * Read the API's own message off a failed request, since ky doesn't throw on 400
+ */
+async function apiMessage (err) {
+  return err.response?.json().then(b => b?.message).catch(() => null) ?? err.message
 }
 
 async function save () {
+  if (state.loading > 0) { return }
+
   state.loading++
-  try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation($strategies: [AuthenticationStrategyInput]!) {
-          authentication {
-            updateStrategies(strategies: $strategies) {
-              responseResult {
-                succeeded
-                errorCode
-                slug
-                message
-              }
-            }
-          }
-        }
-      `,
-      variables: {
-        strategies: this.activeStrategies.map((str, idx) => ({
-          key: str.key,
-          strategyKey: str.strategy.key,
-          displayName: str.displayName,
-          order: idx,
-          isEnabled: str.isEnabled,
-          config: str.config.map(cfg => ({ ...cfg, value: JSON.stringify({ v: cfg.value.value }) })),
-          selfRegistration: str.selfRegistration,
-          domainWhitelist: str.domainWhitelist,
-          autoEnrollGroups: str.autoEnrollGroups
-        }))
+  const failures = []
+  for (const str of state.activeStrategies) {
+    try {
+      const resp = await API_CLIENT.put(`authentication/strategies/${str.id}`, {
+        json: payloadFor(str)
+      }).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
       }
-    })
-    if (resp?.data?.authentication?.updateStrategies?.operation.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.auth.saveSuccess')
-      })
-    } else {
-      throw new Error(resp?.data?.authentication?.updateStrategies?.operation?.message || t('common.error.unexpected'))
+    } catch (err) {
+      failures.push({ name: str.displayName, message: await apiMessage(err) })
     }
-  } catch (err) {
+  }
+
+  if (failures.length > 0) {
+    for (const failure of failures) {
+      $q.notify({
+        type: 'negative',
+        message: t('admin.auth.saveFailed', { strategy: failure.name }),
+        caption: failure.message
+      })
+    }
+  } else {
     $q.notify({
-      type: 'negative',
-      message: 'Failed to save site theme config',
-      caption: err.message
+      type: 'positive',
+      message: t('admin.auth.saveSuccess')
     })
   }
   state.loading--
+  await load()
 }
 
-// apollo: {
-//   strategies: {
-//     query: `
-//       query {
-//         authentication {
-//           strategies {
-//             key
-//             title
-//             description
-//             isAvailable
-//             useForm
-//             logo
-//             website
-//             props {
-//               key
-//               value
-//             }
-//           }
-//         }
-//       }
-//     `,
-//     skip: true,
-//     fetchPolicy: 'network-only',
-//     update: (data) => _.get(data, 'authentication.strategies', []).map(str => ({
-//       ...str,
-//       isDisabled: !str.isAvailable || str.key === 'local',
-//       props: _.sortBy(str.props.map(cfg => ({
-//         key: cfg.key,
-//         ...JSON.parse(cfg.value)
-//       })), [t => t.order])
-//     })),
-//     watchLoading (isLoading) {
-//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-strategies-refresh')
-//     }
-//   },
-//   activeStrategies: {
-//     query: `
-//       query {
-//         authentication {
-//           activeStrategies {
-//             key
-//             strategy {
-//               key
-//               title
-//               description
-//               useForm
-//               logo
-//               website
-//             }
-//             config {
-//               key
-//               value
-//             }
-//             order
-//             isEnabled
-//             displayName
-//             selfRegistration
-//             domainWhitelist
-//             autoEnrollGroups
-//           }
-//         }
-//       }
-//     `,
-//     skip: true,
-//     fetchPolicy: 'network-only',
-//     update: (data) => _.sortBy(_.get(data, 'authentication.activeStrategies', []).map(str => ({
-//       ...str,
-//       config: _.sortBy(str.config.map(cfg => ({
-//         ...cfg,
-//         value: JSON.parse(cfg.value)
-//       })), [t => t.value.order])
-//     })), ['order']),
-//     watchLoading (isLoading) {
-//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-activestrategies-refresh')
-//     }
-//   },
-//   groups: {
-//     query: `{ test }`,
-//     fetchPolicy: 'network-only',
-//     update: (data) => data.groups.list,
-//     watchLoading (isLoading) {
-//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-groups-refresh')
-//     }
-//   },
-//   host: {
-//     query: `{ test }`,
-//     fetchPolicy: 'network-only',
-//     update: (data) => _.cloneDeep(data.site.config.host),
-//     watchLoading (isLoading) {
-//       this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-auth-host-refresh')
-//     }
-//   }
+async function addStrategy (mod) {
+  state.loading++
+  try {
+    const resp = await API_CLIENT.post('authentication/strategies', {
+      json: { module: mod.key, displayName: mod.title }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.auth.addSuccess', { strategy: mod.title })
+    })
+    state.selectedStrategy = resp.id
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.auth.addFailed'),
+      caption: await apiMessage(err)
+    })
+  }
+  state.loading--
+  await load()
+}
 
-onMounted(() => {
-  load()
-  loadGroups()
-})
+function confirmDelete () {
+  const strategy = state.strategy
+  $q.dialog({
+    title: t('admin.auth.deleteStrategy'),
+    message: t('admin.auth.deleteConfirm', { strategy: strategy.displayName }),
+    persistent: true,
+    ok: {
+      label: t('common.actions.delete'),
+      color: 'negative',
+      unelevated: true
+    },
+    cancel: {
+      label: t('common.actions.cancel'),
+      color: 'grey',
+      flat: true
+    }
+  }).onOk(async () => {
+    state.loading++
+    try {
+      const resp = await API_CLIENT.delete(`authentication/strategies/${strategy.id}`)
+      if (!resp?.ok) {
+        throw new Error((await resp.json())?.message || 'An unexpected error occured.')
+      }
+      $q.notify({
+        type: 'positive',
+        message: t('admin.auth.deleteSuccess', { strategy: strategy.displayName })
+      })
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: t('admin.auth.deleteFailed'),
+        caption: await apiMessage(err)
+      })
+    }
+    state.loading--
+    await load()
+  })
+}
+
+// MOUNTED
+
+onMounted(load)
+
 </script>

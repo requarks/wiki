@@ -1,16 +1,19 @@
 import { defineStore } from 'pinia'
 
-
 export const useFlagsStore = defineStore('flags', {
   state: () => ({
     loaded: false,
-    experimental: false
+    // -> Declared rather than left to `$patch` to create, so that anything reading a flag before the
+    //    first load sees `false` instead of `undefined`
+    experimental: false,
+    authDebug: false,
+    sqlLog: false
   }),
   getters: {},
   actions: {
-    async load () {
+    async load() {
       try {
-        const systemFlags = await API_CLIENT.get('system/flags')
+        const systemFlags = await API_CLIENT.get('system/flags').json()
         if (systemFlags) {
           this.$patch({
             ...systemFlags,

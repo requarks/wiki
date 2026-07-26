@@ -69,34 +69,21 @@ const state = reactive({
 async function confirm () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation revokeApiKey ($id: UUID!) {
-          revokeApiKey (id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.apiKey.id
-      }
-    })
-    if (resp?.data?.revokeApiKey?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.api.revokeSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.revokeApiKey?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.post(`api-keys/${props.apiKey.id}/revoke`).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.api.revokeSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    // -> ky throws above 400 — a key revoked from another tab answers 409
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.isLoading = false

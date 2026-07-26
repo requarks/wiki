@@ -88,12 +88,21 @@ q-page.admin-flags
               unchecked-icon='las la-times'
               :aria-label='t(`admin.flags.sqlLog.label`)'
               )
+        q-separator.q-my-sm(inset)
+        q-item
+          q-item-section(avatar)
+            q-icon(name='las la-info-circle', color='grey')
+          q-item-section
+            q-item-label(caption) {{t(`admin.flags.serverLogNotice`)}}
       q-card.q-py-sm.q-mt-md
         q-item
           blueprint-icon(icon='administrative-tools')
           q-item-section
             q-item-label {{t(`admin.flags.advanced.label`)}}
             q-item-label(caption) {{t(`admin.flags.advanced.hint`)}}
+            //- The editor was never built, and nothing reads custom keys — say so rather than leave
+            //- a disabled button with no explanation
+            q-item-label.text-orange(caption) {{t(`admin.flags.advanced.notImplemented`)}}
           q-item-section(avatar)
             q-btn(
               :label='t(`common.actions.edit`)'
@@ -104,22 +113,6 @@ q-page.admin-flags
               disabled
             )
 
-      q-card.q-py-sm.q-mt-md
-        q-item
-          blueprint-icon(icon='key')
-          q-item-section
-            q-item-label {{t(`admin.flags.getTokenLabel`)}}
-            q-item-label(caption) {{t(`admin.flags.getTokenHint`)}}
-          q-item-section(avatar)
-            q-btn(
-              ref='copyTokenBtn'
-              :label='t(`common.actions.copy`)'
-              unelevated
-              icon='las la-clipboard'
-              color='primary'
-              text-color='white'
-            )
-
     .col-12.col-lg-5.gt-md
       .q-pa-md.text-center
         img(src='/_assets/illustrations/undraw_settings.svg', style='width: 80%;')
@@ -127,15 +120,13 @@ q-page.admin-flags
 
 <script setup>
 
-import { onMounted, reactive, ref } from 'vue'
-import { cloneDeep, omit } from 'lodash-es'
+import { onMounted, reactive } from 'vue'
+import { omit } from 'es-toolkit/object'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import ClipboardJS from 'clipboard'
 
 import { useSiteStore } from '@/stores/site'
 import { useFlagsStore } from '@/stores/flags'
-import { useUserStore } from '@/stores/user'
 
 // QUASAR
 
@@ -145,7 +136,6 @@ const $q = useQuasar()
 
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
-const userStore = useUserStore()
 
 // I18N
 
@@ -168,17 +158,22 @@ const state = reactive({
   }
 })
 
-// REFS
-
-const copyTokenBtn = ref(null)
-
 // METHODS
 
 async function load () {
   state.loading++
   $q.loading.show()
-  await flagsStore.load()
-  state.flags = omit(cloneDeep(flagsStore.$state), ['loaded'])
+  try {
+    // -> Through the store, so that `experimental` is refreshed for the whole app at the same time
+    await flagsStore.load()
+    state.flags = omit(flagsStore.$state, ['loaded'])
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.flags.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
@@ -188,38 +183,24 @@ async function save () {
 
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation updateFlags (
-          $flags: JSON!
-        ) {
-          updateSystemFlags(
-            flags: $flags
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        flags: state.flags
-      }
-    })
-    if (resp?.data?.updateSystemFlags?.operation?.succeeded) {
-      load()
-      $q.notify({
-        type: 'positive',
-        message: t('admin.flags.saveSuccess')
-      })
-    } else {
-      throw new Error(resp?.data?.updateSystemFlags?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.put('system/flags', {
+      json: state.flags
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.flags.saveSuccess')
+    })
+    await load()
   } catch (err) {
+    // -> ky doesn't throw on 400, so the API's own message is on the response
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: t('admin.flags.saveFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.loading--
@@ -227,28 +208,7 @@ async function save () {
 
 // MOUNTED
 
-onMounted(async () => {
-  load()
-  const clip = new ClipboardJS(copyTokenBtn.value.$el, {
-    text: () => {
-      return userStore.token
-    }
-  })
-
-  clip.on('success', () => {
-    $q.notify({
-      type: 'positive',
-      message: 'Token copied successfully',
-      icon: 'las la-clipboard'
-    })
-  })
-  clip.on('error', () => {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to copy token'
-    })
-  })
-})
+onMounted(load)
 
 </script>
 

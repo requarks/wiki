@@ -1,0 +1,12 @@
+key: git
+title: Git
+description: >-
+  Distributed version control system. Required for the Git storage module to synchronize content with
+  a remote repository.
+website: 'https://git-scm.com'
+# Detection: a `git` executable somewhere on PATH
+detect:
+  type: command
+  value: git
+# Installed with the operating system's package manager, not from here
+isInstallable: false

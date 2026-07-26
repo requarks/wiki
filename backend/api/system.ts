@@ -56,6 +56,10 @@ async function routes(app: FastifyInstance) {
               isMailConfigured: {
                 type: 'boolean'
               },
+              isApiEnabled: {
+                type: 'boolean',
+                description: 'Whether API keys are accepted.'
+              },
               isMetricsEnabled: {
                 type: 'boolean',
                 description: 'Whether the Prometheus metrics endpoint is turned on.'
@@ -117,6 +121,7 @@ async function routes(app: FastifyInstance) {
         groupsTotal: await WIKI.db.$count(groupsTable),
         hostname: os.hostname(),
         httpPort: 0,
+        isApiEnabled: WIKI.config.api.isEnabled === true,
         isMailConfigured: WIKI.config?.mail?.host?.length > 2,
         isMetricsEnabled: WIKI.config.metrics.isEnabled === true,
         isSchedulerHealthy: await WIKI.models.jobs.isHealthy(),
@@ -147,19 +152,428 @@ async function routes(app: FastifyInstance) {
     {
       schema: {
         summary: 'System Flags',
+        description:
+          'Readable without authentication: the frontend needs `experimental` before anyone has logged in, to know which unfinished features to reveal. A flag must therefore never carry anything sensitive.',
+        tags: ['System'],
+        response: {
+          200: { $ref: 'SystemFlags#' }
+        }
+      }
+    },
+    async () => {
+      return WIKI.models.flags.getFlags()
+    }
+  )
+
+  /**
+   * UPDATE SYSTEM FLAGS
+   */
+  app.put<{ Body: Record<string, any> }>(
+    '/flags',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Update the system flags',
+        description:
+          'Accepts any subset of the flags. All of them take effect immediately, without a restart: `authDebug` and `sqlLog` write to the server log at info level, and `experimental` is picked up by the frontend on its next load.',
+        tags: ['System'],
+        body: { $ref: 'SystemFlags#' },
+        response: {
+          200: {
+            description: 'System flags updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const patch = WIKI.models.flags.pickFlags(req.body)
+      if (Object.keys(patch).length < 1) {
+        return reply.badRequest('No system flags provided to update.')
+      }
+      if (!(await WIKI.models.flags.updateFlags(patch))) {
+        return reply.internalServerError('Failed to save the system flags.')
+      }
+
+      return {
+        ok: true,
+        message: 'System flags updated successfully.'
+      }
+    }
+  )
+
+  /**
+   * GET SECURITY CONFIGURATION
+   */
+  app.get(
+    '/security',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the security configuration',
+        description:
+          'The JWT fields come from the `auth` settings, which are the ones actually in force. Most of the rest is applied when the HTTP server starts, so changing it takes effect on the next restart.',
+        tags: ['System'],
+        response: {
+          200: { $ref: 'SecurityConfig#' }
+        }
+      }
+    },
+    async () => {
+      return WIKI.models.security.getConfig()
+    }
+  )
+
+  /**
+   * UPDATE SECURITY CONFIGURATION
+   */
+  app.put<{ Body: Record<string, any> }>(
+    '/security',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Update the security configuration',
+        description:
+          'Accepts any subset of the fields. Changing the JWT audience invalidates every API key already issued, since a key carries the audience it was signed with. Header, CORS and proxy settings are read when the HTTP server starts and therefore apply after a restart.',
+        tags: ['System'],
+        body: { $ref: 'SecurityConfig#' },
+        response: {
+          200: {
+            description: 'Security configuration updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const patch = WIKI.models.security.pickFields(req.body)
+      if (Object.keys(patch).length < 1) {
+        return reply.badRequest('No security settings provided to update.')
+      }
+
+      const invalid = WIKI.models.security.validate(patch)
+      if (invalid) {
+        return reply.badRequest(invalid)
+      }
+
+      if (!(await WIKI.models.security.updateConfig(patch))) {
+        return reply.internalServerError('Failed to save the security configuration.')
+      }
+
+      return {
+        ok: true,
+        message: 'Security configuration updated successfully.'
+      }
+    }
+  )
+
+  /**
+   * GET SEARCH CONFIGURATION
+   */
+  app.get(
+    '/search',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the search configuration',
+        description:
+          'Search is postgres full-text. `availableDictionaries` lists the text search configurations this database has, which is what a locale may be mapped to.',
         tags: ['System'],
         response: {
           200: {
-            description: 'System Flags',
+            description: 'Search configuration',
             type: 'object',
             properties: {
-              experimental: {
+              termHighlighting: {
                 type: 'boolean'
               },
-              authDebug: {
+              dictOverrides: {
+                type: 'object',
+                description:
+                  'Locale code to postgres dictionary, e.g. `{ "en": "english" }`. Overrides the built-in mapping.',
+                additionalProperties: { type: 'string' }
+              },
+              availableDictionaries: {
+                type: 'array',
+                description: 'Dictionary names this postgres installation knows.',
+                items: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async () => {
+      return {
+        ...WIKI.models.search.getConfig(),
+        availableDictionaries: await WIKI.models.search.getAvailableDictionaries()
+      }
+    }
+  )
+
+  /**
+   * UPDATE SEARCH CONFIGURATION
+   */
+  app.put<{ Body: { termHighlighting?: boolean; dictOverrides?: Record<string, string> } }>(
+    '/search',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Update the search configuration',
+        description:
+          'Every dictionary named in `dictOverrides` must exist in this database, otherwise indexing would fail later, long after the setting was accepted. Changing a mapping affects pages the next time they are indexed — rebuild the index to apply it to existing content.',
+        tags: ['System'],
+        body: {
+          type: 'object',
+          properties: {
+            termHighlighting: {
+              type: 'boolean'
+            },
+            dictOverrides: {
+              type: 'object',
+              description: 'Locale code to postgres dictionary. Replaces the stored mapping.',
+              additionalProperties: { type: 'string' }
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Search configuration updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
                 type: 'boolean'
               },
-              sqlLog: {
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (req.body.termHighlighting === undefined && req.body.dictOverrides === undefined) {
+        return reply.badRequest('No search settings provided to update.')
+      }
+
+      if (req.body.dictOverrides) {
+        const available = await WIKI.models.search.getAvailableDictionaries()
+        for (const [locale, dictionary] of Object.entries(req.body.dictOverrides)) {
+          if (!/^[a-z]{2,3}(?:[-_][A-Za-z]{2,4})?$/.test(locale)) {
+            return reply.badRequest(`"${locale}" is not a valid locale code.`)
+          }
+          if (!available.includes(dictionary)) {
+            return reply.badRequest(
+              `"${dictionary}" is not a text search dictionary in this database.`
+            )
+          }
+        }
+      }
+
+      const previousConfig = WIKI.config.search
+      WIKI.config.search = {
+        ...previousConfig,
+        ...(req.body.termHighlighting !== undefined && {
+          termHighlighting: req.body.termHighlighting
+        }),
+        ...(req.body.dictOverrides !== undefined && { dictOverrides: req.body.dictOverrides })
+      }
+
+      if (!(await WIKI.configSvc.saveToDb(['search']))) {
+        WIKI.config.search = previousConfig
+        return reply.internalServerError('Failed to save the search configuration.')
+      }
+
+      return {
+        ok: true,
+        message: 'Search configuration updated successfully.'
+      }
+    }
+  )
+
+  /**
+   * REBUILD SEARCH INDEX
+   */
+  app.post(
+    '/search/rebuild',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Rebuild the search index',
+        description:
+          'Queues a job that recomputes the search vector of every page from its stored content, using the dictionary mapping in force. Runs in the background: the response only says the job was queued.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'Rebuild queued successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              id: {
+                type: 'string',
+                format: 'uuid',
+                description: 'ID of the queued job, which the scheduler view lists.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const added = await WIKI.scheduler.addJob({ task: 'rebuildSearchIndex' })
+      if (!added?.id) {
+        return reply.internalServerError('The scheduler could not queue the rebuild.')
+      }
+      return {
+        ok: true,
+        message: 'Search index rebuild queued successfully.',
+        id: added.id
+      }
+    }
+  )
+
+  /**
+   * LIST EXTENSIONS
+   */
+  app.get(
+    '/extensions',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'List optional extensions',
+        description:
+          'Third-party tooling that unlocks extra functionality, with whether each one is present on this system. Detection runs per request, so installing a tool shows up without a restart.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'List of extensions',
+            type: 'array',
+            items: { $ref: 'Extension#' }
+          }
+        }
+      }
+    },
+    async () => {
+      return WIKI.models.extensions.getExtensions()
+    }
+  )
+
+  /**
+   * INSTALL EXTENSION
+   */
+  app.post<{ Params: { extensionKey: string } }>(
+    '/extensions/:extensionKey/install',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Install an extension',
+        description:
+          'Only extensions flagged `isInstallable` can be installed from here. None currently are: Git and Pandoc come from the operating system, Sharp and Puppeteer are optional dependencies, so both are installed outside the application and this answers 409 pointing at the documentation.',
+        tags: ['System'],
+        params: {
+          type: 'object',
+          properties: {
+            extensionKey: {
+              type: 'string',
+              maxLength: 255
+            }
+          },
+          required: ['extensionKey']
+        },
+        response: {
+          200: {
+            description: 'Extension installed successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const definition = WIKI.models.extensions.getDefinition(req.params.extensionKey)
+      if (!definition) {
+        return reply.notFound('Extension does not exist.')
+      }
+      if (!WIKI.models.extensions.isCompatible(definition)) {
+        return reply.conflict('This extension is not compatible with this system.')
+      }
+      if (definition.isInstallable !== true) {
+        return reply.conflict(
+          `${definition.title} must be installed manually. See the documentation for instructions.`
+        )
+      }
+
+      // -> No extension declares itself installable yet; an installer belongs with the extension
+      //    that needs it, next to its definition
+      return reply.notImplemented('Installing this extension is not implemented yet.')
+    }
+  )
+
+  /**
+   * GET API STATE
+   */
+  app.get(
+    '/api',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the API state',
+        description:
+          'Whether API keys are accepted. While this is off, every request presenting a key is rejected, no matter how valid the key is.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'API state',
+            type: 'object',
+            properties: {
+              isEnabled: {
                 type: 'boolean'
               }
             }
@@ -168,7 +582,66 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
-      return WIKI.config.flags
+      return { isEnabled: WIKI.config.api.isEnabled === true }
+    }
+  )
+
+  /**
+   * SET API STATE
+   */
+  app.put<{ Body: { isEnabled: boolean } }>(
+    '/api',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Turn the API on or off',
+        description:
+          'Turning it off stops every API key from authenticating, without revoking any of them. Session-authenticated requests, i.e. the admin area itself, are unaffected.',
+        tags: ['System'],
+        body: {
+          type: 'object',
+          required: ['isEnabled'],
+          properties: {
+            isEnabled: {
+              type: 'boolean'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'API state updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              isEnabled: {
+                type: 'boolean'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const previousConfig = WIKI.config.api
+      WIKI.config.api = { ...previousConfig, isEnabled: req.body.isEnabled }
+
+      if (!(await WIKI.configSvc.saveToDb(['api']))) {
+        WIKI.config.api = previousConfig
+        return reply.internalServerError('Failed to save the API state.')
+      }
+
+      return {
+        ok: true,
+        message: req.body.isEnabled ? 'API enabled successfully.' : 'API disabled successfully.',
+        isEnabled: req.body.isEnabled
+      }
     }
   )
 

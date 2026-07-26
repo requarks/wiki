@@ -1,0 +1,10 @@
+key: pandoc
+title: Pandoc
+description: >-
+  Converts between markup formats. Required to import content from other wikis and formats such as
+  MediaWiki, AsciiDoc, Textile or DocBook.
+website: 'https://pandoc.org'
+detect:
+  type: command
+  value: pandoc
+isInstallable: false

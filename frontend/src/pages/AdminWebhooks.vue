@@ -96,9 +96,6 @@ q-page.admin-webhooks
 </template>
 
 <script setup>
-import { cloneDeep } from 'lodash-es'
-
-
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
@@ -138,20 +135,15 @@ const state = reactive({
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getHooks {
-        hooks {
-          id
-          name
-          url
-          state
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.hooks = cloneDeep(resp?.data?.hooks) ?? []
+  try {
+    state.hooks = await API_CLIENT.get('hooks').json() ?? []
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.webhooks.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }

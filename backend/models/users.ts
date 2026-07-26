@@ -289,6 +289,19 @@ class Users {
     if (groups.length > 0) {
       await this.setUserGroups(userId, groups)
     }
+
+    WIKI.models.flags.authDebug(
+      `Created user ${userId} <${email.toLowerCase()}> in ${groups.length} group(s), mustChangePwd: ${mustChangePassword}, verified: ${isVerified}`
+    )
+
+    await WIKI.models.hooks.emit('user:join', {
+      userId,
+      metadata: {
+        name,
+        email: email.toLowerCase()
+      }
+    })
+
     return userId
   }
 
@@ -509,8 +522,21 @@ class Users {
         })
       }
 
+      // -> Never the password, flag or no flag
+      WIKI.models.flags.authDebug(
+        `Login attempt on site ${siteId} using ${str.module} strategy ${strategyId}${username ? ` as "${username}"` : ''} from ${ip}`
+      )
+
       // Authenticate
-      const user = await str.authenticate(context)
+      let user
+      try {
+        user = await str.authenticate(context)
+      } catch (err: any) {
+        WIKI.models.flags.authDebug(
+          `Strategy ${str.module} rejected the attempt${username ? ` for "${username}"` : ''}: ${err.message}`
+        )
+        throw err
+      }
 
       // Perform post-login checks
       return this.afterLoginChecks(
@@ -524,6 +550,7 @@ class Users {
         req
       )
     } else {
+      WIKI.models.flags.authDebug(`Login attempt using unknown strategy ${strategyId} from ${ip}`)
       throw new Error('Invalid Strategy ID')
     }
   }
@@ -590,6 +617,9 @@ class Users {
               strategyId
             }
           })
+          WIKI.models.flags.authDebug(
+            `User ${user.id} <${user.email}> authenticated, but a 2FA code is required first`
+          )
           return {
             nextAction: 'provideTfa',
             continuationToken: tfaToken,
@@ -612,6 +642,9 @@ class Users {
               strategyId
             }
           })
+          WIKI.models.flags.authDebug(
+            `User ${user.id} <${user.email}> authenticated, but must set up 2FA first`
+          )
           return {
             nextAction: 'setupTfa',
             continuationToken: tfaToken,
@@ -636,6 +669,9 @@ class Users {
           }
         })
 
+        WIKI.models.flags.authDebug(
+          `User ${user.id} <${user.email}> authenticated, but must change their password first`
+        )
         return {
           nextAction: 'changePassword',
           continuationToken: pwdChangeToken,
@@ -649,6 +685,22 @@ class Users {
 
     // Set Session Data
     this.updateSession(user, req)
+
+    WIKI.models.flags.authDebug(
+      `User ${user.id} <${user.email}> logged in with ${user.groups.length} group(s) and ${req?.session?.permissions?.length ?? 0} permission(s), redirecting to ${redirect}`
+    )
+
+    // -> Only once the login has actually succeeded: an attempt stopped by 2FA or a forced password
+    //    change is not a login yet
+    await WIKI.models.hooks.emit('user:login', {
+      userId: user.id,
+      strategyId,
+      ip: context.ip,
+      metadata: {
+        name: user.name,
+        email: user.email
+      }
+    })
 
     return {
       authenticated: true,

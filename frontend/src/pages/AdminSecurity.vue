@@ -49,7 +49,10 @@ q-page.admin-mail
               q-card-section.items-center(horizontal)
                 q-card-section.col-auto.q-pr-none
                   q-icon(name='las la-exclamation-triangle', size='sm')
-                q-card-section.text-caption {{ t('admin.security.warn') }}
+                q-card-section.text-caption
+                  div {{ t('admin.security.warn') }}
+                  //- These are read when the HTTP server builds its plugin chain, not per request
+                  div.q-mt-xs {{ t('admin.security.restartRequired') }}
         q-item(tag='label', v-ripple)
           blueprint-icon(icon='rfid-signal')
           q-item-section
@@ -185,7 +188,10 @@ q-page.admin-mail
               q-card-section.items-center(horizontal)
                 q-card-section.col-auto.q-pr-none
                   q-icon(name='las la-info-circle', size='sm')
-                q-card-section.text-caption {{ t('admin.security.uploadsInfo') }}
+                q-card-section.text-caption
+                  div {{ t('admin.security.uploadsInfo') }}
+                  //- Saved, but nothing reads them: there is no upload endpoint yet
+                  div.q-mt-xs {{ t('admin.security.uploadsNotEnforced') }}
         q-item
           blueprint-icon(icon='upload-to-the-cloud')
           q-item-section
@@ -327,16 +333,13 @@ q-page.admin-mail
 </template>
 
 <script setup>
-import { cloneDeep } from 'lodash-es'
-
 import { filesize } from 'filesize'
 import filesizeParser from 'filesize-parser'
 
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive } from 'vue'
 
-import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
 // QUASAR
@@ -345,7 +348,6 @@ const $q = useQuasar()
 
 // STORES
 
-const adminStore = useAdminStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -361,7 +363,7 @@ useMeta({
 // DATA
 
 const state = reactive({
-  loading: false,
+  loading: 0,
   config: {
     corsConfig: '',
     corsMode: 'OFF',
@@ -406,35 +408,17 @@ const corsModes = [
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getSecurityConfig {
-        systemSecurity {
-          authJwtAudience
-          authJwtExpiration
-          authJwtRenewablePeriod
-          corsConfig
-          corsMode
-          cspDirectives
-          disallowFloc
-          disallowIframe
-          disallowOpenRedirect
-          enforceCsp
-          enforceHsts
-          enforceSameOriginReferrerPolicy
-          forceAssetDownload
-          hstsDuration
-          trustProxy
-          uploadMaxFileSize
-          uploadMaxFiles
-          uploadScanSVG
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.config = cloneDeep(resp?.data?.systemSecurity)
-  state.humanUploadMaxFileSize = filesize(state.config.uploadMaxFileSize ?? 0, { base: 2, standard: 'jedec' })
+  try {
+    const resp = await API_CLIENT.get('system/security').json()
+    state.config = { ...state.config, ...resp }
+    state.humanUploadMaxFileSize = filesize(state.config.uploadMaxFileSize ?? 0, { base: 2, standard: 'jedec' })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.security.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
@@ -442,71 +426,38 @@ async function load () {
 async function save () {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveSecurityConfig (
-          $authJwtAudience: String
-          $authJwtExpiration: String
-          $authJwtRenewablePeriod: String
-          $corsConfig: String
-          $corsMode: SystemSecurityCorsMode
-          $cspDirectives: String
-          $disallowFloc: Boolean
-          $disallowIframe: Boolean
-          $disallowOpenRedirect: Boolean
-          $enforceCsp: Boolean
-          $enforceHsts: Boolean
-          $enforceSameOriginReferrerPolicy: Boolean
-          $hstsDuration: Int
-          $trustProxy: Boolean
-          $uploadMaxFiles: Int
-          $uploadMaxFileSize: Int
-        ) {
-          updateSystemSecurity(
-            authJwtAudience: $authJwtAudience
-            authJwtExpiration: $authJwtExpiration
-            authJwtRenewablePeriod: $authJwtRenewablePeriod
-            corsConfig: $corsConfig
-            corsMode: $corsMode
-            cspDirectives: $cspDirectives
-            disallowFloc: $disallowFloc
-            disallowIframe: $disallowIframe
-            disallowOpenRedirect: $disallowOpenRedirect
-            enforceCsp: $enforceCsp
-            enforceHsts: $enforceHsts
-            enforceSameOriginReferrerPolicy: $enforceSameOriginReferrerPolicy
-            hstsDuration: $hstsDuration
-            trustProxy: $trustProxy
-            uploadMaxFiles: $uploadMaxFiles
-            uploadMaxFileSize: $uploadMaxFileSize
-          ) {
-            status {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        ...state.config,
-        uploadMaxFileSize: filesizeParser(state.humanUploadMaxFileSize || '0')
-      }
-    })
-    const resp = respRaw?.data?.updateSystemSecurity?.status || {}
-    if (resp.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.security.saveSuccess')
-      })
-    } else {
-      throw new Error(resp.message)
+    let uploadMaxFileSize
+    try {
+      uploadMaxFileSize = filesizeParser(state.humanUploadMaxFileSize || '0')
+    } catch {
+      throw new Error(t('admin.security.maxUploadSizeInvalid'))
     }
+    if (!(uploadMaxFileSize > 0)) {
+      throw new Error(t('admin.security.maxUploadSizeInvalid'))
+    }
+
+    const resp = await API_CLIENT.put('system/security', {
+      json: {
+        ...state.config,
+        uploadMaxFileSize
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.security.saveSuccess')
+    })
+    await load()
   } catch (err) {
+    // -> ky throws above 400 — the server rejects combinations that would store a setting doing
+    //    nothing, e.g. enforcing a CSP with no directives
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to save security config',
-      caption: err.message
+      message: t('admin.security.saveFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.loading--

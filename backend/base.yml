@@ -64,12 +64,9 @@ defaults:
       uploadScanSVG: true
       disallowIframe: true
       uploadMaxFiles: 20
-      authJwtAudience: 'urn:wiki.js'
-      authJwtExpiration: '30m'
       uploadMaxFileSize: 10485760
       forceAssetDownload: true
       disallowOpenRedirect: true
-      authJwtRenewablePeriod: '14d'
       enforceSameOriginReferrerPolicy: true
     flags:
       experimental: false

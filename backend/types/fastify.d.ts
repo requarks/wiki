@@ -7,8 +7,17 @@
 
 import 'fastify'
 import '@fastify/session'
+import type { ApiKeyIdentity } from '../models/apiKeys.ts'
 
 declare module 'fastify' {
+  interface FastifyRequest {
+    /**
+     * Set by the API key hook in `index.ts` when a request carries a valid bearer key. Null for
+     * cookie-authenticated and anonymous requests.
+     */
+    apiKey?: ApiKeyIdentity | null
+  }
+
   interface Session {
     /** Set by `models/users.ts` → `updateSession()` once a login completes. */
     authenticated?: boolean

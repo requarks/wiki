@@ -1,0 +1,15 @@
+key: sharp
+title: Sharp
+description: >-
+  Processes and transforms images. Required to generate thumbnails of uploaded images and to resize
+  site assets such as logos.
+website: 'https://sharp.pixelplumbing.com'
+# Detection: an optional dependency, so resolvable from the backend's node_modules when present
+detect:
+  type: module
+  value: sharp
+# Prebuilt binaries are published for these architectures only
+architectures:
+  - x64
+  - arm64
+isInstallable: false

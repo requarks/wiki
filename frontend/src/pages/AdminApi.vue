@@ -67,14 +67,18 @@ q-page.admin-api
         q-list(separator)
           q-item(v-for='key of state.keys', :key='key.id')
             q-item-section(side)
-              q-icon(name='las la-key', :color='key.isRevoked ? `negative` : `positive`')
+              q-icon(name='las la-key', :color='isUsable(key) ? `positive` : `negative`')
             q-item-section
               q-item-label {{key.name}}
-              q-item-label(caption) Ending in {{key.keyShort}}
-              q-item-label(caption) Created On: #[strong {{DateTime.fromISO(key.createdAt).toFormat('fff')}}]
-              q-item-label(caption) Expiration: #[strong(:style='key.isRevoked ? `text-decoration: line-through;` : ``') {{DateTime.fromISO(key.expiration).toFormat('fff')}}]
+              q-item-label(caption) {{ t('admin.api.keyEndingIn', { suffix: key.keyShort }) }}
+              q-item-label(caption) {{ t('admin.api.permissionsFrom', { groups: groupNames(key) }) }}
+              q-item-label(caption) {{ t('admin.api.createdOn', { date: humanizeDate(key.createdAt) }) }}
+              q-item-label(caption)
+                span(:style='key.isRevoked ? `text-decoration: line-through;` : ``')
+                  | {{ t('admin.api.expiresOn', { date: humanizeDate(key.expiration) }) }}
+            //- Revoked wins over expired: it is the state an operator acted on
             q-item-section(
-              v-if='key.isRevoked'
+              v-if='key.isRevoked || isExpired(key)'
               side
               style='flex-direction: row; align-items: center;'
               )
@@ -83,26 +87,26 @@ q-page.admin-api
                 size='xs'
                 name='las la-exclamation-triangle'
               )
-              .text-caption.text-negative {{t('admin.api.revoked')}}
-              q-tooltip(anchor='center left', self='center right') {{t('admin.api.revokedHint')}}
+              .text-caption.text-negative {{ key.isRevoked ? t('admin.api.revoked') : t('admin.api.expired') }}
+              q-tooltip(anchor='center left', self='center right') {{ key.isRevoked ? t('admin.api.revokedHint') : t('admin.api.expiredHint') }}
             q-separator.q-ml-md(vertical)
             q-item-section(side, style='flex-direction: row; align-items: center;')
               q-btn.acrylic-btn(
                 :color='key.isRevoked ? `gray` : `red`'
                 icon='las la-ban'
                 flat
+                :aria-label='t(`admin.api.revoke`)'
                 @click='revoke(key)'
                 :disable='key.isRevoked'
               )
+                q-tooltip(v-if='!key.isRevoked', anchor='center left', self='center right') {{ t('admin.api.revoke') }}
 </template>
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
-import { DateTime } from 'luxon'
+import { onMounted, reactive } from 'vue'
 
 import ApiKeyCreateDialog from '../components/ApiKeyCreateDialog.vue'
 import ApiKeyRevokeDialog from '../components/ApiKeyRevokeDialog.vue'
@@ -136,37 +140,61 @@ const state = reactive({
   loading: 0,
   isToggleLoading: false,
   keys: [],
-  isCreateDialogShown: false,
-  isRevokeConfirmDialogShown: false,
-  revokeLoading: false,
-  current: {}
+  groups: []
 })
 
 // METHODS
 
+function humanizeDate (val) {
+  if (!val) { return '---' }
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  })
+}
+
+/** A key past its expiration still authenticates nothing, even though it was never revoked. */
+function isExpired (key) {
+  return Temporal.Instant.compare(Temporal.Instant.from(key.expiration), Temporal.Now.instant()) <= 0
+}
+
+function isUsable (key) {
+  return !key.isRevoked && !isExpired(key)
+}
+
+/** Group names rather than IDs, falling back to the ID for a group that has since been deleted. */
+function groupNames (key) {
+  return (key.groups ?? [])
+    .map(id => state.groups.find(g => g.id === id)?.name ?? id)
+    .join(', ')
+}
+
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getApiKeys {
-        apiKeys {
-          id
-          name
-          keyShort
-          expiration
-          isRevoked
-          createdAt
-          updatedAt
-        }
-        apiState
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.keys = cloneDeep(resp?.data?.apiKeys) ?? []
-  state.enabled = resp?.data?.apiState === true
-  adminStore.info.isApiEnabled = state.enabled
+  try {
+    // -> Groups are fetched alongside the keys so the list can name the permissions each key carries
+    const [keys, apiState, groups] = await Promise.all([
+      API_CLIENT.get('api-keys').json(),
+      API_CLIENT.get('system/api').json(),
+      API_CLIENT.get('groups').json()
+    ])
+    state.keys = keys ?? []
+    state.groups = groups ?? []
+    state.enabled = apiState?.isEnabled === true
+    // -> Keeps the status light in the admin sidebar in step without another round trip
+    adminStore.info.isApiEnabled = state.enabled
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.api.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
@@ -181,36 +209,25 @@ async function refresh () {
 
 async function globalSwitch () {
   state.isToggleLoading = true
+  const wanted = !state.enabled
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation ($enabled: Boolean!) {
-          setApiState (enabled: $enabled) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        enabled: !state.enabled
-      }
-    })
-    if (resp?.data?.setApiState?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: state.enabled ? t('admin.api.toggleStateDisabledSuccess') : t('admin.api.toggleStateEnabledSuccess')
-      })
-      await load()
-    } else {
-      throw new Error(resp?.data?.setApiState?.operation?.message || 'An unexpected error occurred.')
+    const resp = await API_CLIENT.put('system/api', {
+      json: { isEnabled: wanted }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occurred.')
     }
+    $q.notify({
+      type: 'positive',
+      message: wanted ? t('admin.api.toggleStateEnabledSuccess') : t('admin.api.toggleStateDisabledSuccess')
+    })
+    await load()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to switch API state.',
-      caption: err.message
+      message: t('admin.api.toggleStateFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.isToggleLoading = false

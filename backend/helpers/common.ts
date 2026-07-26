@@ -112,6 +112,7 @@ export interface ModulePropDefinition {
   enumDisplay?: string
   multiline?: boolean
   sensitive?: boolean
+  readOnly?: boolean
   icon?: string
   order?: number
   if?: unknown[]
@@ -127,6 +128,8 @@ export interface ModuleProp {
   enumDisplay: string
   multiline: boolean
   sensitive: boolean
+  /** Shown but not editable — the module declares something this server cannot currently change. */
+  readOnly: boolean
   icon: string
   order: number
   if: unknown[]
@@ -149,6 +152,7 @@ export function parseModuleProps(
       enumDisplay: def.enumDisplay || 'select',
       multiline: def.multiline || false,
       sensitive: def.sensitive || false,
+      readOnly: def.readOnly || false,
       icon: def.icon || 'rename',
       order: def.order || 100,
       if: def.if ?? []

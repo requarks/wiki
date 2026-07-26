@@ -152,9 +152,10 @@ class Settings {
           forceAssetDownload: true,
           hstsDuration: 0,
           trustProxy: false,
-          authJwtAudience: 'urn:wiki.js',
-          authJwtExpiration: '30m',
-          authJwtRenewablePeriod: '14d',
+          // NOTE: the JWT audience, expiration and renewal period are deliberately absent here.
+          //       They used to be duplicated under 2.x names (`authJwt*`) that nothing read, so the
+          //       admin area edited values with no effect. They live in the `auth` settings above,
+          //       which is what the server uses; the security view maps onto those.
           uploadMaxFileSize: 10485760,
           uploadMaxFiles: 20,
           uploadScanSVG: true

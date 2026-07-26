@@ -82,13 +82,11 @@ q-page.admin-flags
 
 <script setup>
 
-import { onMounted, reactive, ref } from 'vue'
-import { cloneDeep, omit } from 'lodash-es'
+import { onMounted, reactive } from 'vue'
 import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 
 import { useSiteStore } from '@/stores/site'
-import { useFlagsStore } from '@/stores/flags'
 
 import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
 
@@ -98,7 +96,6 @@ const $q = useQuasar()
 
 // STORES
 
-const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -108,7 +105,7 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  title: t('admin.flags.title')
+  title: t('admin.search.title')
 })
 
 // DATA
@@ -116,9 +113,11 @@ useMeta({
 const state = reactive({
   loading: 0,
   rebuildLoading: false,
+  availableDictionaries: [],
   config: {
     termHighlighting: false,
-    dictOverrides: ''
+    // -> The editor works on text; the API stores and returns an object
+    dictOverrides: '{}'
   }
 })
 
@@ -128,22 +127,16 @@ async function load () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getSearchConfig {
-          systemSearch {
-            termHighlighting
-            dictOverrides
-          }
-        }
-      `,
-      fetchPolicy: 'network-only'
-    })
-    state.config = cloneDeep(resp?.data?.systemSearch)
+    const resp = await API_CLIENT.get('system/search').json()
+    state.config = {
+      termHighlighting: resp?.termHighlighting === true,
+      dictOverrides: JSON.stringify(resp?.dictOverrides ?? {}, null, 2)
+    }
+    state.availableDictionaries = resp?.availableDictionaries ?? []
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load search config',
+      message: t('admin.search.loadFailed'),
       caption: err.message
     })
   }
@@ -154,40 +147,43 @@ async function load () {
 async function save () {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveSearchConfig (
-          $termHighlighting: Boolean
-          $dictOverrides: String
-        ) {
-          updateSystemSearch(
-            termHighlighting: $termHighlighting
-            dictOverrides: $dictOverrides
-          ) {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `,
-      variables: state.config
-    })
-    const resp = respRaw?.data?.updateSystemSearch?.operation || {}
-    if (resp.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.search.saveSuccess')
-      })
-    } else {
-      throw new Error(resp.message)
+    let dictOverrides
+    try {
+      dictOverrides = JSON.parse(state.config.dictOverrides || '{}')
+    } catch (err) {
+      throw new Error(t('admin.search.dictOverridesInvalidJSON', { reason: err.message }))
     }
+    if (typeof dictOverrides !== 'object' || Array.isArray(dictOverrides) || dictOverrides === null) {
+      throw new Error(t('admin.search.dictOverridesNotAnObject'))
+    }
+    // -> Caught here rather than server-side so the offending entry can be named while the operator
+    //    is still looking at the editor
+    for (const [locale, dictionary] of Object.entries(dictOverrides)) {
+      if (typeof dictionary !== 'string' || !state.availableDictionaries.includes(dictionary)) {
+        throw new Error(t('admin.search.dictOverridesUnknown', { locale, dictionary }))
+      }
+    }
+
+    const resp = await API_CLIENT.put('system/search', {
+      json: {
+        termHighlighting: state.config.termHighlighting,
+        dictOverrides
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.search.saveSuccess')
+    })
+    await load()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to save search config',
-      caption: err.message
+      message: t('admin.search.saveFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.loading--
@@ -196,33 +192,20 @@ async function save () {
 async function rebuild () {
   state.rebuildLoading = true
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation rebuildSearchIndex {
-          rebuildSearchIndex {
-            operation {
-              succeeded
-              slug
-              message
-            }
-          }
-        }
-      `
-    })
-    const resp = respRaw?.data?.rebuildSearchIndex?.operation || {}
-    if (resp.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.search.rebuildInitSuccess')
-      })
-    } else {
-      throw new Error(resp.message)
+    const resp = await API_CLIENT.post('system/search/rebuild').json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.search.rebuildInitSuccess')
+    })
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: 'Failed to initiate a search index rebuild',
-      caption: err.message
+      message: t('admin.search.rebuildFailed'),
+      caption: apiMessage || err.message
     })
   }
   state.rebuildLoading = false

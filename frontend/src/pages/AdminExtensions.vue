@@ -39,6 +39,8 @@ q-page.admin-extensions
             q-item-section
               q-item-label {{ext.title}}
               q-item-label(caption) {{ext.description}}
+              q-item-label(caption, v-if='ext.website')
+                a.text-primary(:href='ext.website', target='_blank', rel='noopener') {{ ext.website }}
             q-item-section(side)
               .row
                 q-btn-group(unelevated)
@@ -103,12 +105,10 @@ q-page.admin-extensions
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive } from 'vue'
 
-import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
 // QUASAR
@@ -117,7 +117,6 @@ const $q = useQuasar()
 
 // STORES
 
-const adminStore = useAdminStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -133,7 +132,7 @@ useMeta({
 // DATA
 
 const state = reactive({
-  loading: false,
+  loading: 0,
   extensions: []
 })
 
@@ -142,22 +141,15 @@ const state = reactive({
 async function load () {
   state.loading++
   $q.loading.show()
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query fetchExtensions {
-        systemExtensions {
-          key
-          title
-          description
-          isInstalled
-          isInstallable
-          isCompatible
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.extensions = cloneDeep(resp?.data?.systemExtensions)
+  try {
+    state.extensions = await API_CLIENT.get('system/extensions').json() ?? []
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.extensions.loadFailed'),
+      caption: err.message
+    })
+  }
   $q.loading.hide()
   state.loading--
 }
@@ -168,40 +160,23 @@ async function install (ext) {
     html: true
   })
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation installExtension (
-          $key: String!
-        ) {
-          installExtension (
-            key: $key
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        key: ext.key
-      }
-    })
-    if (respRaw.data?.installExtension?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.extensions.installSuccess')
-      })
-      ext.isInstalled = true
-      // this.$forceUpdate()
-    } else {
-      throw new Error(respRaw.data?.installExtension?.operation?.message || 'An unexpected error occured')
+    const resp = await API_CLIENT.post(`system/extensions/${ext.key}/install`).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.extensions.installSuccess')
+    })
+    // -> Re-detect rather than assume: the install is only done once the server can see the tool
+    await load()
   } catch (err) {
+    // -> ky throws above 400 — an extension that must be installed by hand answers 409 saying so
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
       message: t('admin.extensions.installFailed'),
-      caption: err.message
+      caption: apiMessage || err.message
     })
   }
   $q.loading.hide()

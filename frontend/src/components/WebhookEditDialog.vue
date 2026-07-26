@@ -88,6 +88,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                     ) {{opt.type}}
                 q-item-section
                   q-item-label {{opt.name}}
+                  //- Subscribing is allowed, but say plainly that nothing fires it yet
+                  q-item-label(caption, v-if='!opt.isEmitted') {{ t('admin.webhooks.eventNotEmitted') }}
       q-item
         blueprint-icon.self-start(icon='unknown-status')
         q-item-section
@@ -194,7 +196,6 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 
-import { cloneDeep } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -227,6 +228,8 @@ const { t } = useI18n()
 
 const state = reactive({
   isLoading: false,
+  /** Event keys the server actually emits. Null until fetched, i.e. assume all of them. */
+  emittedEvents: null,
   hook: {
     name: '',
     events: [],
@@ -242,7 +245,7 @@ const state = reactive({
 
 // COMPUTED
 
-const events = computed(() => ([
+const EVENT_DEFINITIONS = computed(() => ([
   { key: 'page:create', name: t('admin.webhooks.eventCreatePage'), type: t('admin.webhooks.typePage') },
   { key: 'page:edit', name: t('admin.webhooks.eventEditPage'), type: t('admin.webhooks.typePage') },
   { key: 'page:rename', name: t('admin.webhooks.eventRenamePage'), type: t('admin.webhooks.typePage') },
@@ -258,6 +261,11 @@ const events = computed(() => ([
   { key: 'user:login', name: t('admin.webhooks.eventUserLogin'), type: t('admin.webhooks.typeUser') },
   { key: 'user:logout', name: t('admin.webhooks.eventUserLogout'), type: t('admin.webhooks.typeUser') }
 ]))
+
+const events = computed(() => EVENT_DEFINITIONS.value.map(evt => ({
+  ...evt,
+  isEmitted: state.emittedEvents === null || state.emittedEvents.includes(evt.key)
+})))
 
 // REFS
 
@@ -279,41 +287,38 @@ const hookUrlValidation = [
 
 // METHODS
 
+/** The fields the API accepts — `state` and `lastErrorMessage` are the server's to set, not ours. */
+function writableFields () {
+  return {
+    name: state.hook.name,
+    events: state.hook.events,
+    url: state.hook.url,
+    includeMetadata: state.hook.includeMetadata,
+    includeContent: state.hook.includeContent,
+    acceptUntrusted: state.hook.acceptUntrusted,
+    authHeader: state.hook.authHeader ?? ''
+  }
+}
+
 async function fetchHook (id) {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getHook (
-          $id: UUID!
-          ) {
-          hookById (
-            id: $id
-            ) {
-            name
-            events
-            url
-            includeMetadata
-            includeContent
-            acceptUntrusted
-            authHeader
-            state
-            lastErrorMessage
-          }
-        }
-      `,
-      fetchPolicy: 'no-cache',
-      variables: { id }
-    })
-    if (resp?.data?.hookById) {
-      state.hook = cloneDeep(resp.data.hookById)
-    } else {
-      throw new Error('Failed to fetch webhook configuration.')
+    const resp = await API_CLIENT.get(`hooks/${id}`).json()
+    if (!resp?.id) {
+      throw new Error(t('admin.webhooks.loadFailed'))
+    }
+    // -> Merged onto the defaults so a null column (e.g. no auth header) still binds to an input
+    state.hook = {
+      ...state.hook,
+      ...resp,
+      authHeader: resp.authHeader ?? '',
+      lastErrorMessage: resp.lastErrorMessage ?? ''
     }
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
     onDialogHide()
   }
@@ -327,48 +332,20 @@ async function create () {
     if (!isFormValid) {
       throw new Error(t('admin.webhooks.createInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation createHook (
-          $name: String!
-          $events: [String]!
-          $url: String!
-          $includeMetadata: Boolean!
-          $includeContent: Boolean!
-          $acceptUntrusted: Boolean!
-          $authHeader: String
-          ) {
-          createHook (
-            name: $name
-            events: $events
-            url: $url
-            includeMetadata: $includeMetadata
-            includeContent: $includeContent
-            acceptUntrusted: $acceptUntrusted
-            authHeader: $authHeader
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: state.hook
-    })
-    if (resp?.data?.createHook?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.webhooks.createSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.createHook?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.post('hooks', { json: writableFields() }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.webhooks.createSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.isLoading = false
@@ -381,57 +358,39 @@ async function save () {
     if (!isFormValid) {
       throw new Error(t('admin.webhooks.createInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveHook (
-          $id: UUID!
-          $patch: HookUpdateInput!
-          ) {
-          updateHook (
-            id: $id
-            patch: $patch
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.hookId,
-        patch: {
-          name: state.hook.name,
-          events: state.hook.events,
-          url: state.hook.url,
-          acceptUntrusted: state.hook.acceptUntrusted,
-          authHeader: state.hook.authHeader,
-          includeMetadata: state.hook.includeMetadata,
-          includeContent: state.hook.includeContent
-        }
-      }
-    })
-    if (resp?.data?.updateHook?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.webhooks.updateSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.updateHook?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.put(`hooks/${props.hookId}`, { json: writableFields() }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.webhooks.updateSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.isLoading = false
 }
 
+async function fetchEmittedEvents () {
+  try {
+    const resp = await API_CLIENT.get('hooks/events').json()
+    state.emittedEvents = (resp ?? []).filter(evt => evt.isEmitted).map(evt => evt.key)
+  } catch {
+    // -> Purely informational: on failure, flag nothing rather than flag everything
+    state.emittedEvents = null
+  }
+}
+
 // MOUNTED
 
 onMounted(() => {
+  fetchEmittedEvents()
   if (props.hookId) {
     fetchHook(props.hookId)
   }

@@ -24,11 +24,12 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
       q-item
         blueprint-icon.self-start(icon='schedule')
         q-item-section
+          //- Single-select: a key has one lifetime. It was declared `multiple` against a string
+          //- model, which showed the default as a stray chip and let several be picked at once.
           q-select(
             outlined
             :options='expirations'
             v-model='state.keyExpiration'
-            multiple
             map-options
             option-value='value'
             option-label='text'
@@ -105,7 +106,6 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 <script setup>
 
-import { cloneDeep, sampleSize } from 'lodash-es'
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -135,8 +135,15 @@ const state = reactive({
   keyGroups: [],
   groups: [],
   loadingGroups: false,
-  loading: false
+  loading: 0
 })
+
+/**
+ * The guests group is anonymous access, so a key carrying its permissions would grant nothing a
+ * caller cannot already do. Its ID is fixed at install (`systemIds.guestsGroupId` in base.yml), and
+ * the API rejects it too.
+ */
+const GUESTS_GROUP_ID = '10000000-0000-4000-8000-000000000001'
 
 const expirations = [
   { value: '30d', text: t('admin.api.expiration30d') },
@@ -173,18 +180,16 @@ const keyGroupsValidation = [
 async function loadGroups () {
   state.loading++
   state.loadingGroups = true
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getGroupsForCreateApiKey {
-        groups {
-          id
-          name
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.groups = cloneDeep(resp?.data?.groups?.filter(g => g.id !== '10000000-0000-4000-8000-000000000001') ?? [])
+  try {
+    const resp = await API_CLIENT.get('groups').json()
+    state.groups = (resp ?? []).filter(g => g.id !== GUESTS_GROUP_ID)
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.users.groupsLoadFailed'),
+      caption: err.message
+    })
+  }
   state.loadingGroups = false
   state.loading--
 }
@@ -196,52 +201,34 @@ async function create () {
     if (!isFormValid) {
       throw new Error(t('admin.api.createInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation createApiKey (
-          $name: String!
-          $expiration: String!
-          $groups: [UUID]!
-          ) {
-          createApiKey (
-            name: $name
-            expiration: $expiration
-            groups: $groups
-            ) {
-            operation {
-              succeeded
-              message
-            }
-            key
-          }
-        }
-      `,
-      variables: {
+    const resp = await API_CLIENT.post('api-keys', {
+      json: {
         name: state.keyName,
         expiration: state.keyExpiration,
         groups: state.keyGroups
       }
-    })
-    if (resp?.data?.createApiKey?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('admin.api.createSuccess')
-      })
-      $q.dialog({
-        component: ApiKeyCopyDialog,
-        componentProps: {
-          keyValue: resp?.data?.createApiKey?.key || 'ERROR'
-        }
-      }).onDismiss(() => {
-        onDialogOK()
-      })
-    } else {
-      throw new Error(resp?.data?.createApiKey?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    if (!resp?.ok || !resp?.key) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('admin.api.createSuccess')
+    })
+    // -> The token exists only in this response, so hand it straight to the copy dialog
+    $q.dialog({
+      component: ApiKeyCopyDialog,
+      componentProps: {
+        keyValue: resp.key
+      }
+    }).onDismiss(() => {
+      onDialogOK()
+    })
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.loading--

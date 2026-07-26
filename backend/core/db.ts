@@ -9,19 +9,36 @@ import { parse } from 'pg-connection-string'
 import semver from 'semver'
 
 import { relations } from '../db/relations.ts'
+import { flags } from '../models/flags.ts'
 import { createDeferred } from '../helpers/common.ts'
 // import migrationSource from '../db/migrator-source.js'
 // const migrateFromLegacy = require('../db/legacy')
 
 /**
+ * Query logger, consulted by Drizzle on every query.
+ *
+ * The decision is made per query rather than when the instance is built, so that the `sqlLog` system
+ * flag can be turned on in the admin area and take effect on the next query — a logger chosen at boot
+ * would need a restart.
+ */
+const queryLogger = {
+  logQuery(query: string, params: unknown[]): void {
+    if (!flags.isEnabled('sqlLog') && !WIKI.config.dev?.logQueries) {
+      return
+    }
+    WIKI.logger.info(`[SQL] ${query}${params.length > 0 ? ` -- ${JSON.stringify(params)}` : ''}`)
+  }
+}
+
+/**
  * Build the Drizzle instance.
  *
- * The two branches are spelled out rather than spreading a conditional `{ logger: true }` into a
- * single call: a spread in the config literal collapses the inferred relations to `EmptyRelations`,
- * which would untype the whole `db.query.*` relational API.
+ * `logger` is passed unconditionally rather than spread in from a conditional: a spread in the config
+ * literal collapses the inferred relations to `EmptyRelations`, which would untype the whole
+ * `db.query.*` relational API.
  */
-function createDb(client: Pool, logQueries: boolean) {
-  return logQueries ? drizzle({ client, relations, logger: true }) : drizzle({ client, relations })
+function createDb(client: Pool) {
+  return drizzle({ client, relations, logger: queryLogger })
 }
 
 /** The Drizzle instance, as returned by `init()` and exposed as `WIKI.db`. */
@@ -117,7 +134,7 @@ export default {
       options: `-c search_path=${WIKI.config.db.schema}`
     })
 
-    const db = createDb(this.pool, Boolean(WIKI.config.dev?.logQueries))
+    const db = createDb(this.pool)
 
     // Connect
     await this.connect(db)

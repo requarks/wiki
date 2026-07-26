@@ -36,7 +36,13 @@ const tsvector = customType({
 export const apiKeys = pgTable('apiKeys', {
   id: uuid().primaryKey().defaultRandom(),
   name: varchar({ length: 255 }).notNull(),
-  key: text().notNull(),
+  // -> Only the tail of the token, to tell keys apart in the admin list. The token itself is a
+  //    signed JWT shown once at creation and never stored: it is a bearer credential, and
+  //    verification needs the public key plus this row's state, not the token.
+  keyShort: varchar({ length: 8 }).notNull(),
+  // -> IDs of the groups whose permissions the key carries. Resolved on every request, so editing a
+  //    group immediately affects the keys pointing at it.
+  groups: jsonb().notNull().default([]),
   expiration: timestamp().notNull().defaultNow(),
   isRevoked: boolean().notNull().default(false),
   createdAt: timestamp().notNull().defaultNow(),
@@ -112,6 +118,29 @@ export const groups = pgTable('groups', {
   redirectOnFirstLogin: varchar({ length: 255 }).notNull().default(''),
   redirectOnLogout: varchar({ length: 255 }).notNull().default(''),
   isSystem: boolean().notNull().default(false),
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp().notNull().defaultNow()
+})
+
+// HOOKS -------------------------------
+export const hookStateEnum = pgEnum('hookState', ['pending', 'success', 'error'])
+export const hooks = pgTable('hooks', {
+  id: uuid().primaryKey().defaultRandom(),
+  name: varchar({ length: 255 }).notNull(),
+  // -> Event keys such as `page:create`, matched against what the server emits
+  events: text()
+    .array()
+    .notNull()
+    .default(sql`ARRAY[]::text[]`),
+  url: text().notNull(),
+  includeMetadata: boolean().notNull().default(true),
+  includeContent: boolean().notNull().default(false),
+  acceptUntrusted: boolean().notNull().default(false),
+  // -> Sent verbatim as the Authorization header, so it holds whatever secret the remote expects
+  authHeader: text(),
+  // -> Outcome of the most recent delivery, which is what the admin list shows
+  state: hookStateEnum().notNull().default('pending'),
+  lastErrorMessage: text(),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp().notNull().defaultNow()
 })

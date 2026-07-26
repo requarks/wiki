@@ -16,6 +16,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', persistent)
             type='textarea'
             outlined
             :model-value='props.keyValue'
+            readonly
             dense
             hide-bottom-space
             :label='t(`admin.api.key`)'
@@ -24,6 +25,16 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', persistent)
             )
     q-card-actions.card-actions
       q-space
+      //- The dialog is the only place this token ever appears, so copying it must not depend on
+      //- selecting a wrapped 700-character string by hand
+      q-btn.acrylic-btn(
+        flat
+        icon='las la-copy'
+        :label='t(`common.actions.copy`)'
+        color='primary'
+        padding='xs md'
+        @click='copyKey'
+        )
       q-btn(
         unelevated
         :label='t(`common.actions.close`)'
@@ -35,7 +46,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', persistent)
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+import { copyToClipboard, useDialogPluginComponent, useQuasar } from 'quasar'
 
 // PROPS
 
@@ -60,4 +71,22 @@ const $q = useQuasar()
 // I18N
 
 const { t } = useI18n()
+
+// METHODS
+
+async function copyKey () {
+  try {
+    await copyToClipboard(props.keyValue)
+    $q.notify({
+      type: 'positive',
+      message: t('admin.api.copySuccess')
+    })
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('admin.api.copyFailed'),
+      caption: err.message
+    })
+  }
+}
 </script>
