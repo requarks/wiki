@@ -110,7 +110,7 @@ q-card.page-properties-dialog
         )
         q-item(v-for='rel of pageStore.relations', :key='`rel-id-` + rel.id')
           q-item-section(side)
-            q-icon(:name='rel.icon')
+            wiki-icon(:name='rel.icon')
           q-item-section
             q-item-label: strong {{rel.label}}
             q-item-label(caption) {{rel.caption}}

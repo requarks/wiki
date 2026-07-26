@@ -6,16 +6,16 @@
       v-if='editorStore.isActive'
       padding='none'
       size='37px'
-      :icon='pageStore.icon'
       color='primary'
       flat
+      :aria-label='t(`editor.props.icon`)'
       )
+      wiki-icon(:name='pageStore.icon', size='37px')
       q-badge(color='grey' floating rounded)
         q-icon(name='las la-pen', size='xs', padding='xs xs')
       q-menu(content-class='shadow-7')
-        .q-pa-lg: em [ TODO: Icon Picker Dialog ]
-        // icon-picker-dialog(v-model='pageStore.icon')
-    q-icon.rounded-borders(
+        icon-picker-dialog(v-model='pageStore.icon')
+    wiki-icon.rounded-borders(
       v-else
       :name='pageStore.icon'
       size='64px'

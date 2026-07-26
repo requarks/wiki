@@ -33,7 +33,13 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       vue({
-        template: { transformAssetUrls }
+        template: {
+          transformAssetUrls,
+          // -> `iconify-icon` is a custom element registered by its package, not a Vue component
+          compilerOptions: {
+            isCustomElement: tag => tag === 'iconify-icon'
+          }
+        }
       }),
       quasar({
         autoImportComponentCase: 'kebab',
@@ -52,7 +58,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: true,
       port: userConfig.dev?.port,
-      proxy: ['_api', '_blocks', '_site', '_thumb', '_user'].reduce((result, key) => {
+      proxy: ['_api', '_blocks', '_icons', '_site', '_thumb', '_user'].reduce((result, key) => {
         result[`/${key}`] = {
           target: {
             host: '127.0.0.1',

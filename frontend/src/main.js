@@ -7,6 +7,7 @@ import { initializeComponents } from './boot/components'
 import { initializeEventBus } from './boot/eventbus'
 import { initializeExternals } from './boot/externals'
 import { initializeI18n } from './boot/i18n'
+import { initializeIconify } from './boot/iconify'
 import { initializeTemporal } from './boot/temporal'
 import quasarIconSet from 'quasar/icon-set/mdi-v7'
 
@@ -34,6 +35,7 @@ app.use(router)
 initializeApi(store)
 initializeComponents(app)
 initializeEventBus()
+initializeIconify()
 initializeExternals(router, store)
 initializeI18n(app, store)
 

@@ -52,32 +52,32 @@ q-card.page-relation-dialog(style='width: 500px;')
         v-if='state.pos === `left`'
         padding='sm md'
         outline
-        :icon='state.icon'
         no-caps
         color='primary'
         )
+        wiki-icon(:name='state.icon')
         .column.text-left.q-pl-md
           .text-body2: strong {{state.label}}
           .text-caption {{state.caption}}
       q-btn.full-width(
         v-else-if='state.pos === `center`'
-        :label='state.label'
         color='primary'
         flat
         no-caps
-        :icon='state.icon'
-      )
+        )
+        wiki-icon.q-mr-sm(:name='state.icon')
+        span {{ state.label }}
       q-btn(
         v-else-if='state.pos === `right`'
         padding='sm md'
         outline
-        :icon-right='state.icon'
         no-caps
         color='primary'
         )
         .column.text-left.q-pr-md
           .text-body2: strong {{state.label}}
           .text-caption {{state.caption}}
+        wiki-icon(:name='state.icon')
   q-card-actions.card-actions
     q-space
     q-btn.acrylic-btn(

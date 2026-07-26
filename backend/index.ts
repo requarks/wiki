@@ -61,11 +61,7 @@ const WIKI = {
   configSvc,
   sites: {},
   sitesMappings: {},
-  startedAt: Temporal.Now.instant(),
-  storage: {
-    defs: [],
-    modules: []
-  }
+  startedAt: Temporal.Now.instant()
 } as unknown as WikiGlobal
 global.WIKI = WIKI
 
@@ -146,10 +142,17 @@ async function postBoot() {
   await WIKI.models.blocks.refreshFromDisk()
   await WIKI.models.blocks.syncAllSites()
 
+  // -> Same: every site gets a row per installed storage module
+  await WIKI.models.storage.refreshFromDisk()
+  await WIKI.models.storage.syncAllSites()
+
   // -> Optional third-party tooling: report what is available, since features silently degrade
   //    without it
   await WIKI.models.extensions.refreshFromDisk()
   await WIKI.models.extensions.logState()
+
+  // -> The icon cache is derived from the db and starts empty on a fresh instance
+  await WIKI.models.icons.ensureCacheDir()
 
   await WIKI.dbManager.subscribeToNotifications()
   await WIKI.scheduler.start()
@@ -546,6 +549,7 @@ async function initHTTPServer() {
 
   app.register(import('./api/index.ts'), { prefix: '/_api' })
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })
+  app.register(import('./controllers/icons.ts'), { prefix: '/_icons' })
 
   // ----------------------------------------
   // Error handling

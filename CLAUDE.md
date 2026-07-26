@@ -43,7 +43,9 @@ scheduler → event emitters), `initHTTPServer()` (Fastify plugins, auth, routes
   - `api/schemas/` — shared JSON Schemas registered via `app.addSchema()` and referenced from route
     schemas as `{ $ref: 'Site#' }`. Register new shared schemas in `api/index.ts` *before* the routes.
 - `controllers/` — non-API HTTP routes. `site.ts` serves per-site resources (logo, favicon, login
-  background) under `/_site`.
+  background) under `/_site`; `icons.ts` serves icons under `/_icons`, implementing the part of the
+  Iconify API protocol the frontend speaks (`/_icons/<prefix>.json?icons=a,b` and
+  `/_icons/<prefix>/<name>.svg`). Public and cached hard — see [Icons](#icons).
 - `core/` — long-lived singletons: `config.ts` (yml + db-backed settings), `db.ts` (pg pool, Drizzle
   instance, migrations, LISTEN/NOTIFY pubsub), `logger.ts`, `scheduler.ts` (poolifier thread pool +
   postgres-backed job queue).
@@ -53,7 +55,9 @@ scheduler → event emitters), `initHTTPServer()` (Fastify plugins, auth, routes
   `SystemIds` passed to each model's `init()` during first-run seeding.
 - `modules/` — pluggable extensions, discovered from disk. Each module is a directory with a
   `definition.yml` (key, title, props/config schema) plus its implementation — e.g.
-  `modules/authentication/local/`.
+  `modules/authentication/local/`. `modules/storage/*` is definition-only so far: the admin area
+  stores a configuration per site and module, but no `storage.ts` exists yet and nothing reads or
+  writes content through a target — pages and assets go straight to the database.
 - `tasks/simple/` — jobs run in-process by the scheduler; each exports `task()`. File name is
   kebab-case, the task key is its camelCase form.
 - `tasks/workers/` — CPU-bound jobs run in a worker thread via `worker.ts`, which boots a minimal
@@ -73,8 +77,9 @@ Quasar app on plain Vite (not Quasar CLI). `src/main.js` wires it up manually: r
 
 - `src/boot/` — one-time app initializers: `api.js` (creates the `ky` client with JWT refresh, exposed
   as the `API_CLIENT` global), `components.js` (global components), `eventbus.js` (`EVENT_BUS` global,
-  mitt), `externals.js`, `i18n.js`, `monaco.js`, `temporal.js` (conditionally polyfills `Temporal`,
-  awaited before anything else in `main.js`).
+  mitt), `externals.js`, `i18n.js`, `iconify.js` (points Iconify at this instance's `/_icons`),
+  `monaco.js`, `temporal.js` (conditionally polyfills `Temporal`, awaited before anything else in
+  `main.js`).
 - `src/router/` — `index.js` (router factory) and `routes.js` (the full route table; page components
   are lazily imported).
 - `src/layouts/` — `MainLayout`, `AdminLayout`, `AuthLayout`, `ProfileLayout`.
@@ -90,8 +95,8 @@ Quasar app on plain Vite (not Quasar CLI). `src/main.js` wires it up manually: r
 
 Path alias `@` → `frontend/src` (defined in `vite.config.js`; `jsconfig.json` mirrors it for the IDE).
 
-Dev server runs on **3001** and proxies `/_api`, `/_blocks`, `/_site`, `/_thumb`, `/_user` to the
-backend on **3000**, so the backend must be running too.
+Dev server runs on **3001** and proxies `/_api`, `/_blocks`, `/_icons`, `/_site`, `/_thumb`, `/_user`
+to the backend on **3000**, so the backend must be running too.
 
 ### `blocks/`
 
@@ -165,12 +170,14 @@ literal and assert it to `WikiGlobal`, since each populates the object progressi
 `backend/types/fastify.d.ts` augments Fastify: session fields (`authenticated`, `user`,
 `permissions`) and the per-route `config.permissions` used by the `preHandler` permission hook.
 
-**Three dynamic paths are extension-sensitive** and invisible to the type checker — they must be
+**Four dynamic paths are extension-sensitive** and invisible to the type checker — they must be
 updated by hand if the files they point at are ever renamed:
 
 - `core/scheduler.ts` → `path.join(WIKI.SERVERPATH, 'worker.ts')` (the poolifier pool entry)
 - `worker.ts` → `import('./tasks/workers/${kebabCase(job.task)}.ts')`
 - `models/authentication.ts` → `import('../modules/authentication/${stg.module}/authentication.ts')`
+- `models/storage.ts` → `import('../modules/storage/${key}/storage.ts')`, plus the `storage.ts`
+  presence check in `hasImplementation()` that gates it
 
 `scheduler.ts` reads `tasks/simple/` filenames with `/\.[jt]s$/`, so task files are extension-agnostic.
 
@@ -282,9 +289,31 @@ These apply to **every workspace**, `frontend/` included — not just the backen
   [Utilities and dates](#utilities-and-dates); the `lodash-es` and `luxon` still present in older
   files are on their way out.
 
+### Icons
+
+Icons come from **Iconify** and are referenced the way Iconify references them — `<prefix>:<name>`,
+e.g. `mdi:account-edit`. That string is all that content, navigation items and page relations ever
+store; no SVG is ever written into content.
+
+- **Admin** (`AdminIcons.vue` → `/_api/icons`) manages which sets exist: adding a set stores its
+  metadata only, and enabling/disabling one controls whether its icons can be searched and filled in.
+- **`models/icons.ts`** resolves a reference through four tiers — memory, disk
+  (`<dataPath>/cache/icons/<prefix>/<name>.json`), the `icons` db table, then the Iconify API. **Only
+  the db is permanent**; the disk cache is derived and starts empty on a fresh instance, so never treat
+  it as storage. The upstream API is consulted only for an icon nobody has used yet, is capped per
+  minute (public routes can trigger a fill), and is skipped entirely when `offline` is set.
+- **Serving** is `controllers/icons.ts` under `/_icons`, cached for a year and immutable. Rendering a
+  page never resolves an icon server-side.
+- **Frontend**: render every user-supplied icon reference with `<wiki-icon :name>`, which draws an
+  Iconify reference through the `iconify-icon` element and hands anything else (`las la-cog`,
+  `mdi-check`, `img:…`) to `q-icon`. Passing such a reference to a Quasar `icon` prop does *not* work —
+  use the component's icon slot instead.
+- Picking an icon calls `POST /_api/icons/materialize`, which is what guarantees the wiki can serve it
+  afterwards without the Iconify API.
+
 ### GraphQL is being removed
 
-An earlier iteration of 3.x used GraphQL/Apollo. 59 files under `frontend/src/` still reference
+An earlier iteration of 3.x used GraphQL/Apollo. 29 files under `frontend/src/` still reference
 `APOLLO_CLIENT` (mostly in commented-out queries), and `blocks/block-index/` still imports a
 `tree.graphql`. **All of it is deprecated** — there is no GraphQL server left in `backend/`, and
 `APOLLO_CLIENT` is no longer defined as a global.

@@ -72,7 +72,7 @@ q-layout(view='hHh lpR fFf', container)
             clickable
             )
             q-item-section(side)
-              q-icon(:name='element.icon', color='white')
+              wiki-icon(:name='element.icon', color='white')
             q-item-section.text-wordbreak-all {{ element.label }}
             q-item-section(side)
               q-icon.handle(name='mdi-drag-horizontal', size='sm')
@@ -242,8 +242,7 @@ q-layout(view='hHh lpR fFf', container)
                     color='primary'
                     )
                     q-menu(content-class='shadow-7')
-                      .q-pa-lg: em [ TODO: Icon Picker Dialog ]
-                      // icon-picker-dialog(v-model='pageStore.icon')
+                      icon-picker-dialog(v-model='state.current.icon')
           q-separator.q-my-sm(inset)
           q-item
             blueprint-icon(icon='link')

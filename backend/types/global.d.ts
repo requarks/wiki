@@ -40,10 +40,6 @@ declare global {
       groups: Record<string, unknown>
       strategies: Record<string, unknown>
     }
-    storage: {
-      defs: unknown[]
-      modules: unknown[]
-    }
 
     /**
      * Merged config.yml + base.yml defaults + the `settings` DB table. Assembled at runtime from

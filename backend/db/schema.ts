@@ -145,6 +145,46 @@ export const hooks = pgTable('hooks', {
   updatedAt: timestamp().notNull().defaultNow()
 })
 
+// ICONS -------------------------------
+// -> An Iconify icon set the wiki draws icons from, e.g. `mdi`. Adding one makes its icons
+//    searchable; individual icons are only stored once something references them.
+export const iconSets = pgTable('iconSets', {
+  // -> The Iconify prefix, which is what content references: `<prefix>:<name>`
+  prefix: varchar({ length: 64 }).primaryKey(),
+  name: varchar({ length: 255 }).notNull(),
+  isEnabled: boolean().notNull().default(true),
+  // -> Iconify collection metadata (author, license, total, palette, samples, ...) as published by
+  //    the upstream API, refreshed on demand rather than being authored here
+  info: jsonb().notNull().default({}),
+  refreshedAt: timestamp(),
+  createdAt: timestamp().notNull().defaultNow()
+})
+
+// -> The permanent home of every icon the wiki has ever served. Fetched from the Iconify API on first
+//    use, then never fetched again: the disk cache is derived from these rows and may be empty.
+export const icons = pgTable(
+  'icons',
+  {
+    prefix: varchar({ length: 64 })
+      .notNull()
+      .references(() => iconSets.prefix),
+    name: varchar({ length: 255 }).notNull(),
+    // -> The SVG markup inside the `<svg>` element, with `currentColor` left as-is
+    body: text().notNull(),
+    // -> Resolved Iconify icon properties: the viewBox is `left top width height`, and the transform
+    //    flags apply on top of it. Aliases are resolved before storing, so a row is self-contained.
+    width: integer().notNull().default(16),
+    height: integer().notNull().default(16),
+    left: integer().notNull().default(0),
+    top: integer().notNull().default(0),
+    rotate: integer().notNull().default(0),
+    hFlip: boolean().notNull().default(false),
+    vFlip: boolean().notNull().default(false),
+    createdAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [primaryKey({ columns: [table.prefix, table.name] })]
+)
+
 // JOB HISTORY -------------------------
 export const jobHistoryStateEnum = pgEnum('jobHistoryState', [
   'active',
@@ -327,6 +367,33 @@ export const sites = pgTable('sites', {
   config: jsonb().notNull(),
   createdAt: timestamp().notNull().defaultNow()
 })
+
+// STORAGE -----------------------------
+export const storage = pgTable(
+  'storage',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    // -> Directory name under `modules/storage`, one row per module per site
+    module: varchar({ length: 255 }).notNull(),
+    isEnabled: boolean().notNull().default(false),
+    // -> `{ activeTypes: string[], largeThreshold: string }`
+    contentTypes: jsonb().notNull().default({}),
+    // -> `{ streaming: boolean, directAccess: boolean }`
+    assetDelivery: jsonb().notNull().default({}),
+    // -> `{ enabled: boolean }`
+    versioning: jsonb().notNull().default({}),
+    // -> Values for the props the module declares in its `definition.yml`
+    config: jsonb().notNull().default({}),
+    // -> Where the module stands, as opposed to how it is configured: `{ setup: 'notconfigured' |
+    //    'pendinginstall' | 'configured' }` for a module that has a setup process to go through.
+    state: jsonb().notNull().default({}),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id)
+  },
+  // -> Covers lookups by site as well, being the leading column
+  (table) => [uniqueIndex('storage_composite_idx').on(table.siteId, table.module)]
+)
 
 // TAGS --------------------------------
 export const tags = pgTable(

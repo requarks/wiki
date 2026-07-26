@@ -27,6 +27,10 @@ defaults:
     offline: false
     dataPath: ./data
     bodyParserLimit: 5mb
+    icons:
+      # Iconify API the wiki fetches icons from the first time they are used. Point this at a
+      # self-hosted Iconify API to keep icon lookups inside your network.
+      apiUrl: 'https://api.iconify.design'
     scheduler:
       workers: 3
       pollingCheck: 5

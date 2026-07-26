@@ -158,6 +158,7 @@ export default {
     await WIKI.models.authentication.init(ids)
     await WIKI.models.users.init(ids)
     await WIKI.models.jobs.init()
+    await WIKI.models.icons.init()
   },
   /**
    * Subscribe to HA propagation events

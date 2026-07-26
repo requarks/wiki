@@ -41,7 +41,7 @@ q-page.admin-storage
         icon='mdi-check'
         :label='t(`common.actions.apply`)'
         color='secondary'
-        @click='save'
+        @click='save()'
         :loading='state.loading > 0'
       )
   q-separator(inset)
@@ -60,7 +60,7 @@ q-page.admin-storage
           )
           q-item(
             v-for='tgt of state.targets'
-            :key='tgt.key'
+            :key='tgt.id'
             active-class='bg-primary text-white'
             :active='state.selectedTarget === tgt.id'
             :to='`/_admin/` + adminStore.currentSiteId + `/storage/` + tgt.id'
@@ -311,7 +311,7 @@ q-page.admin-storage
                 v-if='configIfCheck(cfg.if)'
                 )
                 q-separator.q-my-sm(inset, v-if='idx > 0')
-                q-item(v-if='cfg.type === `Boolean`', tag='label')
+                q-item(v-if='cfg.type === `boolean`', tag='label')
                   blueprint-icon(:icon='cfg.icon', :hue-rotate='cfg.readOnly ? -45 : 0')
                   q-item-section
                     q-item-label {{cfg.title}}
@@ -331,7 +331,7 @@ q-page.admin-storage
                     q-item-label {{cfg.title}}
                     q-item-label(caption) {{cfg.hint}}
                   q-item-section(
-                    :style='cfg.type === `Number` ? `flex: 0 0 150px;` : ``'
+                    :style='cfg.type === `number` ? `flex: 0 0 150px;` : ``'
                     :class='{ "col-auto": cfg.enum && cfg.enumDisplay === `buttons` }'
                     )
                     q-btn-toggle(
@@ -361,7 +361,7 @@ q-page.admin-storage
                       outlined
                       v-model='cfg.value'
                       dense
-                      :type='cfg.multiline ? `textarea` : `input`'
+                      :type='inputTypeFor(cfg)'
                       :aria-label='cfg.title'
                       :disable='cfg.readOnly'
                       )
@@ -410,8 +410,10 @@ q-page.admin-storage
                     flat
                     icon='las la-arrow-circle-right'
                     color='primary'
-                    @click=''
+                    @click='executeAction(act)'
                     :label='t(`common.actions.proceed`)'
+                    :disable='state.runningAction'
+                    :loading='state.runningActionHandler === act.handler'
                   )
 
         .col-12.col-lg-auto
@@ -591,8 +593,6 @@ q-page.admin-storage
 </template>
 
 <script setup>
-import { cloneDeep, find, transform } from 'lodash-es'
-
 import * as VNG from 'v-network-graph'
 
 import { useI18n } from 'vue-i18n'
@@ -716,9 +716,6 @@ const githubSetupForm = ref(null)
 const isSetupNeeded = computed(() => {
   return state.target?.setup?.handler && state.target.setup.state !== 'configured'
 })
-const isSetupCompleted = computed(() => {
-  return state.target?.setup?.handler && state.target.setup.state !== 'configured'
-})
 
 // WATCHERS
 
@@ -734,15 +731,18 @@ watch(() => state.displayMode, (newValue) => {
   }
 })
 watch(() => state.selectedTarget, (newValue) => {
-  state.target = find(state.targets, ['id', newValue]) || null
+  state.target = state.targets.find(tgt => tgt.id === newValue) || null
 })
 watch(() => state.targets, (newValue) => {
   if (newValue && newValue.length > 0) {
     if (state.desiredTarget) {
       state.selectedTarget = state.desiredTarget
       state.desiredTarget = ''
+    } else if (newValue.some(tgt => tgt.id === state.selectedTarget)) {
+      // -> Keep the current selection across a reload, since saving reloads the targets
+      state.target = newValue.find(tgt => tgt.id === state.selectedTarget)
     } else {
-      state.selectedTarget = find(state.targets, ['module', 'db'])?.id || null
+      state.selectedTarget = newValue.find(tgt => tgt.module === 'db')?.id || null
       if (!route.params.id) {
         router.replace(`/_admin/${adminStore.currentSiteId}/storage/${state.selectedTarget}`)
       }
@@ -763,48 +763,54 @@ watch(() => route.params.id, (to, from) => {
 
 // METHODS
 
+/**
+ * Turn a module prop declaration and its stored value into the shape the config editor renders,
+ * expanding `value|label` enum entries into options.
+ */
+function buildConfigEditor (props, values) {
+  const config = {}
+  for (const [key, prop] of Object.entries(props ?? {})) {
+    config[key] = {
+      ...prop,
+      value: values?.[key] ?? prop.default,
+      ...prop.enum && {
+        enum: prop.enum.map(entry => {
+          const [value, label] = entry.split('|')
+          return { value, label: label ?? value }
+        })
+      }
+    }
+  }
+  return config
+}
+
+function inputTypeFor (cfg) {
+  if (cfg.multiline) { return 'textarea' }
+  if (cfg.sensitive) { return 'password' }
+  return cfg.type === 'number' ? 'number' : 'text'
+}
+
+/**
+ * Read the API's own message off a failed request, since ky doesn't throw on 400
+ */
+async function apiMessage (err) {
+  return err.response?.json().then(b => b?.message).catch(() => null) ?? err.message
+}
+
 async function load () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getStorageTargets (
-          $siteId: UUID!
-        ) {
-        storageTargets (
-          siteId: $siteId
-        ) {
-          id
-          isEnabled
-          module
-          title
-          description
-          icon
-          banner
-          vendor
-          website
-          contentTypes
-          assetDelivery
-          versioning
-          sync
-          status
-          setup
-          config
-          actions
-        }
-      }`,
-      variables: {
-        siteId: adminStore.currentSiteId
-      },
-      fetchPolicy: 'network-only'
-    })
-    state.targets = cloneDeep(resp?.data?.storageTargets)
+    const targets = await API_CLIENT.get(`sites/${adminStore.currentSiteId}/storage/targets`).json()
+    state.targets = (targets ?? []).map(tgt => ({
+      ...tgt,
+      config: buildConfigEditor(tgt.props, tgt.config)
+    }))
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load storage configuration.',
-      caption: err.message,
+      message: t('admin.storage.loadFailed'),
+      caption: await apiMessage(err),
       timeout: 20000
     })
   }
@@ -817,69 +823,68 @@ function configIfCheck (ifs) {
   return ifs.every(s => state.target.config[s.key]?.value === s.eq)
 }
 
-async function refresh () {
-  await load()
-  $q.notify({
-    type: 'positive',
-    message: 'List of storage targets has been refreshed.'
-  })
+/**
+ * A target as the API expects it. Read-only props are left out: the server keeps whatever is stored
+ * for them, so sending them back would be pretending they can be set.
+ */
+function payloadFor (tgt) {
+  const config = {}
+  for (const [key, cfg] of Object.entries(tgt.config ?? {})) {
+    if (cfg.readOnly) { continue }
+    config[key] = cfg.type === 'number' ? Number(cfg.value) : cfg.value
+  }
+  return {
+    id: tgt.id,
+    isEnabled: tgt.isEnabled,
+    contentTypes: {
+      activeTypes: tgt.contentTypes.activeTypes,
+      largeThreshold: tgt.contentTypes.largeThreshold
+    },
+    assetDelivery: {
+      streaming: tgt.assetDelivery.streaming,
+      directAccess: tgt.assetDelivery.directAccess
+    },
+    versioning: {
+      enabled: tgt.versioning.enabled
+    },
+    config
+  }
 }
 
-async function save ({ silent }) {
+/**
+ * Save every target at once, the way the API takes them — a target is only meaningful next to the
+ * others, e.g. which of them holds a given content type.
+ *
+ * @param silent Skip the loading overlay and the success notification, for a save made on the way to
+ *   something else, such as the GitHub setup flow.
+ */
+async function save ({ silent = false } = {}) {
   let saveSuccess = false
+  state.loading++
   if (!silent) { $q.loading.show() }
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation (
-          $siteId: UUID!
-          $targets: [StorageTargetInput]!
-          ) {
-          updateStorageTargets(
-            siteId: $siteId
-            targets: $targets
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        siteId: adminStore.currentSiteId,
-        targets: state.targets.map(tgt => ({
-          id: tgt.id,
-          module: tgt.module,
-          isEnabled: tgt.isEnabled,
-          contentTypes: tgt.contentTypes.activeTypes,
-          largeThreshold: tgt.contentTypes.largeThreshold,
-          assetDeliveryFileStreaming: tgt.assetDelivery.streaming,
-          assetDeliveryDirectAccess: tgt.assetDelivery.directAccess,
-          useVersioning: tgt.versioning.enabled,
-          config: transform(tgt.config, (r, v, k) => { r[k] = v.value }, {})
-        }))
-      }
-    })
-    if (resp?.data?.updateStorageTargets?.operation?.succeeded) {
-      saveSuccess = true
-      if (!silent) {
-        $q.notify({
-          type: 'positive',
-          message: t('admin.storage.saveSuccess')
-        })
-      }
-    } else {
-      throw new Error(resp?.data?.updateStorageTargets?.operation?.message || 'Unexpected error')
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/storage/targets`, {
+      json: { targets: state.targets.map(payloadFor) }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    saveSuccess = true
+    if (!silent) {
+      $q.notify({
+        type: 'positive',
+        message: t('admin.storage.saveSuccess')
+      })
     }
   } catch (err) {
     $q.notify({
       type: 'negative',
       message: t('admin.storage.saveFailed'),
-      caption: err.message
+      caption: await apiMessage(err)
     })
   }
   if (!silent) { $q.loading.hide() }
+  state.loading--
   return saveSuccess
 }
 
@@ -910,36 +915,58 @@ function getTargetSubtitleColor (target) {
   }
 }
 
-function getDefaultSchedule (val) {
-  if (!val) { return 'N/A' }
-  return '' // moment.duration(val).format('y [years], M [months], d [days], h [hours], m [minutes]')
+async function executeAction (act) {
+  const run = async () => {
+    state.runningAction = true
+    state.runningActionHandler = act.handler
+    try {
+      const resp = await API_CLIENT.post(
+        `sites/${adminStore.currentSiteId}/storage/targets/${state.selectedTarget}/actions/${act.handler}`
+      ).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      $q.notify({
+        type: 'positive',
+        message: t('admin.storage.actionSuccess', { action: act.label })
+      })
+    } catch (err) {
+      $q.notify({
+        type: 'negative',
+        message: t('admin.storage.actionFailed', { action: act.label }),
+        caption: await apiMessage(err)
+      })
+    }
+    state.runningAction = false
+    state.runningActionHandler = ''
+  }
+
+  // -> An action that declares a warning destroys something, so it is never run on a single click
+  if (act.warn) {
+    $q.dialog({
+      title: act.label,
+      message: act.warn,
+      persistent: true,
+      ok: {
+        label: t('common.actions.proceed'),
+        color: 'negative',
+        unelevated: true
+      },
+      cancel: {
+        label: t('common.actions.cancel'),
+        color: 'grey',
+        flat: true
+      }
+    }).onOk(run)
+  } else {
+    await run()
+  }
 }
 
-async function executeAction (targetKey, handler) {
-  // this.$store.commit('loadingStart', 'admin-storage-executeaction')
-  // this.runningAction = true
-  // this.runningActionHandler = handler
-  // try {
-  //   await this.$apollo.mutate({
-  //     mutation: `{}`,
-  //     variables: {
-  //       targetKey,
-  //       handler
-  //     }
-  //   })
-  //   this.$store.commit('showNotification', {
-  //     message: 'Action completed.',
-  //     style: 'success',
-  //     icon: 'check'
-  //   })
-  // } catch (err) {
-  //   console.warn(err)
-  // }
-  // this.runningAction = false
-  // this.runningActionHandler = ''
-  // this.$store.commit('loadingStop', 'admin-storage-executeaction')
-}
-
+/**
+ * Pick up a setup flow that took the administrator to a provider and back, the provider having
+ * returned them here with a code in the query string.
+ */
 async function handleSetupCallback () {
   if (state.targets.length < 1 || !state.selectedTarget) { return }
 
@@ -962,44 +989,28 @@ async function setupDestroy () {
     })
 
     try {
-      const resp = await APOLLO_CLIENT.mutate({
-        mutation: `
-          mutation (
-            $targetId: UUID!
-            ) {
-            destroyStorageTargetSetup(
-              targetId: $targetId
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          targetId: state.selectedTarget
-        }
-      })
-      if (resp?.data?.destroyStorageTargetSetup?.operation?.succeeded) {
-        state.target.setup.state = 'notconfigured'
-        setTimeout(() => {
-          $q.loading.hide()
-          $q.notify({
-            type: 'positive',
-            message: t('admin.storage.githubSetupDestroySuccess')
-          })
-        }, 2000)
-      } else {
-        throw new Error(resp?.data?.destroyStorageTargetSetup?.operation?.message || 'Unexpected error')
+      const resp = await API_CLIENT.delete(
+        `sites/${adminStore.currentSiteId}/storage/targets/${state.selectedTarget}/setup`
+      ).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
       }
+      state.target.setup.state = 'notconfigured'
+      // -> GitHub needs a moment to settle before the setup can be started over
+      setTimeout(() => {
+        $q.loading.hide()
+        $q.notify({
+          type: 'positive',
+          message: t('admin.storage.githubSetupDestroySuccess')
+        })
+      }, 2000)
     } catch (err) {
+      $q.loading.hide()
       $q.notify({
         type: 'negative',
         message: t('admin.storage.githubSetupDestroyFailed'),
-        caption: err.message
+        caption: await apiMessage(err)
       })
-      $q.loading.hide()
     }
   })
 }
@@ -1061,6 +1072,8 @@ async function setupGitHub () {
   $q.loading.show({
     message: t('admin.storage.githubPreparingManifest')
   })
+  // -> The values typed into the setup form are stored as config, since GitHub sends the
+  //    administrator back here and the flow has to resume from them
   if (await save({ silent: true })) {
     githubSetupForm.value.submit()
   } else {
@@ -1075,79 +1088,62 @@ async function setupGitHubStep (step, code) {
   })
 
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation (
-          $targetId: UUID!
-          $state: JSON!
-          ) {
-          setupStorageTarget(
-            targetId: $targetId
-            state: $state
-          ) {
-            operation {
-              succeeded
-              message
-            }
-            state
-          }
-        }
-      `,
-      variables: {
-        targetId: state.selectedTarget,
-        state: {
+    const resp = await API_CLIENT.post(
+      `sites/${adminStore.currentSiteId}/storage/targets/${state.selectedTarget}/setup`,
+      {
+        json: {
           step,
           ...code && { code }
         }
       }
-    })
-    if (resp?.data?.setupStorageTarget?.operation?.succeeded) {
-      switch (resp.data.setupStorageTarget.state?.nextStep) {
-        case 'installApp': {
-          router.replace({ query: null })
-          $q.loading.hide()
+    ).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    switch (resp.state?.nextStep) {
+      case 'installApp': {
+        router.replace({ query: null })
+        $q.loading.hide()
 
-          $q.dialog({
-            component: GithubSetupInstallDialog,
-            persistent: true
-          }).onOk(() => {
-            $q.loading.show({
-              message: t('admin.storage.githubRedirecting')
-            })
-            window.location.assign(resp.data.setupStorageTarget.state?.url)
-          }).onCancel(() => {
-            throw new Error('Setup was aborted prematurely.')
+        $q.dialog({
+          component: GithubSetupInstallDialog,
+          persistent: true
+        }).onOk(() => {
+          $q.loading.show({
+            message: t('admin.storage.githubRedirecting')
           })
-          break
-        }
-        case 'completed': {
-          state.target.isEnabled = true
-          state.target.setup.state = 'configured'
-          setTimeout(() => {
-            $q.loading.hide()
-            $q.notify({
-              type: 'positive',
-              message: t('admin.storage.githubSetupSuccess')
-            })
-          }, 2000)
-          break
-        }
-        default: {
-          throw new Error('Unknown Setup Step')
-        }
+          window.location.assign(resp.state?.url)
+        }).onCancel(() => {
+          throw new Error('Setup was aborted prematurely.')
+        })
+        break
       }
-    } else {
-      throw new Error(resp?.data?.setupStorageTarget?.operation?.message || 'Unexpected error')
+      case 'completed': {
+        state.target.isEnabled = true
+        state.target.setup.state = 'configured'
+        setTimeout(() => {
+          $q.loading.hide()
+          $q.notify({
+            type: 'positive',
+            message: t('admin.storage.githubSetupSuccess')
+          })
+        }, 2000)
+        break
+      }
+      default: {
+        throw new Error('Unknown Setup Step')
+      }
     }
   } catch (err) {
     $q.loading.hide()
     $q.notify({
       type: 'negative',
       message: t('admin.storage.githubSetupFailed'),
-      caption: err.message
+      caption: await apiMessage(err)
     })
   }
 }
+
 
 function generateGraph () {
   const types = [
@@ -1184,7 +1180,7 @@ function generateGraph () {
     state.deliveryLayouts.nodes[tp.key] = { x: 0, y: (i + 1) * 15 }
 
     // -> Find target with direct access
-    const dt = find(state.targets, tgt => {
+    const dt = state.targets.find(tgt => {
       return tgt.module !== 'db' && tgt.contentTypes.activeTypes.includes(tp.key) && tgt.isEnabled && tgt.assetDelivery.isDirectAccessSupported && tgt.assetDelivery.directAccess
     })
 
@@ -1201,7 +1197,7 @@ function generateGraph () {
 
     // -> Find target with streaming
 
-    const st = find(state.targets, tgt => {
+    const st = state.targets.find(tgt => {
       return tgt.module !== 'db' && tgt.contentTypes.activeTypes.includes(tp.key) && tgt.isEnabled && tgt.assetDelivery.isStreamingSupported && tgt.assetDelivery.streaming
     })
 
@@ -1220,8 +1216,8 @@ function generateGraph () {
 
     // -> Check DB fallback
 
-    const dbt = find(state.targets, ['module', 'db'])
-    if (dbt.contentTypes.activeTypes.includes(tp.key)) {
+    const dbt = state.targets.find(tgt => tgt.module === 'db')
+    if (dbt?.contentTypes?.activeTypes?.includes(tp.key)) {
       state.deliveryNodes[`${tp.key}_wiki`] = { name: 'Wiki.js', icon: '/_assets/logo-wikijs.svg', color: '#161b22' }
       state.deliveryLayouts.nodes[`${tp.key}_wiki`] = { x: 60, y: (i + 1) * 15 }
       state.deliveryEdges[`${tp.key}_db_in`] = { source: tp.key, target: `${tp.key}_wiki` }

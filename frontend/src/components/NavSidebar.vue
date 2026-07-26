@@ -15,10 +15,14 @@ q-scroll-area.sidebar-nav(
         ) {{ item.label }}
       q-expansion-item(
         v-else-if='item.type === `link` && item.children?.length > 0'
-        :icon='item.icon'
-        :label='item.label'
         dense
         )
+        //- The icon goes through a header slot rather than the `icon` prop, so that an Iconify
+        //- reference is drawn by wiki-icon like everywhere else
+        template(#header)
+          q-item-section(side)
+            wiki-icon(:name='item.icon', color='white')
+          q-item-section.text-wordbreak-all.text-white {{ item.label }}
         q-list(
           clickable
           dense
@@ -30,14 +34,14 @@ q-scroll-area.sidebar-nav(
             :key='itemChild.id'
             )
             q-item-section(side)
-              q-icon(:name='itemChild.icon', color='white')
+              wiki-icon(:name='itemChild.icon', color='white')
             q-item-section.text-wordbreak-all.text-white {{ itemChild.label }}
       q-item(
         v-else-if='item.type === `link`'
         :to='item.target'
         )
         q-item-section(side)
-          q-icon(:name='item.icon', color='white')
+          wiki-icon(:name='item.icon', color='white')
         q-item-section.text-wordbreak-all.text-white {{ item.label }}
       q-separator(
         v-else-if='item.type === `separator`'

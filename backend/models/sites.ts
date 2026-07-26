@@ -1,6 +1,10 @@
 import { mergeWith, toMerged } from 'es-toolkit/object'
 import { keyBy } from 'es-toolkit/array'
-import { blocks as blocksTable, sites as sitesTable } from '../db/schema.ts'
+import {
+  blocks as blocksTable,
+  sites as sitesTable,
+  storage as storageTable
+} from '../db/schema.ts'
 import { eq } from 'drizzle-orm'
 import type { SystemIds } from './types.ts'
 
@@ -183,30 +187,14 @@ class Sites {
     //   items: []
     // })
 
-    // WIKI.logger.debug(`Creating new DB storage for site ${newSite.id}`)
-
-    // await WIKI.db.storage.query().insert({
-    //   module: 'db',
-    //   siteId: newSite.id,
-    //   isEnabled: true,
-    //   contentTypes: {
-    //     activeTypes: ['pages', 'images', 'documents', 'others', 'large'],
-    //     largeThreshold: '5MB'
-    //   },
-    //   assetDelivery: {
-    //     streaming: true,
-    //     directAccess: false
-    //   },
-    //   state: {
-    //     current: 'ok'
-    //   }
-    // })
-
     // -> Site lookups by id / hostname are served from cache, which must know about the new site
     await WIKI.models.sites.reloadCache()
 
     // -> Otherwise the new site would have no blocks until the next restart
     await WIKI.models.blocks.syncSite(newSite.id)
+
+    // -> Same for storage: the site needs its database target from the moment it can hold content
+    await WIKI.models.storage.syncSite(newSite.id)
 
     return newSite
   }
@@ -253,12 +241,11 @@ class Sites {
   }
 
   async deleteSite(id: string): Promise<boolean> {
-    // await WIKI.db.storage.query().delete().where('siteId', id)
-
-    // -> Block rows are registration metadata derived from disk, and their FK has no cascade, so
-    //    they would otherwise block the delete. Content tables (pages, assets, ...) deliberately
-    //    still do — see the conflict handling in the route.
+    // -> Block and storage rows are registration metadata derived from disk, and their FK has no
+    //    cascade, so they would otherwise block the delete. Content tables (pages, assets, ...)
+    //    deliberately still do — see the conflict handling in the route.
     await WIKI.db.delete(blocksTable).where(eq(blocksTable.siteId, id))
+    await WIKI.db.delete(storageTable).where(eq(storageTable.siteId, id))
 
     const deletedResult = await WIKI.db.delete(sitesTable).where(eq(sitesTable.id, id))
     if ((deletedResult.rowCount ?? 0) < 1) {

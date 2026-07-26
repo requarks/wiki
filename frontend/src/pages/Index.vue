@@ -51,31 +51,30 @@ q-page.column
                 q-btn.q-mr-sm.q-mb-sm(
                   padding='sm md'
                   outline
-                  :icon='rel.icon'
                   no-caps
                   color='primary'
                   v-for='rel of relationsLeft'
                   :key='`rel-id-` + rel.id'
                   )
+                  wiki-icon(:name='rel.icon')
                   .column.text-left.q-pl-md
                     .text-body2: strong {{rel.label}}
                     .text-caption {{rel.caption}}
               .col.text-center(v-if='relationsCenter.length > 0')
                 .column
                   q-btn(
-                    :label='rel.label'
                     color='primary'
                     flat
                     no-caps
-                    :icon='rel.icon'
                     v-for='rel of relationsCenter'
                     :key='`rel-id-` + rel.id'
-                  )
+                    )
+                    wiki-icon.q-mr-sm(:name='rel.icon')
+                    span {{ rel.label }}
               .col.text-right(v-if='relationsRight.length > 0')
                 q-btn.q-ml-sm.q-mb-sm(
                   padding='sm md'
                   outline
-                  :icon-right='rel.icon'
                   no-caps
                   color='primary'
                   v-for='rel of relationsRight'
@@ -84,6 +83,7 @@ q-page.column
                   .column.text-left.q-pr-md
                     .text-body2: strong {{rel.label}}
                     .text-caption {{rel.caption}}
+                  wiki-icon(:name='rel.icon')
     .page-sidebar(
       v-if='showSidebar'
       :style='siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`'

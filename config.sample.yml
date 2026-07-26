@@ -74,6 +74,16 @@ offline: false
 dataPath: ./data
 
 # ---------------------------------------------------------------------
+# Icons
+# ---------------------------------------------------------------------
+# Icons are fetched from the Iconify API the first time they are used, then
+# stored in the database and served by this instance. Point this at a
+# self-hosted Iconify API to keep icon lookups inside your network.
+
+icons:
+  apiUrl: 'https://api.iconify.design'
+
+# ---------------------------------------------------------------------
 # Body Parser Limit
 # ---------------------------------------------------------------------
 # Maximum size of API requests body that can be parsed, in bytes.
