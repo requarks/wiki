@@ -550,6 +550,7 @@ async function initHTTPServer() {
   app.register(import('./api/index.ts'), { prefix: '/_api' })
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })
   app.register(import('./controllers/icons.ts'), { prefix: '/_icons' })
+  app.register(import('./controllers/user.ts'), { prefix: '/_user' })
 
   // ----------------------------------------
   // Error handling

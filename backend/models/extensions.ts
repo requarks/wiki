@@ -2,6 +2,16 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import yaml from 'js-yaml'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
+
+/** How long an install may run before it is given up on — fetching a native binary is not instant. */
+const installTimeout = 5 * 60 * 1000
+
+/** How much npm output is kept when reporting a failure, taken from the end where the error is. */
+const installErrorLength = 800
 
 /** How an extension's presence on this system is detected. */
 export interface ExtensionDetection {
@@ -85,13 +95,27 @@ async function moduleExists(specifier: string): Promise<boolean> {
  * Extensions model
  *
  * Optional third-party tooling that unlocks extra functionality — a Git binary, Pandoc, Sharp,
- * Puppeteer. Each lives in `modules/extensions/<key>/definition.yml`, which declares how to detect
- * it and what it is compatible with. Nothing here installs anything: these are installed with the
- * system package manager or as optional dependencies, which is what the admin area links out to.
+ * Puppeteer. Each lives in `modules/extensions/<key>/definition.yml`, which declares how to detect it,
+ * what it is compatible with, and whether it can be installed from here.
+ *
+ * Most cannot: a Git or Pandoc binary comes from the system package manager, and the admin area links
+ * out to the instructions. An extension detected as a `module` is an npm package, and `install()` can
+ * (re)install that with npm — which for Sharp, shipped as an optional dependency, is how a native
+ * binary that is missing or does not match the platform gets replaced.
  */
 class Extensions {
   /** Definitions read from disk, refreshed by `refreshFromDisk()`. */
   definitions: ExtensionDefinition[] = []
+
+  /**
+   * npm specifiers this process tried to load and could not, reported by whoever attempted it.
+   *
+   * Node caches a failed module load for the lifetime of the process: an `import()` that threw keeps
+   * throwing the same error afterwards, even once the files it was missing are back on disk. So a
+   * repaired install does not take effect here until the server restarts, and the only way to know
+   * that is to remember having failed.
+   */
+  loadFailures = new Set<string>()
 
   /**
    * Load the extension definitions from disk.
@@ -167,6 +191,91 @@ class Extensions {
       })
     }
     return results
+  }
+
+  /**
+   * Install, or reinstall, an extension with npm.
+   *
+   * Only a `module` extension can be installed from here — a `command` extension is an operating
+   * system package, and no amount of npm will produce one. Callers are expected to have checked
+   * `isInstallable` and `isCompatible` first; this repeats the detection check afterwards, since npm
+   * exiting zero and the module actually being there are not the same claim.
+   *
+   * Reinstalling is the point as much as installing is. Sharp is a declared optional dependency, so an
+   * ordinary install already has it — what goes wrong is its *native* binary: an image built on one
+   * platform and run on another, or an install that skipped optional dependencies, leaves the JavaScript
+   * package in place and the binary for this OS and architecture missing. Hence the flags:
+   *
+   * - `--no-save` because the manifest already declares the package, and an HTTP request has no
+   *   business rewriting the manifests the release was built from.
+   * - `--force` so npm refetches rather than deciding an already-present but unusable copy is fine.
+   * - `--include=optional` because the per-platform binaries are themselves optional dependencies of
+   *   the package, and omitting them is the usual cause of the failure being repaired here.
+   *
+   * @throws If the extension cannot be installed this way, if npm fails, or if the module is still
+   *         missing afterwards
+   */
+  async install(definition: ExtensionDefinition): Promise<void> {
+    if (definition.detect?.type !== 'module') {
+      throw new Error(`${definition.title} is not an npm package, so it cannot be installed here.`)
+    }
+    const specifier = definition.detect.value
+
+    WIKI.logger.info(`Installing extension ${definition.key} (npm package ${specifier})...`)
+    try {
+      const { stdout } = await execFileAsync(
+        process.platform === 'win32' ? 'npm.cmd' : 'npm',
+        [
+          'install',
+          '--no-save',
+          '--force',
+          '--include=optional',
+          '--no-audit',
+          '--no-fund',
+          specifier
+        ],
+        {
+          cwd: WIKI.SERVERPATH,
+          timeout: installTimeout,
+          windowsHide: true,
+          // -> `npm.cmd` is a batch file, which Node will not run without a shell. Nothing here comes
+          //    from a request: the package name is read from a definition on disk.
+          shell: process.platform === 'win32'
+        }
+      )
+      WIKI.logger.debug(stdout.trim())
+    } catch (err: any) {
+      // -> npm says what went wrong on stderr, and the tail of it is the part worth passing on
+      const detail: string = (err.stderr || err.stdout || err.message || '').toString().trim()
+      WIKI.logger.warn(`Failed to install extension ${definition.key}:`)
+      WIKI.logger.warn(detail || err)
+      throw new Error(
+        `npm could not install ${specifier}: ${detail.slice(-installErrorLength) || 'no output'}`
+      )
+    }
+
+    if (!(await this.isInstalled(definition))) {
+      throw new Error(
+        `npm reported success but ${specifier} is still not present in node_modules. Check the server logs.`
+      )
+    }
+    WIKI.logger.info(`Extension ${definition.key} is installed. [ OK ]`)
+  }
+
+  /**
+   * Record that loading a module failed in this process, so that a later reinstall can say a restart is
+   * needed rather than claim the extension is ready to use.
+   */
+  noteLoadFailure(specifier: string): void {
+    this.loadFailures.add(specifier)
+  }
+
+  /**
+   * Whether this process has already failed to load the extension's module, and therefore cannot use it
+   * however healthy the files on disk now are.
+   */
+  hasLoadFailed(definition: ExtensionDefinition): boolean {
+    return definition.detect?.type === 'module' && this.loadFailures.has(definition.detect.value)
   }
 
   /**

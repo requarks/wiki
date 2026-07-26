@@ -100,6 +100,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         dense
         options-dense
         :aria-label='t(`admin.general.defaultTimezone`)'
+        :readonly='!canEdit'
       )
   q-separator.q-my-sm(inset)
   q-item
@@ -116,6 +117,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         dense
         :aria-label='t(`admin.general.defaultDateFormat`)'
         :options='dateFormats'
+        :readonly='!canEdit'
       )
   q-separator.q-my-sm(inset)
   q-item
@@ -131,6 +133,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         no-caps
         toggle-color='primary'
         :options='timeFormats'
+        :disable='!canEdit'
       )
   q-separator.q-my-sm(inset)
   q-item
@@ -146,6 +149,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         no-caps
         toggle-color='primary'
         :options='appearances'
+        :disable='!canEdit'
       )
   .text-header.q-mt-lg {{t('profile.accessibility')}}
   q-item
@@ -161,13 +165,15 @@ q-page.q-py-md(:style-fn='pageStyle')
         no-caps
         toggle-color='primary'
         :options='cvdChoices'
+        :disable='!canEdit'
       )
-  .actions-bar.q-mt-lg
+  .actions-bar.q-mt-lg(v-if='canEdit')
     q-btn(
       icon='las la-check'
       unelevated
       :label='t(`common.actions.saveChanges`)'
       color='secondary'
+      :disable='state.loading > 0'
       @click='save'
     )
 </template>
@@ -215,7 +221,8 @@ const state = reactive({
     timeFormat: '12h',
     appearance: 'site',
     cvd: 'none'
-  }
+  },
+  loading: 0
 })
 
 const dateFormats = [
@@ -253,53 +260,79 @@ function pageStyle (offset, height) {
   }
 }
 
+/**
+ * The profile is read from the server rather than from the user store: the store only holds what the
+ * session carries (name, email, preferences), while the location / job title / pronouns live in the
+ * user's metadata and are not part of it.
+ */
+async function fetchProfile () {
+  state.loading++
+  try {
+    const profile = await API_CLIENT.get('users/profile').json()
+    applyProfile(profile)
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: t('profile.infoLoadingFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
+}
+
+function applyProfile (profile) {
+  state.config.name = profile.name || ''
+  state.config.email = profile.email || ''
+  state.config.location = profile.location || ''
+  state.config.jobTitle = profile.jobTitle || ''
+  state.config.pronouns = profile.pronouns || ''
+  // -> No stored time zone means "whatever the browser resolves"
+  state.config.timezone = profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+  state.config.dateFormat = profile.dateFormat || ''
+  state.config.timeFormat = profile.timeFormat || '12h'
+  state.config.appearance = profile.appearance || 'site'
+  state.config.cvd = profile.cvd || 'none'
+}
+
 async function save () {
   $q.loading.show({
     message: t('profile.saving')
   })
   try {
-    const respRaw = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation saveProfile (
-          $name: String
-          $location: String
-          $jobTitle: String
-          $pronouns: String
-          $timezone: String
-          $dateFormat: String
-          $timeFormat: String
-          $appearance: UserSiteAppearance
-          $cvd: UserCvdChoices
-        ) {
-          updateProfile (
-            name: $name
-            location: $location
-            jobTitle: $jobTitle
-            pronouns: $pronouns
-            timezone: $timezone
-            dateFormat: $dateFormat
-            timeFormat: $timeFormat
-            appearance: $appearance
-            cvd: $cvd
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: state.config
-    })
-    if (respRaw.data?.updateProfile?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('profile.saveSuccess')
-      })
-      userStore.$patch(state.config)
-    } else {
-      throw new Error(respRaw.data?.updateProfile?.operation?.message || 'An unexpected error occured')
+    // -> The email is displayed read-only and cannot be changed here, so it is left out entirely
+    const resp = await API_CLIENT.put('users/profile', {
+      json: {
+        name: state.config.name,
+        location: state.config.location,
+        jobTitle: state.config.jobTitle,
+        pronouns: state.config.pronouns,
+        timezone: state.config.timezone,
+        dateFormat: state.config.dateFormat,
+        timeFormat: state.config.timeFormat,
+        appearance: state.config.appearance,
+        cvd: state.config.cvd
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured')
     }
+    if (resp.profile) {
+      applyProfile(resp.profile)
+    }
+    // -> Only the fields the store actually holds: the appearance and CVD choices are watched by the
+    //    app shell, so saving them takes effect right away
+    userStore.$patch({
+      name: state.config.name,
+      timezone: state.config.timezone,
+      dateFormat: state.config.dateFormat,
+      timeFormat: state.config.timeFormat,
+      appearance: state.config.appearance,
+      cvd: state.config.cvd
+    })
+    $q.notify({
+      type: 'positive',
+      message: t('profile.saveSuccess')
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',
@@ -313,15 +346,6 @@ async function save () {
 // MOUNTED
 
 onMounted(() => {
-  state.config.name = userStore.name || ''
-  state.config.email = userStore.email
-  state.config.location = userStore.location || ''
-  state.config.jobTitle = userStore.jobTitle || ''
-  state.config.pronouns = userStore.pronouns || ''
-  state.config.timezone = userStore.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || ''
-  state.config.dateFormat = userStore.dateFormat || ''
-  state.config.timeFormat = userStore.timeFormat || '12h'
-  state.config.appearance = userStore.appearance || 'site'
-  state.config.cvd = userStore.cvd || 'none'
+  fetchProfile()
 })
 </script>

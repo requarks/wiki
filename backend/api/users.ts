@@ -1,6 +1,7 @@
 import { CustomError } from '../helpers/common.ts'
-import type { FastifyInstance } from 'fastify'
-import type { UserPatch } from '../models/users.ts'
+import { detectImageMime, imageMimeTypes } from '../helpers/images.ts'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { UserPatch, UserProfilePatch } from '../models/users.ts'
 
 interface UserUpdateBody {
   name?: string
@@ -13,10 +14,48 @@ interface UserUpdateBody {
   auth?: Record<string, any>
 }
 
+/** How large an avatar upload may be, before any resizing. */
+const avatarUploadLimit = 2 * 1024 * 1024
+
+/**
+ * The user the session belongs to, or null when the request is not from a logged in user.
+ *
+ * The `/profile` routes are session-authenticated rather than permission-gated: every logged in user
+ * may read and change its own profile, and no permission expresses that.
+ */
+function sessionUserId(req: FastifyRequest): string | null {
+  return req.session?.authenticated && req.session.user?.id ? req.session.user.id : null
+}
+
+/**
+ * Whether self-service profile editing is enabled on the site being browsed.
+ *
+ * It is a per-site feature: an instance whose user data comes from an external identity provider turns
+ * it off. The site is resolved from the request hostname, which is how the admin flag is scoped; an
+ * unresolvable hostname leaves the feature at its default.
+ */
+async function isProfileEditable(req: FastifyRequest): Promise<boolean> {
+  const site = req.hostname
+    ? await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+    : null
+  return !site || site.config?.features?.profile !== false
+}
+
 /**
  * Users API Routes
  */
 async function routes(app: FastifyInstance) {
+  // -> An avatar upload is the raw image rather than a multipart form: one file, no fields, and no
+  //    dependency to add. Registered inside this plugin, so every other route keeps rejecting an
+  //    image body outright.
+  app.addContentTypeParser(
+    [...imageMimeTypes],
+    { parseAs: 'buffer', bodyLimit: avatarUploadLimit },
+    (req, body, done) => {
+      done(null, body)
+    }
+  )
+
   app.get<{
     Querystring: { page?: number; limit?: number; filter?: string; assignableToGroupId?: string }
   }>(
@@ -97,6 +136,292 @@ async function routes(app: FastifyInstance) {
           authenticated: false
         }
       }
+    }
+  )
+
+  /**
+   * GET OWN PROFILE
+   */
+  app.get(
+    '/profile',
+    {
+      schema: {
+        summary: "Get the logged in user's own profile",
+        description:
+          'Returns the profile of the user the session belongs to, with the `meta` / `prefs` blobs flattened into plain fields.',
+        tags: ['Users'],
+        response: {
+          200: {
+            description: 'User profile',
+            type: 'object',
+            $ref: 'UserProfile#'
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      const profile = await WIKI.models.users.getProfile(userId)
+      if (!profile) {
+        // -> The session outlived the user it points at
+        return reply.unauthorized()
+      }
+      return profile
+    }
+  )
+
+  /**
+   * UPDATE OWN PROFILE
+   */
+  app.put<{ Body: UserProfilePatch }>(
+    '/profile',
+    {
+      schema: {
+        summary: "Update the logged in user's own profile",
+        description:
+          'Updates any subset of the profile fields; omitted ones are left unchanged. Requires the current site to have the `profile` feature enabled. The email cannot be changed here, and neither can any field an administrator owns.',
+        tags: ['Users'],
+        body: {
+          $ref: 'UserProfileUpdate#'
+        },
+        response: {
+          200: {
+            description: 'Profile updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              profile: {
+                $ref: 'UserProfile#'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      if (!(await isProfileEditable(req))) {
+        return reply.forbidden('Profile editing is disabled on this site.')
+      }
+
+      // -> A bad time zone would break every date the user sees, and the list of valid zones is only
+      //    known at runtime, so it cannot be expressed as a schema enum
+      if (req.body.timezone !== undefined && req.body.timezone !== '') {
+        if (!Intl.supportedValuesOf('timeZone').includes(req.body.timezone)) {
+          throw new CustomError(
+            'userProfileInvalidTimezone',
+            `Not a recognized IANA time zone: ${req.body.timezone}`
+          )
+        }
+      }
+
+      const patch: UserProfilePatch = {}
+      for (const key of [
+        'name',
+        'location',
+        'jobTitle',
+        'pronouns',
+        'timezone',
+        'dateFormat',
+        'timeFormat',
+        'appearance',
+        'cvd'
+      ] as const) {
+        if (req.body[key] !== undefined) {
+          patch[key] = req.body[key]
+        }
+      }
+      if (Object.keys(patch).length < 1) {
+        throw new CustomError('userProfileEmpty', 'No profile fields provided to update.')
+      }
+      if (patch.name !== undefined && !/^[^<>"]+$/.test(patch.name)) {
+        throw new CustomError('userProfileInvalidName', 'Invalid User Name')
+      }
+
+      const profile = await WIKI.models.users.updateProfile(userId, patch)
+      if (!profile) {
+        return reply.unauthorized()
+      }
+
+      // -> The session carries a copy of the name and the preferences, which `/whoami` serves on
+      //    every page load. Left alone, it would hand back the pre-save values.
+      req.session.user = {
+        ...req.session.user!,
+        name: profile.name,
+        timezone: profile.timezone,
+        dateFormat: profile.dateFormat,
+        timeFormat: profile.timeFormat,
+        appearance: profile.appearance,
+        cvd: profile.cvd
+      }
+
+      return {
+        ok: true,
+        message: 'Profile updated successfully.',
+        profile
+      }
+    }
+  )
+
+  /**
+   * UPLOAD OWN AVATAR
+   */
+  app.put(
+    '/profile/avatar',
+    {
+      schema: {
+        summary: "Replace the logged in user's own avatar",
+        description: `The body is the raw image, not a multipart form — send the file itself with its \`Content-Type\`. At most ${avatarUploadLimit / 1024 / 1024} MB, and it must really be one of the accepted formats: the bytes are checked, not the declared type. Resized to a 180x180 JPEG when the Sharp extension is installed, otherwise stored as uploaded. Requires the current site to have the \`profile\` feature enabled.`,
+        tags: ['Users'],
+        consumes: [...imageMimeTypes],
+        response: {
+          200: {
+            description: 'Avatar uploaded successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      if (!(await isProfileEditable(req))) {
+        return reply.forbidden('Profile editing is disabled on this site.')
+      }
+
+      const data = req.body
+      if (!Buffer.isBuffer(data) || data.length < 1) {
+        throw new CustomError('userAvatarEmpty', 'No image was sent.')
+      }
+      // -> The declared content type got the request this far; what the bytes actually are is what
+      //    decides, since they are what gets stored and served back
+      if (!detectImageMime(data)) {
+        throw new CustomError(
+          'userAvatarInvalidImage',
+          'Not a PNG, JPEG, WebP or GIF image, whatever the request said it was.'
+        )
+      }
+
+      await WIKI.models.users.setAvatar(userId, data)
+      // -> The account menu reads `hasAvatar` off the session on every page load
+      req.session.user = { ...req.session.user!, hasAvatar: true }
+
+      return {
+        ok: true,
+        message: 'Avatar uploaded successfully.'
+      }
+    }
+  )
+
+  /**
+   * CLEAR OWN AVATAR
+   */
+  app.delete(
+    '/profile/avatar',
+    {
+      schema: {
+        summary: "Remove the logged in user's own avatar",
+        description:
+          'Leaves the user to be rendered as a placeholder again. Succeeds even if there was no avatar to remove. Requires the current site to have the `profile` feature enabled.',
+        tags: ['Users'],
+        response: {
+          200: {
+            description: 'Avatar cleared successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      if (!(await isProfileEditable(req))) {
+        return reply.forbidden('Profile editing is disabled on this site.')
+      }
+
+      await WIKI.models.users.clearAvatar(userId)
+      req.session.user = { ...req.session.user!, hasAvatar: false }
+
+      return {
+        ok: true,
+        message: 'Avatar cleared successfully.'
+      }
+    }
+  )
+
+  /**
+   * GET OWN GROUPS
+   *
+   * A user may see which groups it belongs to without holding `read:groups`, which would expose every
+   * group on the instance.
+   */
+  app.get(
+    '/profile/groups',
+    {
+      schema: {
+        summary: 'Get the groups the logged in user belongs to',
+        description:
+          'Only the identity of each group. Reading what a group grants requires `read:groups`.',
+        tags: ['Users'],
+        response: {
+          200: {
+            description: 'Groups the user belongs to',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  format: 'uuid'
+                },
+                name: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      return WIKI.models.users.getUserGroups(userId)
     }
   )
 

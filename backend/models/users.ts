@@ -3,6 +3,7 @@ import {
   authentication as authenticationTable,
   groups as groupsTable,
   sessions as sessionsTable,
+  userAvatars,
   userGroups,
   users as usersTable,
   userKeys
@@ -10,6 +11,7 @@ import {
 import { and, count, eq, ilike, inArray, notExists, or, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { flatten, uniq } from 'es-toolkit/array'
+import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
 import type { SystemIds } from './types.ts'
 
 /** The essential user fields, mirroring the `UserCore` API schema. */
@@ -54,6 +56,48 @@ export interface UserPatch {
   meta?: Record<string, any>
   prefs?: Record<string, any>
 }
+
+/**
+ * The self-service view of a user, flattening the `meta` and `prefs` blobs into the fields the
+ * profile page shows. Mirrors the `UserProfile` API schema.
+ */
+export interface UserProfile {
+  id: string
+  name: string
+  email: string
+  hasAvatar: boolean
+  location: string
+  jobTitle: string
+  pronouns: string
+  timezone: string
+  dateFormat: string
+  timeFormat: string
+  appearance: string
+  cvd: string
+}
+
+/** The fields a user may change on its own profile. Notably not the email, nor any admin flag. */
+export interface UserProfilePatch {
+  name?: string
+  location?: string
+  jobTitle?: string
+  pronouns?: string
+  timezone?: string
+  dateFormat?: string
+  timeFormat?: string
+  appearance?: string
+  cvd?: string
+}
+
+/** The `meta` keys the profile owns, and the `prefs` keys it owns. */
+const profileMetaKeys = ['location', 'jobTitle', 'pronouns'] as const
+const profilePrefsKeys = ['timezone', 'dateFormat', 'timeFormat', 'appearance', 'cvd'] as const
+
+/**
+ * The square, in pixels, an avatar is resized to. The profile page and the account menu both display
+ * one at 180px; nothing displays one larger.
+ */
+const avatarSize = 180
 
 /**
  * Escape the LIKE wildcards `%` and `_` (and the escape character itself) so that a user-supplied
@@ -180,12 +224,7 @@ class Users {
       return null
     }
 
-    const groups = await WIKI.db
-      .select({ id: groupsTable.id, name: groupsTable.name })
-      .from(userGroups)
-      .innerJoin(groupsTable, eq(groupsTable.id, userGroups.groupId))
-      .where(eq(userGroups.userId, id))
-      .orderBy(groupsTable.name)
+    const groups = await this.getUserGroups(id)
 
     const strategies = await WIKI.db.select().from(authenticationTable)
     const auth: UserAuthProvider[] = []
@@ -318,6 +357,142 @@ class Users {
     }
     const result = await WIKI.db.update(usersTable).set(values).where(eq(usersTable.id, id))
     return (result.rowCount ?? 0) > 0
+  }
+
+  /**
+   * The profile of a single user, as shown on its own profile page.
+   *
+   * `meta` and `prefs` are free-form blobs, so every field is defaulted here rather than trusted to
+   * be present — a user created before a given key existed simply has none.
+   *
+   * @returns The profile, or null if no such user exists
+   */
+  async getProfile(id: string): Promise<UserProfile | null> {
+    const user = await this.getById(id)
+    if (!user) {
+      return null
+    }
+    const meta = (user.meta ?? {}) as Record<string, any>
+    const prefs = (user.prefs ?? {}) as Record<string, any>
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      hasAvatar: user.hasAvatar,
+      location: meta.location ?? '',
+      jobTitle: meta.jobTitle ?? '',
+      pronouns: meta.pronouns ?? '',
+      // -> An empty time zone / date format means "whatever the client resolves", which is what the
+      //    profile page falls back to
+      timezone: prefs.timezone ?? '',
+      dateFormat: prefs.dateFormat ?? '',
+      timeFormat: prefs.timeFormat ?? '12h',
+      appearance: prefs.appearance ?? 'site',
+      cvd: prefs.cvd ?? 'none'
+    }
+  }
+
+  /**
+   * Update a user's own profile fields, merging into the `meta` and `prefs` blobs rather than
+   * replacing them — an administrator's notes and any key this endpoint does not expose must survive
+   * a user saving its profile.
+   *
+   * @param patch Fields to change; omitted ones are left as they are
+   * @returns The updated profile, or null if no such user exists
+   */
+  async updateProfile(id: string, patch: UserProfilePatch): Promise<UserProfile | null> {
+    const user = await this.getById(id)
+    if (!user) {
+      return null
+    }
+
+    const meta = { ...((user.meta ?? {}) as Record<string, any>) }
+    const prefs = { ...((user.prefs ?? {}) as Record<string, any>) }
+    for (const key of profileMetaKeys) {
+      if (patch[key] !== undefined) {
+        meta[key] = patch[key]
+      }
+    }
+    for (const key of profilePrefsKeys) {
+      if (patch[key] !== undefined) {
+        prefs[key] = patch[key]
+      }
+    }
+
+    const values: UserPatch = { meta, prefs }
+    if (patch.name !== undefined) {
+      values.name = patch.name
+    }
+    await this.updateUser(id, values)
+
+    return this.getProfile(id)
+  }
+
+  /**
+   * A user's avatar, with the type its bytes say it is.
+   *
+   * The type is sniffed rather than stored: an avatar written while Sharp was installed is a JPEG,
+   * one written without it is whatever was uploaded, and nothing records which. Unrecognizable bytes
+   * are reported as JPEG, which is what every avatar stored by 2.x is.
+   *
+   * @returns The avatar, or null if this user has none
+   */
+  async getAvatar(userId: string): Promise<{ data: Buffer; mime: string } | null> {
+    const rows = await WIKI.db
+      .select({ data: userAvatars.data })
+      .from(userAvatars)
+      .where(eq(userAvatars.id, userId))
+      .limit(1)
+    const data = rows[0]?.data
+    if (!data) {
+      return null
+    }
+    return { data, mime: detectImageMime(data) ?? 'image/jpeg' }
+  }
+
+  /**
+   * Replace a user's avatar.
+   *
+   * Normalized to a square JPEG when the Sharp extension is installed — an avatar is displayed at one
+   * small size, so there is no reason to keep a multi-megabyte original around. Without Sharp the
+   * uploaded bytes are stored as they came in, which is why reading one sniffs the type.
+   *
+   * @param data The uploaded image, already known to be one of the supported formats
+   */
+  async setAvatar(userId: string, data: Buffer): Promise<void> {
+    const normalized = (await resizeImageToSquareJpeg(data, avatarSize)) ?? data
+    await WIKI.db
+      .insert(userAvatars)
+      .values({ id: userId, data: normalized })
+      .onConflictDoUpdate({ target: userAvatars.id, set: { data: normalized } })
+    await WIKI.db
+      .update(usersTable)
+      .set({ hasAvatar: true, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, userId))
+  }
+
+  /**
+   * Remove a user's avatar, leaving it to be rendered as initials again.
+   */
+  async clearAvatar(userId: string): Promise<void> {
+    await WIKI.db.delete(userAvatars).where(eq(userAvatars.id, userId))
+    await WIKI.db
+      .update(usersTable)
+      .set({ hasAvatar: false, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, userId))
+  }
+
+  /**
+   * The groups a user belongs to, by name. Only the identity of each group — never its permissions or
+   * page rules, which a user has no business reading about itself.
+   */
+  async getUserGroups(userId: string): Promise<Array<{ id: string; name: string }>> {
+    return WIKI.db
+      .select({ id: groupsTable.id, name: groupsTable.name })
+      .from(userGroups)
+      .innerJoin(groupsTable, eq(groupsTable.id, userGroups.groupId))
+      .where(eq(userGroups.userId, userId))
+      .orderBy(groupsTable.name)
   }
 
   /**
@@ -707,6 +882,45 @@ class Users {
       nextAction: 'redirect',
       redirect
     }
+  }
+
+  /**
+   * Where to send a user after logging out.
+   *
+   * A group's own target wins over the site's, which is what the admin area promises: the site setting
+   * says it "can be overridden at the group level". With several groups the first one that names a
+   * target wins, the same arbitrary-but-stable rule the login redirect uses.
+   *
+   * @param userId The user logging out, or null for a request that was not logged in
+   * @param siteId The site being logged out of, if it is known
+   * @returns A path or URL, never empty — the site root when nothing is configured
+   */
+  async getLogoutRedirect(userId: string | null, siteId?: string): Promise<string> {
+    if (userId) {
+      const groups = await WIKI.db.query.users
+        .findFirst({
+          columns: {},
+          where: {
+            id: userId
+          },
+          with: {
+            groups: {
+              columns: {
+                redirectOnLogout: true
+              }
+            }
+          }
+        })
+        .then((r: any) => r?.groups ?? [])
+      for (const grp of groups as any[]) {
+        if (grp.redirectOnLogout && grp.redirectOnLogout !== '/') {
+          return grp.redirectOnLogout
+        }
+      }
+    }
+
+    const site = siteId ? await WIKI.models.sites.getSiteById({ id: siteId }) : null
+    return site?.config?.auth?.logoutRedirect || '/'
   }
 
   async loginChangePassword(

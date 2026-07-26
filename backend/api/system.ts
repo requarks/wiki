@@ -504,9 +504,9 @@ async function routes(app: FastifyInstance) {
         permissions: ['manage:system']
       },
       schema: {
-        summary: 'Install an extension',
+        summary: 'Install or reinstall an extension',
         description:
-          'Only extensions flagged `isInstallable` can be installed from here. None currently are: Git and Pandoc come from the operating system, Sharp and Puppeteer are optional dependencies, so both are installed outside the application and this answers 409 pointing at the documentation.',
+          'Only extensions flagged `isInstallable` can be installed from here — currently Sharp, which is an npm package. It already ships as an optional dependency, so this is mostly a repair: it refetches the package and the prebuilt binary for this OS and architecture, which is what to reach for when the native binary is missing or does not match the platform. Git and Pandoc come from the operating system and answer 409 pointing at the documentation. Runs npm and can take minutes.',
         tags: ['System'],
         params: {
           type: 'object',
@@ -528,6 +528,11 @@ async function routes(app: FastifyInstance) {
               },
               message: {
                 type: 'string'
+              },
+              restartRequired: {
+                type: 'boolean',
+                description:
+                  'True when this server already tried and failed to load the module. Node replays a failed module load for the life of the process, so the repaired files cannot be used until the server restarts.'
               }
             }
           }
@@ -548,9 +553,26 @@ async function routes(app: FastifyInstance) {
         )
       }
 
-      // -> No extension declares itself installable yet; an installer belongs with the extension
-      //    that needs it, next to its definition
-      return reply.notImplemented('Installing this extension is not implemented yet.')
+      try {
+        await WIKI.models.extensions.install(definition)
+      } catch (err: any) {
+        // -> The message carries npm's own output, which is the only thing that explains a failure
+        //    like a missing build toolchain. An administrator is the only caller.
+        return reply.internalServerError(err.message)
+      }
+
+      // -> A fresh install is usable at once, since nothing has tried to load it yet. Repairing one this
+      //    process already choked on is a different story, and saying so beats leaving an administrator
+      //    to wonder why nothing changed.
+      const restartRequired = WIKI.models.extensions.hasLoadFailed(definition)
+
+      return {
+        ok: true,
+        message: restartRequired
+          ? `${definition.title} was reinstalled, but this server has to be restarted before it can use it.`
+          : `${definition.title} installed successfully.`,
+        restartRequired
+      }
     }
   )
 

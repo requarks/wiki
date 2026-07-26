@@ -31,10 +31,10 @@ export type HookEvent = (typeof HOOK_EVENTS)[number]
 /**
  * The events something in the server actually emits today.
  *
- * Kept as an explicit list rather than inferred from the prefix: `user:logout` looks like it belongs
- * here, but there is no logout route yet. Add an event here when you add its `emit()` call.
+ * Kept as an explicit list rather than inferred from the prefix, since the page, asset and comment
+ * events have no emit point yet. Add an event here when you add its `emit()` call.
  */
-export const EMITTED_EVENTS: HookEvent[] = ['user:join', 'user:login']
+export const EMITTED_EVENTS: HookEvent[] = ['user:join', 'user:login', 'user:logout']
 
 /** A webhook as exposed by the API. */
 export interface Hook {

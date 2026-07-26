@@ -11,7 +11,7 @@ q-page.q-py-md(:style-fn='pageStyle')
         )
         img(
           v-if='userStore.hasAvatar',
-          :src='`/_user/` + userStore.id + `/avatar?` + state.assetTimestamp'
+          :src='`/_user/current/avatar?` + state.assetTimestamp'
           )
         q-icon(
           v-else,
@@ -79,6 +79,9 @@ const state = reactive({
   assetTimestamp: (new Date()).toISOString()
 })
 
+/** What the upload endpoint accepts. */
+const acceptedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+
 const canEdit = computed(() => siteStore.features?.profile)
 
 // METHODS
@@ -92,47 +95,41 @@ function pageStyle (offset, height) {
 async function uploadImage () {
   const input = document.createElement('input')
   input.type = 'file'
+  input.accept = acceptedTypes.join(',')
 
   input.onchange = async e => {
+    const file = e.target.files?.[0]
+    if (!file) { return }
+    // -> The file picker's filter is a suggestion the user can override, and the server checks the
+    //    bytes anyway; saying so here beats a 415 with nothing to explain it
+    if (!acceptedTypes.includes(file.type)) {
+      $q.notify({
+        type: 'negative',
+        message: t('profile.avatarUploadFailed'),
+        caption: t('profile.avatarUploadInvalidType')
+      })
+      return
+    }
     state.loading++
     try {
-      const resp = await APOLLO_CLIENT.mutate({
-        context: {
-          uploadMode: true
-        },
-        mutation: `
-          mutation uploadUserAvatar (
-            $id: UUID!
-            $image: Upload!
-          ) {
-            uploadUserAvatar (
-              id: $id
-              image: $image
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          id: userStore.id,
-          image: e.target.files[0]
+      // -> The image is the request body itself: the endpoint takes the raw file, not a form
+      const resp = await API_CLIENT.put('users/profile/avatar', {
+        body: file,
+        headers: {
+          'content-type': file.type
         }
-      })
-      if (resp?.data?.uploadUserAvatar?.operation?.succeeded) {
-        $q.notify({
-          type: 'positive',
-          message: t('profile.avatarUploadSuccess')
-        })
-        state.assetTimestamp = (new Date()).toISOString()
-        userStore.$patch({
-          hasAvatar: true
-        })
-      } else {
-        throw new Error(resp?.data?.uploadUserAvatar?.operation?.message || 'An unexpected error occured.')
+      }).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
       }
+      $q.notify({
+        type: 'positive',
+        message: t('profile.avatarUploadSuccess')
+      })
+      state.assetTimestamp = (new Date()).toISOString()
+      userStore.$patch({
+        hasAvatar: true
+      })
     } catch (err) {
       $q.notify({
         type: 'negative',
@@ -149,37 +146,18 @@ async function uploadImage () {
 async function clearImage () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation clearUserAvatar (
-          $id: UUID!
-        ) {
-          clearUserAvatar (
-            id: $id
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: userStore.id
-      }
-    })
-    if (resp?.data?.clearUserAvatar?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('profile.avatarClearSuccess')
-      })
-      state.assetTimestamp = (new Date()).toISOString()
-      userStore.$patch({
-        hasAvatar: false
-      })
-    } else {
-      throw new Error(resp?.data?.uploadUserAvatar?.operation?.message || 'An unexpected error occured.')
+    const resp = await API_CLIENT.delete('users/profile/avatar').json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('profile.avatarClearSuccess')
+    })
+    state.assetTimestamp = (new Date()).toISOString()
+    userStore.$patch({
+      hasAvatar: false
+    })
   } catch (err) {
     $q.notify({
       type: 'negative',

@@ -158,8 +158,15 @@ router.beforeEach(async (to, from) => {
 
 // GLOBAL EVENTS HANDLERS
 
-EVENT_BUS.on('logout', () => {
-  router.push('/')
+EVENT_BUS.on('logout', ({ redirect } = {}) => {
+  const target = redirect || '/'
+  // -> A group or the site can send logged out users to another site entirely, which the router cannot
+  //    navigate to — and leaving the wiki means there is no point notifying anyone either
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(target)) {
+    window.location.assign(target)
+    return
+  }
+  router.push(target)
   $q.notify({
     type: 'positive',
     icon: 'las la-sign-out-alt',

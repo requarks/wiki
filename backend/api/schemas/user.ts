@@ -81,6 +81,112 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * USER PROFILE - The logged in user's own view of itself
+   *
+   * The `meta` / `prefs` blobs are flattened into plain fields here. Values are deliberately typed as
+   * strings rather than enums: this is the serialized response, and a preference stored before an
+   * option existed must still be readable.
+   */
+  app.addSchema({
+    $id: 'UserProfile',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        format: 'uuid'
+      },
+      name: {
+        type: 'string'
+      },
+      email: {
+        type: 'string',
+        format: 'email'
+      },
+      hasAvatar: {
+        type: 'boolean'
+      },
+      location: {
+        type: 'string'
+      },
+      jobTitle: {
+        type: 'string'
+      },
+      pronouns: {
+        type: 'string'
+      },
+      timezone: {
+        type: 'string',
+        description: 'IANA time zone name, or an empty string to use the client time zone.'
+      },
+      dateFormat: {
+        type: 'string',
+        description: 'Empty string means the locale default.'
+      },
+      timeFormat: {
+        type: 'string'
+      },
+      appearance: {
+        type: 'string'
+      },
+      cvd: {
+        type: 'string',
+        description: 'Color vision deficiency to adjust the palette for.'
+      }
+    }
+  })
+
+  /**
+   * USER PROFILE UPDATE - The fields a user may change on its own profile
+   *
+   * The email is absent on purpose: it identifies the account and is the local strategy's username.
+   */
+  app.addSchema({
+    $id: 'UserProfileUpdate',
+    type: 'object',
+    properties: {
+      name: {
+        type: 'string',
+        minLength: 1,
+        maxLength: 255
+      },
+      location: {
+        type: 'string',
+        maxLength: 255
+      },
+      jobTitle: {
+        type: 'string',
+        maxLength: 255
+      },
+      pronouns: {
+        type: 'string',
+        maxLength: 255
+      },
+      timezone: {
+        type: 'string',
+        description: 'IANA time zone name, e.g. `America/New_York`.',
+        maxLength: 255
+      },
+      dateFormat: {
+        type: 'string',
+        description: 'Empty string means the locale default.',
+        enum: ['', 'DD/MM/YYYY', 'DD.MM.YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD']
+      },
+      timeFormat: {
+        type: 'string',
+        enum: ['12h', '24h']
+      },
+      appearance: {
+        type: 'string',
+        enum: ['site', 'light', 'dark']
+      },
+      cvd: {
+        type: 'string',
+        enum: ['none', 'protanopia', 'deuteranopia', 'tritanopia']
+      }
+    }
+  })
+
+  /**
    * USER - All fields
    */
   app.addSchema({

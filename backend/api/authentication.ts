@@ -281,6 +281,82 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * LOGOUT
+   */
+  app.post<{ Params: { siteId: string } }>(
+    '/sites/:siteId/auth/logout',
+    {
+      schema: {
+        summary: 'Logout',
+        description:
+          "Destroys the current session and answers with where to send the user next: the first of the user's groups that sets a logout redirect, otherwise the site's own setting, otherwise the site root. A request that was not logged in gets the same answer rather than an error, so that a client acting on a session the server has already forgotten still ends up somewhere sensible.",
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        response: {
+          200: {
+            description: 'Logged out successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              redirect: {
+                type: 'string',
+                description: 'A path within this wiki, or an absolute URL if one is configured.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const user = req.session?.authenticated ? req.session.user : null
+
+      // -> Resolved before the session goes away, since it depends on who was logged in
+      const redirect = await WIKI.models.users.getLogoutRedirect(
+        user?.id ?? null,
+        req.params.siteId
+      )
+
+      if (req.session) {
+        // -> Drops the stored session, so the cookie the browser still holds refers to nothing
+        await req.session.destroy()
+      }
+      // -> And clear that cookie too: `destroy()` detaches the session, which leaves the plugin's own
+      //    save hook with nothing to do. Name and options match the registration in `index.ts`.
+      reply.clearCookie('wikiSession')
+
+      if (user) {
+        WIKI.models.flags.authDebug(
+          `User ${user.id} <${user.email}> logged out, redirecting to ${redirect}`
+        )
+        await WIKI.models.hooks.emit('user:logout', {
+          userId: user.id,
+          ip: req.ip,
+          metadata: {
+            name: user.name,
+            email: user.email
+          }
+        })
+      }
+
+      return {
+        ok: true,
+        redirect
+      }
+    }
+  )
+
+  /**
    * LIST AUTHENTICATION MODULES
    */
   app.get(

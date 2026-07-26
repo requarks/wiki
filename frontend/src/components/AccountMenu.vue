@@ -8,7 +8,7 @@ q-btn.account-avbtn.q-ml-md(flat, round, dense, color='custom-color')
     v-else
     size='32px'
     )
-    img(:src='`/_user/` + userStore.id + `/avatar`')
+    img(:src='`/_user/current/avatar`')
   q-menu.translucent-menu(auto-close)
     q-card(flat, style='width: 300px;', :dark='false')
       q-card-section(align='center')

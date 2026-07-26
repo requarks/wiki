@@ -1,11 +1,47 @@
 import { defineStore } from 'pinia'
-import { jwtDecode } from 'jwt-decode'
-import Cookies from 'js-cookie'
 
-import { DateTime } from 'luxon'
 import { getAccessibleColor } from '@/helpers/accessibility'
 
 import { useSiteStore } from './site'
+
+const pad = (value) => String(value).padStart(2, '0')
+
+/**
+ * Render the date part of a moment the way the user asked for it.
+ *
+ * The stored preference is one of a handful of explicit patterns, or an empty string meaning "whatever
+ * this locale does" — which is the only case a formatter can be left to decide on its own.
+ */
+function formatDatePart (zoned, dateFormat) {
+  switch (dateFormat) {
+    case 'DD/MM/YYYY':
+      return `${pad(zoned.day)}/${pad(zoned.month)}/${zoned.year}`
+    case 'DD.MM.YYYY':
+      return `${pad(zoned.day)}.${pad(zoned.month)}.${zoned.year}`
+    case 'MM/DD/YYYY':
+      return `${pad(zoned.month)}/${pad(zoned.day)}/${zoned.year}`
+    case 'YYYY-MM-DD':
+      return `${zoned.year}-${pad(zoned.month)}-${pad(zoned.day)}`
+    case 'YYYY/MM/DD':
+      return `${zoned.year}/${pad(zoned.month)}/${pad(zoned.day)}`
+    default:
+      // -> Numeric parts rather than `dateStyle: 'short'`, which abbreviates the year to two digits
+      return zoned.toLocaleString(undefined, { year: 'numeric', month: 'numeric', day: 'numeric' })
+  }
+}
+
+/**
+ * Render the time part. `hourCycle` rather than `hour12: false`, which some locales render as 24:00
+ * where they mean 00:00.
+ */
+function formatTimePart (zoned, timeFormat) {
+  return zoned.toLocaleString(
+    undefined,
+    timeFormat === '24h'
+      ? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+      : { hour: 'numeric', minute: '2-digit', hour12: true }
+  )
+}
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -25,6 +61,8 @@ export const useUserStore = defineStore('user', {
     profileLoaded: false
   }),
   getters: {
+    // -> Luxon format tokens, for the call sites that still format dates with luxon themselves. They
+    //    retire with the last of those; `formatDateTime()` no longer goes through them.
     preferredDateFormat: (state) => {
       if (!state.dateFormat) {
         return 'D'
@@ -68,9 +106,17 @@ export const useUserStore = defineStore('user', {
     },
     async logout() {
       const siteStore = useSiteStore()
-      await API_CLIENT.get(`sites/${siteStore.id}/auth/logout`).json()
+      let redirect = '/'
+      try {
+        const resp = await API_CLIENT.post(`sites/${siteStore.id}/auth/logout`).json()
+        redirect = resp?.redirect || '/'
+      } catch (err) {
+        // -> Clear the client either way. Whatever went wrong, someone who clicked Logout must not be
+        //    left looking at a page that still says they are signed in.
+        console.warn(err)
+      }
       this.setToGuest()
-      EVENT_BUS.emit('logout')
+      EVENT_BUS.emit('logout', { redirect })
     },
     setToGuest() {
       this.$patch({
@@ -84,6 +130,9 @@ export const useUserStore = defineStore('user', {
         appearance: 'site',
         cvd: 'none',
         permissions: [],
+        // -> Page permissions are only refetched on the next navigation, so leaving them would keep
+        //    edit buttons on screen for a user who is no longer logged in
+        pagePermissions: [],
         authenticated: false,
         profileLoaded: false
       })
@@ -120,10 +169,36 @@ export const useUserStore = defineStore('user', {
         console.warn(`Failed to fetch page permissions at path ${path}!`)
       }
     },
+    /**
+     * Format a moment as this user asked to see it: their date pattern, their 12h/24h choice, and their
+     * time zone. Word order comes from the locale, which is why `t` is passed in.
+     *
+     * @param date A `Temporal.Instant`, a `Date`, or a string one can be parsed from — what the API
+     *             returns. Nullable columns like `lastLoginAt` are common, so nothing at all formats as
+     *             an empty string rather than blowing up mid-render.
+     */
     formatDateTime(t, date) {
-      return (typeof date === 'string' ? DateTime.fromISO(date) : date).toFormat(
-        t('common.datetime', { date: this.preferredDateFormat, time: this.preferredTimeFormat })
-      )
+      if (!date) {
+        return ''
+      }
+      let instant = date
+      if (typeof date === 'string') {
+        instant = Temporal.Instant.from(date)
+      } else if (date instanceof Date) {
+        instant = date.toTemporalInstant()
+      }
+      // -> A preference set before the zone list changed, or none at all, falls back to this browser's
+      //    zone rather than throwing in the middle of a table
+      let zoned
+      try {
+        zoned = instant.toZonedDateTimeISO(this.timezone || Temporal.Now.timeZoneId())
+      } catch {
+        zoned = instant.toZonedDateTimeISO(Temporal.Now.timeZoneId())
+      }
+      return t('common.datetime', {
+        date: formatDatePart(zoned, this.dateFormat),
+        time: formatTimePart(zoned, this.timeFormat)
+      })
     }
   }
 })

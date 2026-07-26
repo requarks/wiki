@@ -164,9 +164,14 @@ async function install (ext) {
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured')
     }
+    // -> A reinstall repairs the files on disk, but a server that already failed to load the module
+    //    keeps failing until it restarts — so that answer is a warning, not a success
     $q.notify({
-      type: 'positive',
-      message: t('admin.extensions.installSuccess')
+      type: resp.restartRequired ? 'warning' : 'positive',
+      message: resp.restartRequired
+        ? t('admin.extensions.installRestartRequired')
+        : t('admin.extensions.installSuccess'),
+      timeout: resp.restartRequired ? 10000 : undefined
     })
     // -> Re-detect rather than assume: the install is only done once the server can see the tool
     await load()

@@ -1,10 +1,10 @@
 key: sharp
 title: Sharp
 description: >-
-  Processes and transforms images. Required to generate thumbnails of uploaded images and to resize
-  site assets such as logos.
+  Processes and transforms images. Required to generate thumbnails of uploaded images, and used to
+  resize avatars and site assets such as logos.
 website: 'https://sharp.pixelplumbing.com'
-# Detection: an optional dependency, so resolvable from the backend's node_modules when present
+# Detection: a declared optional dependency of the backend, so normally already in its node_modules
 detect:
   type: module
   value: sharp
@@ -12,4 +12,6 @@ detect:
 architectures:
   - x64
   - arm64
-isInstallable: false
+# Installable with npm, which is also how the admin area reinstalls a native binary that is missing or
+# does not match this OS and architecture
+isInstallable: true

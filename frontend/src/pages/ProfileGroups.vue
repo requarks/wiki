@@ -35,15 +35,9 @@ import { useI18n } from 'vue-i18n'
 import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
-import { useUserStore } from '@/stores/user'
-
 // QUASAR
 
 const $q = useQuasar()
-
-// STORES
-
-const userStore = useUserStore()
 
 // I18N
 
@@ -52,7 +46,7 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  title: t('profile.avatar')
+  title: t('profile.groups')
 })
 
 // DATA
@@ -70,31 +64,15 @@ function pageStyle (offset, height) {
   }
 }
 
+/**
+ * The groups come from the session's own endpoint rather than from `users/:id`: reading an arbitrary
+ * user requires `read:users`, which a regular user does not have.
+ */
 async function fetchGroups () {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.query({
-      query: `
-        query getUserProfileGroups (
-          $id: UUID!
-        ) {
-          userById (
-            id: $id
-          ) {
-            id
-            groups {
-              id
-              name
-            }
-          }
-        }
-      `,
-      variables: {
-        id: userStore.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    state.groups = respRaw.data?.userById?.groups ?? []
+    const groups = await API_CLIENT.get('users/profile/groups').json()
+    state.groups = groups ?? []
   } catch (err) {
     $q.notify({
       type: 'negative',
