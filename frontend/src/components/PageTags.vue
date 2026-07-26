@@ -30,7 +30,8 @@
     new-value-mode='add-unique'
     @new-value='createTag'
     @filter='filterTags'
-    placeholder='Select or create tags...'
+    :placeholder='t(`editor.props.tagsPlaceholder`)'
+    :aria-label='t(`editor.props.tags`)'
     :loading='state.loading'
     )
     template(v-slot:option='scope')
@@ -46,7 +47,6 @@
 import { useQuasar } from 'quasar'
 import { reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { DateTime } from 'luxon'
 
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
@@ -88,16 +88,26 @@ const state = reactive({
 pageStore.$subscribe(() => {
   if (props.edit) {
     editorStore.$patch({
-      lastChangeTimestamp: DateTime.utc()
+      lastChangeTimestamp: Temporal.Now.instant()
     })
   }
 })
 
 watch(() => props.edit, async (newValue) => {
-  if (newValue) {
-    state.loading = true
+  if (!newValue) { return }
+  state.loading = true
+  try {
     await siteStore.fetchTags()
     state.tags = siteStore.tags.map(t => t.tag)
+  } catch (err) {
+    // -> Suggestions are a convenience: without them the field still adds tags, so this is a warning
+    //    rather than a failure, and the spinner must not be left running either way
+    $q.notify({
+      type: 'warning',
+      message: t('editor.props.tagsFailed'),
+      caption: await err.response?.json().then(b => b?.message).catch(() => null) || err.message
+    })
+  } finally {
     state.loading = false
   }
 }, { immediate: true })

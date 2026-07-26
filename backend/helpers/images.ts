@@ -76,3 +76,44 @@ export async function resizeImageToSquareJpeg(data: Buffer, size: number): Promi
     return null
   }
 }
+
+/**
+ * Shrink an image to a WebP thumbnail, using the Sharp extension.
+ *
+ * Unlike an avatar, a thumbnail has no fallback: a file manager that cannot make one simply shows the
+ * file type icon instead, so null here is an ordinary outcome rather than a degraded one.
+ *
+ * @returns The thumbnail, or null if Sharp is not usable on this system or these bytes are not an
+ *          image it can read
+ */
+export async function makeImageThumbnail(
+  data: Buffer,
+  width: number,
+  height: number
+): Promise<Buffer | null> {
+  const definition = WIKI.models.extensions.getDefinition('sharp')
+  if (!definition || !(await WIKI.models.extensions.isInstalled(definition))) {
+    return null
+  }
+  const specifier = 'sharp'
+  // -> Loading Sharp and running it are kept apart here, unlike above: whatever a user uploaded may
+  //    simply not be an image Sharp can read, and that must not be recorded as Sharp itself being
+  //    broken for the rest of the process
+  let sharp: any
+  try {
+    ;({ default: sharp } = await import(specifier))
+  } catch (err: any) {
+    WIKI.models.extensions.noteLoadFailure(specifier)
+    WIKI.logger.warn(`Could not load Sharp to generate a thumbnail: ${err.message}`)
+    return null
+  }
+  try {
+    return await sharp(data)
+      .resize(width, height, { fit: 'cover', position: 'centre', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer()
+  } catch (err: any) {
+    WIKI.logger.debug(`Could not generate a thumbnail for an upload: ${err.message}`)
+    return null
+  }
+}

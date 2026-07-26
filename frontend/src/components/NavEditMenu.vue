@@ -150,52 +150,30 @@ function startEditing () {
 async function save () {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation updateNavMode (
-          $pageId: UUID!
-          $mode: NavigationMode!
-          ) {
-          updateNavigation (
-            pageId: $pageId
-            mode: $mode
-          ) {
-            operation {
-              succeeded
-              message
-            }
-            navigationId
-          }
-        }
-      `,
-      variables: {
-        pageId: pageStore.id,
-        mode: state.mode
-      }
-    })
-    if (resp?.data?.updateNavigation?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('navEdit.saveModeSuccess')
-      })
-      // -> Clear GraphQL Cache
-      APOLLO_CLIENT.cache.evict('ROOT_QUERY')
-      APOLLO_CLIENT.cache.gc()
-
-      // -> Set current nav id
-      pageStore.$patch({
-        navigationMode: state.mode,
-        navigationId: resp.data.updateNavigation.navigationId
-      })
-
-      props.menuHideHandler()
-    } else {
-      throw new Error(resp?.data?.updateNavigation?.operation?.message || 'Unexpected error occured.')
+    // -> Only the mode: the menu items themselves are what the overlay saves
+    const resp = await API_CLIENT.put(
+      `sites/${siteStore.id}/navigation/pages/${pageStore.id}`,
+      { json: { mode: state.mode } }
+    ).json()
+    // -> The API client does not throw on 400, so a refusal comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('navEdit.saveModeSuccess')
+    })
+    // -> Patching the id is what makes the sidebar reload: it watches this and refetches the menu the
+    //    page now resolves to
+    pageStore.$patch({
+      navigationMode: state.mode,
+      navigationId: resp.navigationId ?? null
+    })
+    props.menuHideHandler()
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: await err.response?.json().then(b => b?.message).catch(() => null) || err.message
     })
   }
   state.loading--

@@ -152,7 +152,8 @@ q-layout(view='hHh Lpr lff')
             :to='`/` + item.path'
             )
             q-item-section(avatar)
-              q-avatar(color='primary' text-color='white' rounded :icon='item.icon')
+              q-avatar(color='primary' text-color='white' rounded)
+                wiki-icon(:name='item.icon || defaultPageIcon', size='24px')
             q-item-section
               q-item-label {{ item.title }}
               q-item-label(v-if='item.description', caption) {{ item.description }}
@@ -183,18 +184,22 @@ import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { cloneDeep, debounce, difference } from 'lodash-es'
-import { DateTime } from 'luxon'
+import { debounce } from 'es-toolkit/function'
+import { difference } from 'es-toolkit/array'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
+import { DEFAULT_PAGE_ICON } from '@/stores/page'
 
 import HeaderNav from '@/components/HeaderNav.vue'
 import FooterNav from '@/components/FooterNav.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 
 const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
+
+/** How many results one search returns. The API caps this at 100, and there is no pager yet. */
+const RESULTS_LIMIT = 100
 
 // QUASAR
 
@@ -267,6 +272,8 @@ const publishStates = computed(() => {
 
 const tags = computed(() => siteStore.tags.map(t => t.tag))
 
+const defaultPageIcon = DEFAULT_PAGE_ICON
+
 // WATCHERS
 
 watch(() => route.query, async (newQueryObj) => {
@@ -288,7 +295,7 @@ function pageStyle (offset, height) {
 }
 
 function humanizeDate (val) {
-  return DateTime.fromISO(val).toFormat(userStore.preferredDateFormat)
+  return userStore.formatDateTime(t, val)
 }
 
 function setOrderBy (val) {
@@ -333,88 +340,61 @@ function syncTags (newSelection) {
 }
 
 async function performSearch () {
+  let q = siteStore.search ?? ''
+
+  // -> Extract tags
+  const queryTags = Array.from(q.matchAll(tagsInQueryRgx)).map(t => t[0].substring(1))
+  for (const tag of queryTags) {
+    q = q.replaceAll(`#${tag}`, '')
+  }
+  q = q.trim().replaceAll(/\s\s+/g, ' ')
+
+  const filters = {
+    ...(state.params.filterPath ? { path: state.params.filterPath } : {}),
+    ...(queryTags.length > 0 ? { tags: queryTags.join(',') } : {}),
+    ...(state.params.filterLocale.length > 0 ? { locales: state.params.filterLocale.join(',') } : {}),
+    ...(state.params.filterEditor ? { editor: state.params.filterEditor } : {}),
+    ...(state.params.filterPublishState ? { publishState: state.params.filterPublishState } : {})
+  }
+
+  // -> Nothing to go on: the empty state says as much, and asking the server would answer with the
+  //    most recently updated pages, which is not what an empty search box means
+  if (!q && Object.keys(filters).length < 1) {
+    state.results = []
+    state.total = 0
+    siteStore.searchLastQuery = siteStore.search
+    siteStore.searchIsLoading = false
+    return
+  }
+
+  state.loading++
   siteStore.searchIsLoading = true
   try {
-    let q = siteStore.search
-
-    // -> Extract tags
-    const queryTags = Array.from(q.matchAll(tagsInQueryRgx)).map(t => t[0].substring(1))
-    for (const tag of queryTags) {
-      q = q.replaceAll(`#${tag}`, '')
-    }
-    q = q.trim().replaceAll(/\s\s+/g, ' ')
-
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query searchPages (
-          $siteId: UUID!
-          $query: String!
-          $path: String
-          $locale: [String]
-          $tags: [String]
-          $editor: String
-          $publishState: PagePublishState
-          $orderBy: PageSearchSort
-          $orderByDirection: OrderByDirection
-          $offset: Int
-          $limit: Int
-        ) {
-          searchPages(
-            siteId: $siteId
-            query: $query
-            path: $path
-            locale: $locale
-            tags: $tags
-            editor: $editor
-            publishState: $publishState
-            orderBy: $orderBy
-            orderByDirection: $orderByDirection
-            offset: $offset
-            limit: $limit
-          ) {
-            results {
-              id
-              path
-              locale
-              title
-              description
-              icon
-              tags
-              updatedAt
-              relevancy
-              highlight
-            }
-            totalHits
-          }
-        }
-      `,
-      variables: {
-        siteId: siteStore.id,
-        query: q,
-        path: state.params.filterPath,
-        tags: queryTags,
-        locale: state.params.filterLocale,
-        editor: state.params.filterEditor,
-        publishState: state.params.filterPublishState || null,
+    const resp = await API_CLIENT.get(`sites/${siteStore.id}/pages/search`, {
+      searchParams: {
+        ...(q ? { query: q } : {}),
+        ...filters,
         orderBy: state.params.orderBy,
-        orderByDirection: state.params.orderByDirection
-      },
-      fetchPolicy: 'network-only'
-    })
-    if (!resp?.data?.searchPages) {
-      throw new Error('Unexpected error')
-    }
-    state.results = cloneDeep(resp.data.searchPages.results).map(r => { r.tags.sort(); return r })
-    state.total = resp.data.searchPages.totalHits
+        orderByDirection: state.params.orderByDirection,
+        // -> There is no pager yet, so this is as deep as the results go
+        limit: RESULTS_LIMIT
+      }
+    }).json()
+    state.results = (resp?.results ?? []).map(r => ({ ...r, tags: [...(r.tags ?? [])].sort() }))
+    state.total = resp?.totalHits ?? 0
     siteStore.searchLastQuery = siteStore.search
   } catch (err) {
+    state.results = []
+    state.total = 0
     $q.notify({
       type: 'negative',
-      message: 'Failed to perform search query.',
-      caption: err.message
+      message: t('search.failed'),
+      caption: await err.response?.json().then(b => b?.message).catch(() => null) || err.message
     })
+  } finally {
+    state.loading--
+    siteStore.searchIsLoading = false
   }
-  siteStore.searchIsLoading = false
 }
 
 function goBack () {
@@ -427,9 +407,19 @@ function goBack () {
 
 // MOUNTED
 
-onMounted(() => {
+onMounted(async () => {
   if (!siteStore.search) {
     siteStore.searchIsLoading = false
+  }
+  // -> The tag filter offers what the wiki actually uses, so the list has to be fetched; without it
+  //    the dropdown is silently empty. Listing tags needs a session, and a reader without one still
+  //    gets to search — they just filter by typing `#tag` instead of picking from the list
+  if (userStore.authenticated) {
+    try {
+      await siteStore.fetchTags()
+    } catch (err) {
+      console.warn(err)
+    }
   }
 })
 

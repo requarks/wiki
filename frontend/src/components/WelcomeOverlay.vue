@@ -93,14 +93,25 @@ useMeta({
 async function createHomePage (editor) {
   $q.loading.show()
   siteStore.overlay = ''
-  await pageStore.pageCreate({
-    editor,
-    locale: 'en',
-    path: 'home',
-    title: t('welcome.homeDefault.title'),
-    description: t('welcome.homeDefault.description'),
-    content: t('welcome.homeDefault.content')
-  })
+  try {
+    await pageStore.pageCreate({
+      editor,
+      locale: siteStore.locales.primary,
+      path: 'home',
+      title: t('welcome.homeDefault.title'),
+      description: t('welcome.homeDefault.description'),
+      content: t('welcome.homeDefault.content')
+    })
+  } catch (err) {
+    // -> Opening the editor is what this button does, so a failure has to be said out loud rather
+    //    than leaving the spinner up over a screen that never changed
+    siteStore.overlay = 'Welcome'
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to open the editor.',
+      caption: err.message
+    })
+  }
   $q.loading.hide()
 }
 

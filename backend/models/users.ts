@@ -982,6 +982,8 @@ class Users {
       cvd: user.prefs?.cvd
     }
     req.session.permissions = uniq(flatten(user.groups?.map((g: any) => g.permissions)))
+    // -> Group ids as well as their permissions, since navigation items are limited per group
+    req.session.groups = (user.groups ?? []).map((g: any) => g.id)
   }
 
   async generateToken({

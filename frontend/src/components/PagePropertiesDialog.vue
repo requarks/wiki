@@ -57,14 +57,17 @@ q-card.page-properties-dialog
           outlined
           dense
           )
+          template(#prepend)
+            wiki-icon(:name='pageStore.icon', size='20px', color='primary')
           template(#append)
             q-icon.cursor-pointer(
               name='las la-icons'
               color='primary'
+              :aria-label='t(`editor.props.selectIcon`)'
               )
-              q-menu(content-class='shadow-7')
-                .q-pa-lg: em [ TODO: Icon Picker Dialog ]
-                // icon-picker-dialog(v-model='pageStore.icon')
+              //- The properties panel is docked to the right edge, so the picker has to grow leftwards
+              q-menu(content-class='shadow-7', anchor='bottom right', self='top right')
+                icon-picker-dialog(v-model='pageStore.icon')
         q-input(
           v-if='pageStore.path !== `home`'
           v-model='pageStore.alias'
@@ -315,8 +318,8 @@ q-card.page-properties-dialog
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { DateTime } from 'luxon'
 
+import IconPickerDialog from './IconPickerDialog.vue'
 import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
 import PageTags from './PageTags.vue'
@@ -384,7 +387,7 @@ const publishingRange = computed({
 
 pageStore.$subscribe(() => {
   editorStore.$patch({
-    lastChangeTimestamp: DateTime.utc()
+    lastChangeTimestamp: Temporal.Now.instant()
   })
 })
 

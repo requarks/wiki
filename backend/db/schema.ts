@@ -19,7 +19,9 @@ import {
 
 // == CUSTOM TYPES =====================
 
-const ltree = customType({
+// -> Typed as a string: an ltree path comes back from the driver as its dotted text form, and every
+//    caller treats it as one
+const ltree = customType<{ data: string }>({
   dataType() {
     return 'ltree'
   }

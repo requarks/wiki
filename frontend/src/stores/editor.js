@@ -72,42 +72,14 @@ export const useEditorStore = defineStore('editor', {
         if (!siteStore.id) {
           throw new Error('Cannot fetch editors config: Missing Site ID')
         }
-        const resp = await APOLLO_CLIENT.query({
-          query: `
-            query fetchEditorConfigs (
-              $id: UUID!
-            ) {
-              siteById(
-                id: $id
-              ) {
-                id
-                editors {
-                  asciidoc {
-                    isActive
-                    config
-                  }
-                  markdown {
-                    isActive
-                    config
-                  }
-                  wysiwyg {
-                    isActive
-                    config
-                  }
-                }
-              }
-            }
-          `,
-          variables: {
-            id: siteStore.id
-          },
-          fetchPolicy: 'network-only'
-        })
+        // -> The editor configs are part of the site config, which is one request rather than a
+        //    dedicated endpoint
+        const siteInfo = await API_CLIENT.get(`sites/${siteStore.id}`).json()
         this.$patch({
           editors: {
-            asciidoc: resp?.data?.siteById?.editors?.asciidoc?.config,
-            markdown: resp?.data?.siteById?.editors?.markdown?.config,
-            wysiwyg: resp?.data?.siteById?.editors?.wysiwyg?.config
+            asciidoc: siteInfo?.editors?.asciidoc?.config ?? {},
+            markdown: siteInfo?.editors?.markdown?.config ?? {},
+            wysiwyg: siteInfo?.editors?.wysiwyg?.config ?? {}
           },
           configIsLoaded: true
         })

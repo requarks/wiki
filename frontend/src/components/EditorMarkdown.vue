@@ -269,7 +269,6 @@ import { reactive, ref, shallowRef, nextTick, onMounted, watch, onBeforeUnmount 
 import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { find, get, last, times, startsWith, debounce } from 'lodash-es'
-import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
 
@@ -646,7 +645,7 @@ onMounted(async () => {
   // -> Handle content change
   editor.onDidChangeModelContent(debounce(ev => {
     editorStore.$patch({
-      lastChangeTimestamp: DateTime.utc()
+      lastChangeTimestamp: Temporal.Now.instant()
     })
     pageStore.$patch({
       content: editor.getValue()

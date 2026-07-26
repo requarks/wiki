@@ -64,50 +64,37 @@ onMounted(async () => {
   try {
     for (const item of editorStore.pendingAssets) {
       state.current++
-      const resp = await APOLLO_CLIENT.mutate({
-        context: {
-          uploadMode: true
+      // -> The body is the file itself rather than a multipart form, and the locale is left to the
+      //    server, which uses the site's primary one
+      const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
+        searchParams: {
+          fileName: item.fileName
+          // TODO: Upload to page specific folder
         },
-        mutation: `
-          mutation uploadAssets (
-            $folderId: UUID
-            $locale: String
-            $siteId: UUID
-            $files: [Upload!]!
-          ) {
-            uploadAssets (
-              folderId: $folderId
-              locale: $locale
-              siteId: $siteId
-              files: $files
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          folderId: null, // TODO: Upload to page specific folder
-          siteId: siteStore.id,
-          locale: 'en', // TODO: use current locale
-          files: [item.file]
-        }
-      })
-      if (!resp?.data?.uploadAssets?.operation?.succeeded) {
-        throw new Error(resp?.data?.uploadAssets?.operation?.message || 'An unexpected error occured.')
+        headers: {
+          'content-type': item.file.type || 'application/octet-stream'
+        },
+        body: item.file
+      }).json()
+      if (resp?.ok === false) {
+        throw new Error(resp.message || 'An unexpected error occured.')
       }
-      pageStore.content = pageStore.content.replaceAll(item.blobUrl, `/${item.fileName}`)
+      // -> The stored name is not always the one asked for: a file already in the folder gets the
+      //    next free `name-1.ext`, and the content has to point at what was actually stored
+      const storedPath = resp?.asset?.folderPath
+        ? `${resp.asset.folderPath}/${resp.asset.fileName}`
+        : resp?.asset?.fileName
+      pageStore.content = pageStore.content.replaceAll(item.blobUrl, `/${storedPath}`)
       URL.revokeObjectURL(item.blobUrl)
     }
     editorStore.pendingAssets = []
     EVENT_BUS.emit('reloadEditorContent')
     onDialogOK()
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
     onDialogCancel()
   }

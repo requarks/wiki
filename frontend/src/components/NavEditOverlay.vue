@@ -384,10 +384,10 @@ q-layout(view='hHh lpR fFf', container)
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useQuasar } from 'quasar'
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { v4 as uuid } from 'uuid'
 
-import { cloneDeep, last, pick } from 'lodash-es'
+import { pick } from 'es-toolkit/object'
 
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
@@ -427,6 +427,15 @@ const state = reactive({
   groups: []
 })
 
+/**
+ * The icon a new link item starts with.
+ *
+ * An Iconify reference, so that the icon picker opens on its search tab with this one selected, and so
+ * that the sidebar draws it through `wiki-icon` like every other item. Kept to `mdi`, a set seeded on
+ * every instance.
+ */
+const DEFAULT_LINK_ICON = 'mdi:text-box-outline'
+
 const sortableOptions = {
   handle: '.handle',
   animation: 150
@@ -436,6 +445,17 @@ const visibilityOptions = [
   { value: false, label: t('navEdit.visibilityAll') },
   { value: true, label: t('navEdit.visibilityLimited') }
 ]
+
+// COMPUTED
+
+/**
+ * The menu being edited.
+ *
+ * The home page edits the site-wide menu — the one every other page inherits — which is why it goes
+ * through its resolved id rather than its own. Any other page owns a menu keyed by its own id, which
+ * the server creates on the first save.
+ */
+const navId = computed(() => (pageStore.isHome ? pageStore.navigationId : pageStore.id))
 
 const thumbStyle = {
   right: '2px',
@@ -471,7 +491,7 @@ function addItem (type) {
     }
     case 'link': {
       newItem.label = t('navEdit.link')
-      newItem.icon = 'mdi-text-box-outline'
+      newItem.icon = DEFAULT_LINK_ICON
       newItem.target = '/'
       newItem.openInNewWindow = false
       newItem.isNested = false
@@ -504,20 +524,28 @@ function close () {
   siteStore.$patch({ overlay: '' })
 }
 
+/**
+ * The message an API failure should be reported with — the server's own if it sent one, since ky
+ * throws before the caller ever sees the body.
+ */
+async function apiErrorMessage (err) {
+  const message = await err.response?.json().then(b => b?.message).catch(() => null)
+  return message || err.message || 'An unexpected error occured.'
+}
+
 async function loadGroups () {
   state.loading++
-  const resp = await APOLLO_CLIENT.query({
-    query: `
-      query getGroupsForEditNavMenu {
-        groups {
-          id
-          name
-        }
-      }
-    `,
-    fetchPolicy: 'network-only'
-  })
-  state.groups = cloneDeep(resp?.data?.groups ?? [])
+  try {
+    const groups = await API_CLIENT.get('groups').json()
+    state.groups = (groups ?? []).map(g => ({ id: g.id, name: g.name }))
+  } catch (err) {
+    // -> Without the list, per-group visibility cannot be set, but the rest of the editor still works
+    $q.notify({
+      type: 'warning',
+      message: t('navEdit.groupsFailed'),
+      caption: await apiErrorMessage(err)
+    })
+  }
   state.loading--
 }
 
@@ -525,39 +553,13 @@ async function loadMenuItems () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query getItemsForEditNavMenu (
-          $id: UUID!
-          ) {
-          navigationById (
-            id: $id
-            ) {
-              id
-              type
-              label
-              icon
-              target
-              openInNewWindow
-              visibilityGroups
-              children {
-                id
-                type
-                label
-                icon
-                target
-                openInNewWindow
-                visibilityGroups
-              }
-          }
-        }
-      `,
-      variables: {
-        id: pageStore.isHome ? pageStore.navigationId : pageStore.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    for (const item of cloneDeep(resp?.data?.navigationById ?? [])) {
+    // -> `full`, because the editor has to see items limited to groups the editor is not in: saving
+    //    without them would delete them
+    const items = await API_CLIENT.get(
+      `sites/${siteStore.id}/navigation/${navId.value}`,
+      { searchParams: { full: true } }
+    ).json()
+    for (const item of items ?? []) {
       state.items.push({
         ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow', 'visibilityGroups']),
         visibilityLimited: item.visibilityGroups?.length > 0
@@ -565,16 +567,15 @@ async function loadMenuItems () {
       for (const child of (item?.children ?? [])) {
         state.items.push({
           ...pick(child, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow', 'visibilityGroups']),
-          visibilityLimited: item.visibilityGroups?.length > 0,
+          visibilityLimited: child.visibilityGroups?.length > 0,
           isNested: true
         })
       }
     }
   } catch (err) {
-    console.error(err)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: await apiErrorMessage(err)
     })
     close()
   }
@@ -613,7 +614,7 @@ async function save () {
     const items = []
     for (const item of state.items) {
       if (item.isNested) {
-        if (items.length < 1 || last(items)?.type !== 'link') {
+        if (items.length < 1 || items.at(-1)?.type !== 'link') {
           throw new Error('One or more nested link items are not under a parent link!')
         }
         items[items.length - 1].children.push(cleanMenuItem(item, true))
@@ -622,48 +623,36 @@ async function save () {
       }
     }
 
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation updateMenuItems (
-          $pageId: UUID!
-          $mode: NavigationMode!
-          $items: [NavigationItemInput!]
-          ) {
-          updateNavigation (
-            pageId: $pageId
-            mode: $mode
-            items: $items
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
+    // -> The mode goes with the items: saving a menu for a page that only inherits would store items
+    //    nothing points at
+    const resp = await API_CLIENT.put(
+      `sites/${siteStore.id}/navigation/pages/${pageStore.id}`,
+      {
+        json: {
+          mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
+          items
         }
-      `,
-      variables: {
-        pageId: pageStore.id,
-        mode: siteStore.overlayOpts.mode,
-        items
       }
-    })
-    if (resp?.data?.updateNavigation?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('navEdit.saveSuccess')
-      })
-      siteStore.nav.items = items
-      // -> Clear GraphQL Cache
-      APOLLO_CLIENT.cache.evict('ROOT_QUERY')
-      APOLLO_CLIENT.cache.gc()
-      close()
-    } else {
-      throw new Error(resp?.data?.updateNavigation?.operation?.message || 'Unexpected error occured.')
+    ).json()
+    // -> The API client does not throw on 400, so a refusal comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('navEdit.saveSuccess')
+    })
+    pageStore.$patch({
+      navigationMode: resp.navigationMode,
+      navigationId: resp.navigationId ?? null
+    })
+    // -> Redraw the sidebar from what was just saved, rather than waiting for a navigation
+    await siteStore.fetchNavigation(resp.navigationId ?? navId.value)
+    close()
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: await apiErrorMessage(err)
     })
   }
   $q.loading.hide()

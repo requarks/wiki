@@ -19,6 +19,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
           )
           .q-px-sm
             tree(
+              ref='treeComp'
               :nodes='state.treeNodes'
               :roots='state.treeRoots'
               v-model:selected='state.currentFolderId'
@@ -49,21 +50,25 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         q-item-section
           q-input(
             v-model='state.title'
-            label='Page Title'
+            :label='t(`pageSaveDialog.pageTitle`)'
+            :aria-label='t(`pageSaveDialog.pageTitle`)'
             dense
             outlined
             autofocus
             @focus='state.currentFileId = null'
+            @keyup.enter='save'
           )
       q-item
         blueprint-icon(icon='file-submodule')
         q-item-section
           q-input(
             v-model='state.path'
-            label='Path Name'
+            :label='t(`pageSaveDialog.pathName`)'
+            :aria-label='t(`pageSaveDialog.pathName`)'
             dense
             outlined
             @focus='state.pathDirty = true; state.currentFileId = null'
+            @keyup.enter='save'
             )
             //- template(#append)
             //-   q-badge(outline, color='grey', label='valid')
@@ -116,15 +121,13 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         color='primary'
         padding='xs md'
         @click='save'
-        v-close-popup
       )
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { cloneDeep, find, initial, last } from 'lodash-es'
 
 import slugify from 'slugify'
 
@@ -133,9 +136,7 @@ import fileTypes from '../helpers/fileTypes'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import Tree from '@/components/TreeNav.vue'
 
-import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
-import { dropRight } from 'lodash'
 
 // PROPS
 
@@ -180,7 +181,6 @@ const $q = useQuasar()
 
 // STORES
 
-const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -191,8 +191,9 @@ const { t } = useI18n()
 
 const state = reactive({
   displayMode: 'title',
-  currentFolderId: '',
-  currentFileId: '',
+  currentFolderId: null,
+  currentFileId: null,
+  isFetching: false,
   treeNodes: {},
   treeRoots: [],
   fileList: [],
@@ -213,15 +214,18 @@ const barStyle = {
   width: '7px'
 }
 
+// REFS
+
+const treeComp = ref(null)
+
 // COMPUTED
 
 const currentFolderPath = computed(() => {
-  if (!state.currentFolderId) {
+  const folderNode = state.currentFolderId ? state.treeNodes[state.currentFolderId] : null
+  if (!folderNode?.fileName) {
     return '/'
-  } else {
-    const folderNode = state.treeNodes[state.currentFolderId] ?? {}
-    return folderNode.folderPath ? `/${folderNode.folderPath}/${folderNode.fileName}/` : `/${folderNode.fileName}/`
   }
+  return folderNode.folderPath ? `/${folderNode.folderPath}/${folderNode.fileName}/` : `/${folderNode.fileName}/`
 })
 
 const files = computed(() => {
@@ -242,6 +246,10 @@ const files = computed(() => {
 
 // WATCHERS
 
+watch(() => state.currentFolderId, async (newValue) => {
+  await loadTree({ parentId: newValue })
+})
+
 watch(() => state.title, (newValue) => {
   if (state.pathDirty && !state.path) {
     state.pathDirty = false
@@ -254,108 +262,123 @@ watch(() => state.title, (newValue) => {
 // METHODS
 
 async function save () {
+  if (!state.title?.trim()) {
+    $q.notify({
+      type: 'negative',
+      message: t('pageSaveDialog.titleMissing')
+    })
+    return
+  }
+  if (!/^[a-z0-9-]+$/.test(state.path)) {
+    $q.notify({
+      type: 'negative',
+      message: t('pageSaveDialog.pathInvalid')
+    })
+    return
+  }
   onDialogOK({
-    title: state.title,
+    title: state.title.trim(),
     path: currentFolderPath.value.length > 1 ? `${currentFolderPath.value.substring(1)}${state.path}` : state.path
   })
 }
 
-async function treeLazyLoad (nodeId, isCurrent, { done, fail }) {
-  await loadTree({
-    parentId: nodeId,
-    types: ['folder', 'page']
-  })
+/**
+ * The message an API failure should be reported with — the server's own if it sent one, since ky
+ * throws before the caller ever sees the body.
+ */
+async function apiErrorMessage (err, fallback) {
+  const message = await err.response?.json().then(b => b?.message).catch(() => null)
+  return message || err.message || fallback
+}
+
+async function treeLazyLoad (nodeId, isCurrent, { done }) {
+  await loadTree({ parentId: nodeId })
   done()
 }
 
-async function loadTree ({ parentId = null, parentPath = null, types, initLoad = false }) {
-  try {
+/**
+ * Loads one folder into the tree, and — when that folder is the selected one — into the file list.
+ *
+ * `initLoad` asks for the folders above the one being listed as well, so that opening the dialog on a
+ * page buried a few levels down draws its whole branch from a single request. Those extra entries come
+ * back flagged `isAncestor` and belong in the tree only, never in the file list.
+ */
+async function loadTree ({ parentId = null, parentPath = null, initLoad = false }) {
+  if (state.isFetching) { return }
+  state.isFetching = true
+  if (!parentId) {
+    parentId = null
+  }
+  const isCurrentFolder = parentId === state.currentFolderId
+  if (isCurrentFolder) {
+    state.currentFileId = null
     state.fileList = []
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query loadTree (
-          $siteId: UUID!
-          $parentId: UUID
-          $parentPath: String
-          $types: [TreeItemType]
-          $includeAncestors: Boolean
-          $includeRootFolders: Boolean
-        ) {
-          tree (
-            siteId: $siteId
-            parentId: $parentId
-            parentPath: $parentPath
-            types: $types
-            includeAncestors: $includeAncestors
-            includeRootFolders: $includeRootFolders
-          ) {
-            __typename
-            ... on TreeItemFolder {
-              id
-              folderPath
-              fileName
-              title
-              childrenCount
-            }
-            ... on TreeItemPage {
-              id
-              folderPath
-              fileName
-              title
-              createdAt
-              updatedAt
-              editor
-            }
-          }
-        }
-      `,
-      variables: {
-        siteId: siteStore.id,
-        parentId,
-        parentPath,
-        types,
+  }
+  try {
+    const items = await API_CLIENT.get(`sites/${siteStore.id}/tree`, {
+      searchParams: {
+        ...(parentId ? { parentId } : {}),
+        ...(parentPath ? { parentPath } : {}),
+        ...(state.typesToFetch?.length > 0 ? { types: state.typesToFetch.join(',') } : {}),
         includeAncestors: initLoad,
         includeRootFolders: initLoad
-      },
-      fetchPolicy: 'network-only'
-    })
-    const items = cloneDeep(resp?.data?.tree)
+      }
+    }).json()
     if (items?.length > 0) {
       const newTreeRoots = []
       for (const item of items) {
-        switch (item.__typename) {
-          case 'TreeItemFolder': {
+        switch (item.type) {
+          case 'folder': {
+            // -> Tree Nodes
             state.treeNodes[item.id] = {
               folderPath: item.folderPath,
               fileName: item.fileName,
               title: item.title,
-              children: []
+              children: state.treeNodes[item.id]?.children ?? []
             }
+
+            // -> Set Ancestors / Tree Roots
             if (item.folderPath) {
               let folderParentId = parentId
               if (!folderParentId) {
                 const parentFolderParts = item.folderPath.split('/')
-                const parentFolder = find(items, { folderPath: parentFolderParts.length > 1 ? initial(parentFolderParts).join('/') : '', fileName: last(parentFolderParts) })
-                folderParentId = parentFolder.id
+                const parentFolder = items.find(i =>
+                  i.folderPath === parentFolderParts.slice(0, -1).join('/') &&
+                  i.fileName === parentFolderParts.at(-1)
+                )
+                folderParentId = parentFolder?.id
               }
               if (item.id !== folderParentId && !state.treeNodes[folderParentId]?.children?.includes(item.id)) {
-                state.treeNodes[folderParentId].children.push(item.id)
+                state.treeNodes[folderParentId]?.children?.push(item.id)
               }
             } else {
               newTreeRoots.push(item.id)
             }
+
+            // -> File List
+            if (isCurrentFolder && !item.isAncestor) {
+              state.fileList.push({
+                id: item.id,
+                type: 'folder',
+                title: item.title,
+                fileName: item.fileName
+              })
+            }
             break
           }
-          case 'TreeItemPage': {
-            state.fileList.push({
-              id: item.id,
-              type: 'page',
-              title: item.title,
-              pageType: 'markdown',
-              updatedAt: '2022-11-24T18:27:00Z',
-              folderPath: item.folderPath,
-              fileName: item.fileName
-            })
+          case 'page': {
+            if (isCurrentFolder) {
+              state.fileList.push({
+                id: item.id,
+                type: 'page',
+                title: item.title,
+                pageType: item.editor || 'markdown',
+                folderPath: item.folderPath,
+                fileName: item.fileName,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
+              })
+            }
             break
           }
         }
@@ -367,10 +390,14 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
   } catch (err) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to load folder tree.',
-      caption: err.message
+      message: t('pageSaveDialog.loadFailed'),
+      caption: await apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
+  if (parentId) {
+    treeComp.value?.setLoaded(parentId)
+  }
+  state.isFetching = false
 }
 
 function treeContextAction (nodeId, action) {
@@ -383,7 +410,14 @@ function treeContextAction (nodeId, action) {
 }
 
 function selectItem (item) {
+  // -> A folder is somewhere to save into, not something to overwrite
+  if (item.type === 'folder') {
+    state.currentFolderId = item.id
+    treeComp.value?.setOpened(item.id)
+    return
+  }
   state.currentFileId = item.id
+  state.pathDirty = true
   state.title = item.title
   state.path = item.fileName
 }
@@ -399,21 +433,27 @@ function newFolder (parentId) {
   })
 }
 
+/** The id of an already-loaded folder, addressed the way a path addresses it. */
+function findFolderIdByPath (path) {
+  if (!path) { return null }
+  const entry = Object.entries(state.treeNodes).find(([, node]) =>
+    (node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName) === path
+  )
+  return entry?.[0] ?? null
+}
+
 // MOUNTED
 
-onMounted(() => {
+onMounted(async () => {
   let fPath = props.folderPath
   let fName = props.itemFileName
-  if (props.itemFileName?.indexOf('/') >= 0) {
+  if (props.itemFileName?.includes('/')) {
     const fParts = props.itemFileName.split('/')
-    fPath = dropRight(fParts, 1).join('/')
-    fName = last(fParts)
+    fPath = fParts.slice(0, -1).join('/')
+    fName = fParts.at(-1)
   }
   switch (props.mode) {
-    case 'savePage': {
-      state.typesToFetch = ['folder', 'page']
-      break
-    }
+    case 'savePage':
     case 'duplicatePage': {
       state.typesToFetch = ['folder', 'page']
       break
@@ -424,13 +464,25 @@ onMounted(() => {
       break
     }
   }
-  loadTree({
-    parentPath: fPath,
-    types: state.typesToFetch,
-    initLoad: true
-  })
   state.title = props.itemTitle || ''
   state.path = fName || ''
+  await loadTree({
+    parentPath: fPath,
+    initLoad: true
+  })
+  // -> A page that lives in a subfolder opens the browser on that subfolder rather than on the root.
+  //    The initial request asked for the ancestors too, so the whole branch is already here.
+  const startFolderId = findFolderIdByPath(fPath)
+  if (startFolderId) {
+    const parts = fPath.split('/')
+    for (let i = 1; i <= parts.length; i++) {
+      const ancestorId = findFolderIdByPath(parts.slice(0, i).join('/'))
+      if (ancestorId) {
+        treeComp.value?.setOpened(ancestorId)
+      }
+    }
+    state.currentFolderId = startFolderId
+  }
 })
 
 </script>

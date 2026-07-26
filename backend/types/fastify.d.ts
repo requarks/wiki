@@ -34,6 +34,8 @@ declare module 'fastify' {
     }
     /** Flattened, de-duplicated permissions of every group the user belongs to. */
     permissions?: string[]
+    /** Ids of the groups the user belongs to, which is what per-group visibility is checked against. */
+    groups?: string[]
   }
 
   interface FastifyContextConfig {

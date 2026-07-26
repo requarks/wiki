@@ -1,185 +1,18 @@
 import { defineStore } from 'pinia'
 
-import { cloneDeep, dropRight, initial, last, pick, transform } from 'lodash-es'
-import { DateTime } from 'luxon'
+import { pick } from 'es-toolkit/object'
 
 import { useSiteStore } from './site'
 import { useEditorStore } from './editor'
 
-const pagePropsFragment = `
-  fragment PageRead on Page {
-    alias
-    allowComments
-    allowContributions
-    allowRatings
-    contentType
-    createdAt
-    description
-    editor
-    icon
-    id
-    isBrowsable
-    isSearchable
-    locale
-    navigationId
-    navigationMode
-    password
-    path
-    publishEndDate
-    publishStartDate
-    publishState
-    relations {
-      id
-      position
-      label
-      caption
-      icon
-      target
-    }
-    render
-    scriptJsLoad
-    scriptJsUnload
-    scriptCss
-    showSidebar
-    showTags
-    showToc
-    tags
-    title
-    toc
-    tocDepth {
-      min
-      max
-    }
-    updatedAt
-  }
-`
-const gqlQueries = {
-  pageById: `
-    query loadPage (
-      $id: UUID!
-    ) {
-      pageById(
-        id: $id
-      ) {
-        ...PageRead
-      }
-    }
-    ${pagePropsFragment}
-  `,
-  pageByPath: `
-    query loadPage (
-      $siteId: UUID!
-      $path: String!
-    ) {
-      pageByPath(
-        siteId: $siteId
-        path: $path
-      ) {
-        ...PageRead
-      }
-    }
-    ${pagePropsFragment}
-  `,
-  pageByIdWithContent: `
-    query loadPageWithContent (
-      $id: UUID!
-    ) {
-      pageById(
-        id: $id
-      ) {
-        ...PageRead,
-        content
-      }
-    }
-    ${pagePropsFragment}
-  `,
-  pageByPathWithContent: `
-    query loadPageWithContent (
-      $siteId: UUID!
-      $path: String!
-    ) {
-      pageByPath(
-        siteId: $siteId
-        path: $path
-      ) {
-        ...PageRead,
-        content
-      }
-    }
-    ${pagePropsFragment}
-  `
-}
-
-const gqlMutations = {
-  createPage: `
-    mutation createPage (
-      $alias: String
-      $allowComments: Boolean
-      $allowContributions: Boolean
-      $allowRatings: Boolean
-      $content: String!
-      $description: String!
-      $editor: String!
-      $icon: String
-      $isBrowsable: Boolean
-      $isSearchable: Boolean
-      $locale: String!
-      $path: String!
-      $publishState: PagePublishState!
-      $publishEndDate: Date
-      $publishStartDate: Date
-      $relations: [PageRelationInput!]
-      $scriptCss: String
-      $scriptJsLoad: String
-      $scriptJsUnload: String
-      $showSidebar: Boolean
-      $showTags: Boolean
-      $showToc: Boolean
-      $siteId: UUID!
-      $tags: [String!]
-      $title: String!
-      $tocDepth: PageTocDepthInput
-    ) {
-      createPage (
-        alias: $alias
-        allowComments: $allowComments
-        allowContributions: $allowContributions
-        allowRatings: $allowRatings
-        content: $content
-        description: $description
-        editor: $editor
-        icon: $icon
-        isBrowsable: $isBrowsable
-        isSearchable: $isSearchable
-        locale: $locale
-        path: $path
-        publishState: $publishState
-        publishEndDate: $publishEndDate
-        publishStartDate: $publishStartDate
-        relations: $relations
-        scriptCss: $scriptCss
-        scriptJsLoad: $scriptJsLoad
-        scriptJsUnload: $scriptJsUnload
-        showSidebar: $showSidebar
-        showTags: $showTags
-        showToc: $showToc
-        siteId: $siteId
-        tags: $tags
-        title: $title
-        tocDepth: $tocDepth
-      ) {
-        operation {
-          succeeded
-          message
-        }
-        page {
-          ...PageRead
-        }
-      }
-    }
-    ${pagePropsFragment}
-  `
-}
+/**
+ * The icon a page starts with.
+ *
+ * An Iconify reference, so that the icon picker opens on its search tab with this one selected rather
+ * than on the custom tab. Kept to a set seeded on every instance (`mdi`), so that it resolves without
+ * an administrator having added anything.
+ */
+export const DEFAULT_PAGE_ICON = 'mdi:file-document-outline'
 
 export const usePageStore = defineStore('page', {
   state: () => ({
@@ -194,7 +27,7 @@ export const usePageStore = defineStore('page', {
     createdAt: '',
     description: '',
     editor: '',
-    icon: 'las la-file-alt',
+    icon: DEFAULT_PAGE_ICON,
     id: '',
     isBrowsable: true,
     isSearchable: true,
@@ -227,18 +60,19 @@ export const usePageStore = defineStore('page', {
     breadcrumbs: (state) => {
       const siteStore = useSiteStore()
       const pathPrefix = siteStore.useLocales ? `/${state.locale}` : ''
-      return transform(state.path.split('/'), (result, value, key) => {
+      return state.path.split('/').reduce((result, value, key) => {
         result.push({
           id: key,
           title: value,
           icon: 'las la-file-alt',
           locale: 'en',
-          path: (last(result)?.path || pathPrefix) + `/${value}`
+          path: (result.at(-1)?.path || pathPrefix) + `/${value}`
         })
+        return result
       }, [])
     },
     folderPath: (state) => {
-      return initial(state.path.split('/')).join('/')
+      return state.path.split('/').slice(0, -1).join('/')
     },
     isHome: (state) => {
       return ['', 'home'].includes(state.path)
@@ -252,7 +86,7 @@ export const usePageStore = defineStore('page', {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       try {
-        const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${id ?? fastHash(path)}`, {
+        const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`, {
           searchParams: {
             withContent
           }
@@ -267,12 +101,17 @@ export const usePageStore = defineStore('page', {
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         })
         // Update editor state timestamps
-        const curDate = DateTime.utc()
+        const curDate = Temporal.Now.instant()
         editorStore.$patch({
           lastChangeTimestamp: curDate,
           lastSaveTimestamp: curDate
         })
       } catch (err) {
+        // -> A missing page is an ordinary outcome, not a failure: it is what puts a new instance in
+        //    front of the welcome screen, and what offers to create the page anywhere else
+        if (err.response?.status === 404) {
+          throw new Error('ERR_PAGE_NOT_FOUND')
+        }
         console.warn(err)
         throw err
       }
@@ -283,30 +122,15 @@ export const usePageStore = defineStore('page', {
     async pageAlias (alias) {
       const siteStore = useSiteStore()
       try {
-        const resp = await APOLLO_CLIENT.query({
-          query: `
-            query fetchPathFromAlias (
-              $siteId: UUID!
-              $alias: String!
-            ) {
-              pathFromAlias (
-                siteId: $siteId
-                alias: $alias
-              ) {
-                id
-                path
-              }
-            }
-          `,
-          variables: { siteId: siteStore.id, alias },
-          fetchPolicy: 'cache-first'
-        })
-        const pagePath = cloneDeep(resp?.data?.pathFromAlias)
+        const pagePath = await API_CLIENT.get(`sites/${siteStore.id}/pages/alias/${alias}`).json()
         if (!pagePath?.id) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
         return pagePath.path
       } catch (err) {
+        if (err.response?.status === 404) {
+          throw new Error('ERR_PAGE_NOT_FOUND')
+        }
         console.warn(err)
         throw err
       }
@@ -350,7 +174,7 @@ export const usePageStore = defineStore('page', {
       // -> Default Page Path
       let newPath = path
       if (!path && path !== '') {
-        const parentPath = basePath || basePath === '' ? basePath : dropRight(this.path.split('/'), 1).join('/')
+        const parentPath = basePath || basePath === '' ? basePath : this.path.split('/').slice(0, -1).join('/')
         newPath = parentPath ? `${parentPath}/new-page` : 'new-page'
       }
 
@@ -361,7 +185,7 @@ export const usePageStore = defineStore('page', {
         path: newPath,
         title: title ?? '',
         description: description ?? '',
-        icon: 'las la-file-alt',
+        icon: DEFAULT_PAGE_ICON,
         alias: '',
         publishState: 'published',
         relations: [],
@@ -377,29 +201,12 @@ export const usePageStore = defineStore('page', {
      * PAGE - DUPLICATE
      */
     async pageDuplicate ({ sourecePageId, title, path }) {
+      const siteStore = useSiteStore()
       try {
-        const resp = await APOLLO_CLIENT.query({
-          query: `
-            query loadPageSource (
-              $id: UUID!
-              ) {
-              pageById(
-                id: $id
-              ) {
-                id
-                content
-                contentType
-                description
-                editor
-              }
-            }
-          `,
-          variables: {
-            id: sourecePageId ?? pageStore.id
-          },
-          fetchPolicy: 'network-only'
-        })
-        const pageData = cloneDeep(resp?.data?.pageById ?? {})
+        const pageData = await API_CLIENT.get(
+          `sites/${siteStore.id}/pages/${sourecePageId ?? this.id}`,
+          { searchParams: { withContent: true } }
+        ).json()
         if (!pageData?.id) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
@@ -449,73 +256,23 @@ export const usePageStore = defineStore('page', {
      * PAGE - MOVE
      */
     async pageMove ({ id, title, path } = {}) {
-      const resp = await APOLLO_CLIENT.mutate({
-        mutation: `
-          mutation movePage (
-            $id: UUID!
-            $destinationLocale: String!
-            $destinationPath: String!
-            $title: String
-          ) {
-            movePage (
-              id: $id
-              destinationLocale: $destinationLocale
-              destinationPath: $destinationPath
-              title: $title
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-          `,
-        variables: {
-          id,
-          destinationLocale: this.locale,
-          destinationPath: path,
-          title
+      const siteStore = useSiteStore()
+      unwrap(await API_CLIENT.put(`sites/${siteStore.id}/pages/${id}/path`, {
+        json: {
+          path,
+          ...(title ? { title } : {})
         }
-      })
-      const result = resp?.data?.movePage?.operation ?? {}
-      if (!result.succeeded) {
-        throw new Error(result.message)
-      } else {
-        this.router.replace(`/${path}`)
-      }
+      }).json())
+      this.router.replace(`/${path}`)
     },
     /**
      * PAGE - Rename
      */
     async pageRename ({ id, title } = {}) {
-      const resp = await APOLLO_CLIENT.mutate({
-        mutation: `
-          mutation renamePage (
-            $id: UUID!
-            $patch: PageUpdateInput!
-          ) {
-            updatePage (
-              id: $id
-              patch: $patch
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-          `,
-        variables: {
-          id: id,
-          patch: {
-            title
-          }
-        }
-      })
-      const result = resp?.data?.updatePage?.operation ?? {}
-      if (!result.succeeded) {
-        throw new Error(result.message)
-      }
+      const siteStore = useSiteStore()
+      unwrap(await API_CLIENT.patch(`sites/${siteStore.id}/pages/${id}`, {
+        json: { title }
+      }).json())
 
       // Update page store
       if (id === this.id) {
@@ -529,118 +286,77 @@ export const usePageStore = defineStore('page', {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       try {
+        // -> The render goes up with the content: the markdown pipeline runs here, in the editor, and
+        //    what the preview shows is what gets stored. The server post-processes it — sanitizing it
+        //    against what this author may embed, and deriving the table of contents — so the page it
+        //    returns is the authority on what was actually saved.
+        const body = {
+          ...pick(this, [
+            'alias',
+            'allowComments',
+            'allowContributions',
+            'allowRatings',
+            'content',
+            'description',
+            'icon',
+            'isBrowsable',
+            'isSearchable',
+            'password',
+            'publishEndDate',
+            'publishStartDate',
+            'publishState',
+            'relations',
+            'render',
+            'scriptJsLoad',
+            'scriptJsUnload',
+            'scriptCss',
+            'showSidebar',
+            'showTags',
+            'showToc',
+            'tags',
+            'title',
+            'tocDepth'
+          ])
+        }
+
+        let pageData
         if (editorStore.mode === 'create') {
-          const resp = await APOLLO_CLIENT.mutate({
-            mutation: gqlMutations.createPage,
-            variables: {
-              ...pick(this, [
-                'alias',
-                'allowComments',
-                'allowContributions',
-                'allowRatings',
-                'content',
-                'description',
-                'icon',
-                'isBrowsable',
-                'isSearchable',
-                'locale',
-                'password',
-                'path',
-                'publishEndDate',
-                'publishStartDate',
-                'publishState',
-                'relations',
-                'scriptJsLoad',
-                'scriptJsUnload',
-                'scriptCss',
-                'showSidebar',
-                'showTags',
-                'showToc',
-                'tags',
-                'title',
-                'tocDepth'
-              ]),
-              editor: editorStore.editor,
-              siteId: siteStore.id
+          const resp = unwrap(await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
+            json: {
+              ...body,
+              locale: this.locale,
+              path: this.path,
+              editor: editorStore.editor
             }
-          })
-          const result = resp?.data?.createPage?.operation ?? {}
-          if (!result.succeeded) {
-            throw new Error(result.message)
-          }
-          const pageData = cloneDeep(resp.data.createPage.page ?? {})
+          }).json())
+          pageData = resp?.page
           if (!pageData?.id) {
             throw new Error('ERR_CREATED_PAGE_NOT_FOUND')
           }
-          // Update page store
-          this.$patch({
-            ...pageData,
-            relations: pageData.relations.map(r => pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])),
-            tocDepth: pick(pageData.tocDepth, ['min', 'max'])
-          })
-
-          editorStore.$patch({
-            mode: 'edit'
-          })
-
-          this.router.replace(`/${this.path}`)
         } else {
-          const resp = await APOLLO_CLIENT.mutate({
-            mutation: `
-              mutation savePage (
-                $id: UUID!
-                $patch: PageUpdateInput!
-              ) {
-                updatePage (
-                  id: $id
-                  patch: $patch
-                ) {
-                  operation {
-                    succeeded
-                    message
-                  }
-                }
-              }
-              `,
-            variables: {
-              id: this.id,
-              patch: {
-                ...pick(this, [
-                  'alias',
-                  'allowComments',
-                  'allowContributions',
-                  'allowRatings',
-                  'content',
-                  'description',
-                  'icon',
-                  'isBrowsable',
-                  'isSearchable',
-                  'password',
-                  'publishEndDate',
-                  'publishStartDate',
-                  'publishState',
-                  'relations',
-                  'scriptJsLoad',
-                  'scriptJsUnload',
-                  'scriptCss',
-                  'showSidebar',
-                  'showTags',
-                  'showToc',
-                  'tags',
-                  'title',
-                  'tocDepth'
-                ]),
-                reasonForChange: editorStore.reasonForChange
-              }
-            }
-          })
-          const result = resp?.data?.updatePage?.operation ?? {}
-          if (!result.succeeded) {
-            throw new Error(result.message)
+          const resp = unwrap(await API_CLIENT.patch(`sites/${siteStore.id}/pages/${this.id}`, {
+            json: body
+          }).json())
+          pageData = resp?.page
+          if (!pageData?.id) {
+            throw new Error('ERR_PAGE_NOT_FOUND')
           }
         }
+
+        // Update page store
+        this.$patch({
+          ...pageData,
+          relations: (pageData.relations ?? []).map(r => pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])),
+          tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+        })
+
+        if (editorStore.mode === 'create') {
+          editorStore.$patch({ mode: 'edit' })
+          this.router.replace(`/${this.path}`)
+        }
+
         // Update editor state timestamps
-        const curDate = DateTime.utc()
+        const curDate = Temporal.Now.instant()
         editorStore.$patch({
           lastChangeTimestamp: curDate,
           lastSaveTimestamp: curDate,
@@ -663,8 +379,37 @@ export const usePageStore = defineStore('page', {
 })
 
 /**
+ * Turn a refused request back into an error.
+ *
+ * The API client is set up not to throw on 400 (see `boot/api.js`), so a rejected save arrives as a
+ * parsed error envelope rather than an exception — and reading it as a success is how a validation
+ * failure ends up reported as something unrelated.
+ */
+function unwrap (resp) {
+  if (resp?.ok === false) {
+    throw new Error(resp.message || 'An unexpected error occured.')
+  }
+  return resp
+}
+
+/**
+ * Reduce a route path to the form the server stores a page under.
+ *
+ * A page is looked up by the hash of its path, so the two sides have to agree on what the path *is*
+ * before hashing it: the router hands over `/docs/intro`, the server holds `docs/intro`, and the site
+ * root is the `home` page rather than an empty path.
+ */
+function normalizePath (path) {
+  const clean = (path ?? '').replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase()
+  return clean || 'home'
+}
+
+/**
  * Fast, non-cryptographic 53-bit hash to encode page paths.
  * Returns a URL-safe hex string.
+ *
+ * Mirrored on the server as `generatePathHash` in `backend/helpers/common.ts` — the two have to stay
+ * identical, since this is what a page is addressed by.
  */
 function fastHash (str, seed = 0) {
     let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed

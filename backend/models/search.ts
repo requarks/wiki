@@ -53,6 +53,68 @@ export interface RebuildResult {
   locales: { locale: string; dictionary: string; pages: number }[]
 }
 
+export const SEARCH_ORDER_BY = ['relevancy', 'title', 'updatedAt'] as const
+export type SearchOrderBy = (typeof SEARCH_ORDER_BY)[number]
+
+export interface SearchResult {
+  id: string
+  path: string
+  locale: string
+  title: string
+  description: string | null
+  icon: string | null
+  tags: string[]
+  updatedAt: string
+  relevancy: number
+  highlight: string | null
+}
+
+export interface SearchPagesResult {
+  results: SearchResult[]
+  totalHits: number
+}
+
+export interface SearchPagesParams {
+  siteId: string
+  query?: string
+  path?: string
+  locales?: string[]
+  tags?: string[]
+  editor?: string
+  publishState?: string
+  orderBy?: SearchOrderBy
+  orderByDirection?: 'asc' | 'desc'
+  offset?: number
+  limit?: number
+  /** Restrict to what a reader with no session may see: published, and not password protected. */
+  publicOnly?: boolean
+  /** Whether unpublished pages belong in the results, which is an editor's view of the wiki. */
+  includeDrafts?: boolean
+}
+
+/**
+ * Markers `ts_headline` wraps a matched term in.
+ *
+ * Control characters, because the excerpt is page text that may itself contain anything: it is HTML
+ * escaped before these are turned into tags, so a page whose text reads `<script>` cannot come back as
+ * markup. Anything that could occur in real text would defeat that.
+ */
+const HL_START = '\u0002'
+const HL_STOP = '\u0003'
+
+/** Escape the LIKE wildcards, so that a path filter is a prefix rather than a pattern. */
+function escapeLikePrefix(value: string): string {
+  return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+}
+
 /**
  * Search model
  *
@@ -106,6 +168,154 @@ class Search {
   }
 
   /**
+   * A SQL expression giving the text search dictionary to use for each row.
+   *
+   * The vector on a page was built with its own locale's dictionary, so the query has to be parsed
+   * with the same one — an English query stemmed as French matches nothing. Postgres accepts a
+   * `regconfig` expression, so the mapping travels with the row rather than being fixed per query.
+   *
+   * @param locales Locales the search covers, which is what the CASE needs arms for
+   * @param available Dictionary names postgres knows
+   */
+  private dictionaryExpression(locales: string[], available: string[]) {
+    const arms = locales.map((locale) => {
+      const dictionary = this.dictionaryForLocale(locale, available)
+      // -> Both sides are checked values: the locale is compared as a parameter, and the dictionary
+      //    name is one postgres itself reported
+      return sql`WHEN ${locale} THEN ${sql.raw(`'${dictionary}'`)}`
+    })
+    if (arms.length < 1) {
+      return sql`${sql.raw(`'${FALLBACK_DICTIONARY}'`)}::regconfig`
+    }
+    return sql`(CASE p.locale::text ${sql.join(arms, sql` `)} ELSE ${sql.raw(`'${FALLBACK_DICTIONARY}'`)} END)::regconfig`
+  }
+
+  /**
+   * Full-text search over the pages of a site.
+   *
+   * The text query is optional: with only tags or filters this is a browse rather than a search, which
+   * is what a query of nothing but `#tags` amounts to. Ranking needs matched terms, so ordering by
+   * relevancy without a query falls back to the most recently updated.
+   *
+   * `isSearchable` is honoured for everyone — a page excluded from search was excluded on purpose.
+   */
+  async searchPages({
+    siteId,
+    query = '',
+    path = '',
+    locales = [],
+    tags = [],
+    editor = '',
+    publishState = '',
+    orderBy = 'relevancy',
+    orderByDirection = 'desc',
+    offset = 0,
+    limit = 25,
+    publicOnly = false,
+    includeDrafts = false
+  }: SearchPagesParams): Promise<SearchPagesResult> {
+    const terms = query.trim()
+    const hasQuery = terms.length > 0
+
+    // -> Only the locales in play need an arm in the dictionary CASE
+    const siteLocales: string[] = WIKI.sites[siteId]?.config?.locales?.active ?? ['en']
+    const searchedLocales = locales.length > 0 ? locales : siteLocales
+    const dict = this.dictionaryExpression(
+      searchedLocales,
+      hasQuery ? await this.getAvailableDictionaries() : []
+    )
+    const tsQuery = sql`websearch_to_tsquery(${dict}, ${terms})`
+
+    const conditions = [sql`p."siteId" = ${siteId}`, sql`p."isSearchable" = true`]
+    if (hasQuery) {
+      conditions.push(sql`p.ts @@ ${tsQuery}`)
+    }
+    if (publicOnly) {
+      // -> Matches what a page view shows an anonymous reader, so that search cannot surface a page
+      //    that could not then be opened
+      conditions.push(sql`p."publishState" = 'published'`)
+      conditions.push(sql`p.password IS NULL`)
+    } else if (!includeDrafts) {
+      conditions.push(sql`p."publishState" <> 'draft'`)
+    }
+    if (publishState) {
+      conditions.push(sql`p."publishState" = ${publishState}`)
+    }
+    if (path) {
+      conditions.push(sql`p.path LIKE ${`${escapeLikePrefix(path)}%`}`)
+    }
+    if (locales.length > 0) {
+      // -> `sql.param`, because a bare array is expanded into a list of placeholders rather than
+      //    bound as one array value
+      conditions.push(sql`p.locale::text = ANY(${sql.param(locales)}::text[])`)
+    }
+    if (tags.length > 0) {
+      conditions.push(sql`p.tags @> ${sql.param(tags)}::text[]`)
+    }
+    if (editor) {
+      conditions.push(sql`p.editor = ${editor}`)
+    }
+
+    const direction = orderByDirection === 'asc' ? sql`ASC` : sql`DESC`
+    // -> Every page ranks 0 without a query, which would leave the order down to the planner
+    const effectiveOrderBy = orderBy === 'relevancy' && !hasQuery ? 'updatedAt' : orderBy
+    const ordering = {
+      relevancy: sql`relevancy ${direction}, p."updatedAt" DESC`,
+      title: sql`p.title ${direction}`,
+      updatedAt: sql`p."updatedAt" ${direction}`
+    }[effectiveOrderBy]
+
+    const { termHighlighting } = this.getConfig()
+    const highlight =
+      hasQuery && termHighlighting
+        ? sql`ts_headline(${dict}, coalesce(p."searchContent", ''), ${tsQuery},
+            ${`StartSel=${HL_START},StopSel=${HL_STOP},MaxWords=25,MinWords=10,MaxFragments=1`})`
+        : sql`NULL`
+
+    const rows = await WIKI.db.execute(sql`
+      SELECT
+        p.id,
+        p.path,
+        p.locale::text AS locale,
+        p.title,
+        p.description,
+        p.icon,
+        p.tags,
+        to_char(p."updatedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt",
+        ${hasQuery ? sql`ts_rank(p.ts, ${tsQuery})` : sql`0`} AS relevancy,
+        ${highlight} AS highlight,
+        COUNT(*) OVER() AS "totalHits"
+      FROM pages p
+      WHERE ${sql.join(conditions, sql` AND `)}
+      ORDER BY ${ordering}
+      LIMIT ${limit} OFFSET ${offset}
+    `)
+
+    const result = ((rows.rows ?? rows) as any[]).map((row) => ({
+      id: row.id as string,
+      path: row.path as string,
+      locale: row.locale as string,
+      title: row.title as string,
+      description: row.description ?? null,
+      icon: row.icon ?? null,
+      tags: (row.tags ?? []) as string[],
+      updatedAt: row.updatedAt as string,
+      relevancy: Number(row.relevancy ?? 0),
+      // -> Escaped first, so the only markup that survives is the emphasis postgres marked
+      highlight: row.highlight
+        ? escapeHtml(row.highlight as string)
+            .replaceAll(HL_START, '<b>')
+            .replaceAll(HL_STOP, '</b>')
+        : null
+    }))
+
+    return {
+      results: result,
+      totalHits: Number((rows.rows ?? rows)[0]?.totalHits ?? 0)
+    }
+  }
+
+  /**
    * Recompute the search vector of every page.
    *
    * Grouped by locale, since the dictionary is chosen per locale. Title and description are weighted
@@ -146,6 +356,33 @@ class Search {
 
     WIKI.logger.info(`Search index rebuild completed: ${result.pages} page(s) [ OK ]`)
     return result
+  }
+
+  /**
+   * Recompute one page's search vector, after it was created or edited.
+   *
+   * Same weighting as a full rebuild — title above description above body — so that a page saved
+   * today ranks against pages last indexed by a rebuild rather than alongside them.
+   *
+   * Never throws: a page that saved correctly must not report failure because its index entry could
+   * not be written, and the next rebuild puts it right.
+   */
+  async indexPage(id: string, locale: string): Promise<void> {
+    try {
+      const dictionary = this.dictionaryForLocale(locale, await this.getAvailableDictionaries())
+      // -> The dictionary name is an identifier in `to_tsvector`, and it is only ever one of the
+      //    names postgres itself reported, so it cannot carry anything unexpected
+      const dict = sql.raw(`'${dictionary}'`)
+      await WIKI.db.execute(sql`
+        UPDATE pages SET ts =
+          setweight(to_tsvector(${dict}, coalesce(title, '')), 'A') ||
+          setweight(to_tsvector(${dict}, coalesce(description, '')), 'B') ||
+          setweight(to_tsvector(${dict}, coalesce("searchContent", '')), 'C')
+        WHERE id = ${id}
+      `)
+    } catch (err: any) {
+      WIKI.logger.warn(`Failed to update the search index for page ${id}: ${err.message}`)
+    }
   }
 }
 

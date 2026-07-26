@@ -45,7 +45,9 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
 import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive } from 'vue'
+
+import { useSiteStore } from '@/stores/site'
 
 // PROPS
 
@@ -67,6 +69,10 @@ defineEmits([
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const $q = useQuasar()
 
+// STORES
+
+const siteStore = useSiteStore()
+
 // I18N
 
 const { t } = useI18n()
@@ -86,41 +92,26 @@ async function rename () {
     if (state.path?.length < 2 || !state.path?.includes('.')) {
       throw new Error(t('fileman.renameAssetInvalid'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation renameAsset (
-          $id: UUID!
-          $fileName: String!
-          ) {
-          renameAsset (
-            id: $id
-            fileName: $fileName
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.assetId,
+    const resp = await API_CLIENT.patch(`sites/${siteStore.id}/assets/${props.assetId}`, {
+      json: {
         fileName: state.path
       }
-    })
-    if (resp?.data?.renameAsset?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('fileman.renameAssetSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.renameAsset?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('fileman.renameAssetSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    // -> ky throws above 400 — a name already taken in this folder answers 409
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.loading--
@@ -131,32 +122,16 @@ async function rename () {
 onMounted(async () => {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query fetchAssetForRename (
-          $id: UUID!
-          ) {
-          assetById (
-            id: $id
-            ) {
-            id
-            fileName
-          }
-        }
-      `,
-      fetchPolicy: 'network-only',
-      variables: {
-        id: props.assetId
-      }
-    })
-    if (resp?.data?.assetById?.id !== props.assetId) {
+    const asset = await API_CLIENT.get(`sites/${siteStore.id}/assets/${props.assetId}`).json()
+    if (asset?.id !== props.assetId) {
       throw new Error('Failed to fetch asset data.')
     }
-    state.path = resp.data.assetById.fileName
+    state.path = asset.fileName
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
     onDialogCancel()
   }

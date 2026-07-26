@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-import { clone, sortBy } from 'lodash-es'
+import { sortBy } from 'es-toolkit/array'
 
 import { useUserStore } from './user'
 
@@ -114,106 +114,80 @@ export const useSiteStore = defineStore('site', {
         const siteInfo = await API_CLIENT.get(`sites/${hostname}`).json()
         if (siteInfo) {
           this.$patch({
-            id: clone(siteInfo.id),
-            hostname: clone(siteInfo.hostname),
-            title: clone(siteInfo.title),
-            description: clone(siteInfo.description),
-            logoText: clone(siteInfo.logoText),
-            company: clone(siteInfo.company),
-            contentLicense: clone(siteInfo.contentLicense),
-            footerExtra: clone(siteInfo.footerExtra),
+            id: siteInfo.id,
+            hostname: siteInfo.hostname,
+            title: siteInfo.title,
+            description: siteInfo.description,
+            logoText: siteInfo.logoText,
+            company: siteInfo.company,
+            contentLicense: siteInfo.contentLicense,
+            footerExtra: siteInfo.footerExtra,
             features: {
               ...this.features,
-              ...clone(siteInfo.features)
+              ...siteInfo.features
             },
             editors: {
-              asciidoc: clone(siteInfo.editors.asciidoc.isActive),
-              markdown: clone(siteInfo.editors.markdown.isActive),
-              wysiwyg: clone(siteInfo.editors.wysiwyg.isActive)
+              asciidoc: siteInfo.editors.asciidoc.isActive,
+              markdown: siteInfo.editors.markdown.isActive,
+              wysiwyg: siteInfo.editors.wysiwyg.isActive
             },
             locales: {
-              primary: clone(siteInfo.locales.primary),
-              active: sortBy(clone(siteInfo.locales.active), ['nativeName', 'name'])
+              primary: siteInfo.locales.primary,
+              active: sortBy(siteInfo.locales.active, ['nativeName', 'name'])
             },
             tags: [],
             tagsLoaded: false,
             theme: {
               ...this.theme,
-              ...clone(siteInfo.theme)
+              ...siteInfo.theme
             }
           })
         } else {
           throw new Error('Invalid Site')
         }
       } catch (err) {
-        console.warn(err)
-        console.warn(err.networkError?.result ?? err.message)
+        console.warn(err.message)
         throw err
       }
     },
     async fetchTags (forceRefresh = false) {
       if (this.tagsLoaded && !forceRefresh) { return }
       try {
-        const resp = await APOLLO_CLIENT.query({
-          query: `
-            query getSiteTags ($siteId: UUID!) {
-              tags (
-                siteId: $siteId
-                ) {
-                tag
-                usageCount
-              }
-            }
-          `,
-          variables: {
-            siteId: this.id
-          }
-        })
+        const tags = await API_CLIENT.get(`sites/${this.id}/tags`).json()
         this.$patch({
-          tags: resp.data.tags ?? [],
+          tags: tags ?? [],
           tagsLoaded: true
         })
       } catch (err) {
-        console.warn(err.networkError?.result ?? err.message)
+        console.warn(err.message)
         throw err
       }
     },
+    /**
+     * Load the sidebar menu a page resolves to.
+     *
+     * @param id The page's `navigationId`, which addresses either a tree entry that overrides the menu
+     *           or the site itself for the one every page inherits
+     */
     async fetchNavigation (id) {
       try {
-        const resp = await APOLLO_CLIENT.query({
-          query: `
-            query getNavigationItems ($id: UUID!) {
-              navigationById (
-                id: $id
-              ) {
-                id
-                type
-                label
-                icon
-                target
-                openInNewWindow
-                children {
-                  id
-                  type
-                  label
-                  icon
-                  target
-                  openInNewWindow
-                }
-              }
-            }
-          `,
-          variables: { id }
-        })
+        const items = await API_CLIENT.get(`sites/${this.id}/navigation/${id}`).json()
         this.$patch({
           nav: {
             currentId: id,
-            items: resp?.data?.navigationById ?? []
+            items: items ?? []
           }
         })
       } catch (err) {
-        console.warn(err.networkError?.result ?? err.message)
-        throw err
+        // -> An empty sidebar is the right outcome for a menu nobody has set up, rather than an error
+        //    in front of a reader who cannot act on it
+        console.warn(err.message)
+        this.$patch({
+          nav: {
+            currentId: id,
+            items: []
+          }
+        })
       }
     }
   }

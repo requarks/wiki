@@ -52,6 +52,7 @@
     "ajv-formats": "3.0.1",
     "bcryptjs": "3.0.3",
     "chalk": "5.6.2",
+    "cheerio": "1.2.0",
     "cron-parser": "5.5.0",
     "drizzle-orm": "1.0.0-beta.15-859cf75",
     "emittery": "2.0.0",
@@ -68,6 +69,7 @@
     "pg": "8.21.0",
     "poolifier": "5.3.2",
     "pug": "3.0.4",
+    "sanitize-html": "2.17.6",
     "semver": "7.8.4",
     "uuid": "14.0.0"
   },
@@ -81,6 +83,7 @@
     "@types/pem-jwk": "2.0.2",
     "@types/pg": "8.20.0",
     "@types/pug": "2.0.10",
+    "@types/sanitize-html": "2.16.1",
     "@types/semver": "7.7.1",
     "drizzle-kit": "1.0.0-beta.15-859cf75",
     "nodemon": "3.1.14",

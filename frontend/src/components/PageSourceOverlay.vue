@@ -2,7 +2,7 @@
 q-layout(view='hHh lpR fFf', container)
   q-header.card-header.q-px-md.q-py-sm
     q-icon(name='img:/_assets/icons/fluent-code.svg', left, size='md')
-    span Page Source
+    span {{ t('pageSource.title') }}
     q-space
     transition(name='syncing')
       q-spinner-tail.q-mr-sm(
@@ -15,6 +15,7 @@ q-layout(view='hHh lpR fFf', container)
       color='teal-3'
       dense
       flat
+      :disable='!state.content'
       @click='download'
       )
       q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.download`)}}
@@ -35,15 +36,14 @@ q-layout(view='hHh lpR fFf', container)
         :horizontal-thumb-style='{ height: `5px` }'
         style="width: 100%; height: calc(100vh - 100px);"
         )
-        pre.q-px-md(v-text='state.content')
+        .q-pa-md.text-grey-5(v-if='state.notice') {{ state.notice }}
+        pre.q-px-md(v-else, v-text='state.content')
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { exportFile, useQuasar } from 'quasar'
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-
-import { cloneDeep } from 'lodash-es'
+import { onBeforeUnmount, onMounted, reactive } from 'vue'
 
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
@@ -65,7 +65,9 @@ const { t } = useI18n()
 
 const state = reactive({
   loading: 0,
-  content: ''
+  content: '',
+  contentType: '',
+  notice: ''
 })
 
 const thumb = {
@@ -107,39 +109,36 @@ async function load () {
   state.loading++
   $q.loading.show()
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query loadPageSource (
-          $id: UUID!
-          ) {
-          pageById(
-            id: $id
-          ) {
-            id
-            content
-            contentType
-          }
-        }
-      `,
-      variables: {
-        id: pageStore.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    const pageData = cloneDeep(resp?.data?.pageById ?? {})
+    // -> The source is not part of an ordinary page load, so it has to be asked for
+    const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${pageStore.id}`, {
+      searchParams: { withContent: true }
+    }).json()
     if (!pageData?.id) {
-      throw new Error('ERR_PAGE_NOT_FOUND')
+      throw new Error(t('pageSource.notFound'))
+    }
+    // -> The source is withheld from a reader without a session, the field being left out entirely
+    //    rather than blanked — an empty string is a page that genuinely has no content
+    if (pageData.content === undefined) {
+      state.notice = t('pageSource.unavailable')
+      return
     }
     state.content = pageData.content
-    state.contentType = pageData.contentType
+    // -> Falls back to the editor, which is what identifies the format for anything written before
+    //    contentType was stored
+    state.contentType = pageData.contentType || pageData.editor || ''
   } catch (err) {
+    const message = err.response?.status === 404
+      ? t('pageSource.notFound')
+      : await err.response?.json().then(b => b?.message).catch(() => null) || err.message
+    state.notice = message
     $q.notify({
       type: 'negative',
-      message: err.message
+      message
     })
+  } finally {
+    $q.loading.hide()
+    state.loading--
   }
-  $q.loading.hide()
-  state.loading--
 }
 
 onMounted(() => {

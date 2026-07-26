@@ -35,6 +35,8 @@ import { useI18n } from 'vue-i18n'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { reactive } from 'vue'
 
+import { useSiteStore } from '@/stores/site'
+
 // PROPS
 
 const props = defineProps({
@@ -59,6 +61,10 @@ defineEmits([
 const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 const $q = useQuasar()
 
+// STORES
+
+const siteStore = useSiteStore()
+
 // I18N
 
 const { t } = useI18n()
@@ -74,34 +80,18 @@ const state = reactive({
 async function confirm () {
   state.isLoading = true
   try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation deletePage ($id: UUID!) {
-          deletePage(id: $id) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        id: props.pageId
-      }
+    await API_CLIENT.delete(`sites/${siteStore.id}/pages/${props.pageId}`)
+    $q.notify({
+      type: 'positive',
+      message: t('pageDeleteDialog.deleteSuccess')
     })
-    if (resp?.data?.deletePage?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('pageDeleteDialog.deleteSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.deletePage?.operation?.message || 'An unexpected error occured.')
-    }
+    onDialogOK()
   } catch (err) {
+    // -> ky throws above 400 — a page deleted from another tab answers 404
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.isLoading = false

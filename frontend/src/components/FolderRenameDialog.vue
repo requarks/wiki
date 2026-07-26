@@ -141,44 +141,27 @@ async function rename () {
     if (!isFormValid) {
       throw new Error(t('fileman.renameFolderInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation renameFolder (
-          $folderId: UUID!
-          $pathName: String!
-          $title: String!
-          ) {
-          renameFolder (
-            folderId: $folderId
-            pathName: $pathName
-            title: $title
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        folderId: props.folderId,
+    const resp = await API_CLIENT.patch(`sites/${siteStore.id}/tree/folders/${props.folderId}`, {
+      json: {
         pathName: state.path,
         title: state.title
       }
-    })
-    if (resp?.data?.renameFolder?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('fileman.renameFolderSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.renameFolder?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('fileman.renameFolderSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    // -> ky throws above 400 — a name already taken alongside this folder answers 409
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.loading--
@@ -189,36 +172,18 @@ async function rename () {
 onMounted(async () => {
   state.loading++
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query fetchFolderForRename (
-          $id: UUID!
-          ) {
-          folderById (
-            id: $id
-            ) {
-            id
-            folderPath
-            fileName
-            title
-          }
-        }
-      `,
-      fetchPolicy: 'network-only',
-      variables: {
-        id: props.folderId
-      }
-    })
-    if (resp?.data?.folderById?.id !== props.folderId) {
+    const folder = await API_CLIENT.get(`sites/${siteStore.id}/tree/folders/${props.folderId}`).json()
+    if (folder?.id !== props.folderId) {
       throw new Error('Failed to fetch folder data.')
     }
-    state.path = resp.data.folderById.fileName
-    state.title = resp.data.folderById.title
+    state.path = folder.fileName
+    state.title = folder.title
     state.pathDirty = true
   } catch (err) {
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
     onDialogCancel()
   }

@@ -81,6 +81,34 @@ export function generateHash(str: string): string {
 }
 
 /**
+ * Hash a page path the way the frontend does.
+ *
+ * A page is addressed by the hash of its path rather than the path itself, so that a URL with slashes
+ * in it stays a single path segment. The frontend computes this before asking for a page, so the two
+ * implementations have to agree exactly — this is cyrb53, mirroring `fastHash` in
+ * `frontend/src/stores/page.js`. Not a security boundary: it is a lookup key, and it is checked
+ * against the site it was requested for.
+ *
+ * @param str Page path, without a leading slash
+ * @returns 53-bit hash as a hex string
+ */
+export function generatePathHash(str: string, seed = 0): string {
+  let h1 = 0xdeadbeef ^ seed
+  let h2 = 0x41c6ce57 ^ seed
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i)
+    h1 = Math.imul(h1 ^ ch, 2654435761)
+    h2 = Math.imul(h2 ^ ch, 1597334677)
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507)
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507)
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16)
+}
+
+/**
  * Get default value of type
  *
  * @param type primitive type name

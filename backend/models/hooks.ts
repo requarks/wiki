@@ -6,8 +6,8 @@ import { desc, eq, sql } from 'drizzle-orm'
 /**
  * The events a webhook can subscribe to, as offered by the admin area.
  *
- * Only the user events have emit points today — pages, assets and comments are not implemented yet,
- * so subscribing to them stores a subscription that nothing triggers.
+ * Not all of them have emit points today — pages and comments are not implemented yet, so subscribing
+ * to those stores a subscription that nothing triggers.
  */
 export const HOOK_EVENTS = [
   'page:create',
@@ -31,10 +31,17 @@ export type HookEvent = (typeof HOOK_EVENTS)[number]
 /**
  * The events something in the server actually emits today.
  *
- * Kept as an explicit list rather than inferred from the prefix, since the page, asset and comment
- * events have no emit point yet. Add an event here when you add its `emit()` call.
+ * Kept as an explicit list rather than inferred from the prefix, since the page and comment events
+ * have no emit point yet. Add an event here when you add its `emit()` call.
  */
-export const EMITTED_EVENTS: HookEvent[] = ['user:join', 'user:login', 'user:logout']
+export const EMITTED_EVENTS: HookEvent[] = [
+  'asset:upload',
+  'asset:rename',
+  'asset:delete',
+  'user:join',
+  'user:login',
+  'user:logout'
+]
 
 /** A webhook as exposed by the API. */
 export interface Hook {

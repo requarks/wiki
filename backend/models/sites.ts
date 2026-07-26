@@ -179,13 +179,10 @@ class Sites {
 
     const newSite = result[0]
 
-    // WIKI.logger.debug(`Creating new root navigation for site ${newSite.id}`)
-
-    // await WIKI.db.navigation.query().insert({
-    //   id: newSite.id,
-    //   siteId: newSite.id,
-    //   items: []
-    // })
+    // -> The menu every page of the site inherits, keyed by the site id. Empty to begin with, but it
+    //    has to exist before a page can point at it
+    WIKI.logger.debug(`Creating new root navigation for site ${newSite.id}`)
+    await WIKI.models.navigation.ensureSiteNav(newSite.id)
 
     // -> Site lookups by id / hostname are served from cache, which must know about the new site
     await WIKI.models.sites.reloadCache()

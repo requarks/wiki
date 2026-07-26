@@ -35,6 +35,7 @@ q-layout(view='hHh Lpr lff')
         q-tooltip(anchor='center right' self='center left') Bookmarks
       q-space
       q-btn.q-py-xs(
+        v-if='canEditNav'
         flat
         icon='las la-dharmachakra'
         color='white'
@@ -81,22 +82,23 @@ q-layout(view='hHh Lpr lff')
         v-if='userStore.authenticated'
         dense
         )
-        q-btn.col(
-          icon='las la-dharmachakra'
-          label='Edit Nav'
-          flat
-          )
-          q-menu(
-            ref='navEditMenu'
-            anchor='top left'
-            self='bottom left'
-            :offset='[0, 10]'
+        template(v-if='canEditNav')
+          q-btn.col(
+            icon='las la-dharmachakra'
+            label='Edit Nav'
+            flat
             )
-            nav-edit-menu(
-              :menu-hide-handler='navEditMenu.hide'
-              :update-position-handler='navEditMenu.updatePosition'
+            q-menu(
+              ref='navEditMenu'
+              anchor='top left'
+              self='bottom left'
+              :offset='[0, 10]'
               )
-        q-separator(vertical)
+              nav-edit-menu(
+                :menu-hide-handler='navEditMenu.hide'
+                :update-position-handler='navEditMenu.updatePosition'
+                )
+          q-separator(vertical)
         q-btn.col(
           icon='las la-bookmark'
           label='Bookmarks'
@@ -183,6 +185,12 @@ const isSidebarShown = computed(() => {
 
 const isSidebarMini = computed(() => {
   return ['hide', 'hideExact'].includes(pageStore.navigationMode) || !pageStore.navigationId
+})
+
+// -> Saving from this menu needs manage:navigation, so offering it to anyone else only produces a
+//    permission error once they press Save
+const canEditNav = computed(() => {
+  return userStore.authenticated && userStore.can('manage:navigation')
 })
 
 // METHODS

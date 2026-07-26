@@ -70,6 +70,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
       .q-pa-md
         template(v-if='currentFileDetails')
           q-img.rounded-borders.q-mb-md(
+            v-if='currentFileDetails.thumbnail'
             :src='currentFileDetails.thumbnail'
             width='100%'
             fit='cover'
@@ -284,7 +285,7 @@ q-layout.fileman(view='hHh lpR lFr', container)
                         q-item-section(side)
                           q-icon(name='las la-clipboard', color='primary')
                         q-item-section {{ t(`common.actions.copyURL`) }}
-                      q-item(clickable, v-if='item.type !== `folder`', @click='downloadItem(item)')
+                      q-item(clickable, v-if='item.type === `asset`', @click='downloadItem(item)')
                         q-item-section(side)
                           q-icon(name='las la-download', color='primary')
                         q-item-section {{ t(`common.actions.download`) }}
@@ -322,9 +323,7 @@ import { useI18n } from 'vue-i18n'
 import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toRaw, watch } from 'vue'
 import { filesize } from 'filesize'
 import { useQuasar } from 'quasar'
-import { DateTime } from 'luxon'
-import { cloneDeep, dropRight, find, findKey, initial, last, nth } from 'lodash-es'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 
 import Fuse from 'fuse.js/basic'
 
@@ -356,7 +355,6 @@ const siteStore = useSiteStore()
 // ROUTER
 
 const router = useRouter()
-const route = useRoute()
 
 // I18N
 
@@ -465,59 +463,59 @@ const files = computed(() => {
 })
 
 const currentFileDetails = computed(() => {
-  if (state.currentFileId) {
-    const item = find(state.fileList, ['id', state.currentFileId])
-    if (item.type === 'folder') {
-      return null
-    }
-
-    const items = [
-      {
-        label: t('fileman.detailsTitle'),
-        value: item.title
-      }
-    ]
-    let thumbnail = ''
-    switch (item.type) {
-      case 'page': {
-        thumbnail = '/_assets/illustrations/fileman-page.svg'
-        items.push({
-          label: t('fileman.detailsPageType'),
-          value: t(`fileman.${item.pageType}PageType`)
-        })
-        items.push({
-          label: t('fileman.detailsPageEditor'),
-          value: item.pageType
-        })
-        items.push({
-          label: t('fileman.detailsPageUpdated'),
-          value: DateTime.fromISO(item.updatedAt).toFormat('yyyy-MM-dd \'at\' h:mm ZZZZ')
-        })
-        items.push({
-          label: t('fileman.detailsPageCreated'),
-          value: DateTime.fromISO(item.updatedAt).toFormat('yyyy-MM-dd \'at\' h:mm ZZZZ')
-        })
-        break
-      }
-      case 'asset': {
-        thumbnail = `/_thumb/${item.id}.webp`
-        items.push({
-          label: t('fileman.detailsAssetType'),
-          value: fileTypes[item.fileExt] ? t(`fileman.${item.fileExt}FileType`) : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })
-        })
-        items.push({
-          label: t('fileman.detailsAssetSize'),
-          value: filesize(item.fileSize)
-        })
-        break
-      }
-    }
-    return {
-      thumbnail,
-      items
-    }
-  } else {
+  if (!state.currentFileId) {
     return null
+  }
+  const item = state.fileList.find(f => f.id === state.currentFileId)
+  if (!item || item.type === 'folder') {
+    return null
+  }
+
+  const items = [
+    {
+      label: t('fileman.detailsTitle'),
+      value: item.title
+    }
+  ]
+  let thumbnail = null
+  switch (item.type) {
+    case 'page': {
+      thumbnail = '/_assets/illustrations/fileman-page.svg'
+      items.push({
+        label: t('fileman.detailsPageType'),
+        value: t(`fileman.${item.pageType}PageType`)
+      })
+      items.push({
+        label: t('fileman.detailsPageEditor'),
+        value: item.pageType
+      })
+      items.push({
+        label: t('fileman.detailsPageUpdated'),
+        value: formatDateTime(item.updatedAt)
+      })
+      items.push({
+        label: t('fileman.detailsPageCreated'),
+        value: formatDateTime(item.createdAt)
+      })
+      break
+    }
+    case 'asset': {
+      // -> Only images get one, and the endpoint answers 404 for anything else
+      thumbnail = item.mimeType?.startsWith('image/') ? `/_thumb/${item.id}.webp` : null
+      items.push({
+        label: t('fileman.detailsAssetType'),
+        value: fileTypes[item.fileExt] ? t(`fileman.${item.fileExt}FileType`) : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })
+      })
+      items.push({
+        label: t('fileman.detailsAssetSize'),
+        value: filesize(item.fileSize)
+      })
+      break
+    }
+  }
+  return {
+    thumbnail,
+    items
   }
 })
 
@@ -533,9 +531,27 @@ function close () {
   siteStore.overlay = null
 }
 
+/**
+ * The message an API failure should be reported with — the server's own if it sent one, since ky
+ * throws before the caller ever sees the body.
+ */
+async function apiErrorMessage (err, fallback) {
+  const message = await err.response?.json().then(b => b?.message).catch(() => null)
+  return message || err.message || fallback
+}
+
+function formatDateTime (value) {
+  if (!value) {
+    return ''
+  }
+  return Temporal.Instant.from(value)
+    .toZonedDateTimeISO(Temporal.Now.timeZoneId())
+    .toLocaleString(commonStore.locale, { dateStyle: 'medium', timeStyle: 'short' })
+}
+
 function insertItem (item) {
   if (!item) {
-    item = find(state.fileList, ['id', state.currentFileId])
+    item = state.fileList.find(f => f.id === state.currentFileId)
   }
   EVENT_BUS.emit('insertAsset', toRaw(item))
   close()
@@ -558,64 +574,20 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
     state.fileList = []
   }
   try {
-    const resp = await APOLLO_CLIENT.query({
-      query: `
-        query loadTree (
-          $siteId: UUID!
-          $parentId: UUID
-          $parentPath: String
-          $types: [TreeItemType]
-          $includeAncestors: Boolean
-          $includeRootFolders: Boolean
-        ) {
-          tree (
-            siteId: $siteId
-            parentId: $parentId
-            parentPath: $parentPath
-            types: $types
-            includeAncestors: $includeAncestors
-            includeRootFolders: $includeRootFolders
-          ) {
-            __typename
-            id
-            folderPath
-            fileName
-            title
-            ... on TreeItemFolder {
-              childrenCount
-              isAncestor
-            }
-            ... on TreeItemPage {
-              createdAt
-              updatedAt
-              editor
-            }
-            ... on TreeItemAsset {
-              createdAt
-              updatedAt
-              fileSize
-              fileExt
-              mimeType
-            }
-          }
-        }
-      `,
-      variables: {
-        siteId: siteStore.id,
-        parentId,
-        parentPath,
-        types,
+    const items = await API_CLIENT.get(`sites/${siteStore.id}/tree`, {
+      searchParams: {
+        ...(parentId ? { parentId } : {}),
+        ...(parentPath ? { parentPath } : {}),
+        ...(types?.length > 0 ? { types: types.join(',') } : {}),
         includeAncestors: initLoad,
         includeRootFolders: initLoad
-      },
-      fetchPolicy: 'network-only'
-    })
-    const items = cloneDeep(resp?.data?.tree)
+      }
+    }).json()
     if (items?.length > 0) {
       const newTreeRoots = []
       for (const item of items) {
-        switch (item.__typename) {
-          case 'TreeItemFolder': {
+        switch (item.type) {
+          case 'folder': {
             // -> Tree Nodes
             state.treeNodes[item.id] = {
               folderPath: item.folderPath,
@@ -629,8 +601,11 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
               let folderParentId = parentId
               if (!folderParentId) {
                 const parentFolderParts = item.folderPath.split('/')
-                const parentFolder = find(items, { folderPath: parentFolderParts.length > 1 ? initial(parentFolderParts).join('/') : '', fileName: last(parentFolderParts) })
-                folderParentId = parentFolder.id
+                const parentFolder = items.find(i =>
+                  i.folderPath === parentFolderParts.slice(0, -1).join('/') &&
+                  i.fileName === parentFolderParts.at(-1)
+                )
+                folderParentId = parentFolder?.id
               }
               if (item.id !== folderParentId && !state.treeNodes[folderParentId]?.children?.includes(item.id)) {
                 state.treeNodes[folderParentId]?.children?.push(item.id)
@@ -651,7 +626,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
             }
             break
           }
-          case 'TreeItemAsset': {
+          case 'asset': {
             if (parentId === state.currentFolderId) {
               state.fileList.push({
                 id: item.id,
@@ -661,21 +636,24 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
                 fileSize: item.fileSize,
                 mimeType: item.mimeType,
                 folderPath: item.folderPath,
-                fileName: item.fileName
+                fileName: item.fileName,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
               })
             }
             break
           }
-          case 'TreeItemPage': {
+          case 'page': {
             if (parentId === state.currentFolderId) {
               state.fileList.push({
                 id: item.id,
                 type: 'page',
                 title: item.title,
-                pageType: 'markdown',
-                updatedAt: '2022-11-24T18:27:00Z',
+                pageType: item.editor || 'markdown',
                 folderPath: item.folderPath,
-                fileName: item.fileName
+                fileName: item.fileName,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
               })
             }
             break
@@ -690,7 +668,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
     $q.notify({
       type: 'negative',
       message: 'Failed to load folder tree.',
-      caption: err.message
+      caption: await apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   if (parentId === state.currentFolderId) {
@@ -856,6 +834,7 @@ async function uploadNewFiles () {
   }
 
   state.isUploading = true
+  state.shouldCancelUpload = false
   state.uploadPercentage = 0
 
   state.loading++
@@ -863,57 +842,47 @@ async function uploadNewFiles () {
   nextTick(() => {
     setTimeout(async () => {
       try {
-        const totalFiles = fileIpt.value.files.length
+        const filesToUpload = [...fileIpt.value.files]
+        const totalFiles = filesToUpload.length
         let idx = 0
-        for (const fileToUpload of fileIpt.value.files) {
+        for (const fileToUpload of filesToUpload) {
+          // -> A cancel can only take effect between files: a request already in flight is left to
+          //    finish, since the server has the bytes either way
+          if (state.shouldCancelUpload) {
+            break
+          }
           idx++
           state.uploadPercentage = totalFiles > 1 ? Math.round(idx / totalFiles * 100) : 90
-          const resp = await APOLLO_CLIENT.mutate({
-            context: {
-              uploadMode: true
+          // -> The body is the file itself rather than a multipart form, and the locale is left to the
+          //    server, which uses the site's primary one
+          const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
+            searchParams: {
+              fileName: fileToUpload.name,
+              ...(state.currentFolderId ? { folderId: state.currentFolderId } : {})
             },
-            mutation: `
-              mutation uploadAssets (
-                $folderId: UUID
-                $locale: String
-                $siteId: UUID
-                $files: [Upload!]!
-              ) {
-                uploadAssets (
-                  folderId: $folderId
-                  locale: $locale
-                  siteId: $siteId
-                  files: $files
-                ) {
-                  operation {
-                    succeeded
-                    message
-                  }
-                }
-              }
-            `,
-            variables: {
-              folderId: state.currentFolderId,
-              siteId: siteStore.id,
-              locale: 'en', // TODO: use current locale
-              files: [fileToUpload]
-            }
-          })
-          if (!resp?.data?.uploadAssets?.operation?.succeeded) {
-            throw new Error(resp?.data?.uploadAssets?.operation?.message || 'An unexpected error occured.')
+            headers: {
+              'content-type': fileToUpload.type || 'application/octet-stream'
+            },
+            body: fileToUpload
+          }).json()
+          // -> The API client does not throw on 400, so a refused file comes back as a parsed error
+          if (resp?.ok === false) {
+            throw new Error(resp.message || 'An unexpected error occured.')
           }
         }
         state.uploadPercentage = 100
         loadTree({ parentId: state.currentFolderId })
-        $q.notify({
-          type: 'positive',
-          message: t('fileman.uploadSuccess')
-        })
+        if (!state.shouldCancelUpload) {
+          $q.notify({
+            type: 'positive',
+            message: t('fileman.uploadSuccess')
+          })
+        }
       } catch (err) {
         $q.notify({
           type: 'negative',
           message: 'Failed to upload file.',
-          caption: err.message
+          caption: await apiErrorMessage(err, 'An unexpected error occured.')
         })
       }
       state.loading--
@@ -927,8 +896,7 @@ async function uploadNewFiles () {
 }
 
 function uploadCancel () {
-  state.isUploading = false
-  state.uploadPercentage = 0
+  state.shouldCancelUpload = true
 }
 
 // --------------------------------------
@@ -1006,12 +974,27 @@ async function editItem (item) {
   close()
 }
 
-function downloadItem (item) {
-
+async function downloadItem (item) {
+  try {
+    // -> Fetched rather than linked to: the content route is behind the API client, which is what
+    //    carries the token
+    const blob = await API_CLIENT.get(`sites/${siteStore.id}/assets/${item.id}/content`).blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = item.fileName
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to download file.',
+      caption: await apiErrorMessage(err, 'An unexpected error occured.')
+    })
+  }
 }
 
 function renameItem (item) {
-  console.info(item)
   switch (item.type) {
     case 'folder': {
       renameFolder(item.id)
@@ -1049,7 +1032,7 @@ function delItem (item) {
 
 onMounted(async () => {
   const pathParts = pageStore.path.split('/')
-  const parentPath = initial(pathParts).join('/')
+  const parentPath = pathParts.slice(0, -1).join('/')
 
   await loadTree({
     parentPath,
@@ -1057,8 +1040,8 @@ onMounted(async () => {
   })
 
   // -> Open tree up to current folder
-  const folderFolderPath = dropRight(pathParts, 2).join('/')
-  const folderFileName = nth(pathParts, -2)
+  const folderFolderPath = pathParts.slice(0, -2).join('/')
+  const folderFileName = pathParts.at(-2)
 
   for (const [id, node] of Object.entries(state.treeNodes)) {
     if (parentPath.startsWith(node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName)) {
@@ -1067,9 +1050,10 @@ onMounted(async () => {
   }
 
   // -> Switch to current folder (from page path)
-  const currentNodeId = findKey(state.treeNodes, n => n.folderPath === folderFolderPath && n.fileName === folderFileName)
-  if (currentNodeId) {
-    state.currentFolderId = currentNodeId
+  const currentNode = Object.entries(state.treeNodes)
+    .find(([, n]) => n.folderPath === folderFolderPath && n.fileName === folderFileName)
+  if (currentNode) {
+    state.currentFolderId = currentNode[0]
   }
 })
 

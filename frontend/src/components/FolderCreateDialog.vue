@@ -139,50 +139,29 @@ async function create () {
     if (!isFormValid) {
       throw new Error(t('fileman.createFolderInvalidData'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation createFolder (
-          $siteId: UUID!
-          $locale: String!
-          $parentId: UUID
-          $pathName: String!
-          $title: String!
-          ) {
-          createFolder (
-            siteId: $siteId
-            locale: $locale
-            parentId: $parentId
-            pathName: $pathName
-            title: $title
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        siteId: siteStore.id,
-        locale: 'en',
+    // -> No locale is sent: the server puts the folder in the site's primary one
+    const resp = await API_CLIENT.post(`sites/${siteStore.id}/tree/folders`, {
+      json: {
         parentId: props.parentId,
         pathName: state.path,
         title: state.title
       }
-    })
-    if (resp?.data?.createFolder?.operation?.succeeded) {
-      $q.notify({
-        type: 'positive',
-        message: t('fileman.createFolderSuccess')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(resp?.data?.createFolder?.operation?.message || 'An unexpected error occured.')
+    }).json()
+    // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
     }
+    $q.notify({
+      type: 'positive',
+      message: t('fileman.createFolderSuccess')
+    })
+    onDialogOK()
   } catch (err) {
+    // -> ky throws above 400 — a name already taken in this folder answers 409
+    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
     $q.notify({
       type: 'negative',
-      message: err.message
+      message: apiMessage || err.message
     })
   }
   state.loading--

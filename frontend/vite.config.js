@@ -21,6 +21,19 @@ export default defineConfig(({ mode }) => {
         include: ['!/_blocks/**']
       },
       outDir: '../assets',
+      rollupOptions: {
+        // -> A second entry alongside the app: the markdown pipeline on its own, so the backend can
+        //    drive it in a headless browser to re-render a page server-side
+        input: {
+          main: fileURLToPath(new URL('./index.html', import.meta.url)),
+          renderer: fileURLToPath(new URL('./src/renderers/headless.js', import.meta.url))
+        },
+        output: {
+          // -> The renderer keeps a fixed name because it is referenced from a static page served by
+          //    the backend, which has no way to look up a hashed one
+          entryFileNames: chunk => chunk.name === 'renderer' ? '_assets/renderer.js' : '_assets/[name]-[hash].js'
+        }
+      },
       target: 'es2022'
     },
     optimizeDeps: {
