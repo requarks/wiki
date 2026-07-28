@@ -1,99 +1,96 @@
-<template lang="pug">
-q-page.q-py-md(:style-fn='pageStyle')
-  .text-header {{t('profile.auth')}}
-  .q-pa-md
-    .text-body2 {{ t('profile.authInfo') }}
-    q-list.q-mt-lg(
-      bordered
-      separator
-      )
-      q-item(
-        v-for='auth of state.authMethods'
-        :key='auth.id'
-        )
-        q-item-section(avatar)
-          q-avatar(
-            color='dark-5'
-            text-color='white'
-            rounded
-            )
-            q-icon(:name='`img:` + auth.strategyIcon')
-        q-item-section
-          strong {{auth.authName}}
-        template(v-if='auth.strategyKey === `local`')
-          q-item-section(v-if='auth.config.isTfaSetup', side)
-            q-btn(
-              icon='las la-fingerprint'
-              unelevated
-              :label='t(`profile.authDisableTfa`)'
-              color='negative'
-              @click='disableTfa(auth.authId)'
-              :disable='auth.config.isTfaRequired'
-            )
-          q-item-section(v-else, side)
-            q-btn(
-              icon='las la-fingerprint'
-              unelevated
-              :label='t(`profile.authSetTfa`)'
-              color='primary'
-              @click='setupTfa(auth.authId)'
-            )
-          q-item-section(side)
-            q-btn(
-              icon='las la-key'
-              unelevated
-              :label='t(`profile.authChangePassword`)'
-              color='primary'
-              @click='changePassword(auth.authId)'
-            )
+<template>
+  <w-page class="py-4">
+    <div class="text-header">{{ t('profile.auth') }}</div>
+    <div class="p-4">
+      <div class="text-body2">{{ t('profile.authInfo') }}</div>
+      <w-list class="mt-6" bordered separator>
+        <w-item v-for="auth of state.authMethods" :key="auth.id">
+          <w-item-section avatar>
+            <w-avatar color="dark-5" text-color="white" rounded>
+              <w-icon :name="`img:` + auth.strategyIcon" />
+            </w-avatar>
+          </w-item-section>
+          <w-item-section>
+            <strong>{{ auth.authName }}</strong>
+          </w-item-section>
+          <template v-if="auth.strategyKey === `local`">
+            <w-item-section v-if="auth.config.isTfaSetup" side>
+              <w-btn
+                icon="la:fingerprint"
+                unelevated
+                :label="t(`profile.authDisableTfa`)"
+                color="negative"
+                :disable="auth.config.isTfaRequired"
+                @click="disableTfa(auth.authId)" />
+            </w-item-section>
+            <w-item-section v-else side>
+              <w-btn
+                icon="la:fingerprint"
+                unelevated
+                :label="t(`profile.authSetTfa`)"
+                color="primary"
+                @click="setupTfa(auth.authId)" />
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                icon="la:key"
+                unelevated
+                :label="t(`profile.authChangePassword`)"
+                color="primary"
+                @click="changePassword(auth.authId)" />
+            </w-item-section>
+          </template>
+        </w-item>
+      </w-list>
+    </div>
 
-  .text-header.q-mt-md {{t('profile.passkeys')}}
-  .q-pa-md
-    .text-body2 {{ t('profile.passkeysIntro') }}
-    q-list.q-mt-lg(
-      v-if="state.passkeys?.length > 0"
-      bordered
-      separator
-      )
-      q-item(
-        v-for='pkey of state.passkeys'
-        :key='pkey.id'
-        )
-        q-item-section(avatar)
-          q-avatar(
-            color='secondary'
-            text-color='white'
-            rounded
-            )
-            q-icon(name='las la-key')
-        q-item-section
-          strong {{pkey.name}}
-          .text-caption {{ pkey.siteHostname }}
-          .text-caption.text-grey-7 {{ humanizeDate(pkey.createdAt) }}
-        q-item-section(side)
-          q-btn.acrylic-btn(
-            flat
-            icon='las la-trash'
-            :aria-label='t(`common.actions.delete`)'
-            color='negative'
-            @click='deactivatePasskey(pkey)'
-          )
-    .q-mt-md
-      q-btn(
-        icon='las la-plus'
-        unelevated
-        :label='t(`profile.passkeysAdd`)'
-        color='primary'
-        @click='setupPasskey'
-      )
+    <div class="text-header mt-4">{{ t('profile.passkeys') }}</div>
+    <div class="p-4">
+      <div class="text-body2">{{ t('profile.passkeysIntro') }}</div>
+      <w-list v-if="state.passkeys?.length > 0" class="mt-6" bordered separator>
+        <w-item v-for="pkey of state.passkeys" :key="pkey.id">
+          <w-item-section avatar>
+            <w-avatar color="secondary" text-color="white" rounded>
+              <w-icon name="la:key" />
+            </w-avatar>
+          </w-item-section>
+          <w-item-section>
+            <strong>{{ pkey.name }}</strong>
+            <div class="text-caption">{{ pkey.siteHostname }}</div>
+            <div class="text-caption text-grey-7">{{ humanizeDate(pkey.createdAt) }}</div>
+          </w-item-section>
+          <w-item-section side>
+            <w-btn
+              class="acrylic-btn"
+              flat
+              icon="la:trash"
+              :aria-label="t(`common.actions.delete`)"
+              color="negative"
+              @click="deactivatePasskey(pkey)" />
+          </w-item-section>
+        </w-item>
+      </w-list>
+      <div class="mt-4">
+        <w-btn
+          icon="la:plus"
+          unelevated
+          :label="t(`profile.passkeysAdd`)"
+          color="primary"
+          @click="setupPasskey" />
+      </div>
+    </div>
 
-  q-inner-loading(:showing='state.loading > 0')
+    <w-inner-loading :showing="state.loading > 0" />
+  </w-page>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
+import { dialog } from '@/composables/dialog'
 import { onMounted, reactive } from 'vue'
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
 import { localizeError } from '@/helpers/localization'
@@ -105,10 +102,6 @@ import { useUserStore } from '@/stores/user'
 import ChangePwdDialog from '@/components/ChangePwdDialog.vue'
 import SetupTfaDialog from '@/components/SetupTfaDialog.vue'
 import PasskeyCreateDialog from '@/components/PasskeyCreateDialog.vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -135,17 +128,11 @@ const state = reactive({
 
 // METHODS
 
-function pageStyle (offset, height) {
-  return {
-    'min-height': `${height - 100 - offset}px`
-  }
-}
-
-function humanizeDate (val) {
+function humanizeDate(val) {
   return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_MED)
 }
 
-async function fetchAuthMethods () {
+async function fetchAuthMethods() {
   state.loading++
   try {
     const respRaw = await APOLLO_CLIENT.query({
@@ -181,7 +168,7 @@ async function fetchAuthMethods () {
     state.authMethods = respRaw.data?.userById?.auth ?? []
     state.passkeys = respRaw.data?.userById?.passkeys ?? []
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('profile.authLoadingFailed'),
       caption: err.message
@@ -190,8 +177,8 @@ async function fetchAuthMethods () {
   state.loading--
 }
 
-function changePassword (strategyId) {
-  $q.dialog({
+function changePassword(strategyId) {
+  dialog({
     component: ChangePwdDialog,
     componentProps: {
       strategyId
@@ -199,13 +186,13 @@ function changePassword (strategyId) {
   })
 }
 
-function disableTfa (strategyId) {
-  $q.dialog({
+function disableTfa(strategyId) {
+  dialog({
     title: t('common.actions.confirm'),
     message: t('profile.authDisableTfaConfirm'),
     cancel: true
   }).onOk(async () => {
-    $q.loading.show()
+    loading.show()
     try {
       const resp = await APOLLO_CLIENT.mutate({
         mutation: `
@@ -227,7 +214,7 @@ function disableTfa (strategyId) {
         }
       })
       if (resp?.data?.deactivateTFA?.operation?.succeeded) {
-        $q.notify({
+        notify({
           type: 'positive',
           message: t('profile.authDisableTfaSuccess')
         })
@@ -235,19 +222,19 @@ function disableTfa (strategyId) {
         throw new Error(resp?.data?.deactivateTFA?.operation?.message)
       }
     } catch (err) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: t('profile.authDisableTfaFailed'),
         caption: err.message ?? 'An unexpected error occured.'
       })
     }
     await fetchAuthMethods()
-    $q.loading.hide()
+    loading.hide()
   })
 }
 
-function setupTfa (strategyId) {
-  $q.dialog({
+function setupTfa(strategyId) {
+  dialog({
     component: SetupTfaDialog,
     componentProps: {
       strategyId
@@ -257,12 +244,12 @@ function setupTfa (strategyId) {
   })
 }
 
-async function setupPasskey () {
+async function setupPasskey() {
   try {
     if (!browserSupportsWebAuthn()) {
       throw new Error(t('profile.passkeysUnsupported'))
     }
-    $q.loading.show()
+    loading.show()
 
     // -> Generation registration options
 
@@ -307,17 +294,19 @@ async function setupPasskey () {
 
     // -> Prompt for passkey name
 
-    $q.loading.hide()
+    loading.hide()
     const passkeyName = await new Promise((resolve, reject) => {
-      $q.dialog({
+      dialog({
         component: PasskeyCreateDialog
-      }).onOk(({ name }) => {
-        resolve(name)
-      }).onCancel(() => {
-        reject(new Error(t('error.ERR_PK_USER_CANCELLED')))
       })
+        .onOk(({ name }) => {
+          resolve(name)
+        })
+        .onCancel(() => {
+          reject(new Error(t('error.ERR_PK_USER_CANCELLED')))
+        })
     })
-    $q.loading.show()
+    loading.show()
 
     // -> Verify the authenticator response
 
@@ -344,7 +333,7 @@ async function setupPasskey () {
       }
     })
     if (resp?.data?.finalizePasskey?.operation?.succeeded) {
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('profile.passkeysSetupSuccess')
       })
@@ -352,23 +341,23 @@ async function setupPasskey () {
       throw new Error(resp?.data?.finalizePasskey?.operation?.message)
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('profile.passkeysSetupFailed'),
       caption: err.message ?? 'An unexpected error occured.'
     })
   }
   await fetchAuthMethods()
-  $q.loading.hide()
+  loading.hide()
 }
 
-async function deactivatePasskey (pkey) {
-  $q.dialog({
+async function deactivatePasskey(pkey) {
+  dialog({
     title: t('common.actions.confirm'),
     message: t('profile.passkeysDeactivateConfirm'),
     cancel: true
   }).onOk(async () => {
-    $q.loading.show()
+    loading.show()
     try {
       const resp = await APOLLO_CLIENT.mutate({
         mutation: `
@@ -390,7 +379,7 @@ async function deactivatePasskey (pkey) {
         }
       })
       if (resp?.data?.deactivatePasskey?.operation?.succeeded) {
-        $q.notify({
+        notify({
           type: 'positive',
           message: t('profile.passkeysDeactivateSuccess')
         })
@@ -398,14 +387,14 @@ async function deactivatePasskey (pkey) {
         throw new Error(resp?.data?.deactivatePasskey?.operation?.message)
       }
     } catch (err) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: t('profile.passkeysDeactivateFailed'),
         caption: err.message ?? 'An unexpected error occured.'
       })
     }
     await fetchAuthMethods()
-    $q.loading.hide()
+    loading.hide()
   })
 }
 
@@ -414,5 +403,4 @@ async function deactivatePasskey (pkey) {
 onMounted(() => {
   fetchAuthMethods()
 })
-
 </script>

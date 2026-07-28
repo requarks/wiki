@@ -1,52 +1,60 @@
-<template lang="pug">
-.q-gutter-xs
-  template(v-if='pageStore.tags && pageStore.tags.length > 0')
-    q-chip(
-      square
-      color='secondary'
-      text-color='white'
+<template>
+  <div class="gap-1">
+    <template v-if="pageStore.tags && pageStore.tags.length > 0">
+      <w-chip
+        square
+        color="secondary"
+        text-color="white"
+        dense
+        :clickable="!props.edit"
+        :removable="props.edit"
+        @remove="removeTag(tag)"
+        v-for="tag of pageStore.tags"
+        :key="`tag-` + tag">
+        <w-icon class="mr-1" name="la:hashtag" size="14px" />
+        <span class="text-caption">{{tag}}</span>
+      </w-chip>
+    </template>
+    <w-select
+      class="mt-4"
+      v-if="props.edit"
+      outlined
+      v-model="pageStore.tags"
+      :options="state.filteredTags"
       dense
-      :clickable='!props.edit'
-      :removable='props.edit'
-      @remove='removeTag(tag)'
-      v-for='tag of pageStore.tags'
-      :key='`tag-` + tag'
-      )
-      q-icon.q-mr-xs(name='las la-hashtag', size='14px')
-      span.text-caption {{tag}}
-  q-select.q-mt-md(
-    v-if='props.edit'
-    outlined
-    v-model='pageStore.tags'
-    :options='state.filteredTags'
-    dense
-    options-dense
-    use-input
-    use-chips
-    multiple
-    hide-selected
-    hide-dropdown-icon
-    :input-debounce='0'
-    new-value-mode='add-unique'
-    @new-value='createTag'
-    @filter='filterTags'
-    :placeholder='t(`editor.props.tagsPlaceholder`)'
-    :aria-label='t(`editor.props.tags`)'
-    :loading='state.loading'
-    )
-    template(v-slot:option='scope')
-      q-item(v-bind='scope.itemProps')
-        q-item-section(side)
-          q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)', size='sm')
-        q-item-section
-          q-item-label
-            span(v-html='scope.opt')
+      options-dense
+      use-input
+      use-chips
+      multiple
+      hide-selected
+      hide-dropdown-icon
+      :input-debounce="0"
+      new-value-mode="add-unique"
+      @new-value="createTag"
+      @filter="filterTags"
+      :placeholder="t(`editor.props.tagsPlaceholder`)"
+      :aria-label="t(`editor.props.tags`)"
+      :loading="state.loading">
+      <template v-slot:option="scope">
+        <w-item v-bind="scope.itemProps">
+          <w-item-section side>
+            <w-checkbox
+              :model-value="scope.selected"
+              @update:model-value="scope.toggleOption(scope.opt)"
+              size="sm" />
+          </w-item-section>
+          <w-item-section><w-item-label><span v-html="scope.opt" /></w-item-label></w-item-section>
+        </w-item>
+      </template>
+    </w-select>
+  </div>
 </template>
 
 <script setup>
-import { useQuasar } from 'quasar'
 import { reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { notify } from '@/composables/notify'
 
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
@@ -61,9 +69,6 @@ const props = defineProps({
   }
 })
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -93,44 +98,55 @@ pageStore.$subscribe(() => {
   }
 })
 
-watch(() => props.edit, async (newValue) => {
-  if (!newValue) { return }
-  state.loading = true
-  try {
-    await siteStore.fetchTags()
-    state.tags = siteStore.tags.map(t => t.tag)
-  } catch (err) {
-    // -> Suggestions are a convenience: without them the field still adds tags, so this is a warning
-    //    rather than a failure, and the spinner must not be left running either way
-    $q.notify({
-      type: 'warning',
-      message: t('editor.props.tagsFailed'),
-      caption: await err.response?.json().then(b => b?.message).catch(() => null) || err.message
-    })
-  } finally {
-    state.loading = false
-  }
-}, { immediate: true })
+watch(
+  () => props.edit,
+  async (newValue) => {
+    if (!newValue) {
+      return
+    }
+    state.loading = true
+    try {
+      await siteStore.fetchTags()
+      state.tags = siteStore.tags.map((t) => t.tag)
+    } catch (err) {
+      // -> Suggestions are a convenience: without them the field still adds tags, so this is a warning
+      //    rather than a failure, and the spinner must not be left running either way
+      notify({
+        type: 'warning',
+        message: t('editor.props.tagsFailed'),
+        caption:
+          (await err.response
+            ?.json()
+            .then((b) => b?.message)
+            .catch(() => null)) || err.message
+      })
+    } finally {
+      state.loading = false
+    }
+  },
+  { immediate: true }
+)
 
 // METHODS
 
-function filterTags (val, update) {
+function filterTags(val, update) {
   update(() => {
     if (val === '') {
       state.filteredTags = state.tags
     } else {
       const tagSearch = val.toLowerCase()
-      state.filteredTags = state.tags.filter(
-        v => v.toLowerCase().indexOf(tagSearch) >= 0
-      )
+      state.filteredTags = state.tags.filter((v) => v.toLowerCase().indexOf(tagSearch) >= 0)
     }
   })
 }
 
-function createTag (val, done) {
+function createTag(val, done) {
   if (val) {
     const currentTags = pageStore.tags.slice()
-    for (const tag of val.split(/[,;]+/).map(v => v.trim()).filter(v => v)) {
+    for (const tag of val
+      .split(/[,;]+/)
+      .map((v) => v.trim())
+      .filter((v) => v)) {
       if (!state.tags.includes(tag)) {
         state.tags.push(tag)
       }
@@ -143,7 +159,7 @@ function createTag (val, done) {
   }
 }
 
-function removeTag (tag) {
-  pageStore.tags = pageStore.tags.filter(t => t !== tag)
+function removeTag(tag) {
+  pageStore.tags = pageStore.tags.filter((t) => t !== tag)
 }
 </script>

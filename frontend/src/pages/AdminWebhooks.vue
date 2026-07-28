@@ -1,113 +1,142 @@
-<template lang='pug'>
-q-page.admin-webhooks
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-lightning-bolt.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.webhooks.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.webhooks.subtitle') }}
-    .col-auto
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/system/webhooks`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.acrylic-btn.q-mr-sm(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='las la-plus'
-        :label='t(`admin.webhooks.new`)'
-        color='primary'
-        @click='createHook'
-        )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12(v-if='state.hooks.length < 1')
-      q-card.rounded-borders(
-        flat
-        :class='$q.dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`'
-        )
-        q-card-section.items-center(horizontal)
-          q-card-section.col-auto.q-pr-none
-            q-icon(name='las la-info-circle', size='sm')
-          q-card-section.text-caption {{ t('admin.webhooks.none') }}
-    .col-12(v-else)
-      q-card
-        q-list(separator)
-          q-item(v-for='hook of state.hooks', :key='hook.id')
-            q-item-section(side)
-              q-icon(name='las la-bolt', color='primary')
-            q-item-section
-              q-item-label {{hook.name}}
-              q-item-label(caption) {{hook.url}}
-            q-item-section(side, style='flex-direction: row; align-items: center;')
-              template(v-if='hook.state === `pending`')
-                q-spinner-clock.q-mr-sm(
-                  color='indigo'
-                  size='xs'
-                )
-                .text-caption.text-indigo {{t('admin.webhooks.statePending')}}
-                q-tooltip(anchor='center left', self='center right') {{t('admin.webhooks.statePendingHint')}}
-              template(v-else-if='hook.state === `success`')
-                q-spinner-infinity.q-mr-sm(
-                  color='positive'
-                  size='xs'
-                )
-                .text-caption.text-positive {{t('admin.webhooks.stateSuccess')}}
-                q-tooltip(anchor='center left', self='center right') {{t('admin.webhooks.stateSuccessHint')}}
-              template(v-else-if='hook.state === `error`')
-                q-icon.q-mr-sm(
-                  color='negative'
-                  size='xs'
-                  name='las la-exclamation-triangle'
-                )
-                .text-caption.text-negative {{t('admin.webhooks.stateError')}}
-                q-tooltip(anchor='center left', self='center right') {{t('admin.webhooks.stateErrorHint')}}
-            q-separator.q-ml-md(vertical)
-            q-item-section(side, style='flex-direction: row; align-items: center;')
-              q-btn.acrylic-btn.q-mr-sm(
-                color='indigo'
-                icon='las la-pen'
-                label='Edit'
-                flat
-                no-caps
-                @click='editHook(hook.id)'
-              )
-              q-btn.acrylic-btn(
-                color='red'
-                icon='las la-trash'
-                flat
-                @click='deleteHook(hook)'
-              )
-
+<template>
+  <w-page class="admin-webhooks">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img
+          class="admin-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-lightning-bolt.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.webhooks.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.webhooks.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/system/webhooks`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="acrylic-btn mr-2"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="la:plus"
+          :label="t(`admin.webhooks.new`)"
+          color="primary"
+          @click="createHook" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-12" v-if="state.hooks.length < 1">
+        <w-card
+          class="rounded"
+          flat
+          :class="dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`">
+          <w-card-section class="items-center" horizontal>
+            <w-card-section class="flex-none pr-0">
+              <w-icon name="la:info-circle" size="sm" />
+            </w-card-section>
+            <w-card-section class="text-caption">{{ t('admin.webhooks.none') }}</w-card-section>
+          </w-card-section>
+        </w-card>
+      </div>
+      <div class="col-span-12" v-else>
+        <w-card>
+          <w-list separator>
+            <w-item v-for="hook of state.hooks" :key="hook.id">
+              <w-item-section side><w-icon name="la:bolt" color="primary" /></w-item-section>
+              <w-item-section>
+                <w-item-label>{{ hook.name }}</w-item-label>
+                <w-item-label caption>{{ hook.url }}</w-item-label>
+              </w-item-section>
+              <w-item-section side style="flex-direction: row; align-items: center">
+                <template v-if="hook.state === `pending`">
+                  <w-spinner class="mr-2" color="indigo" size="xs" />
+                  <div class="text-caption text-indigo">{{ t('admin.webhooks.statePending') }}</div>
+                  <w-tooltip anchor="center left" self="center right">{{
+                    t('admin.webhooks.statePendingHint')
+                  }}</w-tooltip>
+                </template>
+                <template v-else-if="hook.state === `success`">
+                  <w-spinner class="mr-2" color="positive" size="xs" />
+                  <div class="text-caption text-positive">
+                    {{ t('admin.webhooks.stateSuccess') }}
+                  </div>
+                  <w-tooltip anchor="center left" self="center right">{{
+                    t('admin.webhooks.stateSuccessHint')
+                  }}</w-tooltip>
+                </template>
+                <template v-else-if="hook.state === `error`">
+                  <w-icon
+                    class="mr-2"
+                    color="negative"
+                    size="xs"
+                    name="la:exclamation-triangle" />
+                  <div class="text-caption text-negative">{{ t('admin.webhooks.stateError') }}</div>
+                  <w-tooltip anchor="center left" self="center right">{{
+                    t('admin.webhooks.stateErrorHint')
+                  }}</w-tooltip>
+                </template>
+              </w-item-section>
+              <w-separator class="ml-4" vertical />
+              <w-item-section side style="flex-direction: row; align-items: center">
+                <w-btn
+                  class="acrylic-btn mr-2"
+                  color="indigo"
+                  icon="la:pen"
+                  label="Edit"
+                  flat
+                  no-caps
+                  @click="editHook(hook.id)" />
+                <w-btn
+                  class="acrylic-btn"
+                  color="red"
+                  icon="la:trash"
+                  flat
+                  @click="deleteHook(hook)" />
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
+
+import { useDark } from '@/composables/dark'
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
+import { dialog } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
 
 import WebhookEditDialog from '@/components/WebhookEditDialog.vue'
 import WebhookDeleteDialog from '@/components/WebhookDeleteDialog.vue'
 
-// QUASAR
+// COMPOSABLES
 
-const $q = useQuasar()
+const dark = useDark()
 
 // STORES
 
@@ -132,24 +161,24 @@ const state = reactive({
 
 // METHODS
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
-    state.hooks = await API_CLIENT.get('hooks').json() ?? []
+    state.hooks = (await API_CLIENT.get('hooks').json()) ?? []
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.webhooks.loadFailed'),
       caption: err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-function createHook () {
-  $q.dialog({
+function createHook() {
+  dialog({
     component: WebhookEditDialog,
     componentProps: {
       hookId: null
@@ -159,8 +188,8 @@ function createHook () {
   })
 }
 
-function editHook (id) {
-  $q.dialog({
+function editHook(id) {
+  dialog({
     component: WebhookEditDialog,
     componentProps: {
       hookId: id
@@ -170,8 +199,8 @@ function editHook (id) {
   })
 }
 
-function deleteHook (hook) {
-  $q.dialog({
+function deleteHook(hook) {
+  dialog({
     component: WebhookDeleteDialog,
     componentProps: {
       hook
@@ -186,9 +215,6 @@ function deleteHook (hook) {
 onMounted(() => {
   load()
 })
-
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

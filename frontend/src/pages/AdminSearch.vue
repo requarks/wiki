@@ -1,98 +1,111 @@
-<template lang='pug'>
-q-page.admin-flags
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-find-and-replace.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.search.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.search.subtitle') }}
-    .col-auto.flex
-      q-btn.q-mr-sm.acrylic-btn(
-        flat
-        icon='mdi-database-refresh'
-        :label='t(`admin.searchRebuildIndex`)'
-        color='purple'
-        @click='rebuild'
-        :loading='state.rebuildLoading'
-      )
-      q-separator.q-mr-sm(vertical)
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/system/search`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='mdi-check'
-        :label='t(`common.actions.apply`)'
-        color='secondary'
-        @click='save'
-        :loading='state.loading > 0'
-      )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12.col-lg-7
-      q-card.q-py-sm
-        q-item(tag='label')
-          blueprint-icon(icon='search')
-          q-item-section
-            q-item-label {{t(`admin.search.highlighting`)}}
-            q-item-label(caption) {{t(`admin.search.highlightingHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.termHighlighting'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.search.highlighting`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon.self-start(icon='search')
-          q-item-section
-            q-item-label {{t(`admin.search.dictOverrides`)}}
-            q-no-ssr(:placeholder='t(`common.loading`)')
-              util-code-editor.admin-theme-cm.q-my-sm(
-                v-model='state.config.dictOverrides'
-                language='json'
-                :min-height='250'
-              )
-              q-item-label(caption)
-                i18n-t(keypath='admin.search.dictOverridesHint' tag='span')
-                  span { "en": "english" }
-
-    .col-12.col-lg-5.gt-md
-      .q-pa-md.text-center
-        img(src='/_assets/illustrations/undraw_file_searching.svg', style='width: 80%;')
+<template>
+  <w-page class="admin-flags">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img
+          class="admin-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-find-and-replace.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.search.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.search.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none flex">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          flat
+          icon="mdi:database-refresh"
+          :label="t(`admin.searchRebuildIndex`)"
+          color="purple"
+          @click="rebuild"
+          :loading="state.rebuildLoading" />
+        <w-separator class="mr-2" vertical />
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/system/search`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="mdi:check"
+          :label="t(`common.actions.apply`)"
+          color="secondary"
+          @click="save"
+          :loading="state.loading > 0" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-12 lg:col-span-7">
+        <w-card class="py-2">
+          <w-item tag="label">
+            <blueprint-icon icon="search" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.search.highlighting`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.search.highlightingHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.termHighlighting"
+                :aria-label="t(`admin.search.highlighting`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon class="self-start" icon="search" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.search.dictOverrides`) }}</w-item-label>
+              <util-code-editor
+                class="admin-theme-cm my-2"
+                v-model="state.config.dictOverrides"
+                language="json"
+                :min-height="250" />
+              <w-item-label caption>
+                <i18n-t keypath="admin.search.dictOverridesHint" tag="span">
+                  <span>{ "en": "english" }</span>
+                </i18n-t>
+              </w-item-label>
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+      <div class="col-span-12 max-lg:hidden lg:col-span-5">
+        <div class="p-4 text-center">
+          <img src="/_assets/illustrations/undraw_file_searching.svg" style="width: 80%" />
+        </div>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-
 import { onMounted, reactive } from 'vue'
-import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
 
 import { useSiteStore } from '@/stores/site'
 
 import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -123,9 +136,9 @@ const state = reactive({
 
 // METHODS
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     const resp = await API_CLIENT.get('system/search').json()
     state.config = {
@@ -134,17 +147,17 @@ async function load () {
     }
     state.availableDictionaries = resp?.availableDictionaries ?? []
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.search.loadFailed'),
       caption: err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-async function save () {
+async function save() {
   state.loading++
   try {
     let dictOverrides
@@ -153,7 +166,11 @@ async function save () {
     } catch (err) {
       throw new Error(t('admin.search.dictOverridesInvalidJSON', { reason: err.message }))
     }
-    if (typeof dictOverrides !== 'object' || Array.isArray(dictOverrides) || dictOverrides === null) {
+    if (
+      typeof dictOverrides !== 'object' ||
+      Array.isArray(dictOverrides) ||
+      dictOverrides === null
+    ) {
       throw new Error(t('admin.search.dictOverridesNotAnObject'))
     }
     // -> Caught here rather than server-side so the offending entry can be named while the operator
@@ -173,14 +190,17 @@ async function save () {
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.search.saveSuccess')
     })
     await load()
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: t('admin.search.saveFailed'),
       caption: apiMessage || err.message
@@ -189,20 +209,23 @@ async function save () {
   state.loading--
 }
 
-async function rebuild () {
+async function rebuild() {
   state.rebuildLoading = true
   try {
     const resp = await API_CLIENT.post('system/search/rebuild').json()
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.search.rebuildInitSuccess')
     })
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: t('admin.search.rebuildFailed'),
       caption: apiMessage || err.message
@@ -216,9 +239,6 @@ async function rebuild () {
 onMounted(async () => {
   load()
 })
-
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

@@ -1,350 +1,385 @@
-<template lang='pug'>
-q-page.admin-mail
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-protect.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.security.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.security.subtitle') }}
-    .col-auto
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/system/security`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='mdi-check'
-        :label='t(`common.actions.apply`)'
-        color='secondary'
-        @click='save'
-        :loading='state.loading > 0'
-      )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12.col-lg-6
-      //- -----------------------
-      //- Security
-      //- -----------------------
-      q-card.q-pb-sm
-        q-card-section
-          .text-subtitle1 {{t('admin.security.title')}}
-        q-item.q-pt-none
-          q-item-section
-            q-card.bg-negative.text-white.rounded-borders(flat)
-              q-card-section.items-center(horizontal)
-                q-card-section.col-auto.q-pr-none
-                  q-icon(name='las la-exclamation-triangle', size='sm')
-                q-card-section.text-caption
-                  div {{ t('admin.security.warn') }}
-                  //- These are read when the HTTP server builds its plugin chain, not per request
-                  div.q-mt-xs {{ t('admin.security.restartRequired') }}
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='rfid-signal')
-          q-item-section
-            q-item-label {{t(`admin.security.disallowFloc`)}}
-            q-item-label(caption) {{t(`admin.security.disallowFlocHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.disallowFloc'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.disallowFloc`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='maximize-window')
-          q-item-section
-            q-item-label {{t(`admin.security.disallowIframe`)}}
-            q-item-label(caption) {{t(`admin.security.disallowIframeHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.disallowIframe'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.disallowIframe`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='do-not-touch')
-          q-item-section
-            q-item-label {{t(`admin.security.enforceSameOriginReferrerPolicy`)}}
-            q-item-label(caption) {{t(`admin.security.enforceSameOriginReferrerPolicyHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.enforceSameOriginReferrerPolicy'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.enforceSameOriginReferrerPolicy`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='curly-arrow')
-          q-item-section
-            q-item-label {{t(`admin.security.disallowOpenRedirect`)}}
-            q-item-label(caption) {{t(`admin.security.disallowOpenRedirectHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.disallowOpenRedirect'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.disallowOpenRedirect`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='download-from-cloud')
-          q-item-section
-            q-item-label {{t(`admin.security.forceAssetDownload`)}}
-            q-item-label(caption) {{t(`admin.security.forceAssetDownloadHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.forceAssetDownload'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.forceAssetDownload`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='door-sensor-alarmed')
-          q-item-section
-            q-item-label {{t(`admin.security.trustProxy`)}}
-            q-item-label(caption) {{t(`admin.security.trustProxyHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.trustProxy'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.trustProxy`)'
-              )
-      //- -----------------------
-      //- HSTS
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.security.hsts')}}
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='hips')
-          q-item-section
-            q-item-label {{t(`admin.security.enforceHsts`)}}
-            q-item-label(caption) {{t(`admin.security.enforceHstsHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.enforceHsts'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.enforceHsts`)'
-              )
-        template(v-if='state.config.enforceHsts')
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='timer')
-            q-item-section
-              q-item-label {{t(`admin.security.hstsDuration`)}}
-              q-item-label(caption) {{t(`admin.security.hstsDurationHint`)}}
-            q-item-section(style='flex: 0 0 200px;')
-              q-select(
+<template>
+  <w-page class="admin-mail">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-protect.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.security.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.security.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/system/security`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="mdi:check"
+          :label="t(`common.actions.apply`)"
+          color="secondary"
+          @click="save"
+          :loading="state.loading > 0" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-12 lg:col-span-6">
+        <!-- ----------------------- -->
+        <!-- Security -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2">
+          <w-card-header>{{ t('admin.security.title') }}</w-card-header>
+          <w-item class="pt-0">
+            <w-item-section>
+              <w-card class="bg-negative text-white rounded" flat>
+                <w-card-section class="items-center" horizontal>
+                  <w-card-section class="flex-none pr-0">
+                    <w-icon name="la:exclamation-triangle" size="sm" />
+                  </w-card-section>
+                  <w-card-section class="text-caption">
+                    <div>{{ t('admin.security.warn') }}</div>
+                    <!-- These are read when the HTTP server builds its plugin chain, not per request -->
+                    <div class="mt-1">{{ t('admin.security.restartRequired') }}</div>
+                  </w-card-section>
+                </w-card-section>
+              </w-card>
+            </w-item-section>
+          </w-item>
+          <w-item tag="label">
+            <blueprint-icon icon="rfid-signal" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.disallowFloc`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.disallowFlocHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.disallowFloc"
+                :aria-label="t(`admin.security.disallowFloc`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="maximize-window" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.disallowIframe`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.disallowIframeHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.disallowIframe"
+                :aria-label="t(`admin.security.disallowIframe`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="do-not-touch" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.enforceSameOriginReferrerPolicy`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`admin.security.enforceSameOriginReferrerPolicyHint`)
+              }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.enforceSameOriginReferrerPolicy"
+                :aria-label="t(`admin.security.enforceSameOriginReferrerPolicy`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="curly-arrow" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.disallowOpenRedirect`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`admin.security.disallowOpenRedirectHint`)
+              }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.disallowOpenRedirect"
+                :aria-label="t(`admin.security.disallowOpenRedirect`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="download-from-cloud" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.forceAssetDownload`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.forceAssetDownloadHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.forceAssetDownload"
+                :aria-label="t(`admin.security.forceAssetDownload`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="door-sensor-alarmed" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.trustProxy`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.trustProxyHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.trustProxy"
+                :aria-label="t(`admin.security.trustProxy`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- HSTS -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.security.hsts') }}</w-card-header>
+          <w-item tag="label">
+            <blueprint-icon icon="hips" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.enforceHsts`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.enforceHstsHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.enforceHsts"
+                :aria-label="t(`admin.security.enforceHsts`)" />
+            </w-item-section>
+          </w-item>
+          <template v-if="state.config.enforceHsts">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="timer" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.security.hstsDuration`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.security.hstsDurationHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section style="flex: 0 0 200px">
+                <w-select
+                  outlined
+                  v-model="state.config.hstsDuration"
+                  :options="hstsDurations"
+                  option-value="value"
+                  option-label="text"
+                  emit-value
+                  map-options
+                  dense
+                  :aria-label="t(`admin.security.hstsDuration`)" />
+              </w-item-section>
+            </w-item>
+          </template>
+        </w-card>
+      </div>
+      <div class="col-span-12 lg:col-span-6">
+        <!-- ----------------------- -->
+        <!-- Uploads -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2">
+          <w-card-header>{{ t('admin.security.uploads') }}</w-card-header>
+          <w-item class="pt-0">
+            <w-item-section>
+              <w-card class="bg-info text-white rounded" flat>
+                <w-card-section class="items-center" horizontal>
+                  <w-card-section class="flex-none pr-0">
+                    <w-icon name="la:info-circle" size="sm" />
+                  </w-card-section>
+                  <w-card-section class="text-caption">
+                    <div>{{ t('admin.security.uploadsInfo') }}</div>
+                    <!-- Saved, but nothing reads them: there is no upload endpoint yet -->
+                    <div class="mt-1">{{ t('admin.security.uploadsNotEnforced') }}</div>
+                  </w-card-section>
+                </w-card-section>
+              </w-card>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="upload-to-the-cloud" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.maxUploadSize`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.maxUploadSizeHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section style="flex: 0 0 200px">
+              <w-input
                 outlined
-                v-model='state.config.hstsDuration'
-                :options='hstsDurations'
-                option-value='value'
-                option-label='text'
+                v-model.number="state.humanUploadMaxFileSize"
+                dense
+                :aria-label="t(`admin.security.maxUploadSize`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="upload-to-ftp" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.maxUploadBatch`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.maxUploadBatchHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section style="flex: 0 0 200px">
+              <w-input
+                outlined
+                v-model.number="state.config.uploadMaxFiles"
+                dense
+                :suffix="t(`admin.security.maxUploadBatchSuffix`)"
+                :aria-label="t(`admin.security.maxUploadBatch`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="scan-stock" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.scanSVG`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.scanSVGHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.uploadScanSVG"
+                :aria-label="t(`admin.security.scanSVG`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- CORS -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.security.cors') }}</w-card-header>
+          <w-item>
+            <blueprint-icon icon="firewall" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.corsMode`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.corsModeHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.config.corsMode"
+                :options="corsModes"
+                option-value="value"
+                option-label="text"
                 emit-value
                 map-options
                 dense
-                :aria-label='t(`admin.security.hstsDuration`)'
-                )
-
-    .col-12.col-lg-6
-      //- -----------------------
-      //- Uploads
-      //- -----------------------
-      q-card.q-pb-sm
-        q-card-section
-          .text-subtitle1 {{t('admin.security.uploads')}}
-        q-item.q-pt-none
-          q-item-section
-            q-card.bg-info.text-white.rounded-borders(flat)
-              q-card-section.items-center(horizontal)
-                q-card-section.col-auto.q-pr-none
-                  q-icon(name='las la-info-circle', size='sm')
-                q-card-section.text-caption
-                  div {{ t('admin.security.uploadsInfo') }}
-                  //- Saved, but nothing reads them: there is no upload endpoint yet
-                  div.q-mt-xs {{ t('admin.security.uploadsNotEnforced') }}
-        q-item
-          blueprint-icon(icon='upload-to-the-cloud')
-          q-item-section
-            q-item-label {{t(`admin.security.maxUploadSize`)}}
-            q-item-label(caption) {{t(`admin.security.maxUploadSizeHint`)}}
-          q-item-section(style='flex: 0 0 200px;')
-            q-input(
-              outlined
-              v-model.number='state.humanUploadMaxFileSize'
-              dense
-              :aria-label='t(`admin.security.maxUploadSize`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='upload-to-ftp')
-          q-item-section
-            q-item-label {{t(`admin.security.maxUploadBatch`)}}
-            q-item-label(caption) {{t(`admin.security.maxUploadBatchHint`)}}
-          q-item-section(style='flex: 0 0 200px;')
-            q-input(
-              outlined
-              v-model.number='state.config.uploadMaxFiles'
-              dense
-              :suffix='t(`admin.security.maxUploadBatchSuffix`)'
-              :aria-label='t(`admin.security.maxUploadBatch`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label', v-ripple)
-          blueprint-icon(icon='scan-stock')
-          q-item-section
-            q-item-label {{t(`admin.security.scanSVG`)}}
-            q-item-label(caption) {{t(`admin.security.scanSVGHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.uploadScanSVG'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.security.scanSVG`)'
-              )
-
-      //- -----------------------
-      //- CORS
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.security.cors')}}
-        q-item
-          blueprint-icon(icon='firewall')
-          q-item-section
-            q-item-label {{t(`admin.security.corsMode`)}}
-            q-item-label(caption) {{t(`admin.security.corsModeHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.config.corsMode'
-              :options='corsModes'
-              option-value='value'
-              option-label='text'
-              emit-value
-              map-options
-              dense
-              :aria-label='t(`admin.security.corsMode`)'
-              )
-        template(v-if='state.config.corsMode === `HOSTNAMES`')
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='todo-list', key='corsHostnames')
-            q-item-section
-              q-item-label {{t(`admin.security.corsHostnames`)}}
-              q-item-label(caption) {{t(`admin.security.corsHostnamesHint`)}}
-            q-item-section
-              q-input(
+                :aria-label="t(`admin.security.corsMode`)" />
+            </w-item-section>
+          </w-item>
+          <template v-if="state.config.corsMode === `HOSTNAMES`">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="todo-list" key="corsHostnames" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.security.corsHostnames`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.security.corsHostnamesHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.config.corsConfig"
+                  dense
+                  type="textarea"
+                  :aria-label="t(`admin.security.corsHostnames`)" />
+              </w-item-section>
+            </w-item>
+          </template>
+          <template v-else-if="state.config.corsMode === `REGEX`">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="validation" key="corsRegex" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.security.corsRegex`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.security.corsRegexHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.config.corsConfig"
+                  dense
+                  :aria-label="t(`admin.security.corsRegex`)" />
+              </w-item-section>
+            </w-item>
+          </template>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- JWT -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.security.jwt') }}</w-card-header>
+          <w-item>
+            <blueprint-icon icon="ticket" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.jwtAudience`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.jwtAudienceHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section style="flex: 0 0 250px">
+              <w-input
                 outlined
-                v-model='state.config.corsConfig'
+                v-model="state.config.authJwtAudience"
                 dense
-                type='textarea'
-                :aria-label='t(`admin.security.corsHostnames`)'
-                )
-        template(v-else-if='state.config.corsMode === `REGEX`')
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='validation', key='corsRegex')
-            q-item-section
-              q-item-label {{t(`admin.security.corsRegex`)}}
-              q-item-label(caption) {{t(`admin.security.corsRegexHint`)}}
-            q-item-section
-              q-input(
+                :aria-label="t(`admin.security.jwtAudience`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="expired" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.tokenExpiration`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.tokenExpirationHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section style="flex: 0 0 140px">
+              <w-input
                 outlined
-                v-model='state.config.corsConfig'
+                v-model="state.config.authJwtExpiration"
                 dense
-                :aria-label='t(`admin.security.corsRegex`)'
-                )
-
-      //- -----------------------
-      //- JWT
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.security.jwt')}}
-        q-item
-          blueprint-icon(icon='ticket')
-          q-item-section
-            q-item-label {{t(`admin.security.jwtAudience`)}}
-            q-item-label(caption) {{t(`admin.security.jwtAudienceHint`)}}
-          q-item-section(style='flex: 0 0 250px;')
-            q-input(
-              outlined
-              v-model='state.config.authJwtAudience'
-              dense
-              :aria-label='t(`admin.security.jwtAudience`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='expired')
-          q-item-section
-            q-item-label {{t(`admin.security.tokenExpiration`)}}
-            q-item-label(caption) {{t(`admin.security.tokenExpirationHint`)}}
-          q-item-section(style='flex: 0 0 140px;')
-            q-input(
-              outlined
-              v-model='state.config.authJwtExpiration'
-              dense
-              :aria-label='t(`admin.security.tokenExpiration`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='future')
-          q-item-section
-            q-item-label {{t(`admin.security.tokenRenewalPeriod`)}}
-            q-item-label(caption) {{t(`admin.security.tokenRenewalPeriodHint`)}}
-          q-item-section(style='flex: 0 0 140px;')
-            q-input(
-              outlined
-              v-model='state.config.authJwtRenewablePeriod'
-              dense
-              :aria-label='t(`admin.security.tokenRenewalPeriod`)'
-              )
+                :aria-label="t(`admin.security.tokenExpiration`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="future" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.tokenRenewalPeriod`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.security.tokenRenewalPeriodHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section style="flex: 0 0 140px">
+              <w-input
+                outlined
+                v-model="state.config.authJwtRenewablePeriod"
+                dense
+                :aria-label="t(`admin.security.tokenRenewalPeriod`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-import { filesize } from 'filesize'
-import filesizeParser from 'filesize-parser'
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
 
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
-
-const $q = useQuasar()
+import { filesize } from 'filesize'
+import filesizeParser from 'filesize-parser'
 
 // STORES
 
@@ -405,25 +440,28 @@ const corsModes = [
 
 // METHODS
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     const resp = await API_CLIENT.get('system/security').json()
     state.config = { ...state.config, ...resp }
-    state.humanUploadMaxFileSize = filesize(state.config.uploadMaxFileSize ?? 0, { base: 2, standard: 'jedec' })
+    state.humanUploadMaxFileSize = filesize(state.config.uploadMaxFileSize ?? 0, {
+      base: 2,
+      standard: 'jedec'
+    })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.security.loadFailed'),
       caption: err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-async function save () {
+async function save() {
   state.loading++
   try {
     let uploadMaxFileSize
@@ -445,7 +483,7 @@ async function save () {
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.security.saveSuccess')
     })
@@ -453,8 +491,11 @@ async function save () {
   } catch (err) {
     // -> ky throws above 400 — the server rejects combinations that would store a setting doing
     //    nothing, e.g. enforcing a CSP with no directives
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: t('admin.security.saveFailed'),
       caption: apiMessage || err.message
@@ -470,6 +511,4 @@ onMounted(() => {
 })
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

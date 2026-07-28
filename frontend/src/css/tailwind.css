@@ -1,0 +1,561 @@
+/*
+  Tailwind, with Preflight.
+
+  Preflight is a global element reset -- it unstyles buttons, headings and lists, and zeroes every
+  border. It stayed off for the whole migration because Quasar's stylesheet was loaded alongside and
+  the reset would have visibly altered every not-yet-migrated screen. Quasar is gone, so Preflight
+  is now the app's only base layer and the `w-unstyled` gymnastics below are no longer needed.
+*/
+@import 'tailwindcss';
+
+/*
+  Base typography.
+
+  Preflight resets the document but sets no body type scale, so without this the browser default of
+  16px applies and everything inheriting it -- nav labels, the text inside inputs -- renders ~14%
+  larger than it used to. The framework that came out declared `body { font-size: 14px;
+  line-height: 1.5 }`, and the whole app is drawn against that: `text-body2` is 14px, the type ramp
+  in `@theme` is built around it, and the component metrics were measured against it.
+
+  In `@layer base`, so any `text-*` utility still wins.
+*/
+@layer base {
+  body {
+    font-size: 14px;
+    line-height: 1.5;
+    /* Carried over with the size: the app's spacing was tuned against these being on */
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/*
+  Sources every template we may emit classes from. Automatic source detection is disabled by the
+  bare `theme.css`/`utilities.css` imports, so the globs are load-bearing, not belt-and-braces.
+*/
+@source '../../index.html';
+@source '../**/*.{vue,js}';
+
+/*
+  Dark mode is driven by the `body--dark` class on <body>, which is what the app has always toggled
+  (Quasar's `$q.dark.set()` writes it). Keying Tailwind's `dark:` variant off the same class means
+  Tailwind and Quasar stay in lockstep for as long as both are installed, and nothing has to change
+  when Quasar is finally dropped -- `useDark()` writes the identical class.
+*/
+@custom-variant dark (&:where(body.body--dark, body.body--dark *));
+
+/*
+  Brand colors indirect through `--q-*` custom properties rather than being literal values. The app
+  recolors itself at runtime (per-site theme + the accessible-color / colour-vision-deficiency
+  remapping in `stores/user.js`) by writing those properties on :root, so the indirection is what
+  keeps runtime theming working. Do not inline these.
+*/
+:root {
+  --q-primary: #1976d2;
+  --q-secondary: #02c39a;
+  --q-accent: #f03a47;
+  --q-positive: #02c39a;
+  --q-negative: #f03a47;
+  --q-info: #3e6990;
+  --q-warning: #f99d4d;
+  --q-header: #000;
+  --q-sidebar: #1976d2;
+}
+
+/*
+  `static` (rather than a plain `@theme`) forces every variable below into the output even when no
+  utility references it. That is load-bearing: the shared components take a `color` prop and resolve
+  it at runtime as `var(--color-<name>)` in a style binding, rather than as a `bg-<name>` class.
+  Tailwind's scanner cannot see a class name it never appears as literal text, so a class-based
+  approach would need every colour safelisted; a variable reference needs only that the variable
+  exists. Default (usage-pruned) emission would drop exactly the ones nothing happens to use as a
+  utility, and those props would silently resolve to nothing.
+*/
+@theme static {
+  /* -- Brand (runtime-themeable, see above) -------------------------------- */
+  --color-primary: var(--q-primary);
+  --color-secondary: var(--q-secondary);
+  --color-accent: var(--q-accent);
+  --color-positive: var(--q-positive);
+  --color-negative: var(--q-negative);
+  --color-info: var(--q-info);
+  --color-warning: var(--q-warning);
+  --color-header: var(--q-header);
+  --color-sidebar: var(--q-sidebar);
+
+  /*
+    Restated here rather than inherited from Tailwind's default theme: the defaults live in a
+    prunable block, and components resolve `var(--color-white)` at runtime where the scanner cannot
+    prove the variable is needed.
+  */
+  --color-white: #fff;
+  --color-black: #000;
+
+  /* -- Wiki.js dark surface ramp (from the old css/_theme.scss) ------------ */
+  --color-dark: #0d1117;
+  --color-dark-1: #343b48;
+  --color-dark-2: #292f39;
+  --color-dark-3: #1e232a;
+  --color-dark-4: #161b22;
+  --color-dark-5: #0d1117;
+  --color-dark-6: #070a0d;
+
+  /*
+    -- Material palette ---------------------------------------------------
+    Only the families the app actually references. Quasar's scale is 1..14 but nothing here uses
+    the accent range (11..14), so these stop at 10. `-6` is the base tone in Material and is what
+    the bare name (e.g. `text-red`) maps to, matching Quasar.
+  */
+  --color-grey: #9e9e9e;
+  --color-grey-1: #fafafa;
+  --color-grey-2: #f5f5f5;
+  --color-grey-3: #eeeeee;
+  --color-grey-4: #e0e0e0;
+  --color-grey-5: #bdbdbd;
+  --color-grey-6: #9e9e9e;
+  --color-grey-7: #757575;
+  --color-grey-8: #616161;
+  --color-grey-9: #424242;
+  --color-grey-10: #212121;
+
+  --color-blue-grey: #607d8b;
+  --color-blue-grey-1: #eceff1;
+  --color-blue-grey-2: #cfd8dc;
+  --color-blue-grey-3: #b0bec5;
+  --color-blue-grey-4: #90a4ae;
+  --color-blue-grey-5: #78909c;
+  --color-blue-grey-6: #607d8b;
+  --color-blue-grey-7: #546e7a;
+  --color-blue-grey-8: #455a64;
+  --color-blue-grey-9: #37474f;
+  --color-blue-grey-10: #263238;
+
+  --color-red: #f44336;
+  --color-red-1: #ffebee;
+  --color-red-2: #ffcdd2;
+  --color-red-3: #ef9a9a;
+  --color-red-4: #e57373;
+  --color-red-5: #ef5350;
+  --color-red-6: #f44336;
+  --color-red-7: #e53935;
+  --color-red-8: #d32f2f;
+  --color-red-9: #c62828;
+  --color-red-10: #b71c1c;
+
+  --color-green: #4caf50;
+  --color-green-1: #e8f5e9;
+  --color-green-2: #c8e6c9;
+  --color-green-3: #a5d6a7;
+  --color-green-4: #81c784;
+  --color-green-5: #66bb6a;
+  --color-green-6: #4caf50;
+  --color-green-7: #43a047;
+  --color-green-8: #388e3c;
+  --color-green-9: #2e7d32;
+  --color-green-10: #1b5e20;
+
+  --color-blue: #2196f3;
+  --color-blue-1: #e3f2fd;
+  --color-blue-2: #bbdefb;
+  --color-blue-3: #90caf9;
+  --color-blue-4: #64b5f6;
+  --color-blue-5: #42a5f5;
+  --color-blue-6: #2196f3;
+  --color-blue-7: #1e88e5;
+  --color-blue-8: #1976d2;
+  --color-blue-9: #1565c0;
+  --color-blue-10: #0d47a1;
+
+  --color-teal: #009688;
+  --color-teal-1: #e0f2f1;
+  --color-teal-2: #b2dfdb;
+  --color-teal-3: #80cbc4;
+  --color-teal-4: #4db6ac;
+  --color-teal-5: #26a69a;
+  --color-teal-6: #009688;
+  --color-teal-7: #00897b;
+  --color-teal-8: #00796b;
+  --color-teal-9: #00695c;
+  --color-teal-10: #004d40;
+
+  --color-orange: #ff9800;
+  --color-orange-1: #fff3e0;
+  --color-orange-2: #ffe0b2;
+  --color-orange-3: #ffcc80;
+  --color-orange-4: #ffb74d;
+  --color-orange-5: #ffa726;
+  --color-orange-6: #ff9800;
+  --color-orange-7: #fb8c00;
+  --color-orange-8: #f57c00;
+  --color-orange-9: #ef6c00;
+  --color-orange-10: #e65100;
+
+  --color-deep-orange: #ff5722;
+  --color-deep-orange-1: #fbe9e7;
+  --color-deep-orange-2: #ffccbc;
+  --color-deep-orange-3: #ffab91;
+  --color-deep-orange-4: #ff8a65;
+  --color-deep-orange-5: #ff7043;
+  --color-deep-orange-6: #ff5722;
+  --color-deep-orange-7: #f4511e;
+  --color-deep-orange-8: #e64a19;
+  --color-deep-orange-9: #d84315;
+  --color-deep-orange-10: #bf360c;
+
+  --color-pink: #e91e63;
+  --color-pink-1: #fce4ec;
+  --color-pink-2: #f8bbd0;
+  --color-pink-3: #f48fb1;
+  --color-pink-4: #f06292;
+  --color-pink-5: #ec407a;
+  --color-pink-6: #e91e63;
+  --color-pink-7: #d81b60;
+  --color-pink-8: #c2185b;
+  --color-pink-9: #ad1457;
+  --color-pink-10: #880e4f;
+
+  --color-purple: #9c27b0;
+  --color-purple-1: #f3e5f5;
+  --color-purple-2: #e1bee7;
+  --color-purple-3: #ce93d8;
+  --color-purple-4: #ba68c8;
+  --color-purple-5: #ab47bc;
+  --color-purple-6: #9c27b0;
+  --color-purple-7: #8e24aa;
+  --color-purple-8: #7b1fa2;
+  --color-purple-9: #6a1b9a;
+  --color-purple-10: #4a148c;
+
+  --color-indigo: #3f51b5;
+  --color-indigo-4: #7986cb;
+  --color-indigo-6: #3f51b5;
+  --color-indigo-9: #283593;
+
+  --color-amber: #ffc107;
+  --color-amber-6: #ffc107;
+  --color-amber-9: #ff8f00;
+
+  --color-brown: #795548;
+  --color-brown-6: #795548;
+  --color-brown-9: #4e342e;
+
+  --color-cyan: #00bcd4;
+  --color-cyan-6: #00bcd4;
+  --color-cyan-9: #00838f;
+
+  --color-lime: #cddc39;
+  --color-lime-6: #cddc39;
+  --color-lime-9: #9e9d24;
+
+  --color-yellow: #ffeb3b;
+  --color-yellow-6: #ffeb3b;
+  --color-yellow-9: #f9a825;
+
+  /* -- Typography ---------------------------------------------------------- */
+  --font-sans: 'Roboto', -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'Roboto Mono', Consolas, 'Liberation Mono', Courier, monospace;
+
+  /*
+    Material type scale, matching the `text-h1`..`text-h6` / `text-subtitle*` / `text-caption` /
+    `text-overline` classes the templates already use. Declared as `--text-*` so Tailwind generates
+    them as first-class font-size utilities with a paired line-height.
+  */
+  --text-h1: 6rem;
+  --text-h1--line-height: 6rem;
+  --text-h1--letter-spacing: -0.01562em;
+  --text-h1--font-weight: 300;
+  --text-h2: 3.75rem;
+  --text-h2--line-height: 3.75rem;
+  --text-h2--letter-spacing: -0.00833em;
+  --text-h2--font-weight: 300;
+  --text-h3: 3rem;
+  --text-h3--line-height: 3.125rem;
+  --text-h3--letter-spacing: normal;
+  --text-h3--font-weight: 400;
+  --text-h4: 2.125rem;
+  --text-h4--line-height: 2.5rem;
+  --text-h4--letter-spacing: 0.00735em;
+  --text-h4--font-weight: 400;
+  --text-h5: 1.5rem;
+  --text-h5--line-height: 2rem;
+  --text-h5--letter-spacing: normal;
+  --text-h5--font-weight: 400;
+  --text-h6: 1.25rem;
+  --text-h6--line-height: 2rem;
+  --text-h6--letter-spacing: 0.0125em;
+  --text-h6--font-weight: 500;
+  --text-subtitle1: 1rem;
+  --text-subtitle1--line-height: 1.75rem;
+  --text-subtitle1--letter-spacing: 0.00937em;
+  --text-subtitle1--font-weight: 400;
+  --text-subtitle2: 0.875rem;
+  --text-subtitle2--line-height: 1.375rem;
+  --text-subtitle2--letter-spacing: 0.00714em;
+  --text-subtitle2--font-weight: 500;
+  --text-body1: 1rem;
+  --text-body1--line-height: 1.5rem;
+  --text-body1--letter-spacing: 0.03125em;
+  --text-body1--font-weight: 400;
+  --text-body2: 0.875rem;
+  --text-body2--line-height: 1.25rem;
+  --text-body2--letter-spacing: 0.01786em;
+  --text-body2--font-weight: 400;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.25rem;
+  --text-caption--letter-spacing: 0.03333em;
+  --text-caption--font-weight: 400;
+  --text-overline: 0.75rem;
+  --text-overline--line-height: 2rem;
+  --text-overline--letter-spacing: 0.16667em;
+  --text-overline--font-weight: 500;
+
+  /* -- Elevation ----------------------------------------------------------- */
+  --shadow-card:
+    0 1px 3px rgb(0 0 0 / 0.2), 0 1px 1px rgb(0 0 0 / 0.14), 0 2px 1px -1px rgb(0 0 0 / 0.12);
+  --shadow-menu:
+    0 1px 5px rgb(0 0 0 / 0.2), 0 2px 2px rgb(0 0 0 / 0.14), 0 3px 1px -2px rgb(0 0 0 / 0.12);
+  --shadow-dialog:
+    0 11px 15px -7px rgb(0 0 0 / 0.2), 0 24px 38px 3px rgb(0 0 0 / 0.14),
+    0 9px 46px 8px rgb(0 0 0 / 0.12);
+
+  /* -- Motion -------------------------------------------------------------- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+  Element reset for the shared components.
+
+  Preflight is switched off above, so a bare <button> keeps its user-agent background, border and
+  font. Quasar's own reset currently hides that -- which is the trap: the components would look
+  correct right up until Quasar's stylesheet is removed, then quietly regress. Resetting here makes
+  the library self-sufficient, so Phase 5 changes nothing about how it renders.
+
+  In `@layer components`, so utility classes (which come later in the layer order) still win: a
+  `text-sm` or `bg-primary` on the same element overrides these baselines rather than fighting them.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .w-input-control {
+    transition-duration: 0.01ms;
+  }
+}
+
+@layer components {
+  /*
+    Border-box sizing. Preflight would normally supply this; with it switched off, a bordered
+    element sized in px comes out wider than asked (a 200px drawer with a 1px border measured
+    201px). Quasar's reset happens to cover this today, which is exactly why it has to be stated
+    here -- otherwise every such element silently changes size the day Quasar is removed.
+  */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /*
+    Shared frame for the form controls (WInput, WSelect). Lives here rather than in a component's
+    scoped style because both components use it, and a scoped rule would only match the one it was
+    declared in. The ring itself is an inline box-shadow on each control; this supplies the resting
+    colour and the transition that animates between resting and active.
+  */
+  .w-input-control {
+    --w-input-ring: rgb(0 0 0 / 0.24);
+    /* Pointer-over: a full-strength edge, so the field reads as reachable before it is focused */
+    --w-input-ring-hover: var(--color-black);
+    /* .36s cubic-bezier(.4,0,.2,1) is Quasar's own field transition, kept so the timing matches */
+    transition:
+      box-shadow 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body.body--dark .w-input-control {
+    --w-input-ring: rgb(255 255 255 / 0.3);
+    --w-input-ring-hover: var(--color-white);
+  }
+
+  /*
+    A rule that stays exactly one device pixel thick under fractional display scaling.
+
+    The element keeps its 1px CSS box (so layout and margins behave normally) but paints nothing
+    itself; the line is drawn by a pseudo-element scaled to `1 / dpr`. At 150% scaling that is
+    0.667 CSS px = 1.0 device px. Without it a 1px CSS rule paints 1.5 device pixels there --
+    measured at ~48% more ink than the same rule at 100% -- which is what makes rules look heavier
+    on a scaled display, and makes rules seen at different scales disagree on what "1px" means.
+
+    `--w-dpr` is published by helpers/hairline.js; the fallback of 1 keeps this correct on a
+    non-scaled display even if that never runs.
+  */
+  .w-hairline {
+    position: relative;
+    background-color: transparent;
+  }
+
+  .w-hairline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--w-hairline-color, rgb(0 0 0 / 0.12));
+    transform: scaleY(calc(1 / var(--w-dpr, 1)));
+    transform-origin: top left;
+  }
+
+  .w-hairline--vertical::after {
+    transform: scaleX(calc(1 / var(--w-dpr, 1)));
+  }
+
+  body.body--dark .w-hairline,
+  .w-hairline--dark {
+    --w-hairline-color: rgb(255 255 255 / 0.15);
+  }
+
+  /*
+    The "push" treatment: a ledge along the bottom edge that makes the control read as raised, and
+    collapses as it is pressed while the control drops by the same 2px. Drawn inside the box as a
+    bottom border on an overlay, so it darkens the control's own bottom edge rather than casting
+    anything outside it.
+
+    Shared with the segmented control, which raises each of its segments the same way.
+
+    Content must sit in a positioned child, or this overlay paints over it -- WBtn and WBtnToggle
+    both mark theirs `relative`.
+  */
+  .w-push::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-bottom: 3px solid rgb(0 0 0 / 0.15);
+    pointer-events: none;
+    transition: border-bottom-width 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+  }
+
+  .w-push:active {
+    transform: translateY(2px);
+  }
+
+  .w-push:active::before {
+    border-bottom-width: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .w-push::before {
+      transition-duration: 0.01ms;
+    }
+  }
+
+  /*
+    Material gloss overlay: a highlight over the top half and a shade over the bottom, painted on
+    top of whatever fill the control has. Shared because both the button and the segmented control
+    offer it, and a second copy of the gradient would be a second thing to keep in step.
+  */
+  .w-glossy {
+    background-image: linear-gradient(
+      180deg,
+      hsl(0deg 0% 100% / 30%),
+      hsl(0deg 0% 100% / 0%) 50%,
+      rgb(0 0 0 / 12%) 51%,
+      rgb(0 0 0 / 4%)
+    );
+  }
+
+  /*
+    Section heading: primary-coloured text over a blue wash that fades out to the right, with two
+    soft rules trailing off beneath it. Lifted from the profile pages, where it was scoped to that
+    layout, so the admin cards can use the same treatment.
+
+    `--w-section-header-surface` is the colour the wash fades INTO, so the same recipe works on a
+    page and on a card; both happen to be white / dark-3 today, but a surface that is neither only
+    has to set the variable.
+
+    Colours resolve through `--color-primary`, so a re-themed site recolours these too -- the
+    original hard-coded the palette's blue.
+  */
+  .w-section-header {
+    --w-section-header-surface: var(--color-white);
+    position: relative;
+    margin-bottom: 10px;
+    padding: 0 16px 6px;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--color-primary);
+    background:
+      linear-gradient(to left, var(--w-section-header-surface), transparent),
+      linear-gradient(
+        to top,
+        color-mix(in srgb, var(--color-primary) 7.5%, transparent),
+        transparent
+      );
+  }
+
+  /* The wider, fainter band trailing below the heading */
+  .w-section-header::before {
+    content: '';
+    position: absolute;
+    bottom: -13px;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+    height: 10px;
+    background:
+      linear-gradient(to left, var(--w-section-header-surface), transparent),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-primary) 5%, transparent),
+        transparent
+      );
+  }
+
+  /*
+    The hairline immediately under it, fading out towards the right.
+
+    Scaled by `1 / --w-dpr` like `.w-hairline`, so it paints exactly one DEVICE pixel: a 1px CSS
+    rule is 1.5 device pixels at 150% display scaling, which reads visibly heavier than the same
+    rule elsewhere on the page.
+  */
+  .w-section-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    z-index: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      to left,
+      transparent,
+      color-mix(in srgb, var(--color-primary) 25%, transparent)
+    );
+    transform: scaleY(calc(1 / var(--w-dpr, 1)));
+    transform-origin: bottom;
+  }
+
+  body.body--dark .w-section-header {
+    --w-section-header-surface: var(--color-dark-3);
+  }
+
+  .w-unstyled {
+    appearance: none;
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: inherit;
+  }
+}
+
+/*
+  Quasar's breakpoints differ from Tailwind's defaults, and the templates are written against
+  Quasar's. Overriding rather than extending keeps `sm:`/`md:` meaning what the existing markup
+  assumes -- note Quasar's `sm` starts at 600px, not Tailwind's 640px.
+*/
+@theme {
+  --breakpoint-*: initial;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 1024px;
+  --breakpoint-lg: 1440px;
+  --breakpoint-xl: 1920px;
+}

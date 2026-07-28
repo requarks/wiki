@@ -1,288 +1,256 @@
-<template lang="pug">
-.editor-markdown
-  .editor-markdown-main
-    .editor-markdown-sidebar
-      //--------------------------------------------------------
-      //- SIDE TOOLBAR
-      //--------------------------------------------------------
-      q-btn(
-        icon='mdi-link-variant-plus'
-        padding='sm sm'
-        flat
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertLink') }}
-      q-btn(
-        icon='mdi-image-plus-outline'
-        padding='sm sm'
-        flat
-        )
-        q-menu(anchor='top right' self='top left')
-          q-list(separator, auto-close)
-            q-item(
-              clickable
-              @click='insertAssets'
-              )
-              q-item-section(side)
-                q-icon(name='las la-folder-open', color='positive')
-              q-item-section
-                q-item-label From File Manager...
-            q-item(
-              clickable
-              @click='getAssetFromClipboard'
-              v-close-popup
-              )
-              q-item-section(side)
-                q-icon(name='las la-clipboard', color='brown')
-              q-item-section
-                q-item-label From Clipboard...
-            q-item(
-              clickable
-              @click='notImplemented'
-              v-close-popup
-              )
-              q-item-section(side)
-                q-icon(name='las la-cloud-download-alt', color='blue')
-              q-item-section
-                q-item-label From Remote URL...
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertAssets') }}
-      q-btn(
-        icon='mdi-code-json'
-        padding='sm sm'
-        flat
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertCodeBlock') }}
-      q-btn(
-        icon='mdi-table-large-plus'
-        padding='sm sm'
-        flat
-        @click='insertTable'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTable') }}
-      q-btn(
-        icon='mdi-tab-plus'
-        padding='sm sm'
-        flat
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertTabset') }}
-      q-btn(
-        icon='mdi-toy-brick-plus'
-        padding='sm sm'
-        flat
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertBlock') }}
-      q-btn(
-        icon='mdi-chart-multiline'
-        padding='sm sm'
-        flat
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertDiagram') }}
-      q-btn(
-        icon='mdi-book-plus'
-        padding='sm sm'
-        flat
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertFootnote') }}
-      q-btn(
-        icon='mdi-cookie-plus'
-        padding='sm sm'
-        @click='notImplemented'
-        flat
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertEmoji') }}
-      q-btn(
-        icon='mdi-line-scan'
-        padding='sm sm'
-        flat
-        @click='insertHorizontalBar'
-        )
-        q-tooltip(anchor='center right' self='center left') {{ t('editor.markup.insertHorizontalBar') }}
-      q-space
-      span.editor-markdown-type Markdown
-    .editor-markdown-mid
-      //--------------------------------------------------------
-      //- TOP TOOLBAR
-      //--------------------------------------------------------
-      .editor-markdown-toolbar
-        q-btn(
-          icon='mdi-format-bold'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: `**` })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.bold') }}
-        q-btn(
-          icon='mdi-format-italic'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: `*` })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.italic') }}
-        q-btn(
-          icon='mdi-format-strikethrough'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: `~~` })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.strikethrough') }}
-        q-btn(
-          icon='mdi-format-header-pound'
-          padding='xs sm'
-          flat
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.header') }}
-          q-menu(auto-close)
-            q-list(separator)
-              q-item(
-                v-for='lvl in 6'
-                clickable
-                @click='setHeaderLine(lvl)'
-                )
-                q-item-section(side)
-                  q-icon(:name='`mdi-format-header-` + lvl')
-                q-item-section {{ t('editor.markup.headerLevel', { level: lvl }) }}
-        q-btn(
-          icon='mdi-format-subscript'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: `~` })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.subscript') }}
-        q-btn(
-          icon='mdi-format-superscript'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: `^` })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.superscript') }}
-        q-btn(
-          icon='mdi-alpha-t-box-outline'
-          padding='xs sm'
-          flat
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.blockquoteAdmonitions') }}
-          q-menu(auto-close)
-            q-list(separator)
-              q-item(clickable, @click='insertBeforeEachLine({ content: `> `})')
-                q-item-section(side)
-                  q-icon(name='mdi-format-quote-close')
-                q-item-section {{ t('editor.markup.blockquote') }}
-              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-info}`})')
-                q-item-section(side)
-                  q-icon(name='mdi-information-box', color='blue-7')
-                q-item-section {{ t('editor.markup.admonitionInfo') }}
-              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-success}`})')
-                q-item-section(side)
-                  q-icon(name='mdi-check-circle', color='positive')
-                q-item-section {{ t('editor.markup.admonitionSuccess') }}
-              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})')
-                q-item-section(side)
-                  q-icon(name='mdi-alert-box', color='orange')
-                q-item-section {{ t('editor.markup.admonitionWarning') }}
-              q-item(clickable, @click='insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})')
-                q-item-section(side)
-                  q-icon(name='mdi-close-box', color='negative')
-                q-item-section {{ t('editor.markup.admonitionDanger') }}
-        q-btn(
-          icon='mdi-format-list-bulleted'
-          padding='xs sm'
-          flat
-          @click='insertBeforeEachLine({ content: `- `})'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.unorderedList') }}
-        q-btn(
-          icon='mdi-format-list-numbered'
-          padding='xs sm'
-          flat
-          @click='insertBeforeEachLine({ content: `1. `})'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.orderedList') }}
-        q-btn(
-          icon='mdi-format-list-checks'
-          padding='xs sm'
-          flat
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.taskList') }}
-          q-menu(auto-close)
-            q-list(separator)
-              q-item(clickable, @click='insertBeforeEachLine({ content: `- [ ] `})')
-                q-item-section(side)
-                  q-icon(name='mdi-checkbox-blank-outline')
-                q-item-section {{ t('editor.markup.taskListUnchecked') }}
-              q-item(clickable, @click='insertBeforeEachLine({ content: `- [x] `})')
-                q-item-section(side)
-                  q-icon(name='mdi-checkbox-outline')
-                q-item-section {{ t('editor.markup.taskListChecked') }}
-        q-btn(
-          icon='mdi-code-tags'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: "`" })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.inlineCode') }}
-        q-btn(
-          icon='mdi-keyboard-variant'
-          padding='xs sm'
-          flat
-          @click='toggleMarkup({ start: `<kbd>`, end: `</kbd>` })'
-          )
-          q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.markup.keyboardKey') }}
-      //--------------------------------------------------------
-      //- MONACO EDITOR
-      //--------------------------------------------------------
-      .editor-markdown-editor
-        div(ref='monacoRef')
-    transition(name='editor-markdown-preview')
-      .editor-markdown-preview(v-if='state.previewShown')
-        .editor-markdown-preview-toolbar
-          strong: em {{ t('editor.renderPreview') }}
-          q-separator.q-ml-md.q-mr-sm(vertical, inset)
-          q-btn(
-            icon='mdi-arrow-vertical-lock'
-            padding='xs sm'
+<template>
+  <div class="editor-markdown">
+    <div class="editor-markdown-main">
+      <div class="editor-markdown-sidebar">
+        <!-- ------------------------------------------------------- -->
+        <!-- SIDE TOOLBAR -->
+        <!-- ------------------------------------------------------- -->
+        <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertLink') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:image-plus-outline" padding="sm sm" flat>
+          <!--
+            Only two of the three rows dismiss the menu, which is what the original did: the first
+            opens the file manager over the top of it. `auto-close` was on the list, where it has
+            never meant anything -- the list component has no such prop, so it rendered as a stray
+            attribute -- and the closing was done by a Quasar directive that cannot see a w-menu.
+          -->
+          <w-menu ref="assetMenuRef" anchor="top right" self="top left">
+            <w-list separator>
+              <w-item clickable @click="insertAssets">
+                <w-item-section side>
+                  <w-icon name="la:folder-open" color="positive" />
+                </w-item-section>
+                <w-item-section><w-item-label>From File Manager...</w-item-label></w-item-section>
+              </w-item>
+              <w-item clickable @click="getAssetFromClipboard(); assetMenuRef.hide()">
+                <w-item-section side>
+                  <w-icon name="la:clipboard" color="brown" />
+                </w-item-section>
+                <w-item-section><w-item-label>From Clipboard...</w-item-label></w-item-section>
+              </w-item>
+              <w-item clickable @click="notImplemented(); assetMenuRef.hide()">
+                <w-item-section side>
+                  <w-icon name="la:cloud-download-alt" color="blue" />
+                </w-item-section>
+                <w-item-section><w-item-label>From Remote URL...</w-item-label></w-item-section>
+              </w-item>
+            </w-list>
+          </w-menu>
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertAssets') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:code-json" padding="sm sm" flat @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertCodeBlock') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:table-large-plus" padding="sm sm" flat @click="insertTable">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertTable') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertTabset') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertBlock') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:chart-multiline" padding="sm sm" flat @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertDiagram') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertFootnote') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:cookie-plus" padding="sm sm" @click="notImplemented" flat>
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertEmoji') }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
+          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertHorizontalBar') }}</w-tooltip>
+        </w-btn>
+        <w-space />
+        <span class="editor-markdown-type">Markdown</span>
+      </div>
+      <div class="editor-markdown-mid">
+        <!-- ------------------------------------------------------- -->
+        <!-- TOP TOOLBAR -->
+        <!-- ------------------------------------------------------- -->
+        <div class="editor-markdown-toolbar">
+          <w-btn icon="mdi:format-bold" padding="xs sm" flat @click="toggleMarkup({ start: `**` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.bold') }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-italic"
+            padding="xs sm"
             flat
-            @click='state.previewScrollSync = !state.previewScrollSync'
-            :color='state.previewScrollSync ? `primary` : null'
-            )
-            q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.toggleScrollSync') }}
-          q-btn(
-            icon='mdi-eye-off-outline'
-            padding='xs sm'
+            @click="toggleMarkup({ start: `*` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.italic') }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-strikethrough"
+            padding="xs sm"
             flat
-            @click='state.previewShown = false'
-            )
-            q-tooltip(anchor='top middle' self='bottom middle') {{ t('editor.togglePreviewPane') }}
-        .editor-markdown-preview-content.page-contents(ref='editorPreviewContainerRef')
-          div(
-            ref='editorPreview'
-            v-html='pageStore.render'
-            )
+            @click="toggleMarkup({ start: `~~` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.strikethrough') }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.header') }}</w-tooltip>
+            <w-menu auto-close>
+              <w-list separator>
+                <w-item v-for="lvl in 6" clickable @click="setHeaderLine(lvl)">
+                  <w-item-section side>
+                    <w-icon :name="HEADER_ICONS[lvl - 1]" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.headerLevel', { level: lvl }) }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-subscript"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `~` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.subscript') }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-superscript"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `^` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.superscript') }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:alpha-t-box-outline" padding="xs sm" flat>
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.blockquoteAdmonitions') }}</w-tooltip>
+            <w-menu auto-close>
+              <w-list separator>
+                <w-item clickable @click="insertBeforeEachLine({ content: `> `})">
+                  <w-item-section side><w-icon name="mdi:format-quote-close" /></w-item-section>
+                  <w-item-section>{{ t('editor.markup.blockquote') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-info}`})">
+                  <w-item-section side>
+                    <w-icon name="mdi:information-box" color="blue-7" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionInfo') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-success}`})">
+                  <w-item-section side>
+                    <w-icon name="mdi:check-circle" color="positive" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionSuccess') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})">
+                  <w-item-section side>
+                    <w-icon name="mdi:alert-box" color="orange" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionWarning') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})">
+                  <w-item-section side>
+                    <w-icon name="mdi:close-box" color="negative" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionDanger') }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-list-bulleted"
+            padding="xs sm"
+            flat
+            @click="insertBeforeEachLine({ content: `- `})">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.unorderedList') }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-list-numbered"
+            padding="xs sm"
+            flat
+            @click="insertBeforeEachLine({ content: `1. `})">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.orderedList') }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:format-list-checks" padding="xs sm" flat>
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.taskList') }}</w-tooltip>
+            <w-menu auto-close>
+              <w-list separator>
+                <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] `})">
+                  <w-item-section side><w-icon name="mdi:checkbox-blank-outline" /></w-item-section>
+                  <w-item-section>{{ t('editor.markup.taskListUnchecked') }}</w-item-section>
+                </w-item>
+                <w-item clickable @click="insertBeforeEachLine({ content: `- [x] `})">
+                  <w-item-section side><w-icon name="mdi:checkbox-outline" /></w-item-section>
+                  <w-item-section>{{ t('editor.markup.taskListChecked') }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn icon="mdi:code-tags" padding="xs sm" flat @click='toggleMarkup({ start: "`" })'>
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.inlineCode') }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:keyboard-variant"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `<kbd>`, end: `</kbd>` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.keyboardKey') }}</w-tooltip>
+          </w-btn>
+        </div>
+        <!-- ------------------------------------------------------- -->
+        <!-- MONACO EDITOR -->
+        <!-- ------------------------------------------------------- -->
+        <div class="editor-markdown-editor"><div ref="monacoRef" /></div>
+      </div>
+      <transition name="editor-markdown-preview">
+        <div class="editor-markdown-preview" v-if="state.previewShown">
+          <div class="editor-markdown-preview-toolbar">
+            <strong><em>{{ t('editor.renderPreview') }}</em></strong>
+            <w-separator class="ml-4 mr-2" vertical inset />
+            <w-btn
+              icon="mdi:arrow-vertical-lock"
+              padding="xs sm"
+              flat
+              @click="state.previewScrollSync = !state.previewScrollSync"
+              :color="state.previewScrollSync ? `primary` : null">
+              <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.toggleScrollSync') }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:eye-off-outline"
+              padding="xs sm"
+              flat
+              @click="state.previewShown = false">
+              <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.togglePreviewPane') }}</w-tooltip>
+            </w-btn>
+          </div>
+          <div
+            class="editor-markdown-preview-content page-contents"
+            ref="editorPreviewContainerRef">
+            <div ref="editorPreview" v-html="pageStore.render" />
+          </div>
+        </div>
+      </transition>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { reactive, ref, shallowRef, nextTick, onMounted, watch, onBeforeUnmount } from 'vue'
-import { useMeta, useQuasar, setCssVar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { find, get, last, times, startsWith, debounce } from 'lodash-es'
-import * as monaco from 'monaco-editor'
-import { Position, Range } from 'monaco-editor'
+
+import { notify } from '@/composables/notify'
 
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
-// Markdown Renderer
+import { debounce } from 'es-toolkit/function'
+import * as monaco from 'monaco-editor'
+import { Position, Range } from 'monaco-editor'
 import { MarkdownRenderer } from '@/renderers/markdown'
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -302,6 +270,21 @@ let md
 const monacoRef = ref(null)
 const editorPreviewContainerRef = ref(null)
 
+/*
+  Listed rather than built as `mdi:format-header-${lvl}`: a concatenated icon name is invisible to
+  the build-time icon scan, so it would ship as six blank squares.
+*/
+const HEADER_ICONS = [
+  'mdi:format-header-1',
+  'mdi:format-header-2',
+  'mdi:format-header-3',
+  'mdi:format-header-4',
+  'mdi:format-header-5',
+  'mdi:format-header-6'
+]
+
+const assetMenuRef = ref(null)
+
 const state = reactive({
   previewShown: true,
   previewScrollSync: true
@@ -309,11 +292,11 @@ const state = reactive({
 
 // METHODS
 
-function insertAssets () {
+function insertAssets() {
   siteStore.openFileManager({ insertMode: true })
 }
 
-function insertAssetClb (opts) {
+function insertAssetClb(opts) {
   const assetPath = opts.folderPath ? `${opts.folderPath}/${opts.fileName}` : opts.fileName
   let content = ''
   switch (opts.type) {
@@ -332,73 +315,79 @@ function insertAssetClb (opts) {
   }, 500)
 }
 
-function insertTable () {
+function insertTable() {
   siteStore.$patch({
     overlay: 'TableEditor'
   })
 }
 
 /**
-* Set current line as header
-*/
-function setHeaderLine (lvl, focus = true) {
+ * Set current line as header
+ */
+function setHeaderLine(lvl, focus = true) {
   const curLine = editor.getPosition().lineNumber
   let lineContent = editor.getModel().getLineContent(curLine)
   const lineLength = lineContent.length
-  if (startsWith(lineContent, '#')) {
+  if (lineContent.startsWith('#')) {
     lineContent = lineContent.replace(/^(#+ )/, '')
   }
-  lineContent = times(lvl, n => '#').join('') + ' ' + lineContent
-  editor.executeEdits('', [{
-    range: new Range(curLine, 1, curLine, lineLength + 1),
-    text: lineContent,
-    forceMoveMarkers: true
-  }])
+  lineContent = '#'.repeat(lvl) + ' ' + lineContent
+  editor.executeEdits('', [
+    {
+      range: new Range(curLine, 1, curLine, lineLength + 1),
+      text: lineContent,
+      forceMoveMarkers: true
+    }
+  ])
   if (focus) {
     editor.focus()
   }
 }
 
 /**
-* Get the header lever of the current line
-*/
-function getHeaderLevel () {
+ * Get the header lever of the current line
+ */
+function getHeaderLevel() {
   const curLine = editor.getPosition().lineNumber
   const lineContent = editor.getModel().getLineContent(curLine)
   let lvl = 0
   const result = lineContent.match(/^(#+) /)
   if (result) {
-    lvl = get(result, '[1]', '').length
+    lvl = (result?.[1] ?? '').length
   }
   return lvl
 }
 
 /**
-* Insert content at cursor
-*/
-function insertAtCursor ({ content, focus = true }) {
+ * Insert content at cursor
+ */
+function insertAtCursor({ content, focus = true }) {
   const cursor = editor.getPosition()
-  editor.executeEdits('', [{
-    range: new Range(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column),
-    text: content,
-    forceMoveMarkers: true
-  }])
+  editor.executeEdits('', [
+    {
+      range: new Range(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column),
+      text: content,
+      forceMoveMarkers: true
+    }
+  ])
   if (focus) {
     editor.focus()
   }
 }
 
 /**
-* Insert content after current line
-*/
-function insertAfter ({ content, newLine, focus = true }) {
+ * Insert content after current line
+ */
+function insertAfter({ content, newLine, focus = true }) {
   const curLine = editor.getPosition().lineNumber
   const lineLength = editor.getModel().getLineContent(curLine).length
-  editor.executeEdits('', [{
-    range: new Range(curLine, lineLength + 1, curLine, lineLength + 1),
-    text: newLine ? `\n\n${content}\n` : `\n${content}`,
-    forceMoveMarkers: true
-  }])
+  editor.executeEdits('', [
+    {
+      range: new Range(curLine, lineLength + 1, curLine, lineLength + 1),
+      text: newLine ? `\n\n${content}\n` : `\n${content}`,
+      forceMoveMarkers: true
+    }
+  ])
   if (focus) {
     editor.focus()
     editor.revealLineInCenterIfOutsideViewport(editor.getPosition().lineNumber)
@@ -406,17 +395,17 @@ function insertAfter ({ content, newLine, focus = true }) {
 }
 
 /**
-* Insert content before current line
-*/
-function insertBeforeEachLine ({ content, after, focus = true }) {
+ * Insert content before current line
+ */
+function insertBeforeEachLine({ content, after, focus = true }) {
   const edits = []
   for (const selection of editor.getSelections()) {
     const lineCount = selection.endLineNumber - selection.startLineNumber + 1
-    const lines = times(lineCount, l => l + selection.startLineNumber)
+    const lines = Array.from({ length: lineCount }, (_, l) => l + selection.startLineNumber)
     for (const line of lines) {
       let lineContent = editor.getModel().getLineContent(line)
       const lineLength = lineContent.length
-      if (startsWith(lineContent, content)) {
+      if (lineContent.startsWith(content)) {
         lineContent = lineContent.substring(content.length)
       }
       edits.push({
@@ -426,7 +415,7 @@ function insertBeforeEachLine ({ content, after, focus = true }) {
       })
     }
     if (after) {
-      const lastLine = last(lines)
+      const lastLine = lines.at(-1)
       const lineLength = editor.getModel().getLineContent(lastLine).length
       edits.push({
         range: new Range(lastLine, lineLength + 1, lastLine, lineLength + 1),
@@ -444,19 +433,21 @@ function insertBeforeEachLine ({ content, after, focus = true }) {
 }
 
 /**
-* Insert an Horizontal Bar
-*/
-function insertHorizontalBar () {
+ * Insert an Horizontal Bar
+ */
+function insertHorizontalBar() {
   insertAfter({ content: '---', newLine: true })
 }
 
 /**
-* Toggle Markup at selection
-*/
-async function toggleMarkup ({ start, end }) {
-  if (!end) { end = start }
+ * Toggle Markup at selection
+ */
+async function toggleMarkup({ start, end }) {
+  if (!end) {
+    end = start
+  }
   if (!editor.getSelection()) {
-    return $q.notify({
+    return notify({
       type: 'negative',
       message: t('editor.markup.noSelectionError')
     })
@@ -468,14 +459,25 @@ async function toggleMarkup ({ start, end }) {
     const selectedText = editor.getModel().getValueInRange(selection)
     if (!selectedText) {
       const wordObj = editor.getModel().getWordAtPosition(selection.getPosition())
-      const wordRange = new Range(selection.startLineNumber, wordObj.startColumn, selection.endLineNumber, wordObj.endColumn)
+      const wordRange = new Range(
+        selection.startLineNumber,
+        wordObj.startColumn,
+        selection.endLineNumber,
+        wordObj.endColumn
+      )
       if (wordObj.word.startsWith(start) && wordObj.word.endsWith(end)) {
-        edits.push({ range: wordRange, text: wordObj.word.substring(start.length, wordObj.word.length - end.length) })
+        edits.push({
+          range: wordRange,
+          text: wordObj.word.substring(start.length, wordObj.word.length - end.length)
+        })
       } else {
         edits.push({ range: wordRange, text: `${start}${wordObj.word}${end}` })
       }
     } else if (selectedText.startsWith(start) && selectedText.endsWith(end)) {
-      edits.push({ range: selection, text: selectedText.substring(start.length, selectedText.length - end.length) })
+      edits.push({
+        range: selection,
+        text: selectedText.substring(start.length, selectedText.length - end.length)
+      })
     } else {
       edits.push({ range: selection, text: `${start}${selectedText}${end}` })
     }
@@ -484,7 +486,7 @@ async function toggleMarkup ({ start, end }) {
   editor.executeEdits('', edits)
 }
 
-function processContent (newContent) {
+function processContent(newContent) {
   pageStore.$patch({
     render: md.render(newContent)
   })
@@ -495,11 +497,11 @@ function processContent (newContent) {
   })
 }
 
-function openEditorSettings () {
+function openEditorSettings() {
   siteStore.$patch({ overlay: 'EditorMarkdownConfig' })
 }
 
-async function getAssetFromClipboard () {
+async function getAssetFromClipboard() {
   try {
     const permission = await navigator.permissions.query({
       name: 'clipboard-read'
@@ -510,7 +512,7 @@ async function getAssetFromClipboard () {
     const clipboardContents = await navigator.clipboard.read()
     let hasValidItem = false
     for (const item of clipboardContents) {
-      const imageType = find(item.types, t => t.startsWith('image/'))
+      const imageType = item.types.find((t) => t.startsWith('image/'))
       if (imageType) {
         hasValidItem = true
         const blob = await item.getType(imageType)
@@ -524,7 +526,7 @@ async function getAssetFromClipboard () {
       throw new Error('No supported content found in the Clipboard.')
     }
   } catch (err) {
-    return $q.notify({
+    return notify({
       type: 'negative',
       message: 'Unable to copy from Clipboard',
       caption: err.message
@@ -532,7 +534,7 @@ async function getAssetFromClipboard () {
   }
 }
 
-function reloadEditorContent () {
+function reloadEditorContent() {
   editor.getModel().setValue(pageStore.content)
 }
 
@@ -562,7 +564,8 @@ onMounted(async () => {
   // Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
   // original https://github.com/microsoft/vscode/blob/3e5c7e2c570a729e664253baceaf443b69e82da6/extensions/markdown-basics/language-configuration.json#L55
   monaco.languages.setLanguageConfiguration('markdown', {
-    wordPattern: /([*_]{1,2}|~~|`+)?[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+(_+[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+)*\1/gu
+    wordPattern:
+      /([*_]{1,2}|~~|`+)?[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+(_+[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+)*\1/gu
   })
 
   // -> Initialize Monaco Editor
@@ -593,7 +596,7 @@ onMounted(async () => {
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB],
     label: 'Toggle bold',
     precondition: '',
-    run (ed) {
+    run(ed) {
       toggleMarkup({ start: '**' })
     }
   })
@@ -605,7 +608,7 @@ onMounted(async () => {
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
     label: 'Toggle italic',
     precondition: '',
-    run (ed) {
+    run(ed) {
       toggleMarkup({ start: '*' })
     }
   })
@@ -615,9 +618,11 @@ onMounted(async () => {
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.RightArrow],
     label: 'Increase Header Level',
     precondition: '',
-    run (ed) {
+    run(ed) {
       let lvl = getHeaderLevel()
-      if (lvl >= 6) { lvl = 5 }
+      if (lvl >= 6) {
+        lvl = 5
+      }
       setHeaderLine(lvl + 1)
     }
   })
@@ -626,9 +631,11 @@ onMounted(async () => {
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.LeftArrow],
     label: 'Decrease Header Level',
     precondition: '',
-    run (ed) {
+    run(ed) {
       let lvl = getHeaderLevel()
-      if (lvl <= 1) { lvl = 2 }
+      if (lvl <= 1) {
+        lvl = 2
+      }
       setHeaderLine(lvl - 1)
     }
   })
@@ -638,49 +645,58 @@ onMounted(async () => {
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
     label: 'Save',
     precondition: '',
-    run (ed) {
-    }
+    run(ed) {}
   })
 
   // -> Handle content change
-  editor.onDidChangeModelContent(debounce(ev => {
-    editorStore.$patch({
-      lastChangeTimestamp: Temporal.Now.instant()
-    })
-    pageStore.$patch({
-      content: editor.getValue()
-    })
-    processContent(pageStore.content)
-  }, 500))
+  editor.onDidChangeModelContent(
+    debounce((ev) => {
+      editorStore.$patch({
+        lastChangeTimestamp: Temporal.Now.instant()
+      })
+      pageStore.$patch({
+        content: editor.getValue()
+      })
+      processContent(pageStore.content)
+    }, 500)
+  )
 
   // -> Handle cursor movement
-  editor.onDidChangeCursorPosition(debounce(ev => {
-    if (!state.previewScrollSync || !state.previewShown) { return }
-    const currentLine = editor.getPosition().lineNumber
-    if (currentLine < 3) {
-      editorPreviewContainerRef.value.scrollTo({ top: 0, behavior: 'smooth' })
-    } else {
-      const exactEl = editorPreviewContainerRef.value.querySelector(`[data-line='${currentLine}']`)
-      if (exactEl) {
-        exactEl.scrollIntoView({
-          behavior: 'smooth'
-        })
+  editor.onDidChangeCursorPosition(
+    debounce((ev) => {
+      if (!state.previewScrollSync || !state.previewShown) {
+        return
+      }
+      const currentLine = editor.getPosition().lineNumber
+      if (currentLine < 3) {
+        editorPreviewContainerRef.value.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
-        const closestLine = md.getClosestPreviewLine(currentLine)
-        if (closestLine) {
-          const closestEl = editorPreviewContainerRef.value.querySelector(`[data-line='${closestLine}']`)
-          if (closestEl) {
-            closestEl.scrollIntoView({
-              behavior: 'smooth'
-            })
+        const exactEl = editorPreviewContainerRef.value.querySelector(
+          `[data-line='${currentLine}']`
+        )
+        if (exactEl) {
+          exactEl.scrollIntoView({
+            behavior: 'smooth'
+          })
+        } else {
+          const closestLine = md.getClosestPreviewLine(currentLine)
+          if (closestLine) {
+            const closestEl = editorPreviewContainerRef.value.querySelector(
+              `[data-line='${closestLine}']`
+            )
+            if (closestEl) {
+              closestEl.scrollIntoView({
+                behavior: 'smooth'
+              })
+            }
           }
         }
       }
-    }
-  }, 500))
+    }, 500)
+  )
 
   // -> Handle asset drop
-  editor.getContainerDomNode().addEventListener('drop', ev => {
+  editor.getContainerDomNode().addEventListener('drop', (ev) => {
     ev.preventDefault()
     for (const file of ev.dataTransfer.files) {
       const blobUrl = editorStore.addPendingAsset(file)
@@ -750,8 +766,8 @@ onBeforeUnmount(() => {
   }
 })
 
-function notImplemented () {
-  $q.notify({
+function notImplemented() {
+  notify({
     type: 'negative',
     message: 'Not implemented'
   })
@@ -794,7 +810,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     writing-mode: vertical-rl;
     text-orientation: mixed;
     padding-bottom: 1rem;
-    color: rgba(255,255,255, .4);
+    color: rgba(255, 255, 255, 0.4);
     font-weight: 500;
   }
   &-preview {
@@ -812,15 +828,17 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     // @include until($tablet) {
     //   display: none;
     // }
-    &-enter-active, &-leave-active {
-      transition: max-width .5s ease;
+    &-enter-active,
+    &-leave-active {
+      transition: max-width 0.5s ease;
       max-width: 50vw;
       .editor-code-preview-content {
         width: 50vw;
-        overflow:hidden;
+        overflow: hidden;
       }
     }
-    &-enter, &-leave-to {
+    &-enter,
+    &-leave-to {
       max-width: 0;
     }
     &-toolbar {
@@ -870,7 +888,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
         }
         &-header {
           background-color: $teal-5;
-          color: #FFF !important;
+          color: #fff !important;
           padding: 5px 12px;
           font-size: 14px;
           font-weight: 500;
@@ -885,7 +903,7 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
           padding: 0 15px 15px;
           overflow: hidden;
           @at-root .theme--dark & {
-            background-color: rgba($teal-5, .1);
+            background-color: rgba($teal-5, 0.1);
           }
         }
       }
@@ -894,13 +912,13 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
   &-toolbar {
     background-color: $primary;
     border-left: 60px solid color.adjust($primary, $lightness: -5%);
-    color: #FFF;
+    color: #fff;
     height: 32px;
   }
   &-sidebar {
     background-color: $dark-4;
     border-top: 32px solid color.adjust($primary, $lightness: -10%);
-    color: #FFF;
+    color: #fff;
     width: 56px;
     display: flex;
     flex-direction: column;

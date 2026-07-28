@@ -1,363 +1,372 @@
-<template lang="pug">
-.auth-login
-  //- -----------------------------------------------------
-  //- LOGIN SCREEN
-  //- -----------------------------------------------------
-  template(v-if='state.screen === `login`')
-    template(v-if='state.strategies?.length > 1')
-      p {{t('auth.selectAuthProvider')}}
-      .auth-strategies.q-mb-md
-        q-btn(
-          v-for='str of state.strategies'
-          :label='str.activeStrategy.displayName'
-          :icon='`img:` + str.activeStrategy.strategy.icon'
+<template>
+  <div class="auth-login">
+    <!-- ----------------------------------------------------- -->
+    <!-- LOGIN SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-if="state.screen === `login`">
+      <template v-if="state.strategies?.length > 1">
+        <p>{{t('auth.selectAuthProvider')}}</p>
+        <div class="auth-strategies mb-4">
+          <w-btn
+            v-for="str of state.strategies"
+            :label="str.activeStrategy.displayName"
+            :icon="`img:` + str.activeStrategy.strategy.icon"
+            push
+            no-caps
+            :color="str.id === state.selectedStrategyId ? `primary` : (dark.isActive ? `blue-grey-9` : `grey-1`)"
+            :text-color="str.id === state.selectedStrategyId || dark.isActive ? `white` : `blue-grey-9`"
+            @click="state.selectedStrategyId = str.id" />
+        </div>
+      </template>
+      <w-form ref="loginForm" @submit="login">
+        <w-input
+          ref="loginEmailIpt"
+          v-model="state.username"
+          autofocus
+          outlined
+          :label="t(`auth.fields.` + (selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`))"
+          :rules="selectedStrategy.activeStrategy?.strategy?.usernameType === `username` ? loginUsernameValidation : userEmailValidation"
+          lazy-rules="ondemand"
+          hide-bottom-space
+          :autocomplete="selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`">
+          <template #prepend><w-icon name="la:user" /></template>
+        </w-input>
+        <w-input
+          class="mt-2"
+          v-model="state.password"
+          outlined
+          :label="t(`auth.fields.password`)"
+          :rules="loginPasswordValidation"
+          lazy-rules="ondemand"
+          hide-bottom-space
+          type="password"
+          autocomplete="current-password">
+          <template #prepend><w-icon name="la:key" /></template>
+        </w-input>
+        <w-btn
+          class="w-full mt-2"
+          type="submit"
           push
+          color="primary"
+          :label="t(`auth.actions.login`)"
           no-caps
-          :color='str.id === state.selectedStrategyId ? `primary` : ($q.dark.isActive ? `blue-grey-9` : `grey-1`)'
-          :text-color='str.id === state.selectedStrategyId || $q.dark.isActive ? `white` : `blue-grey-9`'
-          @click='state.selectedStrategyId = str.id'
-          )
-    q-form(ref='loginForm', @submit='login')
-      q-input(
-        ref='loginEmailIpt'
-        v-model='state.username'
-        autofocus
-        outlined
-        :label='t(`auth.fields.` + (selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`))'
-        :rules='selectedStrategy.activeStrategy?.strategy?.usernameType === `username` ? loginUsernameValidation : userEmailValidation'
-        lazy-rules='ondemand'
-        hide-bottom-space
-        :autocomplete='selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`'
-        )
-        template(#prepend)
-          i.las.la-user
-      q-input.q-mt-sm(
-        v-model='state.password'
-        outlined
-        :label='t(`auth.fields.password`)'
-        :rules='loginPasswordValidation'
-        lazy-rules='ondemand'
-        hide-bottom-space
-        type='password'
-        autocomplete='current-password'
-        )
-        template(#prepend)
-          i.las.la-key
-      q-btn.full-width.q-mt-sm(
-        type='submit'
-        push
-        color='primary'
-        :label='t(`auth.actions.login`)'
-        no-caps
-        icon='las la-sign-in-alt'
-      )
-    template(v-if='canUsePasskeys')
-      q-separator.q-my-md
-      q-btn.acrylic-btn.full-width(
+          icon="la:sign-in-alt" />
+      </w-form>
+      <template v-if="canUsePasskeys">
+        <w-separator class="my-4" />
+        <w-btn
+          class="acrylic-btn w-full"
+          flat
+          color="primary"
+          :label="t(`auth.passkeys.signin`)"
+          no-caps
+          icon="la:key"
+          @click="switchTo(`passkey`)" />
+      </template>
+      <template v-if="selectedStrategy.activeStrategy?.strategy?.key === `local`">
+        <w-separator class="my-4" />
+        <w-btn
+          class="acrylic-btn w-full mb-2"
+          v-if="selectedStrategy.activeStrategy.registration"
+          flat
+          color="primary"
+          :label="t(`auth.switchToRegister.link`)"
+          no-caps
+          icon="la:user-plus"
+          @click="switchTo(`register`)" />
+        <w-btn
+          class="acrylic-btn w-full"
+          flat
+          color="primary"
+          :label="t(`auth.forgotPasswordLink`)"
+          no-caps
+          icon="la:life-ring"
+          @click="switchTo(`forgot`)" />
+      </template>
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- PASSKEY LOGIN SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-else-if="state.screen === `passkey`">
+      <p>{{t('auth.passkeys.signinHint')}}</p>
+      <w-form ref="passkeyForm" @submit="loginWithPasskey">
+        <w-input
+          ref="passkeyEmailIpt"
+          v-model="state.username"
+          outlined
+          hide-bottom-space
+          :label="t(`auth.fields.email`)"
+          autocomplete="webauthn">
+          <template #prepend><w-icon name="la:envelope" /></template>
+        </w-input>
+        <w-btn
+          class="w-full mt-2"
+          type="submit"
+          push
+          color="primary"
+          :label="t(`auth.actions.login`)"
+          no-caps
+          icon="la:key" />
+      </w-form>
+      <w-separator class="my-4" />
+      <w-btn
+        class="acrylic-btn w-full"
         flat
-        color='primary'
-        :label='t(`auth.passkeys.signin`)'
+        color="primary"
+        :label="t(`auth.forgotPasswordCancel`)"
         no-caps
-        icon='las la-key'
-        @click='switchTo(`passkey`)'
-      )
-    template(v-if='selectedStrategy.activeStrategy?.strategy?.key === `local`')
-      q-separator.q-my-md
-      q-btn.acrylic-btn.full-width.q-mb-sm(
-        v-if='selectedStrategy.activeStrategy.registration'
+        icon="la:arrow-circle-left"
+        @click="switchTo(`login`)" />
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- FORGOT PASSWORD SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-else-if="state.screen === `forgot`">
+      <p>{{t('auth.forgotPasswordSubtitle')}}</p>
+      <w-form ref="forgotForm" @submit="forgotPassword">
+        <w-input
+          ref="forgotEmailIpt"
+          v-model="state.username"
+          outlined
+          :rules="userEmailValidation"
+          lazy-rules="ondemand"
+          hide-bottom-space
+          :label="t(`auth.fields.email`)"
+          autocomplete="email">
+          <template #prepend><w-icon name="la:envelope" /></template>
+        </w-input>
+        <w-btn
+          class="w-full mt-2"
+          type="submit"
+          push
+          color="primary"
+          :label="t(`auth.sendResetPassword`)"
+          no-caps
+          icon="la:life-ring" />
+      </w-form>
+      <w-separator class="my-4" />
+      <w-btn
+        class="acrylic-btn w-full"
         flat
-        color='primary'
-        :label='t(`auth.switchToRegister.link`)'
+        color="primary"
+        :label="t(`auth.forgotPasswordCancel`)"
         no-caps
-        icon='las la-user-plus'
-        @click='switchTo(`register`)'
-      )
-      q-btn.acrylic-btn.full-width(
+        icon="la:arrow-circle-left"
+        @click="switchTo(`login`)" />
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- REGISTER SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-else-if="state.screen === `register`">
+      <p>{{t('auth.registerSubTitle')}}</p>
+      <w-form ref="registerForm" @submit="register">
+        <w-input
+          ref="registerNameIpt"
+          v-model="state.newName"
+          outlined
+          :rules="userNameValidation"
+          lazy-rules="ondemand"
+          hide-bottom-space
+          :label="t(`auth.fields.name`)"
+          autocomplete="name">
+          <template #prepend><w-icon name="la:user-circle" /></template>
+        </w-input>
+        <w-input
+          class="mt-2"
+          type="email"
+          v-model="state.newEmail"
+          outlined
+          :rules="userEmailValidation"
+          lazy-rules="ondemand"
+          hide-bottom-space
+          :label="t(`auth.fields.email`)"
+          autocomplete="email">
+          <template #prepend><w-icon name="la:envelope" /></template>
+        </w-input>
+        <w-input
+          class="mt-2"
+          v-model="state.newPassword"
+          outlined
+          :label="t(`auth.fields.password`)"
+          type="password"
+          autocomplete="new-password"
+          :rules="userPasswordValidation"
+          hide-bottom-space
+          lazy-rules="ondemand">
+          <template #append>
+            <w-badge
+              v-show="state.newPassword"
+              :color="passwordStrength.color"
+              :label="passwordStrength.label" />
+          </template>
+          <template #prepend><w-icon name="la:key" /></template>
+        </w-input>
+        <w-input
+          class="mt-2"
+          v-model="state.newPasswordVerify"
+          outlined
+          :label="t(`auth.fields.verifyPassword`)"
+          type="password"
+          autocomplete="new-password"
+          :rules="userPasswordVerifyValidation"
+          hide-bottom-space
+          lazy-rules="ondemand">
+          <template #prepend><w-icon name="la:key" /></template>
+        </w-input>
+        <w-btn
+          class="w-full mt-2"
+          type="submit"
+          push
+          color="primary"
+          :label="t(`auth.actions.register`)"
+          no-caps
+          icon="la:user-plus" />
+      </w-form>
+      <w-separator class="my-4" />
+      <w-btn
+        class="acrylic-btn w-full"
         flat
-        color='primary'
-        :label='t(`auth.forgotPasswordLink`)'
+        color="primary"
+        :label="t(`auth.switchToLogin.link`)"
         no-caps
-        icon='las la-life-ring'
-        @click='switchTo(`forgot`)'
-      )
-
-  //- -----------------------------------------------------
-  //- PASSKEY LOGIN SCREEN
-  //- -----------------------------------------------------
-  template(v-else-if='state.screen === `passkey`')
-    p {{t('auth.passkeys.signinHint')}}
-    q-form(ref='passkeyForm', @submit='loginWithPasskey')
-      q-input(
-        ref='passkeyEmailIpt'
-        v-model='state.username'
-        outlined
-        hide-bottom-space
-        :label='t(`auth.fields.email`)'
-        autocomplete='webauthn'
-        )
-        template(#prepend)
-          i.las.la-envelope
-      q-btn.full-width.q-mt-sm(
-        type='submit'
+        icon="la:arrow-circle-left"
+        @click="switchTo(`login`)" />
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- CHANGE PASSWORD SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-else-if="state.screen === `changePwd`">
+      <p v-if="state.continuationToken">{{t('auth.changePwd.instructions')}}</p>
+      <w-form ref="changePwdForm" @submit="changePwd">
+        <w-input
+          v-if="!state.continuationToken"
+          ref="changePwdCurrentIpt"
+          v-model="state.password"
+          outlined
+          type="password"
+          :rules="loginPasswordValidation"
+          lazy-rules="ondemand"
+          hide-bottom-space
+          :label="t(`auth.changePwd.currentPassword`)"
+          autocomplete="password">
+          <template #prepend><w-icon name="la:key" /></template>
+        </w-input>
+        <w-input
+          class="mt-2"
+          ref="changePwdNewPwdIpt"
+          v-model="state.newPassword"
+          outlined
+          :label="t(`auth.changePwd.newPassword`)"
+          type="password"
+          autocomplete="new-password"
+          :rules="userPasswordValidation"
+          hide-bottom-space
+          lazy-rules="ondemand">
+          <template #append>
+            <w-badge
+              v-show="state.newPassword"
+              :color="passwordStrength.color"
+              :label="passwordStrength.label" />
+          </template>
+          <template #prepend><w-icon name="la:key" /></template>
+        </w-input>
+        <w-input
+          class="mt-2"
+          v-model="state.newPasswordVerify"
+          outlined
+          :label="t(`auth.changePwd.newPasswordVerify`)"
+          type="password"
+          autocomplete="new-password"
+          :rules="userPasswordVerifyValidation"
+          hide-bottom-space
+          lazy-rules="ondemand">
+          <template #prepend><w-icon name="la:key" /></template>
+        </w-input>
+        <w-btn
+          class="w-full mt-2"
+          type="submit"
+          push
+          color="primary"
+          :label="t(`auth.changePwd.proceed`)"
+          no-caps
+          icon="la:sync-alt" />
+      </w-form>
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- TFA SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-else-if="state.screen === `tfa`">
+      <p>{{t('auth.tfa.subtitle')}}</p>
+      <v-otp-input
+        v-model:value="state.securityCode"
+        :num-inputs="6"
+        :should-auto-focus="true"
+        input-classes="otp-input"
+        input-type="number"
+        separator=""
+        @on-complete="verifyTFA" />
+      <w-btn
+        class="w-full mt-4"
         push
-        color='primary'
-        :label='t(`auth.actions.login`)'
+        color="primary"
+        :label="t(`auth.tfa.verifyToken`)"
         no-caps
-        icon='las la-key'
-      )
-    q-separator.q-my-md
-    q-btn.acrylic-btn.full-width(
-      flat
-      color='primary'
-      :label='t(`auth.forgotPasswordCancel`)'
-      no-caps
-      icon='las la-arrow-circle-left'
-      @click='switchTo(`login`)'
-    )
-
-  //- -----------------------------------------------------
-  //- FORGOT PASSWORD SCREEN
-  //- -----------------------------------------------------
-  template(v-else-if='state.screen === `forgot`')
-    p {{t('auth.forgotPasswordSubtitle')}}
-    q-form(ref='forgotForm', @submit='forgotPassword')
-      q-input(
-        ref='forgotEmailIpt'
-        v-model='state.username'
-        outlined
-        :rules='userEmailValidation'
-        lazy-rules='ondemand'
-        hide-bottom-space
-        :label='t(`auth.fields.email`)'
-        autocomplete='email'
-        )
-        template(#prepend)
-          i.las.la-envelope
-      q-btn.full-width.q-mt-sm(
-        type='submit'
+        icon="la:sign-in-alt"
+        @click="verifyTFA" />
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- TFA SETUP SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <template v-else-if="state.screen === `tfasetup`">
+      <p>{{t('auth.tfaSetupTitle')}}</p>
+      <p>{{t('auth.tfaSetupInstrFirst')}}</p>
+      <div style="justify-content: center; display: flex;">
+        <div v-html="state.tfaQRImage" style="width: 200px;" />
+      </div>
+      <p class="mt-2">{{t('auth.tfaSetupInstrSecond')}}</p>
+      <v-otp-input
+        v-model:value="state.securityCode"
+        :num-inputs="6"
+        :should-auto-focus="true"
+        input-classes="otp-input"
+        input-type="number"
+        separator="" />
+      <w-btn
+        class="w-full mt-4"
         push
-        color='primary'
-        :label='t(`auth.sendResetPassword`)'
+        color="primary"
+        :label="t(`auth.tfa.verifyToken`)"
         no-caps
-        icon='las la-life-ring'
-      )
-    q-separator.q-my-md
-    q-btn.acrylic-btn.full-width(
-      flat
-      color='primary'
-      :label='t(`auth.forgotPasswordCancel`)'
-      no-caps
-      icon='las la-arrow-circle-left'
-      @click='switchTo(`login`)'
-    )
-
-  //- -----------------------------------------------------
-  //- REGISTER SCREEN
-  //- -----------------------------------------------------
-  template(v-else-if='state.screen === `register`')
-    p {{t('auth.registerSubTitle')}}
-    q-form(ref='registerForm', @submit='register')
-      q-input(
-        ref='registerNameIpt'
-        v-model='state.newName'
-        outlined
-        :rules='userNameValidation'
-        lazy-rules='ondemand'
-        hide-bottom-space
-        :label='t(`auth.fields.name`)'
-        autocomplete='name'
-        )
-        template(#prepend)
-          i.las.la-user-circle
-      q-input.q-mt-sm(
-        type='email'
-        v-model='state.newEmail'
-        outlined
-        :rules='userEmailValidation'
-        lazy-rules='ondemand'
-        hide-bottom-space
-        :label='t(`auth.fields.email`)'
-        autocomplete='email'
-        )
-        template(#prepend)
-          i.las.la-envelope
-      q-input.q-mt-sm(
-        v-model='state.newPassword'
-        outlined
-        :label='t(`auth.fields.password`)'
-        type='password'
-        autocomplete='new-password'
-        :rules='userPasswordValidation'
-        hide-bottom-space
-        lazy-rules='ondemand'
-        )
-        template(#append)
-          q-badge(
-            v-show='state.newPassword'
-            :color='passwordStrength.color'
-            :label='passwordStrength.label'
-          )
-        template(#prepend)
-          i.las.la-key
-      q-input.q-mt-sm(
-        v-model='state.newPasswordVerify'
-        outlined
-        :label='t(`auth.fields.verifyPassword`)'
-        type='password'
-        autocomplete='new-password'
-        :rules='userPasswordVerifyValidation'
-        hide-bottom-space
-        lazy-rules='ondemand'
-        )
-        template(#prepend)
-          i.las.la-key
-      q-btn.full-width.q-mt-sm(
-        type='submit'
-        push
-        color='primary'
-        :label='t(`auth.actions.register`)'
-        no-caps
-        icon='las la-user-plus'
-      )
-    q-separator.q-my-md
-    q-btn.acrylic-btn.full-width(
-      flat
-      color='primary'
-      :label='t(`auth.switchToLogin.link`)'
-      no-caps
-      icon='las la-arrow-circle-left'
-      @click='switchTo(`login`)'
-    )
-
-  //- -----------------------------------------------------
-  //- CHANGE PASSWORD SCREEN
-  //- -----------------------------------------------------
-  template(v-else-if='state.screen === `changePwd`')
-    p(v-if='state.continuationToken') {{t('auth.changePwd.instructions')}}
-    q-form(ref='changePwdForm', @submit='changePwd')
-      q-input(
-        v-if='!state.continuationToken'
-        ref='changePwdCurrentIpt'
-        v-model='state.password'
-        outlined
-        type='password'
-        :rules='loginPasswordValidation'
-        lazy-rules='ondemand'
-        hide-bottom-space
-        :label='t(`auth.changePwd.currentPassword`)'
-        autocomplete='password'
-        )
-        template(#prepend)
-          i.las.la-key
-      q-input.q-mt-sm(
-        ref='changePwdNewPwdIpt'
-        v-model='state.newPassword'
-        outlined
-        :label='t(`auth.changePwd.newPassword`)'
-        type='password'
-        autocomplete='new-password'
-        :rules='userPasswordValidation'
-        hide-bottom-space
-        lazy-rules='ondemand'
-        )
-        template(#append)
-          q-badge(
-            v-show='state.newPassword'
-            :color='passwordStrength.color'
-            :label='passwordStrength.label'
-          )
-        template(#prepend)
-          i.las.la-key
-      q-input.q-mt-sm(
-        v-model='state.newPasswordVerify'
-        outlined
-        :label='t(`auth.changePwd.newPasswordVerify`)'
-        type='password'
-        autocomplete='new-password'
-        :rules='userPasswordVerifyValidation'
-        hide-bottom-space
-        lazy-rules='ondemand'
-        )
-        template(#prepend)
-          i.las.la-key
-      q-btn.full-width.q-mt-sm(
-        type='submit'
-        push
-        color='primary'
-        :label='t(`auth.changePwd.proceed`)'
-        no-caps
-        icon='las la-sync-alt'
-      )
-  //- -----------------------------------------------------
-  //- TFA SCREEN
-  //- -----------------------------------------------------
-  template(v-else-if='state.screen === `tfa`')
-    p {{t('auth.tfa.subtitle')}}
-    v-otp-input(
-      v-model:value='state.securityCode'
-      :num-inputs='6'
-      :should-auto-focus='true'
-      input-classes='otp-input'
-      input-type='number'
-      separator=''
-      @on-complete='verifyTFA'
-      )
-    q-btn.full-width.q-mt-md(
-      push
-      color='primary'
-      :label='t(`auth.tfa.verifyToken`)'
-      no-caps
-      icon='las la-sign-in-alt'
-      @click='verifyTFA'
-    )
-  //- -----------------------------------------------------
-  //- TFA SETUP SCREEN
-  //- -----------------------------------------------------
-  template(v-else-if='state.screen === `tfasetup`')
-    p {{t('auth.tfaSetupTitle')}}
-    p {{t('auth.tfaSetupInstrFirst')}}
-    div(style='justify-content: center; display: flex;')
-      div(v-html='state.tfaQRImage', style='width: 200px;')
-    p.q-mt-sm {{t('auth.tfaSetupInstrSecond')}}
-    v-otp-input(
-      v-model:value='state.securityCode'
-      :num-inputs='6'
-      :should-auto-focus='true'
-      input-classes='otp-input'
-      input-type='number'
-      separator=''
-    )
-    q-btn.full-width.q-mt-md(
-      push
-      color='primary'
-      :label='t(`auth.tfa.verifyToken`)'
-      no-caps
-      icon='las la-sign-in-alt'
-      @click='finishSetupTFA'
-    )
+        icon="la:sign-in-alt"
+        @click="finishSetupTFA" />
+    </template>
+  </div>
 </template>
 
 <script setup>
-import { find } from 'lodash-es'
+import { useI18n } from 'vue-i18n'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+
+import { loading } from '@/composables/loading'
+import { notify } from '@/composables/notify'
+import { useDark } from '@/composables/dark'
+
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
+
 import Cookies from 'js-cookie'
 import zxcvbn from 'zxcvbn'
-import { useI18n } from 'vue-i18n'
-import { useQuasar } from 'quasar'
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import {
   browserSupportsWebAuthn,
   browserSupportsWebAuthnAutofill,
   startAuthentication
 } from '@simplewebauthn/browser'
-
-import { useSiteStore } from '@/stores/site'
-import { useUserStore } from '@/stores/user'
-
 import VOtpInput from 'vue3-otp-input'
 
-// QUASAR
 
-const $q = useQuasar()
+// COMPOSABLES
+
+const dark = useDark()
 
 // STORES
 
@@ -403,7 +412,11 @@ const changePwdForm = ref(null)
 // COMPUTED
 
 const selectedStrategy = computed(() => {
-  return (state.selectedStrategyId && find(state.strategies, ['id', state.selectedStrategyId])) || {}
+  return (
+    (state.selectedStrategyId &&
+      state.strategies.find((s) => s.id === state.selectedStrategyId)) ||
+    {}
+  )
 })
 
 const passwordStrength = computed(() => {
@@ -449,37 +462,33 @@ const canUsePasskeys = computed(() => {
 
 // VALIDATION RULES
 
-const loginUsernameValidation = [
-  val => val.length > 0 || t('auth.errors.missingUsername')
-]
+const loginUsernameValidation = [(val) => val.length > 0 || t('auth.errors.missingUsername')]
 
-const loginPasswordValidation = [
-  val => val.length > 0 || t('auth.errors.missingPassword')
-]
+const loginPasswordValidation = [(val) => val.length > 0 || t('auth.errors.missingPassword')]
 
 const userNameValidation = [
-  val => val.length > 0 || t('auth.errors.missingName'),
-  val => /^[^<>"]+$/.test(val) || t('auth.errors.invalidName')
+  (val) => val.length > 0 || t('auth.errors.missingName'),
+  (val) => /^[^<>"]+$/.test(val) || t('auth.errors.invalidName')
 ]
 
 const userEmailValidation = [
-  val => val.length > 0 || t('auth.errors.missingEmail'),
-  val => /^.+@.+\..+$/.test(val) || t('auth.errors.invalidEmail')
+  (val) => val.length > 0 || t('auth.errors.missingEmail'),
+  (val) => /^.+@.+\..+$/.test(val) || t('auth.errors.invalidEmail')
 ]
 
 const userPasswordValidation = [
-  val => val.length > 0 || t('auth.errors.missingPassword'),
-  val => val.length >= 8 || t('auth.errors.passwordTooShort')
+  (val) => val.length > 0 || t('auth.errors.missingPassword'),
+  (val) => val.length >= 8 || t('auth.errors.passwordTooShort')
 ]
 
 const userPasswordVerifyValidation = [
-  val => val.length > 0 || t('auth.errors.missingVerifyPassword'),
-  val => val === state.newPassword || t('auth.errors.passwordsNotMatch')
+  (val) => val.length > 0 || t('auth.errors.missingVerifyPassword'),
+  (val) => val === state.newPassword || t('auth.errors.passwordsNotMatch')
 ]
 
 // METHODS
 
-function switchTo (screen) {
+function switchTo(screen) {
   switch (screen) {
     case 'login': {
       state.screen = 'login'
@@ -515,7 +524,7 @@ function switchTo (screen) {
   }
 }
 
-async function fetchStrategies (showAll = false) {
+async function fetchStrategies(showAll = false) {
   state.strategies = await API_CLIENT.get(`sites/${siteStore.id}/auth/strategies`, {
     searchParams: {
       visibleOnly: !showAll
@@ -524,7 +533,7 @@ async function fetchStrategies (showAll = false) {
   state.selectedStrategyId = state.strategies[0].id
 }
 
-async function handleLoginResponse (resp) {
+async function handleLoginResponse(resp) {
   state.continuationToken = resp.continuationToken
   switch (resp.nextAction) {
     case 'changePassword': {
@@ -536,24 +545,24 @@ async function handleLoginResponse (resp) {
           changePwdCurrentIpt.value.focus()
         }
       })
-      $q.loading.hide()
+      loading.hide()
       break
     }
     case 'provideTfa': {
       state.securityCode = ''
       state.screen = 'tfa'
-      $q.loading.hide()
+      loading.hide()
       break
     }
     case 'setupTfa': {
       state.securityCode = ''
       state.screen = 'tfasetup'
       state.tfaQRImage = resp.tfaQRImage
-      $q.loading.hide()
+      loading.hide()
       break
     }
     case 'redirect': {
-      $q.loading.show({
+      loading.show({
         message: t('auth.loginSuccess')
       })
       setTimeout(() => {
@@ -573,8 +582,8 @@ async function handleLoginResponse (resp) {
       break
     }
     default: {
-      $q.loading.hide()
-      $q.notify({
+      loading.hide()
+      notify({
         type: 'negative',
         message: 'Unexpected Authentication Response'
       })
@@ -585,8 +594,8 @@ async function handleLoginResponse (resp) {
 /**
  * LOGIN
  */
-async function login () {
-  $q.loading.show({
+async function login() {
+  loading.show({
     message: t('auth.signingIn')
   })
   try {
@@ -610,8 +619,8 @@ async function login () {
     }
   } catch (err) {
     console.warn(err)
-    $q.loading.hide()
-    $q.notify({
+    loading.hide()
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -621,8 +630,8 @@ async function login () {
 /**
  * LOGIN WITH PASSKEY
  */
-async function loginWithPasskey () {
-  $q.loading.show({
+async function loginWithPasskey() {
+  loading.show({
     message: t('auth.signingIn')
   })
   try {
@@ -650,7 +659,10 @@ async function loginWithPasskey () {
       }
     })
     if (respGen.data?.authenticatePasskeyGenerate?.operation?.succeeded) {
-      const authResp = await startAuthentication(respGen.data.authenticatePasskeyGenerate.authOptions, await browserSupportsWebAuthnAutofill())
+      const authResp = await startAuthentication(
+        respGen.data.authenticatePasskeyGenerate.authOptions,
+        await browserSupportsWebAuthnAutofill()
+      )
 
       const respVerif = await APOLLO_CLIENT.mutate({
         mutation: `
@@ -679,14 +691,19 @@ async function loginWithPasskey () {
       if (respVerif.data?.authenticatePasskeyVerify?.operation?.succeeded) {
         handleLoginResponse(respVerif.data.authenticatePasskeyVerify)
       } else {
-        throw new Error(respVerif.data?.authenticatePasskeyVerify?.operation?.message || t('auth.errors.loginError'))
+        throw new Error(
+          respVerif.data?.authenticatePasskeyVerify?.operation?.message ||
+            t('auth.errors.loginError')
+        )
       }
     } else {
-      throw new Error(respGen.data?.authenticatePasskeyGenerate?.operation?.message || t('auth.errors.loginError'))
+      throw new Error(
+        respGen.data?.authenticatePasskeyGenerate?.operation?.message || t('auth.errors.loginError')
+      )
     }
   } catch (err) {
-    $q.loading.hide()
-    $q.notify({
+    loading.hide()
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -696,19 +713,19 @@ async function loginWithPasskey () {
 /**
  * FORGOT PASSWORD
  */
-async function forgotPassword () {
+async function forgotPassword() {
   try {
     const isFormValid = await forgotForm.value.validate(true)
     if (!isFormValid) {
       throw new Error(t('auth.errors.forgotPassword'))
     }
     // TODO: Implement forgot password
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Not implemented yet.'
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -718,7 +735,7 @@ async function forgotPassword () {
 /**
  * REGISTER
  */
-async function register () {
+async function register() {
   try {
     const isFormValid = await registerForm.value.validate(true)
     if (!isFormValid) {
@@ -763,7 +780,7 @@ async function register () {
       throw new Error(resp.data?.register?.operation?.message || t('auth.errors.registerError'))
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -773,7 +790,7 @@ async function register () {
 /**
  * CHANGE PASSWORD
  */
-async function changePwd () {
+async function changePwd() {
   try {
     const isFormValid = await changePwdForm.value.validate(true)
     if (!isFormValid) {
@@ -789,7 +806,7 @@ async function changePwd () {
     }).json()
     if (resp.ok) {
       state.password = ''
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('auth.changePwd.success')
       })
@@ -798,7 +815,7 @@ async function changePwd () {
       throw new Error(resp.message || t('auth.errors.loginError'))
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -808,8 +825,8 @@ async function changePwd () {
 /**
  * VERIFY TFA TOKEN
  */
-async function verifyTFA () {
-  $q.loading.show({
+async function verifyTFA() {
+  loading.show({
     message: t('auth.signingIn')
   })
   try {
@@ -857,8 +874,8 @@ async function verifyTFA () {
       throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
-    $q.loading.hide()
-    $q.notify({
+    loading.hide()
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -868,8 +885,8 @@ async function verifyTFA () {
 /**
  * FINISH TFA SETUP
  */
-async function finishSetupTFA () {
-  $q.loading.show({
+async function finishSetupTFA() {
+  loading.show({
     message: t('auth.tfaSetupVerifying')
   })
   try {
@@ -913,7 +930,7 @@ async function finishSetupTFA () {
     if (resp.data?.loginTFA?.operation?.succeeded) {
       state.continuationToken = ''
       state.securityCode = ''
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('auth.tfaSetupSuccess')
       })
@@ -922,8 +939,8 @@ async function finishSetupTFA () {
       throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
-    $q.loading.hide()
-    $q.notify({
+    loading.hide()
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -935,7 +952,6 @@ async function finishSetupTFA () {
 onMounted(async () => {
   await fetchStrategies()
 })
-
 </script>
 
 <style lang="scss">

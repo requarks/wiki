@@ -1,14 +1,12 @@
-<template lang="pug">
-q-dialog.main-overlay(
-  v-model='siteStore.overlayIsShown'
-  persistent
-  full-width
-  full-height
-  no-shake
-  transition-show='jump-up'
-  transition-hide='jump-down'
-  )
-  component(:is='overlays[siteStore.overlay]')
+<template>
+  <w-dialog
+    v-model="siteStore.overlayIsShown"
+    class="main-overlay"
+    persistent
+    full-width
+    full-height>
+    <component :is="overlays[siteStore.overlay]" />
+  </w-dialog>
 </template>
 
 <script setup>

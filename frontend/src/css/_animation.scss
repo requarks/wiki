@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------
 
 :root {
-  --animate-duration: .6s;
+  --animate-duration: 0.6s;
   --animate-delay: 1s;
   --animate-repeat: 1;
 }
@@ -19,7 +19,7 @@
 
 @for $i from 1 to 12 {
   .wait-p#{$i}s {
-    animation-delay: $i * .1s !important;
+    animation-delay: $i * 0.1s !important;
   }
 }
 
@@ -34,7 +34,7 @@
 
 .fade-enter,
 .fade-leave-active {
-  opacity: 0
+  opacity: 0;
 }
 
 // -> Slide Up Transition

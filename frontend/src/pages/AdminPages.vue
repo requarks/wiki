@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
@@ -22,7 +22,7 @@
               solo
               flat
               v-model='search'
-              prepend-inner-icon='mdi-file-search-outline'
+              prepend-inner-icon='mdi:file-search-outline'
               label='Search Pages...'
               hide-details
               dense
@@ -74,7 +74,7 @@
                 td {{ props.item.createdAt | moment('calendar') }}
                 td {{ props.item.updatedAt | moment('calendar') }}
             template(slot='no-data')
-              v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
+              v-alert.ma-3(icon='mdi:alert', :value='true', outlined) No pages to display.
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
             v-pagination(v-model='pagination', :length='pageTotal')
 </template>
@@ -108,11 +108,11 @@ export default {
     }
   },
   computed: {
-    pageTotal () {
+    pageTotal() {
       return Math.ceil(this.filteredPages.length / 15)
     },
-    filteredPages () {
-      return _.filter(this.pages, pg => {
+    filteredPages() {
+      return _.filter(this.pages, (pg) => {
         if (this.selectedLang !== null && this.selectedLang !== pg.locale) {
           return false
         }
@@ -122,14 +122,17 @@ export default {
         return true
       })
     },
-    langs () {
-      return _.concat({
-        text: 'All Locales',
-        value: null
-      }, _.uniqBy(this.pages, 'locale').map(pg => ({
-        text: pg.locale,
-        value: pg.locale
-      })))
+    langs() {
+      return _.concat(
+        {
+          text: 'All Locales',
+          value: null
+        },
+        _.uniqBy(this.pages, 'locale').map((pg) => ({
+          text: pg.locale,
+          value: pg.locale
+        }))
+      )
     }
   },
   methods: {
@@ -144,14 +147,14 @@ export default {
     newpage() {
       this.pageSelectorShown = true
     },
-    recyclebin () { }
+    recyclebin() {}
   },
   apollo: {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'network-only',
       update: (data) => data.pages.list,
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.loading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
       }
@@ -160,7 +163,7 @@ export default {
 }
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 .admin-pages-path {
   display: flex;
   justify-content: flex-start;

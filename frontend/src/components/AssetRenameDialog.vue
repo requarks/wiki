@@ -1,50 +1,54 @@
-<template lang='pug'>
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 650px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-rename.svg', left, size='sm')
-      span {{ t(`fileman.assetRename`) }}
-    q-form.q-py-sm(@submit='rename')
-      q-item
-        blueprint-icon.self-start(icon='image')
-        q-item-section
-          q-input(
-            autofocus
-            outlined
-            v-model='state.path'
-            dense
-            hide-bottom-space
-            :label='t(`fileman.assetFileName`)'
-            :aria-label='t(`fileman.assetFileName`)'
-            :hint='t(`fileman.assetFileNameHint`)'
-            lazy-rules='ondemand'
-            @keyup.enter='rename'
-            )
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.rename`)'
-        color='primary'
-        padding='xs md'
-        @click='rename'
-        :loading='state.loading > 0'
-        )
-    q-inner-loading(:showing='state.loading > 0')
-      q-spinner(color='accent', size='lg')
+<template>
+  <w-dialog v-model="dialogVisible" @hide="onDialogHide">
+    <w-card class="relative" style="min-width: 650px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-rename.svg" size="sm" class="mr-2" />
+        <span>{{ t(`fileman.assetRename`) }}</span>
+      </w-card-section>
+      <w-form class="py-2" @submit="rename">
+        <w-item>
+          <blueprint-icon icon="image" class="self-start" />
+          <w-item-section>
+            <w-input
+              v-model="state.path"
+              autofocus
+              outlined
+              dense
+              hide-bottom-space
+              :label="t(`fileman.assetFileName`)"
+              :hint="t(`fileman.assetFileNameHint`)"
+              lazy-rules="ondemand"
+              @keyup:enter="rename" />
+          </w-item-section>
+        </w-item>
+      </w-form>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          unelevated
+          :label="t(`common.actions.rename`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.loading > 0"
+          @click="rename" />
+      </w-card-actions>
+      <w-inner-loading :showing="state.loading > 0" size="38px" spinner-class="text-accent" />
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { onMounted, reactive } from 'vue'
 
 import { useSiteStore } from '@/stores/site'
@@ -60,14 +64,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // STORES
 
@@ -86,7 +87,7 @@ const state = reactive({
 
 // METHODS
 
-async function rename () {
+async function rename() {
   state.loading++
   try {
     if (state.path?.length < 2 || !state.path?.includes('.')) {
@@ -101,15 +102,18 @@ async function rename () {
     if (resp?.ok === false) {
       throw new Error(resp.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('fileman.renameAssetSuccess')
     })
     onDialogOK()
   } catch (err) {
     // -> ky throws above 400 — a name already taken in this folder answers 409
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })
@@ -128,8 +132,11 @@ onMounted(async () => {
     }
     state.path = asset.fileName
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })

@@ -4,9 +4,7 @@ const routes = [
   {
     path: '/login',
     component: () => import('@/layouts/AuthLayout.vue'),
-    children: [
-      { path: '', component: () => import('@/pages/Login.vue') }
-    ]
+    children: [{ path: '', component: () => import('@/pages/Login.vue') }]
   },
   {
     path: '/a/:alias',
@@ -89,9 +87,7 @@ const routes = [
   {
     path: '/_create/:editor?',
     component: () => import('../layouts/MainLayout.vue'),
-    children: [
-      { path: '', component: () => import('../pages/Index.vue') }
-    ]
+    children: [{ path: '', component: () => import('../pages/Index.vue') }]
   },
   // --------------------------------
   // EDIT
@@ -99,9 +95,7 @@ const routes = [
   {
     path: '/_edit/:pagePath?',
     component: () => import('../layouts/MainLayout.vue'),
-    children: [
-      { path: '', component: () => import('../pages/Index.vue') }
-    ]
+    children: [{ path: '', component: () => import('../pages/Index.vue') }]
   },
   // -----------------------
   // STANDARD PAGE CATCH-ALL
@@ -109,9 +103,7 @@ const routes = [
   {
     path: '/:catchAll(.*)*',
     component: () => import('../layouts/MainLayout.vue'),
-    children: [
-      { path: '', component: () => import('../pages/Index.vue') }
-    ]
+    children: [{ path: '', component: () => import('../pages/Index.vue') }]
   }
 ]
 

@@ -1,197 +1,195 @@
-<template lang="pug">
-q-layout(view='hHh Lpr lff')
-  header-nav
-  q-page-container.layout-search
-    .layout-search-card
-      q-btn.layout-search-back(
-        icon='las la-arrow-circle-left'
-        color='white'
-        flat
-        round
-        @click='goBack'
-        )
-        q-tooltip(anchor='center left', self='center right') {{ t('common.actions.goback') }}
-      .layout-search-sd
-        .text-header {{ t('search.sortBy') }}
-        q-list(dense, padding)
-          q-item(
-            v-for='item of orderByOptions'
-            clickable
-            :active='item.value === state.params.orderBy'
-            @click='setOrderBy(item.value)'
-            )
-            q-item-section(side)
-              q-icon(:name='item.icon', :color='item.value === state.params.orderBy ? `primary` : ``')
-            q-item-section
-              q-item-label {{ item.label }}
-            q-item-section(
-              v-if='item.value === state.params.orderBy'
-              side
-              )
-              q-icon(
-                :name='state.params.orderByDirection === `desc` ? `mdi-transfer-down` : `mdi-transfer-up`'
-                size='sm'
-                color='primary'
-                )
-        .text-header {{ t('search.filters') }}
-        .q-pa-sm
-          q-input(
-            outlined
-            dense
-            :placeholder='t(`search.filterPath`)'
-            prefix='/'
-            v-model='state.params.filterPath'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-caret-square-right', size='xs')
-          q-select.q-mt-sm(
-            outlined
-            v-model='state.selectedTags'
-            :options='state.filteredTags'
-            dense
-            options-dense
-            use-input
-            use-chips
-            multiple
-            hide-dropdown-icon
-            :input-debounce='0'
-            @update:model-value='v => syncTags(v)'
-            @filter='filterTags'
-            :placeholder='state.selectedTags.length < 1 ? t(`search.filterTags`) : ``'
-            :loading='state.loading > 0'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-hashtag', size='xs')
-            template(v-slot:option='scope')
-              q-item(v-bind='scope.itemProps')
-                q-item-section(side)
-                  q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)', size='sm')
-                q-item-section
-                  q-item-label
-                    span(v-html='scope.opt')
-          //- q-input.q-mt-sm(
-          //-   outlined
-          //-   dense
-          //-   placeholder='Last updated...'
-          //-   )
-          //-   template(v-slot:prepend)
-          //-     q-icon(name='las la-calendar', size='xs')
-          //- q-input.q-mt-sm(
-          //-   outlined
-          //-   dense
-          //-   placeholder='Last edited by...'
-          //-   )
-          //-   template(v-slot:prepend)
-          //-     q-icon(name='las la-user-edit', size='xs')
-          q-select.q-mt-sm(
-            outlined
-            v-model='state.params.filterLocale'
-            emit-value
-            map-options
-            dense
-            :aria-label='t(`search.filterLocale`)'
-            :options='siteStore.locales.active'
-            option-value='code'
-            option-label='name'
-            options-dense
-            multiple
-            :display-value='t(`search.filterLocaleDisplay`, { n: state.params.filterLocale.length > 0 ? state.params.filterLocale[0].toUpperCase() : state.params.filterLocale.length }, state.params.filterLocale.length)'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-language', size='xs')
-            template(v-slot:option='scope')
-              q-item(v-bind='scope.itemProps')
-                q-item-section(side)
-                  q-checkbox(:model-value='scope.selected', @update:model-value='scope.toggleOption(scope.opt)')
-                q-item-section
-                  q-item-label
-                    span(v-html='scope.opt.name')
-          q-select.q-mt-sm(
-            outlined
-            v-model='state.params.filterEditor'
-            emit-value
-            map-options
-            dense
-            :aria-label='t(`search.filterEditor`)'
-            :options='editors'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-pen-nib', size='xs')
-          q-select.q-mt-sm(
-            outlined
-            v-model='state.params.filterPublishState'
-            emit-value
-            map-options
-            dense
-            :aria-label='t(`search.filterPublishState`)'
-            :options='publishStates'
-            )
-            template(v-slot:prepend)
-              q-icon(name='las la-traffic-light', size='xs')
-      q-page(:style-fn='pageStyle')
-        .text-header.flex
-          span {{t('search.results')}}
-          q-space
-          transition(name='slide-up', mode='out-in')
-            i18n-t(
-              v-if='!siteStore.searchIsLoading'
-              keypath='search.totalResults'
-              tag='span'
-              class='text-caption'
-              :plural='state.total'
-              )
-              strong {{ state.total }}
-        .q-pa-lg(v-if='state.results.length < 1')
-          i18n-t(keypath='search.noResults', tag='span', v-if='siteStore.search && siteStore.searchLastQuery')
-            strong {{ siteStore.searchLastQuery }}
-          span(v-else): em {{ t('search.emptyQuery') }}
-        q-list(separator)
-          q-item(
-            v-for='item of state.results'
-            clickable
-            :to='`/` + item.path'
-            )
-            q-item-section(avatar)
-              q-avatar(color='primary' text-color='white' rounded)
-                wiki-icon(:name='item.icon || defaultPageIcon', size='24px')
-            q-item-section
-              q-item-label {{ item.title }}
-              q-item-label(v-if='item.description', caption) {{ item.description }}
-              q-item-label.text-highlight(v-if='item.highlight', caption)
-                span(v-html='item.highlight')
-            q-item-section(side)
-              .flex.layout-search-itemtags
-                q-chip(
-                  v-for='tag of item.tags'
-                  square
-                  color='secondary'
-                  text-color='white'
-                  icon='las la-hashtag'
-                  size='sm'
-                  ) {{ tag }}
-              .flex
-                .text-caption.q-mr-sm.text-grey /{{ item.path }}
-                .text-caption {{ humanizeDate(item.updatedAt) }}
-
-      q-inner-loading(:showing='state.loading > 0')
-  main-overlay-dialog
-  footer-nav
+<template>
+  <w-layout>
+    <w-header><header-nav /></w-header>
+    <w-page-container class="layout-search">
+      <div class="layout-search-card">
+        <w-btn
+          class="layout-search-back"
+          icon="la:arrow-circle-left"
+          color="white"
+          flat
+          round
+          @click="goBack">
+          <w-tooltip anchor="center left" self="center right">{{ t('common.actions.goback') }}</w-tooltip>
+        </w-btn>
+        <div class="layout-search-sd">
+          <div class="text-header">{{ t('search.sortBy') }}</div>
+          <w-list dense padding>
+            <w-item
+              v-for="item of orderByOptions"
+              clickable
+              :active="item.value === state.params.orderBy"
+              @click="setOrderBy(item.value)">
+              <w-item-section side>
+                <w-icon
+                  :name="item.icon"
+                  :color="item.value === state.params.orderBy ? `primary` : ``" />
+              </w-item-section>
+              <w-item-section><w-item-label>{{ item.label }}</w-item-label></w-item-section>
+              <w-item-section v-if="item.value === state.params.orderBy" side>
+                <w-icon
+                  :name="state.params.orderByDirection === `desc` ? `mdi:transfer-down` : `mdi:transfer-up`"
+                  size="sm"
+                  color="primary" />
+              </w-item-section>
+            </w-item>
+          </w-list>
+          <div class="text-header">{{ t('search.filters') }}</div>
+          <div class="p-2">
+            <w-input
+              outlined
+              dense
+              :placeholder="t(`search.filterPath`)"
+              prefix="/"
+              v-model="state.params.filterPath">
+              <template #prepend>
+                <w-icon name="la:caret-square-right" size="xs" />
+              </template>
+            </w-input>
+            <w-select
+              class="mt-2"
+              outlined
+              v-model="state.selectedTags"
+              :options="tags"
+              dense
+              options-dense
+              use-input
+              use-chips
+              multiple
+              hide-dropdown-icon
+              :aria-label="t(`search.filterTags`)"
+              @update:model-value="v => syncTags(v)"
+              :placeholder="state.selectedTags.length < 1 ? t(`search.filterTags`) : ``"
+              :loading="state.loading > 0">
+              <template #prepend><w-icon name="la:hashtag" size="xs" /></template>
+            </w-select>
+            <!-- q-input.q-mt-sm( -->
+            <!-- outlined -->
+            <!-- dense -->
+            <!-- placeholder='Last updated...' -->
+            <!-- ) -->
+            <!-- template(v-slot:prepend) -->
+            <!-- q-icon(name='la:calendar', size='xs') -->
+            <!-- q-input.q-mt-sm( -->
+            <!-- outlined -->
+            <!-- dense -->
+            <!-- placeholder='Last edited by...' -->
+            <!-- ) -->
+            <!-- template(v-slot:prepend) -->
+            <!-- q-icon(name='la:user-edit', size='xs') -->
+            <w-select
+              class="mt-2"
+              outlined
+              v-model="state.params.filterLocale"
+              emit-value
+              map-options
+              dense
+              :aria-label="t(`search.filterLocale`)"
+              :options="siteStore.locales.active"
+              option-value="code"
+              option-label="name"
+              options-dense
+              multiple
+              :display-value="t(`search.filterLocaleDisplay`, { n: state.params.filterLocale.length > 0 ? state.params.filterLocale[0].toUpperCase() : state.params.filterLocale.length }, state.params.filterLocale.length)">
+              <template #prepend><w-icon name="la:language" size="xs" /></template>
+            </w-select>
+            <w-select
+              class="mt-2"
+              outlined
+              v-model="state.params.filterEditor"
+              emit-value
+              map-options
+              dense
+              :aria-label="t(`search.filterEditor`)"
+              :options="editors">
+              <template #prepend><w-icon name="la:pen-nib" size="xs" /></template>
+            </w-select>
+            <w-select
+              class="mt-2"
+              outlined
+              v-model="state.params.filterPublishState"
+              emit-value
+              map-options
+              dense
+              :aria-label="t(`search.filterPublishState`)"
+              :options="publishStates">
+              <template #prepend><w-icon name="la:traffic-light" size="xs" /></template>
+            </w-select>
+          </div>
+        </div>
+        <w-page>
+          <div class="text-header flex">
+            <span>{{t('search.results')}}</span>
+            <w-space />
+            <transition name="slide-up" mode="out-in">
+              <i18n-t
+                class="text-caption"
+                v-if="!siteStore.searchIsLoading"
+                keypath="search.totalResults"
+                tag="span"
+                :plural="state.total">
+                <strong>{{ state.total }}</strong>
+              </i18n-t>
+            </transition>
+          </div>
+          <div class="p-6" v-if="state.results.length < 1">
+            <i18n-t
+              keypath="search.noResults"
+              tag="span"
+              v-if="siteStore.search && siteStore.searchLastQuery">
+              <strong>{{ siteStore.searchLastQuery }}</strong>
+            </i18n-t>
+            <span v-else><em>{{ t('search.emptyQuery') }}</em></span>
+          </div>
+          <w-list separator>
+            <w-item v-for="item of state.results" clickable :to="`/` + item.path">
+              <w-item-section avatar>
+                <w-avatar color="primary" text-color="white" rounded>
+                  <w-icon :name="item.icon || defaultPageIcon" size="24px" />
+                </w-avatar>
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ item.title }}</w-item-label>
+                <w-item-label v-if="item.description" caption>{{ item.description }}</w-item-label>
+                <w-item-label class="text-highlight" v-if="item.highlight" caption>
+                  <span v-html="item.highlight" />
+                </w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <div class="flex layout-search-itemtags">
+                  <w-chip v-for="tag of item.tags" square color="secondary" text-color="white" icon="la:hashtag" size="sm">{{ tag }}</w-chip>
+                </div>
+                <div class="flex">
+                  <div class="text-caption mr-2 text-grey">/{{ item.path }}</div>
+                  <div class="text-caption">{{ humanizeDate(item.updatedAt) }}</div>
+                </div>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-page>
+        <w-inner-loading :showing="state.loading > 0" />
+      </div>
+    </w-page-container>
+    <main-overlay-dialog />
+    <w-footer><footer-nav /></w-footer>
+  </w-layout>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-import { debounce } from 'es-toolkit/function'
-import { difference } from 'es-toolkit/array'
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 import { DEFAULT_PAGE_ICON } from '@/stores/page'
 
+import { debounce } from 'es-toolkit/function'
+import { difference } from 'es-toolkit/array'
 import HeaderNav from '@/components/HeaderNav.vue'
 import FooterNav from '@/components/FooterNav.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
@@ -200,10 +198,6 @@ const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"
 
 /** How many results one search returns. The API caps this at 100, and there is no pager yet. */
 const RESULTS_LIMIT = 100
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -223,7 +217,7 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  titleTemplate: title => `${title} - ${t('profile.title')} - Wiki.js`
+  titleTemplate: (title) => `${title} - ${t('profile.title')} - Wiki.js`
 })
 
 // DATA
@@ -239,16 +233,15 @@ const state = reactive({
     orderByDirection: 'desc'
   },
   selectedTags: [],
-  filteredTags: [],
   results: [],
   total: 0
 })
 
 const orderByOptions = computed(() => {
   return [
-    { label: t('search.sortByRelevance'), value: 'relevancy', icon: 'las la-stream' },
-    { label: t('search.sortByTitle'), value: 'title', icon: 'las la-heading' },
-    { label: t('search.sortByLastUpdated'), value: 'updatedAt', icon: 'las la-calendar' }
+    { label: t('search.sortByRelevance'), value: 'relevancy', icon: 'la:stream' },
+    { label: t('search.sortByTitle'), value: 'title', icon: 'la:heading' },
+    { label: t('search.sortByLastUpdated'), value: 'updatedAt', icon: 'la:calendar' }
   ]
 })
 
@@ -270,35 +263,33 @@ const publishStates = computed(() => {
   ]
 })
 
-const tags = computed(() => siteStore.tags.map(t => t.tag))
+const tags = computed(() => siteStore.tags.map((t) => t.tag))
 
 const defaultPageIcon = DEFAULT_PAGE_ICON
 
 // WATCHERS
 
-watch(() => route.query, async (newQueryObj) => {
-  if (newQueryObj.q) {
-    siteStore.search = newQueryObj.q.trim()
-    syncTags()
-    performSearch()
-  }
-}, { immediate: true })
+watch(
+  () => route.query,
+  async (newQueryObj) => {
+    if (newQueryObj.q) {
+      siteStore.search = newQueryObj.q.trim()
+      syncTags()
+      performSearch()
+    }
+  },
+  { immediate: true }
+)
 
 watch(() => state.params, debounce(performSearch, 500), { deep: true })
 
 // METHODS
 
-function pageStyle (offset, height) {
-  return {
-    'min-height': `${height - 100 - offset}px`
-  }
-}
-
-function humanizeDate (val) {
+function humanizeDate(val) {
   return userStore.formatDateTime(t, val)
 }
 
-function setOrderBy (val) {
+function setOrderBy(val) {
   if (val === state.params.orderBy) {
     state.params.orderByDirection = state.params.orderByDirection === 'desc' ? 'asc' : 'desc'
   } else {
@@ -307,21 +298,10 @@ function setOrderBy (val) {
   }
 }
 
-function filterTags (val, update) {
-  update(() => {
-    if (val === '') {
-      state.filteredTags = tags.value
-    } else {
-      const tagSearch = val.toLowerCase()
-      state.filteredTags = tags.value.filter(
-        v => v.toLowerCase().indexOf(tagSearch) >= 0
-      )
-    }
-  })
-}
-
-function syncTags (newSelection) {
-  const queryTags = Array.from(siteStore.search.matchAll(tagsInQueryRgx)).map(t => t[0].substring(1))
+function syncTags(newSelection) {
+  const queryTags = Array.from(siteStore.search.matchAll(tagsInQueryRgx)).map((t) =>
+    t[0].substring(1)
+  )
   if (!newSelection) {
     state.selectedTags = queryTags
   } else {
@@ -339,11 +319,11 @@ function syncTags (newSelection) {
   }
 }
 
-async function performSearch () {
+async function performSearch() {
   let q = siteStore.search ?? ''
 
   // -> Extract tags
-  const queryTags = Array.from(q.matchAll(tagsInQueryRgx)).map(t => t[0].substring(1))
+  const queryTags = Array.from(q.matchAll(tagsInQueryRgx)).map((t) => t[0].substring(1))
   for (const tag of queryTags) {
     q = q.replaceAll(`#${tag}`, '')
   }
@@ -352,7 +332,9 @@ async function performSearch () {
   const filters = {
     ...(state.params.filterPath ? { path: state.params.filterPath } : {}),
     ...(queryTags.length > 0 ? { tags: queryTags.join(',') } : {}),
-    ...(state.params.filterLocale.length > 0 ? { locales: state.params.filterLocale.join(',') } : {}),
+    ...(state.params.filterLocale.length > 0
+      ? { locales: state.params.filterLocale.join(',') }
+      : {}),
     ...(state.params.filterEditor ? { editor: state.params.filterEditor } : {}),
     ...(state.params.filterPublishState ? { publishState: state.params.filterPublishState } : {})
   }
@@ -380,16 +362,20 @@ async function performSearch () {
         limit: RESULTS_LIMIT
       }
     }).json()
-    state.results = (resp?.results ?? []).map(r => ({ ...r, tags: [...(r.tags ?? [])].sort() }))
+    state.results = (resp?.results ?? []).map((r) => ({ ...r, tags: [...(r.tags ?? [])].sort() }))
     state.total = resp?.totalHits ?? 0
     siteStore.searchLastQuery = siteStore.search
   } catch (err) {
     state.results = []
     state.total = 0
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('search.failed'),
-      caption: await err.response?.json().then(b => b?.message).catch(() => null) || err.message
+      caption:
+        (await err.response
+          ?.json()
+          .then((b) => b?.message)
+          .catch(() => null)) || err.message
     })
   } finally {
     state.loading--
@@ -397,7 +383,7 @@ async function performSearch () {
   }
 }
 
-function goBack () {
+function goBack() {
   if (history.length > 0) {
     router.back()
   } else {
@@ -428,7 +414,6 @@ onUnmounted(() => {
   siteStore.searchLastQuery = ''
   siteStore.searchIsLoading = false
 })
-
 </script>
 
 <style lang="scss">
@@ -447,7 +432,7 @@ onUnmounted(() => {
     top: 0;
     width: 100%;
     background: radial-gradient(ellipse at bottom, $dark-3, $dark-6);
-    border-bottom: 1px solid #FFF;
+    border-bottom: 1px solid #fff;
 
     @at-root .body--dark & {
       border-bottom-color: $dark-3;
@@ -460,7 +445,12 @@ onUnmounted(() => {
     position: fixed;
     top: 64px;
     width: 100%;
-    background: linear-gradient(to right, transparent 0%, rgba(255,255,255,.1) 50%, transparent 100%);
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
   }
 
   &-back {
@@ -480,7 +470,7 @@ onUnmounted(() => {
     height: 100%;
 
     @at-root .body--light & {
-      background-color: #FFF;
+      background-color: #fff;
     }
     @at-root .body--dark & {
       background-color: $dark-3;
@@ -494,18 +484,18 @@ onUnmounted(() => {
 
     @at-root .body--light & {
       background-color: $grey-1;
-      border-right: 1px solid rgba($dark-3, .1);
-      box-shadow: inset -1px 0 0 #FFF;
+      border-right: 1px solid rgba($dark-3, 0.1);
+      box-shadow: inset -1px 0 0 #fff;
     }
     @at-root .body--dark & {
       background-color: $dark-4;
-      border-right: 1px solid rgba(#FFF, .12);
-      box-shadow: inset -1px 0 0 rgba($dark-6, .5);
+      border-right: 1px solid rgba(#fff, 0.12);
+      box-shadow: inset -1px 0 0 rgba($dark-6, 0.5);
     }
   }
 
   .text-header {
-    padding: .75rem 1rem;
+    padding: 0.75rem 1rem;
     font-weight: 500;
 
     @at-root .body--light & {
@@ -522,12 +512,12 @@ onUnmounted(() => {
     font-style: italic;
 
     > b {
-      background-color: rgba($yellow-7, .5);
+      background-color: rgba($yellow-7, 0.5);
       border-radius: 3px;
     }
   }
 
-  .q-page {
+  .w-page {
     flex: 1 1;
 
     .text-header:first-child {
@@ -535,15 +525,15 @@ onUnmounted(() => {
     }
 
     @at-root .body--light & {
-      border-left: 1px solid #FFF;
+      border-left: 1px solid #fff;
     }
     @at-root .body--dark & {
-      border-left: 1px solid rgba($dark-6, .75);
+      border-left: 1px solid rgba($dark-6, 0.75);
     }
   }
 
   &-itemtags {
-    .q-chip:last-child {
+    .w-chip:last-child {
       margin-right: 0;
     }
   }
@@ -553,7 +543,8 @@ body.body--dark {
   background-color: $dark-6;
 }
 
-.q-footer {
+.w-footer {
+  // FooterNav still renders a q-bar; this goes with it in a later phase.
   .q-bar {
     @at-root .body--light & {
       background-color: $grey-3;
@@ -561,7 +552,7 @@ body.body--dark {
     }
     @at-root .body--dark & {
       background-color: $dark-4;
-      color: rgba(255,255,255,.3);
+      color: rgba(255, 255, 255, 0.3);
     }
   }
 }

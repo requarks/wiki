@@ -426,6 +426,93 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * GET OWN EDITOR SETTINGS
+   *
+   * Per-user and per-editor, e.g. whether the markdown editor opens with its preview pane showing.
+   * Session-scoped like the rest of `/profile`, so it needs no permission of its own: a user can
+   * only ever read its own.
+   */
+  app.get<{ Params: { editor: string } }>(
+    '/profile/editor-settings/:editor',
+    {
+      schema: {
+        summary: "Get the logged in user's settings for one editor",
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            editor: { type: 'string', description: 'Editor key, e.g. `markdown`' }
+          },
+          required: ['editor']
+        },
+        response: {
+          200: {
+            description: 'Editor settings. An object whose shape belongs to the editor.',
+            type: 'object',
+            additionalProperties: true
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      return WIKI.models.users.getEditorSettings(userId, req.params.editor)
+    }
+  )
+
+  /**
+   * UPDATE OWN EDITOR SETTINGS
+   */
+  app.put<{ Params: { editor: string }; Body: Record<string, any> }>(
+    '/profile/editor-settings/:editor',
+    {
+      schema: {
+        summary: "Update the logged in user's settings for one editor",
+        description:
+          "Replaces the settings for this editor. Other editors' settings, and every other preference, are left alone.",
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            editor: { type: 'string', description: 'Editor key, e.g. `markdown`' }
+          },
+          required: ['editor']
+        },
+        body: {
+          type: 'object',
+          additionalProperties: true
+        },
+        response: {
+          200: {
+            description: 'Editor settings updated successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              config: { type: 'object', additionalProperties: true }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      const config = await WIKI.models.users.setEditorSettings(userId, req.params.editor, req.body)
+      if (config === null) {
+        // -> The session outlived the user it points at
+        return reply.unauthorized()
+      }
+      return { ok: true, config }
+    }
+  )
+
+  /**
    * GET USER DEFAULTS
    *
    * Instance-wide, not per-site: stored as the `userDefaults` key of the settings table.

@@ -1,68 +1,74 @@
-<template lang='pug'>
-q-page.admin-terminal
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-linux-terminal-animated.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.terminal.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.terminal.subtitle') }}
-    .col-auto.flex
-      q-btn.acrylic-btn.q-mr-sm(
-        v-if='!state.connected || state.connecting'
-        flat
-        icon='las la-link'
-        :label='t(`admin.terminal.connect`)'
-        color='positive'
-        @click='connect'
-        :loading='state.connecting'
-        :disabled='state.connecting'
-      )
-      q-btn.acrylic-btn.q-mr-sm(
-        v-else
-        flat
-        icon='las la-unlink'
-        :label='t(`admin.terminal.disconnect`)'
-        color='negative'
-        @click='disconnect'
-      )
-      q-btn.acrylic-btn.q-mr-md(
-        flat
-        icon='las la-ban'
-        :label='t(`admin.terminal.clear`)'
-        color='primary'
-        @click='clearTerminal'
-      )
-      q-separator.q-mr-md(vertical)
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/admin/terminal`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-  q-separator(inset)
-  .q-pa-md.q-gutter-md
-    q-card
-      .admin-terminal-term(ref='termDiv')
-
+<template>
+  <w-page class="admin-terminal">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img
+          class="admin-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-linux-terminal-animated.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.terminal.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.terminal.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none flex">
+        <w-btn
+          class="acrylic-btn mr-2"
+          v-if="!state.connected || state.connecting"
+          flat
+          icon="la:link"
+          :label="t(`admin.terminal.connect`)"
+          color="positive"
+          @click="connect"
+          :loading="state.connecting"
+          :disabled="state.connecting" />
+        <w-btn
+          class="acrylic-btn mr-2"
+          v-else
+          flat
+          icon="la:unlink"
+          :label="t(`admin.terminal.disconnect`)"
+          color="negative"
+          @click="disconnect" />
+        <w-btn
+          class="acrylic-btn mr-4"
+          flat
+          icon="la:ban"
+          :label="t(`admin.terminal.clear`)"
+          color="primary"
+          @click="clearTerminal" />
+        <w-separator class="mr-4" vertical />
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/admin/terminal`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="p-4 gap-4">
+      <w-card><div class="admin-terminal-term" ref="termDiv" /></w-card>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-import { io } from 'socket.io-client'
-import { Terminal } from '@xterm/xterm'
-import '@xterm/xterm/css/xterm.css'
+
+import { useMeta } from '@/composables/meta'
 
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
-
-const $q = useQuasar()
+import { io } from 'socket.io-client'
+import { Terminal } from '@xterm/xterm'
+import '@xterm/xterm/css/xterm.css'
 
 // STORES
 
@@ -95,17 +101,17 @@ const termDiv = ref(null)
 
 // METHODS
 
-function clearTerminal () {
+function clearTerminal() {
   term.clear()
   term.focus()
 }
 
-function connect () {
+function connect() {
   state.connecting = true
   socket.connect()
 }
 
-function disconnect () {
+function disconnect() {
   socket.disconnect()
 }
 
@@ -158,7 +164,7 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 .admin-terminal {
   &-term {
     width: 100%;

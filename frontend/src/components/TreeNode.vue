@@ -1,56 +1,54 @@
-<template lang="pug">
-li.treeview-node
-  //- NODE
-  .treeview-label(@click='openNode', :class='{ "active": isActive }')
-    q-icon(
-      :name='icon'
-      size='sm'
-      @click.stop='toggleNode()'
-      )
-    .treeview-label-text {{displayMode === 'path' ? node.fileName : node.title}}
-    q-spinner.q-mr-xs(
-      color='primary'
-      v-if='state.isLoading'
-      )
-    q-icon(
-      v-if='isActive'
-      name='las la-angle-right'
-      :color='$q.dark.isActive ? `yellow-9` : `brown-4`'
-      )
-    //- RIGHT-CLICK MENU
-    q-menu(
-      v-if='contextActionList.length > 0'
-      touch-position
-      context-menu
-      auto-close
-      transition-show='jump-down'
-      transition-hide='jump-up'
-      @before-show='state.isContextMenuShown = true'
-      @before-hide='state.isContextMenuShown = false'
-      )
-      q-card.q-pa-sm
-        q-list(dense, style='min-width: 150px;')
-          q-item(
-            v-for='action of contextActionList'
-            :key='action.key'
-            clickable
-            @click='action.handler(node.id)'
-            )
-            q-item-section(side)
-              q-icon(:name='action.icon', :color='action.iconColor')
-            q-item-section(:class='action.labelColor && (`text-` + action.labelColor)') {{action.label}}
-  //- SUB-LEVEL
-  transition(name='treeview')
-    tree-level(
-      v-if='hasChildren && isOpened'
-      :parent-id='props.node.id'
-      :depth='props.depth + 1'
-    )
+<template>
+  <li class="treeview-node">
+    <!-- NODE -->
+    <div class="treeview-label" @click="openNode" :class='{ "active": isActive }'>
+      <w-icon :name="icon" size="sm" @click.stop="toggleNode()" />
+      <div class="treeview-label-text">{{displayMode === 'path' ? node.fileName : node.title}}</div>
+      <w-spinner class="mr-1" color="primary" v-if="state.isLoading" />
+      <w-icon
+        v-if="isActive"
+        name="la:angle-right"
+        :color="dark.isActive ? `yellow-9` : `brown-4`" />
+      <!-- RIGHT-CLICK MENU -->
+      <w-menu
+        v-if="contextActionList.length > 0"
+        touch-position
+        context-menu
+        auto-close
+        transition-show="jump-down"
+        transition-hide="jump-up"
+        @before-show="state.isContextMenuShown = true"
+        @before-hide="state.isContextMenuShown = false">
+        <w-card class="p-2">
+          <w-list dense style="min-width: 150px;">
+            <w-item
+              v-for="action of contextActionList"
+              :key="action.key"
+              clickable
+              @click="action.handler(node.id)">
+              <w-item-section side>
+                <w-icon :name="action.icon" :color="action.iconColor" />
+              </w-item-section>
+              <w-item-section :class="action.labelColor && (`text-` + action.labelColor)">{{action.label}}</w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </w-menu>
+    </div>
+    <!-- SUB-LEVEL -->
+    <transition name="treeview">
+      <tree-level
+        v-if="hasChildren && isOpened"
+        :parent-id="props.node.id"
+        :depth="props.depth + 1" />
+    </transition>
+  </li>
 </template>
 
 <script setup>
 import { computed, inject, reactive } from 'vue'
-import { useQuasar } from 'quasar'
+
+import { useDark } from '@/composables/dark'
 
 import TreeLevel from './TreeLevel.vue'
 
@@ -71,9 +69,6 @@ const props = defineProps({
   }
 })
 
-// QUASAR
-
-const $q = useQuasar()
 
 // INJECT
 
@@ -91,13 +86,19 @@ const state = reactive({
   isLoading: false
 })
 
+// COMPOSABLES
+
+const dark = useDark()
+
 // COMPUTED
 
 const icon = computed(() => {
   if (props.node.icon) {
     return props.node.icon
   }
-  return isOpened.value ? 'img:/_assets/icons/fluent-opened-folder.svg' : 'img:/_assets/icons/fluent-folder.svg'
+  return isOpened.value
+    ? 'img:/_assets/icons/fluent-opened-folder.svg'
+    : 'img:/_assets/icons/fluent-folder.svg'
 })
 
 const hasChildren = computed(() => {
@@ -112,7 +113,7 @@ const isActive = computed(() => {
 
 // METHODS
 
-async function toggleNode (isCurrent = false) {
+async function toggleNode(isCurrent = false) {
   opened[props.node.id] = !(opened[props.node.id] === true)
   if (opened[props.node.id] && !loaded[props.node.id]) {
     state.isLoading = true
@@ -129,12 +130,11 @@ async function toggleNode (isCurrent = false) {
   }
 }
 
-function openNode () {
+function openNode() {
   selection.value = props.node.id
   if (selection.value !== props.node.id && opened[props.node.id]) {
     return
   }
   toggleNode(true)
 }
-
 </script>

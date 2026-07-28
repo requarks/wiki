@@ -1,5 +1,5 @@
 @use 'sass:color';
-@use '../../node_modules/quasar/src/css/variables.sass' as quasar;
+@use 'palette';
 @use 'theme';
 
 .page-contents {
@@ -11,7 +11,7 @@
   }
 
   @at-root .body--dark & {
-    color: #FFF;
+    color: #fff;
   }
 
   // ---------------------------------
@@ -22,10 +22,10 @@
     color: var(--q-primary);
 
     &.is-internal-link.is-invalid-page {
-      color: quasar.$red-8;
+      color: palette.$red-8;
 
       @at-root .body--dark & {
-        color: quasar.$red-2;
+        color: palette.$red-2;
       }
     }
 
@@ -37,14 +37,14 @@
         font-size: 24px/1;
         padding-left: 3px;
         display: inline-block;
-        content: "\f35d";
-        color: quasar.$grey-5;
+        content: '\f35d';
+        color: palette.$grey-5;
         text-decoration: none;
       }
     }
 
     @at-root .body--dark & {
-      color: quasar.$blue-4;
+      color: palette.$blue-4;
     }
   }
 
@@ -52,7 +52,12 @@
   // HEADERS
   // ---------------------------------
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     padding: 0;
     margin: 0;
     font-weight: 400;
@@ -95,8 +100,8 @@
   }
 
   * + h1 {
-    margin-top: .5em;
-    padding-top: .5em;
+    margin-top: 0.5em;
+    padding-top: 0.5em;
     // border-top: 2px solid var(--q-primary);
     position: relative;
 
@@ -112,16 +117,16 @@
   }
 
   *:not(h1) + h2 {
-    margin-top: .5em;
-    padding-top: .5em;
-    border-top: 1px dotted #CCC;
+    margin-top: 0.5em;
+    padding-top: 0.5em;
+    border-top: 1px dotted #ccc;
   }
 
   .toc-anchor {
     display: none;
     position: absolute;
     right: 1rem;
-    bottom: .5rem;
+    bottom: 0.5rem;
     font-size: 1.25rem;
     text-decoration: none;
     color: #666;
@@ -133,7 +138,7 @@
 
   p {
     padding: 0;
-    margin: .3em 0 1em 0;
+    margin: 0.3em 0 1em 0;
   }
 
   // ---------------------------------
@@ -141,30 +146,32 @@
   // ---------------------------------
 
   blockquote {
-    padding: 1em 1em .3em 1em;
-    background-color: quasar.$blue-grey-1;
-    border-left: 55px solid quasar.$blue-grey-5;
-    border-radius: .5rem;
+    padding: 1em 1em 0.3em 1em;
+    background-color: palette.$blue-grey-1;
+    border-left: 55px solid palette.$blue-grey-5;
+    border-radius: 0.5rem;
     margin: 1rem 0;
     position: relative;
 
     @at-root .body--dark & {
-      background-color: quasar.$blue-grey-9;
+      background-color: palette.$blue-grey-9;
     }
 
     &::before {
       display: inline-block;
-      font: normal normal normal 24px/1 "Material Design Icons", sans-serif;
+      font:
+        normal normal normal 24px/1 'Material Design Icons',
+        sans-serif;
       position: absolute;
       margin-top: -12px;
       top: 50%;
       left: -38px;
-      color: rgba(255, 255, 255, .7);
-      content: "\F0757";
+      color: rgba(255, 255, 255, 0.7);
+      content: '\F0757';
     }
 
     > p:first-child .emoji {
-      margin-right: .5rem;
+      margin-right: 0.5rem;
     }
 
     &.valign-center > p {
@@ -173,84 +180,84 @@
     }
 
     &.is-info {
-      background-color: quasar.$blue-1;
-      border-color: quasar.$blue-3;
-      color: quasar.$blue-9;
+      background-color: palette.$blue-1;
+      border-color: palette.$blue-3;
+      color: palette.$blue-9;
 
       &::before {
-        content: "\F02FC";
+        content: '\F02FC';
       }
 
       code {
-        background-color: quasar.$blue-1;
-        color: quasar.$blue-8;
+        background-color: palette.$blue-1;
+        color: palette.$blue-8;
       }
 
       @at-root .body--dark & {
-        background-color: quasar.$blue-9;
-        color: quasar.$blue-5;
-        border-color: quasar.$blue-5;
+        background-color: palette.$blue-9;
+        color: palette.$blue-5;
+        border-color: palette.$blue-5;
       }
     }
     &.is-warning {
-      background-color: quasar.$orange-1;
-      border-color: quasar.$orange-3;
-      color: color.adjust(quasar.$orange-9, $lightness: -10%);
+      background-color: palette.$orange-1;
+      border-color: palette.$orange-3;
+      color: color.adjust(palette.$orange-9, $lightness: -10%);
 
       &::before {
-        content: "\F0026";
+        content: '\F0026';
       }
 
       code {
-        background-color: quasar.$orange-1;
-        color: quasar.$orange-8;
+        background-color: palette.$orange-1;
+        color: palette.$orange-8;
       }
 
       @at-root .body--dark & {
-        background-color: color.adjust(quasar.$orange-9, $lightness: -5%);
-        color: quasar.$orange-1;
-        border-color: quasar.$orange-5;
-        box-shadow: 0 0 2px 0 quasar.$grey-9;
+        background-color: color.adjust(palette.$orange-9, $lightness: -5%);
+        color: palette.$orange-1;
+        border-color: palette.$orange-5;
+        box-shadow: 0 0 2px 0 palette.$grey-9;
       }
     }
     &.is-danger {
-      background-color: quasar.$red-1;
-      border-color: quasar.$red-3;
-      color: quasar.$red-9;
+      background-color: palette.$red-1;
+      border-color: palette.$red-3;
+      color: palette.$red-9;
 
       &::before {
-        content: "\F0159";
+        content: '\F0159';
       }
 
       code {
-        background-color: quasar.$red-1;
-        color: quasar.$red-8;
+        background-color: palette.$red-1;
+        color: palette.$red-8;
       }
 
       @at-root .body--dark & {
-        background-color: quasar.$red-9;
-        color: quasar.$red-1;
-        border-color: quasar.$red-5;
+        background-color: palette.$red-9;
+        color: palette.$red-1;
+        border-color: palette.$red-5;
       }
     }
     &.is-success {
-      background-color: quasar.$green-1;
-      border-color: quasar.$green-3;
-      color: quasar.$green-9;
+      background-color: palette.$green-1;
+      border-color: palette.$green-3;
+      color: palette.$green-9;
 
       &::before {
-        content: "\F0E1E";
+        content: '\F0E1E';
       }
 
       code {
-        background-color: quasar.$green-1;
-        color: quasar.$green-8;
+        background-color: palette.$green-1;
+        color: palette.$green-8;
       }
 
       @at-root .body--dark & {
-        background-color: quasar.$green-9;
-        color: quasar.$green-5;
-        border-color: quasar.$green-5;
+        background-color: palette.$green-9;
+        color: palette.$green-5;
+        border-color: palette.$green-5;
       }
     }
 
@@ -264,7 +271,8 @@
   // LISTS
   // ---------------------------------
 
-  ol, ul:not(.tabset-tabs) {
+  ol,
+  ul:not(.tabset-tabs) {
     width: 100%;
 
     li > p {
@@ -281,8 +289,9 @@
       padding-right: 1em;
     }
 
-    li > ul, li > ol {
-      padding-top: .5rem;
+    li > ul,
+    li > ol {
+      padding-top: 0.5rem;
       padding-left: 1em;
 
       @at-root .is-rtl & {
@@ -292,7 +301,7 @@
     }
 
     li + li {
-      margin-top: .5rem;
+      margin-top: 0.5rem;
     }
 
     &.links-list {
@@ -304,11 +313,11 @@
       }
 
       li {
-        background-color: quasar.$grey-1;
-        background-image: linear-gradient(to bottom, #FFF, quasar.$grey-1);
-        border-right: 1px solid quasar.$grey-3;
-        border-bottom: 1px solid quasar.$grey-3;
-        border-left: 5px solid quasar.$grey-4;
+        background-color: palette.$grey-1;
+        background-image: linear-gradient(to bottom, #fff, palette.$grey-1);
+        border-right: 1px solid palette.$grey-3;
+        border-bottom: 1px solid palette.$grey-3;
+        border-left: 5px solid palette.$grey-4;
         box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
         padding: 1rem;
         border-radius: 5px;
@@ -320,13 +329,17 @@
         }
 
         &:hover {
-          background-image: linear-gradient(to bottom, #FFF, color.adjust(quasar.$blue-1, $lightness: 4%));
-          border-left-color: quasar.$blue-5;
+          background-image: linear-gradient(
+            to bottom,
+            #fff,
+            color.adjust(palette.$blue-1, $lightness: 4%)
+          );
+          border-left-color: palette.$blue-5;
           cursor: pointer;
 
           @at-root .is-rtl & {
-            border-left-color: quasar.$grey-3;
-            border-right-width: quasar.$blue-5;
+            border-left-color: palette.$grey-3;
+            border-right-width: palette.$blue-5;
           }
         }
 
@@ -344,11 +357,11 @@
           > em {
             font-weight: 400;
             font-style: normal;
-            color: quasar.$grey-7;
+            color: palette.$grey-7;
             display: inline-block;
-            padding-left: .5rem;
-            border-left: 1px solid quasar.$grey-4;
-            margin-left: .5rem;
+            padding-left: 0.5rem;
+            border-left: 1px solid palette.$grey-4;
+            margin-left: 0.5rem;
 
             &.is-block {
               display: block;
@@ -365,11 +378,15 @@
         }
 
         @at-root .body--dark & {
-          background-color: quasar.$grey-1;
-          background-image: linear-gradient(to bottom, color.adjust(quasar.$grey-9, $lightness: 5%), quasar.$grey-9);
-          border-right: 1px solid quasar.$grey-9;
-          border-bottom: 1px solid quasar.$grey-9;
-          border-left: 5px solid quasar.$grey-7;
+          background-color: palette.$grey-1;
+          background-image: linear-gradient(
+            to bottom,
+            color.adjust(palette.$grey-9, $lightness: 5%),
+            palette.$grey-9
+          );
+          border-right: 1px solid palette.$grey-9;
+          border-bottom: 1px solid palette.$grey-9;
+          border-left: 5px solid palette.$grey-7;
           box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.1);
 
           @at-root .body--dark.is-rtl & {
@@ -378,12 +395,16 @@
           }
 
           &:hover {
-            background-image: linear-gradient(to bottom, color.adjust(quasar.$grey-9, $lightness: 2%), color.adjust(quasar.$grey-9, $lightness: -3%));
+            background-image: linear-gradient(
+              to bottom,
+              color.adjust(palette.$grey-9, $lightness: 2%),
+              color.adjust(palette.$grey-9, $lightness: -3%)
+            );
             border-left-color: mc('indigo', '300');
             cursor: pointer;
 
             @at-root .body--dark.is-rtl & {
-              border-left-color: quasar.$grey-9;
+              border-left-color: palette.$grey-9;
               border-right-width: mc('indigo', '300');
             }
           }
@@ -393,8 +414,8 @@
 
     &.grid-list {
       margin: 1rem 0 0 0;
-      background-color: #FFF;
-      border: 1px solid quasar.$grey-3;
+      background-color: #fff;
+      border: 1px solid palette.$grey-3;
       padding: 1px;
       display: inline-block;
       list-style-type: none;
@@ -405,8 +426,8 @@
       }
 
       li {
-        background-color: quasar.$grey-1;
-        padding: .6rem 1rem;
+        background-color: palette.$grey-1;
+        padding: 0.6rem 1rem;
         display: block;
 
         &:nth-child(odd) {
@@ -423,10 +444,10 @@
         }
 
         @at-root .body--dark & {
-          background-color: quasar.$grey-9;
+          background-color: palette.$grey-9;
 
           &:nth-child(odd) {
-            background-color: color.adjust(quasar.$grey-9, $lightness: -5%);
+            background-color: color.adjust(palette.$grey-9, $lightness: -5%);
           }
         }
       }
@@ -436,13 +457,14 @@
   ul:not(.tabset-tabs):not(.contains-task-list) {
     list-style: square;
   }
-  ol, ul:not(.tabset-tabs) {
+  ol,
+  ul:not(.tabset-tabs) {
     > li {
       position: relative;
       > p {
-        display:inline-block;
-        vertical-align:top;
-        padding-top:0;
+        display: inline-block;
+        vertical-align: top;
+        padding-top: 0;
       }
     }
   }
@@ -464,7 +486,7 @@
       height: 1.1rem;
       top: 2px;
       position: relative;
-      margin-right: .4em;
+      margin-right: 0.4em;
       background-color: theme.$dark-5;
       border-width: 0;
 
@@ -472,30 +494,30 @@
         position: absolute;
         left: 0;
         top: 0;
-        font-family: "Material Design Icons";
+        font-family: 'Material Design Icons';
         font-size: 1.25em;
         font-weight: normal;
         content: '\F0131';
-        color: quasar.$grey-10;
+        color: palette.$grey-10;
         display: block;
         border: none;
-        background-color: #FFF;
+        background-color: #fff;
         line-height: 1em;
         cursor: default;
 
         @at-root .body--dark & {
-          color: #FFF;
+          color: #fff;
           background-color: theme.$dark-6;
         }
       }
 
-      &[checked]::after  {
+      &[checked]::after {
         content: '\F0C52';
       }
     }
 
     .contains-task-list {
-      padding: .5rem 0 0 1.5rem;
+      padding: 0.5rem 0 0 1.5rem;
     }
   }
 
@@ -523,7 +545,7 @@
   // }
 
   pre.codeblock {
-    border: 1px solid rgba(0,0,0,.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 5px;
     box-shadow: initial;
     padding: 1rem;
@@ -536,10 +558,11 @@
       // color: #FFF;
       box-shadow: initial;
       display: block;
-      font-size: .85rem;
+      font-size: 0.85rem;
       font-family: 'Roboto Mono', monospace;
 
-      &:after, &:before {
+      &:after,
+      &:before {
         content: initial;
         letter-spacing: initial;
       }
@@ -575,7 +598,7 @@
             content: counter(linenumber);
             color: #999;
             display: block;
-            padding-right: .8em;
+            padding-right: 0.8em;
             text-align: right;
           }
         }
@@ -590,7 +613,7 @@
   .align-abstopright {
     width: 100px;
     max-height: 100px;
-    border: 2px dashed quasar.$red;
+    border: 2px dashed palette.$red;
     border-radius: 5px;
     padding: 5px;
   }

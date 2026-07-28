@@ -1,5 +1,5 @@
 @use 'sass:color';
-@use '../../node_modules/quasar/src/css/variables.sass' as quasar;
+@use 'palette';
 @use 'theme';
 
 // app global css in SCSS form
@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------
 
 html {
-  --scrollbarBG: #CCC;
+  --scrollbarBG: #ccc;
   --thumbBG: #999;
 }
 body::-webkit-scrollbar {
@@ -37,7 +37,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .font-robotomono {
-  font-family: 'Roboto Mono', Consolas, "Liberation Mono", Courier, monospace;
+  font-family: 'Roboto Mono', Consolas, 'Liberation Mono', Courier, monospace;
 }
 
 .text-wordbreak-all {
@@ -50,24 +50,38 @@ body::-webkit-scrollbar-thumb {
 
 :root {
   --q-header: #000;
-  --q-sidebar: #1976D2;
+  --q-sidebar: #1976d2;
 }
 
-.header, .bg-header {
+.header,
+.bg-header {
   background: #000;
   background: var(--q-header);
 }
-.sidebar, .bg-sidebar {
-  background: #1976D2;
+.sidebar,
+.bg-sidebar {
+  background: #1976d2;
   background: var(--q-sidebar);
 }
 
-.bg-dark-6 { background-color: #070a0d; }
-.bg-dark-5 { background-color: #0d1117; }
-.bg-dark-4 { background-color: #161b22; }
-.bg-dark-3 { background-color: #1e232a; }
-.bg-dark-2 { background-color: #292f39; }
-.bg-dark-1 { background-color: #343b48; }
+.bg-dark-6 {
+  background-color: #070a0d;
+}
+.bg-dark-5 {
+  background-color: #0d1117;
+}
+.bg-dark-4 {
+  background-color: #161b22;
+}
+.bg-dark-3 {
+  background-color: #1e232a;
+}
+.bg-dark-2 {
+  background-color: #292f39;
+}
+.bg-dark-1 {
+  background-color: #343b48;
+}
 
 // ------------------------------------------------------------------
 // FORMS
@@ -89,10 +103,10 @@ body::-webkit-scrollbar-thumb {
 }
 
 .q-field.fill-outline .q-field__control {
-  background-color: #FFF;
+  background-color: #fff;
 
   @at-root .body--light & {
-    background-color: #FFF;
+    background-color: #fff;
   }
   @at-root .body--dark & {
     background-color: theme.$dark;
@@ -101,7 +115,7 @@ body::-webkit-scrollbar-thumb {
 
 .q-field--dark .q-field__control:before {
   background-color: theme.$dark-5;
-  border-color: rgba(255,255,255,.25);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 // ------------------------------------------------------------------
@@ -126,11 +140,27 @@ body::-webkit-scrollbar-thumb {
 .q-btn.acrylic-btn {
   .q-focus-helper {
     background-color: currentColor;
-    opacity: .1;
+    opacity: 0.1;
   }
 
   &:hover .q-focus-helper {
-    opacity: .3 !important;
+    opacity: 0.3 !important;
+  }
+}
+
+// The same frosted treatment for WBtn, which has no focus-helper child to tint -- it draws its
+// own hover state -- so the tint is a background on the button itself. Kept alongside the rule
+// above rather than replacing it, because both kinds of button are in play until Quasar is gone.
+//
+// Unlayered (this file is plain CSS, not a Tailwind layer), so it beats the `hover:bg-current/10`
+// utility WBtn carries for its flat variant, which would otherwise cancel the hover step out.
+.w-btn.acrylic-btn {
+  background-color: color-mix(in srgb, currentcolor 10%, transparent);
+}
+
+@media (hover: hover) {
+  .w-btn.acrylic-btn:hover {
+    background-color: color-mix(in srgb, currentcolor 30%, transparent);
   }
 }
 
@@ -152,10 +182,10 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   align-items: center;
   font-weight: 500;
-  font-size: .9rem;
+  font-size: 0.9rem;
   background-color: theme.$dark-3;
   background-image: radial-gradient(at bottom right, theme.$dark-3, theme.$dark-5);
-  color: #FFF;
+  color: #fff;
 
   @at-root .body--light & {
     border-bottom: 1px solid theme.$dark-3;
@@ -170,31 +200,35 @@ body::-webkit-scrollbar-thumb {
 .card-negative {
   display: flex;
   align-items: center;
-  font-size: .9rem;
+  font-size: 0.9rem;
 
   @at-root .body--light & {
-    background-color: quasar.$red-1;
-    background-image: radial-gradient(at bottom center, color.adjust(quasar.$red-1, $lightness: 2%), color.adjust(quasar.$red-2, $lightness: 2%));
-    border-bottom: 1px solid quasar.$red-3;
-    text-shadow: 0 0 4px #FFF;
-    color: quasar.$red-9;
+    background-color: palette.$red-1;
+    background-image: radial-gradient(
+      at bottom center,
+      color.adjust(palette.$red-1, $lightness: 2%),
+      color.adjust(palette.$red-2, $lightness: 2%)
+    );
+    border-bottom: 1px solid palette.$red-3;
+    text-shadow: 0 0 4px #fff;
+    color: palette.$red-9;
   }
   @at-root .body--dark & {
-    background-color: quasar.$red-9;
-    background-image: radial-gradient(at bottom center, quasar.$red-7, quasar.$red-9);
-    border-bottom: 1px solid quasar.$red-7;
-    text-shadow: 0 0 4px color.adjust(quasar.$red-9, $lightness: -10%);
-    color: #FFF;
+    background-color: palette.$red-9;
+    background-image: radial-gradient(at bottom center, palette.$red-7, palette.$red-9);
+    border-bottom: 1px solid palette.$red-7;
+    text-shadow: 0 0 4px color.adjust(palette.$red-9, $lightness: -10%);
+    color: #fff;
   }
 }
 
 .card-actions {
   @at-root .body--light & {
-    background-color: #FAFAFA;
-    background-image: linear-gradient(to bottom, #FCFCFC, #F0F0F0);
+    background-color: #fafafa;
+    background-image: linear-gradient(to bottom, #fcfcfc, #f0f0f0);
     color: theme.$dark-3;
-    border-top: 1px solid #EEE;
-    box-shadow: inset 0 1px 0 0 #FFF;
+    border-top: 1px solid #eee;
+    box-shadow: inset 0 1px 0 0 #fff;
   }
   @at-root .body--dark & {
     background-color: theme.$dark-3;
@@ -209,14 +243,20 @@ body::-webkit-scrollbar-thumb {
 // ------------------------------------------------------------------
 
 .q-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 1px 1px rgba(0, 0, 0, 0.14),
+    0 2px 1px -1px rgba(0, 0, 0, 0.12);
 
   &.q-card--dark {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      0 1px 1px rgba(0, 0, 0, 0.14),
+      0 2px 1px -1px rgba(0, 0, 0, 0.12);
   }
 
   .q-separator--dark {
-    background-color: rgba(0,0,0,.7);
+    background-color: rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -228,19 +268,25 @@ body::-webkit-scrollbar-thumb {
   backdrop-filter: blur(10px) saturate(180%);
 
   @at-root .body--light & {
-    background-color: rgba(255,255,255,.8);
+    background-color: rgba(255, 255, 255, 0.8);
   }
   @at-root .body--dark & {
-    background-color: rgba(theme.$dark,.7);
+    background-color: rgba(theme.$dark, 0.7);
   }
 
-  > .q-card {
+  // The panel inside has to let the blur through. `!important` because WCard sets its background
+  // with a utility class; both spellings are listed while q-card and w-card coexist.
+  > .q-card,
+  > .w-card {
     background-color: transparent !important;
   }
 }
 
 .q-menu--dark {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px -1px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 1px 1px rgba(0, 0, 0, 0.14),
+    0 2px 1px -1px rgba(0, 0, 0, 0.12);
 }
 
 // ------------------------------------------------------------------
@@ -248,7 +294,7 @@ body::-webkit-scrollbar-thumb {
 // ------------------------------------------------------------------
 
 .syncing-enter-active {
-  animation: syncing-anim .1s;
+  animation: syncing-anim 0.1s;
 }
 .syncing-leave-active {
   animation: syncing-anim 1s reverse;
@@ -264,6 +310,6 @@ body::-webkit-scrollbar-thumb {
 
 .loading-darker {
   .q-loading__backdrop {
-    opacity: .75;
+    opacity: 0.75;
   }
 }

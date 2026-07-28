@@ -64,7 +64,7 @@ export const usePageStore = defineStore('page', {
         result.push({
           id: key,
           title: value,
-          icon: 'las la-file-alt',
+          icon: 'la:file-alt',
           locale: 'en',
           path: (result.at(-1)?.path || pathPrefix) + `/${value}`
         })
@@ -82,22 +82,27 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - LOAD
      */
-    async pageLoad ({ path, id, withContent = false }) {
+    async pageLoad({ path, id, withContent = false }) {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       try {
-        const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`, {
-          searchParams: {
-            withContent
+        const pageData = await API_CLIENT.get(
+          `sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`,
+          {
+            searchParams: {
+              withContent
+            }
           }
-        }).json()
+        ).json()
         if (!pageData?.id) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
         // Update page store
         this.$patch({
           ...pageData,
-          relations: pageData.relations.map(r => pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])),
+          relations: pageData.relations.map((r) =>
+            pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+          ),
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         })
         // Update editor state timestamps
@@ -119,7 +124,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - GET PATH FROM ALIAS
      */
-    async pageAlias (alias) {
+    async pageAlias(alias) {
       const siteStore = useSiteStore()
       try {
         const pagePath = await API_CLIENT.get(`sites/${siteStore.id}/pages/alias/${alias}`).json()
@@ -138,7 +143,16 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - CREATE
      */
-    async pageCreate ({ editor, locale, path, basePath, title = '', description = '', content = '', fromNavigate = false } = {}) {
+    async pageCreate({
+      editor,
+      locale,
+      path,
+      basePath,
+      title = '',
+      description = '',
+      content = '',
+      fromNavigate = false
+    } = {}) {
       const editorStore = useEditorStore()
 
       // -> Load editor config
@@ -174,7 +188,8 @@ export const usePageStore = defineStore('page', {
       // -> Default Page Path
       let newPath = path
       if (!path && path !== '') {
-        const parentPath = basePath || basePath === '' ? basePath : this.path.split('/').slice(0, -1).join('/')
+        const parentPath =
+          basePath || basePath === '' ? basePath : this.path.split('/').slice(0, -1).join('/')
         newPath = parentPath ? `${parentPath}/new-page` : 'new-page'
       }
 
@@ -200,7 +215,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - DUPLICATE
      */
-    async pageDuplicate ({ sourecePageId, title, path }) {
+    async pageDuplicate({ sourecePageId, title, path }) {
       const siteStore = useSiteStore()
       try {
         const pageData = await API_CLIENT.get(
@@ -225,7 +240,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - EDIT
      */
-    async pageEdit ({ path, id, fromNavigate = false } = {}) {
+    async pageEdit({ path, id, fromNavigate = false } = {}) {
       const editorStore = useEditorStore()
 
       const loadArgs = {
@@ -255,24 +270,28 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - MOVE
      */
-    async pageMove ({ id, title, path } = {}) {
+    async pageMove({ id, title, path } = {}) {
       const siteStore = useSiteStore()
-      unwrap(await API_CLIENT.put(`sites/${siteStore.id}/pages/${id}/path`, {
-        json: {
-          path,
-          ...(title ? { title } : {})
-        }
-      }).json())
+      unwrap(
+        await API_CLIENT.put(`sites/${siteStore.id}/pages/${id}/path`, {
+          json: {
+            path,
+            ...(title ? { title } : {})
+          }
+        }).json()
+      )
       this.router.replace(`/${path}`)
     },
     /**
      * PAGE - Rename
      */
-    async pageRename ({ id, title } = {}) {
+    async pageRename({ id, title } = {}) {
       const siteStore = useSiteStore()
-      unwrap(await API_CLIENT.patch(`sites/${siteStore.id}/pages/${id}`, {
-        json: { title }
-      }).json())
+      unwrap(
+        await API_CLIENT.patch(`sites/${siteStore.id}/pages/${id}`, {
+          json: { title }
+        }).json()
+      )
 
       // Update page store
       if (id === this.id) {
@@ -282,7 +301,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE SAVE
      */
-    async pageSave () {
+    async pageSave() {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       try {
@@ -321,22 +340,26 @@ export const usePageStore = defineStore('page', {
 
         let pageData
         if (editorStore.mode === 'create') {
-          const resp = unwrap(await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
-            json: {
-              ...body,
-              locale: this.locale,
-              path: this.path,
-              editor: editorStore.editor
-            }
-          }).json())
+          const resp = unwrap(
+            await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
+              json: {
+                ...body,
+                locale: this.locale,
+                path: this.path,
+                editor: editorStore.editor
+              }
+            }).json()
+          )
           pageData = resp?.page
           if (!pageData?.id) {
             throw new Error('ERR_CREATED_PAGE_NOT_FOUND')
           }
         } else {
-          const resp = unwrap(await API_CLIENT.patch(`sites/${siteStore.id}/pages/${this.id}`, {
-            json: body
-          }).json())
+          const resp = unwrap(
+            await API_CLIENT.patch(`sites/${siteStore.id}/pages/${this.id}`, {
+              json: body
+            }).json()
+          )
           pageData = resp?.page
           if (!pageData?.id) {
             throw new Error('ERR_PAGE_NOT_FOUND')
@@ -346,7 +369,9 @@ export const usePageStore = defineStore('page', {
         // Update page store
         this.$patch({
           ...pageData,
-          relations: (pageData.relations ?? []).map(r => pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])),
+          relations: (pageData.relations ?? []).map((r) =>
+            pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+          ),
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         })
 
@@ -367,14 +392,12 @@ export const usePageStore = defineStore('page', {
         throw err
       }
     },
-    async cancelPageEdit () {
+    async cancelPageEdit() {
       const editorStore = useEditorStore()
       await this.pageLoad({ id: editorStore.originPageId ? editorStore.originPageId : this.id })
       this.router.replace(`/${this.path}`)
     },
-    generateToc () {
-
-    }
+    generateToc() {}
   }
 })
 
@@ -385,7 +408,7 @@ export const usePageStore = defineStore('page', {
  * parsed error envelope rather than an exception — and reading it as a success is how a validation
  * failure ends up reported as something unrelated.
  */
-function unwrap (resp) {
+function unwrap(resp) {
   if (resp?.ok === false) {
     throw new Error(resp.message || 'An unexpected error occured.')
   }
@@ -399,7 +422,7 @@ function unwrap (resp) {
  * before hashing it: the router hands over `/docs/intro`, the server holds `docs/intro`, and the site
  * root is the `home` page rather than an empty path.
  */
-function normalizePath (path) {
+function normalizePath(path) {
   const clean = (path ?? '').replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase()
   return clean || 'home'
 }
@@ -411,18 +434,19 @@ function normalizePath (path) {
  * Mirrored on the server as `generatePathHash` in `backend/helpers/common.ts` — the two have to stay
  * identical, since this is what a page is addressed by.
  */
-function fastHash (str, seed = 0) {
-    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed
-    for (let i = 0, ch; i < str.length; i++) {
-        ch = str.charCodeAt(i)
-        h1 = Math.imul(h1 ^ ch, 2654435761)
-        h2 = Math.imul(h2 ^ ch, 1597334677)
-    }
-    h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507)
-    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909)
-    h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507)
-    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+function fastHash(str, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i)
+    h1 = Math.imul(h1 ^ ch, 2654435761)
+    h2 = Math.imul(h2 ^ ch, 1597334677)
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507)
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507)
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909)
 
-    // Convert to a 16-character hexadecimal string
-    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16)
+  // Convert to a 16-character hexadecimal string
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16)
 }

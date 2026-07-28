@@ -1,350 +1,409 @@
-<template lang='pug'>
-q-layout.fileman(view='hHh lpR lFr', container)
-  q-header.card-header
-    q-toolbar(dark)
-      q-icon(name='img:/_assets/icons/fluent-folder.svg', left, size='md')
-      span {{ t(`fileman.title`) }}
-    q-toolbar(dark)
-      q-btn.q-mr-sm.acrylic-btn(
-        flat
-        color='white'
-        :label='commonStore.locale'
-        :aria-label='commonStore.locale'
-        style='height: 40px;'
-        )
-        locale-selector-menu
-      q-input(
-        dark
-        v-model='state.search'
-        standout='bg-white text-dark'
-        dense
-        ref='searchField'
-        style='width: 100%;'
-        :label='t(`fileman.searchFolder`)'
-        :debounce='500'
-        )
-        template(#prepend)
-          q-icon(name='las la-search')
-        template(#append)
-          q-icon.cursor-pointer(
-            name='las la-times'
-            @click='state.search=``'
-            v-if='state.search.length > 0'
-            :color='$q.dark.isActive ? `blue` : `grey-4`'
-            )
-    q-toolbar(dark)
-      q-space
-      q-btn(
-        flat
-        dense
-        no-caps
-        color='red-3'
-        :aria-label='t(`common.actions.close`)'
-        icon='las la-times'
-        @click='close'
-        )
-        q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.close`)}}
-  q-drawer.fileman-left(:model-value='true', :width='350')
-    q-scroll-area(
-      :thumb-style='thumbStyle'
-      :bar-style='barStyle'
-      style='height: 100%;'
-      )
-      .q-px-md.q-pb-sm
-        tree(
-          ref='treeComp'
-          :nodes='state.treeNodes'
-          :roots='state.treeRoots'
-          v-model:selected='state.currentFolderId'
-          @lazy-load='treeLazyLoad'
-          :use-lazy-load='true'
-          @context-action='treeContextAction'
-          :display-mode='state.displayMode'
-        )
-  q-drawer.fileman-right(:model-value='$q.screen.gt.md', :width='350', side='right')
-    q-scroll-area(
-      :thumb-style='thumbStyle'
-      :bar-style='barStyle'
-      style='height: 100%;'
-      )
-      .q-pa-md
-        template(v-if='currentFileDetails')
-          q-img.rounded-borders.q-mb-md(
-            v-if='currentFileDetails.thumbnail'
-            :src='currentFileDetails.thumbnail'
-            width='100%'
-            fit='cover'
-            :ratio='16/10'
-            no-spinner
-          )
-          .fileman-details-row(
-            v-for='item of currentFileDetails.items'
-            :key='item.id'
-            )
-            label {{ item.label }}
-            span {{ item.value }}
-          template(v-if='insertMode')
-            q-separator.q-my-md
-            q-btn.full-width(
-              @click='insertItem()'
-              :label='t(`common.actions.insert`)'
-              color='primary'
-              icon='las la-plus-circle'
-              push
-              padding='sm'
-              )
-  q-page-container
-    q-page.fileman-center.column
-      //- TOOLBAR -----------------------------------------------------
-      q-toolbar.fileman-toolbar
-        template(v-if='state.isUploading')
-          .fileman-progressbar
-            div(:style='`width: ` + state.uploadPercentage + `%`') {{ state.uploadPercentage }}%
-          q-btn.acrylic-btn.q-ml-sm(
-            flat
-            dense
-            no-caps
-            color='negative'
-            :aria-label='t(`common.actions.cancel`)'
-            icon='las la-square'
-            @click='uploadCancel'
-            v-if='state.uploadPercentage < 100'
-            )
-        template(v-else)
-          q-space
-          q-btn.q-mr-sm(
-            flat
-            dense
-            no-caps
-            color='grey'
-            :aria-label='t(`fileman.viewOptions`)'
-            icon='las la-th-list'
-            )
-            q-tooltip(anchor='bottom middle', self='top middle') {{ t(`fileman.viewOptions`) }}
-            q-menu(
-              transition-show='jump-down'
-              transition-hide='jump-up'
-              anchor='bottom right'
-              self='top right'
-              )
-              q-card.q-pa-sm
-                .text-center
-                  small.text-grey {{ t(`fileman.viewOptions`) }}
-                q-list(dense)
-                  q-separator.q-my-sm
-                  q-item(clickable)
-                    q-item-section(side)
-                      q-icon(name='las la-list', color='grey', size='xs')
-                    q-item-section.q-pr-sm Browse using...
-                    q-item-section(side)
-                      q-icon(name='las la-angle-right', color='grey', size='xs')
-                    q-menu(
-                      anchor='top end'
-                      self='top start'
-                      )
-                      q-list.q-pa-sm(dense)
-                        q-item(clickable, @click='state.displayMode = `path`')
-                          q-item-section(side)
-                            q-icon(
-                              :name='state.displayMode === `path` ? `las la-check-circle` : `las la-circle`'
-                              :color='state.displayMode === `path` ? `positive` : `grey`'
-                              size='xs'
-                              )
-                          q-item-section.q-pr-sm Browse Using Paths
-                        q-item(clickable, @click='state.displayMode = `title`')
-                          q-item-section(side)
-                            q-icon(
-                              :name='state.displayMode === `title` ? `las la-check-circle` : `las la-circle`'
-                              :color='state.displayMode === `title` ? `positive` : `grey`'
-                              size='xs'
-                              )
-                          q-item-section.q-pr-sm Browse Using Titles
-                  q-item(clickable, @click='state.isCompact = !state.isCompact')
-                    q-item-section(side)
-                      q-icon(
-                        :name='state.isCompact ? `las la-check-square` : `las la-stop`'
-                        :color='state.isCompact ? `positive` : `grey`'
-                        size='xs'
-                      )
-                    q-item-section.q-pr-sm Compact List
-                  q-item(clickable, @click='state.shouldShowFolders = !state.shouldShowFolders')
-                    q-item-section(side)
-                      q-icon(
-                        :name='state.shouldShowFolders ? `las la-check-square` : `las la-stop`'
-                        :color='state.shouldShowFolders ? `positive` : `grey`'
-                        size='xs'
-                      )
-                    q-item-section.q-pr-sm Show Folders
-          q-btn.q-mr-sm(
-            flat
-            dense
-            no-caps
-            color='grey'
-            :aria-label='t(`common.actions.refresh`)'
-            icon='las la-redo-alt'
-            @click='reloadFolder(state.currentFolderId)'
-            )
-            q-tooltip(anchor='bottom middle', self='top middle') {{ t(`common.actions.refresh`) }}
-          q-separator.q-mr-sm(inset, vertical)
-          q-btn.q-mr-sm(
-            flat
-            dense
-            no-caps
-            color='blue'
-            :label='t(`common.actions.new`)'
-            :aria-label='t(`common.actions.new`)'
-            icon='las la-plus-circle'
-            )
-            new-menu(
-              :hide-asset-btn='true'
-              :show-new-folder='true'
-              @new-folder='() => newFolder(state.currentFolderId)'
-              @new-page='() => close()'
-              :base-path='folderPath'
-              )
-          q-btn(
-            flat
-            dense
-            no-caps
-            color='positive'
-            :label='t(`common.actions.upload`)'
-            :aria-label='t(`common.actions.upload`)'
-            icon='las la-cloud-upload-alt'
-            @click='uploadFile'
-            )
-
-      .row(style='flex: 1 1 100%;')
-        .col
-          q-scroll-area(
-            :thumb-style='thumbStyle'
-            :bar-style='barStyle'
-            style='height: 100%;'
-            )
-            .fileman-loadinglist(v-if='state.fileListLoading')
-              q-spinner.q-mr-sm(color='primary', size='64px', :thickness='1')
-              span.text-primary Fetching folder contents...
-            .fileman-emptylist(v-else-if='files.length < 1')
-              img(src='/_assets/icons/carbon-copy-empty-box.svg')
-              span This folder is empty.
-            q-list.fileman-filelist(
-              v-else
-              :class='state.isCompact && `is-compact`'
-              )
-              q-item(
-                v-for='item of files'
-                :key='item.id'
-                clickable
-                active-class='active'
-                :active='item.id === state.currentFileId'
-                @click='selectItem(item)'
-                @dblclick='doubleClickItem(item)'
-                )
-                q-item-section.fileman-filelist-icon(avatar)
-                  q-icon(:name='item.icon', :size='state.isCompact ? `md` : `xl`')
-                q-item-section.fileman-filelist-label
-                  q-item-label {{ usePathTitle ? item.fileName : item.title }}
-                  q-item-label(caption, v-if='!state.isCompact') {{ item.caption }}
-                q-item-section.fileman-filelist-side(side, v-if='item.side')
-                  .text-caption {{ item.side }}
-                //- RIGHT-CLICK MENU
-                q-menu.translucent-menu(
-                  touch-position
-                  context-menu
-                  auto-close
-                  transition-show='jump-down'
-                  transition-hide='jump-up'
-                  )
-                  q-card.q-pa-sm
-                    q-list(dense, style='min-width: 150px;')
-                      q-item(clickable, v-if='insertMode && item.type !== `folder`', @click='insertItem(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-plus-circle', color='primary')
-                        q-item-section {{ t(`common.actions.insert`) }}
-                      q-item(clickable, v-if='item.type === `page`', @click='editItem(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-edit', color='orange')
-                        q-item-section {{ t(`common.actions.edit`) }}
-                      q-item(clickable, v-if='item.type === `page`', @click='rerenderPage(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-magic', color='orange')
-                        q-item-section {{ t(`common.actions.rerender`) }}
-                      q-item(clickable, v-if='item.type !== `folder`', @click='openItem(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-eye', color='primary')
-                        q-item-section {{ t(`common.actions.view`) }}
-                      template(v-if='item.type === `asset` && item.imageEdit')
-                        q-item(clickable)
-                          q-item-section(side)
-                            q-icon(name='las la-edit', color='orange')
-                          q-item-section Edit Image...
-                        q-item(clickable)
-                          q-item-section(side)
-                            q-icon(name='las la-crop', color='orange')
-                          q-item-section Resize Image...
-                      q-item(clickable, v-if='item.type !== `folder`', @click='copyItemURL(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-clipboard', color='primary')
-                        q-item-section {{ t(`common.actions.copyURL`) }}
-                      q-item(clickable, v-if='item.type === `asset`', @click='downloadItem(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-download', color='primary')
-                        q-item-section {{ t(`common.actions.download`) }}
-                      q-item(clickable)
-                        q-item-section(side)
-                          q-icon(name='las la-copy', color='teal')
-                        q-item-section Duplicate...
-                      q-item(clickable, @click='renameItem(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-redo', color='teal')
-                        q-item-section Rename...
-                      q-item(clickable)
-                        q-item-section(side)
-                          q-icon(name='las la-arrow-right', color='teal')
-                        q-item-section Move to...
-                      q-item(clickable, @click='delItem(item)')
-                        q-item-section(side)
-                          q-icon(name='las la-trash-alt', color='negative')
-                        q-item-section.text-negative {{ t(`common.actions.delete`) }}
-  q-footer
-    q-bar.fileman-path
-      small.text-caption.text-grey-7 {{folderPath}}
-
-  input(
-    type='file'
-    ref='fileIpt'
-    multiple
-    @change='uploadNewFiles'
-    style='display: none'
-    )
+<template>
+  <w-layout class="fileman" view="hHh lpR lFr" container>
+    <w-header class="card-header">
+      <w-toolbar dark>
+        <w-icon name="img:/_assets/icons/fluent-folder.svg" left size="md" />
+        <span>{{ t(`fileman.title`) }}</span>
+      </w-toolbar>
+      <w-toolbar dark>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          flat
+          color="white"
+          :label="commonStore.locale"
+          :aria-label="commonStore.locale"
+          style="height: 40px;">
+          <locale-selector-menu />
+        </w-btn>
+        <w-input
+          dark
+          v-model="state.search"
+          standout="bg-white text-dark"
+          dense
+          ref="searchField"
+          style="width: 100%;"
+          :label="t(`fileman.searchFolder`)"
+          :debounce="500">
+          <template #prepend><w-icon name="la:search" /></template>
+          <template #append>
+            <w-icon
+              class="cursor-pointer"
+              name="la:times"
+              @click="state.search=``"
+              v-if="state.search.length > 0"
+              :color="dark.isActive ? `blue` : `grey-4`" />
+          </template>
+        </w-input>
+      </w-toolbar>
+      <w-toolbar dark>
+        <w-space />
+        <w-btn
+          flat
+          dense
+          no-caps
+          color="red-3"
+          :aria-label="t(`common.actions.close`)"
+          icon="la:times"
+          @click="close">
+          <w-tooltip anchor="bottom middle" self="top middle">{{t(`common.actions.close`)}}</w-tooltip>
+        </w-btn>
+      </w-toolbar>
+    </w-header>
+    <w-drawer class="fileman-left" :model-value="true" :width="350">
+      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%;">
+        <div class="px-4 pb-2">
+          <tree
+            ref="treeComp"
+            :nodes="state.treeNodes"
+            :roots="state.treeRoots"
+            v-model:selected="state.currentFolderId"
+            @lazy-load="treeLazyLoad"
+            :use-lazy-load="true"
+            @context-action="treeContextAction"
+            :display-mode="state.displayMode" />
+        </div>
+      </w-scroll-area>
+    </w-drawer>
+    <w-drawer class="fileman-right" :model-value="screen.gt.md" :width="350" side="right">
+      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%;">
+        <div class="p-4">
+          <template v-if="currentFileDetails">
+            <img
+              class="w-full object-cover rounded mb-4"
+              v-if="currentFileDetails.thumbnail"
+              :src="currentFileDetails.thumbnail"
+              width="100%"
+              :ratio="16/10" />
+            <div
+              class="fileman-details-row"
+              v-for="item of currentFileDetails.items"
+              :key="item.id">
+              <label>{{ item.label }}</label>
+              <span>{{ item.value }}</span>
+            </div>
+            <template v-if="insertMode">
+              <w-separator class="my-4" />
+              <w-btn
+                class="w-full"
+                @click="insertItem()"
+                :label="t(`common.actions.insert`)"
+                color="primary"
+                icon="la:plus-circle"
+                push
+                padding="sm" />
+            </template>
+          </template>
+        </div>
+      </w-scroll-area>
+    </w-drawer>
+    <w-page-container>
+      <w-page class="fileman-center column">
+        <!-- TOOLBAR ----------------------------------------------------- -->
+        <w-toolbar class="fileman-toolbar">
+          <template v-if="state.isUploading">
+            <div class="fileman-progressbar">
+              <div :style="`width: ` + state.uploadPercentage + `%`">{{ state.uploadPercentage }}%</div>
+            </div>
+            <w-btn
+              class="acrylic-btn ml-2"
+              flat
+              dense
+              no-caps
+              color="negative"
+              :aria-label="t(`common.actions.cancel`)"
+              icon="la:square"
+              @click="uploadCancel"
+              v-if="state.uploadPercentage < 100" />
+          </template>
+          <template v-else>
+            <w-space />
+            <w-btn
+              class="mr-2"
+              flat
+              dense
+              no-caps
+              color="grey"
+              :aria-label="t(`fileman.viewOptions`)"
+              icon="la:th-list">
+              <w-tooltip anchor="bottom middle" self="top middle">{{ t(`fileman.viewOptions`) }}</w-tooltip>
+              <w-menu
+                transition-show="jump-down"
+                transition-hide="jump-up"
+                anchor="bottom right"
+                self="top right">
+                <w-card class="p-2">
+                  <div class="text-center">
+                    <small class="text-grey">{{ t(`fileman.viewOptions`) }}</small>
+                  </div>
+                  <w-list dense>
+                    <w-separator class="my-2" />
+                    <w-item clickable>
+                      <w-item-section side>
+                        <w-icon name="la:list" color="grey" size="xs" />
+                      </w-item-section>
+                      <w-item-section class="pr-2">Browse using...</w-item-section>
+                      <w-item-section side>
+                        <w-icon name="la:angle-right" color="grey" size="xs" />
+                      </w-item-section>
+                      <w-menu anchor="top end" self="top start">
+                        <w-list class="p-2" dense>
+                          <w-item clickable @click="state.displayMode = `path`">
+                            <w-item-section side>
+                              <w-icon
+                                :name="state.displayMode === `path` ? `la:check-circle` : `la:circle`"
+                                :color="state.displayMode === `path` ? `positive` : `grey`"
+                                size="xs" />
+                            </w-item-section>
+                            <w-item-section class="pr-2">Browse Using Paths</w-item-section>
+                          </w-item>
+                          <w-item clickable @click="state.displayMode = `title`">
+                            <w-item-section side>
+                              <w-icon
+                                :name="state.displayMode === `title` ? `la:check-circle` : `la:circle`"
+                                :color="state.displayMode === `title` ? `positive` : `grey`"
+                                size="xs" />
+                            </w-item-section>
+                            <w-item-section class="pr-2">Browse Using Titles</w-item-section>
+                          </w-item>
+                        </w-list>
+                      </w-menu>
+                    </w-item>
+                    <w-item clickable @click="state.isCompact = !state.isCompact">
+                      <w-item-section side>
+                        <w-icon
+                          :name="state.isCompact ? `la:check-square` : `la:stop`"
+                          :color="state.isCompact ? `positive` : `grey`"
+                          size="xs" />
+                      </w-item-section>
+                      <w-item-section class="pr-2">Compact List</w-item-section>
+                    </w-item>
+                    <w-item clickable @click="state.shouldShowFolders = !state.shouldShowFolders">
+                      <w-item-section side>
+                        <w-icon
+                          :name="state.shouldShowFolders ? `la:check-square` : `la:stop`"
+                          :color="state.shouldShowFolders ? `positive` : `grey`"
+                          size="xs" />
+                      </w-item-section>
+                      <w-item-section class="pr-2">Show Folders</w-item-section>
+                    </w-item>
+                  </w-list>
+                </w-card>
+              </w-menu>
+            </w-btn>
+            <w-btn
+              class="mr-2"
+              flat
+              dense
+              no-caps
+              color="grey"
+              :aria-label="t(`common.actions.refresh`)"
+              icon="la:redo-alt"
+              @click="reloadFolder(state.currentFolderId)">
+              <w-tooltip anchor="bottom middle" self="top middle">{{ t(`common.actions.refresh`) }}</w-tooltip>
+            </w-btn>
+            <w-separator class="mr-2" inset vertical />
+            <w-btn
+              class="mr-2"
+              flat
+              dense
+              no-caps
+              color="blue"
+              :label="t(`common.actions.new`)"
+              :aria-label="t(`common.actions.new`)"
+              icon="la:plus-circle">
+              <new-menu
+                :hide-asset-btn="true"
+                :show-new-folder="true"
+                @new-folder="() => newFolder(state.currentFolderId)"
+                @new-page="() => close()"
+                :base-path="folderPath" />
+            </w-btn>
+            <w-btn
+              flat
+              dense
+              no-caps
+              color="positive"
+              :label="t(`common.actions.upload`)"
+              :aria-label="t(`common.actions.upload`)"
+              icon="la:cloud-upload-alt"
+              @click="uploadFile" />
+          </template>
+        </w-toolbar>
+        <div class="flex flex-wrap" style="flex: 1 1 100%;">
+          <div class="min-w-0 flex-1">
+            <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%;">
+              <div class="fileman-loadinglist" v-if="state.fileListLoading">
+                <w-spinner class="mr-2" color="primary" size="64px" :thickness="1" />
+                <span class="text-primary">Fetching folder contents...</span>
+              </div>
+              <div class="fileman-emptylist" v-else-if="files.length < 1">
+                <img src="/_assets/icons/carbon-copy-empty-box.svg" />
+                <span>This folder is empty.</span>
+              </div>
+              <w-list class="fileman-filelist" v-else :class="state.isCompact && `is-compact`">
+                <w-item
+                  v-for="item of files"
+                  :key="item.id"
+                  clickable
+                  active-class="active"
+                  :active="item.id === state.currentFileId"
+                  @click="selectItem(item)"
+                  @dblclick="doubleClickItem(item)">
+                  <w-item-section class="fileman-filelist-icon" avatar>
+                    <w-icon :name="item.icon" :size="state.isCompact ? `md` : `xl`" />
+                  </w-item-section>
+                  <w-item-section class="fileman-filelist-label">
+                    <w-item-label>{{ usePathTitle ? item.fileName : item.title }}</w-item-label>
+                    <w-item-label caption v-if="!state.isCompact">{{ item.caption }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section class="fileman-filelist-side" side v-if="item.side">
+                    <div class="text-caption">{{ item.side }}</div>
+                  </w-item-section>
+                  <!-- RIGHT-CLICK MENU -->
+                  <w-menu
+                    class="translucent-menu"
+                    touch-position
+                    context-menu
+                    auto-close
+                    transition-show="jump-down"
+                    transition-hide="jump-up">
+                    <w-card class="p-2">
+                      <w-list dense style="min-width: 150px;">
+                        <w-item
+                          clickable
+                          v-if="insertMode && item.type !== `folder`"
+                          @click="insertItem(item)">
+                          <w-item-section side>
+                            <w-icon name="la:plus-circle" color="primary" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.insert`) }}</w-item-section>
+                        </w-item>
+                        <w-item clickable v-if="item.type === `page`" @click="editItem(item)">
+                          <w-item-section side>
+                            <w-icon name="la:edit" color="orange" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.edit`) }}</w-item-section>
+                        </w-item>
+                        <w-item clickable v-if="item.type === `page`" @click="rerenderPage(item)">
+                          <w-item-section side>
+                            <w-icon name="la:magic" color="orange" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.rerender`) }}</w-item-section>
+                        </w-item>
+                        <w-item clickable v-if="item.type !== `folder`" @click="openItem(item)">
+                          <w-item-section side>
+                            <w-icon name="la:eye" color="primary" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
+                        </w-item>
+                        <template v-if="item.type === `asset` && item.imageEdit">
+                          <w-item clickable>
+                            <w-item-section side>
+                              <w-icon name="la:edit" color="orange" />
+                            </w-item-section>
+                            <w-item-section>Edit Image...</w-item-section>
+                          </w-item>
+                          <w-item clickable>
+                            <w-item-section side>
+                              <w-icon name="la:crop" color="orange" />
+                            </w-item-section>
+                            <w-item-section>Resize Image...</w-item-section>
+                          </w-item>
+                        </template>
+                        <w-item clickable v-if="item.type !== `folder`" @click="copyItemURL(item)">
+                          <w-item-section side>
+                            <w-icon name="la:clipboard" color="primary" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.copyURL`) }}</w-item-section>
+                        </w-item>
+                        <w-item clickable v-if="item.type === `asset`" @click="downloadItem(item)">
+                          <w-item-section side>
+                            <w-icon name="la:download" color="primary" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.download`) }}</w-item-section>
+                        </w-item>
+                        <w-item clickable>
+                          <w-item-section side>
+                            <w-icon name="la:copy" color="teal" />
+                          </w-item-section>
+                          <w-item-section>Duplicate...</w-item-section>
+                        </w-item>
+                        <w-item clickable @click="renameItem(item)">
+                          <w-item-section side>
+                            <w-icon name="la:redo" color="teal" />
+                          </w-item-section>
+                          <w-item-section>Rename...</w-item-section>
+                        </w-item>
+                        <w-item clickable>
+                          <w-item-section side>
+                            <w-icon name="la:arrow-right" color="teal" />
+                          </w-item-section>
+                          <w-item-section>Move to...</w-item-section>
+                        </w-item>
+                        <w-item clickable @click="delItem(item)">
+                          <w-item-section side>
+                            <w-icon name="la:trash-alt" color="negative" />
+                          </w-item-section>
+                          <w-item-section class="text-negative">{{ t(`common.actions.delete`) }}</w-item-section>
+                        </w-item>
+                      </w-list>
+                    </w-card>
+                  </w-menu>
+                </w-item>
+              </w-list>
+            </w-scroll-area>
+          </div>
+        </div>
+      </w-page>
+    </w-page-container>
+    <w-footer>
+      <w-bar class="fileman-path">
+        <small class="text-caption text-grey-7">{{folderPath}}</small>
+      </w-bar>
+    </w-footer>
+    <input type="file" ref="fileIpt" multiple @change="uploadNewFiles" style="display: none" />
+  </w-layout>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, toRaw, watch } from 'vue'
-import { filesize } from 'filesize'
-import { useQuasar } from 'quasar'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  reactive,
+  ref,
+  toRaw,
+  watch
+} from 'vue'
 import { useRouter } from 'vue-router'
 
-import Fuse from 'fuse.js/basic'
-
-import NewMenu from './PageNewMenu.vue'
-import Tree from './TreeNav.vue'
-
-import fileTypes from '@/helpers/fileTypes'
+import { dialog } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
+import { useScreen } from '@/composables/screen'
+import { useDark } from '@/composables/dark'
 
 import { useCommonStore } from '@/stores/common'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
+import { filesize } from 'filesize'
+import Fuse from 'fuse.js/basic'
+import NewMenu from './PageNewMenu.vue'
+import Tree from './TreeNav.vue'
+import fileTypes from '@/helpers/fileTypes'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
 import AssetRenameDialog from '@/components/AssetRenameDialog.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 
-// QUASAR
 
-const $q = useQuasar()
+// COMPOSABLES
+
+const dark = useDark()
+const screen = useScreen()
 
 // STORES
 
@@ -407,7 +466,9 @@ const folderPath = computed(() => {
     return '/'
   } else {
     const folderNode = state.treeNodes[state.currentFolderId] ?? {}
-    return folderNode.folderPath ? `/${folderNode.folderPath}/${folderNode.fileName}/` : `/${folderNode.fileName}/`
+    return folderNode.folderPath
+      ? `/${folderNode.folderPath}/${folderNode.fileName}/`
+      : `/${folderNode.fileName}/`
   }
 })
 
@@ -416,57 +477,56 @@ const usePathTitle = computed(() => state.displayMode === 'path')
 const filteredFiles = computed(() => {
   if (state.search) {
     const fuse = new Fuse(state.fileList, {
-      keys: [
-        'title',
-        'fileName'
-      ]
+      keys: ['title', 'fileName']
     })
-    return fuse.search(state.search).map(n => n.item)
+    return fuse.search(state.search).map((n) => n.item)
   } else {
     return state.fileList
   }
 })
 
 const files = computed(() => {
-  return filteredFiles.value.filter(f => {
-    // -> Show Folders Filter
-    if (f.type === 'folder' && !state.shouldShowFolders) {
-      return false
-    }
-    return true
-  }).map(f => {
-    switch (f.type) {
-      case 'folder': {
-        f.icon = fileTypes.folder.icon
-        f.caption = t('fileman.folderChildrenCount', { count: f.children }, f.children)
-        break
+  return filteredFiles.value
+    .filter((f) => {
+      // -> Show Folders Filter
+      if (f.type === 'folder' && !state.shouldShowFolders) {
+        return false
       }
-      case 'page': {
-        f.icon = fileTypes.page.icon
-        f.caption = t(`fileman.${f.pageType}PageType`)
-        break
-      }
-      case 'asset': {
-        f.icon = fileTypes[f.fileExt]?.icon ?? ''
-        f.side = filesize(f.fileSize, { round: 0 })
-        f.imageEdit = fileTypes[f.fileExt]?.imageEdit
-        if (fileTypes[f.fileExt]) {
-          f.caption = t(`fileman.${f.fileExt}FileType`)
-        } else {
-          f.caption = t('fileman.unknownFileType', { type: f.fileExt.toUpperCase() })
+      return true
+    })
+    .map((f) => {
+      switch (f.type) {
+        case 'folder': {
+          f.icon = fileTypes.folder.icon
+          f.caption = t('fileman.folderChildrenCount', { count: f.children }, f.children)
+          break
         }
-        break
+        case 'page': {
+          f.icon = fileTypes.page.icon
+          f.caption = t(`fileman.${f.pageType}PageType`)
+          break
+        }
+        case 'asset': {
+          f.icon = fileTypes[f.fileExt]?.icon ?? ''
+          f.side = filesize(f.fileSize, { round: 0 })
+          f.imageEdit = fileTypes[f.fileExt]?.imageEdit
+          if (fileTypes[f.fileExt]) {
+            f.caption = t(`fileman.${f.fileExt}FileType`)
+          } else {
+            f.caption = t('fileman.unknownFileType', { type: f.fileExt.toUpperCase() })
+          }
+          break
+        }
       }
-    }
-    return f
-  })
+      return f
+    })
 })
 
 const currentFileDetails = computed(() => {
   if (!state.currentFileId) {
     return null
   }
-  const item = state.fileList.find(f => f.id === state.currentFileId)
+  const item = state.fileList.find((f) => f.id === state.currentFileId)
   if (!item || item.type === 'folder') {
     return null
   }
@@ -504,7 +564,9 @@ const currentFileDetails = computed(() => {
       thumbnail = item.mimeType?.startsWith('image/') ? `/_thumb/${item.id}.webp` : null
       items.push({
         label: t('fileman.detailsAssetType'),
-        value: fileTypes[item.fileExt] ? t(`fileman.${item.fileExt}FileType`) : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })
+        value: fileTypes[item.fileExt]
+          ? t(`fileman.${item.fileExt}FileType`)
+          : t('fileman.unknownFileType', { type: item.fileExt.toUpperCase() })
       })
       items.push({
         label: t('fileman.detailsAssetSize'),
@@ -521,13 +583,16 @@ const currentFileDetails = computed(() => {
 
 // WATCHERS
 
-watch(() => state.currentFolderId, async (newValue) => {
-  await loadTree({ parentId: newValue })
-})
+watch(
+  () => state.currentFolderId,
+  async (newValue) => {
+    await loadTree({ parentId: newValue })
+  }
+)
 
 // METHODS
 
-function close () {
+function close() {
   siteStore.overlay = null
 }
 
@@ -535,12 +600,15 @@ function close () {
  * The message an API failure should be reported with — the server's own if it sent one, since ky
  * throws before the caller ever sees the body.
  */
-async function apiErrorMessage (err, fallback) {
-  const message = await err.response?.json().then(b => b?.message).catch(() => null)
+async function apiErrorMessage(err, fallback) {
+  const message = await err.response
+    ?.json()
+    .then((b) => b?.message)
+    .catch(() => null)
   return message || err.message || fallback
 }
 
-function formatDateTime (value) {
+function formatDateTime(value) {
   if (!value) {
     return ''
   }
@@ -549,21 +617,23 @@ function formatDateTime (value) {
     .toLocaleString(commonStore.locale, { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-function insertItem (item) {
+function insertItem(item) {
   if (!item) {
-    item = state.fileList.find(f => f.id === state.currentFileId)
+    item = state.fileList.find((f) => f.id === state.currentFileId)
   }
   EVENT_BUS.emit('insertAsset', toRaw(item))
   close()
 }
 
-async function treeLazyLoad (nodeId, isCurrent, { done, fail }) {
+async function treeLazyLoad(nodeId, isCurrent, { done, fail }) {
   await loadTree({ parentId: nodeId, types: isCurrent ? null : ['folder'] })
   done()
 }
 
-async function loadTree ({ parentId = null, parentPath = null, types, initLoad = false }) {
-  if (state.isFetching) { return }
+async function loadTree({ parentId = null, parentPath = null, types, initLoad = false }) {
+  if (state.isFetching) {
+    return
+  }
   state.isFetching = true
   if (!parentId) {
     parentId = null
@@ -601,13 +671,17 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
               let folderParentId = parentId
               if (!folderParentId) {
                 const parentFolderParts = item.folderPath.split('/')
-                const parentFolder = items.find(i =>
-                  i.folderPath === parentFolderParts.slice(0, -1).join('/') &&
-                  i.fileName === parentFolderParts.at(-1)
+                const parentFolder = items.find(
+                  (i) =>
+                    i.folderPath === parentFolderParts.slice(0, -1).join('/') &&
+                    i.fileName === parentFolderParts.at(-1)
                 )
                 folderParentId = parentFolder?.id
               }
-              if (item.id !== folderParentId && !state.treeNodes[folderParentId]?.children?.includes(item.id)) {
+              if (
+                item.id !== folderParentId &&
+                !state.treeNodes[folderParentId]?.children?.includes(item.id)
+              ) {
                 state.treeNodes[folderParentId]?.children?.push(item.id)
               }
             } else {
@@ -665,7 +739,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
       }
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to load folder tree.',
       caption: await apiErrorMessage(err, 'An unexpected error occured.')
@@ -682,7 +756,7 @@ async function loadTree ({ parentId = null, parentPath = null, types, initLoad =
   state.isFetching = false
 }
 
-function treeContextAction (nodeId, action) {
+function treeContextAction(nodeId, action) {
   switch (action) {
     case 'newFolder': {
       newFolder(nodeId)
@@ -703,8 +777,8 @@ function treeContextAction (nodeId, action) {
 // FOLDER METHODS
 // --------------------------------------
 
-function newFolder (parentId) {
-  $q.dialog({
+function newFolder(parentId) {
+  dialog({
     component: FolderCreateDialog,
     componentProps: {
       parentId
@@ -714,8 +788,8 @@ function newFolder (parentId) {
   })
 }
 
-function renameFolder (folderId) {
-  $q.dialog({
+function renameFolder(folderId) {
+  dialog({
     component: FolderRenameDialog,
     componentProps: {
       folderId
@@ -737,8 +811,8 @@ function renameFolder (folderId) {
   })
 }
 
-function delFolder (folderId, mustReload = false) {
-  $q.dialog({
+function delFolder(folderId, mustReload = false) {
+  dialog({
     component: FolderDeleteDialog,
     componentProps: {
       folderId,
@@ -747,12 +821,14 @@ function delFolder (folderId, mustReload = false) {
   }).onOk(() => {
     for (const nodeId in state.treeNodes) {
       if (state.treeNodes[nodeId].children.includes(folderId)) {
-        state.treeNodes[nodeId].children = state.treeNodes[nodeId].children.filter(c => c !== folderId)
+        state.treeNodes[nodeId].children = state.treeNodes[nodeId].children.filter(
+          (c) => c !== folderId
+        )
       }
     }
     delete state.treeNodes[folderId]
     if (state.treeRoots.includes(folderId)) {
-      state.treeRoots = state.treeRoots.filter(n => n !== folderId)
+      state.treeRoots = state.treeRoots.filter((n) => n !== folderId)
     }
     if (mustReload) {
       loadTree({ parentId: state.currentFolderId })
@@ -760,7 +836,7 @@ function delFolder (folderId, mustReload = false) {
   })
 }
 
-function reloadFolder (folderId) {
+function reloadFolder(folderId) {
   loadTree({ parentId: folderId })
   treeComp.value.resetLoaded()
 }
@@ -769,8 +845,8 @@ function reloadFolder (folderId) {
 // PAGE METHODS
 // --------------------------------------
 
-function rerenderPage (item) {
-  $q.dialog({
+function rerenderPage(item) {
+  dialog({
     component: defineAsyncComponent(() => import('@/components/RerenderPageDialog.vue')),
     componentProps: {
       id: item.id
@@ -778,8 +854,8 @@ function rerenderPage (item) {
   })
 }
 
-function delPage (pageId, pageName) {
-  $q.dialog({
+function delPage(pageId, pageName) {
+  dialog({
     component: defineAsyncComponent(() => import('@/components/PageDeleteDialog.vue')),
     componentProps: {
       pageId,
@@ -795,8 +871,8 @@ function delPage (pageId, pageName) {
 // ASSET METHODS
 // --------------------------------------
 
-function renameAsset (assetId) {
-  $q.dialog({
+function renameAsset(assetId) {
+  dialog({
     component: AssetRenameDialog,
     componentProps: {
       assetId
@@ -807,8 +883,8 @@ function renameAsset (assetId) {
   })
 }
 
-function delAsset (assetId, assetName) {
-  $q.dialog({
+function delAsset(assetId, assetName) {
+  dialog({
     component: defineAsyncComponent(() => import('@/components/AssetDeleteDialog.vue')),
     componentProps: {
       assetId,
@@ -824,11 +900,11 @@ function delAsset (assetId, assetName) {
 // UPLOAD METHODS
 // --------------------------------------
 
-function uploadFile () {
+function uploadFile() {
   fileIpt.value.click()
 }
 
-async function uploadNewFiles () {
+async function uploadNewFiles() {
   if (!fileIpt.value.files?.length) {
     return
   }
@@ -852,7 +928,7 @@ async function uploadNewFiles () {
             break
           }
           idx++
-          state.uploadPercentage = totalFiles > 1 ? Math.round(idx / totalFiles * 100) : 90
+          state.uploadPercentage = totalFiles > 1 ? Math.round((idx / totalFiles) * 100) : 90
           // -> The body is the file itself rather than a multipart form, and the locale is left to the
           //    server, which uses the site's primary one
           const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
@@ -873,13 +949,13 @@ async function uploadNewFiles () {
         state.uploadPercentage = 100
         loadTree({ parentId: state.currentFolderId })
         if (!state.shouldCancelUpload) {
-          $q.notify({
+          notify({
             type: 'positive',
             message: t('fileman.uploadSuccess')
           })
         }
       } catch (err) {
-        $q.notify({
+        notify({
           type: 'negative',
           message: 'Failed to upload file.',
           caption: await apiErrorMessage(err, 'An unexpected error occured.')
@@ -895,7 +971,7 @@ async function uploadNewFiles () {
   })
 }
 
-function uploadCancel () {
+function uploadCancel() {
   state.shouldCancelUpload = true
 }
 
@@ -903,7 +979,7 @@ function uploadCancel () {
 // ITEM LIST ACTIONS
 // --------------------------------------
 
-function selectItem (item) {
+function selectItem(item) {
   if (item.type === 'folder') {
     state.currentFolderId = item.id
     treeComp.value.setOpened(item.id)
@@ -912,7 +988,7 @@ function selectItem (item) {
   }
 }
 
-function doubleClickItem (item) {
+function doubleClickItem(item) {
   if (insertMode.value) {
     insertItem(item)
   } else {
@@ -920,7 +996,7 @@ function doubleClickItem (item) {
   }
 }
 
-function openItem (item) {
+function openItem(item) {
   switch (item.type) {
     case 'folder': {
       return
@@ -939,7 +1015,7 @@ function openItem (item) {
   }
 }
 
-async function copyItemURL (item) {
+async function copyItemURL(item) {
   try {
     switch (item.type) {
       case 'page': {
@@ -956,12 +1032,12 @@ async function copyItemURL (item) {
         throw new Error('Invalid Item Type')
       }
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('fileman.copyURLSuccess')
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to copy URL to clipboard.',
       caption: err.message
@@ -969,12 +1045,14 @@ async function copyItemURL (item) {
   }
 }
 
-async function editItem (item) {
-  router.push(item.folderPath ? `/_edit/${item.folderPath}/${item.fileName}` : `/_edit/${item.fileName}`)
+async function editItem(item) {
+  router.push(
+    item.folderPath ? `/_edit/${item.folderPath}/${item.fileName}` : `/_edit/${item.fileName}`
+  )
   close()
 }
 
-async function downloadItem (item) {
+async function downloadItem(item) {
   try {
     // -> Fetched rather than linked to: the content route is behind the API client, which is what
     //    carries the token
@@ -986,7 +1064,7 @@ async function downloadItem (item) {
     link.click()
     URL.revokeObjectURL(url)
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to download file.',
       caption: await apiErrorMessage(err, 'An unexpected error occured.')
@@ -994,7 +1072,7 @@ async function downloadItem (item) {
   }
 }
 
-function renameItem (item) {
+function renameItem(item) {
   switch (item.type) {
     case 'folder': {
       renameFolder(item.id)
@@ -1011,7 +1089,7 @@ function renameItem (item) {
   }
 }
 
-function delItem (item) {
+function delItem(item) {
   switch (item.type) {
     case 'asset': {
       delAsset(item.id, item.title)
@@ -1044,19 +1122,21 @@ onMounted(async () => {
   const folderFileName = pathParts.at(-2)
 
   for (const [id, node] of Object.entries(state.treeNodes)) {
-    if (parentPath.startsWith(node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName)) {
+    if (
+      parentPath.startsWith(node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName)
+    ) {
       treeComp.value.setOpened(id)
     }
   }
 
   // -> Switch to current folder (from page path)
-  const currentNode = Object.entries(state.treeNodes)
-    .find(([, n]) => n.folderPath === folderFolderPath && n.fileName === folderFileName)
+  const currentNode = Object.entries(state.treeNodes).find(
+    ([, n]) => n.folderPath === folderFolderPath && n.fileName === folderFileName
+  )
   if (currentNode) {
     state.currentFolderId = currentNode[0]
   }
 })
-
 </script>
 
 <style lang="scss">
@@ -1071,9 +1151,8 @@ onMounted(async () => {
   }
 
   &-center {
-
     @at-root .body--light & {
-      background-color: #FFF;
+      background-color: #fff;
     }
     @at-root .body--dark & {
       background-color: $dark-6;
@@ -1135,7 +1214,7 @@ onMounted(async () => {
     align-items: center;
 
     > img {
-      opacity: .25;
+      opacity: 0.25;
       width: 200px;
     }
 
@@ -1154,26 +1233,26 @@ onMounted(async () => {
   &-filelist {
     padding: 8px 12px;
 
-    > .q-item {
+    > .w-item {
       padding: 4px 6px;
       border-radius: 8px;
 
       &.active {
-        background-color: var(--q-primary);
-        color: #FFF;
+        background-color: var(--color-primary);
+        color: #fff;
 
-        .fileman-filelist-label .q-item__label--caption {
-          color: rgba(255,255,255,.7);
+        .fileman-filelist-label .w-item-label--caption {
+          color: rgba(255, 255, 255, 0.7);
         }
 
         .fileman-filelist-side .text-caption {
-          color: rgba(255,255,255,.7);
+          color: rgba(255, 255, 255, 0.7);
         }
       }
     }
 
     &.is-compact {
-      > .q-item {
+      > .w-item {
         padding: 0 6px;
         min-height: 36px;
       }
@@ -1190,7 +1269,7 @@ onMounted(async () => {
     padding: 5px 0;
 
     label {
-      font-size: .7rem;
+      font-size: 0.7rem;
       font-weight: 500;
 
       @at-root .body--light & {
@@ -1201,7 +1280,7 @@ onMounted(async () => {
       }
     }
     span {
-      font-size: .85rem;
+      font-size: 0.85rem;
 
       @at-root .body--light & {
         color: $grey-8;
@@ -1250,7 +1329,7 @@ onMounted(async () => {
       font-size: 9px;
       letter-spacing: 2px;
       font-weight: 700;
-      color: #FFF;
+      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;

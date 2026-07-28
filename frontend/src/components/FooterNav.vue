@@ -1,27 +1,37 @@
-<template lang="pug">
-q-footer.site-footer
-  .site-footer-line
-    i18n-t.q-mr-xs(
-      v-if='hasSiteFooter'
-      :keypath='isCopyright ? `common.footerCopyright` : `common.footerLicense`'
-      tag='span'
-      scope='global'
-      )
-      template(#company)
-        strong {{siteStore.company}}
-      template(#year)
-        span {{currentYear}}
-      template(#license)
-        span {{t(`common.license.` + siteStore.contentLicense)}}
-    i18n-t(
-      :keypath='props.generic ? `common.footerGeneric` : `common.footerPoweredBy`'
-      tag='span'
-      scope='global'
-      )
-      template(#link)
-        a(href='https://js.wiki', target='_blank', ref='noopener noreferrer'): strong Wiki.js
-  .site-footer-line(v-if='!props.generic && siteStore.footerExtra')
-    span {{ siteStore.footerExtra }}
+<template>
+  <div class="site-footer">
+    <div class="site-footer-line">
+      <i18n-t
+        v-if="hasSiteFooter"
+        class="mr-1"
+        :keypath="isCopyright ? `common.footerCopyright` : `common.footerLicense`"
+        tag="span"
+        scope="global">
+        <template #company>
+          <strong>{{ siteStore.company }}</strong>
+        </template>
+        <template #year>
+          <span>{{ currentYear }}</span>
+        </template>
+        <template #license>
+          <span>{{ t(`common.license.` + siteStore.contentLicense) }}</span>
+        </template>
+      </i18n-t>
+      <i18n-t
+        :keypath="props.generic ? `common.footerGeneric` : `common.footerPoweredBy`"
+        tag="span"
+        scope="global">
+        <template #link>
+          <a href="https://js.wiki" target="_blank" rel="noopener noreferrer"
+            ><strong>Wiki.js</strong></a
+          >
+        </template>
+      </i18n-t>
+    </div>
+    <div v-if="!props.generic && siteStore.footerExtra" class="site-footer-line">
+      <span>{{ siteStore.footerExtra }}</span>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -29,6 +39,14 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useSiteStore } from '@/stores/site'
+
+/**
+ * Footer content.
+ *
+ * Content only: the enclosing layout supplies the footer element itself (`<w-footer>`, or
+ * `<q-footer>` in a layout not yet migrated). Keeping positioning out of here is what lets the
+ * three layouts sharing this component migrate one at a time instead of all together.
+ */
 
 // PROPS
 
@@ -61,33 +79,30 @@ const isCopyright = computed(() => {
 })
 </script>
 
-<style lang="scss">
+<style scoped>
 .site-footer {
-  background-color: $grey-3;
-  color: $grey-8;
+  background-color: var(--color-grey-3);
+  color: var(--color-grey-8);
   padding: 4px 12px;
   font-size: 11px;
+}
 
-  @at-root .body--dark & {
-    background-color: $dark-4;
-    color: rgba(255,255,255,.4);
-  }
+:global(body.body--dark .site-footer) {
+  background-color: var(--color-dark-4);
+  color: rgb(255 255 255 / 0.4);
+}
 
-  &-line {
-    text-align: center;
+.site-footer-line {
+  text-align: center;
+}
 
-    a {
-      text-decoration: none;
-      color: inherit;
+.site-footer-line a {
+  text-decoration: none;
+  color: inherit;
+}
 
-      &:hover, &:focus {
-        text-decoration: underline;
-      }
-    }
-
-    & + .q-bar {
-      height: 18px;
-    }
-  }
+.site-footer-line a:hover,
+.site-footer-line a:focus {
+  text-decoration: underline;
 }
 </style>

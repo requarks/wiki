@@ -1,43 +1,35 @@
-<template lang="pug">
-q-page.q-py-md(:style-fn='pageStyle')
-  .text-header {{t('profile.groups')}}
-  .q-pa-md
-    .text-body2 {{ t('profile.groupsInfo') }}
-    q-list.q-mt-lg(
-      bordered
-      separator
-      )
-      q-item(
-        v-if='state.groups.length === 0 && state.loading < 1'
-        )
-        q-item-section
-          span.text-negative {{ t('profile.groupsNone') }}
-      q-item(
-        v-for='grp of state.groups'
-        :key='grp.id'
-        )
-        q-item-section(avatar)
-          q-avatar(
-            color='secondary'
-            text-color='white'
-            icon='las la-users'
-            rounded
-            )
-        q-item-section
-          strong {{grp.name}}
+<template>
+  <w-page class="py-4">
+    <div class="text-header">{{ t('profile.groups') }}</div>
+    <div class="p-4">
+      <div class="text-body2">{{ t('profile.groupsInfo') }}</div>
+      <w-list class="mt-6" bordered separator>
+        <w-item v-if="state.groups.length === 0 && state.loading < 1">
+          <w-item-section>
+            <span class="text-negative">{{ t('profile.groupsNone') }}</span>
+          </w-item-section>
+        </w-item>
+        <w-item v-for="grp of state.groups" :key="grp.id">
+          <w-item-section avatar>
+            <w-avatar color="secondary" text-color="white" icon="la:users" rounded />
+          </w-item-section>
+          <w-item-section>
+            <strong>{{ grp.name }}</strong>
+          </w-item-section>
+        </w-item>
+      </w-list>
+    </div>
 
-  q-inner-loading(:showing='state.loading > 0')
+    <w-inner-loading :showing="state.loading > 0" />
+  </w-page>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
 import { onMounted, reactive } from 'vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // I18N
 
@@ -58,23 +50,17 @@ const state = reactive({
 
 // METHODS
 
-function pageStyle (offset, height) {
-  return {
-    'min-height': `${height - 100 - offset}px`
-  }
-}
-
 /**
  * The groups come from the session's own endpoint rather than from `users/:id`: reading an arbitrary
  * user requires `read:users`, which a regular user does not have.
  */
-async function fetchGroups () {
+async function fetchGroups() {
   state.loading++
   try {
     const groups = await API_CLIENT.get('users/profile/groups').json()
     state.groups = groups ?? []
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('profile.groupsLoadingFailed'),
       caption: err.message
@@ -88,5 +74,4 @@ async function fetchGroups () {
 onMounted(() => {
   fetchGroups()
 })
-
 </script>

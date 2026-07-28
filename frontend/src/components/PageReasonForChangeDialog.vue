@@ -1,48 +1,56 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 450px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-query.svg', left, size='sm')
-      span {{t(`editor.reasonForChange.title`)}}
-    q-card-section
-      .text-body2(v-if='props.required') {{t(`editor.reasonForChange.required`)}}
-      .text-body2(v-else) {{t(`editor.reasonForChange.optional`)}}
-    q-form.q-pb-sm(ref='reasonForm', @submit.prevent='commit')
-      q-item
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.reason'
-            dense
-            :rules='reasonValidation'
-            hide-bottom-space
-            :label='t(`editor.reasonForChange.field`)'
-            :aria-label='t(`editor.reasonForChange.field`)'
-            lazy-rules='ondemand'
-            autofocus
-            )
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.save`)'
-        color='primary'
-        padding='xs md'
-        @click='commit'
-        :loading='state.isLoading'
-        )
+<template>
+  <w-dialog v-model="dialogVisible" @hide="onDialogHide">
+    <w-card style="min-width: 450px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-query.svg" size="sm" class="mr-2" />
+        <span>{{ t(`editor.reasonForChange.title`) }}</span>
+      </w-card-section>
+      <w-card-section>
+        <div v-if="props.required" class="text-body2">
+          {{ t(`editor.reasonForChange.required`) }}
+        </div>
+        <div v-else class="text-body2">{{ t(`editor.reasonForChange.optional`) }}</div>
+      </w-card-section>
+      <w-form ref="reasonForm" class="pb-2" @submit="commit">
+        <w-item>
+          <w-item-section>
+            <w-input
+              v-model="state.reason"
+              outlined
+              dense
+              :rules="reasonValidation"
+              hide-bottom-space
+              :label="t(`editor.reasonForChange.field`)"
+              lazy-rules="ondemand"
+              autofocus />
+          </w-item-section>
+        </w-item>
+      </w-form>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          unelevated
+          :label="t(`common.actions.save`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.isLoading"
+          @click="commit" />
+      </w-card-actions>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { reactive, ref } from 'vue'
 
 // PROPS
@@ -57,14 +65,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // I18N
 
@@ -83,13 +88,11 @@ const reasonForm = ref(null)
 
 // VALIDATION RULES
 
-const reasonValidation = [
-  val => val.length > 0 || t('editor.reasonForChange.reasonMissing')
-]
+const reasonValidation = [(val) => val.length > 0 || t('editor.reasonForChange.reasonMissing')]
 
 // METHODS
 
-async function commit () {
+async function commit() {
   state.isLoading = true
   try {
     if (props.required) {
@@ -99,7 +102,7 @@ async function commit () {
       }
     }
     onDialogOK({ reason: state.reason })
-  } catch (err) { }
+  } catch (err) {}
   state.isLoading = false
 }
 </script>

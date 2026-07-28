@@ -1,61 +1,58 @@
-<template lang="pug">
-q-page.q-py-md(:style-fn='pageStyle')
-  .text-header {{t('profile.avatar')}}
-  .row.q-gutter-lg.q-mt-xl
-    .col.text-center
-      q-avatar.profile-avatar-circ(
-        size='180px'
-        :color='userStore.hasAvatar ? `dark-1` : `primary`'
-        text-color='white'
-        :class='userStore.hasAvatar ? `is-image` : ``'
-        )
-        img(
-          v-if='userStore.hasAvatar',
-          :src='`/_user/current/avatar?` + state.assetTimestamp'
-          )
-        q-icon(
-          v-else,
-          name='las la-user'
-          )
-    .col.self-center(v-if='canEdit')
-      .text-body1 {{ t('profile.avatarUploadTitle') }}
-      .text-caption {{ t('profile.avatarUploadHint') }}
-      .q-mt-md
-        q-btn(
-          icon='las la-upload'
-          unelevated
-          :label='t(`profile.uploadNewAvatar`)'
-          color='primary'
-          @click='uploadImage'
-        )
-      .q-mt-md
-        q-btn.q-mr-sm(
-          icon='las la-times'
-          outline
-          :label='t(`common.actions.clear`)'
-          color='primary'
-          @click='clearImage'
-          :disable='!userStore.hasAvatar'
-        )
-    .col.self-center(v-else)
-      .text-caption.text-negative {{ t('profile.avatarUploadDisabled') }}
+<template>
+  <w-page class="py-4">
+    <div class="text-header">{{ t('profile.avatar') }}</div>
+    <div class="mt-10 flex flex-wrap gap-6">
+      <div class="flex-1 text-center">
+        <w-avatar
+          class="profile-avatar-circ"
+          size="180px"
+          :color="userStore.hasAvatar ? `dark-1` : `primary`"
+          text-color="white"
+          :class="userStore.hasAvatar ? `is-image` : ``">
+          <img v-if="userStore.hasAvatar" :src="`/_user/current/avatar?` + state.assetTimestamp" />
+          <w-icon v-else name="la:user" />
+        </w-avatar>
+      </div>
+      <div v-if="canEdit" class="flex-1 self-center">
+        <div class="text-body1">{{ t('profile.avatarUploadTitle') }}</div>
+        <div class="text-caption">{{ t('profile.avatarUploadHint') }}</div>
+        <div class="mt-4">
+          <w-btn
+            icon="la:upload"
+            unelevated
+            :label="t(`profile.uploadNewAvatar`)"
+            color="primary"
+            @click="uploadImage" />
+        </div>
+        <div class="mt-4">
+          <w-btn
+            class="mr-2"
+            icon="la:times"
+            outline
+            :label="t(`common.actions.clear`)"
+            color="primary"
+            :disable="!userStore.hasAvatar"
+            @click="clearImage" />
+        </div>
+      </div>
+      <div v-else class="flex-1 self-center">
+        <div class="text-caption text-negative">{{ t('profile.avatarUploadDisabled') }}</div>
+      </div>
+    </div>
 
-  q-inner-loading(:showing='state.loading > 0')
+    <w-inner-loading :showing="state.loading > 0" />
+  </w-page>
 </template>
 
 <script setup>
-
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
 import { computed, reactive } from 'vue'
 
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -76,7 +73,7 @@ useMeta({
 
 const state = reactive({
   loading: 0,
-  assetTimestamp: (new Date()).toISOString()
+  assetTimestamp: new Date().toISOString()
 })
 
 /** What the upload endpoint accepts. */
@@ -86,24 +83,20 @@ const canEdit = computed(() => siteStore.features?.profile)
 
 // METHODS
 
-function pageStyle (offset, height) {
-  return {
-    'min-height': `${height - 100 - offset}px`
-  }
-}
-
-async function uploadImage () {
+async function uploadImage() {
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = acceptedTypes.join(',')
 
-  input.onchange = async e => {
+  input.onchange = async (e) => {
     const file = e.target.files?.[0]
-    if (!file) { return }
+    if (!file) {
+      return
+    }
     // -> The file picker's filter is a suggestion the user can override, and the server checks the
     //    bytes anyway; saying so here beats a 415 with nothing to explain it
     if (!acceptedTypes.includes(file.type)) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: t('profile.avatarUploadFailed'),
         caption: t('profile.avatarUploadInvalidType')
@@ -122,16 +115,16 @@ async function uploadImage () {
       if (!resp?.ok) {
         throw new Error(resp?.message || 'An unexpected error occured.')
       }
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('profile.avatarUploadSuccess')
       })
-      state.assetTimestamp = (new Date()).toISOString()
+      state.assetTimestamp = new Date().toISOString()
       userStore.$patch({
         hasAvatar: true
       })
     } catch (err) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: t('profile.avatarUploadFailed'),
         caption: err.message
@@ -143,23 +136,23 @@ async function uploadImage () {
   input.click()
 }
 
-async function clearImage () {
+async function clearImage() {
   state.loading++
   try {
     const resp = await API_CLIENT.delete('users/profile/avatar').json()
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('profile.avatarClearSuccess')
     })
-    state.assetTimestamp = (new Date()).toISOString()
+    state.assetTimestamp = new Date().toISOString()
     userStore.$patch({
       hasAvatar: false
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('profile.avatarClearFailed'),
       caption: err.message
@@ -167,15 +160,17 @@ async function clearImage () {
   }
   state.loading--
 }
-
 </script>
 
 <style lang="scss">
 .profile-avatar-circ {
-  box-shadow: 2px 2px 15px -5px var(--q-primary), -2px -2px 15px -5px var(--q-primary), inset 0 0 2px 8px rgba(255,255,255,.15);
+  box-shadow:
+    2px 2px 15px -5px var(--color-primary),
+    -2px -2px 15px -5px var(--color-primary),
+    inset 0 0 2px 8px rgba(255, 255, 255, 0.15);
 
   &.is-image {
-    box-shadow: 0 0 0 5px rgba(0,0,0,.1);
+    box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.1);
   }
 }
 </style>

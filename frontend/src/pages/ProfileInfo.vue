@@ -1,196 +1,227 @@
-<template lang="pug">
-q-page.q-py-md(:style-fn='pageStyle')
-  .text-header {{t('profile.myInfo')}}
-  q-item(v-if='!canEdit')
-    q-item-section
-      q-card.bg-negative.text-white.rounded-borders(flat)
-        q-card-section.items-center(horizontal)
-          q-card-section.col-auto.q-pr-none
-            q-icon(name='las la-ban', size='sm')
-          q-card-section
-            span {{ t('profile.editDisabledTitle') }}
-            .text-caption.text-red-1 {{ t('profile.editDisabledDescription') }}
-  q-item
-    blueprint-icon(icon='contact')
-    q-item-section
-      q-item-label {{t(`profile.displayName`)}}
-      q-item-label(caption) {{t(`profile.displayNameHint`)}}
-    q-item-section
-      q-input(
-        outlined
-        v-model='state.config.name'
-        dense
-        hide-bottom-space
-        :aria-label='t(`profile.displayName`)'
-        :readonly='!canEdit'
-        )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='envelope')
-    q-item-section
-      q-item-label {{t(`profile.email`)}}
-      q-item-label(caption) {{t(`profile.emailHint`)}}
-    q-item-section
-      q-input(
-        outlined
-        v-model='state.config.email'
-        dense
-        :aria-label='t(`profile.email`)'
-        readonly
-        )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='address')
-    q-item-section
-      q-item-label {{t(`profile.location`)}}
-      q-item-label(caption) {{t(`profile.locationHint`)}}
-    q-item-section
-      q-input(
-        outlined
-        v-model='state.config.location'
-        dense
-        hide-bottom-space
-        :aria-label='t(`profile.location`)'
-        :readonly='!canEdit'
-        )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='new-job')
-    q-item-section
-      q-item-label {{t(`profile.jobTitle`)}}
-      q-item-label(caption) {{t(`profile.jobTitleHint`)}}
-    q-item-section
-      q-input(
-        outlined
-        v-model='state.config.jobTitle'
-        dense
-        hide-bottom-space
-        :aria-label='t(`profile.jobTitle`)'
-        :readonly='!canEdit'
-        )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='gender')
-    q-item-section
-      q-item-label {{t(`profile.pronouns`)}}
-      q-item-label(caption) {{t(`profile.pronounsHint`)}}
-    q-item-section
-      q-input(
-        outlined
-        v-model='state.config.pronouns'
-        dense
-        hide-bottom-space
-        :aria-label='t(`profile.pronouns`)'
-        :readonly='!canEdit'
-        )
-  .text-header.q-mt-lg {{t('profile.preferences')}}
-  q-item
-    blueprint-icon(icon='timezone')
-    q-item-section
-      q-item-label {{t(`profile.timezone`)}}
-      q-item-label(caption) {{t(`profile.timezoneHint`)}}
-    q-item-section
-      q-select(
-        outlined
-        v-model='state.config.timezone'
-        :options='timezones'
-        :virtual-scroll-slice-size='100'
-        :virtual-scroll-slice-ratio-before='2'
-        :virtual-scroll-slice-ratio-after='2'
-        dense
-        options-dense
-        :aria-label='t(`admin.general.defaultTimezone`)'
-        :readonly='!canEdit'
-      )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='calendar')
-    q-item-section
-      q-item-label {{t(`profile.dateFormat`)}}
-      q-item-label(caption) {{t(`profile.dateFormatHint`)}}
-    q-item-section
-      q-select(
-        outlined
-        v-model='state.config.dateFormat'
-        emit-value
-        map-options
-        dense
-        :aria-label='t(`admin.general.defaultDateFormat`)'
-        :options='dateFormats'
-        :readonly='!canEdit'
-      )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='clock')
-    q-item-section
-      q-item-label {{t(`profile.timeFormat`)}}
-      q-item-label(caption) {{t(`profile.timeFormatHint`)}}
-    q-item-section.col-auto
-      q-btn-toggle(
-        v-model='state.config.timeFormat'
-        push
-        glossy
-        no-caps
-        toggle-color='primary'
-        :options='timeFormats'
-        :disable='!canEdit'
-      )
-  q-separator.q-my-sm(inset)
-  q-item
-    blueprint-icon(icon='light-on')
-    q-item-section
-      q-item-label {{t(`profile.appearance`)}}
-      q-item-label(caption) {{t(`profile.appearanceHint`)}}
-    q-item-section.col-auto
-      q-btn-toggle(
-        v-model='state.config.appearance'
-        push
-        glossy
-        no-caps
-        toggle-color='primary'
-        :options='appearances'
-        :disable='!canEdit'
-      )
-  .text-header.q-mt-lg {{t('profile.accessibility')}}
-  q-item
-    blueprint-icon(icon='visualy-impaired')
-    q-item-section
-      q-item-label {{t(`profile.cvd`)}}
-      q-item-label(caption) {{t(`profile.cvdHint`)}}
-    q-item-section.col-auto
-      q-btn-toggle(
-        v-model='state.config.cvd'
-        push
-        glossy
-        no-caps
-        toggle-color='primary'
-        :options='cvdChoices'
-        :disable='!canEdit'
-      )
-  .actions-bar.q-mt-lg(v-if='canEdit')
-    q-btn(
-      icon='las la-check'
-      unelevated
-      :label='t(`common.actions.saveChanges`)'
-      color='secondary'
-      :disable='state.loading > 0'
-      @click='save'
-    )
+<template>
+  <w-page class="py-4">
+    <div class="text-header">{{ t('profile.myInfo') }}</div>
+    <w-item v-if="!canEdit">
+      <w-item-section>
+        <w-card class="bg-negative rounded text-white" flat>
+          <w-card-section class="items-center" horizontal>
+            <w-card-section class="shrink-0 pr-0">
+              <w-icon name="la:ban" size="sm" />
+            </w-card-section>
+            <w-card-section>
+              <span>{{ t('profile.editDisabledTitle') }}</span>
+              <div class="text-caption text-red-1">{{ t('profile.editDisabledDescription') }}</div>
+            </w-card-section>
+          </w-card-section>
+        </w-card>
+      </w-item-section>
+    </w-item>
+    <w-item>
+      <blueprint-icon icon="contact" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.displayName`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.displayNameHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-input
+          v-model="state.config.name"
+          outlined
+          dense
+          hide-bottom-space
+          :aria-label="t(`profile.displayName`)"
+          :readonly="!canEdit" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="envelope" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.email`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.emailHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-input
+          v-model="state.config.email"
+          outlined
+          dense
+          :aria-label="t(`profile.email`)"
+          readonly />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="address" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.location`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.locationHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-input
+          v-model="state.config.location"
+          outlined
+          dense
+          hide-bottom-space
+          :aria-label="t(`profile.location`)"
+          :readonly="!canEdit" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="new-job" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.jobTitle`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.jobTitleHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-input
+          v-model="state.config.jobTitle"
+          outlined
+          dense
+          hide-bottom-space
+          :aria-label="t(`profile.jobTitle`)"
+          :readonly="!canEdit" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="gender" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.pronouns`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.pronounsHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-input
+          v-model="state.config.pronouns"
+          outlined
+          dense
+          hide-bottom-space
+          :aria-label="t(`profile.pronouns`)"
+          :readonly="!canEdit" />
+      </w-item-section>
+    </w-item>
+    <div class="text-header mt-6">{{ t('profile.preferences') }}</div>
+    <w-item>
+      <blueprint-icon icon="timezone" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.timezone`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.timezoneHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <!--
+          The virtual-scroll props the previous control took are gone: WSelect renders its options
+          directly. The timezone list is the longest in the app and the dropdown scrolls internally,
+          so this trades a few hundred DOM nodes for a much simpler component.
+        -->
+        <w-select
+          v-model="state.config.timezone"
+          outlined
+          :options="timezones"
+          dense
+          options-dense
+          hide-bottom-space
+          :aria-label="t(`admin.general.defaultTimezone`)"
+          :readonly="!canEdit" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="calendar" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.dateFormat`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.dateFormatHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-select
+          v-model="state.config.dateFormat"
+          outlined
+          emit-value
+          map-options
+          dense
+          hide-bottom-space
+          :aria-label="t(`admin.general.defaultDateFormat`)"
+          :options="dateFormats"
+          :readonly="!canEdit" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="clock" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.timeFormat`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.timeFormatHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section side>
+        <w-btn-toggle
+          v-model="state.config.timeFormat"
+          push
+          glossy
+          no-caps
+          toggle-color="primary"
+          :options="timeFormats"
+          :disable="!canEdit"
+          :aria-label="t(`profile.timeFormat`)" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="light-on" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.appearance`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.appearanceHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section side>
+        <w-btn-toggle
+          v-model="state.config.appearance"
+          push
+          glossy
+          no-caps
+          toggle-color="primary"
+          :options="appearances"
+          :disable="!canEdit"
+          :aria-label="t(`profile.appearance`)" />
+      </w-item-section>
+    </w-item>
+    <div class="text-header mt-6">{{ t('profile.accessibility') }}</div>
+    <w-item>
+      <blueprint-icon icon="visualy-impaired" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.cvd`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.cvdHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section side>
+        <w-btn-toggle
+          v-model="state.config.cvd"
+          push
+          glossy
+          no-caps
+          toggle-color="primary"
+          :options="cvdChoices"
+          :disable="!canEdit"
+          :aria-label="t(`profile.cvd`)" />
+      </w-item-section>
+    </w-item>
+    <div v-if="canEdit" class="actions-bar mt-6">
+      <w-btn
+        icon="la:check"
+        unelevated
+        :label="t(`common.actions.saveChanges`)"
+        color="secondary"
+        :disable="state.loading > 0"
+        @click="save" />
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
 import { computed, onMounted, reactive } from 'vue'
 
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -254,24 +285,18 @@ const canEdit = computed(() => siteStore.features?.profile)
 
 // METHODS
 
-function pageStyle (offset, height) {
-  return {
-    'min-height': `${height - 100 - offset}px`
-  }
-}
-
 /**
  * The profile is read from the server rather than from the user store: the store only holds what the
  * session carries (name, email, preferences), while the location / job title / pronouns live in the
  * user's metadata and are not part of it.
  */
-async function fetchProfile () {
+async function fetchProfile() {
   state.loading++
   try {
     const profile = await API_CLIENT.get('users/profile').json()
     applyProfile(profile)
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('profile.infoLoadingFailed'),
       caption: err.message
@@ -280,7 +305,7 @@ async function fetchProfile () {
   state.loading--
 }
 
-function applyProfile (profile) {
+function applyProfile(profile) {
   state.config.name = profile.name || ''
   state.config.email = profile.email || ''
   state.config.location = profile.location || ''
@@ -294,8 +319,8 @@ function applyProfile (profile) {
   state.config.cvd = profile.cvd || 'none'
 }
 
-async function save () {
-  $q.loading.show({
+async function save() {
+  loading.show({
     message: t('profile.saving')
   })
   try {
@@ -329,18 +354,18 @@ async function save () {
       appearance: state.config.appearance,
       cvd: state.config.cvd
     })
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('profile.saveSuccess')
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('profile.saveFailed'),
       caption: err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
 }
 
 // MOUNTED

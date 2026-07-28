@@ -393,6 +393,46 @@ class Users {
   }
 
   /**
+   * A user's own settings for one editor.
+   *
+   * Kept under `prefs.editors[editor]` so each editor owns its own blob and adding a second one
+   * needs no migration. The shape is whatever that editor saves; this only guarantees an object.
+   *
+   * @returns The saved settings, or `{}` for a user who has never saved any
+   */
+  async getEditorSettings(id: string, editor: string): Promise<Record<string, any>> {
+    const user = await this.getById(id)
+    if (!user) {
+      return {}
+    }
+    const prefs = (user.prefs ?? {}) as Record<string, any>
+    return (prefs.editors?.[editor] ?? {}) as Record<string, any>
+  }
+
+  /**
+   * Replace a user's settings for one editor.
+   *
+   * Merges at both levels for the same reason `updateProfile` does: another editor's settings, and
+   * every other preference, have to survive one editor saving its own.
+   *
+   * @returns The saved settings, or null if no such user exists
+   */
+  async setEditorSettings(
+    id: string,
+    editor: string,
+    config: Record<string, any>
+  ): Promise<Record<string, any> | null> {
+    const user = await this.getById(id)
+    if (!user) {
+      return null
+    }
+    const prefs = { ...((user.prefs ?? {}) as Record<string, any>) }
+    prefs.editors = { ...((prefs.editors ?? {}) as Record<string, any>), [editor]: config }
+    await this.updateUser(id, { prefs })
+    return config
+  }
+
+  /**
    * Update a user's own profile fields, merging into the `meta` and `prefs` blobs rather than
    * replacing them — an administrator's notes and any key this endpoint does not expose must survive
    * a user saving its profile.

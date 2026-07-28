@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, fill-height)
     v-layout(row wrap)
       v-flex(xs12)
@@ -27,6 +27,4 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

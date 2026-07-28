@@ -1,67 +1,74 @@
-<template lang='pug'>
-q-layout(view='hHh lpR fFf', container)
-  q-header.card-header.q-px-md.q-py-sm
-    q-icon(name='img:/_assets/icons/fluent-template.svg', left, size='md')
-    span {{ t(`admin.mail.templateEditor`) }}
-    q-space
-    q-btn.q-mr-sm(
-      flat
-      rounded
-      color='white'
-      :aria-label='t(`common.actions.viewDocs`)'
-      icon='las la-question-circle'
-      :href='siteStore.docsBase + `/system/mail`'
-      target='_blank'
-      type='a'
-    )
-    q-btn-group(push)
-      q-btn(
-        push
-        color='white'
-        text-color='grey-7'
-        :label='t(`common.actions.cancel`)'
-        :aria-label='t(`common.actions.cancel`)'
-        icon='las la-times'
-        @click='close'
-      )
-      q-btn(
-        push
-        color='positive'
-        text-color='white'
-        :label='t(`common.actions.save`)'
-        :aria-label='t(`common.actions.save`)'
-        icon='las la-check'
-        :disabled='state.loading > 0'
-      )
-  q-page-container
-    q-page
-      //--------------------------------------------------------
-      //- MONACO EDITOR
-      //--------------------------------------------------------
-      .mail-template-editor
-        repl(:editor='Monaco' :store='store' :show-ts-config='false' theme='dark' :auto-resize='true' :ssr='false' :show-compile-output='false')
-
-      q-inner-loading(:showing='state.loading > 0')
-        q-spinner(color='accent', size='lg')
+<template>
+  <w-layout view="hHh lpR fFf" container>
+    <w-header class="card-header px-4 py-2">
+      <w-icon name="img:/_assets/icons/fluent-template.svg" left size="md" />
+      <span>{{ t(`admin.mail.templateEditor`) }}</span>
+      <w-space />
+      <w-btn
+        class="mr-2"
+        flat
+        rounded
+        color="white"
+        :aria-label="t(`common.actions.viewDocs`)"
+        icon="la:question-circle"
+        :href="siteStore.docsBase + `/system/mail`"
+        target="_blank"
+        type="a" />
+      <w-btn-group push>
+        <w-btn
+          push
+          color="white"
+          text-color="grey-7"
+          :label="t(`common.actions.cancel`)"
+          :aria-label="t(`common.actions.cancel`)"
+          icon="la:times"
+          @click="close" />
+        <w-btn
+          push
+          color="positive"
+          text-color="white"
+          :label="t(`common.actions.save`)"
+          :aria-label="t(`common.actions.save`)"
+          icon="la:check"
+          :disabled="state.loading > 0" />
+      </w-btn-group>
+    </w-header>
+    <w-page-container>
+      <w-page>
+        <!-- ------------------------------------------------------- -->
+        <!-- MONACO EDITOR -->
+        <!-- ------------------------------------------------------- -->
+        <div class="mail-template-editor">
+          <repl
+            :editor="Monaco"
+            :store="store"
+            :show-ts-config="false"
+            theme="dark"
+            :auto-resize="true"
+            :ssr="false"
+            :show-compile-output="false" />
+        </div>
+        <w-inner-loading :showing="state.loading > 0">
+          <w-spinner color="accent" size="lg" />
+        </w-inner-loading>
+      </w-page>
+    </w-page-container>
+  </w-layout>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useQuasar } from 'quasar'
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-
-import { cloneDeep, debounce } from 'lodash-es'
-import { Repl, ReplStore, File } from '@vue/repl'
-import Monaco from '@vue/repl/monaco-editor'
-import '@vue/repl/style.css'
 
 import { useAdminStore } from '@/stores/admin'
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
-
-const $q = useQuasar()
+import { cloneDeep } from 'es-toolkit/object'
+import { debounce } from 'es-toolkit/function'
+import { Repl, ReplStore, File } from '@vue/repl'
+import Monaco from '@vue/repl/monaco-editor'
+import '@vue/repl/style.css'
 
 // STORES
 
@@ -93,7 +100,7 @@ const monacoRef = ref(null)
 
 // METHODS
 
-function close () {
+function close() {
   adminStore.$patch({ overlay: '' })
 }
 

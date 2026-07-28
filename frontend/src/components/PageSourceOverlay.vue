@@ -1,56 +1,53 @@
-<template lang="pug">
-q-layout(view='hHh lpR fFf', container)
-  q-header.card-header.q-px-md.q-py-sm
-    q-icon(name='img:/_assets/icons/fluent-code.svg', left, size='md')
-    span {{ t('pageSource.title') }}
-    q-space
-    transition(name='syncing')
-      q-spinner-tail.q-mr-sm(
-        v-show='state.loading > 0'
-        color='accent'
-        size='24px'
-      )
-    q-btn.q-mr-md(
-      icon='las la-download'
-      color='teal-3'
-      dense
-      flat
-      :disable='!state.content'
-      @click='download'
-      )
-      q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.download`)}}
-    q-btn(
-      icon='las la-times'
-      color='pink-2'
-      dense
-      flat
-      @click='close'
-      )
-      q-tooltip(anchor='bottom middle', self='top middle') {{t(`common.actions.close`)}}
-
-  q-page-container
-    q-page.bg-dark-6.text-white.font-robotomono.pagesource
-      q-scroll-area(
-        :thumb-style='thumb'
-        :bar-style='bar'
-        :horizontal-thumb-style='{ height: `5px` }'
-        style="width: 100%; height: calc(100vh - 100px);"
-        )
-        .q-pa-md.text-grey-5(v-if='state.notice') {{ state.notice }}
-        pre.q-px-md(v-else, v-text='state.content')
+<template>
+  <w-layout view="hHh lpR fFf" container>
+    <w-header class="card-header px-4 py-2">
+      <w-icon name="img:/_assets/icons/fluent-code.svg" left size="md" />
+      <span>{{ t('pageSource.title') }}</span>
+      <w-space />
+      <transition name="syncing">
+        <w-spinner class="mr-2" v-show="state.loading > 0" color="accent" size="24px" />
+      </transition>
+      <w-btn
+        class="mr-4"
+        icon="la:download"
+        color="teal-3"
+        dense
+        flat
+        :disable="!state.content"
+        @click="download">
+        <w-tooltip anchor="bottom middle" self="top middle">{{t(`common.actions.download`)}}</w-tooltip>
+      </w-btn>
+      <w-btn icon="la:times" color="pink-2" dense flat @click="close">
+        <w-tooltip anchor="bottom middle" self="top middle">{{t(`common.actions.close`)}}</w-tooltip>
+      </w-btn>
+    </w-header>
+    <w-page-container>
+      <w-page class="bg-dark-6 text-white font-robotomono pagesource">
+        <w-scroll-area
+          :thumb-style="thumb"
+          :bar-style="bar"
+          :horizontal-thumb-style="{ height: `5px` }"
+          style="width: 100%; height: calc(100vh - 100px);">
+          <div class="p-4 text-grey-5" v-if="state.notice">{{ state.notice }}</div>
+          <pre class="px-4" v-else v-text="state.content"></pre>
+        </w-scroll-area>
+      </w-page>
+    </w-page-container>
+  </w-layout>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { exportFile, useQuasar } from 'quasar'
 import { onBeforeUnmount, onMounted, reactive } from 'vue'
+
+import { loading } from '@/composables/loading'
+import { notify } from '@/composables/notify'
 
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
+import { fileSave } from 'browser-fs-access'
 
-const $q = useQuasar()
 
 // STORES
 
@@ -96,18 +93,21 @@ const contentTypes = {
 
 // METHODS
 
-function download () {
+function download() {
   const fileType = contentTypes[state.contentType] ?? { ext: 'txt', mime: 'text/plain' }
-  exportFile(`page.${fileType.ext}`, state.content, { mimeType: `${fileType.mime};charset=UTF-8` })
+  fileSave(new Blob([state.content], { type: `${fileType.mime};charset=UTF-8` }), {
+    fileName: `page.${fileType.ext}`,
+    extensions: [`.${fileType.ext}`]
+  })
 }
 
-function close () {
+function close() {
   siteStore.$patch({ overlay: '' })
 }
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     // -> The source is not part of an ordinary page load, so it has to be asked for
     const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${pageStore.id}`, {
@@ -127,16 +127,20 @@ async function load () {
     //    contentType was stored
     state.contentType = pageData.contentType || pageData.editor || ''
   } catch (err) {
-    const message = err.response?.status === 404
-      ? t('pageSource.notFound')
-      : await err.response?.json().then(b => b?.message).catch(() => null) || err.message
+    const message =
+      err.response?.status === 404
+        ? t('pageSource.notFound')
+        : (await err.response
+            ?.json()
+            .then((b) => b?.message)
+            .catch(() => null)) || err.message
     state.notice = message
-    $q.notify({
+    notify({
       type: 'negative',
       message
     })
   } finally {
-    $q.loading.hide()
+    loading.hide()
     state.loading--
   }
 }

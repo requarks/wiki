@@ -19,42 +19,30 @@
   "ignorePatterns": [
     "dist/**",
     ".quasar/**",
-    "node_modules/**"
+    "node_modules/**",
+    ".harness/**"
   ],
   "categories": {
     "correctness": "error"
   },
   "rules": {
-    // allow async-await
-    "generator-star-spacing": "off",
-    // allow paren-less arrow functions
-    "arrow-parens": "off",
-    "one-var": "off",
     "no-void": "off",
-    "multiline-ternary": "off",
+    "prefer-promise-reject-errors": "off",
+    "no-unused-vars": "off",
 
+    // allow debugger during development only
+    "no-debugger": "error",
+
+    // These are valid rule names but currently inert: the `import` plugin is not enabled above.
+    // Turning it on reports a false positive for every Vite `?worker` import in boot/monaco.js,
+    // because the plugin resolves the specifier literally and does not know Vite rewrites those
+    // into modules with a default export. Left declared so the intent survives; enable the plugin
+    // once those imports can be resolved cleanly.
     "import/first": "off",
     "import/named": "error",
     "import/namespace": "error",
     "import/default": "error",
     "import/export": "error",
-    "import/extensions": "off",
-    "import/no-unresolved": "off",
-    "import/no-extraneous-dependencies": "off",
-
-    "prefer-promise-reject-errors": "off",
-
-    "no-unused-vars": "off",
-    "vue/multi-word-component-names": "off",
-
-    // allow debugger during development only
-    "no-debugger": "error",
-
-    // disable bogus rules
-    "vue/valid-template-root": "off",
-    "vue/no-parsing-error": "off",
-    "vue/valid-v-for": "off",
-    "vue/html-quotes": ["warn", "single"],
-    "vue/max-attributes-per-line": "off"
+    "import/extensions": "off"
   }
 }

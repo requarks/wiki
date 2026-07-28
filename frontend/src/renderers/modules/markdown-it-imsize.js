@@ -1,7 +1,7 @@
 // Adapted from markdown-it-imsize plugin by @tatsy
 // Original source https://github.com/tatsy/markdown-it-imsize/blob/master/lib/index.js
 
-function renderImSize (state, silent) {
+function renderImSize(state, silent) {
   let attrs
   let code
   let label
@@ -18,17 +18,23 @@ function renderImSize (state, silent) {
   const oldPos = state.pos
   const max = state.posMax
 
-  if (state.src.charCodeAt(state.pos) !== 0x21/* ! */) { return false }
-  if (state.src.charCodeAt(state.pos + 1) !== 0x5B/* [ */) { return false }
+  if (state.src.charCodeAt(state.pos) !== 0x21 /* ! */) {
+    return false
+  }
+  if (state.src.charCodeAt(state.pos + 1) !== 0x5b /* [ */) {
+    return false
+  }
 
   const labelStart = state.pos + 2
   const labelEnd = state.md.helpers.parseLinkLabel(state, state.pos + 1, false)
 
   // parser failed to find ']', so it's not a valid link
-  if (labelEnd < 0) { return false }
+  if (labelEnd < 0) {
+    return false
+  }
 
   pos = labelEnd + 1
-  if (pos < max && state.src.charCodeAt(pos) === 0x28/* ( */) {
+  if (pos < max && state.src.charCodeAt(pos) === 0x28 /* ( */) {
     //
     // Inline link
     //
@@ -38,9 +44,13 @@ function renderImSize (state, silent) {
     pos++
     for (; pos < max; pos++) {
       code = state.src.charCodeAt(pos)
-      if (code !== 0x20 && code !== 0x0A) { break }
+      if (code !== 0x20 && code !== 0x0a) {
+        break
+      }
     }
-    if (pos >= max) { return false }
+    if (pos >= max) {
+      return false
+    }
 
     // [link](  <href>  "title"  )
     //          ^^^^^^ parsing link destination
@@ -60,7 +70,9 @@ function renderImSize (state, silent) {
     start = pos
     for (; pos < max; pos++) {
       code = state.src.charCodeAt(pos)
-      if (code !== 0x20 && code !== 0x0A) { break }
+      if (code !== 0x20 && code !== 0x0a) {
+        break
+      }
     }
 
     // [link](  <href>  "title"  )
@@ -74,7 +86,9 @@ function renderImSize (state, silent) {
       //                         ^^ skipping these spaces
       for (; pos < max; pos++) {
         code = state.src.charCodeAt(pos)
-        if (code !== 0x20 && code !== 0x0A) { break }
+        if (code !== 0x20 && code !== 0x0a) {
+          break
+        }
       }
     } else {
       title = ''
@@ -98,13 +112,15 @@ function renderImSize (state, silent) {
           //                              ^^ skipping these spaces
           for (; pos < max; pos++) {
             code = state.src.charCodeAt(pos)
-            if (code !== 0x20 && code !== 0x0A) { break }
+            if (code !== 0x20 && code !== 0x0a) {
+              break
+            }
           }
         }
       }
     }
 
-    if (pos >= max || state.src.charCodeAt(pos) !== 0x29/* ) */) {
+    if (pos >= max || state.src.charCodeAt(pos) !== 0x29 /* ) */) {
       state.pos = oldPos
       return false
     }
@@ -113,16 +129,20 @@ function renderImSize (state, silent) {
     //
     // Link reference
     //
-    if (typeof state.env.references === 'undefined') { return false }
+    if (typeof state.env.references === 'undefined') {
+      return false
+    }
 
     // [foo]  [bar]
     //      ^^ optional whitespace (can include newlines)
     for (; pos < max; pos++) {
       code = state.src.charCodeAt(pos)
-      if (code !== 0x20 && code !== 0x0A) { break }
+      if (code !== 0x20 && code !== 0x0a) {
+        break
+      }
     }
 
-    if (pos < max && state.src.charCodeAt(pos) === 0x5B/* [ */) {
+    if (pos < max && state.src.charCodeAt(pos) === 0x5b /* [ */) {
       start = pos + 1
       pos = state.md.helpers.parseLinkLabel(state, pos)
       if (pos >= 0) {
@@ -136,7 +156,9 @@ function renderImSize (state, silent) {
 
     // covers label === '' and label === undefined
     // (collapsed reference link and shortcut reference link respectively)
-    if (!label) { label = state.src.slice(labelStart, labelEnd) }
+    if (!label) {
+      label = state.src.slice(labelStart, labelEnd)
+    }
 
     ref = state.env.references[state.md.utils.normalizeReference(label)]
     if (!ref) {
@@ -159,13 +181,15 @@ function renderImSize (state, silent) {
       state.src.slice(labelStart, labelEnd),
       state.md,
       state.env,
-      tokens = []
+      (tokens = [])
     )
     newState.md.inline.tokenize(newState)
 
     token = state.push('image', 'img', 0)
-    token.attrs = attrs = [['src', href],
-      ['alt', '']]
+    token.attrs = attrs = [
+      ['src', href],
+      ['alt', '']
+    ]
     token.children = tokens
     if (title) {
       attrs.push(['title', title])
@@ -185,7 +209,7 @@ function renderImSize (state, silent) {
   return true
 }
 
-function parseNextNumber (str, pos, max) {
+function parseNextNumber(str, pos, max) {
   let code
   const start = pos
   const result = {
@@ -196,7 +220,7 @@ function parseNextNumber (str, pos, max) {
 
   code = str.charCodeAt(pos)
 
-  while ((pos < max && (code >= 0x30 /* 0 */ && code <= 0x39 /* 9 */)) || code === 0x25 /* % */) {
+  while ((pos < max && code >= 0x30 /* 0 */ && code <= 0x39) /* 9 */ || code === 0x25 /* % */) {
     code = str.charCodeAt(++pos)
   }
 
@@ -207,7 +231,7 @@ function parseNextNumber (str, pos, max) {
   return result
 }
 
-function parseImageSize (str, pos, max) {
+function parseImageSize(str, pos, max) {
   let code
   const result = {
     ok: false,
@@ -216,11 +240,15 @@ function parseImageSize (str, pos, max) {
     height: ''
   }
 
-  if (pos >= max) { return result }
+  if (pos >= max) {
+    return result
+  }
 
   code = str.charCodeAt(pos)
 
-  if (code !== 0x3d /* = */) { return result }
+  if (code !== 0x3d /* = */) {
+    return result
+  }
 
   pos++
 
@@ -239,7 +267,9 @@ function parseImageSize (str, pos, max) {
 
   // next charactor must be 'x'
   code = str.charCodeAt(pos)
-  if (code !== 0x78 /* x */) { return result }
+  if (code !== 0x78 /* x */) {
+    return result
+  }
 
   pos++
 

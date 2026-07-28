@@ -1,258 +1,437 @@
-<template lang='pug'>
-q-layout.admin(view='hHh Lpr lff')
-  q-header.bg-black.text-white
-    .row.no-wrap
-      q-toolbar(style='height: 64px;', dark)
-        q-btn(dense, flat, to='/')
-          q-avatar(size='34px', square)
-            img(src='/_assets/logo-wikijs.svg')
-        q-toolbar-title.text-h6 Wiki.js
-      q-toolbar.gt-sm.justify-center(style='height: 64px;', dark)
-        .text-overline.text-uppercase.text-grey {{ t('admin.adminArea') }}
-        q-badge.q-ml-sm(
-          label='beta'
-          color='pink'
-          outline
-          )
-      q-toolbar(style='height: 64px;', dark)
-        q-space
-        transition(name='syncing')
-          q-spinner-tail(
-            v-show='commonStore.routerLoading'
-            color='accent'
-            size='24px'
-          )
-        q-btn.q-ml-md(flat, dense, icon='las la-times-circle', :label='t(`common.actions.exit`)' color='pink', to='/')
-        q-btn.q-ml-md(flat, dense, icon='las la-language', :label='commonStore.locale' color='grey-4')
-          q-menu.translucent-menu(auto-close, anchor='bottom right', self='top right')
-            q-list(separator, padding)
-              q-item(
-                v-for='lang of adminStore.locales'
-                :key='lang.code'
-                clickable
-                @click='commonStore.setLocale(lang.code)'
-                )
-                q-item-section(side)
-                  q-avatar(rounded, :color='lang.code === commonStore.locale ? `secondary` : `primary`', text-color='white', size='sm')
-                    .text-caption.text-uppercase: strong {{ lang.language }}
-                q-item-section
-                  q-item-label {{ lang.nativeName }}
-                  q-item-label(caption) {{ lang.name }}
-        account-menu
-  q-drawer.admin-sidebar(v-model='leftDrawerOpen', show-if-above, bordered)
-    q-scroll-area.admin-nav(
-      :thumb-style='thumbStyle'
-      :bar-style='barStyle'
-      )
-      q-list.text-white.q-pb-lg(padding, dense)
-        q-item.q-mb-sm
-          q-item-section
-            q-btn.acrylic-btn(
-              flat
-              color='pink'
-              icon='las la-heart'
-              :label='t(`admin.contribute.title`)'
-              no-caps
-              href='https://js.wiki/donate'
-              target='_blank'
-              type='a'
-            )
-        q-item(to='/_admin/dashboard', v-ripple, active-class='bg-primary text-white')
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-apps-tab.svg')
-          q-item-section {{ t('admin.dashboard.title') }}
-        q-item(to='/_admin/sites', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`)')
-          q-item-section(avatar)
-            q-icon(name='img:/_assets/icons/fluent-change-theme.svg')
-          q-item-section {{ t('admin.sites.title') }}
-          q-item-section(side)
-            q-badge(color='dark-3', :label='adminStore.sites.length')
-        template(v-if='siteSectionShown')
-          q-item-label.q-mt-sm(header).text-caption.text-blue-grey-4 {{ t('admin.nav.site') }}
-          q-item.q-mb-md
-            q-item-section
-              q-select(
-                dark
-                standout
-                dense
-                v-model='adminStore.currentSiteId'
-                :options='adminStore.sites'
-                option-value='id'
-                option-label='title'
-                emit-value
-                map-options
-              )
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/general`', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-web.svg')
-            q-item-section {{ t('admin.general.title') }}
-          template(v-if='flagsStore.experimental')
-            q-item(:to='`/_admin/` + adminStore.currentSiteId + `/analytics`', v-ripple, active-class='bg-primary text-white', disabled)
-              q-item-section(avatar)
-                q-icon(name='img:/_assets/icons/fluent-bar-chart.svg')
-              q-item-section {{ t('admin.analytics.title') }}
-            q-item(:to='`/_admin/` + adminStore.currentSiteId + `/approvals`', v-ripple, active-class='bg-primary text-white', disabled)
-              q-item-section(avatar)
-                q-icon(name='img:/_assets/icons/fluent-inspection.svg')
-              q-item-section {{ t('admin.approval.title') }}
-            q-item(:to='`/_admin/` + adminStore.currentSiteId + `/comments`', v-ripple, active-class='bg-primary text-white', disabled)
-              q-item-section(avatar)
-                q-icon(name='img:/_assets/icons/fluent-comments.svg')
-              q-item-section {{ t('admin.comments.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/blocks`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-rfid-tag.svg')
-            q-item-section {{ t('admin.blocks.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/editors`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-cashbook.svg')
-            q-item-section {{ t('admin.editors.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/locale`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-language.svg')
-            q-item-section {{ t('admin.locale.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/login`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-bunch-of-keys.svg')
-            q-item-section {{ t('admin.login.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/navigation`', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental && (userStore.can(`manage:sites`) || userStore.can(`manage:navigation`))')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-tree-structure.svg')
-            q-item-section {{ t('admin.navigation.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/storage`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-ssd.svg')
-            q-item-section {{ t('admin.storage.title') }}
-            q-item-section(side)
-              //- TODO: Reflect site storage status
-              status-light(:color='true ? `positive` : `warning`', :pulse='false')
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/tags`', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental && (userStore.can(`manage:sites`))')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-tag.svg')
-            q-item-section {{ t('admin.tags.title') }}
-          q-item(:to='`/_admin/` + adminStore.currentSiteId + `/theme`', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:sites`) || userStore.can(`manage:theme`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-paint-roller.svg')
-            q-item-section {{ t('admin.theme.title') }}
-        template(v-if='usersSectionShown')
-          q-item-label.q-mt-sm(header).text-caption.text-blue-grey-4 {{ t('admin.nav.users') }}
-          q-item(to='/_admin/auth', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:system`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-security-lock.svg')
-            q-item-section {{ t('admin.auth.title') }}
-          q-item(to='/_admin/groups', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:groups`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-people.svg')
-            q-item-section {{ t('admin.groups.title') }}
-            q-item-section(side)
-              q-badge(color='dark-3', :label='adminStore.info.groupsTotal')
-          q-item(to='/_admin/users', v-ripple, active-class='bg-primary text-white', v-if='userStore.can(`manage:users`)')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-account.svg')
-            q-item-section {{ t('admin.users.title') }}
-            q-item-section(side)
-              q-badge(color='dark-3', :label='adminStore.info.usersTotal')
-        template(v-if='userStore.can(`manage:system`)')
-          q-item-label.q-mt-sm(header).text-caption.text-blue-grey-4 {{ t('admin.nav.system') }}
-          q-item(to='/_admin/api', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-rest-api.svg')
-            q-item-section {{ t('admin.api.title') }}
-            q-item-section(side)
-              status-light(:color='adminStore.info.isApiEnabled ? `positive` : `negative`')
-          q-item(to='/_admin/audit', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-event-log.svg')
-            q-item-section {{ t('admin.audit.title') }}
-          q-item(to='/_admin/extensions', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-module.svg')
-            q-item-section {{ t('admin.extensions.title') }}
-          q-item(to='/_admin/icons', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-spring.svg')
-            q-item-section {{ t('admin.icons.title') }}
-          q-item(to='/_admin/instances', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-network.svg')
-            q-item-section {{ t('admin.instances.title') }}
-          q-item(to='/_admin/mail', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-message-settings.svg')
-            q-item-section {{ t('admin.mail.title') }}
-            q-item-section(side)
-              status-light(:color='adminStore.info.isMailConfigured ? `positive` : `warning`', :pulse='!adminStore.info.isMailConfigured')
-          q-item(to='/_admin/metrics', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-graph.svg')
-            q-item-section {{ t('admin.metrics.title') }}
-            q-item-section(side)
-              status-light(:color='adminStore.info.isMetricsEnabled ? `positive` : `negative`')
-          q-item(to='/_admin/rendering', v-ripple, active-class='bg-primary text-white', v-if='flagsStore.experimental')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-rich-text-converter.svg')
-            q-item-section {{ t('admin.rendering.title') }}
-          q-item(to='/_admin/scheduler', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-bot.svg')
-            q-item-section {{ t('admin.scheduler.title') }}
-            q-item-section(side)
-              status-light(:color='adminStore.info.isSchedulerHealthy ? `positive` : `warning`', :pulse='!adminStore.info.isSchedulerHealthy')
-          q-item(to='/_admin/search', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-find-and-replace.svg')
-            q-item-section {{ t('admin.search.title') }}
-          q-item(to='/_admin/security', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-protect.svg')
-            q-item-section {{ t('admin.security.title') }}
-          q-item(to='/_admin/ssl', v-ripple, active-class='bg-primary text-white', disabled, v-if='flagsStore.experimental')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-security-ssl.svg')
-            q-item-section {{ t('admin.ssl.title') }}
-          q-item(to='/_admin/system', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-processor.svg')
-            q-item-section {{ t('admin.system.title') }}
-            q-item-section(side)
-              status-light(:color='adminStore.isVersionLatest ? `positive` : `warning`')
-          q-item(to='/_admin/terminal', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-linux-terminal.svg')
-            q-item-section {{ t('admin.terminal.title') }}
-          q-item(to='/_admin/utilities', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-swiss-army-knife.svg')
-            q-item-section {{ t('admin.utilities.title') }}
-          q-item(to='/_admin/webhooks', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-lightning-bolt.svg')
-            q-item-section {{ t('admin.webhooks.title') }}
-          q-item(to='/_admin/flags', v-ripple, active-class='bg-primary text-white')
-            q-item-section(avatar)
-              q-icon(name='img:/_assets/icons/fluent-windsock.svg')
-            q-item-section {{ t('admin.dev.flags.title') }}
-  q-page-container.admin-container
-    router-view(v-slot='{ Component }')
-      component(:is='Component')
-  q-dialog.admin-overlay(
-    v-model='overlayIsShown'
-    persistent
-    full-width
-    full-height
-    no-shake
-    transition-show='jump-up'
-    transition-hide='jump-down'
-    )
-    component(:is='overlays[adminStore.overlay]')
-  footer-nav.admin-footer(generic)
+<template>
+  <w-layout class="admin">
+    <w-header class="bg-black text-white">
+      <div class="flex flex-nowrap">
+        <w-toolbar style="height: 64px">
+          <w-btn dense flat to="/">
+            <w-avatar size="34px" square><img src="/_assets/logo-wikijs.svg" /></w-avatar>
+          </w-btn>
+          <w-toolbar-title class="text-h6">Wiki.js</w-toolbar-title>
+        </w-toolbar>
+        <w-toolbar class="max-md:hidden justify-center" style="height: 64px">
+          <div class="text-overline uppercase text-grey">{{ t('admin.adminArea') }}</div>
+          <w-badge class="ml-2" label="beta" color="pink" outline />
+        </w-toolbar>
+        <w-toolbar style="height: 64px">
+          <w-space />
+          <transition name="syncing">
+            <w-spinner v-show="commonStore.routerLoading" color="accent" size="24px" />
+          </transition>
+          <w-btn
+            class="ml-4"
+            flat
+            dense
+            icon="la:times-circle"
+            :label="t(`common.actions.exit`)"
+            color="pink"
+            to="/" />
+          <w-btn
+            class="ml-4"
+            flat
+            dense
+            icon="la:language"
+            :label="commonStore.locale"
+            color="grey-4">
+            <w-menu
+              content-class="translucent-menu"
+              auto-close
+              anchor="bottom right"
+              self="top right">
+              <w-list separator padding>
+                <w-item
+                  v-for="lang of adminStore.locales"
+                  :key="lang.code"
+                  clickable
+                  @click="commonStore.setLocale(lang.code)">
+                  <w-item-section side>
+                    <w-avatar
+                      rounded
+                      :color="lang.code === commonStore.locale ? `secondary` : `primary`"
+                      text-color="white"
+                      size="sm">
+                      <div class="text-caption uppercase">
+                        <strong>{{ lang.language }}</strong>
+                      </div>
+                    </w-avatar>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{ lang.nativeName }}</w-item-label>
+                    <w-item-label caption>{{ lang.name }}</w-item-label>
+                  </w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <account-menu />
+        </w-toolbar>
+      </div>
+    </w-header>
+    <w-drawer class="admin-sidebar" v-model="leftDrawerOpen" show-if-above bordered>
+      <w-scroll-area class="admin-nav">
+        <w-list class="text-white pb-6" padding dense dark>
+          <w-item class="mb-2">
+            <w-item-section>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                color="pink"
+                icon="la:heart"
+                :label="t(`admin.contribute.title`)"
+                no-caps
+                href="https://js.wiki/donate"
+                target="_blank" />
+            </w-item-section>
+          </w-item>
+          <w-item to="/_admin/dashboard" active-class="bg-primary text-white">
+            <w-item-section avatar>
+              <w-icon name="img:/_assets/icons/fluent-apps-tab.svg" />
+            </w-item-section>
+            <w-item-section>{{ t('admin.dashboard.title') }}</w-item-section>
+          </w-item>
+          <w-item
+            to="/_admin/sites"
+            active-class="bg-primary text-white"
+            v-if="userStore.can(`manage:sites`)">
+            <w-item-section avatar>
+              <w-icon name="img:/_assets/icons/fluent-change-theme.svg" />
+            </w-item-section>
+            <w-item-section>{{ t('admin.sites.title') }}</w-item-section>
+            <w-item-section side>
+              <w-badge color="dark-3" :label="adminStore.sites.length" />
+            </w-item-section>
+          </w-item>
+          <template v-if="siteSectionShown">
+            <w-item-label class="mt-2 text-caption text-blue-grey-4" header>{{
+              t('admin.nav.site')
+            }}</w-item-label>
+            <w-item class="mb-2">
+              <w-item-section>
+                <w-select
+                  dark
+                  standout
+                  dense
+                  hide-bottom-space
+                  v-model="adminStore.currentSiteId"
+                  :options="adminStore.sites"
+                  option-value="id"
+                  option-label="title"
+                  emit-value
+                  map-options />
+              </w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/general`"
+              active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-web.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.general.title') }}</w-item-section>
+            </w-item>
+            <template v-if="flagsStore.experimental">
+              <w-item
+                :to="`/_admin/` + adminStore.currentSiteId + `/analytics`"
+                active-class="bg-primary text-white"
+                disabled>
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-bar-chart.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.analytics.title') }}</w-item-section>
+              </w-item>
+              <w-item
+                :to="`/_admin/` + adminStore.currentSiteId + `/approvals`"
+                active-class="bg-primary text-white"
+                disabled>
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-inspection.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.approval.title') }}</w-item-section>
+              </w-item>
+              <w-item
+                :to="`/_admin/` + adminStore.currentSiteId + `/comments`"
+                active-class="bg-primary text-white"
+                disabled>
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-comments.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.comments.title') }}</w-item-section>
+              </w-item>
+            </template>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/blocks`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-rfid-tag.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.blocks.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/editors`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-cashbook.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.editors.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/locale`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-language.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.locale.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/login`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-bunch-of-keys.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.login.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/navigation`"
+              active-class="bg-primary text-white"
+              disabled
+              v-if="
+                flagsStore.experimental &&
+                (userStore.can(`manage:sites`) || userStore.can(`manage:navigation`))
+              ">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-tree-structure.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.navigation.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/storage`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-ssd.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.storage.title') }}</w-item-section>
+              <w-item-section side>
+                <!-- TODO: Reflect site storage status -->
+                <status-light :color="true ? `positive` : `warning`" :pulse="false" />
+              </w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/tags`"
+              active-class="bg-primary text-white"
+              disabled
+              v-if="flagsStore.experimental && userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-tag.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.tags.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/theme`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`) || userStore.can(`manage:theme`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-paint-roller.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.theme.title') }}</w-item-section>
+            </w-item>
+          </template>
+          <template v-if="usersSectionShown">
+            <w-item-label class="mt-2 text-caption text-blue-grey-4" header>{{
+              t('admin.nav.users')
+            }}</w-item-label>
+            <w-item
+              to="/_admin/auth"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:system`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-security-lock.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.auth.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              to="/_admin/groups"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:groups`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-people.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.groups.title') }}</w-item-section>
+              <w-item-section side>
+                <w-badge color="dark-3" :label="adminStore.info.groupsTotal" />
+              </w-item-section>
+            </w-item>
+            <w-item
+              to="/_admin/users"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:users`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-account.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.users.title') }}</w-item-section>
+              <w-item-section side>
+                <w-badge color="dark-3" :label="adminStore.info.usersTotal" />
+              </w-item-section>
+            </w-item>
+          </template>
+          <template v-if="userStore.can(`manage:system`)">
+            <w-item-label class="mt-2 text-caption text-blue-grey-4" header>{{
+              t('admin.nav.system')
+            }}</w-item-label>
+            <w-item to="/_admin/api" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-rest-api.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.api.title') }}</w-item-section>
+              <w-item-section side>
+                <status-light :color="adminStore.info.isApiEnabled ? `positive` : `negative`" />
+              </w-item-section>
+            </w-item>
+            <w-item
+              to="/_admin/audit"
+              active-class="bg-primary text-white"
+              disabled
+              v-if="flagsStore.experimental">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-event-log.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.audit.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/extensions" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-module.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.extensions.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/icons" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-spring.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.icons.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/instances" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-network.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.instances.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/mail" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-message-settings.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.mail.title') }}</w-item-section>
+              <w-item-section side>
+                <status-light
+                  :color="adminStore.info.isMailConfigured ? `positive` : `warning`"
+                  :pulse="!adminStore.info.isMailConfigured" />
+              </w-item-section>
+            </w-item>
+            <w-item to="/_admin/metrics" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-graph.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.metrics.title') }}</w-item-section>
+              <w-item-section side>
+                <status-light :color="adminStore.info.isMetricsEnabled ? `positive` : `negative`" />
+              </w-item-section>
+            </w-item>
+            <w-item
+              to="/_admin/rendering"
+              active-class="bg-primary text-white"
+              v-if="flagsStore.experimental">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-rich-text-converter.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.rendering.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/scheduler" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-bot.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.scheduler.title') }}</w-item-section>
+              <w-item-section side>
+                <status-light
+                  :color="adminStore.info.isSchedulerHealthy ? `positive` : `warning`"
+                  :pulse="!adminStore.info.isSchedulerHealthy" />
+              </w-item-section>
+            </w-item>
+            <w-item to="/_admin/search" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-find-and-replace.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.search.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/security" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-protect.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.security.title') }}</w-item-section>
+            </w-item>
+            <w-item
+              to="/_admin/ssl"
+              active-class="bg-primary text-white"
+              disabled
+              v-if="flagsStore.experimental">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-security-ssl.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.ssl.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/system" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-processor.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.system.title') }}</w-item-section>
+              <w-item-section side>
+                <status-light :color="adminStore.isVersionLatest ? `positive` : `warning`" />
+              </w-item-section>
+            </w-item>
+            <w-item to="/_admin/terminal" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-linux-terminal.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.terminal.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/utilities" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-swiss-army-knife.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.utilities.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/webhooks" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-lightning-bolt.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.webhooks.title') }}</w-item-section>
+            </w-item>
+            <w-item to="/_admin/flags" active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-windsock.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.dev.flags.title') }}</w-item-section>
+            </w-item>
+          </template>
+        </w-list>
+      </w-scroll-area>
+    </w-drawer>
+    <w-page-container class="admin-container">
+      <router-view v-slot="{ Component }"><component :is="Component" /></router-view>
+    </w-page-container>
+    <w-dialog class="admin-overlay" v-model="overlayIsShown" persistent full-width full-height>
+      <component :is="overlays[adminStore.overlay]" />
+    </w-dialog>
+    <w-footer><footer-nav generic /></w-footer>
+  </w-layout>
 </template>
 
 <script setup>
-import { useMeta, useQuasar, setCssVar } from 'quasar'
-import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+
+import { useMeta } from '@/composables/meta'
 
 import { useAdminStore } from '@/stores/admin'
 import { useCommonStore } from '@/stores/common'
@@ -260,20 +439,16 @@ import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
-// COMPONENTS
-
 import AccountMenu from '../components/AccountMenu.vue'
 import FooterNav from '@/components/FooterNav.vue'
 const overlays = {
-  EditorMarkdownConfig: defineAsyncComponent(() => import('../components/EditorMarkdownConfigOverlay.vue')),
+  EditorMarkdownConfig: defineAsyncComponent(
+    () => import('../components/EditorMarkdownConfigOverlay.vue')
+  ),
   GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),
   // MailTemplateEditorOverlay: defineAsyncComponent(() => import('../components/MailTemplateEditorOverlay.vue')),
   UserEditOverlay: defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
 }
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -295,27 +470,21 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  titleTemplate: title => `${title} - ${t('admin.adminArea')} - Wiki.js`
+  titleTemplate: (title) => `${title} - ${t('admin.adminArea')} - Wiki.js`
 })
 
 // DATA
 
 const leftDrawerOpen = ref(true)
-const thumbStyle = {
-  right: '1px',
-  borderRadius: '5px',
-  backgroundColor: '#666',
-  width: '5px',
-  opacity: 0.5
-}
-const barStyle = {
-  width: '7px'
-}
 
 // COMPUTED
 
 const siteSectionShown = computed(() => {
-  return userStore.can('manage:sites') || userStore.can('manage:navigation') || userStore.can('manage:theme')
+  return (
+    userStore.can('manage:sites') ||
+    userStore.can('manage:navigation') ||
+    userStore.can('manage:theme')
+  )
 })
 const usersSectionShown = computed(() => {
   return userStore.can('manage:groups') || userStore.can('manage:users')
@@ -326,24 +495,36 @@ const overlayIsShown = computed(() => {
 
 // WATCHERS
 
-watch(() => route.path, async (newValue) => {
-  if (!newValue.startsWith('/_admin')) { return }
-  if (!userStore.can('access:admin')) {
-    router.replace('/_error/unauthorized')
+watch(
+  () => route.path,
+  async (newValue) => {
+    if (!newValue.startsWith('/_admin')) {
+      return
+    }
+    if (!userStore.can('access:admin')) {
+      router.replace('/_error/unauthorized')
+    }
+  },
+  { immediate: true }
+)
+watch(
+  () => adminStore.sites,
+  (newValue) => {
+    if (adminStore.currentSiteId === null && newValue.length > 0) {
+      adminStore.$patch({
+        currentSiteId: siteStore.id
+      })
+    }
   }
-}, { immediate: true })
-watch(() => adminStore.sites, (newValue) => {
-  if (adminStore.currentSiteId === null && newValue.length > 0) {
-    adminStore.$patch({
-      currentSiteId: siteStore.id
-    })
+)
+watch(
+  () => adminStore.currentSiteId,
+  (newValue) => {
+    if (newValue && route.params.siteid !== newValue) {
+      router.push({ params: { siteid: newValue } })
+    }
   }
-})
-watch(() => adminStore.currentSiteId, (newValue) => {
-  if (newValue && route.params.siteid !== newValue) {
-    router.push({ params: { siteid: newValue } })
-  }
-})
+)
 
 // MOUNTED
 
@@ -362,7 +543,6 @@ onMounted(async () => {
   }
   adminStore.fetchInfo()
 })
-
 </script>
 
 <style lang="scss">
@@ -382,8 +562,11 @@ onMounted(async () => {
     background-color: $dark-5;
   }
 
-  .q-item__label--header {
-    box-shadow: 0 -1px 0 0 rgba(255,255,255,.15), 0 -2px 0 0 color.adjust($dark-6, $lightness: -1%);
+  // -> The section headings between nav groups; the double shadow is the divider above them
+  .w-item-label--header {
+    box-shadow:
+      0 -1px 0 0 rgba(255, 255, 255, 0.15),
+      0 -2px 0 0 color.adjust($dark-6, $lightness: -1%);
     padding-top: 16px;
   }
 }
@@ -395,9 +578,9 @@ onMounted(async () => {
     background-color: $dark-4;
   }
 
-  .q-card {
+  .w-card {
     @at-root .body--light & {
-      background-color: #FFF;
+      background-color: #fff;
     }
     @at-root .body--dark & {
       background-color: $dark-3;
@@ -406,20 +589,20 @@ onMounted(async () => {
 }
 
 .admin-overlay {
-  > .q-dialog__backdrop {
-    background-color: rgba(0,0,0,.6);
+  > .w-dialog-backdrop {
+    background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(5px) saturate(180%);
   }
-  > .q-dialog__inner {
+  > .w-dialog-viewport {
     padding: 24px 64px;
 
-    @media (max-width: $breakpoint-sm-max) {
+    @media (max-width: 1023.98px) {
       padding: 0;
     }
 
-    > .q-layout-container {
+    > .w-dialog-panel {
       border-radius: 6px;
-      box-shadow: 0 0 0 1px rgba(0,0,0,.5);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 
       @at-root .body--light & {
         background-image: linear-gradient(to bottom, $dark-5 10px, $grey-3 11px, $grey-4);
@@ -431,24 +614,6 @@ onMounted(async () => {
   }
 }
 
-.admin-footer > .q-bar {
-  @at-root .body--light & {
-    background-color: #FFF !important;
-    color: $blue-grey-5 !important;
-
-    a {
-      color: $blue-grey-9 !important;
-      text-decoration: none;
-    }
-  }
-  @at-root .body--dark & {
-    background-color: $dark-6 !important;
-    color: $blue-grey-5 !important;
-
-    a {
-      color: $blue-grey-5 !important;
-      text-decoration: none;
-    }
-  }
-}
+// -> The `.admin-footer > .q-bar` rule that used to sit here never matched: FooterNav rendered a
+//    footer element, never a bar. Its colours come from its own scoped style.
 </style>

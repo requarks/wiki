@@ -1,53 +1,63 @@
-<template lang='pug'>
-q-layout(view='hHh Lpr lff')
-  header-nav
-  q-page-container.layout-profile
-    .layout-profile-card
-      .layout-profile-sd
-        q-list
-          template(v-for='navItem of sidenav' :key='navItem.key')
-            q-item(
-              v-if='!navItem.disabled || flagsStore.experimental'
-              clickable
-              :to='`/_profile/` + navItem.key'
-              active-class='is-active'
-              :disabled='navItem.disabled'
-              v-ripple
-              )
-              q-item-section(side)
-                q-icon(:name='navItem.icon')
-              q-item-section
-                q-item-label {{navItem.label}}
-          q-separator.q-my-sm(inset)
-          q-item(
-            clickable
-            v-ripple
-            :to='`/_user/` + userStore.id'
-            )
-            q-item-section(side)
-              q-icon(name='las la-id-card')
-            q-item-section
-              q-item-label {{ t('profile.viewPublicProfile') }}
-          q-separator.q-my-sm(inset)
-          q-item(
-            clickable
-            v-ripple
-            @click='userStore.logout()'
-            )
-            q-item-section(side)
-              q-icon(name='las la-sign-out-alt', color='negative')
-            q-item-section
-              q-item-label.text-negative {{ t('common.header.logout') }}
-      router-view
-  main-overlay-dialog
-  footer-nav
+<template>
+  <w-layout>
+    <w-header>
+      <header-nav />
+    </w-header>
+    <w-page-container class="layout-profile">
+      <div class="layout-profile-card">
+        <div class="layout-profile-sd">
+          <w-list>
+            <template v-for="navItem of sidenav" :key="navItem.key">
+              <w-item
+                v-if="!navItem.disabled || flagsStore.experimental"
+                clickable
+                :to="`/_profile/` + navItem.key"
+                active-class="is-active"
+                :disabled="navItem.disabled">
+                <w-item-section side>
+                  <w-icon :name="navItem.icon" />
+                </w-item-section>
+                <w-item-section>
+                  <w-item-label>{{ navItem.label }}</w-item-label>
+                </w-item-section>
+              </w-item>
+            </template>
+            <w-separator inset spaced="sm" />
+            <w-item clickable :to="`/_user/` + userStore.id">
+              <w-item-section side>
+                <w-icon name="la:id-card" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ t('profile.viewPublicProfile') }}</w-item-label>
+              </w-item-section>
+            </w-item>
+            <w-separator inset spaced="sm" />
+            <w-item clickable @click="userStore.logout()">
+              <w-item-section side>
+                <w-icon name="la:sign-out-alt" color="negative" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label class="text-negative">{{ t('common.header.logout') }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </div>
+        <router-view />
+      </div>
+    </w-page-container>
+    <main-overlay-dialog />
+    <w-footer>
+      <footer-nav />
+    </w-footer>
+  </w-layout>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+
+import { useMeta } from '@/composables/meta'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
@@ -56,10 +66,6 @@ import { useUserStore } from '@/stores/user'
 import HeaderNav from '@/components/HeaderNav.vue'
 import FooterNav from '@/components/FooterNav.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -79,7 +85,7 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  titleTemplate: title => `${title} - ${t('profile.title')} - Wiki.js`
+  titleTemplate: (title) => `${title} - ${t('profile.title')} - Wiki.js`
 })
 
 // DATA
@@ -88,51 +94,57 @@ const sidenav = [
   {
     key: 'info',
     label: t('profile.title'),
-    icon: 'las la-user-circle'
+    icon: 'la:user-circle'
   },
   {
     key: 'avatar',
     label: t('profile.avatar'),
-    icon: 'las la-otter'
+    icon: 'la:otter'
   },
   {
     key: 'auth',
     label: t('profile.auth'),
-    icon: 'las la-key'
+    icon: 'la:key'
   },
   {
     key: 'groups',
     label: t('profile.groups'),
-    icon: 'las la-users'
+    icon: 'la:users'
   },
   {
     key: 'notifications',
     label: t('profile.notifications'),
-    icon: 'las la-bell',
+    icon: 'la:bell',
     disabled: true
   },
   // {
   //   key: 'pages',
   //   label: 'My Pages',
-  //   icon: 'las la-file-alt',
+  //   icon: 'la:file-alt',
   //   disabled: true
   // },
   {
     key: 'activity',
     label: t('profile.activity'),
-    icon: 'las la-history',
+    icon: 'la:history',
     disabled: true
   }
 ]
 
 // WATCHERS
 
-watch(() => route.path, async (newValue) => {
-  if (!newValue.startsWith('/_profile')) { return }
-  if (!userStore.authenticated) {
-    router.replace('/login')
-  }
-}, { immediate: true })
+watch(
+  () => route.path,
+  async (newValue) => {
+    if (!newValue.startsWith('/_profile')) {
+      return
+    }
+    if (!userStore.authenticated) {
+      router.replace('/login')
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style lang="scss">
@@ -151,7 +163,7 @@ watch(() => route.path, async (newValue) => {
     top: 0;
     width: 100%;
     background: radial-gradient(ellipse at bottom, $dark-3, $dark-6);
-    border-bottom: 1px solid #FFF;
+    border-bottom: 1px solid #fff;
 
     @at-root .body--dark & {
       border-bottom-color: $dark-3;
@@ -164,7 +176,12 @@ watch(() => route.path, async (newValue) => {
     position: fixed;
     top: 64px;
     width: 100%;
-    background: linear-gradient(to right, transparent 0%, rgba(255,255,255,.1) 50%, transparent 100%);
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
   }
 
   &-card {
@@ -176,10 +193,13 @@ watch(() => route.path, async (newValue) => {
     border-radius: 7px;
     display: flex;
     align-items: stretch;
-    height: 100%;
+    // -> Replaces the per-page `style-fn` that computed `height - 100 - offset` in JS: the 100px is
+    //    this element's own 50px top and bottom margins, and the offsets are now handled by the
+    //    layout grid rather than measured at runtime.
+    min-height: calc(100% - 100px);
 
     @at-root .body--light & {
-      background-color: #FFF;
+      background-color: #fff;
     }
     @at-root .body--dark & {
       background-color: $dark-3;
@@ -193,42 +213,44 @@ watch(() => route.path, async (newValue) => {
 
     @at-root .body--light & {
       background-color: $grey-1;
-      border-right: 1px solid rgba($dark-3, .1);
-      box-shadow: inset -1px 0 0 #FFF;
+      border-right: 1px solid rgba($dark-3, 0.1);
+      box-shadow: inset -1px 0 0 #fff;
     }
     @at-root .body--dark & {
       background-color: $dark-4;
-      border-right: 1px solid rgba(#FFF, .12);
-      box-shadow: inset -1px 0 0 rgba($dark-6, .5);
+      border-right: 1px solid rgba(#fff, 0.12);
+      box-shadow: inset -1px 0 0 rgba($dark-6, 0.5);
     }
 
-    .q-list .q-item {
+    .w-list .w-item {
       font-weight: 500;
       color: $grey-9;
 
       @at-root .body--dark & {
-        color: rgba(255,255,255,.75);
+        color: rgba(255, 255, 255, 0.75);
       }
 
       &.is-active {
-        background: linear-gradient(to bottom, rgba($primary, .25), rgba($primary, .1));
+        background: linear-gradient(to bottom, rgba($primary, 0.25), rgba($primary, 0.1));
         color: $primary;
 
-        .q-icon {
+        // -> WIcon draws an Iconify reference as <iconify-icon> and anything else via q-icon
+        .w-icon,
+        iconify-icon {
           color: $primary;
         }
       }
     }
   }
 
-  .q-page {
+  .w-page {
     flex: 1 1;
 
     @at-root .body--light & {
-      border-left: 1px solid #FFF;
+      border-left: 1px solid #fff;
     }
     @at-root .body--dark & {
-      border-left: 1px solid rgba($dark-6, .75);
+      border-left: 1px solid rgba($dark-6, 0.75);
     }
   }
 
@@ -238,25 +260,33 @@ watch(() => route.path, async (newValue) => {
     padding: 0 16px 6px 16px;
     color: $primary;
     position: relative;
-    background: linear-gradient(to left, #FFF, transparent), linear-gradient(to top, rgba($primary, .075), transparent);
+    background:
+      linear-gradient(to left, #fff, transparent),
+      linear-gradient(to top, rgba($primary, 0.075), transparent);
     margin-bottom: 10px;
 
     @at-root .body--dark & {
-      background: linear-gradient(to left, $dark-3, transparent), linear-gradient(to top, rgba($primary, .075), transparent);
+      background:
+        linear-gradient(to left, $dark-3, transparent),
+        linear-gradient(to top, rgba($primary, 0.075), transparent);
     }
 
     &:before {
       content: '';
       width: 100%;
       height: 10px;
-      background: linear-gradient(to left, #FFF, transparent), linear-gradient(to bottom, rgba($primary, .05), transparent);
+      background:
+        linear-gradient(to left, #fff, transparent),
+        linear-gradient(to bottom, rgba($primary, 0.05), transparent);
       position: absolute;
       bottom: -13px;
       left: 0;
       z-index: 0;
 
       @at-root .body--dark & {
-        background: linear-gradient(to left,$dark-3, transparent), linear-gradient(to bottom, rgba($primary, .05), transparent);
+        background:
+          linear-gradient(to left, $dark-3, transparent),
+          linear-gradient(to bottom, rgba($primary, 0.05), transparent);
       }
     }
 
@@ -264,7 +294,7 @@ watch(() => route.path, async (newValue) => {
       content: '';
       width: 100%;
       height: 1px;
-      background: linear-gradient(to left, transparent, rgba($primary, .25));
+      background: linear-gradient(to left, transparent, rgba($primary, 0.25));
       position: absolute;
       bottom: -2px;
       left: 0;
@@ -275,26 +305,34 @@ watch(() => route.path, async (newValue) => {
   .actions-bar {
     display: flex;
     padding: 16px;
-    background: linear-gradient(to right, #FFF, transparent), linear-gradient(to bottom, rgba($secondary, .1), transparent);
+    background:
+      linear-gradient(to right, #fff, transparent),
+      linear-gradient(to bottom, rgba($secondary, 0.1), transparent);
     justify-content: flex-end;
     position: relative;
 
     @at-root .body--dark & {
-      background: linear-gradient(to right, $dark-3, transparent), linear-gradient(to bottom, rgba($secondary, .1), transparent);
+      background:
+        linear-gradient(to right, $dark-3, transparent),
+        linear-gradient(to bottom, rgba($secondary, 0.1), transparent);
     }
 
     &:before {
       content: '';
       width: 100%;
       height: 10px;
-      background: linear-gradient(to right, #FFF, transparent), linear-gradient(to top, rgba($secondary, .05), transparent);
+      background:
+        linear-gradient(to right, #fff, transparent),
+        linear-gradient(to top, rgba($secondary, 0.05), transparent);
       position: absolute;
       top: -13px;
       left: 0;
       z-index: 0;
 
       @at-root .body--dark & {
-        background: linear-gradient(to right, $dark-3, transparent), linear-gradient(to top, rgba($secondary, .05), transparent);
+        background:
+          linear-gradient(to right, $dark-3, transparent),
+          linear-gradient(to top, rgba($secondary, 0.05), transparent);
       }
     }
 
@@ -302,7 +340,7 @@ watch(() => route.path, async (newValue) => {
       content: '';
       width: 100%;
       height: 1px;
-      background: linear-gradient(to right, transparent, rgba($secondary, .25));
+      background: linear-gradient(to right, transparent, rgba($secondary, 0.25));
       position: absolute;
       top: -2px;
       left: 0;
@@ -315,16 +353,6 @@ body.body--dark {
   background-color: $dark-6;
 }
 
-.q-footer {
-  .q-bar {
-    @at-root .body--light & {
-      background-color: $grey-3;
-      color: $grey-7;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-4;
-      color: rgba(255,255,255,.3);
-    }
-  }
-}
+// -> The `.q-footer .q-bar` rule that used to sit here never matched: FooterNav renders
+//    `.site-footer`, never a q-bar. The footer's own colours live in FooterNav's scoped style.
 </style>

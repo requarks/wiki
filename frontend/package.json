@@ -10,13 +10,15 @@
     "dev": "vite --force",
     "build": "NODE_OPTIONS=--max-old-space-size=8192 vite build --emptyOutDir",
     "ncu": "ncu -i",
-    "ncu-u": "ncu -u"
+    "ncu-u": "ncu -u",
+    "icons": "node scripts/generate-icons.mjs",
+    "icons:check": "node scripts/generate-icons.mjs --check"
   },
   "dependencies": {
     "@lezer/common": "1.5.2",
-    "@mdi/font": "7.4.47",
     "@quasar/extras": "2.0.1",
     "@simplewebauthn/browser": "13.3.0",
+    "@tailwindcss/vite": "4.3.3",
     "@tanstack/vue-query": "5.101.0",
     "@xterm/xterm": "6.0.0",
     "browser-fs-access": "0.38.0",
@@ -64,12 +66,12 @@
     "prosemirror-transform": "1.12.0",
     "prosemirror-view": "1.41.9",
     "pug": "3.0.4",
-    "quasar": "2.20.0",
     "slugify": "1.6.9",
     "socket.io-client": "4.8.3",
     "sortablejs": "1.15.7",
     "sortablejs-vue3": "1.3.0",
     "tabulator-tables": "6.4.0",
+    "tailwindcss": "4.3.3",
     "temporal-polyfill": "1.0.1",
     "tippy.js": "6.3.7",
     "twemoji": "14.0.2",
@@ -84,9 +86,9 @@
     "zxcvbn": "4.4.2"
   },
   "devDependencies": {
+    "@iconify-json/la": "1.2.1",
+    "@iconify-json/mdi": "1.2.3",
     "@intlify/unplugin-vue-i18n": "11.2.3",
-    "@quasar/app-vite": "2.6.2",
-    "@quasar/vite-plugin": "1.12.0",
     "@types/lodash": "4.17.24",
     "@vitejs/plugin-vue": "6.0.8",
     "@vue/language-plugin-pug": "3.3.5",

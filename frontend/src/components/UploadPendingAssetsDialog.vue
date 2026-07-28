@@ -1,24 +1,26 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide', persistent)
-  q-card(style='min-width: 350px; max-width: 450px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-upload.svg', left, size='sm')
-      span {{t(`editor.pendingAssetsUploading`)}}
-    q-card-section
-      .q-pa-md.text-center
-        img(src='/_assets/illustrations/undraw_upload.svg', style='width: 150px;')
-      q-linear-progress(
-        indeterminate
-        size='lg'
-        rounded
-        )
-      .q-mt-sm.text-center.text-caption {{ state.current }} / {{ state.total }}
+<template>
+  <w-dialog v-model="dialogVisible" max-width="450px" persistent @hide="onDialogHide">
+    <w-card style="min-width: 350px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-upload.svg" size="sm" class="mr-2" />
+        <span>{{ t(`editor.pendingAssetsUploading`) }}</span>
+      </w-card-section>
+      <w-card-section>
+        <div class="p-4 text-center">
+          <img src="/_assets/illustrations/undraw_upload.svg" style="width: 150px" />
+        </div>
+        <w-linear-progress indeterminate size="lg" rounded />
+        <div class="mt-2 text-center text-caption">{{ state.current }} / {{ state.total }}</div>
+      </w-card-section>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive } from 'vue'
 
 import { useEditorStore } from '@/stores/editor'
@@ -27,14 +29,11 @@ import { usePageStore } from '@/stores/page'
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // STORES
 
@@ -59,7 +58,7 @@ onMounted(async () => {
   state.total = editorStore.pendingAssets.length ?? 0
   state.current = 0
 
-  await new Promise(resolve => setTimeout(resolve, 500))
+  await new Promise((resolve) => setTimeout(resolve, 500))
 
   try {
     for (const item of editorStore.pendingAssets) {
@@ -91,8 +90,11 @@ onMounted(async () => {
     EVENT_BUS.emit('reloadEditorContent')
     onDialogOK()
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })

@@ -1,39 +1,48 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 350px; max-width: 450px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-delete-bin.svg', left, size='sm')
-      span {{t(`admin.sites.delete`)}}
-    q-card-section
-      .text-body2
-        i18n-t(keypath='admin.sites.deleteConfirm')
-          template(v-slot:siteTitle)
-            strong {{props.site.title}}
-      .text-body2.q-mt-md
-        strong.text-negative {{t(`admin.sites.deleteConfirmWarn`)}}
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.delete`)'
-        color='negative'
-        padding='xs md'
-        @click='confirm'
-        :loading='state.isLoading'
-        )
+<template>
+  <w-dialog v-model="dialogVisible" max-width="450px" @hide="onDialogHide">
+    <w-card style="min-width: 350px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-delete-bin.svg" size="sm" class="mr-2" />
+        <span>{{ t(`admin.sites.delete`) }}</span>
+      </w-card-section>
+      <w-card-section>
+        <div class="text-body2">
+          <i18n-t keypath="admin.sites.deleteConfirm">
+            <template #siteTitle>
+              <strong>{{ props.site.title }}</strong>
+            </template>
+          </i18n-t>
+        </div>
+        <div class="text-body2 mt-4">
+          <strong class="text-negative">{{ t(`admin.sites.deleteConfirmWarn`) }}</strong>
+        </div>
+      </w-card-section>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          unelevated
+          :label="t(`common.actions.delete`)"
+          color="negative"
+          padding="xs md"
+          :loading="state.isLoading"
+          @click="confirm" />
+      </w-card-actions>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { reactive } from 'vue'
 
 import { useAdminStore } from '../stores/admin'
@@ -49,14 +58,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // STORES
 
@@ -74,24 +80,26 @@ const state = reactive({
 
 // METHODS
 
-async function confirm () {
+async function confirm() {
   state.isLoading = true
   try {
     const resp = await API_CLIENT.delete(`sites/${props.site.id}`)
     if (resp?.ok) {
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('admin.sites.deleteSuccess')
       })
       adminStore.$patch({
-        sites: adminStore.sites.filter(s => s.id !== props.site.id)
+        sites: adminStore.sites.filter((s) => s.id !== props.site.id)
       })
       onDialogOK()
     } else {
-      throw new Error(t(`admin.sites.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.sites.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })

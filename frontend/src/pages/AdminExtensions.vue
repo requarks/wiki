@@ -1,119 +1,125 @@
-<template lang='pug'>
-q-page.admin-extensions
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-module.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.extensions.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.extensions.subtitle') }}
-    .col-auto
-      q-btn.acrylic-btn.q-mr-sm(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/system/extensions`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12
-      q-card
-        q-list(separator)
-          q-item(
-            v-for='ext of state.extensions'
-            :key='`ext-` + ext.key'
-            )
-            blueprint-icon(icon='module')
-            q-item-section
-              q-item-label {{ext.title}}
-              q-item-label(caption) {{ext.description}}
-              q-item-label(caption, v-if='ext.website')
-                a.text-primary(:href='ext.website', target='_blank', rel='noopener') {{ ext.website }}
-            q-item-section(side)
-              .row
-                q-btn-group(unelevated)
-                  q-btn(
-                    icon='las la-check'
-                    size='sm'
-                    color='positive'
-                    padding='xs sm'
-                    v-if='ext.isInstalled'
-                    :ripple='false'
-                    )
-                    q-tooltip(
-                      anchor='center left'
-                      self='center right'
-                      ) {{t('admin.extensions.installed')}}
-                  q-btn(
-                    :label='t(`admin.extensions.install`)'
-                    color='blue-7'
-                    v-if='ext.isCompatible && !ext.isInstalled && ext.isInstallable'
-                    @click='install(ext)'
-                    no-caps
-                  )
-                  q-btn(
-                    v-else-if='ext.isCompatible && ext.isInstalled && ext.isInstallable'
-                    :label='t(`admin.extensions.reinstall`)'
-                    color='blue-7'
-                    @click='install(ext)'
-                    no-caps
-                  )
-                  q-btn(
-                    v-else-if='ext.isCompatible && ext.isInstalled && !ext.isInstallable'
-                    :label='t(`admin.extensions.installed`)'
-                    color='positive'
-                    no-caps
-                    :ripple='false'
-                  )
-                  q-btn(
-                    v-else-if='ext.isCompatible'
-                    :label='t(`admin.extensions.instructions`)'
-                    icon='las la-info-circle'
-                    color='indigo'
-                    outline
-                    type='a'
-                    :href='`https://docs.js.wiki/admin/extensions/` + ext.key'
-                    target='_blank'
-                    no-caps
-                    )
-                    q-tooltip(
-                      anchor='center left'
-                      self='center right'
-                      ) {{t('admin.extensions.instructionsHint')}}
-                  q-btn(
-                    v-else
-                    color='negative'
-                    outline
-                    :label='t(`admin.extensions.incompatible`)'
-                    no-caps
-                    :ripple='false'
-                  )
-
+<template>
+  <w-page class="admin-extensions">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-module.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">
+          {{ t('admin.extensions.title') }}
+        </div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.extensions.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="acrylic-btn mr-2"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/system/extensions`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-12">
+        <w-card>
+          <w-list separator>
+            <w-item v-for="ext of state.extensions" :key="`ext-` + ext.key">
+              <blueprint-icon icon="module" />
+              <w-item-section>
+                <w-item-label>{{ ext.title }}</w-item-label>
+                <w-item-label caption>{{ ext.description }}</w-item-label>
+                <w-item-label caption v-if="ext.website">
+                  <a class="text-primary" :href="ext.website" target="_blank" rel="noopener">{{
+                    ext.website
+                  }}</a>
+                </w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <div class="flex flex-wrap">
+                  <w-btn-group unelevated>
+                    <w-btn
+                      icon="la:check"
+                      size="sm"
+                      color="positive"
+                      padding="xs sm"
+                      v-if="ext.isInstalled">
+                      <w-tooltip anchor="center left" self="center right">{{
+                        t('admin.extensions.installed')
+                      }}</w-tooltip>
+                    </w-btn>
+                    <w-btn
+                      :label="t(`admin.extensions.install`)"
+                      color="blue-7"
+                      v-if="ext.isCompatible && !ext.isInstalled && ext.isInstallable"
+                      @click="install(ext)"
+                      no-caps />
+                    <w-btn
+                      v-else-if="ext.isCompatible && ext.isInstalled && ext.isInstallable"
+                      :label="t(`admin.extensions.reinstall`)"
+                      color="blue-7"
+                      @click="install(ext)"
+                      no-caps />
+                    <w-btn
+                      v-else-if="ext.isCompatible && ext.isInstalled && !ext.isInstallable"
+                      :label="t(`admin.extensions.installed`)"
+                      color="positive"
+                      no-caps />
+                    <w-btn
+                      v-else-if="ext.isCompatible"
+                      :label="t(`admin.extensions.instructions`)"
+                      icon="la:info-circle"
+                      color="indigo"
+                      outline
+                      :href="`https://docs.js.wiki/admin/extensions/` + ext.key"
+                      target="_blank"
+                      no-caps>
+                      <w-tooltip anchor="center left" self="center right">{{
+                        t('admin.extensions.instructionsHint')
+                      }}</w-tooltip>
+                    </w-btn>
+                    <w-btn
+                      v-else
+                      color="negative"
+                      outline
+                      :label="t(`admin.extensions.incompatible`)"
+                      no-caps />
+                  </w-btn-group>
+                </div>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive } from 'vue'
 
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
+
 import { useSiteStore } from '@/stores/site'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -138,24 +144,24 @@ const state = reactive({
 
 // METHODS
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
-    state.extensions = await API_CLIENT.get('system/extensions').json() ?? []
+    state.extensions = (await API_CLIENT.get('system/extensions').json()) ?? []
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.extensions.loadFailed'),
       caption: err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-async function install (ext) {
-  $q.loading.show({
+async function install(ext) {
+  loading.show({
     message: t('admin.extensions.installing') + '<br>' + t('admin.extensions.installingHint'),
     html: true
   })
@@ -166,7 +172,7 @@ async function install (ext) {
     }
     // -> A reinstall repairs the files on disk, but a server that already failed to load the module
     //    keeps failing until it restarts — so that answer is a warning, not a success
-    $q.notify({
+    notify({
       type: resp.restartRequired ? 'warning' : 'positive',
       message: resp.restartRequired
         ? t('admin.extensions.installRestartRequired')
@@ -177,14 +183,17 @@ async function install (ext) {
     await load()
   } catch (err) {
     // -> ky throws above 400 — an extension that must be installed by hand answers 409 saying so
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: t('admin.extensions.installFailed'),
       caption: apiMessage || err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
 }
 
 // MOUNTED
@@ -192,18 +201,4 @@ async function install (ext) {
 onMounted(() => {
   load()
 })
-
 </script>
-
-<style lang='scss'>
-.admin-extensions {
-  .q-expansion-item__content .q-card {
-    @at-root .body--light & {
-      background-color: $grey-1;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-3;
-    }
-  }
-}
-</style>

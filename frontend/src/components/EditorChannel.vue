@@ -1,41 +1,39 @@
-<template lang="pug">
-.channel-container
-  .channel-sidebar
-    q-card.rounded-borders.bg-dark
-      q-list(
-        padding
-        dark
-        )
-        q-item(
-          v-for='ch of channels'
-          :key='ch.id'
-          active-class='bg-primary text-white'
-          :active='selectedChannel === ch.id'
-          @click='selectedChannel = ch.id'
-          clickable
-          )
-          q-item-section(side)
-            q-icon(name='las la-grip-lines')
-          q-item-section
-            q-item-label
-              span #&nbsp;
-              strong {{ch.name}}
-            q-item-label(caption) {{ch.description}}
-          //- q-item-section(side)
-          //-   q-badge(color='accent', label='0')
-    q-btn.q-mt-sm.full-width(
-      color='primary'
-      icon='las la-plus'
-      :label='$t(`Add Channel`)'
-      no-caps
-      )
-  .channel-main
+<template>
+  <div class="channel-container">
+    <div class="channel-sidebar">
+      <w-card class="rounded bg-dark">
+        <w-list padding dark>
+          <w-item
+            v-for="ch of channels"
+            :key="ch.id"
+            active-class="bg-primary text-white"
+            :active="selectedChannel === ch.id"
+            @click="selectedChannel = ch.id"
+            clickable>
+            <w-item-section side><w-icon name="la:grip-lines" /></w-item-section>
+            <w-item-section>
+              <w-item-label><span>#&nbsp;</span><strong>{{ch.name}}</strong></w-item-label>
+              <w-item-label caption>{{ch.description}}</w-item-label>
+            </w-item-section>
+            <!-- q-item-section(side) -->
+            <!-- q-badge(color='accent', label='0') -->
+          </w-item>
+        </w-list>
+      </w-card>
+      <w-btn
+        class="mt-2 w-full"
+        color="primary"
+        icon="la:plus"
+        :label="$t(`Add Channel`)"
+        no-caps />
+    </div>
+    <div class="channel-main" />
+  </div>
 </template>
 
 <script>
-
 export default {
-  data () {
+  data() {
     return {
       selectedChannel: 'xyz',
       channels: [
@@ -74,7 +72,7 @@ export default {
   }
 
   &-main {
-    background-color: #FFF;
+    background-color: #fff;
     flex: 1;
   }
 }

@@ -1,30 +1,28 @@
-<template lang='pug'>
-q-item-section(avatar)
-  q-avatar.blueprint-icon(
-    :color='avatarBgColor'
-    :text-color='avatarTextColor'
-    font-size='14px'
-    rounded
-    :style='props.hueRotate !== 0 ? `filter: hue-rotate(` + props.hueRotate + `deg)` : ``'
-    )
-    q-badge(
-      v-if='indicatorDot'
+<template>
+  <w-item-section avatar>
+    <w-avatar
+      class="blueprint-icon"
+      :color="avatarBgColor"
+      :text-color="avatarTextColor"
+      font-size="14px"
       rounded
-      :color='indicatorDot'
-      floating
-      )
-      q-tooltip(v-if='props.indicatorText') {{props.indicatorText}}
-    q-icon(
-      v-if='!textMode'
-      :name='`img:/_assets/icons/ultraviolet-` + icon + `.svg`'
-      size='sm'
-    )
-    span.text-uppercase(v-else) {{props.text}}
+      :style="props.hueRotate !== 0 ? `filter: hue-rotate(` + props.hueRotate + `deg)` : ``">
+      <w-badge v-if="indicatorDot" rounded :color="indicatorDot" floating>
+        <w-tooltip v-if="props.indicatorText">{{props.indicatorText}}</w-tooltip>
+      </w-badge>
+      <w-icon
+        v-if="!textMode"
+        :name="`img:/_assets/icons/ultraviolet-` + icon + `.svg`"
+        size="sm" />
+      <span class="uppercase" v-else>{{props.text}}</span>
+    </w-avatar>
+  </w-item-section>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useQuasar } from 'quasar'
+
+import { useDark } from '@/composables/dark'
 
 const props = defineProps({
   icon: {
@@ -53,17 +51,26 @@ const props = defineProps({
   }
 })
 
-// QUASAR
 
-const $q = useQuasar()
+// COMPOSABLES
+
+const dark = useDark()
 
 // COMPUTED
 
-const textMode = computed(() => { return props.text !== null })
-const avatarBgColor = computed(() => { return $q.dark.isActive || props.dark ? 'dark-4' : 'blue-1' })
-const avatarTextColor = computed(() => { return $q.dark.isActive || props.dark ? 'white' : 'blue-7' })
+const textMode = computed(() => {
+  return props.text !== null
+})
+const avatarBgColor = computed(() => {
+  return dark.isActive || props.dark ? 'dark-4' : 'blue-1'
+})
+const avatarTextColor = computed(() => {
+  return dark.isActive || props.dark ? 'white' : 'blue-7'
+})
 const indicatorDot = computed(() => {
-  if (props.indicator === null) { return null }
-  return (props.indicator === '') ? 'pink' : props.indicator
+  if (props.indicator === null) {
+    return null
+  }
+  return props.indicator === '' ? 'pink' : props.indicator
 })
 </script>

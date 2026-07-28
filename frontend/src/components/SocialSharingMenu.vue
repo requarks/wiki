@@ -1,27 +1,38 @@
-<template lang="pug">
-q-menu(
-  auto-close
-  anchor='bottom middle'
-  self='top middle'
-  @show='menuShown'
-  @before-hide='menuHidden'
-  )
-  q-list(dense, padding)
-    q-item(clickable, ref='copyUrlButton')
-      q-item-section.items-center(avatar)
-        q-icon(color='grey', name='las la-clipboard', size='sm')
-      q-item-section.q-pr-md Copy URL
-    q-item(clickable, tag='a', :href='`mailto:?subject=` + encodeURIComponent(props.title) + `&body=` + encodeURIComponent(urlFormatted) + `%0D%0A%0D%0A` + encodeURIComponent(props.description)', target='_blank')
-      q-item-section.items-center(avatar)
-        q-icon(color='grey', name='las la-envelope', size='sm')
-      q-item-section.q-pr-md Email
+<template>
+  <w-menu
+    auto-close
+    anchor="bottom middle"
+    self="top middle"
+    @show="menuShown"
+    @before-hide="menuHidden">
+    <w-list dense padding>
+      <w-item clickable ref="copyUrlButton">
+        <w-item-section class="items-center" avatar>
+          <w-icon color="grey" name="la:clipboard" size="sm" />
+        </w-item-section>
+        <w-item-section class="pr-4">Copy URL</w-item-section>
+      </w-item>
+      <w-item
+        clickable
+        tag="a"
+        :href="`mailto:?subject=` + encodeURIComponent(props.title) + `&body=` + encodeURIComponent(urlFormatted) + `%0D%0A%0D%0A` + encodeURIComponent(props.description)"
+        target="_blank">
+        <w-item-section class="items-center" avatar>
+          <w-icon color="grey" name="la:envelope" size="sm" />
+        </w-item-section>
+        <w-item-section class="pr-4">Email</w-item-section>
+      </w-item>
+    </w-list>
+  </w-menu>
 </template>
 
 <script setup>
-import ClipboardJS from 'clipboard'
-import { useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { notify } from '@/composables/notify'
+
+import ClipboardJS from 'clipboard'
 
 // PROPS
 
@@ -40,9 +51,6 @@ const props = defineProps({
   }
 })
 
-// QUASAR
-
-const $q = useQuasar()
 
 // I18N
 
@@ -72,7 +80,7 @@ const urlFormatted = computed(() => {
 })
 // METHODS
 
-function openSocialPop (url) {
+function openSocialPop(url) {
   const popupWindow = window.open(
     url,
     'sharer',
@@ -82,26 +90,28 @@ function openSocialPop (url) {
   popupWindow.focus()
 }
 
-function menuShown (ev) {
+function menuShown(ev) {
   clip = new ClipboardJS(copyUrlButton.value.$el, {
-    text: () => { return urlFormatted.value }
+    text: () => {
+      return urlFormatted.value
+    }
   })
 
   clip.on('success', () => {
-    $q.notify({
+    notify({
       message: 'URL copied successfully',
-      icon: 'las la-clipboard'
+      icon: 'la:clipboard'
     })
   })
   clip.on('error', () => {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to copy to clipboard'
     })
   })
 }
 
-function menuHidden (ev) {
+function menuHidden(ev) {
   clip.destroy()
 }
 
@@ -115,10 +125,18 @@ onMounted(() => {
   const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left
   const dualScreenTop = window.screenTop !== undefined ? window.screenTop : screen.top
 
-  const width = window.innerWidth ? window.innerWidth : (document.documentElement.clientWidth ? document.documentElement.clientWidth : screen.width)
-  const height = window.innerHeight ? window.innerHeight : (document.documentElement.clientHeight ? document.documentElement.clientHeight : screen.height)
+  const width = window.innerWidth
+    ? window.innerWidth
+    : document.documentElement.clientWidth
+      ? document.documentElement.clientWidth
+      : screen.width
+  const height = window.innerHeight
+    ? window.innerHeight
+    : document.documentElement.clientHeight
+      ? document.documentElement.clientHeight
+      : screen.height
 
-  state.left = ((width / 2) - (state.width / 2)) + dualScreenLeft
-  state.top = ((height / 2) - (state.height / 2)) + dualScreenTop
+  state.left = width / 2 - state.width / 2 + dualScreenLeft
+  state.top = height / 2 - state.height / 2 + dualScreenTop
 })
 </script>

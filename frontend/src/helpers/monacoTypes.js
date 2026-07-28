@@ -4,14 +4,14 @@
 
 // export function values<V = any>(set: Set<V>): V[];
 // export function values<K = any, V = any>(map: Map<K, V>): V[];
-export function values (forEachable) {
+export function values(forEachable) {
   const result = []
-  forEachable.forEach(value => result.push(value))
+  forEachable.forEach((value) => result.push(value))
   return result
 }
 
 export class Position {
-  static Min (...positions) {
+  static Min(...positions) {
     if (positions.length === 0) {
       throw new TypeError()
     }
@@ -25,7 +25,7 @@ export class Position {
     return result
   }
 
-  static Max (...positions) {
+  static Max(...positions) {
     if (positions.length === 0) {
       throw new TypeError()
     }
@@ -39,7 +39,7 @@ export class Position {
     return result
   }
 
-  static isPosition (other) {
+  static isPosition(other) {
     if (!other) {
       return false
     }
@@ -53,15 +53,15 @@ export class Position {
     return false
   }
 
-  get line () {
+  get line() {
     return this._line
   }
 
-  get character () {
+  get character() {
     return this._character
   }
 
-  constructor (line, character) {
+  constructor(line, character) {
     if (line < 0) {
       throw new Error('line must be non-negative')
     }
@@ -72,7 +72,7 @@ export class Position {
     this._character = character
   }
 
-  isBefore (other) {
+  isBefore(other) {
     if (this._line < other._line) {
       return true
     }
@@ -82,7 +82,7 @@ export class Position {
     return this._character < other._character
   }
 
-  isBeforeOrEqual (other) {
+  isBeforeOrEqual(other) {
     if (this._line < other._line) {
       return true
     }
@@ -92,19 +92,19 @@ export class Position {
     return this._character <= other._character
   }
 
-  isAfter (other) {
+  isAfter(other) {
     return !this.isBeforeOrEqual(other)
   }
 
-  isAfterOrEqual (other) {
+  isAfterOrEqual(other) {
     return !this.isBefore(other)
   }
 
-  isEqual (other) {
+  isEqual(other) {
     return this._line === other._line && this._character === other._character
   }
 
-  compareTo (other) {
+  compareTo(other) {
     if (this._line < other._line) {
       return -1
     } else if (this._line > other.line) {
@@ -122,7 +122,7 @@ export class Position {
     }
   }
 
-  translate (lineDeltaOrChange, characterDelta = 0) {
+  translate(lineDeltaOrChange, characterDelta = 0) {
     if (lineDeltaOrChange === null || characterDelta === null) {
       throw new Error()
     }
@@ -134,7 +134,8 @@ export class Position {
       lineDelta = lineDeltaOrChange
     } else {
       lineDelta = typeof lineDeltaOrChange.lineDelta === 'number' ? lineDeltaOrChange.lineDelta : 0
-      characterDelta = typeof lineDeltaOrChange.characterDelta === 'number' ? lineDeltaOrChange.characterDelta : 0
+      characterDelta =
+        typeof lineDeltaOrChange.characterDelta === 'number' ? lineDeltaOrChange.characterDelta : 0
     }
 
     if (lineDelta === 0 && characterDelta === 0) {
@@ -143,7 +144,7 @@ export class Position {
     return new Position(this.line + lineDelta, this.character + characterDelta)
   }
 
-  with (lineOrChange, character = this.character) {
+  with(lineOrChange, character = this.character) {
     if (lineOrChange === null || character === null) {
       throw new Error()
     }
@@ -155,7 +156,8 @@ export class Position {
       line = lineOrChange
     } else {
       line = typeof lineOrChange.line === 'number' ? lineOrChange.line : this.line
-      character = typeof lineOrChange.character === 'number' ? lineOrChange.character : this.character
+      character =
+        typeof lineOrChange.character === 'number' ? lineOrChange.character : this.character
     }
 
     if (line === this.line && character === this.character) {
@@ -164,13 +166,13 @@ export class Position {
     return new Position(line, character)
   }
 
-  toJSON () {
+  toJSON() {
     return { line: this.line, character: this.character }
   }
 }
 
 export class Range {
-  static isRange (thing) {
+  static isRange(thing) {
     if (thing instanceof Range) {
       return true
     }
@@ -180,19 +182,24 @@ export class Range {
     return Position.isPosition(thing.start) && Position.isPosition(thing.end)
   }
 
-  get start () {
+  get start() {
     return this._start
   }
 
-  get end () {
+  get end() {
     return this._end
   }
 
-  constructor (startLineOrStart, startColumnOrEnd, endLine, endColumn) {
+  constructor(startLineOrStart, startColumnOrEnd, endLine, endColumn) {
     let start
     let end
 
-    if (typeof startLineOrStart === 'number' && typeof startColumnOrEnd === 'number' && typeof endLine === 'number' && typeof endColumn === 'number') {
+    if (
+      typeof startLineOrStart === 'number' &&
+      typeof startColumnOrEnd === 'number' &&
+      typeof endLine === 'number' &&
+      typeof endColumn === 'number'
+    ) {
       start = new Position(startLineOrStart, startColumnOrEnd)
       end = new Position(endLine, endColumn)
     } else if (startLineOrStart instanceof Position && startColumnOrEnd instanceof Position) {
@@ -213,10 +220,9 @@ export class Range {
     }
   }
 
-  contains (positionOrRange) {
+  contains(positionOrRange) {
     if (positionOrRange instanceof Range) {
-      return this.contains(positionOrRange._start) &&
-      this.contains(positionOrRange._end)
+      return this.contains(positionOrRange._start) && this.contains(positionOrRange._end)
     } else if (positionOrRange instanceof Position) {
       if (positionOrRange.isBefore(this._start)) {
         return false
@@ -229,11 +235,11 @@ export class Range {
     return false
   }
 
-  isEqual (other) {
+  isEqual(other) {
     return this._start.isEqual(other._start) && this._end.isEqual(other._end)
   }
 
-  intersection (other) {
+  intersection(other) {
     const start = Position.Max(other.start, this._start)
     const end = Position.Min(other.end, this._end)
     if (start.isAfter(end)) {
@@ -245,7 +251,7 @@ export class Range {
     return new Range(start, end)
   }
 
-  union (other) {
+  union(other) {
     if (this.contains(other)) {
       return this
     } else if (other.contains(this)) {
@@ -256,15 +262,15 @@ export class Range {
     return new Range(start, end)
   }
 
-  get isEmpty () {
+  get isEmpty() {
     return this._start.isEqual(this._end)
   }
 
-  get isSingleLine () {
+  get isSingleLine() {
     return this._start.line === this._end.line
   }
 
-  with (startOrChange, end = this.end) {
+  with(startOrChange, end = this.end) {
     if (startOrChange === null || end === null) {
       throw new Error()
     }
@@ -285,38 +291,45 @@ export class Range {
     return new Range(start, end)
   }
 
-  toJSON () {
+  toJSON() {
     return [this.start, this.end]
   }
 }
 
 export class Selection extends Range {
-  static isSelection (thing) {
+  static isSelection(thing) {
     if (thing instanceof Selection) {
       return true
     }
     if (!thing) {
       return false
     }
-    return Range.isRange(thing) &&
+    return (
+      Range.isRange(thing) &&
       Position.isPosition(thing.anchor) &&
       Position.isPosition(thing.active) &&
       typeof thing.isReversed === 'boolean'
+    )
   }
 
-  get anchor () {
+  get anchor() {
     return this._anchor
   }
 
-  get active () {
+  get active() {
     return this._active
   }
 
-  constructor (anchorLineOrAnchor, anchorColumnOrActive, activeLine, activeColumn) {
+  constructor(anchorLineOrAnchor, anchorColumnOrActive, activeLine, activeColumn) {
     let anchor
     let active
 
-    if (typeof anchorLineOrAnchor === 'number' && typeof anchorColumnOrActive === 'number' && typeof activeLine === 'number' && typeof activeColumn === 'number') {
+    if (
+      typeof anchorLineOrAnchor === 'number' &&
+      typeof anchorColumnOrActive === 'number' &&
+      typeof activeLine === 'number' &&
+      typeof activeColumn === 'number'
+    ) {
       anchor = new Position(anchorLineOrAnchor, anchorColumnOrActive)
       active = new Position(activeLine, activeColumn)
     } else if (anchorLineOrAnchor instanceof Position && anchorColumnOrActive instanceof Position) {
@@ -334,11 +347,11 @@ export class Selection extends Range {
     this._active = active
   }
 
-  get isReversed () {
+  get isReversed() {
     return this._anchor === this._end
   }
 
-  toJSON () {
+  toJSON() {
     return {
       start: this.start,
       end: this.end,
@@ -354,7 +367,7 @@ export const EndOfLine = {
 }
 
 export class TextEdit {
-  static isTextEdit (thing) {
+  static isTextEdit(thing) {
     if (thing instanceof TextEdit) {
       return true
     }
@@ -364,63 +377,63 @@ export class TextEdit {
     return Range.isRange(thing) && typeof thing.newText === 'string'
   }
 
-  static replace (range, newText) {
+  static replace(range, newText) {
     return new TextEdit(range, newText)
   }
 
-  static insert (position, newText) {
+  static insert(position, newText) {
     return TextEdit.replace(new Range(position, position), newText)
   }
 
-  static delete (range) {
+  static delete(range) {
     return TextEdit.replace(range, '')
   }
 
-  static setEndOfLine (eol) {
+  static setEndOfLine(eol) {
     const ret = new TextEdit(new Range(new Position(0, 0), new Position(0, 0)), '')
     ret.newEol = eol
     return ret
   }
 
-  get range () {
+  get range() {
     return this._range
   }
 
-  set range (value) {
+  set range(value) {
     if (value && !Range.isRange(value)) {
       throw new Error('range')
     }
     this._range = value
   }
 
-  get newText () {
+  get newText() {
     return this._newText || ''
   }
 
-  set newText (value) {
+  set newText(value) {
     if (value && typeof value !== 'string') {
       throw new Error('newText')
     }
     this._newText = value
   }
 
-  get newEol () {
+  get newEol() {
     return this._newEol
   }
 
-  set newEol (value) {
+  set newEol(value) {
     if (value && typeof value !== 'number') {
       throw new Error('newEol')
     }
     this._newEol = value
   }
 
-  constructor (range, newText) {
+  constructor(range, newText) {
     this.range = range
     this._newText = newText
   }
 
-  toJSON () {
+  toJSON() {
     return {
       range: this.range,
       newText: this.newText,
@@ -430,35 +443,35 @@ export class TextEdit {
 }
 
 export class WorkspaceEdit {
-  constructor () {
+  constructor() {
     this._edits = []
   }
 
-  renameFile (from, to, options) {
+  renameFile(from, to, options) {
     this._edits.push({ _type: 1, from, to, options })
   }
 
-  createFile (uri, options) {
+  createFile(uri, options) {
     this._edits.push({ _type: 1, from: undefined, to: uri, options })
   }
 
-  deleteFile (uri, options) {
+  deleteFile(uri, options) {
     this._edits.push({ _type: 1, from: uri, to: undefined, options })
   }
 
-  replace (uri, range, newText) {
+  replace(uri, range, newText) {
     this._edits.push({ _type: 2, uri, edit: new TextEdit(range, newText) })
   }
 
-  insert (resource, position, newText) {
+  insert(resource, position, newText) {
     this.replace(resource, new Range(position, position), newText)
   }
 
-  delete (resource, range) {
+  delete(resource, range) {
     this.replace(resource, range, '')
   }
 
-  has (uri) {
+  has(uri) {
     for (const edit of this._edits) {
       if (edit._type === 2 && edit.uri.toString() === uri.toString()) {
         return true
@@ -467,7 +480,7 @@ export class WorkspaceEdit {
     return false
   }
 
-  set (uri, edits) {
+  set(uri, edits) {
     if (!edits) {
       // remove all text edits for `uri`
       for (let i = 0; i < this._edits.length; i++) {
@@ -487,7 +500,7 @@ export class WorkspaceEdit {
     }
   }
 
-  get (uri) {
+  get(uri) {
     const res = []
     for (const candidate of this._edits) {
       if (candidate._type === 2 && candidate.uri.toString() === uri.toString()) {
@@ -497,7 +510,7 @@ export class WorkspaceEdit {
     return res
   }
 
-  entries () {
+  entries() {
     const textEdits = new Map()
     for (const candidate of this._edits) {
       if (candidate._type === 2) {
@@ -512,7 +525,7 @@ export class WorkspaceEdit {
     return values(textEdits)
   }
 
-  _allEntries () {
+  _allEntries() {
     const res = []
     for (const edit of this._edits) {
       if (edit._type === 1) {
@@ -524,11 +537,11 @@ export class WorkspaceEdit {
     return res
   }
 
-  get size () {
+  get size() {
     return this.entries().length
   }
 
-  toJSON () {
+  toJSON() {
     return this.entries()
   }
 }
@@ -547,7 +560,7 @@ export const TextEditorSelectionChangeKind = {
 }
 
 export class SnippetString {
-  static isSnippetString (thing) {
+  static isSnippetString(thing) {
     if (thing instanceof SnippetString) {
       return true
     }
@@ -557,27 +570,27 @@ export class SnippetString {
     return typeof thing.value === 'string'
   }
 
-  static _escape (value) {
+  static _escape(value) {
     return value.replace(/\$|}|\\/g, '\\$&')
   }
 
-  constructor (value) {
+  constructor(value) {
     this._tabstop = 1
     this.value = value || ''
   }
 
-  appendText (string) {
+  appendText(string) {
     this.value += SnippetString._escape(string)
     return this
   }
 
-  appendTabstop (number = this._tabstop++) {
+  appendTabstop(number = this._tabstop++) {
     this.value += '$'
     this.value += number
     return this
   }
 
-  appendPlaceholder (value, number = this._tabstop++) {
+  appendPlaceholder(value, number = this._tabstop++) {
     if (typeof value === 'function') {
       const nested = new SnippetString()
       nested._tabstop = this._tabstop
@@ -597,7 +610,7 @@ export class SnippetString {
     return this
   }
 
-  appendVariable (name, defaultValue) {
+  appendVariable(name, defaultValue) {
     if (typeof defaultValue === 'function') {
       const nested = new SnippetString()
       nested._tabstop = this._tabstop

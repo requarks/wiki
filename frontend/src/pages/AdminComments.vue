@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
@@ -56,7 +56,7 @@
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='mdi-cog-box'
+                prepend-icon='mdi:cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
@@ -68,7 +68,7 @@
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
                 color='primary'
-                prepend-icon='mdi-cog-box'
+                prepend-icon='mdi:cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 inset
@@ -79,7 +79,7 @@
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='mdi-cog-box'
+                prepend-icon='mdi:cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
@@ -90,7 +90,7 @@
                 :key='cfg.key'
                 :label='cfg.value.title'
                 v-model='cfg.value.value'
-                prepend-icon='mdi-cog-box'
+                prepend-icon='mdi:cog-box'
                 :hint='cfg.value.hint ? cfg.value.hint : ""'
                 persistent-hint
                 :class='cfg.value.hint ? "mb-2" : ""'
@@ -100,7 +100,6 @@
 
 <script>
 import _ from 'lodash'
-
 
 export default {
   data() {
@@ -146,10 +145,13 @@ export default {
             }
           `,
           variables: {
-            providers: this.providers.map(tgt => ({
+            providers: this.providers.map((tgt) => ({
               isEnabled: tgt.key === this.selectedProvider,
               key: tgt.key,
-              config: tgt.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))
+              config: tgt.config.map((cfg) => ({
+                ...cfg,
+                value: JSON.stringify({ v: cfg.value.value })
+              }))
             }))
           }
         })
@@ -160,7 +162,13 @@ export default {
             icon: 'check'
           })
         } else {
-          throw new Error(_.get(resp, 'data.comments.updateProviders.responseResult.message', this.$t('common.error.unexpected')))
+          throw new Error(
+            _.get(
+              resp,
+              'data.comments.updateProviders.responseResult.message',
+              this.$t('common.error.unexpected')
+            )
+          )
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -190,14 +198,18 @@ export default {
         }
       `,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.comments.providers).map(str => ({
-        ...str,
-        config: _.sortBy(str.config.map(cfg => ({
-          ...cfg,
-          value: JSON.parse(cfg.value)
-        })), [t => t.value.order])
-      })),
-      watchLoading (isLoading) {
+      update: (data) =>
+        _.cloneDeep(data.comments.providers).map((str) => ({
+          ...str,
+          config: _.sortBy(
+            str.config.map((cfg) => ({
+              ...cfg,
+              value: JSON.parse(cfg.value)
+            })),
+            [(t) => t.value.order]
+          )
+        })),
+      watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-comments-refresh')
       }
     }

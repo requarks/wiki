@@ -1,133 +1,143 @@
-<template lang='pug'>
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card.page-save-dialog(style='width: 860px; max-width: 90vw;')
-    q-card-section.card-header(v-if='props.mode === `savePage`')
-      q-icon(name='img:/_assets/icons/fluent-save-as.svg', left, size='sm')
-      span {{ t('pageSaveDialog.title') }}
-    q-card-section.card-header(v-else-if='props.mode === `duplicatePage`')
-      q-icon(name='img:/_assets/icons/color-documents.svg', left, size='sm')
-      span {{ t('pageDuplicateDialog.title') }}
-    q-card-section.card-header(v-else-if='props.mode === `renamePage`')
-      q-icon(name='img:/_assets/icons/fluent-rename.svg', left, size='sm')
-      span {{ t('pageRenameDialog.title') }}
-    .row.page-save-dialog-browser
-      .col-4
-        q-scroll-area(
-          :thumb-style='thumbStyle'
-          :bar-style='barStyle'
-          style='height: 300px'
-          )
-          .q-px-sm
-            tree(
-              ref='treeComp'
-              :nodes='state.treeNodes'
-              :roots='state.treeRoots'
-              v-model:selected='state.currentFolderId'
-              @lazy-load='treeLazyLoad'
-              :use-lazy-load='true'
-              @context-action='treeContextAction'
-              :context-action-list='[`newFolder`]'
-              :display-mode='state.displayMode'
-            )
-      .col-8
-        q-list.page-save-dialog-filelist(dense)
-          q-item(
-            v-for='item of files'
-            :key='item.id'
-            clickable
-            active-class='active'
-            :active='item.id === state.currentFileId'
-            @click='selectItem(item)'
-            )
-            q-item-section(side)
-              q-icon(:name='item.icon', size='sm')
-            q-item-section
-              q-item-label {{item.title}}
-    .page-save-dialog-path.font-robotomono {{ currentFolderPath }}
-    q-list.q-py-sm
-      q-item
-        blueprint-icon(icon='new-document')
-        q-item-section
-          q-input(
-            v-model='state.title'
-            :label='t(`pageSaveDialog.pageTitle`)'
-            :aria-label='t(`pageSaveDialog.pageTitle`)'
-            dense
-            outlined
-            autofocus
-            @focus='state.currentFileId = null'
-            @keyup.enter='save'
-          )
-      q-item
-        blueprint-icon(icon='file-submodule')
-        q-item-section
-          q-input(
-            v-model='state.path'
-            :label='t(`pageSaveDialog.pathName`)'
-            :aria-label='t(`pageSaveDialog.pathName`)'
-            dense
-            outlined
-            @focus='state.pathDirty = true; state.currentFileId = null'
-            @keyup.enter='save'
-            )
-            //- template(#append)
-            //-   q-badge(outline, color='grey', label='valid')
-    q-card-actions.card-actions.q-px-md
-      q-btn.acrylic-btn(
-        icon='las la-ellipsis-h'
-        color='blue-grey'
-        padding='xs sm'
-        flat
-        )
-        q-tooltip(anchor='center right' self='center left') Display Options
-        q-menu(
-          auto-close
-          transition-show='jump-down'
-          transition-hide='jump-up'
-          anchor='top left'
-          self='bottom left'
-          )
-          q-card.q-pa-sm
-            q-list(dense)
-              q-item(clickable, @click='state.displayMode = `path`')
-                q-item-section(side)
-                  q-icon(
-                    :name='state.displayMode === `path` ? `las la-check-circle` : `las la-circle`'
-                    :color='state.displayMode === `path` ? `positive` : `grey`'
-                    size='xs'
-                    )
-                q-item-section.q-pr-sm {{ t('pageSaveDialog.displayModePath') }}
-              q-item(clickable, @click='state.displayMode = `title`')
-                q-item-section(side)
-                  q-icon(
-                    :name='state.displayMode === `title` ? `las la-check-circle` : `las la-circle`'
-                    :color='state.displayMode === `title` ? `positive` : `grey`'
-                    size='xs'
-                    )
-                q-item-section.q-pr-sm {{ t('pageSaveDialog.displayModeTitle') }}
-      q-space
-      q-btn.acrylic-btn(
-        icon='las la-times'
-        :label='t(`common.actions.cancel`)'
-        color='grey-7'
-        padding='xs md'
-        @click='onDialogCancel'
-        flat
-      )
-      q-btn(
-        icon='las la-check'
-        :label='t(`common.actions.save`)'
-        unelevated
-        color='primary'
-        padding='xs md'
-        @click='save'
-      )
+<template>
+  <w-dialog v-model="dialogVisible" @hide="onDialogHide">
+    <w-card class="page-save-dialog" style="width: 860px; max-width: 90vw">
+      <w-card-section v-if="props.mode === `savePage`" class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-save-as.svg" size="sm" class="mr-2" />
+        <span>{{ t('pageSaveDialog.title') }}</span>
+      </w-card-section>
+      <w-card-section v-else-if="props.mode === `duplicatePage`" class="card-header">
+        <w-icon name="img:/_assets/icons/color-documents.svg" size="sm" class="mr-2" />
+        <span>{{ t('pageDuplicateDialog.title') }}</span>
+      </w-card-section>
+      <w-card-section v-else-if="props.mode === `renamePage`" class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-rename.svg" size="sm" class="mr-2" />
+        <span>{{ t('pageRenameDialog.title') }}</span>
+      </w-card-section>
+      <div class="page-save-dialog-browser flex flex-nowrap">
+        <div class="w-1/3">
+          <w-scroll-area style="height: 300px">
+            <div class="px-2">
+              <tree
+                ref="treeComp"
+                v-model:selected="state.currentFolderId"
+                :nodes="state.treeNodes"
+                :roots="state.treeRoots"
+                :use-lazy-load="true"
+                :context-action-list="[`newFolder`]"
+                :display-mode="state.displayMode"
+                @lazy-load="treeLazyLoad"
+                @context-action="treeContextAction" />
+            </div>
+          </w-scroll-area>
+        </div>
+        <div class="w-2/3">
+          <w-list class="page-save-dialog-filelist" dense>
+            <w-item
+              v-for="item of files"
+              :key="item.id"
+              clickable
+              active-class="active"
+              :active="item.id === state.currentFileId"
+              @click="selectItem(item)">
+              <w-item-section side>
+                <w-icon :name="item.icon" size="sm" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ item.title }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </div>
+      </div>
+      <div class="page-save-dialog-path font-robotomono">{{ currentFolderPath }}</div>
+      <w-list class="py-2">
+        <w-item>
+          <blueprint-icon icon="new-document" />
+          <w-item-section>
+            <w-input
+              v-model="state.title"
+              :label="t(`pageSaveDialog.pageTitle`)"
+              dense
+              outlined
+              autofocus
+              @focus="state.currentFileId = null"
+              @keyup:enter="save" />
+          </w-item-section>
+        </w-item>
+        <w-item>
+          <blueprint-icon icon="file-submodule" />
+          <w-item-section>
+            <w-input
+              v-model="state.path"
+              :label="t(`pageSaveDialog.pathName`)"
+              dense
+              outlined
+              @focus="onPathFocus"
+              @keyup:enter="save" />
+          </w-item-section>
+        </w-item>
+      </w-list>
+      <w-card-actions class="card-actions px-4">
+        <w-btn class="acrylic-btn" icon="la:ellipsis-h" color="blue-grey" padding="xs sm" flat>
+          <w-tooltip anchor="center right" self="center left">Display Options</w-tooltip>
+          <w-menu auto-close anchor="top left" self="bottom left">
+            <w-card class="p-2">
+              <w-list dense>
+                <w-item clickable @click="state.displayMode = `path`">
+                  <w-item-section side>
+                    <w-icon
+                      :name="state.displayMode === `path` ? `la:check-circle` : `la:circle`"
+                      :color="state.displayMode === `path` ? `positive` : `grey`"
+                      size="xs" />
+                  </w-item-section>
+                  <w-item-section class="pr-2">{{
+                    t('pageSaveDialog.displayModePath')
+                  }}</w-item-section>
+                </w-item>
+                <w-item clickable @click="state.displayMode = `title`">
+                  <w-item-section side>
+                    <w-icon
+                      :name="
+                        state.displayMode === `title` ? `la:check-circle` : `la:circle`
+                      "
+                      :color="state.displayMode === `title` ? `positive` : `grey`"
+                      size="xs" />
+                  </w-item-section>
+                  <w-item-section class="pr-2">{{
+                    t('pageSaveDialog.displayModeTitle')
+                  }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-card>
+          </w-menu>
+        </w-btn>
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          icon="la:times"
+          :label="t(`common.actions.cancel`)"
+          color="grey-7"
+          padding="xs md"
+          flat
+          @click="onDialogCancel" />
+        <w-btn
+          icon="la:check"
+          :label="t(`common.actions.save`)"
+          unelevated
+          color="primary"
+          padding="xs md"
+          @click="save" />
+      </w-card-actions>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+
+import { dialog, dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
 
 import slugify from 'slugify'
 
@@ -170,14 +180,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // STORES
 
@@ -203,17 +210,6 @@ const state = reactive({
   pathDirty: false
 })
 
-const thumbStyle = {
-  right: '1px',
-  borderRadius: '5px',
-  backgroundColor: '#666',
-  width: '5px',
-  opacity: 0.5
-}
-const barStyle = {
-  width: '7px'
-}
-
 // REFS
 
 const treeComp = ref(null)
@@ -225,11 +221,13 @@ const currentFolderPath = computed(() => {
   if (!folderNode?.fileName) {
     return '/'
   }
-  return folderNode.folderPath ? `/${folderNode.folderPath}/${folderNode.fileName}/` : `/${folderNode.fileName}/`
+  return folderNode.folderPath
+    ? `/${folderNode.folderPath}/${folderNode.fileName}/`
+    : `/${folderNode.fileName}/`
 })
 
 const files = computed(() => {
-  return state.fileList.map(f => {
+  return state.fileList.map((f) => {
     switch (f.type) {
       case 'folder': {
         f.icon = fileTypes.folder.icon
@@ -246,31 +244,43 @@ const files = computed(() => {
 
 // WATCHERS
 
-watch(() => state.currentFolderId, async (newValue) => {
-  await loadTree({ parentId: newValue })
-})
+watch(
+  () => state.currentFolderId,
+  async (newValue) => {
+    await loadTree({ parentId: newValue })
+  }
+)
 
-watch(() => state.title, (newValue) => {
-  if (state.pathDirty && !state.path) {
-    state.pathDirty = false
+watch(
+  () => state.title,
+  (newValue) => {
+    if (state.pathDirty && !state.path) {
+      state.pathDirty = false
+    }
+    if (!state.pathDirty) {
+      state.path = slugify(newValue, { lower: true, strict: true })
+    }
   }
-  if (!state.pathDirty) {
-    state.path = slugify(newValue, { lower: true, strict: true })
-  }
-})
+)
 
 // METHODS
 
-async function save () {
+/** Typing in the path field takes over from the tree selection that was driving it. */
+function onPathFocus() {
+  state.pathDirty = true
+  state.currentFileId = null
+}
+
+async function save() {
   if (!state.title?.trim()) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('pageSaveDialog.titleMissing')
     })
     return
   }
   if (!/^[a-z0-9-]+$/.test(state.path)) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('pageSaveDialog.pathInvalid')
     })
@@ -278,7 +288,10 @@ async function save () {
   }
   onDialogOK({
     title: state.title.trim(),
-    path: currentFolderPath.value.length > 1 ? `${currentFolderPath.value.substring(1)}${state.path}` : state.path
+    path:
+      currentFolderPath.value.length > 1
+        ? `${currentFolderPath.value.substring(1)}${state.path}`
+        : state.path
   })
 }
 
@@ -286,12 +299,15 @@ async function save () {
  * The message an API failure should be reported with — the server's own if it sent one, since ky
  * throws before the caller ever sees the body.
  */
-async function apiErrorMessage (err, fallback) {
-  const message = await err.response?.json().then(b => b?.message).catch(() => null)
+async function apiErrorMessage(err, fallback) {
+  const message = await err.response
+    ?.json()
+    .then((b) => b?.message)
+    .catch(() => null)
   return message || err.message || fallback
 }
 
-async function treeLazyLoad (nodeId, isCurrent, { done }) {
+async function treeLazyLoad(nodeId, isCurrent, { done }) {
   await loadTree({ parentId: nodeId })
   done()
 }
@@ -303,8 +319,10 @@ async function treeLazyLoad (nodeId, isCurrent, { done }) {
  * page buried a few levels down draws its whole branch from a single request. Those extra entries come
  * back flagged `isAncestor` and belong in the tree only, never in the file list.
  */
-async function loadTree ({ parentId = null, parentPath = null, initLoad = false }) {
-  if (state.isFetching) { return }
+async function loadTree({ parentId = null, parentPath = null, initLoad = false }) {
+  if (state.isFetching) {
+    return
+  }
   state.isFetching = true
   if (!parentId) {
     parentId = null
@@ -342,13 +360,17 @@ async function loadTree ({ parentId = null, parentPath = null, initLoad = false 
               let folderParentId = parentId
               if (!folderParentId) {
                 const parentFolderParts = item.folderPath.split('/')
-                const parentFolder = items.find(i =>
-                  i.folderPath === parentFolderParts.slice(0, -1).join('/') &&
-                  i.fileName === parentFolderParts.at(-1)
+                const parentFolder = items.find(
+                  (i) =>
+                    i.folderPath === parentFolderParts.slice(0, -1).join('/') &&
+                    i.fileName === parentFolderParts.at(-1)
                 )
                 folderParentId = parentFolder?.id
               }
-              if (item.id !== folderParentId && !state.treeNodes[folderParentId]?.children?.includes(item.id)) {
+              if (
+                item.id !== folderParentId &&
+                !state.treeNodes[folderParentId]?.children?.includes(item.id)
+              ) {
                 state.treeNodes[folderParentId]?.children?.push(item.id)
               }
             } else {
@@ -388,7 +410,7 @@ async function loadTree ({ parentId = null, parentPath = null, initLoad = false 
       }
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('pageSaveDialog.loadFailed'),
       caption: await apiErrorMessage(err, 'An unexpected error occured.')
@@ -400,7 +422,7 @@ async function loadTree ({ parentId = null, parentPath = null, initLoad = false 
   state.isFetching = false
 }
 
-function treeContextAction (nodeId, action) {
+function treeContextAction(nodeId, action) {
   switch (action) {
     case 'newFolder': {
       newFolder(nodeId)
@@ -409,7 +431,7 @@ function treeContextAction (nodeId, action) {
   }
 }
 
-function selectItem (item) {
+function selectItem(item) {
   // -> A folder is somewhere to save into, not something to overwrite
   if (item.type === 'folder') {
     state.currentFolderId = item.id
@@ -422,8 +444,8 @@ function selectItem (item) {
   state.path = item.fileName
 }
 
-function newFolder (parentId) {
-  $q.dialog({
+function newFolder(parentId) {
+  dialog({
     component: FolderCreateDialog,
     componentProps: {
       parentId
@@ -434,10 +456,12 @@ function newFolder (parentId) {
 }
 
 /** The id of an already-loaded folder, addressed the way a path addresses it. */
-function findFolderIdByPath (path) {
-  if (!path) { return null }
-  const entry = Object.entries(state.treeNodes).find(([, node]) =>
-    (node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName) === path
+function findFolderIdByPath(path) {
+  if (!path) {
+    return null
+  }
+  const entry = Object.entries(state.treeNodes).find(
+    ([, node]) => (node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName) === path
   )
   return entry?.[0] ?? null
 }
@@ -484,7 +508,6 @@ onMounted(async () => {
     state.currentFolderId = startFolderId
   }
 })
-
 </script>
 
 <style lang="scss">
@@ -494,7 +517,7 @@ onMounted(async () => {
   &-browser {
     height: 300px;
     max-height: 90vh;
-    border-bottom: 1px solid #FFF;
+    border-bottom: 1px solid #fff;
 
     @at-root .body--light & {
       border-bottom-color: $blue-grey-1;
@@ -518,20 +541,20 @@ onMounted(async () => {
   &-filelist {
     padding: 8px 12px;
 
-    > .q-item {
+    > .w-item {
       padding: 4px 6px;
       border-radius: 4px;
 
       &.active {
-        background-color: var(--q-primary);
-        color: #FFF;
+        background-color: var(--color-primary);
+        color: #fff;
 
-        .fileman-filelist-label .q-item__label--caption {
-          color: rgba(255,255,255,.7);
+        .fileman-filelist-label .w-item-label--caption {
+          color: rgba(255, 255, 255, 0.7);
         }
 
         .fileman-filelist-side .text-caption {
-          color: rgba(255,255,255,.7);
+          color: rgba(255, 255, 255, 0.7);
         }
       }
     }
@@ -540,7 +563,7 @@ onMounted(async () => {
   &-path {
     padding: 5px 16px;
     font-size: 12px;
-    border-bottom: 1px solid #FFF;
+    border-bottom: 1px solid #fff;
 
     @at-root .body--light & {
       background-color: color.adjust($blue-grey-1, $lightness: 4%);
@@ -553,6 +576,5 @@ onMounted(async () => {
       color: $blue-grey-3;
     }
   }
-
 }
 </style>

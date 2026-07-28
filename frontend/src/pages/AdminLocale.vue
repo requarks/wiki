@@ -1,128 +1,139 @@
-<template lang='pug'>
-q-page.admin-locale
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-language.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.locale.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.locale.subtitle') }}
-    .col-auto.flex
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/admin/localisation`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='mdi-check'
-        :label='t(`common.actions.apply`)'
-        color='secondary'
-        @click='save'
-        :disabled='state.loading > 0'
-      )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12.col-lg-7
-      //- -----------------------
-      //- Locale Options
-      //- -----------------------
-      q-card.q-pb-sm
-        q-card-section
-          .text-subtitle1 {{t('admin.locale.settings')}}
-        q-item
-          blueprint-icon(icon='translation')
-          q-item-section
-            q-item-label {{t(`admin.locale.primary`)}}
-            q-item-label(caption) {{t(`admin.locale.primaryHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.primary'
-              :options='state.locales'
-              option-value='code'
-              option-label='name'
-              emit-value
-              map-options
-              dense
-              :aria-label='t(`admin.locale.primary`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label')
-          blueprint-icon(icon='close-pane')
-          q-item-section
-            q-item-label {{t(`admin.locale.forcePrefix`)}}
-            q-item-label(caption) {{t(`admin.locale.forcePrefixHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.forcePrefix'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.locale.forcePrefixHint`)'
-              )
-
-      //- -----------------------
-      //- Active Locales
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.locale.active')}}
-          .text-caption(:class='$q.dark.isActive ? `text-grey-4` : `text-grey-7`') Select the locales that can be used on this site.
-
-        q-item(
-          v-for='lc of state.locales'
-          :key='lc.code'
-          :tag='lc.code !== state.selectedLocale ? `label` : null'
-          )
-          blueprint-icon(:text='lc.language')
-          q-item-section
-            q-item-label {{lc.nativeName}}
-            q-item-label(caption) {{lc.name}} ({{lc.code}})
-          q-item-section(avatar)
-            q-toggle(
-              :disable='lc.code === state.primary'
-              v-model='state.active'
-              :val='lc.code'
-              :color='lc.code === state.primary ? `secondary` : `primary`'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='lc.name'
-              )
-
-    .col-12.col-lg-5
-      .q-pa-md.text-center
-        img(src='/_assets/illustrations/undraw_world.svg', style='width: 80%;')
-
+<template>
+  <w-page class="admin-locale">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-language.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.locale.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.locale.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none flex">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/admin/localisation`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="mdi:check"
+          :label="t(`common.actions.apply`)"
+          color="secondary"
+          @click="save"
+          :disabled="state.loading > 0" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-12 lg:col-span-7">
+        <!-- ----------------------- -->
+        <!-- Locale Options -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2">
+          <w-card-header>{{ t('admin.locale.settings') }}</w-card-header>
+          <w-item>
+            <blueprint-icon icon="translation" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.locale.primary`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.locale.primaryHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.primary"
+                :options="state.locales"
+                option-value="code"
+                option-label="name"
+                emit-value
+                map-options
+                dense
+                :aria-label="t(`admin.locale.primary`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="close-pane" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.locale.forcePrefix`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.locale.forcePrefixHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.forcePrefix"
+                :aria-label="t(`admin.locale.forcePrefixHint`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- Active Locales -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>
+            {{ t('admin.locale.active') }}
+            <template #hint>Select the locales that can be used on this site.</template>
+          </w-card-header>
+          <w-item
+            v-for="lc of state.locales"
+            :key="lc.code"
+            :tag="lc.code !== state.selectedLocale ? `label` : null">
+            <blueprint-icon :text="lc.language" />
+            <w-item-section>
+              <w-item-label>{{ lc.nativeName }}</w-item-label>
+              <w-item-label caption>{{ lc.name }} ({{ lc.code }})</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                :disable="lc.code === state.primary"
+                v-model="state.active"
+                :val="lc.code"
+                :aria-label="lc.name" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+      <div class="col-span-12 lg:col-span-5">
+        <div class="p-4 text-center">
+          <img src="/_assets/illustrations/undraw_world.svg" style="width: 80%" />
+        </div>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-
-import { sortBy } from 'es-toolkit/array'
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
+
+import { useDark } from '@/composables/dark'
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
+import { sortBy } from 'es-toolkit/array'
 
-const $q = useQuasar()
+// COMPOSABLES
+
+const dark = useDark()
 
 // STORES
 
@@ -151,21 +162,27 @@ const state = reactive({
 
 // WATCHERS
 
-watch(() => adminStore.currentSiteId, (newValue) => {
-  load()
-})
-// -> Selecting a primary locale that isn't active yet activates it, since its toggle is disabled
-watch(() => state.primary, (newValue) => {
-  if (newValue && !state.active.includes(newValue)) {
-    state.active.push(newValue)
+watch(
+  () => adminStore.currentSiteId,
+  (newValue) => {
+    load()
   }
-})
+)
+// -> Selecting a primary locale that isn't active yet activates it, since its toggle is disabled
+watch(
+  () => state.primary,
+  (newValue) => {
+    if (newValue && !state.active.includes(newValue)) {
+      state.active.push(newValue)
+    }
+  }
+)
 
 // METHODS
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     const [locales, site] = await Promise.all([
       API_CLIENT.get('locales').json(),
@@ -180,18 +197,20 @@ async function load () {
       state.active.push(state.primary)
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.locale.loadFailed'),
       caption: err.message
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-async function save () {
-  if (state.loading > 0) { return }
+async function save() {
+  if (state.loading > 0) {
+    return
+  }
 
   state.loading++
   try {
@@ -210,10 +229,12 @@ async function save () {
       }
     }).json()
     if (!resp?.ok) {
-      throw new Error(t(`admin.locale.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.locale.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
     state.active = active
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.locale.saveSuccess')
     })
@@ -222,7 +243,7 @@ async function save () {
       siteStore.loadSite(window.location.hostname)
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })

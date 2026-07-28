@@ -1,0 +1,79 @@
+// Material palette entries and a couple of derived values, vendored.
+// --------------------------------------------------------------------------------------
+// These used to arrive from Quasar's `variables.sass`, injected into every SFC by its Vite
+// plugin. Both are gone, so the values the app's own stylesheets reference live here.
+//
+// Only the entries actually used are listed. A missing one is a build error naming the variable,
+// not a silent fallback, so this staying minimal costs nothing.
+
+$blue: #2196f3;
+$blue-1: #e3f2fd;
+$blue-3: #90caf9;
+$blue-4: #64b5f6;
+$blue-5: #42a5f5;
+$blue-7: #1e88e5;
+$blue-8: #1976d2;
+$blue-9: #1565c0;
+
+$blue-grey-1: #eceff1;
+$blue-grey-2: #cfd8dc;
+$blue-grey-3: #b0bec5;
+$blue-grey-4: #90a4ae;
+$blue-grey-5: #78909c;
+$blue-grey-9: #37474f;
+
+$deep-orange-3: #ffab91;
+$deep-orange-9: #d84315;
+
+$green-1: #e8f5e9;
+$green-3: #a5d6a7;
+$green-5: #66bb6a;
+$green-8: #388e3c;
+$green-9: #2e7d32;
+
+$grey-1: #fafafa;
+$grey-2: #f5f5f5;
+$grey-3: #eeeeee;
+$grey-4: #e0e0e0;
+$grey-5: #bdbdbd;
+$grey-6: #9e9e9e;
+$grey-7: #757575;
+$grey-8: #616161;
+$grey-9: #424242;
+$grey-10: #212121;
+
+$orange-1: #fff3e0;
+$orange-3: #ffcc80;
+$orange-5: #ffa726;
+$orange-8: #f57c00;
+$orange-9: #ef6c00;
+
+$red: #f44336;
+$red-1: #ffebee;
+$red-2: #ffcdd2;
+$red-3: #ef9a9a;
+$red-5: #ef5350;
+$red-7: #e53935;
+$red-8: #d32f2f;
+$red-9: #c62828;
+
+$teal-1: #e0f2f1;
+$teal-2: #b2dfdb;
+$teal-5: #26a69a;
+$teal-7: #00897b;
+
+$yellow-7: #fdd835;
+
+// Elevation 2, as the material spec composes it: three shadows of the same colour at decreasing
+// opacity. Written out rather than derived, since the three source variables went with Quasar.
+$shadow-2:
+  0 1px 5px rgba(0, 0, 0, 0.2),
+  0 2px 2px rgba(0, 0, 0, 0.14),
+  0 3px 1px -2px rgba(0, 0, 0, 0.12);
+
+// `max` breakpoints: just below where the next one starts. The breakpoints themselves are declared
+// once in `tailwind.css` (`--breakpoint-sm` and friends) and mirrored here for media queries
+// written in Sass. Keep the two in step.
+$breakpoint-xs-max: 599.98px;
+$breakpoint-sm-max: 1023.98px;
+$breakpoint-md-max: 1439.98px;

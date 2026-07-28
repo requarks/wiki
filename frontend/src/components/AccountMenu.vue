@@ -1,37 +1,34 @@
-<template lang='pug'>
-q-btn.account-avbtn.q-ml-md(flat, round, dense, color='custom-color')
-  q-icon(
-    v-if='!userStore.authenticated || !userStore.hasAvatar'
-    name='las la-user-circle'
-    )
-  q-avatar(
-    v-else
-    size='32px'
-    )
-    img(:src='`/_user/current/avatar`')
-  q-menu.translucent-menu(auto-close)
-    q-card(flat, style='width: 300px;', :dark='false')
-      q-card-section(align='center')
-        .text-subtitle1.text-grey-7 {{userStore.name}}
-        .text-caption.text-grey-8 {{userStore.email}}
-      q-separator(:dark='false')
-      q-card-actions(align='center')
-        q-btn(
-          flat
-          :label='t(`common.header.profile`)'
-          icon='las la-user-alt'
-          color='primary'
-          to='/_profile'
-          no-caps
-          )
-        q-btn(flat
-          :label='t(`common.header.logout`)'
-          icon='las la-sign-out-alt'
-          color='red'
-          @click='userStore.logout()'
-          no-caps
-          )
-  q-tooltip {{ t('common.header.account') }}
+<template>
+  <w-btn class="account-avbtn ml-4" flat round dense color="custom-color">
+    <w-icon v-if="!userStore.authenticated || !userStore.hasAvatar" name="la:user-circle" />
+    <w-avatar v-else size="32px"><img :src="`/_user/current/avatar`" /></w-avatar>
+    <w-menu class="translucent-menu" auto-close>
+      <w-card flat style="width: 300px;" :dark="false">
+        <w-card-section align="center">
+          <div class="text-subtitle1 text-grey-7">{{userStore.name}}</div>
+          <div class="text-caption text-grey-8">{{userStore.email}}</div>
+        </w-card-section>
+        <w-separator :dark="false" />
+        <w-card-actions align="center">
+          <w-btn
+            flat
+            :label="t(`common.header.profile`)"
+            icon="la:user-alt"
+            color="primary"
+            to="/_profile"
+            no-caps />
+          <w-btn
+            flat
+            :label="t(`common.header.logout`)"
+            icon="la:sign-out-alt"
+            color="red"
+            @click="userStore.logout()"
+            no-caps />
+        </w-card-actions>
+      </w-card>
+    </w-menu>
+    <w-tooltip>{{ t('common.header.account') }}</w-tooltip>
+  </w-btn>
 </template>
 
 <script setup>
@@ -50,6 +47,6 @@ const { t } = useI18n()
 
 <style lang="scss">
 .account-avbtn {
-  color: rgba(255,255,255,.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 </style>

@@ -1,53 +1,49 @@
-<template lang="pug">
-q-card.page-scripts-dialog(style='width: 860px; max-width: 90vw;')
-  q-toolbar.bg-primary.text-white
-    .text-subtitle2 {{t('editor.pageScripts.title')}} - {{t('editor.props.' + props.mode)}}
-    q-space
-    q-chip(
-      square
-      style='background-color: rgba(0,0,0,.1)'
-      text-color='white'
-      )
-      .text-caption {{languageLabel}}
-  div(style='min-height: 450px;')
-    q-no-ssr(:placeholder='t(`common.loading`)')
-      util-code-editor(
-        v-if='state.showEditor'
-        ref='editor'
-        v-model='state.content'
-        :language='language'
-        :min-height='450'
-      )
-  q-card-actions.card-actions
-    q-space
-    q-btn.acrylic-btn(
-      icon='las la-times'
-      :label='t(`common.actions.discard`)'
-      color='grey-7'
-      padding='xs md'
-      v-close-popup
-      flat
-    )
-    q-btn(
-      icon='las la-check'
-      :label='t(`common.actions.save`)'
-      unelevated
-      color='primary'
-      padding='xs md'
-      @click='persist'
-      v-close-popup
-    )
+<template>
+  <w-card class="page-scripts-dialog" style="width: 860px; max-width: 90vw;">
+    <w-toolbar class="bg-primary text-white">
+      <div class="text-subtitle2">{{t('editor.pageScripts.title')}} - {{t('editor.props.' + props.mode)}}</div>
+      <w-space />
+      <w-chip square style="background-color: rgba(0,0,0,.1)" text-color="white">
+        <div class="text-caption">{{languageLabel}}</div>
+      </w-chip>
+    </w-toolbar>
+    <div style="min-height: 450px;">
+      <util-code-editor
+        v-if="state.showEditor"
+        ref="editor"
+        v-model="state.content"
+        :language="language"
+        :min-height="450" />
+    </div>
+    <w-card-actions class="card-actions">
+      <w-space />
+      <w-btn
+        class="acrylic-btn"
+        icon="la:times"
+        :label="t(`common.actions.discard`)"
+        color="grey-7"
+        padding="xs md"
+        flat
+        @click="$emit('close')" />
+      <w-btn
+        icon="la:check"
+        :label="t(`common.actions.save`)"
+        unelevated
+        color="primary"
+        padding="xs md"
+        @click="persist(); $emit('close')" />
+    </w-card-actions>
+  </w-card>
 </template>
 
 <script setup>
 import { computed, nextTick, onMounted, reactive } from 'vue'
-import { useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
-
-import UtilCodeEditor from './UtilCodeEditor.vue'
 
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+
+import UtilCodeEditor from './UtilCodeEditor.vue'
 
 // PROPS
 
@@ -58,9 +54,6 @@ const props = defineProps({
   }
 })
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -68,6 +61,8 @@ const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
+
+defineEmits(['close'])
 
 const { t } = useI18n()
 
@@ -109,7 +104,7 @@ const contentStoreKey = computed(() => {
 
 // METHODS
 
-function persist () {
+function persist() {
   pageStore.$patch({
     [contentStoreKey]: state.content
   })
@@ -127,6 +122,4 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss">
-
-</style>
+<style lang="scss"></style>

@@ -1,530 +1,591 @@
-<template lang='pug'>
-q-layout(view='hHh lpR fFf', container)
-  q-header.card-header.q-px-md.q-py-sm
-    q-icon(name='img:/_assets/icons/fluent-people.svg', left, size='md')
-    div
-      span {{ t(`admin.groups.edit`) }}
-      .text-caption {{ state.group.name }}
-    q-space
-    q-btn-group(push)
-      q-btn(
-        push
-        color='grey-6'
-        text-color='white'
-        :aria-label='t(`common.actions.refresh`)'
-        icon='las la-redo-alt'
-        @click='refresh'
-        )
-        q-tooltip(anchor='center left', self='center right') {{ t(`common.actions.refresh`) }}
-      q-btn(
-        push
-        color='white'
-        text-color='grey-7'
-        :label='t(`common.actions.close`)'
-        icon='las la-times'
-        @click='close'
-      )
-      q-btn(
-        push
-        color='positive'
-        text-color='white'
-        :label='t(`common.actions.save`)'
-        icon='las la-check'
-        :loading='state.isLoading'
-        @click='save'
-      )
-  q-drawer.bg-dark-6(:model-value='true', :width='250', dark)
-    q-list(padding, v-show='!state.isLoading')
-      template(v-for='sc of sections', :key='`section-` + sc.key')
-        q-item(
-          v-if='!(isGuestGroup && sc.excludeGuests)'
-          clickable
-          :to='{ params: { section: sc.key } }'
-          active-class='bg-primary text-white'
-          :disabled='sc.disabled'
-          )
-          q-item-section(side)
-            q-icon(:name='sc.icon', color='white')
-          q-item-section {{ sc.text }}
-          q-item-section(side, v-if='sc.usersTotal')
-            q-badge(color='dark-3', :label='state.usersTotal')
-          q-item-section(side, v-if='sc.rulesTotal && state.group.rules')
-            q-badge(color='dark-3', :label='state.group.rules.length')
-  q-page-container
-    q-page(v-if='state.isLoading')
-    //- -----------------------------------------------------------------------
-    //- OVERVIEW
-    //- -----------------------------------------------------------------------
-    q-page(v-else-if='route.params.section === `overview`')
-      .q-pa-md
-        .row.q-col-gutter-md
-          .col-12.col-lg-8
-            q-card.shadow-1.q-pb-sm
-              q-card-section
-                .text-subtitle1 {{ t('admin.groups.general') }}
-              q-item
-                blueprint-icon(icon='team')
-                q-item-section
-                  q-item-label {{ t(`admin.groups.name`) }}
-                  q-item-label(caption) {{ t(`admin.groups.nameHint`) }}
-                q-item-section
-                  q-input(
-                    outlined
-                    v-model='state.group.name'
-                    dense
-                    :rules='groupNameValidation'
-                    hide-bottom-space
-                    :aria-label='t(`admin.groups.name`)'
-                    :disable='isGuestGroup'
-                    )
-
-            q-card.shadow-1.q-pb-sm.q-mt-md(v-if='!isGuestGroup')
-              q-card-section
-                .text-subtitle1 {{ t('admin.groups.authBehaviors') }}
-              q-item
-                blueprint-icon(icon='double-right')
-                q-item-section
-                  q-item-label {{ t(`admin.groups.redirectOnLogin`) }}
-                  q-item-label(caption) {{ t(`admin.groups.redirectOnLoginHint`) }}
-                q-item-section
-                  q-input(
-                    outlined
-                    v-model='state.group.redirectOnLogin'
-                    dense
-                    :aria-label='t(`admin.groups.redirectOnLogin`)'
-                    )
-              q-separator.q-my-sm(inset)
-              q-item
-                blueprint-icon(icon='chevron-right')
-                q-item-section
-                  q-item-label {{ t(`admin.groups.redirectOnFirstLogin`) }}
-                  q-item-label(caption) {{ t(`admin.groups.redirectOnFirstLoginHint`) }}
-                q-item-section
-                  q-input(
-                    outlined
-                    v-model='state.group.redirectOnFirstLogin'
-                    dense
-                    :aria-label='t(`admin.groups.redirectOnLogin`)'
-                    )
-              q-separator.q-my-sm(inset)
-              q-item
-                blueprint-icon(icon='exit')
-                q-item-section
-                  q-item-label {{ t(`admin.groups.redirectOnLogout`) }}
-                  q-item-label(caption) {{ t(`admin.groups.redirectOnLogoutHint`) }}
-                q-item-section
-                  q-input(
-                    outlined
-                    v-model='state.group.redirectOnLogout'
-                    dense
-                    :aria-label='t(`admin.groups.redirectOnLogout`)'
-                    )
-
-          .col-12.col-lg-4
-            q-card.shadow-1.q-pb-sm
-              q-card-section
-                .text-subtitle1 {{ t('admin.groups.info') }}
-              q-item
-                blueprint-icon(icon='team', :hue-rotate='-45')
-                q-item-section
-                  q-item-label {{ t(`common.field.id`) }}
-                  q-item-label: strong {{state.group.id}}
-              q-separator.q-my-sm(inset)
-              q-item
-                blueprint-icon(icon='calendar-plus', :hue-rotate='-45')
-                q-item-section
-                  q-item-label {{ t(`common.field.createdOn`) }}
-                  q-item-label: strong {{humanizeDate(state.group.createdAt)}}
-              q-separator.q-my-sm(inset)
-              q-item
-                blueprint-icon(icon='summertime', :hue-rotate='-45')
-                q-item-section
-                  q-item-label {{ t(`common.field.lastUpdated`) }}
-                  q-item-label: strong {{humanizeDate(state.group.updatedAt)}}
-    //- -----------------------------------------------------------------------
-    //- RULES
-    //- -----------------------------------------------------------------------
-    q-page(v-else-if='route.params.section === `rules`')
-      q-toolbar.q-pl-md(
-        :class='$q.dark.isActive ? `bg-dark-3` : `bg-white`'
-        )
-        .text-subtitle1 {{ t('admin.groups.rules') }}
-        q-space
-        q-btn.acrylic-btn.q-mr-sm(
-          icon='las la-question-circle'
-          flat
-          color='grey'
-          type='a'
-          :href='siteStore.docsBase + `/admin/groups#rules`'
-          target='_blank'
-          )
-        q-btn.acrylic-btn.q-mr-sm(
-          flat
-          color='indigo'
-          icon='las la-file-export'
-          @click='exportRules'
-          )
-          q-tooltip {{ t('admin.groups.exportRules') }}
-        q-btn.acrylic-btn.q-mr-sm(
-          flat
-          color='indigo'
-          icon='las la-file-import'
-          @click='importRules'
-          )
-          q-tooltip {{ t('admin.groups.importRules') }}
-        q-btn(
-          unelevated
-          color='primary'
-          icon='las la-plus'
-          label='New Rule'
-          @click='newRule'
-        )
-      q-separator
-      .q-pa-md
-        q-banner(
-          v-if='!state.group.rules || state.group.rules.length < 1'
-          rounded
-          :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`'
-          ) {{ t('admin.groups.rulesNone') }}
-        q-card.shadow-1.q-pb-sm(v-else)
-          q-card-section
-            .admin-groups-rule(
-              v-for='rule of state.group.rules'
-              :key='rule.id'
-              )
-              .admin-groups-rule-icon(:class='getRuleModeColor(rule.mode)')
-                q-icon.cursor-pointer(
-                  :name='getRuleModeIcon(rule.mode)'
-                  color='white'
-                  @click='rule.mode = getNextRuleMode(rule.mode)'
-                )
-              .admin-groups-rule-name
-                .admin-groups-rule-name-text: strong(:class='getRuleModeColor(rule.mode)') {{ getRuleModeName(rule.mode) }}
-                q-separator.q-ml-sm.q-mr-xs(vertical)
-                input(
-                  type='text'
-                  v-model='rule.name'
-                  placeholder='Rule Name'
-                )
-              q-card.admin-groups-rule-card.q-mt-md(flat)
-                q-card-section.admin-groups-rule-card-permissions(:class='getRuleModeClass(rule.mode)')
-                  q-select.q-mt-xs(
-                    standout
-                    v-model='rule.roles'
-                    emit-value
-                    map-options
-                    dense
-                    :aria-label='t(`admin.groups.ruleSites`)'
-                    :options='rules'
-                    placeholder='Select permissions...'
-                    option-value='permission'
-                    option-label='title'
-                    options-dense
-                    multiple
-                    use-chips
-                    stack-label
-                    )
-                    template(#selected-item='scope')
-                      q-chip(
-                        square
+<template>
+  <w-layout view="hHh lpR fFf" container>
+    <w-header class="card-header px-4 py-2">
+      <w-icon name="img:/_assets/icons/fluent-people.svg" left size="md" />
+      <div>
+        <span>{{ t(`admin.groups.edit`) }}</span>
+        <div class="text-caption">{{ state.group.name }}</div>
+      </div>
+      <w-space />
+      <w-btn-group push>
+        <w-btn
+          push
+          color="grey-6"
+          text-color="white"
+          :aria-label="t(`common.actions.refresh`)"
+          icon="la:redo-alt"
+          @click="refresh">
+          <w-tooltip anchor="center left" self="center right">{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          push
+          color="white"
+          text-color="grey-7"
+          :label="t(`common.actions.close`)"
+          icon="la:times"
+          @click="close" />
+        <w-btn
+          push
+          color="positive"
+          text-color="white"
+          :label="t(`common.actions.save`)"
+          icon="la:check"
+          :loading="state.isLoading"
+          @click="save" />
+      </w-btn-group>
+    </w-header>
+    <w-drawer class="bg-dark-6" :model-value="true" :width="250" dark>
+      <w-list padding dark v-show="!state.isLoading">
+        <template v-for="sc of sections" :key="`section-` + sc.key">
+          <w-item
+            v-if="!(isGuestGroup && sc.excludeGuests)"
+            clickable
+            :to="{ params: { section: sc.key } }"
+            active-class="bg-primary text-white"
+            :disabled="sc.disabled">
+            <w-item-section side><w-icon :name="sc.icon" color="white" /></w-item-section>
+            <w-item-section>{{ sc.text }}</w-item-section>
+            <w-item-section side v-if="sc.usersTotal">
+              <w-badge color="dark-3" :label="state.usersTotal" />
+            </w-item-section>
+            <w-item-section side v-if="sc.rulesTotal && state.group.rules">
+              <w-badge color="dark-3" :label="state.group.rules.length" />
+            </w-item-section>
+          </w-item>
+        </template>
+      </w-list>
+    </w-drawer>
+    <w-page-container>
+      <w-page v-if="state.isLoading" />
+      <!-- ----------------------------------------------------------------------- -->
+      <!-- OVERVIEW -->
+      <!-- ----------------------------------------------------------------------- -->
+      <w-page v-else-if="route.params.section === `overview`">
+        <div class="p-4">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 lg:col-span-8">
+              <w-card class="shadow-1 pb-2">
+                <w-card-section>
+                  <div class="text-subtitle1">{{ t('admin.groups.general') }}</div>
+                </w-card-section>
+                <w-item>
+                  <blueprint-icon icon="team" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.groups.name`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.groups.nameHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-input
+                      outlined
+                      v-model="state.group.name"
+                      dense
+                      :rules="groupNameValidation"
+                      hide-bottom-space
+                      :aria-label="t(`admin.groups.name`)"
+                      :disable="isGuestGroup" />
+                  </w-item-section>
+                </w-item>
+              </w-card>
+              <w-card class="shadow-1 pb-2 mt-4" v-if="!isGuestGroup">
+                <w-card-section>
+                  <div class="text-subtitle1">{{ t('admin.groups.authBehaviors') }}</div>
+                </w-card-section>
+                <w-item>
+                  <blueprint-icon icon="double-right" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.groups.redirectOnLogin`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.groups.redirectOnLoginHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-input
+                      outlined
+                      v-model="state.group.redirectOnLogin"
+                      dense
+                      :aria-label="t(`admin.groups.redirectOnLogin`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="chevron-right" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.groups.redirectOnFirstLogin`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.groups.redirectOnFirstLoginHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-input
+                      outlined
+                      v-model="state.group.redirectOnFirstLogin"
+                      dense
+                      :aria-label="t(`admin.groups.redirectOnLogin`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="exit" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.groups.redirectOnLogout`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.groups.redirectOnLogoutHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-input
+                      outlined
+                      v-model="state.group.redirectOnLogout"
+                      dense
+                      :aria-label="t(`admin.groups.redirectOnLogout`)" />
+                  </w-item-section>
+                </w-item>
+              </w-card>
+            </div>
+            <div class="col-span-12 lg:col-span-4">
+              <w-card class="shadow-1 pb-2">
+                <w-card-section>
+                  <div class="text-subtitle1">{{ t('admin.groups.info') }}</div>
+                </w-card-section>
+                <w-item>
+                  <blueprint-icon icon="team" :hue-rotate="-45" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`common.field.id`) }}</w-item-label>
+                    <w-item-label><strong>{{state.group.id}}</strong></w-item-label>
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="calendar-plus" :hue-rotate="-45" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`common.field.createdOn`) }}</w-item-label>
+                    <w-item-label>
+                      <strong>{{humanizeDate(state.group.createdAt)}}</strong>
+                    </w-item-label>
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="summertime" :hue-rotate="-45" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`common.field.lastUpdated`) }}</w-item-label>
+                    <w-item-label>
+                      <strong>{{humanizeDate(state.group.updatedAt)}}</strong>
+                    </w-item-label>
+                  </w-item-section>
+                </w-item>
+              </w-card>
+            </div>
+          </div>
+        </div>
+      </w-page>
+      <!-- ----------------------------------------------------------------------- -->
+      <!-- RULES -->
+      <!-- ----------------------------------------------------------------------- -->
+      <w-page v-else-if="route.params.section === `rules`">
+        <w-toolbar class="pl-4" :class="dark.isActive ? `bg-dark-3` : `bg-white`">
+          <div class="text-subtitle1">{{ t('admin.groups.rules') }}</div>
+          <w-space />
+          <w-btn
+            class="acrylic-btn mr-2"
+            icon="la:question-circle"
+            flat
+            color="grey"
+            type="a"
+            :href="siteStore.docsBase + `/admin/groups#rules`"
+            target="_blank" />
+          <w-btn
+            class="acrylic-btn mr-2"
+            flat
+            color="indigo"
+            icon="la:file-export"
+            @click="exportRules">
+            <w-tooltip>{{ t('admin.groups.exportRules') }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            class="acrylic-btn mr-2"
+            flat
+            color="indigo"
+            icon="la:file-import"
+            @click="importRules">
+            <w-tooltip>{{ t('admin.groups.importRules') }}</w-tooltip>
+          </w-btn>
+          <w-btn unelevated color="primary" icon="la:plus" label="New Rule" @click="newRule" />
+        </w-toolbar>
+        <w-separator />
+        <div class="p-4">
+          <w-banner v-if="!state.group.rules || state.group.rules.length < 1" rounded :class="dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`">{{ t('admin.groups.rulesNone') }}</w-banner>
+          <w-card class="shadow-1 pb-2" v-else>
+            <w-card-section>
+              <div class="admin-groups-rule" v-for="rule of state.group.rules" :key="rule.id">
+                <div class="admin-groups-rule-icon" :class="getRuleModeColor(rule.mode)">
+                  <w-icon
+                    class="cursor-pointer"
+                    :name="getRuleModeIcon(rule.mode)"
+                    color="white"
+                    @click="rule.mode = getNextRuleMode(rule.mode)" />
+                </div>
+                <div class="admin-groups-rule-name">
+                  <div class="admin-groups-rule-name-text">
+                    <strong :class="getRuleModeColor(rule.mode)">{{ getRuleModeName(rule.mode) }}</strong>
+                  </div>
+                  <w-separator class="ml-2 mr-1" vertical />
+                  <input type="text" v-model="rule.name" placeholder="Rule Name" />
+                </div>
+                <w-card class="admin-groups-rule-card mt-4" flat>
+                  <w-card-section
+                    class="admin-groups-rule-card-permissions"
+                    :class="getRuleModeClass(rule.mode)">
+                    <w-select
+                      class="mt-1"
+                      standout
+                      v-model="rule.roles"
+                      emit-value
+                      map-options
+                      dense
+                      :aria-label="t(`admin.groups.ruleSites`)"
+                      :options="rules"
+                      placeholder="Select permissions..."
+                      option-value="permission"
+                      option-label="title"
+                      options-dense
+                      multiple
+                      use-chips
+                      stack-label>
+                      <template #selected-item="scope">
+                        <w-chip
+                          square
+                          dense
+                          :tabindex="scope.tabindex"
+                          :color="getRuleModeBgColor(rule.mode)"
+                          text-color="white">
+                          <span class="text-caption">{{ scope.opt.title }}</span>
+                        </w-chip>
+                      </template>
+                      <template #option="{ itemProps, itemEvents, opt, selected, toggleOption }">
+                        <w-item v-bind="itemProps" v-on="itemEvents">
+                          <w-item-section side>
+                            <w-toggle
+                              :model-value="selected"
+                              @update:model-value="toggleOption(opt)"
+                              color="primary"
+                              checked-icon="la:check"
+                              unchecked-icon="la:times"
+                              :aria-label="opt.label" />
+                          </w-item-section>
+                          <!-- q-item-section(side, style='flex-basis: 150px;') -->
+                          <!-- q-chip.text-caption( -->
+                          <!-- square -->
+                          <!-- color='teal' -->
+                          <!-- text-color='white' -->
+                          <!-- dense -->
+                          <!-- ) {{opt.permission}} -->
+                          <w-item-section>
+                            <w-item-label>{{ opt.title }}</w-item-label>
+                            <w-item-label caption>{{opt.hint}}</w-item-label>
+                          </w-item-section>
+                        </w-item>
+                      </template>
+                    </w-select>
+                    <w-btn
+                      class="acrylic-btn ml-4"
+                      flat
+                      icon="la:trash"
+                      color="negative"
+                      padding="sm sm"
+                      size="md"
+                      @click="deleteRule(rule.id)" />
+                  </w-card-section>
+                  <w-card-section horizontal>
+                    <w-card-section class="admin-groups-rule-card-filters">
+                      <div class="text-caption">Applies to...</div>
+                      <w-select
+                        class="mt-1"
+                        standout
+                        v-model="rule.sites"
+                        emit-value
+                        map-options
                         dense
-                        :tabindex='scope.tabindex'
-                        :color='getRuleModeBgColor(rule.mode)'
-                        text-color='white'
-                        )
-                        span.text-caption {{ scope.opt.title }}
-                    template(#option='{ itemProps, itemEvents, opt, selected, toggleOption }')
-                      q-item(v-bind='itemProps', v-on='itemEvents')
-                        q-item-section(side)
-                          q-toggle(
-                            :model-value='selected'
-                            @update:model-value='toggleOption(opt)'
-                            color='primary'
-                            checked-icon='las la-check'
-                            unchecked-icon='las la-times'
-                            :aria-label='opt.label'
-                          )
-                        //- q-item-section(side, style='flex-basis: 150px;')
-                        //-   q-chip.text-caption(
-                        //-     square
-                        //-     color='teal'
-                        //-     text-color='white'
-                        //-     dense
-                        //-   ) {{opt.permission}}
-                        q-item-section
-                          q-item-label {{ opt.title }}
-                          q-item-label(caption) {{opt.hint}}
-                  q-btn.acrylic-btn.q-ml-md(
-                    flat
-                    icon='las la-trash'
-                    color='negative'
-                    padding='sm sm'
-                    size='md',
-                    @click='deleteRule(rule.id)'
-                  )
-                q-card-section(horizontal)
-                  q-card-section.admin-groups-rule-card-filters
-                    .text-caption Applies to...
-                    q-select.q-mt-xs(
-                      standout
-                      v-model='rule.sites'
-                      emit-value
-                      map-options
-                      dense
-                      :aria-label='t(`admin.groups.ruleSites`)'
-                      :options='adminStore.sites'
-                      option-value='id'
-                      option-label='title'
-                      multiple
-                      behavior='dialog'
-                      :display-value='t(`admin.groups.selectedSites`, rule.sites.length, { count: rule.sites.length })'
-                      )
-                      template(#option='{ itemProps, itemEvents, opt, selected, toggleOption }')
-                        q-item(v-bind='itemProps', v-on='itemEvents')
-                          q-item-section
-                            q-item-label {{ opt.title }}
-                          q-item-section(side)
-                            q-toggle(
-                              :model-value='selected'
-                              @update:model-value='toggleOption(opt)'
-                              color='primary'
-                              checked-icon='las la-check'
-                              unchecked-icon='las la-times'
-                              :aria-label='opt.label'
-                            )
-                    q-select.q-mt-sm(
-                      standout
-                      v-model='rule.locales'
-                      emit-value
-                      map-options
-                      dense
-                      :aria-label='t(`admin.groups.ruleLocales`)'
-                      :options='adminStore.locales'
-                      option-value='code'
-                      option-label='name'
-                      multiple
-                      behavior='dialog'
-                      :display-value='t(`admin.groups.selectedLocales`, { n: rule.locales.length > 0 ? rule.locales[0].toUpperCase() : rule.locales.length }, rule.locales.length)'
-                      )
-                      template(#option='{ itemProps, opt, selected, toggleOption }')
-                        q-item(v-bind='itemProps')
-                          q-item-section
-                            q-item-label {{ opt.name }}
-                          q-item-section(side)
-                            q-toggle(
-                              :model-value='selected'
-                              @update:model-value='toggleOption(opt)'
-                              color='primary'
-                              checked-icon='las la-check'
-                              unchecked-icon='las la-times'
-                              :aria-label='opt.name'
-                            )
-                  q-card-section.admin-groups-rule-card-pattern
-                    .text-caption Pattern
-                    q-select.q-mt-xs(
-                      standout
-                      v-model='rule.match'
-                      emit-value
-                      map-options
-                      dense
-                      :aria-label='t(`admin.groups.ruleMatch`)'
-                      :options=`[
+                        :aria-label="t(`admin.groups.ruleSites`)"
+                        :options="adminStore.sites"
+                        option-value="id"
+                        option-label="title"
+                        multiple
+                        behavior="dialog"
+                        :display-value="t(`admin.groups.selectedSites`, rule.sites.length, { count: rule.sites.length })">
+                        <template #option="{ itemProps, itemEvents, opt, selected, toggleOption }">
+                          <w-item v-bind="itemProps" v-on="itemEvents">
+                            <w-item-section>
+                              <w-item-label>{{ opt.title }}</w-item-label>
+                            </w-item-section>
+                            <w-item-section side>
+                              <w-toggle
+                                :model-value="selected"
+                                @update:model-value="toggleOption(opt)"
+                                color="primary"
+                                checked-icon="la:check"
+                                unchecked-icon="la:times"
+                                :aria-label="opt.label" />
+                            </w-item-section>
+                          </w-item>
+                        </template>
+                      </w-select>
+                      <w-select
+                        class="mt-2"
+                        standout
+                        v-model="rule.locales"
+                        emit-value
+                        map-options
+                        dense
+                        :aria-label="t(`admin.groups.ruleLocales`)"
+                        :options="adminStore.locales"
+                        option-value="code"
+                        option-label="name"
+                        multiple
+                        behavior="dialog"
+                        :display-value="t(`admin.groups.selectedLocales`, { n: rule.locales.length > 0 ? rule.locales[0].toUpperCase() : rule.locales.length }, rule.locales.length)">
+                        <template #option="{ itemProps, opt, selected, toggleOption }">
+                          <w-item v-bind="itemProps">
+                            <w-item-section>
+                              <w-item-label>{{ opt.name }}</w-item-label>
+                            </w-item-section>
+                            <w-item-section side>
+                              <w-toggle
+                                :model-value="selected"
+                                @update:model-value="toggleOption(opt)"
+                                color="primary"
+                                checked-icon="la:check"
+                                unchecked-icon="la:times"
+                                :aria-label="opt.name" />
+                            </w-item-section>
+                          </w-item>
+                        </template>
+                      </w-select>
+                    </w-card-section>
+                    <w-card-section class="admin-groups-rule-card-pattern">
+                      <div class="text-caption">Pattern</div>
+                      <w-select
+                        class="mt-1"
+                        standout
+                        v-model="rule.match"
+                        emit-value
+                        map-options
+                        dense
+                        :aria-label="t(`admin.groups.ruleMatch`)"
+                        :options="[
                         { label: t('admin.groups.ruleMatchStart'), value: 'START' },
                         { label: t('admin.groups.ruleMatchEnd'), value: 'END' },
                         { label: t('admin.groups.ruleMatchRegex'), value: 'REGEX' },
                         { label: t('admin.groups.ruleMatchTag'), value: 'TAG' },
                         { label: t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
                         { label: t('admin.groups.ruleMatchExact'), value: 'EXACT' }
-                      ]`
-                    )
-                    q-input.q-mt-sm(
-                      standout
-                      v-model='rule.path'
-                      dense
-                      :prefix='[`START`, `REGEX`, `EXACT`].includes(rule.match) ? `/` : null'
-                      :suffix='rule.match === `REGEX` ? `/` : null'
-                      :aria-label='t(`admin.groups.rulePath`)'
-                    )
-    //- -----------------------------------------------------------------------
-    //- PERMISSIONS
-    //- -----------------------------------------------------------------------
-    q-page(v-else-if='route.params.section === `permissions`')
-      .q-pa-md
-        .row.q-col-gutter-md
-          .col-12.col-lg-6
-            q-card.shadow-1.q-pb-sm
-              .flex.justify-between
-                q-card-section
-                  .text-subtitle1 {{ t(`admin.groups.permissions`) }}
-                q-card-section
-                  q-btn.acrylic-btn(
-                    icon='las la-question-circle'
-                    flat
-                    color='grey'
-                    type='a'
-                    :href='siteStore.docsBase + `/admin/groups#permissions`'
-                    target='_blank'
-                    )
-              template(v-for='(perm, idx) of permissions', :key='perm.permission')
-                q-item(tag='label', v-ripple)
-                  q-item-section.items-center(style='flex: 0 0 40px;')
-                    q-icon(
-                      name='las la-comments'
-                      color='primary'
-                      size='sm'
-                      )
-                  q-item-section
-                    q-item-label {{ perm.permission }}
-                    q-item-label(caption) {{ perm.hint }}
-                  q-item-section(avatar)
-                    q-toggle(
-                      v-model='state.group.permissions'
-                      :val='perm.permission'
-                      color='primary'
-                      checked-icon='las la-check'
-                      unchecked-icon='las la-times'
-                      :aria-label='t(`admin.general.allowComments`)'
-                      )
-                q-separator.q-my-sm(inset, v-if='idx < permissions.length - 1')
-    //- -----------------------------------------------------------------------
-    //- USERS
-    //- -----------------------------------------------------------------------
-    q-page(v-else-if='route.params.section === `users`')
-      q-toolbar(
-        :class='$q.dark.isActive ? `bg-dark-3` : `bg-white`'
-        )
-        .text-subtitle1 {{ t('admin.groups.users') }}
-        q-space
-        q-btn.acrylic-btn.q-mr-sm(
-          icon='las la-question-circle'
-          flat
-          color='grey'
-          type='a'
-          :href='siteStore.docsBase + `/admin/groups#users`'
-          target='_blank'
-          )
-        q-input.denser.fill-outline.q-mr-sm(
-          outlined
-          v-model='state.usersFilter'
-          :placeholder='t(`admin.groups.filterUsers`)'
-          dense
-          )
-          template(#prepend)
-            q-icon(name='las la-search')
-        q-btn.q-mr-sm.acrylic-btn(
-          icon='las la-redo-alt'
-          flat
-          color='secondary'
-          @click='refreshUsers'
-          )
-        q-btn.q-mr-xs(
-          unelevated
-          icon='las la-user-plus'
-          :label='t(`admin.groups.assignUser`)'
-          color='primary'
-          @click='assignUser'
-          )
-      q-separator
-      .q-pa-md
-        q-banner(
-          v-if='!state.users || state.users.length < 1'
-          rounded
-          :class='$q.dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`'
-          ) {{ t('admin.groups.usersNone') }}
-        q-card.shadow-1
-          q-table(
-            :rows='state.users'
-            :columns='usersHeaders'
-            row-key='id'
+                      ]" />
+                      <w-input
+                        class="mt-2"
+                        standout
+                        v-model="rule.path"
+                        dense
+                        :prefix="[`START`, `REGEX`, `EXACT`].includes(rule.match) ? `/` : null"
+                        :suffix="rule.match === `REGEX` ? `/` : null"
+                        :aria-label="t(`admin.groups.rulePath`)" />
+                    </w-card-section>
+                  </w-card-section>
+                </w-card>
+              </div>
+            </w-card-section>
+          </w-card>
+        </div>
+      </w-page>
+      <!-- ----------------------------------------------------------------------- -->
+      <!-- PERMISSIONS -->
+      <!-- ----------------------------------------------------------------------- -->
+      <w-page v-else-if="route.params.section === `permissions`">
+        <div class="p-4">
+          <div class="grid grid-cols-12 gap-4">
+            <div class="col-span-12 lg:col-span-6">
+              <w-card class="shadow-1 pb-2">
+                <div class="flex justify-between">
+                  <w-card-section>
+                    <div class="text-subtitle1">{{ t(`admin.groups.permissions`) }}</div>
+                  </w-card-section>
+                  <w-card-section>
+                    <w-btn
+                      class="acrylic-btn"
+                      icon="la:question-circle"
+                      flat
+                      color="grey"
+                      type="a"
+                      :href="siteStore.docsBase + `/admin/groups#permissions`"
+                      target="_blank" />
+                  </w-card-section>
+                </div>
+                <template v-for="(perm, idx) of permissions" :key="perm.permission">
+                  <w-item tag="label">
+                    <w-item-section class="items-center" style="flex: 0 0 40px;">
+                      <w-icon name="la:comments" color="primary" size="sm" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ perm.permission }}</w-item-label>
+                      <w-item-label caption>{{ perm.hint }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section avatar>
+                      <w-toggle
+                        v-model="state.group.permissions"
+                        :val="perm.permission"
+                        color="primary"
+                        checked-icon="la:check"
+                        unchecked-icon="la:times"
+                        :aria-label="t(`admin.general.allowComments`)" />
+                    </w-item-section>
+                  </w-item>
+                  <w-separator class="my-2" inset v-if="idx < permissions.length - 1" />
+                </template>
+              </w-card>
+            </div>
+          </div>
+        </div>
+      </w-page>
+      <!-- ----------------------------------------------------------------------- -->
+      <!-- USERS -->
+      <!-- ----------------------------------------------------------------------- -->
+      <w-page v-else-if="route.params.section === `users`">
+        <w-toolbar :class="dark.isActive ? `bg-dark-3` : `bg-white`">
+          <div class="text-subtitle1">{{ t('admin.groups.users') }}</div>
+          <w-space />
+          <w-btn
+            class="acrylic-btn mr-2"
+            icon="la:question-circle"
             flat
-            hide-header
-            hide-bottom
-            :rows-per-page-options='[0]'
-            :loading='state.isLoadingUsers'
-            )
-            template(#body-cell-id='props')
-              q-td(:props='props')
-                q-icon(name='las la-user', color='primary', size='sm')
-            template(#body-cell-name='props')
-              q-td(:props='props')
-                .flex.items-center
-                  strong {{ props.value }}
-                  q-icon.q-ml-sm(
-                    v-if='props.row.isSystem'
-                    name='las la-lock'
-                    color='pink'
-                    )
-                  q-icon.q-ml-sm(
-                    v-if='!props.row.isActive'
-                    name='las la-ban'
-                    color='pink'
-                    )
-            template(#body-cell-email='props')
-              q-td(:props='props')
-                em {{ props.value }}
-            template(#body-cell-date='props')
-              q-td(:props='props')
-                i18n-t.text-caption(keypath='admin.users.createdAt', tag='div')
-                  template(#date)
-                    strong {{ humanizeDate(props.value) }}
-                i18n-t.text-caption(
-                  v-if='props.row.lastLoginAt'
-                  keypath='admin.users.lastLoginAt'
-                  tag='div'
-                  )
-                  template(#date)
-                    strong {{ humanizeDate(props.row.lastLoginAt) }}
-            template(#body-cell-edit='props')
-              q-td(:props='props')
-                q-btn.acrylic-btn.q-mr-sm(
-                  v-if='!props.row.isSystem'
-                  flat
-                  :to='`/_admin/users/` + props.row.id'
-                  icon='las la-pen'
-                  color='indigo'
-                  :label='t(`common.actions.edit`)'
-                  no-caps
-                  )
-                //- Hidden for system users: the guest account's membership is fixed, and the API
-                //- refuses to change it either way
-                q-btn.acrylic-btn(
-                  v-if='!props.row.isSystem'
-                  flat
-                  icon='las la-user-minus'
-                  color='accent'
-                  :aria-label='t(`admin.groups.unassignUser`)'
-                  @click='unassignUser(props.row)'
-                  )
-                  q-tooltip(anchor='center left' self='center right') {{ t('admin.groups.unassignUser') }}
-
-        .flex.flex-center.q-mt-md(v-if='usersTotalPages > 1')
-          q-pagination(
-            v-model='state.usersPage'
-            :max='usersTotalPages'
-            :max-pages='9'
-            boundary-numbers
-            direction-links
-          )
+            color="grey"
+            type="a"
+            :href="siteStore.docsBase + `/admin/groups#users`"
+            target="_blank" />
+          <w-input
+            class="denser fill-outline mr-2"
+            outlined
+            v-model="state.usersFilter"
+            :placeholder="t(`admin.groups.filterUsers`)"
+            dense>
+            <template #prepend><w-icon name="la:search" /></template>
+          </w-input>
+          <w-btn
+            class="mr-2 acrylic-btn"
+            icon="la:redo-alt"
+            flat
+            color="secondary"
+            @click="refreshUsers" />
+          <w-btn
+            class="mr-1"
+            unelevated
+            icon="la:user-plus"
+            :label="t(`admin.groups.assignUser`)"
+            color="primary"
+            @click="assignUser" />
+        </w-toolbar>
+        <w-separator />
+        <div class="p-4">
+          <w-banner v-if="!state.users || state.users.length < 1" rounded :class="dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`">{{ t('admin.groups.usersNone') }}</w-banner>
+          <w-card class="shadow-1">
+            <w-table
+              :rows="state.users"
+              :columns="usersHeaders"
+              row-key="id"
+              flat
+              hide-header
+              :loading="state.isLoadingUsers">
+              <template #body-cell-id="props">
+                <w-td :props="props"><w-icon name="la:user" color="primary" size="sm" /></w-td>
+              </template>
+              <template #body-cell-name="props">
+                <w-td :props="props">
+                  <div class="flex items-center">
+                    <strong>{{ props.value }}</strong>
+                    <w-icon
+                      class="ml-2"
+                      v-if="props.row.isSystem"
+                      name="la:lock"
+                      color="pink" />
+                    <w-icon
+                      class="ml-2"
+                      v-if="!props.row.isActive"
+                      name="la:ban"
+                      color="pink" />
+                  </div>
+                </w-td>
+              </template>
+              <template #body-cell-email="props">
+                <w-td :props="props"><em>{{ props.value }}</em></w-td>
+              </template>
+              <template #body-cell-date="props">
+                <w-td :props="props">
+                  <i18n-t class="text-caption" keypath="admin.users.createdAt" tag="div">
+                    <template #date><strong>{{ humanizeDate(props.value) }}</strong></template>
+                  </i18n-t>
+                  <i18n-t
+                    class="text-caption"
+                    v-if="props.row.lastLoginAt"
+                    keypath="admin.users.lastLoginAt"
+                    tag="div">
+                    <template #date>
+                      <strong>{{ humanizeDate(props.row.lastLoginAt) }}</strong>
+                    </template>
+                  </i18n-t>
+                </w-td>
+              </template>
+              <template #body-cell-edit="props">
+                <w-td :props="props">
+                  <w-btn
+                    class="acrylic-btn mr-2"
+                    v-if="!props.row.isSystem"
+                    flat
+                    :to="`/_admin/users/` + props.row.id"
+                    icon="la:pen"
+                    color="indigo"
+                    :label="t(`common.actions.edit`)"
+                    no-caps />
+                  <!-- Hidden for system users: the guest account's membership is fixed, and the API -->
+                  <!-- refuses to change it either way -->
+                  <w-btn
+                    class="acrylic-btn"
+                    v-if="!props.row.isSystem"
+                    flat
+                    icon="la:user-minus"
+                    color="accent"
+                    :aria-label="t(`admin.groups.unassignUser`)"
+                    @click="unassignUser(props.row)">
+                    <w-tooltip anchor="center left" self="center right">{{ t('admin.groups.unassignUser') }}</w-tooltip>
+                  </w-btn>
+                </w-td>
+              </template>
+            </w-table>
+          </w-card>
+          <div class="flex items-center justify-center mt-4" v-if="usersTotalPages > 1">
+            <w-pagination
+              v-model="state.usersPage"
+              :max="usersTotalPages"
+              :max-pages="9"
+              boundary-numbers
+              direction-links />
+          </div>
+        </div>
+      </w-page>
+    </w-page-container>
+  </w-layout>
 </template>
 
 <script setup>
-
-import { v4 as uuid } from 'uuid'
-import { fileOpen } from 'browser-fs-access'
-
 import { useI18n } from 'vue-i18n'
-import { exportFile, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+
+import { confirm, dialog } from '@/composables/dialog'
+import { useDark } from '@/composables/dark'
+import { notify } from '@/composables/notify'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
+import { v4 as uuid } from 'uuid'
+import { fileOpen, fileSave } from 'browser-fs-access'
 import UserSearchDialog from '@/components/UserSearchDialog.vue'
 
-// QUASAR
+// COMPOSABLES
 
-const $q = useQuasar()
+const dark = useDark()
 
 // STORES
 
@@ -556,10 +617,21 @@ const state = reactive({
 })
 
 const sections = [
-  { key: 'overview', text: t('admin.groups.overview'), icon: 'las la-users' },
-  { key: 'rules', text: t('admin.groups.rules'), icon: 'las la-file-invoice', rulesTotal: true },
-  { key: 'permissions', text: t('admin.groups.permissions'), icon: 'las la-list-alt', excludeGuests: true },
-  { key: 'users', text: t('admin.groups.users'), icon: 'las la-user', usersTotal: true, excludeGuests: true }
+  { key: 'overview', text: t('admin.groups.overview'), icon: 'la:users' },
+  { key: 'rules', text: t('admin.groups.rules'), icon: 'la:file-invoice', rulesTotal: true },
+  {
+    key: 'permissions',
+    text: t('admin.groups.permissions'),
+    icon: 'la:list-alt',
+    excludeGuests: true
+  },
+  {
+    key: 'users',
+    text: t('admin.groups.users'),
+    icon: 'la:user',
+    usersTotal: true,
+    excludeGuests: true
+  }
 ]
 
 const usersHeaders = [
@@ -777,14 +849,14 @@ const rules = [
 
 // VALIDATION RULES
 
-const groupNameValidation = [
-  val => /^[^<>"]+$/.test(val) || t('admin.groups.nameInvalidChars')
-]
+const groupNameValidation = [(val) => /^[^<>"]+$/.test(val) || t('admin.groups.nameInvalidChars')]
 
 // COMPUTED
 
 const usersTotalPages = computed(() => {
-  if (state.usersTotal < 1) { return 0 }
+  if (state.usersTotal < 1) {
+    return 0
+  }
   return Math.ceil(state.usersTotal / state.usersPageSize)
 })
 
@@ -799,11 +871,11 @@ watch([() => state.usersPage, () => state.usersFilter], refreshUsers)
 
 // METHODS
 
-function close () {
+function close() {
   adminStore.$patch({ overlay: '' })
 }
 
-function checkRoute () {
+function checkRoute() {
   if (!route.params.section) {
     router.replace({ params: { section: 'overview' } })
   } else if (route.params.section === 'users') {
@@ -811,8 +883,10 @@ function checkRoute () {
   }
 }
 
-function humanizeDate (val) {
-  if (!val) { return '---' }
+function humanizeDate(val) {
+  if (!val) {
+    return '---'
+  }
   return Temporal.Instant.from(val).toLocaleString(undefined, {
     year: 'numeric',
     month: 'long',
@@ -823,56 +897,64 @@ function humanizeDate (val) {
   })
 }
 
-function getRuleModeColor (mode) {
-  return ({
+function getRuleModeColor(mode) {
+  return {
     DENY: 'text-negative',
     ALLOW: 'text-positive',
     FORCEALLOW: 'text-blue'
-  })[mode]
+  }[mode]
 }
 
-function getRuleModeBgColor (mode) {
-  return ({
+function getRuleModeBgColor(mode) {
+  return {
     DENY: 'negative',
     ALLOW: 'positive',
     FORCEALLOW: 'blue'
-  })[mode]
+  }[mode]
 }
 
-function getRuleModeClass (mode) {
+function getRuleModeClass(mode) {
   return 'is-' + mode.toLowerCase()
 }
 
-function getRuleModeIcon (mode) {
-  return ({
-    DENY: 'las la-ban',
-    ALLOW: 'las la-check',
-    FORCEALLOW: 'las la-check-double'
-  })[mode] || 'las la-frog'
+function getRuleModeIcon(mode) {
+  return (
+    {
+      DENY: 'la:ban',
+      ALLOW: 'la:check',
+      FORCEALLOW: 'la:check-double'
+    }[mode] || 'la:frog'
+  )
 }
 
-function getNextRuleMode (mode) {
-  return ({
-    DENY: 'FORCEALLOW',
-    ALLOW: 'DENY',
-    FORCEALLOW: 'ALLOW'
-  })[mode] || 'ALLOW'
+function getNextRuleMode(mode) {
+  return (
+    {
+      DENY: 'FORCEALLOW',
+      ALLOW: 'DENY',
+      FORCEALLOW: 'ALLOW'
+    }[mode] || 'ALLOW'
+  )
 }
 
-function getRuleModeName (mode) {
+function getRuleModeName(mode) {
   switch (mode) {
-    case 'ALLOW': return t('admin.groups.ruleAllow')
-    case 'DENY': return t('admin.groups.ruleDeny')
-    case 'FORCEALLOW': return t('admin.groups.ruleForceAllow')
-    default: return '???'
+    case 'ALLOW':
+      return t('admin.groups.ruleAllow')
+    case 'DENY':
+      return t('admin.groups.ruleDeny')
+    case 'FORCEALLOW':
+      return t('admin.groups.ruleForceAllow')
+    default:
+      return '???'
   }
 }
 
-function refresh () {
+function refresh() {
   fetchGroup()
 }
 
-async function fetchGroup () {
+async function fetchGroup() {
   state.isLoading = true
   try {
     const resp = await API_CLIENT.get(`groups/${adminStore.overlayOpts.id}`).json()
@@ -882,7 +964,7 @@ async function fetchGroup () {
     state.group = resp
     state.usersTotal = state.group.userCount ?? 0
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -890,7 +972,7 @@ async function fetchGroup () {
   state.isLoading = false
 }
 
-async function save () {
+async function save() {
   state.isLoading = true
   try {
     const resp = await API_CLIENT.put(`groups/${state.group.id}`, {
@@ -904,14 +986,16 @@ async function save () {
       }
     }).json()
     if (!resp?.ok) {
-      throw new Error(t(`admin.groups.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.groups.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.groups.saveSuccess')
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -919,7 +1003,7 @@ async function save () {
   state.isLoading = false
 }
 
-function newRule () {
+function newRule() {
   state.group.rules.push({
     id: uuid(),
     name: t('admin.groups.ruleUntitled'),
@@ -932,22 +1016,25 @@ function newRule () {
   })
 }
 
-function deleteRule (id) {
-  state.group.rules = state.group.rules.filter(r => r.id !== id)
+function deleteRule(id) {
+  state.group.rules = state.group.rules.filter((r) => r.id !== id)
 }
 
-function exportRules () {
+function exportRules() {
   if (state.group.rules.length < 1) {
-    return $q.notify({
+    return notify({
       type: 'negative',
       message: t('admin.groups.exportRulesNoneError')
     })
   }
   const rules = state.group.rules.map(({ __typename, ...r }) => r)
-  exportFile('rules.json', JSON.stringify(rules, null, 2), { mimeType: 'application/json;charset=UTF-8' })
+  fileSave(new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json;charset=UTF-8' }), {
+    fileName: 'rules.json',
+    extensions: ['.json']
+  })
 }
 
-async function importRules () {
+async function importRules() {
   try {
     const blob = await fileOpen({
       mimeTypes: ['application/json'],
@@ -960,7 +1047,7 @@ async function importRules () {
     if (!Array.isArray(rules) || rules.length < 1) {
       throw new Error('Invalid Rules Format')
     }
-    $q.dialog({
+    confirm({
       title: t('admin.groups.importModeTitle'),
       message: t('admin.groups.importModeText'),
       options: {
@@ -972,37 +1059,39 @@ async function importRules () {
         ]
       },
       persistent: true
-    }).onOk(choice => {
+    }).onOk((choice) => {
       if (choice === 'replace') {
         state.group.rules = []
       }
       state.group.rules = [
         ...state.group.rules,
-        ...rules.map(r => ({
+        ...rules.map((r) => ({
           id: uuid(),
           name: r.name || t('admin.groups.ruleUntitled'),
           mode: ['ALLOW', 'DENY', 'FORCEALLOW'].includes(r.mode) ? r.mode : 'DENY',
-          match: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match) ? r.match : 'START',
+          match: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match)
+            ? r.match
+            : 'START',
           roles: r.roles || [],
           path: r.path || '',
-          locales: r.locales.filter(l => adminStore.locales.some(loc => loc.code === l)),
-          sites: r.sites.filter(s => adminStore.sites.some(site => site.id === s))
+          locales: r.locales.filter((l) => adminStore.locales.some((loc) => loc.code === l)),
+          sites: r.sites.filter((s) => adminStore.sites.some((site) => site.id === s))
         }))
       ]
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('admin.groups.importSuccess')
       })
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.groups.importFailed') + ` [${err.message}]`
     })
   }
 }
 
-async function refreshUsers () {
+async function refreshUsers() {
   state.isLoadingUsers = true
   try {
     const resp = await API_CLIENT.get(`groups/${adminStore.overlayOpts.id}/users`, {
@@ -1018,7 +1107,7 @@ async function refreshUsers () {
     state.usersTotal = resp.total ?? 0
     state.users = resp.users
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -1026,8 +1115,8 @@ async function refreshUsers () {
   state.isLoadingUsers = false
 }
 
-function assignUser () {
-  $q.dialog({
+function assignUser() {
+  dialog({
     component: UserSearchDialog,
     componentProps: {
       title: t('admin.groups.assignUserTitle'),
@@ -1048,8 +1137,11 @@ function assignUser () {
         assigned++
       } catch (err) {
         // -> ky throws above 400, with the reason in the body
-        const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-        $q.notify({
+        const apiMessage = await err.response
+          ?.json()
+          .then((b) => b?.message)
+          .catch(() => null)
+        notify({
           type: 'negative',
           message: t('admin.groups.assignUserFailed', { userName: usr.name }),
           caption: apiMessage || err.message
@@ -1057,7 +1149,7 @@ function assignUser () {
       }
     }
     if (assigned > 0) {
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('admin.groups.assignUserSuccess', { count: assigned })
       })
@@ -1066,8 +1158,8 @@ function assignUser () {
   })
 }
 
-async function unassignUser (user) {
-  $q.dialog({
+async function unassignUser(user) {
+  confirm({
     title: t('admin.groups.unassignUser'),
     message: t('admin.groups.unassignUserConfirm', { userName: user.name }),
     cancel: true,
@@ -1079,15 +1171,18 @@ async function unassignUser (user) {
       if (!resp?.ok) {
         throw new Error((await resp.json())?.message || 'An unexpected error occured.')
       }
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('admin.groups.unassignUserSuccess')
       })
       await refreshUsers()
     } catch (err) {
       // -> ky throws above 400 (e.g. 409 for the last root admin), with the reason in the body
-      const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-      $q.notify({
+      const apiMessage = await err.response
+        ?.json()
+        .then((b) => b?.message)
+        .catch(() => null)
+      notify({
         type: 'negative',
         message: apiMessage || err.message
       })
@@ -1102,7 +1197,6 @@ onMounted(() => {
   checkRoute()
   fetchGroup()
 })
-
 </script>
 
 <style lang="scss">
@@ -1119,7 +1213,7 @@ onMounted(() => {
 
     &::before {
       position: absolute;
-      content: "";
+      content: '';
       border-radius: 100%;
       width: 31px;
       height: 31px;
@@ -1129,17 +1223,17 @@ onMounted(() => {
 
     &::after {
       position: absolute;
-      content: "";
+      content: '';
       width: 3px;
       top: 41px;
       bottom: 0;
       left: 14px;
-      opacity: .4;
+      opacity: 0.4;
       background-color: currentColor;
       display: block;
     }
 
-    .q-icon {
+    .w-icon {
       position: absolute;
       top: 0;
       left: 0;
@@ -1182,10 +1276,10 @@ onMounted(() => {
       }
 
       @at-root .body--dark & {
-        color: rgba(255,255,255,.7);
+        color: rgba(255, 255, 255, 0.7);
 
         &::placeholder {
-          color: rgba(255,255,255,.4);
+          color: rgba(255, 255, 255, 0.4);
         }
       }
     }
@@ -1199,26 +1293,26 @@ onMounted(() => {
     }
 
     &-permissions {
-      background-color: rgba($positive, .1);
-      border-bottom: 1px solid rgba($positive, .3);
+      background-color: rgba($positive, 0.1);
+      border-bottom: 1px solid rgba($positive, 0.3);
       display: flex;
       align-items: center;
 
-      .q-select {
+      .w-select {
         flex-basis: 100%;
       }
 
       &.is-allow {
-        background-color: rgba($positive, .1);
-        border-bottom: 1px solid rgba($positive, .3);
+        background-color: rgba($positive, 0.1);
+        border-bottom: 1px solid rgba($positive, 0.3);
       }
       &.is-deny {
-        background-color: rgba($negative, .1);
-        border-bottom: 1px solid rgba($negative, .3);
+        background-color: rgba($negative, 0.1);
+        border-bottom: 1px solid rgba($negative, 0.3);
       }
       &.is-forceallow {
-        background-color: rgba($blue, .1);
-        border-bottom: 1px solid rgba($blue, .3);
+        background-color: rgba($blue, 0.1);
+        border-bottom: 1px solid rgba($blue, 0.3);
       }
     }
 

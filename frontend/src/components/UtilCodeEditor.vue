@@ -38,9 +38,7 @@ const props = defineProps({
 
 // EMITS
 
-const emit = defineEmits([
-  'update:modelValue'
-])
+const emit = defineEmits(['update:modelValue'])
 
 // STATE
 
@@ -49,12 +47,15 @@ const cmRef = ref(null)
 
 // WATCHERS
 
-watch(() => props.modelValue, (newVal) => {
-  // Ignore loopback changes while editing
-  if (!cm.value.hasFocus()) {
-    cm.value.setValue(newVal)
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    // Ignore loopback changes while editing
+    if (!cm.value.hasFocus()) {
+      cm.value.setValue(newVal)
+    }
   }
-})
+)
 
 // MOUNTED
 
@@ -105,7 +106,7 @@ onMounted(async () => {
   })
 
   cm.value.setValue(props.modelValue)
-  cm.value.on('change', c => {
+  cm.value.on('change', (c) => {
     emit('update:modelValue', c.getValue())
   })
 
@@ -122,7 +123,7 @@ onBeforeMount(() => {
 <style lang="scss">
 .util-code-editor {
   min-height: 100px;
-  border: 1px solid #CCC;
+  border: 1px solid #ccc;
   border-radius: 5px;
   overflow: hidden;
 

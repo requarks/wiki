@@ -1,12 +1,23 @@
-<template lang='pug'>
-router-view
+<template>
+  <router-view />
+  <!-- Mounted once for the whole app; driven by composables/{notify,loading,dialog}.js -->
+  <w-notifications />
+  <w-loading-overlay />
+  <w-dialog-host />
 </template>
 
 <script setup>
 import { reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { setCssVar, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
+
+import { setCssVar } from '@/helpers/cssVars'
+import { useDark } from '@/composables/dark'
+import { notify } from '@/composables/notify'
+
+import WDialogHost from '@/components/shared/WDialogHost.vue'
+import WLoadingOverlay from '@/components/shared/WLoadingOverlay.vue'
+import WNotifications from '@/components/shared/WNotifications.vue'
 
 import { useCommonStore } from './stores/common'
 import { useFlagsStore } from '@/stores/flags'
@@ -15,9 +26,9 @@ import { useUserStore } from '@/stores/user'
 
 /* global siteConfig */
 
-// QUASAR
+// DARK MODE
 
-const $q = useQuasar()
+const dark = useDark()
 
 // STORES
 
@@ -42,28 +53,34 @@ const state = reactive({
 
 // WATCHERS
 
-watch(() => userStore.appearance, (newValue) => {
-  if (newValue === 'site') {
-    $q.dark.set(siteStore.theme.dark)
-  } else {
-    $q.dark.set(newValue === 'dark')
+watch(
+  () => userStore.appearance,
+  (newValue) => {
+    if (newValue === 'site') {
+      dark.set(siteStore.theme.dark)
+    } else {
+      dark.set(newValue === 'dark')
+    }
   }
-})
+)
 
-watch(() => userStore.cvd, () => {
-  applyTheme()
-})
+watch(
+  () => userStore.cvd,
+  () => {
+    applyTheme()
+  }
+)
 
 watch(() => commonStore.locale, applyLocale)
 
 // LOCALE
 
-async function applyLocale (locale) {
+async function applyLocale(locale) {
   if (!i18n.availableLocales.includes(locale)) {
     try {
       i18n.setLocaleMessage(locale, await commonStore.fetchLocaleStrings(locale))
     } catch (err) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: `Failed to load ${locale} locale strings.`,
         caption: err.message
@@ -75,12 +92,12 @@ async function applyLocale (locale) {
 
 // THEME
 
-async function applyTheme () {
+async function applyTheme() {
   // -> Dark Mode
   if (userStore.appearance === 'site') {
-    $q.dark.set(siteStore.theme.dark)
+    dark.set(siteStore.theme.dark)
   } else {
-    $q.dark.set(userStore.appearance === 'dark')
+    dark.set(userStore.appearance === 'dark')
   }
 
   // -> CSS Vars
@@ -141,7 +158,10 @@ router.beforeEach(async (to, from) => {
   }
 
   // -> Locale
-  if (!commonStore.desiredLocale || !siteStore.locales.active.some(l => l.code === commonStore.desiredLocale)) {
+  if (
+    !commonStore.desiredLocale ||
+    !siteStore.locales.active.some((l) => l.code === commonStore.desiredLocale)
+  ) {
     commonStore.setLocale(siteStore.locales.primary)
   }
   applyLocale(commonStore.desiredLocale)
@@ -167,9 +187,9 @@ EVENT_BUS.on('logout', ({ redirect } = {}) => {
     return
   }
   router.push(target)
-  $q.notify({
+  notify({
     type: 'positive',
-    icon: 'las la-sign-out-alt',
+    icon: 'mdi:logout',
     message: i18n.t('auth.logoutSuccess')
   })
 })
@@ -187,5 +207,4 @@ router.afterEach(() => {
   }
   commonStore.routerLoading = false
 })
-
 </script>

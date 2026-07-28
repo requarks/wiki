@@ -1,125 +1,125 @@
-<template lang='pug'>
-q-page.admin-locale
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-change-theme.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.sites.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.sites.subtitle') }}
-    .col-auto
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        type='a'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/admin/sites`'
-        target='_blank'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='refresh'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='las la-plus'
-        :label='t(`admin.sites.new`)'
-        color='primary'
-        @click='createSite'
-        )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12
-      q-card
-        q-list(separator)
-          q-item(
-            v-for='site of adminStore.sites'
-            :key='site.id'
-            )
-            q-item-section(side)
-              q-icon(name='las la-chalkboard', color='primary')
-            q-item-section
-              strong {{site.title}}
-            q-item-section
-              div
-                q-chip.q-mx-none(
-                  v-if='site.hostname !== `*`'
-                  square
-                  color='blue-7'
-                  text-color='white'
-                  size='sm'
-                  )
-                  q-avatar(
-                    icon='las la-angle-right'
-                    color='blue-5'
-                    text-color='white'
-                  )
-                  span {{site.hostname}}
-                q-chip.q-mx-none(
-                  v-else
-                  square
-                  color='indigo-7'
-                  text-color='white'
-                  size='sm'
-                  )
-                  q-avatar(
-                    icon='las la-asterisk'
-                    color='indigo-5'
-                    text-color='white'
-                  )
-                  span catch-all
-            q-item-section(side)
-              q-toggle(
-                :model-value='site.isEnabled'
-                color='primary'
-                checked-icon='las la-check'
-                unchecked-icon='las la-times'
-                :label='t(`admin.sites.isActive`)'
-                :aria-label='t(`admin.sites.isActive`)'
-                @update:model-value ='(val) => { toggleSiteState(site, val) }'
-                )
-            q-separator.q-ml-md(vertical)
-            q-item-section(side, style='flex-direction: row; align-items: center;')
-              q-btn.acrylic-btn.q-mr-sm(
-                flat
-                @click='editSite(site)'
-                icon='las la-pen'
-                color='indigo'
-                :label='t(`common.actions.edit`)'
-                no-caps
-                )
-              q-btn.acrylic-btn(
-                flat
-                icon='las la-trash'
-                color='negative'
-                @click='deleteSite(site)'
-                :aria-label='t(`common.actions.delete`)'
-                )
+<template>
+  <w-page class="admin-locale">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-change-theme.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.sites.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.sites.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/admin/sites`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="refresh">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="la:plus"
+          :label="t(`admin.sites.new`)"
+          color="primary"
+          @click="createSite" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-12">
+        <w-card>
+          <w-list separator>
+            <w-item v-for="site of adminStore.sites" :key="site.id">
+              <w-item-section side>
+                <w-icon name="la:chalkboard" color="primary" />
+              </w-item-section>
+              <w-item-section
+                ><strong>{{ site.title }}</strong></w-item-section
+              >
+              <w-item-section>
+                <div>
+                  <w-chip
+                    class="mx-0"
+                    v-if="site.hostname !== `*`"
+                    square
+                    color="blue-7"
+                    text-color="white"
+                    size="sm">
+                    <w-avatar icon="la:angle-right" color="blue-5" text-color="white" />
+                    <span>{{ site.hostname }}</span>
+                  </w-chip>
+                  <w-chip class="mx-0" v-else square color="indigo-7" text-color="white" size="sm">
+                    <w-avatar icon="la:asterisk" color="indigo-5" text-color="white" />
+                    <span>catch-all</span>
+                  </w-chip>
+                </div>
+              </w-item-section>
+              <w-item-section side>
+                <w-toggle
+                  :model-value="site.isEnabled"
+                  :label="t(`admin.sites.isActive`)"
+                  :aria-label="t(`admin.sites.isActive`)"
+                  @update:model-value="
+                    (val) => {
+                      toggleSiteState(site, val)
+                    }
+                  " />
+              </w-item-section>
+              <w-separator class="ml-4" vertical />
+              <w-item-section side style="flex-direction: row; align-items: center">
+                <w-btn
+                  class="acrylic-btn mr-2"
+                  flat
+                  @click="editSite(site)"
+                  icon="la:pen"
+                  color="indigo"
+                  :label="t(`common.actions.edit`)"
+                  no-caps />
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:trash"
+                  color="negative"
+                  @click="deleteSite(site)"
+                  :aria-label="t(`common.actions.delete`)" />
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { useAdminStore } from '../stores/admin'
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { dialog } from '@/composables/dialog'
+
 import { useSiteStore } from '@/stores/site'
 
-// COMPONENTS
-
+import { useAdminStore } from '../stores/admin'
 import SiteActivateDialog from '../components/SiteActivateDialog.vue'
 import SiteCreateDialog from '../components/SiteCreateDialog.vue'
 import SiteDeleteDialog from '../components/SiteDeleteDialog.vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -142,19 +142,19 @@ useMeta({
 
 // METHODS
 
-async function refresh () {
+async function refresh() {
   await adminStore.fetchSites()
-  $q.notify({
+  notify({
     type: 'positive',
     message: t('admin.sites.refreshSuccess')
   })
 }
-function createSite () {
-  $q.dialog({
+function createSite() {
+  dialog({
     component: SiteCreateDialog
   })
 }
-function editSite (st) {
+function editSite(st) {
   adminStore.$patch({
     currentSiteId: st.id
   })
@@ -162,8 +162,8 @@ function editSite (st) {
     router.push(`/_admin/${st.id}/general`)
   })
 }
-function toggleSiteState (st, newState) {
-  $q.dialog({
+function toggleSiteState(st, newState) {
+  dialog({
     component: SiteActivateDialog,
     componentProps: {
       site: st,
@@ -171,8 +171,8 @@ function toggleSiteState (st, newState) {
     }
   })
 }
-function deleteSite (st) {
-  $q.dialog({
+function deleteSite(st) {
+  dialog({
     component: SiteDeleteDialog,
     componentProps: {
       site: st

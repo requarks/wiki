@@ -1,92 +1,98 @@
-<template lang="pug">
-q-menu.translucent-menu(
-  anchor='bottom right'
-  self='top right'
-  :offset='[0, 10]'
-  ref='menuRef'
-  )
-  q-card(style='width: 850px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-choose.svg', left, size='sm')
-      span {{t(`admin.users.defaults`)}}
-    q-list(padding)
-      q-item
-        blueprint-icon(icon='timezone')
-        q-item-section
-          q-item-label {{t(`admin.general.defaultTimezone`)}}
-          q-item-label(caption) {{t(`admin.general.defaultTimezoneHint`)}}
-        q-item-section
-          q-select(
-            outlined
-            v-model='state.timezone'
-            :options='timezones'
-            option-value='value'
-            option-label='text'
-            emit-value
-            map-options
-            dense
-            options-dense
-            :virtual-scroll-slice-size='1000'
-            :aria-label='t(`admin.general.defaultTimezone`)'
-            )
-      q-separator.q-my-sm(inset)
-      q-item
-        blueprint-icon(icon='calendar')
-        q-item-section
-          q-item-label {{t(`admin.general.defaultDateFormat`)}}
-          q-item-label(caption) {{t(`admin.general.defaultDateFormatHint`)}}
-        q-item-section
-          q-select(
-            outlined
-            v-model='state.dateFormat'
-            emit-value
-            map-options
-            dense
-            :aria-label='t(`admin.general.defaultDateFormat`)'
-            :options='dateFormats'
-            )
-      q-separator.q-my-sm(inset)
-      q-item
-        blueprint-icon(icon='clock')
-        q-item-section
-          q-item-label {{t(`admin.general.defaultTimeFormat`)}}
-          q-item-label(caption) {{t(`admin.general.defaultTimeFormatHint`)}}
-        q-item-section.col-auto
-          q-btn-toggle(
-            v-model='state.timeFormat'
-            push
-            glossy
-            no-caps
-            toggle-color='primary'
-            :options='timeFormats'
-          )
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        v-close-popup
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.save`)'
-        color='primary'
-        padding='xs md'
-        @click='save'
-        )
-    q-inner-loading(:showing='state.loading > 0')
+<template>
+  <w-menu
+    class="translucent-menu"
+    anchor="bottom right"
+    self="top right"
+    :offset="[0, 10]"
+    ref="menuRef">
+    <w-card style="width: 850px;">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-choose.svg" left size="sm" />
+        <span>{{t(`admin.users.defaults`)}}</span>
+      </w-card-section>
+      <w-list padding>
+        <w-item>
+          <blueprint-icon icon="timezone" />
+          <w-item-section>
+            <w-item-label>{{t(`admin.general.defaultTimezone`)}}</w-item-label>
+            <w-item-label caption>{{t(`admin.general.defaultTimezoneHint`)}}</w-item-label>
+          </w-item-section>
+          <w-item-section>
+            <w-select
+              outlined
+              v-model="state.timezone"
+              :options="timezones"
+              option-value="value"
+              option-label="text"
+              emit-value
+              map-options
+              dense
+              options-dense
+              :aria-label="t(`admin.general.defaultTimezone`)" />
+          </w-item-section>
+        </w-item>
+        <w-separator class="my-2" inset />
+        <w-item>
+          <blueprint-icon icon="calendar" />
+          <w-item-section>
+            <w-item-label>{{t(`admin.general.defaultDateFormat`)}}</w-item-label>
+            <w-item-label caption>{{t(`admin.general.defaultDateFormatHint`)}}</w-item-label>
+          </w-item-section>
+          <w-item-section>
+            <w-select
+              outlined
+              v-model="state.dateFormat"
+              emit-value
+              map-options
+              dense
+              :aria-label="t(`admin.general.defaultDateFormat`)"
+              :options="dateFormats" />
+          </w-item-section>
+        </w-item>
+        <w-separator class="my-2" inset />
+        <w-item>
+          <blueprint-icon icon="clock" />
+          <w-item-section>
+            <w-item-label>{{t(`admin.general.defaultTimeFormat`)}}</w-item-label>
+            <w-item-label caption>{{t(`admin.general.defaultTimeFormatHint`)}}</w-item-label>
+          </w-item-section>
+          <w-item-section class="flex-none">
+            <w-btn-toggle
+              v-model="state.timeFormat"
+              push
+              glossy
+              no-caps
+              toggle-color="primary"
+              :options="timeFormats" />
+          </w-item-section>
+        </w-item>
+      </w-list>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="menuRef.hide()" />
+        <w-btn
+          unelevated
+          :label="t(`common.actions.save`)"
+          color="primary"
+          padding="xs md"
+          @click="save" />
+      </w-card-actions>
+      <w-inner-loading :showing="state.loading > 0" />
+    </w-card>
+  </w-menu>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useQuasar } from 'quasar'
 import { onMounted, reactive, ref } from 'vue'
 
-// QUASAR
-
-const $q = useQuasar()
+import { notify } from '@/composables/notify'
 
 // I18N
 
@@ -119,7 +125,7 @@ const timezones = Intl.supportedValuesOf('timeZone')
 
 // METHODS
 
-async function save () {
+async function save() {
   state.loading++
   try {
     const resp = await API_CLIENT.put('users/defaults', {
@@ -130,15 +136,17 @@ async function save () {
       }
     }).json()
     if (!resp?.ok) {
-      throw new Error(t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.users.defaultsSaveSuccess')
     })
     menuRef.value.hide()
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to save user defaults.',
       caption: err.message
@@ -157,7 +165,7 @@ onMounted(async () => {
     state.dateFormat = resp?.dateFormat ?? 'YYYY-MM-DD'
     state.timeFormat = resp?.timeFormat ?? '12h'
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to load user defaults',
       caption: err.message
@@ -165,5 +173,4 @@ onMounted(async () => {
   }
   state.loading--
 })
-
 </script>

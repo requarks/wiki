@@ -1,28 +1,36 @@
-<template lang="pug">
-q-menu.translucent-menu(
-  auto-close
-  :anchor='props.anchor'
-  :self='props.self'
-  :offset='props.offset'
-  )
-  q-list(padding, style='min-width: 200px;')
-    q-item(
-      v-for='lang of siteStore.locales.active'
-      :key='lang.code'
-      clickable
-      @click='commonStore.setLocale(lang.code)'
-      )
-      q-item-section(side)
-        q-avatar(rounded, :color='lang.code === commonStore.locale ? `secondary` : `primary`', text-color='white', size='sm')
-          .text-caption.text-uppercase: strong {{ lang.language }}
-      q-item-section
-        q-item-label {{ lang.nativeName }}
-        q-item-label(caption) {{ lang.name }}
+<template>
+  <w-menu
+    class="translucent-menu"
+    auto-close
+    :anchor="props.anchor"
+    :self="props.self"
+    :offset="props.offset">
+    <w-list padding style="min-width: 200px;">
+      <w-item
+        v-for="lang of siteStore.locales.active"
+        :key="lang.code"
+        clickable
+        @click="commonStore.setLocale(lang.code)">
+        <w-item-section side>
+          <w-avatar
+            rounded
+            :color="lang.code === commonStore.locale ? `secondary` : `primary`"
+            text-color="white"
+            size="sm">
+            <div class="text-caption uppercase"><strong>{{ lang.language }}</strong></div>
+          </w-avatar>
+        </w-item-section>
+        <w-item-section>
+          <w-item-label>{{ lang.nativeName }}</w-item-label>
+          <w-item-label caption>{{ lang.name }}</w-item-label>
+        </w-item-section>
+      </w-item>
+    </w-list>
+  </w-menu>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useQuasar } from 'quasar'
 
 import { useCommonStore } from '@/stores/common'
 import { useSiteStore } from '@/stores/site'
@@ -40,13 +48,10 @@ const props = defineProps({
   },
   offset: {
     type: Array,
-    default: () => ([0, 0])
+    default: () => [0, 0]
   }
 })
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -58,5 +63,4 @@ const siteStore = useSiteStore()
 const { t } = useI18n()
 
 // METHODS
-
 </script>

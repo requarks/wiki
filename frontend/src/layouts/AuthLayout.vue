@@ -1,13 +1,9 @@
-<template lang='pug'>
-q-layout(view='hHh lpr lff')
-  q-page-container
-    router-view
+<template>
+  <w-layout>
+    <w-page-container>
+      <router-view />
+    </w-page-container>
+  </w-layout>
 </template>
 
-<script setup>
-
-</script>
-
-<style lang="scss">
-
-</style>
+<script setup></script>

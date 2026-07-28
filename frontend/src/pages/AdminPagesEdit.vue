@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, grid-list-lg)
     v-layout(row, wrap, v-if='page.id')
       v-flex(xs12)
@@ -197,7 +197,13 @@ export default {
           })
           this.$router.replace('/pages')
         } else {
-          throw new Error(_.get(resp, 'data.pages.delete.responseResult.message', this.$t('common.error.unexpected')))
+          throw new Error(
+            _.get(
+              resp,
+              'data.pages.delete.responseResult.message',
+              this.$t('common.error.unexpected')
+            )
+          )
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -222,7 +228,7 @@ export default {
       },
       fetchPolicy: 'network-only',
       update: (data) => data.pages.single,
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-pages-refresh')
       }
     }
@@ -230,6 +236,4 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

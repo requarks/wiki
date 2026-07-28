@@ -1,77 +1,61 @@
-<template lang="pug">
-q-menu.translucent-menu(
-  auto-close
-  anchor='bottom right'
-  self='top right'
-  )
-  q-list(padding)
-    q-item(
-      clickable
-      @click='create(`wysiwyg`)'
-      v-if='siteStore.editors.wysiwyg && flagsStore.experimental'
-      )
-      blueprint-icon(icon='google-presentation')
-      q-item-section.q-pr-sm New Page
-    q-item(
-      clickable
-      @click='create(`markdown`)'
-      v-if='siteStore.editors.markdown'
-      )
-      blueprint-icon(icon='markdown')
-      q-item-section.q-pr-sm New Markdown Page
-    template(v-if='flagsStore.experimental')
-      q-item(
+<template>
+  <w-menu class="translucent-menu" auto-close anchor="bottom right" self="top right">
+    <w-list padding>
+      <w-item
         clickable
-        @click='create(`asciidoc`)'
-        v-if='siteStore.editors.asciidoc'
-        )
-        blueprint-icon(icon='asciidoc')
-        q-item-section.q-pr-sm New AsciiDoc Page
-      q-item(
-        clickable
-        @click='create(`channel`)'
-        )
-        blueprint-icon(icon='chat')
-        q-item-section.q-pr-sm New Discussion Space
-      q-item(
-        clickable
-        @click='create(`blog`)'
-        )
-        blueprint-icon(icon='typewriter-with-paper')
-        q-item-section.q-pr-sm New Blog Page
-      q-item(
-        clickable
-        @click='create(`api`)'
-        )
-        blueprint-icon(icon='api')
-        q-item-section.q-pr-sm New API Documentation
-      q-item(
-        clickable
-        @click='create(`redirect`)'
-        )
-        blueprint-icon(icon='advance')
-        q-item-section.q-pr-sm New Redirection
-    template(v-if='props.hideAssetBtn === false')
-      q-separator.q-my-sm(inset)
-      q-item(
-        clickable
-        @click='openFileManager'
-        )
-        blueprint-icon(icon='add-image')
-        q-item-section.q-pr-sm Upload Media Asset
-    template(v-if='props.showNewFolder')
-      q-separator.q-my-sm(inset)
-      q-item(
-        clickable
-        @click='newFolder'
-        )
-        blueprint-icon(icon='add-folder')
-        q-item-section.q-pr-sm New Folder
+        @click="create(`wysiwyg`)"
+        v-if="siteStore.editors.wysiwyg && flagsStore.experimental">
+        <blueprint-icon icon="google-presentation" />
+        <w-item-section class="pr-2">New Page</w-item-section>
+      </w-item>
+      <w-item clickable @click="create(`markdown`)" v-if="siteStore.editors.markdown">
+        <blueprint-icon icon="markdown" />
+        <w-item-section class="pr-2">New Markdown Page</w-item-section>
+      </w-item>
+      <template v-if="flagsStore.experimental">
+        <w-item clickable @click="create(`asciidoc`)" v-if="siteStore.editors.asciidoc">
+          <blueprint-icon icon="asciidoc" />
+          <w-item-section class="pr-2">New AsciiDoc Page</w-item-section>
+        </w-item>
+        <w-item clickable @click="create(`channel`)">
+          <blueprint-icon icon="chat" />
+          <w-item-section class="pr-2">New Discussion Space</w-item-section>
+        </w-item>
+        <w-item clickable @click="create(`blog`)">
+          <blueprint-icon icon="typewriter-with-paper" />
+          <w-item-section class="pr-2">New Blog Page</w-item-section>
+        </w-item>
+        <w-item clickable @click="create(`api`)">
+          <blueprint-icon icon="api" />
+          <w-item-section class="pr-2">New API Documentation</w-item-section>
+        </w-item>
+        <w-item clickable @click="create(`redirect`)">
+          <blueprint-icon icon="advance" />
+          <w-item-section class="pr-2">New Redirection</w-item-section>
+        </w-item>
+      </template>
+      <template v-if="props.hideAssetBtn === false">
+        <w-separator class="my-2" inset />
+        <w-item clickable @click="openFileManager">
+          <blueprint-icon icon="add-image" />
+          <w-item-section class="pr-2">Upload Media Asset</w-item-section>
+        </w-item>
+      </template>
+      <template v-if="props.showNewFolder">
+        <w-separator class="my-2" inset />
+        <w-item clickable @click="newFolder">
+          <blueprint-icon icon="add-folder" />
+          <w-item-section class="pr-2">New Folder</w-item-section>
+        </w-item>
+      </template>
+    </w-list>
+  </w-menu>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useQuasar } from 'quasar'
+
+import { loading } from '@/composables/loading'
 
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
@@ -99,9 +83,6 @@ const props = defineProps({
 
 const emit = defineEmits(['newFolder', 'newPage'])
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -117,10 +98,10 @@ const { t } = useI18n()
 // METHODS
 
 async function create (editor) {
-  $q.loading.show()
+  loading.show()
   emit('newPage')
   await pageStore.pageCreate({ editor, basePath: props.basePath })
-  $q.loading.hide()
+  loading.hide()
 }
 
 function openFileManager () {

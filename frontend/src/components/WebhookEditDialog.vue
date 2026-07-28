@@ -1,203 +1,212 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 850px;')
-    q-card-section.card-header
-      template(v-if='props.hookId')
-        q-icon(name='img:/_assets/icons/fluent-pencil-drawing.svg', left, size='sm')
-        span {{t(`admin.webhooks.edit`)}}
-      template(v-else)
-        q-icon(name='img:/_assets/icons/fluent-plus-plus.svg', left, size='sm')
-        span {{t(`admin.webhooks.new`)}}
-    //- STATE INFO BAR
-    q-card-section.flex.items-center.bg-indigo.text-white(v-if='props.hookId && state.hook.state === `pending`')
-      q-spinner-clock.q-mr-sm(
-        color='white'
-        size='xs'
-      )
-      .text-caption {{t('admin.webhooks.statePendingHint')}}
-    q-card-section.flex.items-center.bg-positive.text-white(v-if='props.hookId && state.hook.state === `success`')
-      q-spinner-infinity.q-mr-sm(
-        color='white'
-        size='xs'
-      )
-      .text-caption {{t('admin.webhooks.stateSuccessHint')}}
-    q-card-section.bg-negative.text-white(v-if='props.hookId && state.hook.state === `error`')
-      .flex.items-center
-        q-icon.q-mr-sm(
-          color='white'
-          size='xs'
-          name='las la-exclamation-triangle'
-        )
-        .text-caption {{t('admin.webhooks.stateErrorExplain')}}
-      .text-caption.q-pl-lg.q-ml-xs.text-red-2 {{state.hook.lastErrorMessage}}
-    //- FORM
-    q-form.q-py-sm(ref='editWebhookForm')
-      q-item
-        blueprint-icon(icon='info-popup')
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.hook.name'
-            dense
-            :rules='hookNameValidation'
-            hide-bottom-space
-            :label='t(`common.field.name`)'
-            :aria-label='t(`common.field.name`)'
-            lazy-rules='ondemand'
-            autofocus
-            )
-      q-item
-        blueprint-icon(icon='lightning-bolt')
-        q-item-section
-          q-select(
-            outlined
-            :options='events'
-            v-model='state.hook.events'
-            multiple
-            map-options
-            emit-value
-            option-value='key'
-            option-label='name'
-            options-dense
-            dense
-            :rules='hookEventsValidation'
-            hide-bottom-space
-            :label='t(`admin.webhooks.events`)'
-            :aria-label='t(`admin.webhooks.events`)'
-            lazy-rules='ondemand'
-            )
-            template(v-slot:selected)
-              .text-caption(v-if='state.hook.events.length > 0') {{t(`admin.webhooks.eventsSelected`, state.hook.events.length, { count: state.hook.events.length })}}
-              span(v-else) &nbsp;
-            template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
-              q-item(
-                v-bind='itemProps'
-                )
-                q-item-section(side)
-                  q-checkbox(
-                    :model-value='selected'
-                    @update:model-value='toggleOption(opt)'
-                    size='sm'
-                    )
-                q-item-section(side)
-                  q-chip.q-mx-none(
-                    size='sm'
-                    color='positive'
-                    text-color='white'
-                    square
-                    ) {{opt.type}}
-                q-item-section
-                  q-item-label {{opt.name}}
-                  //- Subscribing is allowed, but say plainly that nothing fires it yet
-                  q-item-label(caption, v-if='!opt.isEmitted') {{ t('admin.webhooks.eventNotEmitted') }}
-      q-item
-        blueprint-icon.self-start(icon='unknown-status')
-        q-item-section
-          q-item-label {{t(`admin.webhooks.url`)}}
-          q-item-label(caption) {{t(`admin.webhooks.urlHint`)}}
-          q-input.q-mt-sm(
-            outlined
-            v-model='state.hook.url'
-            dense
-            :rules='hookUrlValidation'
-            hide-bottom-space
-            placeholder='https://'
-            :aria-label='t(`admin.webhooks.url`)'
-            lazy-rules='ondemand'
-            )
-            template(v-slot:prepend)
-              q-chip.q-mx-none(
-                color='positive'
-                text-color='white'
-                square
-                size='sm'
-              ) POST
-      q-item(tag='label', v-ripple)
-        blueprint-icon(icon='rescan-document')
-        q-item-section
-          q-item-label {{t(`admin.webhooks.includeMetadata`)}}
-          q-item-label(caption) {{t(`admin.webhooks.includeMetadataHint`)}}
-        q-item-section(avatar)
-          q-toggle(
-            v-model='state.hook.includeMetadata'
-            color='primary'
-            checked-icon='las la-check'
-            unchecked-icon='las la-times'
-            :aria-label='t(`admin.webhooks.includeMetadata`)'
-            )
-      q-item(tag='label', v-ripple)
-        blueprint-icon(icon='select-all')
-        q-item-section
-          q-item-label {{t(`admin.webhooks.includeContent`)}}
-          q-item-label(caption) {{t(`admin.webhooks.includeContentHint`)}}
-        q-item-section(avatar)
-          q-toggle(
-            v-model='state.hook.includeContent'
-            color='primary'
-            checked-icon='las la-check'
-            unchecked-icon='las la-times'
-            :aria-label='t(`admin.webhooks.includeContent`)'
-            )
-      q-item(tag='label', v-ripple)
-        blueprint-icon(icon='security-ssl')
-        q-item-section
-          q-item-label {{t(`admin.webhooks.acceptUntrusted`)}}
-          q-item-label(caption) {{t(`admin.webhooks.acceptUntrustedHint`)}}
-        q-item-section(avatar)
-          q-toggle(
-            v-model='state.hook.acceptUntrusted'
-            color='primary'
-            checked-icon='las la-check'
-            unchecked-icon='las la-times'
-            :aria-label='t(`admin.webhooks.acceptUntrusted`)'
-            )
-      q-item
-        blueprint-icon.self-start(icon='fingerprint-scan')
-        q-item-section
-          q-item-label {{t(`admin.webhooks.authHeader`)}}
-          q-item-label(caption) {{t(`admin.webhooks.authHeaderHint`)}}
-          q-input.q-mt-sm(
-            outlined
-            v-model='state.hook.authHeader'
-            dense
-            :aria-label='t(`admin.webhooks.authHeader`)'
-            )
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        v-if='props.hookId'
-        unelevated
-        :label='t(`common.actions.save`)'
-        color='primary'
-        padding='xs md'
-        @click='save'
-        :loading='state.isLoading'
-        )
-      q-btn(
-        v-else
-        unelevated
-        :label='t(`common.actions.create`)'
-        color='primary'
-        padding='xs md'
-        @click='create'
-        :loading='state.isLoading'
-        )
+<template>
+  <w-dialog v-model="dialogVisible" @hide="onDialogHide">
+    <w-card class="relative" style="min-width: 850px">
+      <w-card-section class="card-header">
+        <template v-if="props.hookId">
+          <w-icon name="img:/_assets/icons/fluent-pencil-drawing.svg" size="sm" class="mr-2" />
+          <span>{{ t(`admin.webhooks.edit`) }}</span>
+        </template>
+        <template v-else>
+          <w-icon name="img:/_assets/icons/fluent-plus-plus.svg" size="sm" class="mr-2" />
+          <span>{{ t(`admin.webhooks.new`) }}</span>
+        </template>
+      </w-card-section>
 
-    q-inner-loading(:showing='state.isLoading')
-      q-spinner(color='accent', size='lg')
+      <!-- STATE INFO BAR -->
+      <w-card-section
+        v-if="props.hookId && state.hook.state === `pending`"
+        class="flex flex-nowrap items-center bg-indigo text-white">
+        <w-spinner size="18px" class="mr-2" />
+        <div class="text-caption">{{ t('admin.webhooks.statePendingHint') }}</div>
+      </w-card-section>
+      <w-card-section
+        v-if="props.hookId && state.hook.state === `success`"
+        class="flex flex-nowrap items-center bg-positive text-white">
+        <w-spinner size="18px" class="mr-2" />
+        <div class="text-caption">{{ t('admin.webhooks.stateSuccessHint') }}</div>
+      </w-card-section>
+      <w-card-section
+        v-if="props.hookId && state.hook.state === `error`"
+        class="bg-negative text-white">
+        <div class="flex flex-nowrap items-center">
+          <w-icon color="white" size="xs" name="la:exclamation-triangle" class="mr-2" />
+          <div class="text-caption">{{ t('admin.webhooks.stateErrorExplain') }}</div>
+        </div>
+        <div class="text-caption text-red-2 pl-6 ml-1">{{ state.hook.lastErrorMessage }}</div>
+      </w-card-section>
+
+      <!-- FORM -->
+      <w-form ref="editWebhookForm" class="py-2">
+        <w-item>
+          <blueprint-icon icon="info-popup" />
+          <w-item-section>
+            <w-input
+              v-model="state.hook.name"
+              outlined
+              dense
+              :rules="hookNameValidation"
+              hide-bottom-space
+              :label="t(`common.field.name`)"
+              lazy-rules="ondemand"
+              autofocus />
+          </w-item-section>
+        </w-item>
+        <w-item>
+          <blueprint-icon icon="lightning-bolt" />
+          <w-item-section>
+            <w-select
+              v-model="state.hook.events"
+              outlined
+              :options="events"
+              multiple
+              map-options
+              emit-value
+              option-value="key"
+              option-label="name"
+              options-dense
+              dense
+              :rules="hookEventsValidation"
+              hide-bottom-space
+              :label="t(`admin.webhooks.events`)"
+              lazy-rules="ondemand">
+              <template #selected>
+                <span v-if="state.hook.events.length > 0" class="text-caption">
+                  {{
+                    t(`admin.webhooks.eventsSelected`, state.hook.events.length, {
+                      count: state.hook.events.length
+                    })
+                  }}
+                </span>
+                <span v-else>&nbsp;</span>
+              </template>
+              <template #option="{ opt }">
+                <span class="flex flex-nowrap items-center gap-2">
+                  <w-chip size="sm" color="positive" text-color="white" square>{{
+                    opt.type
+                  }}</w-chip>
+                  <span class="min-w-0 flex-1">
+                    <w-item-label>{{ opt.name }}</w-item-label>
+                    <!-- Subscribing is allowed, but say plainly that nothing fires it yet -->
+                    <w-item-label v-if="!opt.isEmitted" caption>{{
+                      t('admin.webhooks.eventNotEmitted')
+                    }}</w-item-label>
+                  </span>
+                </span>
+              </template>
+            </w-select>
+          </w-item-section>
+        </w-item>
+        <w-item>
+          <blueprint-icon icon="unknown-status" class="self-start" />
+          <w-item-section>
+            <w-item-label>{{ t(`admin.webhooks.url`) }}</w-item-label>
+            <w-item-label caption>{{ t(`admin.webhooks.urlHint`) }}</w-item-label>
+            <w-input
+              v-model="state.hook.url"
+              class="mt-2"
+              outlined
+              dense
+              :rules="hookUrlValidation"
+              hide-bottom-space
+              placeholder="https://"
+              :aria-label="t(`admin.webhooks.url`)"
+              lazy-rules="ondemand">
+              <template #prepend>
+                <w-chip color="positive" text-color="white" square size="sm">POST</w-chip>
+              </template>
+            </w-input>
+          </w-item-section>
+        </w-item>
+        <w-item clickable @click="state.hook.includeMetadata = !state.hook.includeMetadata">
+          <blueprint-icon icon="rescan-document" />
+          <w-item-section>
+            <w-item-label>{{ t(`admin.webhooks.includeMetadata`) }}</w-item-label>
+            <w-item-label caption>{{ t(`admin.webhooks.includeMetadataHint`) }}</w-item-label>
+          </w-item-section>
+          <w-item-section avatar>
+            <w-toggle
+              v-model="state.hook.includeMetadata"
+              :aria-label="t(`admin.webhooks.includeMetadata`)"
+              @click.stop />
+          </w-item-section>
+        </w-item>
+        <w-item clickable @click="state.hook.includeContent = !state.hook.includeContent">
+          <blueprint-icon icon="select-all" />
+          <w-item-section>
+            <w-item-label>{{ t(`admin.webhooks.includeContent`) }}</w-item-label>
+            <w-item-label caption>{{ t(`admin.webhooks.includeContentHint`) }}</w-item-label>
+          </w-item-section>
+          <w-item-section avatar>
+            <w-toggle
+              v-model="state.hook.includeContent"
+              :aria-label="t(`admin.webhooks.includeContent`)"
+              @click.stop />
+          </w-item-section>
+        </w-item>
+        <w-item clickable @click="state.hook.acceptUntrusted = !state.hook.acceptUntrusted">
+          <blueprint-icon icon="security-ssl" />
+          <w-item-section>
+            <w-item-label>{{ t(`admin.webhooks.acceptUntrusted`) }}</w-item-label>
+            <w-item-label caption>{{ t(`admin.webhooks.acceptUntrustedHint`) }}</w-item-label>
+          </w-item-section>
+          <w-item-section avatar>
+            <w-toggle
+              v-model="state.hook.acceptUntrusted"
+              :aria-label="t(`admin.webhooks.acceptUntrusted`)"
+              @click.stop />
+          </w-item-section>
+        </w-item>
+        <w-item>
+          <blueprint-icon icon="fingerprint-scan" class="self-start" />
+          <w-item-section>
+            <w-item-label>{{ t(`admin.webhooks.authHeader`) }}</w-item-label>
+            <w-item-label caption>{{ t(`admin.webhooks.authHeaderHint`) }}</w-item-label>
+            <w-input
+              v-model="state.hook.authHeader"
+              class="mt-2"
+              outlined
+              dense
+              :aria-label="t(`admin.webhooks.authHeader`)" />
+          </w-item-section>
+        </w-item>
+      </w-form>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          v-if="props.hookId"
+          unelevated
+          :label="t(`common.actions.save`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.isLoading"
+          @click="save" />
+        <w-btn
+          v-else
+          unelevated
+          :label="t(`common.actions.create`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.isLoading"
+          @click="create" />
+      </w-card-actions>
+
+      <w-inner-loading :showing="state.isLoading" size="38px" spinner-class="text-accent" />
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 // PROPS
@@ -211,14 +220,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // I18N
 
@@ -245,27 +251,77 @@ const state = reactive({
 
 // COMPUTED
 
-const EVENT_DEFINITIONS = computed(() => ([
-  { key: 'page:create', name: t('admin.webhooks.eventCreatePage'), type: t('admin.webhooks.typePage') },
+const EVENT_DEFINITIONS = computed(() => [
+  {
+    key: 'page:create',
+    name: t('admin.webhooks.eventCreatePage'),
+    type: t('admin.webhooks.typePage')
+  },
   { key: 'page:edit', name: t('admin.webhooks.eventEditPage'), type: t('admin.webhooks.typePage') },
-  { key: 'page:rename', name: t('admin.webhooks.eventRenamePage'), type: t('admin.webhooks.typePage') },
-  { key: 'page:delete', name: t('admin.webhooks.eventDeletePage'), type: t('admin.webhooks.typePage') },
-  { key: 'asset:upload', name: t('admin.webhooks.eventUploadAsset'), type: t('admin.webhooks.typeAsset') },
-  { key: 'asset:edit', name: t('admin.webhooks.eventEditAsset'), type: t('admin.webhooks.typeAsset') },
-  { key: 'asset:rename', name: t('admin.webhooks.eventRenameAsset'), type: t('admin.webhooks.typeAsset') },
-  { key: 'asset:delete', name: t('admin.webhooks.eventDeleteAsset'), type: t('admin.webhooks.typeAsset') },
-  { key: 'comment:new', name: t('admin.webhooks.eventNewComment'), type: t('admin.webhooks.typeComment') },
-  { key: 'comment:edit', name: t('admin.webhooks.eventEditComment'), type: t('admin.webhooks.typeComment') },
-  { key: 'comment:delete', name: t('admin.webhooks.eventDeleteComment'), type: t('admin.webhooks.typeComment') },
+  {
+    key: 'page:rename',
+    name: t('admin.webhooks.eventRenamePage'),
+    type: t('admin.webhooks.typePage')
+  },
+  {
+    key: 'page:delete',
+    name: t('admin.webhooks.eventDeletePage'),
+    type: t('admin.webhooks.typePage')
+  },
+  {
+    key: 'asset:upload',
+    name: t('admin.webhooks.eventUploadAsset'),
+    type: t('admin.webhooks.typeAsset')
+  },
+  {
+    key: 'asset:edit',
+    name: t('admin.webhooks.eventEditAsset'),
+    type: t('admin.webhooks.typeAsset')
+  },
+  {
+    key: 'asset:rename',
+    name: t('admin.webhooks.eventRenameAsset'),
+    type: t('admin.webhooks.typeAsset')
+  },
+  {
+    key: 'asset:delete',
+    name: t('admin.webhooks.eventDeleteAsset'),
+    type: t('admin.webhooks.typeAsset')
+  },
+  {
+    key: 'comment:new',
+    name: t('admin.webhooks.eventNewComment'),
+    type: t('admin.webhooks.typeComment')
+  },
+  {
+    key: 'comment:edit',
+    name: t('admin.webhooks.eventEditComment'),
+    type: t('admin.webhooks.typeComment')
+  },
+  {
+    key: 'comment:delete',
+    name: t('admin.webhooks.eventDeleteComment'),
+    type: t('admin.webhooks.typeComment')
+  },
   { key: 'user:join', name: t('admin.webhooks.eventUserJoin'), type: t('admin.webhooks.typeUser') },
-  { key: 'user:login', name: t('admin.webhooks.eventUserLogin'), type: t('admin.webhooks.typeUser') },
-  { key: 'user:logout', name: t('admin.webhooks.eventUserLogout'), type: t('admin.webhooks.typeUser') }
-]))
+  {
+    key: 'user:login',
+    name: t('admin.webhooks.eventUserLogin'),
+    type: t('admin.webhooks.typeUser')
+  },
+  {
+    key: 'user:logout',
+    name: t('admin.webhooks.eventUserLogout'),
+    type: t('admin.webhooks.typeUser')
+  }
+])
 
-const events = computed(() => EVENT_DEFINITIONS.value.map(evt => ({
-  ...evt,
-  isEmitted: state.emittedEvents === null || state.emittedEvents.includes(evt.key)
-})))
+const events = computed(() =>
+  EVENT_DEFINITIONS.value.map((evt) => ({
+    ...evt,
+    isEmitted: state.emittedEvents === null || state.emittedEvents.includes(evt.key)
+  }))
+)
 
 // REFS
 
@@ -274,21 +330,19 @@ const editWebhookForm = ref(null)
 // VALIDATION RULES
 
 const hookNameValidation = [
-  val => val.length > 0 || t('admin.webhooks.nameMissing'),
-  val => /^[^<>"]+$/.test(val) || t('admin.webhooks.nameInvalidChars')
+  (val) => val.length > 0 || t('admin.webhooks.nameMissing'),
+  (val) => /^[^<>"]+$/.test(val) || t('admin.webhooks.nameInvalidChars')
 ]
-const hookEventsValidation = [
-  val => val.length > 0 || t('admin.webhooks.eventsMissing')
-]
+const hookEventsValidation = [(val) => val.length > 0 || t('admin.webhooks.eventsMissing')]
 const hookUrlValidation = [
-  val => (val.length > 0 && val.startsWith('http')) || t('admin.webhooks.urlMissing'),
-  val => /^[^<>"]+$/.test(val) || t('admin.webhooks.urlInvalidChars')
+  (val) => (val.length > 0 && val.startsWith('http')) || t('admin.webhooks.urlMissing'),
+  (val) => /^[^<>"]+$/.test(val) || t('admin.webhooks.urlInvalidChars')
 ]
 
 // METHODS
 
 /** The fields the API accepts — `state` and `lastErrorMessage` are the server's to set, not ours. */
-function writableFields () {
+function writableFields() {
   return {
     name: state.hook.name,
     events: state.hook.events,
@@ -300,7 +354,7 @@ function writableFields () {
   }
 }
 
-async function fetchHook (id) {
+async function fetchHook(id) {
   state.isLoading = true
   try {
     const resp = await API_CLIENT.get(`hooks/${id}`).json()
@@ -315,8 +369,11 @@ async function fetchHook (id) {
       lastErrorMessage: resp.lastErrorMessage ?? ''
     }
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })
@@ -325,7 +382,7 @@ async function fetchHook (id) {
   state.isLoading = false
 }
 
-async function create () {
+async function create() {
   state.isLoading = true
   try {
     const isFormValid = await editWebhookForm.value.validate(true)
@@ -336,14 +393,17 @@ async function create () {
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.webhooks.createSuccess')
     })
     onDialogOK()
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })
@@ -351,7 +411,7 @@ async function create () {
   state.isLoading = false
 }
 
-async function save () {
+async function save() {
   state.isLoading = true
   try {
     const isFormValid = await editWebhookForm.value.validate(true)
@@ -362,14 +422,17 @@ async function save () {
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.webhooks.updateSuccess')
     })
     onDialogOK()
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })
@@ -377,10 +440,10 @@ async function save () {
   state.isLoading = false
 }
 
-async function fetchEmittedEvents () {
+async function fetchEmittedEvents() {
   try {
     const resp = await API_CLIENT.get('hooks/events').json()
-    state.emittedEvents = (resp ?? []).filter(evt => evt.isEmitted).map(evt => evt.key)
+    state.emittedEvents = (resp ?? []).filter((evt) => evt.isEmitted).map((evt) => evt.key)
   } catch {
     // -> Purely informational: on failure, flag nothing rather than flag everything
     state.emittedEvents = null
@@ -395,5 +458,4 @@ onMounted(() => {
     fetchHook(props.hookId)
   }
 })
-
 </script>

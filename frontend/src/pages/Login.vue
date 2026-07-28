@@ -1,31 +1,26 @@
-<template lang='pug'>
-.auth
-  .auth-content
-    .auth-logo
-      img(:src='`/_site/current/logo`' :alt='siteStore.title')
-    h2.auth-site-title(v-if='siteStore.logoText') {{ siteStore.title }}
-    p.text-grey-7 Login to continue
-    auth-login-panel
-  .auth-bg(aria-hidden="true")
-    img(:src='`/_site/current/loginbg`' alt='')
+<template>
+  <div class="auth">
+    <div class="auth-content">
+      <div class="auth-logo"><img :src="`/_site/current/logo`" :alt="siteStore.title" /></div>
+      <h2 class="auth-site-title" v-if="siteStore.logoText">{{ siteStore.title }}</h2>
+      <p class="text-grey-7">Login to continue</p>
+      <auth-login-panel />
+    </div>
+    <div class="auth-bg" aria-hidden="true"><img :src="`/_site/current/loginbg`" alt="" /></div>
+  </div>
 </template>
 
 <script setup>
-
-import { find, has, head, reject, sortBy } from 'lodash-es'
-import Cookies from 'js-cookie'
-
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
 
-import AuthLoginPanel from '@/components/AuthLoginPanel.vue'
+import { useMeta } from '@/composables/meta'
 
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
-
-const $q = useQuasar()
+import { find, has, head, reject, sortBy } from 'lodash-es'
+import Cookies from 'js-cookie'
+import AuthLoginPanel from '@/components/AuthLoginPanel.vue'
 
 // STORES
 
@@ -96,7 +91,7 @@ const state = reactive({
 /**
  * LOGIN
  */
-async function login () {
+async function login() {
   this.errorShown = false
   if (this.username.length < 2) {
     this.errorMessage = t('auth.invalidEmailUsername')
@@ -163,7 +158,7 @@ async function login () {
 /**
  * VERIFY TFA CODE
  */
-async function verifySecurityCode (setup = false) {
+async function verifySecurityCode(setup = false) {
   if (this.securityCode.length !== 6) {
     this.$store.commit('showNotification', {
       style: 'red',
@@ -240,7 +235,7 @@ async function verifySecurityCode (setup = false) {
 /**
  * CHANGE PASSWORD
  */
-async function changePassword () {
+async function changePassword() {
   this.loaderColor = 'grey darken-4'
   this.loaderTitle = t('auth.changePwd.loading')
   this.isLoading = true
@@ -298,7 +293,7 @@ async function changePassword () {
 /**
  * SWITCH TO FORGOT PASSWORD SCREEN
  */
-function forgotPassword () {
+function forgotPassword() {
   this.screen = 'forgot'
   this.$nextTick(() => {
     this.$refs.iptForgotPwdEmail.focus()
@@ -308,7 +303,7 @@ function forgotPassword () {
 /**
  * FORGOT PASSWORD SUBMIT
  */
-async function forgotPasswordSubmit () {
+async function forgotPasswordSubmit() {
   this.loaderColor = 'grey darken-4'
   this.loaderTitle = t('auth.forgotPasswordLoading')
   this.isLoading = true
@@ -362,7 +357,7 @@ async function forgotPasswordSubmit () {
   this.isLoading = false
 }
 
-function handleLoginResponse (respObj) {
+function handleLoginResponse(respObj) {
   this.continuationToken = respObj.continuationToken
   if (respObj.mustChangePwd === true) {
     this.screen = 'changePwd'
@@ -412,75 +407,75 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
- .auth {
-    background-color: #FFF;
+.auth {
+  background-color: #fff;
+  display: flex;
+
+  @at-root .body--dark & {
+    background-color: $dark-6;
+  }
+
+  &-content {
+    flex: 1 0 100%;
+    width: 100%;
+    max-width: 500px;
+    padding: 3rem 4rem;
     display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
 
-    @at-root .body--dark & {
-      background-color: $dark-6;
-    }
-
-    &-content {
-      flex: 1 0 100%;
-      width: 100%;
-      max-width: 500px;
-      padding: 3rem 4rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: stretch;
-
-      @media (max-width: $breakpoint-xs-max) {
-        padding: 1rem 2rem;
-        max-width: 100vw;
-      }
-    }
-
-    &-logo {
-      margin-bottom: 6px;
-
-      img {
-        height: 72px;
-      }
-    }
-
-    &-site-title {
-      font-size: 1.875rem;
-      line-height: 2.25rem;
-      font-weight: 700;
-      margin: 0;
-      color: $blue-grey-9;
-
-      @at-root .body--dark & {
-        color: $blue-grey-1;
-      }
-    }
-
-    &-strategies {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
-      gap: 10px;
-    }
-
-    &-bg {
-      flex: 1;
-      flex-basis: 0;
-      position: relative;
-      height: 100vh;
-      overflow: hidden;
-
-      img {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: 0;
-        padding: 0;
-      }
+    @media (max-width: $breakpoint-xs-max) {
+      padding: 1rem 2rem;
+      max-width: 100vw;
     }
   }
+
+  &-logo {
+    margin-bottom: 6px;
+
+    img {
+      height: 72px;
+    }
+  }
+
+  &-site-title {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: $blue-grey-9;
+
+    @at-root .body--dark & {
+      color: $blue-grey-1;
+    }
+  }
+
+  &-strategies {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
+    gap: 10px;
+  }
+
+  &-bg {
+    flex: 1;
+    flex-basis: 0;
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+
+    img {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 0;
+    }
+  }
+}
 </style>

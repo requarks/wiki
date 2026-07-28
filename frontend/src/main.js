@@ -1,5 +1,4 @@
 import { createApp } from 'vue'
-import { Quasar, Dialog, Loading, LoadingBar, Meta, Notify } from 'quasar'
 import { initializeRouter } from './router'
 import { initializeStore } from './stores'
 import { initializeApi } from './boot/api'
@@ -9,15 +8,13 @@ import { initializeExternals } from './boot/externals'
 import { initializeI18n } from './boot/i18n'
 import { initializeIconify } from './boot/iconify'
 import { initializeTemporal } from './boot/temporal'
-import quasarIconSet from 'quasar/icon-set/mdi-v7'
+import { initializeHairlines } from './helpers/hairline'
 
-// Import icon libraries
+// Roboto only: icon data is inlined at build time by scripts/generate-icons.mjs,
+// so no icon webfont is loaded.
 import '@quasar/extras/roboto-font/roboto-font.css'
-import '@mdi/font/css/materialdesignicons.css'
-import '@quasar/extras/line-awesome/line-awesome.css'
 
-// Import Quasar css
-import 'quasar/src/css/index.sass'
+import './css/tailwind.css'
 import './css/app.scss'
 
 import RootApp from './App.vue'
@@ -32,55 +29,11 @@ const app = createApp(RootApp)
 app.use(store)
 app.use(router)
 
+initializeHairlines()
 initializeApi(store)
 initializeComponents(app)
 initializeEventBus()
 initializeIconify()
 initializeExternals(router, store)
 initializeI18n(app, store)
-
-app.use(Quasar, {
-  plugins: {
-    Dialog,
-    Loading,
-    LoadingBar,
-    Meta,
-    Notify
-  },
-  iconSet: quasarIconSet,
-  config: {
-    brand: {
-      header: '#000',
-      sidebar: '#1976D2'
-    },
-    loading: {
-      delay: 500,
-      spinner: 'QSpinnerGrid',
-      spinnerSize: 32,
-      spinnerColor: 'white',
-      customClass: 'loading-darker'
-    },
-    loadingBar: {
-      color: 'primary',
-      size: '1px',
-      position: 'top'
-    },
-    notify: {
-      position: 'top',
-      progress: true,
-      color: 'green',
-      icon: 'las la-check',
-      actions: [
-        {
-          icon: 'las la-times',
-          color: 'white',
-          size: 'sm',
-          round: true,
-          handler: () => {}
-        }
-      ]
-    }
-  }
-})
-
 app.mount('#app')

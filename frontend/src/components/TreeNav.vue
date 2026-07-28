@@ -54,39 +54,42 @@ const { t } = useI18n()
 
 const contextActions = {
   newFolder: {
-    icon: 'las la-plus-circle',
+    icon: 'la:plus-circle',
     iconColor: 'blue',
     label: t('common.actions.newFolder')
   },
   duplicate: {
-    icon: 'las la-copy',
+    icon: 'la:copy',
     iconColor: 'teal',
     label: t('common.actions.duplicate') + '...'
   },
   rename: {
-    icon: 'las la-redo',
+    icon: 'la:redo',
     iconColor: 'teal',
     label: t('common.actions.rename') + '...'
   },
   move: {
-    icon: 'las la-arrow-right',
+    icon: 'la:arrow-right',
     iconColor: 'teal',
     label: t('common.actions.moveTo') + '...'
   },
   del: {
-    icon: 'las la-trash-alt',
+    icon: 'la:trash-alt',
     iconColor: 'negative',
     label: t('common.actions.delete'),
     labelColor: 'negative'
   }
 }
-provide('contextActionList', props.contextActionList.map(key => ({
-  key,
-  ...contextActions[key],
-  handler: (nodeId) => {
-    emit('contextAction', nodeId, key)
-  }
-})))
+provide(
+  'contextActionList',
+  props.contextActionList.map((key) => ({
+    key,
+    ...contextActions[key],
+    handler: (nodeId) => {
+      emit('contextAction', nodeId, key)
+    }
+  }))
+)
 
 // DATA
 
@@ -98,17 +101,17 @@ const state = reactive({
 // COMPUTED
 
 const selection = computed({
-  get () {
+  get() {
     return props.selected
   },
-  set (val) {
+  set(val) {
     emit('update:selected', val)
   }
 })
 
 // METHODS
 
-function emitLazyLoad (nodeId, isCurrent, clb) {
+function emitLazyLoad(nodeId, isCurrent, clb) {
   if (props.useLazyLoad) {
     emit('lazyLoad', nodeId, isCurrent, clb)
   } else {
@@ -116,16 +119,16 @@ function emitLazyLoad (nodeId, isCurrent, clb) {
   }
 }
 
-function setOpened (nodeId) {
+function setOpened(nodeId) {
   state.opened[nodeId] = true
 }
-function isLoaded (nodeId) {
+function isLoaded(nodeId) {
   return state.loaded[nodeId]
 }
-function setLoaded (nodeId, value) {
+function setLoaded(nodeId, value) {
   state.loaded[nodeId] = value
 }
-function resetLoaded () {
+function resetLoaded() {
   state.loaded = {}
 }
 
@@ -155,7 +158,7 @@ onMounted(() => {
     let foundRoot = false
     let currentId = props.selected
     while (!foundRoot) {
-      const parentId = findKey(props.nodes, n => n.children?.includes(currentId))
+      const parentId = findKey(props.nodes, (n) => n.children?.includes(currentId))
       if (parentId) {
         state.opened[parentId] = true
         currentId = parentId
@@ -166,7 +169,6 @@ onMounted(() => {
     state.opened[props.selected] = true
   }
 })
-
 </script>
 
 <style lang="scss">
@@ -190,13 +192,13 @@ onMounted(() => {
 
   &-node {
     display: block;
-    border-left: 2px solid rgba(0,0,0,.05);
+    border-left: 2px solid rgba(0, 0, 0, 0.05);
 
     @at-root .body--light & {
-      border-left: 2px solid rgba(0,0,0,.05);
+      border-left: 2px solid rgba(0, 0, 0, 0.05);
     }
     @at-root .body--dark & {
-      border-left: 2px solid rgba(255,255,255,.1);
+      border-left: 2px solid rgba(255, 255, 255, 0.1);
     }
   }
 
@@ -206,18 +208,20 @@ onMounted(() => {
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: background-color .4s ease;
+    transition: background-color 0.4s ease;
 
-    &:hover, &:focus, &.active {
+    &:hover,
+    &:focus,
+    &.active {
       @at-root .body--light & {
-        background-color: rgba(0,0,0,.05);
+        background-color: rgba(0, 0, 0, 0.05);
       }
       @at-root .body--dark & {
-        background-color: rgba(255,255,255,.1);
+        background-color: rgba(255, 255, 255, 0.1);
       }
     }
 
-    > .q-icon {
+    > .w-icon {
       margin-right: 5px;
     }
 
@@ -228,11 +232,13 @@ onMounted(() => {
 
   // Animations
 
-  &-enter-active, &-leave-active {
+  &-enter-active,
+  &-leave-active {
     transition: all 0.2s ease;
   }
 
-  &-enter-from, &-leave-to {
+  &-enter-from,
+  &-leave-to {
     transform: translateY(-10px);
     opacity: 0;
   }

@@ -1,219 +1,293 @@
-<template lang='pug'>
-q-page.admin-icons
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.admin-icons-icon.animated.fadeInLeft(src='/_assets/icons/fluent-spring.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.icons.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.icons.subtitle') }}
-    .col-auto
-      q-btn.acrylic-btn.q-mr-sm(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/system/icons`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.acrylic-btn.q-mr-sm(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='las la-plus'
-        :label='t(`admin.icons.addSet`)'
-        color='primary'
-        @click='openAddSet'
-      )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-12.col-lg
-      //- -----------------------
-      //- Icon Sets
-      //- -----------------------
-      q-card
-        q-card-section
-          .text-subtitle1 {{ t('admin.icons.sets') }}
-          .text-body2.text-grey {{ t('admin.icons.setsHint') }}
-        q-banner.q-mx-md.q-mb-md(
-          v-if='state.sets.length < 1 && state.loading < 1'
-          rounded
-          :class='$q.dark.isActive ? `bg-grey-9 text-white` : `bg-grey-2 text-grey-7`'
-          ) {{ t('admin.icons.noSets') }}
-        q-list(separator)
-          q-item(v-for='set of state.sets', :key='set.prefix')
-            q-item-section(side)
-              .admin-icons-samples
-                wiki-icon.admin-icons-sample(
-                  v-for='sample of sampleRefs(set)'
-                  :key='sample'
-                  :name='sample'
-                  size='24px'
-                )
-                q-icon(v-if='sampleRefs(set).length < 1', name='las la-icons', size='24px', color='grey')
-            q-item-section
-              q-item-label
-                strong {{ set.name }}
-                q-chip.q-ml-sm(square, dense, size='sm', color='primary', text-color='white') {{ set.prefix }}
-              q-item-label(caption) {{ setCaption(set) }}
-              q-item-label.text-deep-orange(caption, v-if='set.info?.palette') {{ t('admin.icons.paletteWarn') }}
-            q-item-section(side)
-              q-btn.acrylic-btn(
-                type='a'
-                icon='las la-external-link-square-alt'
-                :label='t(`admin.icons.reference`)'
-                color='indigo'
-                flat
-                no-caps
-                padding='xs md'
-                :href='referenceUrl(set)'
-                target='_blank'
-                rel='noreferrer noopener'
-                )
-                q-tooltip {{ t('admin.icons.referenceHint') }}
-            q-separator.q-ml-md(vertical)
-            q-item-section(side)
-              q-toggle.q-pr-sm(
-                :modelValue='set.isEnabled'
-                @update:model-value='newValue => setSetState(set, newValue)'
-                color='primary'
-                checked-icon='las la-check'
-                unchecked-icon='las la-times'
-                :label='t(`admin.icons.isEnabled`)'
-                :aria-label='t(`admin.icons.isEnabled`)'
-                )
-            q-item-section(side)
-              q-btn.acrylic-btn(
-                icon='las la-trash'
-                flat
-                color='negative'
-                :aria-label='t(`common.actions.delete`)'
-                @click='confirmDeleteSet(set)'
-                )
-                q-tooltip {{ t(`common.actions.delete`) }}
-
-    .col-12.col-lg-auto
-      //- -----------------------
-      //- Storage / Cache
-      //- -----------------------
-      q-card.rounded-borders(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{ t('admin.icons.storage') }}
-          .text-body2.text-grey {{ t('admin.icons.storageHint') }}
-        q-list.q-pb-sm(dense)
-          q-item
-            q-item-section
-              q-item-label.text-grey {{ t('admin.icons.storedIcons') }}
-              q-item-label {{ t('admin.icons.storedIconsValue', { count: state.cache.iconCount ?? 0 }) }}
-          q-separator.q-my-sm(inset)
-          q-item
-            q-item-section
-              q-item-label.text-grey {{ t('admin.icons.diskCache') }}
-              q-item-label {{ t('admin.icons.diskCacheValue', { count: state.cache.diskCount ?? 0, size: prettyBytes(state.cache.diskSize ?? 0) }) }}
-          q-separator.q-my-sm(inset)
-          q-item
-            q-item-section
-              q-item-label.text-grey {{ t('admin.icons.memoryCache') }}
-              q-item-label {{ t('admin.icons.memoryCacheValue', { count: state.cache.memoryCount ?? 0 }) }}
-        q-separator
-        q-card-actions.q-px-md
-          q-btn.acrylic-btn(
-            flat
-            no-caps
-            icon='las la-broom'
-            color='negative'
-            :label='t(`admin.icons.purgeCache`)'
-            @click='purgeCache'
-          )
-            q-tooltip {{ t('admin.icons.purgeCacheHint') }}
-
-      //- -----------------------
-      //- How it works
-      //- -----------------------
-      q-card.rounded-borders.q-mt-md(style='width: 350px;')
-        q-card-section
-          .text-subtitle1 {{ t('admin.icons.howItWorks') }}
-          .text-body2.text-grey.q-mt-sm {{ t('admin.icons.howItWorksHint') }}
-        q-separator.q-mb-sm(inset)
-        q-item
-          q-item-section
-            q-item-label.text-grey {{ t('admin.icons.upstream') }}
-            q-item-label.text-caption {{ t('admin.icons.upstreamHint') }}
-
-  //- -----------------------
-  //- Add Set Dialog
-  //- -----------------------
-  q-dialog(v-model='state.addSetDialog')
-    q-card(style='width: 700px; max-width: 90vw;')
-      q-card-section.row.items-center.q-pb-none
-        .text-h6 {{ t('admin.icons.addSet') }}
-        q-space
-        q-btn(icon='las la-times', flat, round, dense, v-close-popup)
-      q-card-section
-        .text-body2.text-grey {{ t('admin.icons.addSetHint') }}
-        q-input.q-mt-md(
-          v-model='state.availableFilter'
-          outlined
-          dense
-          clearable
-          :label='t(`admin.icons.filterSets`)'
-          :aria-label='t(`admin.icons.filterSets`)'
-          )
-          template(#prepend)
-            q-icon(name='las la-search')
-      q-separator
-      q-card-section.q-pa-none(style='height: 50vh; overflow-y: auto;')
-        q-inner-loading(:showing='state.loadingAvailable')
-          q-spinner-tail(color='primary', size='md')
-        q-banner.q-ma-md(
-          v-if='state.availableError'
-          rounded
-          class='bg-negative text-white'
-          ) {{ state.availableError }}
-        q-list(separator)
-          q-item(
-            v-for='set of filteredAvailableSets'
-            :key='set.prefix'
-            clickable
-            :disable='set.isAdded'
-            @click='addSet(set)'
-            )
-            q-item-section(side)
-              .admin-icons-samples
-                wiki-icon.admin-icons-sample(
-                  v-for='sample of set.samples.slice(0, 3)'
-                  :key='sample'
-                  :name='`${set.prefix}:${sample}`'
-                  size='24px'
-                )
-            q-item-section
-              q-item-label
-                strong {{ set.name }}
-                q-chip.q-ml-sm(square, dense, size='sm', color='primary', text-color='white') {{ set.prefix }}
-              q-item-label(caption) {{ availableCaption(set) }}
-            q-item-section(side)
-              q-chip(v-if='set.isAdded', dense, size='sm', color='positive', text-color='white', icon='las la-check') {{ t('admin.icons.added') }}
-              q-icon(v-else, name='las la-plus-circle', color='primary', size='sm')
+<template>
+  <w-page class="admin-icons">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img
+          class="admin-icon admin-icons-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-spring.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.icons.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.icons.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="acrylic-btn mr-2"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/system/icons`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="acrylic-btn mr-2"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="la:plus"
+          :label="t(`admin.icons.addSet`)"
+          color="primary"
+          @click="openAddSet" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="flex flex-wrap gap-4 p-4">
+      <div class="w-full lg:min-w-0 lg:flex-1">
+        <!-- ----------------------- -->
+        <!-- Icon Sets -->
+        <!-- ----------------------- -->
+        <w-card>
+          <w-card-header>
+            {{ t('admin.icons.sets') }}
+            <template #hint>{{ t('admin.icons.setsHint') }}</template>
+          </w-card-header>
+          <w-banner
+            class="mx-4 mb-4"
+            v-if="state.sets.length < 1 && state.loading < 1"
+            :class="dark.isActive ? `bg-grey-9 text-white` : `bg-grey-2 text-grey-7`"
+            >{{ t('admin.icons.noSets') }}</w-banner
+          >
+          <w-list separator>
+            <w-item v-for="set of state.sets" :key="set.prefix">
+              <w-item-section side>
+                <div class="admin-icons-samples">
+                  <w-icon
+                    class="admin-icons-sample"
+                    v-for="sample of sampleRefs(set)"
+                    :key="sample"
+                    :name="sample"
+                    size="24px" />
+                  <w-icon
+                    v-if="sampleRefs(set).length < 1"
+                    name="la:icons"
+                    size="24px"
+                    color="grey" />
+                </div>
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>
+                  <strong>{{ set.name }}</strong>
+                  <w-chip class="ml-2" square dense size="sm" color="primary" text-color="white">{{
+                    set.prefix
+                  }}</w-chip>
+                </w-item-label>
+                <w-item-label caption>{{ setCaption(set) }}</w-item-label>
+                <w-item-label class="text-deep-orange" caption v-if="set.info?.palette">{{
+                  t('admin.icons.paletteWarn')
+                }}</w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <w-btn
+                  class="acrylic-btn"
+                  icon="la:external-link-square-alt"
+                  :label="t(`admin.icons.reference`)"
+                  color="indigo"
+                  flat
+                  no-caps
+                  padding="xs md"
+                  :href="referenceUrl(set)"
+                  target="_blank">
+                  <w-tooltip>{{ t('admin.icons.referenceHint') }}</w-tooltip>
+                </w-btn>
+              </w-item-section>
+              <w-separator class="ml-4" vertical />
+              <w-item-section side>
+                <w-toggle
+                  class="pr-2"
+                  :modelValue="set.isEnabled"
+                  @update:model-value="(newValue) => setSetState(set, newValue)"
+                  :label="t(`admin.icons.isEnabled`)"
+                  :aria-label="t(`admin.icons.isEnabled`)" />
+              </w-item-section>
+              <w-item-section side>
+                <w-btn
+                  class="acrylic-btn"
+                  icon="la:trash"
+                  flat
+                  color="negative"
+                  :aria-label="t(`common.actions.delete`)"
+                  @click="confirmDeleteSet(set)">
+                  <w-tooltip>{{ t(`common.actions.delete`) }}</w-tooltip>
+                </w-btn>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </div>
+      <div class="w-full lg:w-auto">
+        <!-- ----------------------- -->
+        <!-- Storage / Cache -->
+        <!-- ----------------------- -->
+        <w-card class="rounded" style="width: 350px">
+          <w-card-header>
+            {{ t('admin.icons.storage') }}
+            <template #hint>{{ t('admin.icons.storageHint') }}</template>
+          </w-card-header>
+          <w-list class="pb-2" dense>
+            <w-item>
+              <w-item-section>
+                <w-item-label class="text-grey">{{ t('admin.icons.storedIcons') }}</w-item-label>
+                <w-item-label>{{
+                  t('admin.icons.storedIconsValue', { count: state.cache.iconCount ?? 0 })
+                }}</w-item-label>
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <w-item-section>
+                <w-item-label class="text-grey">{{ t('admin.icons.diskCache') }}</w-item-label>
+                <w-item-label>{{
+                  t('admin.icons.diskCacheValue', {
+                    count: state.cache.diskCount ?? 0,
+                    size: prettyBytes(state.cache.diskSize ?? 0)
+                  })
+                }}</w-item-label>
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <w-item-section>
+                <w-item-label class="text-grey">{{ t('admin.icons.memoryCache') }}</w-item-label>
+                <w-item-label>{{
+                  t('admin.icons.memoryCacheValue', { count: state.cache.memoryCount ?? 0 })
+                }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+          <w-separator />
+          <w-card-actions class="px-4">
+            <w-btn
+              class="acrylic-btn"
+              flat
+              no-caps
+              icon="la:broom"
+              color="negative"
+              :label="t(`admin.icons.purgeCache`)"
+              @click="purgeCache">
+              <w-tooltip>{{ t('admin.icons.purgeCacheHint') }}</w-tooltip>
+            </w-btn>
+          </w-card-actions>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- How it works -->
+        <!-- ----------------------- -->
+        <w-card class="rounded mt-4" style="width: 350px">
+          <w-card-header>
+            {{ t('admin.icons.howItWorks') }}
+            <template #hint>{{ t('admin.icons.howItWorksHint') }}</template>
+          </w-card-header>
+          <w-separator class="mb-2" inset />
+          <w-item>
+            <w-item-section>
+              <w-item-label class="text-grey">{{ t('admin.icons.upstream') }}</w-item-label>
+              <w-item-label class="text-caption">{{ t('admin.icons.upstreamHint') }}</w-item-label>
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+    </div>
+    <!-- ----------------------- -->
+    <!-- Add Set Dialog -->
+    <!-- ----------------------- -->
+    <w-dialog v-model="state.addSetDialog">
+      <w-card style="width: 700px; max-width: 90vw">
+        <w-card-section class="flex flex-wrap items-center pb-0">
+          <div class="text-h6">{{ t('admin.icons.addSet') }}</div>
+          <w-space />
+          <w-btn icon="la:times" flat round dense @click="state.addSetDialog = false" />
+        </w-card-section>
+        <w-card-section>
+          <div class="text-body2 text-grey">{{ t('admin.icons.addSetHint') }}</div>
+          <w-input
+            class="mt-4"
+            v-model="state.availableFilter"
+            outlined
+            dense
+            clearable
+            :label="t(`admin.icons.filterSets`)"
+            :aria-label="t(`admin.icons.filterSets`)">
+            <template #prepend><w-icon name="la:search" /></template>
+          </w-input>
+        </w-card-section>
+        <w-separator />
+        <w-card-section class="p-0" style="height: 50vh; overflow-y: auto">
+          <w-inner-loading :showing="state.loadingAvailable">
+            <w-spinner color="primary" size="md" />
+          </w-inner-loading>
+          <w-banner class="m-4 bg-negative text-white" v-if="state.availableError">{{
+            state.availableError
+          }}</w-banner>
+          <w-list separator>
+            <w-item
+              v-for="set of filteredAvailableSets"
+              :key="set.prefix"
+              clickable
+              :disable="set.isAdded"
+              @click="addSet(set)">
+              <w-item-section side>
+                <div class="admin-icons-samples">
+                  <w-icon
+                    class="admin-icons-sample"
+                    v-for="sample of set.samples.slice(0, 3)"
+                    :key="sample"
+                    :name="`${set.prefix}:${sample}`"
+                    size="24px" />
+                </div>
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>
+                  <strong>{{ set.name }}</strong>
+                  <w-chip class="ml-2" square dense size="sm" color="primary" text-color="white">{{
+                    set.prefix
+                  }}</w-chip>
+                </w-item-label>
+                <w-item-label caption>{{ availableCaption(set) }}</w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <w-chip
+                  v-if="set.isAdded"
+                  dense
+                  size="sm"
+                  color="positive"
+                  text-color="white"
+                  icon="la:check"
+                  >{{ t('admin.icons.added') }}</w-chip
+                >
+                <w-icon v-else name="la:plus-circle" color="primary" size="sm" />
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card-section>
+      </w-card>
+    </w-dialog>
+  </w-page>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive } from 'vue'
+
+import { useDark } from '@/composables/dark'
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { dialog } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
+// COMPOSABLES
 
-const $q = useQuasar()
+const dark = useDark()
 
 // STORES
 
@@ -246,11 +320,15 @@ const state = reactive({
 
 const filteredAvailableSets = computed(() => {
   const filter = state.availableFilter?.trim().toLowerCase()
-  if (!filter) { return state.availableSets }
-  return state.availableSets.filter(set => {
-    return set.name.toLowerCase().includes(filter) ||
+  if (!filter) {
+    return state.availableSets
+  }
+  return state.availableSets.filter((set) => {
+    return (
+      set.name.toLowerCase().includes(filter) ||
       set.prefix.includes(filter) ||
       set.category.toLowerCase().includes(filter)
+    )
   })
 })
 
@@ -259,21 +337,30 @@ const filteredAvailableSets = computed(() => {
 /**
  * Read the API's own message off a failed request, since ky doesn't throw on 400
  */
-async function apiMessage (err) {
-  return err.response?.json().then(b => b?.message).catch(() => null) ?? err.message
+async function apiMessage(err) {
+  return (
+    err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null) ?? err.message
+  )
 }
 
-function prettyBytes (bytes) {
-  if (bytes < 1024) { return `${bytes} B` }
-  if (bytes < 1024 * 1024) { return `${(bytes / 1024).toFixed(1)} kB` }
+function prettyBytes(bytes) {
+  if (bytes < 1024) {
+    return `${bytes} B`
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} kB`
+  }
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
 /**
  * A few icons of the set to show next to it, from the samples upstream publishes
  */
-function sampleRefs (set) {
-  return (set.info?.samples ?? []).slice(0, 3).map(sample => `${set.prefix}:${sample}`)
+function sampleRefs(set) {
+  return (set.info?.samples ?? []).slice(0, 3).map((sample) => `${set.prefix}:${sample}`)
 }
 
 /**
@@ -282,11 +369,11 @@ function sampleRefs (set) {
  * Deliberately not the author's own site: what an administrator needs from here is the names to
  * search for, and the Iconify browser is the catalog those names come from.
  */
-function referenceUrl (set) {
+function referenceUrl(set) {
   return `https://icon-sets.iconify.design/${set.prefix}/`
 }
 
-function setCaption (set) {
+function setCaption(set) {
   const parts = [t('admin.icons.setIconCount', { count: set.iconCount })]
   if (set.info?.total) {
     parts.push(t('admin.icons.setTotal', { total: set.info.total.toLocaleString() }))
@@ -297,15 +384,17 @@ function setCaption (set) {
   return parts.join(' • ')
 }
 
-function availableCaption (set) {
+function availableCaption(set) {
   return [
     t('admin.icons.setTotal', { total: set.total.toLocaleString() }),
     set.category,
     set.license
-  ].filter(Boolean).join(' • ')
+  ]
+    .filter(Boolean)
+    .join(' • ')
 }
 
-async function load () {
+async function load() {
   state.loading++
   try {
     const [sets, cache] = await Promise.all([
@@ -315,7 +404,7 @@ async function load () {
     state.sets = sets ?? []
     state.cache = cache ?? {}
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.icons.loadFailed'),
       caption: await apiMessage(err)
@@ -330,7 +419,7 @@ async function load () {
  * Sets seeded at install time have no metadata until this runs, since installing must not depend on
  * outbound access.
  */
-async function refreshSets () {
+async function refreshSets() {
   state.loading++
   try {
     await API_CLIENT.post('icons/sets/refresh').json()
@@ -341,22 +430,26 @@ async function refreshSets () {
   await load()
 }
 
-async function openAddSet () {
+async function openAddSet() {
   state.addSetDialog = true
-  if (state.availableSets.length > 0) { return }
+  if (state.availableSets.length > 0) {
+    return
+  }
 
   state.loadingAvailable = true
   state.availableError = ''
   try {
-    state.availableSets = await API_CLIENT.get('icons/available-sets').json() ?? []
+    state.availableSets = (await API_CLIENT.get('icons/available-sets').json()) ?? []
   } catch (err) {
     state.availableError = await apiMessage(err)
   }
   state.loadingAvailable = false
 }
 
-async function addSet (set) {
-  if (set.isAdded) { return }
+async function addSet(set) {
+  if (set.isAdded) {
+    return
+  }
 
   state.loading++
   try {
@@ -365,12 +458,12 @@ async function addSet (set) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
     set.isAdded = true
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.icons.addSuccess', { set: set.name })
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.icons.addFailed'),
       caption: await apiMessage(err)
@@ -380,21 +473,21 @@ async function addSet (set) {
   await load()
 }
 
-async function setSetState (set, isEnabled) {
+async function setSetState(set, isEnabled) {
   state.loading++
   try {
     const resp = await API_CLIENT.put(`icons/sets/${set.prefix}`, { json: { isEnabled } }).json()
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: isEnabled
         ? t('admin.icons.enableSuccess', { set: set.name })
         : t('admin.icons.disableSuccess', { set: set.name })
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.icons.saveFailed'),
       caption: await apiMessage(err)
@@ -404,8 +497,8 @@ async function setSetState (set, isEnabled) {
   await load()
 }
 
-function confirmDeleteSet (set) {
-  $q.dialog({
+function confirmDeleteSet(set) {
+  dialog({
     title: t('admin.icons.deleteSet'),
     message: t('admin.icons.deleteSetConfirm', { set: set.name, count: set.iconCount }),
     persistent: true,
@@ -426,17 +519,17 @@ function confirmDeleteSet (set) {
       if (!resp?.ok) {
         throw new Error(resp?.message || 'An unexpected error occured.')
       }
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('admin.icons.deleteSuccess', { set: set.name })
       })
       // -> The catalog now offers it again
-      const available = state.availableSets.find(s => s.prefix === set.prefix)
+      const available = state.availableSets.find((s) => s.prefix === set.prefix)
       if (available) {
         available.isAdded = false
       }
     } catch (err) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: t('admin.icons.deleteFailed'),
         caption: await apiMessage(err)
@@ -447,8 +540,8 @@ function confirmDeleteSet (set) {
   })
 }
 
-function purgeCache () {
-  $q.dialog({
+function purgeCache() {
+  dialog({
     title: t('admin.icons.purgeCache'),
     message: t('admin.icons.purgeCacheConfirm'),
     persistent: true,
@@ -469,12 +562,12 @@ function purgeCache () {
       if (!resp?.ok) {
         throw new Error(resp?.message || 'An unexpected error occured.')
       }
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('admin.icons.purgeCacheSuccess')
       })
     } catch (err) {
-      $q.notify({
+      notify({
         type: 'negative',
         message: t('admin.icons.purgeCacheFailed'),
         caption: await apiMessage(err)
@@ -491,16 +584,18 @@ onMounted(async () => {
   await load()
   // -> A set with no metadata has never been described by upstream: seeded at install, or added while
   //    the API was unreachable
-  if (state.sets.some(set => !set.info?.total)) {
+  if (state.sets.some((set) => !set.info?.total)) {
     await refreshSets()
   }
 })
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 .admin-icons {
   &-icon {
-    animation: fadeInLeft .6s forwards, flower-rotate 30s linear infinite;
+    animation:
+      fadeInLeft 0.6s forwards,
+      flower-rotate 30s linear infinite;
   }
 
   &-samples {

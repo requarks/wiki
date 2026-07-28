@@ -1,131 +1,122 @@
-<template lang='pug'>
-q-layout(view='hHh Lpr lff')
-  header-nav
-  q-drawer.bg-sidebar(
-    :model-value='isSidebarShown'
-    :show-if-above='siteStore.theme.sidebarPosition !== `off`'
-    :width='isSidebarMini ? 56 : 255'
-    :side='siteStore.theme.sidebarPosition === `right` ? `right` : `left`'
-    )
-    .sidebar-mini.column.items-stretch(v-if='isSidebarMini')
-      q-btn.q-py-md(
-        flat
-        icon='las la-globe'
-        color='white'
-        aria-label='Switch Locale'
-        )
-        locale-selector-menu(anchor='top right' self='top left')
-        q-tooltip(anchor='center right' self='center left') Switch Locale
-      q-btn.q-py-md(
-        flat
-        icon='las la-sitemap'
-        color='white'
-        aria-label='Browse'
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') Browse
-      q-separator.q-my-sm(inset, dark)
-      q-btn.q-py-md(
-        flat
-        icon='las la-bookmark'
-        color='white'
-        aria-label='Bookmarks'
-        @click='notImplemented'
-        )
-        q-tooltip(anchor='center right' self='center left') Bookmarks
-      q-space
-      q-btn.q-py-xs(
-        v-if='canEditNav'
-        flat
-        icon='las la-dharmachakra'
-        color='white'
-        aria-label='Edit Nav'
-        size='sm'
-        )
-        q-menu(
-          ref='navEditMenuMini'
-          anchor='top right'
-          self='bottom left'
-          )
-          nav-edit-menu(
-            :menu-hide-handler='navEditMenuMini.hide'
-            :update-position-handler='navEditMenuMini.updatePosition'
-            )
-        q-tooltip(anchor='center right' self='center left') Edit Nav
-    template(v-else)
-      .sidebar-actions.flex.items-stretch
-        q-btn.q-px-sm.col(
+<template>
+  <w-layout>
+    <w-header class="site-header-wrap">
+      <header-nav />
+    </w-header>
+    <w-drawer
+      class="bg-sidebar"
+      :model-value="isSidebarShown"
+      :show-if-above="siteStore.theme.sidebarPosition !== `off`"
+      :width="isSidebarMini ? 56 : 255"
+      :side="siteStore.theme.sidebarPosition === `right` ? `right` : `left`">
+      <div v-if="isSidebarMini" class="sidebar-mini flex flex-col items-stretch">
+        <w-btn class="py-4" flat icon="la:globe" color="white" aria-label="Switch Locale">
+          <locale-selector-menu anchor="top right" self="top left" />
+          <w-tooltip anchor="center right" self="center left">Switch Locale</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="py-4"
           flat
-          dense
-          icon='las la-globe'
-          color='blue-7'
-          text-color='custom-color'
-          :label='commonStore.locale'
-          :aria-label='commonStore.locale'
-          size='sm'
-          )
-          locale-selector-menu(:offset='[-5, 5]')
-        q-separator(vertical)
-        q-btn.q-px-sm.col(
+          icon="la:sitemap"
+          color="white"
+          aria-label="Browse"
+          @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">Browse</w-tooltip>
+        </w-btn>
+        <w-separator class="my-2" inset dark />
+        <w-btn
+          class="py-4"
           flat
-          dense
-          icon='las la-sitemap'
-          color='blue-7'
-          text-color='custom-color'
-          label='Browse'
-          aria-label='Browse'
-          size='sm'
-          @click='notImplemented'
-          )
-      nav-sidebar
-      q-bar.sidebar-footerbtns.text-white(
-        v-if='userStore.authenticated'
-        dense
-        )
-        template(v-if='canEditNav')
-          q-btn.col(
-            icon='las la-dharmachakra'
-            label='Edit Nav'
+          icon="la:bookmark"
+          color="white"
+          aria-label="Bookmarks"
+          @click="notImplemented">
+          <w-tooltip anchor="center right" self="center left">Bookmarks</w-tooltip>
+        </w-btn>
+        <w-space />
+        <w-btn
+          v-if="canEditNav"
+          class="py-1"
+          flat
+          icon="la:dharmachakra"
+          color="white"
+          aria-label="Edit Nav"
+          size="sm">
+          <w-menu ref="navEditMenuMini" anchor="top right" self="bottom left">
+            <nav-edit-menu
+              :menu-hide-handler="navEditMenuMini.hide"
+              :update-position-handler="navEditMenuMini.updatePosition" />
+          </w-menu>
+          <w-tooltip anchor="center right" self="center left">Edit Nav</w-tooltip>
+        </w-btn>
+      </div>
+      <template v-else>
+        <div class="sidebar-actions flex flex-nowrap items-stretch">
+          <w-btn
+            class="flex-1 px-2"
             flat
-            )
-            q-menu(
-              ref='navEditMenu'
-              anchor='top left'
-              self='bottom left'
-              :offset='[0, 10]'
-              )
-              nav-edit-menu(
-                :menu-hide-handler='navEditMenu.hide'
-                :update-position-handler='navEditMenu.updatePosition'
-                )
-          q-separator(vertical)
-        q-btn.col(
-          icon='las la-bookmark'
-          label='Bookmarks'
-          flat
-          @click='notImplemented'
-        )
-  q-page-container
-    router-view
-    q-page-scroller(
-      position='bottom-right'
-      :scroll-offset='150'
-      :offset='[15, 15]'
-      )
-      q-btn(
-        icon='las la-arrow-up'
-        color='primary'
-        round
-        size='md'
-      )
-  main-overlay-dialog
-  footer-nav(v-if='!editorStore.isActive')
+            dense
+            icon="la:globe"
+            color="blue-7"
+            text-color="custom-color"
+            :label="commonStore.locale"
+            :aria-label="commonStore.locale"
+            size="sm">
+            <locale-selector-menu :offset="[-5, 5]" />
+          </w-btn>
+          <w-separator vertical />
+          <w-btn
+            class="flex-1 px-2"
+            flat
+            dense
+            icon="la:sitemap"
+            color="blue-7"
+            text-color="custom-color"
+            label="Browse"
+            aria-label="Browse"
+            size="sm"
+            @click="notImplemented" />
+        </div>
+        <nav-sidebar />
+        <w-bar v-if="userStore.authenticated" class="sidebar-footerbtns text-white" dense>
+          <template v-if="canEditNav">
+            <w-btn class="flex-1" icon="la:dharmachakra" label="Edit Nav" flat>
+              <w-menu ref="navEditMenu" anchor="top left" self="bottom left" :offset="[0, 10]">
+                <nav-edit-menu
+                  :menu-hide-handler="navEditMenu.hide"
+                  :update-position-handler="navEditMenu.updatePosition" />
+              </w-menu>
+            </w-btn>
+            <w-separator vertical />
+          </template>
+          <w-btn
+            class="flex-1"
+            icon="la:bookmark"
+            label="Bookmarks"
+            flat
+            @click="notImplemented" />
+        </w-bar>
+      </template>
+    </w-drawer>
+    <w-page-container>
+      <router-view />
+      <w-page-scroller :scroll-offset="150" :offset="[15, 15]">
+        <w-btn icon="la:arrow-up" color="primary" round size="md" />
+      </w-page-scroller>
+    </w-page-container>
+    <main-overlay-dialog />
+    <w-footer v-if="!editorStore.isActive">
+      <footer-nav />
+    </w-footer>
+  </w-layout>
 </template>
 
 <script setup>
-import { useMeta, useQuasar } from 'quasar'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
 import { useI18n } from 'vue-i18n'
 
 import { useCommonStore } from '@/stores/common'
@@ -143,10 +134,6 @@ import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 import NavSidebar from '@/components/NavSidebar.vue'
 import NavEditMenu from '@/components/NavEditMenu.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -169,7 +156,7 @@ const { t } = useI18n()
 // META
 
 useMeta({
-  titleTemplate: title => `${title} - ${siteStore.title}`
+  titleTemplate: (title) => `${title} - ${siteStore.title}`
 })
 
 // REFS
@@ -180,7 +167,11 @@ const navEditMenuMini = ref(null)
 // COMPUTED
 
 const isSidebarShown = computed(() => {
-  return siteStore.showSideNav && !siteStore.sideNavIsDisabled && !(editorStore.isActive && editorStore.hideSideNav)
+  return (
+    siteStore.showSideNav &&
+    !siteStore.sideNavIsDisabled &&
+    !(editorStore.isActive && editorStore.hideSideNav)
+  )
 })
 
 const isSidebarMini = computed(() => {
@@ -195,23 +186,22 @@ const canEditNav = computed(() => {
 
 // METHODS
 
-function notImplemented () {
-  $q.notify({
+function notImplemented() {
+  notify({
     type: 'negative',
     message: 'Not implemented'
   })
 }
-
 </script>
 
 <style lang="scss">
 .sidebar-actions {
-  background: linear-gradient(to bottom, rgba(255,255,255,.1) 0%, rgba(0,0,0, .05) 100%);
-  border-bottom: 1px solid rgba(0,0,0,.2);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   height: 38px;
 
-  .q-btn {
-    color: rgba(255,255,255,.8);
+  .w-btn {
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 
@@ -220,28 +210,31 @@ function notImplemented () {
 }
 
 .sidebar-footerbtns {
-  background-color: rgba(255,255,255,.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 body.body--dark {
   background-color: $dark-6;
 }
 
+// -> Ported from the Quasar dialog internals onto WDialog's own structure:
+//    .q-dialog__backdrop -> .w-dialog-backdrop, .q-dialog__inner -> .w-dialog-viewport,
+//    .q-layout-container -> .w-dialog-panel
 .main-overlay {
-  > .q-dialog__backdrop {
-    background-color: rgba(0,0,0,.6);
+  > .w-dialog-backdrop {
+    background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(5px) saturate(180%);
   }
-  > .q-dialog__inner {
+  > .w-dialog-viewport {
     padding: 24px 64px;
 
     @media (max-width: $breakpoint-sm-max) {
       padding: 0;
     }
 
-    > .q-layout-container {
+    > .w-dialog-panel {
       border-radius: 6px;
-      box-shadow: 0 0 30px 0 rgba(0,0,0,.3);
+      box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.3);
 
       @at-root .body--light & {
         background-image: linear-gradient(to bottom, $dark-5 10px, $grey-3 11px, $grey-4);
@@ -253,21 +246,11 @@ body.body--dark {
   }
 }
 
-.q-footer {
-  .q-bar {
-    @at-root .body--light & {
-      background-color: $grey-3;
-      color: $grey-7;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-4;
-      color: rgba(255,255,255,.3);
-    }
-  }
-}
+// -> The `.q-footer .q-bar` rule that used to sit here never matched: FooterNav renders
+//    `.site-footer`, never a q-bar. Its colours live in FooterNav's own scoped style.
 
 .syncing-enter-active {
-  animation: syncing-anim .1s;
+  animation: syncing-anim 0.1s;
 }
 .syncing-leave-active {
   animation: syncing-anim 1s reverse;

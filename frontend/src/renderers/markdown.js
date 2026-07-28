@@ -40,22 +40,27 @@ const quoteStyles = {
 }
 
 export class MarkdownRenderer {
-  constructor (config = {}) {
+  constructor(config = {}) {
     this.md = new MarkdownIt({
       html: config.allowHTML,
       breaks: config.lineBreaks,
       linkify: config.linkify,
       typography: config.typographer,
       quotes: quoteStyles[config.quotes] ?? quoteStyles.english,
-      highlight (str, lang) {
+      highlight(str, lang) {
         if (lang === 'diagram') {
           return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
         } else if (['mermaid', 'plantuml'].includes(lang)) {
           return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
         } else {
-          const highlighted = lang ? hljs.highlight(str, { language: lang, ignoreIllegals: true }) : { value: str }
+          const highlighted = lang
+            ? hljs.highlight(str, { language: lang, ignoreIllegals: true })
+            : { value: str }
           const lineCount = highlighted.value.match(/\n/g).length
-          const lineNums = lineCount > 1 ? `<span aria-hidden="true" class="line-numbers-rows">${times(lineCount, n => '<span></span>').join('')}</span>` : ''
+          const lineNums =
+            lineCount > 1
+              ? `<span aria-hidden="true" class="line-numbers-rows">${times(lineCount, (n) => '<span></span>').join('')}</span>`
+              : ''
           return `<pre class="codeblock hljs ${lineCount > 1 && 'line-numbers'}"><code class="language-${lang}">${highlighted.value}${lineNums}</code></pre>`
         }
       }
@@ -117,12 +122,17 @@ export class MarkdownRenderer {
     //  Needed for \bond for the ~ forms
     //  Raise by 2.56mu, not 2mu. We're raising a hyphen-minus, U+002D, not
     //  a mathematical minus, U+2212. So we need that extra 0.56.
-    katex.__defineMacro('\\tripledash', '{\\vphantom{-}\\raisebox{2.56mu}{$\\mkern2mu' + '\\tiny\\text{-}\\mkern1mu\\text{-}\\mkern1mu\\text{-}\\mkern2mu$}}')
+    katex.__defineMacro(
+      '\\tripledash',
+      '{\\vphantom{-}\\raisebox{2.56mu}{$\\mkern2mu' +
+        '\\tiny\\text{-}\\mkern1mu\\text{-}\\mkern1mu\\text{-}\\mkern2mu$}}'
+    )
     this.md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
     this.md.renderer.rules.katex_inline = (tokens, idx) => {
       try {
         return katex.renderToString(tokens[idx].content, {
-          displayMode: false, macros
+          displayMode: false,
+          macros
         })
       } catch (err) {
         console.warn(err)
@@ -134,9 +144,14 @@ export class MarkdownRenderer {
     })
     this.md.renderer.rules.katex_block = (tokens, idx) => {
       try {
-        return '<p>' + katex.renderToString(tokens[idx].content, {
-          displayMode: true, macros
-        }) + '</p>'
+        return (
+          '<p>' +
+          katex.renderToString(tokens[idx].content, {
+            displayMode: true,
+            macros
+          }) +
+          '</p>'
+        )
       } catch (err) {
         console.warn(err)
         return tokens[idx].content
@@ -149,7 +164,7 @@ export class MarkdownRenderer {
 
     this.md.renderer.rules.emoji = (token, idx) => {
       return twemoji.parse(token[idx].content, {
-        callback (icon, opts) {
+        callback(icon, opts) {
           return `/_assets/svg/twemoji/${icon}.svg`
         }
       })
@@ -175,12 +190,12 @@ export class MarkdownRenderer {
     this.md.renderer.rules.blockquote_open = injectLineNumbers
   }
 
-  render (src) {
+  render(src) {
     this.linesMap = []
     return this.md.render(src)
   }
 
-  getClosestPreviewLine (line) {
-    return findLast(this.linesMap, n => n <= line)
+  getClosestPreviewLine(line) {
+    return findLast(this.linesMap, (n) => n <= line)
   }
 }

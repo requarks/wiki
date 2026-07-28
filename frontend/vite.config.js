@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import yaml from 'js-yaml'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { quasar, transformAssetUrls } from '@quasar/vite-plugin'
+import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vitejs.dev/config/
@@ -47,19 +47,33 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue({
         template: {
-          transformAssetUrls,
+          /*
+            `/_assets/...` paths are served by the BACKEND at runtime; they are not build inputs and
+            there is nothing at that path on disk to resolve. Vue's default would turn each one into
+            an import and fail the build. Quasar's Vite plugin used to supply this same setting.
+          */
+          transformAssetUrls: { includeAbsolute: false },
           // -> `iconify-icon` is a custom element registered by its package, not a Vue component
           compilerOptions: {
             isCustomElement: tag => tag === 'iconify-icon'
           }
         }
       }),
-      quasar({
-        autoImportComponentCase: 'kebab',
-        sassVariables: '@/css/_theme.scss'
-      }),
+      tailwindcss(),
       vueDevTools()
     ],
+    css: {
+      preprocessorOptions: {
+        scss: {
+          /*
+            Every SFC style block gets these, which is what Quasar's Vite plugin used to do with its
+            `sassVariables` option. Without it each file would have to import them itself, and the
+            app's stylesheets are written against bare `$primary` / `$dark-3` / `$grey-4`.
+          */
+          additionalData: `@use '@/css/_theme.scss' as *; @use '@/css/_palette.scss' as *;`
+        }
+      }
+    },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url))

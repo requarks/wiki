@@ -37,12 +37,14 @@ export const useSiteStore = defineStore('site', {
     },
     locales: {
       primary: 'en',
-      active: [{
-        code: 'en',
-        language: 'en',
-        name: 'English',
-        nativeName: 'English'
-      }]
+      active: [
+        {
+          code: 'en',
+          language: 'en',
+          name: 'English',
+          nativeName: 'English'
+        }
+      ]
     },
     tags: [],
     tagsLoaded: false,
@@ -101,7 +103,7 @@ export const useSiteStore = defineStore('site', {
     }
   },
   actions: {
-    openFileManager (opts) {
+    openFileManager(opts) {
       this.$patch({
         overlay: 'FileManager',
         overlayOpts: {
@@ -109,7 +111,7 @@ export const useSiteStore = defineStore('site', {
         }
       })
     },
-    async loadSite (hostname) {
+    async loadSite(hostname) {
       try {
         const siteInfo = await API_CLIENT.get(`sites/${hostname}`).json()
         if (siteInfo) {
@@ -150,8 +152,10 @@ export const useSiteStore = defineStore('site', {
         throw err
       }
     },
-    async fetchTags (forceRefresh = false) {
-      if (this.tagsLoaded && !forceRefresh) { return }
+    async fetchTags(forceRefresh = false) {
+      if (this.tagsLoaded && !forceRefresh) {
+        return
+      }
       try {
         const tags = await API_CLIENT.get(`sites/${this.id}/tags`).json()
         this.$patch({
@@ -169,7 +173,7 @@ export const useSiteStore = defineStore('site', {
      * @param id The page's `navigationId`, which addresses either a tree entry that overrides the menu
      *           or the site itself for the one every page inherits
      */
-    async fetchNavigation (id) {
+    async fetchNavigation(id) {
       try {
         const items = await API_CLIENT.get(`sites/${this.id}/navigation/${id}`).json()
         this.$patch({

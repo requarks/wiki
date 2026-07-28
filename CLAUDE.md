@@ -3,13 +3,21 @@
 Next-generation open source wiki. This is the **3.x development branch** — incomplete, unstable, and
 with no upgrade path from 2.x. AGPL-3.0.
 
+**Nothing here has to stay compatible with an existing installation.** Nobody is expected to be
+running an earlier state of this branch, so do not write migration shims, legacy-value fallbacks,
+deprecated aliases or "old data may still contain X" handling. Change the shape, change the callers,
+and delete the old path — a fallback for a case that cannot occur is dead code that still has to be
+read, tested and reasoned about. This applies to db columns, API payloads, stored settings and
+config keys alike; only real migrations under `backend/db/migrations/` are exempt, because Drizzle
+needs the history to get a live dev database to the current schema.
+
 Three independently-installed workspaces (each has its own `package.json` / `node_modules`, there is
 no root package or monorepo tooling):
 
 | Path        | What it is                                                    |
 | ----------- | ------------------------------------------------------------- |
 | `backend/`  | Fastify REST API server + job scheduler, Drizzle on PostgreSQL |
-| `frontend/` | Vue 3 / Vite / Quasar SPA                                     |
+| `frontend/` | Vue 3 / Vite SPA, Tailwind CSS + an in-repo component library  |
 | `blocks/`   | Lit web components users embed into wiki pages                 |
 
 Requires Node.js **26+** and PostgreSQL **16+**. All three workspaces are ESM (`"type": "module"`).
@@ -72,8 +80,10 @@ scheduler → event emitters), `initHTTPServer()` (Fastify plugins, auth, routes
 
 ### `frontend/`
 
-Quasar app on plain Vite (not Quasar CLI). `src/main.js` wires it up manually: router → pinia store
-→ `boot/*` initializers → Quasar plugins → mount.
+Vue 3 on plain Vite. `src/main.js` wires it up manually: router → pinia store → `boot/*`
+initializers → mount. There is no UI framework: `src/components/shared/` is the component library
+(every component is `W*`, used in templates as `<w-btn>`, `<w-input>`, …), registered globally by
+`boot/components.js` and styled with Tailwind.
 
 - `src/boot/` — one-time app initializers: `api.js` (creates the `ky` client with JWT refresh, exposed
   as the `API_CLIENT` global), `components.js` (global components), `eventbus.js` (`EVENT_BUS` global,
@@ -90,7 +100,10 @@ Quasar app on plain Vite (not Quasar CLI). `src/main.js` wires it up manually: r
   `stores/index.js` creates the pinia instance and injects `router` into every store.
 - `src/renderers/` — page content rendering pipeline: `markdown.js` plus `modules/` (katex, kroki,
   plantuml, markdown-it plugins).
-- `src/css/` — SCSS. `_theme.scss` holds the Quasar sass variables (wired in `vite.config.js`).
+- `src/css/` — `tailwind.css` (theme tokens, utilities and the shared component classes) plus SCSS:
+  `_theme.scss` (brand colours) and `_palette.scss` (the Material ramp the older stylesheets use).
+  Both are injected into every SFC by `css.preprocessorOptions.scss.additionalData` in
+  `vite.config.js`, which is why templates can write bare `$primary` / `$grey-4`.
 - `src/helpers/`, `src/assets/`, `public/`, `index.html`.
 
 Path alias `@` → `frontend/src` (defined in `vite.config.js`; `jsconfig.json` mirrors it for the IDE).
@@ -106,8 +119,9 @@ config change. Output goes to `blocks/compiled/`, which the backend serves stati
 `/_blocks/`. Blocks are loaded dynamically at runtime, which is why `_blocks/**` is excluded from
 Vite's `dynamicImportVarsOptions`.
 
-Blocks style themselves with `:host` / `:host-context(body.body--dark)` for dark mode and read Quasar
-theme colors via CSS custom properties (`var(--q-primary)`).
+Blocks style themselves with `:host` / `:host-context(body.body--dark)` for dark mode and read the
+theme colors via CSS custom properties (`var(--q-primary)` — the `--q-` prefix is historical; the
+properties are declared in `css/tailwind.css` and rewritten at runtime for per-site theming).
 
 ## Commands
 
@@ -278,9 +292,12 @@ These apply to **every workspace**, `frontend/` included — not just the backen
 
 ### Frontend patterns
 
-- **Vue 3 with pug templates** (`<template lang="pug">`) in most components — check the file you're
-  editing rather than assuming HTML. Quasar components are auto-imported in kebab-case
-  (`q-btn`, `q-dialog`).
+- **Templates are plain HTML.** A handful of pre-3.x leftovers are still `<template lang="pug">` —
+  check the file you're editing rather than assuming.
+- **UI components come from `components/shared/`**, registered globally, so `<w-btn>` / `<w-input>` /
+  `<w-icon>` need no import. Each one is scoped to how this app actually uses it rather than to the
+  full API of the framework component it replaced; the header comment in each file says where they
+  differ. Add a prop there rather than reaching around it.
 - HTTP calls go through the `ky` client, reachable as the `API_CLIENT` global (declared in the oxlint
   config, so no import needed) — e.g. `await API_CLIENT.get('sites').json()`. It handles the `/_api`
   prefix and JWT refresh.
@@ -304,20 +321,38 @@ store; no SVG is ever written into content.
   minute (public routes can trigger a fill), and is skipped entirely when `offline` is set.
 - **Serving** is `controllers/icons.ts` under `/_icons`, cached for a year and immutable. Rendering a
   page never resolves an icon server-side.
-- **Frontend**: render every user-supplied icon reference with `<wiki-icon :name>`, which draws an
-  Iconify reference through the `iconify-icon` element and hands anything else (`las la-cog`,
-  `mdi-check`, `img:…`) to `q-icon`. Passing such a reference to a Quasar `icon` prop does *not* work —
-  use the component's icon slot instead.
+- **Frontend**: render every icon with `<w-icon :name>` (`components/shared/WIcon.vue`).
+  Components that take an `icon` prop go through it too, so every form works there.
+  - Every Iconify reference written **literally in this repo's source** is inlined at build time by
+    `scripts/generate-icons.mjs` into `src/assets/icons.generated.js` (committed) and drawn as an
+    inline `<svg>`. Run `npm run icons` after adding or removing one; `check-icons.mjs` fails if the
+    bundle drifts. This is why the interface needs no icon webfont — and why nothing an
+    administrator does to icon sets can blank it, which fetching at runtime could not promise:
+    resolution is gated on the set being enabled, and deleting a set drops every icon stored for it.
+  - A reference built at runtime — an icon a **user** picked, stored on a page or nav item — is
+    invisible to that scan and falls through to `iconify-icon`, resolving against `/_icons` as
+    before. A name assembled by concatenation is therefore a bug: make it a literal.
+  - `img:…` renders as an `<img>`. Legacy `las la-cog` / `mdi-check` webfont names are mapped onto
+    their Iconify equivalents for data written before the fonts were dropped; do not write new ones.
 - Picking an icon calls `POST /_api/icons/materialize`, which is what guarantees the wiki can serve it
   afterwards without the Iconify API.
 
 ### GraphQL is being removed
 
-An earlier iteration of 3.x used GraphQL/Apollo. 29 files under `frontend/src/` still reference
-`APOLLO_CLIENT` (mostly in commented-out queries), and `blocks/block-index/` still imports a
-`tree.graphql`. **All of it is deprecated** — there is no GraphQL server left in `backend/`, and
-`APOLLO_CLIENT` is no longer defined as a global.
+An earlier iteration of 3.x used GraphQL/Apollo. **All of it is deprecated** — there is no GraphQL
+server left in `backend/`, and `APOLLO_CLIENT` is not defined as a global, so any call still going
+through it throws. `blocks/block-index/` also still imports a `tree.graphql`.
+
+Seven files under `frontend/src/` make live `APOLLO_CLIENT` calls, and each needs a REST endpoint
+that does not exist yet, so the feature behind it is currently broken:
+
+| File | Feature |
+| ---- | ------- |
+| `components/AuthLoginPanel.vue` | passkey login, self-registration, TFA verify + setup |
+| `components/ChangePwdDialog.vue`, `pages/ProfileAuth.vue`, `components/SetupTfaDialog.vue` | password / TFA self-service |
+| `pages/AdminGeneral.vue`, `pages/AdminNavigation.vue`, `pages/AdminUtilities.vue` | assorted admin actions |
 
 When touching such a file, port it to the REST API (`API_CLIENT` + the matching `backend/api/` route)
 rather than extending the GraphQL code. If the REST endpoint doesn't exist yet, add it under
-`backend/api/` following the schema + permissions conventions above.
+`backend/api/` following the schema + permissions conventions above — `users/profile/editor-settings`
+is a recent example of doing exactly that.

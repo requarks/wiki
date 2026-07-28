@@ -1,324 +1,360 @@
-<template lang='pug'>
-q-page.admin-theme
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-paint-roller-animated.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.theme.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.theme.subtitle') }}
-    .col-auto
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        type='a'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/admin/theme`'
-        target='_blank'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='load'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='mdi-check'
-        :label='t(`common.actions.apply`)'
-        color='secondary'
-        @click='save'
-        :loading='state.loading > 0'
-      )
-  q-separator(inset)
-  .row.q-pa-md.q-col-gutter-md
-    .col-6
-      //- -----------------------
-      //- Theme Options
-      //- -----------------------
-      q-card.q-pb-sm
-        q-card-section.flex.items-center
-          .text-subtitle1 {{t('admin.theme.appearance')}}
-          q-space
-          q-btn.acrylic-btn(
-            icon='las la-redo-alt'
-            :label='t(`admin.theme.resetDefaults`)'
-            flat
-            size='sm'
-            color='pink'
-            @click='resetColors'
-          )
-        q-item(tag='label')
-          blueprint-icon(icon='light-on')
-          q-item-section
-            q-item-label {{t(`admin.theme.darkMode`)}}
-            q-item-label(caption) {{t(`admin.theme.darkModeHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.dark'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.theme.darkMode`)'
-              )
-        template(v-for='cl of colorKeys', :key='cl')
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='fill-color')
-            q-item-section
-              q-item-label {{t(`admin.theme.` + cl + `Color`)}}
-              q-item-label(caption) {{t(`admin.theme.` + cl + `ColorHint`)}}
-            q-item-section(side)
-              .text-caption.text-grey-6 {{state.config[`color` + startCase(cl)]}}
-            q-item-section(side)
-              q-btn.q-mr-sm(
-                :key='`btnpick-` + cl'
-                glossy
-                padding='xs md'
-                no-caps
-                size='sm'
-                :style='`background-color: ` + state.config[`color` + startCase(cl)] + `;`'
-                text-color='white'
-                )
-                q-icon(name='las la-fill', size='xs', left)
-                span Pick...
-                q-menu
-                  q-color(
-                    v-model='state.config[`color` + startCase(cl)]'
-                  )
-
-      //- -----------------------
-      //- Code Blocks
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section.flex.items-center
-          .text-subtitle1 {{t('admin.theme.codeBlocks')}}
-          q-space
-          q-btn.acrylic-btn(
-            icon='las la-redo-alt'
-            :label='t(`admin.theme.resetDefaults`)'
-            flat
-            size='sm'
-            color='pink'
-            @click='resetCodeBlocks'
-          )
-        q-item
-          blueprint-icon(icon='code')
-          q-item-section
-            q-item-label {{t(`admin.theme.codeBlocksAppearance`)}}
-            q-item-label(caption) {{t(`admin.theme.codeBlocksAppearanceHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.config.codeBlocksTheme'
-              :options='codeThemes'
-              emit-value
-              map-options
-              :virtual-scroll-slice-size='100'
-              :virtual-scroll-slice-ratio-before='2'
-              :virtual-scroll-slice-ratio-after='2'
-              dense
-              options-dense
-              :aria-label='t(`admin.theme.codeBlocksAppearance`)'
-              )
-
-      //- -----------------------
-      //- Theme Layout
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.theme.layout')}}
-        template(v-if='flagStore.experimental')
-          q-item
-            blueprint-icon(icon='width')
-            q-item-section
-              q-item-label {{t(`admin.theme.contentWidth`)}}
-              q-item-label(caption) {{t(`admin.theme.contentWidthHint`)}}
-            q-item-section.col-auto
-              q-btn-toggle(
-                v-model='state.config.contentWidth'
+<template>
+  <w-page class="admin-theme">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img
+          class="admin-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-paint-roller-animated.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.theme.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.theme.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/admin/theme`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="mdi:check"
+          :label="t(`common.actions.apply`)"
+          color="secondary"
+          @click="save"
+          :loading="state.loading > 0" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="grid grid-cols-12 p-4 gap-4">
+      <div class="col-span-6">
+        <!-- ----------------------- -->
+        <!-- Theme Options -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2">
+          <w-card-header>
+            {{ t('admin.theme.appearance') }}
+            <template #action>
+              <w-btn
+                class="acrylic-btn"
+                icon="la:redo-alt"
+                :label="t(`admin.theme.resetDefaults`)"
+                flat
+                size="sm"
+                color="pink"
+                @click="resetColors" />
+            </template>
+          </w-card-header>
+          <w-item tag="label">
+            <blueprint-icon icon="light-on" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.darkMode`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.darkModeHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle v-model="state.config.dark" :aria-label="t(`admin.theme.darkMode`)" />
+            </w-item-section>
+          </w-item>
+          <template v-for="cl of colorKeys" :key="cl">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="fill-color" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.theme.` + cl + `Color`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.theme.` + cl + `ColorHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <div class="text-caption text-grey-6">
+                  {{ state.config[`color` + startCase(cl)] }}
+                </div>
+              </w-item-section>
+              <w-item-section side>
+                <w-btn
+                  class="mr-2"
+                  :key="`btnpick-` + cl"
+                  glossy
+                  padding="xs md"
+                  no-caps
+                  size="sm"
+                  :style="`background-color: ` + state.config[`color` + startCase(cl)] + `;`"
+                  text-color="white">
+                  <w-icon class="mr-2" name="la:fill" size="xs" />
+                  <span>Pick...</span>
+                  <w-menu
+                    ><w-color-picker v-model="state.config[`color` + startCase(cl)]"
+                  /></w-menu>
+                </w-btn>
+              </w-item-section>
+            </w-item>
+          </template>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- Code Blocks -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>
+            {{ t('admin.theme.codeBlocks') }}
+            <template #action>
+              <w-btn
+                class="acrylic-btn"
+                icon="la:redo-alt"
+                :label="t(`admin.theme.resetDefaults`)"
+                flat
+                size="sm"
+                color="pink"
+                @click="resetCodeBlocks" />
+            </template>
+          </w-card-header>
+          <w-item>
+            <blueprint-icon icon="code" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.codeBlocksAppearance`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.codeBlocksAppearanceHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.config.codeBlocksTheme"
+                :options="codeThemes"
+                emit-value
+                map-options
+                dense
+                options-dense
+                :aria-label="t(`admin.theme.codeBlocksAppearance`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- Theme Layout -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.theme.layout') }}</w-card-header>
+          <template v-if="flagStore.experimental">
+            <w-item>
+              <blueprint-icon icon="width" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.theme.contentWidth`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.theme.contentWidthHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section class="flex-none">
+                <w-btn-toggle
+                  v-model="state.config.contentWidth"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :options="widthOptions" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+          </template>
+          <w-item>
+            <blueprint-icon icon="right-navigation-toolbar" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.sidebarPosition`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.sidebarPositionHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section class="flex-none">
+              <w-btn-toggle
+                v-model="state.config.sidebarPosition"
                 push
                 glossy
                 no-caps
-                toggle-color='primary'
-                :options='widthOptions'
-              )
-          q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='right-navigation-toolbar')
-          q-item-section
-            q-item-label {{t(`admin.theme.sidebarPosition`)}}
-            q-item-label(caption) {{t(`admin.theme.sidebarPositionHint`)}}
-          q-item-section.col-auto
-            q-btn-toggle(
-              v-model='state.config.sidebarPosition'
-              push
-              glossy
-              no-caps
-              toggle-color='primary'
-              :options='rightLeftOptions'
-            )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='index')
-          q-item-section
-            q-item-label {{t(`admin.theme.tocPosition`)}}
-            q-item-label(caption) {{t(`admin.theme.tocPositionHint`)}}
-          q-item-section.col-auto
-            q-btn-toggle(
-              v-model='state.config.tocPosition'
-              push
-              glossy
-              no-caps
-              toggle-color='primary'
-              :options='rightLeftOptions'
-            )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label')
-          blueprint-icon(icon='share')
-          q-item-section
-            q-item-label {{t(`admin.theme.showSharingMenu`)}}
-            q-item-label(caption) {{t(`admin.theme.showSharingMenuHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.showSharingMenu'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.theme.showSharingMenu`)'
-              )
-        q-separator.q-my-sm(inset)
-        q-item(tag='label')
-          blueprint-icon(icon='print')
-          q-item-section
-            q-item-label {{t(`admin.theme.showPrintBtn`)}}
-            q-item-label(caption) {{t(`admin.theme.showPrintBtnHint`)}}
-          q-item-section(avatar)
-            q-toggle(
-              v-model='state.config.showPrintBtn'
-              color='primary'
-              checked-icon='las la-check'
-              unchecked-icon='las la-times'
-              :aria-label='t(`admin.theme.showPrintBtn`)'
-              )
-
-    .col-6
-      //- -----------------------
-      //- Fonts
-      //- -----------------------
-      q-card.q-pb-sm
-        q-card-section.flex.items-center
-          .text-subtitle1 {{t('admin.theme.fonts')}}
-          q-space
-          q-btn.acrylic-btn(
-            icon='las la-redo-alt'
-            :label='t(`admin.theme.resetDefaults`)'
-            flat
-            size='sm'
-            color='pink'
-            @click='resetFonts'
-          )
-        q-item
-          blueprint-icon(icon='fonts-app')
-          q-item-section
-            q-item-label {{t(`admin.theme.baseFont`)}}
-            q-item-label(caption) {{t(`admin.theme.baseFontHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.config.baseFont'
-              :options='fonts'
-              emit-value
-              map-options
-              dense
-              :aria-label='t(`admin.theme.baseFont`)'
-              )
-        q-item
-          blueprint-icon(icon='fonts-app')
-          q-item-section
-            q-item-label {{t(`admin.theme.contentFont`)}}
-            q-item-label(caption) {{t(`admin.theme.contentFontHint`)}}
-          q-item-section
-            q-select(
-              outlined
-              v-model='state.config.contentFont'
-              :options='fonts'
-              emit-value
-              map-options
-              dense
-              :aria-label='t(`admin.theme.contentFont`)'
-              )
-
-      //- -----------------------
-      //- Code Injection
-      //- -----------------------
-      q-card.q-pb-sm.q-mt-md
-        q-card-section
-          .text-subtitle1 {{t('admin.theme.codeInjection')}}
-        q-item
-          blueprint-icon(icon='css')
-          q-item-section
-            q-item-label {{t(`admin.theme.cssOverride`)}}
-            q-item-label(caption) {{t(`admin.theme.cssOverrideHint`)}}
-        q-item
-          q-item-section
-            q-no-ssr(:placeholder='t(`common.loading`)')
-              util-code-editor.admin-theme-cm(
-                ref='cmCSS'
-                v-model='state.config.injectCSS'
-                language='css'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='html')
-          q-item-section
-            q-item-label {{t(`admin.theme.headHtmlInjection`)}}
-            q-item-label(caption) {{t(`admin.theme.headHtmlInjectionHint`)}}
-        q-item
-          q-item-section
-            q-no-ssr(:placeholder='t(`common.loading`)')
-              util-code-editor.admin-theme-cm(
-                ref='cmHead'
-                v-model='state.config.injectHead'
-                language='html'
-              )
-        q-separator.q-my-sm(inset)
-        q-item
-          blueprint-icon(icon='html')
-          q-item-section
-            q-item-label {{t(`admin.theme.bodyHtmlInjection`)}}
-            q-item-label(caption) {{t(`admin.theme.bodyHtmlInjectionHint`)}}
-        q-item
-          q-item-section
-            q-no-ssr(:placeholder='t(`common.loading`)')
-              util-code-editor.admin-theme-cm(
-                ref='cmBody'
-                v-model='state.config.injectBody'
-                language='html'
-              )
+                toggle-color="primary"
+                :options="rightLeftOptions" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="index" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.tocPosition`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.tocPositionHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section class="flex-none">
+              <w-btn-toggle
+                v-model="state.config.tocPosition"
+                push
+                glossy
+                no-caps
+                toggle-color="primary"
+                :options="rightLeftOptions" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="share" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.showSharingMenu`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.showSharingMenuHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.showSharingMenu"
+                :aria-label="t(`admin.theme.showSharingMenu`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="print" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.showPrintBtn`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.showPrintBtnHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.showPrintBtn"
+                :aria-label="t(`admin.theme.showPrintBtn`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+      <div class="col-span-6">
+        <!-- ----------------------- -->
+        <!-- Fonts -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2">
+          <w-card-header>
+            {{ t('admin.theme.fonts') }}
+            <template #action>
+              <w-btn
+                class="acrylic-btn"
+                icon="la:redo-alt"
+                :label="t(`admin.theme.resetDefaults`)"
+                flat
+                size="sm"
+                color="pink"
+                @click="resetFonts" />
+            </template>
+          </w-card-header>
+          <w-item>
+            <blueprint-icon icon="fonts-app" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.baseFont`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.baseFontHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.config.baseFont"
+                :options="fonts"
+                emit-value
+                map-options
+                dense
+                :aria-label="t(`admin.theme.baseFont`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="fonts-app" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.contentFont`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.contentFontHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.config.contentFont"
+                :options="fonts"
+                emit-value
+                map-options
+                dense
+                :aria-label="t(`admin.theme.contentFont`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- Code Injection -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.theme.codeInjection') }}</w-card-header>
+          <w-item>
+            <blueprint-icon icon="css" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.cssOverride`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.cssOverrideHint`) }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <w-item-section>
+              <util-code-editor
+                class="admin-theme-cm"
+                ref="cmCSS"
+                v-model="state.config.injectCSS"
+                language="css" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="html" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.headHtmlInjection`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.headHtmlInjectionHint`) }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <w-item-section>
+              <util-code-editor
+                class="admin-theme-cm"
+                ref="cmHead"
+                v-model="state.config.injectHead"
+                language="html" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="html" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.bodyHtmlInjection`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.bodyHtmlInjectionHint`) }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <w-item-section>
+              <util-code-editor
+                class="admin-theme-cm"
+                ref="cmBody"
+                v-model="state.config.injectBody"
+                language="html" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-
-import { toMerged } from 'es-toolkit/object'
-import { startCase } from 'es-toolkit/string'
 import { useI18n } from 'vue-i18n'
-import { useMeta, useQuasar } from 'quasar'
 import { onMounted, reactive, watch } from 'vue'
+
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
+import { toMerged } from 'es-toolkit/object'
+import { startCase } from 'es-toolkit/string'
 import UtilCodeEditor from '../components/UtilCodeEditor.vue'
-
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -342,7 +378,7 @@ useMeta({
  * Fallbacks for theme keys a site may not have stored yet, so that every control renders with a
  * defined value. Must mirror the theme defaults used by the backend when creating a site.
  */
-function defaultConfig () {
+function defaultConfig() {
   return {
     dark: false,
     injectCSS: '',
@@ -369,13 +405,7 @@ const state = reactive({
   config: defaultConfig()
 })
 
-const colorKeys = [
-  'primary',
-  'secondary',
-  'accent',
-  'header',
-  'sidebar'
-]
+const colorKeys = ['primary', 'secondary', 'accent', 'header', 'sidebar']
 
 const widthOptions = [
   { label: 'Full Width', value: 'full' },
@@ -566,7 +596,10 @@ const codeThemes = [
   { label: 'Base16 / Summerfruit Dark', value: 'base16/summerfruit-dark' },
   { label: 'Base16 / Summerfruit Light', value: 'base16/summerfruit-light' },
   { label: 'Base16 / Synth Midnight Terminal Dark', value: 'base16/synth-midnight-terminal-dark' },
-  { label: 'Base16 / Synth Midnight Terminal Light', value: 'base16/synth-midnight-terminal-light' },
+  {
+    label: 'Base16 / Synth Midnight Terminal Light',
+    value: 'base16/synth-midnight-terminal-light'
+  },
   { label: 'Base16 / Tango', value: 'base16/tango' },
   { label: 'Base16 / Tender', value: 'base16/tender' },
   { label: 'Base16 / Tomorrow', value: 'base16/tomorrow' },
@@ -650,13 +683,16 @@ const codeThemes = [
 
 // WATCHERS
 
-watch(() => adminStore.currentSiteId, (newValue) => {
-  load()
-})
+watch(
+  () => adminStore.currentSiteId,
+  (newValue) => {
+    load()
+  }
+)
 
 // METHODS
 
-function resetColors () {
+function resetColors() {
   state.config.dark = false
   state.config.colorPrimary = '#1976D2'
   state.config.colorSecondary = '#02C39A'
@@ -665,18 +701,18 @@ function resetColors () {
   state.config.colorSidebar = '#1976D2'
 }
 
-function resetFonts () {
+function resetFonts() {
   state.config.baseFont = 'roboto'
   state.config.contentFont = 'roboto'
 }
 
-function resetCodeBlocks () {
+function resetCodeBlocks() {
   state.config.codeBlocksTheme = 'github-dark'
 }
 
-async function load () {
+async function load() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
     if (!resp?.theme) {
@@ -684,16 +720,16 @@ async function load () {
     }
     state.config = toMerged(defaultConfig(), resp.theme)
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to fetch site theme config'
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-async function save () {
+async function save() {
   state.loading++
   try {
     const patchTheme = {
@@ -721,7 +757,9 @@ async function save () {
       }
     }).json()
     if (!resp?.ok) {
-      throw new Error(t(`admin.theme.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.theme.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
     if (adminStore.currentSiteId === siteStore.id) {
       siteStore.$patch({
@@ -729,12 +767,12 @@ async function save () {
       })
       EVENT_BUS.emit('applyTheme')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.theme.saveSuccess')
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to save site theme config',
       caption: err.message
@@ -750,12 +788,11 @@ onMounted(() => {
     load()
   }
 })
-
 </script>
 
-<style lang='scss'>
+<style lang="scss">
 .admin-theme-cm {
-  border: 1px solid #CCC;
+  border: 1px solid #ccc;
   border-radius: 5px;
   overflow: hidden;
 

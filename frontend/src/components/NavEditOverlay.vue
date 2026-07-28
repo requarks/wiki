@@ -1,404 +1,439 @@
-<template lang="pug">
-q-layout(view='hHh lpR fFf', container)
-  q-header.card-header.q-px-md.q-py-sm
-    q-icon(name='img:/_assets/icons/fluent-sidebar-menu.svg', left, size='md')
-    span {{t(`navEdit.editMenuItems`)}}
-    q-space
-    transition(name='syncing')
-      q-spinner-tail.q-mr-sm(
-        v-show='state.loading > 0'
-        color='accent'
-        size='24px'
-      )
-    q-btn.q-mr-sm(
-      flat
-      rounded
-      color='white'
-      :aria-label='t(`common.actions.viewDocs`)'
-      icon='las la-question-circle'
-      :href='siteStore.docsBase + `/admin/editors/markdown`'
-      target='_blank'
-      type='a'
-    )
-    q-btn-group(push)
-      q-btn(
-        push
-        color='white'
-        text-color='grey-7'
-        :label='t(`common.actions.cancel`)'
-        :aria-label='t(`common.actions.cancel`)'
-        icon='las la-times'
-        @click='close'
-      )
-      q-btn(
-        push
-        color='positive'
-        text-color='white'
-        :label='t(`common.actions.save`)'
-        :aria-label='t(`common.actions.save`)'
-        icon='las la-check'
-        :disabled='state.loading > 0'
-        @click='save'
-      )
-
-  q-drawer.bg-dark-6(:model-value='true', :width='295', dark)
-    q-scroll-area.nav-edit(
-      :thumb-style='thumbStyle'
-      :bar-style='barStyle'
-      )
-      sortable(
-        class='q-list q-list--dense q-list--dark nav-edit-list'
-        :list='state.items'
-        item-key='id'
-        :options='sortableOptions'
-        @end='updateItemPosition'
-        )
-        template(#item='{element}')
-          .nav-edit-item.nav-edit-item-header(
-            v-if='element.type === `header`'
-            :class='state.selected === element.id ? `is-active` : ``'
-            @click='setItem(element)'
-            )
-            q-item-label.text-caption(
-              header
-              ) {{ element.label }}
-            q-space
-            q-item-section(side)
-              q-icon.handle(name='mdi-drag-horizontal', size='sm')
-          q-item.nav-edit-item.nav-edit-item-link(
-            v-else-if='element.type === `link`'
-            :class='{ "is-active": state.selected === element.id, "is-nested": element.isNested }'
-            @click='setItem(element)'
-            clickable
-            )
-            q-item-section(side)
-              wiki-icon(:name='element.icon', color='white')
-            q-item-section.text-wordbreak-all {{ element.label }}
-            q-item-section(side)
-              q-icon.handle(name='mdi-drag-horizontal', size='sm')
-          .nav-edit-item.nav-edit-item-separator(
-            v-else
-            :class='state.selected === element.id ? `is-active` : ``'
-            @click='setItem(element)'
-            )
-            q-separator(
-              dark
-              inset
-              style='flex: 1; margin-top: 11px;'
-              )
-            q-item-section(side)
-              q-icon.handle(name='mdi-drag-horizontal', size='sm')
-
-      .q-pa-md.flex
-        q-btn.acrylic-btn(
-          style='flex: 1;'
-          flat
-          color='positive'
-          :label='t(`common.actions.add`)'
-          :aria-label='t(`common.actions.add`)'
-          icon='las la-plus-circle'
-          )
-          q-menu(fit, :offset='[0, 10]', auto-close)
-            q-list(separator)
-              q-item(clickable, @click='addItem(`header`)')
-                q-item-section(side)
-                  q-icon(name='las la-heading')
-                q-item-section
-                  q-item-label {{t('navEdit.header')}}
-              q-item(clickable, @click='addItem(`link`)')
-                q-item-section(side)
-                  q-icon(name='las la-link')
-                q-item-section
-                  q-item-label {{t('navEdit.link')}}
-              q-item(clickable, @click='addItem(`separator`)')
-                q-item-section(side)
-                  q-icon(name='las la-minus')
-                q-item-section
-                  q-item-label {{t('navEdit.separator')}}
-        q-btn.q-ml-sm.acrylic-btn(
-          flat
-          color='grey'
-          :aria-label='t(`common.actions.add`)'
-          icon='las la-ellipsis-v'
-          padding='xs sm'
-          )
-          q-menu(:offset='[0, 10]' anchor='bottom right' self='top right' auto-close)
-            q-list(separator)
-              q-item(clickable, @click='clearItems', :disable='state.items.length < 1')
-                q-item-section(side)
-                  q-icon(name='las la-trash-alt', color='negative')
-                q-item-section
-                  q-item-label {{t('navEdit.clearItems')}}
-              //- q-item(clickable)
-              //-   q-item-section(side)
-              //-     q-icon(name='mdi-import')
-              //-   q-item-section
-              //-     q-item-label Copy from...
-
-  q-page-container
-    q-page.q-pa-md
-      template(v-if='state.items.length < 1')
-        q-card
-          q-card-section
-            q-icon.q-mr-sm(name='las la-arrow-left', size='xs')
-            span {{ t('navEdit.emptyMenuText') }}
-      template(v-else-if='!state.selected')
-        q-card
-          q-card-section
-            q-icon.q-mr-sm(name='las la-arrow-left', size='xs')
-            span {{ t('navEdit.noSelection') }}
-
-      template(v-if='state.current.type === `header`')
-        q-card.q-pb-sm
-          q-card-section
-            .text-subtitle1 {{t('navEdit.header')}}
-          q-item
-            blueprint-icon(icon='typography')
-            q-item-section
-              q-item-label {{t(`navEdit.label`)}}
-              q-item-label(caption) {{t(`navEdit.labelHint`)}}
-            q-item-section
-              q-input(
-                outlined
-                v-model='state.current.label'
-                dense
-                hide-bottom-space
-                :aria-label='t(`navEdit.label`)'
-                )
-          q-item
-            blueprint-icon(icon='user-groups')
-            q-item-section
-              q-item-label {{t(`navEdit.visibility`)}}
-              q-item-label(caption) {{t(`navEdit.visibilityHint`)}}
-            q-item-section(avatar)
-              q-btn-toggle(
-                v-model='state.current.visibilityLimited'
-                push
-                glossy
-                no-caps
-                toggle-color='primary'
-                :options='visibilityOptions'
-              )
-          q-item.items-center(v-if='state.current.visibilityLimited')
-            q-space
-            .text-caption.q-mr-md {{ t('navEdit.selectGroups') }}
-            q-select(
-              style='width: 100%; max-width: calc(50% - 34px);'
-              outlined
-              v-model='state.current.visibilityGroups'
-              :options='state.groups'
-              option-value='id'
-              option-label='name'
-              emit-value
-              map-options
-              dense
-              multiple
-              :aria-label='t(`navEdit.selectGroups`)'
-              )
-        q-card.q-pa-md.q-mt-md.flex
-          q-space
-          q-btn.acrylic-btn(
-            flat
-            icon='las la-trash-alt'
-            :label='t(`common.actions.delete`)'
-            color='negative'
-            padding='xs md'
-            @click='removeItem(state.current.id)'
-          )
-
-      template(v-if='state.current.type === `link`')
-        q-card.q-pb-sm
-          q-card-section
-            .text-subtitle1 {{t('navEdit.link')}}
-          q-item
-            blueprint-icon(icon='typography')
-            q-item-section
-              q-item-label {{t(`navEdit.label`)}}
-              q-item-label(caption) {{t(`navEdit.labelHint`)}}
-            q-item-section
-              q-input(
-                outlined
-                v-model='state.current.label'
-                dense
-                hide-bottom-space
-                :aria-label='t(`navEdit.label`)'
-                )
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='spring')
-            q-item-section
-              q-item-label {{t(`navEdit.icon`)}}
-              q-item-label(caption) {{t(`navEdit.iconHint`)}}
-            q-item-section
-              q-input(
-                outlined
-                v-model='state.current.icon'
-                dense
-                :aria-label='t(`navEdit.icon`)'
-                )
-                template(#append)
-                  q-icon.cursor-pointer(
-                    name='las la-icons'
-                    color='primary'
-                    )
-                    q-menu(content-class='shadow-7')
-                      icon-picker-dialog(v-model='state.current.icon')
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='link')
-            q-item-section
-              q-item-label {{t(`navEdit.target`)}}
-              q-item-label(caption) {{t(`navEdit.targetHint`)}}
-            q-item-section
-              q-input(
-                outlined
-                v-model='state.current.target'
-                dense
-                hide-bottom-space
-                :aria-label='t(`navEdit.target`)'
-                )
-          q-separator.q-my-sm(inset)
-          q-item(tag='label')
-            blueprint-icon(icon='external-link')
-            q-item-section
-              q-item-label {{t(`navEdit.openInNewWindow`)}}
-              q-item-label(caption) {{t(`navEdit.openInNewWindowHint`)}}
-            q-item-section(avatar)
-              q-toggle(
-                v-model='state.current.openInNewWindow'
-                color='primary'
-                checked-icon='las la-check'
-                unchecked-icon='las la-times'
-                :aria-label='t(`navEdit.openInNewWindow`)'
-                )
-          q-separator.q-my-sm(inset)
-          q-item
-            blueprint-icon(icon='user-groups')
-            q-item-section
-              q-item-label {{t(`navEdit.visibility`)}}
-              q-item-label(caption) {{t(`navEdit.visibilityHint`)}}
-            q-item-section(avatar)
-              q-btn-toggle(
-                v-model='state.current.visibilityLimited'
-                push
-                glossy
-                no-caps
-                toggle-color='primary'
-                :options='visibilityOptions'
-              )
-          q-item.items-center(v-if='state.current.visibilityLimited')
-            q-space
-            .text-caption.q-mr-md {{ t('navEdit.selectGroups') }}
-            q-select(
-              style='width: 100%; max-width: calc(50% - 34px);'
-              outlined
-              v-model='state.current.visibilityGroups'
-              :options='state.groups'
-              option-value='id'
-              option-label='name'
-              emit-value
-              map-options
-              dense
-              multiple
-              :aria-label='t(`navEdit.selectGroups`)'
-              )
-
-        q-card.q-pa-md.q-mt-md.flex.items-start
-          div
-            q-btn.acrylic-btn(
-              v-if='state.current.isNested'
-              flat
-              :label='t(`navEdit.unnestItem`)'
-              icon='mdi-format-indent-decrease'
-              color='teal'
-              padding='xs md'
-              @click='state.current.isNested = false'
-            )
-            q-btn.acrylic-btn(
+<template>
+  <w-layout view="hHh lpR fFf" container>
+    <w-header class="card-header px-4 py-2">
+      <w-icon name="img:/_assets/icons/fluent-sidebar-menu.svg" left size="md" />
+      <span>{{t(`navEdit.editMenuItems`)}}</span>
+      <w-space />
+      <transition name="syncing">
+        <w-spinner class="mr-2" v-show="state.loading > 0" color="accent" size="24px" />
+      </transition>
+      <w-btn
+        class="mr-2"
+        flat
+        rounded
+        color="white"
+        :aria-label="t(`common.actions.viewDocs`)"
+        icon="la:question-circle"
+        :href="siteStore.docsBase + `/admin/editors/markdown`"
+        target="_blank"
+        type="a" />
+      <w-btn-group push>
+        <w-btn
+          push
+          color="white"
+          text-color="grey-7"
+          :label="t(`common.actions.cancel`)"
+          :aria-label="t(`common.actions.cancel`)"
+          icon="la:times"
+          @click="close" />
+        <w-btn
+          push
+          color="positive"
+          text-color="white"
+          :label="t(`common.actions.save`)"
+          :aria-label="t(`common.actions.save`)"
+          icon="la:check"
+          :disabled="state.loading > 0"
+          @click="save" />
+      </w-btn-group>
+    </w-header>
+    <w-drawer class="bg-dark-6" :model-value="true" :width="295" dark>
+      <w-scroll-area class="nav-edit" :thumb-style="thumbStyle" :bar-style="barStyle">
+        <sortable
+          class="q-list q-list--dense q-list--dark nav-edit-list"
+          :list="state.items"
+          item-key="id"
+          :options="sortableOptions"
+          @end="updateItemPosition">
+          <template #item="{element}">
+            <div
+              class="nav-edit-item nav-edit-item-header"
+              v-if="element.type === `header`"
+              :class="state.selected === element.id ? `is-active` : ``"
+              @click="setItem(element)">
+              <w-item-label class="text-caption" header>{{ element.label }}</w-item-label>
+              <w-space />
+              <w-item-section side>
+                <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
+              </w-item-section>
+            </div>
+            <w-item
+              class="nav-edit-item nav-edit-item-link"
+              v-else-if="element.type === `link`"
+              :class='{ "is-active": state.selected === element.id, "is-nested": element.isNested }'
+              @click="setItem(element)"
+              clickable>
+              <w-item-section side><w-icon :name="element.icon" color="white" /></w-item-section>
+              <w-item-section class="text-wordbreak-all">{{ element.label }}</w-item-section>
+              <w-item-section side>
+                <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
+              </w-item-section>
+            </w-item>
+            <div
+              class="nav-edit-item nav-edit-item-separator"
               v-else
+              :class="state.selected === element.id ? `is-active` : ``"
+              @click="setItem(element)">
+              <w-separator dark inset style="flex: 1; margin-top: 11px;" />
+              <w-item-section side>
+                <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
+              </w-item-section>
+            </div>
+          </template>
+        </sortable>
+        <div class="p-4 flex">
+          <w-btn
+            class="acrylic-btn"
+            style="flex: 1;"
+            flat
+            color="positive"
+            :label="t(`common.actions.add`)"
+            :aria-label="t(`common.actions.add`)"
+            icon="la:plus-circle">
+            <w-menu fit :offset="[0, 10]" auto-close>
+              <w-list separator>
+                <w-item clickable @click="addItem(`header`)">
+                  <w-item-section side><w-icon name="la:heading" /></w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{t('navEdit.header')}}</w-item-label>
+                  </w-item-section>
+                </w-item>
+                <w-item clickable @click="addItem(`link`)">
+                  <w-item-section side><w-icon name="la:link" /></w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{t('navEdit.link')}}</w-item-label>
+                  </w-item-section>
+                </w-item>
+                <w-item clickable @click="addItem(`separator`)">
+                  <w-item-section side><w-icon name="la:minus" /></w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{t('navEdit.separator')}}</w-item-label>
+                  </w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn
+            class="ml-2 acrylic-btn"
+            flat
+            color="grey"
+            :aria-label="t(`common.actions.add`)"
+            icon="la:ellipsis-v"
+            padding="xs sm">
+            <w-menu :offset="[0, 10]" anchor="bottom right" self="top right" auto-close>
+              <w-list separator>
+                <w-item clickable @click="clearItems" :disable="state.items.length < 1">
+                  <w-item-section side>
+                    <w-icon name="la:trash-alt" color="negative" />
+                  </w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{t('navEdit.clearItems')}}</w-item-label>
+                  </w-item-section>
+                </w-item>
+                <!-- q-item(clickable) -->
+                <!-- q-item-section(side) -->
+                <!-- q-icon(name='mdi:import') -->
+                <!-- q-item-section -->
+                <!-- q-item-label Copy from... -->
+              </w-list>
+            </w-menu>
+          </w-btn>
+        </div>
+      </w-scroll-area>
+    </w-drawer>
+    <w-page-container>
+      <w-page class="p-4">
+        <template v-if="state.items.length < 1">
+          <w-card>
+            <w-card-section>
+              <w-icon class="mr-2" name="la:arrow-left" size="xs" />
+              <span>{{ t('navEdit.emptyMenuText') }}</span>
+            </w-card-section>
+          </w-card>
+        </template>
+        <template v-else-if="!state.selected">
+          <w-card>
+            <w-card-section>
+              <w-icon class="mr-2" name="la:arrow-left" size="xs" />
+              <span>{{ t('navEdit.noSelection') }}</span>
+            </w-card-section>
+          </w-card>
+        </template>
+        <template v-if="state.current.type === `header`">
+          <w-card class="pb-2">
+            <w-card-section>
+              <div class="text-subtitle1">{{t('navEdit.header')}}</div>
+            </w-card-section>
+            <w-item>
+              <blueprint-icon icon="typography" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.label`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.labelHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.current.label"
+                  dense
+                  hide-bottom-space
+                  :aria-label="t(`navEdit.label`)" />
+              </w-item-section>
+            </w-item>
+            <w-item>
+              <blueprint-icon icon="user-groups" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.visibility`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.visibilityHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-btn-toggle
+                  v-model="state.current.visibilityLimited"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :options="visibilityOptions" />
+              </w-item-section>
+            </w-item>
+            <w-item class="items-center" v-if="state.current.visibilityLimited">
+              <w-space />
+              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <w-select
+                style="width: 100%; max-width: calc(50% - 34px);"
+                outlined
+                v-model="state.current.visibilityGroups"
+                :options="state.groups"
+                option-value="id"
+                option-label="name"
+                emit-value
+                map-options
+                dense
+                multiple
+                :aria-label="t(`navEdit.selectGroups`)" />
+            </w-item>
+          </w-card>
+          <w-card class="p-4 mt-4 flex">
+            <w-space />
+            <w-btn
+              class="acrylic-btn"
               flat
-              :label='t(`navEdit.nestItem`)'
-              icon='mdi-format-indent-increase'
-              color='teal'
-              padding='xs md'
-              @click='state.current.isNested = true'
-            )
-            .text-caption.q-mt-md.text-grey-7 {{ t('navEdit.nestingWarn') }}
-          q-space
-          q-btn.acrylic-btn(
-            flat
-            icon='las la-trash-alt'
-            :label='t(`common.actions.delete`)'
-            color='negative'
-            padding='xs md'
-            @click='removeItem(state.current.id)'
-          )
-
-      template(v-if='state.current.type === `separator`')
-        q-card.q-pb-sm
-          q-card-section
-            .text-subtitle1 {{t('navEdit.separator')}}
-          q-item
-            blueprint-icon(icon='user-groups')
-            q-item-section
-              q-item-label {{t(`navEdit.visibility`)}}
-              q-item-label(caption) {{t(`navEdit.visibilityHint`)}}
-            q-item-section(avatar)
-              q-btn-toggle(
-                v-model='state.current.visibilityLimited'
-                push
-                glossy
-                no-caps
-                toggle-color='primary'
-                :options='visibilityOptions'
-              )
-          q-item.items-center(v-if='state.current.visibilityLimited')
-            q-space
-            .text-caption.q-mr-md {{ t('navEdit.selectGroups') }}
-            q-select(
-              style='width: 100%; max-width: calc(50% - 34px);'
-              outlined
-              v-model='state.current.visibilityGroups'
-              :options='state.groups'
-              option-value='id'
-              option-label='name'
-              emit-value
-              map-options
-              dense
-              multiple
-              :aria-label='t(`navEdit.selectGroups`)'
-              )
-        q-card.q-pa-md.q-mt-md.flex
-          q-space
-          q-btn.acrylic-btn(
-            flat
-            icon='las la-trash-alt'
-            :label='t(`common.actions.delete`)'
-            color='negative'
-            padding='xs md'
-            @click='removeItem(state.current.id)'
-          )
-
+              icon="la:trash-alt"
+              :label="t(`common.actions.delete`)"
+              color="negative"
+              padding="xs md"
+              @click="removeItem(state.current.id)" />
+          </w-card>
+        </template>
+        <template v-if="state.current.type === `link`">
+          <w-card class="pb-2">
+            <w-card-section><div class="text-subtitle1">{{t('navEdit.link')}}</div></w-card-section>
+            <w-item>
+              <blueprint-icon icon="typography" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.label`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.labelHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.current.label"
+                  dense
+                  hide-bottom-space
+                  :aria-label="t(`navEdit.label`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="spring" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.icon`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.iconHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.current.icon"
+                  dense
+                  :aria-label="t(`navEdit.icon`)">
+                  <template #append>
+                    <w-icon class="cursor-pointer" name="la:icons" color="primary">
+                      <w-menu content-class="shadow-7">
+                        <icon-picker-dialog v-model="state.current.icon" />
+                      </w-menu>
+                    </w-icon>
+                  </template>
+                </w-input>
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="link" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.target`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.targetHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.current.target"
+                  dense
+                  hide-bottom-space
+                  :aria-label="t(`navEdit.target`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item tag="label">
+              <blueprint-icon icon="external-link" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.openInNewWindow`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.openInNewWindowHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-toggle
+                  v-model="state.current.openInNewWindow"
+                  color="primary"
+                  checked-icon="la:check"
+                  unchecked-icon="la:times"
+                  :aria-label="t(`navEdit.openInNewWindow`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="user-groups" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.visibility`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.visibilityHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-btn-toggle
+                  v-model="state.current.visibilityLimited"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :options="visibilityOptions" />
+              </w-item-section>
+            </w-item>
+            <w-item class="items-center" v-if="state.current.visibilityLimited">
+              <w-space />
+              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <w-select
+                style="width: 100%; max-width: calc(50% - 34px);"
+                outlined
+                v-model="state.current.visibilityGroups"
+                :options="state.groups"
+                option-value="id"
+                option-label="name"
+                emit-value
+                map-options
+                dense
+                multiple
+                :aria-label="t(`navEdit.selectGroups`)" />
+            </w-item>
+          </w-card>
+          <w-card class="p-4 mt-4 flex items-start">
+            <div>
+              <w-btn
+                class="acrylic-btn"
+                v-if="state.current.isNested"
+                flat
+                :label="t(`navEdit.unnestItem`)"
+                icon="mdi:format-indent-decrease"
+                color="teal"
+                padding="xs md"
+                @click="state.current.isNested = false" />
+              <w-btn
+                class="acrylic-btn"
+                v-else
+                flat
+                :label="t(`navEdit.nestItem`)"
+                icon="mdi:format-indent-increase"
+                color="teal"
+                padding="xs md"
+                @click="state.current.isNested = true" />
+              <div class="text-caption mt-4 text-grey-7">{{ t('navEdit.nestingWarn') }}</div>
+            </div>
+            <w-space />
+            <w-btn
+              class="acrylic-btn"
+              flat
+              icon="la:trash-alt"
+              :label="t(`common.actions.delete`)"
+              color="negative"
+              padding="xs md"
+              @click="removeItem(state.current.id)" />
+          </w-card>
+        </template>
+        <template v-if="state.current.type === `separator`">
+          <w-card class="pb-2">
+            <w-card-section>
+              <div class="text-subtitle1">{{t('navEdit.separator')}}</div>
+            </w-card-section>
+            <w-item>
+              <blueprint-icon icon="user-groups" />
+              <w-item-section>
+                <w-item-label>{{t(`navEdit.visibility`)}}</w-item-label>
+                <w-item-label caption>{{t(`navEdit.visibilityHint`)}}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-btn-toggle
+                  v-model="state.current.visibilityLimited"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :options="visibilityOptions" />
+              </w-item-section>
+            </w-item>
+            <w-item class="items-center" v-if="state.current.visibilityLimited">
+              <w-space />
+              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <w-select
+                style="width: 100%; max-width: calc(50% - 34px);"
+                outlined
+                v-model="state.current.visibilityGroups"
+                :options="state.groups"
+                option-value="id"
+                option-label="name"
+                emit-value
+                map-options
+                dense
+                multiple
+                :aria-label="t(`navEdit.selectGroups`)" />
+            </w-item>
+          </w-card>
+          <w-card class="p-4 mt-4 flex">
+            <w-space />
+            <w-btn
+              class="acrylic-btn"
+              flat
+              icon="la:trash-alt"
+              :label="t(`common.actions.delete`)"
+              color="negative"
+              padding="xs md"
+              @click="removeItem(state.current.id)" />
+          </w-card>
+        </template>
+      </w-page>
+    </w-page-container>
+  </w-layout>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { useQuasar } from 'quasar'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { v4 as uuid } from 'uuid'
 
-import { pick } from 'es-toolkit/object'
+import { loading } from '@/composables/loading'
+import { notify } from '@/composables/notify'
 
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
+import { v4 as uuid } from 'uuid'
+import { pick } from 'es-toolkit/object'
 import { Sortable } from 'sortablejs-vue3'
-
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -431,7 +466,7 @@ const state = reactive({
  * The icon a new link item starts with.
  *
  * An Iconify reference, so that the icon picker opens on its search tab with this one selected, and so
- * that the sidebar draws it through `wiki-icon` like every other item. Kept to `mdi`, a set seeded on
+ * that the sidebar draws it through `w-icon` like every other item. Kept to `mdi`, a set seeded on
  * every instance.
  */
 const DEFAULT_LINK_ICON = 'mdi:text-box-outline'
@@ -472,12 +507,12 @@ const barStyle = {
 
 // METHODS
 
-function setItem (item) {
+function setItem(item) {
   state.selected = item.id
   state.current = item
 }
 
-function addItem (type) {
+function addItem(type) {
   const newItem = {
     id: uuid(),
     type,
@@ -503,24 +538,24 @@ function addItem (type) {
   state.current = newItem
 }
 
-function removeItem (id) {
-  state.items = state.items.filter(item => item.id !== id)
+function removeItem(id) {
+  state.items = state.items.filter((item) => item.id !== id)
   state.selected = null
   state.current = {}
 }
 
-function clearItems () {
+function clearItems() {
   state.items = []
   state.selected = null
   state.current = {}
 }
 
-function updateItemPosition (ev) {
+function updateItemPosition(ev) {
   const item = state.items.splice(ev.oldIndex, 1)[0]
   state.items.splice(ev.newIndex, 0, item)
 }
 
-function close () {
+function close() {
   siteStore.$patch({ overlay: '' })
 }
 
@@ -528,19 +563,22 @@ function close () {
  * The message an API failure should be reported with — the server's own if it sent one, since ky
  * throws before the caller ever sees the body.
  */
-async function apiErrorMessage (err) {
-  const message = await err.response?.json().then(b => b?.message).catch(() => null)
+async function apiErrorMessage(err) {
+  const message = await err.response
+    ?.json()
+    .then((b) => b?.message)
+    .catch(() => null)
   return message || err.message || 'An unexpected error occured.'
 }
 
-async function loadGroups () {
+async function loadGroups() {
   state.loading++
   try {
     const groups = await API_CLIENT.get('groups').json()
-    state.groups = (groups ?? []).map(g => ({ id: g.id, name: g.name }))
+    state.groups = (groups ?? []).map((g) => ({ id: g.id, name: g.name }))
   } catch (err) {
     // -> Without the list, per-group visibility cannot be set, but the rest of the editor still works
-    $q.notify({
+    notify({
       type: 'warning',
       message: t('navEdit.groupsFailed'),
       caption: await apiErrorMessage(err)
@@ -549,41 +587,56 @@ async function loadGroups () {
   state.loading--
 }
 
-async function loadMenuItems () {
+async function loadMenuItems() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     // -> `full`, because the editor has to see items limited to groups the editor is not in: saving
     //    without them would delete them
-    const items = await API_CLIENT.get(
-      `sites/${siteStore.id}/navigation/${navId.value}`,
-      { searchParams: { full: true } }
-    ).json()
+    const items = await API_CLIENT.get(`sites/${siteStore.id}/navigation/${navId.value}`, {
+      searchParams: { full: true }
+    }).json()
     for (const item of items ?? []) {
       state.items.push({
-        ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow', 'visibilityGroups']),
+        ...pick(item, [
+          'id',
+          'type',
+          'label',
+          'icon',
+          'target',
+          'openInNewWindow',
+          'visibilityGroups'
+        ]),
         visibilityLimited: item.visibilityGroups?.length > 0
       })
-      for (const child of (item?.children ?? [])) {
+      for (const child of item?.children ?? []) {
         state.items.push({
-          ...pick(child, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow', 'visibilityGroups']),
+          ...pick(child, [
+            'id',
+            'type',
+            'label',
+            'icon',
+            'target',
+            'openInNewWindow',
+            'visibilityGroups'
+          ]),
           visibilityLimited: child.visibilityGroups?.length > 0,
           isNested: true
         })
       }
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: await apiErrorMessage(err)
     })
     close()
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-function cleanMenuItem (item, isNested = false) {
+function cleanMenuItem(item, isNested = false) {
   switch (item.type) {
     case 'header': {
       return {
@@ -595,7 +648,7 @@ function cleanMenuItem (item, isNested = false) {
       return {
         ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow']),
         visibilityGroups: item.visibilityLimited ? item.visibilityGroups : [],
-        ...!isNested && { children: [] }
+        ...(!isNested && { children: [] })
       }
     }
     case 'separator': {
@@ -607,9 +660,9 @@ function cleanMenuItem (item, isNested = false) {
   }
 }
 
-async function save () {
+async function save() {
   state.loading++
-  $q.loading.show()
+  loading.show()
   try {
     const items = []
     for (const item of state.items) {
@@ -625,20 +678,17 @@ async function save () {
 
     // -> The mode goes with the items: saving a menu for a page that only inherits would store items
     //    nothing points at
-    const resp = await API_CLIENT.put(
-      `sites/${siteStore.id}/navigation/pages/${pageStore.id}`,
-      {
-        json: {
-          mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
-          items
-        }
+    const resp = await API_CLIENT.put(`sites/${siteStore.id}/navigation/pages/${pageStore.id}`, {
+      json: {
+        mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
+        items
       }
-    ).json()
+    }).json()
     // -> The API client does not throw on 400, so a refusal comes back as a parsed error
     if (resp?.ok === false) {
       throw new Error(resp.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('navEdit.saveSuccess')
     })
@@ -650,12 +700,12 @@ async function save () {
     await siteStore.fetchNavigation(resp.navigationId ?? navId.value)
     close()
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: await apiErrorMessage(err)
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
@@ -739,7 +789,8 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.nav-edit-item-header, .nav-edit-item-separator {
+.nav-edit-item-header,
+.nav-edit-item-separator {
   & + .nav-edit-item-link.is-nested {
     background-color: $negative !important;
     border-left-color: color.adjust($negative, $lightness: -10%) !important;
@@ -753,7 +804,7 @@ onBeforeUnmount(() => {
 }
 
 .nav-edit-list {
-  .nav-edit-item-separator + .nav-edit-item-header > .q-item__label {
+  .nav-edit-item-separator + .nav-edit-item-header > .w-item-label {
     padding-top: 8px;
   }
 

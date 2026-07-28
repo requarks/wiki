@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, grid-list-lg)
     v-layout(row, wrap)
       v-flex(xs12)
@@ -65,7 +65,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
+                  prepend-icon='mdi:cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -76,7 +76,7 @@
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
                   color='primary'
-                  prepend-icon='mdi-cog-box'
+                  prepend-icon='mdi:cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   inset
@@ -87,7 +87,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
+                  prepend-icon='mdi:cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -98,7 +98,7 @@
                   :key='cfg.key'
                   :label='cfg.value.title'
                   v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
+                  prepend-icon='mdi:cog-box'
                   :hint='cfg.value.hint ? cfg.value.hint : ""'
                   persistent-hint
                   :class='cfg.value.hint ? "mb-2" : ""'
@@ -143,11 +143,15 @@ export default {
         await this.$apollo.mutate({
           mutation: providersSaveMutation,
           variables: {
-            providers: this.providers.map(str => _.pick(str, [
-              'isEnabled',
-              'key',
-              'config'
-            ])).map(str => ({...str, config: str.config.map(cfg => ({...cfg, value: JSON.stringify({ v: cfg.value.value })}))}))
+            providers: this.providers
+              .map((str) => _.pick(str, ['isEnabled', 'key', 'config']))
+              .map((str) => ({
+                ...str,
+                config: str.config.map((cfg) => ({
+                  ...cfg,
+                  value: JSON.stringify({ v: cfg.value.value })
+                }))
+              }))
           }
         })
         this.$store.commit('showNotification', {
@@ -165,14 +169,18 @@ export default {
     providers: {
       query: providersQuery,
       fetchPolicy: 'network-only',
-      update: (data) => _.cloneDeep(data.analytics.providers).map(str => ({
-        ...str,
-        config: _.sortBy(str.config.map(cfg => ({
-          ...cfg,
-          value: JSON.parse(cfg.value)
-        })), [t => t.value.order])
-      })),
-      watchLoading (isLoading) {
+      update: (data) =>
+        _.cloneDeep(data.analytics.providers).map((str) => ({
+          ...str,
+          config: _.sortBy(
+            str.config.map((cfg) => ({
+              ...cfg,
+              value: JSON.parse(cfg.value)
+            })),
+            [(t) => t.value.order]
+          )
+        })),
+      watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-analytics-refresh')
       }
     }

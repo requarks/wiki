@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
@@ -125,7 +125,6 @@
 <script>
 import _ from 'lodash'
 
-
 import { SemipolarSpinner } from 'epic-spinners'
 
 export default {
@@ -149,7 +148,7 @@ export default {
     }
   },
   computed: {
-    providerTitle () {
+    providerTitle() {
       switch (this.info.sslProvider) {
         case 'custom':
           return this.$t('admin.ssl.providerCustomCertificate')
@@ -161,7 +160,7 @@ export default {
     }
   },
   methods: {
-    async toggleRedir () {
+    async toggleRedir() {
       this.loadingRedir = true
       try {
         this.info.httpRedirection = !this.info.httpRedirection
@@ -183,8 +182,11 @@ export default {
           variables: {
             enabled: _.get(this.info, 'httpRedirection', false)
           },
-          watchLoading (isLoading) {
-            this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-toggleRedirection')
+          watchLoading(isLoading) {
+            this.$store.commit(
+              `loading${isLoading ? 'Start' : 'Stop'}`,
+              'admin-ssl-toggleRedirection'
+            )
           }
         })
         this.$store.commit('showNotification', {
@@ -198,7 +200,7 @@ export default {
       }
       this.loadingRedir = false
     },
-    async renewCertificate () {
+    async renewCertificate() {
       this.loadingRenew = true
       try {
         const respRaw = await this.$apollo.mutate({
@@ -216,7 +218,7 @@ export default {
               }
             }
           `,
-          watchLoading (isLoading) {
+          watchLoading(isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-renew')
           }
         })
@@ -256,7 +258,7 @@ export default {
       `,
       fetchPolicy: 'network-only',
       update: (data) => _.cloneDeep(data.system.info),
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-ssl-refresh')
       }
     }
@@ -264,6 +266,4 @@ export default {
 }
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

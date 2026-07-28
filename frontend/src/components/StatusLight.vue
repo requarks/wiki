@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
 .status-light(:class='cssClasses')
 </template>
 
@@ -34,7 +34,7 @@ const cssClasses = computed(() => {
   border-radius: 5px;
   color: $grey-5;
   background-color: currentColor;
-  background-image: linear-gradient(to bottom, transparent, rgba(255,255,255,.4));
+  background-image: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.4));
 
   &.negative {
     color: $negative;

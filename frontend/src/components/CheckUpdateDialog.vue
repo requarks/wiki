@@ -1,50 +1,68 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 350px; max-width: 450px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-downloading-updates.svg', left, size='sm')
-      span {{t(`admin.system.checkingForUpdates`)}}
-    q-card-section
-      .q-pa-md.text-center
-        img(src='/_assets/illustrations/undraw_going_up.svg', style='width: 150px;')
-      template(v-if='state.isLoading')
-        q-linear-progress(
-          indeterminate
-          size='lg'
-          rounded
-          )
-        .q-mt-sm.text-center.text-caption {{ $t('admin.system.fetchingLatestVersionInfo') }}
-      template(v-else)
-        .text-center
-          strong.text-positive(v-if='isLatest') {{ $t('admin.system.runningLatestVersion') }}
-          strong.text-pink(v-else) {{ $t('admin.system.newVersionAvailable') }}
-          .text-body2.q-mt-md Current: #[strong {{ state.current }}]
-          .text-body2 Latest: #[strong {{ state.latest }}]
-          .text-body2 Release Date: #[strong {{ state.latestDate }}]
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='state.isLoading ? t(`common.actions.cancel`) : t(`common.actions.close`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        v-if='state.canUpgrade'
-        unelevated
-        :label='t(`admin.system.upgrade`)'
-        color='primary'
-        padding='xs md'
-        @click='upgrade'
-        :loading='state.isLoading'
-        )
+<template>
+  <w-dialog v-model="dialogVisible" max-width="450px" @hide="onDialogHide">
+    <w-card style="min-width: 350px">
+      <w-card-section class="card-header">
+        <w-icon
+          name="img:/_assets/icons/fluent-downloading-updates.svg"
+          size="sm"
+          class="mr-2" />
+        <span>{{ t(`admin.system.checkingForUpdates`) }}</span>
+      </w-card-section>
+      <w-card-section>
+        <div class="p-4 text-center">
+          <img src="/_assets/illustrations/undraw_going_up.svg" style="width: 150px" />
+        </div>
+        <template v-if="state.isLoading">
+          <w-linear-progress indeterminate size="lg" rounded />
+          <div class="mt-2 text-center text-caption">
+            {{ $t('admin.system.fetchingLatestVersionInfo') }}
+          </div>
+        </template>
+        <template v-else>
+          <div class="text-center">
+            <strong v-if="isLatest" class="text-positive">{{
+              $t('admin.system.runningLatestVersion')
+            }}</strong>
+            <strong v-else class="text-pink">{{ $t('admin.system.newVersionAvailable') }}</strong>
+            <div class="text-body2 mt-4">
+              Current: <strong>{{ state.current }}</strong>
+            </div>
+            <div class="text-body2">
+              Latest: <strong>{{ state.latest }}</strong>
+            </div>
+            <div class="text-body2">
+              Release Date: <strong>{{ state.latestDate }}</strong>
+            </div>
+          </div>
+        </template>
+      </w-card-section>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="state.isLoading ? t(`common.actions.cancel`) : t(`common.actions.close`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          v-if="state.canUpgrade"
+          unelevated
+          :label="t(`admin.system.upgrade`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.isLoading"
+          @click="upgrade" />
+      </w-card-actions>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive } from 'vue'
 import { DateTime } from 'luxon'
 
@@ -52,14 +70,11 @@ import { useUserStore } from '@/stores/user'
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // STORES
 
@@ -85,7 +100,7 @@ const isLatest = computed(() => {
 
 // METHODS
 
-async function check () {
+async function check() {
   state.isLoading = true
   try {
     const resp = await API_CLIENT.post('system/checkForUpdate').json()
@@ -97,7 +112,7 @@ async function check () {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })

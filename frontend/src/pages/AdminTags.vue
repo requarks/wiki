@@ -1,4 +1,4 @@
-<template lang='pug'>
+<template lang="pug">
   v-container(fluid, grid-list-lg)
     v-layout(row wrap)
       v-flex(xs12)
@@ -25,7 +25,7 @@
                     dense
                     color='teal'
                     :background-color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-2`'
-                    prepend-inner-icon='mdi-magnify'
+                    prepend-inner-icon='mdi:magnify'
                   )
                 v-divider
                 v-list.py-2(dense, nav)
@@ -60,14 +60,14 @@
                     v-text-field(
                       outlined
                       :label='$t("tags.tag")'
-                      prepend-icon='mdi-tag'
+                      prepend-icon='mdi:tag'
                       v-model='current.tag'
                       counter='255'
                     )
                     v-text-field(
                       outlined
                       :label='$t("tags.label")'
-                      prepend-icon='mdi-format-title'
+                      prepend-icon='mdi:format-title'
                       v-model='current.title'
                       hide-details
                     )
@@ -100,7 +100,6 @@
 <script>
 import _ from 'lodash'
 
-
 export default {
   data() {
     return {
@@ -111,9 +110,12 @@ export default {
     }
   },
   computed: {
-    filteredTags () {
+    filteredTags() {
       if (this.filter.length > 0) {
-        return _.filter(this.tags, t => t.tag.indexOf(this.filter) >= 0 || t.title.indexOf(this.filter) >= 0)
+        return _.filter(
+          this.tags,
+          (t) => t.tag.indexOf(this.filter) >= 0 || t.title.indexOf(this.filter) >= 0
+        )
       } else {
         return this.tags
       }
@@ -153,7 +155,13 @@ export default {
           })
           this.refresh()
         } else {
-          throw new Error(_.get(resp, 'data.pages.deleteTag.responseResult.message', 'An unexpected error occurred.'))
+          throw new Error(
+            _.get(
+              resp,
+              'data.pages.deleteTag.responseResult.message',
+              'An unexpected error occurred.'
+            )
+          )
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -193,7 +201,13 @@ export default {
           })
           this.current.updatedAt = new Date()
         } else {
-          throw new Error(_.get(resp, 'data.pages.updateTag.responseResult.message', 'An unexpected error occurred.'))
+          throw new Error(
+            _.get(
+              resp,
+              'data.pages.updateTag.responseResult.message',
+              'An unexpected error occurred.'
+            )
+          )
         }
       } catch (err) {
         this.$store.commit('pushGraphError', err)
@@ -227,7 +241,7 @@ export default {
       `,
       fetchPolicy: 'network-only',
       update: (data) => _.cloneDeep(data.pages.tags),
-      watchLoading (isLoading) {
+      watchLoading(isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-tags-refresh')
       }
     }
@@ -235,14 +249,12 @@ export default {
 }
 </script>
 
-<style lang='scss' scoped>
-
+<style lang="scss" scoped>
 .clickable {
   cursor: pointer;
 
   &:hover {
-    background-color: rgba(mc('blue', '500'), .25);
+    background-color: rgba(mc('blue', '500'), 0.25);
   }
 }
-
 </style>

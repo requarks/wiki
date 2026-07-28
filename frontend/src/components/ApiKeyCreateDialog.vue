@@ -1,127 +1,127 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 650px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-plus-plus.svg', left, size='sm')
-      span {{t(`admin.api.newKeyTitle`)}}
-    q-form.q-py-sm(ref='createKeyForm', @submit='create')
-      q-item
-        blueprint-icon.self-start(icon='grand-master-key')
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.keyName'
-            dense
-            :rules='keyNameValidation'
-            hide-bottom-space
-            :label='t(`admin.api.newKeyName`)'
-            :aria-label='t(`admin.api.newKeyName`)'
-            :hint='t(`admin.api.newKeyNameHint`)'
-            lazy-rules='ondemand'
-            autofocus
-            ref='iptName'
-            )
-      q-item
-        blueprint-icon.self-start(icon='schedule')
-        q-item-section
-          //- Single-select: a key has one lifetime. It was declared `multiple` against a string
-          //- model, which showed the default as a stray chip and let several be picked at once.
-          q-select(
-            outlined
-            :options='expirations'
-            v-model='state.keyExpiration'
-            map-options
-            option-value='value'
-            option-label='text'
-            emit-value
-            options-dense
-            dense
-            hide-bottom-space
-            :label='t(`admin.api.newKeyExpiration`)'
-            :aria-label='t(`admin.api.newKeyExpiration`)'
-            :hint='t(`admin.api.newKeyExpirationHint`)'
-            )
-      q-item
-        blueprint-icon.self-start(icon='access')
-        q-item-section
-          q-select(
-            outlined
-            :options='state.groups'
-            v-model='state.keyGroups'
-            multiple
-            map-options
-            emit-value
-            option-value='id'
-            option-label='name'
-            options-dense
-            dense
-            :rules='keyGroupsValidation'
-            hide-bottom-space
-            :label='t(`admin.api.permissionGroups`)'
-            :aria-label='t(`admin.api.permissionGroups`)'
-            :hint='t(`admin.api.newKeyGroupHint`)'
-            lazy-rules='ondemand'
-            :loading='state.loadingGroups'
-            )
-            template(v-slot:selected)
-              .text-caption(v-if='state.keyGroups.length > 1')
-                i18n-t(keypath='admin.api.groupsSelected', scope='global')
-                  template(#count)
-                    strong {{ state.keyGroups.length }}
-              .text-caption(v-else-if='state.keyGroups.length === 1')
-                i18n-t(keypath='admin.api.groupSelected', scope='global')
-                  template(#group)
-                    strong {{ selectedGroupName }}
-              span(v-else)
-            template(v-slot:option='{ itemProps, opt, selected, toggleOption }')
-              q-item(
-                v-bind='itemProps'
-                )
-                q-item-section(side)
-                  q-checkbox(
-                    size='sm'
-                    :model-value='selected'
-                    @update:model-value='toggleOption(opt)'
-                    )
-                q-item-section
-                  q-item-label {{opt.name}}
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.create`)'
-        color='primary'
-        padding='xs md'
-        @click='create'
-        :loading='state.loading > 0'
-        )
+<template>
+  <w-dialog v-model="dialogVisible" @hide="onDialogHide">
+    <w-card style="min-width: 650px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-plus-plus.svg" size="sm" class="mr-2" />
+        <span>{{ t(`admin.api.newKeyTitle`) }}</span>
+      </w-card-section>
+      <w-form ref="createKeyForm" class="py-2" @submit="create">
+        <w-item>
+          <blueprint-icon icon="grand-master-key" class="self-start" />
+          <w-item-section>
+            <w-input
+              ref="iptName"
+              v-model="state.keyName"
+              outlined
+              dense
+              :rules="keyNameValidation"
+              hide-bottom-space
+              :label="t(`admin.api.newKeyName`)"
+              :hint="t(`admin.api.newKeyNameHint`)"
+              lazy-rules="ondemand"
+              autofocus />
+          </w-item-section>
+        </w-item>
+        <w-item>
+          <blueprint-icon icon="schedule" class="self-start" />
+          <w-item-section>
+            <!--
+              Single-select: a key has one lifetime. It was declared `multiple` against a string
+              model, which showed the default as a stray chip and let several be picked at once.
+            -->
+            <w-select
+              v-model="state.keyExpiration"
+              outlined
+              :options="expirations"
+              map-options
+              option-value="value"
+              option-label="text"
+              emit-value
+              options-dense
+              dense
+              hide-bottom-space
+              :label="t(`admin.api.newKeyExpiration`)"
+              :hint="t(`admin.api.newKeyExpirationHint`)" />
+          </w-item-section>
+        </w-item>
+        <w-item>
+          <blueprint-icon icon="access" class="self-start" />
+          <w-item-section>
+            <w-select
+              v-model="state.keyGroups"
+              outlined
+              :options="state.groups"
+              multiple
+              map-options
+              emit-value
+              option-value="id"
+              option-label="name"
+              options-dense
+              dense
+              :rules="keyGroupsValidation"
+              hide-bottom-space
+              :label="t(`admin.api.permissionGroups`)"
+              :hint="t(`admin.api.newKeyGroupHint`)"
+              lazy-rules="ondemand"
+              :loading="state.loadingGroups">
+              <template #selected>
+                <span v-if="state.keyGroups.length > 1" class="text-caption">
+                  <i18n-t keypath="admin.api.groupsSelected" scope="global">
+                    <template #count>
+                      <strong>{{ state.keyGroups.length }}</strong>
+                    </template>
+                  </i18n-t>
+                </span>
+                <span v-else-if="state.keyGroups.length === 1" class="text-caption">
+                  <i18n-t keypath="admin.api.groupSelected" scope="global">
+                    <template #group>
+                      <strong>{{ selectedGroupName }}</strong>
+                    </template>
+                  </i18n-t>
+                </span>
+                <span v-else />
+              </template>
+            </w-select>
+          </w-item-section>
+        </w-item>
+      </w-form>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          unelevated
+          :label="t(`common.actions.create`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.loading > 0"
+          @click="create" />
+      </w-card-actions>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialog, dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import ApiKeyCopyDialog from './ApiKeyCopyDialog.vue'
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // I18N
 
@@ -161,30 +161,28 @@ const iptName = ref(null)
 // COMPUTED
 
 const selectedGroupName = computed(() => {
-  return state.groups.filter(g => g.id === state.keyGroups[0])[0]?.name
+  return state.groups.filter((g) => g.id === state.keyGroups[0])[0]?.name
 })
 
 // VALIDATION RULES
 
 const keyNameValidation = [
-  val => val.length > 0 || t('admin.api.nameMissing'),
-  val => /^[^<>"]+$/.test(val) || t('admin.api.nameInvalidChars')
+  (val) => val.length > 0 || t('admin.api.nameMissing'),
+  (val) => /^[^<>"]+$/.test(val) || t('admin.api.nameInvalidChars')
 ]
 
-const keyGroupsValidation = [
-  val => val.length > 0 || t('admin.api.groupsMissing')
-]
+const keyGroupsValidation = [(val) => val.length > 0 || t('admin.api.groupsMissing')]
 
 // METHODS
 
-async function loadGroups () {
+async function loadGroups() {
   state.loading++
   state.loadingGroups = true
   try {
     const resp = await API_CLIENT.get('groups').json()
-    state.groups = (resp ?? []).filter(g => g.id !== GUESTS_GROUP_ID)
+    state.groups = (resp ?? []).filter((g) => g.id !== GUESTS_GROUP_ID)
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: t('admin.users.groupsLoadFailed'),
       caption: err.message
@@ -194,7 +192,7 @@ async function loadGroups () {
   state.loading--
 }
 
-async function create () {
+async function create() {
   state.loading++
   try {
     const isFormValid = await createKeyForm.value.validate(true)
@@ -211,12 +209,12 @@ async function create () {
     if (!resp?.ok || !resp?.key) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.api.createSuccess')
     })
     // -> The token exists only in this response, so hand it straight to the copy dialog
-    $q.dialog({
+    dialog({
       component: ApiKeyCopyDialog,
       componentProps: {
         keyValue: resp.key
@@ -225,8 +223,11 @@ async function create () {
       onDialogOK()
     })
   } catch (err) {
-    const apiMessage = await err.response?.json().then(b => b?.message).catch(() => null)
-    $q.notify({
+    const apiMessage = await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)
+    notify({
       type: 'negative',
       message: apiMessage || err.message
     })

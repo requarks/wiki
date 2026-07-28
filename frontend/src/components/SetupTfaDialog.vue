@@ -1,51 +1,62 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide', persistent)
-  q-card.setup2fadialog(style='min-width: 450px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-fingerprint.svg', left, size='sm')
-      span {{t(`profile.authSetTfa`)}}
-    template(v-if='!state.isInit')
-      q-linear-progress(query, color='positive')
-      q-card-section.text-center.text-grey {{t(`profile.authSetTfaLoading`)}}
-    template(v-else)
-      q-card-section.text-center
-        p {{t('auth.tfaSetupInstrFirst')}}
-        div(style='justify-content: center; display: flex;')
-          div(v-html='state.tfaQRImage', style='width: 200px;')
-        p.q-mt-sm {{t('auth.tfaSetupInstrSecond')}}
-        .flex.justify-center
-          v-otp-input(
-            v-model:value='state.securityCode'
-            :num-inputs='6'
-            :should-auto-focus='true'
-            input-classes='otp-input'
-            input-type='number'
-            separator=''
-          )
-        q-inner-loading(:showing='state.isLoading')
-      q-card-actions.card-actions
-        q-space
-        q-btn.acrylic-btn(
-          flat
-          :label='t(`common.actions.cancel`)'
-          color='grey'
-          padding='xs md'
-          @click='onDialogCancel'
-          )
-        q-btn(
-          unelevated
-          :label='t(`auth.tfa.verifyToken`)'
-          color='primary'
-          padding='xs md'
-          @click='save'
-          :loading='state.isLoading'
-          )
+<template>
+  <w-dialog v-model="dialogVisible" persistent @hide="onDialogHide">
+    <w-card class="setup2fadialog" style="min-width: 450px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-fingerprint.svg" size="sm" class="mr-2" />
+        <span>{{ t(`profile.authSetTfa`) }}</span>
+      </w-card-section>
+      <template v-if="!state.isInit">
+        <w-linear-progress query color="positive" />
+        <w-card-section class="text-center text-grey">
+          {{ t(`profile.authSetTfaLoading`) }}
+        </w-card-section>
+      </template>
+      <template v-else>
+        <w-card-section class="relative text-center">
+          <p>{{ t('auth.tfaSetupInstrFirst') }}</p>
+          <div style="justify-content: center; display: flex">
+            <!-- eslint-disable-next-line vue/no-v-html -- server-generated QR code SVG -->
+            <div v-html="state.tfaQRImage" style="width: 200px" />
+          </div>
+          <p class="mt-2">{{ t('auth.tfaSetupInstrSecond') }}</p>
+          <div class="flex flex-wrap justify-center">
+            <v-otp-input
+              v-model:value="state.securityCode"
+              :num-inputs="6"
+              :should-auto-focus="true"
+              input-classes="otp-input"
+              input-type="number"
+              separator="" />
+          </div>
+          <w-inner-loading :showing="state.isLoading" />
+        </w-card-section>
+        <w-card-actions class="card-actions">
+          <w-space />
+          <w-btn
+            class="acrylic-btn"
+            flat
+            :label="t(`common.actions.cancel`)"
+            color="grey"
+            padding="xs md"
+            @click="onDialogCancel" />
+          <w-btn
+            unelevated
+            :label="t(`auth.tfa.verifyToken`)"
+            color="primary"
+            padding="xs md"
+            :loading="state.isLoading"
+            @click="save" />
+        </w-card-actions>
+      </template>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { onMounted, reactive } from 'vue'
 
 import { useSiteStore } from '@/stores/site'
@@ -63,14 +74,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // STORES
 
@@ -92,7 +100,7 @@ const state = reactive({
 
 // METHODS
 
-async function load () {
+async function load() {
   state.isInit = false
   try {
     const resp = await APOLLO_CLIENT.mutate({
@@ -127,7 +135,7 @@ async function load () {
       throw new Error(resp?.data?.setupTFA?.operation?.message || 'An unexpected error occured.')
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })
@@ -135,7 +143,7 @@ async function load () {
   }
 }
 
-async function save () {
+async function save() {
   state.isLoading = true
   try {
     if (!/^[0-9]{6}$/.test(state.securityCode)) {
@@ -173,7 +181,7 @@ async function save () {
     if (resp.data?.loginTFA?.operation?.succeeded) {
       state.continuationToken = ''
       state.securityCode = ''
-      $q.notify({
+      notify({
         type: 'positive',
         message: t('auth.tfaSetupSuccess')
       })
@@ -183,7 +191,7 @@ async function save () {
       throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
     }
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })

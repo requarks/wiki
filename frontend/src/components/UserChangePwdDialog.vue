@@ -1,79 +1,84 @@
-<template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
-  q-card(style='min-width: 650px;')
-    q-card-section.card-header
-      q-icon(name='img:/_assets/icons/fluent-password-reset.svg', left, size='sm')
-      span {{t(`admin.users.changePassword`)}}
-    q-form.q-py-sm(ref='changeUserPwdForm', @submit='save')
-      q-item
-        blueprint-icon(icon='password')
-        q-item-section
-          q-input(
-            outlined
-            v-model='state.userPassword'
-            dense
-            :rules='userPasswordValidation'
-            hide-bottom-space
-            :label='t(`admin.users.password`)'
-            :aria-label='t(`admin.users.password`)'
-            lazy-rules='ondemand'
-            autofocus
-            )
-            template(#append)
-              .flex.items-center
-                q-badge(
-                  :color='passwordStrength.color'
-                  :label='passwordStrength.label'
-                )
-                q-separator.q-mx-sm(vertical)
-                q-btn(
-                  flat
-                  dense
-                  padding='none xs'
-                  color='brown'
-                  @click='randomizePassword'
-                  )
-                  q-icon(name='las la-dice-d6')
-                  .q-pl-xs.text-caption: strong Generate
-      q-item(tag='label', v-ripple)
-        blueprint-icon(icon='password-reset')
-        q-item-section
-          q-item-label {{t(`admin.users.mustChangePwd`)}}
-          q-item-label(caption) {{t(`admin.users.mustChangePwdHint`)}}
-        q-item-section(avatar)
-          q-toggle(
-            v-model='state.userMustChangePassword'
-            color='primary'
-            checked-icon='las la-check'
-            unchecked-icon='las la-times'
-            :aria-label='t(`admin.users.mustChangePwd`)'
-            )
-    q-card-actions.card-actions
-      q-space
-      q-btn.acrylic-btn(
-        flat
-        :label='t(`common.actions.cancel`)'
-        color='grey'
-        padding='xs md'
-        @click='onDialogCancel'
-        )
-      q-btn(
-        unelevated
-        :label='t(`common.actions.update`)'
-        color='primary'
-        padding='xs md'
-        @click='save'
-        :loading='state.isLoading'
-        )
+<template>
+  <w-dialog v-model="dialogVisible" @hide="onDialogHide">
+    <w-card style="min-width: 650px">
+      <w-card-section class="card-header">
+        <w-icon name="img:/_assets/icons/fluent-password-reset.svg" size="sm" class="mr-2" />
+        <span>{{ t(`admin.users.changePassword`) }}</span>
+      </w-card-section>
+      <w-form ref="changeUserPwdForm" class="py-2" @submit="save">
+        <w-item>
+          <blueprint-icon icon="password" />
+          <w-item-section>
+            <w-input
+              v-model="state.userPassword"
+              outlined
+              dense
+              :rules="userPasswordValidation"
+              hide-bottom-space
+              :label="t(`admin.users.password`)"
+              lazy-rules="ondemand"
+              autofocus>
+              <template #append>
+                <div class="flex flex-nowrap items-center">
+                  <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
+                  <w-separator vertical class="mx-2 self-stretch" />
+                  <w-btn flat dense padding="none xs" color="brown" @click="randomizePassword">
+                    <w-icon name="la:dice-d6" />
+                    <div class="pl-1 text-caption"><strong>Generate</strong></div>
+                  </w-btn>
+                </div>
+              </template>
+            </w-input>
+          </w-item-section>
+        </w-item>
+        <!--
+          The whole row is the toggle's hit area, as it was when this was a <label>-tagged item.
+          `@click.stop` on the toggle keeps a direct hit on the switch from also firing the row
+          handler and cancelling itself out.
+        -->
+        <w-item clickable @click="state.userMustChangePassword = !state.userMustChangePassword">
+          <blueprint-icon icon="password-reset" />
+          <w-item-section>
+            <w-item-label>{{ t(`admin.users.mustChangePwd`) }}</w-item-label>
+            <w-item-label caption>{{ t(`admin.users.mustChangePwdHint`) }}</w-item-label>
+          </w-item-section>
+          <w-item-section avatar>
+            <w-toggle
+              v-model="state.userMustChangePassword"
+              :aria-label="t(`admin.users.mustChangePwd`)"
+              @click.stop />
+          </w-item-section>
+        </w-item>
+      </w-form>
+      <w-card-actions class="card-actions">
+        <w-space />
+        <w-btn
+          class="acrylic-btn"
+          flat
+          :label="t(`common.actions.cancel`)"
+          color="grey"
+          padding="xs md"
+          @click="onDialogCancel" />
+        <w-btn
+          unelevated
+          :label="t(`common.actions.update`)"
+          color="primary"
+          padding="xs md"
+          :loading="state.isLoading"
+          @click="save" />
+      </w-card-actions>
+    </w-card>
+  </w-dialog>
 </template>
 
 <script setup>
-
 import { sampleSize } from 'es-toolkit/array'
 import zxcvbn from 'zxcvbn'
 
 import { useI18n } from 'vue-i18n'
-import { useDialogPluginComponent, useQuasar } from 'quasar'
+
+import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { computed, reactive, ref } from 'vue'
 
 // PROPS
@@ -87,14 +92,11 @@ const props = defineProps({
 
 // EMITS
 
-defineEmits([
-  ...useDialogPluginComponent.emits
-])
+defineEmits([...dialogComponentEmits])
 
-// QUASAR
+// DIALOG
 
-const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
-const $q = useQuasar()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
 // I18N
 
@@ -154,18 +156,18 @@ const passwordStrength = computed(() => {
 // VALIDATION RULES
 
 const userPasswordValidation = [
-  val => val.length > 0 || t('admin.users.passwordMissing'),
-  val => val.length >= 8 || t('admin.users.passwordTooShort')
+  (val) => val.length > 0 || t('admin.users.passwordMissing'),
+  (val) => val.length >= 8 || t('admin.users.passwordTooShort')
 ]
 
 // METHODS
 
-function randomizePassword () {
+function randomizePassword() {
   const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
   state.userPassword = sampleSize(pwdChars, 16).join('')
 }
 
-async function save () {
+async function save() {
   state.isLoading = true
   try {
     const isFormValid = await changeUserPwdForm.value.validate(true)
@@ -179,9 +181,11 @@ async function save () {
       }
     }).json()
     if (!resp?.ok) {
-      throw new Error(t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.users.changePasswordSuccess')
     })
@@ -189,7 +193,7 @@ async function save () {
       mustChangePassword: state.userMustChangePassword
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: err.message
     })

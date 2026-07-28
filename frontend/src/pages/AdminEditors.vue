@@ -1,90 +1,108 @@
-<template lang='pug'>
-q-page.admin-flags
-  .row.q-pa-md.items-center
-    .col-auto
-      img.admin-icon.animated.fadeInLeft(src='/_assets/icons/fluent-cashbook.svg')
-    .col.q-pl-md
-      .text-h5.text-primary.animated.fadeInLeft {{ t('admin.editors.title') }}
-      .text-subtitle1.text-grey.animated.fadeInLeft.wait-p2s {{ t('admin.editors.subtitle') }}
-    .col-auto
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-question-circle'
-        flat
-        color='grey'
-        :aria-label='t(`common.actions.viewDocs`)'
-        :href='siteStore.docsBase + `/admin/editors`'
-        target='_blank'
-        type='a'
-        )
-        q-tooltip {{ t(`common.actions.viewDocs`) }}
-      q-btn.q-mr-sm.acrylic-btn(
-        icon='las la-redo-alt'
-        flat
-        color='secondary'
-        :loading='state.loading > 0'
-        :aria-label='t(`common.actions.refresh`)'
-        @click='refresh'
-        )
-        q-tooltip {{ t(`common.actions.refresh`) }}
-      q-btn(
-        unelevated
-        icon='mdi-check'
-        :label='t(`common.actions.apply`)'
-        color='secondary'
-        @click='save'
-        :disabled='state.loading > 0'
-      )
-  q-separator(inset)
-  .q-pa-md.q-gutter-md
-    q-card
-      q-list(separator)
-        template(v-for='editor of editors', :key='editor.id')
-          q-item(v-if='flagsStore.experimental || !editor.isDisabled')
-            blueprint-icon(:icon='editor.icon')
-            q-item-section
-              q-item-label: strong {{t(`admin.editors.` + editor.id + `Name`)}}
-              q-item-label(caption)
-                span {{t(`admin.editors.` + editor.id + `Description`)}}
-              q-item-label(caption, v-if='editor.useRendering')
-                em.text-purple {{ t('admin.editors.useRenderingPipeline') }}
-            template(v-if='editor.hasConfig')
-              q-item-section(
-                side
-                )
-                q-btn(
-                  icon='las la-cog'
-                  :label='t(`admin.editors.configuration`)'
-                  :color='$q.dark.isActive ? `blue-grey-3` : `blue-grey-8`'
-                  outline
-                  no-caps
-                  padding='xs md'
-                  @click='openConfig(editor.id)'
-                )
-              q-separator.q-ml-md(vertical)
-            q-item-section(side)
-              q-toggle.q-pr-sm(
-                v-model='state.config[editor.id]'
-                :color='editor.isDisabled ? `grey` : `primary`'
-                checked-icon='las la-check'
-                unchecked-icon='las la-times'
-                :label='t(`admin.sites.isActive`)'
-                :aria-label='t(`admin.sites.isActive`)'
-                :disabled='editor.isDisabled'
-                )
+<template>
+  <w-page class="admin-flags">
+    <div class="flex flex-wrap p-4 items-center">
+      <div class="flex-none">
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-cashbook.svg" />
+      </div>
+      <div class="min-w-0 flex-1 pl-4">
+        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.editors.title') }}</div>
+        <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
+          {{ t('admin.editors.subtitle') }}
+        </div>
+      </div>
+      <div class="flex-none">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/admin/editors`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="refresh">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          unelevated
+          icon="mdi:check"
+          :label="t(`common.actions.apply`)"
+          color="secondary"
+          @click="save"
+          :disabled="state.loading > 0" />
+      </div>
+    </div>
+    <w-separator inset />
+    <div class="p-4 gap-4">
+      <w-card>
+        <w-list separator>
+          <template v-for="editor of editors" :key="editor.id">
+            <w-item v-if="flagsStore.experimental || !editor.isDisabled">
+              <blueprint-icon :icon="editor.icon" />
+              <w-item-section>
+                <w-item-label>
+                  <strong>{{ t(`admin.editors.` + editor.id + `Name`) }}</strong>
+                </w-item-label>
+                <w-item-label caption>
+                  <span>{{ t(`admin.editors.` + editor.id + `Description`) }}</span>
+                </w-item-label>
+                <w-item-label caption v-if="editor.useRendering">
+                  <em class="text-purple">{{ t('admin.editors.useRenderingPipeline') }}</em>
+                </w-item-label>
+              </w-item-section>
+              <template v-if="editor.hasConfig">
+                <w-item-section side>
+                  <w-btn
+                    icon="la:cog"
+                    :label="t(`admin.editors.configuration`)"
+                    :color="dark.isActive ? `blue-grey-3` : `blue-grey-8`"
+                    outline
+                    no-caps
+                    padding="xs md"
+                    @click="openConfig(editor.id)" />
+                </w-item-section>
+                <w-separator class="ml-4" vertical />
+              </template>
+              <w-item-section side>
+                <w-toggle
+                  class="pr-2"
+                  v-model="state.config[editor.id]"
+                  :label="t(`admin.sites.isActive`)"
+                  :aria-label="t(`admin.sites.isActive`)"
+                  :disabled="editor.isDisabled" />
+              </w-item-section>
+            </w-item>
+          </template>
+        </w-list>
+      </w-card>
+    </div>
+  </w-page>
 </template>
 
 <script setup>
-import { useMeta, useQuasar } from 'quasar'
 import { useI18n } from 'vue-i18n'
 import { onMounted, reactive, watch } from 'vue'
+
+import { useDark } from '@/composables/dark'
+import { useMeta } from '@/composables/meta'
+import { notify } from '@/composables/notify'
+import { loading } from '@/composables/loading'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
-// QUASAR
+// COMPOSABLES
 
-const $q = useQuasar()
+const dark = useDark()
 
 // STORES
 
@@ -160,14 +178,17 @@ const editors = reactive([
 
 // WATCHERS
 
-watch(() => adminStore.currentSiteId, (newValue) => {
-  $q.loading.show()
-  load()
-})
+watch(
+  () => adminStore.currentSiteId,
+  (newValue) => {
+    loading.show()
+    load()
+  }
+)
 
 // METHODS
 
-async function load () {
+async function load() {
   state.loading++
   try {
     const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
@@ -176,16 +197,16 @@ async function load () {
     state.config.markdown = data?.markdown?.isActive ?? false
     state.config.wysiwyg = data?.wysiwyg?.isActive ?? false
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to fetch editors state.'
     })
   }
-  $q.loading.hide()
+  loading.hide()
   state.loading--
 }
 
-async function save () {
+async function save() {
   state.loading++
   try {
     // -> Only `isActive` is sent, so each editor's own `config` is left untouched by the merge
@@ -199,7 +220,9 @@ async function save () {
       }
     }).json()
     if (!resp?.ok) {
-      throw new Error(t(`admin.editors.${resp?.error}`, resp?.message || 'An unexpected error occured.'))
+      throw new Error(
+        t(`admin.editors.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+      )
     }
     if (adminStore.currentSiteId === siteStore.id) {
       siteStore.$patch({
@@ -210,12 +233,12 @@ async function save () {
         }
       })
     }
-    $q.notify({
+    notify({
       type: 'positive',
       message: t('admin.editors.saveSuccess')
     })
   } catch (err) {
-    $q.notify({
+    notify({
       type: 'negative',
       message: 'Failed to save site editors config',
       caption: err.message
@@ -224,21 +247,21 @@ async function save () {
   state.loading--
 }
 
-async function refresh () {
+async function refresh() {
   await load()
 }
 
-function openConfig (editorId) {
+function openConfig(editorId) {
   switch (editorId) {
     case 'markdown': {
       adminStore.$patch({
-        overlayOpts: { },
+        overlayOpts: {},
         overlay: 'EditorMarkdownConfig'
       })
       break
     }
     default: {
-      $q.notify({
+      notify({
         type: 'negative',
         message: 'Invalid Editor Config Call'
       })
@@ -249,13 +272,11 @@ function openConfig (editorId) {
 // MOUNTED
 
 onMounted(async () => {
-  $q.loading.show()
+  loading.show()
   if (adminStore.currentSiteId) {
     await load()
   }
 })
 </script>
 
-<style lang='scss'>
-
-</style>
+<style lang="scss"></style>

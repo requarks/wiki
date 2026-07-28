@@ -1,95 +1,93 @@
-<template lang="pug">
-.wysiwyg-container
-  .wysiwyg-toolbar(v-if='editor')
-    template(v-for='menuItem of menuBar')
-      q-separator.q-mx-xs(
-        v-if='menuItem.type === `divider`'
-        vertical
-        )
-      q-btn(
-        v-else-if='menuItem.type === `dropdown`'
-        :key='`ddn-` + menuItem.key'
-        flat
-        :icon='menuItem.icon'
-        padding='xs'
-        :class='{ "is-active": menuItem.isActive && menuItem.isActive() }'
-        :color='menuItem.isActive && menuItem.isActive() ? `primary` : `grey-10`'
-        :aria-label='menuItem.title'
-        split
-        :disabled='menuItem.disabled && menuItem.disabled()'
-        )
-        q-menu
-          q-list(
-            dense
-            padding
-            )
-            template(v-for='child of menuItem.children')
-              q-separator.q-my-sm(v-if='child.type === `divider`')
-              q-item(
-                v-else
-                :key='child.key'
-                clickable
-                @click='child.action'
-                :active='child.isActive && child.isActive()'
-                active-class='text-primary'
-                :disabled='child.disabled && child.disabled()'
-                )
-                q-item-section(side)
-                  q-icon(
-                    :name='child.icon'
-                    :color='child.color'
-                  )
-                q-item-section
-                  q-item-label {{child.title}}
-      q-btn-group(
-        v-else-if='menuItem.type === `btngroup`'
-        :key='`btngrp-` + menuItem.key'
-        flat
-        )
-        q-btn(
-          v-for='child of menuItem.children'
-          :key='child.key'
+<template>
+  <div class="wysiwyg-container">
+    <div class="wysiwyg-toolbar" v-if="editor">
+      <template v-for="menuItem of menuBar">
+        <w-separator class="mx-1" v-if="menuItem.type === `divider`" vertical />
+        <w-btn
+          v-else-if="menuItem.type === `dropdown`"
+          :key="`ddn-` + menuItem.key"
           flat
-          :icon='child.icon'
-          padding='xs'
-          :class='{ "is-active": child.isActive && child.isActive() }'
-          :color='child.isActive && child.isActive() ? `primary` : `grey-10`'
-          @click='child.action'
-          :aria-label='child.title'
-          :disabled='menuItem.disabled && menuItem.disabled()'
-          )
-      q-btn(
-        v-else
-        :key='`btn-` + menuItem.key'
-        flat
-        :icon='menuItem.icon'
-        padding='xs'
-        :class='{ "is-active": menuItem.isActive && menuItem.isActive() }'
-        :color='menuItem.isActive && menuItem.isActive() ? `primary` : `grey-10`'
-        @click='menuItem.action'
-        :aria-label='menuItem.title'
-        :disabled='menuItem.disabled && menuItem.disabled()'
-        )
-    //- q-space
-    //- q-btn(
-    //-   size='sm'
-    //-   unelevated
-    //-   color='red'
-    //-   label='Test'
-    //-   @click='snapshot'
-    //- )
-  //- q-scroll-area(
-  //-   :thumb-style='thumbStyle'
-  //-   :bar-style='barStyle'
-  //-   style='height: 100%;'
-  //-   )
-  editor-content(:editor='editor')
+          :icon="menuItem.icon"
+          padding="xs"
+          :class='{ "is-active": menuItem.isActive && menuItem.isActive() }'
+          :color="menuItem.isActive && menuItem.isActive() ? `primary` : `grey-10`"
+          :aria-label="menuItem.title"
+          split
+          :disabled="menuItem.disabled && menuItem.disabled()">
+          <w-menu>
+            <w-list dense padding>
+              <template v-for="child of menuItem.children">
+                <w-separator class="my-2" v-if="child.type === `divider`" />
+                <w-item
+                  v-else
+                  :key="child.key"
+                  clickable
+                  @click="child.action"
+                  :active="child.isActive && child.isActive()"
+                  active-class="text-primary"
+                  :disabled="child.disabled && child.disabled()">
+                  <w-item-section side>
+                    <w-icon :name="child.icon" :color="child.color" />
+                  </w-item-section>
+                  <w-item-section><w-item-label>{{child.title}}</w-item-label></w-item-section>
+                </w-item>
+              </template>
+            </w-list>
+          </w-menu>
+        </w-btn>
+        <w-btn-group v-else-if="menuItem.type === `btngroup`" :key="`btngrp-` + menuItem.key" flat>
+          <w-btn
+            v-for="child of menuItem.children"
+            :key="child.key"
+            flat
+            :icon="child.icon"
+            padding="xs"
+            :class='{ "is-active": child.isActive && child.isActive() }'
+            :color="child.isActive && child.isActive() ? `primary` : `grey-10`"
+            @click="child.action"
+            :aria-label="child.title"
+            :disabled="menuItem.disabled && menuItem.disabled()" />
+        </w-btn-group>
+        <w-btn
+          v-else
+          :key="`btn-` + menuItem.key"
+          flat
+          :icon="menuItem.icon"
+          padding="xs"
+          :class='{ "is-active": menuItem.isActive && menuItem.isActive() }'
+          :color="menuItem.isActive && menuItem.isActive() ? `primary` : `grey-10`"
+          @click="menuItem.action"
+          :aria-label="menuItem.title"
+          :disabled="menuItem.disabled && menuItem.disabled()" />
+      </template>
+      <!-- q-space -->
+      <!-- q-btn( -->
+      <!-- size='sm' -->
+      <!-- unelevated -->
+      <!-- color='red' -->
+      <!-- label='Test' -->
+      <!-- @click='snapshot' -->
+      <!-- ) -->
+    </div>
+    <!-- q-scroll-area( -->
+    <!-- :thumb-style='thumbStyle' -->
+    <!-- :bar-style='barStyle' -->
+    <!-- style='height: 100%;' -->
+    <!-- ) -->
+    <editor-content :editor="editor" />
+  </div>
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+import { useEditorStore } from '@/stores/editor'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
-// import Collaboration from '@tiptap/extension-collaboration'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { Color } from '@tiptap/extension-color'
 import FontFamily from '@tiptap/extension-font-family'
@@ -107,24 +105,9 @@ import TextAlign from '@tiptap/extension-text-align'
 import TextStyle from '@tiptap/extension-text-style'
 import Typography from '@tiptap/extension-typography'
 import { common, createLowlight } from 'lowlight'
-import { onBeforeUnmount, onMounted, reactive, shallowRef } from 'vue'
-// import * as Y from 'yjs'
-// import { IndexeddbPersistence } from 'y-indexeddb'
-// import { WebsocketProvider } from 'y-websocket'
-
-import { useMeta, useQuasar, setCssVar } from 'quasar'
-import { useI18n } from 'vue-i18n'
-import { DateTime } from 'luxon'
-
-import { useEditorStore } from '@/stores/editor'
-import { usePageStore } from '@/stores/page'
-import { useSiteStore } from '@/stores/site'
 
 const lowlight = createLowlight(common)
 
-// QUASAR
-
-const $q = useQuasar()
 
 // STORES
 
@@ -160,48 +143,48 @@ const barStyle = {
 const menuBar = [
   {
     key: 'bold',
-    icon: 'mdi-format-bold',
+    icon: 'mdi:format-bold',
     title: 'Bold',
     action: () => editor.value.chain().focus().toggleBold().run(),
     isActive: () => editor.value.isActive('bold')
   },
   {
     key: 'italic',
-    icon: 'mdi-format-italic',
+    icon: 'mdi:format-italic',
     title: 'Italic',
     action: () => editor.value.chain().focus().toggleItalic().run(),
     isActive: () => editor.value.isActive('italic')
   },
   {
     key: 'strikethrough',
-    icon: 'mdi-format-strikethrough',
+    icon: 'mdi:format-strikethrough',
     title: 'Strike',
     action: () => editor.value.chain().focus().toggleStrike().run(),
     isActive: () => editor.value.isActive('strike')
   },
   {
     key: 'code',
-    icon: 'mdi-code-tags',
+    icon: 'mdi:code-tags',
     title: 'Code',
     action: () => editor.value.chain().focus().toggleCode().run(),
     isActive: () => editor.value.isActive('code')
   },
   {
     key: 'fontfamily',
-    icon: 'mdi-format-font',
+    icon: 'mdi:format-font',
     title: 'Font Family',
     type: 'dropdown',
     isActive: () => editor.value.isActive('fontFamily'),
     children: [
       {
         key: 'fontunset',
-        icon: 'mdi-format-font',
+        icon: 'mdi:format-font',
         title: 'Sans-Serif',
         action: () => editor.value.chain().focus().unsetFontFamily().run()
       },
       {
         key: 'monospace',
-        icon: 'mdi-format-font',
+        icon: 'mdi:format-font',
         title: 'Monospace',
         action: () => editor.value.chain().focus().setFontFamily('monospace').run()
       }
@@ -209,70 +192,70 @@ const menuBar = [
   },
   {
     key: 'color',
-    icon: 'mdi-palette',
+    icon: 'mdi:palette',
     title: 'Text Color',
     type: 'dropdown',
     isActive: () => editor.value.isActive('color'),
     children: [
       {
         key: 'color-blue',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Blue',
         color: 'blue',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-brown',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Brown',
         color: 'brown',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-green',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Green',
         color: 'green',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-orange',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Orange',
         color: 'orange',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-pink',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Pink',
         color: 'pink',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-purple',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Purple',
         color: 'purple',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-red',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Red',
         color: 'red',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-teal',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Teal',
         color: 'teal',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'color-yellow',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Yellow',
         color: 'yellow',
         action: () => editor.value.chain().focus().toggleHighlight().run()
@@ -282,7 +265,7 @@ const menuBar = [
       },
       {
         key: 'color-remove',
-        icon: 'mdi-palette',
+        icon: 'mdi:palette',
         title: 'Default',
         color: 'grey',
         action: () => editor.value.chain().focus().unsetHighlight().run()
@@ -291,42 +274,42 @@ const menuBar = [
   },
   {
     key: 'highlight',
-    icon: 'mdi-marker',
+    icon: 'mdi:marker',
     title: 'Highlight',
     type: 'dropdown',
     isActive: () => editor.value.isActive('highlight'),
     children: [
       {
         key: 'highlight-yellow',
-        icon: 'mdi-marker',
+        icon: 'mdi:marker',
         title: 'Yellow',
         color: 'yellow',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'highlight-blue',
-        icon: 'mdi-marker',
+        icon: 'mdi:marker',
         title: 'Blue',
         color: 'blue',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'highlight-pink',
-        icon: 'mdi-marker',
+        icon: 'mdi:marker',
         title: 'Pink',
         color: 'pink',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'highlight-green',
-        icon: 'mdi-marker',
+        icon: 'mdi:marker',
         title: 'Green',
         color: 'green',
         action: () => editor.value.chain().focus().toggleHighlight().run()
       },
       {
         key: 'highlight-orange',
-        icon: 'mdi-marker',
+        icon: 'mdi:marker',
         title: 'Orange',
         color: 'orange',
         action: () => editor.value.chain().focus().toggleHighlight().run()
@@ -336,7 +319,7 @@ const menuBar = [
       },
       {
         key: 'highlight-remove',
-        icon: 'mdi-marker-cancel',
+        icon: 'mdi:marker-cancel',
         title: 'Remove',
         color: 'grey',
         action: () => editor.value.chain().focus().unsetHighlight().run()
@@ -348,49 +331,49 @@ const menuBar = [
   },
   {
     key: 'header',
-    icon: 'mdi-format-header-pound',
+    icon: 'mdi:format-header-pound',
     title: 'Header',
     type: 'dropdown',
     isActive: () => editor.value.isActive('heading'),
     children: [
       {
         key: 'h1',
-        icon: 'mdi-format-header-1',
+        icon: 'mdi:format-header-1',
         title: 'Header 1',
         action: () => editor.value.chain().focus().toggleHeading({ level: 1 }).run(),
         isActive: () => editor.value.isActive('heading', { level: 1 })
       },
       {
         key: 'h2',
-        icon: 'mdi-format-header-2',
+        icon: 'mdi:format-header-2',
         title: 'Header 2',
         action: () => editor.value.chain().focus().toggleHeading({ level: 2 }).run(),
         isActive: () => editor.value.isActive('heading', { level: 2 })
       },
       {
         key: 'h3',
-        icon: 'mdi-format-header-3',
+        icon: 'mdi:format-header-3',
         title: 'Header 3',
         action: () => editor.value.chain().focus().toggleHeading({ level: 3 }).run(),
         isActive: () => editor.value.isActive('heading', { level: 3 })
       },
       {
         key: 'h4',
-        icon: 'mdi-format-header-4',
+        icon: 'mdi:format-header-4',
         title: 'Header 4',
         action: () => editor.value.chain().focus().toggleHeading({ level: 4 }).run(),
         isActive: () => editor.value.isActive('heading', { level: 4 })
       },
       {
         key: 'h5',
-        icon: 'mdi-format-header-5',
+        icon: 'mdi:format-header-5',
         title: 'Header 5',
         action: () => editor.value.chain().focus().toggleHeading({ level: 5 }).run(),
         isActive: () => editor.value.isActive('heading', { level: 5 })
       },
       {
         key: 'h6',
-        icon: 'mdi-format-header-6',
+        icon: 'mdi:format-header-6',
         title: 'Header 6',
         action: () => editor.value.chain().focus().toggleHeading({ level: 6 }).run(),
         isActive: () => editor.value.isActive('heading', { level: 6 })
@@ -399,7 +382,7 @@ const menuBar = [
   },
   {
     key: 'paragraph',
-    icon: 'mdi-format-paragraph',
+    icon: 'mdi:format-paragraph',
     title: 'Paragraph',
     action: () => editor.value.chain().focus().setParagraph().run(),
     isActive: () => editor.value.isActive('paragraph')
@@ -413,28 +396,28 @@ const menuBar = [
     children: [
       {
         key: 'align-left',
-        icon: 'mdi-format-align-left',
+        icon: 'mdi:format-align-left',
         title: 'Left Align',
         action: () => editor.value.chain().focus().setTextAlign('left').run(),
         isActive: () => editor.value.isActive({ textAlign: 'left' })
       },
       {
         key: 'align-center',
-        icon: 'mdi-format-align-center',
+        icon: 'mdi:format-align-center',
         title: 'Center Align',
         action: () => editor.value.chain().focus().setTextAlign('center').run(),
         isActive: () => editor.value.isActive({ textAlign: 'center' })
       },
       {
         key: 'align-right',
-        icon: 'mdi-format-align-right',
+        icon: 'mdi:format-align-right',
         title: 'Right Align',
         action: () => editor.value.chain().focus().setTextAlign('right').run(),
         isActive: () => editor.value.isActive({ textAlign: 'right' })
       },
       {
         key: 'align-justify',
-        icon: 'mdi-format-align-justify',
+        icon: 'mdi:format-align-justify',
         title: 'Justify Align',
         action: () => editor.value.chain().focus().setTextAlign('justify').run(),
         isActive: () => editor.value.isActive({ textAlign: 'justify' })
@@ -446,21 +429,21 @@ const menuBar = [
   },
   {
     key: 'bulletlist',
-    icon: 'mdi-format-list-bulleted',
+    icon: 'mdi:format-list-bulleted',
     title: 'Bullet List',
     action: () => editor.value.chain().focus().toggleBulletList().run(),
     isActive: () => editor.value.isActive('bulletList')
   },
   {
     key: 'orderedlist',
-    icon: 'mdi-format-list-numbered',
+    icon: 'mdi:format-list-numbered',
     title: 'Ordered List',
     action: () => editor.value.chain().focus().toggleOrderedList().run(),
     isActive: () => editor.value.isActive('orderedList')
   },
   {
     key: 'tasklist',
-    icon: 'mdi-format-list-checks',
+    icon: 'mdi:format-list-checks',
     title: 'Task List',
     action: () => editor.value.chain().focus().toggleTaskList().run(),
     isActive: () => editor.value.isActive('taskList')
@@ -470,27 +453,27 @@ const menuBar = [
   },
   {
     key: 'codeblock',
-    icon: 'mdi-code-json',
+    icon: 'mdi:code-json',
     title: 'Code Block',
     action: () => editor.value.chain().focus().toggleCodeBlock().run(),
     isActive: () => editor.value.isActive('codeBlock')
   },
   {
     key: 'blockquote',
-    icon: 'mdi-format-quote-open',
+    icon: 'mdi:format-quote-open',
     title: 'Blockquote',
     action: () => editor.value.chain().focus().toggleBlockquote().run(),
     isActive: () => editor.value.isActive('blockquote')
   },
   {
     key: 'rule',
-    icon: 'mdi-minus',
+    icon: 'mdi:minus',
     title: 'Horizontal Rule',
     action: () => editor.value.chain().focus().setHorizontalRule().run()
   },
   {
     key: 'link',
-    icon: 'mdi-link-variant',
+    icon: 'mdi:link-variant',
     title: 'Link',
     action: () => {
       // TODO: insert link
@@ -498,7 +481,7 @@ const menuBar = [
   },
   {
     key: 'image',
-    icon: 'mdi-image-plus',
+    icon: 'mdi:image-plus',
     title: 'Image',
     action: () => {
       siteStore.openFileManager({ insertMode: true })
@@ -506,37 +489,38 @@ const menuBar = [
   },
   {
     key: 'table',
-    icon: 'mdi-table',
+    icon: 'mdi:table',
     title: 'Table',
     type: 'dropdown',
     isActive: () => editor.value.isActive('table'),
     children: [
       {
         key: 'table-insert',
-        icon: 'mdi-table-large-plus',
+        icon: 'mdi:table-large-plus',
         title: 'Insert Table',
-        action: () => editor.value.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+        action: () =>
+          editor.value.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
       },
       {
         type: 'divider'
       },
       {
         key: 'table-addcolumnbefore',
-        icon: 'mdi-table-column-plus-before',
+        icon: 'mdi:table-column-plus-before',
         title: 'Add Column Before',
         action: () => editor.value.chain().focus().addColumnBefore().run(),
         disabled: () => !editor.value.can().addColumnBefore()
       },
       {
         key: 'table-addcolumnafter',
-        icon: 'mdi-table-column-plus-after',
+        icon: 'mdi:table-column-plus-after',
         title: 'Add Column After',
         action: () => editor.value.chain().focus().addColumnAfter().run(),
         disabled: () => !editor.value.can().addColumnAfter()
       },
       {
         key: 'table-deletecolumn',
-        icon: 'mdi-table-column-remove',
+        icon: 'mdi:table-column-remove',
         title: 'Remove Column',
         action: () => editor.value.chain().focus().deleteColumn().run(),
         disabled: () => !editor.value.can().deleteColumn()
@@ -546,21 +530,21 @@ const menuBar = [
       },
       {
         key: 'table-addrowbefore',
-        icon: 'mdi-table-row-plus-before',
+        icon: 'mdi:table-row-plus-before',
         title: 'Add Row Before',
         action: () => editor.value.chain().focus().addRowBefore().run(),
         disabled: () => !editor.value.can().addRowBefore()
       },
       {
         key: 'table-addrowafter',
-        icon: 'mdi-table-row-plus-after',
+        icon: 'mdi:table-row-plus-after',
         title: 'Add Row After',
         action: () => editor.value.chain().focus().addRowAfter().run(),
         disabled: () => !editor.value.can().addRowAfter()
       },
       {
         key: 'table-deleterow',
-        icon: 'mdi-table-row-remove',
+        icon: 'mdi:table-row-remove',
         title: 'Remove Row',
         action: () => editor.value.chain().focus().deleteRow().run(),
         disabled: () => !editor.value.can().deleteRow()
@@ -570,14 +554,14 @@ const menuBar = [
       },
       {
         key: 'table-merge',
-        icon: 'mdi-table-merge-cells',
+        icon: 'mdi:table-merge-cells',
         title: 'Merge Cells',
         action: () => editor.value.chain().focus().mergeCells().run(),
         disabled: () => !editor.value.can().mergeCells()
       },
       {
         key: 'table-split',
-        icon: 'mdi-table-split-cell',
+        icon: 'mdi:table-split-cell',
         title: 'Split Cell',
         action: () => editor.value.chain().focus().splitCell().run(),
         disabled: () => !editor.value.can().splitCell()
@@ -587,21 +571,21 @@ const menuBar = [
       },
       {
         key: 'table-toggleHeaderColumn',
-        icon: 'mdi-table-column',
+        icon: 'mdi:table-column',
         title: 'Toggle Header Column',
         action: () => editor.value.chain().focus().toggleHeaderColumn().run(),
         disabled: () => !editor.value.can().toggleHeaderColumn()
       },
       {
         key: 'table-toggleHeaderRow',
-        icon: 'mdi-table-row',
+        icon: 'mdi:table-row',
         title: 'Toggle Header Row',
         action: () => editor.value.chain().focus().toggleHeaderRow().run(),
         disabled: () => !editor.value.can().toggleHeaderRow()
       },
       {
         key: 'table-toggleHeaderCell',
-        icon: 'mdi-crop-square',
+        icon: 'mdi:crop-square',
         title: 'Toggle Header Cell',
         action: () => editor.value.chain().focus().toggleHeaderCell().run(),
         disabled: () => !editor.value.can().toggleHeaderCell()
@@ -611,14 +595,14 @@ const menuBar = [
       },
       {
         key: 'table-fix',
-        icon: 'mdi-table-heart',
+        icon: 'mdi:table-heart',
         title: 'Fix Table',
         action: () => editor.value.chain().focus().fixTables().run(),
         disabled: () => !editor.value.can().fixTables()
       },
       {
         key: 'table-remove',
-        icon: 'mdi-table-large-remove',
+        icon: 'mdi:table-large-remove',
         title: 'Delete Table',
         action: () => editor.value.chain().focus().deleteTable().run(),
         disabled: () => !editor.value.can().deleteTable()
@@ -630,33 +614,29 @@ const menuBar = [
   },
   {
     key: 'pagebreak',
-    icon: 'mdi-format-page-break',
+    icon: 'mdi:format-page-break',
     title: 'Hard Break',
     action: () => editor.value.chain().focus().setHardBreak().run()
   },
   {
     key: 'clearformat',
-    icon: 'mdi-format-clear',
+    icon: 'mdi:format-clear',
     title: 'Clear Format',
-    action: () => editor.value.chain()
-      .focus()
-      .clearNodes()
-      .unsetAllMarks()
-      .run()
+    action: () => editor.value.chain().focus().clearNodes().unsetAllMarks().run()
   },
   {
     type: 'divider'
   },
   {
     key: 'undo',
-    icon: 'mdi-undo-variant',
+    icon: 'mdi:undo-variant',
     title: 'Undo',
     action: () => editor.value.chain().focus().undo().run(),
     disabled: () => !editor.value.can().undo()
   },
   {
     key: 'redo',
-    icon: 'mdi-redo-variant',
+    icon: 'mdi:redo-variant',
     title: 'Redo',
     action: () => editor.value.chain().focus().redo().run(),
     disabled: () => !editor.value.can().redo()
@@ -665,7 +645,7 @@ const menuBar = [
 
 // METHODS
 
-function init () {
+function init() {
   // -> Setup Editor View
   editorStore.$patch({
     hideSideNav: false
@@ -681,7 +661,10 @@ function init () {
 
   // -> Initialize TipTap
   editor = useEditor({
-    content: pageStore.content && pageStore.content.startsWith('{') ? JSON.parse(pageStore.content) : `<p>${pageStore.content}</p>`,
+    content:
+      pageStore.content && pageStore.content.startsWith('{')
+        ? JSON.parse(pageStore.content)
+        : `<p>${pageStore.content}</p>`,
     extensions: [
       StarterKit.configure({
         codeBlock: false,
@@ -721,7 +704,7 @@ function init () {
     ],
     onUpdate: ({ editor }) => {
       editorStore.$patch({
-        lastChangeTimestamp: DateTime.utc()
+        lastChangeTimestamp: Temporal.Now.instant()
       })
       pageStore.$patch({
         content: JSON.stringify(editor.getJSON()),
@@ -731,10 +714,10 @@ function init () {
   })
 }
 
-function insertTable () {
+function insertTable() {
   // this.ql.getModule('table').insertTable(3, 3)
 }
-function snapshot () {
+function snapshot() {
   // console.info(Y.encodeStateVector(this.ydoc))
 }
 
@@ -761,7 +744,7 @@ init()
     display: flex;
     align-items: center;
     padding: 4px;
-    background: linear-gradient(to top, $grey-1 0%, #FFF 100%);
+    background: linear-gradient(to top, $grey-1 0%, #fff 100%);
   }
 
   .ProseMirror {
@@ -797,8 +780,8 @@ init()
     }
 
     pre {
-      background: #0D0D0D;
-      color: #FFF;
+      background: #0d0d0d;
+      color: #fff;
       font-family: 'JetBrainsMono', monospace;
       padding: 0.75rem 1rem;
       border-radius: 0.5rem;
@@ -818,12 +801,12 @@ init()
 
     blockquote {
       padding-left: 1rem;
-      border-left: 2px solid rgba(#0D0D0D, 0.1);
+      border-left: 2px solid rgba(#0d0d0d, 0.1);
     }
 
     hr {
       border: none;
-      border-top: 2px solid rgba(#0D0D0D, 0.1);
+      border-top: 2px solid rgba(#0d0d0d, 0.1);
       margin: 2rem 0;
     }
 
@@ -857,8 +840,11 @@ init()
       .selectedCell:after {
         z-index: 2;
         position: absolute;
-        content: "";
-        left: 0; right: 0; top: 0; bottom: 0;
+        content: '';
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
         background: rgba(200, 200, 255, 0.4);
         pointer-events: none;
       }
@@ -883,7 +869,7 @@ init()
       cursor: col-resize;
     }
 
-    ul[data-type="taskList"] {
+    ul[data-type='taskList'] {
       list-style: none;
       padding: 0;
 
