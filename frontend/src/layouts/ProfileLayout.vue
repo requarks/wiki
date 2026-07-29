@@ -198,11 +198,21 @@ watch(
     //    layout grid rather than measured at runtime.
     min-height: calc(100% - 100px);
 
+    /*
+      A foreground to go with the background.
+
+      This card is a plain div rather than a WCard, and a WCard is what declares BOTH halves of a
+      surface. Setting only the background meant everything inside inherited the document's black --
+      row titles, input values, select values alike -- which is invisible against the dark surface.
+      The light value is the black it was already inheriting, so only dark mode changes.
+    */
     @at-root .body--light & {
       background-color: #fff;
+      color: var(--color-black);
     }
     @at-root .body--dark & {
       background-color: $dark-3;
+      color: var(--color-white);
     }
   }
 
@@ -254,7 +264,7 @@ watch(
     }
   }
 
-  .text-header {
+  .section-header {
     font-weight: 500;
     font-size: 17px;
     padding: 0 16px 6px 16px;

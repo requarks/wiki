@@ -294,10 +294,9 @@
           <w-item>
             <w-item-section>
               <util-code-editor
-                class="admin-theme-cm"
-                ref="cmCSS"
                 v-model="state.config.injectCSS"
-                language="css" />
+                language="css"
+                :aria-label="t(`admin.theme.cssOverride`)" />
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
@@ -311,10 +310,9 @@
           <w-item>
             <w-item-section>
               <util-code-editor
-                class="admin-theme-cm"
-                ref="cmHead"
                 v-model="state.config.injectHead"
-                language="html" />
+                language="html"
+                :aria-label="t(`admin.theme.headHtmlInjection`)" />
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
@@ -328,10 +326,9 @@
           <w-item>
             <w-item-section>
               <util-code-editor
-                class="admin-theme-cm"
-                ref="cmBody"
                 v-model="state.config.injectBody"
-                language="html" />
+                language="html"
+                :aria-label="t(`admin.theme.bodyHtmlInjection`)" />
             </w-item-section>
           </w-item>
         </w-card>
@@ -790,14 +787,4 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss">
-.admin-theme-cm {
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  overflow: hidden;
-
-  > .CodeMirror {
-    height: 150px;
-  }
-}
-</style>
+<!-- -> The `.admin-theme-cm` rules that were here framed the old editor; UtilCodeEditor draws its own -->

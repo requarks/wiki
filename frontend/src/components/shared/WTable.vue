@@ -25,10 +25,19 @@
         </tr>
       </thead>
       <tbody>
+        <!--
+          `h-[52px]` is a floor, not a fixed height: on a table row CSS treats `height` as a minimum
+          and taller content still expands it. Without one, a row's height came purely from its
+          content, so the rows carrying action buttons stood 52px tall (a 36px flat button plus the
+          cell's 16px of vertical padding) while rows whose actions were hidden collapsed to 40px.
+          The table this replaces had the same floor at 48px, which is why the two never visibly
+          disagreed there; 52px is that same idea sized to what these cells actually hold, so no
+          existing row has to shrink to make them agree.
+        -->
         <tr
           v-for="(row, rowIndex) of visibleRows"
           :key="rowKey ? row[rowKey] : rowIndex"
-          class="w-table__row">
+          class="w-table__row h-[52px]">
           <!--
             The cell slot is named per column (`body-cell-<name>`), which is what the pages already
             provide, and receives one object so `#body-cell-x="props"` reads `props.value` /

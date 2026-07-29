@@ -1,6 +1,6 @@
 <template>
   <w-page class="py-4">
-    <div class="text-header">{{ t('profile.groups') }}</div>
+    <div class="section-header">{{ t('profile.groups') }}</div>
     <div class="p-4">
       <div class="text-body2">{{ t('profile.groupsInfo') }}</div>
       <w-list class="mt-6" bordered separator>

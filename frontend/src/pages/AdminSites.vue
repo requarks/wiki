@@ -86,7 +86,7 @@
                   flat
                   @click="editSite(site)"
                   icon="la:pen"
-                  color="indigo"
+                  :color="dark.isActive ? `indigo-4` : `indigo`"
                   :label="t(`common.actions.edit`)"
                   no-caps />
                 <w-btn
@@ -110,6 +110,7 @@ import { useI18n } from 'vue-i18n'
 import { nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { dialog } from '@/composables/dialog'
@@ -120,6 +121,10 @@ import { useAdminStore } from '../stores/admin'
 import SiteActivateDialog from '../components/SiteActivateDialog.vue'
 import SiteCreateDialog from '../components/SiteCreateDialog.vue'
 import SiteDeleteDialog from '../components/SiteDeleteDialog.vue'
+
+// COMPOSABLES
+
+const dark = useDark()
 
 // STORES
 

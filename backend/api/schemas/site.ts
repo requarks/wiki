@@ -186,6 +186,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           },
           forcePrefix: {
             type: 'boolean'
+          },
+          showMenu: {
+            type: 'boolean',
+            description:
+              'Whether the sidebar offers a locale selector to switch between the active locales.'
           }
         }
       },

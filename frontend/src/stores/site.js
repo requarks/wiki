@@ -4,6 +4,42 @@ import { sortBy } from 'es-toolkit/array'
 
 import { useUserStore } from './user'
 
+/**
+ * Turn the site's active locale CODES into the descriptors the UI reads.
+ *
+ * The API stores and returns `locales.active` as bare codes -- `['en']` -- because that is what the
+ * admin screen writes back and what the server validates against its installed set. Everything that
+ * DISPLAYS a locale, though, wants a name for it: the sidebar's locale menu, the language filter on
+ * the search screen, and the check in App.vue that a requested locale is one this site offers. They
+ * were each reading `.code` / `.language` / `.nativeName` off a string, so every one of them rendered
+ * blank -- the locale menu showed an empty row rather than "English".
+ *
+ * Resolved here rather than server-side so the write shape stays a plain list of codes, and with
+ * `Intl.DisplayNames` rather than a table, which gives the name in the reader's own language for
+ * free. Asking for a code's name IN that code is what produces the native spelling.
+ */
+function describeLocales(codes) {
+  const localized = new Intl.DisplayNames(undefined, { type: 'language' })
+
+  return (codes ?? []).map((code) => {
+    let name = code
+    let nativeName = code
+    try {
+      name = localized.of(code) ?? code
+      nativeName = new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code
+    } catch {
+      // -> An unregistered or malformed tag throws rather than returning nothing; show the code
+    }
+    return {
+      code,
+      // -> The bare language, for the two-letter badge beside each entry
+      language: code.split('-')[0],
+      name,
+      nativeName
+    }
+  })
+}
+
 export const useSiteStore = defineStore('site', {
   state: () => ({
     id: null,
@@ -37,6 +73,7 @@ export const useSiteStore = defineStore('site', {
     },
     locales: {
       primary: 'en',
+      showMenu: true,
       active: [
         {
           code: 'en',
@@ -133,9 +170,12 @@ export const useSiteStore = defineStore('site', {
               markdown: siteInfo.editors.markdown.isActive,
               wysiwyg: siteInfo.editors.wysiwyg.isActive
             },
+            // -> Spread over the state defaults, as `features` and `theme` above do, so a key the
+            //    site config has never been saved with reads as its default rather than undefined
             locales: {
-              primary: siteInfo.locales.primary,
-              active: sortBy(siteInfo.locales.active, ['nativeName', 'name'])
+              ...this.locales,
+              ...siteInfo.locales,
+              active: sortBy(describeLocales(siteInfo.locales.active), ['nativeName', 'name'])
             },
             tags: [],
             tagsLoaded: false,

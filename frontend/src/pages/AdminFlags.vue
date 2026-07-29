@@ -49,7 +49,7 @@
               <w-card class="bg-negative text-white rounded" flat>
                 <w-card-section class="items-center" horizontal>
                   <w-card-section class="flex-none pr-0">
-                    <w-icon name="la:exclamation-triangle" size="sm" />
+                    <w-icon name="la:exclamation-triangle" size="lg" />
                   </w-card-section>
                   <w-card-section>
                     <span>{{ t('admin.flags.warn.label') }}</span>

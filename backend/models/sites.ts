@@ -111,7 +111,8 @@ class Sites {
             locales: {
               primary: 'en',
               active: ['en'],
-              forcePrefix: false
+              forcePrefix: false,
+              showMenu: true
             },
             assets: {
               logo: false,
@@ -307,7 +308,8 @@ class Sites {
         locales: {
           primary: 'en',
           active: ['en'],
-          forcePrefix: false
+          forcePrefix: false,
+          showMenu: true
         },
         assets: {
           logo: false,

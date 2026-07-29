@@ -253,7 +253,12 @@ async function routes(app: FastifyInstance) {
       defaults?: Record<string, any>
       editors?: Record<string, { isActive?: boolean; config?: Record<string, any> }>
       features?: Record<string, any>
-      locales?: { primary?: string; active?: string[]; forcePrefix?: boolean }
+      locales?: {
+        primary?: string
+        active?: string[]
+        forcePrefix?: boolean
+        showMenu?: boolean
+      }
       robots?: Record<string, any>
       theme?: Record<string, any>
       uploads?: Record<string, any>

@@ -1,7 +1,7 @@
 <template>
-  <w-card class="page-data-dialog" style="width: 750px;">
+  <w-card class="page-data-dialog" style="width: 750px">
     <w-toolbar class="bg-primary text-white flex">
-      <div class="text-subtitle2">{{t('editor.pageData.title')}}</div>
+      <div class="text-subtitle2">{{ t('editor.pageData.title') }}</div>
       <w-space />
       <w-btn icon="la:times" dense flat @click="siteStore.sideDialogShown = false" />
     </w-toolbar>
@@ -19,7 +19,7 @@
           emit-value
           standout
           dense
-          style="flex: 1 0 auto;" />
+          style="flex: 1 0 auto" />
         <w-btn
           class="acrylic-btn"
           dark
@@ -38,7 +38,7 @@
     <w-scroll-area
       :thumb-style="siteStore.thumbStyle"
       :bar-style="siteStore.barStyle"
-      style="height: calc(100% - 50px - 75px - 48px);">
+      style="height: calc(100% - 50px - 75px - 48px)">
       <w-card-section v-if="state.mode === `visual`">
         <div class="gap-2">
           <w-input label="Attribute Text" dense outlined>
@@ -56,13 +56,16 @@
         The `v-else` moves onto the editor itself: the wrapper it sat on only deferred rendering
         until hydration, which this app has no server renderer to need, so unwrapping it would
         otherwise have taken the branch with it and orphaned the `v-if` above.
+
+        This was a `<codemirror>` tag, which no plugin or import ever registered -- so the editor was
+        never rendering at all, only warning about an unknown element.
       -->
-      <codemirror
+      <util-code-editor
         v-else
-        class="admin-theme-cm"
-        ref="cmData"
         v-model="state.content"
-        :options="{ mode: `text/yaml` }" />
+        language="yaml"
+        :min-height="400"
+        aria-label="Page data (YAML)" />
     </w-scroll-area>
     <w-dialog v-model="state.showDataTemplateDialog">
       <page-data-template-dialog @close="state.showDataTemplateDialog = false" />
@@ -78,7 +81,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import PageDataTemplateDialog from './PageDataTemplateDialog.vue'
-
+import UtilCodeEditor from './UtilCodeEditor.vue'
 
 // STORES
 

@@ -16,7 +16,9 @@
       <div class="page-save-dialog-browser flex flex-nowrap">
         <div class="w-1/3">
           <w-scroll-area style="height: 300px">
-            <div class="px-2">
+            <!-- -> No side padding: the rows carry their own 12px and span the column, as in the
+                    File Manager. Padding here would inset the highlight band as well. -->
+            <div>
               <tree
                 ref="treeComp"
                 v-model:selected="state.currentFolderId"
@@ -97,9 +99,7 @@
                 <w-item clickable @click="state.displayMode = `title`">
                   <w-item-section side>
                     <w-icon
-                      :name="
-                        state.displayMode === `title` ? `la:check-circle` : `la:circle`
-                      "
+                      :name="state.displayMode === `title` ? `la:check-circle` : `la:circle`"
                       :color="state.displayMode === `title` ? `positive` : `grey`"
                       size="xs" />
                   </w-item-section>

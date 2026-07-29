@@ -1,13 +1,11 @@
 <template>
   <!--
-    `bg-[var(--color-white)]` rather than `bg-white`, and likewise for the text colour: Quasar defines
-    `.bg-white { background: #fff !important }` unlayered, which outranks every layered Tailwind rule
-    including the `dark:` variant -- so the plain utility would pin this surface to white in dark mode.
-    An arbitrary-value utility has a class name Quasar does not define, so the variant works.
-    Phase 5 can put the plain utilities back.
+    The surface colours live on `.w-card` in `@layer components` (see `css/tailwind.css`), not here.
+    As utilities they outranked the `bg-negative` / `bg-info` the admin pages tint their notice cards
+    with, since two background utilities are ordered within the layer rather than by who wrote them.
   -->
   <div
-    class="w-card relative rounded bg-[var(--color-white)] text-[var(--color-black)] dark:bg-dark-3 dark:text-white"
+    class="w-card relative rounded"
     :class="[flat ? '' : 'shadow-card', horizontal ? 'flex flex-nowrap' : '']">
     <slot />
   </div>

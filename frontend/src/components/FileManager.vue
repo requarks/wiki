@@ -12,31 +12,47 @@
           color="white"
           :label="commonStore.locale"
           :aria-label="commonStore.locale"
-          style="height: 40px;">
+          style="height: 40px">
           <locale-selector-menu />
         </w-btn>
-        <w-input
-          dark
-          v-model="state.search"
-          standout="bg-white text-dark"
-          dense
-          ref="searchField"
-          style="width: 100%;"
-          :label="t(`fileman.searchFolder`)"
-          :debounce="500">
-          <template #prepend><w-icon name="la:search" /></template>
-          <template #append>
-            <w-icon
-              class="cursor-pointer"
-              name="la:times"
-              @click="state.search=``"
-              v-if="state.search.length > 0"
-              :color="dark.isActive ? `blue` : `grey-4`" />
-          </template>
-        </w-input>
+        <!--
+          The same pill the site header uses, rather than a `w-input`.
+
+          It was a `w-input` carrying `dark`, `standout="bg-white text-dark"` and `debounce`, none of
+          which that component has -- they fell through as bare attributes and styled nothing. What
+          rendered was the FILLED variant: a 4%-black wash holding white text, on a near-black header,
+          with its label stranded above the toolbar. Written out here so it matches HeaderSearch,
+          which is what a search field in this app looks like.
+        -->
+        <div class="fileman-search" :class="{ 'is-focused': state.searchIsFocused }">
+          <w-icon class="fileman-search-lead" name="la:search" />
+          <input
+            ref="searchField"
+            v-model="state.search"
+            type="text"
+            class="fileman-search-input"
+            :placeholder="t(`fileman.searchFolder`)"
+            :aria-label="t(`fileman.searchFolder`)"
+            autocomplete="off"
+            @focus="state.searchIsFocused = true"
+            @blur="state.searchIsFocused = false" />
+          <button
+            v-if="state.search.length > 0"
+            type="button"
+            class="fileman-search-clear"
+            :aria-label="t(`common.actions.clear`)"
+            @click="state.search = ``">
+            <w-icon name="la:times" />
+          </button>
+        </div>
       </w-toolbar>
       <w-toolbar dark>
         <w-space />
+        <!--
+          -> No right margin needed: the toolbar's own 12px is already close to the 9-10px the header
+             leaves above and below. What made the button look pushed into the corner was the broken
+             search field inflating the header to 61px, which stretched those two gaps to 14/15.
+        -->
         <w-btn
           flat
           dense
@@ -45,13 +61,20 @@
           :aria-label="t(`common.actions.close`)"
           icon="la:times"
           @click="close">
-          <w-tooltip anchor="bottom middle" self="top middle">{{t(`common.actions.close`)}}</w-tooltip>
+          <w-tooltip anchor="bottom middle" self="top middle">{{
+            t(`common.actions.close`)
+          }}</w-tooltip>
         </w-btn>
       </w-toolbar>
     </w-header>
     <w-drawer class="fileman-left" :model-value="true" :width="350">
-      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%;">
-        <div class="px-4 pb-2">
+      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
+        <!--
+          -> No side padding: the tree's rows run the full width of the drawer, so a hovered or
+             selected row reads as a band across it rather than a floating pill. `pt-2` is the gap
+             above the root entry that the padding used to imply.
+        -->
+        <div class="pt-2 pb-2">
           <tree
             ref="treeComp"
             :nodes="state.treeNodes"
@@ -65,7 +88,7 @@
       </w-scroll-area>
     </w-drawer>
     <w-drawer class="fileman-right" :model-value="screen.gt.md" :width="350" side="right">
-      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%;">
+      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
         <div class="p-4">
           <template v-if="currentFileDetails">
             <img
@@ -73,7 +96,7 @@
               v-if="currentFileDetails.thumbnail"
               :src="currentFileDetails.thumbnail"
               width="100%"
-              :ratio="16/10" />
+              :ratio="16 / 10" />
             <div
               class="fileman-details-row"
               v-for="item of currentFileDetails.items"
@@ -102,7 +125,9 @@
         <w-toolbar class="fileman-toolbar">
           <template v-if="state.isUploading">
             <div class="fileman-progressbar">
-              <div :style="`width: ` + state.uploadPercentage + `%`">{{ state.uploadPercentage }}%</div>
+              <div :style="`width: ` + state.uploadPercentage + `%`">
+                {{ state.uploadPercentage }}%
+              </div>
             </div>
             <w-btn
               class="acrylic-btn ml-2"
@@ -125,7 +150,9 @@
               color="grey"
               :aria-label="t(`fileman.viewOptions`)"
               icon="la:th-list">
-              <w-tooltip anchor="bottom middle" self="top middle">{{ t(`fileman.viewOptions`) }}</w-tooltip>
+              <w-tooltip anchor="bottom middle" self="top middle">{{
+                t(`fileman.viewOptions`)
+              }}</w-tooltip>
               <w-menu
                 transition-show="jump-down"
                 transition-hide="jump-up"
@@ -150,7 +177,9 @@
                           <w-item clickable @click="state.displayMode = `path`">
                             <w-item-section side>
                               <w-icon
-                                :name="state.displayMode === `path` ? `la:check-circle` : `la:circle`"
+                                :name="
+                                  state.displayMode === `path` ? `la:check-circle` : `la:circle`
+                                "
                                 :color="state.displayMode === `path` ? `positive` : `grey`"
                                 size="xs" />
                             </w-item-section>
@@ -159,7 +188,9 @@
                           <w-item clickable @click="state.displayMode = `title`">
                             <w-item-section side>
                               <w-icon
-                                :name="state.displayMode === `title` ? `la:check-circle` : `la:circle`"
+                                :name="
+                                  state.displayMode === `title` ? `la:check-circle` : `la:circle`
+                                "
                                 :color="state.displayMode === `title` ? `positive` : `grey`"
                                 size="xs" />
                             </w-item-section>
@@ -199,7 +230,9 @@
               :aria-label="t(`common.actions.refresh`)"
               icon="la:redo-alt"
               @click="reloadFolder(state.currentFolderId)">
-              <w-tooltip anchor="bottom middle" self="top middle">{{ t(`common.actions.refresh`) }}</w-tooltip>
+              <w-tooltip anchor="bottom middle" self="top middle">{{
+                t(`common.actions.refresh`)
+              }}</w-tooltip>
             </w-btn>
             <w-separator class="mr-2" inset vertical />
             <w-btn
@@ -229,9 +262,9 @@
               @click="uploadFile" />
           </template>
         </w-toolbar>
-        <div class="flex flex-wrap" style="flex: 1 1 100%;">
+        <div class="flex flex-wrap" style="flex: 1 1 100%">
           <div class="min-w-0 flex-1">
-            <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%;">
+            <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
               <div class="fileman-loadinglist" v-if="state.fileListLoading">
                 <w-spinner class="mr-2" color="primary" size="64px" :thickness="1" />
                 <span class="text-primary">Fetching folder contents...</span>
@@ -268,7 +301,7 @@
                     transition-show="jump-down"
                     transition-hide="jump-up">
                     <w-card class="p-2">
-                      <w-list dense style="min-width: 150px;">
+                      <w-list dense style="min-width: 150px">
                         <w-item
                           clickable
                           v-if="insertMode && item.type !== `folder`"
@@ -344,7 +377,9 @@
                           <w-item-section side>
                             <w-icon name="la:trash-alt" color="negative" />
                           </w-item-section>
-                          <w-item-section class="text-negative">{{ t(`common.actions.delete`) }}</w-item-section>
+                          <w-item-section class="text-negative">{{
+                            t(`common.actions.delete`)
+                          }}</w-item-section>
                         </w-item>
                       </w-list>
                     </w-card>
@@ -358,7 +393,7 @@
     </w-page-container>
     <w-footer>
       <w-bar class="fileman-path">
-        <small class="text-caption text-grey-7">{{folderPath}}</small>
+        <small class="text-caption text-grey-7">{{ folderPath }}</small>
       </w-bar>
     </w-footer>
     <input type="file" ref="fileIpt" multiple @change="uploadNewFiles" style="display: none" />
@@ -399,7 +434,6 @@ import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
 import AssetRenameDialog from '@/components/AssetRenameDialog.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 
-
 // COMPOSABLES
 
 const dark = useDark()
@@ -425,6 +459,8 @@ const state = reactive({
   loading: 0,
   isFetching: false,
   search: '',
+  /** Drives the search pill's inversion, as HeaderSearch does it. */
+  searchIsFocused: false,
   currentFolderId: null,
   currentFileId: null,
   treeNodes: {},
@@ -1141,6 +1177,72 @@ onMounted(async () => {
 
 <style lang="scss">
 .fileman {
+  /*
+    The search pill, mirroring `.header-search-field` in HeaderSearch: 40px tall, dark fill on the
+    dark header, inverting to white ink-on-white in use. Stated here rather than borrowing that
+    component's class, so a change to the site header cannot silently restyle this overlay -- but the
+    metrics are deliberately the same, because it is the same control in a different place.
+  */
+  &-search {
+    display: flex;
+    flex: 1 1;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 8px 0 12px;
+    border-radius: 9999px;
+    background-color: #212121;
+    color: rgba(255, 255, 255, 0.85);
+    transition:
+      background-color 0.25s var(--ease-standard),
+      color 0.25s var(--ease-standard);
+
+    // -> Driven by a class rather than `:focus-within`, matching HeaderSearch
+    &.is-focused {
+      background-color: #fff;
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    &-lead {
+      flex-shrink: 0;
+      font-size: 20px;
+      opacity: 0.7;
+    }
+
+    &-input {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      outline: none;
+
+      &::placeholder {
+        color: currentColor;
+        opacity: 0.55;
+      }
+    }
+
+    &-clear {
+      flex-shrink: 0;
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 9999px;
+      border: 0;
+      background: none;
+      color: inherit;
+      opacity: 0.6;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+
   &-left {
     @at-root .body--light & {
       background-color: $blue-grey-1;

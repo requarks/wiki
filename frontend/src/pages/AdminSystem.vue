@@ -77,7 +77,7 @@
                   <w-btn
                     class="acrylic-btn"
                     flat
-                    color="purple"
+                    :color="dark.isActive ? `purple-3` : `purple`"
                     @click="checkForUpdates"
                     :label="t(`admin.system.checkUpdate`)" />
                 </div>
@@ -271,6 +271,7 @@
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
+import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -281,6 +282,10 @@ import { useSiteStore } from '@/stores/site'
 import { cloneDeep } from 'lodash-es'
 import ClipboardJS from 'clipboard'
 import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
+
+// COMPOSABLES
+
+const dark = useDark()
 
 // STORES
 

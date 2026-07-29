@@ -2,7 +2,7 @@
   <w-card class="icon-picker" flat style="width: 460px">
     <w-tabs class="text-primary" v-model="state.currentTab" no-caps inline-label>
       <w-tab name="icon" icon="la:icons" :label="t(`iconPicker.icons`)" />
-      <w-tab name="custom" icon="la:pen" :label="t(`iconPicker.custom`)" />
+      <w-tab name="image" icon="la:image" :label="t(`iconPicker.image`)" />
     </w-tabs>
     <w-separator />
     <w-tab-panels v-model="state.currentTab">
@@ -33,7 +33,7 @@
               options-dense
               emit-value
               map-options
-              style="min-width: 130px;"
+              style="min-width: 130px"
               :label="t(`iconPicker.set`)"
               :aria-label="t(`iconPicker.set`)"
               @update:model-value="search" />
@@ -43,7 +43,11 @@
           <w-inner-loading :showing="state.loading">
             <w-spinner color="primary" size="md" />
           </w-inner-loading>
-          <div class="text-center text-caption text-grey p-6" v-if="!state.loading && state.results.length < 1">{{ state.query?.length >= 2 ? t('iconPicker.noResults') : t('iconPicker.searchHint') }}</div>
+          <div
+            class="text-center text-caption text-grey p-6"
+            v-if="!state.loading && state.results.length < 1">
+            {{ state.query?.length >= 2 ? t('iconPicker.noResults') : t('iconPicker.searchHint') }}
+          </div>
           <div class="icon-picker-grid" v-else>
             <w-btn
               class="icon-picker-cell"
@@ -51,7 +55,7 @@
               :key="icon"
               flat
               dense
-              :class='{ "icon-picker-cell--active": state.selected === icon }'
+              :class="{ 'icon-picker-cell--active': state.selected === icon }"
               :aria-label="icon"
               @click="state.selected = icon">
               <w-icon :name="icon" size="24px" />
@@ -61,18 +65,25 @@
         </div>
       </w-tab-panel>
       <!-- ----------------------- -->
-      <!-- Anything else -->
+      <!-- An image file -->
       <!-- ----------------------- -->
-      <w-tab-panel name="custom">
-        <div class="text-caption text-grey">{{ t('iconPicker.customHint') }}</div>
+      <w-tab-panel class="p-3" name="image">
+        <div class="text-caption text-grey">{{ t('iconPicker.imageHint') }}</div>
+        <!--
+          The field holds the path alone; the `img:` that marks it as an image is shown as a fixed
+          prefix and added on the way out. That is how the reference has to be stored -- see WIcon --
+          but it is not something anyone should have to know to type.
+        -->
         <w-input
           class="mt-2"
-          v-model="state.custom"
+          v-model="state.image"
           outlined
           dense
-          :label="t(`iconPicker.reference`)"
-          :aria-label="t(`iconPicker.reference`)"
-          placeholder="la:home" />
+          prefix="img:"
+          :label="t(`iconPicker.imageUrl`)"
+          :aria-label="t(`iconPicker.imageUrl`)"
+          placeholder="/_assets/icons/my-icon.svg" />
+        <div class="mt-2 text-caption text-grey">{{ t('iconPicker.imageSizeHint') }}</div>
       </w-tab-panel>
     </w-tab-panels>
     <w-separator />
@@ -100,7 +111,7 @@
         unelevated
         color="secondary"
         :disable="!pendingValue"
-        @click="apply(); closePopup()" />
+        @click="applyAndClose" />
     </w-card-actions>
   </w-card>
 </template>
@@ -114,7 +125,6 @@ import { useDark } from '@/composables/dark'
 
 import { debounce } from 'es-toolkit/function'
 import { useClosePopup } from '@/composables/popup'
-
 
 // I18N
 
@@ -144,12 +154,15 @@ const state = reactive({
   sets: [],
   results: [],
   selected: '',
-  custom: '',
+  image: '',
   loading: false
 })
 
-/** An Iconify reference, as opposed to a webfont name or an `img:` URL. */
+/** An Iconify reference, as opposed to an `img:` URL. */
 const ICONIFY_REF = /^[a-z0-9-]+:[a-z0-9.-]+$/
+
+/** What marks a reference as an image rather than an icon, per WIcon. */
+const IMAGE_PREFIX = 'img:'
 
 // COMPOSABLES
 
@@ -165,7 +178,11 @@ const setOptions = computed(() => {
 })
 
 const pendingValue = computed(() => {
-  return state.currentTab === 'custom' ? (state.custom?.trim() ?? '') : state.selected
+  if (state.currentTab !== 'image') {
+    return state.selected
+  }
+  const url = state.image?.trim()
+  return url ? `${IMAGE_PREFIX}${url}` : ''
 })
 
 // METHODS
@@ -236,7 +253,8 @@ async function apply() {
   const value = pendingValue.value
   emit('update:modelValue', value)
 
-  if (!ICONIFY_REF.test(value)) {
+  // -> An image is served from wherever it points; only an icon has to be stored
+  if (value.startsWith(IMAGE_PREFIX) || !ICONIFY_REF.test(value)) {
     return
   }
   try {
@@ -251,16 +269,22 @@ async function apply() {
   }
 }
 
+/** Named, because oxfmt breaks a two-statement inline handler onto separate lines */
+function applyAndClose() {
+  apply()
+  closePopup()
+}
+
 // MOUNTED
 
 onMounted(async () => {
-  // -> An Iconify reference starts on the search tab, anything else on the custom one
-  if (ICONIFY_REF.test(props.modelValue ?? '')) {
+  // -> An image reference opens on the image tab, an Iconify one on the search tab
+  if (props.modelValue?.startsWith(IMAGE_PREFIX)) {
+    state.currentTab = 'image'
+    state.image = props.modelValue.slice(IMAGE_PREFIX.length)
+  } else if (ICONIFY_REF.test(props.modelValue ?? '')) {
     state.selected = props.modelValue
     state.results = [props.modelValue]
-  } else if (props.modelValue) {
-    state.currentTab = 'custom'
-    state.custom = props.modelValue
   }
   await loadSets()
 })
@@ -277,22 +301,13 @@ onMounted(async () => {
     }
   }
 
-  .q-tab-panels {
+  /* -> A shade off the card, so the fields and the results area read as sitting on a surface */
+  .w-tab-panels {
     @at-root .body--light & {
       background-color: $grey-1;
     }
     @at-root .body--dark & {
       background-color: $dark-4;
-    }
-  }
-
-  .q-input .q-field__control,
-  .q-select .q-field__control {
-    @at-root .body--light & {
-      background-color: #fff;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-5;
     }
   }
 

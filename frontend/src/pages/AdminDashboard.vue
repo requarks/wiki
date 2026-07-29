@@ -30,7 +30,7 @@
               :label="t(`common.actions.new`)"
               :disable="!userStore.can(`manage:sites`)"
               @click="newSite" />
-            <w-separator class="mx-2" vertical />
+            <w-separator vertical />
             <w-btn
               flat
               color="primary"
@@ -59,7 +59,7 @@
               :label="t(`common.actions.new`)"
               :disable="!userStore.can(`manage:users`)"
               @click="newGroup" />
-            <w-separator class="mx-2" vertical />
+            <w-separator vertical />
             <w-btn
               flat
               color="primary"
@@ -88,7 +88,7 @@
               :label="t(`common.actions.new`)"
               :disable="!userStore.can(`manage:users`)"
               @click="newUser" />
-            <w-separator class="mx-2" vertical />
+            <w-separator vertical />
             <w-btn
               flat
               color="primary"

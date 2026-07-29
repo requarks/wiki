@@ -92,7 +92,7 @@
                   class="acrylic-btn"
                   icon="la:external-link-square-alt"
                   :label="t(`admin.icons.reference`)"
-                  color="indigo"
+                  :color="dark.isActive ? `indigo-4` : `indigo`"
                   flat
                   no-caps
                   padding="xs md"

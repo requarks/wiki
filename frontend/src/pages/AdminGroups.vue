@@ -16,8 +16,8 @@
           outlined
           v-model="state.search"
           dense
-          :class="dark.isActive ? `bg-dark` : `bg-white`">
-          <template #prepend><w-icon name="la:search" /></template>
+          :class="dark.isActive ? `bg-dark text-white` : `bg-white`">
+          <template #prepend><w-icon class="opacity-50" name="la:search" size="20px" /></template>
         </w-input>
         <w-btn
           class="acrylic-btn mr-2"
@@ -60,19 +60,13 @@
             :loading="state.loading > 0"
             :filter="state.search">
             <template v-slot:body-cell-id="props">
-              <w-td :props="props"
-                ><w-icon name="la:users" color="primary" size="sm"
-              /></w-td>
+              <w-td :props="props"><w-icon name="la:users" color="primary" size="sm" /></w-td>
             </template>
             <template v-slot:body-cell-name="props">
               <w-td :props="props">
                 <div class="flex items-center">
                   <strong>{{ props.value }}</strong>
-                  <w-icon
-                    class="ml-2"
-                    v-if="props.row.isSystem"
-                    name="la:lock"
-                    color="pink" />
+                  <w-icon class="ml-2" v-if="props.row.isSystem" name="la:lock" color="pink" />
                 </div>
               </w-td>
             </template>
@@ -95,7 +89,7 @@
                   flat
                   :to="`/_admin/groups/` + props.row.id"
                   icon="la:pen"
-                  color="indigo"
+                  :color="dark.isActive ? `indigo-4` : `indigo`"
                   :label="t(`common.actions.edit`)"
                   no-caps />
                 <w-btn

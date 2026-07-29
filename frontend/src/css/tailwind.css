@@ -229,7 +229,9 @@
 
   --color-indigo: #3f51b5;
   --color-indigo-4: #7986cb;
+  --color-indigo-5: #5c6bc0;
   --color-indigo-6: #3f51b5;
+  --color-indigo-7: #3949ab;
   --color-indigo-9: #283593;
 
   --color-amber: #ffc107;
@@ -237,6 +239,7 @@
   --color-amber-9: #ff8f00;
 
   --color-brown: #795548;
+  --color-brown-4: #a1887f;
   --color-brown-6: #795548;
   --color-brown-9: #4e342e;
 
@@ -354,6 +357,39 @@
   }
 
   /*
+    The card surface, as a component class rather than utilities on `WCard`'s own tag, because it is
+    a DEFAULT that callers are expected to replace: the admin pages tint these cards into notices
+    with `bg-negative` / `bg-info` and `text-white`. Two background utilities on one element are
+    resolved by their order within the layer, not by which one the caller wrote, so as a utility this
+    one simply beat them and every notice came out white. Here it loses to any utility by layer
+    order, which is what makes `bg-*` on a `<w-card>` mean what it says.
+  */
+  .w-card {
+    background-color: var(--color-white);
+    color: var(--color-black);
+  }
+
+  body.body--dark .w-card {
+    background-color: var(--color-dark-3);
+    color: var(--color-white);
+  }
+
+  /*
+    How an image in a `WAvatar` is cropped to the avatar's shape: by taking its radius and filling
+    the box, rather than by the avatar clipping its overflow. Same approach as the avatar this
+    replaces, and the reason is the same -- a clipping avatar would also cut off a floating badge,
+    which is meant to overhang the corner.
+
+    A DIRECT child only. An `img:`-style icon renders as `<i class="w-icon"><img></i>`, and that
+    inner image is sized by the icon, not by the avatar.
+  */
+  .w-avatar > img {
+    border-radius: inherit;
+    width: 100%;
+    height: 100%;
+  }
+
+  /*
     Shared frame for the form controls (WInput, WSelect). Lives here rather than in a component's
     scoped style because both components use it, and a scoped rule would only match the one it was
     declared in. The ring itself is an inline box-shadow on each control; this supplies the resting
@@ -372,6 +408,143 @@
   body.body--dark .w-input-control {
     --w-input-ring: rgb(255 255 255 / 0.3);
     --w-input-ring-hover: var(--color-white);
+  }
+
+  /*
+    The Material notched outline, for an outlined field that carries a label: at rest the label stands
+    in the middle of the field, and on focus or once there is a value it rises into the top border.
+    Shared by WInput and WSelect, for the reason given above.
+
+    Drawn as a fieldset whose legend cuts the notch. A fieldset is the only element that interrupts
+    its own top border for a child, which is what makes a REAL gap rather than a patch -- so the label
+    needs no background of its own and works over a white card, a grey `alt-card` section or a dark
+    surface alike. The legend widening from nothing to the label's width IS the notch opening.
+
+    Three measurements interlock, so changing one means checking the others:
+      - the outline sits 6px above the control, putting its top border through the label's middle
+      - the outline's side padding plus the legend span's places the gap's left edge
+      - the label's own `left` has to land inside that gap, or it sits on solid border
+  */
+  .w-input-outline {
+    position: absolute;
+    inset: -6px 0 0;
+    margin: 0;
+    padding: 0 0.5rem;
+    border-style: solid;
+    border-radius: inherit;
+    /* -> Clicks belong to the field underneath */
+    pointer-events: none;
+    min-inline-size: 0;
+    transition: border-color 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .w-input-outline legend {
+    float: unset;
+    display: block;
+    width: auto;
+    height: 0.6875rem;
+    padding: 0;
+    font-size: 0.75rem;
+    /* -> Hidden, but still occupying the top border, which is what interrupts it */
+    visibility: hidden;
+    white-space: nowrap;
+    max-width: 0.01px;
+    transition: max-width 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /*
+    3px, and it has to stay in step with the outline's side padding above.
+
+    This padding is what becomes the visible gap either side of the label, but it is measured around
+    the SPAN's text, which starts one border-width inboard of the label's own `left`. So the numbers
+    are chosen to make the span's text land exactly where the label's does -- outline padding + 1px
+    border + 3px equals the label's `left`, at both densities -- and then equal padding either side
+    gives an equal gap either side. Change one of the three and the gap goes lopsided.
+  */
+  .w-input-outline legend > span {
+    display: inline-block;
+    padding: 0 0.1875rem;
+    opacity: 0;
+  }
+
+  /* -> Qualified with `legend` so it outranks the resting rule above rather than tying on specificity */
+  .w-input-outline legend.w-input-outline-notch--open {
+    max-width: 100%;
+    /* -> Opens a beat after the label starts moving, so the gap appears under it rather than ahead */
+    transition: max-width 0.1s 0.05s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /*
+    The label itself. At rest it is centred in the field at the field's own text size, sitting exactly
+    where the text will appear; floated, it shrinks and rises onto the outline. Pointer events are off
+    so a click at rest reaches the field rather than the label.
+  */
+  .w-input-float {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    /*
+      Sized at the FLOATED size and scaled UP to rest, rather than the other way round.
+
+      The notch is cut from a legend laid out at this same 0.75rem, and a transform-scaled 0.875rem
+      label is not exactly the width of a 0.75rem one -- hinting differs -- so scaling down to float
+      left the gap wider than the text it was cut for. Floated is therefore the untransformed state,
+      where label and notch are the same string at the same size and cannot disagree; 1.1667 is 14/12,
+      which brings the resting label back to the field's own text size.
+    */
+    font-size: 0.75rem;
+    transform: translateY(-50%) scale(1.1667);
+    /*
+      Scaling about the left edge at mid-height: the box is translated up by half its own height, and
+      growing it about that same midline keeps the resting text centred in the field and its left edge
+      aligned with where the field's text begins.
+    */
+    transform-origin: left center;
+    max-width: calc(100% - 1.5rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+    /*
+      `top` is in here deliberately. It carries the whole vertical move -- from the middle of the
+      field to its top edge -- and leaving it out is what made the label JUMP: only the transform and
+      the font size were animating, and the transform is identical in both states.
+    */
+    transition:
+      top 0.2s var(--ease-standard),
+      transform 0.2s var(--ease-standard),
+      color 0.2s var(--ease-standard);
+  }
+
+  /*
+    Floated is simply the unscaled state.
+
+    Animating `font-size` instead would re-lay the text out on every frame, and since `translateY(-50%)`
+    resolves against the element's own height, that height changing under the transform made the label
+    drift as well as shrink. A scale is one operation on a box whose layout never changes.
+  */
+  .w-input-float--up {
+    top: 0;
+    transform: translateY(-50%) scale(1);
+  }
+
+  /* -> A dense field's text starts 8px in rather than 12px, so its label and notch follow */
+  .w-input-control--dense .w-input-outline {
+    padding: 0 0.25rem;
+  }
+
+  .w-input-control--dense .w-input-float {
+    left: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .w-input-outline,
+    .w-input-outline legend,
+    .w-input-outline legend.w-input-outline-notch--open,
+    .w-input-float {
+      transition-duration: 0.01ms;
+    }
   }
 
   /*

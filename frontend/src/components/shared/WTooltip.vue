@@ -98,9 +98,14 @@ onMounted(() => {
     Climb to the real control rather than stopping at the immediate parent. WBtn wraps its slot in
     an inner <span> (so the label can be hidden while loading), so the naive parent would be that
     span -- and clicking the button's padding, which is outside it, would do nothing.
+
+    `.w-badge` is in the list to STOP the climb, not to continue it: `closest` tests the element
+    itself first, so a tooltip written inside a badge resolves to that badge. Without it the climb
+    ran on to the enclosing `.w-item`, and the tooltip for a 12px indicator dot was measured against
+    the whole settings row -- appearing under the middle of the row rather than under the dot.
   */
   const host = placeholderEl.value?.parentElement ?? null
-  triggerEl = host?.closest('button, a, .w-btn, .w-item') ?? host
+  triggerEl = host?.closest('button, a, .w-btn, .w-item, .w-badge') ?? host
   if (!triggerEl) {
     return
   }

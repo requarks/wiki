@@ -65,6 +65,23 @@ const props = defineProps({
   color: {
     type: String,
     default: null
+  },
+  /**
+   * Standard 8px gap on the side facing the text: `left` for an icon that precedes it, `right` for
+   * one that follows.
+   *
+   * Ported because the markup already asks for it -- a dozen headers and menu items pass `left` -- and
+   * without the prop it fell through as a bare attribute and spaced nothing, which is why the File
+   * Manager's title sat flush against its folder icon. A toolbar deliberately has no `gap` of its own
+   * (see WToolbar), so spacing there is each item's own business.
+   */
+  left: {
+    type: Boolean,
+    default: false
+  },
+  right: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -120,7 +137,15 @@ const bundled = computed(() => {
   return { ...icon, transform: parts.length ? parts.join(' ') : undefined }
 })
 
-const colorClass = computed(() => (props.color ? `text-${props.color}` : undefined))
+/*
+  Colour and the spacing props share one binding, since every branch of the template already applies
+  `colorClass` and the alternative is threading a second class through all three.
+*/
+const colorClass = computed(() => [
+  props.color ? `text-${props.color}` : '',
+  props.left ? 'mr-2' : '',
+  props.right ? 'ml-2' : ''
+])
 
 /**
  * Both the inline SVG and `iconify-icon` size themselves in `em`, so one declaration covers them.

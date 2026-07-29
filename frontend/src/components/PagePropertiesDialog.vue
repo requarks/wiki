@@ -1,18 +1,21 @@
 <template>
-  <w-card class="page-properties-dialog">
-    <div
-      class="floating-sidepanel-quickaccess animated fadeIn"
-      v-if="state.showQuickAccess"
-      style="right: 486px;">
+  <!--
+    `h-full` so the card fills the panel: the scroll area below is sized `calc(100% - 50px)`, which
+    against an auto-height card resolves to `auto` and let the card grow past the panel instead of
+    scrolling inside it -- the white surface and the panel's shadow ending in different places.
+  -->
+  <w-card class="page-properties-dialog h-full">
+    <!-- -> Offset comes from the stylesheet now, relative to this card; see SideDialog -->
+    <div class="floating-sidepanel-quickaccess animated fadeIn" v-if="state.showQuickAccess">
       <template v-for="(qa, idx) of quickaccess" :key="`qa-` + qa.key">
         <w-btn :icon="qa.icon" flat padding="sm xs" size="sm" @click="jumpToSection(qa.key)">
-          <w-tooltip anchor="center left" self="center right">{{qa.label}}</w-tooltip>
+          <w-tooltip anchor="center left" self="center right">{{ qa.label }}</w-tooltip>
         </w-btn>
         <w-separator dark v-if="idx < quickaccess.length - 1" />
       </template>
     </div>
     <w-toolbar class="bg-primary text-white flex">
-      <div class="text-subtitle2">{{t('editor.props.pageProperties')}}</div>
+      <div class="text-subtitle2">{{ t('editor.props.pageProperties') }}</div>
       <w-space />
       <w-btn
         class="mr-2"
@@ -30,11 +33,18 @@
       ref="scrollArea"
       :thumb-style="siteStore.scrollStyle.thumb"
       :bar-style="siteStore.scrollStyle.bar"
-      style="height: calc(100% - 50px);">
+      style="height: calc(100% - 50px)">
       <w-card-section id="refCardInfo">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:info-circle" size="xs" /> {{t('editor.props.info')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:info-circle" size="xs" /> {{ t('editor.props.info') }}
+        </div>
         <w-form class="gap-2">
-          <w-input v-model="pageStore.title" :label="t(`editor.props.title`)" outlined dense />
+          <w-input
+            ref="iptTitle"
+            v-model="pageStore.title"
+            :label="t(`editor.props.title`)"
+            outlined
+            dense />
           <w-input
             v-model="pageStore.description"
             :label="t(`editor.props.shortDescription`)"
@@ -45,16 +55,24 @@
               <w-icon :name="pageStore.icon" size="20px" color="primary" />
             </template>
             <template #append>
-              <w-icon
-                class="cursor-pointer"
-                name="la:icons"
+              <!--
+                A button, not a bare `w-icon`: for a bundled icon WIcon renders an <svg> whose body is
+                set through `v-html`, which renders no slot -- so the menu inside it never existed and
+                the control did nothing. It was also just the 14px glyph, with no hit area of its own.
+              -->
+              <w-btn
+                flat
+                dense
+                round
+                icon="la:icons"
                 color="primary"
-                :aria-label="t(`editor.props.selectIcon`)">
+                :aria-label="t(`iconPicker.open`)">
+                <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
                 <!-- The properties panel is docked to the right edge, so the picker has to grow leftwards -->
                 <w-menu content-class="shadow-7" anchor="bottom right" self="top right">
                   <icon-picker-dialog v-model="pageStore.icon" />
                 </w-menu>
-              </w-icon>
+              </w-btn>
             </template>
           </w-input>
           <w-input
@@ -67,7 +85,9 @@
         </w-form>
       </w-card-section>
       <w-card-section class="alt-card" id="refCardPublishState">
-        <div class="text-overline pb-1 items-center flex"><w-icon class="mr-2" name="la:power-off" size="xs" /> {{t('editor.props.publishState')}}</div>
+        <div class="text-overline pb-1 items-center flex">
+          <w-icon class="mr-2" name="la:power-off" size="xs" /> {{ t('editor.props.publishState') }}
+        </div>
         <w-form class="gap-4">
           <div>
             <w-btn-toggle
@@ -77,39 +97,45 @@
               no-caps
               toggle-color="primary"
               :options="[
-              { label: t('editor.props.draft'), value: 'draft' },
-              { label: t('editor.props.published'), value: 'published' },
-              { label: t('editor.props.dateRange'), value: 'scheduled' }
-            ]" />
+                { label: t('editor.props.draft'), value: 'draft' },
+                { label: t('editor.props.published'), value: 'published' },
+                { label: t('editor.props.dateRange'), value: 'scheduled' }
+              ]" />
           </div>
           <div class="text-caption" v-if="pageStore.publishState === `published`">
-            <em>{{t('editor.props.publishedHint')}}</em>
+            <em>{{ t('editor.props.publishedHint') }}</em>
           </div>
           <div class="text-caption" v-else-if="pageStore.publishState === `draft`">
-            <em>{{t('editor.props.draftHint')}}</em>
+            <em>{{ t('editor.props.draftHint') }}</em>
           </div>
           <template v-else-if="pageStore.publishState === `scheduled`">
-            <div class="text-caption"><em>{{t('editor.props.dateRangeHint')}}</em></div>
+            <div class="text-caption">
+              <em>{{ t('editor.props.dateRangeHint') }}</em>
+            </div>
             <w-date v-model="publishingRange" range flat bordered landscape minimal />
           </template>
         </w-form>
       </w-card-section>
       <w-card-section id="refCardRelations">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:sun" size="xs" /> {{t('editor.props.relations')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:sun" size="xs" /> {{ t('editor.props.relations') }}
+        </div>
         <w-list
-          class="rounded mb-2 bg-white"
+          class="rounded mb-2 bg-white dark:bg-black/20"
           v-if="pageStore.relations.length > 0"
           separator
           bordered>
           <w-item v-for="rel of pageStore.relations" :key="`rel-id-` + rel.id">
             <w-item-section side><w-icon :name="rel.icon" /></w-item-section>
             <w-item-section>
-              <w-item-label><strong>{{rel.label}}</strong></w-item-label>
-              <w-item-label caption>{{rel.caption}}</w-item-label>
+              <w-item-label
+                ><strong>{{ rel.label }}</strong></w-item-label
+              >
+              <w-item-label caption>{{ rel.caption }}</w-item-label>
             </w-item-section>
             <w-item-section side>
               <w-chip class="px-2" dense square color="primary" text-color="white">
-                <div class="text-caption">{{rel.position}}</div>
+                <div class="text-caption">{{ rel.position }}</div>
               </w-chip>
             </w-item-section>
             <w-item-section side>
@@ -128,11 +154,13 @@
           unelevated
           color="secondary"
           @click="newRelation">
-          <w-tooltip>{{t('editor.props.relationAddHint')}}</w-tooltip>
+          <w-tooltip>{{ t('editor.props.relationAddHint') }}</w-tooltip>
         </w-btn>
       </w-card-section>
       <w-card-section class="alt-card" id="refCardScripts">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:code" size="xs" /> {{t('editor.props.scripts')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:code" size="xs" /> {{ t('editor.props.scripts') }}
+        </div>
         <w-btn
           class="w-full"
           :label="t(`editor.props.jsLoad`)"
@@ -141,7 +169,7 @@
           unelevated
           color="secondary"
           @click="editScripts(`jsLoad`)">
-          <w-tooltip>{{t('editor.props.jsLoadHint')}}</w-tooltip>
+          <w-tooltip>{{ t('editor.props.jsLoadHint') }}</w-tooltip>
         </w-btn>
         <w-btn
           class="w-full mt-2"
@@ -151,7 +179,7 @@
           unelevated
           color="secondary"
           @click="editScripts(`jsUnload`)">
-          <w-tooltip>{{t('editor.props.jsUnloadHint')}}</w-tooltip>
+          <w-tooltip>{{ t('editor.props.jsUnloadHint') }}</w-tooltip>
         </w-btn>
         <w-btn
           class="w-full mt-2"
@@ -161,11 +189,13 @@
           unelevated
           color="secondary"
           @click="editScripts(`styles`)">
-          <w-tooltip>{{t('editor.props.stylesHint')}}</w-tooltip>
+          <w-tooltip>{{ t('editor.props.stylesHint') }}</w-tooltip>
         </w-btn>
       </w-card-section>
       <w-card-section class="pb-6" id="refCardSidebar">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:ruler-vertical" size="xs" /> {{t('editor.props.sidebar')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:ruler-vertical" size="xs" /> {{ t('editor.props.sidebar') }}
+        </div>
         <w-form class="gap-4 pt-2">
           <div>
             <w-toggle
@@ -186,8 +216,11 @@
               checked-icon="la:check"
               unchecked-icon="la:times" />
           </div>
-          <div v-if="pageStore.showSidebar && pageStore.showToc" style="padding-left: 40px;">
-            <div class="text-caption">{{t('editor.props.tocMinMaxDepth')}} <strong>(H{{pageStore.tocDepth.min}} &rarr; H{{pageStore.tocDepth.max}})</strong></div>
+          <div v-if="pageStore.showSidebar && pageStore.showToc" style="padding-left: 40px">
+            <div class="text-caption">
+              {{ t('editor.props.tocMinMaxDepth') }}
+              <strong>(H{{ pageStore.tocDepth.min }} &rarr; H{{ pageStore.tocDepth.max }})</strong>
+            </div>
             <w-range
               v-model="pageStore.tocDepth"
               :min="1"
@@ -212,7 +245,9 @@
         </w-form>
       </w-card-section>
       <w-card-section class="alt-card pb-6" id="refCardSocial">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:comments" size="xs" /> {{t('editor.props.social')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:comments" size="xs" /> {{ t('editor.props.social') }}
+        </div>
         <w-form class="gap-4 pt-2">
           <div>
             <w-toggle
@@ -244,11 +279,15 @@
         </w-form>
       </w-card-section>
       <w-card-section class="pb-6" id="refCardTags">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:tags" size="xs" /> {{t('editor.props.tags')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:tags" size="xs" /> {{ t('editor.props.tags') }}
+        </div>
         <page-tags edit />
       </w-card-section>
       <w-card-section class="alt-card pb-6" id="refCardVisibility">
-        <div class="text-overline items-center flex"><w-icon class="mr-2" name="la:eye" size="xs" /> {{t('editor.props.visibility')}}</div>
+        <div class="text-overline items-center flex">
+          <w-icon class="mr-2" name="la:eye" size="xs" /> {{ t('editor.props.visibility') }}
+        </div>
         <w-form class="gap-4 pt-2">
           <div>
             <w-toggle
@@ -278,7 +317,7 @@
               checked-icon="la:check"
               unchecked-icon="la:times" />
           </div>
-          <div v-if="state.requirePassword" style="padding-left: 40px;">
+          <div v-if="state.requirePassword" style="padding-left: 40px">
             <w-input
               ref="iptPagePassword"
               v-model="pageStore.password"
@@ -291,7 +330,9 @@
       </w-card-section>
     </w-scroll-area>
     <w-dialog v-model="state.showRelationDialog">
-      <page-relation-dialog :edit-id="state.editRelationId" @close="state.showRelationDialog = false" />
+      <page-relation-dialog
+        :edit-id="state.editRelationId"
+        @close="state.showRelationDialog = false" />
     </w-dialog>
     <w-dialog v-model="state.showScriptsDialog">
       <page-scripts-dialog :mode="state.pageScriptsMode" @close="state.showScriptsDialog = false" />
@@ -311,7 +352,6 @@ import IconPickerDialog from './IconPickerDialog.vue'
 import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
 import PageTags from './PageTags.vue'
-
 
 // STORES
 
@@ -347,6 +387,7 @@ const quickaccess = [
 
 // REFS
 
+const iptTitle = ref(null)
 const iptPagePassword = ref(null)
 
 // COMPUTED
@@ -412,8 +453,35 @@ function toggleRequirePassword(newValue) {
 onMounted(() => {
   state.requirePassword = pageStore.password?.length > 0
 
+  // -> Title is the field this panel is opened to edit, so the caret starts there
+  nextTick(() => {
+    iptTitle.value?.focus()
+  })
+
   setTimeout(() => {
     state.showQuickAccess = true
   }, 300)
 })
 </script>
+
+<style lang="scss">
+/*
+  The panel is inset from the window and rounded now, so the two children that reach its corners have
+  to be rounded too -- a square toolbar or scroll area paints straight over the radius. `inherit`
+  takes the card's own value, so these stay right if that radius ever changes.
+
+  The scroll area is what makes the BOTTOM corners work: it already clips its overflow, so giving it
+  the radius clips the last section (grey, `alt-card`) to the corner instead of letting it square off.
+*/
+.page-properties-dialog {
+  > .w-toolbar {
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+
+  > .w-scroll-area {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+  }
+}
+</style>

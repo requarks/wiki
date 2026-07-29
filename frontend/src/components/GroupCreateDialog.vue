@@ -17,7 +17,7 @@
               hide-bottom-space
               :label="t(`common.field.name`)"
               lazy-rules="ondemand"
-              autofocus />
+              ref="iptGroupName" />
           </w-item-section>
         </w-item>
       </w-form>
@@ -55,7 +55,9 @@ defineEmits([...dialogComponentEmits])
 
 // DIALOG
 
-const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent({
+  autofocus: () => iptGroupName.value
+})
 
 // I18N
 
@@ -71,6 +73,7 @@ const state = reactive({
 // REFS
 
 const createGroupForm = ref(null)
+const iptGroupName = ref(null)
 
 // VALIDATION RULES
 

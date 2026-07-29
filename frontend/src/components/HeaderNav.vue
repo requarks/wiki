@@ -16,7 +16,7 @@
       <w-toolbar style="height: 64px">
         <w-space />
         <transition name="syncing">
-          <w-spinner v-show="commonStore.routerLoading" size="24px" class="text-accent" />
+          <w-spinner v-show="commonStore.routerLoading" size="20px" class="text-accent" />
         </transition>
         <w-btn
           v-if="userStore.can(`write:pages`)"

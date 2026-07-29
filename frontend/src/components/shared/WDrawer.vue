@@ -6,34 +6,40 @@
 
     `v-show` rather than `v-if`: a `display: none` grid item generates no box, so the drawer's
     column collapses to zero width exactly as if it were absent, while the element stays mounted so
-    its scroll position and any child state survive being closed.
+    its scroll position and any child state survive being closed. `Transition` drives `v-show` here,
+    which keeps that property -- it only defers the `display: none` until the slide has finished.
+
+    The width goes out as a custom property rather than an inline `width`, because the slide has to
+    be able to state its own geometry in terms of it and an inline style would outrank the class.
   -->
-  <aside
-    v-show="isVisible"
-    class="w-drawer flex flex-col"
-    :class="[
-      side === 'right' ? 'w-drawer--right' : 'w-drawer--left',
-      isOverlay ? 'w-drawer--overlay fixed inset-y-0 z-40 shadow-dialog' : '',
-      isOverlay && side === 'right' ? 'right-0' : '',
-      isOverlay && side !== 'right' ? 'left-0' : '',
-      bordered ? borderClass : '',
-      dark ? 'text-white' : ''
-    ]"
-    :style="{ width: `${width}px` }">
-    <teleport to="body">
-      <transition name="w-drawer-scrim">
-        <div
-          v-if="isVisible && isOverlay"
-          class="fixed inset-0 z-30 bg-black/40"
-          @click="$emit('update:modelValue', false)" />
-      </transition>
-    </teleport>
-    <slot />
-  </aside>
+  <transition name="w-drawer">
+    <aside
+      v-show="isVisible"
+      class="w-drawer flex flex-col"
+      :class="[
+        side === 'right' ? 'w-drawer--right' : 'w-drawer--left',
+        isOverlay ? 'w-drawer--overlay fixed inset-y-0 z-40 shadow-dialog' : '',
+        isOverlay && side === 'right' ? 'right-0' : '',
+        isOverlay && side !== 'right' ? 'left-0' : '',
+        bordered ? borderClass : '',
+        dark ? 'text-white' : ''
+      ]"
+      :style="{ '--w-drawer-width': `${width}px` }">
+      <teleport to="body">
+        <transition name="w-drawer-scrim">
+          <div
+            v-if="isVisible && isOverlay"
+            class="fixed inset-0 z-30 bg-black/40"
+            @click="$emit('update:modelValue', false)" />
+        </transition>
+      </teleport>
+      <slot />
+    </aside>
+  </transition>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useMinWidth } from '@/composables/screen'
 
 /**
@@ -43,8 +49,8 @@ import { useMinWidth } from '@/composables/screen'
  *   - wide   -- occupies its own grid column, pushing the page across
  *   - narrow -- overlays the page with a dismissable scrim
  *
- * `showIfAbove` reproduces the old behaviour where a drawer is open by default on a wide screen
- * whatever its model value says, and obeys the model only once the viewport is narrow.
+ * `showIfAbove` reproduces the old behaviour where a drawer starts open on a wide screen whatever
+ * its model value says -- a starting state only, not a permanent override: see `defaultOpen`.
  */
 const props = defineProps({
   modelValue: {
@@ -61,7 +67,7 @@ const props = defineProps({
     default: 'left',
     validator: (v) => ['left', 'right'].includes(v)
   },
-  /** Force the drawer open on wide viewports, whatever the model says. */
+  /** Start the drawer open on wide viewports, whatever the model says at mount. */
   showIfAbove: {
     type: Boolean,
     default: false
@@ -98,10 +104,25 @@ const isWide = useMinWidth(1024)
 
 const isOverlay = computed(() => !isWide.value)
 
-const isVisible = computed(() =>
-  // -> On a wide screen `showIfAbove` wins; on a narrow one the model is the only thing that counts
-  isWide.value ? props.showIfAbove || props.modelValue : props.modelValue
+/**
+ * `showIfAbove` only supplies the initial state, and stops applying the moment the model says
+ * anything of its own -- ORing it into `isVisible` for good made the model unable to CLOSE a drawer
+ * on a wide screen, which is how the editor lost its full width: it drops the site sidebar by
+ * flipping the model to false, and nothing happened.
+ *
+ * Cleared for good rather than per breakpoint, so widening the window mid-edit does not pop the
+ * sidebar back open.
+ */
+const defaultOpen = ref(props.showIfAbove)
+
+watch(
+  () => props.modelValue,
+  () => {
+    defaultOpen.value = false
+  }
 )
+
+const isVisible = computed(() => props.modelValue || (isWide.value && defaultOpen.value))
 
 const borderClass = computed(() =>
   props.side === 'right'
@@ -111,6 +132,10 @@ const borderClass = computed(() =>
 </script>
 
 <style scoped>
+.w-drawer {
+  width: var(--w-drawer-width);
+}
+
 .w-drawer--left {
   grid-area: ldrawer;
 }
@@ -123,6 +148,31 @@ const borderClass = computed(() =>
   grid-area: unset;
 }
 
+/*
+  The slide is a negative outer margin, not a transform: the drawer's grid column is `auto`, so it is
+  sized by the item's MARGIN box, and pulling the margin to `-width` collapses the column to zero
+  while the border box keeps its full width and simply hangs off the edge. One animated property
+  therefore does both halves of the effect -- the panel slides out and the page grows into the space
+  it leaves, in step. A transform would have moved the panel but left the column at full width, and
+  animating `width` would have reflowed the nav on every frame instead of sliding it.
+
+  Nothing clips the panel on its way out, but nothing needs to: overflow past the left edge of the
+  document creates no scrollable area, and an overlaying drawer is `fixed`, which is outside the
+  document's overflow altogether.
+*/
+.w-drawer-enter-active,
+.w-drawer-leave-active {
+  transition: margin 0.2s var(--ease-standard);
+}
+.w-drawer--left.w-drawer-enter-from,
+.w-drawer--left.w-drawer-leave-to {
+  margin-left: calc(-1 * var(--w-drawer-width));
+}
+.w-drawer--right.w-drawer-enter-from,
+.w-drawer--right.w-drawer-leave-to {
+  margin-right: calc(-1 * var(--w-drawer-width));
+}
+
 .w-drawer-scrim-enter-active,
 .w-drawer-scrim-leave-active {
   transition: opacity 0.2s var(--ease-standard);
@@ -133,6 +183,8 @@ const borderClass = computed(() =>
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .w-drawer-enter-active,
+  .w-drawer-leave-active,
   .w-drawer-scrim-enter-active,
   .w-drawer-scrim-leave-active {
     transition-duration: 0.01ms;

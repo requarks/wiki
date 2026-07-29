@@ -2,7 +2,7 @@
   <w-layout view="hHh lpR fFf" container>
     <w-header class="card-header px-4 py-2">
       <w-icon name="img:/_assets/icons/fluent-sidebar-menu.svg" left size="md" />
-      <span>{{t(`navEdit.editMenuItems`)}}</span>
+      <span>{{ t(`navEdit.editMenuItems`) }}</span>
       <w-space />
       <transition name="syncing">
         <w-spinner class="mr-2" v-show="state.loading > 0" color="accent" size="24px" />
@@ -45,7 +45,7 @@
           item-key="id"
           :options="sortableOptions"
           @end="updateItemPosition">
-          <template #item="{element}">
+          <template #item="{ element }">
             <div
               class="nav-edit-item nav-edit-item-header"
               v-if="element.type === `header`"
@@ -60,7 +60,7 @@
             <w-item
               class="nav-edit-item nav-edit-item-link"
               v-else-if="element.type === `link`"
-              :class='{ "is-active": state.selected === element.id, "is-nested": element.isNested }'
+              :class="{ 'is-active': state.selected === element.id, 'is-nested': element.isNested }"
               @click="setItem(element)"
               clickable>
               <w-item-section side><w-icon :name="element.icon" color="white" /></w-item-section>
@@ -74,7 +74,7 @@
               v-else
               :class="state.selected === element.id ? `is-active` : ``"
               @click="setItem(element)">
-              <w-separator dark inset style="flex: 1; margin-top: 11px;" />
+              <w-separator dark inset style="flex: 1; margin-top: 11px" />
               <w-item-section side>
                 <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
               </w-item-section>
@@ -84,7 +84,7 @@
         <div class="p-4 flex">
           <w-btn
             class="acrylic-btn"
-            style="flex: 1;"
+            style="flex: 1"
             flat
             color="positive"
             :label="t(`common.actions.add`)"
@@ -95,19 +95,19 @@
                 <w-item clickable @click="addItem(`header`)">
                   <w-item-section side><w-icon name="la:heading" /></w-item-section>
                   <w-item-section>
-                    <w-item-label>{{t('navEdit.header')}}</w-item-label>
+                    <w-item-label>{{ t('navEdit.header') }}</w-item-label>
                   </w-item-section>
                 </w-item>
                 <w-item clickable @click="addItem(`link`)">
                   <w-item-section side><w-icon name="la:link" /></w-item-section>
                   <w-item-section>
-                    <w-item-label>{{t('navEdit.link')}}</w-item-label>
+                    <w-item-label>{{ t('navEdit.link') }}</w-item-label>
                   </w-item-section>
                 </w-item>
                 <w-item clickable @click="addItem(`separator`)">
                   <w-item-section side><w-icon name="la:minus" /></w-item-section>
                   <w-item-section>
-                    <w-item-label>{{t('navEdit.separator')}}</w-item-label>
+                    <w-item-label>{{ t('navEdit.separator') }}</w-item-label>
                   </w-item-section>
                 </w-item>
               </w-list>
@@ -127,7 +127,7 @@
                     <w-icon name="la:trash-alt" color="negative" />
                   </w-item-section>
                   <w-item-section>
-                    <w-item-label>{{t('navEdit.clearItems')}}</w-item-label>
+                    <w-item-label>{{ t('navEdit.clearItems') }}</w-item-label>
                   </w-item-section>
                 </w-item>
                 <!-- q-item(clickable) -->
@@ -162,13 +162,13 @@
         <template v-if="state.current.type === `header`">
           <w-card class="pb-2">
             <w-card-section>
-              <div class="text-subtitle1">{{t('navEdit.header')}}</div>
+              <div class="text-subtitle1">{{ t('navEdit.header') }}</div>
             </w-card-section>
             <w-item>
               <blueprint-icon icon="typography" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.label`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.labelHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.label`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.labelHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section>
                 <w-input
@@ -182,8 +182,8 @@
             <w-item>
               <blueprint-icon icon="user-groups" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.visibility`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.visibilityHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.visibility`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.visibilityHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section avatar>
                 <w-btn-toggle
@@ -199,7 +199,7 @@
               <w-space />
               <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
               <w-select
-                style="width: 100%; max-width: calc(50% - 34px);"
+                style="width: 100%; max-width: calc(50% - 34px)"
                 outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
@@ -226,12 +226,14 @@
         </template>
         <template v-if="state.current.type === `link`">
           <w-card class="pb-2">
-            <w-card-section><div class="text-subtitle1">{{t('navEdit.link')}}</div></w-card-section>
+            <w-card-section
+              ><div class="text-subtitle1">{{ t('navEdit.link') }}</div></w-card-section
+            >
             <w-item>
               <blueprint-icon icon="typography" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.label`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.labelHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.label`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.labelHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section>
                 <w-input
@@ -246,8 +248,8 @@
             <w-item>
               <blueprint-icon icon="spring" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.icon`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.iconHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.icon`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.iconHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section>
                 <w-input
@@ -256,11 +258,24 @@
                   dense
                   :aria-label="t(`navEdit.icon`)">
                   <template #append>
-                    <w-icon class="cursor-pointer" name="la:icons" color="primary">
+                    <!--
+                      A button, not a bare `w-icon`: for a bundled icon WIcon renders an <svg> whose
+                      body is set through `v-html`, and that branch renders no slot -- so the menu
+                      inside it never existed and the control did nothing. It was also just the glyph,
+                      with no hit area of its own. Same fix as the page-properties dialog.
+                    -->
+                    <w-btn
+                      flat
+                      dense
+                      round
+                      icon="la:icons"
+                      color="primary"
+                      :aria-label="t(`iconPicker.open`)">
+                      <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
                       <w-menu content-class="shadow-7">
                         <icon-picker-dialog v-model="state.current.icon" />
                       </w-menu>
-                    </w-icon>
+                    </w-btn>
                   </template>
                 </w-input>
               </w-item-section>
@@ -269,8 +284,8 @@
             <w-item>
               <blueprint-icon icon="link" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.target`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.targetHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.target`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.targetHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section>
                 <w-input
@@ -285,8 +300,8 @@
             <w-item tag="label">
               <blueprint-icon icon="external-link" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.openInNewWindow`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.openInNewWindowHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.openInNewWindow`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.openInNewWindowHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section avatar>
                 <w-toggle
@@ -301,8 +316,8 @@
             <w-item>
               <blueprint-icon icon="user-groups" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.visibility`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.visibilityHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.visibility`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.visibilityHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section avatar>
                 <w-btn-toggle
@@ -318,7 +333,7 @@
               <w-space />
               <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
               <w-select
-                style="width: 100%; max-width: calc(50% - 34px);"
+                style="width: 100%; max-width: calc(50% - 34px)"
                 outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
@@ -367,13 +382,13 @@
         <template v-if="state.current.type === `separator`">
           <w-card class="pb-2">
             <w-card-section>
-              <div class="text-subtitle1">{{t('navEdit.separator')}}</div>
+              <div class="text-subtitle1">{{ t('navEdit.separator') }}</div>
             </w-card-section>
             <w-item>
               <blueprint-icon icon="user-groups" />
               <w-item-section>
-                <w-item-label>{{t(`navEdit.visibility`)}}</w-item-label>
-                <w-item-label caption>{{t(`navEdit.visibilityHint`)}}</w-item-label>
+                <w-item-label>{{ t(`navEdit.visibility`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.visibilityHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section avatar>
                 <w-btn-toggle
@@ -389,7 +404,7 @@
               <w-space />
               <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
               <w-select
-                style="width: 100%; max-width: calc(50% - 34px);"
+                style="width: 100%; max-width: calc(50% - 34px)"
                 outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
@@ -433,7 +448,6 @@ import { v4 as uuid } from 'uuid'
 import { pick } from 'es-toolkit/object'
 import { Sortable } from 'sortablejs-vue3'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
-
 
 // STORES
 

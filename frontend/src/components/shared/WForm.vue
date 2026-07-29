@@ -1,5 +1,14 @@
 <template>
-  <form novalidate @submit.prevent="onSubmit">
+  <!--
+    A flex column, not the `<form>` default of `display: block`.
+
+    Six call sites already style themselves with `gap-2` / `gap-4` to space their fields, and `gap`
+    does nothing on a block container -- the toggles in the page-properties panel were sitting 1px
+    apart with `gap-4` set and ignored. Stacking is what every form here does, and flex children
+    stretch to full width exactly as block-level ones did, so this changes nothing for the call sites
+    that set no gap.
+  -->
+  <form novalidate class="flex flex-col" @submit.prevent="onSubmit">
     <slot />
   </form>
 </template>

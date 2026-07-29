@@ -183,10 +183,6 @@ onMounted(() => {
 
     > .treeview-node {
       border-left: none;
-
-      > .treeview-label {
-        border-radius: 5px;
-      }
     }
   }
 
@@ -203,8 +199,12 @@ onMounted(() => {
   }
 
   &-label {
-    padding: 4px 8px;
-    border-radius: 0 5px 5px 0;
+    // -> 12px matches a toolbar's own side padding, which is what lines a row's folder icon up with
+    //    the icon in the header above it. Applied here rather than on the container so the row's
+    //    highlight still spans the full width.
+    padding: 4px 12px;
+    // -> Square: a row spans the full width of its container, and a radius on a full-width band reads
+    //    as a pill that has been clipped rather than as a highlighted row
     cursor: pointer;
     display: flex;
     align-items: center;

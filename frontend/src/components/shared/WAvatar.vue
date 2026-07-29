@@ -1,6 +1,16 @@
 <template>
+  <!--
+    `relative` so a `<w-badge floating>` in the slot pins to THIS box. Without it the badge kept
+    looking for a positioned ancestor and found the surrounding card, which put the blueprint icon's
+    indicator dot in the card's far top-right corner instead of on the icon.
+
+    Deliberately NOT `overflow-hidden`, for the same reason: a floating badge is meant to overhang
+    the corner, and a clipping avatar would cut it in half. An image is instead clipped by taking
+    this box's own radius, as the avatar this replaces did -- see `.w-avatar > img` in
+    `css/tailwind.css`.
+  -->
   <div
-    class="w-avatar inline-flex shrink-0 items-center justify-center overflow-hidden align-middle"
+    class="w-avatar relative inline-flex shrink-0 items-center justify-center align-middle"
     :class="shapeClass"
     :style="styles">
     <w-icon v-if="icon" :name="icon" />

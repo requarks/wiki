@@ -10,10 +10,12 @@
           flat
           round
           @click="goBack">
-          <w-tooltip anchor="center left" self="center right">{{ t('common.actions.goback') }}</w-tooltip>
+          <w-tooltip anchor="center left" self="center right">{{
+            t('common.actions.goback')
+          }}</w-tooltip>
         </w-btn>
         <div class="layout-search-sd">
-          <div class="text-header">{{ t('search.sortBy') }}</div>
+          <div class="section-header">{{ t('search.sortBy') }}</div>
           <w-list dense padding>
             <w-item
               v-for="item of orderByOptions"
@@ -25,16 +27,22 @@
                   :name="item.icon"
                   :color="item.value === state.params.orderBy ? `primary` : ``" />
               </w-item-section>
-              <w-item-section><w-item-label>{{ item.label }}</w-item-label></w-item-section>
+              <w-item-section
+                ><w-item-label>{{ item.label }}</w-item-label></w-item-section
+              >
               <w-item-section v-if="item.value === state.params.orderBy" side>
                 <w-icon
-                  :name="state.params.orderByDirection === `desc` ? `mdi:transfer-down` : `mdi:transfer-up`"
+                  :name="
+                    state.params.orderByDirection === `desc`
+                      ? `mdi:transfer-down`
+                      : `mdi:transfer-up`
+                  "
                   size="sm"
                   color="primary" />
               </w-item-section>
             </w-item>
           </w-list>
-          <div class="text-header">{{ t('search.filters') }}</div>
+          <div class="section-header">{{ t('search.filters') }}</div>
           <div class="p-2">
             <w-input
               outlined
@@ -58,7 +66,7 @@
               multiple
               hide-dropdown-icon
               :aria-label="t(`search.filterTags`)"
-              @update:model-value="v => syncTags(v)"
+              @update:model-value="(v) => syncTags(v)"
               :placeholder="state.selectedTags.length < 1 ? t(`search.filterTags`) : ``"
               :loading="state.loading > 0">
               <template #prepend><w-icon name="la:hashtag" size="xs" /></template>
@@ -90,7 +98,18 @@
               option-label="name"
               options-dense
               multiple
-              :display-value="t(`search.filterLocaleDisplay`, { n: state.params.filterLocale.length > 0 ? state.params.filterLocale[0].toUpperCase() : state.params.filterLocale.length }, state.params.filterLocale.length)">
+              :display-value="
+                t(
+                  `search.filterLocaleDisplay`,
+                  {
+                    n:
+                      state.params.filterLocale.length > 0
+                        ? state.params.filterLocale[0].toUpperCase()
+                        : state.params.filterLocale.length
+                  },
+                  state.params.filterLocale.length
+                )
+              ">
               <template #prepend><w-icon name="la:language" size="xs" /></template>
             </w-select>
             <w-select
@@ -118,8 +137,8 @@
           </div>
         </div>
         <w-page>
-          <div class="text-header flex">
-            <span>{{t('search.results')}}</span>
+          <div class="section-header flex">
+            <span>{{ t('search.results') }}</span>
             <w-space />
             <transition name="slide-up" mode="out-in">
               <i18n-t
@@ -139,7 +158,9 @@
               v-if="siteStore.search && siteStore.searchLastQuery">
               <strong>{{ siteStore.searchLastQuery }}</strong>
             </i18n-t>
-            <span v-else><em>{{ t('search.emptyQuery') }}</em></span>
+            <span v-else
+              ><em>{{ t('search.emptyQuery') }}</em></span
+            >
           </div>
           <w-list separator>
             <w-item v-for="item of state.results" clickable :to="`/` + item.path">
@@ -157,7 +178,15 @@
               </w-item-section>
               <w-item-section side>
                 <div class="flex layout-search-itemtags">
-                  <w-chip v-for="tag of item.tags" square color="secondary" text-color="white" icon="la:hashtag" size="sm">{{ tag }}</w-chip>
+                  <w-chip
+                    v-for="tag of item.tags"
+                    square
+                    color="secondary"
+                    text-color="white"
+                    icon="la:hashtag"
+                    size="sm"
+                    >{{ tag }}</w-chip
+                  >
                 </div>
                 <div class="flex">
                   <div class="text-caption mr-2 text-grey">/{{ item.path }}</div>
@@ -469,11 +498,20 @@ onUnmounted(() => {
     align-items: stretch;
     height: 100%;
 
+    /*
+      A foreground to go with the background, as `.layout-profile-card` needs for the same reason:
+      this card is a plain div rather than a WCard, and a WCard is what declares BOTH halves of a
+      surface. With only the background set, everything inside inherited the document's black --
+      headings, result titles, input and select values alike -- which is invisible on the dark one.
+      The light value is the black it was already inheriting, so only dark mode changes.
+    */
     @at-root .body--light & {
       background-color: #fff;
+      color: var(--color-black);
     }
     @at-root .body--dark & {
       background-color: $dark-3;
+      color: var(--color-white);
     }
   }
 
@@ -494,9 +532,18 @@ onUnmounted(() => {
     }
   }
 
-  .text-header {
+  /*
+    Primary, matching the section headers on the profile screen.
+
+    This class was `text-header` until the rename, which collided with a GENERATED Tailwind utility:
+    the palette carries a `header` colour, so `text-header` also meant `color: var(--color-header)` --
+    #000 in both themes -- and that beat the card's inherited white. Renamed rather than fought, so the
+    colour below is now a plain design choice instead of an override.
+  */
+  .section-header {
     padding: 0.75rem 1rem;
     font-weight: 500;
+    color: $primary;
 
     @at-root .body--light & {
       background-color: $grey-1;
@@ -520,7 +567,7 @@ onUnmounted(() => {
   .w-page {
     flex: 1 1;
 
-    .text-header:first-child {
+    .section-header:first-child {
       border-top-right-radius: 7px;
     }
 

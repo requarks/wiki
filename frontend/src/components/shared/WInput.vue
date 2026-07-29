@@ -7,8 +7,9 @@
     still handles the growing.
   -->
   <div class="w-input max-w-full min-w-0">
+    <!-- -> Only the non-outlined variant still labels from above; see `hasFloatingLabel` -->
     <label
-      v-if="label"
+      v-if="label && !hasFloatingLabel"
       :for="inputId"
       class="mb-1 block text-caption text-black/60 dark:text-white/70">
       {{ label }}
@@ -20,6 +21,34 @@
       class="w-input-control flex flex-nowrap items-center gap-2 rounded"
       :class="controlClasses"
       :style="controlStyle">
+      <!--
+        The outline, as a fieldset whose legend cuts the notch the floated label sits in.
+
+        A fieldset is the only element that interrupts its own top border for a child, which is what
+        makes a real gap rather than a patch: the label needs no background of its own, so it works
+        over a white card, a grey `alt-card` section or a dark surface alike. The legend widens from
+        nothing to the label's width, and that transition IS the notch opening.
+
+        `aria-hidden`, and the accessible name stays on the real <label> below.
+      -->
+      <fieldset
+        v-if="hasFloatingLabel"
+        aria-hidden="true"
+        class="w-input-outline"
+        :style="outlineStyle">
+        <legend :class="isFloating ? 'w-input-outline-notch--open' : ''">
+          <span>{{ label }}</span>
+        </legend>
+      </fieldset>
+
+      <label
+        v-if="hasFloatingLabel"
+        :for="inputId"
+        class="w-input-float"
+        :class="[isFloating ? 'w-input-float--up' : '', floatColorClass]">
+        {{ label }}
+      </label>
+
       <slot name="prepend" />
 
       <!--
@@ -98,7 +127,7 @@
 </template>
 
 <script setup>
-import { computed, inject, ref, useId, watch } from 'vue'
+import { computed, inject, ref, useId, useSlots, watch } from 'vue'
 
 /**
  * Text input.
@@ -221,6 +250,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'keyup:enter', 'focus', 'blur'])
 
+const slots = useSlots()
+
 const inputEl = ref(null)
 const inputId = useId()
 const errorMessage = ref(null)
@@ -257,10 +288,61 @@ const showsBottom = computed(
 
 const describedBy = computed(() => (showsBottom.value ? `${inputId}-desc` : undefined))
 
+/*
+  A label on an outlined field rides the outline, Material-style, instead of sitting above it: at rest
+  it stands in the middle of the field, and on focus or once there is a value it rises into the top
+  border. The non-outlined (filled) variant keeps its label above, since there is no outline to rise
+  into -- only three call sites in the app are labelled and not outlined.
+*/
+const hasFloatingLabel = computed(() => Boolean(props.label) && props.outlined)
+
+const hasValue = computed(() => String(props.modelValue ?? '').length > 0)
+
+/*
+  Floated whenever the resting position is unavailable or would collide.
+
+  A leading icon or prefix keeps it floated permanently: the resting label occupies the same place as
+  the field's text, which begins after those, so the two would overlap. MUI resolves this the same
+  way -- it asks the caller to pin the label up whenever there is a start adornment.
+
+  A placeholder likewise: it renders in the resting position the moment the field is empty.
+*/
+const hasLeadingAdornment = computed(() => Boolean(slots.prepend || props.prefix))
+
+const isFloating = computed(
+  () => hasFocus.value || hasValue.value || Boolean(props.placeholder) || hasLeadingAdornment.value
+)
+
+const floatColorClass = computed(() => {
+  if (hasError.value) {
+    return 'text-negative'
+  }
+  return hasFocus.value ? 'text-primary' : 'text-black/60 dark:text-white/70'
+})
+
 const controlClasses = computed(() => [
-  props.dense ? 'min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',
-  props.outlined ? 'bg-transparent' : 'rounded-b-none bg-black/4 dark:bg-white/6',
-  props.disable || props.disabled ? 'pointer-events-none opacity-60' : ''
+  props.dense ? 'w-input-control--dense min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',
+  /*
+    An outlined field carries its own surface rather than borrowing whatever it sits on: white in
+    light mode, a darker well in dark mode. Transparent read fine on a white card and wrong
+    everywhere else -- a grey `alt-card` section, the admin page background, the profile card -- where
+    the field dissolved into its surroundings.
+
+    The dark value is translucent black rather than a fixed tone so it holds up on each of those
+    surfaces; the light one can be flat white because that IS the surface a field should present.
+  */
+  props.outlined ? 'bg-white dark:bg-black/20' : 'rounded-b-none bg-black/4 dark:bg-white/6',
+  props.disable || props.disabled ? 'pointer-events-none opacity-60' : '',
+  /*
+    `relative` for the outline and the label. The margin is the room the floated label needs above the
+    control, and it is matched below so the field's box stays symmetric about the control -- otherwise
+    a top margin alone drops the control below the centre of whatever row it sits in, out of line with
+    a leading icon beside it.
+
+    Skipped underneath when a message line follows, since that already occupies the space and the gap
+    would only push the message away from the field it belongs to.
+  */
+  hasFloatingLabel.value ? (showsBottom.value ? 'relative mt-2' : 'relative my-2') : ''
 ])
 
 /**
@@ -275,22 +357,35 @@ const controlClasses = computed(() => [
  * arbitrary Tailwind class would be one more thing that has to survive the scanner and the
  * Quasar cascade.
  */
-const controlStyle = computed(() => {
-  const color = hasError.value
+const frameColor = computed(() =>
+  hasError.value
     ? 'var(--color-negative)'
     : hasFocus.value
       ? 'var(--color-primary)'
       : isHovered.value && !props.disable && !props.disabled && !props.readonly
         ? 'var(--w-input-ring-hover)'
         : 'var(--w-input-ring)'
-  // -> Error and focus both read as "active", and get the heavier 2px frame
-  const width = hasError.value || hasFocus.value ? 2 : 1
+)
+
+// -> Error and focus both read as "active", and get the heavier 2px frame
+const frameWidth = computed(() => (hasError.value || hasFocus.value ? 2 : 1))
+
+const controlStyle = computed(() => {
+  // -> A floating label needs a frame that can be interrupted, which the fieldset draws instead
+  if (hasFloatingLabel.value) {
+    return undefined
+  }
   return {
     boxShadow: props.outlined
-      ? `inset 0 0 0 ${width}px ${color}`
-      : `inset 0 -${width}px 0 0 ${color}`
+      ? `inset 0 0 0 ${frameWidth.value}px ${frameColor.value}`
+      : `inset 0 -${frameWidth.value}px 0 0 ${frameColor.value}`
   }
 })
+
+const outlineStyle = computed(() => ({
+  borderColor: frameColor.value,
+  borderWidth: `${frameWidth.value}px`
+}))
 
 // METHODS
 

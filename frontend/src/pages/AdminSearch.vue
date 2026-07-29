@@ -73,10 +73,11 @@
             <w-item-section>
               <w-item-label>{{ t(`admin.search.dictOverrides`) }}</w-item-label>
               <util-code-editor
-                class="admin-theme-cm my-2"
+                class="my-2"
                 v-model="state.config.dictOverrides"
                 language="json"
-                :min-height="250" />
+                :min-height="250"
+                :aria-label="t(`admin.search.dictOverrides`)" />
               <w-item-label caption>
                 <i18n-t keypath="admin.search.dictOverridesHint" tag="span">
                   <span>{ "en": "english" }</span>

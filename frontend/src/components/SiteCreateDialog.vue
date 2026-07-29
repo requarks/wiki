@@ -17,7 +17,7 @@
               hide-bottom-space
               :label="t(`common.field.name`)"
               lazy-rules="ondemand"
-              autofocus />
+              ref="iptSiteName" />
           </w-item-section>
         </w-item>
         <w-item>
@@ -71,7 +71,9 @@ defineEmits([...dialogComponentEmits])
 
 // DIALOG
 
-const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent({
+  autofocus: () => iptSiteName.value
+})
 
 // STORES
 
@@ -92,6 +94,7 @@ const state = reactive({
 // REFS
 
 const createSiteForm = ref(null)
+const iptSiteName = ref(null)
 
 // VALIDATION RULES
 

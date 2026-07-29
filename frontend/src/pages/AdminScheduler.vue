@@ -77,7 +77,16 @@
             :loading="state.loading > 0">
             <template v-slot:body-cell-id="props">
               <w-td :props="props">
-                <w-spinner class="mr-2" color="indigo" size="xs" />
+                <!--
+                  -> A calendar, not the plain `clock` the Upcoming tab uses: these rows are recurring
+                     cron entries rather than single runs waiting on a time, and the two tabs should
+                     not be telling them apart by nothing.
+
+                     From `la` rather than `mdi` for weight: every other icon on this page is Line
+                     Awesome, which is an outline set, and MDI's solid glyph sat noticeably heavier
+                     beside them.
+                -->
+                <w-icon class="mr-2" name="la:calendar" color="indigo" size="sm" />
               </w-td>
             </template>
             <template v-slot:body-cell-task="props">
@@ -159,9 +168,7 @@
             flat
             :loading="state.loading > 0">
             <template v-slot:body-cell-id="props">
-              <w-td :props="props"
-                ><w-icon name="la:clock" color="primary" size="sm"
-              /></w-td>
+              <w-td :props="props"><w-icon name="la:clock" color="primary" size="sm" /></w-td>
             </template>
             <template v-slot:body-cell-task="props">
               <w-td :props="props">

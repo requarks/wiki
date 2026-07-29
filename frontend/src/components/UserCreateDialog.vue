@@ -17,8 +17,7 @@
               :rules="userNameValidation"
               hide-bottom-space
               :label="t(`common.field.name`)"
-              lazy-rules="ondemand"
-              autofocus />
+              lazy-rules="ondemand" />
           </w-item-section>
         </w-item>
         <w-item>
@@ -32,8 +31,7 @@
               :rules="userEmailValidation"
               hide-bottom-space
               :label="t(`admin.users.email`)"
-              lazy-rules="ondemand"
-              autofocus />
+              lazy-rules="ondemand" />
           </w-item-section>
         </w-item>
         <w-item>
@@ -46,8 +44,7 @@
               :rules="userPasswordValidation"
               hide-bottom-space
               :label="t(`admin.users.password`)"
-              lazy-rules="ondemand"
-              autofocus>
+              lazy-rules="ondemand">
               <template #append>
                 <div class="flex flex-nowrap items-center">
                   <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
@@ -146,7 +143,12 @@
         </w-item>
       </w-form>
       <w-card-actions class="card-actions">
+        <!--
+          -> `ml-2` lines the checkbox up with the blueprint icons above it: the rows are `w-item`s,
+             padded 16px, while this action bar is padded 8px, so it started 8px to their left
+        -->
         <w-checkbox
+          class="ml-2"
           v-model="state.keepOpened"
           color="primary"
           :label="t(`admin.users.createKeepOpened`)" />
@@ -187,7 +189,9 @@ defineEmits([...dialogComponentEmits])
 
 // DIALOG
 
-const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent({
+  autofocus: () => iptName.value
+})
 
 // STORES
 

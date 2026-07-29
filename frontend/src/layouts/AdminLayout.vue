@@ -15,7 +15,7 @@
         <w-toolbar style="height: 64px">
           <w-space />
           <transition name="syncing">
-            <w-spinner v-show="commonStore.routerLoading" color="accent" size="24px" />
+            <w-spinner v-show="commonStore.routerLoading" color="accent" size="20px" />
           </transition>
           <w-btn
             class="ml-4"
@@ -570,21 +570,15 @@ onMounted(async () => {
     padding-top: 16px;
   }
 }
+// -> No `.w-card` rule here: WCard already paints its own surface with these exact colours, and an
+//    unlayered rule in an SFC stylesheet outranks every Tailwind utility however specific, so this
+//    restatement did nothing except stop the admin pages tinting a card with `bg-negative` / `bg-info`
 .admin-container {
   @at-root .body--light & {
     background-color: $grey-1;
   }
   @at-root .body--dark & {
     background-color: $dark-4;
-  }
-
-  .w-card {
-    @at-root .body--light & {
-      background-color: #fff;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-3;
-    }
   }
 }
 

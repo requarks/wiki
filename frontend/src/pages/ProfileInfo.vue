@@ -1,12 +1,12 @@
 <template>
   <w-page class="py-4">
-    <div class="text-header">{{ t('profile.myInfo') }}</div>
+    <div class="section-header">{{ t('profile.myInfo') }}</div>
     <w-item v-if="!canEdit">
       <w-item-section>
         <w-card class="bg-negative rounded text-white" flat>
           <w-card-section class="items-center" horizontal>
             <w-card-section class="shrink-0 pr-0">
-              <w-icon name="la:ban" size="sm" />
+              <w-icon name="la:ban" size="lg" />
             </w-card-section>
             <w-card-section>
               <span>{{ t('profile.editDisabledTitle') }}</span>
@@ -99,7 +99,7 @@
           :readonly="!canEdit" />
       </w-item-section>
     </w-item>
-    <div class="text-header mt-6">{{ t('profile.preferences') }}</div>
+    <div class="section-header mt-6">{{ t('profile.preferences') }}</div>
     <w-item>
       <blueprint-icon icon="timezone" />
       <w-item-section>
@@ -181,7 +181,7 @@
           :aria-label="t(`profile.appearance`)" />
       </w-item-section>
     </w-item>
-    <div class="text-header mt-6">{{ t('profile.accessibility') }}</div>
+    <div class="section-header mt-6">{{ t('profile.accessibility') }}</div>
     <w-item>
       <blueprint-icon icon="visualy-impaired" />
       <w-item-section>

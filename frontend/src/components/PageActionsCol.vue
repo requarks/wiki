@@ -1,10 +1,20 @@
 <template>
+  <!--
+    `flex flex-col` in place of the `column` this carried: that was Quasar's flex helper and nothing
+    defines it any more, so the rail was a plain block. Which is why `items-stretch` never stretched
+    the buttons to its width, and why `<w-space />` -- a `flex-grow: 1` spacer -- could not push the
+    last group to the bottom.
+  -->
+  <!--
+    Page Properties keeps the rail's full square; every other button is 48px. The primary action for
+    the page reads as the largest target, and the rest sit quieter beneath it.
+  -->
   <div
-    class="page-actions column items-stretch order-last"
+    class="page-actions flex flex-col items-stretch order-last"
     :class="editorStore.isActive ? `is-editor` : ``">
     <template v-if="userStore.can(`edit:pages`)">
       <w-btn
-        class="py-4"
+        class="aspect-square"
         flat
         icon="la:pen-nib"
         :color="editorStore.isActive ? `white` : `deep-orange-9`"
@@ -13,7 +23,7 @@
         <w-tooltip anchor="center left" self="center right">Page Properties</w-tooltip>
       </w-btn>
       <w-btn
-        class="py-4"
+        class="h-12"
         v-if="flagsStore.experimental"
         flat
         icon="la:project-diagram"
@@ -24,7 +34,7 @@
         <w-tooltip anchor="center left" self="center right">Page Data</w-tooltip>
       </w-btn>
       <w-btn
-        class="py-4"
+        class="h-12"
         v-if="editorStore.isActive"
         flat
         color="white"
@@ -43,12 +53,14 @@
         </w-icon>
         <w-tooltip anchor="center left" self="center right">Pending Asset Uploads</w-tooltip>
         <w-menu ref="menuPendingAssets" anchor="top left" self="top right" :offset="[10, 0]">
-          <w-card style="width: 450px;">
+          <w-card style="width: 450px">
             <w-card-section class="card-header">
               <w-icon name="img:/_assets/icons/color-data-pending.svg" left size="sm" />
               <span>Pending Asset Uploads</span>
             </w-card-section>
-            <w-card-section v-if="!hasPendingAssets">There are no assets pending uploads.</w-card-section>
+            <w-card-section v-if="!hasPendingAssets"
+              >There are no assets pending uploads.</w-card-section
+            >
             <w-list v-else separator>
               <w-item v-for="item of editorStore.pendingAssets" :key="item.id">
                 <w-item-section side><w-icon name="la:file-image" /></w-item-section>
@@ -66,7 +78,10 @@
               </w-item>
             </w-list>
             <w-card-section class="card-actions">
-              <em class="text-caption">Assets that are pasted or dropped onto this page will be held here until the page is saved.</em>
+              <em class="text-caption"
+                >Assets that are pasted or dropped onto this page will be held here until the page
+                is saved.</em
+              >
             </w-card-section>
           </w-card>
         </w-menu>
@@ -74,7 +89,7 @@
       <w-separator class="my-2" inset />
     </template>
     <w-btn
-      class="py-4"
+      class="h-12"
       flat
       icon="la:history"
       :color="editorStore.isActive ? `white` : `grey`"
@@ -83,7 +98,7 @@
       <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
     </w-btn>
     <w-btn
-      class="py-4"
+      class="h-12"
       flat
       icon="la:code"
       :color="editorStore.isActive ? `white` : `grey`"
@@ -94,7 +109,7 @@
     <template v-if="!(editorStore.isActive && editorStore.mode === `create`)">
       <w-separator class="my-2" inset />
       <w-btn
-        class="py-2"
+        class="h-12"
         flat
         icon="la:ellipsis-h"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
@@ -106,7 +121,7 @@
           self="top right"
           auto-close
           transition-show="jump-left">
-          <w-list padding style="min-width: 225px;">
+          <w-list padding style="min-width: 225px">
             <w-item clickable disabled v-if="userStore.can(`manage:pages`)">
               <w-item-section class="items-center" avatar>
                 <w-icon color="deep-orange-9" name="la:atom" size="sm" />
@@ -132,7 +147,7 @@
     <w-space />
     <template v-if="!(editorStore.isActive && editorStore.mode === `create`)">
       <w-btn
-        class="py-2"
+        class="h-12"
         v-if="userStore.can(`create:pages`)"
         flat
         icon="la:copy"
@@ -142,7 +157,7 @@
         <w-tooltip anchor="center left" self="center right">Duplicate Page</w-tooltip>
       </w-btn>
       <w-btn
-        class="py-2"
+        class="h-12"
         v-if="userStore.can(`manage:pages`)"
         flat
         icon="la:share"
@@ -152,14 +167,13 @@
         <w-tooltip anchor="center left" self="center right">Rename / Move Page</w-tooltip>
       </w-btn>
       <w-btn
-        class="py-2"
+        class="h-12"
         v-if="userStore.can(`delete:pages`)"
         flat
         icon="la:trash"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Delete Page"
-        @click="deletePage"
-        :class="editorStore.isActive ? `q-pb-md` : ``">
+        @click="deletePage">
         <w-tooltip anchor="center left" self="center right">Delete Page</w-tooltip>
       </w-btn>
     </template>
@@ -180,7 +194,6 @@ import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
-
 
 // STORES
 

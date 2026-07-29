@@ -105,8 +105,19 @@ export const dialogComponentEmits = ['ok', 'hide']
  *   const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
  *
  * and bind `v-model` / `@hide` on the root `<w-dialog>`.
+ *
+ * Pass `autofocus` to put the caret in a field once the dialog is up:
+ *
+ *   const iptName = ref(null)
+ *   useDialogComponent({ autofocus: () => iptName.value })
+ *
+ * A getter rather than the ref itself, so it can be written above the ref's own declaration and the
+ * component's sections stay in their usual order.
+ *
+ * @param {object} [opts]
+ * @param {() => { focus?: Function } | null} [opts.autofocus] Returns the control to focus on open.
  */
-export function useDialogComponent() {
+export function useDialogComponent({ autofocus } = {}) {
   const { emit } = getCurrentInstance()
   const dialogVisible = ref(false)
 
@@ -115,6 +126,19 @@ export function useDialogComponent() {
   onMounted(() =>
     nextTick(() => {
       dialogVisible.value = true
+
+      /*
+        Focus AFTER a second tick, which is the whole reason this lives here rather than in each
+        dialog: the field does not exist yet at this point. `WDialog` renders its panel only while
+        open, so flipping the flag above is what mounts the content -- a dialog calling `focus()` from
+        its own `onMounted` finds a null ref and silently does nothing, which is what every create
+        dialog in the app was doing.
+      */
+      if (autofocus) {
+        nextTick(() => {
+          autofocus()?.focus()
+        })
+      }
     })
   )
 

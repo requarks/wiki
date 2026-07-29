@@ -1,6 +1,12 @@
 <template>
+  <!--
+    `leading-tight` rather than the inherited 1.5: a chip is a single nowrap line, so its height is
+    its line box plus padding, and body line-height made it noticeably taller than the text it wraps.
+    Tight still clears the glyph box, which matters because the label span clips its overflow -- any
+    less and descenders would be cut.
+  -->
   <div
-    class="w-chip inline-flex max-w-full flex-nowrap items-center gap-1.5 align-middle"
+    class="w-chip inline-flex max-w-full flex-nowrap items-center gap-1.5 leading-tight align-middle"
     :class="classes"
     :style="styles"
     :tabindex="clickable ? 0 : undefined"
@@ -92,3 +98,38 @@ const styles = computed(() => ({
   color: props.textColor ? `var(--color-${props.textColor})` : undefined
 }))
 </script>
+
+<style scoped>
+/*
+  An avatar inside a chip is sized by the chip, not by the 48px it takes standing on its own -- that
+  default made a 12px-font chip 56px tall, swallowing the row. Same reason WItemSection overrides it
+  for a flanking section, and the box has to be restated for the same reason too: the chip this
+  replaces derived an avatar's dimensions from its font size, ours does not.
+
+  Relative rather than the fixed px used for item metrics, because a chip's own font size is a prop
+  (10-16px) and the avatar has to track it.
+
+  `font-size: inherit` is load-bearing: it keeps the avatar on the CHIP's font size, so the `em`
+  lengths below are chip-ems. Were a font size set here instead, they would resolve against it.
+
+  1.25em matches the `leading-tight` line box on the tag above, so the avatar sits WITHIN the label's
+  line instead of setting the chip's height. Anything taller becomes the tallest thing in the box and
+  the chip grows around it, which is what made it stand a row tall.
+
+  A descendant selector, not a child one: everything slotted lands inside the truncating <span> in
+  the template, so an avatar written between the chip's tags is a grandchild. That also means the
+  chip's own `gap` does not separate it from the label -- they are inline siblings inside that span,
+  with nothing between them -- so the gap has to be a margin here.
+*/
+.w-chip :deep(.w-avatar) {
+  width: 1.25em;
+  height: 1.25em;
+  font-size: inherit;
+  margin-right: 0.45em;
+}
+
+/* -> Which leaves the glyph to scale separately, at a little over two thirds of the circle */
+.w-chip :deep(.w-avatar > .w-icon) {
+  font-size: 0.85em;
+}
+</style>

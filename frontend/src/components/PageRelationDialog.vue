@@ -1,11 +1,16 @@
 <template>
-  <w-card class="page-relation-dialog" style="width: 500px;">
+  <w-card class="page-relation-dialog" style="width: 500px">
     <w-toolbar class="bg-primary text-white">
-      <div class="text-subtitle2" v-if="isEditMode">{{t('editor.pageRel.titleEdit')}}</div>
-      <div class="text-subtitle2" v-else>{{t('editor.pageRel.title')}}</div>
+      <div class="text-subtitle2" v-if="isEditMode">{{ t('editor.pageRel.titleEdit') }}</div>
+      <div class="text-subtitle2" v-else>{{ t('editor.pageRel.title') }}</div>
     </w-toolbar>
     <w-card-section>
-      <div class="text-overline">{{t('editor.pageRel.position')}}</div>
+      <!--
+        `self-start` on every button: WForm stacks with `flex-col`, so a button left to its own devices
+        stretches to the full width of the dialog. The section titles pull the item below them up, since
+        the form's `gap-4` belongs between sections rather than between a title and its own content.
+      -->
+      <div class="text-overline -mb-3">{{ t('editor.pageRel.position') }}</div>
       <w-form class="gap-4 pt-4">
         <div>
           <w-btn-toggle
@@ -15,50 +20,73 @@
             no-caps
             toggle-color="primary"
             :options="[
-            { label: t('editor.pageRel.left'), value: 'left' },
-            { label: t('editor.pageRel.center'), value: 'center' },
-            { label: t('editor.pageRel.right'), value: 'right' }
-          ]" />
+              { label: t('editor.pageRel.left'), value: 'left' },
+              { label: t('editor.pageRel.center'), value: 'center' },
+              { label: t('editor.pageRel.right'), value: 'right' }
+            ]" />
         </div>
-        <div class="text-overline">{{t('editor.pageRel.button')}}</div>
-        <w-input
-          ref="iptRelLabel"
-          outlined
-          dense
-          :label="t(`editor.pageRel.label`)"
-          v-model="state.label" />
-        <template v-if="state.pos !== `center`">
-          <w-input outlined dense :label="t(`editor.pageRel.caption`)" v-model="state.caption" />
-        </template>
+        <div class="text-overline -mb-3">{{ t('editor.pageRel.button') }}</div>
+        <!-- One item, so the two fields are only ever as far apart as their own margins -->
+        <div class="flex flex-col">
+          <w-input
+            ref="iptRelLabel"
+            outlined
+            dense
+            :label="t(`editor.pageRel.label`)"
+            v-model="state.label" />
+          <w-input
+            v-if="state.pos !== `center`"
+            outlined
+            dense
+            :label="t(`editor.pageRel.caption`)"
+            v-model="state.caption" />
+        </div>
         <w-btn
-          class="rounded"
+          class="self-start rounded"
           :label="t(`editor.pageRel.selectIcon`)"
           color="primary"
           outline>
+          <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
           <w-menu content-class="shadow-7"><icon-picker-dialog v-model="state.icon" /></w-menu>
         </w-btn>
-        <div class="text-overline">{{t('editor.pageRel.target')}}</div>
+        <div class="text-overline -mb-3">{{ t('editor.pageRel.target') }}</div>
         <w-btn
-          class="rounded"
+          class="self-start rounded"
           :label="t(`editor.pageRel.selectPage`)"
           color="primary"
           outline />
-        <div class="text-overline">{{t('editor.pageRel.preview')}}</div>
-        <w-btn v-if="state.pos === `left`" padding="sm md" outline no-caps color="primary">
+        <div class="text-overline -mb-3">{{ t('editor.pageRel.preview') }}</div>
+        <w-btn
+          v-if="state.pos === `left`"
+          class="self-start"
+          padding="sm md"
+          outline
+          no-caps
+          color="primary">
           <w-icon :name="state.icon" />
-          <div class="column text-left pl-4">
-            <div class="text-body2"><strong>{{state.label}}</strong></div>
-            <div class="text-caption">{{state.caption}}</div>
+          <div class="flex flex-col text-left pl-4">
+            <div class="text-body2">
+              <strong>{{ state.label }}</strong>
+            </div>
+            <div class="text-caption">{{ state.caption }}</div>
           </div>
         </w-btn>
         <w-btn class="w-full" v-else-if="state.pos === `center`" color="primary" flat no-caps>
           <w-icon class="mr-2" :name="state.icon" />
           <span>{{ state.label }}</span>
         </w-btn>
-        <w-btn v-else-if="state.pos === `right`" padding="sm md" outline no-caps color="primary">
-          <div class="column text-left pr-4">
-            <div class="text-body2"><strong>{{state.label}}</strong></div>
-            <div class="text-caption">{{state.caption}}</div>
+        <w-btn
+          v-else-if="state.pos === `right`"
+          class="self-start"
+          padding="sm md"
+          outline
+          no-caps
+          color="primary">
+          <div class="flex flex-col text-left pr-4">
+            <div class="text-body2">
+              <strong>{{ state.label }}</strong>
+            </div>
+            <div class="text-caption">{{ state.caption }}</div>
           </div>
           <w-icon :name="state.icon" />
         </w-btn>
@@ -82,7 +110,7 @@
         unelevated
         color="primary"
         padding="xs md"
-        @click="persist(); $emit('close')" />
+        @click="saveAndClose" />
       <w-btn
         v-else
         :disabled="!canSubmit"
@@ -91,7 +119,7 @@
         unelevated
         color="primary"
         padding="xs md"
-        @click="create(); $emit('close')" />
+        @click="createAndClose" />
     </w-card-actions>
   </w-card>
 </template>
@@ -115,7 +143,6 @@ const props = defineProps({
     default: null
   }
 })
-
 
 // STORES
 
@@ -169,7 +196,7 @@ watch(
 
 // METHODS
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 function create() {
   pageStore.$patch({
@@ -201,6 +228,20 @@ function persist() {
   pageStore.$patch({
     relations: rels
   })
+}
+
+/*
+  Named handlers: an inline `persist(); $emit('close')` is reformatted onto two lines by oxfmt, which
+  is no longer a valid template expression.
+*/
+function saveAndClose() {
+  persist()
+  emit('close')
+}
+
+function createAndClose() {
+  create()
+  emit('close')
 }
 
 // MOUNTED

@@ -8,8 +8,9 @@
     still handles the growing.
   -->
   <div class="w-select max-w-full min-w-0">
+    <!-- -> Only variants without an outline to rise into still label from above; see WInput -->
     <label
-      v-if="label"
+      v-if="label && !hasFloatingLabel"
       :for="selectId"
       class="mb-1 block text-caption text-black/60 dark:text-white/70">
       {{ label }}
@@ -29,6 +30,7 @@
       :aria-expanded="useInput ? undefined : String(isOpen)"
       :aria-haspopup="useInput ? undefined : 'listbox'"
       :aria-label="useInput || label ? undefined : ariaLabel"
+      :aria-labelledby="hasFloatingLabel && !useInput ? `${selectId}-label` : undefined"
       :aria-readonly="!useInput && readonly ? true : undefined"
       :aria-controls="!useInput && isOpen ? `${selectId}-listbox` : undefined"
       :aria-activedescendant="
@@ -42,6 +44,31 @@
       @pointerenter="isHovered = true"
       @pointerleave="isHovered = false"
       @keydown="useInput || onKeydown($event)">
+      <!-- -> The notched outline and its label, exactly as WInput draws them; CSS is shared -->
+      <fieldset
+        v-if="hasFloatingLabel"
+        aria-hidden="true"
+        class="w-input-outline"
+        :style="outlineStyle">
+        <legend :class="isFloating ? 'w-input-outline-notch--open' : ''">
+          <span>{{ label }}</span>
+        </legend>
+      </fieldset>
+
+      <!--
+        A <span>, not a <label>: the control it names IS this element's ancestor for the plain
+        variant (a <button>), and a label cannot sit inside the thing it labels. The control points
+        at it with `aria-labelledby` instead, which names it without displacing the selected value
+        the way an `aria-label` would.
+      -->
+      <span
+        v-if="hasFloatingLabel"
+        :id="`${selectId}-label`"
+        class="w-input-float"
+        :class="[isFloating ? 'w-input-float--up' : '', floatColorClass]">
+        {{ label }}
+      </span>
+
       <slot name="prepend" />
 
       <!--
@@ -70,6 +97,7 @@
         :aria-expanded="String(isOpen)"
         aria-haspopup="listbox"
         :aria-label="label ? undefined : ariaLabel"
+        :aria-labelledby="hasFloatingLabel ? `${selectId}-label` : undefined"
         :aria-controls="isOpen ? `${selectId}-listbox` : undefined"
         :aria-activedescendant="isOpen && activeIndex >= 0 ? optionId(activeIndex) : undefined"
         :disabled="isDisabled"
@@ -168,7 +196,7 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, ref, useId, watch } from 'vue'
+import { computed, inject, nextTick, ref, useId, useSlots, watch } from 'vue'
 import WChip from './WChip.vue'
 import WMenu from './WMenu.vue'
 import WSpinner from './WSpinner.vue'
@@ -183,6 +211,8 @@ import WSpinner from './WSpinner.vue'
  * Simplification: no free-text filtering or async search. Every current usage picks from a fixed,
  * short list.
  */
+const slots = useSlots()
+
 const props = defineProps({
   modelValue: {
     type: null,
@@ -618,13 +648,44 @@ const showsBottom = computed(
     (!props.hideBottomSpace && (props.hint || props.rules.length > 0))
 )
 
+/*
+  Matches WInput: a labelled outlined field floats its label onto the outline. A `standout` control
+  carries its state in its fill and draws no outline at all, so there is nothing for a label to rise
+  into and it keeps its label above.
+*/
+const hasFloatingLabel = computed(() => Boolean(props.label) && props.outlined && !props.standout)
+
+/*
+  Open counts as focus for this control. A selection, a placeholder or a leading icon each occupy the
+  resting position, so the label has to be up out of the way -- see the note in WInput.
+*/
+const isFloating = computed(
+  () =>
+    isOpen.value ||
+    hasSelection.value ||
+    Boolean(props.displayValue) ||
+    Boolean(props.placeholder) ||
+    Boolean(slots.prepend)
+)
+
+const floatColorClass = computed(() => {
+  if (errorMessage.value) {
+    return 'text-negative'
+  }
+  return isOpen.value ? 'text-primary' : 'text-black/60 dark:text-white/70'
+})
+
 const controlClasses = computed(() => [
-  props.dense ? 'min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',
+  props.dense ? 'w-input-control--dense min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',
+  // -> Its own surface, white or a dark well, matching WInput; see the note there
   standoutClass.value ??
-    (props.outlined ? 'bg-transparent' : 'rounded-b-none bg-black/4 dark:bg-white/6'),
+    (props.outlined ? 'bg-white dark:bg-black/20' : 'rounded-b-none bg-black/4 dark:bg-white/6'),
   isDisabled.value ? 'pointer-events-none opacity-60' : '',
   // -> readonly keeps full contrast; only the pointer affordance goes away
-  props.readonly ? 'cursor-default' : isDisabled.value ? '' : 'cursor-pointer'
+  props.readonly ? 'cursor-default' : isDisabled.value ? '' : 'cursor-pointer',
+  // -> Room for the floated label above, matched below so the control stays centred in its row; see
+  //    the fuller note in WInput
+  hasFloatingLabel.value ? (showsBottom.value ? 'relative mt-2' : 'relative my-2') : ''
 ])
 
 /** A standout control carries its state in its fill, so it takes no ring at all (see below). */
@@ -643,22 +704,32 @@ const standoutClass = computed(() => {
  * resting and active states. "Active" here is the open dropdown, which is this control's equivalent
  * of focus. See WInput for why this is an inline style rather than classes.
  */
-const controlStyle = computed(() => {
-  if (props.standout) {
-    return {}
-  }
-  const color = errorMessage.value
+const frameColor = computed(() =>
+  errorMessage.value
     ? 'var(--color-negative)'
     : isOpen.value
       ? 'var(--color-primary)'
       : isHovered.value && !isDisabled.value && !props.readonly
         ? 'var(--w-input-ring-hover)'
         : 'var(--w-input-ring)'
-  const width = errorMessage.value || isOpen.value ? 2 : 1
+)
+
+const frameWidth = computed(() => (errorMessage.value || isOpen.value ? 2 : 1))
+
+const controlStyle = computed(() => {
+  // -> A floating label needs a frame it can interrupt, which the fieldset draws instead
+  if (props.standout || hasFloatingLabel.value) {
+    return {}
+  }
   return {
     boxShadow: props.outlined
-      ? `inset 0 0 0 ${width}px ${color}`
-      : `inset 0 -${width}px 0 0 ${color}`
+      ? `inset 0 0 0 ${frameWidth.value}px ${frameColor.value}`
+      : `inset 0 -${frameWidth.value}px 0 0 ${frameColor.value}`
   }
 })
+
+const outlineStyle = computed(() => ({
+  borderColor: frameColor.value,
+  borderWidth: `${frameWidth.value}px`
+}))
 </script>

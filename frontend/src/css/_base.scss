@@ -264,14 +264,30 @@ body::-webkit-scrollbar-thumb {
 // DROPDOWN MENUS
 // ------------------------------------------------------------------
 
+// A gradient rather than one flat translucency: glassy at the top, fully opaque from halfway down.
+//
+// The flat version read well over a pale page and poorly over a dark or busy one, where whatever sat
+// behind the menu showed through its text. Keeping the original alpha at the very top preserves the
+// glass effect where the menu meets its trigger, and everything below the midpoint gets a solid
+// surface to sit on -- which is where a menu's content actually is.
+//
+// The last stop carries on to the bottom edge, so a taller menu stays opaque rather than fading back
+// out; only the position where it becomes solid is proportional.
 .translucent-menu {
   backdrop-filter: blur(10px) saturate(180%);
 
+  // `background-color: transparent` is load-bearing: WMenu paints an OPAQUE surface of its own with
+  // a `bg-[…]` utility, and the flat rule this replaces worked by overriding that colour outright. A
+  // gradient is a background IMAGE, which composites over that colour rather than replacing it -- so
+  // on its own it changed nothing at all, the top included. Clearing the colour makes the gradient the
+  // only background layer, which is what lets the top be translucent.
   @at-root .body--light & {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: transparent;
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, #fff 50%);
   }
   @at-root .body--dark & {
-    background-color: rgba(theme.$dark, 0.7);
+    background-color: transparent;
+    background-image: linear-gradient(to bottom, rgba(theme.$dark, 0.7) 0%, theme.$dark 50%);
   }
 
   // The panel inside has to let the blur through. `!important` because WCard sets its background

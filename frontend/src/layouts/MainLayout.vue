@@ -10,7 +10,13 @@
       :width="isSidebarMini ? 56 : 255"
       :side="siteStore.theme.sidebarPosition === `right` ? `right` : `left`">
       <div v-if="isSidebarMini" class="sidebar-mini flex flex-col items-stretch">
-        <w-btn class="py-4" flat icon="la:globe" color="white" aria-label="Switch Locale">
+        <w-btn
+          v-if="siteStore.locales.showMenu"
+          class="py-4"
+          flat
+          icon="la:globe"
+          color="white"
+          aria-label="Switch Locale">
           <locale-selector-menu anchor="top right" self="top left" />
           <w-tooltip anchor="center right" self="center left">Switch Locale</w-tooltip>
         </w-btn>
@@ -52,26 +58,25 @@
       </div>
       <template v-else>
         <div class="sidebar-actions flex flex-nowrap items-stretch">
-          <w-btn
-            class="flex-1 px-2"
-            flat
-            dense
-            icon="la:globe"
-            color="blue-7"
-            text-color="custom-color"
-            :label="commonStore.locale"
-            :aria-label="commonStore.locale"
-            size="sm">
-            <locale-selector-menu :offset="[-5, 5]" />
-          </w-btn>
-          <w-separator vertical />
+          <!-- -> Both the button and its separator go, so Browse spans the row on its own -->
+          <template v-if="siteStore.locales.showMenu">
+            <w-btn
+              class="flex-1 px-2"
+              flat
+              dense
+              icon="la:globe"
+              :label="commonStore.locale"
+              :aria-label="commonStore.locale"
+              size="sm">
+              <locale-selector-menu :offset="[-5, 5]" />
+            </w-btn>
+            <w-separator vertical />
+          </template>
           <w-btn
             class="flex-1 px-2"
             flat
             dense
             icon="la:sitemap"
-            color="blue-7"
-            text-color="custom-color"
             label="Browse"
             aria-label="Browse"
             size="sm"
@@ -89,12 +94,7 @@
             </w-btn>
             <w-separator vertical />
           </template>
-          <w-btn
-            class="flex-1"
-            icon="la:bookmark"
-            label="Bookmarks"
-            flat
-            @click="notImplemented" />
+          <w-btn class="flex-1" icon="la:bookmark" label="Bookmarks" flat @click="notImplemented" />
         </w-bar>
       </template>
     </w-drawer>
@@ -200,6 +200,8 @@ function notImplemented() {
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   height: 38px;
 
+  // -> Where the two buttons above get their colour, so neither carries a `color` prop: `WBtn` emits
+  //    an inline `color`, which would outrank this rule
   .w-btn {
     color: rgba(255, 255, 255, 0.8);
   }

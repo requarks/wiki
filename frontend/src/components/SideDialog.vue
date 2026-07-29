@@ -34,7 +34,6 @@ const sideDialogs = {
   })
 }
 
-
 // STORES
 
 const editorStore = useEditorStore()
@@ -69,18 +68,22 @@ const state = reactive({
 <style lang="scss">
 @use 'sass:color';
 
+/*
+  The rules that used to sit here hung off `.q-dialog__inner` and `.w-card__section`, neither of which
+  this app renders any more -- so the inset, the radius and the panel's minimum width had all silently
+  stopped applying. The inset and radius now come from WDialog's own `right` variant, where they
+  belong; only the panel's floor width is a side-panel concern, and it is stated on the panel itself.
+*/
 .floating-sidepanel {
-  .q-dialog__inner {
-    right: 24px;
-
-    .w-card {
-      border-radius: 4px !important;
-      min-width: 450px;
-
-      .w-card__section {
-        border-radius: 0;
-      }
-    }
+  /*
+    A definite width, not the `min-width: 450px` this replaces. The panel's content arrives
+    asynchronously behind a loading placeholder, and while the width was content-driven it changed
+    when the real dialog swapped in -- which, on a right-justified panel, jumped the left edge 112px
+    mid-transition and made a 32px slide look like a lurch. 560px is the width the content settles at
+    anyway; measured, nothing inside asks for more, date picker included.
+  */
+  .w-dialog-panel {
+    width: 560px;
   }
 
   .alt-card {
@@ -102,27 +105,30 @@ const state = reactive({
     }
   }
 
+  /*
+    The quick-jump rail, which sits outside the panel's left edge.
+
+    Two things kept it off screen. It was `position: fixed` at a hard-coded `right: 486px`, a number
+    derived from a panel 450px wide with a 24px margin -- once the panel sized itself to its content
+    (562px) that offset landed the rail INSIDE the panel. And `z-index: -1` then painted it behind the
+    card's own background, so even overlapping it was invisible.
+
+    Anchored to the card instead (`WCard` is a positioned element), so it tracks whatever width the
+    panel ends up with. The two `.q-transition--jump-*` rules that hid it mid-animation are gone with
+    the Quasar transitions they named; the 300ms timer in the dialog already keeps it out of the slide.
+  */
   &-quickaccess {
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 24px;
     width: 40px;
-    border-radius: 4px !important;
+    display: flex;
+    flex-direction: column;
+    border-radius: 4px;
     background-color: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(5px);
     color: #fff;
-    position: fixed;
-    right: 486px;
-    top: 74px;
-    z-index: -1;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5) !important;
-
-    @at-root .q-transition--jump-left-enter-active & {
-      display: none !important;
-    }
-
-    @at-root .q-transition--jump-right-leave-active & {
-      display: none !important;
-    }
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);
   }
 }
 </style>

@@ -97,8 +97,13 @@ const TRANSITIONS = {
   standard: 'w-dialog-scale'
 }
 
+/*
+  `p-3` on the right-hand viewport is what insets the side panel from the window edges instead of
+  butting it against them, which is also what lets its corners be rounded: a radius against the very
+  edge of the window reads as a rendering fault rather than a shape.
+*/
 const VIEWPORTS = {
-  right: 'items-stretch justify-end',
+  right: 'items-stretch justify-end p-3',
   bottom: 'items-end justify-center',
   standard: 'items-center justify-center p-4'
 }
@@ -108,7 +113,8 @@ const transitionName = computed(() => TRANSITIONS[props.position] ?? TRANSITIONS
 const viewportClasses = computed(() => VIEWPORTS[props.position] ?? VIEWPORTS.standard)
 
 const panelClasses = computed(() => [
-  props.position === 'right' ? 'h-full rounded-none' : '',
+  // -> `rounded`, not `rounded-none`: the panel no longer touches the window, see VIEWPORTS above
+  props.position === 'right' ? 'h-full rounded' : '',
   props.position === 'bottom' ? 'rounded-b-none max-h-full rounded-t' : '',
   props.position === 'standard' ? 'rounded max-h-full' : '',
   props.fullHeight && props.position === 'standard' ? 'h-full' : '',
@@ -206,13 +212,29 @@ onBeforeUnmount(() => {
   transform: scale(0.94);
 }
 
+/*
+  A short slide in from the right, paired with a fade so a 32px move does not read as a pop.
+
+  32px and not `100%`: a percentage resolves against the panel's OWN width, and the side panel's
+  content arrives asynchronously -- so the width changed mid-transition, the percentage re-resolved
+  against the new value, and the panel lurched instead of sliding. A fixed distance cannot move
+  underneath the animation.
+*/
+.w-dialog-slide-right-enter-active,
+.w-dialog-slide-right-leave-active {
+  transition: opacity 0.2s var(--ease-standard);
+}
+.w-dialog-slide-right-enter-from,
+.w-dialog-slide-right-leave-to {
+  opacity: 0;
+}
 .w-dialog-slide-right-enter-active .w-dialog-panel,
 .w-dialog-slide-right-leave-active .w-dialog-panel {
-  transition: transform 0.25s var(--ease-standard);
+  transition: transform 0.2s var(--ease-standard);
 }
 .w-dialog-slide-right-enter-from .w-dialog-panel,
 .w-dialog-slide-right-leave-to .w-dialog-panel {
-  transform: translateX(100%);
+  transform: translateX(32px);
 }
 
 .w-dialog-slide-bottom-enter-active .w-dialog-panel,

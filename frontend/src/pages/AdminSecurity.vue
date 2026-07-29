@@ -53,7 +53,7 @@
               <w-card class="bg-negative text-white rounded" flat>
                 <w-card-section class="items-center" horizontal>
                   <w-card-section class="flex-none pr-0">
-                    <w-icon name="la:exclamation-triangle" size="sm" />
+                    <w-icon name="la:exclamation-triangle" size="lg" />
                   </w-card-section>
                   <w-card-section class="text-caption">
                     <div>{{ t('admin.security.warn') }}</div>
@@ -198,7 +198,7 @@
               <w-card class="bg-info text-white rounded" flat>
                 <w-card-section class="items-center" horizontal>
                   <w-card-section class="flex-none pr-0">
-                    <w-icon name="la:info-circle" size="sm" />
+                    <w-icon name="la:info-circle" size="lg" />
                   </w-card-section>
                   <w-card-section class="text-caption">
                     <div>{{ t('admin.security.uploadsInfo') }}</div>

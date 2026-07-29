@@ -80,6 +80,17 @@
                 :aria-label="t(`admin.locale.forcePrefixHint`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="geography" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.locale.showMenu`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.locale.showMenuHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle v-model="state.showMenu" :aria-label="t(`admin.locale.showMenuHint`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <!-- ----------------------- -->
         <!-- Active Locales -->
@@ -157,6 +168,7 @@ const state = reactive({
   locales: [],
   primary: 'en',
   forcePrefix: false,
+  showMenu: true,
   active: []
 })
 
@@ -191,6 +203,7 @@ async function load() {
     state.locales = sortBy(locales ?? [], ['nativeName', 'name'])
     state.primary = site?.locales?.primary ?? 'en'
     state.forcePrefix = site?.locales?.forcePrefix ?? false
+    state.showMenu = site?.locales?.showMenu ?? true
     state.active = [...(site?.locales?.active ?? [])]
     // -> The primary locale is always active, and its toggle is disabled to keep it that way
     if (!state.active.includes(state.primary)) {
@@ -224,7 +237,8 @@ async function save() {
         locales: {
           primary: state.primary,
           active,
-          forcePrefix: state.forcePrefix
+          forcePrefix: state.forcePrefix,
+          showMenu: state.showMenu
         }
       }
     }).json()
