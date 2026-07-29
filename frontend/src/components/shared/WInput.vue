@@ -317,7 +317,10 @@ const floatColorClass = computed(() => {
   if (hasError.value) {
     return 'text-negative'
   }
-  return hasFocus.value ? 'text-primary' : 'text-black/60 dark:text-white/70'
+  // -> `primary` is picked to read on white; on a dark field it needs the lightened mix
+  return hasFocus.value
+    ? 'text-primary dark:text-primary-light'
+    : 'text-black/60 dark:text-white/70'
 })
 
 const controlClasses = computed(() => [

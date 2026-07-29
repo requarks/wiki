@@ -249,6 +249,16 @@ watch(
         iconify-icon {
           color: $primary;
         }
+
+        // -> Same lightened brand blue as the section headings; `$primary` is too dim on this surface
+        @at-root .body--dark & {
+          color: var(--color-primary-light);
+
+          .w-icon,
+          iconify-icon {
+            color: var(--color-primary-light);
+          }
+        }
       }
     }
   }
@@ -261,54 +271,6 @@ watch(
     }
     @at-root .body--dark & {
       border-left: 1px solid rgba($dark-6, 0.75);
-    }
-  }
-
-  .section-header {
-    font-weight: 500;
-    font-size: 17px;
-    padding: 0 16px 6px 16px;
-    color: $primary;
-    position: relative;
-    background:
-      linear-gradient(to left, #fff, transparent),
-      linear-gradient(to top, rgba($primary, 0.075), transparent);
-    margin-bottom: 10px;
-
-    @at-root .body--dark & {
-      background:
-        linear-gradient(to left, $dark-3, transparent),
-        linear-gradient(to top, rgba($primary, 0.075), transparent);
-    }
-
-    &:before {
-      content: '';
-      width: 100%;
-      height: 10px;
-      background:
-        linear-gradient(to left, #fff, transparent),
-        linear-gradient(to bottom, rgba($primary, 0.05), transparent);
-      position: absolute;
-      bottom: -13px;
-      left: 0;
-      z-index: 0;
-
-      @at-root .body--dark & {
-        background:
-          linear-gradient(to left, $dark-3, transparent),
-          linear-gradient(to bottom, rgba($primary, 0.05), transparent);
-      }
-    }
-
-    &:after {
-      content: '';
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(to left, transparent, rgba($primary, 0.25));
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      z-index: 0;
     }
   }
 

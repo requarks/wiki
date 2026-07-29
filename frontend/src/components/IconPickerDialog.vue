@@ -1,6 +1,11 @@
 <template>
   <w-card class="icon-picker" flat style="width: 460px">
-    <w-tabs class="text-primary" v-model="state.currentTab" no-caps inline-label>
+    <!-- -> `primary` is a mid-tone for white; on the dark card the tabs need the lightened mix -->
+    <w-tabs
+      class="text-primary dark:text-primary-light"
+      v-model="state.currentTab"
+      no-caps
+      inline-label>
       <w-tab name="icon" icon="la:icons" :label="t(`iconPicker.icons`)" />
       <w-tab name="image" icon="la:image" :label="t(`iconPicker.image`)" />
     </w-tabs>
@@ -13,11 +18,11 @@
         <div class="flex flex-wrap gap-2">
           <div class="min-w-0 flex-1">
             <w-input
+              ref="iptSearch"
               v-model="state.query"
               outlined
               dense
               clearable
-              autofocus
               :label="t(`iconPicker.search`)"
               :aria-label="t(`iconPicker.search`)"
               @update:model-value="queueSearch">
@@ -75,6 +80,7 @@
           but it is not something anyone should have to know to type.
         -->
         <w-input
+          ref="iptImage"
           class="mt-2"
           v-model="state.image"
           outlined
@@ -118,7 +124,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, reactive } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 
 import { notify } from '@/composables/notify'
 import { useDark } from '@/composables/dark'
@@ -163,6 +169,11 @@ const ICONIFY_REF = /^[a-z0-9-]+:[a-z0-9.-]+$/
 
 /** What marks a reference as an image rather than an icon, per WIcon. */
 const IMAGE_PREFIX = 'img:'
+
+// REFS
+
+const iptSearch = ref(null)
+const iptImage = ref(null)
 
 // COMPOSABLES
 
@@ -286,6 +297,16 @@ onMounted(async () => {
     state.selected = props.modelValue
     state.results = [props.modelValue]
   }
+
+  /*
+    Focus whichever field the picker just opened on -- the search box, or the image path when an
+    `img:` value brought us to that tab. Two ticks: the first renders the tab switch above, and the
+    field being focused only exists after the panel it lives in is the visible one.
+  */
+  await nextTick()
+  await nextTick()
+  ;(state.currentTab === 'image' ? iptImage : iptSearch).value?.focus()
+
   await loadSets()
 })
 </script>

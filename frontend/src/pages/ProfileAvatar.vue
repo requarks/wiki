@@ -1,6 +1,6 @@
 <template>
   <w-page class="py-4">
-    <div class="section-header">{{ t('profile.avatar') }}</div>
+    <div class="w-section-header">{{ t('profile.avatar') }}</div>
     <div class="mt-10 flex flex-wrap gap-6">
       <div class="flex-1 text-center">
         <w-avatar

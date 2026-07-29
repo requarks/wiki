@@ -2,7 +2,10 @@
   <w-page class="flex flex-col">
     <div class="page-breadcrumbs py-2 px-4 flex flex-wrap" v-if="!editorStore.isActive">
       <div class="min-w-0 flex-1">
-        <w-breadcrumbs :items="breadcrumbs" active-color="grey-7" separator-color="grey">
+        <w-breadcrumbs
+          :items="breadcrumbs"
+          :active-color="dark.isActive ? `grey-5` : `grey-7`"
+          separator-color="grey">
           <template #separator><w-icon name="la:angle-right" /></template>
         </w-breadcrumbs>
       </div>
@@ -11,14 +14,18 @@
           <div class="text-caption text-accent"><strong>Unpublished</strong></div>
           <w-separator class="mx-2" vertical />
         </template>
-        <div class="text-caption text-grey-6">Last modified on <strong>{{lastModified}}</strong></div>
+        <div class="text-caption text-grey-6">
+          Last modified on <strong>{{ lastModified }}</strong>
+        </div>
       </div>
     </div>
     <page-header />
-    <div class="page-container flex flex-nowrap items-stretch" style="flex: 1 1 100%;">
-      <div class="min-w-0 flex-1" :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
+    <div class="page-container flex flex-nowrap items-stretch" style="flex: 1 1 100%">
+      <div
+        class="min-w-0 flex-1"
+        :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
         <component :is="editorComponents[editorStore.editor]" v-if="editorStore.isActive" />
-        <w-scroll-area class="page-container-scrl" v-else style="height: 100%;">
+        <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
           <div class="p-4">
             <div class="page-contents" ref="pageContents" v-html="pageStore.render" />
             <template v-if="pageStore.relations && pageStore.relations.length > 0">
@@ -35,8 +42,10 @@
                     :key="`rel-id-` + rel.id">
                     <w-icon :name="rel.icon" />
                     <div class="flex flex-col text-left pl-4">
-                      <div class="text-body2"><strong>{{rel.label}}</strong></div>
-                      <div class="text-caption">{{rel.caption}}</div>
+                      <div class="text-body2">
+                        <strong>{{ rel.label }}</strong>
+                      </div>
+                      <div class="text-caption">{{ rel.caption }}</div>
                     </div>
                   </w-btn>
                 </div>
@@ -63,8 +72,10 @@
                     v-for="rel of relationsRight"
                     :key="`rel-id-` + rel.id">
                     <div class="flex flex-col text-left pr-4">
-                      <div class="text-body2"><strong>{{rel.label}}</strong></div>
-                      <div class="text-caption">{{rel.caption}}</div>
+                      <div class="text-body2">
+                        <strong>{{ rel.label }}</strong>
+                      </div>
+                      <div class="text-caption">{{ rel.caption }}</div>
                     </div>
                     <w-icon :name="rel.icon" />
                   </w-btn>
@@ -154,6 +165,7 @@ import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, wat
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -199,6 +211,10 @@ const route = useRoute()
 // I18N
 
 const { t } = useI18n()
+
+// COMPOSABLES
+
+const dark = useDark()
 
 // META
 
@@ -406,9 +422,18 @@ function refreshTocExpanded(baseToc, lvl) {
     background: linear-gradient(to bottom, $grey-1 0%, $grey-3 100%);
     border-bottom: 1px solid $grey-4;
   }
+  /*
+    The bar sets a background per theme, so it owes a foreground too: the LAST crumb -- the current
+    page -- deliberately inherits rather than taking `active-color`, and what it was inheriting in
+    dark mode was the document's black.
+  */
+  @at-root .body--light & {
+    color: var(--color-black);
+  }
   @at-root .body--dark & {
     background: linear-gradient(to bottom, $dark-3 0%, $dark-4 100%);
     border-bottom: 1px solid $dark-3;
+    color: var(--color-white);
   }
 }
 .page-header {

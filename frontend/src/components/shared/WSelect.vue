@@ -672,7 +672,8 @@ const floatColorClass = computed(() => {
   if (errorMessage.value) {
     return 'text-negative'
   }
-  return isOpen.value ? 'text-primary' : 'text-black/60 dark:text-white/70'
+  // -> Lightened brand blue on a dark field, matching WInput
+  return isOpen.value ? 'text-primary dark:text-primary-light' : 'text-black/60 dark:text-white/70'
 })
 
 const controlClasses = computed(() => [

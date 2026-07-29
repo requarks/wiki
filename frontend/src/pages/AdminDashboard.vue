@@ -25,7 +25,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:plus-circle"
               :label="t(`common.actions.new`)"
               :disable="!userStore.can(`manage:sites`)"
@@ -33,7 +33,7 @@
             <w-separator vertical />
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:sitemap"
               :label="t(`common.actions.manage`)"
               :disable="!userStore.can(`manage:sites`)"
@@ -54,7 +54,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:plus-circle"
               :label="t(`common.actions.new`)"
               :disable="!userStore.can(`manage:users`)"
@@ -62,7 +62,7 @@
             <w-separator vertical />
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:users"
               :label="t(`common.actions.manage`)"
               :disable="!userStore.can(`manage:users`)"
@@ -83,7 +83,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:user-plus"
               :label="t(`common.actions.new`)"
               :disable="!userStore.can(`manage:users`)"
@@ -91,7 +91,7 @@
             <w-separator vertical />
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:user-friends"
               :label="t(`common.actions.manage`)"
               :disable="!userStore.can(`manage:users`)"
@@ -129,7 +129,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
-              color="primary"
+              :color="actionColor"
               icon="la:chart-area"
               :label="t(`admin.analytics.title`)"
               :disable="!flagsStore.experimental"
@@ -166,9 +166,11 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { computed } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { dialog } from '@/composables/dialog'
+import { useDark } from '@/composables/dark'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useUserStore } from '@/stores/user'
@@ -184,6 +186,17 @@ import GroupCreateDialog from '@/components/GroupCreateDialog.vue'
 const adminStore = useAdminStore()
 const flagsStore = useFlagsStore()
 const userStore = useUserStore()
+
+// COMPOSABLES
+
+const dark = useDark()
+
+/*
+  WBtn emits its colour as an inline style, so no `dark:` class can reach it -- the theme has to be
+  read here. `primary` is a mid-tone picked to read on white; on the dark card it needs the lightened
+  mix, the same one the section headings use.
+*/
+const actionColor = computed(() => (dark.isActive ? 'primary-light' : 'primary'))
 
 // ROUTER
 

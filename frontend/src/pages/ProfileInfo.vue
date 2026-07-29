@@ -1,6 +1,6 @@
 <template>
   <w-page class="py-4">
-    <div class="section-header">{{ t('profile.myInfo') }}</div>
+    <div class="w-section-header">{{ t('profile.myInfo') }}</div>
     <w-item v-if="!canEdit">
       <w-item-section>
         <w-card class="bg-negative rounded text-white" flat>
@@ -99,7 +99,7 @@
           :readonly="!canEdit" />
       </w-item-section>
     </w-item>
-    <div class="section-header mt-6">{{ t('profile.preferences') }}</div>
+    <div class="w-section-header mt-6">{{ t('profile.preferences') }}</div>
     <w-item>
       <blueprint-icon icon="timezone" />
       <w-item-section>
@@ -181,7 +181,7 @@
           :aria-label="t(`profile.appearance`)" />
       </w-item-section>
     </w-item>
-    <div class="section-header mt-6">{{ t('profile.accessibility') }}</div>
+    <div class="w-section-header mt-6">{{ t('profile.accessibility') }}</div>
     <w-item>
       <blueprint-icon icon="visualy-impaired" />
       <w-item-section>

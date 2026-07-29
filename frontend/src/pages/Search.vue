@@ -550,6 +550,8 @@ onUnmounted(() => {
       border-bottom: 1px solid $grey-3;
     }
     @at-root .body--dark & {
+      // -> Same lightened brand blue as `.w-section-header`; `$primary` on this surface is ~2.7:1
+      color: var(--color-primary-light);
       background-color: $dark-3;
       border-bottom: 1px solid $dark-2;
     }

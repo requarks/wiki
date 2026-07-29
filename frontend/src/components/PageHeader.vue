@@ -6,11 +6,13 @@
         class="rounded"
         v-if="editorStore.isActive"
         padding="none"
-        size="37px"
+        size="64px"
         color="primary"
         flat
-        :aria-label="t(`editor.props.icon`)">
-        <w-icon :name="pageStore.icon" size="37px" />
+        :aria-label="t(`editor.props.icon`)"
+        style="min-height: 64px">
+        <!-- -> 64px, the size the icon has when the page is merely being read; see the branch below -->
+        <w-icon :name="pageStore.icon" size="64px" />
         <w-badge color="grey" floating rounded>
           <w-icon name="la:pen" size="xs" padding="xs xs" />
         </w-badge>
@@ -21,14 +23,14 @@
     <!-- PAGE HEADER -->
     <div class="min-w-0 flex-1 p-4">
       <div class="text-h4 page-header-title">
-        <span>{{pageStore.title}}</span>
+        <span>{{ pageStore.title }}</span>
         <template v-if="editorStore.isActive">
-          <span class="text-grey" v-if="!pageStore.title">{{ t(`editor.props.title`)}}</span>
+          <span class="text-grey" v-if="!pageStore.title">{{ t(`editor.props.title`) }}</span>
           <w-btn class="acrylic-btn ml-4" icon="la:pen" flat padding="xs" size="sm">
             <w-popup-edit v-model="pageStore.title" auto-save v-slot="scope">
               <w-input
                 outlined
-                style="width: 450px;"
+                style="width: 450px"
                 v-model="scope.value"
                 dense
                 autofocus
@@ -41,12 +43,14 @@
       <div class="text-subtitle2 page-header-subtitle">
         <span>{{ pageStore.description }}</span>
         <template v-if="editorStore.isActive">
-          <span class="text-grey" v-if="!pageStore.description">{{ t(`editor.props.shortDescription`)}}</span>
+          <span class="text-grey" v-if="!pageStore.description">{{
+            t(`editor.props.shortDescription`)
+          }}</span>
           <w-btn class="acrylic-btn ml-4" icon="la:pen" flat padding="none xs" size="xs">
             <w-popup-edit v-model="pageStore.description" auto-save v-slot="scope">
               <w-input
                 outlined
-                style="width: 450px;"
+                style="width: 450px"
                 v-model="scope.value"
                 dense
                 autofocus
@@ -132,8 +136,12 @@
           flat
           icon="la:times"
           color="negative"
-          :label="editorStore.hasPendingChanges ? t(`common.actions.discard`) : t(`common.actions.close`)"
-          :aria-label="editorStore.hasPendingChanges ? t(`common.actions.discard`) : t(`common.actions.close`)"
+          :label="
+            editorStore.hasPendingChanges ? t(`common.actions.discard`) : t(`common.actions.close`)
+          "
+          :aria-label="
+            editorStore.hasPendingChanges ? t(`common.actions.discard`) : t(`common.actions.close`)
+          "
           no-caps
           @click="discardChanges" />
         <w-btn
@@ -205,7 +213,6 @@ import { useUserStore } from '@/stores/user'
 
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 import SocialSharingMenu from '@/components/SocialSharingMenu.vue'
-
 
 // STORES
 

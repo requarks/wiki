@@ -85,6 +85,13 @@
   --color-sidebar: var(--q-sidebar);
 
   /*
+    The brand blue lightened for text on a dark surface: `primary` itself is a mid-tone picked to
+    read on white, and at #1976d2 on `dark-3` it lands around 2.7:1 -- too dim for a heading. Mixing
+    towards white rather than naming a palette blue keeps a re-themed site's own hue.
+  */
+  --color-primary-light: color-mix(in srgb, var(--color-primary) 60%, white);
+
+  /*
     Restated here rather than inherited from Tailwind's default theme: the defaults live in a
     prunable block, and components resolve `var(--color-white)` at runtime where the scanner cannot
     prove the variable is needed.
@@ -705,6 +712,7 @@
 
   body.body--dark .w-section-header {
     --w-section-header-surface: var(--color-dark-3);
+    color: var(--color-primary-light);
   }
 
   .w-unstyled {
