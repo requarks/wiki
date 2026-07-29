@@ -29,11 +29,17 @@
           @focus="state.searchIsFocused = true"
           @blur="checkSearchFocus" />
 
+        <!--
+          `mousedown.prevent` keeps the press from pulling focus out of the input: the blur would
+          swap the badge to its right (see below) and the resulting reflow shifts this button out
+          from under the pointer before it can be released, eating the click.
+        -->
         <button
           v-if="siteStore.search.length > 0"
           type="button"
           class="header-search-clear"
           :aria-label="t('common.actions.clear')"
+          @mousedown.prevent
           @click="clearSearch">
           <w-icon name="la:times" />
         </button>
@@ -148,8 +154,14 @@ watch(searchPanelIsShown, (newValue) => {
 
 // METHODS
 
+/*
+  Ctrl+K focuses the field -- unless a full-screen overlay is up, in which case this header is behind
+  it and the shortcut belongs to whatever is in front. FileManager has a search field of its own and
+  claims it; the rest simply have nothing to focus, and pulling focus into a field the user cannot see
+  is worse than the key doing nothing.
+*/
 function handleKeyPress(ev) {
-  if (siteStore.features.search) {
+  if (siteStore.features.search && !siteStore.overlayIsShown) {
     if (ev.ctrlKey && ev.key === 'k') {
       ev.preventDefault()
       searchField.value.focus()
@@ -280,6 +292,8 @@ onBeforeUnmount(() => {
   /* Sits inside the pill, against its fill, so it inverts with everything else */
   &-kbd {
     flex-shrink: 0;
+    /* -> pulls it clear of the pill's edge, where the two mismatched radii read as a kink */
+    margin-right: 2px;
     padding: 2px 8px;
     border: 1px solid currentColor;
     border-radius: 9999px;

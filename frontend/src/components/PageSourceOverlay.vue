@@ -29,7 +29,8 @@
           :horizontal-thumb-style="{ height: `5px` }"
           style="width: 100%; height: calc(100vh - 100px);">
           <div class="p-4 text-grey-5" v-if="state.notice">{{ state.notice }}</div>
-          <pre class="px-4" v-else v-text="state.content"></pre>
+          <!-- -> `pt-4` so the first line clears the header rather than sitting against it -->
+          <pre class="px-4 pt-4" v-else v-text="state.content"></pre>
         </w-scroll-area>
       </w-page>
     </w-page-container>

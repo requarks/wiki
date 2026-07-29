@@ -22,7 +22,7 @@ import katexHelper from './modules/katex'
 
 import hljs from 'highlight.js'
 
-import { escape, findLast, times } from 'lodash-es'
+import { escape } from 'es-toolkit/string'
 
 const quoteStyles = {
   chinese: '””‘’',
@@ -53,15 +53,31 @@ export class MarkdownRenderer {
         } else if (['mermaid', 'plantuml'].includes(lang)) {
           return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
         } else {
-          const highlighted = lang
-            ? hljs.highlight(str, { language: lang, ignoreIllegals: true })
-            : { value: str }
-          const lineCount = highlighted.value.match(/\n/g).length
+          /*
+            `getLanguage` first, because `hljs.highlight` THROWS on a language it does not know --
+            `ignoreIllegals` only forgives illegal syntax within a language it does. markdown-it takes
+            the first word of a fence's info string as the language name, so a fence whose code starts
+            on the opening line (```   <!DOCTYPE rfc [) asks for a language called `<!DOCTYPE`, and the
+            throw took the entire render with it: an empty preview, and -- since the editor patches the
+            store with the result -- an empty render saved over the stored HTML.
+
+            Unknown language therefore falls back to plain code, and the fallback ESCAPES: `str` is the
+            author's raw source, and the unhighlighted branch used to interpolate it into the markup as
+            it stood. hljs escapes what it emits, so this only ever affected the unhighlighted path.
+          */
+          const highlighted =
+            lang && hljs.getLanguage(lang)
+              ? hljs.highlight(str, { language: lang, ignoreIllegals: true })
+              : { value: escape(str) }
+          // -> `match` is null, not empty, when the code is a single line with no trailing newline
+          const lineCount = (highlighted.value.match(/\n/g) ?? []).length
           const lineNums =
             lineCount > 1
-              ? `<span aria-hidden="true" class="line-numbers-rows">${times(lineCount, (n) => '<span></span>').join('')}</span>`
+              ? `<span aria-hidden="true" class="line-numbers-rows">${'<span></span>'.repeat(lineCount)}</span>`
               : ''
-          return `<pre class="codeblock hljs ${lineCount > 1 && 'line-numbers'}"><code class="language-${lang}">${highlighted.value}${lineNums}</code></pre>`
+          // -> `lang` is escaped too: it is whatever the author typed after the backticks, and a quote
+          //    in it would otherwise close the attribute and inject markup into the preview
+          return `<pre class="codeblock hljs ${lineCount > 1 && 'line-numbers'}"><code class="language-${escape(lang ?? '')}">${highlighted.value}${lineNums}</code></pre>`
         }
       }
     })
@@ -196,6 +212,6 @@ export class MarkdownRenderer {
   }
 
   getClosestPreviewLine(line) {
-    return findLast(this.linesMap, (n) => n <= line)
+    return this.linesMap.findLast((n) => n <= line)
   }
 }

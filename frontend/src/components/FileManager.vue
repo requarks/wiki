@@ -406,6 +406,7 @@ import {
   computed,
   defineAsyncComponent,
   nextTick,
+  onBeforeUnmount,
   onMounted,
   reactive,
   ref,
@@ -491,6 +492,7 @@ const barStyle = {
 // REFS
 
 const fileIpt = ref(null)
+const searchField = ref(null)
 const treeComp = ref(null)
 
 // COMPUTED
@@ -1142,9 +1144,25 @@ function delItem(item) {
   }
 }
 
+/**
+ * Ctrl+K reaches THIS search field while the overlay is up.
+ *
+ * HeaderSearch owns the same shortcut and steps aside for an overlay (see the note there), so the two
+ * never both answer it. Bound and unbound with the component, which only exists while the overlay is
+ * open -- the listener's lifetime is the window in which it should win.
+ */
+function handleKeyPress(ev) {
+  if (ev.ctrlKey && ev.key === 'k') {
+    ev.preventDefault()
+    searchField.value?.focus()
+  }
+}
+
 // MOUNTED
 
 onMounted(async () => {
+  window.addEventListener('keydown', handleKeyPress)
+
   const pathParts = pageStore.path.split('/')
   const parentPath = pathParts.slice(0, -1).join('/')
 
@@ -1172,6 +1190,10 @@ onMounted(async () => {
   if (currentNode) {
     state.currentFolderId = currentNode[0]
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyPress)
 })
 </script>
 

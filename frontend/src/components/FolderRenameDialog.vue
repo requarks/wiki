@@ -18,7 +18,6 @@
               hide-bottom-space
               :label="t(`fileman.folderTitle`)"
               lazy-rules="ondemand"
-              autofocus
               @keyup:enter="rename" />
           </w-item-section>
         </w-item>
@@ -86,7 +85,9 @@ defineEmits([...dialogComponentEmits])
 
 // DIALOG
 
-const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent({
+  autofocus: () => iptTitle.value
+})
 
 // STORES
 

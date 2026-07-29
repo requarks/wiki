@@ -1,11 +1,8 @@
 <template>
   <w-card class="icon-picker" flat style="width: 460px">
-    <!-- -> `primary` is a mid-tone for white; on the dark card the tabs need the lightened mix -->
-    <w-tabs
-      class="text-primary dark:text-primary-light"
-      v-model="state.currentTab"
-      no-caps
-      inline-label>
+    <!-- -> Inset from the card's edges: the strip is a segmented control with a track of its own, so
+         it sits ON the card rather than spanning it edge to edge -->
+    <w-tabs class="m-2" v-model="state.currentTab" no-caps inline-label>
       <w-tab name="icon" icon="la:icons" :label="t(`iconPicker.icons`)" />
       <w-tab name="image" icon="la:image" :label="t(`iconPicker.image`)" />
     </w-tabs>
@@ -45,9 +42,9 @@
           </div>
         </div>
         <div class="icon-picker-results mt-2">
-          <w-inner-loading :showing="state.loading">
-            <w-spinner color="primary" size="md" />
-          </w-inner-loading>
+          <!-- -> No spinner in the slot: WInnerLoading draws its own, and the slot is for what goes
+               BESIDE it (a caption). Passing one gave two stacked spinners. -->
+          <w-inner-loading :showing="state.loading" size="32px" />
           <div
             class="text-center text-caption text-grey p-6"
             v-if="!state.loading && state.results.length < 1">
@@ -73,7 +70,11 @@
       <!-- An image file -->
       <!-- ----------------------- -->
       <w-tab-panel class="p-3" name="image">
-        <div class="text-caption text-grey">{{ t('iconPicker.imageHint') }}</div>
+        <!-- -> `text-grey` (#9e9e9e) is too faint to read at caption size; the app's secondary-text
+             pair holds up on both the light panel and the dark one -->
+        <div class="text-caption text-black/60 dark:text-white/70">
+          {{ t('iconPicker.imageHint') }}
+        </div>
         <!--
           The field holds the path alone; the `img:` that marks it as an image is shown as a fixed
           prefix and added on the way out. That is how the reference has to be stored -- see WIcon --
@@ -81,7 +82,7 @@
         -->
         <w-input
           ref="iptImage"
-          class="mt-2"
+          class="mt-4"
           v-model="state.image"
           outlined
           dense
@@ -89,7 +90,9 @@
           :label="t(`iconPicker.imageUrl`)"
           :aria-label="t(`iconPicker.imageUrl`)"
           placeholder="/_assets/icons/my-icon.svg" />
-        <div class="mt-2 text-caption text-grey">{{ t('iconPicker.imageSizeHint') }}</div>
+        <div class="mt-4 text-caption text-black/60 dark:text-white/70">
+          {{ t('iconPicker.imageSizeHint') }}
+        </div>
       </w-tab-panel>
     </w-tab-panels>
     <w-separator />
@@ -124,7 +127,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { notify } from '@/composables/notify'
 import { useDark } from '@/composables/dark'
@@ -195,6 +198,11 @@ const pendingValue = computed(() => {
   const url = state.image?.trim()
   return url ? `${IMAGE_PREFIX}${url}` : ''
 })
+
+// WATCHERS
+
+// -> Switching tabs by hand lands in that tab's field, the same as opening on it does
+watch(() => state.currentTab, focusCurrentTab)
 
 // METHODS
 
@@ -286,6 +294,18 @@ function applyAndClose() {
   closePopup()
 }
 
+/**
+ * Focus the field the visible tab leads with -- the search box, or the image path.
+ *
+ * Two ticks: the first renders the tab switch, and the field only exists once the panel it lives in
+ * is the visible one.
+ */
+async function focusCurrentTab() {
+  await nextTick()
+  await nextTick()
+  ;(state.currentTab === 'image' ? iptImage : iptSearch).value?.focus()
+}
+
 // MOUNTED
 
 onMounted(async () => {
@@ -298,14 +318,9 @@ onMounted(async () => {
     state.results = [props.modelValue]
   }
 
-  /*
-    Focus whichever field the picker just opened on -- the search box, or the image path when an
-    `img:` value brought us to that tab. Two ticks: the first renders the tab switch above, and the
-    field being focused only exists after the panel it lives in is the visible one.
-  */
-  await nextTick()
-  await nextTick()
-  ;(state.currentTab === 'image' ? iptImage : iptSearch).value?.focus()
+  // -> Focus whichever field the picker opened on; an `img:` value above may have moved the tab,
+  //    in which case the watcher is focusing the same field and this is a no-op
+  await focusCurrentTab()
 
   await loadSets()
 })

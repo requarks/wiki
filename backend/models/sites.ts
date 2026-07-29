@@ -135,7 +135,6 @@ class Sites {
               contentWidth: 'full',
               sidebarPosition: 'left',
               tocPosition: 'right',
-              showSharingMenu: true,
               showPrintBtn: true,
               baseFont: 'roboto',
               contentFont: 'roboto'
@@ -360,7 +359,6 @@ class Sites {
           contentWidth: 'full',
           sidebarPosition: 'left',
           tocPosition: 'right',
-          showSharingMenu: true,
           showPrintBtn: true,
           baseFont: 'roboto',
           contentFont: 'roboto'

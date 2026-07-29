@@ -8,7 +8,7 @@
           </w-avatar>
           <img v-else :src="`/_site/current/logo`" style="height: 34px" />
         </w-btn>
-        <div v-if="siteStore.logoText" class="text-h6 min-w-0 flex-1 truncate">
+        <div v-if="siteStore.logoText" class="text-h6 ml-2 min-w-0 flex-1 truncate">
           {{ siteStore.title }}
         </div>
       </w-toolbar>

@@ -88,7 +88,7 @@
         </w-btn>
         <w-btn
           class="ml-4"
-          v-if="siteStore.theme.showSharingMenu"
+          v-if="!pageStore.isHome"
           flat
           dense
           icon="la:share-alt"
@@ -129,6 +129,22 @@
           @click="openEditorSettings">
           <w-tooltip>{{ t(`editor.settings`) }}</w-tooltip>
         </w-btn>
+      </template>
+      <!--
+        Not `v-else-if` on the block below: changes made from the page properties panel put the header
+        into the pending state without an editor behind it, and hiding Edit there left no way back into
+        the content at all. Ahead of the commit actions so those stay rightmost.
+      -->
+      <template v-if="!editorStore.isActive && userStore.can(`edit:pages`)">
+        <w-btn
+          class="acrylic-btn ml-4"
+          flat
+          icon="la:edit"
+          color="deep-orange-9"
+          :label="t(`common.actions.edit`)"
+          :aria-label="t(`common.actions.edit`)"
+          no-caps
+          @click="editPage" />
       </template>
       <template v-if="editorStore.isActive || editorStore.hasPendingChanges">
         <w-btn
@@ -180,17 +196,6 @@
             </w-btn>
           </template>
         </w-btn-group>
-      </template>
-      <template v-else-if="userStore.can(`edit:pages`)">
-        <w-btn
-          class="acrylic-btn ml-4"
-          flat
-          icon="la:edit"
-          color="deep-orange-9"
-          :label="t(`common.actions.edit`)"
-          :aria-label="t(`common.actions.edit`)"
-          no-caps
-          @click="editPage" />
       </template>
     </div>
   </div>

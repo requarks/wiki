@@ -86,6 +86,11 @@
           @remove="deselect(v)" />
       </span>
 
+      <!--
+        `outline-none` because the FIELD is what shows focus, with its ring: the user agent's own
+        outline drew a second, black one inside the rounded frame. Placeholder colour matched to
+        WInput's, which this had been leaving to the browser as well.
+      -->
       <input
         v-if="useInput"
         :id="selectId"
@@ -103,7 +108,7 @@
         :disabled="isDisabled"
         :readonly="readonly"
         :placeholder="useChips && hasSelection ? '' : placeholder"
-        class="w-unstyled min-w-8 flex-1 bg-transparent pt-0.5"
+        class="w-unstyled min-w-8 flex-1 bg-transparent pt-0.5 outline-none placeholder:text-black/40 dark:placeholder:text-white/40"
         @focus="readonly || open(0)"
         @keydown="onKeydown" />
       <span
@@ -150,14 +155,19 @@
             ]"
             @click.stop="select(opt.value)"
             @mousemove="activeIndex = idx">
-            <w-icon
-              v-if="multiple"
-              :name="isSelected(opt.value) ? 'mdi:checkbox-marked' : 'mdi:checkbox-blank-outline'"
-              class="shrink-0" />
+            <!--
+              A check, not a checkbox. The icon takes the row's own font size unless told otherwise,
+              which made a 14px square that read as a rendering fault rather than a control -- and the
+              row already announces its state by colouring itself. The column is held open when
+              nothing is drawn, so labels line up whatever is selected.
+            -->
+            <span v-if="multiple" class="flex w-5 shrink-0 justify-center">
+              <w-icon v-if="isSelected(opt.value)" name="mdi:check" size="20px" />
+            </span>
             <span class="min-w-0 flex-1">
               <!--
-                `option` customises the row's content only. Selection mechanics (the checkbox and
-                the click handling) stay with the component, so a caller cannot accidentally wire a
+                `option` customises the row's content only. Selection mechanics (the check and the
+                click handling) stay with the component, so a caller cannot accidentally wire a
                 nested control that toggles twice -- which is what the markup this replaces had to
                 guard against by hand.
               -->
@@ -326,6 +336,18 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /**
+   * Let what has been typed become a value of its own.
+   *
+   * With `useInput`, Enter on a query that matches no highlighted option emits `create` with the
+   * trimmed text instead of closing the popup. The caller decides what that means — adding it to
+   * `options` and to the selection, typically — because only the caller knows whether the thing is
+   * allowed to exist.
+   */
+  create: {
+    type: Boolean,
+    default: false
+  },
   /** Show the selection as removable chips instead of comma-joined text. */
   useChips: {
     type: Boolean,
@@ -355,7 +377,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'create'])
 
 const isOpen = ref(false)
 /** Pointer-over, for the ring: the ring is an inline style, so CSS `:hover` cannot reach it. */
@@ -412,6 +434,16 @@ const filteredOptions = computed(() => {
   }
   const needle = query.value.toLowerCase()
   return normalizedOptions.value.filter((o) => o.label.toLowerCase().includes(needle))
+})
+
+/*
+  Keep the keyboard cursor inside the list it is pointing at. Typing narrows the options under it, and
+  a cursor left past the end made Enter read an option that was no longer there.
+*/
+watch(filteredOptions, (options) => {
+  if (activeIndex.value >= options.length) {
+    activeIndex.value = options.length > 0 ? 0 : -1
+  }
 })
 
 const selectedValues = computed(() => {
@@ -578,20 +610,33 @@ function onKeydown(ev) {
       }
       return
     case 'Enter':
-    case ' ':
+    case ' ': {
       /*
         Both would otherwise reach the <button> as a click and toggle the popup shut, discarding
         the cursor. When open they commit instead; when closed the default click opens as usual.
       */
-      if (isOpen.value) {
-        ev.preventDefault()
-        if (activeIndex.value >= 0) {
-          select(filteredOptions.value[activeIndex.value].value)
-        } else {
-          isOpen.value = false
-        }
+      // -> Space is a character to a field with a text input, not a commit key: it belongs to the query
+      if (ev.key === ' ' && props.useInput) {
+        return
       }
+      if (!isOpen.value) {
+        return
+      }
+      ev.preventDefault()
+      if (activeIndex.value >= 0) {
+        select(filteredOptions.value[activeIndex.value].value)
+        return
+      }
+      // -> Nothing to commit, so what was typed is the value -- see the `create` prop
+      const typed = query.value.trim()
+      if (props.create && typed) {
+        emit('create', typed)
+        query.value = ''
+        return
+      }
+      isOpen.value = false
       return
+    }
     case 'Escape':
       if (isOpen.value) {
         ev.preventDefault()

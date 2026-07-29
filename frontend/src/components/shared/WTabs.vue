@@ -1,7 +1,7 @@
 <template>
   <div
     ref="listEl"
-    class="w-tabs flex flex-nowrap items-stretch overflow-x-auto"
+    class="w-tabs flex flex-nowrap items-stretch gap-1 overflow-x-auto rounded-lg bg-grey-2 p-1 dark:bg-dark-5"
     role="tablist"
     @keydown="onKeydown">
     <slot />
@@ -12,11 +12,16 @@
 import { computed, provide, ref } from 'vue'
 
 /**
- * A strip of tabs. `WTab` children register through it; the panels are either `WTabPanels` or,
- * where a caller prefers, plain `v-if` on the same model.
+ * A strip of tabs, drawn as a segmented control: a tinted track holding the tabs, with the active
+ * one raised out of it as a light pill (see `WTab`). `WTab` children register through it; the panels
+ * are either `WTabPanels` or, where a caller prefers, plain `v-if` on the same model.
  *
- * Simplification: no scroll arrows, no overflow menu, no animated indicator travel. The two tab
- * strips in this app have two tabs each; the strip simply scrolls if it ever cannot fit.
+ * The track fill is a utility rather than a rule in this file's stylesheet, so a caller that puts
+ * the strip on a surface of its own -- `PageDataDialog` bands it with `alt-card` -- still overrides
+ * it. An SFC stylesheet is emitted unlayered and would outrank any such class.
+ *
+ * Simplification: no scroll arrows, no overflow menu. The two tab strips in this app have two tabs
+ * each; the strip simply scrolls if it ever cannot fit.
  */
 const props = defineProps({
   modelValue: {

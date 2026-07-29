@@ -200,19 +200,6 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item tag="label">
-            <blueprint-icon icon="share" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.theme.showSharingMenu`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.theme.showSharingMenuHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.showSharingMenu"
-                :aria-label="t(`admin.theme.showSharingMenu`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
             <blueprint-icon icon="print" />
             <w-item-section>
               <w-item-label>{{ t(`admin.theme.showPrintBtn`) }}</w-item-label>
@@ -390,7 +377,6 @@ function defaultConfig() {
     contentWidth: 'full',
     sidebarPosition: 'left',
     tocPosition: 'right',
-    showSharingMenu: true,
     showPrintBtn: true,
     baseFont: 'roboto',
     contentFont: 'roboto'
@@ -743,7 +729,6 @@ async function save() {
       contentWidth: state.config.contentWidth,
       sidebarPosition: state.config.sidebarPosition,
       tocPosition: state.config.tocPosition,
-      showSharingMenu: state.config.showSharingMenu,
       showPrintBtn: state.config.showPrintBtn,
       baseFont: state.config.baseFont,
       contentFont: state.config.contentFont

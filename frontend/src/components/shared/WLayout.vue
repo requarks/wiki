@@ -45,8 +45,18 @@ defineProps({
   min-height: 0;
 }
 
+/*
+  An app shell: the layout is exactly the viewport, and what scrolls is the page cell inside it.
+
+  `min-height: 100vh` here instead meant the whole document scrolled, which pushed the header, the
+  drawers and the footer off the top of the screen and left everything anchored to the bottom of a
+  column -- the sidebar's own action bar, the page's action rail -- sitting at the end of the article
+  rather than at the bottom of the window. Those things belong to the shell, so the shell has to be
+  what stays still.
+*/
 .w-layout--page {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .w-layout--container {
@@ -55,16 +65,20 @@ defineProps({
 }
 
 /*
-  A container layout is bounded by its parent (a dialog), so anything taller than that box has to
-  scroll SOMEWHERE. The layout engine this replaces wrapped its whole tree in a scrolling div; here
-  the page cell scrolls instead, which keeps the header and the drawer in place rather than sliding
-  them away -- the behaviour an overlay with a sidebar wants.
+  Either way the layout is bounded -- by the viewport, or by the dialog holding it -- so anything
+  taller than that box has to scroll SOMEWHERE. The layout engine this replaces wrapped its whole
+  tree in a scrolling div; here the page cell scrolls instead, which keeps the header and the drawers
+  in place rather than sliding them away.
 
   `min-height: 0` is what makes it work at all: a grid item's automatic minimum size is its content,
   so without this the `1fr` row grows to fit and there is nothing left to scroll. Reached with
   `:deep()` because the page cell is a child COMPONENT and this rule has to cross that boundary.
+
+  A page that manages its own scrolling -- the page view scrolls its article column, so that the
+  contents sidebar beside it stays put -- simply never overflows this box, and no second scrollbar
+  appears.
 */
-.w-layout--container :deep(> .w-page-container) {
+.w-layout :deep(> .w-page-container) {
   min-height: 0;
   overflow: auto;
 }

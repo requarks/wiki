@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  242 icons.
+  240 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-double-right": {"body":"<path fill=\"currentColor\" d=\"M9.094 4.781L7.688 6.22l9.78 9.78l-9.78 9.781l1.406 1.438L20.313 16zm7 0L14.687 6.22L24.47 16l-9.782 9.781l1.407 1.438L27.312 16z\"/>","width":32,"height":32},
@@ -26,7 +26,6 @@ export const BUNDLED_ICONS = {
   "la:broadcast-tower": {"body":"<path fill=\"currentColor\" d=\"M7.188 4.188c-4.297 4.183-4.282 11.125 0 15.406l1.406-1.407c-3.52-3.519-3.504-9.148 0-12.562zm17.625.093L23.405 5.72c3.524 3.523 3.524 9.039 0 12.562l1.407 1.438a10.897 10.897 0 0 0 0-15.438zM9.905 7.188c-2.586 2.585-2.586 6.82 0 9.406l1.406-1.407a4.68 4.68 0 0 1 0-6.593zm12.188.093L20.687 8.72a4.64 4.64 0 0 1 0 6.562l1.407 1.438c2.586-2.586 2.586-6.852 0-9.438zM16 10a2 2 0 0 0-2 2c0 .625.3 1.164.75 1.531L10.312 26H9v2h4v-2h-.594L16 15.969L19.594 26H19v2h4v-2h-1.313L17.25 13.531c.45-.367.75-.906.75-1.531a2 2 0 0 0-2-2\"/>","width":32,"height":32},
   "la:broom": {"body":"<path fill=\"currentColor\" d=\"m28.281 2.281l-10 10L17 11v-.031l-.031-.031c-.64-.57-1.477-.844-2.282-.844s-1.582.3-2.187.906l-.156.125l-.5.5l-.344.281L2.375 19l-.875.719L12.281 30.5l.719-.875l7.063-9.063l.03.032l1-1h.032l.031-.032c1.14-1.285 1.149-3.257-.062-4.468l-1.375-1.375l10-10zm-13.593 9.813a1.4 1.4 0 0 1 .906.312c.011.008.02.024.031.031l4.063 4.063c.375.375.41 1.172 0 1.688c-.016.019-.016.042-.032.062l-.312.281l-5.782-5.781l.344-.344c.192-.191.473-.304.781-.312zM12.03 14.03l5.938 5.938l-5.875 7.5l-1.438-1.438l2.156-2.25l-1.437-1.375l-2.125 2.219l-1.313-1.313l3.875-3.906L10.406 18L6.5 21.875l-1.969-1.969z\"/>","width":32,"height":32},
   "la:calendar": {"body":"<path fill=\"currentColor\" d=\"M9 4v1H5v22h22V5h-4V4h-2v1H11V4zM7 7h2v1h2V7h10v1h2V7h2v2H7zm0 4h18v14H7zm6 2v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zM9 17v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2zM9 21v2h2v-2zm4 0v2h2v-2zm4 0v2h2v-2z\"/>","width":32,"height":32},
-  "la:caret-right": {"body":"<path fill=\"currentColor\" d=\"M12 4.594v22.812l1.719-1.687l9-9l.687-.719l-.687-.719l-9-9zm2 4.843L20.563 16L14 22.563z\"/>","width":32,"height":32},
   "la:caret-square-right": {"body":"<path fill=\"currentColor\" d=\"M5 5v22h22V5zm2 2h18v18H7zm7.219 2.281L12.78 10.72L18.062 16l-5.28 5.281l1.437 1.438l6-6l.687-.719l-.687-.719z\"/>","width":32,"height":32},
   "la:chalkboard": {"body":"<path fill=\"currentColor\" d=\"M5 7v16H3v2h26v-2h-2V7zm2 2h18v14H7zm14.281 3.281L17 16.562l-3.281-3.28l-.719-.688l-.719.687l-3 3l1.438 1.438L13 15.437l3.281 3.282l.719.687l.719-.687l5-5zM20 20l-1 1l1 1h4v-2z\"/>","width":32,"height":32},
   "la:chart-area": {"body":"<path fill=\"currentColor\" d=\"m28 4.063l-1.625 1.25l-4.625 3.625L16.156 8l-.375-.063l-.344.22l-5.687 3.78l-4.563-.906L4 10.781V28h24zm-2 4.093v5.375l-4.219 3.344l-5.468-1.813l-.47-.156l-.405.25l-5.563 3.719L6 17.312V13.22l3.813.75l.406.094l.344-.22l5.656-3.78l5.625.937l.437.063l.344-.282zm0 7.938V26H6v-6.5l3.625 1.438l.5.187l.438-.281l5.624-3.75l5.5 1.843l.5.188l.438-.344z\"/>","width":32,"height":32},
@@ -155,7 +154,6 @@ export const BUNDLED_ICONS = {
   "mdi:check": {"body":"<path fill=\"currentColor\" d=\"M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59z\"/>","width":24,"height":24},
   "mdi:check-circle": {"body":"<path fill=\"currentColor\" d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z\"/>","width":24,"height":24},
   "mdi:checkbox-blank-outline": {"body":"<path fill=\"currentColor\" d=\"M19 3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 2v14H5V5z\"/>","width":24,"height":24},
-  "mdi:checkbox-marked": {"body":"<path fill=\"currentColor\" d=\"m10 17l-5-5l1.41-1.42L10 14.17l7.59-7.59L19 8m0-5H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2\"/>","width":24,"height":24},
   "mdi:checkbox-outline": {"body":"<path fill=\"currentColor\" d=\"M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m0 2v14H5V5zm-9 12l-4-4l1.41-1.42L10 14.17l6.59-6.59L18 9\"/>","width":24,"height":24},
   "mdi:chevron-down": {"body":"<path fill=\"currentColor\" d=\"M7.41 8.58L12 13.17l4.59-4.59L18 10l-6 6l-6-6z\"/>","width":24,"height":24},
   "mdi:chevron-left": {"body":"<path fill=\"currentColor\" d=\"M15.41 16.58L10.83 12l4.58-4.59L14 6l-6 6l6 6z\"/>","width":24,"height":24},

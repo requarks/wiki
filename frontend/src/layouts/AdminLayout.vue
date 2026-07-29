@@ -562,6 +562,14 @@ onMounted(async () => {
     background-color: $dark-5;
   }
 
+  // -> Nav rows are a 24px icon and its label, so the avatar column's 56px track centres the icon
+  //    and leaves the pair reading as two columns rather than one item. Sizing the column to the
+  //    icon leaves the section's own 16px as the whole gap. Needs the extra `.w-list` to outrank
+  //    WItemSection's scoped rule, which matches on specificity alone.
+  .w-list .w-item-section--avatar {
+    min-width: auto;
+  }
+
   // -> The section headings between nav groups; the double shadow is the divider above them
   .w-item-label--header {
     box-shadow:

@@ -309,9 +309,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             type: 'string',
             enum: ['off', 'left', 'right']
           },
-          showSharingMenu: {
-            type: 'boolean'
-          },
           showPrintBtn: {
             type: 'boolean'
           },

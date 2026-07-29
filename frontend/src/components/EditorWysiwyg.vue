@@ -708,6 +708,9 @@ function init() {
       })
       pageStore.$patch({
         content: JSON.stringify(editor.getJSON()),
+        // -> What the author has typed IS the source, whatever the load did or did not deliver; see
+        //    the guard in `pageSave`
+        contentLoaded: true,
         render: editor.getHTML()
       })
     }

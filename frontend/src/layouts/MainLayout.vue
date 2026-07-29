@@ -7,7 +7,7 @@
       class="bg-sidebar"
       :model-value="isSidebarShown"
       :show-if-above="siteStore.theme.sidebarPosition !== `off`"
-      :width="isSidebarMini ? 56 : 255"
+      :width="sidebarWidth"
       :side="siteStore.theme.sidebarPosition === `right` ? `right` : `left`">
       <div v-if="isSidebarMini" class="sidebar-mini flex flex-col items-stretch">
         <w-btn
@@ -100,7 +100,12 @@
     </w-drawer>
     <w-page-container>
       <router-view />
-      <w-page-scroller :scroll-offset="150" :offset="[15, 15]">
+      <!-- -> `.page-container-scrl` is the page view's article column, which is what scrolls -->
+      <w-page-scroller
+        :scroll-offset="150"
+        :offset="[15, 15]"
+        :anchor-x="scrollerAnchorX"
+        target=".page-container-scrl">
         <w-btn icon="la:arrow-up" color="primary" round size="md" />
       </w-page-scroller>
     </w-page-container>
@@ -117,6 +122,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
+import { useMinWidth } from '@/composables/screen'
 import { useI18n } from 'vue-i18n'
 
 import { useCommonStore } from '@/stores/common'
@@ -178,6 +184,36 @@ const isSidebarMini = computed(() => {
   return ['hide', 'hideExact'].includes(pageStore.navigationMode) || !pageStore.navigationId
 })
 
+/** Sidebar widths, in px: the full nav, and the icon rail it collapses to. */
+const SIDEBAR_WIDTH = 255
+const SIDEBAR_WIDTH_MINI = 56
+
+const sidebarWidth = computed(() => (isSidebarMini.value ? SIDEBAR_WIDTH_MINI : SIDEBAR_WIDTH))
+
+/**
+ * Where the drawer stops overlaying the page and takes its own column. Matches `WDrawer`'s own
+ * breakpoint — below it there is no seam to straddle, because the sidebar is not beside anything.
+ */
+const isWideViewport = useMinWidth(1024)
+
+/*
+  The scroll-to-top button straddles the seam between the sidebar and the content, half over each, so
+  its centre is the sidebar's inner edge — which is the sidebar's width on the left, or the same
+  distance in from the right when the site puts its sidebar there.
+
+  Null puts it back in the corner, for every case where there is no seam: a narrow viewport (the
+  drawer overlays the page), a site with no sidebar, and the editor, which closes the sidebar to take
+  the full width.
+*/
+const scrollerAnchorX = computed(() => {
+  if (!isWideViewport.value || !isSidebarShown.value || siteStore.theme.sidebarPosition === 'off') {
+    return null
+  }
+  return siteStore.theme.sidebarPosition === 'right'
+    ? `calc(100% - ${sidebarWidth.value}px)`
+    : `${sidebarWidth.value}px`
+})
+
 // -> Saving from this menu needs manage:navigation, so offering it to anyone else only produces a
 //    permission error once they press Save
 const canEditNav = computed(() => {
@@ -211,8 +247,14 @@ function notImplemented() {
   height: 100%;
 }
 
+/*
+  No background of its own, and nothing sticky: the drawer is the height of the shell and the nav list
+  above scrolls inside itself, so this bar sits at the bottom of the window by being last in the
+  column. WBar's own translucent tint is what colours it -- the `background-color` that used to be
+  declared here never applied, its scoped rule outranking a single class.
+*/
 .sidebar-footerbtns {
-  background-color: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 body.body--dark {

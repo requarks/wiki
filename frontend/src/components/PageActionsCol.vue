@@ -356,6 +356,10 @@ function notImplemented() {
     }
   }
 
+  /* -> Taller than the shell only on a very short window, and then it scrolls rather than clipping */
+  overflow-y: auto;
+  scrollbar-width: none;
+
   &-mode {
     writing-mode: vertical-rl;
     text-orientation: mixed;

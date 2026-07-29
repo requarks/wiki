@@ -98,7 +98,6 @@ export const useSiteStore = defineStore('site', {
       codeBlocksTheme: '',
       sidebarPosition: 'left',
       tocPosition: 'right',
-      showSharingMenu: true,
       showPrintBtn: true
     },
     sideDialogShown: false,

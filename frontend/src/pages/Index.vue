@@ -1,5 +1,10 @@
 <template>
-  <w-page class="flex flex-col">
+  <!--
+    `h-full min-h-0`: the shell hands this page a definite height, and the page has to CLAIM it for
+    the article column below to scroll on its own. Left to grow, the whole page would scroll inside
+    the shell instead and take the sidebars with it.
+  -->
+  <w-page class="flex flex-col h-full min-h-0">
     <div class="page-breadcrumbs py-2 px-4 flex flex-wrap" v-if="!editorStore.isActive">
       <div class="min-w-0 flex-1">
         <w-breadcrumbs
@@ -20,7 +25,8 @@
       </div>
     </div>
     <page-header />
-    <div class="page-container flex flex-nowrap items-stretch" style="flex: 1 1 100%">
+    <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
+    <div class="page-container flex min-h-0 flex-nowrap items-stretch" style="flex: 1 1 100%">
       <div
         class="min-w-0 flex-1"
         :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
@@ -89,56 +95,63 @@
         class="page-sidebar"
         v-if="showSidebar"
         :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`">
-        <template v-if="pageStore.showToc">
+        <template v-if="showToc">
           <!-- TOC -->
           <div class="p-4 flex items-center">
             <w-icon class="mr-2" name="la:stream" color="grey" />
-            <div class="text-caption text-grey-7">Contents</div>
+            <!-- -> Its own string, not `common.page.toc`: this heading labels a column beside the
+                 article and reads better short, where "Table of Contents" is the full name of the
+                 thing and belongs where there is room for it -->
+            <div class="text-caption text-grey-7">{{ t('common.page.contents') }}</div>
           </div>
           <div class="px-4 pb-2">
-            <w-tree
-              class="page-toc"
+            <page-toc
               :nodes="pageStore.toc"
-              icon="la:caret-right"
-              node-key="key"
-              dense
-              v-model:expanded="state.tocExpanded"
+              :min-depth="pageStore.tocDepth.min"
+              :max-depth="pageStore.tocDepth.max"
               v-model:selected="state.tocSelected" />
           </div>
         </template>
         <!-- Tags -->
         <template v-if="pageStore.showTags">
-          <w-separator v-if="pageStore.showToc" />
+          <w-separator v-if="showToc" />
           <div
             class="p-4"
             @mouseover="state.showTagsEditBtn = true"
             @mouseleave="state.showTagsEditBtn = false">
             <div class="flex items-center">
               <w-icon class="mr-2" name="la:tags" color="grey" />
-              <div class="text-caption text-grey-7">Tags</div>
+              <div class="text-caption text-grey-7">{{ t('common.page.tags') }}</div>
               <w-space />
-              <transition name="fade">
-                <w-btn
-                  v-show="state.showTagsEditBtn"
-                  size="sm"
-                  padding="none xs"
-                  icon="la:pen"
-                  color="deep-orange-9"
-                  flat
-                  label="Edit"
-                  no-caps
-                  @click="state.tagEditMode = !state.tagEditMode" />
-              </transition>
+              <!--
+                Always rendered, hidden with `visibility` rather than removed: `display: none` took the
+                row's height with it, so the heading jumped 6px the moment the pointer arrived.
+                `visibility` also keeps it out of the tab order and out of hit-testing while hidden,
+                which `opacity: 0` on its own would not.
+
+                It stays put while editing, because that is when it is the way back out.
+              -->
+              <w-btn
+                class="tags-edit-btn"
+                :class="{ 'is-hidden': !state.tagEditMode && !state.showTagsEditBtn }"
+                size="sm"
+                padding="none xs"
+                :icon="state.tagEditMode ? `la:check` : `la:pen`"
+                color="deep-orange-9"
+                flat
+                :label="state.tagEditMode ? t('common.actions.exitEdit') : t('common.actions.edit')"
+                no-caps
+                @click="state.tagEditMode = !state.tagEditMode" />
             </div>
             <page-tags class="mt-2" :edit="state.tagEditMode" />
           </div>
         </template>
         <template v-if="siteStore.features.ratingsMode !== `off` && pageStore.allowRatings">
-          <w-separator v-if="pageStore.showToc || pageStore.showTags" />
+          <w-separator v-if="showToc || pageStore.showTags" />
           <!-- Rating -->
           <div class="p-4 flex items-center">
             <w-icon class="mr-2" name="la:star-half-alt" color="grey" />
-            <div class="text-caption text-grey-7">Rate this page</div>
+            <div class="text-caption text-grey-7">{{ t('common.page.ratePage') }}</div>
           </div>
           <div class="px-4">
             <w-rating
@@ -169,6 +182,7 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
+import { flattenToc } from '@/helpers/toc'
 
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
@@ -181,6 +195,7 @@ import LoadingGeneric from '@/components/LoadingGeneric.vue'
 import PageActionsCol from '@/components/PageActionsCol.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageTags from '@/components/PageTags.vue'
+import PageToc from '@/components/PageToc.vue'
 import SideDialog from '@/components/SideDialog.vue'
 
 const editorComponents = {
@@ -231,7 +246,6 @@ const state = reactive({
   globalDialogComponent: null,
   showTagsEditBtn: false,
   tagEditMode: false,
-  tocExpanded: [],
   tocSelected: null,
   currentRating: 3
 })
@@ -245,6 +259,23 @@ const showSidebar = computed(() => {
     siteStore.showSidebar &&
     siteStore.theme.tocPosition !== 'off' &&
     !editorStore.isActive
+  )
+})
+/*
+  Whether there is a contents SECTION, heading and separator included -- not just whether the page
+  asked for one. A page with no headings, or whose depth settings leave nothing to list, would
+  otherwise show "Contents" over an empty space. Asked of the same helper the list itself draws from,
+  so the two can never disagree about whether a row survives.
+*/
+const showToc = computed(() => {
+  if (!pageStore.showToc) {
+    return false
+  }
+  return (
+    flattenToc(pageStore.toc, {
+      minDepth: pageStore.tocDepth.min,
+      maxDepth: pageStore.tocDepth.max
+    }).length > 0
   )
 })
 const relationsLeft = computed(() => {
@@ -373,47 +404,6 @@ watch(
   },
   { immediate: true }
 )
-
-watch(
-  () => pageStore.toc,
-  () => {
-    refreshTocExpanded()
-  },
-  { immediate: true }
-)
-watch(
-  () => pageStore.tocDepth,
-  () => {
-    refreshTocExpanded()
-  }
-)
-
-// METHODS
-
-function refreshTocExpanded(baseToc, lvl) {
-  const toExpand = []
-  let isRootNode = false
-  if (!baseToc) {
-    baseToc = pageStore.toc
-    isRootNode = true
-    lvl = 1
-  }
-  if (baseToc.length > 0) {
-    for (const node of baseToc) {
-      if (lvl >= pageStore.tocDepth.min && lvl < pageStore.tocDepth.max) {
-        toExpand.push(node.key)
-      }
-      if (node.children?.length && lvl < pageStore.tocDepth.max - 1) {
-        toExpand.push(...refreshTocExpanded(node.children, lvl + 1))
-      }
-    }
-  }
-  if (isRootNode) {
-    state.tocExpanded = toExpand
-  } else {
-    return toExpand
-  }
-}
 </script>
 
 <style lang="scss">
@@ -479,6 +469,28 @@ function refreshTocExpanded(baseToc, lvl) {
   //   border-top: 1px solid $dark-6;
   // }
 }
+/*
+  The Tags heading's edit toggle. `visibility` is transitioned alongside the opacity so it still fades
+  BOTH ways: as a discrete property it flips at the end of the transition when going to hidden, and at
+  the start when coming back, which is exactly the timing a fade wants.
+*/
+.tags-edit-btn {
+  transition:
+    opacity 0.2s var(--ease-standard),
+    visibility 0.2s var(--ease-standard);
+
+  &.is-hidden {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tags-edit-btn {
+    transition-duration: 0.01ms;
+  }
+}
+
 .page-sidebar {
   flex: 0 0 300px;
 
@@ -501,11 +513,15 @@ function refreshTocExpanded(baseToc, lvl) {
   @at-root .body--dark & .w-separator {
     --w-hairline-color: #070a0d;
   }
-}
 
-.page-toc {
-  &.w-tree--dense .w-tree__node {
-    padding-bottom: 5px;
-  }
+  /*
+    The column is the height of the shell, so its own content scrolls when there is more of it than
+    there is room -- a long contents list, in practice. Nothing sticky is involved: the shell holds
+    still on its own, and the article beside this scrolls in its own box.
+  */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(102 102 102 / 0.5) transparent;
 }
 </style>

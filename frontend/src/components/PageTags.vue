@@ -15,38 +15,27 @@
         <span class="text-caption">{{tag}}</span>
       </w-chip>
     </template>
+    <!--
+      Entry only: no `use-chips`, because the selection is already shown as the chips above and having
+      it in the field as well said the same thing twice. `create` is what lets a tag that does not
+      exist yet be typed in; the suggestions are filtered by WSelect itself, from what is typed.
+    -->
     <w-select
       class="mt-4"
       v-if="props.edit"
       outlined
       v-model="pageStore.tags"
-      :options="state.filteredTags"
+      :options="state.tags"
       dense
       options-dense
       use-input
-      use-chips
+      create
       multiple
-      hide-selected
       hide-dropdown-icon
-      :input-debounce="0"
-      new-value-mode="add-unique"
-      @new-value="createTag"
-      @filter="filterTags"
+      @create="createTag"
       :placeholder="t(`editor.props.tagsPlaceholder`)"
       :aria-label="t(`editor.props.tags`)"
-      :loading="state.loading">
-      <template v-slot:option="scope">
-        <w-item v-bind="scope.itemProps">
-          <w-item-section side>
-            <w-checkbox
-              :model-value="scope.selected"
-              @update:model-value="scope.toggleOption(scope.opt)"
-              size="sm" />
-          </w-item-section>
-          <w-item-section><w-item-label><span v-html="scope.opt" /></w-item-label></w-item-section>
-        </w-item>
-      </template>
-    </w-select>
+      :loading="state.loading" />
   </div>
 </template>
 
@@ -83,8 +72,8 @@ const { t } = useI18n()
 // DATA
 
 const state = reactive({
+  /** Every tag on the site, as suggestions. WSelect narrows these against what is typed. */
   tags: [],
-  filteredTags: [],
   loading: false
 })
 
@@ -129,34 +118,31 @@ watch(
 
 // METHODS
 
-function filterTags(val, update) {
-  update(() => {
-    if (val === '') {
-      state.filteredTags = state.tags
-    } else {
-      const tagSearch = val.toLowerCase()
-      state.filteredTags = state.tags.filter((v) => v.toLowerCase().indexOf(tagSearch) >= 0)
-    }
-  })
-}
-
-function createTag(val, done) {
-  if (val) {
-    const currentTags = pageStore.tags.slice()
-    for (const tag of val
-      .split(/[,;]+/)
-      .map((v) => v.trim())
-      .filter((v) => v)) {
-      if (!state.tags.includes(tag)) {
-        state.tags.push(tag)
-      }
-      if (!currentTags.includes(tag)) {
-        currentTags.push(tag)
-      }
-    }
-    done('')
-    pageStore.tags = currentTags
+/**
+ * Add whatever was typed, as one tag or as several.
+ *
+ * A comma or a semicolon separates tags, so a list can be pasted in one go. Each new one joins the
+ * suggestions too, so re-typing it offers a match rather than looking unknown.
+ */
+function createTag(val) {
+  const tags = val
+    .split(/[,;]+/)
+    .map((v) => v.trim())
+    .filter(Boolean)
+  if (tags.length === 0) {
+    return
   }
+
+  const nextSelection = pageStore.tags.slice()
+  for (const tag of tags) {
+    if (!state.tags.includes(tag)) {
+      state.tags.push(tag)
+    }
+    if (!nextSelection.includes(tag)) {
+      nextSelection.push(tag)
+    }
+  }
+  pageStore.tags = nextSelection
 }
 
 function removeTag(tag) {

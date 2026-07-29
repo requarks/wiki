@@ -39,8 +39,13 @@
     </w-header>
     <w-drawer class="bg-dark-6" :model-value="true" :width="295" dark>
       <w-scroll-area class="nav-edit" :thumb-style="thumbStyle" :bar-style="barStyle">
+        <!--
+          The `q-list q-list--dense q-list--dark` this carried were the old framework's classes and
+          nothing defines them any more, which is why the rows had drifted to full height: the density
+          now comes from `dense` on each item, matching what NavSidebar renders.
+        -->
         <sortable
-          class="q-list q-list--dense q-list--dark nav-edit-list"
+          class="nav-edit-list"
           :list="state.items"
           item-key="id"
           :options="sortableOptions"
@@ -60,6 +65,7 @@
             <w-item
               class="nav-edit-item nav-edit-item-link"
               v-else-if="element.type === `link`"
+              dense
               :class="{ 'is-active': state.selected === element.id, 'is-nested': element.isNested }"
               @click="setItem(element)"
               clickable>
@@ -736,11 +742,37 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 @use 'sass:color';
 
+/*
+  Light ink on an always-dark surface.
+
+  This drawer is dark whatever the site theme is, but the shared components' own dark treatments are
+  `dark:` variants -- keyed off `body.body--dark`, i.e. the APP theme. On a light-themed site their
+  light-mode colours therefore applied here: `WItemLabel`'s header variant resolved to black at 54%
+  and `WItemSection`'s side variant likewise, which on `dark-6` is invisible. WDrawer's `dark` prop
+  covers plain inherited text, not a component that states a colour of its own, so each one that does
+  is restated here at the value its dark variant would have used.
+*/
 .nav-edit {
   height: 100%;
 
   .handle {
     cursor: grab;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /*
+    Same padding NavSidebar gives its own headings: `WItemLabel`'s uniform `p-4` made this row 52px
+    against the sidebar's 40px, so a heading looked considerably heavier here than the thing being
+    edited.
+  */
+  .w-item-label--header {
+    color: rgba(255, 255, 255, 0.7);
+    padding-bottom: 4px;
+  }
+
+  /* -> A rule between nav items is content here, not trim: 15% white is too faint to aim at */
+  .nav-edit-item-separator .w-separator {
+    --w-hairline-color: rgb(255 255 255 / 0.32);
   }
 }
 

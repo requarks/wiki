@@ -24,6 +24,14 @@ export const usePageStore = defineStore('page', {
     authorName: '',
     commentsCount: 0,
     content: '',
+    /**
+     * Whether `content` above is this page's actual source, rather than just the state it starts in.
+     *
+     * The API leaves `content` out of a page unless an editor asked for it and the session may see it,
+     * so an empty string in this store means either "the page is empty" or "nobody fetched it" — and
+     * `pageSave` must not write the second one over a page that has content. See the guard there.
+     */
+    contentLoaded: false,
     createdAt: '',
     description: '',
     editor: '',
@@ -100,6 +108,9 @@ export const usePageStore = defineStore('page', {
         // Update page store
         this.$patch({
           ...pageData,
+          // -> The field is present exactly when the source came with the page, which is what makes
+          //    the copy in this store safe to save; a view-mode load leaves the previous one in place
+          contentLoaded: Object.hasOwn(pageData, 'content'),
           relations: pageData.relations.map((r) =>
             pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
           ),
@@ -206,6 +217,8 @@ export const usePageStore = defineStore('page', {
         relations: [],
         tags: [],
         content: content ?? '',
+        // -> A page being created has no stored source to lose: whatever it starts with IS the source
+        contentLoaded: true,
         render: '',
         isBrowsable: true,
         isSearchable: true,
@@ -255,7 +268,20 @@ export const usePageStore = defineStore('page', {
         loadArgs.id = this.id
       }
 
-      await this.pageLoad(loadArgs)
+      /*
+        Edits made OUTSIDE the editor have to survive opening it.
+
+        The page properties panel writes straight to this store, and the header then offers to save
+        them — so a page can arrive here with a changed title and an unchanged everything else. A full
+        load would replace every field with what is stored and reset the change timestamps, throwing
+        those edits away without a word. The source is the only thing missing in that state, so the
+        source is the only thing fetched.
+      */
+      if (editorStore.hasPendingChanges) {
+        await this.pageLoadSource()
+      } else {
+        await this.pageLoad(loadArgs)
+      }
 
       if (!editorStore.configIsLoaded) {
         await editorStore.fetchConfigs()
@@ -266,6 +292,32 @@ export const usePageStore = defineStore('page', {
         mode: 'edit',
         editor: this.editor
       })
+    },
+    /**
+     * PAGE - LOAD SOURCE ONLY
+     *
+     * Fetches the source and nothing else, for opening the editor on a page whose other fields have
+     * already been edited elsewhere. Deliberately touches neither the rest of the page nor the editor's
+     * change timestamps: what is pending stays pending, and stays saveable.
+     */
+    async pageLoadSource() {
+      const siteStore = useSiteStore()
+      try {
+        const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${this.id}`, {
+          searchParams: { withContent: true }
+        }).json()
+        // -> Absent rather than empty means the server withheld it; see `contentLoaded`
+        if (!Object.hasOwn(pageData ?? {}, 'content')) {
+          throw new Error('ERR_PAGE_SOURCE_UNAVAILABLE')
+        }
+        this.$patch({
+          content: pageData.content,
+          contentLoaded: true
+        })
+      } catch (err) {
+        console.warn(err)
+        throw err
+      }
     },
     /**
      * PAGE - MOVE
@@ -336,6 +388,23 @@ export const usePageStore = defineStore('page', {
             'title',
             'tocDepth'
           ])
+        }
+
+        /*
+          Never save a source this store never received.
+
+          An editor that came up empty because the source was withheld — an expired session, a failed
+          load — is indistinguishable from an empty page by the time the payload is built, and sending
+          the empty string replaces the stored HTML's source with nothing. Dropping the key instead
+          leaves it exactly as it was: `updatePage` only writes `content` when it is not `undefined`.
+
+          Typing into an editor sets the flag, so deliberately clearing a page still works — that empty
+          string came from the author, not from a load that never happened. A page being created always
+          has it set, which is also why this cannot leave the POST short of a required field.
+        */
+        if (!this.contentLoaded) {
+          delete body.content
+          console.warn('Page source was never loaded; saving without touching the stored content.')
         }
 
         let pageData

@@ -160,6 +160,9 @@ watch(
 
   &-header {
     color: rgba(255, 255, 255, 0.75) !important;
+    /* -> WItemLabel's uniform `p-4` leaves the heading floating between its own group and the one
+       above it; tightening the bottom side ties it to the links it labels */
+    padding-bottom: 4px;
   }
 }
 </style>

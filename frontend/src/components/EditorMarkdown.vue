@@ -487,8 +487,28 @@ async function toggleMarkup({ start, end }) {
 }
 
 function processContent(newContent) {
+  /*
+    A render that throws must not become a render that is empty.
+
+    `pageSave` sends whatever is in the store, and the server replaces the stored HTML with it -- so
+    patching a failed render in blanks the published page, and patching nothing keeps the last good
+    one. Loud rather than silent, because the preview is then showing something other than the source.
+  */
+  let html
+  try {
+    html = md.render(newContent)
+  } catch (err) {
+    console.error(err)
+    notify({
+      type: 'negative',
+      message: t('editor.renderFailed'),
+      caption: err.message
+    })
+    return
+  }
+
   pageStore.$patch({
-    render: md.render(newContent)
+    render: html
   })
   nextTick(() => {
     for (const block of editorPreviewContainerRef.value.querySelectorAll(':not(:defined)')) {
@@ -655,7 +675,10 @@ onMounted(async () => {
         lastChangeTimestamp: Temporal.Now.instant()
       })
       pageStore.$patch({
-        content: editor.getValue()
+        content: editor.getValue(),
+        // -> What the author has typed IS the source, whatever the load did or did not deliver; see
+        //    the guard in `pageSave`
+        contentLoaded: true
       })
       processContent(pageStore.content)
     }, 500)
