@@ -13,52 +13,53 @@
         style="min-height: 64px">
         <!-- -> 64px, the size the icon has when the page is merely being read; see the branch below -->
         <w-icon :name="pageStore.icon" size="64px" />
-        <w-badge color="grey" floating rounded>
-          <w-icon name="la:pen" size="xs" padding="xs xs" />
-        </w-badge>
         <w-menu content-class="shadow-7"><icon-picker-dialog v-model="pageStore.icon" /></w-menu>
       </w-btn>
       <w-icon class="rounded" v-else :name="pageStore.icon" size="64px" color="primary" />
     </div>
     <!-- PAGE HEADER -->
+    <!--
+      In the editor the title and the description are the fields, edited where they sit rather than
+      through a button and a popup. They keep the heading type they have when the page is being read:
+      what tells an author they can type here is the hover tint and the caret, not a box drawn around
+      the text.
+
+      The text is NOT interpolated into the editable elements. Vue would rewrite the text node on every
+      keystroke as the store echoes it back, and a rewritten text node puts the caret at the start of
+      it. `syncEditable` writes it instead, and only when the two have actually diverged.
+    -->
     <div class="min-w-0 flex-1 p-4">
       <div class="text-h4 page-header-title">
-        <span>{{ pageStore.title }}</span>
-        <template v-if="editorStore.isActive">
-          <span class="text-grey" v-if="!pageStore.title">{{ t(`editor.props.title`) }}</span>
-          <w-btn class="acrylic-btn ml-4" icon="la:pen" flat padding="xs" size="sm">
-            <w-popup-edit v-model="pageStore.title" auto-save v-slot="scope">
-              <w-input
-                outlined
-                style="width: 450px"
-                v-model="scope.value"
-                dense
-                autofocus
-                @keyup.enter="scope.set"
-                :label="t(`editor.props.title`)" />
-            </w-popup-edit>
-          </w-btn>
-        </template>
+        <span
+          v-if="editorStore.isActive"
+          ref="titleEl"
+          class="page-header-editable"
+          :class="{ 'is-empty': !pageStore.title }"
+          contenteditable="plaintext-only"
+          role="textbox"
+          aria-multiline="false"
+          :aria-label="t(`editor.props.title`)"
+          :data-placeholder="t(`editor.props.title`)"
+          @input="onEditableInput(`title`, $event)"
+          @blur="onEditableBlur(`title`, $event)"
+          @keydown.enter.prevent="$event.target.blur()" />
+        <span v-else>{{ pageStore.title }}</span>
       </div>
       <div class="text-subtitle2 page-header-subtitle">
-        <span>{{ pageStore.description }}</span>
-        <template v-if="editorStore.isActive">
-          <span class="text-grey" v-if="!pageStore.description">{{
-            t(`editor.props.shortDescription`)
-          }}</span>
-          <w-btn class="acrylic-btn ml-4" icon="la:pen" flat padding="none xs" size="xs">
-            <w-popup-edit v-model="pageStore.description" auto-save v-slot="scope">
-              <w-input
-                outlined
-                style="width: 450px"
-                v-model="scope.value"
-                dense
-                autofocus
-                @keyup.enter="scope.set"
-                :label="t(`editor.props.shortDescription`)" />
-            </w-popup-edit>
-          </w-btn>
-        </template>
+        <span
+          v-if="editorStore.isActive"
+          ref="descriptionEl"
+          class="page-header-editable"
+          :class="{ 'is-empty': !pageStore.description }"
+          contenteditable="plaintext-only"
+          role="textbox"
+          aria-multiline="false"
+          :aria-label="t(`editor.props.shortDescription`)"
+          :data-placeholder="t(`editor.props.shortDescription`)"
+          @input="onEditableInput(`description`, $event)"
+          @blur="onEditableBlur(`description`, $event)"
+          @keydown.enter.prevent="$event.target.blur()" />
+        <span v-else>{{ pageStore.description }}</span>
       </div>
     </div>
     <!-- PAGE ACTIONS -->
@@ -191,7 +192,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -224,7 +225,84 @@ const route = useRoute()
 
 const { t } = useI18n()
 
+// REFS
+
+/** The two in-place fields, which only exist while the editor is open. */
+const titleEl = ref(null)
+const descriptionEl = ref(null)
+
+// WATCHERS
+
+/*
+  Opening the editor is what mounts the two fields, so it is also what fills them. `immediate` covers
+  arriving with the editor already open, where the elements appear in the same tick as this runs.
+*/
+watch(
+  () => editorStore.isActive,
+  (isActive) => isActive && seedEditables(),
+  { immediate: true }
+)
+
+/*
+  Changed from somewhere else -- the properties panel edits both of these, and a save replaces the whole
+  page -- so the field follows. A change that came FROM the field is already in the element and
+  `syncEditable` leaves it alone.
+*/
+watch(
+  () => pageStore.title,
+  (title) => syncEditable(titleEl.value, title)
+)
+watch(
+  () => pageStore.description,
+  (description) => syncEditable(descriptionEl.value, description)
+)
+
 // METHODS
+
+/**
+ * Put a value into a contenteditable without disturbing a caret that is already in it.
+ *
+ * Writing `textContent` replaces the node's text and collapses the selection to its start, so it is
+ * only done when the element and the store have actually diverged — which is never mid-keystroke,
+ * since the keystroke is where the store's value came from.
+ */
+function syncEditable(el, value) {
+  if (el && el.textContent !== (value ?? '')) {
+    el.textContent = value ?? ''
+  }
+}
+
+/** Both fields, from the store. Call after they mount; they do not exist outside the editor. */
+async function seedEditables() {
+  await nextTick()
+  syncEditable(titleEl.value, pageStore.title)
+  syncEditable(descriptionEl.value, pageStore.description)
+}
+
+function onEditableInput(field, event) {
+  // -> Clearing the field leaves a browser-inserted `<br>` behind, which contributes nothing to the
+  //    text but does hold a second line open under the placeholder
+  if (event.target.textContent === '' && event.target.innerHTML !== '') {
+    event.target.innerHTML = ''
+  }
+  pageStore[field] = event.target.textContent
+  // -> What the tag editor and the properties panel do for their own edits: the header is a place a
+  //    page gets changed, so it owes the same "unsaved changes" signal
+  editorStore.lastChangeTimestamp = Temporal.Now.instant()
+}
+
+/*
+  Tidied on the way out rather than as it is typed: a pasted line break or a run of spaces has no
+  business in a title, but collapsing them under the caret would move it while someone is still going.
+*/
+function onEditableBlur(field, event) {
+  const tidied = event.target.textContent.replace(/\s+/g, ' ').trim()
+  if (tidied !== pageStore[field]) {
+    pageStore[field] = tidied
+    editorStore.lastChangeTimestamp = Temporal.Now.instant()
+  }
+  syncEditable(event.target, tidied)
+}
 
 function openEditorSettings() {
   EVENT_BUS.emit('openEditorSettings')
@@ -409,3 +487,53 @@ function notImplemented() {
   })
 }
 </script>
+
+<style scoped lang="scss">
+/*
+  The two headings, while they are also the fields.
+
+  No border and no focus ring: at rest each one has to read exactly as it does when the page is being
+  read, which is the whole point of editing them where they sit. What says "type here" is the hover
+  tint, the caret, and -- while a field is empty -- the placeholder below.
+
+  The padding is cancelled by an equal negative margin, so the text keeps the position it has outside
+  the editor and only the tint is inset from it.
+*/
+.page-header-editable {
+  display: inline-block;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: 4px;
+  outline: none;
+  cursor: text;
+  transition: background-color 0.15s var(--ease-standard);
+
+  &:hover {
+    background-color: rgb(0 0 0 / 0.06);
+  }
+  &:focus {
+    background-color: rgb(0 0 0 / 0.09);
+  }
+
+  @at-root .body--dark & {
+    &:hover {
+      background-color: rgb(255 255 255 / 0.08);
+    }
+    &:focus {
+      background-color: rgb(255 255 255 / 0.12);
+    }
+  }
+}
+
+/*
+  Keyed off the store rather than `:empty`, which a cleared field can fail: the browser leaves a `<br>`
+  behind and the element stops counting as empty even though it looks it.
+*/
+.page-header-editable.is-empty::before {
+  content: attr(data-placeholder);
+  opacity: 0.4;
+  /* -> Decoration: it must not be selectable, and it must never end up in the value */
+  pointer-events: none;
+  user-select: none;
+}
+</style>

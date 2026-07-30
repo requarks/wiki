@@ -99,6 +99,15 @@ export const usePageStore = defineStore('page', {
     async pageLoad({ path, id, withContent = false }) {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
+      /*
+        The lock belongs to the page being loaded, not to the one before it.
+
+        Everything else in this store stays put until the reply arrives, deliberately -- blanking it
+        would flash an empty page on every navigation. `isLocked` cannot be treated that way: it is
+        read as "the page on screen is protected", and left standing it makes the NEXT page look
+        protected for as long as the request takes.
+      */
+      this.isLocked = false
       try {
         const pageData = await API_CLIENT.get(
           `sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`,

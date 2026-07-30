@@ -150,7 +150,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Search pages',
         description:
-          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages, and password-protected pages only for someone who may edit them, since a result carries an excerpt of the page text. A page marked as not searchable never appears, whoever is asking.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
+          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages. A page marked as not searchable never appears, whoever is asking.\n\nA password-protected page is listed like any other — its title and description are not what the password covers — but for a searcher who would have to enter that password it can only be matched on those two, never on the text behind the lock, and it comes back with no `highlight`.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -262,9 +262,10 @@ async function routes(app: FastifyInstance) {
         includeDrafts: ['write:pages', 'manage:pages', 'manage:system'].some((p) =>
           permissions.includes(p)
         ),
-        // -> Same rule as the page view: a protected page's text is for whoever holds the password,
-        //    and a search excerpt is that text
-        hideProtected: !mayBypassPassword(req)
+        // -> Same rule as the page view: a protected page's text is for whoever holds the password, and
+        //    a search excerpt is that text. Its title and description are not covered, so the page is
+        //    still listed — see `hideProtectedContent`.
+        hideProtectedContent: !mayBypassPassword(req)
       })
     }
   )

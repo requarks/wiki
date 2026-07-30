@@ -26,8 +26,15 @@ const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const SRC = path.join(ROOT, 'src')
 const OUT = path.join(SRC, 'assets/icons.generated.js')
 
-/** Icon sets we bundle from. A prefix not listed here is left to resolve at runtime. */
-const SETS = ['mdi', 'la']
+/**
+ * Icon sets we bundle from. A prefix not listed here is left to resolve at runtime — which for an icon
+ * written into this repo's own source means it does not render at all unless an administrator happens to
+ * have added that set, so a new set has to be listed HERE and installed as `@iconify-json/<prefix>`.
+ *
+ * The skip is silent on purpose: `prefix:name` also describes every permission string in the frontend
+ * (`write:pages`, `manage:system`), and those must not be mistaken for icons.
+ */
+const SETS = ['mdi', 'la', 'tabler']
 
 /**
  * A quoted string that is EXACTLY an Iconify reference. Requiring the whole literal to match is what

@@ -377,6 +377,13 @@ watch(
   and making them press a button first would only add a step. Keyed on the page rather than on the
   flag, so dismissing the prompt does not immediately reopen it -- the lock screen's own button is the
   way back in -- while walking to another protected page prompts again.
+
+  Deliberately NOT `immediate`. This component is unmounted and remounted around any route outside the
+  page view (a search, the profile, the admin area), and the store it reads is global: an immediate run
+  fires against whatever page was on screen BEFORE that detour, so leaving a locked page for the search
+  screen and coming back to an unprotected one prompted for the earlier page's password. Every real
+  case still fires here, because `pageLoad` clears the flag as it starts and the reply sets it again --
+  so a locked page always arrives as a change, mount or no mount.
 */
 watch(
   () => (pageStore.isLocked ? pageStore.id : null),
@@ -384,8 +391,7 @@ watch(
     if (lockedPageId) {
       promptUnlock()
     }
-  },
-  { immediate: true }
+  }
 )
 
 watch(

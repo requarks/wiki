@@ -174,6 +174,20 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /**
+   * Drop the field's own surface and let whatever is behind it show through.
+   *
+   * For a field on a surface that is not flat: a translucent (acrylic) menu, where the field's white
+   * would sit as an opaque slab on a panel meant to be see-through — and where the floating label,
+   * riding the top border, would have that slab on one side of it and the blur on the other.
+   *
+   * Only the fill goes. The border, the focus ring and the label's notch are untouched, so the field is
+   * still obviously a field.
+   */
+  transparent: {
+    type: Boolean,
+    default: false
+  },
   dense: {
     type: Boolean,
     default: false
@@ -340,8 +354,16 @@ const controlClasses = computed(() => [
 
     The dark value is translucent black rather than a fixed tone so it holds up on each of those
     surfaces; the light one can be flat white because that IS the surface a field should present.
+
+    `transparent` opts out, for the surfaces where that reasoning inverts -- see the prop.
   */
-  props.outlined ? 'bg-white dark:bg-black/20' : 'rounded-b-none bg-black/4 dark:bg-white/6',
+  props.transparent
+    ? props.outlined
+      ? ''
+      : 'rounded-b-none'
+    : props.outlined
+      ? 'bg-white dark:bg-black/20'
+      : 'rounded-b-none bg-black/4 dark:bg-white/6',
   props.disable || props.disabled ? 'pointer-events-none opacity-60' : '',
   /*
     `relative` for the outline and the label. The margin is the room the floated label needs above the

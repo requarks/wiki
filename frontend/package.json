@@ -12,7 +12,9 @@
     "ncu": "ncu -i",
     "ncu-u": "ncu -u",
     "icons": "node scripts/generate-icons.mjs",
-    "icons:check": "node scripts/generate-icons.mjs --check"
+    "icons:check": "node scripts/generate-icons.mjs --check",
+    "emoji": "node scripts/generate-emoji.mjs",
+    "emoji:check": "node scripts/generate-emoji.mjs --check"
   },
   "dependencies": {
     "@quasar/extras": "2.0.1",
@@ -67,7 +69,6 @@
     "socket.io-client": "4.8.3",
     "sortablejs": "1.15.7",
     "sortablejs-vue3": "1.3.0",
-    "tabulator-tables": "6.4.0",
     "tailwindcss": "4.3.3",
     "temporal-polyfill": "1.0.1",
     "tippy.js": "6.3.7",
@@ -85,6 +86,7 @@
   "devDependencies": {
     "@iconify-json/la": "1.2.1",
     "@iconify-json/mdi": "1.2.3",
+    "@iconify-json/tabler": "1.2.38",
     "@intlify/unplugin-vue-i18n": "11.2.3",
     "@types/lodash": "4.17.24",
     "@vitejs/plugin-vue": "6.0.8",
@@ -95,6 +97,7 @@
     "oxfmt": "0.54.0",
     "oxlint": "1.69.0",
     "sass": "1.101.0",
+    "unicode-emoji-json": "0.9.0",
     "vite": "8.1.5",
     "vite-plugin-vue-devtools": "8.1.2"
   },

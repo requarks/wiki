@@ -50,11 +50,18 @@
           <w-menu content-class="shadow-7"><icon-picker-dialog v-model="state.icon" /></w-menu>
         </w-btn>
         <div class="text-overline -mb-3">{{ t('editor.pageRel.target') }}</div>
-        <w-btn
-          class="self-start rounded"
-          :label="t(`editor.pageRel.selectPage`)"
-          color="primary"
-          outline />
+        <div class="flex flex-nowrap items-center gap-3">
+          <w-btn
+            class="flex-none rounded"
+            :label="t(`editor.pageRel.selectPage`)"
+            color="primary"
+            outline
+            @click="selectTarget" />
+          <!-- -> The chosen target, spelled out: the button says what it does, not what it picked -->
+          <div class="text-caption font-robotomono min-w-0 flex-1 truncate">
+            {{ state.target || '—' }}
+          </div>
+        </div>
         <div class="text-overline -mb-3">{{ t('editor.pageRel.preview') }}</div>
         <w-btn
           v-if="state.pos === `left`"
@@ -133,7 +140,11 @@ import { useSiteStore } from '@/stores/site'
 
 import { v4 as uuid } from 'uuid'
 import { cloneDeep } from 'es-toolkit/object'
+
+import { dialog } from '@/composables/dialog'
+
 import IconPickerDialog from './IconPickerDialog.vue'
+import LinkPickerDialog from './LinkPickerDialog.vue'
 
 // PROPS
 
@@ -197,6 +208,26 @@ watch(
 // METHODS
 
 const emit = defineEmits(['close'])
+
+/*
+  The same picker the editor's Insert Link uses, opened on whatever this relation already points at.
+
+  No new-tab option: a relation is stored as a target and nothing else — see the shape written in
+  `create()` — so offering the choice would be offering to discard it.
+*/
+function selectTarget() {
+  dialog({
+    component: LinkPickerDialog,
+    componentProps: {
+      title: t('editor.pageRel.target'),
+      okLabel: t('common.actions.select'),
+      initialHref: state.target,
+      newTabOption: false
+    }
+  }).onOk(({ href }) => {
+    state.target = href
+  })
+}
 
 function create() {
   pageStore.$patch({

@@ -91,10 +91,11 @@ export interface SearchPagesParams {
   /** Whether unpublished pages belong in the results, which is an editor's view of the wiki. */
   includeDrafts?: boolean
   /**
-   * Leave out password-protected pages. Set for anyone who would have to enter the password to read
-   * one, because a result carries an excerpt of the page text — see `highlight` below.
+   * Keep a password-protected page's *body* out of the results, for a searcher who would have to enter
+   * the password to read it. The page itself still appears — its title and description are not what
+   * the password covers — but it can only be matched on those, and comes back with no excerpt.
    */
-  hideProtected?: boolean
+  hideProtectedContent?: boolean
 }
 
 /**
@@ -218,7 +219,7 @@ class Search {
     limit = 25,
     publicOnly = false,
     includeDrafts = false,
-    hideProtected = true
+    hideProtectedContent = true
   }: SearchPagesParams): Promise<SearchPagesResult> {
     const terms = query.trim()
     const hasQuery = terms.length > 0
@@ -243,15 +244,21 @@ class Search {
     } else if (!includeDrafts) {
       conditions.push(sql`p."publishState" <> 'draft'`)
     }
-    if (hideProtected) {
+    if (hideProtectedContent && hasQuery) {
       /*
-        A result is not just a title: `highlight` below is an excerpt of the page's own text, cut from
-        `searchContent`. Handing that to someone who would be shown a lock screen on the page itself
-        would give away through search exactly what the password withholds — so a protected page is
-        absent from their results entirely rather than present without its excerpt, which would still
-        confirm that a page matching their terms is there.
+        A protected page is findable by name, not by what it says.
+
+        `indexPage` stores the three parts of a page under distinct weights — title `A`, description
+        `B`, body `C` — so `ts_filter` can drop the body and ask whether the query still matches. A
+        protected page therefore surfaces when the terms are in its title or description, both of which
+        it shows to everyone anyway, and stays out when they are only in the text behind the password.
+        Otherwise a search for a distinctive phrase would confirm the phrase is in there, which is the
+        thing the password is for.
+
+        Written with the cheap test first: for a page with no password the OR short-circuits and
+        `ts_filter` never runs.
       */
-      conditions.push(sql`p.password IS NULL`)
+      conditions.push(sql`(p.password IS NULL OR ts_filter(p.ts, '{a,b}') @@ ${tsQuery})`)
     }
     if (publishState) {
       conditions.push(sql`p."publishState" = ${publishState}`)
@@ -281,11 +288,19 @@ class Search {
     }[effectiveOrderBy]
 
     const { termHighlighting } = this.getConfig()
+    const headline = sql`ts_headline(${dict}, coalesce(p."searchContent", ''), ${tsQuery},
+      ${`StartSel=${HL_START},StopSel=${HL_STOP},MaxWords=25,MinWords=10,MaxFragments=1`})`
+    /*
+      The excerpt is cut from the page's own text, so a protected page has none to give a searcher who
+      would be shown a lock screen on the page itself. `CASE` rather than a filter on the rows: the page
+      still belongs in the results, it just arrives without the part the password covers.
+    */
     const highlight =
-      hasQuery && termHighlighting
-        ? sql`ts_headline(${dict}, coalesce(p."searchContent", ''), ${tsQuery},
-            ${`StartSel=${HL_START},StopSel=${HL_STOP},MaxWords=25,MinWords=10,MaxFragments=1`})`
-        : sql`NULL`
+      !hasQuery || !termHighlighting
+        ? sql`NULL`
+        : hideProtectedContent
+          ? sql`CASE WHEN p.password IS NULL THEN ${headline} ELSE NULL END`
+          : headline
 
     const rows = await WIKI.db.execute(sql`
       SELECT

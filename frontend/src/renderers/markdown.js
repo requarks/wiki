@@ -107,7 +107,16 @@ export class MarkdownRenderer {
         }
       }
     })
-      .use(mdMdc)
+      /*
+        MDC's INLINE component syntax is off, and deliberately: `:name` is how it writes one, which is
+        also how markdown writes an emoji, and MDC parses first. With it on, `:rocket:` came out as
+        `<rocket>:` and no emoji shortcode in any page ever rendered — while this file goes to the
+        trouble of drawing them as twemoji SVGs, and the editor has a picker for them.
+
+        Everything else MDC brings is untouched: block components (`::note`), inline props and inline
+        spans. Turning this back on means giving up emoji shortcodes again.
+      */
+      .use(mdMdc, { syntax: { inlineComponent: false } })
       .use(mdAttrs, {
         allowedAttributes: ['id', 'class', 'target']
       })

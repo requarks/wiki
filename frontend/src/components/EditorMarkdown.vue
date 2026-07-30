@@ -5,63 +5,60 @@
         <!-- ------------------------------------------------------- -->
         <!-- SIDE TOOLBAR -->
         <!-- ------------------------------------------------------- -->
-        <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertLink') }}</w-tooltip>
+        <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="insertLink">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertLink')
+          }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:image-plus-outline" padding="sm sm" flat>
-          <!--
-            Only two of the three rows dismiss the menu, which is what the original did: the first
-            opens the file manager over the top of it. `auto-close` was on the list, where it has
-            never meant anything -- the list component has no such prop, so it rendered as a stray
-            attribute -- and the closing was done by a Quasar directive that cannot see a w-menu.
-          -->
-          <w-menu ref="assetMenuRef" anchor="top right" self="top left">
-            <w-list separator>
-              <w-item clickable @click="insertAssets">
-                <w-item-section side>
-                  <w-icon name="la:folder-open" color="positive" />
-                </w-item-section>
-                <w-item-section><w-item-label>From File Manager...</w-item-label></w-item-section>
-              </w-item>
-              <w-item clickable @click="getAssetFromClipboard(); assetMenuRef.hide()">
-                <w-item-section side>
-                  <w-icon name="la:clipboard" color="brown" />
-                </w-item-section>
-                <w-item-section><w-item-label>From Clipboard...</w-item-label></w-item-section>
-              </w-item>
-              <w-item clickable @click="notImplemented(); assetMenuRef.hide()">
-                <w-item-section side>
-                  <w-icon name="la:cloud-download-alt" color="blue" />
-                </w-item-section>
-                <w-item-section><w-item-label>From Remote URL...</w-item-label></w-item-section>
-              </w-item>
-            </w-list>
-          </w-menu>
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertAssets') }}</w-tooltip>
+        <!-- -> Straight to the File Manager. The menu this replaces offered two other sources: a remote
+                URL, which was never implemented, and the clipboard — see `getAssetFromClipboard`, which
+                now has no caller. -->
+        <w-btn icon="mdi:image-plus-outline" padding="sm sm" flat @click="insertAssets">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertAssets')
+          }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:code-json" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertCodeBlock') }}</w-tooltip>
+        <w-btn icon="mdi:code-json" padding="sm sm" flat>
+          <editor-code-block-menu anchor="top right" self="top left" @select="insertCodeBlock" />
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertCodeBlock')
+          }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:table-large-plus" padding="sm sm" flat @click="insertTable">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertTable') }}</w-tooltip>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertTable')
+          }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertTabset') }}</w-tooltip>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertTabset')
+          }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertBlock') }}</w-tooltip>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertBlock')
+          }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:chart-multiline" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertDiagram') }}</w-tooltip>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertDiagram')
+          }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertFootnote') }}</w-tooltip>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertFootnote')
+          }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:cookie-plus" padding="sm sm" @click="notImplemented" flat>
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertEmoji') }}</w-tooltip>
+        <w-btn icon="mdi:emoticon-plus-outline" padding="sm sm" flat>
+          <editor-emoji-menu anchor="top right" self="top left" @select="insertEmoji" />
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertEmoji')
+          }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
-          <w-tooltip anchor="center right" self="center left">{{ t('editor.markup.insertHorizontalBar') }}</w-tooltip>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertHorizontalBar')
+          }}</w-tooltip>
         </w-btn>
         <w-space />
         <span class="editor-markdown-type">Markdown</span>
@@ -72,31 +69,41 @@
         <!-- ------------------------------------------------------- -->
         <div class="editor-markdown-toolbar">
           <w-btn icon="mdi:format-bold" padding="xs sm" flat @click="toggleMarkup({ start: `**` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.bold') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.bold')
+            }}</w-tooltip>
           </w-btn>
           <w-btn
             icon="mdi:format-italic"
             padding="xs sm"
             flat
             @click="toggleMarkup({ start: `*` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.italic') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.italic')
+            }}</w-tooltip>
           </w-btn>
           <w-btn
             icon="mdi:format-strikethrough"
             padding="xs sm"
             flat
             @click="toggleMarkup({ start: `~~` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.strikethrough') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.strikethrough')
+            }}</w-tooltip>
           </w-btn>
           <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.header') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.header')
+            }}</w-tooltip>
             <w-menu auto-close>
               <w-list separator>
                 <w-item v-for="lvl in 6" clickable @click="setHeaderLine(lvl)">
                   <w-item-section side>
                     <w-icon :name="HEADER_ICONS[lvl - 1]" />
                   </w-item-section>
-                  <w-item-section>{{ t('editor.markup.headerLevel', { level: lvl }) }}</w-item-section>
+                  <w-item-section>{{
+                    t('editor.markup.headerLevel', { level: lvl })
+                  }}</w-item-section>
                 </w-item>
               </w-list>
             </w-menu>
@@ -106,26 +113,32 @@
             padding="xs sm"
             flat
             @click="toggleMarkup({ start: `~` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.subscript') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.subscript')
+            }}</w-tooltip>
           </w-btn>
           <w-btn
             icon="mdi:format-superscript"
             padding="xs sm"
             flat
             @click="toggleMarkup({ start: `^` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.superscript') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.superscript')
+            }}</w-tooltip>
           </w-btn>
           <w-btn icon="mdi:alpha-t-box-outline" padding="xs sm" flat>
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.blockquoteAdmonitions') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.blockquoteAdmonitions')
+            }}</w-tooltip>
             <w-menu auto-close>
               <w-list separator>
-                <w-item clickable @click="insertBeforeEachLine({ content: `> `})">
+                <w-item clickable @click="insertBeforeEachLine({ content: `> ` })">
                   <w-item-section side><w-icon name="mdi:format-quote-close" /></w-item-section>
                   <w-item-section>{{ t('editor.markup.blockquote') }}</w-item-section>
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-info}`})">
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-info}` })">
                   <w-item-section side>
                     <w-icon name="mdi:information-box" color="blue-7" />
                   </w-item-section>
@@ -133,7 +146,7 @@
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-success}`})">
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-success}` })">
                   <w-item-section side>
                     <w-icon name="mdi:check-circle" color="positive" />
                   </w-item-section>
@@ -141,7 +154,7 @@
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-warning}`})">
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-warning}` })">
                   <w-item-section side>
                     <w-icon name="mdi:alert-box" color="orange" />
                   </w-item-section>
@@ -149,7 +162,7 @@
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-danger}`})">
+                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-danger}` })">
                   <w-item-section side>
                     <w-icon name="mdi:close-box" color="negative" />
                   </w-item-section>
@@ -162,40 +175,50 @@
             icon="mdi:format-list-bulleted"
             padding="xs sm"
             flat
-            @click="insertBeforeEachLine({ content: `- `})">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.unorderedList') }}</w-tooltip>
+            @click="insertBeforeEachLine({ content: `- ` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.unorderedList')
+            }}</w-tooltip>
           </w-btn>
           <w-btn
             icon="mdi:format-list-numbered"
             padding="xs sm"
             flat
-            @click="insertBeforeEachLine({ content: `1. `})">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.orderedList') }}</w-tooltip>
+            @click="insertBeforeEachLine({ content: `1. ` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.orderedList')
+            }}</w-tooltip>
           </w-btn>
           <w-btn icon="mdi:format-list-checks" padding="xs sm" flat>
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.taskList') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.taskList')
+            }}</w-tooltip>
             <w-menu auto-close>
               <w-list separator>
-                <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] `})">
+                <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] ` })">
                   <w-item-section side><w-icon name="mdi:checkbox-blank-outline" /></w-item-section>
                   <w-item-section>{{ t('editor.markup.taskListUnchecked') }}</w-item-section>
                 </w-item>
-                <w-item clickable @click="insertBeforeEachLine({ content: `- [x] `})">
+                <w-item clickable @click="insertBeforeEachLine({ content: `- [x] ` })">
                   <w-item-section side><w-icon name="mdi:checkbox-outline" /></w-item-section>
                   <w-item-section>{{ t('editor.markup.taskListChecked') }}</w-item-section>
                 </w-item>
               </w-list>
             </w-menu>
           </w-btn>
-          <w-btn icon="mdi:code-tags" padding="xs sm" flat @click='toggleMarkup({ start: "`" })'>
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.inlineCode') }}</w-tooltip>
+          <w-btn icon="mdi:code-tags" padding="xs sm" flat @click="toggleMarkup({ start: '`' })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.inlineCode')
+            }}</w-tooltip>
           </w-btn>
           <w-btn
             icon="mdi:keyboard-variant"
             padding="xs sm"
             flat
             @click="toggleMarkup({ start: `<kbd>`, end: `</kbd>` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.markup.keyboardKey') }}</w-tooltip>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.keyboardKey')
+            }}</w-tooltip>
           </w-btn>
         </div>
         <!-- ------------------------------------------------------- -->
@@ -206,7 +229,9 @@
       <transition name="editor-markdown-preview">
         <div class="editor-markdown-preview" v-if="state.previewShown">
           <div class="editor-markdown-preview-toolbar">
-            <strong><em>{{ t('editor.renderPreview') }}</em></strong>
+            <strong
+              ><em>{{ t('editor.renderPreview') }}</em></strong
+            >
             <w-separator class="ml-4 mr-2" vertical inset />
             <w-btn
               icon="mdi:arrow-vertical-lock"
@@ -214,14 +239,18 @@
               flat
               @click="state.previewScrollSync = !state.previewScrollSync"
               :color="state.previewScrollSync ? `primary` : null">
-              <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.toggleScrollSync') }}</w-tooltip>
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.toggleScrollSync')
+              }}</w-tooltip>
             </w-btn>
             <w-btn
               icon="mdi:eye-off-outline"
               padding="xs sm"
               flat
               @click="state.previewShown = false">
-              <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.togglePreviewPane') }}</w-tooltip>
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.togglePreviewPane')
+              }}</w-tooltip>
             </w-btn>
           </div>
           <!--
@@ -245,7 +274,12 @@
 import { reactive, ref, shallowRef, nextTick, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+
+import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
+import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
+import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
 
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
@@ -258,7 +292,6 @@ import { debounce } from 'es-toolkit/function'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
 import { MarkdownRenderer } from '@/renderers/markdown'
-
 
 // STORES
 
@@ -275,6 +308,8 @@ const { t } = useI18n()
 
 let editor
 let md
+/** Where the paste listener ended up, so it can be taken off the same node. See the note in onMounted. */
+let pasteCaptureNode = null
 const monacoRef = ref(null)
 const editorPreviewContainerRef = ref(null)
 
@@ -290,8 +325,6 @@ const HEADER_ICONS = [
   'mdi:format-header-5',
   'mdi:format-header-6'
 ]
-
-const assetMenuRef = ref(null)
 
 const state = reactive({
   previewShown: true,
@@ -323,9 +356,97 @@ function insertAssetClb(opts) {
   }, 500)
 }
 
+/**
+ * A fenced code block in the chosen language.
+ *
+ * Wraps the selection when there is one — marking a few lines and picking a language reads as "this is
+ * code" — and otherwise opens an empty block with the caret on the line inside it, ready to type.
+ *
+ * The fence has to start a line of its own, so a cursor sitting mid-sentence breaks out of it first.
+ */
+function insertCodeBlock(language) {
+  const model = editor.getModel()
+  const selection = editor.getSelection()
+  const selected = model.getValueInRange(selection)
+  const startLine = model.getLineContent(selection.startLineNumber)
+  const endLine = model.getLineContent(selection.endLineNumber)
+  const before = startLine.slice(0, selection.startColumn - 1).trim().length > 0 ? '\n\n' : ''
+  const after = endLine.slice(selection.endColumn - 1).trim().length > 0 ? '\n\n' : '\n'
+  editor.executeEdits('', [
+    {
+      range: selection,
+      text: `${before}\`\`\`${language}\n${selected}\n\`\`\`${after}`,
+      forceMoveMarkers: true
+    }
+  ])
+  if (!selected) {
+    // -> Onto the empty line between the fences, which is the only place typing makes sense next
+    const openerLine = selection.startLineNumber + (before ? 2 : 0)
+    editor.setPosition({ lineNumber: openerLine + 1, column: 1 })
+  }
+  editor.focus()
+}
+
+/**
+ * The chosen emoji, as its shortcode.
+ *
+ * `:tada:` rather than 🎉, because that is what the renderer replaces — see `renderers/markdown.js`,
+ * where the emoji plugin's tokens are the only ones handed to twemoji. A raw character would survive
+ * into the page and be drawn by whatever font the reader happens to have.
+ */
+function insertEmoji(shortcode) {
+  insertAtCursor({ content: `:${shortcode}:` })
+}
+
 function insertTable() {
   siteStore.$patch({
     overlay: 'TableEditor'
+  })
+}
+
+/**
+ * The table the overlay built, at the cursor.
+ *
+ * Kept on its own line: a table only parses as one when its first row starts a line, so inserting into
+ * the middle of a sentence has to break out of it. The blank line after is what separates it from
+ * whatever the cursor was sitting in front of.
+ */
+function insertTableClb(markdown) {
+  const position = editor.getPosition()
+  const line = editor.getModel().getLineContent(position.lineNumber)
+  const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n\n' : ''
+  const after = line.slice(position.column - 1).trim().length > 0 ? '\n\n' : '\n'
+  insertAtCursor({ content: `${before}${markdown}${after}` })
+}
+
+/**
+ * Insert a link, from the shared picker.
+ *
+ * Whatever is selected becomes the link's text, so marking a phrase and pressing the button reads as
+ * "make this a link". With nothing selected the picker's own answer supplies it: the title of the page
+ * that was chosen, or the URL itself, which is at least something to type over.
+ *
+ * `{target="_blank"}` is markdown-it-attrs syntax, and `target` is one of the three attributes the
+ * stored render is allowed to keep — see `renderers/markdown.js` and `models/rendering.ts`.
+ */
+function insertLink() {
+  dialog({ component: LinkPickerDialog }).onOk(({ href, openInNewTab, title }) => {
+    const selection = editor.getSelection()
+    const selected = editor.getModel().getValueInRange(selection)
+    const label = selected || title || href
+    const attributes = openInNewTab ? '{target="_blank"}' : ''
+    /*
+      One edit for both cases: a selection is replaced, and an empty selection -- which is all a bare
+      cursor is -- inserts. `insertAtCursor` cannot do the first, since it builds its own empty range.
+    */
+    editor.executeEdits('', [
+      {
+        range: selection,
+        text: `[${label}](${href})${attributes}`,
+        forceMoveMarkers: true
+      }
+    ])
+    editor.focus()
   })
 }
 
@@ -531,37 +652,80 @@ function openEditorSettings() {
   siteStore.$patch({ overlay: 'EditorMarkdownConfig' })
 }
 
-async function getAssetFromClipboard() {
-  try {
-    const permission = await navigator.permissions.query({
-      name: 'clipboard-read'
-    })
-    if (permission.state === 'denied') {
-      throw new Error('Not allowed to read clipboard.')
-    }
-    const clipboardContents = await navigator.clipboard.read()
-    let hasValidItem = false
-    for (const item of clipboardContents) {
-      const imageType = item.types.find((t) => t.startsWith('image/'))
-      if (imageType) {
-        hasValidItem = true
-        const blob = await item.getType(imageType)
-        const blobUrl = editorStore.addPendingAsset(blob)
-        insertAtCursor({
-          content: `![](${blobUrl})`
-        })
-      }
-    }
-    if (!hasValidItem) {
-      throw new Error('No supported content found in the Clipboard.')
-    }
-  } catch (err) {
-    return notify({
-      type: 'negative',
-      message: 'Unable to copy from Clipboard',
-      caption: err.message
-    })
+/**
+ * Take files the author brought in — pasted or dropped — and write markdown for them at the cursor.
+ *
+ * Nothing is uploaded here. Each one becomes a pending asset held against a `blob:` URL that the
+ * markdown points at, and `UploadPendingAssetsDialog` sends them on save and rewrites those URLs to
+ * wherever they actually landed. So the editor shows the image immediately and the page never stores a
+ * blob URL.
+ *
+ * An image goes in as one, anything else as a link with its file name for text — a dropped PDF is a
+ * link to a PDF, not a broken picture. The name is the image's alt text as well, which is both what the
+ * handler this replaces did and better than nothing for a reader who cannot see it.
+ */
+function insertFilesAsAssets(files) {
+  const markup = files.map((file) => {
+    const blobUrl = editorStore.addPendingAsset(file)
+    return `${file.type.startsWith('image/') ? '!' : ''}[${file.name}](${blobUrl})`
+  })
+  // -> One per line: two images on the same line is rarely what was meant by dropping two files
+  insertAtCursor({ content: markup.join('\n') })
+}
+
+/** Whether a paste or drop is carrying files, as opposed to text. */
+function hasFiles(transfer) {
+  return (transfer?.files?.length ?? 0) > 0
+}
+
+/*
+  Pasting a file inserts it; pasting anything else is left alone.
+
+  Text wins when both are on the clipboard. Copying from a spreadsheet or a design tool puts a bitmap
+  there ALONGSIDE the text, and an editor that answered those pastes with a screenshot would be
+  infuriating -- so the image is only taken when there is no text to prefer.
+*/
+function onEditorPaste(event) {
+  if (!hasFiles(event.clipboardData)) {
+    return
   }
+  if ((event.clipboardData.getData('text/plain') ?? '').trim().length > 0) {
+    return
+  }
+  /*
+    Taken over completely. `stopPropagation` as well as `preventDefault`, because this runs in capture
+    ABOVE the editor: letting it travel on would hand the same files to Monaco's paste-as feature, which
+    would answer the paste a second time in its own way.
+  */
+  event.preventDefault()
+  event.stopPropagation()
+  insertFilesAsAssets([...event.clipboardData.files])
+}
+
+/*
+  A drop has to be claimed twice: `dragover` is what tells the browser this is a valid target -- without
+  it there is no drop at all, just the browser navigating away to the file -- and `drop` is where it
+  arrives.
+*/
+function onEditorDragOver(event) {
+  if (!hasFiles(event.dataTransfer) && !(event.dataTransfer?.types ?? []).includes('Files')) {
+    return
+  }
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'copy'
+}
+
+function onEditorDrop(event) {
+  if (!hasFiles(event.dataTransfer)) {
+    return
+  }
+  event.preventDefault()
+  // -> Dropped text lands where it was dropped, and so should a file: the cursor moves to meet it
+  const target = editor.getTargetAtClientPoint(event.clientX, event.clientY)
+  if (target?.position) {
+    editor.setPosition(target.position)
+  }
+  insertFilesAsAssets([...event.dataTransfer.files])
 }
 
 function reloadEditorContent() {
@@ -728,22 +892,23 @@ onMounted(async () => {
     }, 500)
   )
 
-  // -> Handle asset drop
-  editor.getContainerDomNode().addEventListener('drop', (ev) => {
-    ev.preventDefault()
-    for (const file of ev.dataTransfer.files) {
-      const blobUrl = editorStore.addPendingAsset(file)
-      if (file.type.startsWith('image')) {
-        insertAtCursor({
-          content: `![${file.name}](${blobUrl})`
-        })
-      } else {
-        insertAtCursor({
-          content: `[${file.name}](${blobUrl})`
-        })
-      }
-    }
-  })
+  /*
+    Files arriving by paste or by drop.
+
+    Paste is CAPTURED on the element above the editor, and that is the whole trick. Monaco's own
+    paste-as feature (`CopyPasteController`) listens in the capture phase on the editor's container and
+    calls `stopImmediatePropagation()` for every paste it claims -- which includes any paste carrying
+    files. A listener on that container or below it, in either phase, is simply never reached. Capture
+    runs outside-in, so one level up goes first and can decide before Monaco sees it.
+
+    The drop half replaces a listener that could not fire either, for a different reason: without
+    `dragover` claiming the target, the browser treats a file dropped on a page as a navigation and
+    opens it, and the drop event never reaches anything here.
+  */
+  pasteCaptureNode = monacoRef.value.parentElement ?? monacoRef.value
+  pasteCaptureNode.addEventListener('paste', onEditorPaste, true)
+  monacoRef.value.addEventListener('dragover', onEditorDragOver)
+  monacoRef.value.addEventListener('drop', onEditorDrop)
 
   // -> Post init
 
@@ -754,6 +919,7 @@ onMounted(async () => {
   })
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
+  EVENT_BUS.on('insertTable', insertTableClb)
   EVENT_BUS.on('openEditorSettings', openEditorSettings)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
 
@@ -792,8 +958,12 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
+  EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('openEditorSettings', openEditorSettings)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
+  pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
+  monacoRef.value?.removeEventListener('dragover', onEditorDragOver)
+  monacoRef.value?.removeEventListener('drop', onEditorDrop)
   if (editor) {
     editor.dispose()
   }
