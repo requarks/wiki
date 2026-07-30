@@ -39,6 +39,32 @@ const quoteStyles = {
   swedish: '””’’'
 }
 
+/**
+ * Whether a link leaves this wiki.
+ *
+ * Resolved against the page's own address, so a relative path, an absolute one and a protocol-relative
+ * URL are all judged the same way -- by the host they end up on. `mailto:`, `tel:` and the rest are not
+ * pages at all, and are left unmarked: they announce themselves by what they are.
+ *
+ * With no document to resolve against -- a render outside a browser -- only an absolute URL can be
+ * judged, and it is judged external; a relative one fails to parse and comes back internal.
+ */
+function isExternalHref(href) {
+  if (!href) {
+    return false
+  }
+  const here = globalThis.location?.href
+  try {
+    const url = new URL(href, here)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return false
+    }
+    return here ? url.origin !== new URL(here).origin : true
+  } catch {
+    return false
+  }
+}
+
 export class MarkdownRenderer {
   constructor(config = {}) {
     this.md = new MarkdownIt({
@@ -172,6 +198,24 @@ export class MarkdownRenderer {
         console.warn(err)
         return tokens[idx].content
       }
+    }
+
+    // --------------------------------
+    // LINK DESTINATIONS
+    // --------------------------------
+
+    /*
+      Where a link goes is decided here, at render time, and recorded as a class -- `is-external-link`
+      -- for the stylesheet to mark. It cannot be decided in CSS: a selector can match on the shape of
+      an href but not compare its host with the wiki's own, which is the whole question.
+
+      The class survives being stored: `models/rendering.ts` keeps `class` on every element.
+    */
+    this.md.renderer.rules.link_open = (tokens, idx, options, env, slf) => {
+      if (isExternalHref(tokens[idx].attrGet('href'))) {
+        tokens[idx].attrJoin('class', 'is-external-link')
+      }
+      return slf.renderToken(tokens, idx, options, env, slf)
     }
 
     // --------------------------------

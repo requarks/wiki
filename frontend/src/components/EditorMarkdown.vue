@@ -224,11 +224,17 @@
               <w-tooltip anchor="top middle" self="bottom middle">{{ t('editor.togglePreviewPane') }}</w-tooltip>
             </w-btn>
           </div>
+          <!--
+            The render goes directly into the element carrying `page-contents`, exactly as the page
+            view does it. The wrapper div this replaces made the headings grandchildren of that
+            element, so content rules written against its direct children -- the page title's rule
+            reaching out to the sidebar -- applied on one surface and not the other. Its `ref` was
+            never read; the scroll-sync and block loading both use the container.
+          -->
           <div
             class="editor-markdown-preview-content page-contents"
-            ref="editorPreviewContainerRef">
-            <div ref="editorPreview" v-html="pageStore.render" />
-          </div>
+            ref="editorPreviewContainerRef"
+            v-html="pageStore.render" />
         </div>
       </transition>
     </div>
@@ -245,6 +251,8 @@ import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+
+import { enhanceRenderedContent } from '@/helpers/renderedContent'
 
 import { debounce } from 'es-toolkit/function'
 import * as monaco from 'monaco-editor'
@@ -514,6 +522,8 @@ function processContent(newContent) {
     for (const block of editorPreviewContainerRef.value.querySelectorAll(':not(:defined)')) {
       commonStore.loadBlocks([block.tagName.toLowerCase()])
     }
+    // -> The render was just replaced, so the copy buttons went with it
+    enhanceRenderedContent(editorPreviewContainerRef.value)
   })
 }
 

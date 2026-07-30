@@ -110,19 +110,53 @@ async function applyTheme() {
   setCssVar('negative', userStore.getAccessibleColor('negative', '#f03a47'))
 
   // -> Highlight.js Theme
-  if (siteStore.theme.codeBlocksTheme) {
-    const desiredHljsTheme = userStore.cvd !== 'none' ? 'github' : siteStore.theme.codeBlocksTheme
+  await applyCodeBlocksTheme()
+}
 
-    const hljsStyleEl = document.querySelector('#hljs-theme')
-    if (hljsStyleEl) {
-      hljsStyleEl.remove()
-    }
+/**
+ * Every highlight.js theme the admin area offers, as loaders that fetch one on demand.
+ *
+ * `?inline` hands back the stylesheet as a STRING rather than injecting it: these have to be scoped to
+ * the page content before they are applied (see below), which cannot be done to a stylesheet the
+ * bundler has already added to the document. `**` covers the `base16/` family, since that is how the
+ * admin's list names half of its options.
+ *
+ * Only the theme in use is ever fetched; the rest sit in the build as assets nobody asks for.
+ */
+const HLJS_THEMES = import.meta.glob('../node_modules/highlight.js/styles/**/*.min.css', {
+  query: '?inline',
+  import: 'default'
+})
 
-    const newHljsStyleEl = document.createElement('style')
-    newHljsStyleEl.id = 'hljs-theme'
-    // newHljsStyleEl.innerHTML = (await import(`../node_modules/highlight.js/styles/${desiredHljsTheme}.css`)).default
-    document.head.appendChild(newHljsStyleEl)
+/**
+ * Paint code blocks in the theme chosen under Admin → Theme.
+ *
+ * The stylesheet is wrapped in `.page-contents { ... }` and applied through CSS nesting, for two
+ * reasons: a highlight.js theme is written as bare `.hljs*` rules that would otherwise reach every
+ * code sample in the interface, and nesting lifts its selectors to the same weight as the fallback
+ * palette in `_page-contents.scss` -- so this one wins on being applied later, which is exactly the
+ * relationship wanted. With no theme chosen, nothing is injected and that fallback is what shows.
+ */
+async function applyCodeBlocksTheme() {
+  document.querySelector('#hljs-theme')?.remove()
+
+  // -> A colour-vision-deficient palette cannot be honoured per theme, so it takes a neutral one
+  const desiredHljsTheme = userStore.cvd !== 'none' ? 'github' : siteStore.theme.codeBlocksTheme
+  if (!desiredHljsTheme) {
+    return
   }
+
+  const load = HLJS_THEMES[`../node_modules/highlight.js/styles/${desiredHljsTheme}.min.css`]
+  if (!load) {
+    // -> A name the admin area offers that highlight.js does not ship; the fallback palette stands in
+    console.warn(`Unknown code blocks theme: ${desiredHljsTheme}`)
+    return
+  }
+
+  const styleEl = document.createElement('style')
+  styleEl.id = 'hljs-theme'
+  styleEl.textContent = `.page-contents {\n${await load()}\n}`
+  document.head.appendChild(styleEl)
 }
 
 // INIT SITE STORE

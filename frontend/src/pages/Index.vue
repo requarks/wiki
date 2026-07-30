@@ -182,6 +182,7 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
+import { enhanceRenderedContent } from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
 
 import { useCommonStore } from '@/stores/common'
@@ -316,6 +317,19 @@ const breadcrumbs = computed(() => [
 ])
 
 // WATCHERS
+
+/*
+  The copy buttons on code blocks are part of the content, so they are re-added whenever the content
+  is. Keyed on the render rather than on the route: it arrives after the page has already mounted, and
+  it is replaced again on every save without the route moving at all.
+*/
+watch(
+  () => pageStore.render,
+  () => {
+    nextTick(() => enhanceRenderedContent(pageContents.value))
+  },
+  { immediate: true }
+)
 
 watch(
   () => route.path,

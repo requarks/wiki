@@ -1,620 +1,1232 @@
-@use 'sass:color';
-@use 'palette';
-@use 'theme';
+/*
+  THE RENDERED PAGE
+  =================
+
+  Everything a page's own markup can produce, and nothing else: every selector in this file is nested
+  under `.page-contents`, which is the only element the render is injected into -- the article column
+  in the page view, and the preview pane in the markdown editor. Both carry that class, so the two
+  cannot drift apart.
+
+  The app's Tailwind base layer strips margins, list markers and heading sizes from every element, so
+  this file is not a set of tweaks over browser defaults: it is the whole typographic system for
+  content, and it has to be, or a rendered page comes out as undifferentiated 14px text.
+
+  Written against what `renderers/markdown.js` actually emits (and what `models/rendering.ts` does to
+  it server-side), which is: heading anchors, `pre.codeblock` with highlight.js token classes and an
+  optional line-number gutter, task lists, footnotes, multi-line tables, KaTeX, `img.uml-diagram` for
+  PlantUML/Kroki, twemoji images, and whatever classes an author attaches through `markdown-it-attrs`
+  (`id`, `class` and `target` are the ones the renderer allows through).
+
+  The measurements follow what the documentation platforms have converged on -- 16px body text, headings
+  at 600 with far more space above than below, ruled h1/h2, tinted code and table headers, a left-ruled
+  quote -- because those conventions are what makes a long page scannable, not because any one of them
+  is copied.
+
+  Colours go through custom properties declared on the root block, for three reasons: dark mode is
+  then one override block rather than a rule per element, an author's own CSS can retint content
+  without rewriting selectors, and the brand colours stay indirected through `--color-primary` so a
+  re-themed site follows.
+*/
 
 .page-contents {
-  color: #424242;
-  font-size: 16px;
+  /* -- Palette ----------------------------------------------------------------- */
 
-  > *:first-child {
-    margin-top: 0;
-  }
+  /* Ink at three strengths: body, secondary (quotes, captions), and incidental (gutters, markers) */
+  --content-ink: #26292e;
+  --content-ink-muted: #5b616b;
+  --content-ink-faint: #8a9099;
+
+  --content-link: var(--color-primary);
+  /* The page's own title, in the site's colour -- see the gradient rule under `h1` */
+  --content-h1: var(--color-primary);
+  /*
+    The rule under it stays the brand colour itself in BOTH themes: the lightening the title's text
+    needs to stay legible would leave the rule washed out, and a 2px band has no legibility problem to
+    solve -- it only has to read as the site's colour.
+  */
+  --content-h1-rule: var(--color-primary);
+
+  /*
+    How far the rule under an h1 reaches back into the padding of whatever is holding the content, so
+    that it starts at the sidebar rather than at the text. Both surfaces pad by 1rem -- the article
+    column's `p-4` and the preview pane's own padding -- and a surface that pads differently overrides
+    this one property rather than the rule.
+  */
+  --content-bleed: 1rem;
+
+  /* Rules: the hairline between table cells and around panels, and a heavier one for a quote's bar */
+  --content-rule: rgba(0, 0, 0, 0.12);
+  --content-rule-strong: rgba(0, 0, 0, 0.26);
+  /*
+    The grey under a section heading. Stronger than `--content-rule`, because it is only at full
+    strength at its left end -- a hairline's weight would leave nothing visible once it starts fading.
+  */
+  --content-h2-rule: rgba(0, 0, 0, 0.42);
+
+  /*
+    Two surfaces. `code` is the panel behind a code block -- opaque, because the preview pane sits on
+    grey and a translucent tint would disappear into it -- and `alt` is the wash behind an inline code
+    span or a table header, translucent so it works on either.
+  */
+  --content-surface-code: #f4f6f8;
+  --content-surface-alt: rgba(0, 0, 0, 0.04);
+
+  --content-mark: #fdf1a0;
+
+  /* Admonition hues: the bar and the wash behind it, per severity */
+  --content-info: #1867c0;
+  --content-info-wash: rgba(24, 103, 192, 0.08);
+  --content-success: #0f7b53;
+  --content-success-wash: rgba(15, 123, 83, 0.08);
+  --content-warning: #a35a00;
+  --content-warning-wash: rgba(163, 90, 0, 0.09);
+  --content-danger: #c02636;
+  --content-danger-wash: rgba(192, 38, 54, 0.08);
+
+  /*
+    Code tokens, after GitHub's syntax themes.
+
+    The FALLBACK, for a site that has chosen no code theme: `App.vue` injects the highlight.js theme
+    picked under Admin → Theme, scoped to this same element, and being injected later it takes
+    precedence over everything below at equal weight. Without either, a code block would render as
+    uncoloured monospace, which is what it did before both halves existed.
+  */
+  --content-code-comment: #6a737d;
+  --content-code-keyword: #cf222e;
+  --content-code-string: #0a3069;
+  --content-code-number: #0550ae;
+  --content-code-title: #7c3aed;
+  --content-code-type: #953800;
+  --content-code-attr: #0550ae;
+  --content-code-meta: #57606a;
+  --content-code-addition: #1a7f37;
+  --content-code-addition-wash: rgba(26, 127, 55, 0.12);
+  --content-code-deletion: #cf222e;
+  --content-code-deletion-wash: rgba(207, 34, 46, 0.12);
+
+  color: var(--content-ink);
+  font-size: 1rem;
+  /*
+    1.6, not the 1.7 the documentation platforms tend to set: at this measure the looser leading read
+    as gappy rather than airy, with the lines of a paragraph no longer holding together as a block.
+  */
+  line-height: 1.6;
+  /* -> A pasted URL or a long identifier wraps rather than widening the whole column */
+  overflow-wrap: break-word;
 
   @at-root .body--dark & {
-    color: #fff;
+    --content-ink: rgba(255, 255, 255, 0.87);
+    --content-ink-muted: rgba(255, 255, 255, 0.62);
+    --content-ink-faint: rgba(255, 255, 255, 0.42);
+
+    /* -> The mid-tone brand blue is too dim on a dark surface; see `--color-primary-light` */
+    --content-link: var(--color-primary-light);
+    --content-h1: var(--color-primary-light);
+
+    --content-rule: rgba(255, 255, 255, 0.16);
+    --content-rule-strong: rgba(255, 255, 255, 0.32);
+    --content-h2-rule: rgba(255, 255, 255, 0.45);
+
+    /* Matches the app's own `dark-4` panel, so code sits a step above the page rather than below it */
+    --content-surface-code: #161b22;
+    --content-surface-alt: rgba(255, 255, 255, 0.07);
+
+    --content-mark: #6b5d13;
+
+    --content-info: #6ab0ff;
+    --content-info-wash: rgba(106, 176, 255, 0.12);
+    --content-success: #4ecf9a;
+    --content-success-wash: rgba(78, 207, 154, 0.12);
+    --content-warning: #f3b661;
+    --content-warning-wash: rgba(243, 182, 97, 0.12);
+    --content-danger: #ff8b8b;
+    --content-danger-wash: rgba(255, 139, 139, 0.12);
+
+    --content-code-comment: #8b949e;
+    --content-code-keyword: #ff7b72;
+    --content-code-string: #a5d6ff;
+    --content-code-number: #79c0ff;
+    --content-code-title: #d2a8ff;
+    --content-code-type: #ffa657;
+    --content-code-attr: #79c0ff;
+    --content-code-meta: #8b949e;
+    --content-code-addition: #56d364;
+    --content-code-addition-wash: rgba(46, 160, 67, 0.15);
+    --content-code-deletion: #ffa198;
+    --content-code-deletion-wash: rgba(248, 81, 73, 0.15);
   }
 
-  // ---------------------------------
-  // LINKS
-  // ---------------------------------
-
-  a {
-    color: var(--q-primary);
-
-    &.is-internal-link.is-invalid-page {
-      color: palette.$red-8;
-
-      @at-root .body--dark & {
-        color: palette.$red-2;
-      }
-    }
-
-    &.is-external-link {
-      padding-right: 3px;
-
-      &::after {
-        font-family: 'Line Awesome Free';
-        font-size: 24px/1;
-        padding-left: 3px;
-        display: inline-block;
-        content: '\f35d';
-        color: palette.$grey-5;
-        text-decoration: none;
-      }
-    }
-
-    @at-root .body--dark & {
-      color: palette.$blue-4;
-    }
+  /* -> The page's own margins are the container's business; the first and last block give theirs up */
+  > :first-child {
+    margin-top: 0;
+  }
+  > :last-child {
+    margin-bottom: 0;
   }
 
-  // ---------------------------------
-  // HEADERS
-  // ---------------------------------
+  // ---------------------------------------------------------------------------
+  // HEADINGS
+  // ---------------------------------------------------------------------------
 
+  /*
+    Space belongs ABOVE a heading, several times what sits below it: that asymmetry is what visibly
+    binds a heading to its own section instead of leaving it floating between two.
+
+    The margins are in `em`, so each level's gap scales with its own size -- which is what keeps the
+    run of them descending (h1 40px, h2 34px, h3 30px, and so on down) rather than a deeper heading
+    ending up with more room above it than the one it sits under.
+  */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    padding: 0;
-    margin: 0;
-    font-weight: 400;
+    margin: 1.5em 0 0.6em;
+    font-weight: 600;
+    line-height: 1.3;
+    /*
+      Anchors are what the contents sidebar and every `#heading` link aim at, and the article scrolls
+      in its own column inside a fixed shell -- so a heading brought into view needs to stop clear of
+      the column's top edge rather than flush against it.
+    */
+    scroll-margin-top: 1.25rem;
+  }
+
+  /*
+    A rule under the two top levels, which is what makes the sections of a long page findable. Both
+    fade out to the right; the title's is the site's colour and the section's a grey, and the title's
+    is the thicker of the two, so the two levels stay apart at a glance.
+
+    Drawn as a pseudo-element rather than a border, because a border can be neither a gradient nor
+    wider than its own box -- and the title's is both. Each level supplies its own weight and colour
+    through the two properties below, so the mechanism is stated once.
+  */
+  h1,
+  h2 {
     position: relative;
-    line-height: normal;
+    /* -> Close under the text: the rule belongs to the heading, not to the space after it */
+    padding-bottom: 0.1em;
 
-    &:first-child {
-      padding-top: 0;
-    }
-
-    &:hover {
-      .toc-anchor {
-        display: block;
-      }
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      /* -> Only a top-level title reaches past the text column; see the override below */
+      left: 0;
+      height: var(--content-heading-rule-weight);
+      background-image: linear-gradient(to right, var(--content-heading-rule-color), transparent);
     }
   }
 
   h1 {
-    font-size: 3em;
-    font-weight: 500;
-    padding: 12px 0;
-    // color: var(--q-primary);
-  }
-  h2 {
-    font-size: 2.4em;
-    padding: 12px 0;
-  }
-  h3 {
+    --content-heading-rule-weight: 2px;
+    --content-heading-rule-color: var(--content-h1-rule);
+
+    /* -> Less than the 1.5em its size would give it, which at 32px was a gap of over 50px */
+    margin-top: 1.25em;
+    color: var(--content-h1);
     font-size: 2em;
-    padding: 12px 0;
+    letter-spacing: -0.015em;
   }
-  h4 {
-    font-size: 1.75em;
-  }
-  h5 {
+
+  h2 {
+    --content-heading-rule-weight: 1px;
+    --content-heading-rule-color: var(--content-h2-rule);
+
+    /* -> A shade under the shared 1.5em, so it stays clear of the h1 above it in the ramp */
+    margin-top: 1.4em;
     font-size: 1.5em;
+    letter-spacing: -0.01em;
   }
-  h6 {
+
+  /*
+    The title's rule alone starts at the sidebar rather than at the text, reaching `--content-bleed`
+    back through the container's padding -- and only when the title is the page's own, not one nested
+    in a quote or a list item.
+  */
+  > h1::after {
+    left: calc(-1 * var(--content-bleed));
+  }
+
+  h3 {
     font-size: 1.25em;
   }
+  h4 {
+    font-size: 1.0625em;
+  }
+  h5 {
+    font-size: 1em;
+  }
+  /*
+    The pilcrow that copies a link to a heading, added by `helpers/renderedContent.js`.
 
-  * + h1 {
-    margin-top: 0.5em;
-    padding-top: 0.5em;
-    // border-top: 2px solid var(--q-primary);
+    At the far right of the heading's box rather than trailing its text: a marker that moves with the
+    words is hard to aim at and drags the eye along the line, where a fixed right edge is somewhere the
+    pointer can go straight to. The heading reserves its width as padding, which the button then sits
+    in, so a long heading's text cannot run underneath it.
+
+    Hidden with `opacity` so it stays reachable by keyboard, and revealed on focus as well as on hover.
+  */
+  h1[data-heading-anchor],
+  h2[data-heading-anchor],
+  h3[data-heading-anchor],
+  h4[data-heading-anchor],
+  h5[data-heading-anchor],
+  h6[data-heading-anchor] {
     position: relative;
+    /* -> In `rem` to match the button it reserves room for, which no longer scales with the heading */
+    padding-right: 2.25rem;
+  }
 
-    &::before {
+  .heading-anchor {
+    position: absolute;
+    /*
+      Centred on the heading's own box, which for a heading on one line -- nearly all of them -- is the
+      middle of its text. Aligning to the first line instead needs that line's height, and neither unit
+      that looks like it would give it does: `em` and `lh` in here both resolve against the BUTTON, so
+      they follow the glyph's size rather than the heading's.
+    */
+    top: 50%;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /*
+      Sized in `rem`, so the control is the same on an h1 as on an h6: scaling it with the heading made
+      it a heavy mark on a title and an unaimable one further down.
+    */
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--content-ink-faint);
+    /* -> The pilcrow reads small for its point size, so it is set larger than the body text, not smaller */
+    font-size: 1.375rem;
+    font-weight: 400;
+    /* -> The heading's own tracking would space a single glyph away from its box */
+    letter-spacing: normal;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-50%);
+    transition:
+      opacity 0.15s var(--ease-standard),
+      color 0.15s var(--ease-standard);
+
+    &:hover {
+      color: var(--content-link);
+    }
+
+    &.is-copied {
+      color: var(--content-success);
+      opacity: 1;
+    }
+
+    /*
+      Its own tooltip, since the pilcrow says nothing on its own about what pressing it does. Built as a
+      pseudo-element rather than with `WTooltip`, which is a component and so out of reach of a control
+      assembled in script -- the look is copied from it. It opens to the LEFT because the button sits at
+      the right edge of the column, where a bubble would otherwise be clipped by the scroll container.
+    */
+    &::after {
+      content: attr(data-tooltip);
       position: absolute;
-      width: 100%;
-      height: 1px;
-      content: ' ';
-      background: linear-gradient(to right, var(--q-primary), transparent);
-      top: 0;
-      left: -16px;
+      top: 50%;
+      right: calc(100% + 4px);
+      padding: 0.125rem 0.5rem;
+      border-radius: 4px;
+      background-color: rgb(0 0 0 / 0.85);
+      color: #fff;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(-50%);
+      transition: opacity 0.15s var(--ease-standard);
+      pointer-events: none;
+    }
+
+    &:hover::after,
+    &:focus-visible::after {
+      opacity: 1;
     }
   }
 
-  *:not(h1) + h2 {
-    margin-top: 0.5em;
-    padding-top: 0.5em;
-    border-top: 1px dotted #ccc;
+  [data-heading-anchor]:hover > .heading-anchor,
+  .heading-anchor:focus-visible {
+    opacity: 1;
   }
 
-  .toc-anchor {
-    display: none;
-    position: absolute;
-    right: 1rem;
-    bottom: 0.5rem;
-    font-size: 1.25rem;
-    text-decoration: none;
-    color: #666;
+  @media (prefers-reduced-motion: reduce) {
+    .heading-anchor {
+      transition-duration: 0.01ms;
+    }
   }
 
-  // ---------------------------------
-  // PARAGRAPHS
-  // ---------------------------------
+  /* The last level reads as a label rather than a title; there is no room left to go smaller */
+  h6 {
+    font-size: 0.875em;
+    color: var(--content-ink-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  // ---------------------------------------------------------------------------
+  // TEXT
+  // ---------------------------------------------------------------------------
 
   p {
-    padding: 0;
-    margin: 0.3em 0 1em 0;
+    margin: 0 0 1.15em;
   }
 
-  // ---------------------------------
-  // BLOCKQUOTES
-  // ---------------------------------
+  strong,
+  b {
+    font-weight: 600;
+  }
 
-  blockquote {
-    padding: 1em 1em 0.3em 1em;
-    background-color: palette.$blue-grey-1;
-    border-left: 55px solid palette.$blue-grey-5;
-    border-radius: 0.5rem;
-    margin: 1rem 0;
-    position: relative;
+  small {
+    font-size: 0.875em;
+    color: var(--content-ink-muted);
+  }
 
-    @at-root .body--dark & {
-      background-color: palette.$blue-grey-9;
+  mark {
+    padding: 0.05em 0.15em;
+    border-radius: 2px;
+    background-color: var(--content-mark);
+    color: inherit;
+  }
+
+  del {
+    color: var(--content-ink-muted);
+  }
+
+  ins,
+  u {
+    text-decoration-color: var(--content-rule-strong);
+    text-underline-offset: 2px;
+  }
+
+  /* Marked up by the renderer's `abbr` plugin: the definition is in the title, so say it is there */
+  abbr[title] {
+    text-decoration: underline dotted;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    cursor: help;
+  }
+
+  sub,
+  sup {
+    font-size: 0.75em;
+    line-height: 0;
+  }
+
+  /* Inserted by the editor's keyboard-key button, and by hand in HTML */
+  kbd {
+    display: inline-block;
+    min-width: 1.6em;
+    padding: 0.1em 0.4em;
+    border: 1px solid var(--content-rule-strong);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background-color: var(--content-surface-alt);
+    color: var(--content-ink);
+    font-family: var(--font-mono);
+    font-size: 0.8125em;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  // ---------------------------------------------------------------------------
+  // LINKS
+  // ---------------------------------------------------------------------------
+
+  /*
+    The same `--color-primary` the page title is drawn in -- literally the same token, resolving to the
+    same value in both themes. What made a link look like a paler blue than the title is stroke weight:
+    the title is 600 at 32px and a link is body text, so the same hue covers far fewer pixels and lets
+    more of the page through. A medium weight puts the two back on equal footing without touching the
+    colour, which is what keeps a re-themed site's links and titles in step.
+  */
+  a {
+    color: var(--content-link);
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
     }
 
-    &::before {
+    /*
+      A link that leaves the wiki says so.
+
+      Marked with the class the renderer attaches (see `renderers/markdown.js`), because whether an href
+      is off-site is a question about its host, which no selector can ask. The mark is a masked SVG so
+      it takes the link's own colour and needs no icon font -- the app ships none.
+    */
+    &.is-external-link::after {
+      content: '';
       display: inline-block;
-      font:
-        normal normal normal 24px/1 'Material Design Icons',
-        sans-serif;
-      position: absolute;
-      margin-top: -12px;
-      top: 50%;
-      left: -38px;
-      color: rgba(255, 255, 255, 0.7);
-      content: '\F0757';
+      /* -> Sized in `em`, so it keeps its proportion to the words wherever the link sits */
+      width: 0.8em;
+      height: 0.8em;
+      margin-left: 0.25em;
+      background-color: currentColor;
+      /* -> Subordinate to the words: a marker, not a second link */
+      opacity: 0.7;
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 3v2h3.59l-9.83 9.83l1.41 1.41L19 6.41V10h2V3m-2 16H5V5h7V3H5c-1.11 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2z'/%3E%3C/svg%3E");
+      mask-repeat: no-repeat;
+      mask-size: contain;
+      vertical-align: baseline;
     }
 
-    > p:first-child .emoji {
-      margin-right: 0.5rem;
-    }
-
-    &.valign-center > p {
-      display: flex;
-      align-items: center;
-    }
-
-    &.is-info {
-      background-color: palette.$blue-1;
-      border-color: palette.$blue-3;
-      color: palette.$blue-9;
-
-      &::before {
-        content: '\F02FC';
-      }
-
-      code {
-        background-color: palette.$blue-1;
-        color: palette.$blue-8;
-      }
-
-      @at-root .body--dark & {
-        background-color: palette.$blue-9;
-        color: palette.$blue-5;
-        border-color: palette.$blue-5;
-      }
-    }
-    &.is-warning {
-      background-color: palette.$orange-1;
-      border-color: palette.$orange-3;
-      color: color.adjust(palette.$orange-9, $lightness: -10%);
-
-      &::before {
-        content: '\F0026';
-      }
-
-      code {
-        background-color: palette.$orange-1;
-        color: palette.$orange-8;
-      }
-
-      @at-root .body--dark & {
-        background-color: color.adjust(palette.$orange-9, $lightness: -5%);
-        color: palette.$orange-1;
-        border-color: palette.$orange-5;
-        box-shadow: 0 0 2px 0 palette.$grey-9;
-      }
-    }
-    &.is-danger {
-      background-color: palette.$red-1;
-      border-color: palette.$red-3;
-      color: palette.$red-9;
-
-      &::before {
-        content: '\F0159';
-      }
-
-      code {
-        background-color: palette.$red-1;
-        color: palette.$red-8;
-      }
-
-      @at-root .body--dark & {
-        background-color: palette.$red-9;
-        color: palette.$red-1;
-        border-color: palette.$red-5;
-      }
-    }
-    &.is-success {
-      background-color: palette.$green-1;
-      border-color: palette.$green-3;
-      color: palette.$green-9;
-
-      &::before {
-        content: '\F0E1E';
-      }
-
-      code {
-        background-color: palette.$green-1;
-        color: palette.$green-8;
-      }
-
-      @at-root .body--dark & {
-        background-color: palette.$green-9;
-        color: palette.$green-5;
-        border-color: palette.$green-5;
-      }
-    }
-
-    .codeblock > code {
-      background-color: inherit;
+    /* -> A link wrapping code keeps the link's colour, not the code span's */
+    code {
       color: inherit;
     }
   }
 
-  // ---------------------------------
+  // ---------------------------------------------------------------------------
   // LISTS
-  // ---------------------------------
+  // ---------------------------------------------------------------------------
 
-  ol,
-  ul:not(.tabset-tabs) {
-    width: 100%;
-
-    li > p {
-      &:first-child {
-        margin-top: 0;
-      }
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    @at-root .is-rtl & {
-      padding-left: 0;
-      padding-right: 1em;
-    }
-
-    li > ul,
-    li > ol {
-      padding-top: 0.5rem;
-      padding-left: 1em;
-
-      @at-root .is-rtl & {
-        padding-left: 0;
-        padding-right: 1em;
-      }
-    }
-
-    li + li {
-      margin-top: 0.5rem;
-    }
-
-    &.links-list {
-      padding-left: 0;
-      list-style-type: none;
-
-      @at-root .is-rtl & {
-        padding-right: 0;
-      }
-
-      li {
-        background-color: palette.$grey-1;
-        background-image: linear-gradient(to bottom, #fff, palette.$grey-1);
-        border-right: 1px solid palette.$grey-3;
-        border-bottom: 1px solid palette.$grey-3;
-        border-left: 5px solid palette.$grey-4;
-        box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
-        padding: 1rem;
-        border-radius: 5px;
-        font-weight: 500;
-
-        @at-root .is-rtl & {
-          border-left-width: 1px;
-          border-right-width: 5px;
-        }
-
-        &:hover {
-          background-image: linear-gradient(
-            to bottom,
-            #fff,
-            color.adjust(palette.$blue-1, $lightness: 4%)
-          );
-          border-left-color: palette.$blue-5;
-          cursor: pointer;
-
-          @at-root .is-rtl & {
-            border-left-color: palette.$grey-3;
-            border-right-width: palette.$blue-5;
-          }
-        }
-
-        &::before {
-          content: '';
-          display: none;
-        }
-
-        > a {
-          display: block;
-          text-decoration: none;
-          margin: -1rem;
-          padding: 1rem;
-
-          > em {
-            font-weight: 400;
-            font-style: normal;
-            color: palette.$grey-7;
-            display: inline-block;
-            padding-left: 0.5rem;
-            border-left: 1px solid palette.$grey-4;
-            margin-left: 0.5rem;
-
-            &.is-block {
-              display: block;
-              padding-left: 0;
-              margin-left: 0;
-              border-left: none;
-            }
-          }
-        }
-
-        > em {
-          font-weight: 400;
-          font-style: normal;
-        }
-
-        @at-root .body--dark & {
-          background-color: palette.$grey-1;
-          background-image: linear-gradient(
-            to bottom,
-            color.adjust(palette.$grey-9, $lightness: 5%),
-            palette.$grey-9
-          );
-          border-right: 1px solid palette.$grey-9;
-          border-bottom: 1px solid palette.$grey-9;
-          border-left: 5px solid palette.$grey-7;
-          box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.1);
-
-          @at-root .body--dark.is-rtl & {
-            border-left-width: 1px;
-            border-right-width: 5px;
-          }
-
-          &:hover {
-            background-image: linear-gradient(
-              to bottom,
-              color.adjust(palette.$grey-9, $lightness: 2%),
-              color.adjust(palette.$grey-9, $lightness: -3%)
-            );
-            border-left-color: mc('indigo', '300');
-            cursor: pointer;
-
-            @at-root .body--dark.is-rtl & {
-              border-left-color: palette.$grey-9;
-              border-right-width: mc('indigo', '300');
-            }
-          }
-        }
-      }
-    }
-
-    &.grid-list {
-      margin: 1rem 0 0 0;
-      background-color: #fff;
-      border: 1px solid palette.$grey-3;
-      padding: 1px;
-      display: inline-block;
-      list-style-type: none;
-
-      @at-root .body--dark & {
-        background-color: #000;
-        border: 1px solid mc('grey', '800');
-      }
-
-      li {
-        background-color: palette.$grey-1;
-        padding: 0.6rem 1rem;
-        display: block;
-
-        &:nth-child(odd) {
-          background-color: mc('grey', '100');
-        }
-
-        & + li {
-          margin-top: 0;
-        }
-
-        &::before {
-          content: '';
-          display: none;
-        }
-
-        @at-root .body--dark & {
-          background-color: palette.$grey-9;
-
-          &:nth-child(odd) {
-            background-color: color.adjust(palette.$grey-9, $lightness: -5%);
-          }
-        }
-      }
-    }
+  ul,
+  ol {
+    margin: 0 0 1.15em;
+    padding-left: 1.6em;
   }
 
-  ul:not(.tabset-tabs):not(.contains-task-list) {
+  ul {
+    list-style: disc;
+  }
+  ol {
+    list-style: decimal;
+  }
+
+  /* Depth is legible from the marker as well as the indent, as an outline should be */
+  ul ul {
+    list-style: circle;
+  }
+  ul ul ul {
     list-style: square;
   }
-  ol,
-  ul:not(.tabset-tabs) {
-    > li {
-      position: relative;
-      > p {
-        display: inline-block;
-        vertical-align: top;
-        padding-top: 0;
+  ol ol {
+    list-style: lower-alpha;
+  }
+  ol ol ol {
+    list-style: lower-roman;
+  }
+
+  li {
+    margin-top: 0.35em;
+
+    &::marker {
+      color: var(--content-ink-faint);
+    }
+
+    /* A nested list belongs to the item above it, so it sits closer than a sibling item does */
+    > ul,
+    > ol {
+      margin: 0.35em 0 0;
+    }
+
+    /*
+      A one-paragraph item is tight against its marker; a multi-paragraph item spaces its own
+      paragraphs. Markdown produces either shape depending on whether the list is "loose".
+    */
+    > p {
+      margin: 0;
+
+      + p {
+        margin-top: 0.6em;
       }
     }
   }
 
-  // ---------------------------------
-  // TASK LISTS
-  // ---------------------------------
-
+  /*
+    Task lists lose their markers: the checkbox IS the marker. The box is the renderer's own disabled
+    input, so it is coloured rather than replaced -- `accent-color` is all that takes, and it needs no
+    icon font, which is what the treatment this replaces depended on.
+  */
   .contains-task-list {
-    padding-left: 1em;
-  }
-
-  .task-list-item {
-    position: relative;
-    list-style-type: none;
-
-    &-checkbox[disabled] {
-      width: 1.1rem;
-      height: 1.1rem;
-      top: 2px;
-      position: relative;
-      margin-right: 0.4em;
-      background-color: theme.$dark-5;
-      border-width: 0;
-
-      &::after {
-        position: absolute;
-        left: 0;
-        top: 0;
-        font-family: 'Material Design Icons';
-        font-size: 1.25em;
-        font-weight: normal;
-        content: '\F0131';
-        color: palette.$grey-10;
-        display: block;
-        border: none;
-        background-color: #fff;
-        line-height: 1em;
-        cursor: default;
-
-        @at-root .body--dark & {
-          color: #fff;
-          background-color: theme.$dark-6;
-        }
-      }
-
-      &[checked]::after {
-        content: '\F0C52';
-      }
-    }
+    padding-left: 0;
+    list-style: none;
 
     .contains-task-list {
-      padding: 0.5rem 0 0 1.5rem;
+      padding-left: 1.6em;
     }
   }
 
-  // ---------------------------------
-  // CODE
-  // ---------------------------------
+  /*
+    Laid out inline rather than as a flex row: a task item can contain a nested list, and as a flex
+    child that list would sit BESIDE the text instead of under it.
+  */
+  .task-list-item-checkbox {
+    width: 1em;
+    height: 1em;
+    margin: 0 0.5em 0 0;
+    accent-color: var(--color-primary);
+    /* -> Disabled by the renderer, so it must not read as something to try to click */
+    cursor: default;
+    opacity: 1;
+    vertical-align: -0.1em;
+  }
 
-  // code {
-  //   background-color: mc('indigo', '50');
-  //   padding: 0 5px;
-  //   color: mc('indigo', '800');
-  //   font-family: 'Roboto Mono', monospace;
-  //   font-weight: normal;
-  //   font-size: 1rem;
-  //   box-shadow: none;
+  /*
+    The renderer leaves the raw marker behind the checkbox -- `<input><span>x</span> text` -- so the
+    box would otherwise be followed by a literal "x" or a stray space. The box says the same thing.
+  */
+  .task-list-item > .task-list-item-checkbox + span {
+    display: none;
+  }
 
-  //   &::before, &::after {
-  //     display: none;
-  //   }
+  // ---------------------------------------------------------------------------
+  // QUOTES AND ADMONITIONS
+  // ---------------------------------------------------------------------------
 
-  //   @at-root .theme--dark & {
-  //     background-color: color.adjust(mc('grey', '900'), $lightness: -5%);
-  //     color: mc('indigo', '100');
-  //   }
-  // }
+  /*
+    A quote is a bar and a colour change, nothing more -- a box would compete with the code blocks and
+    admonitions that are meant to stand out.
+  */
+  blockquote {
+    margin: 1.5em 0;
+    padding: 0.15em 0 0.15em 1.15em;
+    border-left: 3px solid var(--content-rule-strong);
+    color: var(--content-ink-muted);
 
-  pre.codeblock {
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    box-shadow: initial;
-    padding: 1rem;
-    margin: 1rem 0;
-    overflow: auto;
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
 
-    > code {
-      // background-color: transparent;
-      padding: 0;
-      // color: #FFF;
-      box-shadow: initial;
-      display: block;
-      font-size: 0.85rem;
-      font-family: 'Roboto Mono', monospace;
+  /*
+    Admonitions, from `{.is-info}` and friends on a blockquote.
 
-      &:after,
-      &:before {
-        content: initial;
-        letter-spacing: initial;
+    A wash, a heavier bar and an icon: colour alone would leave the four kinds indistinguishable to a
+    reader who cannot separate the hues, and the icon is a masked SVG rather than a glyph so it needs
+    no webfont -- the app dropped those, which is why the markers here used to render as tofu.
+  */
+  /*
+    Matched on the quote itself and on a quote CONTAINING the class, because where the class lands
+    depends on how it was attached: raw HTML puts it on the blockquote, while an attribute written in
+    markdown attaches to whichever node the plugin resolves it against -- often the paragraph inside.
+  */
+  blockquote {
+    &.is-info,
+    &:has(> .is-info),
+    &.is-success,
+    &:has(> .is-success),
+    &.is-warning,
+    &:has(> .is-warning),
+    &.is-danger,
+    &:has(> .is-danger) {
+      position: relative;
+      padding: 0.9em 1.1em 0.9em 3.1em;
+      border-left-width: 4px;
+      border-radius: 0 6px 6px 0;
+      color: var(--content-ink);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 1em;
+        left: 1.1em;
+        width: 1.25em;
+        height: 1.25em;
+        background-color: currentColor;
+        mask-repeat: no-repeat;
+        mask-size: contain;
+      }
+
+      /* -> The icon takes the severity's colour; the prose stays at full contrast to read well */
+      > :last-child {
+        margin-bottom: 0;
+      }
+
+      code {
+        background-color: var(--content-surface-alt);
       }
     }
 
-    &.line-numbers {
-      counter-reset: linenumber;
-      padding-left: 3rem;
+    &.is-info,
+    &:has(> .is-info) {
+      border-left-color: var(--content-info);
+      background-color: var(--content-info-wash);
 
-      > code {
-        position: relative;
-        white-space: inherit;
+      &::before {
+        color: var(--content-info);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 9h-2V7h2m0 10h-2v-6h2m-1-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2'/%3E%3C/svg%3E");
       }
+    }
 
-      .line-numbers-rows {
-        position: absolute;
-        pointer-events: none;
-        top: 0;
-        font-size: 100%;
-        left: -3.8em;
-        width: 3em;
-        letter-spacing: -1px;
-        border-right: 1px solid #999;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        user-select: none;
+    &.is-success,
+    &:has(> .is-success) {
+      border-left-color: var(--content-success);
+      background-color: var(--content-success-wash);
 
-        & > span {
+      &::before {
+        color: var(--content-success);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-2 15l-5-5l1.41-1.41L10 14.17l7.59-7.59L19 8z'/%3E%3C/svg%3E");
+      }
+    }
+
+    &.is-warning,
+    &:has(> .is-warning) {
+      border-left-color: var(--content-warning);
+      background-color: var(--content-warning-wash);
+
+      &::before {
+        color: var(--content-warning);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 14h-2V9h2m0 9h-2v-2h2M1 21h22L12 2z'/%3E%3C/svg%3E");
+      }
+    }
+
+    &.is-danger,
+    &:has(> .is-danger) {
+      border-left-color: var(--content-danger);
+      background-color: var(--content-danger-wash);
+
+      &::before {
+        color: var(--content-danger);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-3.4 14L12 13.4L8.4 17L7 15.6l3.6-3.6L7 8.4L8.4 7l3.6 3.6L15.6 7L17 8.4L13.4 12l3.6 3.6z'/%3E%3C/svg%3E");
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // CODE
+  // ---------------------------------------------------------------------------
+
+  /* An inline span is a wash and a size step down -- 0.875em, so it sits on the text's own baseline */
+  code {
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    background-color: var(--content-surface-alt);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+  }
+
+  /* A heading's code is already emphasised; a wash inside one only muddies it */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    code {
+      padding: 0;
+      background: none;
+      font-size: 0.9em;
+    }
+
+    /* -> A link in a heading takes the heading's weight; 500 inside 600 would read as a dip */
+    a {
+      font-weight: inherit;
+    }
+  }
+
+  /*
+    Every preformatted block, whether the renderer produced it or an author wrote the `<pre>` by hand.
+    It keeps its border in both themes: the preview pane in the editor sits on grey, where a tinted
+    panel with no edge would dissolve into the page.
+  */
+  pre {
+    margin: 1.5em 0;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--content-rule);
+    border-radius: 8px;
+    background-color: var(--content-surface-code);
+    color: var(--content-ink);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    /* -> Tracks the body's leading; code at 13px needs a little more of it, not much */
+    line-height: 1.55;
+    /* -> Code does not wrap: a wrapped line is a different line, and indentation stops meaning anything */
+    overflow-x: auto;
+    tab-size: 2;
+
+    /* -> The panel is the block's own; the code inside it drops the inline span's wash and padding */
+    > code {
+      display: block;
+      padding: 0;
+      border-radius: 0;
+      background: none;
+      color: inherit;
+      font-size: inherit;
+    }
+  }
+
+  /*
+    The copy button, added to each block by `helpers/renderedContent.js`.
+
+    Out of the way until the pointer is over the block, and revealed by keyboard focus as well -- it
+    stays in the tab order the whole time, so `opacity` rather than `visibility` is what hides it: a
+    reader who cannot use a pointer would otherwise have no way to reach it at all.
+  */
+  pre.codeblock[data-code-copy] {
+    position: relative;
+  }
+
+  /*
+    The button takes its colours from the block it sits on, not from the site's theme.
+
+    `inherit` is all it takes, and it needs no filter: a highlight.js theme paints `.hljs`, which is the
+    `pre` itself, so the panel's colour and its ink are already on this button's parent -- dark panel,
+    light icon; light panel, dark icon; and a mid-tone theme handled as correctly as either. Inverting
+    what is behind the button (`backdrop-filter: invert()`) could only ever approximate that, and would
+    hue-shift anything that is not near-black or near-white.
+
+    That also means the code theme and the site theme can disagree freely -- a dark code theme on a
+    light page keeps a dark button -- which is what makes it read as part of the block.
+  */
+  .code-copy {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    /* -> Derived from the block's ink, so the edge shows on a panel of any colour */
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-radius: 5px;
+    background-color: inherit;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+      opacity 0.15s var(--ease-standard),
+      box-shadow 0.15s var(--ease-standard);
+
+    /*
+      Hover lifts it off the panel with a wash of the panel's own ink, laid inside the box: a second
+      background colour would have to be a fixed value, and any fixed value is wrong for some theme.
+    */
+    &:hover {
+      box-shadow: inset 0 0 0 2rem color-mix(in srgb, currentColor 12%, transparent);
+    }
+
+    /* -> Mixed toward the panel's ink rather than a flat green, so it stays legible on any theme */
+    &.is-copied {
+      color: color-mix(in srgb, #2ea043 70%, currentColor);
+      opacity: 1;
+    }
+  }
+
+  pre.codeblock:hover > .code-copy,
+  .code-copy:focus-visible {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .code-copy {
+      transition-duration: 0.01ms;
+    }
+  }
+
+  /*
+    The line-number gutter, for a block of more than one line. The renderer emits one empty <span> per
+    line inside `.line-numbers-rows`; a counter turns those into numbers, so the digits are never part
+    of the text and a copied selection stays clean.
+  */
+  pre.codeblock.line-numbers {
+    position: relative;
+    padding-left: 3.6rem;
+    counter-reset: codeline;
+
+    > code {
+      position: relative;
+    }
+
+    .line-numbers-rows {
+      position: absolute;
+      top: 0;
+      left: -2.5rem;
+      width: 2rem;
+      border-right: 1px solid var(--content-rule);
+      user-select: none;
+      pointer-events: none;
+
+      > span {
+        display: block;
+        counter-increment: codeline;
+
+        &::before {
+          content: counter(codeline);
           display: block;
-          counter-increment: linenumber;
-
-          &:before {
-            content: counter(linenumber);
-            color: #999;
-            display: block;
-            padding-right: 0.8em;
-            text-align: right;
-          }
+          padding-right: 0.7em;
+          color: var(--content-ink-faint);
+          text-align: right;
         }
       }
     }
   }
 
-  // ---------------------------------
-  // LEGACY
-  // ---------------------------------
+  /*
+    Diagram sources -- a mermaid or plantuml fence, or a base64 `diagram` block -- reach the page as
+    code, and are drawn later or not at all. A quiet dashed panel says "this is a diagram that has not
+    been drawn" rather than pretending to be a code sample.
+  */
+  pre.codeblock-mermaid,
+  pre.codeblock-plantuml,
+  pre.diagram {
+    border-style: dashed;
+    border-color: var(--content-rule-strong);
+    background-color: var(--content-surface-alt);
+    color: var(--content-ink-muted);
+  }
 
-  .align-abstopright {
-    width: 100px;
-    max-height: 100px;
-    border: 2px dashed palette.$red;
-    border-radius: 5px;
-    padding: 5px;
+  /* -- highlight.js tokens ------------------------------------------------------ */
+
+  .hljs-comment,
+  .hljs-quote {
+    color: var(--content-code-comment);
+    font-style: italic;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-doctag,
+  .hljs-name,
+  .hljs-subst {
+    color: var(--content-code-keyword);
+  }
+
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-template-tag,
+  .hljs-template-variable,
+  .hljs-addition {
+    color: var(--content-code-string);
+  }
+
+  .hljs-number,
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-link {
+    color: var(--content-code-number);
+  }
+
+  .hljs-title,
+  .hljs-section,
+  .hljs-title.function_,
+  .hljs-selector-id {
+    color: var(--content-code-title);
+  }
+
+  .hljs-type,
+  .hljs-class .hljs-title,
+  .hljs-title.class_,
+  .hljs-built_in,
+  .hljs-builtin-name,
+  .hljs-params {
+    color: var(--content-code-type);
+  }
+
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-variable,
+  .hljs-selector-attr,
+  .hljs-selector-class,
+  .hljs-selector-pseudo {
+    color: var(--content-code-attr);
+  }
+
+  .hljs-meta,
+  .hljs-comment .hljs-doctag,
+  .hljs-tag {
+    color: var(--content-code-meta);
+  }
+
+  /* A diff's added and removed lines are marked by the line, not by the token */
+  .hljs-addition {
+    display: inline-block;
+    width: 100%;
+    background-color: var(--content-code-addition-wash);
+    color: var(--content-code-addition);
+  }
+  .hljs-deletion {
+    display: inline-block;
+    width: 100%;
+    background-color: var(--content-code-deletion-wash);
+    color: var(--content-code-deletion);
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+  .hljs-strong {
+    font-weight: 600;
+  }
+
+  // ---------------------------------------------------------------------------
+  // TABLES
+  // ---------------------------------------------------------------------------
+
+  /*
+    A wide table scrolls itself rather than widening the article.
+
+    `display: block` is what makes that possible -- a table box cannot scroll -- and the rows and cells
+    still lay out as a table inside it through anonymous table boxes. `width: max-content` keeps the
+    table its natural width up to the column's, so a narrow table does not stretch.
+  */
+  table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    margin: 1.5em 0;
+    border-collapse: collapse;
+    font-size: 0.9375em;
+    overflow-x: auto;
+  }
+
+  th,
+  td {
+    padding: 0.5em 0.8em;
+    border: 1px solid var(--content-rule);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background-color: var(--content-surface-alt);
+    font-weight: 600;
+  }
+
+  /* Banding, faint enough to guide the eye across a wide row without striping the page */
+  tbody tr:nth-child(even) > td {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  @at-root .body--dark & {
+    tbody tr:nth-child(even) > td {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+  }
+
+  caption {
+    padding-bottom: 0.5em;
+    color: var(--content-ink-muted);
+    font-size: 0.875em;
+    text-align: left;
+  }
+
+  // ---------------------------------------------------------------------------
+  // FIGURES, IMAGES AND DIAGRAMS
+  // ---------------------------------------------------------------------------
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    /* -> An image is a block when it is the whole paragraph, and inline when it sits in a sentence */
+    vertical-align: middle;
+  }
+
+  /* The alignment classes an author can attach through `markdown-it-attrs` */
+  img,
+  figure {
+    &.align-left {
+      float: left;
+      margin: 0.3em 1.2em 0.8em 0;
+    }
+    &.align-right {
+      float: right;
+      margin: 0.3em 0 0.8em 1.2em;
+    }
+    &.align-center {
+      display: block;
+      float: none;
+      margin-inline: auto;
+    }
+  }
+
+  figure {
+    margin: 1.5em 0;
+    text-align: center;
+  }
+
+  figcaption {
+    margin-top: 0.6em;
+    color: var(--content-ink-muted);
+    font-size: 0.875em;
+  }
+
+  /*
+    PlantUML and Kroki return SVGs drawn in black on nothing. On a dark page that is a diagram of
+    invisible lines, so it gets a light card of its own -- the same treatment either way, since a
+    diagram is an illustration rather than part of the text.
+  */
+  img.uml-diagram {
+    display: block;
+    margin: 1.5em auto;
+    padding: 0.75rem;
+    border: 1px solid var(--content-rule);
+    border-radius: 8px;
+    background-color: #fff;
+  }
+
+  /* Twemoji, which the renderer swaps in for `:shortcodes:` */
+  img.emoji {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    margin: 0 0.05em;
+    border-radius: 0;
+    vertical-align: -0.2em;
+  }
+
+  // ---------------------------------------------------------------------------
+  // RULES AND DISCLOSURES
+  // ---------------------------------------------------------------------------
+
+  hr {
+    height: 1px;
+    margin: 2.5em 0;
+    border: 0;
+    background-color: var(--content-rule);
+  }
+
+  details {
+    margin: 1.5em 0;
+    padding: 0.75em 1.1em;
+    border: 1px solid var(--content-rule);
+    border-radius: 8px;
+    background-color: var(--content-surface-alt);
+
+    > summary {
+      cursor: pointer;
+      font-weight: 600;
+
+      /* -> Only spaced away from the content once there IS content below it */
+      &:focus-visible {
+        outline: 2px solid var(--content-link);
+        outline-offset: 2px;
+      }
+    }
+
+    &[open] > summary {
+      margin-bottom: 0.75em;
+      padding-bottom: 0.5em;
+      border-bottom: 1px solid var(--content-rule);
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // FOOTNOTES
+  // ---------------------------------------------------------------------------
+
+  /* The reference in the text: a superscript number that does not need underlining to be seen */
+  .footnote-ref > a {
+    padding: 0 0.15em;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .footnotes-sep {
+    margin-top: 2.5em;
+  }
+
+  .footnotes {
+    color: var(--content-ink-muted);
+    font-size: 0.875em;
+
+    .footnotes-list {
+      padding-left: 1.4em;
+    }
+
+    .footnote-item > p {
+      margin: 0.3em 0;
+    }
+  }
+
+  /* -> Where a footnote link has just landed, so the reader can see which one they were sent to */
+  .footnote-item:target,
+  h1:target,
+  h2:target,
+  h3:target,
+  h4:target,
+  h5:target,
+  h6:target {
+    /* Drawn outside the box so it cannot shift the text it highlights */
+    box-shadow: 0 0 0 0.4em var(--content-mark);
+    background-color: var(--content-mark);
+    border-radius: 2px;
+  }
+
+  .footnote-backref {
+    margin-left: 0.3em;
+    text-decoration: none;
+  }
+
+  // ---------------------------------------------------------------------------
+  // MATH
+  // ---------------------------------------------------------------------------
+
+  /*
+    KaTeX sizes itself; what it cannot do is decide what happens when an equation is wider than the
+    column. A display equation scrolls on its own rather than stretching the page.
+  */
+  .katex-display {
+    margin: 1.4em 0;
+    padding: 0.2em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .katex {
+    /* -> KaTeX's default 1.21em is oversized next to 16px body text */
+    font-size: 1.1em;
+  }
+
+  // ---------------------------------------------------------------------------
+  // PRINT
+  // ---------------------------------------------------------------------------
+
+  @media print {
+    /* Washes and tints cost ink and print muddy; the structure has to come from the rules instead */
+    --content-ink: #000;
+    --content-ink-muted: #333;
+    --content-surface-code: #fff;
+    --content-surface-alt: #fff;
+
+    font-size: 11pt;
+    line-height: 1.55;
+
+    pre.codeblock,
+    table,
+    img,
+    blockquote,
+    details {
+      /* -> A block split across a page break is unreadable in both halves */
+      break-inside: avoid;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      break-after: avoid;
+    }
+
+    /* -> On paper there is no "leaves the wiki": every link is equally unfollowable */
+    a.is-external-link::after {
+      content: none;
+    }
   }
 }
