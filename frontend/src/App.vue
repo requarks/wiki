@@ -4,10 +4,11 @@
   <w-notifications />
   <w-loading-overlay />
   <w-dialog-host />
+  <component :is="DevQuickMenu" v-if="DevQuickMenu" />
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { defineAsyncComponent, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -25,6 +26,20 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 /* global siteConfig */
+
+// DEV TOOLS
+
+/*
+  The dev quick menu, and nothing of it in a release.
+
+  `import.meta.env.DEV` is substituted at build time, so a production build sees `false ? … : null`,
+  drops the branch, and with it the only reference to the dynamic import -- the component is never
+  emitted as a chunk, not merely never rendered. Keep the import inside this expression for that
+  reason: a top-level `import` of it would be bundled however it was guarded afterwards.
+*/
+const DevQuickMenu = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('@/components/DevQuickMenu.vue'))
+  : null
 
 // DARK MODE
 

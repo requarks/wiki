@@ -86,10 +86,15 @@ export interface SearchPagesParams {
   orderByDirection?: 'asc' | 'desc'
   offset?: number
   limit?: number
-  /** Restrict to what a reader with no session may see: published, and not password protected. */
+  /** Restrict to what a reader with no session may see: published pages. */
   publicOnly?: boolean
   /** Whether unpublished pages belong in the results, which is an editor's view of the wiki. */
   includeDrafts?: boolean
+  /**
+   * Leave out password-protected pages. Set for anyone who would have to enter the password to read
+   * one, because a result carries an excerpt of the page text — see `highlight` below.
+   */
+  hideProtected?: boolean
 }
 
 /**
@@ -212,7 +217,8 @@ class Search {
     offset = 0,
     limit = 25,
     publicOnly = false,
-    includeDrafts = false
+    includeDrafts = false,
+    hideProtected = true
   }: SearchPagesParams): Promise<SearchPagesResult> {
     const terms = query.trim()
     const hasQuery = terms.length > 0
@@ -234,9 +240,18 @@ class Search {
       // -> Matches what a page view shows an anonymous reader, so that search cannot surface a page
       //    that could not then be opened
       conditions.push(sql`p."publishState" = 'published'`)
-      conditions.push(sql`p.password IS NULL`)
     } else if (!includeDrafts) {
       conditions.push(sql`p."publishState" <> 'draft'`)
+    }
+    if (hideProtected) {
+      /*
+        A result is not just a title: `highlight` below is an excerpt of the page's own text, cut from
+        `searchContent`. Handing that to someone who would be shown a lock screen on the page itself
+        would give away through search exactly what the password withholds — so a protected page is
+        absent from their results entirely rather than present without its excerpt, which would still
+        confirm that a page matching their terms is there.
+      */
+      conditions.push(sql`p.password IS NULL`)
     }
     if (publishState) {
       conditions.push(sql`p."publishState" = ${publishState}`)

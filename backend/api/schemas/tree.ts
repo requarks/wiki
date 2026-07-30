@@ -77,6 +77,41 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * BROWSE ITEM - One entry of a reader's folder listing, which may be a page and a folder at once
+   */
+  app.addSchema({
+    $id: 'BrowseItem',
+    type: 'object',
+    properties: {
+      path: {
+        type: 'string',
+        description:
+          "Slash-separated path of the entry: the page's own URL, and the folder to list on the way down."
+      },
+      fileName: {
+        type: 'string'
+      },
+      title: {
+        type: 'string',
+        description: "The page's title when there is a page here, otherwise the folder's."
+      },
+      icon: {
+        type: ['string', 'null'],
+        description:
+          "The page's icon, as an Iconify reference. Null for a folder with no page at its path."
+      },
+      isPage: {
+        type: 'boolean',
+        description: 'Whether there is a page at this path to open.'
+      },
+      isFolder: {
+        type: 'boolean',
+        description: 'Whether there is a folder at this path to descend into.'
+      }
+    }
+  })
+
+  /**
    * FOLDER INPUT - The writable fields of a folder, used for both create and rename
    */
   app.addSchema({

@@ -318,9 +318,14 @@
               unchecked-icon="la:times" />
           </div>
           <div v-if="state.requirePassword" style="padding-left: 40px">
+            <!-- -> Masked, with WInput's own reveal toggle: this is a secret to hand out rather than
+                    one to remember, so the author has to be able to read back what they typed -->
             <w-input
               ref="iptPagePassword"
               v-model="pageStore.password"
+              type="password"
+              revealable
+              autocomplete="off"
               :label="t(`editor.props.password`)"
               :hint="t(`editor.props.passwordHint`)"
               outlined

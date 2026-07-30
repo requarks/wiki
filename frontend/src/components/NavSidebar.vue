@@ -81,7 +81,12 @@ watch(
 <style lang="scss">
 .sidebar-nav {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
-  height: calc(100% - 38px - 24px);
+  /* -> Fills whatever the drawer's flex column has left over, rather than subtracting the action bar
+     and footer bar by hand: both are conditional, so a fixed `calc()` left dead space at the bottom
+     for an anonymous reader (no footer bar) and for a site with no action bar at all. `min-height: 0`
+     is what lets it shrink below its content so the scroll area actually scrolls. */
+  flex: 1 1 0;
+  min-height: 0;
 
   &-list > .w-separator {
     margin-top: 10px;

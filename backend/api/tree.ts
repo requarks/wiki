@@ -187,6 +187,82 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * BROWSE THE TREE AS A READER
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { path?: string; locale?: string } }>(
+    '/sites/:siteId/tree/browse',
+    {
+      schema: {
+        summary: 'Browse the tree as a reader',
+        description:
+          "Lists one folder for the sidebar's browse menu: the pages a reader may open and the folders holding some, with assets, hidden pages and dead-end folders left out.\n\nA page and a folder can share a path — `/foo/bar` alongside the folder of pages under it — and such a pair comes back as a single entry with both `isPage` and `isFolder` set, since a reader sees one name with two ways in.\n\nReadable without a session, because a wiki is browsed by people who are not logged in — an anonymous request sees only published pages with no password on them, which is exactly what the page view itself would serve them. Requires the site's `browse` feature to be on.",
+        tags: ['Tree'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              maxLength: 2048,
+              description: 'Slash-separated path of the folder to list. The site root when absent.'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: "The site's primary locale when absent."
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'One level of the tree',
+            type: 'object',
+            properties: {
+              path: {
+                type: 'string',
+                description: 'The folder that was listed. Empty at the site root.'
+              },
+              title: {
+                type: 'string',
+                description: "The folder's title. Empty at the site root, which is not a folder."
+              },
+              truncated: {
+                type: 'boolean',
+                description: 'Whether the folder holds more entries than were returned.'
+              },
+              items: {
+                type: 'array',
+                items: { $ref: 'BrowseItem#' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = WIKI.sites[req.params.siteId]
+      if (!site) {
+        return reply.notFound('This site does not exist.')
+      }
+      // -> The same setting that hides the sidebar's Browse button, enforced where it counts: with
+      //    browsing off, the tree is not something to hand out one folder at a time either
+      if (!site.config?.features?.browse) {
+        return reply.forbidden('Browsing is disabled on this site.')
+      }
+      const level = await WIKI.models.tree.browse({
+        siteId: req.params.siteId,
+        path: req.query.path,
+        locale: req.query.locale ?? defaultLocale(req.params.siteId),
+        publicOnly: !req.session?.authenticated
+      })
+      if (!level) {
+        return reply.notFound('This folder does not exist.')
+      }
+      return level
+    }
+  )
+
+  /**
    * GET FOLDER
    */
   app.get<{ Params: { siteId: string; folderId: string } }>(

@@ -38,6 +38,12 @@ export const usePageStore = defineStore('page', {
     icon: DEFAULT_PAGE_ICON,
     id: '',
     isBrowsable: true,
+    /**
+     * Whether the server withheld this page's body because it is password protected and this reader
+     * has not entered the password. `render`, `toc` and `content` are empty while it is set — the API
+     * never sent them — so nothing here can display a locked page by mistake.
+     */
+    isLocked: false,
     isSearchable: true,
     locale: 'en',
     navigationId: null,
@@ -131,6 +137,34 @@ export const usePageStore = defineStore('page', {
         console.warn(err)
         throw err
       }
+    },
+    /**
+     * PAGE - UNLOCK
+     *
+     * Hands a password for a protected page to the server, which answers with the page — body
+     * included — when it matches. The reply is what fills the content in, rather than this store
+     * flipping `isLocked` and re-reading a page it already had: there is nothing here to unlock, the
+     * body was never sent.
+     *
+     * The server also remembers the unlock for the session, so navigating away and back does not ask
+     * again.
+     *
+     * @param {string} password
+     * @throws When the password is wrong (401) or the request fails; the caller reports it.
+     */
+    async pageUnlock(password) {
+      const siteStore = useSiteStore()
+      const pageData = await API_CLIENT.post(`sites/${siteStore.id}/pages/${this.id}/unlock`, {
+        json: { password }
+      }).json()
+      this.$patch({
+        ...pageData,
+        contentLoaded: Object.hasOwn(pageData, 'content'),
+        relations: pageData.relations.map((r) =>
+          pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+        ),
+        tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+      })
     },
     /**
      * PAGE - GET PATH FROM ALIAS

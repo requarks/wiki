@@ -88,17 +88,6 @@
         </w-btn>
         <w-btn
           class="ml-4"
-          v-if="!pageStore.isHome"
-          flat
-          dense
-          icon="la:share-alt"
-          color="grey"
-          aria-label="Share">
-          <w-tooltip>Share</w-tooltip>
-          <social-sharing-menu />
-        </w-btn>
-        <w-btn
-          class="ml-4"
           v-if="siteStore.theme.showPrintBtn"
           flat
           dense
@@ -217,7 +206,6 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
-import SocialSharingMenu from '@/components/SocialSharingMenu.vue'
 
 // STORES
 

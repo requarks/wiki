@@ -1,5 +1,6 @@
-import { and, asc, desc, eq, inArray, ne, or, sql, type SQL } from 'drizzle-orm'
-import { tree as treeTable } from '../db/schema.ts'
+import { and, asc, desc, eq, exists, inArray, ne, or, sql, type SQL } from 'drizzle-orm'
+import { alias, type PgColumn } from 'drizzle-orm/pg-core'
+import { pages as pagesTable, tree as treeTable } from '../db/schema.ts'
 import { CustomError, decodeTreePath, encodeTreePath, generateHash } from '../helpers/common.ts'
 
 /** What a tree entry can be. Mirrors the `treeType` enum in the schema. */
@@ -42,6 +43,35 @@ export interface TreeItem {
   description?: string
 }
 
+/**
+ * One row of a browse listing.
+ *
+ * A page and a folder can sit at the very same path — `/foo/bar` the page, `/foo/bar/…` the folder of
+ * pages under it — and a reader thinks of those as one thing with two ways in, so they come back as
+ * one entry carrying both flags rather than as two rows with the same name.
+ */
+export interface BrowseItem {
+  /** Slash-separated path of the entry: the page's own URL, and the folder to list on the way down. */
+  path: string
+  fileName: string
+  title: string
+  /** The page's icon, as an Iconify reference. Null for a folder with no page at its path. */
+  icon: string | null
+  isPage: boolean
+  isFolder: boolean
+}
+
+/** One level of a browse listing: what a folder holds, plus what the folder itself is called. */
+export interface BrowseLevel {
+  /** The folder that was listed, slash-separated. Empty at the site root. */
+  path: string
+  /** The folder's title. Empty at the site root, which is not a folder and has no row of its own. */
+  title: string
+  items: BrowseItem[]
+  /** Whether the folder holds more than `MAX_BROWSE` entries, the rest of which were dropped. */
+  truncated: boolean
+}
+
 /** A raw `tree` row, as the model passes it around internally. */
 export interface TreeRow {
   id: string
@@ -64,6 +94,9 @@ const reTitle = /^[^<>"]+$/
 /** Ceiling on how many entries one listing returns, and how deep it may recurse. */
 const MAX_LIMIT = 1000
 const MAX_DEPTH = 10
+
+/** Ceiling on how many entries one browse level returns. */
+const MAX_BROWSE = 500
 
 /** How many `name-1`, `name-2`… variants an upload will try before giving up on the name. */
 const MAX_NAME_ATTEMPTS = 100
@@ -117,6 +150,32 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
       description: row.meta?.description ?? ''
     })
   }
+}
+
+/**
+ * What a page has to be for a reader to be shown that it exists.
+ *
+ * Deliberately the same rule the page view itself applies (see `pages.getPage`'s `publicOnly`), so
+ * that a menu never offers a page that would answer 404 — nor hides one that would open.
+ *
+ * A password-protected page is listed. It is not hidden but locked: opening it puts the reader in
+ * front of the unlock prompt, which is exactly where someone who has the password wants to end up,
+ * and its title is metadata rather than protected content.
+ *
+ * The columns come in one by one rather than as a table, because this is applied both to `pages` and
+ * to an alias of it, and an alias is a different type.
+ *
+ * @param publicOnly Restrict to what a reader with no session may see. `isBrowsable` applies either
+ *                   way: it is the author saying "not in the tree", not an access rule.
+ */
+function pageIsVisible(
+  columns: { isBrowsable: PgColumn; publishState: PgColumn },
+  publicOnly: boolean
+): (SQL | undefined)[] {
+  return [
+    eq(columns.isBrowsable, true),
+    ...(publicOnly ? [eq(columns.publishState, 'published')] : [])
+  ]
 }
 
 /**
@@ -236,6 +295,150 @@ class Tree {
       .offset(offset)
 
     return rows.map(({ row, depth: rowDepth }) => toTreeItem(row as TreeRow, rowDepth, path))
+  }
+
+  /**
+   * List one folder the way a reader browses it: the pages they may open and the folders worth
+   * opening, and nothing else.
+   *
+   * Not a variant of `getTree()`. That one is the file manager's view — every entry of every kind,
+   * for someone with permission to manage them. This is the reader's: assets have no place in it,
+   * a page nobody may see must not appear even as a name, and a folder whose whole contents are
+   * invisible is a dead end rather than something to offer.
+   *
+   * @param path Slash-separated path of the folder to list. The site root when empty.
+   * @param publicOnly Restrict pages to what a reader with no session may see. See `pageIsVisible`.
+   * @returns The level, or null when there is no such folder
+   */
+  async browse({
+    siteId,
+    path,
+    locale,
+    publicOnly = true
+  }: {
+    siteId: string
+    path?: string | null
+    locale: string
+    publicOnly?: boolean
+  }): Promise<BrowseLevel | null> {
+    const encodedPath = encodeTreePath(path)
+    const basePath = decodeTreePath(encodedPath) ?? ''
+
+    // -> What the level is called. The root is not a folder, so it has no row and no title of its own
+    //    — and a path that is not a folder is nothing this can list.
+    let title = ''
+    if (encodedPath) {
+      const location = splitPath(encodedPath)
+      const folder = await WIKI.db
+        .select({ title: treeTable.title })
+        .from(treeTable)
+        .where(
+          and(
+            eq(treeTable.siteId, siteId),
+            eq(treeTable.locale, locale),
+            eq(treeTable.folderPath, location.folderPath),
+            eq(treeTable.fileName, location.fileName),
+            eq(treeTable.type, 'folder')
+          )
+        )
+        .limit(1)
+      if (!folder[0]) {
+        return null
+      }
+      title = folder[0].title
+    }
+
+    const descendant = alias(treeTable, 'descendantTree')
+    const descendantPage = alias(pagesTable, 'descendantPage')
+    // -> Text rather than an ltree operator, so that the child path can be built from a bound prefix
+    //    and the row's own name: `foo.bar.` + `baz`
+    const childPathPrefix = encodedPath ? `${encodedPath}.` : ''
+
+    /*
+      Whether a folder holds a page a reader may open, at any depth below it.
+
+      A folder is created for whatever is put in it, so it can end up holding only assets, only
+      drafts, or nothing at all — descending into any of those lands on an empty menu. `EXISTS` stops
+      at the first hit, so this costs an index lookup per folder in the level rather than a count.
+    */
+    const holdsVisiblePages = exists(
+      WIKI.db
+        .select({ one: sql`1` })
+        .from(descendant)
+        .innerJoin(descendantPage, eq(descendantPage.id, descendant.id))
+        .where(
+          and(
+            eq(descendant.siteId, treeTable.siteId),
+            eq(descendant.locale, treeTable.locale),
+            eq(descendant.type, 'page'),
+            sql`${descendant.folderPath} <@ (${childPathPrefix}::text || ${treeTable.fileName})::ltree`,
+            ...pageIsVisible(descendantPage, publicOnly)
+          )
+        )
+    )
+
+    /*
+      Ordered by file name rather than by title, so that a page and the folder at the same path are
+      adjacent: the row after `MAX_BROWSE` is dropped, and only a pair straddling that boundary can
+      lose half of itself. Display order is settled below, once the pairs are merged.
+    */
+    const rows = await WIKI.db
+      .select({
+        type: treeTable.type,
+        fileName: treeTable.fileName,
+        title: treeTable.title,
+        icon: pagesTable.icon,
+        holdsVisiblePages: sql<boolean>`${holdsVisiblePages}`.mapWith(Boolean)
+      })
+      .from(treeTable)
+      .leftJoin(pagesTable, eq(pagesTable.id, treeTable.id))
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, locale),
+          eq(treeTable.folderPath, encodedPath),
+          or(
+            eq(treeTable.type, 'folder'),
+            and(eq(treeTable.type, 'page'), ...pageIsVisible(pagesTable, publicOnly))
+          )
+        )
+      )
+      .orderBy(asc(treeTable.fileName))
+      .limit(MAX_BROWSE + 1)
+
+    const merged = new Map<string, BrowseItem>()
+    for (const row of rows.slice(0, MAX_BROWSE)) {
+      if (row.type === 'folder' && !row.holdsVisiblePages) {
+        continue
+      }
+      const entry = merged.get(row.fileName) ?? {
+        path: basePath ? `${basePath}/${row.fileName}` : row.fileName,
+        fileName: row.fileName,
+        title: row.title,
+        icon: null,
+        isPage: false,
+        isFolder: false
+      }
+      if (row.type === 'folder') {
+        entry.isFolder = true
+      } else {
+        entry.isPage = true
+        // -> The page is the thing a reader clicks, so it names the row when both exist
+        entry.title = row.title
+        entry.icon = row.icon
+      }
+      merged.set(row.fileName, entry)
+    }
+
+    return {
+      path: basePath,
+      title,
+      truncated: rows.length > MAX_BROWSE,
+      // -> Folders first, as a file browser lists them; an entry that is both belongs with them
+      items: [...merged.values()].sort((a, b) =>
+        a.isFolder === b.isFolder ? a.title.localeCompare(b.title) : a.isFolder ? -1 : 1
+      )
+    }
   }
 
   /**

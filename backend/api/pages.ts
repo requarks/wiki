@@ -56,6 +56,45 @@ function actorFrom(req: FastifyRequest): PageActor | null {
 }
 
 /**
+ * Permissions that make a page's password irrelevant to the holder.
+ *
+ * Whoever may edit a page can read its source in the editor and can take the password off it
+ * altogether, so asking them for it protects nothing. Everybody else — including a logged in reader —
+ * has to enter it.
+ *
+ * Site-wide rather than per page, because per-path rules are not implemented. See the FIXME on the
+ * page-permissions route below.
+ */
+const PASSWORD_BYPASS = ['write:pages', 'manage:pages', 'manage:system']
+
+/**
+ * Every page permission a group can be granted, i.e. the whole set `manage:system` amounts to. Mirrors
+ * the page rules offered in the group editor.
+ */
+const PAGE_PERMISSIONS = [
+  'read:pages',
+  'write:pages',
+  'review:pages',
+  'manage:pages',
+  'delete:pages'
+]
+
+function mayBypassPassword(req: FastifyRequest): boolean {
+  const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
+  return PASSWORD_BYPASS.some((permission) => permissions.includes(permission))
+}
+
+/**
+ * Whether the password on a page has already been satisfied for this request.
+ *
+ * The unlock is recorded on the session — server side, by page id — so that reading a page the reader
+ * unlocked a moment ago does not ask again, and so that nothing the browser can set decides this.
+ */
+function unlockedFor(req: FastifyRequest, pageId: string): boolean {
+  return mayBypassPassword(req) || Boolean(req.session?.unlockedPages?.includes(pageId))
+}
+
+/**
  * Pages API Routes
  */
 async function routes(app: FastifyInstance) {
@@ -111,7 +150,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Search pages',
         description:
-          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages with no password on them. Drafts are included only for someone who may write pages. A page marked as not searchable never appears, whoever is asking.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
+          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages, and password-protected pages only for someone who may edit them, since a result carries an excerpt of the page text. A page marked as not searchable never appears, whoever is asking.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -222,7 +261,10 @@ async function routes(app: FastifyInstance) {
         // -> An unpublished page is only of interest to someone who could have written it
         includeDrafts: ['write:pages', 'manage:pages', 'manage:system'].some((p) =>
           permissions.includes(p)
-        )
+        ),
+        // -> Same rule as the page view: a protected page's text is for whoever holds the password,
+        //    and a search excerpt is that text
+        hideProtected: !mayBypassPassword(req)
       })
     }
   )
@@ -239,7 +281,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a single page',
         description:
-          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in — but an anonymous request only ever sees published pages with no password on them, and never their source. Per-page access rules are not implemented yet.",
+          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in — but an anonymous request only ever sees published pages, and never their source. Per-page access rules are not implemented yet.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.",
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -283,11 +325,94 @@ async function routes(app: FastifyInstance) {
         locale: req.query.locale,
         // -> The source is what an editor loads, and editing is not something an anonymous reader does
         withContent: Boolean(req.query.withContent) && Boolean(actor),
-        publicOnly: !actor
+        publicOnly: !actor,
+        // -> Answered once the page is known, since a hash does not say which page it is yet
+        unlocked: (pageId) => unlockedFor(req, pageId),
+        withPassword: mayBypassPassword(req)
       })
       if (!page) {
         return reply.notFound('This page does not exist.')
       }
+      return page
+    }
+  )
+
+  /**
+   * UNLOCK PAGE
+   */
+  app.post<{
+    Params: { siteId: string; pageIdOrHash: string }
+    Querystring: { locale?: string }
+    Body: { password: string }
+  }>(
+    '/sites/:siteId/pages/:pageIdOrHash/unlock',
+    {
+      schema: {
+        summary: 'Unlock a password-protected page',
+        description:
+          'Answers with the page, body included, when the password matches — and records the unlock on the session, so that reading the page again does not ask a second time. A wrong password is a 401 and says nothing more; a page with no password on it answers the same way, so that this cannot be used to find out which pages are protected.\n\nCallable without a session, because a protected page is written for readers who have the password rather than an account. Unlocking one is what first gives an anonymous reader a session.\n\nWhoever may edit the page never needs this: they can read the source and remove the password, so `GET` already hands them the body.',
+        tags: ['Pages'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            pageIdOrHash: {
+              type: 'string',
+              oneOf: [{ format: 'uuid' }, { pattern: '^[a-f0-9]+$' }]
+            }
+          },
+          required: ['siteId', 'pageIdOrHash']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            locale: {
+              type: 'string',
+              maxLength: 10
+            }
+          }
+        },
+        body: {
+          type: 'object',
+          required: ['password'],
+          properties: {
+            password: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            }
+          }
+        },
+        response: {
+          200: { $ref: 'Page#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const isId = uuidValidate(req.params.pageIdOrHash)
+      const actor = actorFrom(req)
+      const page = await WIKI.models.pages.unlockPage({
+        siteId: req.params.siteId,
+        ...(isId ? { id: req.params.pageIdOrHash } : { hash: req.params.pageIdOrHash }),
+        locale: req.query.locale,
+        password: req.body.password,
+        publicOnly: !actor
+      })
+      if (!page) {
+        return reply.unauthorized('Incorrect password.')
+      }
+      /*
+        Recorded per page rather than as a blanket "this session may read protected pages": each
+        password is a separate secret, and knowing one says nothing about the others.
+
+        Writing to the session is what creates one for an anonymous reader — `saveUninitialized` is
+        off, so no row exists until this point. That is the intent: the unlock has to outlive the
+        request, and it is the reader's own deliberate action that starts it.
+      */
+      req.session.unlockedPages = [...new Set([...(req.session.unlockedPages ?? []), page.id])]
       return page
     }
   )
@@ -623,6 +748,14 @@ async function routes(app: FastifyInstance) {
       const actor = actorFrom(req)
       if (!actor) {
         return []
+      }
+      /*
+        An administrator holds all of them, and holds them here too. Filtering their permissions by
+        name the way the line below does would answer `manage:system` → nothing ending in `:pages` →
+        that an administrator has no rights over any page, which is the opposite of true.
+      */
+      if (actor.permissions.includes('manage:system')) {
+        return PAGE_PERMISSIONS
       }
       // FIXME: per-path permission rules are not implemented — a group's page permissions apply to
       // the whole site, so this returns what the user holds anywhere rather than here.

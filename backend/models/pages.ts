@@ -1,6 +1,6 @@
-import { and, eq, isNull, ne, sql } from 'drizzle-orm'
+import { and, eq, ne, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
-import { CustomError, generatePathHash } from '../helpers/common.ts'
+import { CustomError, generatePathHash, timingSafeCompare } from '../helpers/common.ts'
 import type { TocNode } from './rendering.ts'
 
 /** What each editor produces, which is what the content column holds. */
@@ -42,7 +42,14 @@ export interface Page {
   publishEndDate: Date | null
   isBrowsable: boolean
   isSearchable: boolean
-  password: string | null
+  /**
+   * The page's password, if it has one. Present only for a requester who may edit the page — see
+   * `getPage`'s `withPassword`. Absent, rather than null, for everyone else: a reader cannot tell a
+   * page with no password from one whose password was withheld, and does not need to.
+   */
+  password?: string | null
+  /** Whether the body was withheld because the page is password protected. See `getPage`. */
+  isLocked: boolean
   relations: any[]
   tags: string[]
   toc: TocNode[]
@@ -137,8 +144,21 @@ function normalizePath(input: string): string {
 class Pages {
   /**
    * Flatten a row and its blobs into the shape the API returns.
+   *
+   * @param locked Withhold the body — the source, the rendered HTML, the table of contents drawn from
+   *               it, and the relation links written onto the page. The metadata stays: a reader
+   *               looking at the lock screen is told what page they are being asked for a password to.
+   * @param withPassword Include the page's own password. Only for a requester who may edit the page,
+   *                     which is the one that has to be able to read it back and save it again.
    */
-  private toPage(row: any, { withContent = false }: { withContent?: boolean } = {}): Page {
+  private toPage(
+    row: any,
+    {
+      withContent = false,
+      withPassword = false,
+      locked = false
+    }: { withContent?: boolean; withPassword?: boolean; locked?: boolean } = {}
+  ): Page {
     const config = row.config ?? {}
     const scripts = row.scripts ?? {}
     return {
@@ -157,12 +177,13 @@ class Pages {
       publishEndDate: row.publishEndDate,
       isBrowsable: row.isBrowsable,
       isSearchable: row.isSearchable,
-      password: row.password,
-      relations: row.relations ?? [],
+      ...(withPassword ? { password: row.password } : {}),
+      isLocked: locked,
+      relations: locked ? [] : (row.relations ?? []),
       tags: row.tags ?? [],
-      toc: row.toc ?? [],
-      render: row.render ?? '',
-      ...(withContent ? { content: row.content ?? '' } : {}),
+      toc: locked ? [] : (row.toc ?? []),
+      render: locked ? '' : (row.render ?? ''),
+      ...(withContent && !locked ? { content: row.content ?? '' } : {}),
       allowComments: config.allowComments ?? true,
       allowContributions: config.allowContributions ?? true,
       allowRatings: config.allowRatings ?? true,
@@ -187,6 +208,24 @@ class Pages {
    *
    * The hash is what the frontend addresses a page with — see `generatePathHash` — so this is the
    * lookup an ordinary page view goes through.
+   *
+   * A password-protected page still comes back to a requester who has not unlocked it: the metadata
+   * is what the lock screen is drawn from. What the password withholds is the body — see `toPage`'s
+   * `locked`. Anything that puts a page's text in front of a reader has to go through here, or
+   * through the same check, because the enforcement is this method and not the client.
+   *
+   * **The defaults hand over the whole page**, `unlocked` and `withPassword` included, the way they do
+   * for `publicOnly` beside them: most callers here are a save, a move, a delete or a re-render, and
+   * none of those is a reader — a save that got a withheld body back would answer its author with an
+   * empty page, and a re-render would store one. A path that serves a reader has to say so, and there
+   * are exactly two: the `GET` route, and `unlockPage` below.
+   *
+   * @param unlocked Whether the password has been satisfied for this requester. Route-level concern:
+   *                 see `unlockedFor` in `api/pages.ts`. A function is called with the page's id once
+   *                 the row is in hand, which is what lets a caller answer per page even though it
+   *                 asked for the page by path hash.
+   * @param withPassword Whether to include the password value. For whoever may edit the page — not for
+   *                     a reader who just entered it, who needs it no more after that.
    */
   async getPage({
     siteId,
@@ -194,22 +233,26 @@ class Pages {
     hash,
     locale,
     withContent = false,
-    publicOnly = false
+    publicOnly = false,
+    unlocked = true,
+    withPassword = true
   }: {
     siteId: string
     id?: string
     hash?: string
     locale?: string
     withContent?: boolean
-    /** Restrict to what a reader with no session may see: published, and not password protected. */
+    /** Restrict to what a reader with no session may see: published pages. */
     publicOnly?: boolean
+    unlocked?: boolean | ((pageId: string) => boolean)
+    withPassword?: boolean
   }): Promise<Page | null> {
     const conditions = [eq(pagesTable.siteId, siteId)]
     if (publicOnly) {
       // -> Page-level access rules are not implemented, so this is the whole of it: an anonymous
-      //    reader sees published pages that are not behind a password, and nothing else
+      //    reader sees published pages, and nothing else. A password does not hide a page from them —
+      //    it withholds the body until they enter it, which is what `locked` below does.
       conditions.push(eq(pagesTable.publishState, 'published'))
-      conditions.push(isNull(pagesTable.password))
     }
     if (id) {
       conditions.push(eq(pagesTable.id, id))
@@ -238,6 +281,7 @@ class Pages {
     if (!row) {
       return null
     }
+    const isUnlocked = typeof unlocked === 'function' ? unlocked(row.page.id) : unlocked
     return this.toPage(
       {
         ...row.page,
@@ -245,8 +289,68 @@ class Pages {
         navigationId: row.navigationId,
         navigationMode: row.navigationMode
       },
-      { withContent }
+      { withContent, withPassword, locked: Boolean(row.page.password) && !isUnlocked }
     )
+  }
+
+  /**
+   * Check a page's password, and hand the page over if it matches.
+   *
+   * Deliberately the only way past the lock: a reader gets the body from here or from a `getPage` the
+   * route has already marked as unlocked, and never from a flag the browser sent.
+   *
+   * @returns The page, its body included, or null when the password is wrong or the page has none —
+   *          the caller cannot tell those apart, and neither can whoever is guessing.
+   */
+  async unlockPage({
+    siteId,
+    id,
+    hash,
+    locale,
+    password,
+    publicOnly = false
+  }: {
+    siteId: string
+    id?: string
+    hash?: string
+    locale?: string
+    password: string
+    publicOnly?: boolean
+  }): Promise<Page | null> {
+    /*
+      Asked for as a reader would see it, for two reasons: a wrong guess must not assemble the body in
+      the first place, and `isLocked` is how this knows there is a password to check at all.
+    */
+    const page = await this.getPage({
+      siteId,
+      id,
+      hash,
+      locale,
+      publicOnly,
+      unlocked: false,
+      withPassword: false
+    })
+    if (!page?.isLocked) {
+      return null
+    }
+    const stored = await WIKI.db
+      .select({ password: pagesTable.password })
+      .from(pagesTable)
+      .where(eq(pagesTable.id, page.id))
+      .limit(1)
+    const expected = stored[0]?.password
+    if (!expected || !timingSafeCompare(password, expected)) {
+      return null
+    }
+    // -> Unlocked, but still without the password itself: entering it is not the same as being able
+    //    to change it, and the reader has no further use for the value
+    return this.getPage({
+      siteId,
+      id: page.id,
+      publicOnly,
+      unlocked: true,
+      withPassword: false
+    })
   }
 
   /**

@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --force",
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 vite build --emptyOutDir",
+    "build": "NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 vite build --emptyOutDir",
     "ncu": "ncu -i",
     "ncu-u": "ncu -u",
     "icons": "node scripts/generate-icons.mjs",

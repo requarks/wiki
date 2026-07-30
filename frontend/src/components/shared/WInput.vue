@@ -83,14 +83,21 @@
         @blur="onBlur"
         @keyup.enter="$emit('keyup:enter', $event)" />
 
+      <!--
+        `mr-1` on the button rather than more padding on the control: the padding is what every
+        trailing control shares -- the clear cross, an `append` slot -- and this is about the eye,
+        which reads cramped against the field's edge at the row's own 8px.
+      -->
       <button
         v-if="revealable && type === 'password'"
         type="button"
-        class="w-unstyled shrink-0 cursor-pointer opacity-60 hover:opacity-100"
+        class="w-unstyled mr-1 shrink-0 cursor-pointer opacity-60 hover:opacity-100"
         :aria-label="isRevealed ? hideLabel : revealLabel"
         :aria-pressed="String(isRevealed)"
         @click="isRevealed = !isRevealed">
-        <w-icon :name="isRevealed ? 'mdi:eye-off' : 'mdi:eye'" />
+        <!-- -> A size of its own rather than the control's 1em: at the field's 14px the eye came out
+                smaller than the text it sits beside, which is not much of a target to aim at -->
+        <w-icon :name="isRevealed ? 'mdi:eye-off' : 'mdi:eye'" size="xs" />
       </button>
 
       <button

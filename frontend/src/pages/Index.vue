@@ -31,6 +31,23 @@
         class="min-w-0 flex-1"
         :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
         <component :is="editorComponents[editorStore.editor]" v-if="editorStore.isActive" />
+        <!--
+          The lock screen, in place of the article. There is nothing to hide here: the server sent no
+          body at all, so this is the whole of what arrived for a protected page.
+        -->
+        <div v-else-if="pageStore.isLocked" class="page-locked">
+          <w-icon class="page-locked-icon" name="la:lock" />
+          <div class="text-h6">{{ t('common.page.locked') }}</div>
+          <div class="text-body2 mt-1 opacity-60">{{ t('common.page.lockedHint') }}</div>
+          <w-btn
+            class="mt-6"
+            unelevated
+            icon="la:lock-open"
+            color="primary"
+            padding="xs lg"
+            :label="t(`common.page.unlock`)"
+            @click="promptUnlock" />
+        </div>
         <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
           <div class="p-4">
             <div class="page-contents" ref="pageContents" v-html="pageStore.render" />
@@ -124,14 +141,19 @@
               <div class="text-caption text-grey-7">{{ t('common.page.tags') }}</div>
               <w-space />
               <!--
-                Always rendered, hidden with `visibility` rather than removed: `display: none` took the
-                row's height with it, so the heading jumped 6px the moment the pointer arrived.
-                `visibility` also keeps it out of the tab order and out of hit-testing while hidden,
-                which `opacity: 0` on its own would not.
+                Rendered for whoever may save the page, and hidden with `visibility` rather than
+                removed as the pointer comes and goes: `display: none` took the row's height with it,
+                so the heading jumped 6px the moment the pointer arrived. `visibility` also keeps it
+                out of the tab order and out of hit-testing while hidden, which `opacity: 0` on its own
+                would not.
 
                 It stays put while editing, because that is when it is the way back out.
+
+                A reader gets no button at all -- `v-if`, not the same `visibility` treatment, because
+                for them it is not a control that happens to be out of sight.
               -->
               <w-btn
+                v-if="canEditPage"
                 class="tags-edit-btn"
                 :class="{ 'is-hidden': !state.tagEditMode && !state.showTagsEditBtn }"
                 size="sm"
@@ -179,6 +201,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useDark } from '@/composables/dark'
+import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -197,6 +220,7 @@ import PageActionsCol from '@/components/PageActionsCol.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageTags from '@/components/PageTags.vue'
 import PageToc from '@/components/PageToc.vue'
+import PageUnlockDialog from '@/components/PageUnlockDialog.vue'
 import SideDialog from '@/components/SideDialog.vue'
 
 const editorComponents = {
@@ -279,6 +303,23 @@ const showToc = computed(() => {
     }).length > 0
   )
 })
+/*
+  Whether this user may save a change to the page, which is what editing the tags amounts to -- the tags
+  go up with the rest of the page rather than through an endpoint of their own. So the test is the pair
+  the PATCH route accepts: `write:pages` or `manage:pages`.
+
+  Read off `pagePermissions` rather than through `userStore.can()`, which would answer true for
+  everybody: `can()` also consults `userStore.permissions`, and `users/whoami` still fills that with a
+  hardcoded `['manage:system']` for every session -- a TODO in `api/users.ts`. `pagePermissions` comes
+  from `pages/userPermissions`, which reads what the session actually holds. Once whoami is fixed this
+  check needs no change: that route stays the authority on what a user may do to a page.
+*/
+const canEditPage = computed(() =>
+  ['write:pages', 'manage:pages'].some((permission) =>
+    userStore.pagePermissions.includes(permission)
+  )
+)
+
 const relationsLeft = computed(() => {
   return pageStore.relations ? pageStore.relations.filter((r) => r.position === 'left') : []
 })
@@ -327,6 +368,22 @@ watch(
   () => pageStore.render,
   () => {
     nextTick(() => enhanceRenderedContent(pageContents.value))
+  },
+  { immediate: true }
+)
+
+/*
+  A protected page asks for its password the moment it arrives: the reader followed a link to read it,
+  and making them press a button first would only add a step. Keyed on the page rather than on the
+  flag, so dismissing the prompt does not immediately reopen it -- the lock screen's own button is the
+  way back in -- while walking to another protected page prompts again.
+*/
+watch(
+  () => (pageStore.isLocked ? pageStore.id : null),
+  (lockedPageId) => {
+    if (lockedPageId) {
+      promptUnlock()
+    }
   },
   { immediate: true }
 )
@@ -386,9 +443,10 @@ watch(
           isActive: false
         })
       }
-      // -> Load Blocks
+      // -> Load Blocks. `?.` because a locked page draws its lock screen in place of the article, so
+      //    there is no content element to scan -- and nothing in it to scan for.
       nextTick(() => {
-        for (const block of pageContents.value.querySelectorAll(':not(:defined)')) {
+        for (const block of pageContents.value?.querySelectorAll(':not(:defined)') ?? []) {
           commonStore.loadBlocks([block.tagName.toLowerCase()])
         }
       })
@@ -418,9 +476,49 @@ watch(
   },
   { immediate: true }
 )
+
+// METHODS
+
+/** Asks for the page's password. Opened on arrival, and again from the lock screen's own button. */
+function promptUnlock() {
+  dialog({ component: PageUnlockDialog })
+}
 </script>
 
 <style lang="scss">
+.page-locked {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* -> Off dead centre: the text reads better a little above the middle of the column */
+  padding: 0 24px 10vh;
+  text-align: center;
+
+  /*
+    Stated per theme, as everything else in this column is: the article's own colours come from
+    `_page-contents.scss`, so a plain block dropped in beside it inherits the document's black and
+    goes invisible on the dark surface. The icon below takes its colour from here as well.
+  */
+  @at-root .body--light & {
+    color: $grey-9;
+  }
+  @at-root .body--dark & {
+    color: #fff;
+  }
+}
+
+/*
+  Large and faint. It is the illustration on an otherwise empty column, not something to look at -- the
+  sentence under it is what the reader is here to read.
+*/
+.page-locked-icon {
+  margin-bottom: 24px;
+  font-size: 96px;
+  opacity: 0.12;
+}
+
 .page-breadcrumbs {
   @at-root .body--light & {
     background: linear-gradient(to bottom, $grey-1 0%, $grey-3 100%);

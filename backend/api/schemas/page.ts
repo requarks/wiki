@@ -148,7 +148,16 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       publishEndDate: { type: ['string', 'null'], format: 'date-time' },
       isBrowsable: { type: 'boolean' },
       isSearchable: { type: 'boolean' },
-      password: { type: ['string', 'null'] },
+      password: {
+        type: ['string', 'null'],
+        description:
+          'Only present for a requester who may edit the page — whoever can take the password off it. Absent otherwise, protected page or not.'
+      },
+      isLocked: {
+        type: 'boolean',
+        description:
+          'The page is password protected and this requester has not entered it, so `content`, `render` and `toc` were withheld. Unlock it with `POST …/unlock`.'
+      },
       relations: {
         type: 'array',
         items: { type: 'object', additionalProperties: true }

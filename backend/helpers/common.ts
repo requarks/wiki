@@ -81,6 +81,18 @@ export function generateHash(str: string): string {
 }
 
 /**
+ * Compare two secrets without leaking which character stopped the comparison.
+ *
+ * `===` on strings returns as soon as it finds a difference, and the time that takes is measurable
+ * across enough attempts. Both sides are digested first because `timingSafeEqual` throws on operands
+ * of different lengths — the digest is a fixed 32 bytes, so the length of the candidate says nothing.
+ */
+export function timingSafeCompare(a: string, b: string): boolean {
+  const digest = (value: string) => crypto.createHash('sha256').update(value).digest()
+  return crypto.timingSafeEqual(digest(a), digest(b))
+}
+
+/**
  * Hash a page path the way the frontend does.
  *
  * A page is addressed by the hash of its path rather than the path itself, so that a URL with slashes

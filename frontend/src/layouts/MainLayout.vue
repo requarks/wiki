@@ -21,15 +21,19 @@
           <w-tooltip anchor="center right" self="center left">Switch Locale</w-tooltip>
         </w-btn>
         <w-btn
+          v-if="canBrowse"
           class="py-4"
           flat
           icon="la:sitemap"
           color="white"
-          aria-label="Browse"
-          @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">Browse</w-tooltip>
+          :aria-label="t(`common.sidebar.browse`)">
+          <nav-browse-menu anchor="top right" self="top left" />
+          <w-tooltip anchor="center right" self="center left">
+            {{ t('common.sidebar.browse') }}
+          </w-tooltip>
         </w-btn>
-        <w-separator class="my-2" inset dark />
+        <!-- -> Nothing to divide from Bookmarks when neither button above it renders -->
+        <w-separator v-if="siteStore.locales.showMenu || canBrowse" class="my-2" inset dark />
         <w-btn
           class="py-4"
           flat
@@ -57,8 +61,9 @@
         </w-btn>
       </div>
       <template v-else>
-        <div class="sidebar-actions flex flex-nowrap items-stretch">
-          <!-- -> Both the button and its separator go, so Browse spans the row on its own -->
+        <div v-if="showSidebarActions" class="sidebar-actions flex flex-nowrap items-stretch">
+          <!-- -> Either button takes the whole row when the other one is off, and the separator only
+               exists to divide the two, so it goes with them -->
           <template v-if="siteStore.locales.showMenu">
             <w-btn
               class="flex-1 px-2"
@@ -70,17 +75,19 @@
               size="sm">
               <locale-selector-menu :offset="[-5, 5]" />
             </w-btn>
-            <w-separator vertical />
+            <w-separator v-if="canBrowse" vertical />
           </template>
           <w-btn
+            v-if="canBrowse"
             class="flex-1 px-2"
             flat
             dense
             icon="la:sitemap"
-            label="Browse"
-            aria-label="Browse"
-            size="sm"
-            @click="notImplemented" />
+            :label="t(`common.sidebar.browse`)"
+            :aria-label="t(`common.sidebar.browse`)"
+            size="sm">
+            <nav-browse-menu :offset="[-5, 5]" />
+          </w-btn>
         </div>
         <nav-sidebar />
         <w-bar v-if="userStore.authenticated" class="sidebar-footerbtns text-white" dense>
@@ -137,6 +144,7 @@ import { useUserStore } from '@/stores/user'
 import FooterNav from '@/components/FooterNav.vue'
 import HeaderNav from '@/components/HeaderNav.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
+import NavBrowseMenu from '@/components/NavBrowseMenu.vue'
 import NavSidebar from '@/components/NavSidebar.vue'
 import NavEditMenu from '@/components/NavEditMenu.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
@@ -213,6 +221,13 @@ const scrollerAnchorX = computed(() => {
     ? `calc(100% - ${sidebarWidth.value}px)`
     : `${sidebarWidth.value}px`
 })
+
+// -> The "Allow Browsing" site feature (admin/general): with it off the tree browser is not something
+//    a reader can reach, so the button that opens it does not render
+const canBrowse = computed(() => siteStore.features.browse)
+
+// -> The action bar holds only the locale menu and Browse; with both off it would be an empty strip
+const showSidebarActions = computed(() => siteStore.locales.showMenu || canBrowse.value)
 
 // -> Saving from this menu needs manage:navigation, so offering it to anyone else only produces a
 //    permission error once they press Save
