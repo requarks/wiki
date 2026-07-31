@@ -644,28 +644,27 @@
     soft rules trailing off beneath it. Lifted from the profile pages, where it was scoped to that
     layout, so the admin cards can use the same treatment.
 
-    `--w-section-header-surface` is the colour the wash fades INTO, so the same recipe works on a
-    page and on a card; both happen to be white / dark-3 today, but a surface that is neither only
-    has to set the variable.
+    Every layer fades to `transparent`, never to the colour of the surface behind it, so the heading
+    blends into whatever it is drawn on -- a page, a card, a tinted panel. Fading in two directions
+    at once is what the ellipse is for: it is anchored to the corner the wash is strongest at, and
+    falls off towards both far edges. Fading a flat wash out sideways the other way round means
+    laying an opaque copy of the surface over it, which lines up on exactly one surface.
 
     Colours resolve through `--color-primary`, so a re-themed site recolours these too -- the
     original hard-coded the palette's blue.
   */
   .w-section-header {
-    --w-section-header-surface: var(--color-white);
     position: relative;
     margin-bottom: 10px;
     padding: 0 16px 6px;
     font-size: 17px;
     font-weight: 500;
     color: var(--color-primary);
-    background:
-      linear-gradient(to left, var(--w-section-header-surface), transparent),
-      linear-gradient(
-        to top,
-        color-mix(in srgb, var(--color-primary) 7.5%, transparent),
-        transparent
-      );
+    background: radial-gradient(
+      farthest-side at left bottom,
+      color-mix(in srgb, var(--color-primary) 7.5%, transparent),
+      transparent
+    );
   }
 
   /* The wider, fainter band trailing below the heading */
@@ -677,13 +676,11 @@
     z-index: 0;
     width: 100%;
     height: 10px;
-    background:
-      linear-gradient(to left, var(--w-section-header-surface), transparent),
-      linear-gradient(
-        to bottom,
-        color-mix(in srgb, var(--color-primary) 5%, transparent),
-        transparent
-      );
+    background: radial-gradient(
+      farthest-side at left top,
+      color-mix(in srgb, var(--color-primary) 5%, transparent),
+      transparent
+    );
   }
 
   /*
@@ -711,7 +708,6 @@
   }
 
   body.body--dark .w-section-header {
-    --w-section-header-surface: var(--color-dark-3);
     color: var(--color-primary-light);
   }
 

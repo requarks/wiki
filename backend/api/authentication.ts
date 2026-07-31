@@ -463,7 +463,7 @@ async function routes(app: FastifyInstance) {
           'A module can be configured more than once, so that two instances of the same provider can coexist. A new strategy is not offered by any site until that site adds it to its login screen.',
         tags: ['Authentication'],
         body: {
-          allOf: [{ $ref: 'AuthStrategyInput#' }, { required: ['module'] }]
+          allOf: [{ $ref: 'AuthStrategyInput#' }, { type: 'object', required: ['module'] }]
         },
         response: {
           200: {

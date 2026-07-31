@@ -165,7 +165,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       tags: { type: 'array', items: { type: 'string' } },
       toc: {
         type: 'array',
-        description: 'Nested headings, derived from the stored render.',
+        description:
+          'Nested headings, derived from the stored render. Each carries its own `level` — the heading tag it came from — as well as its place in the tree, since which headings a contents list shows is a question about the tag rather than about the nesting.',
         items: { type: 'object', additionalProperties: true }
       },
       render: { type: 'string' },
@@ -195,6 +196,35 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       authorName: { type: 'string' },
       createdAt: { type: 'string', format: 'date-time' },
       updatedAt: { type: 'string', format: 'date-time' }
+    }
+  })
+
+  /**
+   * INCLUDED PAGE - Another page's render, as an include block draws it inside the page being read
+   */
+  app.addSchema({
+    $id: 'IncludedPage',
+    type: 'object',
+    properties: {
+      path: {
+        type: 'string',
+        description: 'Slash-separated path of the page that was included.'
+      },
+      locale: {
+        type: 'string'
+      },
+      title: {
+        type: 'string'
+      },
+      isLocked: {
+        type: 'boolean',
+        description:
+          'The page is password protected and this reader has not entered it, so `render` is empty. An include does not offer the unlock prompt: the reader unlocks the page by opening it.'
+      },
+      render: {
+        type: 'string',
+        description: 'The stored HTML, already sanitised when the page was saved.'
+      }
     }
   })
 }

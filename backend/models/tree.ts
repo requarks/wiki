@@ -72,6 +72,17 @@ export interface BrowseLevel {
   truncated: boolean
 }
 
+/** One page of a reader-facing listing, as the index block draws it. */
+export interface ListedPage {
+  id: string
+  /** Slash-separated path of the page, i.e. its URL within the site. */
+  path: string
+  title: string
+  description: string
+  /** The page's icon, as an Iconify reference. Empty when it has none. */
+  icon: string
+}
+
 /** A raw `tree` row, as the model passes it around internally. */
 export interface TreeRow {
   id: string
@@ -279,7 +290,9 @@ class Tree {
       conditions.push(inArray(treeTable.type, types))
     }
     if (tags && tags.length > 0) {
-      conditions.push(sql`${treeTable.tags} @> ${tags}`)
+      // -> `sql.param`, because a bare array in a template is read as a parameter *list* — the
+      //    comma-separated form `inArray` needs — and `@>` wants one array-typed parameter
+      conditions.push(sql`${treeTable.tags} @> ${sql.param(tags)}`)
     }
 
     const direction = orderByDirection === 'desc' ? desc : asc
@@ -295,6 +308,87 @@ class Tree {
       .offset(offset)
 
     return rows.map(({ row, depth: rowDepth }) => toTreeItem(row as TreeRow, rowDepth, path))
+  }
+
+  /**
+   * List the pages under a path, the way an index block on a page lists them.
+   *
+   * Between `getTree()` and `browse()`: it recurses and sorts like the first and hides like the
+   * second. Folders are left out entirely — the block draws a list of pages, not a file browser —
+   * and so is any page the reader may not open, by the same rule the page view applies.
+   *
+   * @param path Slash-separated path to list. The site root when empty.
+   * @param depth How many folders below the path to include. 0, the default, is the path itself.
+   * @param tags Only pages carrying every one of these tags.
+   * @param publicOnly Restrict to what a reader with no session may see. See `pageIsVisible`.
+   */
+  async listPages({
+    siteId,
+    path,
+    locale,
+    tags,
+    limit = 10,
+    orderBy = 'title',
+    orderByDirection = 'asc',
+    depth = 0,
+    publicOnly = true
+  }: {
+    siteId: string
+    path?: string | null
+    locale: string
+    tags?: string[] | null
+    limit?: number
+    orderBy?: TreeOrderBy
+    orderByDirection?: 'asc' | 'desc'
+    depth?: number
+    publicOnly?: boolean
+  }): Promise<ListedPage[]> {
+    if (limit < 1 || limit > MAX_LIMIT) {
+      throw new CustomError('treeInvalidLimit', `The limit must be between 1 and ${MAX_LIMIT}.`)
+    }
+    if (depth < 0 || depth > MAX_DEPTH) {
+      throw new CustomError('treeInvalidDepth', `The depth must be between 0 and ${MAX_DEPTH}.`)
+    }
+
+    const encodedPath = encodeTreePath(path)
+    const levels = depth > 0 ? `*{,${depth}}` : '*{0}'
+    const pathQuery = encodedPath ? `${encodedPath}.${levels}` : levels
+
+    const direction = orderByDirection === 'desc' ? desc : asc
+    const rows = await WIKI.db
+      .select({
+        id: treeTable.id,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        title: treeTable.title,
+        description: pagesTable.description,
+        icon: pagesTable.icon
+      })
+      .from(treeTable)
+      .innerJoin(pagesTable, eq(pagesTable.id, treeTable.id))
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, locale),
+          eq(treeTable.type, 'page'),
+          sql`${treeTable.folderPath} ~ ${pathQuery}::lquery`,
+          ...(tags && tags.length > 0 ? [sql`${treeTable.tags} @> ${sql.param(tags)}`] : []),
+          ...pageIsVisible(pagesTable, publicOnly)
+        )
+      )
+      .orderBy(direction(treeTable[orderBy]))
+      .limit(limit)
+
+    return rows.map((row) => {
+      const folderPath = decodeTreePath(row.folderPath ?? '') ?? ''
+      return {
+        id: row.id,
+        path: folderPath ? `${folderPath}/${row.fileName}` : row.fileName,
+        title: row.title,
+        description: row.description ?? '',
+        icon: row.icon ?? ''
+      }
+    })
   }
 
   /**

@@ -2,6 +2,7 @@ import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
 import { SEARCH_ORDER_BY, type SearchOrderBy } from '../models/search.ts'
+import { generatePathHash } from '../helpers/common.ts'
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
 function splitList(value?: string): string[] {
@@ -271,6 +272,64 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * GET PAGE FOR INCLUSION
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { path: string; locale?: string } }>(
+    '/sites/:siteId/pages/include',
+    {
+      schema: {
+        summary: 'Get a page for inclusion',
+        description:
+          "What an include block needs to draw another page inside the one being read: its title and its stored render, addressed by path rather than by ID, since a path is what an author writes into the page.\n\nThe reader's own access decides the answer, exactly as it would if they opened the page themselves — an anonymous request only ever sees published pages, and a password-protected page comes back with `isLocked: true` and no body unless this session has already unlocked it. So an include can never show content its reader could not have reached on their own.",
+        tags: ['Pages'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          required: ['path'],
+          properties: {
+            path: {
+              type: 'string',
+              maxLength: 2048,
+              description: 'Slash-separated path of the page to include. The home page when empty.'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: "The site's primary locale when absent."
+            }
+          }
+        },
+        response: {
+          200: { $ref: 'IncludedPage#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const actor = actorFrom(req)
+      // -> The stored path: no wrapping slashes, lowercase, and the site root is the `home` page
+      const path = req.query.path.trim().replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase()
+      const page = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        hash: generatePathHash(path || 'home'),
+        locale: req.query.locale,
+        publicOnly: !actor,
+        unlocked: (pageId) => unlockedFor(req, pageId),
+        withPassword: false
+      })
+      if (!page) {
+        return reply.notFound('This page does not exist.')
+      }
+      return {
+        path: page.path,
+        locale: page.locale,
+        title: page.title,
+        isLocked: page.isLocked,
+        render: page.render
+      }
+    }
+  )
+
+  /**
    * GET PAGE
    */
   app.get<{
@@ -434,7 +493,10 @@ async function routes(app: FastifyInstance) {
         tags: ['Pages'],
         params: siteIdParam,
         body: {
-          allOf: [{ $ref: 'PageInput#' }, { required: ['path', 'title', 'editor', 'content'] }]
+          allOf: [
+            { $ref: 'PageInput#' },
+            { type: 'object', required: ['path', 'title', 'editor', 'content'] }
+          ]
         },
         response: {
           200: {

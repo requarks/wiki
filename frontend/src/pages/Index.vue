@@ -196,7 +196,16 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -205,6 +214,7 @@ import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
+import { scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { enhanceRenderedContent } from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
 
@@ -394,6 +404,23 @@ watch(
   }
 )
 
+/*
+  A fragment that changes without the page doing so: a link inside the content, or the reader going
+  back to one. The browser tries it natively and gets nowhere when the heading is inside a panel that
+  is not open, so the same routine runs here — where the heading is revealed first.
+*/
+onMounted(() => {
+  window.addEventListener('hashchange', onHashChange)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', onHashChange)
+})
+
+function onHashChange() {
+  scrollToAnchorWhenReady(window.location.hash)
+}
+
 watch(
   () => route.path,
   async (newValue) => {
@@ -451,10 +478,17 @@ watch(
       }
       // -> Load Blocks. `?.` because a locked page draws its lock screen in place of the article, so
       //    there is no content element to scan -- and nothing in it to scan for.
-      nextTick(() => {
+      nextTick(async () => {
         for (const block of pageContents.value?.querySelectorAll(':not(:defined)') ?? []) {
           commonStore.loadBlocks([block.tagName.toLowerCase()])
         }
+        /*
+          Then the heading in the URL, if there is one. The browser tried it the moment it had the
+          document, which was long before this render existed, so nothing happened — following a link
+          to `#a-heading` left the reader at the top of the page. Done here rather than on mount
+          because a route change within the app renders a new page the same way.
+        */
+        scrollToAnchorWhenReady(route.hash)
       })
     } catch (err) {
       if (err.message === 'ERR_PAGE_NOT_FOUND') {

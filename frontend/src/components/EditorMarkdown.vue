@@ -29,12 +29,12 @@
             t('editor.markup.insertTable')
           }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="notImplemented">
+        <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="insertTabset">
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertTabset')
           }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="notImplemented">
+        <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="insertBlock">
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertBlock')
           }}</w-tooltip>
@@ -44,7 +44,7 @@
             t('editor.markup.insertDiagram')
           }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="notImplemented">
+        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertFootnote')
           }}</w-tooltip>
@@ -276,6 +276,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { blockMarkdown } from '@/helpers/blocks'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
@@ -398,6 +399,55 @@ function insertEmoji(shortcode) {
   insertAtCursor({ content: `:${shortcode}:` })
 }
 
+function insertBlock() {
+  siteStore.$patch({
+    overlay: 'BlockPicker'
+  })
+}
+
+/**
+ * The tabset, without going through the picker.
+ *
+ * A shortcut to picking Tabs from the block list and inserting it as it stands, so the markup is
+ * built from the same definition rather than written out a second time here — a change to the block's
+ * starter body reaches both. It still asks the server which blocks this site has: a shortcut to a
+ * block an administrator switched off would insert something the page cannot draw.
+ */
+async function insertTabset() {
+  try {
+    const blocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
+    const tabs = blocks.find((block) => block.block === `tabs` && block.isEnabled)
+    if (!tabs) {
+      notify({
+        type: 'warning',
+        message: t('editor.blockPicker.blockUnavailable')
+      })
+      return
+    }
+    insertBlockClb(blockMarkdown(tabs))
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('editor.blockPicker.loadFailed'),
+      caption: err.message
+    })
+  }
+}
+
+/**
+ * The block the picker built, on its own lines.
+ *
+ * MDC's block syntax only opens a component when `::` starts a line, so a cursor mid-sentence breaks
+ * out of it first — the same rule the table follows.
+ */
+function insertBlockClb(markdown) {
+  const position = editor.getPosition()
+  const line = editor.getModel().getLineContent(position.lineNumber)
+  const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n\n' : ''
+  const after = line.slice(position.column - 1).trim().length > 0 ? '\n\n' : '\n'
+  insertAtCursor({ content: `${before}${markdown}${after}` })
+}
+
 function insertTable() {
   siteStore.$patch({
     overlay: 'TableEditor'
@@ -429,6 +479,59 @@ function insertTableClb(markdown) {
  * `{target="_blank"}` is markdown-it-attrs syntax, and `target` is one of the three attributes the
  * stored render is allowed to keep — see `renderers/markdown.js` and `models/rendering.ts`.
  */
+/**
+ * The number to give the next footnote.
+ *
+ * Markdown numbers footnotes in the order they are referenced, not by their labels, so these are
+ * names rather than positions — but an author reading the source expects them to count up, and two
+ * notes sharing a name would collapse into one. Anything the author named themselves is left alone
+ * and simply counted past.
+ */
+function nextFootnoteLabel(text) {
+  let highest = 0
+  for (const [, label] of text.matchAll(/\[\^([^\]\s]+)\]/g)) {
+    if (/^\d+$/.test(label)) {
+      highest = Math.max(highest, Number.parseInt(label, 10))
+    }
+  }
+  return String(highest + 1)
+}
+
+/**
+ * A footnote: the marker where the cursor is, and the note itself at the foot of the source.
+ *
+ * Both halves in one edit, because either alone is broken — a marker with no note renders as literal
+ * text, and a note nothing refers to renders as nothing at all. The cursor ends on the note, since
+ * writing it is what the author was about to do; the marker is already where they left it.
+ */
+function insertFootnote() {
+  const model = editor.getModel()
+  const label = nextFootnoteLabel(model.getValue())
+  const cursor = editor.getPosition()
+  const lastLine = model.getLineCount()
+  const lastLineLength = model.getLineContent(lastLine).length
+  // -> On a line of its own at the end, one blank line clear of whatever the page ends with
+  const lead = lastLineLength > 0 ? `\n\n` : ``
+
+  editor.executeEdits('', [
+    {
+      range: new Range(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column),
+      text: `[^${label}]`,
+      forceMoveMarkers: true
+    },
+    {
+      range: new Range(lastLine, lastLineLength + 1, lastLine, lastLineLength + 1),
+      text: `${lead}[^${label}]: `,
+      forceMoveMarkers: true
+    }
+  ])
+
+  const noteLine = model.getLineCount()
+  editor.setPosition({ lineNumber: noteLine, column: model.getLineContent(noteLine).length + 1 })
+  editor.revealLineInCenterIfOutsideViewport(noteLine)
+  editor.focus()
+}
+
 function insertLink() {
   dialog({ component: LinkPickerDialog }).onOk(({ href, openInNewTab, title }) => {
     const selection = editor.getSelection()
@@ -920,6 +1023,7 @@ onMounted(async () => {
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertTable', insertTableClb)
+  EVENT_BUS.on('insertBlock', insertBlockClb)
   EVENT_BUS.on('openEditorSettings', openEditorSettings)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
 
@@ -959,6 +1063,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertTable', insertTableClb)
+  EVENT_BUS.off('insertBlock', insertBlockClb)
   EVENT_BUS.off('openEditorSettings', openEditorSettings)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)

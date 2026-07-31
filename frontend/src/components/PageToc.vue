@@ -26,6 +26,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 
+import { scrollToAnchor } from '@/helpers/anchors'
 import { flattenToc } from '@/helpers/toc'
 
 /**
@@ -105,8 +106,7 @@ function headingFor(key) {
 }
 
 function onClick(ev, item) {
-  const heading = headingFor(item.key)
-  if (!heading) {
+  if (!headingFor(item.key)) {
     // -> Nothing to scroll to; let the browser do whatever it can with the href
     return
   }
@@ -114,8 +114,8 @@ function onClick(ev, item) {
   emit('update:selected', item.key)
   spySuspendedUntil = performance.now() + CLICK_SETTLE_MS
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  heading.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' })
+  // -> Through the helper, so that a heading inside a closed tab is revealed rather than scrolled at
+  scrollToAnchor(item.key, { smooth: true })
 }
 
 /**

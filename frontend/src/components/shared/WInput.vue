@@ -13,6 +13,7 @@
       :for="inputId"
       class="mb-1 block text-caption text-black/60 dark:text-white/70">
       {{ label }}
+      <span v-if="required" class="text-negative pr-1" aria-hidden="true">&nbsp;*</span>
     </label>
 
     <div
@@ -37,7 +38,12 @@
         class="w-input-outline"
         :style="outlineStyle">
         <legend :class="isFloating ? 'w-input-outline-notch--open' : ''">
-          <span>{{ label }}</span>
+          <span
+            >{{ label
+            }}<span v-if="required" class="text-negative pr-1" aria-hidden="true"
+              >&nbsp;*</span
+            ></span
+          >
         </legend>
       </fieldset>
 
@@ -47,6 +53,7 @@
         class="w-input-float"
         :class="[isFloating ? 'w-input-float--up' : '', floatColorClass]">
         {{ label }}
+        <span v-if="required" class="text-negative pr-1" aria-hidden="true">&nbsp;*</span>
       </label>
 
       <slot name="prepend" />
@@ -75,6 +82,7 @@
         :autocomplete="autocomplete"
         :rows="type === 'textarea' ? rows : undefined"
         :aria-invalid="hasError || undefined"
+        :aria-required="required || undefined"
         :aria-describedby="describedBy"
         class="w-unstyled min-w-0 flex-1 bg-transparent pt-0.5 outline-none placeholder:text-black/40 dark:placeholder:text-white/40"
         :class="monospaced ? 'font-mono text-[13px] leading-[1.4] font-semibold' : ''"
@@ -163,6 +171,17 @@ const props = defineProps({
   placeholder: {
     type: String,
     default: null
+  },
+  /**
+   * Marks the field as one that has to be filled in.
+   *
+   * Draws a red asterisk beside the label and tells assistive technology the same thing through
+   * `aria-required`; it does not validate anything or set the native `required` attribute, since the
+   * form around it owns when and how it complains.
+   */
+  required: {
+    type: Boolean,
+    default: false
   },
   /** Helper text below the control, replaced by the error message when invalid. */
   hint: {

@@ -14,6 +14,7 @@
       :for="selectId"
       class="mb-1 block text-caption text-black/60 dark:text-white/70">
       {{ label }}
+      <span v-if="required" class="text-negative pr-1" aria-hidden="true">&nbsp;*</span>
     </label>
 
     <!--
@@ -51,7 +52,12 @@
         class="w-input-outline"
         :style="outlineStyle">
         <legend :class="isFloating ? 'w-input-outline-notch--open' : ''">
-          <span>{{ label }}</span>
+          <span
+            >{{ label
+            }}<span v-if="required" class="text-negative pr-1" aria-hidden="true"
+              >&nbsp;*</span
+            ></span
+          >
         </legend>
       </fieldset>
 
@@ -67,6 +73,7 @@
         class="w-input-float"
         :class="[isFloating ? 'w-input-float--up' : '', floatColorClass]">
         {{ label }}
+        <span v-if="required" class="text-negative pr-1" aria-hidden="true">&nbsp;*</span>
       </span>
 
       <slot name="prepend" />
@@ -100,6 +107,7 @@
         role="combobox"
         autocomplete="off"
         :aria-expanded="String(isOpen)"
+        :aria-required="required || undefined"
         aria-haspopup="listbox"
         :aria-label="label ? undefined : ariaLabel"
         :aria-labelledby="hasFloatingLabel ? `${selectId}-label` : undefined"
@@ -305,6 +313,17 @@ const props = defineProps({
     default: false
   },
   disabled: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Marks the field as one that has to be filled in.
+   *
+   * Draws a red asterisk beside the label and tells assistive technology the same thing through
+   * `aria-required`; it does not validate anything or set the native `required` attribute, since the
+   * form around it owns when and how it complains.
+   */
+  required: {
     type: Boolean,
     default: false
   },

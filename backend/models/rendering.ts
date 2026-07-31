@@ -29,6 +29,14 @@ import { CustomError } from '../helpers/common.ts'
 export interface TocNode {
   key: string
   label: string
+  /**
+   * The heading's own level, 1 to 6.
+   *
+   * Kept alongside the nesting because the two say different things: a contents list is asked to show
+   * "H1 to H2", which is about the tag an author reached for, and an `h3` written under an `h1` is
+   * still an `h3` however few levels sit above it.
+   */
+  level: number
   children: TocNode[]
 }
 
@@ -274,12 +282,35 @@ class Rendering {
   }
 
   /**
+   * The block elements a page may carry, and what each of them may be given.
+   *
+   * A block is the one thing in a page that is not HTML, so sanitising against a list of HTML tags
+   * drops every one of them and no block ever survives being saved. The list is built from the
+   * compiled manifest — a block that is installed may be embedded, one that is not may not — and
+   * each tag gets exactly the attributes its component declares as props, which is the same set the
+   * editor's block picker offers. The markup is inert either way: what makes a block do anything is
+   * the component fetched from `/_blocks` at view time.
+   */
+  private blockAllowances(): { tags: string[]; attributes: Record<string, string[]> } {
+    const tags: string[] = []
+    const attributes: Record<string, string[]> = {}
+    for (const definition of WIKI.models.blocks.definitions) {
+      const tag = `block-${definition.block}`
+      tags.push(tag)
+      attributes[tag] = (definition.props ?? []).map((prop) => prop.name)
+    }
+    return { tags, attributes }
+  }
+
+  /**
    * Strip everything the author is not allowed to embed.
    */
   private sanitize(html: string, permissions: RenderPermissions): string {
-    const allowedTags = [...BASE_ALLOWED_TAGS]
+    const blocks = this.blockAllowances()
+    const allowedTags = [...BASE_ALLOWED_TAGS, ...blocks.tags]
     const allowedAttributes: Record<string, string[]> = {
       ...BASE_ALLOWED_ATTRIBUTES,
+      ...blocks.attributes,
       '*': [...BASE_ALLOWED_ATTRIBUTES['*']]
     }
 
@@ -373,9 +404,10 @@ class Rendering {
       }
 
       heading.attr('id', key)
+      const level = Number.parseInt(el.tagName.slice(1), 10)
       flat.push({
-        level: Number.parseInt(el.tagName.slice(1), 10),
-        node: { key: `#${key}`, label, children: [] }
+        level,
+        node: { key: `#${key}`, label, level, children: [] }
       })
     })
 

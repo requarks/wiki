@@ -112,6 +112,34 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * LISTED PAGE - One page of a reader-facing listing, as an index block draws it
+   */
+  app.addSchema({
+    $id: 'ListedPage',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        format: 'uuid'
+      },
+      path: {
+        type: 'string',
+        description: 'Slash-separated path of the page, i.e. its URL within the site.'
+      },
+      title: {
+        type: 'string'
+      },
+      description: {
+        type: 'string'
+      },
+      icon: {
+        type: 'string',
+        description: "The page's icon, as an Iconify reference. Empty when it has none."
+      }
+    }
+  })
+
+  /**
    * FOLDER INPUT - The writable fields of a folder, used for both create and rename
    */
   app.addSchema({

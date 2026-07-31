@@ -1,7 +1,6 @@
 import summary from 'rollup-plugin-summary'
 import terser from '@rollup/plugin-terser'
 import resolve from '@rollup/plugin-node-resolve'
-import graphql from '@rollup/plugin-graphql'
 
 import * as glob from 'glob'
 
@@ -15,6 +14,13 @@ function literalToValue (node, blockDir) {
   switch (node.type) {
     case 'Literal':
       return node.value
+    // A backtick string with nothing interpolated is still a plain value, and the readable way to
+    // write the multi-line ones -- a starter body for a block, say.
+    case 'TemplateLiteral':
+      if (node.expressions.length > 0) {
+        throw new Error(`${blockDir}: "static definition" must contain only plain literals, got an interpolated template.`)
+      }
+      return node.quasis[0].value.cooked
     case 'ArrayExpression':
       return node.elements.map(el => literalToValue(el, blockDir))
     case 'ObjectExpression':
@@ -24,6 +30,24 @@ function literalToValue (node, blockDir) {
       ]))
     default:
       throw new Error(`${blockDir}: "static definition" must contain only plain literals, got ${node.type}.`)
+  }
+}
+
+/**
+ * Loads a `.css` import as a string.
+ *
+ * A block styles itself from inside its shadow root, which a `<link>` in the page cannot reach — so a
+ * library's stylesheet has to be part of the component. Rollup has no notion of CSS on its own.
+ */
+function cssAsString () {
+  return {
+    name: 'css-as-string',
+    transform (code, id) {
+      if (!id.endsWith('.css')) {
+        return null
+      }
+      return { code: `export default ${JSON.stringify(code)}`, map: { mappings: '' } }
+    }
   }
 }
 
@@ -90,15 +114,12 @@ export default {
   ),
   output: {
     dir: 'compiled',
-    format: 'es',
-    globals: {
-      APOLLO_CLIENT: 'APOLLO_CLIENT'
-    }
+    format: 'es'
   },
   plugins: [
     blocksManifest(),
+    cssAsString(),
     resolve(),
-    graphql(),
     terser({
       ecma: 2019,
       module: true

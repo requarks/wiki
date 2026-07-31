@@ -157,7 +157,7 @@ async function routes(app: FastifyInstance) {
         tags: ['Webhooks'],
         // -> The same shape as an update, with the three fields a webhook cannot exist without
         body: {
-          allOf: [{ $ref: 'HookInput#' }, { required: ['name', 'events', 'url'] }]
+          allOf: [{ $ref: 'HookInput#' }, { type: 'object', required: ['name', 'events', 'url'] }]
         },
         response: {
           200: {

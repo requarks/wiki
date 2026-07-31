@@ -263,6 +263,98 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * LIST PAGES AS A READER
+   */
+  app.get<{
+    Params: { siteId: string }
+    Querystring: {
+      path?: string
+      locale?: string
+      tags?: string
+      limit?: number
+      orderBy?: TreeOrderBy
+      orderByDirection?: 'asc' | 'desc'
+      depth?: number
+    }
+  }>(
+    '/sites/:siteId/tree/pages',
+    {
+      schema: {
+        summary: 'List pages as a reader',
+        description:
+          "Lists the pages under a path, ordered and limited, for an index block drawn inside a page. Folders are not part of the answer — this is a list of pages, at `depth` folders below the path when asked for.\n\nReadable without a session, because the page holding the block is: an anonymous request sees only published pages, the same set the page view would serve it. Unlike `/tree/browse` it is not gated on the site's `browse` feature, which governs the sidebar's browse menu rather than what a page may render.",
+        tags: ['Tree'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          properties: {
+            path: {
+              type: 'string',
+              maxLength: 2048,
+              description: 'Slash-separated path to list. The site root when absent.'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: "The site's primary locale when absent."
+            },
+            tags: {
+              type: 'string',
+              description: 'Comma-separated list of tags a page must carry all of.'
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 1000,
+              default: 10
+            },
+            orderBy: {
+              type: 'string',
+              enum: TREE_ORDER_BY,
+              default: 'title'
+            },
+            orderByDirection: {
+              type: 'string',
+              enum: ['asc', 'desc'],
+              default: 'asc'
+            },
+            depth: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 10,
+              default: 0,
+              description: 'How many folders below the path to include. 0 is the path itself.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The pages found',
+            type: 'array',
+            items: { $ref: 'ListedPage#' }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (!WIKI.sites[req.params.siteId]) {
+        return reply.notFound('This site does not exist.')
+      }
+      return WIKI.models.tree.listPages({
+        siteId: req.params.siteId,
+        path: req.query.path,
+        locale: req.query.locale ?? defaultLocale(req.params.siteId),
+        tags: splitList(req.query.tags),
+        limit: req.query.limit,
+        orderBy: req.query.orderBy,
+        orderByDirection: req.query.orderByDirection,
+        depth: req.query.depth,
+        publicOnly: !req.session?.authenticated
+      })
+    }
+  )
+
+  /**
    * GET FOLDER
    */
   app.get<{ Params: { siteId: string; folderId: string } }>(
@@ -311,7 +403,7 @@ async function routes(app: FastifyInstance) {
         body: {
           allOf: [
             { $ref: 'FolderInput#' },
-            { required: ['pathName', 'title'] },
+            { type: 'object', required: ['pathName', 'title'] },
             {
               type: 'object',
               properties: {
@@ -388,7 +480,7 @@ async function routes(app: FastifyInstance) {
         tags: ['Tree'],
         params: folderIdParam,
         body: {
-          allOf: [{ $ref: 'FolderInput#' }, { required: ['pathName', 'title'] }]
+          allOf: [{ $ref: 'FolderInput#' }, { type: 'object', required: ['pathName', 'title'] }]
         },
         response: {
           200: {

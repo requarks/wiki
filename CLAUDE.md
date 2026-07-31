@@ -238,6 +238,25 @@ the frontend adds the `vue` plugin and the `API_CLIENT` / `EVENT_BUS` / `Tempora
 Both tools handle `.ts` with no extra configuration, and the backend's oxlint config already enables
 the `typescript` plugin. oxlint does not type-check — run `npm run typecheck` for that.
 
+**Never put two statements in a Vue template attribute.** `@click="doOne(); doTwo()"` builds today
+and is a build error the moment the file is formatted, because `semi: false` and Vue disagree about
+the same character. Vue's `transformOn` decides whether an inline handler is a statement block or an
+expression from `exp.content.includes(';')` — with the semicolon it emits `$event => { … }`,
+without it `$event => ( … )`. oxfmt breaks the handler across lines and drops the semicolon, so Vue
+parenthesises two statements and the template fails to compile (`Error parsing JavaScript
+expression: Unexpected token`). Write a named handler instead — `@click="closeAndRefresh"` — as
+`EditorMarkdown.vue` and `PageRelationDialog.vue` do.
+
+Neither side of that is worth reconfiguring, so don't try: the `includes(';')` check has no compiler
+option behind it, and the parse error is raised by the built-in `transformExpression`, which
+`baseCompile` runs *before* any `nodeTransforms` you could add — and Volar runs the same compiler,
+so a build-time workaround would still leave the editor showing errors. On the formatter side,
+`embeddedLanguageFormatting: "off"` does leave attribute expressions alone but also stops formatting
+every `<script>` and `<style>` block in every SFC. This is not an oxfmt quirk either: Prettier with
+`--no-semi` produces identical output. For a one-off where the inline form genuinely reads better,
+`<!-- prettier-ignore -->` on the preceding line works (oxfmt honors Prettier's marker; there is no
+`oxfmt-ignore`).
+
 ### Utilities and dates
 
 These apply to **every workspace**, `frontend/` included — not just the backend.
