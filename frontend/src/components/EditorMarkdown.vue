@@ -39,11 +39,6 @@
             t('editor.markup.insertBlock')
           }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:chart-multiline" padding="sm sm" flat @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertDiagram')
-          }}</w-tooltip>
-        </w-btn>
         <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertFootnote')
@@ -138,23 +133,41 @@
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-info}` })">
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!NOTE]` })">
                   <w-item-section side>
-                    <w-icon name="mdi:information-box" color="blue-7" />
+                    <!--
+                      A colour with a utility behind it. WIcon composes the class from this name, so
+                      Tailwind never sees it while scanning and emits only the ones written out in
+                      full somewhere in the app -- of the blues, that is this one. Asking for the 7
+                      step, as this did, left the icon the colour of the menu text.
+
+                      Nothing above may spell a class out either: the scanner reads comments too, and
+                      would generate whatever this explanation quoted.
+                    -->
+                    <w-icon name="mdi:information-box" color="blue" />
                   </w-item-section>
                   <w-item-section>{{ t('editor.markup.admonitionInfo') }}</w-item-section>
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-success}` })">
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!TIP]` })">
                   <w-item-section side>
                     <w-icon name="mdi:check-circle" color="positive" />
                   </w-item-section>
                   <w-item-section>{{ t('editor.markup.admonitionSuccess') }}</w-item-section>
                 </w-item>
+                <!-- -> The same speech bubble the page draws an IMPORTANT admonition with -->
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-warning}` })">
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!IMPORTANT]` })">
+                  <w-item-section side>
+                    <w-icon name="mdi:message-alert" color="purple" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionImportant') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!WARNING]` })">
                   <w-item-section side>
                     <w-icon name="mdi:alert-box" color="orange" />
                   </w-item-section>
@@ -162,7 +175,7 @@
                 </w-item>
                 <w-item
                   clickable
-                  @click="insertBeforeEachLine({ content: `> `, after: `{.is-danger}` })">
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!CAUTION]` })">
                   <w-item-section side>
                     <w-icon name="mdi:close-box" color="negative" />
                   </w-item-section>
@@ -628,8 +641,12 @@ function insertAfter({ content, newLine, focus = true }) {
 
 /**
  * Insert content before current line
+ *
+ * `before` is a line of its own, put above the first of them — the `> [!NOTE]` that opens an
+ * admonition. It rides along in that line's own edit rather than as an insertion of its own, so no
+ * two edits in the batch start at the same position.
  */
-function insertBeforeEachLine({ content, after, focus = true }) {
+function insertBeforeEachLine({ content, before, focus = true }) {
   const edits = []
   for (const selection of editor.getSelections()) {
     const lineCount = selection.endLineNumber - selection.startLineNumber + 1
@@ -640,18 +657,10 @@ function insertBeforeEachLine({ content, after, focus = true }) {
       if (lineContent.startsWith(content)) {
         lineContent = lineContent.substring(content.length)
       }
+      const opening = before && line === lines[0] ? `${before}\n` : ''
       edits.push({
         range: new Range(line, 1, line, lineLength + 1),
-        text: `${content}${lineContent}`,
-        forceMoveMarkers: true
-      })
-    }
-    if (after) {
-      const lastLine = lines.at(-1)
-      const lineLength = editor.getModel().getLineContent(lastLine).length
-      edits.push({
-        range: new Range(lastLine, lineLength + 1, lastLine, lineLength + 1),
-        text: `\n${after}`,
+        text: `${opening}${content}${lineContent}`,
         forceMoveMarkers: true
       })
     }

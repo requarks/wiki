@@ -11,14 +11,10 @@ import mdMark from 'markdown-it-mark'
 import mdMultiTable from 'markdown-it-multimd-table'
 import mdFootnote from 'markdown-it-footnote'
 import mdMdc from 'markdown-it-mdc'
-import katex from 'katex'
 import mdUnderline from './modules/markdown-it-underline'
 import mdImsize from './modules/markdown-it-imsize'
-import 'katex/dist/contrib/mhchem'
+import mdGithubAlerts from './modules/github-alerts'
 import twemoji from 'twemoji'
-import plantuml from './modules/plantuml'
-import kroki from './modules/kroki.mjs'
-import katexHelper from './modules/katex'
 
 import hljs from 'highlight.js'
 
@@ -77,6 +73,12 @@ export class MarkdownRenderer {
         if (lang === 'diagram') {
           return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
         } else if (['mermaid', 'plantuml'].includes(lang)) {
+          /*
+            Left as source, deliberately: a diagram is drawn by the block whose body it is —
+            `block-diagram` for mermaid, `block-plantuml` for the other — and each reads the text out
+            of this `pre`. A fence on its own outside a block keeps the panel the stylesheet gives it,
+            which says "a diagram nobody has drawn" rather than pretending to be a code sample.
+          */
           return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
         } else {
           /*
@@ -130,6 +132,7 @@ export class MarkdownRenderer {
       .use(mdMark)
       .use(mdFootnote)
       .use(mdImsize)
+      .use(mdGithubAlerts)
 
     /*
       MDC's slot syntax, off for the same reason as inline components: it takes a line the author
@@ -171,76 +174,6 @@ export class MarkdownRenderer {
 
     if (config.mdmultiTable) {
       this.md.use(mdMultiTable, { multiline: true, rowspan: true, headerless: true })
-    }
-
-    // --------------------------------
-    // PLANTUML
-    // --------------------------------
-
-    if (config.plantuml) {
-      plantuml.init(this.md, { server: config.plantumlServerUrl })
-    }
-
-    // --------------------------------
-    // KROKI
-    // --------------------------------
-
-    if (config.kroki) {
-      kroki.init(this.md, { server: config.krokiServerUrl })
-    }
-
-    // --------------------------------
-    // KATEX
-    // --------------------------------
-
-    const macros = {}
-
-    // TODO: Add mhchem (needs esm conversion)
-    // Add \ce, \pu, and \tripledash to the KaTeX macros.
-    // katex.__defineMacro('\\ce', function (context) {
-    //   return chemParse(context.consumeArgs(1)[0], 'ce')
-    // })
-    // katex.__defineMacro('\\pu', function (context) {
-    //   return chemParse(context.consumeArgs(1)[0], 'pu')
-    // })
-
-    //  Needed for \bond for the ~ forms
-    //  Raise by 2.56mu, not 2mu. We're raising a hyphen-minus, U+002D, not
-    //  a mathematical minus, U+2212. So we need that extra 0.56.
-    katex.__defineMacro(
-      '\\tripledash',
-      '{\\vphantom{-}\\raisebox{2.56mu}{$\\mkern2mu' +
-        '\\tiny\\text{-}\\mkern1mu\\text{-}\\mkern1mu\\text{-}\\mkern2mu$}}'
-    )
-    this.md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
-    this.md.renderer.rules.katex_inline = (tokens, idx) => {
-      try {
-        return katex.renderToString(tokens[idx].content, {
-          displayMode: false,
-          macros
-        })
-      } catch (err) {
-        console.warn(err)
-        return tokens[idx].content
-      }
-    }
-    this.md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
-      alt: ['paragraph', 'reference', 'blockquote', 'list']
-    })
-    this.md.renderer.rules.katex_block = (tokens, idx) => {
-      try {
-        return (
-          '<p>' +
-          katex.renderToString(tokens[idx].content, {
-            displayMode: true,
-            macros
-          }) +
-          '</p>'
-        )
-      } catch (err) {
-        console.warn(err)
-        return tokens[idx].content
-      }
     }
 
     // --------------------------------

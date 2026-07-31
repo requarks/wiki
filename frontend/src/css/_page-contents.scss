@@ -13,9 +13,12 @@
 
   Written against what `renderers/markdown.js` actually emits (and what `models/rendering.ts` does to
   it server-side), which is: heading anchors, `pre.codeblock` with highlight.js token classes and an
-  optional line-number gutter, task lists, footnotes, multi-line tables, KaTeX, `img.uml-diagram` for
-  PlantUML/Kroki, twemoji images, and whatever classes an author attaches through `markdown-it-attrs`
-  (`id`, `class` and `target` are the ones the renderer allows through).
+  optional line-number gutter, task lists, footnotes, multi-line tables, admonitions, twemoji images,
+  and whatever classes an author attaches through `markdown-it-attrs` (`id`, `class` and `target` are
+  the ones the renderer allows through).
+
+  Maths and diagrams are not in that list: they are blocks now -- `block-mathjax`, `block-diagram`,
+  `block-plantuml` -- and a block styles itself inside its own shadow root, which nothing here reaches.
 
   The measurements follow what the documentation platforms have converged on -- 16px body text, headings
   at 600 with far more space above than below, ruled h1/h2, tinted code and table headers, a left-ruled
@@ -82,6 +85,13 @@
   --content-warning-wash: rgba(163, 90, 0, 0.09);
   --content-danger: #c02636;
   --content-danger-wash: rgba(192, 38, 54, 0.08);
+  /*
+    A fifth hue, for `[!IMPORTANT]`: it sits between "worth knowing" and "watch out", which is exactly
+    the gap the other four leave. Purple because GitHub uses purple, and a reader who knows the marker
+    from there should recognise the colour here.
+  */
+  --content-important: #6f42c1;
+  --content-important-wash: rgba(111, 66, 193, 0.08);
 
   /*
     Code tokens, after GitHub's syntax themes.
@@ -141,6 +151,8 @@
     --content-warning-wash: rgba(243, 182, 97, 0.12);
     --content-danger: #ff8b8b;
     --content-danger-wash: rgba(255, 139, 139, 0.12);
+    --content-important: #c4a7ff;
+    --content-important-wash: rgba(196, 167, 255, 0.12);
 
     --content-code-comment: #8b949e;
     --content-code-keyword: #ff7b72;
@@ -606,9 +618,10 @@
   }
 
   /*
-    Admonitions, from `{.is-info}` and friends on a blockquote.
+    Admonitions, from `{.is-info}` and friends on a blockquote -- and from a GitHub-style `> [!NOTE]`,
+    which `renderers/modules/github-alerts.js` turns into the very same classes plus a label.
 
-    A wash, a heavier bar and an icon: colour alone would leave the four kinds indistinguishable to a
+    A wash, a heavier bar and an icon: colour alone would leave the kinds indistinguishable to a
     reader who cannot separate the hues, and the icon is a masked SVG rather than a glyph so it needs
     no webfont -- the app dropped those, which is why the markers here used to render as tofu.
   */
@@ -622,6 +635,8 @@
     &:has(> .is-info),
     &.is-success,
     &:has(> .is-success),
+    &.is-important,
+    &:has(> .is-important),
     &.is-warning,
     &:has(> .is-warning),
     &.is-danger,
@@ -649,6 +664,17 @@
         margin-bottom: 0;
       }
 
+      /*
+        The label a GitHub-style alert opens with -- "Note", "Tip" -- standing in for the marker the
+        author typed. In the severity's own colour, since it is naming the severity, and close above
+        the text it introduces rather than a paragraph's distance from it.
+      */
+      > .alert-title {
+        margin-bottom: 0.3em;
+        color: var(--alert-hue);
+        font-weight: 600;
+      }
+
       code {
         background-color: var(--content-surface-alt);
       }
@@ -656,6 +682,8 @@
 
     &.is-info,
     &:has(> .is-info) {
+      --alert-hue: var(--content-info);
+
       border-left-color: var(--content-info);
       background-color: var(--content-info-wash);
 
@@ -667,6 +695,8 @@
 
     &.is-success,
     &:has(> .is-success) {
+      --alert-hue: var(--content-success);
+
       border-left-color: var(--content-success);
       background-color: var(--content-success-wash);
 
@@ -676,8 +706,24 @@
       }
     }
 
+    /* -> `mdi:message-alert`, the same speech bubble GitHub marks an important note with */
+    &.is-important,
+    &:has(> .is-important) {
+      --alert-hue: var(--content-important);
+
+      border-left-color: var(--content-important);
+      background-color: var(--content-important-wash);
+
+      &::before {
+        color: var(--content-important);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 11h-2V5h2m0 10h-2v-2h2m7-11H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2'/%3E%3C/svg%3E");
+      }
+    }
+
     &.is-warning,
     &:has(> .is-warning) {
+      --alert-hue: var(--content-warning);
+
       border-left-color: var(--content-warning);
       background-color: var(--content-warning-wash);
 
@@ -689,6 +735,8 @@
 
     &.is-danger,
     &:has(> .is-danger) {
+      --alert-hue: var(--content-danger);
+
       border-left-color: var(--content-danger);
       background-color: var(--content-danger-wash);
 
@@ -1061,20 +1109,6 @@
     font-size: 0.875em;
   }
 
-  /*
-    PlantUML and Kroki return SVGs drawn in black on nothing. On a dark page that is a diagram of
-    invisible lines, so it gets a light card of its own -- the same treatment either way, since a
-    diagram is an illustration rather than part of the text.
-  */
-  img.uml-diagram {
-    display: block;
-    margin: 1.5em auto;
-    padding: 0.75rem;
-    border: 1px solid var(--content-rule);
-    border-radius: 8px;
-    background-color: #fff;
-  }
-
   /* Twemoji, which the renderer swaps in for `:shortcodes:` */
   img.emoji {
     display: inline-block;
@@ -1170,26 +1204,6 @@
   .footnote-backref {
     margin-left: 0.3em;
     text-decoration: none;
-  }
-
-  // ---------------------------------------------------------------------------
-  // MATH
-  // ---------------------------------------------------------------------------
-
-  /*
-    KaTeX sizes itself; what it cannot do is decide what happens when an equation is wider than the
-    column. A display equation scrolls on its own rather than stretching the page.
-  */
-  .katex-display {
-    margin: 1.4em 0;
-    padding: 0.2em 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .katex {
-    /* -> KaTeX's default 1.21em is oversized next to 16px body text */
-    font-size: 1.1em;
   }
 
   // ---------------------------------------------------------------------------

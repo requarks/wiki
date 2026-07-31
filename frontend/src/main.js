@@ -14,18 +14,6 @@ import { initializeHairlines } from './helpers/hairline'
 // so no icon webfont is loaded.
 import '@quasar/extras/roboto-font/roboto-font.css'
 
-/*
-  KaTeX's own stylesheet, which the math in a page is drawn with.
-
-  Vendor CSS rather than something `_page-contents.scss` could express: it carries the maths fonts and
-  the geometry of every symbol. Without it a formula renders TWICE -- KaTeX emits both an HTML tree and
-  a MathML fallback, and the CSS is what hides the one the browser is not using -- which is what made
-  every equation appear as a broken rendering followed by its own source.
-
-  Global, but inert outside content: `.katex` appears nowhere else in the app.
-*/
-import 'katex/dist/katex.min.css'
-
 import './css/tailwind.css'
 import './css/app.scss'
 

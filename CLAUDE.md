@@ -117,7 +117,9 @@ Self-contained Lit components. Each lives in `blocks/block-<name>/component.js` 
 `rollup.config.mjs` picks up any directory matching `block-*` automatically, so a new block needs no
 config change. Output goes to `blocks/compiled/`, which the backend serves statically under
 `/_blocks/`. Blocks are loaded dynamically at runtime, which is why `_blocks/**` is excluded from
-Vite's `dynamicImportVarsOptions`.
+Vite's `dynamicImportVarsOptions`. A block pulling in a heavy library is fine — nothing is fetched
+until its tag turns up in a page — and a library that still ships CommonJS works too, since the
+rollup config runs `@rollup/plugin-commonjs` after `resolve()`.
 
 Blocks style themselves with `:host` / `:host-context(body.body--dark)` for dark mode and read the
 theme colors via CSS custom properties (`var(--q-primary)` — the `--q-` prefix is historical; the

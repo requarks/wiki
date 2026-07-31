@@ -118,23 +118,6 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item>
-            <blueprint-icon icon="sigma" />
-            <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.latexEngine`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.latexEngineHint`)}}</w-item-label>
-            </w-item-section>
-            <w-item-section class="flex-none">
-              <w-btn-toggle
-                v-model="state.config.latexEngine"
-                push
-                glossy
-                no-caps
-                toggle-color="primary"
-                :options="latexEngines" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item>
             <blueprint-icon icon="data-sheet" />
             <w-item-section>
               <w-item-label>{{t(`admin.editors.markdown.multimdTable`)}}</w-item-label>
@@ -204,82 +187,6 @@
             </w-item-section>
           </w-item>
         </w-card>
-        <w-card class="shadow-1 pb-2 mt-4">
-          <w-card-section>
-            <div class="text-subtitle1">{{t('admin.editors.markdown.plantuml')}}</div>
-          </w-card-section>
-          <w-item tag="label">
-            <blueprint-icon icon="workflow" />
-            <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.plantuml`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.plantumlHint`)}}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.plantuml"
-                color="primary"
-                checked-icon="la:check"
-                unchecked-icon="la:times"
-                :aria-label="t(`admin.editors.markdown.plantuml`)" />
-            </w-item-section>
-          </w-item>
-          <template v-if="state.config.plantuml">
-            <w-separator class="my-2" inset />
-            <w-item>
-              <blueprint-icon icon="website" />
-              <w-item-section>
-                <w-item-label>{{t(`admin.editors.markdown.plantumlServerUrl`)}}</w-item-label>
-                <w-item-label caption>{{t(`admin.editors.markdown.plantumlServerUrlHint`)}}</w-item-label>
-              </w-item-section>
-              <w-item-section side>
-                <w-input
-                  style="width: 450px;"
-                  outlined
-                  v-model="state.config.plantumlServerUrl"
-                  dense
-                  :aria-label="t(`admin.editors.markdown.plantumlServerUrl`)" />
-              </w-item-section>
-            </w-item>
-          </template>
-        </w-card>
-        <w-card class="shadow-1 pb-2 mt-4">
-          <w-card-section>
-            <div class="text-subtitle1">{{t('admin.editors.markdown.kroki')}}</div>
-          </w-card-section>
-          <w-item tag="label">
-            <blueprint-icon icon="workflow" />
-            <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.kroki`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.krokiHint`)}}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.kroki"
-                color="primary"
-                checked-icon="la:check"
-                unchecked-icon="la:times"
-                :aria-label="t(`admin.editors.markdown.kroki`)" />
-            </w-item-section>
-          </w-item>
-          <template v-if="state.config.kroki">
-            <w-separator class="my-2" inset />
-            <w-item>
-              <blueprint-icon icon="website" />
-              <w-item-section>
-                <w-item-label>{{t(`admin.editors.markdown.krokiServerUrl`)}}</w-item-label>
-                <w-item-label caption>{{t(`admin.editors.markdown.krokiServerUrlHint`)}}</w-item-label>
-              </w-item-section>
-              <w-item-section side>
-                <w-input
-                  style="width: 450px;"
-                  outlined
-                  v-model="state.config.krokiServerUrl"
-                  dense
-                  :aria-label="t(`admin.editors.markdown.krokiServerUrl`)" />
-              </w-item-section>
-            </w-item>
-          </template>
-        </w-card>
         <w-inner-loading :showing="state.loading > 0">
           <w-spinner color="accent" size="lg" />
         </w-inner-loading>
@@ -326,12 +233,7 @@ function defaultConfig() {
     quotes: 'english',
     underline: true,
     tabWidth: 2,
-    latexEngine: 'katex',
-    multimdTable: true,
-    plantuml: false,
-    plantumlServerUrl: 'https://www.plantuml.com/plantuml/',
-    kroki: false,
-    krokiServerUrl: 'https://kroki.io'
+    multimdTable: true
   }
 }
 
@@ -339,11 +241,6 @@ const state = reactive({
   config: defaultConfig(),
   loading: 0
 })
-
-const latexEngines = [
-  { value: 'katex', label: 'KaTeX' },
-  { value: 'mathjax', label: 'Mathjax' }
-]
 
 const quoteStyles = [
   { value: 'chinese', label: 'Chinese' },

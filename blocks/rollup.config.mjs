@@ -1,6 +1,7 @@
 import summary from 'rollup-plugin-summary'
 import terser from '@rollup/plugin-terser'
 import resolve from '@rollup/plugin-node-resolve'
+import commonjs from '@rollup/plugin-commonjs'
 
 import * as glob from 'glob'
 
@@ -120,6 +121,9 @@ export default {
     blocksManifest(),
     cssAsString(),
     resolve(),
+    // -> A block's own code is ESM, but a library it pulls in need not be: mermaid reaches for dayjs,
+    //    which ships as UMD, and rollup has no notion of `module.exports` without this
+    commonjs(),
     terser({
       ecma: 2019,
       module: true

@@ -28,7 +28,12 @@
       keystroke as the store echoes it back, and a rewritten text node puts the caret at the start of
       it. `syncEditable` writes it instead, and only when the two have actually diverged.
     -->
-    <div class="min-w-0 flex-1 p-4">
+    <!--
+      Centred rather than top-aligned: with no description the title is the only line in this column,
+      and left at the top it sat above the middle of the icon beside it. A page that has one is taller
+      than everything else in the row, so there is nothing to centre and this changes nothing.
+    -->
+    <div class="min-w-0 flex-1 flex flex-col justify-center p-4">
       <div class="text-h4 page-header-title">
         <span
           v-if="editorStore.isActive"
@@ -65,6 +70,16 @@
     <!-- PAGE ACTIONS -->
     <div class="flex-none p-4 flex items-center justify-end">
       <template v-if="!editorStore.isActive">
+        <!--
+          Whoever is looking at a draft can already see it, so the badge is not gated on being logged
+          in the way the actions beside it are: it is telling a reader what they are reading, not
+          offering them something to do.
+        -->
+        <w-badge
+          v-if="pageStore.publishState === `draft`"
+          class="uppercase"
+          color="negative"
+          :label="t(`editor.props.draft`)" />
         <w-btn
           class="ml-4"
           v-if="userStore.authenticated"
