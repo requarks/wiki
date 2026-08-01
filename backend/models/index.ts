@@ -11,6 +11,7 @@ import { icons } from './icons.ts'
 import { jobs } from './jobs.ts'
 import { locales } from './locales.ts'
 import { navigation } from './navigation.ts'
+import { pageHistory } from './pageHistory.ts'
 import { pages } from './pages.ts'
 import { passkeys } from './passkeys.ts'
 import { rendering } from './rendering.ts'
@@ -38,6 +39,7 @@ export default {
   jobs,
   locales,
   navigation,
+  pageHistory,
   pages,
   passkeys,
   rendering,

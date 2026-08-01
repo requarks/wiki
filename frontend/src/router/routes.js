@@ -31,6 +31,16 @@ const routes = [
     ]
   },
   {
+    path: '/_inbox',
+    component: () => import('@/layouts/InboxLayout.vue'),
+    children: [
+      { path: '', redirect: '/_inbox/messages' },
+      { path: 'messages', component: () => import('@/pages/InboxMessages.vue') },
+      { path: 'watching', component: () => import('@/pages/InboxWatching.vue') },
+      { path: 'review', component: () => import('@/pages/InboxReview.vue') }
+    ]
+  },
+  {
     path: '/_search',
     component: () => import('@/pages/Search.vue')
   },

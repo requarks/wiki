@@ -50,7 +50,15 @@
         </div>
         <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
           <div class="p-4">
-            <div class="page-contents" ref="pageContents" v-html="pageStore.render" />
+            <!--
+              Delegated rather than bound per link: the anchors are written by `v-html`, so there is
+              nothing here to put a handler on, and they are replaced wholesale on every render.
+            -->
+            <div
+              class="page-contents"
+              ref="pageContents"
+              v-html="pageStore.render"
+              @click="onContentClick" />
             <template v-if="pageStore.relations && pageStore.relations.length > 0">
               <w-separator class="my-6" />
               <div class="flex flex-wrap">
@@ -215,7 +223,7 @@ import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 import { scrollToAnchorWhenReady } from '@/helpers/anchors'
-import { enhanceRenderedContent } from '@/helpers/renderedContent'
+import { enhanceRenderedContent, routableHref } from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
 
 import { useCommonStore } from '@/stores/common'
@@ -518,6 +526,37 @@ watch(
 )
 
 // METHODS
+
+/**
+ * Follow a link inside the page's content without reloading the application.
+ *
+ * A rendered page is HTML, so its internal links are ordinary anchors: the browser would throw the
+ * whole SPA away and build it again to show a page the router can swap in. `routableHref` decides
+ * which ones are ours; anything it declines is left to the browser, including a click asking for a
+ * new tab.
+ */
+function onContentClick(ev) {
+  if (
+    ev.defaultPrevented ||
+    ev.button !== 0 ||
+    ev.metaKey ||
+    ev.ctrlKey ||
+    ev.shiftKey ||
+    ev.altKey
+  ) {
+    return
+  }
+  const anchor = ev.target?.closest?.('a[href]')
+  if (!anchor) {
+    return
+  }
+  const target = routableHref(anchor, window.location)
+  if (!target) {
+    return
+  }
+  ev.preventDefault()
+  router.push(target)
+}
 
 /** Asks for the page's password. Opened on arrival, and again from the lock screen's own button. */
 function promptUnlock() {

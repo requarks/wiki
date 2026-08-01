@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "91c32c3a-9a9e-4693-b10f-694beca33f26",
+  "id": "9f2b7fea-5303-4a92-802b-bf7fae047462",
   "prevIds": [
-    "061e8c84-e05e-40b0-a074-7a56bd794fc7"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -13,6 +13,16 @@
         "other"
       ],
       "name": "assetKind",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "pending",
+        "success",
+        "error"
+      ],
+      "name": "hookState",
       "entityType": "enums",
       "schema": "public"
     },
@@ -67,6 +77,12 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "approvalRules",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "assets",
       "entityType": "tables",
       "schema": "public"
@@ -86,6 +102,24 @@
     {
       "isRlsEnabled": false,
       "name": "groups",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "hooks",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "iconSets",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "icons",
       "entityType": "tables",
       "schema": "public"
     },
@@ -127,6 +161,18 @@
     },
     {
       "isRlsEnabled": false,
+      "name": "pageEditSubmissions",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "pageHistory",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
       "name": "pages",
       "entityType": "tables",
       "schema": "public"
@@ -146,6 +192,12 @@
     {
       "isRlsEnabled": false,
       "name": "sites",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "storage",
       "entityType": "tables",
       "schema": "public"
     },
@@ -212,14 +264,27 @@
       "table": "apiKeys"
     },
     {
-      "type": "text",
+      "type": "varchar(8)",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "key",
+      "name": "keyShort",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "apiKeys"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "groups",
       "entityType": "columns",
       "schema": "public",
       "table": "apiKeys"
@@ -275,6 +340,136 @@
       "entityType": "columns",
       "schema": "public",
       "table": "apiKeys"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "''",
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "varchar(16)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'START'",
+      "generated": null,
+      "identity": null,
+      "name": "match",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "varchar(2048)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "''",
+      "generated": null,
+      "identity": null,
+      "name": "path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "submitterGroups",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'[]'",
+      "generated": null,
+      "identity": null,
+      "name": "reviewerGroups",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "siteId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "approvalRules"
     },
     {
       "type": "uuid",
@@ -821,6 +1016,383 @@
       "entityType": "columns",
       "schema": "public",
       "table": "groups"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "ARRAY[]",
+      "generated": null,
+      "identity": null,
+      "name": "events",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "url",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "includeMetadata",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "includeContent",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "acceptUntrusted",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "authHeader",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "hookState",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'pending'",
+      "generated": null,
+      "identity": null,
+      "name": "state",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "lastErrorMessage",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "hooks"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "prefix",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "iconSets"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "iconSets"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "isEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "iconSets"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "info",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "iconSets"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "refreshedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "iconSets"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "iconSets"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "prefix",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "body",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "16",
+      "generated": null,
+      "identity": null,
+      "name": "width",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "16",
+      "generated": null,
+      "identity": null,
+      "name": "height",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "left",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "top",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "rotate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "hFlip",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "vFlip",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "icons"
     },
     {
       "type": "uuid",
@@ -1457,10 +2029,309 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "patch",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "baseHash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "guestName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "guestEmail",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "createdAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updatedAt",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "siteId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "authorId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "pageId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "varchar(16)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'updated'",
+      "generated": null,
+      "identity": null,
+      "name": "action",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 1,
+      "default": "ARRAY[]",
+      "generated": null,
+      "identity": null,
+      "name": "changedFields",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "locale",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "path",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "title",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "content",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "meta",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "timestamp",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "versionDate",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "authorId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "siteId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "pages"
     },
     {
-      "type": "ltree",
+      "type": "varchar(255)",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2071,6 +2942,123 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "module",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isEnabled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "contentTypes",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "assetDelivery",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "versioning",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "config",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "jsonb",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'{}'",
+      "generated": null,
+      "identity": null,
+      "name": "state",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "siteId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
       "table": "tags"
     },
     {
@@ -2204,7 +3192,7 @@
       "table": "tree"
     },
     {
-      "type": "ltree",
+      "type": "varchar(255)",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -2661,6 +3649,27 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
+      "name": "approvalRules_siteId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "siteId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
       "name": "assets_siteId_idx",
       "entityType": "indexes",
       "schema": "public",
@@ -2728,6 +3737,188 @@
       "entityType": "indexes",
       "schema": "public",
       "table": "navigation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageEditSubmissions_pageId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "siteId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageEditSubmissions_siteId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "authorId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageEditSubmissions_authorId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "authorId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": "\"authorId\" IS NOT NULL",
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageEditSubmissions_page_author_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "pageId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "versionDate",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageHistory_pageId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "siteId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "locale",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "path",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "versionDate",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageHistory_siteId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "authorId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pageHistory_authorId_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pageHistory"
     },
     {
       "nameExplicit": true,
@@ -2906,6 +4097,34 @@
           "asc": true,
           "nullsFirst": false,
           "opclass": null
+        },
+        {
+          "value": "module",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "storage_composite_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "siteId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
         }
       ],
       "isUnique": false,
@@ -3065,7 +4284,7 @@
       "isUnique": false,
       "where": null,
       "with": "",
-      "method": "gist",
+      "method": "btree",
       "concurrently": false,
       "name": "tree_locale_idx",
       "entityType": "indexes",
@@ -3271,6 +4490,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "siteId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "sites",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "approvalRules_siteId_sites_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "approvalRules"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "authorId"
       ],
       "schemaTo": "public",
@@ -3322,6 +4558,23 @@
     {
       "nameExplicit": false,
       "columns": [
+        "prefix"
+      ],
+      "schemaTo": "public",
+      "tableTo": "iconSets",
+      "columnsTo": [
+        "prefix"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "icons_prefix_iconSets_prefix_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
         "siteId"
       ],
       "schemaTo": "public",
@@ -3335,6 +4588,91 @@
       "entityType": "fks",
       "schema": "public",
       "table": "navigation"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "pageId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "pages",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "pageEditSubmissions_pageId_pages_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "siteId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "sites",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "pageEditSubmissions_siteId_sites_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "authorId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "pageEditSubmissions_authorId_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "pageEditSubmissions"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "authorId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "users",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "SET NULL",
+      "name": "pageHistory_authorId_users_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "pageHistory"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "siteId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "sites",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "pageHistory_siteId_sites_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "pageHistory"
     },
     {
       "nameExplicit": false,
@@ -3433,6 +4771,23 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
+      "name": "storage_siteId_sites_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "storage"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "siteId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "sites",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
       "name": "tags_siteId_sites_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -3508,6 +4863,17 @@
     },
     {
       "columns": [
+        "prefix",
+        "name"
+      ],
+      "nameExplicit": false,
+      "name": "icons_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "icons"
+    },
+    {
+      "columns": [
         "userId",
         "groupId"
       ],
@@ -3525,6 +4891,16 @@
       "name": "apiKeys_pkey",
       "schema": "public",
       "table": "apiKeys",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "approvalRules_pkey",
+      "schema": "public",
+      "table": "approvalRules",
       "entityType": "pks"
     },
     {
@@ -3565,6 +4941,26 @@
       "name": "groups_pkey",
       "schema": "public",
       "table": "groups",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "hooks_pkey",
+      "schema": "public",
+      "table": "hooks",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "prefix"
+      ],
+      "nameExplicit": false,
+      "name": "iconSets_pkey",
+      "schema": "public",
+      "table": "iconSets",
       "entityType": "pks"
     },
     {
@@ -3632,6 +5028,26 @@
         "id"
       ],
       "nameExplicit": false,
+      "name": "pageEditSubmissions_pkey",
+      "schema": "public",
+      "table": "pageEditSubmissions",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "pageHistory_pkey",
+      "schema": "public",
+      "table": "pageHistory",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
       "name": "pages_pkey",
       "schema": "public",
       "table": "pages",
@@ -3665,6 +5081,16 @@
       "name": "sites_pkey",
       "schema": "public",
       "table": "sites",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "storage_pkey",
+      "schema": "public",
+      "table": "storage",
       "entityType": "pks"
     },
     {

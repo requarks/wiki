@@ -25,6 +25,17 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
 }
 
 /**
+ * Who is reviewing, as the rules see them: the groups on their session, plus whether they hold
+ * `manage:system` — which sees every queue, here as everywhere else.
+ */
+function reviewerFor(req: FastifyRequest): { groupIds: string[]; isAdmin: boolean } {
+  return {
+    groupIds: WIKI.models.approvals.getActorGroupIds(req),
+    isAdmin: Boolean(req.session?.permissions?.includes('manage:system'))
+  }
+}
+
+/**
  * Everything a rule has to satisfy beyond what the JSON Schema already enforces.
  *
  * All of it comes down to the same thing: a rule that cannot match a page, or that nobody is on either
@@ -337,6 +348,203 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('Approval rule does not exist.')
       }
       return reply.code(204).send()
+    }
+  )
+
+  /**
+   * LIST SUGGESTIONS WAITING ON THIS REVIEWER
+   */
+  app.get<{ Params: { siteId: string } }>(
+    '/sites/:siteId/approvals/submissions',
+    {
+      schema: {
+        summary: 'List the edit suggestions waiting for the caller to review',
+        description:
+          'Scoped by the approval rules: a suggestion appears here when an enabled rule covers its page and names a group the caller is in. Oldest first, which is the order a queue is worked through. `manage:system` sees the whole site’s queue.',
+        tags: ['Approvals'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId']
+        },
+        response: {
+          200: {
+            description: 'Suggestions awaiting review',
+            type: 'array',
+            items: { $ref: 'PageEditSubmission#' }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      return WIKI.models.approvals.getReviewableSubmissions(req.params.siteId, reviewerFor(req))
+    }
+  )
+
+  /**
+   * GET ONE SUGGESTION TO REVIEW
+   */
+  app.get<{ Params: { siteId: string; submissionId: string } }>(
+    '/sites/:siteId/approvals/submissions/:submissionId',
+    {
+      schema: {
+        summary: 'Get an edit suggestion, with both sides of the diff',
+        description:
+          'The suggested source and the page as it currently stands, which is what the review screen compares. Answers 404 for a suggestion that is not the caller’s to review, so that an ID cannot be probed for.',
+        tags: ['Approvals'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            submissionId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'submissionId']
+        },
+        response: {
+          200: { $ref: 'PageEditSubmissionDetail#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      const submission = await WIKI.models.approvals.getSubmissionForReview(
+        req.params.siteId,
+        req.params.submissionId,
+        reviewerFor(req)
+      )
+      if (!submission) {
+        return reply.notFound('This edit suggestion does not exist.')
+      }
+      return submission
+    }
+  )
+
+  /**
+   * APPROVE A SUGGESTION
+   */
+  app.post<{
+    Params: { siteId: string; submissionId: string }
+    Body: { content?: string; render?: string }
+  }>(
+    '/sites/:siteId/approvals/submissions/:submissionId/approve',
+    {
+      schema: {
+        summary: 'Approve an edit suggestion and write it to the page',
+        description:
+          'Applies `content` when given — the reviewer may have adjusted the suggestion before accepting it — and what was submitted otherwise. Send `render` alongside it, as the editor does on any other save: the markdown pipeline lives in the client. Without it the server renders the page itself, which needs the Puppeteer extension. The page is re-indexed as it would be for any other edit, with the reviewer recorded as the author, and the suggestion is closed out.',
+        tags: ['Approvals'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            submissionId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'submissionId']
+        },
+        body: {
+          type: 'object',
+          properties: {
+            content: {
+              type: 'string',
+              description: 'What to write to the page. Defaults to the suggestion as submitted.'
+            },
+            render: {
+              type: 'string',
+              description:
+                'The HTML for that content. Omitting it makes the server render the page, which needs the Puppeteer extension.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Suggestion approved',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const actor = actorFrom(req)
+      if (!actor) {
+        return reply.unauthorized()
+      }
+      const submission = await WIKI.models.approvals.getSubmissionForReview(
+        req.params.siteId,
+        req.params.submissionId,
+        reviewerFor(req)
+      )
+      if (!submission) {
+        return reply.notFound('This edit suggestion does not exist.')
+      }
+
+      const applied = await WIKI.models.approvals.approveSubmission({
+        siteId: req.params.siteId,
+        submissionId: req.params.submissionId,
+        content: req.body.content ?? submission.content,
+        render: req.body.render,
+        actor
+      })
+      if (!applied) {
+        return reply.notFound('This edit suggestion does not exist.')
+      }
+      return {
+        ok: true,
+        message: 'Edit suggestion approved.'
+      }
+    }
+  )
+
+  /**
+   * REJECT A SUGGESTION
+   */
+  app.post<{ Params: { siteId: string; submissionId: string } }>(
+    '/sites/:siteId/approvals/submissions/:submissionId/reject',
+    {
+      schema: {
+        summary: 'Decline an edit suggestion',
+        description: 'Discards the suggestion. The page is left exactly as it is.',
+        tags: ['Approvals'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            submissionId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'submissionId']
+        },
+        response: {
+          200: {
+            description: 'Suggestion declined',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const submission = await WIKI.models.approvals.getSubmissionForReview(
+        req.params.siteId,
+        req.params.submissionId,
+        reviewerFor(req)
+      )
+      if (!submission) {
+        return reply.notFound('This edit suggestion does not exist.')
+      }
+      await WIKI.models.approvals.rejectSubmission(req.params.siteId, req.params.submissionId)
+      return {
+        ok: true,
+        message: 'Edit suggestion declined.'
+      }
     }
   )
 

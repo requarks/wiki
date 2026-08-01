@@ -15,6 +15,16 @@ import { createDeferred } from '../helpers/common.ts'
 // const migrateFromLegacy = require('../db/legacy')
 
 /**
+ * Postgres extensions the schema depends on, installed before the migrations run.
+ *
+ * `ltree` types the folder paths of the page tree and answers the ancestor queries the navigation is
+ * built from; `pg_trgm` backs fuzzy text matching. `pgcrypto` used to be here for `gen_random_uuid()`,
+ * which every primary key defaults to — that has been core since Postgres 13, and 16 is the minimum
+ * this runs on, so nothing needs it any more.
+ */
+const REQUIRED_EXTENSIONS = ['ltree', 'pg_trgm']
+
+/**
  * Query logger, consulted by Drizzle on every query.
  *
  * The decision is made per query rather than when the instance is built, so that the `sqlLog` system
@@ -263,6 +273,23 @@ export default {
   async syncSchemas(db: WikiDb) {
     WIKI.logger.info('Ensuring DB schema exists...')
     await db.execute(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schema}`)
+
+    /*
+      Here rather than at the top of the first migration, for the same reason the schema itself is:
+      the migrations need these to exist and cannot express them.
+
+      `drizzle-kit generate` builds a migration by diffing the schema definition against the previous
+      snapshot, and an extension is part of neither — so a hand-written `CREATE EXTENSION` preamble
+      survives only until somebody regenerates, at which point the very first migration fails on the
+      `ltree` column it can no longer create. Stated here, that cannot happen.
+
+      Idempotent, so a database whose extensions an administrator installed by hand is untouched.
+    */
+    WIKI.logger.info('Ensuring required DB extensions are installed...')
+    for (const extension of REQUIRED_EXTENSIONS) {
+      await db.execute(`CREATE EXTENSION IF NOT EXISTS ${extension}`)
+    }
+
     WIKI.logger.info('Ensuring DB migrations have been applied...')
     return migrate(db, {
       migrationsFolder: path.join(WIKI.SERVERPATH, 'db/migrations'),

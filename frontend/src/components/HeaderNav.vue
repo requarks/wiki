@@ -43,6 +43,18 @@
           <w-tooltip>File Manager</w-tooltip>
         </w-btn>
         <w-btn
+          v-if="userStore.authenticated"
+          class="ml-4"
+          flat
+          round
+          dense
+          icon="mdi:inbox-full"
+          color="amber"
+          to="/_inbox"
+          :aria-label="t(`inbox.title`)">
+          <w-tooltip>{{ t('inbox.title') }}</w-tooltip>
+        </w-btn>
+        <w-btn
           v-if="userStore.can(`access:admin`)"
           class="ml-4"
           flat

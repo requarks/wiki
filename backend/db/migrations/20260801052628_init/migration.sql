@@ -1,4 +1,5 @@
 CREATE TYPE "assetKind" AS ENUM('document', 'image', 'other');--> statement-breakpoint
+CREATE TYPE "hookState" AS ENUM('pending', 'success', 'error');--> statement-breakpoint
 CREATE TYPE "jobHistoryState" AS ENUM('active', 'completed', 'failed', 'interrupted');--> statement-breakpoint
 CREATE TYPE "pagePublishState" AS ENUM('draft', 'published', 'scheduled');--> statement-breakpoint
 CREATE TYPE "treeNavigationMode" AS ENUM('inherit', 'override', 'overrideExact', 'hide', 'hideExact');--> statement-breakpoint
@@ -6,11 +7,25 @@ CREATE TYPE "treeType" AS ENUM('folder', 'page', 'asset');--> statement-breakpoi
 CREATE TABLE "apiKeys" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"name" varchar(255) NOT NULL,
-	"key" text NOT NULL,
+	"keyShort" varchar(8) NOT NULL,
+	"groups" jsonb DEFAULT '[]' NOT NULL,
 	"expiration" timestamp DEFAULT now() NOT NULL,
 	"isRevoked" boolean DEFAULT false NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "approvalRules" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"name" varchar(255) DEFAULT '' NOT NULL,
+	"isEnabled" boolean DEFAULT true NOT NULL,
+	"match" varchar(16) DEFAULT 'START' NOT NULL,
+	"path" varchar(2048) DEFAULT '' NOT NULL,
+	"submitterGroups" jsonb DEFAULT '[]' NOT NULL,
+	"reviewerGroups" jsonb DEFAULT '[]' NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	"siteId" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "assets" (
@@ -65,6 +80,45 @@ CREATE TABLE "groups" (
 	"isSystem" boolean DEFAULT false NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hooks" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"name" varchar(255) NOT NULL,
+	"events" text[] DEFAULT ARRAY[]::text[] NOT NULL,
+	"url" text NOT NULL,
+	"includeMetadata" boolean DEFAULT true NOT NULL,
+	"includeContent" boolean DEFAULT false NOT NULL,
+	"acceptUntrusted" boolean DEFAULT false NOT NULL,
+	"authHeader" text,
+	"state" "hookState" DEFAULT 'pending'::"hookState" NOT NULL,
+	"lastErrorMessage" text,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "iconSets" (
+	"prefix" varchar(64) PRIMARY KEY,
+	"name" varchar(255) NOT NULL,
+	"isEnabled" boolean DEFAULT true NOT NULL,
+	"info" jsonb DEFAULT '{}' NOT NULL,
+	"refreshedAt" timestamp,
+	"createdAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "icons" (
+	"prefix" varchar(64),
+	"name" varchar(255),
+	"body" text NOT NULL,
+	"width" integer DEFAULT 16 NOT NULL,
+	"height" integer DEFAULT 16 NOT NULL,
+	"left" integer DEFAULT 0 NOT NULL,
+	"top" integer DEFAULT 0 NOT NULL,
+	"rotate" integer DEFAULT 0 NOT NULL,
+	"hFlip" boolean DEFAULT false NOT NULL,
+	"vFlip" boolean DEFAULT false NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "icons_pkey" PRIMARY KEY("prefix","name")
 );
 --> statement-breakpoint
 CREATE TABLE "jobHistory" (
@@ -133,9 +187,38 @@ CREATE TABLE "navigation" (
 	"siteId" uuid NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "pageEditSubmissions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"content" text NOT NULL,
+	"patch" text NOT NULL,
+	"baseHash" varchar(64) NOT NULL,
+	"guestName" varchar(255),
+	"guestEmail" varchar(255),
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	"pageId" uuid NOT NULL,
+	"siteId" uuid NOT NULL,
+	"authorId" uuid
+);
+--> statement-breakpoint
+CREATE TABLE "pageHistory" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"pageId" uuid NOT NULL,
+	"action" varchar(16) DEFAULT 'updated' NOT NULL,
+	"changedFields" text[] DEFAULT ARRAY[]::text[] NOT NULL,
+	"locale" varchar(255) NOT NULL,
+	"path" varchar(255) NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"content" text,
+	"meta" jsonb DEFAULT '{}' NOT NULL,
+	"versionDate" timestamp DEFAULT now() NOT NULL,
+	"authorId" uuid,
+	"siteId" uuid NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "pages" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-	"locale" ltree NOT NULL,
+	"locale" varchar(255) NOT NULL,
 	"path" varchar(255) NOT NULL,
 	"hash" varchar(255) NOT NULL,
 	"alias" varchar(255),
@@ -192,6 +275,18 @@ CREATE TABLE "sites" (
 	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "storage" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"module" varchar(255) NOT NULL,
+	"isEnabled" boolean DEFAULT false NOT NULL,
+	"contentTypes" jsonb DEFAULT '{}' NOT NULL,
+	"assetDelivery" jsonb DEFAULT '{}' NOT NULL,
+	"versioning" jsonb DEFAULT '{}' NOT NULL,
+	"config" jsonb DEFAULT '{}' NOT NULL,
+	"state" jsonb DEFAULT '{}' NOT NULL,
+	"siteId" uuid NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "tags" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"tag" varchar(255) NOT NULL,
@@ -207,7 +302,7 @@ CREATE TABLE "tree" (
 	"fileName" varchar(255) NOT NULL,
 	"hash" varchar(255) NOT NULL,
 	"tree" "treeType" NOT NULL,
-	"locale" ltree NOT NULL,
+	"locale" varchar(255) NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"navigationMode" "treeNavigationMode" DEFAULT 'inherit'::"treeNavigationMode" NOT NULL,
 	"navigationId" uuid,
@@ -256,10 +351,18 @@ CREATE TABLE "users" (
 	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE INDEX "approvalRules_siteId_idx" ON "approvalRules" ("siteId");--> statement-breakpoint
 CREATE INDEX "assets_siteId_idx" ON "assets" ("siteId");--> statement-breakpoint
 CREATE INDEX "blocks_siteId_idx" ON "blocks" ("siteId");--> statement-breakpoint
 CREATE INDEX "locales_language_idx" ON "locales" ("language");--> statement-breakpoint
 CREATE INDEX "navigation_siteId_idx" ON "navigation" ("siteId");--> statement-breakpoint
+CREATE INDEX "pageEditSubmissions_pageId_idx" ON "pageEditSubmissions" ("pageId");--> statement-breakpoint
+CREATE INDEX "pageEditSubmissions_siteId_idx" ON "pageEditSubmissions" ("siteId");--> statement-breakpoint
+CREATE INDEX "pageEditSubmissions_authorId_idx" ON "pageEditSubmissions" ("authorId");--> statement-breakpoint
+CREATE UNIQUE INDEX "pageEditSubmissions_page_author_idx" ON "pageEditSubmissions" ("pageId","authorId") WHERE "authorId" IS NOT NULL;--> statement-breakpoint
+CREATE INDEX "pageHistory_pageId_idx" ON "pageHistory" ("pageId","versionDate");--> statement-breakpoint
+CREATE INDEX "pageHistory_siteId_idx" ON "pageHistory" ("siteId","locale","path","versionDate");--> statement-breakpoint
+CREATE INDEX "pageHistory_authorId_idx" ON "pageHistory" ("authorId");--> statement-breakpoint
 CREATE INDEX "pages_authorId_idx" ON "pages" ("authorId");--> statement-breakpoint
 CREATE INDEX "pages_creatorId_idx" ON "pages" ("creatorId");--> statement-breakpoint
 CREATE INDEX "pages_ownerId_idx" ON "pages" ("ownerId");--> statement-breakpoint
@@ -268,6 +371,7 @@ CREATE INDEX "pages_ts_idx" ON "pages" USING gin ("ts");--> statement-breakpoint
 CREATE INDEX "pages_tags_idx" ON "pages" USING gin ("tags");--> statement-breakpoint
 CREATE INDEX "pages_isSearchableComputed_idx" ON "pages" ("isSearchableComputed");--> statement-breakpoint
 CREATE INDEX "sessions_userId_idx" ON "sessions" ("userId");--> statement-breakpoint
+CREATE UNIQUE INDEX "storage_composite_idx" ON "storage" ("siteId","module");--> statement-breakpoint
 CREATE INDEX "tags_siteId_idx" ON "tags" ("siteId");--> statement-breakpoint
 CREATE UNIQUE INDEX "tags_composite_idx" ON "tags" ("siteId","tag");--> statement-breakpoint
 CREATE INDEX "tree_folderpath_idx" ON "tree" ("folderPath");--> statement-breakpoint
@@ -275,7 +379,7 @@ CREATE INDEX "tree_folderpath_gist_idx" ON "tree" USING gist ("folderPath");--> 
 CREATE INDEX "tree_fileName_idx" ON "tree" ("fileName");--> statement-breakpoint
 CREATE INDEX "tree_hash_idx" ON "tree" ("hash");--> statement-breakpoint
 CREATE INDEX "tree_type_idx" ON "tree" ("tree");--> statement-breakpoint
-CREATE INDEX "tree_locale_idx" ON "tree" USING gist ("locale");--> statement-breakpoint
+CREATE INDEX "tree_locale_idx" ON "tree" ("locale");--> statement-breakpoint
 CREATE INDEX "tree_navigationMode_idx" ON "tree" ("navigationMode");--> statement-breakpoint
 CREATE INDEX "tree_navigationId_idx" ON "tree" ("navigationId");--> statement-breakpoint
 CREATE INDEX "tree_tags_idx" ON "tree" USING gin ("tags");--> statement-breakpoint
@@ -285,15 +389,23 @@ CREATE INDEX "userGroups_groupId_idx" ON "userGroups" ("groupId");--> statement-
 CREATE INDEX "userGroups_composite_idx" ON "userGroups" ("userId","groupId");--> statement-breakpoint
 CREATE INDEX "userKeys_userId_idx" ON "userKeys" ("userId");--> statement-breakpoint
 CREATE INDEX "users_lastLoginAt_idx" ON "users" ("lastLoginAt");--> statement-breakpoint
+ALTER TABLE "approvalRules" ADD CONSTRAINT "approvalRules_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "assets" ADD CONSTRAINT "assets_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "assets" ADD CONSTRAINT "assets_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "blocks" ADD CONSTRAINT "blocks_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "icons" ADD CONSTRAINT "icons_prefix_iconSets_prefix_fkey" FOREIGN KEY ("prefix") REFERENCES "iconSets"("prefix");--> statement-breakpoint
 ALTER TABLE "navigation" ADD CONSTRAINT "navigation_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "pageEditSubmissions" ADD CONSTRAINT "pageEditSubmissions_pageId_pages_id_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "pageEditSubmissions" ADD CONSTRAINT "pageEditSubmissions_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "pageEditSubmissions" ADD CONSTRAINT "pageEditSubmissions_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id");--> statement-breakpoint
+ALTER TABLE "pageHistory" ADD CONSTRAINT "pageHistory_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "pageHistory" ADD CONSTRAINT "pageHistory_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_creatorId_users_id_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_ownerId_users_id_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id");--> statement-breakpoint
+ALTER TABLE "storage" ADD CONSTRAINT "storage_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "tags" ADD CONSTRAINT "tags_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "tree" ADD CONSTRAINT "tree_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "userGroups" ADD CONSTRAINT "userGroups_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint

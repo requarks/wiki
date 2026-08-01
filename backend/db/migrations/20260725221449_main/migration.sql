@@ -1,1 +1,0 @@
-ALTER TABLE "apiKeys" DROP COLUMN "key";

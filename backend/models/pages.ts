@@ -446,6 +446,13 @@ class Pages {
       throw err
     }
 
+    await WIKI.models.pageHistory.record({
+      siteId,
+      pageId: page.id,
+      action: 'created',
+      authorId: actor.id
+    })
+
     await WIKI.models.search.indexPage(page.id, locale)
     await WIKI.models.hooks.emit('page:create', {
       id: page.id,
@@ -561,9 +568,21 @@ class Pages {
     // -> The author is whoever last changed it; the creator and owner do not move
     values.authorId = actor.id
 
+    // -> Worked out before the write, against the row as it stands: the editor sends every field on
+    //    every save, so the patch alone would report a change to all of them
+    const changedFields = WIKI.models.pageHistory.changedFields(existing, values)
+
     await WIKI.db.update(pagesTable).set(values).where(eq(pagesTable.id, id))
 
     const updated = (await this.getPage({ siteId, id })) as Page
+
+    await WIKI.models.pageHistory.record({
+      siteId,
+      pageId: id,
+      action: 'updated',
+      authorId: actor.id,
+      changedFields
+    })
 
     if (treeTitle !== null || patch.tags !== undefined) {
       await WIKI.db
@@ -653,6 +672,20 @@ class Pages {
     })
 
     const moved = (await this.getPage({ siteId, id })) as Page
+
+    // -> Recorded as its own kind of change rather than an edit: a move is what breaks inbound links,
+    //    and a history list has to be able to say so
+    await WIKI.models.pageHistory.record({
+      siteId,
+      pageId: id,
+      action: 'moved',
+      authorId: actor.id,
+      changedFields: [
+        ...(newPath !== page.path ? ['path'] : []),
+        ...(title !== undefined && title.trim() !== page.title ? ['title'] : [])
+      ]
+    })
+
     await WIKI.models.hooks.emit('page:rename', {
       id,
       path: moved.path,
@@ -674,6 +707,14 @@ class Pages {
     if (!page) {
       return false
     }
+    // -> Before the row goes, and this version is what recovering the page would be built from
+    await WIKI.models.pageHistory.record({
+      siteId,
+      pageId: id,
+      action: 'deleted',
+      authorId: actor.id
+    })
+
     await WIKI.db.delete(pagesTable).where(eq(pagesTable.id, id))
     await WIKI.models.tree.deleteEntry(id)
     // -> A page that overrode the sidebar owns a menu keyed by its own id, which nothing could reach

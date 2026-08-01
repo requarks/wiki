@@ -193,7 +193,7 @@ class Search {
     if (arms.length < 1) {
       return sql`${sql.raw(`'${FALLBACK_DICTIONARY}'`)}::regconfig`
     }
-    return sql`(CASE p.locale::text ${sql.join(arms, sql` `)} ELSE ${sql.raw(`'${FALLBACK_DICTIONARY}'`)} END)::regconfig`
+    return sql`(CASE p.locale ${sql.join(arms, sql` `)} ELSE ${sql.raw(`'${FALLBACK_DICTIONARY}'`)} END)::regconfig`
   }
 
   /**
@@ -269,7 +269,7 @@ class Search {
     if (locales.length > 0) {
       // -> `sql.param`, because a bare array is expanded into a list of placeholders rather than
       //    bound as one array value
-      conditions.push(sql`p.locale::text = ANY(${sql.param(locales)}::text[])`)
+      conditions.push(sql`p.locale = ANY(${sql.param(locales)}::text[])`)
     }
     if (tags.length > 0) {
       conditions.push(sql`p.tags @> ${sql.param(tags)}::text[]`)
@@ -306,7 +306,7 @@ class Search {
       SELECT
         p.id,
         p.path,
-        p.locale::text AS locale,
+        p.locale,
         p.title,
         p.description,
         p.icon,
@@ -357,9 +357,7 @@ class Search {
    */
   async rebuildIndex(): Promise<RebuildResult> {
     const available = await this.getAvailableDictionaries()
-    const localeRows = await WIKI.db.execute(
-      sql`SELECT DISTINCT locale::text AS locale FROM pages ORDER BY locale`
-    )
+    const localeRows = await WIKI.db.execute(sql`SELECT DISTINCT locale FROM pages ORDER BY locale`)
     const locales = ((localeRows.rows ?? localeRows) as any[]).map((r) => r.locale as string)
 
     WIKI.logger.info(`Rebuilding the search index for ${locales.length} locale(s)...`)
@@ -374,7 +372,7 @@ class Search {
           setweight(to_tsvector(${sql.raw(`'${dictionary}'`)}, coalesce(title, '')), 'A') ||
           setweight(to_tsvector(${sql.raw(`'${dictionary}'`)}, coalesce(description, '')), 'B') ||
           setweight(to_tsvector(${sql.raw(`'${dictionary}'`)}, coalesce("searchContent", '')), 'C')
-        WHERE locale::text = ${locale}
+        WHERE locale = ${locale}
       `)
       const pages = updated.rowCount ?? 0
       result.pages += pages

@@ -314,7 +314,10 @@ export const pages = pgTable(
   'pages',
   {
     id: uuid().primaryKey().defaultRandom(),
-    locale: ltree('locale').notNull(),
+    // -> A BCP-47 code, matched only ever for equality. Not `ltree`: a hyphenated code is a single
+    //    label to it, so `'pt-BR'::ltree <@ 'pt'` is false and the type buys no locale-family
+    //    matching -- see the note on `pageHistory.locale`.
+    locale: varchar({ length: 255 }).notNull(),
     path: varchar({ length: 255 }).notNull(),
     hash: varchar({ length: 255 }).notNull(),
     alias: varchar({ length: 255 }),
@@ -372,6 +375,75 @@ export const pages = pgTable(
     index('pages_ts_idx').using('gin', table.ts),
     index('pages_tags_idx').using('gin', table.tags),
     index('pages_isSearchableComputed_idx').on(table.isSearchableComputed)
+  ]
+)
+
+// PAGE HISTORY ------------------------
+/**
+ * One row per change to a page: what it looked like afterwards, who made it, and what kind of change
+ * it was.
+ *
+ * Every row is a complete version rather than a delta, which is what makes the three things this
+ * exists for straightforward: comparing any two versions, putting a page back to one of them, and
+ * recovering a page that was deleted. The deletion itself is recorded the same way, carrying the page
+ * as it stood when it went — that row is the whole of what a recovery needs.
+ *
+ * The render is deliberately not kept. It is derived from the content by a pipeline that lives in the
+ * frontend, and storing a second copy of every page's HTML for every version is a great deal of space
+ * for something a restore can regenerate.
+ */
+export const pageHistory = pgTable(
+  'pageHistory',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    // -> Not a foreign key: the history of a deleted page is exactly what recovering it needs, so it
+    //    has to outlive the row it points at
+    pageId: uuid().notNull(),
+    /**
+     * `created`, `updated`, `moved` or `deleted`. A varchar rather than an enum so that naming another
+     * kind of change later does not need a migration.
+     */
+    action: varchar({ length: 16 }).notNull().default('updated'),
+    /** Which fields this change touched, so a history list can summarise it without diffing. */
+    changedFields: text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    /*
+      Columns rather than part of `meta` below: a history list shows these for every row, a page that
+      has moved needs the path it had at the time rather than the one it has now, and looking a history
+      up by where the page was — the only way in once the page itself is gone — means matching on the
+      locale and the path together.
+
+      A locale code is BCP-47 with hyphens (`pt-BR`), and every comparison anywhere is an equality
+      one. `locales.code`, which these values come from, is a varchar too.
+    */
+    locale: varchar({ length: 255 }).notNull(),
+    path: varchar({ length: 255 }).notNull(),
+    title: varchar({ length: 255 }).notNull(),
+    content: text(),
+    /**
+     * The rest of the page as it stood: description, icon, tags, publish state and dates, relations,
+     * scripts, config, editor and content type. Kept whole rather than as columns of its own so that a
+     * field added to a page does not have to be added here too.
+     */
+    meta: jsonb().notNull().default({}),
+    versionDate: timestamp().notNull().defaultNow(),
+    // -> Null once the account is gone, rather than holding the account hostage: a history row is a
+    //    record of what happened to the page, and requiring its author to exist for ever would mean
+    //    that editing a page once made an account undeletable — even after the page itself was gone.
+    authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id)
+  },
+  (table) => [
+    index('pageHistory_pageId_idx').on(table.pageId, table.versionDate),
+    // -> "What happened to the page at this path, in this locale", which is how a deleted page is
+    //    found again: there is no page row left to look its ID up from. Leading with `siteId` means
+    //    this also serves the plain per-site queries.
+    index('pageHistory_siteId_idx').on(table.siteId, table.locale, table.path, table.versionDate),
+    index('pageHistory_authorId_idx').on(table.authorId)
   ]
 )
 
@@ -507,11 +579,13 @@ export const tree = pgTable(
   'tree',
   {
     id: uuid().primaryKey().defaultRandom(),
+    // -> Genuinely hierarchical, and queried as such with `<@`, `@>` and lquery: this is what ltree is
+    //    for. The locale beside it is not, and is a plain string.
     folderPath: ltree('folderPath'),
     fileName: varchar({ length: 255 }).notNull(),
     hash: varchar({ length: 255 }).notNull(),
     type: treeTypeEnum('tree').notNull(),
-    locale: ltree('locale').notNull(),
+    locale: varchar({ length: 255 }).notNull(),
     title: varchar({ length: 255 }).notNull(),
     navigationMode: treeNavigationModeEnum('navigationMode').notNull().default('inherit'),
     navigationId: uuid(),
@@ -532,7 +606,9 @@ export const tree = pgTable(
     index('tree_fileName_idx').on(table.fileName),
     index('tree_hash_idx').on(table.hash),
     index('tree_type_idx').on(table.type),
-    index('tree_locale_idx').using('gist', table.locale),
+    // -> A plain btree: the locale is a string compared for equality, and GiST — which is what an
+    //    ltree column wanted — has no operator class for varchar at all
+    index('tree_locale_idx').on(table.locale),
     index('tree_navigationMode_idx').on(table.navigationMode),
     index('tree_navigationId_idx').on(table.navigationId),
     index('tree_tags_idx').using('gin', table.tags),

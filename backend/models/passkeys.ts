@@ -6,6 +6,7 @@ import {
 } from '@simplewebauthn/server'
 import { isoBase64URL } from '@simplewebauthn/server/helpers'
 import { eq, sql } from 'drizzle-orm'
+import { validate as uuidValidate } from 'uuid'
 import { users as usersTable } from '../db/schema.ts'
 import type {
   AuthenticationResponseJSON,
@@ -366,11 +367,16 @@ class Passkeys {
     }
 
     // -> The handle is the user ID this server encoded at registration, so anything else is not a
-    //    credential of ours
+    //    credential of ours. Checked for shape before it is looked up: postgres rejects a malformed
+    //    uuid with an error of its own, which would turn a rejected login into a logged fault.
     let userId: string
     try {
       userId = isoBase64URL.toUTF8String(userHandle)
     } catch {
+      throw new Error('ERR_LOGIN_FAILED')
+    }
+    if (!uuidValidate(userId)) {
+      WIKI.models.flags.authDebug('Passkey login rejected: the user handle is not one of ours')
       throw new Error('ERR_LOGIN_FAILED')
     }
 

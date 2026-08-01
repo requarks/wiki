@@ -63,6 +63,83 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * PAGE EDIT SUBMISSION - An edit somebody suggested, as its reviewer sees it
+   */
+  app.addSchema({
+    $id: 'PageEditSubmission',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        format: 'uuid'
+      },
+      createdAt: {
+        type: 'string',
+        format: 'date-time',
+        description: 'RFC 3339 Date Time'
+      },
+      updatedAt: {
+        type: 'string',
+        format: 'date-time',
+        description: 'RFC 3339 Date Time'
+      },
+      isStale: {
+        type: 'boolean',
+        description:
+          'The page has changed since this was written against it, so accepting it wholesale would undo whatever changed in between.'
+      },
+      page: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          path: { type: 'string' },
+          title: { type: 'string' },
+          locale: { type: 'string' }
+        }
+      },
+      author: {
+        type: 'object',
+        properties: {
+          id: {
+            type: ['string', 'null'],
+            description: 'Null for a guest, who has no account.'
+          },
+          name: { type: 'string' },
+          email: { type: 'string' },
+          isGuest: { type: 'boolean' }
+        }
+      }
+    }
+  })
+
+  /**
+   * PAGE EDIT SUBMISSION DETAIL - The same, with both sides of the diff
+   */
+  app.addSchema({
+    $id: 'PageEditSubmissionDetail',
+    allOf: [
+      { $ref: 'PageEditSubmission#' },
+      {
+        type: 'object',
+        properties: {
+          content: {
+            type: 'string',
+            description: 'What the suggestion proposes the page should say.'
+          },
+          pageContent: {
+            type: 'string',
+            description: 'What it currently says.'
+          },
+          patch: {
+            type: 'string',
+            description: 'Unified diff against the page as it stood when the suggestion was made.'
+          }
+        }
+      }
+    ]
+  })
+
+  /**
    * APPROVAL RULE INPUT - The fields a rule is written with
    */
   app.addSchema({

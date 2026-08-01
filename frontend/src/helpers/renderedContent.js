@@ -170,3 +170,63 @@ export function enhanceRenderedContent(root) {
   addCodeCopyButtons(root)
   addHeadingAnchors(root)
 }
+
+/**
+ * Paths the server owns rather than the router: assets, the API, block bundles, per-site files,
+ * thumbnails and avatars. A link to one of these is a request for a file, not a page, and handing it
+ * to the router would render the catch-all page view over the top of nothing.
+ */
+const SERVER_PATHS = [
+  '/_assets/',
+  '/_api/',
+  '/_blocks/',
+  '/_icons/',
+  '/_site/',
+  '/_thumb/',
+  '/_user/'
+]
+
+/**
+ * Where a link inside rendered content should take the reader, if the router should handle it.
+ *
+ * A page's HTML arrives through `v-html`, so every link in it is a plain anchor: left alone, the
+ * browser tears the whole application down and builds it again to show a page the router could have
+ * swapped in. This decides which links are worth intercepting, and everything it declines stays
+ * exactly as the browser would have treated it.
+ *
+ * Declined, deliberately:
+ *   - another origin, or a scheme that is not http(s) — `mailto:`, `tel:`, a download link
+ *   - anything asking for a new context: `target`, `download`, `rel="external"`
+ *   - a path the server owns rather than the router
+ *   - a bare fragment on the page already open, which the browser scrolls to and which fires the
+ *     `hashchange` the page view already listens for
+ *
+ * @param {object} link The anchor's own properties: `href` is the resolved absolute URL.
+ * @param {Location|{origin: string, pathname: string}} current Where the reader is now.
+ * @returns {string|null} A path to push, or null to let the browser do what it would have done.
+ */
+export function routableHref({ href, target, download, rel } = {}, current) {
+  if (!href || (target && target !== '_self') || download || /\bexternal\b/.test(rel ?? '')) {
+    return null
+  }
+
+  let url
+  try {
+    url = new URL(href)
+  } catch {
+    return null
+  }
+  if (url.origin !== current.origin || !/^https?:$/.test(url.protocol)) {
+    return null
+  }
+  if (SERVER_PATHS.some((prefix) => url.pathname.startsWith(prefix))) {
+    return null
+  }
+  // -> Same page, different fragment: the browser scrolls and announces it, and the router would do
+  //    neither
+  if (url.pathname === current.pathname && url.hash) {
+    return null
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`
+}
