@@ -127,6 +127,14 @@
               </w-item-section>
               <w-item-section>{{ t('admin.general.title') }}</w-item-section>
             </w-item>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/approvals`"
+              active-class="bg-primary text-white">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-inspection.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.approval.title') }}</w-item-section>
+            </w-item>
             <template v-if="flagsStore.experimental">
               <w-item
                 :to="`/_admin/` + adminStore.currentSiteId + `/analytics`"
@@ -136,15 +144,6 @@
                   <w-icon name="img:/_assets/icons/fluent-bar-chart.svg" />
                 </w-item-section>
                 <w-item-section>{{ t('admin.analytics.title') }}</w-item-section>
-              </w-item>
-              <w-item
-                :to="`/_admin/` + adminStore.currentSiteId + `/approvals`"
-                active-class="bg-primary text-white"
-                disabled>
-                <w-item-section avatar>
-                  <w-icon name="img:/_assets/icons/fluent-inspection.svg" />
-                </w-item-section>
-                <w-item-section>{{ t('admin.approval.title') }}</w-item-section>
               </w-item>
               <w-item
                 :to="`/_admin/` + adminStore.currentSiteId + `/comments`"

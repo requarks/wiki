@@ -68,9 +68,7 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-8">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.profile') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.profile') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="contact" />
                   <w-item-section>
@@ -153,9 +151,7 @@
                 </template>
               </w-card>
               <w-card class="shadow-1 pb-2 mt-4" v-if="state.user.meta">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.preferences') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.preferences') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="timezone" />
                   <w-item-section>
@@ -268,9 +264,7 @@
             </div>
             <div class="col-span-12 lg:col-span-4">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.info') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.info') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="person" :hue-rotate="-45" />
                   <w-item-section>
@@ -312,10 +306,9 @@
                 </w-item>
               </w-card>
               <w-card class="shadow-1 pb-2 mt-4" v-if="state.user.meta">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.notes') }}</div>
+                <w-card-header>{{ t('admin.users.notes') }}</w-card-header>
+                <w-card-section class="pt-0">
                   <w-input
-                    class="mt-2"
                     outlined
                     v-model="state.user.meta.notes"
                     type="textarea"
@@ -334,9 +327,7 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-7">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.passAuth') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.passAuth') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="password" :hue-rotate="45" />
                   <w-item-section>
@@ -397,9 +388,7 @@
                 </w-item>
               </w-card>
               <w-card class="shadow-1 pb-2 mt-4">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.tfa') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.tfa') }}</w-card-header>
                 <w-item tag="label">
                   <blueprint-icon icon="key" />
                   <w-item-section>
@@ -441,11 +430,9 @@
             </div>
             <div class="col-span-12 lg:col-span-5">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.linkedProviders') }}</div>
+                <w-card-header>{{ t('admin.users.linkedProviders') }}</w-card-header>
+                <w-card-section v-if="linkedAuthProviders.length < 1" class="pt-0">
                   <w-banner
-                    class="mt-4"
-                    v-if="linkedAuthProviders.length < 1"
                     rounded
                     :class="dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`"
                     >{{ t('admin.users.noLinkedProviders') }}</w-banner
@@ -471,9 +458,7 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-8">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.groups') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.groups') }}</w-card-header>
                 <template v-for="(grp, idx) of state.user.groups" :key="grp.id">
                   <w-separator class="my-2" inset v-if="idx > 0" />
                   <w-item>
@@ -535,15 +520,16 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-8">
               <w-card class="shadow-1 pb-2">
-                <w-card-section class="flex items-center">
-                  <div class="text-subtitle1">{{ t('admin.users.metadata') }}</div>
-                  <w-space />
-                  <w-badge v-if="state.metadataInvalidJSON" color="negative">
-                    <w-icon class="mr-1" name="la:exclamation-triangle" size="20px" />
-                    <span>{{ t('admin.users.invalidJSON') }}</span>
-                  </w-badge>
-                  <w-badge class="py-1" v-else label="JSON" color="positive" />
-                </w-card-section>
+                <w-card-header>
+                  {{ t('admin.users.metadata') }}
+                  <template #action>
+                    <w-badge v-if="state.metadataInvalidJSON" color="negative">
+                      <w-icon class="mr-1" name="la:exclamation-triangle" size="20px" />
+                      <span>{{ t('admin.users.invalidJSON') }}</span>
+                    </w-badge>
+                    <w-badge class="py-1" v-else label="JSON" color="positive" />
+                  </template>
+                </w-card-header>
                 <w-item>
                   <w-item-section>
                     <util-code-editor
@@ -563,9 +549,7 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-8">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.users.operations') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.users.operations') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="email-open" :hue-rotate="45" />
                   <w-item-section>

@@ -1,4 +1,4 @@
-import { CustomError } from '../helpers/common.ts'
+import { CustomError, rethrowAsBadRequest } from '../helpers/common.ts'
 import { detectImageMime, imageMimeTypes } from '../helpers/images.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { UserPatch, UserProfilePatch } from '../models/users.ts'
@@ -509,6 +509,532 @@ async function routes(app: FastifyInstance) {
         return reply.unauthorized()
       }
       return { ok: true, config }
+    }
+  )
+
+  /**
+   * GET OWN AUTHENTICATION METHODS
+   *
+   * What the profile's authentication page is built from: the providers linked to the account and the
+   * passkeys registered against it. Session-scoped like the rest of `/profile` — a user can only ever
+   * see its own, and no permission expresses that.
+   */
+  app.get(
+    '/profile/auth',
+    {
+      schema: {
+        summary: "Get the logged in user's authentication methods",
+        description:
+          'The providers the account can be signed in with, plus its registered passkeys. Secrets are never included: each provider reports only whether a password is set, whether 2FA is active, and whether the user is allowed to turn it off.',
+        tags: ['Users'],
+        response: {
+          200: {
+            description: 'Authentication methods',
+            type: 'object',
+            properties: {
+              authMethods: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    authId: { type: 'string', format: 'uuid' },
+                    authName: { type: 'string' },
+                    strategyKey: { type: 'string' },
+                    strategyIcon: { type: 'string' },
+                    config: {
+                      type: 'object',
+                      properties: {
+                        isPasswordSet: { type: 'boolean' },
+                        isTfaSetup: { type: 'boolean' },
+                        isTfaRequired: {
+                          type: 'boolean',
+                          description:
+                            'Either this user is flagged for 2FA or the strategy enforces it. Turning 2FA off is refused while this holds.'
+                        },
+                        isPasswordLoginEnabled: {
+                          type: 'boolean',
+                          description:
+                            'False once password login has been turned off, by the user or by an administrator.'
+                        },
+                        canDisablePasswordLogin: {
+                          type: 'boolean',
+                          description:
+                            'Whether the account has another way in — a passkey or another linked provider — and may therefore turn password login off.'
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              passkeys: {
+                type: 'array',
+                items: { $ref: 'Passkey#' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      return {
+        authMethods: await WIKI.models.users.getProfileAuthMethods(userId),
+        passkeys: await WIKI.models.passkeys.list(userId)
+      }
+    }
+  )
+
+  /**
+   * CHANGE OWN PASSWORD
+   */
+  app.put<{ Body: { strategyId: string; currentPassword: string; newPassword: string } }>(
+    '/profile/password',
+    {
+      schema: {
+        summary: "Change the logged in user's own password",
+        description:
+          'The current password has to be given, and is what authorizes the change. Only a provider that stores the password on this instance can be changed here. Also clears any pending forced password change.',
+        tags: ['Users'],
+        body: {
+          type: 'object',
+          required: ['strategyId', 'currentPassword', 'newPassword'],
+          properties: {
+            strategyId: {
+              type: 'string',
+              format: 'uuid',
+              description: 'The provider whose password is being changed.'
+            },
+            currentPassword: { type: 'string', minLength: 1, maxLength: 255 },
+            newPassword: { type: 'string', minLength: 8, maxLength: 255 }
+          }
+        },
+        response: {
+          200: {
+            description: 'Password changed successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      try {
+        await WIKI.models.users.changeOwnPassword({
+          userId,
+          strategyId: req.body.strategyId,
+          currentPassword: req.body.currentPassword,
+          newPassword: req.body.newPassword
+        })
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      }
+
+      return {
+        ok: true,
+        message: 'Password changed successfully.'
+      }
+    }
+  )
+
+  /**
+   * TURN OWN PASSWORD LOGIN ON OR OFF
+   */
+  app.put<{ Body: { strategyId: string; isEnabled: boolean } }>(
+    '/profile/password-login',
+    {
+      schema: {
+        summary: "Turn password login on or off for the logged in user's own account",
+        description:
+          'The same restriction an administrator can apply from the admin area. Turning it off is refused unless the account has another way in — a registered passkey or another linked provider — so that a user cannot lock themselves out. The password itself is kept, so turning it back on restores it.',
+        tags: ['Users'],
+        body: {
+          type: 'object',
+          required: ['strategyId', 'isEnabled'],
+          properties: {
+            strategyId: {
+              type: 'string',
+              format: 'uuid',
+              description:
+                'The provider to change, which has to be one that stores a password here.'
+            },
+            isEnabled: { type: 'boolean' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Password login setting updated successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      try {
+        await WIKI.models.users.setPasswordLoginEnabled({
+          userId,
+          strategyId: req.body.strategyId,
+          isEnabled: req.body.isEnabled
+        })
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      }
+
+      return {
+        ok: true,
+        message: req.body.isEnabled ? 'Password login enabled.' : 'Password login disabled.'
+      }
+    }
+  )
+
+  /**
+   * START OWN 2FA SETUP
+   *
+   * Two steps, because the server cannot know the secret reached the user's authenticator until the
+   * user proves it did: this hands out a QR code and a continuation token, and `PUT` activates the
+   * secret once a code generated from it comes back.
+   */
+  app.post<{ Body: { strategyId: string } }>(
+    '/profile/tfa',
+    {
+      schema: {
+        summary: "Start setting up 2FA on the logged in user's account",
+        description:
+          'Generates a secret and returns the QR code to scan. The secret does nothing until a code produced by it is submitted to `PUT /users/profile/tfa` with the continuation token returned here. Starting again replaces a secret that was never activated.',
+        tags: ['Users'],
+        body: {
+          type: 'object',
+          required: ['strategyId'],
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' }
+          }
+        },
+        response: {
+          200: {
+            description: '2FA setup started',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              continuationToken: { type: 'string' },
+              tfaQRImage: {
+                type: 'string',
+                description: 'The `otpauth://` URI as an SVG QR code, to be rendered as-is.'
+              },
+              tfaSecret: {
+                type: 'string',
+                description:
+                  'The base32 secret the QR code encodes, for a user who would rather type it into an authenticator app than scan it. Only ever returned here, to the user setting 2FA up on their own account.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      // -> The site names the entry in the user's authenticator app, and is the one being browsed
+      //    rather than one the client names: nothing else about this request is client-chosen either
+      const site = req.hostname
+        ? await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
+        : null
+
+      try {
+        const { continuationToken, tfaQRImage, tfaSecret } =
+          await WIKI.models.users.startProfileTfaSetup({
+            userId,
+            strategyId: req.body.strategyId,
+            siteId: site?.id
+          })
+        return {
+          ok: true,
+          continuationToken,
+          tfaQRImage,
+          tfaSecret
+        }
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      }
+    }
+  )
+
+  /**
+   * FINISH OWN 2FA SETUP
+   */
+  app.put<{ Body: { strategyId: string; continuationToken: string; securityCode: string } }>(
+    '/profile/tfa',
+    {
+      schema: {
+        summary: 'Activate the 2FA secret the logged in user just set up',
+        description:
+          'Checks a code from the user’s authenticator against the secret generated by `POST /users/profile/tfa`, and activates it. A wrong code can be retried a handful of times before the continuation token is discarded and the setup has to be started again.',
+        tags: ['Users'],
+        body: {
+          type: 'object',
+          required: ['strategyId', 'continuationToken', 'securityCode'],
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' },
+            continuationToken: { type: 'string', minLength: 1, maxLength: 255 },
+            securityCode: {
+              type: 'string',
+              pattern: '^[0-9]{6}$',
+              description: 'The six digits shown by the authenticator app.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: '2FA activated successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      try {
+        await WIKI.models.users.confirmTfaSetup({
+          userId,
+          strategyId: req.body.strategyId,
+          continuationToken: req.body.continuationToken,
+          securityCode: req.body.securityCode
+        })
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      }
+
+      return {
+        ok: true,
+        message: '2FA enabled successfully.'
+      }
+    }
+  )
+
+  /**
+   * TURN OWN 2FA OFF
+   */
+  app.delete<{ Params: { strategyId: string } }>(
+    '/profile/tfa/:strategyId',
+    {
+      schema: {
+        summary: "Turn 2FA off on the logged in user's account",
+        description:
+          'Forgets the secret, so setting 2FA up again starts from a new one. Refused when the account is flagged for 2FA or the strategy enforces it — the next login would only ask for it again.',
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' }
+          },
+          required: ['strategyId']
+        },
+        response: {
+          204: {
+            description: '2FA turned off successfully'
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      try {
+        await WIKI.models.users.disableTfa(userId, req.params.strategyId)
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      }
+
+      return reply.code(204).send()
+    }
+  )
+
+  /**
+   * START REGISTERING A PASSKEY
+   */
+  app.post(
+    '/profile/passkeys/challenge',
+    {
+      schema: {
+        summary: 'Get the options for registering a new passkey',
+        description:
+          "Pass the result to the browser's WebAuthn API, then send what the authenticator produces to `POST /users/profile/passkeys`. The credential is bound to the hostname of this request, so a passkey registered on one site of a multi-site instance does not work on another.",
+        tags: ['Users'],
+        response: {
+          200: {
+            description: 'Registration options',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              registrationOptions: {
+                type: 'object',
+                additionalProperties: true,
+                description: 'A WebAuthn `PublicKeyCredentialCreationOptions`, JSON-encoded.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      try {
+        const { registrationOptions, pending } = await WIKI.models.passkeys.startRegistration({
+          userId,
+          hostname: req.hostname,
+          origin: req.headers.origin
+        })
+        // -> Kept out of the client's hands: what the authenticator signs is only worth anything if the
+        //    challenge it answers is one this server remembers issuing
+        req.session.passkeyRegistration = pending
+        return {
+          ok: true,
+          registrationOptions
+        }
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      }
+    }
+  )
+
+  /**
+   * FINISH REGISTERING A PASSKEY
+   */
+  app.post<{ Body: { name: string; registrationResponse: Record<string, any> } }>(
+    '/profile/passkeys',
+    {
+      schema: {
+        summary: 'Register the passkey an authenticator just created',
+        tags: ['Users'],
+        body: {
+          type: 'object',
+          required: ['name', 'registrationResponse'],
+          properties: {
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              description: 'What to call it in the list, e.g. the device it lives on.'
+            },
+            registrationResponse: {
+              type: 'object',
+              additionalProperties: true,
+              description: "The browser's WebAuthn registration response, JSON-encoded."
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Passkey registered successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              passkey: { $ref: 'Passkey#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+
+      try {
+        const passkey = await WIKI.models.passkeys.finalizeRegistration({
+          userId,
+          name: req.body.name,
+          registrationResponse: req.body.registrationResponse as any,
+          pending: req.session.passkeyRegistration
+        })
+        return {
+          ok: true,
+          passkey
+        }
+      } catch (err: any) {
+        rethrowAsBadRequest(err)
+      } finally {
+        // -> Spent either way: a rejected response does not get a second go at the same challenge
+        req.session.passkeyRegistration = undefined
+      }
+    }
+  )
+
+  /**
+   * REMOVE A PASSKEY
+   */
+  app.delete<{ Params: { passkeyId: string } }>(
+    '/profile/passkeys/:passkeyId',
+    {
+      schema: {
+        summary: 'Remove one of the logged in user’s passkeys',
+        description:
+          'Only this instance forgets it — the credential itself lives on the user’s device and has to be deleted there too.',
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            passkeyId: {
+              type: 'string',
+              description: 'The credential ID, as listed by `GET /users/profile/auth`.'
+            }
+          },
+          required: ['passkeyId']
+        },
+        response: {
+          204: {
+            description: 'Passkey removed successfully'
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = sessionUserId(req)
+      if (!userId) {
+        return reply.unauthorized()
+      }
+      if (!(await WIKI.models.passkeys.remove(userId, req.params.passkeyId))) {
+        return reply.notFound('You have no passkey with this ID.')
+      }
+      return reply.code(204).send()
     }
   )
 

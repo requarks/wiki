@@ -145,7 +145,12 @@
       </w-btn>
     </template>
     <w-space />
-    <template v-if="!(editorStore.isActive && editorStore.mode === `create`)">
+    <!--
+      Hidden outright while a suggestion is being written: duplicating, moving or deleting the page is
+      not part of suggesting a change to it, and a submitter who happens to hold those rights elsewhere
+      would otherwise find them here.
+    -->
+    <template v-if="!(editorStore.isActive && [`create`, `suggest`].includes(editorStore.mode))">
       <w-btn
         class="h-12"
         v-if="userStore.can(`create:pages`)"
@@ -177,7 +182,12 @@
         <w-tooltip anchor="center left" self="center right">Delete Page</w-tooltip>
       </w-btn>
     </template>
-    <span class="page-actions-mode" v-else>{{ t('common.actions.newPage') }}</span>
+    <!-- What the rail says instead: which of the two write modes the editor is in. -->
+    <span class="page-actions-mode" v-else>{{
+      editorStore.mode === `suggest`
+        ? t('common.actions.suggestedEdit')
+        : t('common.actions.newPage')
+    }}</span>
   </div>
 </template>
 

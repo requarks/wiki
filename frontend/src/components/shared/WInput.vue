@@ -506,6 +506,16 @@ registerWithForm?.({ validate })
 defineExpose({
   validate,
   focus: () => inputEl.value?.focus(),
+  /**
+   * Show the value of a `revealable` password field, as if the eye had been clicked.
+   *
+   * For a caller that fills the field in itself: a generated password the user never typed is worth
+   * nothing hidden behind dots, and having to click the eye afterwards is a step with no purpose.
+   * Hiding it again is left to the user, which is why there is no matching `conceal()`.
+   */
+  reveal: () => {
+    isRevealed.value = true
+  },
   hasError
 })
 </script>

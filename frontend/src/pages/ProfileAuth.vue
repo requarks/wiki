@@ -12,34 +12,104 @@
           </w-item-section>
           <w-item-section>
             <strong>{{ auth.authName }}</strong>
+            <div v-if="!auth.config.isPasswordLoginEnabled" class="text-caption text-negative">
+              {{ t('profile.authPasswordLoginOff') }}
+            </div>
+            <!--
+              A disabled button with no reason next to it reads as a bug. This is the reason: the
+              server refuses to turn password login off while it is the only way into the account.
+            -->
+            <div
+              v-else-if="auth.strategyKey === `local` && !auth.config.canDisablePasswordLogin"
+              class="text-caption text-grey">
+              {{ t('profile.authPasswordLoginOnlyMethod') }}
+            </div>
           </w-item-section>
-          <template v-if="auth.strategyKey === `local`">
-            <w-item-section v-if="auth.config.isTfaSetup" side>
+          <!--
+            One trigger rather than a row of buttons: these are occasional actions on a row that also
+            has to stay readable, and a `w-item` puts every `side` section on the same line.
+          -->
+          <w-item-section v-if="auth.strategyKey === `local`" side>
+            <div class="flex items-center gap-3">
+              <!--
+                Says at a glance that the account is protected, without opening the menu to find out.
+                Only shown when 2FA is on: the absence of a badge is not a warning, since 2FA is
+                optional unless an administrator requires it.
+              -->
+              <w-badge
+                v-if="auth.config.isTfaSetup"
+                class="gap-1"
+                color="positive"
+                rounded
+                :title="t('profile.authTfaActive')">
+                <w-icon name="la:check" />
+                <span>{{ t('profile.authTfaBadge') }}</span>
+              </w-badge>
               <w-btn
-                icon="la:fingerprint"
-                unelevated
-                :label="t(`profile.authDisableTfa`)"
-                color="negative"
-                :disable="auth.config.isTfaRequired"
-                @click="disableTfa(auth.authId)" />
-            </w-item-section>
-            <w-item-section v-else side>
-              <w-btn
-                icon="la:fingerprint"
-                unelevated
-                :label="t(`profile.authSetTfa`)"
+                class="acrylic-btn"
+                flat
+                dense
+                round
+                icon="la:cog"
                 color="primary"
-                @click="setupTfa(auth.authId)" />
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                icon="la:key"
-                unelevated
-                :label="t(`profile.authChangePassword`)"
-                color="primary"
-                @click="changePassword(auth.authId)" />
-            </w-item-section>
-          </template>
+                :aria-label="t(`profile.authActions`)">
+                <w-menu class="translucent-menu" auto-close anchor="bottom right" self="top right">
+                  <!--
+                  `!min-w-0 !pr-2` on each icon section: an avatar section is a 56px column with 16px
+                  of padding after it, which is the right metric for a 40px avatar in a list row and
+                  far too much air beside a 24px icon in a menu. Both rules are scoped styles in
+                  WItemSection, hence `!` -- a layered utility cannot outrank them.
+
+                  The colours are literal classes rather than WIcon's `color` prop: that prop builds
+                  `text-${color}` at runtime, and Tailwind only emits a utility it can see spelled out
+                  in the source, so `color="blue-7"` would compile to a class that does not exist.
+                -->
+                  <w-list dense padding style="min-width: 240px">
+                    <w-item clickable @click="changePassword(auth.authId)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:key" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('profile.authChangePassword') }}</w-item-section>
+                    </w-item>
+                    <w-item
+                      v-if="auth.config.isTfaSetup"
+                      clickable
+                      @click="disableTfa(auth.authId)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:fingerprint" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('profile.authDisableTfa') }}</w-item-section>
+                    </w-item>
+                    <w-item v-else clickable @click="setupTfa(auth.authId)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:fingerprint" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('profile.authSetTfa') }}</w-item-section>
+                    </w-item>
+                    <w-separator class="my-2" />
+                    <w-item
+                      v-if="auth.config.isPasswordLoginEnabled"
+                      clickable
+                      :disabled="!auth.config.canDisablePasswordLogin"
+                      @click="disablePasswordLogin(auth.authId)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:ban" class="text-negative" />
+                      </w-item-section>
+                      <w-item-section class="text-negative">
+                        {{ t('profile.authDisablePasswordLogin') }}
+                      </w-item-section>
+                    </w-item>
+                    <w-item v-else clickable @click="enablePasswordLogin(auth.authId)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:redo" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('profile.authEnablePasswordLogin') }}</w-item-section>
+                    </w-item>
+                  </w-list>
+                </w-menu>
+              </w-btn>
+            </div>
+          </w-item-section>
         </w-item>
       </w-list>
     </div>
@@ -90,23 +160,14 @@ import { useI18n } from 'vue-i18n'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { dialog } from '@/composables/dialog'
+import { confirm, dialog } from '@/composables/dialog'
 import { onMounted, reactive } from 'vue'
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
 import { localizeError } from '@/helpers/localization'
-import { DateTime } from 'luxon'
-
-import { useSiteStore } from '@/stores/site'
-import { useUserStore } from '@/stores/user'
 
 import ChangePwdDialog from '@/components/ChangePwdDialog.vue'
 import SetupTfaDialog from '@/components/SetupTfaDialog.vue'
 import PasskeyCreateDialog from '@/components/PasskeyCreateDialog.vue'
-
-// STORES
-
-const siteStore = useSiteStore()
-const userStore = useUserStore()
 
 // I18N
 
@@ -128,50 +189,37 @@ const state = reactive({
 
 // METHODS
 
+/**
+ * The reason the API gave, out of a response ky threw on (anything above 400) or out of the error
+ * itself when the request never got an answer. An `ERR_*` code is translated on the way out.
+ */
+async function apiMessage(err) {
+  const message =
+    (await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)) ?? err.message
+  return localizeError(message, t)
+}
+
 function humanizeDate(val) {
-  return DateTime.fromISO(val).toLocaleString(DateTime.DATETIME_MED)
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
 }
 
 async function fetchAuthMethods() {
   state.loading++
   try {
-    const respRaw = await APOLLO_CLIENT.query({
-      query: `
-        query getUserProfileAuthMethods (
-          $id: UUID!
-        ) {
-          userById (
-            id: $id
-          ) {
-            id
-            auth {
-              authId
-              authName
-              strategyKey
-              strategyIcon
-              config
-            }
-            passkeys {
-              id
-              name
-              createdAt
-              siteHostname
-            }
-          }
-        }
-      `,
-      variables: {
-        id: userStore.id
-      },
-      fetchPolicy: 'network-only'
-    })
-    state.authMethods = respRaw.data?.userById?.auth ?? []
-    state.passkeys = respRaw.data?.userById?.passkeys ?? []
+    const resp = await API_CLIENT.get('users/profile/auth').json()
+    state.authMethods = resp?.authMethods ?? []
+    state.passkeys = resp?.passkeys ?? []
   } catch (err) {
     notify({
       type: 'negative',
       message: t('profile.authLoadingFailed'),
-      caption: err.message
+      caption: await apiMessage(err)
     })
   }
   state.loading--
@@ -187,50 +235,79 @@ function changePassword(strategyId) {
 }
 
 function disableTfa(strategyId) {
-  dialog({
+  confirm({
     title: t('common.actions.confirm'),
     message: t('profile.authDisableTfaConfirm'),
-    cancel: true
+    cancel: true,
+    color: 'negative',
+    okLabel: t('profile.authDisableTfa')
   }).onOk(async () => {
     loading.show()
     try {
-      const resp = await APOLLO_CLIENT.mutate({
-        mutation: `
-          mutation deactivateTfa (
-            $strategyId: UUID!
-          ) {
-            deactivateTFA(
-              strategyId: $strategyId
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          strategyId
-        }
-      })
-      if (resp?.data?.deactivateTFA?.operation?.succeeded) {
-        notify({
-          type: 'positive',
-          message: t('profile.authDisableTfaSuccess')
-        })
-      } else {
-        throw new Error(resp?.data?.deactivateTFA?.operation?.message)
+      // -> Answers 204, so there is no body to read — only whether it succeeded
+      const resp = await API_CLIENT.delete(`users/profile/tfa/${strategyId}`)
+      if (!resp?.ok) {
+        throw new Error(localizeError((await resp.json())?.message, t))
       }
+      notify({
+        type: 'positive',
+        message: t('profile.authDisableTfaSuccess')
+      })
     } catch (err) {
       notify({
         type: 'negative',
         message: t('profile.authDisableTfaFailed'),
-        caption: err.message ?? 'An unexpected error occured.'
+        caption: await apiMessage(err)
       })
     }
     await fetchAuthMethods()
     loading.hide()
   })
+}
+
+function disablePasswordLogin(strategyId) {
+  confirm({
+    title: t('common.actions.confirm'),
+    message: t('profile.authDisablePasswordLoginConfirm'),
+    cancel: true,
+    color: 'negative',
+    okLabel: t('profile.authDisablePasswordLogin')
+  }).onOk(() => setPasswordLogin(strategyId, false))
+}
+
+function enablePasswordLogin(strategyId) {
+  setPasswordLogin(strategyId, true)
+}
+
+async function setPasswordLogin(strategyId, isEnabled) {
+  loading.show()
+  try {
+    const resp = await API_CLIENT.put('users/profile/password-login', {
+      json: {
+        strategyId,
+        isEnabled
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(localizeError(resp?.message, t))
+    }
+    notify({
+      type: 'positive',
+      message: isEnabled
+        ? t('profile.authEnablePasswordLoginSuccess')
+        : t('profile.authDisablePasswordLoginSuccess')
+    })
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: isEnabled
+        ? t('profile.authEnablePasswordLoginFailed')
+        : t('profile.authDisablePasswordLoginFailed'),
+      caption: await apiMessage(err)
+    })
+  }
+  await fetchAuthMethods()
+  loading.hide()
 }
 
 function setupTfa(strategyId) {
@@ -251,39 +328,18 @@ async function setupPasskey() {
     }
     loading.show()
 
-    // -> Generation registration options
+    // -> Generate registration options
 
-    const genResp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation setupPasskey (
-          $siteId: UUID!
-        ) {
-          setupPasskey(
-            siteId: $siteId
-          ) {
-            operation {
-              succeeded
-              message
-            }
-            registrationOptions
-          }
-        }
-      `,
-      variables: {
-        siteId: siteStore.id
-      }
-    })
-    if (genResp?.data?.setupPasskey?.operation?.succeeded) {
-      state.registrationOptions = genResp.data.setupPasskey.registrationOptions
-    } else {
-      throw new Error(localizeError(genResp?.data?.setupPasskey?.operation?.message, t))
+    const genResp = await API_CLIENT.post('users/profile/passkeys/challenge').json()
+    if (!genResp?.ok) {
+      throw new Error(localizeError(genResp?.message, t))
     }
 
     // -> Start registration on the authenticator
 
     let attResp
     try {
-      attResp = await startRegistration(state.registrationOptions)
+      attResp = await startRegistration({ optionsJSON: genResp.registrationOptions })
     } catch (err) {
       if (err.name === 'InvalidStateError') {
         throw new Error(t('error.ERR_PK_ALREADY_REGISTERED'))
@@ -310,41 +366,24 @@ async function setupPasskey() {
 
     // -> Verify the authenticator response
 
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation finalizePasskey (
-          $registrationResponse: JSON!
-          $name: String!
-        ) {
-          finalizePasskey(
-            registrationResponse: $registrationResponse
-            name: $name
-          ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        registrationResponse: attResp,
-        name: passkeyName
+    const resp = await API_CLIENT.post('users/profile/passkeys', {
+      json: {
+        name: passkeyName,
+        registrationResponse: attResp
       }
-    })
-    if (resp?.data?.finalizePasskey?.operation?.succeeded) {
-      notify({
-        type: 'positive',
-        message: t('profile.passkeysSetupSuccess')
-      })
-    } else {
-      throw new Error(resp?.data?.finalizePasskey?.operation?.message)
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(localizeError(resp?.message, t))
     }
+    notify({
+      type: 'positive',
+      message: t('profile.passkeysSetupSuccess')
+    })
   } catch (err) {
     notify({
       type: 'negative',
       message: t('profile.passkeysSetupFailed'),
-      caption: err.message ?? 'An unexpected error occured.'
+      caption: await apiMessage(err)
     })
   }
   await fetchAuthMethods()
@@ -352,45 +391,28 @@ async function setupPasskey() {
 }
 
 async function deactivatePasskey(pkey) {
-  dialog({
+  confirm({
     title: t('common.actions.confirm'),
     message: t('profile.passkeysDeactivateConfirm'),
-    cancel: true
+    cancel: true,
+    color: 'negative',
+    okLabel: t('common.actions.delete')
   }).onOk(async () => {
     loading.show()
     try {
-      const resp = await APOLLO_CLIENT.mutate({
-        mutation: `
-          mutation deactivatePasskey (
-            $id: UUID!
-          ) {
-            deactivatePasskey(
-              id: $id
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          id: pkey.id
-        }
-      })
-      if (resp?.data?.deactivatePasskey?.operation?.succeeded) {
-        notify({
-          type: 'positive',
-          message: t('profile.passkeysDeactivateSuccess')
-        })
-      } else {
-        throw new Error(resp?.data?.deactivatePasskey?.operation?.message)
+      const resp = await API_CLIENT.delete(`users/profile/passkeys/${encodeURIComponent(pkey.id)}`)
+      if (!resp?.ok) {
+        throw new Error(localizeError((await resp.json())?.message, t))
       }
+      notify({
+        type: 'positive',
+        message: t('profile.passkeysDeactivateSuccess')
+      })
     } catch (err) {
       notify({
         type: 'negative',
         message: t('profile.passkeysDeactivateFailed'),
-        caption: err.message ?? 'An unexpected error occured.'
+        caption: await apiMessage(err)
       })
     }
     await fetchAuthMethods()

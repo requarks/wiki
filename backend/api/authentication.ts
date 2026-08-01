@@ -166,6 +166,9 @@ async function routes(app: FastifyInstance) {
               maxLength: 255
             }
           }
+        },
+        response: {
+          200: { $ref: 'AuthLoginResult#' }
         }
       }
     },
@@ -242,6 +245,9 @@ async function routes(app: FastifyInstance) {
               maxLength: 255
             }
           }
+        },
+        response: {
+          200: { $ref: 'AuthLoginResult#' }
         }
       }
     },
@@ -276,6 +282,229 @@ async function routes(app: FastifyInstance) {
           WIKI.models.flags.authDebug(`Password change from login failed: ${err.message}`)
           return reply.badRequest('ERR_CHANGE_PASSWORD_FAILED')
         }
+      }
+    }
+  )
+
+  /**
+   * SUBMIT A 2FA CODE
+   *
+   * The other half of a login that answered `provideTfa` or `setupTfa`: the continuation token stands
+   * for the login that got that far, and the code proves the second factor. With `setup`, a correct
+   * code also activates the secret the login generated, which is how an account that is required to
+   * use 2FA gets it configured.
+   */
+  app.put<{
+    Params: { siteId: string }
+    Body: {
+      strategyId: string
+      continuationToken: string
+      securityCode: string
+      setup?: boolean
+    }
+  }>(
+    '/sites/:siteId/auth/tfa',
+    {
+      schema: {
+        summary: 'Submit a 2FA Security Code From Login',
+        description:
+          'Answers like the login route does, since the same checks continue afterwards: a user who also owes a password change is asked for one next. A wrong code can be retried a few times before the continuation token is discarded and the login has to be started again.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: {
+          type: 'object',
+          required: ['strategyId', 'continuationToken', 'securityCode'],
+          properties: {
+            strategyId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            continuationToken: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            },
+            securityCode: {
+              type: 'string',
+              pattern: '^[0-9]{6}$',
+              description: 'The six digits shown by the authenticator app.'
+            },
+            setup: {
+              type: 'boolean',
+              default: false,
+              description:
+                'True when answering a `setupTfa` login, i.e. the code confirms a secret that was just generated.'
+            }
+          }
+        },
+        response: {
+          200: { $ref: 'AuthLoginResult#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        const result = await WIKI.models.users.loginTFA(
+          {
+            siteId: req.params.siteId,
+            strategyId: req.body.strategyId,
+            continuationToken: req.body.continuationToken,
+            securityCode: req.body.securityCode,
+            setup: req.body.setup ?? false,
+            ip: req.ip
+          },
+          req
+        )
+        return {
+          ok: true,
+          ...result
+        }
+      } catch (err: any) {
+        if (err.message.startsWith('ERR_')) {
+          WIKI.models.flags.authDebug(`2FA verification rejected: ${err.message}`)
+          return reply.badRequest(err.message)
+        } else {
+          WIKI.logger.debug(err)
+          WIKI.models.flags.authDebug(`2FA verification failed unexpectedly: ${err.message}`)
+          return reply.badRequest('ERR_TFA_FAILED')
+        }
+      }
+    }
+  )
+
+  /**
+   * REQUEST A PASSKEY CHALLENGE
+   *
+   * Takes no identity: a passkey says which account it belongs to, so there is nobody to name until the
+   * assertion comes back. The challenge is remembered on the session.
+   */
+  app.post<{ Params: { siteId: string } }>(
+    '/sites/:siteId/auth/passkey/challenge',
+    {
+      schema: {
+        summary: 'Get the options for logging in with a passkey',
+        description:
+          "Pass the result to the browser's WebAuthn API, then send what the authenticator produces to `PUT /sites/:siteId/auth/passkey/login`. No credential list is sent and no user is named: passkeys are registered as discoverable credentials, so the authenticator offers whichever ones it holds for this hostname and the assertion identifies the account.",
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        response: {
+          200: {
+            description: 'Passkey challenge generated',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              authOptions: {
+                type: 'object',
+                additionalProperties: true,
+                description: 'A WebAuthn `PublicKeyCredentialRequestOptions`, JSON-encoded.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        const { authOptions, pending } = await WIKI.models.passkeys.startLogin({
+          hostname: req.hostname,
+          origin: req.headers.origin
+        })
+        req.session.passkeyLogin = pending
+        return {
+          ok: true,
+          authOptions
+        }
+      } catch (err: any) {
+        if (err.message.startsWith('ERR_')) {
+          return reply.badRequest(err.message)
+        } else {
+          WIKI.logger.debug(err)
+          return reply.badRequest('ERR_LOGIN_FAILED')
+        }
+      }
+    }
+  )
+
+  /**
+   * LOGIN USING A PASSKEY
+   */
+  app.put<{ Params: { siteId: string }; Body: { authResponse: Record<string, any> } }>(
+    '/sites/:siteId/auth/passkey/login',
+    {
+      schema: {
+        summary: 'Login With a Passkey',
+        description:
+          'Verifies what the authenticator signed and, if it holds up, logs the user in. A passkey establishes both identity and presence, so no password or 2FA code is asked for on top of it.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: {
+          type: 'object',
+          required: ['authResponse'],
+          properties: {
+            authResponse: {
+              type: 'object',
+              additionalProperties: true,
+              description: "The browser's WebAuthn authentication response, JSON-encoded."
+            }
+          }
+        },
+        response: {
+          200: { $ref: 'AuthLoginResult#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        const result = await WIKI.models.passkeys.verifyLogin(
+          {
+            authResponse: req.body.authResponse as any,
+            pending: req.session.passkeyLogin,
+            ip: req.ip
+          },
+          req
+        )
+        return {
+          ok: true,
+          ...result
+        }
+      } catch (err: any) {
+        if (err.message.startsWith('ERR_')) {
+          return reply.badRequest(err.message)
+        } else {
+          WIKI.logger.debug(err)
+          WIKI.models.flags.authDebug(`Passkey login failed unexpectedly: ${err.message}`)
+          return reply.badRequest('ERR_LOGIN_FAILED')
+        }
+      } finally {
+        // -> Spent either way: a rejected assertion does not get a second go at the same challenge
+        req.session.passkeyLogin = undefined
       }
     }
   )

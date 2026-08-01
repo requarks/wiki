@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs'
+import QRCode from 'qrcode'
 import {
   authentication as authenticationTable,
   groups as groupsTable,
@@ -12,6 +13,7 @@ import { and, count, eq, ilike, inArray, notExists, or, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { flatten, uniq } from 'es-toolkit/array'
 import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
+import { buildTotpUri, generateTotpSecret, verifyTotpCode } from '../helpers/totp.ts'
 import type { SystemIds } from './types.ts'
 
 /** The essential user fields, mirroring the `UserCore` API schema. */
@@ -37,7 +39,7 @@ export interface UserPage {
 /**
  * An authentication provider linked to a user, as exposed by the API. Secrets held in the stored
  * `auth` blob (the password hash, the TFA secret) are never included — `isPasswordSet` and
- * `tfaIsActive` report their state instead.
+ * `isTfaSetup` report their state instead.
  */
 export interface UserAuthProvider {
   authId: string
@@ -45,6 +47,28 @@ export interface UserAuthProvider {
   strategyKey: string
   strategyIcon: string
   config: Record<string, any>
+}
+
+/**
+ * One authentication provider as the user's own profile page sees it: enough to render what can be
+ * done with it, and nothing else. Unlike the administrator's view this carries no provider flags —
+ * only whether a password exists, whether 2FA is set up, and whether the user is allowed to turn it
+ * off again.
+ */
+export interface UserProfileAuthMethod {
+  authId: string
+  authName: string
+  strategyKey: string
+  strategyIcon: string
+  config: {
+    isPasswordSet: boolean
+    isTfaSetup: boolean
+    isTfaRequired: boolean
+    /** False once password login has been turned off, whether by the user or by an administrator. */
+    isPasswordLoginEnabled: boolean
+    /** Whether the account has another way in, and may therefore turn password login off. */
+    canDisablePasswordLogin: boolean
+  }
 }
 
 /** The subset of user fields that may be modified. `isSystem` is deliberately absent. */
@@ -106,6 +130,64 @@ const avatarSize = 180
  */
 function escapeLikePattern(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
+}
+
+/**
+ * Count a wrong 2FA code against a continuation token, destroying the token once `maxTfaAttempts`
+ * have been used up — the client then has nothing left to continue with and has to start over.
+ *
+ * A token that has already been destroyed, or never existed, is not an error here: the caller is
+ * about to reject the attempt either way.
+ */
+async function countTfaFailure(token: string): Promise<void> {
+  const rows = await WIKI.db
+    .select({ id: userKeys.id, meta: userKeys.meta, userId: userKeys.userId })
+    .from(userKeys)
+    .where(eq(userKeys.token, token))
+    .limit(1)
+  const row = rows[0]
+  if (!row) {
+    return
+  }
+
+  const meta = (row.meta ?? {}) as Record<string, any>
+  const attempts = (meta.attempts ?? 0) + 1
+  if (attempts >= maxTfaAttempts) {
+    await WIKI.db.delete(userKeys).where(eq(userKeys.id, row.id))
+    WIKI.models.flags.authDebug(
+      `Discarded the 2FA continuation token of user ${row.userId} after ${attempts} incorrect codes`
+    )
+    return
+  }
+  await WIKI.db
+    .update(userKeys)
+    .set({ meta: { ...meta, attempts } })
+    .where(eq(userKeys.id, row.id))
+}
+
+/**
+ * How many wrong 2FA codes a continuation token survives before it is destroyed and the user has to
+ * start the login over. Retries have to be allowed — six digits get mistyped, and a code that rotates
+ * every 30 seconds is regularly entered a moment too late — but an unlimited number of them against a
+ * token that lives for 24 hours is a code space small enough to walk through.
+ */
+const maxTfaAttempts = 5
+
+/**
+ * How many ways into the account remain if the given provider stops working: the other providers
+ * linked to it, plus every registered passkey.
+ *
+ * A provider that is itself restricted does not count — it is no way in either. Passkeys are counted
+ * whichever host they were registered against: on a multi-site instance one bound to another site
+ * still leaves the account reachable, which is what this guards against.
+ */
+function countAlternativeLogins(user: any, strategyId: string): number {
+  const auth = (user.auth ?? {}) as Record<string, any>
+  const otherProviders = Object.entries(auth).filter(
+    ([id, config]) => id !== strategyId && !config?.restrictLogin
+  ).length
+  const passkeys = ((user.passkeys ?? {}).authenticators ?? []).length
+  return otherProviders + passkeys
 }
 
 /** Selection shared by the list / detail queries. Never includes `auth` or `passkeys`. */
@@ -211,7 +293,7 @@ class Users {
    * Fetch a single user with the groups it belongs to and the authentication providers linked to it.
    *
    * The stored `auth` blob is keyed by strategy ID and holds secrets, so it is reshaped into a list
-   * of providers carrying only state (`isPasswordSet`, `tfaIsActive`) — never the password hash or
+   * of providers carrying only state (`isPasswordSet`, `isTfaSetup`) — never the password hash or
    * the TFA secret.
    *
    * @param id User ID
@@ -233,7 +315,7 @@ class Users {
     )) {
       const strategy = strategies.find((s: any) => s.id === strategyId)
       const definition = WIKI.data.authentication?.find((d: any) => d.key === strategy?.module)
-      const { password, tfaSecret, ...config } = rawConfig ?? {}
+      const { password, tfaSecret, tfaIsActive, tfaRequired, ...config } = rawConfig ?? {}
       auth.push({
         authId: strategyId,
         authName: strategy?.displayName || definition?.title || strategy?.module || 'Unknown',
@@ -242,7 +324,11 @@ class Users {
         config: {
           ...config,
           isPasswordSet: Boolean(password),
-          tfaIsActive: Boolean(tfaSecret)
+          // -> Named as the profile page's own view names them, so one piece of state is not called two
+          //    things across the API. Whether 2FA is set up is `tfaIsActive` and a stored secret both:
+          //    a secret that was generated but never confirmed is not 2FA being on.
+          isTfaSetup: Boolean(tfaIsActive && tfaSecret),
+          isTfaRequired: Boolean(tfaRequired)
         }
       })
     }
@@ -640,6 +726,250 @@ class Users {
   }
 
   /**
+   * The authentication providers linked to a user, as its own profile page shows them.
+   *
+   * Reshaped from the stored `auth` blob the same way `getUserDetail()` does it, but reporting only
+   * what the user may act on. `isTfaRequired` is what greys out the "turn off 2FA" button, so it
+   * accounts for the strategy enforcing 2FA for everyone as well as this user being flagged for it.
+   */
+  async getProfileAuthMethods(userId: string): Promise<UserProfileAuthMethod[]> {
+    const user = await this.getById(userId)
+    if (!user) {
+      return []
+    }
+
+    const strategies = await WIKI.db.select().from(authenticationTable)
+    const methods: UserProfileAuthMethod[] = []
+    for (const [strategyId, rawConfig] of Object.entries(
+      (user.auth ?? {}) as Record<string, any>
+    )) {
+      const strategy = strategies.find((s: any) => s.id === strategyId)
+      const definition = WIKI.data.authentication?.find((d: any) => d.key === strategy?.module)
+      const config = rawConfig ?? {}
+      methods.push({
+        authId: strategyId,
+        authName: strategy?.displayName || definition?.title || strategy?.module || 'Unknown',
+        strategyKey: strategy?.module ?? 'unknown',
+        strategyIcon: definition?.icon ?? '',
+        config: {
+          isPasswordSet: Boolean(config.password),
+          isTfaSetup: Boolean(config.tfaIsActive && config.tfaSecret),
+          isTfaRequired: Boolean(
+            config.tfaRequired || (strategy?.config as Record<string, any>)?.enforceTfa
+          ),
+          isPasswordLoginEnabled: !config.restrictLogin,
+          canDisablePasswordLogin: countAlternativeLogins(user, strategyId) > 0
+        }
+      })
+    }
+    return methods
+  }
+
+  /**
+   * Change a user's own password, having checked the current one.
+   *
+   * Distinct from `setUserPassword()`, which is an administrator replacing a password it does not
+   * know. This also clears `mustChangePwd`: a user who has just chosen a password satisfies the
+   * requirement to choose one.
+   *
+   * @throws `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_TOO_SHORT` or
+   *         `ERR_INCORRECT_CURRENT_PASSWORD`
+   */
+  async changeOwnPassword({
+    userId,
+    strategyId,
+    currentPassword,
+    newPassword
+  }: {
+    userId: string
+    strategyId: string
+    currentPassword: string
+    newPassword: string
+  }): Promise<void> {
+    const user = await this.getById(userId)
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('ERR_PASSWORD_TOO_SHORT')
+    }
+
+    const auth = (user.auth ?? {}) as Record<string, any>
+    // -> Only a provider that stores a password here has one to change; an external identity provider
+    //    holds it somewhere this instance cannot reach
+    if (!auth[strategyId]?.password) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    if ((await bcrypt.compare(currentPassword, auth[strategyId].password)) !== true) {
+      WIKI.models.flags.authDebug(
+        `Password change for user ${userId} rejected: the current password did not match`
+      )
+      throw new Error('ERR_INCORRECT_CURRENT_PASSWORD')
+    }
+
+    auth[strategyId] = {
+      ...auth[strategyId],
+      password: await bcrypt.hash(newPassword, 12),
+      mustChangePwd: false
+    }
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, userId))
+  }
+
+  /**
+   * Turn password login on or off for a user's own account, which is the same `restrictLogin` flag an
+   * administrator sets from the admin area.
+   *
+   * Turning it off is refused unless something else can still sign the account in — a passkey or
+   * another linked provider — because the alternative is a user locking themselves out of their own
+   * account with one click. Turning it back on needs no such check, and the password itself is neither
+   * cleared nor asked for: a session that got this far has already been authenticated.
+   *
+   * @throws `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_LOGIN_NOT_APPLICABLE` or
+   *         `ERR_NO_OTHER_LOGIN_METHOD`
+   */
+  async setPasswordLoginEnabled({
+    userId,
+    strategyId,
+    isEnabled
+  }: {
+    userId: string
+    strategyId: string
+    isEnabled: boolean
+  }): Promise<void> {
+    const user = await this.getById(userId)
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    const auth = (user.auth ?? {}) as Record<string, any>
+    if (!auth[strategyId]) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+
+    // -> The flag is only ever read by the local module's `authenticate()`, so setting it on a provider
+    //    that authenticates elsewhere would be a switch connected to nothing
+    const strategy = await WIKI.models.authentication.getStrategyById(strategyId)
+    if (strategy?.module !== 'local' || !auth[strategyId].password) {
+      throw new Error('ERR_PASSWORD_LOGIN_NOT_APPLICABLE')
+    }
+
+    if (!isEnabled && countAlternativeLogins(user, strategyId) < 1) {
+      throw new Error('ERR_NO_OTHER_LOGIN_METHOD')
+    }
+
+    auth[strategyId] = { ...auth[strategyId], restrictLogin: !isEnabled }
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, userId))
+
+    WIKI.models.flags.authDebug(
+      `User ${userId} <${user.email}> turned password login ${isEnabled ? 'on' : 'off'}`
+    )
+  }
+
+  /**
+   * Start 2FA setup for a user: store a fresh secret, inactive, and return the QR code to scan.
+   *
+   * The secret is stored before it is proven to work, because the user has to be able to scan it and
+   * come back with a code generated from it. It counts for nothing until `enableTfa()` marks it
+   * active, and starting the setup again simply replaces it.
+   *
+   * @param user The user row, whose `auth` blob is updated in place as well as saved
+   * @param siteId The site being logged into, which names the entry in the authenticator app
+   * @returns The QR code as an SVG document, and the secret it encodes — which is shown as text too,
+   *          for a user who would rather type it into an authenticator app than scan anything
+   */
+  async startTfaSetup(
+    user: any,
+    strategyId: string,
+    siteId?: string
+  ): Promise<{ secret: string; tfaQRImage: string }> {
+    WIKI.logger.debug(`Generating a new 2FA secret for user ${user.id}...`)
+
+    // -> The title is only a label in the user's authenticator app, so any site will do when the one
+    //    being logged into cannot be resolved
+    const site = (siteId ? WIKI.sites[siteId] : null) ?? Object.values(WIKI.sites ?? {})[0]
+    const issuer = (site as any)?.config?.title || 'Wiki'
+
+    const secret = generateTotpSecret()
+    user.auth = (user.auth ?? {}) as Record<string, any>
+    user.auth[strategyId] = {
+      ...user.auth[strategyId],
+      tfaSecret: secret,
+      tfaIsActive: false
+    }
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth: user.auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, user.id))
+
+    return {
+      secret,
+      tfaQRImage: await QRCode.toString(buildTotpUri({ secret, account: user.email, issuer }), {
+        type: 'svg',
+        margin: 1
+      })
+    }
+  }
+
+  /**
+   * Mark a user's stored 2FA secret as active, i.e. required from now on. Called once the user has
+   * proven it produces the codes this server expects.
+   */
+  async enableTfa(user: any, strategyId: string): Promise<void> {
+    user.auth[strategyId] = { ...user.auth[strategyId], tfaIsActive: true }
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth: user.auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, user.id))
+    WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> enabled 2FA`)
+  }
+
+  /**
+   * Turn 2FA off for a user and forget the secret, so that setting it up again starts from a new one.
+   *
+   * @throws `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY`, `ERR_TFA_NOT_ACTIVE` or `ERR_TFA_ENFORCED`
+   */
+  async disableTfa(userId: string, strategyId: string): Promise<void> {
+    const user = await this.getById(userId)
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    const auth = (user.auth ?? {}) as Record<string, any>
+    if (!auth[strategyId]) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    if (!auth[strategyId].tfaIsActive) {
+      throw new Error('ERR_TFA_NOT_ACTIVE')
+    }
+
+    // -> Turning it off would be undone at the next login, which is worth an error rather than a
+    //    confusing round trip. The client greys the button out, but that is a client.
+    const strategy = await WIKI.models.authentication.getStrategyById(strategyId)
+    if (auth[strategyId].tfaRequired || (strategy?.config as Record<string, any>)?.enforceTfa) {
+      throw new Error('ERR_TFA_ENFORCED')
+    }
+
+    auth[strategyId] = { ...auth[strategyId], tfaIsActive: false, tfaSecret: '' }
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, userId))
+    WIKI.models.flags.authDebug(`User ${userId} <${user.email}> disabled 2FA`)
+  }
+
+  /**
+   * Whether a security code matches the 2FA secret stored for a user under one strategy.
+   */
+  verifyTfaCode(user: any, strategyId: string, securityCode: string): boolean {
+    const secret = ((user.auth ?? {}) as Record<string, any>)[strategyId]?.tfaSecret
+    return Boolean(secret) && verifyTotpCode(secret, securityCode)
+  }
+
+  /**
    * Delete a user.
    *
    * Group assignments cascade, but sessions and keys do not — they are login artifacts, so they are
@@ -822,10 +1152,7 @@ class Users {
     if (!skipTFA) {
       if (authStr.tfaIsActive && authStr.tfaSecret) {
         try {
-          // FIXME: pre-existing bug — `WIKI.db.userKeys` is leftover Objection.js API and does not
-          // exist on a Drizzle instance, so this throws a TypeError. The intended call is
-          // `this.generateToken({ ... })`, as used further down in this same file.
-          const tfaToken = await (WIKI.db as any).userKeys.generateToken({
+          const tfaToken = await this.generateToken({
             kind: 'tfa',
             userId: user.id,
             meta: {
@@ -842,15 +1169,12 @@ class Users {
           }
         } catch (errc) {
           WIKI.logger.warn(errc)
-          throw new WIKI.Error.AuthGenericError()
+          throw new Error('ERR_TFA_FAILED')
         }
       } else if (str.config?.enforceTfa || authStr.tfaRequired) {
         try {
-          const tfaQRImage = await user.generateTFA(strategyId, context.siteId)
-          // FIXME: pre-existing bug — `WIKI.db.userKeys` is leftover Objection.js API and does not
-          // exist on a Drizzle instance, so this throws a TypeError. The intended call is
-          // `this.generateToken({ ... })`, as used further down in this same file.
-          const tfaToken = await (WIKI.db as any).userKeys.generateToken({
+          const { tfaQRImage } = await this.startTfaSetup(user, strategyId, context.siteId)
+          const tfaToken = await this.generateToken({
             kind: 'tfaSetup',
             userId: user.id,
             meta: {
@@ -868,7 +1192,7 @@ class Users {
           }
         } catch (errc) {
           WIKI.logger.warn(errc)
-          throw new WIKI.Error.AuthGenericError()
+          throw new Error('ERR_TFA_FAILED')
         }
       }
     }
@@ -894,7 +1218,7 @@ class Users {
         }
       } catch (errc) {
         WIKI.logger.warn(errc)
-        throw new WIKI.Error.AuthGenericError()
+        throw new Error('ERR_CHANGE_PASSWORD_FAILED')
       }
     }
 
@@ -922,6 +1246,153 @@ class Users {
       nextAction: 'redirect',
       redirect
     }
+  }
+
+  /**
+   * Finish a login that stopped for 2FA — either to ask for a code, or to have the user set 2FA up
+   * because the strategy or the account requires it.
+   *
+   * The continuation token identifies the half-finished login, and is kept rather than consumed while
+   * codes are being tried: a mistyped or just-expired code has to be retryable. It is destroyed here
+   * as soon as one is correct, and by `countTfaFailure()` once too many have not been.
+   *
+   * @param setup True when the token came from a required setup, in which case a correct code also
+   *              activates the secret that was generated for it
+   * @throws `ERR_TFA_INVALID_REQUEST`, `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY` or
+   *         `ERR_TFA_INCORRECT_TOKEN`, plus whatever `validateToken()` raises for a token that is
+   *         unknown or expired
+   */
+  async loginTFA(
+    {
+      strategyId,
+      siteId,
+      securityCode,
+      continuationToken,
+      setup = false,
+      ip
+    }: {
+      strategyId: string
+      siteId: string
+      securityCode: string
+      continuationToken: string
+      setup?: boolean
+      ip?: string
+    },
+    req: any
+  ): Promise<AfterLoginResult> {
+    if (!continuationToken || !/^[0-9]{6}$/.test(securityCode)) {
+      throw new Error('ERR_TFA_INVALID_REQUEST')
+    }
+
+    const { user, strategyId: expectedStrategyId } = await this.validateToken({
+      kind: setup ? 'tfaSetup' : 'tfa',
+      token: continuationToken,
+      skipDelete: true
+    })
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    if (strategyId !== expectedStrategyId) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    if (!this.verifyTfaCode(user, strategyId, securityCode)) {
+      await countTfaFailure(continuationToken)
+      WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> submitted an incorrect 2FA code`)
+      throw new Error('ERR_TFA_INCORRECT_TOKEN')
+    }
+
+    await this.destroyToken({ token: continuationToken })
+    if (setup) {
+      await this.enableTfa(user, strategyId)
+    }
+
+    // -> The remaining checks still apply: a user who owed a password change before 2FA still owes it
+    return this.afterLoginChecks(user, strategyId, { ip, siteId }, { skipTFA: true }, req)
+  }
+
+  /**
+   * Start 2FA setup from the profile page, for a user who is already logged in.
+   *
+   * @returns The QR code to scan, the secret behind it for manual entry, and the token that
+   *          `confirmTfaSetup()` expects back
+   * @throws `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY` or `ERR_TFA_ALREADY_ACTIVE`
+   */
+  async startProfileTfaSetup({
+    userId,
+    strategyId,
+    siteId
+  }: {
+    userId: string
+    strategyId: string
+    siteId?: string
+  }): Promise<{ continuationToken: string; tfaQRImage: string; tfaSecret: string }> {
+    const user = await this.getById(userId)
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    const auth = (user.auth ?? {}) as Record<string, any>
+    if (!auth[strategyId]) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    // -> Replacing a working secret would silently invalidate the app entry the user already has;
+    //    turning 2FA off first is the way to start again
+    if (auth[strategyId].tfaIsActive) {
+      throw new Error('ERR_TFA_ALREADY_ACTIVE')
+    }
+
+    const { secret, tfaQRImage } = await this.startTfaSetup(user, strategyId, siteId)
+    const continuationToken = await this.generateToken({
+      kind: 'tfaSetup',
+      userId,
+      meta: { strategyId }
+    })
+    return { continuationToken, tfaQRImage, tfaSecret: secret }
+  }
+
+  /**
+   * Finish 2FA setup from the profile page: check a code from the user's authenticator, then activate
+   * the secret that was generated for it.
+   *
+   * Deliberately not `loginTFA()` with `setup`: the user is already logged in, and running the login
+   * checks again would rebuild the session and emit a second login event for one visit.
+   *
+   * @throws `ERR_TFA_INVALID_REQUEST`, `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY` or
+   *         `ERR_TFA_INCORRECT_TOKEN`
+   */
+  async confirmTfaSetup({
+    userId,
+    strategyId,
+    continuationToken,
+    securityCode
+  }: {
+    userId: string
+    strategyId: string
+    continuationToken: string
+    securityCode: string
+  }): Promise<void> {
+    if (!continuationToken || !/^[0-9]{6}$/.test(securityCode)) {
+      throw new Error('ERR_TFA_INVALID_REQUEST')
+    }
+
+    const { user, strategyId: expectedStrategyId } = await this.validateToken({
+      kind: 'tfaSetup',
+      token: continuationToken,
+      skipDelete: true
+    })
+    // -> The token is a bearer credential, so it only counts for the session that asked for it
+    if (!user || user.id !== userId) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    if (strategyId !== expectedStrategyId) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    if (!this.verifyTfaCode(user, strategyId, securityCode)) {
+      await countTfaFailure(continuationToken)
+      throw new Error('ERR_TFA_INCORRECT_TOKEN')
+    }
+
+    await this.destroyToken({ token: continuationToken })
+    await this.enableTfa(user, strategyId)
   }
 
   /**

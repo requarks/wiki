@@ -46,7 +46,7 @@ const pageIdParam = {
  * A page records an author, so it takes a logged in user rather than an API key — and the author's
  * permissions are what the render is sanitized against.
  */
-function actorFrom(req: FastifyRequest): PageActor | null {
+export function actorFrom(req: FastifyRequest): PageActor | null {
   if (!req.session?.authenticated || !req.session.user?.id) {
     return null
   }
@@ -80,7 +80,7 @@ const PAGE_PERMISSIONS = [
   'delete:pages'
 ]
 
-function mayBypassPassword(req: FastifyRequest): boolean {
+export function mayBypassPassword(req: FastifyRequest): boolean {
   const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
   return PASSWORD_BYPASS.some((permission) => permissions.includes(permission))
 }
@@ -91,7 +91,7 @@ function mayBypassPassword(req: FastifyRequest): boolean {
  * The unlock is recorded on the session — server side, by page id — so that reading a page the reader
  * unlocked a moment ago does not ask again, and so that nothing the browser can set decides this.
  */
-function unlockedFor(req: FastifyRequest, pageId: string): boolean {
+export function unlockedFor(req: FastifyRequest, pageId: string): boolean {
   return mayBypassPassword(req) || Boolean(req.session?.unlockedPages?.includes(pageId))
 }
 

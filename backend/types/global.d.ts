@@ -60,13 +60,6 @@ declare global {
     sites: Record<string, any>
     sitesMappings: Record<string, string>
 
-    /**
-     * FIXME: never assigned anywhere in the codebase. The three
-     * `throw new WIKI.Error.AuthGenericError()` sites in models/users.ts therefore raise a
-     * TypeError rather than the intended error. Declared only so the migration can typecheck.
-     */
-    Error: any
-
     /** Only present in worker threads (see worker.ts) */
     ensureDb?: () => Promise<boolean | void>
   }

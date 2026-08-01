@@ -14,13 +14,9 @@ props:
   enforceTfa:
     type: Boolean
     title: Enforce Two-Factor Authentication
-    # Read-only until 2FA works end to end: `afterLoginChecks` reaches for a `generateTFA()` that does
-    # not exist, and there is no route to submit a code, so a login that needs 2FA can only fail.
-    # See the FIXME comments in models/users.ts.
-    hint: Not available yet — two-factor authentication is not implemented in this version.
+    hint: Users will be required to set up 2FA the first time they login, and cannot turn it off afterwards.
     icon: pin-pad
     default: false
-    readOnly: true
   emailValidation:
     type: Boolean
     title: Email Validation

@@ -26,6 +26,7 @@
           <blueprint-icon icon="password" />
           <w-item-section>
             <w-input
+              ref="newPasswordIpt"
               v-model="state.newPassword"
               outlined
               dense
@@ -90,14 +91,13 @@
 
 <script setup>
 import zxcvbn from 'zxcvbn'
-import { sampleSize } from 'lodash-es'
+import { sampleSize } from 'es-toolkit/array'
 import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { localizeError } from '@/helpers/localization'
 import { computed, reactive, ref } from 'vue'
-
-import { useSiteStore } from '@/stores/site'
 
 // PROPS
 
@@ -116,10 +116,6 @@ defineEmits([...dialogComponentEmits])
 
 const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
-// STORES
-
-const siteStore = useSiteStore()
-
 // I18N
 
 const { t } = useI18n()
@@ -136,6 +132,7 @@ const state = reactive({
 // REFS
 
 const changeUserPwdForm = ref(null)
+const newPasswordIpt = ref(null)
 
 // COMPUTED
 
@@ -192,7 +189,9 @@ const verifyPasswordValidation = [
 
 function randomizePassword() {
   const pwdChars = 'abcdefghkmnpqrstuvwxyzABCDEFHJKLMNPQRSTUVWXYZ23456789_*=?#!()+'
-  state.newPassword = sampleSize(pwdChars, 16).join('')
+  state.newPassword = sampleSize([...pwdChars], 16).join('')
+  // -> A password the user never typed has to be readable, or there is no way to record it anywhere
+  newPasswordIpt.value.reveal()
 }
 
 async function save() {
@@ -202,49 +201,29 @@ async function save() {
     if (!isFormValid) {
       throw new Error(t('auth.errors.fields'))
     }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation changePwd (
-          $currentPassword: String
-          $newPassword: String!
-          $strategyId: UUID!
-          $siteId: UUID!
-          ) {
-          changePassword (
-            currentPassword: $currentPassword
-            newPassword: $newPassword
-            strategyId: $strategyId
-            siteId: $siteId
-            ) {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      variables: {
-        currentPassword: state.currentPassword,
-        newPassword: state.newPassword,
+    const resp = await API_CLIENT.put('users/profile/password', {
+      json: {
         strategyId: props.strategyId,
-        siteId: siteStore.id
+        currentPassword: state.currentPassword,
+        newPassword: state.newPassword
       }
-    })
-    if (resp?.data?.changePassword?.operation?.succeeded) {
-      notify({
-        type: 'positive',
-        message: t('auth.changePwd.success')
-      })
-      onDialogOK()
-    } else {
-      throw new Error(
-        resp?.data?.changePassword?.operation?.message || 'An unexpected error occured.'
-      )
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(localizeError(resp?.message, t) || 'An unexpected error occured.')
     }
+    notify({
+      type: 'positive',
+      message: t('auth.changePwd.success')
+    })
+    onDialogOK()
   } catch (err) {
     notify({
       type: 'negative',
-      message: err.message
+      message:
+        (await err.response
+          ?.json()
+          .then((b) => localizeError(b?.message, t))
+          .catch(() => null)) ?? err.message
     })
   }
   state.isLoading = false

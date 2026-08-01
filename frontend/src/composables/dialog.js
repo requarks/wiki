@@ -29,6 +29,19 @@ let seq = 0
  * @returns {{ onOk: Function, onCancel: Function, onDismiss: Function }} Chainable handle.
  */
 export function dialog({ component, componentProps = {} }) {
+  /*
+    Loudly, because the failure is otherwise invisible: a `dialog({ title, message })` call -- the form
+    the replaced library supported -- mounts nothing, so `.onOk()` never fires and the button that
+    opened it appears to do nothing at all. That is exactly how three dead confirmations sat unnoticed
+    on the profile authentication page. `confirm()` is the form that takes a title and a message.
+  */
+  if (!component) {
+    console.error(
+      'dialog() requires a component. For a title/message confirmation, call confirm() instead.',
+      componentProps
+    )
+  }
+
   const id = ++seq
   const handlers = { ok: [], cancel: [], dismiss: [] }
 

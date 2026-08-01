@@ -1,4 +1,5 @@
 import { apiKeys } from './apiKeys.ts'
+import { approvals } from './approvals.ts'
 import { assets } from './assets.ts'
 import { authentication } from './authentication.ts'
 import { blocks } from './blocks.ts'
@@ -11,6 +12,7 @@ import { jobs } from './jobs.ts'
 import { locales } from './locales.ts'
 import { navigation } from './navigation.ts'
 import { pages } from './pages.ts'
+import { passkeys } from './passkeys.ts'
 import { rendering } from './rendering.ts'
 import { search } from './search.ts'
 import { security } from './security.ts'
@@ -24,6 +26,7 @@ import { users } from './users.ts'
 
 export default {
   apiKeys,
+  approvals,
   assets,
   authentication,
   blocks,
@@ -36,6 +39,7 @@ export default {
   locales,
   navigation,
   pages,
+  passkeys,
   rendering,
   search,
   security,

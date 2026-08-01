@@ -4,7 +4,7 @@
     <div class="flex-none pl-4 flex items-center">
       <w-btn
         class="rounded"
-        v-if="editorStore.isActive"
+        v-if="isEditing"
         padding="none"
         size="64px"
         color="primary"
@@ -36,7 +36,7 @@
     <div class="min-w-0 flex-1 flex flex-col justify-center p-4">
       <div class="text-h4 page-header-title">
         <span
-          v-if="editorStore.isActive"
+          v-if="isEditing"
           ref="titleEl"
           class="page-header-editable"
           :class="{ 'is-empty': !pageStore.title }"
@@ -52,7 +52,7 @@
       </div>
       <div class="text-subtitle2 page-header-subtitle">
         <span
-          v-if="editorStore.isActive"
+          v-if="isEditing"
           ref="descriptionEl"
           class="page-header-editable"
           :class="{ 'is-empty': !pageStore.description }"
@@ -151,6 +151,30 @@
           no-caps
           @click="editPage" />
       </template>
+      <!--
+        For a reader who may read the page but not change it, and whose groups an approval rule lets
+        suggest edits to it. Same place and same shape as Edit, because it is the same intent -- what
+        differs is where the result goes.
+      -->
+      <template v-else-if="!editorStore.isActive && pageStore.canSuggestEdits">
+        <w-btn
+          class="acrylic-btn ml-4"
+          flat
+          icon="la:edit"
+          color="deep-orange-9"
+          :label="
+            pageStore.hasOpenSuggestion
+              ? t(`common.actions.continueSuggestion`)
+              : t(`common.actions.suggestEdits`)
+          "
+          :aria-label="
+            pageStore.hasOpenSuggestion
+              ? t(`common.actions.continueSuggestion`)
+              : t(`common.actions.suggestEdits`)
+          "
+          no-caps
+          @click="suggestEdits" />
+      </template>
       <template v-if="editorStore.isActive || editorStore.hasPendingChanges">
         <w-btn
           class="acrylic-btn ml-2"
@@ -167,7 +191,18 @@
           @click="discardChanges" />
         <w-btn
           class="acrylic-btn ml-2"
-          v-if="editorStore.mode === `create`"
+          v-if="isSuggesting"
+          flat
+          icon="la:paper-plane"
+          color="positive"
+          :label="t(`common.actions.submitEdits`)"
+          :aria-label="t(`common.actions.submitEdits`)"
+          :disabled="!editorStore.hasPendingChanges"
+          no-caps
+          @click="submitSuggestion" />
+        <w-btn
+          class="acrylic-btn ml-2"
+          v-else-if="editorStore.mode === `create`"
           flat
           icon="la:check"
           color="positive"
@@ -240,9 +275,23 @@ const route = useRoute()
 
 const { t } = useI18n()
 
+// COMPUTED
+
+/**
+ * Suggesting an edit rather than making one: the editor is open on a submission, and everything about
+ * the page other than its content is out of scope.
+ */
+const isSuggesting = computed(() => editorStore.isActive && editorStore.mode === 'suggest')
+
+/**
+ * Editing the page itself, which is what makes the icon, title and description editable in place.
+ * Excludes suggest mode, where those are page properties the submitter has no say over.
+ */
+const isEditing = computed(() => editorStore.isActive && !isSuggesting.value)
+
 // REFS
 
-/** The two in-place fields, which only exist while the editor is open. */
+/** The two in-place fields, which only exist while the page itself is being edited. */
 const titleEl = ref(null)
 const descriptionEl = ref(null)
 
@@ -253,8 +302,8 @@ const descriptionEl = ref(null)
   arriving with the editor already open, where the elements appear in the same tick as this runs.
 */
 watch(
-  () => editorStore.isActive,
-  (isActive) => isActive && seedEditables(),
+  () => isEditing.value,
+  (editing) => editing && seedEditables(),
   { immediate: true }
 )
 
@@ -341,18 +390,24 @@ async function discardChanges() {
   }
 
   const hadPendingChanges = editorStore.hasPendingChanges
+  const wasSuggesting = isSuggesting.value
 
   loading.show()
   try {
     editorStore.$patch({
       isActive: false,
-      editor: ''
+      editor: '',
+      // -> Back to the ordinary meaning of the editor, or the next thing opened would inherit this one
+      mode: 'edit'
     })
     await pageStore.cancelPageEdit()
     if (hadPendingChanges) {
       notify({
         type: 'positive',
-        message: 'Page has been reverted to the last saved state.'
+        // -> Nothing was reverted in the suggest case: the page never changed, the draft did
+        message: wasSuggesting
+          ? t('common.page.suggestDiscarded')
+          : 'Page has been reverted to the last saved state.'
       })
     }
   } catch (err) {
@@ -488,6 +543,73 @@ async function processPendingAssets() {
 async function editPage() {
   loading.show()
   await pageStore.pageEdit()
+  loading.hide()
+}
+
+/**
+ * Open the editor on an edit suggestion. Picks up the reader's own pending suggestion if they have
+ * one, which the server decides -- see `pageSuggest`.
+ */
+async function suggestEdits() {
+  loading.show()
+  try {
+    await pageStore.pageSuggest()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('common.page.suggestFailed'),
+      caption: err.message
+    })
+  }
+  loading.hide()
+}
+
+/**
+ * Send the suggestion, asking a guest who they are first: nothing else records that, and a reviewer
+ * has to be able to answer them.
+ */
+async function submitSuggestion() {
+  if (!userStore.authenticated) {
+    dialog({
+      component: defineAsyncComponent(() => import('../components/SuggestionGuestDialog.vue'))
+    }).onOk((guest) => submitSuggestionCommit(guest))
+    return
+  }
+  submitSuggestionCommit()
+}
+
+async function submitSuggestionCommit(guest = {}) {
+  loading.show()
+  try {
+    await pageStore.pageSubmitSuggestion(guest)
+    // -> Back to the page as everyone else sees it: what was typed is now a suggestion waiting for a
+    //    reviewer, not a version of the page, so leaving the editor open on it would be a lie
+    editorStore.$patch({
+      isActive: false,
+      editor: '',
+      mode: 'edit'
+    })
+    await pageStore.pageLoad({ id: pageStore.id })
+    notify({
+      type: 'positive',
+      message: t('common.page.suggestSubmitted'),
+      // -> Only an account can be matched to a suggestion afterwards, so only a logged in author is
+      //    told they can come back to it; for a guest that would be a promise nothing here can keep
+      caption: userStore.authenticated
+        ? t('common.page.suggestSubmittedHint')
+        : t('common.page.suggestSubmittedHintGuest')
+    })
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('common.page.suggestSubmitFailed'),
+      caption:
+        (await err.response
+          ?.json()
+          .then((b) => b?.message)
+          .catch(() => null)) ?? err.message
+    })
+  }
   loading.hide()
 }
 

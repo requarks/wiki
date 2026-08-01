@@ -1,11 +1,11 @@
 <template>
-  <div class="auth-login">
+  <div>
     <!-- ----------------------------------------------------- -->
     <!-- LOGIN SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-if="state.screen === `login`">
       <template v-if="state.strategies?.length > 1">
-        <p>{{t('auth.selectAuthProvider')}}</p>
+        <p>{{ t('auth.selectAuthProvider') }}</p>
         <div class="auth-strategies mb-4">
           <w-btn
             v-for="str of state.strategies"
@@ -13,8 +13,16 @@
             :icon="`img:` + str.activeStrategy.strategy.icon"
             push
             no-caps
-            :color="str.id === state.selectedStrategyId ? `primary` : (dark.isActive ? `blue-grey-9` : `grey-1`)"
-            :text-color="str.id === state.selectedStrategyId || dark.isActive ? `white` : `blue-grey-9`"
+            :color="
+              str.id === state.selectedStrategyId
+                ? `primary`
+                : dark.isActive
+                  ? `blue-grey-9`
+                  : `grey-1`
+            "
+            :text-color="
+              str.id === state.selectedStrategyId || dark.isActive ? `white` : `blue-grey-9`
+            "
             @click="state.selectedStrategyId = str.id" />
         </div>
       </template>
@@ -24,8 +32,14 @@
           v-model="state.username"
           autofocus
           outlined
-          :label="t(`auth.fields.` + (selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`))"
-          :rules="selectedStrategy.activeStrategy?.strategy?.usernameType === `username` ? loginUsernameValidation : userEmailValidation"
+          :label="
+            t(`auth.fields.` + (selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`))
+          "
+          :rules="
+            selectedStrategy.activeStrategy?.strategy?.usernameType === `username`
+              ? loginUsernameValidation
+              : userEmailValidation
+          "
           lazy-rules="ondemand"
           hide-bottom-space
           :autocomplete="selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`">
@@ -52,6 +66,11 @@
           no-caps
           icon="la:sign-in-alt" />
       </w-form>
+      <!--
+        Straight into the browser's passkey prompt: a passkey is a discoverable credential, so the
+        authenticator knows which accounts it holds for this site and asking for an email address first
+        would only be a step in the way.
+      -->
       <template v-if="canUsePasskeys">
         <w-separator class="my-4" />
         <w-btn
@@ -61,7 +80,7 @@
           :label="t(`auth.passkeys.signin`)"
           no-caps
           icon="la:key"
-          @click="switchTo(`passkey`)" />
+          @click="loginWithPasskey" />
       </template>
       <template v-if="selectedStrategy.activeStrategy?.strategy?.key === `local`">
         <w-separator class="my-4" />
@@ -85,44 +104,10 @@
       </template>
     </template>
     <!-- ----------------------------------------------------- -->
-    <!-- PASSKEY LOGIN SCREEN -->
-    <!-- ----------------------------------------------------- -->
-    <template v-else-if="state.screen === `passkey`">
-      <p>{{t('auth.passkeys.signinHint')}}</p>
-      <w-form ref="passkeyForm" @submit="loginWithPasskey">
-        <w-input
-          ref="passkeyEmailIpt"
-          v-model="state.username"
-          outlined
-          hide-bottom-space
-          :label="t(`auth.fields.email`)"
-          autocomplete="webauthn">
-          <template #prepend><w-icon name="la:envelope" /></template>
-        </w-input>
-        <w-btn
-          class="w-full mt-2"
-          type="submit"
-          push
-          color="primary"
-          :label="t(`auth.actions.login`)"
-          no-caps
-          icon="la:key" />
-      </w-form>
-      <w-separator class="my-4" />
-      <w-btn
-        class="acrylic-btn w-full"
-        flat
-        color="primary"
-        :label="t(`auth.forgotPasswordCancel`)"
-        no-caps
-        icon="la:arrow-circle-left"
-        @click="switchTo(`login`)" />
-    </template>
-    <!-- ----------------------------------------------------- -->
     <!-- FORGOT PASSWORD SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `forgot`">
-      <p>{{t('auth.forgotPasswordSubtitle')}}</p>
+      <p>{{ t('auth.forgotPasswordSubtitle') }}</p>
       <w-form ref="forgotForm" @submit="forgotPassword">
         <w-input
           ref="forgotEmailIpt"
@@ -158,7 +143,7 @@
     <!-- REGISTER SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `register`">
-      <p>{{t('auth.registerSubTitle')}}</p>
+      <p>{{ t('auth.registerSubTitle') }}</p>
       <w-form ref="registerForm" @submit="register">
         <w-input
           ref="registerNameIpt"
@@ -236,7 +221,7 @@
     <!-- CHANGE PASSWORD SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `changePwd`">
-      <p v-if="state.continuationToken">{{t('auth.changePwd.instructions')}}</p>
+      <p v-if="state.continuationToken">{{ t('auth.changePwd.instructions') }}</p>
       <w-form ref="changePwdForm" @submit="changePwd">
         <w-input
           v-if="!state.continuationToken"
@@ -296,7 +281,7 @@
     <!-- TFA SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `tfa`">
-      <p>{{t('auth.tfa.subtitle')}}</p>
+      <p>{{ t('auth.tfa.subtitle') }}</p>
       <v-otp-input
         v-model:value="state.securityCode"
         :num-inputs="6"
@@ -318,12 +303,12 @@
     <!-- TFA SETUP SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `tfasetup`">
-      <p>{{t('auth.tfaSetupTitle')}}</p>
-      <p>{{t('auth.tfaSetupInstrFirst')}}</p>
-      <div style="justify-content: center; display: flex;">
-        <div v-html="state.tfaQRImage" style="width: 200px;" />
+      <p>{{ t('auth.tfaSetupTitle') }}</p>
+      <p>{{ t('auth.tfaSetupInstrFirst') }}</p>
+      <div style="justify-content: center; display: flex">
+        <div v-html="state.tfaQRImage" style="width: 200px" />
       </div>
-      <p class="mt-2">{{t('auth.tfaSetupInstrSecond')}}</p>
+      <p class="mt-2">{{ t('auth.tfaSetupInstrSecond') }}</p>
       <v-otp-input
         v-model:value="state.securityCode"
         :num-inputs="6"
@@ -350,19 +335,15 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useDark } from '@/composables/dark'
+import { localizeError } from '@/helpers/localization'
 
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import Cookies from 'js-cookie'
 import zxcvbn from 'zxcvbn'
-import {
-  browserSupportsWebAuthn,
-  browserSupportsWebAuthnAutofill,
-  startAuthentication
-} from '@simplewebauthn/browser'
+import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser'
 import VOtpInput from 'vue3-otp-input'
-
 
 // COMPOSABLES
 
@@ -399,7 +380,6 @@ const state = reactive({
 // REFS
 
 const loginEmailIpt = ref(null)
-const passkeyEmailIpt = ref(null)
 const forgotEmailIpt = ref(null)
 const registerNameIpt = ref(null)
 const changePwdCurrentIpt = ref(null)
@@ -413,8 +393,7 @@ const changePwdForm = ref(null)
 
 const selectedStrategy = computed(() => {
   return (
-    (state.selectedStrategyId &&
-      state.strategies.find((s) => s.id === state.selectedStrategyId)) ||
+    (state.selectedStrategyId && state.strategies.find((s) => s.id === state.selectedStrategyId)) ||
     {}
   )
 })
@@ -488,19 +467,26 @@ const userPasswordVerifyValidation = [
 
 // METHODS
 
+/**
+ * The reason the API gave, untranslated: the `ERR_*` code out of a response ky threw on (anything
+ * above 400), or the error's own message when the request never got an answer. Kept as the raw code so
+ * that callers can both display it and act on it.
+ */
+async function apiError(err) {
+  return (
+    (await err.response
+      ?.json()
+      .then((b) => b?.message)
+      .catch(() => null)) ?? err.message
+  )
+}
+
 function switchTo(screen) {
   switch (screen) {
     case 'login': {
       state.screen = 'login'
       nextTick(() => {
         loginEmailIpt.value.focus()
-      })
-      break
-    }
-    case 'passkey': {
-      state.screen = 'passkey'
-      nextTick(() => {
-        passkeyEmailIpt.value.focus()
       })
       break
     }
@@ -615,14 +601,14 @@ async function login() {
       state.password = ''
       handleLoginResponse(resp)
     } else {
-      throw new Error(resp.message || t('auth.errors.loginError'))
+      throw new Error(resp.message || 'ERR_LOGIN_FAILED')
     }
   } catch (err) {
     console.warn(err)
     loading.hide()
     notify({
       type: 'negative',
-      message: err.message
+      message: localizeError(await apiError(err), t)
     })
   }
 }
@@ -635,77 +621,34 @@ async function loginWithPasskey() {
     message: t('auth.signingIn')
   })
   try {
-    const respGen = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation authenticatePasskeyGenerate (
-          $email: String!
-          $siteId: UUID!
-          ) {
-          authenticatePasskeyGenerate (
-            email: $email
-            siteId: $siteId
-            ) {
-            operation {
-              succeeded
-              message
-            }
-            authOptions
-          }
-        }
-      `,
-      variables: {
-        email: state.username,
-        siteId: siteStore.id
-      }
-    })
-    if (respGen.data?.authenticatePasskeyGenerate?.operation?.succeeded) {
-      const authResp = await startAuthentication(
-        respGen.data.authenticatePasskeyGenerate.authOptions,
-        await browserSupportsWebAuthnAutofill()
-      )
-
-      const respVerif = await APOLLO_CLIENT.mutate({
-        mutation: `
-          mutation authenticatePasskeyVerify (
-            $authResponse: JSON!
-            ) {
-            authenticatePasskeyVerify (
-              authResponse: $authResponse
-              ) {
-              operation {
-                succeeded
-                message
-              }
-              jwt
-              nextAction
-              continuationToken
-              redirect
-              tfaQRImage
-            }
-          }
-        `,
-        variables: {
-          authResponse: authResp
-        }
-      })
-      if (respVerif.data?.authenticatePasskeyVerify?.operation?.succeeded) {
-        handleLoginResponse(respVerif.data.authenticatePasskeyVerify)
-      } else {
-        throw new Error(
-          respVerif.data?.authenticatePasskeyVerify?.operation?.message ||
-            t('auth.errors.loginError')
-        )
-      }
-    } else {
-      throw new Error(
-        respGen.data?.authenticatePasskeyGenerate?.operation?.message || t('auth.errors.loginError')
-      )
+    const respGen = await API_CLIENT.post(`sites/${siteStore.id}/auth/passkey/challenge`).json()
+    if (!respGen?.ok) {
+      throw new Error(respGen?.message || 'ERR_LOGIN_FAILED')
     }
+
+    // -> No `useBrowserAutofill`: that fills a passkey into a form field the user is typing in, and
+    //    there is no field here -- this opens the browser's own account picker instead
+    const authResp = await startAuthentication({ optionsJSON: respGen.authOptions })
+
+    const respVerif = await API_CLIENT.put(`sites/${siteStore.id}/auth/passkey/login`, {
+      json: {
+        authResponse: authResp
+      }
+    }).json()
+    if (!respVerif?.ok) {
+      throw new Error(respVerif?.message || 'ERR_LOGIN_FAILED')
+    }
+    await handleLoginResponse(respVerif)
   } catch (err) {
     loading.hide()
+    // -> Dismissing the browser's passkey prompt is not a failure to report: the user asked for the
+    //    prompt and then changed their mind, and is looking at the login form again either way
+    if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+      return
+    }
     notify({
       type: 'negative',
-      message: err.message
+      message: localizeError(await apiError(err), t)
     })
   }
 }
@@ -812,73 +755,73 @@ async function changePwd() {
       })
       await handleLoginResponse(resp)
     } else {
-      throw new Error(resp.message || t('auth.errors.loginError'))
+      throw new Error(resp.message || 'ERR_CHANGE_PASSWORD_FAILED')
     }
   } catch (err) {
     notify({
       type: 'negative',
-      message: err.message
+      message: localizeError(await apiError(err), t)
     })
   }
 }
 
 /**
- * VERIFY TFA TOKEN
+ * Send the security code for the login this panel is in the middle of.
+ *
+ * The continuation token is only cleared once the code is accepted: a mistyped one can be entered
+ * again, up to the handful of attempts the server allows before it discards the token.
+ *
+ * @param setup True on the setup screen, where a correct code also activates the new secret
+ * @returns The login response, to be handed to `handleLoginResponse()`
  */
+async function submitTFA(setup) {
+  if (!/^[0-9]{6}$/.test(state.securityCode)) {
+    throw new Error(t('auth.errors.tfaMissing'))
+  }
+  const resp = await API_CLIENT.put(`sites/${siteStore.id}/auth/tfa`, {
+    json: {
+      strategyId: state.selectedStrategyId,
+      continuationToken: state.continuationToken,
+      securityCode: state.securityCode,
+      setup
+    }
+  }).json()
+  if (!resp?.ok) {
+    throw new Error(resp?.message || 'ERR_LOGIN_FAILED')
+  }
+  state.continuationToken = ''
+  state.securityCode = ''
+  return resp
+}
+
+/**
+ * Report a failed 2FA attempt, and start the login over when there is nothing left to continue: an
+ * expired token, or one the server has discarded after too many wrong codes, leaves this screen with
+ * no way forward.
+ */
+async function handleTFAError(err) {
+  const code = await apiError(err)
+  loading.hide()
+  notify({
+    type: 'negative',
+    message: localizeError(code, t)
+  })
+  if (code === 'ERR_INVALID_VALIDATION_TOKEN' || code === 'ERR_EXPIRED_VALIDATION_TOKEN') {
+    state.continuationToken = ''
+    state.securityCode = ''
+    state.password = ''
+    switchTo('login')
+  }
+}
+
 async function verifyTFA() {
   loading.show({
     message: t('auth.signingIn')
   })
   try {
-    if (!/^[0-9]{6}$/.test(state.securityCode)) {
-      throw new Error(t('auth.errors.tfaMissing'))
-    }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation(
-          $continuationToken: String!
-          $securityCode: String!
-          $strategyId: UUID!
-          $siteId: UUID!
-          ) {
-          loginTFA(
-            continuationToken: $continuationToken
-            securityCode: $securityCode
-            strategyId: $strategyId
-            siteId: $siteId
-            ) {
-            operation {
-              succeeded
-              message
-            }
-            jwt
-            nextAction
-            continuationToken
-            redirect
-            tfaQRImage
-          }
-        }
-      `,
-      variables: {
-        continuationToken: state.continuationToken,
-        securityCode: state.securityCode,
-        strategyId: state.selectedStrategyId,
-        siteId: siteStore.id
-      }
-    })
-    if (resp.data?.loginTFA?.operation?.succeeded) {
-      state.continuationToken = ''
-      state.securityCode = ''
-      await handleLoginResponse(resp.data.loginTFA)
-    } else {
-      throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
-    }
+    await handleLoginResponse(await submitTFA(false))
   } catch (err) {
-    loading.hide()
-    notify({
-      type: 'negative',
-      message: err.message
-    })
+    await handleTFAError(err)
   }
 }
 
@@ -890,60 +833,14 @@ async function finishSetupTFA() {
     message: t('auth.tfaSetupVerifying')
   })
   try {
-    if (!/^[0-9]{6}$/.test(state.securityCode)) {
-      throw new Error(t('auth.errors.tfaMissing'))
-    }
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation(
-          $continuationToken: String!
-          $securityCode: String!
-          $strategyId: UUID!
-          $siteId: UUID!
-          ) {
-          loginTFA(
-            continuationToken: $continuationToken
-            securityCode: $securityCode
-            strategyId: $strategyId
-            siteId: $siteId
-            setup: true
-            ) {
-            operation {
-              succeeded
-              message
-            }
-            jwt
-            nextAction
-            continuationToken
-            redirect
-            tfaQRImage
-          }
-        }
-      `,
-      variables: {
-        continuationToken: state.continuationToken,
-        securityCode: state.securityCode,
-        strategyId: state.selectedStrategyId,
-        siteId: siteStore.id
-      }
-    })
-    if (resp.data?.loginTFA?.operation?.succeeded) {
-      state.continuationToken = ''
-      state.securityCode = ''
-      notify({
-        type: 'positive',
-        message: t('auth.tfaSetupSuccess')
-      })
-      await handleLoginResponse(resp.data.loginTFA)
-    } else {
-      throw new Error(resp.data?.loginTFA?.operation?.message || t('auth.errors.loginError'))
-    }
-  } catch (err) {
-    loading.hide()
+    const resp = await submitTFA(true)
     notify({
-      type: 'negative',
-      message: err.message
+      type: 'positive',
+      message: t('auth.tfaSetupSuccess')
     })
+    await handleLoginResponse(resp)
+  } catch (err) {
+    await handleTFAError(err)
   }
 }
 
@@ -953,41 +850,3 @@ onMounted(async () => {
   await fetchStrategies()
 })
 </script>
-
-<style lang="scss">
-.auth-login {
-  .otp-input {
-    width: 100%;
-    height: 48px;
-    padding: 5px;
-    margin: 0 5px;
-    font-size: 20px;
-    border-radius: 6px;
-    text-align: center;
-
-    @at-root .body--light & {
-      border: 2px solid rgba(0, 0, 0, 0.2);
-    }
-
-    @at-root .body--dark & {
-      border: 2px solid rgba(255, 255, 255, 0.3);
-    }
-
-    &:focus-visible {
-      outline-color: $primary;
-    }
-
-    /* Background colour of an input field with value */
-    &.is-complete {
-      border-color: $positive;
-      border-width: 2px;
-    }
-
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-  }
-}
-</style>

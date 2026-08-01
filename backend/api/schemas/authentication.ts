@@ -2,6 +2,42 @@ import type { FastifyInstance } from 'fastify'
 
 export async function registerSchemas(app: FastifyInstance): Promise<void> {
   /**
+   * AUTH LOGIN RESULT - Where a login attempt got to, and what the client must do next
+   */
+  app.addSchema({
+    $id: 'AuthLoginResult',
+    type: 'object',
+    properties: {
+      ok: {
+        type: 'boolean'
+      },
+      authenticated: {
+        type: 'boolean',
+        description: 'Present, and true, only once the session is actually logged in.'
+      },
+      nextAction: {
+        type: 'string',
+        enum: ['redirect', 'changePassword', 'provideTfa', 'setupTfa'],
+        description:
+          'What the client has to do to finish. Anything other than `redirect` means the attempt is not a login yet and has to be continued with `continuationToken`.'
+      },
+      continuationToken: {
+        type: 'string',
+        description: 'Stands for this half-finished login. Sent back with whatever it asked for.'
+      },
+      tfaQRImage: {
+        type: 'string',
+        description:
+          'For `setupTfa` only: the `otpauth://` URI as an SVG QR code, to be rendered as-is.'
+      },
+      redirect: {
+        type: 'string',
+        description: 'Where to send the user once logged in. A path within this wiki, or a URL.'
+      }
+    }
+  })
+
+  /**
    * AUTH MODULE - An authentication module as found on disk
    */
   app.addSchema({

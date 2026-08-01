@@ -225,3 +225,17 @@ export class CustomError extends Error {
     this.statusCode = statusCode
   }
 }
+
+/**
+ * Rethrow a failure raised by the authentication models as an HTTP error.
+ *
+ * Those models signal a rejected request by throwing an `ERR_*` code rather than prose, because the
+ * client has a translation for each one — so the code travels to the client as the message of a 400.
+ * Anything else is an actual fault and is left alone, for the error handler to log and answer 500 to.
+ */
+export function rethrowAsBadRequest(err: any): never {
+  if (typeof err?.message === 'string' && err.message.startsWith('ERR_')) {
+    throw new CustomError('Bad Request', err.message)
+  }
+  throw err
+}

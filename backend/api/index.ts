@@ -6,6 +6,7 @@ import type { FastifyInstance } from 'fastify'
 async function routes(app: FastifyInstance) {
   // Register schemas
   await import('./schemas/apiKey.ts').then((m) => m.registerSchemas(app))
+  await import('./schemas/approval.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/asset.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/authentication.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/block.ts').then((m) => m.registerSchemas(app))
@@ -25,6 +26,7 @@ async function routes(app: FastifyInstance) {
 
   // Register routes
   app.register(import('./apiKeys.ts'), { prefix: '/api-keys' })
+  app.register(import('./approvals.ts'))
   app.register(import('./assets.ts'))
   app.register(import('./authentication.ts'))
   app.register(import('./blocks.ts'))

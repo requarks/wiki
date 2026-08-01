@@ -722,6 +722,66 @@
     line-height: inherit;
     text-align: inherit;
   }
+
+  /*
+    The digit fields of a security code, as `vue3-otp-input` renders them -- it ships no stylesheet of
+    its own and takes the class name to put on each input. Kept here rather than in each of the two
+    components that use it, since a code entry should look the same on the login screen and in the
+    setup dialog.
+
+    The size has to be stated: the library lays the inputs out in a flex row, so a field with no width
+    of its own is stretched to whatever share of the row it lands in -- which in a dialog several
+    hundred pixels wide is a very wide box for one digit.
+  */
+  .otp-input {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 0.25rem;
+    padding: 0;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  /*
+    The library puts `display: flex` on the row itself; centering and wrapping are left to whoever
+    styles it. Both matter on a narrow phone, where six fields inside the login screen's padding would
+    otherwise run past the edge.
+  */
+  .otp-input-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  @media (max-width: 420px) {
+    .otp-input {
+      width: 2.25rem;
+      height: 2.25rem;
+      margin: 0 0.125rem;
+      font-size: 1rem;
+    }
+  }
+
+  body.body--dark .otp-input {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .otp-input:focus-visible {
+    outline-color: var(--color-primary);
+  }
+
+  /* Filled in, i.e. this digit is entered -- the library adds the class. */
+  .otp-input.is-complete {
+    border-color: var(--color-positive);
+  }
+
+  /* A digit field is not a number picker, whatever `input-type="number"` implies. */
+  .otp-input::-webkit-inner-spin-button,
+  .otp-input::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
 }
 
 /*

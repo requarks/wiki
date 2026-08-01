@@ -65,9 +65,7 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-8">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.groups.general') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.groups.general') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="team" />
                   <w-item-section>
@@ -87,9 +85,7 @@
                 </w-item>
               </w-card>
               <w-card class="shadow-1 pb-2 mt-4" v-if="!isGuestGroup">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.groups.authBehaviors') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.groups.authBehaviors') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="double-right" />
                   <w-item-section>
@@ -138,9 +134,7 @@
             </div>
             <div class="col-span-12 lg:col-span-4">
               <w-card class="shadow-1 pb-2">
-                <w-card-section>
-                  <div class="text-subtitle1">{{ t('admin.groups.info') }}</div>
-                </w-card-section>
+                <w-card-header>{{ t('admin.groups.info') }}</w-card-header>
                 <w-item>
                   <blueprint-icon icon="team" :hue-rotate="-45" />
                   <w-item-section>
@@ -398,11 +392,9 @@
           <div class="grid grid-cols-12 gap-4">
             <div class="col-span-12 lg:col-span-6">
               <w-card class="shadow-1 pb-2">
-                <div class="flex justify-between">
-                  <w-card-section>
-                    <div class="text-subtitle1">{{ t(`admin.groups.permissions`) }}</div>
-                  </w-card-section>
-                  <w-card-section>
+                <w-card-header>
+                  {{ t(`admin.groups.permissions`) }}
+                  <template #action>
                     <w-btn
                       class="acrylic-btn"
                       icon="la:question-circle"
@@ -411,8 +403,8 @@
                       type="a"
                       :href="siteStore.docsBase + `/admin/groups#permissions`"
                       target="_blank" />
-                  </w-card-section>
-                </div>
+                  </template>
+                </w-card-header>
                 <template v-for="(perm, idx) of permissions" :key="perm.permission">
                   <w-item tag="label">
                     <w-item-section class="items-center" style="flex: 0 0 40px;">

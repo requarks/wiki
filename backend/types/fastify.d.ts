@@ -8,6 +8,7 @@
 import 'fastify'
 import '@fastify/session'
 import type { ApiKeyIdentity } from '../models/apiKeys.ts'
+import type { PasskeyChallenge } from '../models/passkeys.ts'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -42,6 +43,17 @@ declare module 'fastify' {
      * it — the client is never trusted with that state.
      */
     unlockedPages?: string[]
+    /**
+     * The WebAuthn challenge a passkey ceremony is waiting on, written by the routes in `api/users.ts`
+     * (registration) and `api/authentication.ts` (login) and consumed by the verification that
+     * follows.
+     *
+     * It lives on the session because a login challenge belongs to nobody yet: a passkey identifies
+     * the account it signs for, so the server has no idea who is signing in until the assertion comes
+     * back. Two fields rather than one, so that neither ceremony can consume the other's challenge.
+     */
+    passkeyRegistration?: PasskeyChallenge
+    passkeyLogin?: PasskeyChallenge
   }
 
   interface FastifyContextConfig {

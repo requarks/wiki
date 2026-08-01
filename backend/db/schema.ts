@@ -51,6 +51,39 @@ export const apiKeys = pgTable('apiKeys', {
   updatedAt: timestamp().notNull().defaultNow()
 })
 
+// APPROVAL RULES ----------------------
+/**
+ * Which pages accept edit suggestions, who may submit them, and who reviews them.
+ *
+ * Per site, and matched the way group page rules are: a mode plus a pattern. A page no rule matches
+ * accepts no suggestions at all, so this table being empty means the feature is off.
+ */
+export const approvalRules = pgTable(
+  'approvalRules',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    name: varchar({ length: 255 }).notNull().default(''),
+    // -> A rule can be turned off without losing what it says, which is how an administrator suspends
+    //    suggestions on a section without having to write the rule again afterwards.
+    isEnabled: boolean().notNull().default(true),
+    // -> One of START / EXACT / END / REGEX / TAG / TAGALL, the same set group page rules use. A
+    //    varchar rather than an enum so that adding a mode does not need a migration; the API schema
+    //    is what rejects an unknown one.
+    match: varchar({ length: 16 }).notNull().default('START'),
+    path: varchar({ length: 2048 }).notNull().default(''),
+    // -> Group IDs. Resolved on use rather than joined, so deleting a group takes effect at once, the
+    //    way `apiKeys.groups` works.
+    submitterGroups: jsonb().notNull().default([]),
+    reviewerGroups: jsonb().notNull().default([]),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id)
+  },
+  (table) => [index('approvalRules_siteId_idx').on(table.siteId)]
+)
+
 // ASSETS ------------------------------
 export const assetKindEnum = pgEnum('assetKind', ['document', 'image', 'other'])
 export const assets = pgTable(
@@ -339,6 +372,51 @@ export const pages = pgTable(
     index('pages_ts_idx').using('gin', table.ts),
     index('pages_tags_idx').using('gin', table.tags),
     index('pages_isSearchableComputed_idx').on(table.isSearchableComputed)
+  ]
+)
+
+// PAGE EDIT SUBMISSIONS ---------------
+/**
+ * An edit suggested by somebody who may read a page but not change it, waiting to be reviewed.
+ *
+ * Both the resulting source and a patch are kept, because they answer different questions. The patch
+ * is what a reviewer merges — it is computed against the page as it stood at submission time, so two
+ * people suggesting edits to different parts of a page can both be accepted. The source is what the
+ * author resumes from and what a review screen shows, and it cannot be reconstructed from the patch
+ * alone once the page has moved on.
+ */
+export const pageEditSubmissions = pgTable(
+  'pageEditSubmissions',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    content: text().notNull(),
+    /** Unified diff, from the page content this was based on to `content`. */
+    patch: text().notNull(),
+    /** SHA-256 of that base content, so a reviewer can tell the page has changed underneath. */
+    baseHash: varchar({ length: 64 }).notNull(),
+    // -> A guest has no account to attribute the suggestion to, so it says who sent it. Null for a
+    //    logged in author, whose name is on `authorId` instead.
+    guestName: varchar({ length: 255 }),
+    guestEmail: varchar({ length: 255 }),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id),
+    authorId: uuid().references(() => users.id)
+  },
+  (table) => [
+    index('pageEditSubmissions_pageId_idx').on(table.pageId),
+    index('pageEditSubmissions_siteId_idx').on(table.siteId),
+    index('pageEditSubmissions_authorId_idx').on(table.authorId),
+    // -> One open suggestion per person per page: coming back to the button continues that one rather
+    //    than starting a second. Guests are excluded because they are all the same nobody.
+    uniqueIndex('pageEditSubmissions_page_author_idx')
+      .on(table.pageId, table.authorId)
+      .where(sql`"authorId" IS NOT NULL`)
   ]
 )
 

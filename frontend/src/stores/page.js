@@ -4,6 +4,7 @@ import { pick } from 'es-toolkit/object'
 
 import { useSiteStore } from './site'
 import { useEditorStore } from './editor'
+import { useUserStore } from './user'
 
 /**
  * The icon a page starts with.
@@ -68,7 +69,16 @@ export const usePageStore = defineStore('page', {
       min: 1,
       max: 2
     },
-    updatedAt: ''
+    updatedAt: '',
+    /**
+     * Whether this reader may suggest edits to this page, i.e. an enabled approval rule covers it and
+     * names a group they are in. Answered by the server, since neither the rules nor the reader's
+     * groups are known here — and left false until it does, so the button never flashes into view on
+     * a page that turns out not to take suggestions.
+     */
+    canSuggestEdits: false,
+    /** Whether the reader already has a suggestion open on this page, which they would carry on with. */
+    hasOpenSuggestion: false
   }),
   getters: {
     breadcrumbs: (state) => {
@@ -137,6 +147,18 @@ export const usePageStore = defineStore('page', {
           lastChangeTimestamp: curDate,
           lastSaveTimestamp: curDate
         })
+
+        /*
+          Whether this reader may suggest edits, which is only a question for one who cannot make them
+          directly -- anybody who can edit the page just edits it. Not awaited: it decides whether one
+          button appears, and the page has no reason to wait for that.
+        */
+        const userStore = useUserStore()
+        if (userStore.can('edit:pages')) {
+          this.$patch({ canSuggestEdits: false, hasOpenSuggestion: false })
+        } else {
+          this.fetchSuggestState()
+        }
       } catch (err) {
         // -> A missing page is an ordinary outcome, not a failure: it is what puts a new instance in
         //    front of the welcome screen, and what offers to create the page anywhere else
@@ -292,6 +314,92 @@ export const usePageStore = defineStore('page', {
         console.warn(err)
         throw err
       }
+    },
+    /**
+     * PAGE - SUGGESTION STATE
+     *
+     * Whether this page takes edit suggestions from whoever is reading it. Only worth asking for a
+     * reader who cannot edit the page outright — anyone who can just edits it — so the caller decides
+     * when to ask, and a page nobody may suggest against simply leaves the flags false.
+     */
+    async fetchSuggestState() {
+      const siteStore = useSiteStore()
+      if (!this.id) {
+        return
+      }
+      try {
+        const resp = await API_CLIENT.get(
+          `sites/${siteStore.id}/pages/${this.id}/suggestions/self`
+        ).json()
+        this.$patch({
+          canSuggestEdits: Boolean(resp?.canSubmit),
+          hasOpenSuggestion: Boolean(resp?.submission)
+        })
+      } catch (err) {
+        // -> Not being able to answer is not the same as being told no, but it comes to the same thing
+        //    on screen: no button. Worth a line in the console and nothing in the reader's way.
+        console.warn('Could not determine whether this page accepts edit suggestions.', err)
+        this.$patch({ canSuggestEdits: false, hasOpenSuggestion: false })
+      }
+    },
+    /**
+     * PAGE - SUGGEST EDITS
+     *
+     * Opens the editor on a suggestion rather than on the page. The source comes from the suggestion
+     * endpoint rather than from the page: it hands back whatever this reader already suggested, so
+     * that coming back to the button carries on from where they left off, and it is also the only way
+     * an anonymous reader gets the source at all.
+     */
+    async pageSuggest() {
+      const editorStore = useEditorStore()
+      const siteStore = useSiteStore()
+
+      const resp = await API_CLIENT.get(`sites/${siteStore.id}/pages/${this.id}/suggestions/self`, {
+        searchParams: { withContent: true }
+      }).json()
+      if (!resp?.canSubmit) {
+        throw new Error('ERR_SUGGESTIONS_NOT_ALLOWED')
+      }
+
+      this.$patch({
+        content: resp.content ?? '',
+        contentLoaded: true,
+        canSuggestEdits: true,
+        hasOpenSuggestion: Boolean(resp.submission)
+      })
+
+      if (!editorStore.configIsLoaded) {
+        await editorStore.fetchConfigs()
+      }
+
+      const curDate = Temporal.Now.instant()
+      editorStore.$patch({
+        isActive: true,
+        mode: 'suggest',
+        editor: this.editor,
+        lastChangeTimestamp: curDate,
+        lastSaveTimestamp: curDate
+      })
+    },
+    /**
+     * PAGE - SUBMIT SUGGESTED EDITS
+     *
+     * @param {object} [guest] Name and email, required when nobody is logged in
+     */
+    async pageSubmitSuggestion({ guestName, guestEmail } = {}) {
+      const siteStore = useSiteStore()
+      const resp = await API_CLIENT.put(`sites/${siteStore.id}/pages/${this.id}/suggestions/self`, {
+        json: {
+          content: this.content,
+          ...(guestName ? { guestName } : {}),
+          ...(guestEmail ? { guestEmail } : {})
+        }
+      }).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      this.hasOpenSuggestion = true
+      return resp.submission
     },
     /**
      * PAGE - EDIT

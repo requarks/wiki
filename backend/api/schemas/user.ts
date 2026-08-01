@@ -2,6 +2,34 @@ import type { FastifyInstance } from 'fastify'
 
 export async function registerSchemas(app: FastifyInstance): Promise<void> {
   /**
+   * PASSKEY - One registered authenticator, without any of its key material
+   */
+  app.addSchema({
+    $id: 'Passkey',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        description: 'The WebAuthn credential ID, base64url-encoded.'
+      },
+      name: {
+        type: 'string',
+        description: 'What the user called it, e.g. the device it lives on.'
+      },
+      siteHostname: {
+        type: 'string',
+        description:
+          'The hostname it was registered against. A passkey only works on that host, so this is stored rather than resolved from the site, which may since have been renamed.'
+      },
+      createdAt: {
+        type: 'string',
+        format: 'date-time',
+        description: 'RFC 3339 Date Time'
+      }
+    }
+  })
+
+  /**
    * USER CORE - Essential fields only
    */
   app.addSchema({
@@ -209,7 +237,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           auth: {
             type: 'array',
             description:
-              'Authentication providers linked to this user. Secrets are never included — `config.isPasswordSet` and `config.tfaIsActive` report their state instead.',
+              'Authentication providers linked to this user. Secrets are never included — `config.isPasswordSet` and `config.isTfaSetup` report their state instead.',
             items: {
               type: 'object',
               properties: {

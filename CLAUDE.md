@@ -364,13 +364,12 @@ An earlier iteration of 3.x used GraphQL/Apollo. **All of it is deprecated** —
 server left in `backend/`, and `APOLLO_CLIENT` is not defined as a global, so any call still going
 through it throws. `blocks/block-index/` also still imports a `tree.graphql`.
 
-Seven files under `frontend/src/` make live `APOLLO_CLIENT` calls, and each needs a REST endpoint
+Four files under `frontend/src/` make live `APOLLO_CLIENT` calls, and each needs a REST endpoint
 that does not exist yet, so the feature behind it is currently broken:
 
 | File | Feature |
 | ---- | ------- |
-| `components/AuthLoginPanel.vue` | passkey login, self-registration, TFA verify + setup |
-| `components/ChangePwdDialog.vue`, `pages/ProfileAuth.vue`, `components/SetupTfaDialog.vue` | password / TFA self-service |
+| `components/AuthLoginPanel.vue` | self-registration (the `register()` call only — passkey login and 2FA are REST now) |
 | `pages/AdminGeneral.vue`, `pages/AdminNavigation.vue`, `pages/AdminUtilities.vue` | assorted admin actions |
 
 When touching such a file, port it to the REST API (`API_CLIENT` + the matching `backend/api/` route)
