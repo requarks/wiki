@@ -14,7 +14,7 @@
         <span>{{ t('pageRenameDialog.title') }}</span>
       </w-card-section>
       <div class="page-save-dialog-browser flex flex-nowrap">
-        <div class="w-1/3">
+        <div class="page-save-dialog-tree w-1/3">
           <w-scroll-area style="height: 300px">
             <!-- -> No side padding: the rows carry their own 12px and span the column, as in the
                     File Manager. Padding here would inset the highlight band as well. -->
@@ -33,22 +33,29 @@
           </w-scroll-area>
         </div>
         <div class="w-2/3">
-          <w-list class="page-save-dialog-filelist" dense>
-            <w-item
-              v-for="item of files"
-              :key="item.id"
-              clickable
-              active-class="active"
-              :active="item.id === state.currentFileId"
-              @click="selectItem(item)">
-              <w-item-section side>
-                <w-icon :name="item.icon" size="sm" />
-              </w-item-section>
-              <w-item-section>
-                <w-item-label>{{ item.title }}</w-item-label>
-              </w-item-section>
-            </w-item>
-          </w-list>
+          <!--
+            Scrolls on its own, as the tree beside it does: this row is a fixed 300px, and a folder
+            with more entries than that holds simply drew straight over the path bar, the two fields
+            and the buttons underneath.
+          -->
+          <w-scroll-area style="height: 300px">
+            <w-list class="page-save-dialog-filelist" dense>
+              <w-item
+                v-for="item of files"
+                :key="item.id"
+                clickable
+                active-class="active"
+                :active="item.id === state.currentFileId"
+                @click="selectItem(item)">
+                <w-item-section side>
+                  <w-icon :name="item.icon" size="sm" />
+                </w-item-section>
+                <w-item-section>
+                  <w-item-label>{{ item.title }}</w-item-label>
+                </w-item-section>
+              </w-item>
+            </w-list>
+          </w-scroll-area>
         </div>
       </div>
       <div class="page-save-dialog-path font-robotomono">{{ currentFolderPath }}</div>
@@ -514,9 +521,25 @@ onMounted(async () => {
 @use 'sass:color';
 
 .page-save-dialog {
+  /*
+    The header draws its separator as an OUTSET box-shadow, which is painted with the header's own
+    background -- and a later sibling's background is painted after it. So the tinted tree column
+    covered that 1px line while the untinted file list left it showing, and the two columns looked as
+    though they started at different heights.
+
+    Positioning the header puts it above both: a positioned element paints over its in-flow siblings,
+    so the line survives across the full width.
+  */
+  .card-header {
+    position: relative;
+  }
+
   &-browser {
     height: 300px;
     max-height: 90vh;
+    /* -> Belt and braces with the scroll areas inside: whatever either column ends up holding, the
+          browser cannot spill over the fields and buttons below it */
+    overflow: hidden;
     border-bottom: 1px solid #fff;
 
     @at-root .body--light & {
@@ -525,16 +548,20 @@ onMounted(async () => {
     @at-root .body--dark & {
       border-bottom-color: $dark-3;
     }
+  }
 
-    > .col-4 {
-      height: 300px;
+  /*
+    Tinted so the tree reads as a column of its own rather than running into the file list beside it.
 
-      @at-root .body--light & {
-        background-color: $blue-grey-1;
-      }
-      @at-root .body--dark & {
-        background-color: $dark-4;
-      }
+    This was a `> .col-4` rule, which the layout migration left pointing at a class that no longer
+    exists -- the columns are Tailwind fractions now -- so the pane had been plain white since.
+  */
+  &-tree {
+    @at-root .body--light & {
+      background-color: $blue-grey-1;
+    }
+    @at-root .body--dark & {
+      background-color: $dark-4;
     }
   }
 

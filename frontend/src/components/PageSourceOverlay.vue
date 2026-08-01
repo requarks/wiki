@@ -15,10 +15,14 @@
         flat
         :disable="!state.content"
         @click="download">
-        <w-tooltip anchor="bottom middle" self="top middle">{{t(`common.actions.download`)}}</w-tooltip>
+        <w-tooltip anchor="bottom middle" self="top middle">{{
+          t(`common.actions.download`)
+        }}</w-tooltip>
       </w-btn>
       <w-btn icon="la:times" color="pink-2" dense flat @click="close">
-        <w-tooltip anchor="bottom middle" self="top middle">{{t(`common.actions.close`)}}</w-tooltip>
+        <w-tooltip anchor="bottom middle" self="top middle">{{
+          t(`common.actions.close`)
+        }}</w-tooltip>
       </w-btn>
     </w-header>
     <w-page-container>
@@ -27,7 +31,7 @@
           :thumb-style="thumb"
           :bar-style="bar"
           :horizontal-thumb-style="{ height: `5px` }"
-          style="width: 100%; height: calc(100vh - 100px);">
+          style="width: 100%; height: calc(100vh - 100px)">
           <div class="p-4 text-grey-5" v-if="state.notice">{{ state.notice }}</div>
           <!-- -> `pt-4` so the first line clears the header rather than sitting against it -->
           <pre class="px-4 pt-4" v-else v-text="state.content"></pre>
@@ -48,7 +52,6 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import { fileSave } from 'browser-fs-access'
-
 
 // STORES
 
@@ -96,7 +99,9 @@ const contentTypes = {
 
 function download() {
   const fileType = contentTypes[state.contentType] ?? { ext: 'txt', mime: 'text/plain' }
-  fileSave(new Blob([state.content], { type: `${fileType.mime};charset=UTF-8` }), {
+  // -> No `;charset=` on the type: the save picker uses it as an `accept` key and rejects a type
+  //    with parameters. A Blob built from a JS string is UTF-8 regardless.
+  fileSave(new Blob([state.content], { type: fileType.mime }), {
     fileName: `page.${fileType.ext}`,
     extensions: [`.${fileType.ext}`]
   })

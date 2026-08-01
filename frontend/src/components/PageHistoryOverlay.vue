@@ -3,11 +3,40 @@
     <w-header class="card-header px-4 py-2">
       <w-icon name="la:history" left size="md" />
       <span>{{ t('history.title') }}</span>
-      <span class="page-history-page ml-3">{{ pageStore.title }}</span>
+      <!--
+        Centred on the header itself rather than on the space left between the two groups of
+        controls, which are nowhere near the same width — hence absolute rather than a pair of
+        spacers. Ignores the pointer so it can overlap nothing it would block.
+      -->
+      <span class="page-history-page">{{ pageStore.title }}</span>
       <w-space />
       <transition name="syncing">
         <w-spinner class="mr-2" v-show="state.loading > 0" color="accent" size="24px" />
       </transition>
+      <!--
+        How the two versions are laid against each other. Up here rather than over the diff, so the
+        compare bar below can stay exactly two halves lining up with the editor's own two panes.
+      -->
+      <w-btn-group class="mr-6">
+        <w-btn
+          push
+          dense
+          no-caps
+          :label="t(`history.sideBySide`)"
+          padding="0.285em sm"
+          :color="state.inline ? `white` : `secondary`"
+          :text-color="state.inline ? `black` : `white`"
+          @click="state.inline = false" />
+        <w-btn
+          push
+          dense
+          no-caps
+          :label="t(`history.inline`)"
+          padding="0.285em sm"
+          :color="state.inline ? `secondary` : `white`"
+          :text-color="state.inline ? `white` : `black`"
+          @click="state.inline = true" />
+      </w-btn-group>
       <w-btn
         icon="la:times"
         color="pink-2"
@@ -55,16 +84,71 @@
               <div class="page-history-meta" v-if="version.action === `moved`">
                 /{{ version.path }}
               </div>
-              <!-- Why, in the author's own words, when the site asks for a reason on save. -->
-              <div class="page-history-reason" v-if="version.reason">{{ version.reason }}</div>
-              <div class="page-history-fields" v-if="version.changedFields.length > 0">
-                {{ t('history.changedFields', { fields: version.changedFields.join(', ') }) }}
-              </div>
             </div>
             <!--
               Stops the click from also reaching the item, which would move both letters at once.
             -->
             <div class="page-history-pick" @click.stop>
+              <w-btn
+                flat
+                dense
+                round
+                icon="la:ellipsis-h"
+                color="grey-5"
+                :aria-label="t(`history.versionActions`)">
+                <w-menu class="translucent-menu" auto-close anchor="bottom left" self="top left">
+                  <!--
+                    `!min-w-0 !pr-2` on each icon section, and literal colour classes rather than
+                    WIcon's `color` prop — both for the same reasons as the profile menu this copies.
+                  -->
+                  <w-list dense padding style="min-width: 260px">
+                    <w-item clickable @click="pick(`a`, version.id)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="mdi:letter-a-box" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('history.setAsSource') }}</w-item-section>
+                    </w-item>
+                    <w-item clickable @click="pick(`b`, version.id)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="mdi:letter-b-box" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('history.setAsTarget') }}</w-item-section>
+                    </w-item>
+                    <w-separator class="my-1" />
+                    <w-item clickable @click="viewSource(version)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:code" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('history.viewSource') }}</w-item-section>
+                    </w-item>
+                    <w-item clickable @click="downloadVersion(version)">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:download" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('history.downloadVersion') }}</w-item-section>
+                    </w-item>
+                    <template v-if="userStore.can(`write:pages`)">
+                      <w-separator class="my-1" />
+                      <!--
+                        Writes over the page, so it reads as the one destructive thing in here — the
+                        same red the profile menu gives its one irreversible entry.
+                      -->
+                      <w-item clickable @click="restoreVersion(version)">
+                        <w-item-section avatar class="!min-w-0 !pr-2">
+                          <w-icon name="la:undo" class="text-negative" />
+                        </w-item-section>
+                        <w-item-section>{{ t('history.restore') }}</w-item-section>
+                      </w-item>
+                      <w-item clickable @click="branchFrom(version)">
+                        <w-item-section avatar class="!min-w-0 !pr-2">
+                          <w-icon name="la:code-branch" class="text-blue-7" />
+                        </w-item-section>
+                        <w-item-section>{{ t('history.branchOff') }}</w-item-section>
+                      </w-item>
+                    </template>
+                  </w-list>
+                </w-menu>
+              </w-btn>
               <!-- Not `unelevated`: the push ledge is the point, and that prop would flatten it. -->
               <w-btn-group>
                 <w-btn
@@ -89,6 +173,19 @@
                   @click="pick(`b`, version.id)" />
               </w-btn-group>
             </div>
+            <!--
+              A row of their own, under the buttons rather than beside them: both are prose that runs
+              on, and the column left over next to the A/B group is too narrow to read either in.
+            -->
+            <div
+              class="page-history-notes"
+              v-if="version.reason || version.changedFields.length > 0">
+              <!-- Why, in the author's own words, when the site asks for a reason on save. -->
+              <div class="page-history-reason" v-if="version.reason">{{ version.reason }}</div>
+              <div class="page-history-fields" v-if="version.changedFields.length > 0">
+                {{ t('history.changedFields', { fields: version.changedFields.join(', ') }) }}
+              </div>
+            </div>
           </div>
         </div>
         <div class="p-4 text-grey-5" v-else-if="state.loading < 1">{{ t('history.none') }}</div>
@@ -109,9 +206,10 @@
                 <div class="truncate">{{ sideLabel(sideA) }}</div>
                 <div class="page-history-meta truncate">{{ sideCaption(sideA) }}</div>
               </div>
+              <!-- A literal class, not `color`: that prop builds one at runtime, which Tailwind
+                   never emits. `ml-auto` puts it on the seam between the two panes. -->
+              <w-icon class="text-grey-6 ml-auto" name="la:arrow-right" />
             </div>
-            <!-- A literal class, not `color`: that prop builds one at runtime, which Tailwind never emits. -->
-            <w-icon class="text-grey-6" name="la:arrow-right" />
             <div class="page-history-side">
               <span class="page-history-letter">B</span>
               <div class="min-w-0">
@@ -135,15 +233,31 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import * as monaco from 'monaco-editor'
+import { fileSave } from 'browser-fs-access'
 
+import { MarkdownRenderer } from '@/renderers/markdown'
+
+import { confirm, dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 
+import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 /**
  * Everything that ever happened to a page, and the difference between any two moments of it.
@@ -157,8 +271,14 @@ import { useSiteStore } from '@/stores/site'
 
 // STORES
 
+const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
+
+// ROUTER
+
+const router = useRouter()
 
 // I18N
 
@@ -177,7 +297,9 @@ const state = reactive({
   /** Shown in place of the diff when there is nothing to show one of. */
   notice: '',
   /** Set alongside the models rather than computed: the fetched sources are held outside `state`. */
-  sameContent: false
+  sameContent: false,
+  /** One column with the changes marked in place, rather than the two-column default. */
+  inline: false
 })
 
 const thumb = {
@@ -232,6 +354,12 @@ const sideB = computed(() => state.versions.find((v) => v.id === state.bId) ?? n
 // WATCHERS
 
 watch(() => [state.aId, state.bId], applyDiff)
+
+// -> A live option, so switching keeps the scroll position and the models rather than rebuilding
+watch(
+  () => state.inline,
+  (inline) => diffEditor?.updateOptions({ renderSideBySide: !inline })
+)
 
 // METHODS
 
@@ -334,6 +462,210 @@ async function loadVersion(id) {
   return version
 }
 
+/** What a version's source is saved as, by the format it was written in. */
+const FILE_TYPES = {
+  markdown: { ext: 'md', mime: 'text/markdown' },
+  html: { ext: 'html', mime: 'text/html' }
+}
+
+/**
+ * The format a version was written in — which decides how it colours, how it renders and what it
+ * downloads as. Taken from the version rather than from the page, since the page may have been
+ * converted since.
+ */
+function contentTypeOf(version) {
+  return version?.meta?.contentType || version?.meta?.editor || pageStore.editor || 'markdown'
+}
+
+/** A version with its source, with the spinner and the error report the menu actions all want. */
+async function withVersion(version) {
+  state.loading++
+  try {
+    return await loadVersion(version.id)
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('history.loadFailed'),
+      caption: await apiMessage(err)
+    })
+    return null
+  } finally {
+    state.loading--
+  }
+}
+
+/**
+ * The HTML for a version's source, produced here for the same reason every save produces it here:
+ * the markdown pipeline is a frontend one, and the server would otherwise have to drive a headless
+ * browser — an extension most instances do not install.
+ */
+async function renderOf(version, content) {
+  if (contentTypeOf(version) !== 'markdown') {
+    return content
+  }
+  // -> The renderer is configured per site (line breaks, typographer, …), and that configuration
+  //    arrives with the editor configs rather than on its own
+  if (!editorStore.configIsLoaded) {
+    await editorStore.fetchConfigs()
+  }
+  return new MarkdownRenderer(editorStore.editors.markdown ?? {}).render(content)
+}
+
+async function viewSource(version) {
+  const full = await withVersion(version)
+  if (!full) {
+    return
+  }
+  dialog({
+    component: defineAsyncComponent(() => import('./PageVersionSourceDialog.vue')),
+    componentProps: {
+      content: full.content ?? '',
+      date: humanizeDate(full.versionDate)
+    }
+  })
+}
+
+async function downloadVersion(version) {
+  const full = await withVersion(version)
+  if (!full) {
+    return
+  }
+  const type = FILE_TYPES[contentTypeOf(full)] ?? { ext: 'txt', mime: 'text/plain' }
+  // -> Named for the page and the moment, since a folder of `page.md` files says nothing
+  const name = full.path.split('/').at(-1) || 'page'
+  const stamp = full.versionDate.slice(0, 19).replace(/[:T]/g, '-')
+  try {
+    /*
+      A bare MIME type, with no `;charset=` on it: the save picker uses this as an `accept` key and
+      rejects a type carrying parameters outright. Nothing is lost by dropping it — a Blob built from
+      a JS string is UTF-8 already.
+    */
+    await fileSave(new Blob([full.content ?? ''], { type: type.mime }), {
+      fileName: `${name}-${stamp}.${type.ext}`,
+      extensions: [`.${type.ext}`]
+    })
+  } catch (err) {
+    // -> Dismissing the file picker is not a failure
+    if (err.name !== 'AbortError') {
+      notify({ type: 'negative', message: t('history.downloadFailed'), caption: err.message })
+    }
+  }
+}
+
+/**
+ * Put this version's source back on the page.
+ *
+ * The source only: the page keeps the title, tags and settings it has now. Restoring those too would
+ * quietly undo everything done since, and a reader asking for an old version back is asking for the
+ * text. Nothing is lost either way — this is an ordinary edit, so it becomes a version of its own
+ * with the current state recorded in it.
+ */
+function restoreVersion(version) {
+  confirm({
+    title: t('history.restore'),
+    message: [
+      t('history.restoreConfirm', { date: humanizeDate(version.versionDate) }),
+      t('history.restoreConfirmHint')
+    ],
+    caption: t('history.versionId', { id: version.id }),
+    cancel: true,
+    color: 'negative',
+    okLabel: t('history.restore')
+  }).onOk(async () => {
+    const full = await withVersion(version)
+    if (!full) {
+      return
+    }
+    state.loading++
+    try {
+      const content = full.content ?? ''
+      const resp = await API_CLIENT.patch(`sites/${siteStore.id}/pages/${pageStore.id}`, {
+        json: {
+          content,
+          render: await renderOf(full, content),
+          reasonForChange: t('history.restoreReason', { date: humanizeDate(full.versionDate) })
+        }
+      }).json()
+      if (!resp?.page?.id) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      notify({ type: 'positive', message: t('history.restoreSuccess') })
+      // -> The page behind this overlay is now out of date, and so is the timeline: the restore is
+      //    itself a version, and it is the one worth landing on
+      await pageStore.pageLoad({ id: pageStore.id })
+      await load()
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('history.restoreFailed'),
+        caption: await apiMessage(err)
+      })
+    } finally {
+      state.loading--
+    }
+  })
+}
+
+/**
+ * Start a new page from this version, leaving this one alone.
+ *
+ * What to do with an old version that is worth keeping but not worth reverting to. The same path
+ * picker as duplicating a page, because that is what this is — a duplicate of a page as it was.
+ */
+function branchFrom(version) {
+  dialog({
+    component: defineAsyncComponent(() => import('./TreeBrowserDialog.vue')),
+    componentProps: {
+      mode: 'duplicatePage',
+      folderPath: '',
+      itemId: pageStore.id,
+      itemTitle: version.title,
+      itemFileName: pageStore.path
+    }
+  }).onOk(async (target) => {
+    const full = await withVersion(version)
+    if (!full) {
+      return
+    }
+    state.loading++
+    try {
+      const content = full.content ?? ''
+      const resp = await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
+        json: {
+          path: target.path,
+          title: target.title,
+          locale: pageStore.locale,
+          editor: full.meta?.editor || pageStore.editor,
+          content,
+          render: await renderOf(full, content),
+          description: full.meta?.description ?? '',
+          icon: full.meta?.icon ?? '',
+          tags: full.meta?.tags ?? [],
+          // -> A version that was scheduled carries dates this new page has not got, and the API
+          //    rightly refuses that combination
+          publishState: full.meta?.publishState === 'published' ? 'published' : 'draft',
+          reasonForChange: t('history.branchReason', { date: humanizeDate(full.versionDate) })
+        }
+      }).json()
+      const page = resp?.page
+      if (!page?.id) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      notify({ type: 'positive', message: t('history.branchSuccess') })
+      close()
+      router.push(`/${page.path}`)
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('history.branchFailed'),
+        caption: await apiMessage(err)
+      })
+    } finally {
+      state.loading--
+    }
+  })
+}
+
 /** The editor is built on first use, since the container only exists once there is history to show. */
 async function mountEditor() {
   await nextTick()
@@ -357,9 +689,9 @@ async function mountEditor() {
   diffEditor = monaco.editor.createDiffEditor(diffEl.value, {
     automaticLayout: true,
     fontSize: 14,
-    // -> Side by side: this exists to compare the two, and an inline diff of prose reads as a jumble
-    //    of half-lines
-    renderSideBySide: true,
+    // -> Side by side by default: this exists to compare the two, and an inline diff of prose reads
+    //    as a jumble of half-lines. The header offers the other way for anyone who prefers it.
+    renderSideBySide: !state.inline,
     originalEditable: false,
     // -> A reader, not an editor. Restoring a version is its own action, and is not implemented yet.
     readOnly: true,
@@ -371,8 +703,7 @@ async function mountEditor() {
 
 /** The format the page was written in at the time, which is what colours the two sides. */
 function languageOf(version) {
-  const kind = version?.meta?.contentType || version?.meta?.editor
-  return kind === 'html' ? 'html' : 'markdown'
+  return contentTypeOf(version) === 'html' ? 'html' : 'markdown'
 }
 
 async function applyDiff() {
@@ -418,6 +749,7 @@ function disposeEditor() {
 
 async function load() {
   state.loading++
+  state.notice = ''
   try {
     state.versions =
       (await API_CLIENT.get(`sites/${siteStore.id}/pages/${pageStore.id}/history`).json()) ?? []
@@ -454,7 +786,21 @@ $timeline-line: rgba(#fff, 0.12);
 $timeline-turn: 16px;
 
 .page-history {
+  /* -> The header is the positioning context for the page title below */
+  .card-header {
+    position: relative;
+  }
+
   &-page {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    /* -> Never wide enough to reach either group of controls; a long title is cut instead */
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
     font-size: 0.8rem;
     opacity: 0.6;
   }
@@ -510,8 +856,11 @@ $timeline-turn: 16px;
   &-item {
     position: relative;
     display: flex;
+    /* -> Wraps so the notes below can claim a row of their own; no row gap, since they bring their
+          own margin */
+    flex-wrap: wrap;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0 0.75rem;
     padding: 0.75rem 1rem;
     cursor: pointer;
 
@@ -554,6 +903,13 @@ $timeline-turn: 16px;
     color: rgba(#fff, 0.6);
   }
 
+  /* -> Full width, indented to sit under the entry's text rather than under its dot */
+  &-notes {
+    flex: 0 0 100%;
+    min-width: 0;
+    padding-left: calc(28px + 0.75rem);
+  }
+
   &-reason {
     margin-top: 0.25rem;
     font-size: 0.78rem;
@@ -571,24 +927,30 @@ $timeline-turn: 16px;
 
   &-pick {
     flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   &-compare {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
+    /* -> No gap: each side owns exactly half the width, and its own padding keeps the two apart */
+    padding: 0.75rem 0;
     border-bottom: 1px solid rgba(#fff, 0.1);
     font-size: 0.85rem;
   }
 
+  /* -> Half each, so B starts on the divider between the editor's two panes rather than wherever
+        the row's other contents happen to leave it */
   &-side {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    flex: 1 1 0;
+    flex: 0 0 50%;
     min-width: 0;
+    padding: 0 1rem;
   }
 
   &-letter {

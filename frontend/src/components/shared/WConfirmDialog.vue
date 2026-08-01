@@ -5,7 +5,20 @@
         <span>{{ title }}</span>
       </w-card-section>
       <w-card-section>
-        <div class="text-body2">{{ message }}</div>
+        <div
+          v-for="(paragraph, pIdx) of paragraphs"
+          :key="pIdx"
+          class="text-body2"
+          :class="pIdx > 0 ? 'mt-3' : ''">
+          <template v-for="(run, rIdx) of runs(paragraph)" :key="rIdx">
+            <strong v-if="run.strong">{{ run.text }}</strong>
+            <template v-else>{{ run.text }}</template>
+          </template>
+        </div>
+
+        <!-- An identifier, a path, a count: the quiet detail under the question, as the page
+             deletion dialog shows the page's ID. -->
+        <div v-if="caption" class="text-caption text-grey mt-2">{{ caption }}</div>
 
         <!--
           The one prompting variant in the codebase: pick one of a few named choices. `onOk`
@@ -43,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
@@ -61,7 +74,17 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  /**
+   * What is being confirmed. An array is rendered as one paragraph per entry, and `**like this**`
+   * marks a run as bold — the one bit of emphasis these dialogs have ever needed, and cheaper than
+   * a bespoke component per message.
+   */
   message: {
+    type: [String, Array],
+    default: ''
+  },
+  /** A supporting detail, set smaller and greyer under the message. */
+  caption: {
     type: String,
     default: ''
   },
@@ -102,6 +125,21 @@ defineEmits(dialogComponentEmits)
 const { t } = useI18n()
 
 const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
+
+const paragraphs = computed(() => (Array.isArray(props.message) ? props.message : [props.message]))
+
+/**
+ * A paragraph split into plain and bold runs.
+ *
+ * Split on `**`, so every odd piece is what sat between a pair. Returned as data for the template to
+ * render as real elements rather than as markup handed to `v-html`: a confirmation message is often
+ * built from a page title or a file name, and none of those can become HTML this way.
+ */
+function runs(paragraph) {
+  return String(paragraph)
+    .split('**')
+    .map((text, idx) => ({ text, strong: idx % 2 === 1 }))
+}
 
 /** Radios need a name unique to this instance, or two open dialogs would share a group. */
 const groupName = useId()
