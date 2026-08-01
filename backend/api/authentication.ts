@@ -10,6 +10,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { visibleOnly?: boolean } }>(
     '/sites/:siteId/auth/strategies',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'List all site authentication strategies',
         description:
@@ -135,6 +138,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/auth/login',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Login',
         tags: ['Authentication'],
@@ -214,6 +220,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/auth/changePassword',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Change Password From Login',
         tags: ['Authentication'],
@@ -305,6 +314,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/auth/tfa',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Submit a 2FA Security Code From Login',
         description:
@@ -390,6 +402,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string } }>(
     '/sites/:siteId/auth/passkey/challenge',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Get the options for logging in with a passkey',
         description:
@@ -449,6 +464,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { siteId: string }; Body: { authResponse: Record<string, any> } }>(
     '/sites/:siteId/auth/passkey/login',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Login With a Passkey',
         description:
@@ -515,6 +533,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string } }>(
     '/sites/:siteId/auth/logout',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Logout',
         description:

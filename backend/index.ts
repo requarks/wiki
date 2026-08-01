@@ -137,6 +137,8 @@ async function postBoot() {
   await WIKI.models.authentication.activateStrategies()
   await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
+  // -> Page access is decided from these on every request, so they are in memory from the start
+  await WIKI.models.groups.reloadCache()
 
   // -> Must follow the sites cache: every site gets a row per installed block
   await WIKI.models.blocks.refreshFromDisk()
@@ -357,10 +359,10 @@ async function initHTTPServer() {
   app.register(fastifySwagger, {
     hideUntagged: true,
     openapi: {
-      openapi: '3.0.0',
+      openapi: '3.1.0',
       info: {
         title: 'Wiki.js API',
-        version: WIKI.config.version
+        version: WIKI.version
       },
       components: {
         securitySchemes: {
@@ -397,9 +399,18 @@ async function initHTTPServer() {
         transformedSchema.description =
           `${currentDescription}\n\n**Required Permissions:** ${uniq(nestedPermissions).join(' or ')}`.trim()
         transformedSchema['x-permissions'] = permissions
-      } else {
+      } else if (route?.config?.publicAccess) {
         transformedSchema.description =
           `${currentDescription}\n\n**This API is public.** No special permissions required.`.trim()
+      } else {
+        /*
+          No fixed permission is not the same as public, and saying so was wrong for most of these.
+          A route without one is usually a route whose answer depends on the caller: the page rules of
+          their groups, their own account, or the queue they happen to be a reviewer for. What it
+          serves is scoped, not unrestricted.
+        */
+        transformedSchema.description =
+          `${currentDescription}\n\n**No fixed permission.** What this returns, and what it acts on, is limited to what the caller is entitled to — their session, their groups' page rules, or their own account. A request that is entitled to nothing gets an empty answer or a refusal rather than an error about permissions.`.trim()
       }
 
       return { schema: transformedSchema, url }
@@ -407,7 +418,39 @@ async function initHTTPServer() {
   })
   app.register(fastifySwaggerUi, {
     routePrefix: '/_api',
-    logo: {} as any
+    // -> Left empty so the plugin inlines neither its own logo nor one of ours; the stylesheet below
+    //    is what puts the site's logo in the topbar
+    logo: {} as any,
+    theme: {
+      css: [
+        {
+          filename: 'wiki.css',
+          /*
+            The site's own logo in the topbar, as a background on the link swagger draws its wordmark
+            in.
+
+            A stylesheet rather than the plugin's `logo` option, which takes a buffer and base64-inlines
+            it into the page when the server boots. This documentation is served for whichever site the
+            request arrived at, and an administrator can change that site's logo at any time — a URL
+            resolves both of those per request, and a buffer chosen at boot resolves neither.
+
+            `contain` in a box wider than it is tall, so a square mark and a wordmark both sit sensibly
+            without the logo being distorted to fit.
+          */
+          content: `
+            .swagger-ui .topbar-wrapper a.link > * {
+              display: none;
+            }
+            .swagger-ui .topbar-wrapper a.link {
+              display: block;
+              width: 160px;
+              height: 40px;
+              background: url('/_site/current/logo') left center / contain no-repeat;
+            }
+          `
+        }
+      ]
+    }
   })
 
   // ----------------------------------------

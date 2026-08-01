@@ -165,6 +165,14 @@ export const usePageStore = defineStore('page', {
         if (err.response?.status === 404) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
+        /*
+          Nor is a page the reader may not open: the group rules say so deliberately, and the reader
+          is owed the unauthorized screen -- which offers signing in as somebody else -- rather than
+          an error banner over an empty page view.
+        */
+        if (err.response?.status === 403) {
+          throw new Error('ERR_PAGE_UNAUTHORIZED')
+        }
         console.warn(err)
         throw err
       }

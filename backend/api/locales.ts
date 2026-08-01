@@ -7,6 +7,9 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'List all locales',
         tags: ['Locales']
@@ -20,6 +23,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { code: string } }>(
     '/:code/strings',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Get locale strings',
         tags: ['Locales']

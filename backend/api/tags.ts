@@ -13,13 +13,14 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { limit?: number } }>(
     '/sites/:siteId/tags',
     {
-      config: {
-        permissions: ['read:pages', 'write:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: a tag exists because a readable page carries it, so the answer
+        is filtered per page below rather than refused outright.
+      */
       schema: {
         summary: 'List the tags in use on a site',
         description:
-          'Every tag carried by at least one page, most used first. This is what the tag field offers as suggestions while a page is being edited.',
+          'Every tag carried by at least one page the caller may read, most used first, counted over those pages only. This is what the tag field offers as suggestions while a page is being edited, and what the search screen filters by.',
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -63,7 +64,10 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      return WIKI.models.tags.getTags(req.params.siteId, { limit: req.query.limit })
+      return WIKI.models.tags.getTags(req.params.siteId, {
+        limit: req.query.limit,
+        actor: WIKI.models.groups.actorForRequest(req)
+      })
     }
   )
 }

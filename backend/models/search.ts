@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import type { AccessActor } from './groups.ts'
 
 /**
  * Locale to PostgreSQL text search dictionary, for the languages postgres ships a snowball stemmer
@@ -90,6 +91,13 @@ export interface SearchPagesParams {
   publicOnly?: boolean
   /** Whether unpublished pages belong in the results, which is an editor's view of the wiki. */
   includeDrafts?: boolean
+  /**
+   * Who is searching, so that a result they could not open never reaches them.
+   *
+   * Applied to the rows rather than in the query: which pages a rule covers can depend on a regular
+   * expression or on a page's tags, neither of which a `WHERE` clause here could express.
+   */
+  actor?: AccessActor
   /**
    * Keep a password-protected page's *body* out of the results, for a searcher who would have to enter
    * the password to read it. The page itself still appears — its title and description are not what
@@ -219,7 +227,8 @@ class Search {
     limit = 25,
     publicOnly = false,
     includeDrafts = false,
-    hideProtectedContent = true
+    hideProtectedContent = true,
+    actor
   }: SearchPagesParams): Promise<SearchPagesResult> {
     const terms = query.trim()
     const hasQuery = terms.length > 0
@@ -227,10 +236,17 @@ class Search {
     // -> Only the locales in play need an arm in the dictionary CASE
     const siteLocales: string[] = WIKI.sites[siteId]?.config?.locales?.active ?? ['en']
     const searchedLocales = locales.length > 0 ? locales : siteLocales
-    const dict = this.dictionaryExpression(
-      searchedLocales,
-      hasQuery ? await this.getAvailableDictionaries() : []
-    )
+    /*
+      No terms means no query to parse, and therefore no dictionary to parse it with.
+
+      Both arguments are withheld together on purpose. Passing the locales while claiming nothing is
+      installed -- which is what an empty `available` says -- made every locale resolve to the
+      fallback and warn that its dictionary was missing, on a code path that never uses the answer.
+      That warning was the one in the logs: `english` is installed, nobody had looked.
+    */
+    const dict = hasQuery
+      ? this.dictionaryExpression(searchedLocales, await this.getAvailableDictionaries())
+      : this.dictionaryExpression([], [])
     const tsQuery = sql`websearch_to_tsquery(${dict}, ${terms})`
 
     const conditions = [sql`p."siteId" = ${siteId}`, sql`p."isSearchable" = true`]
@@ -321,7 +337,22 @@ class Search {
       LIMIT ${limit} OFFSET ${offset}
     `)
 
-    const result = ((rows.rows ?? rows) as any[]).map((row) => ({
+    /*
+      Filtered here rather than in SQL: a page rule can be a regular expression or a set of tags, so
+      the deciding rule is only knowable per row. Search must not be a way around page permissions —
+      a title and an excerpt are content too.
+    */
+    const visible = actor
+      ? ((rows.rows ?? rows) as any[]).filter((row) =>
+          WIKI.models.groups.checkAccess(actor, 'read:pages', {
+            path: row.path as string,
+            locale: row.locale as string,
+            tags: (row.tags ?? []) as string[]
+          })
+        )
+      : ((rows.rows ?? rows) as any[])
+
+    const result = visible.map((row) => ({
       id: row.id as string,
       path: row.path as string,
       locale: row.locale as string,
@@ -341,7 +372,18 @@ class Search {
 
     return {
       results: result,
-      totalHits: Number((rows.rows ?? rows)[0]?.totalHits ?? 0)
+      /*
+        The count postgres reported, less whatever the rules just removed from this page of results.
+        Not exact when rows are dropped -- the window function counted every match, including ones on
+        later pages this reader may not see -- but a total that ignored the filtering entirely would
+        promise results that do not exist.
+      */
+      totalHits: Math.max(
+        0,
+        Number((rows.rows ?? rows)[0]?.totalHits ?? 0) -
+          ((rows.rows ?? rows) as any[]).length +
+          visible.length
+      )
     }
   }
 

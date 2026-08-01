@@ -184,19 +184,6 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item tag="label">
-            <blueprint-icon icon="pen" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.allowContributions`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.allowContributionsHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.features.contributions"
-                :aria-label="t(`admin.general.allowContributions`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
             <blueprint-icon icon="administrator-male" />
             <w-item-section>
               <w-item-label>{{ t(`admin.general.allowProfile`) }}</w-item-label>
@@ -588,7 +575,6 @@ function defaultConfig() {
       ratings: false,
       ratingsMode: 'off',
       comments: false,
-      contributions: false,
       reasonForChange: 'required',
       profile: false
     },
@@ -708,7 +694,6 @@ async function save() {
           browse: state.config.features?.browse ?? false,
           comments: state.config.features?.comments ?? false,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
-          contributions: state.config.features?.contributions ?? false,
           profile: state.config.features?.profile ?? false,
           reasonForChange: state.config.features?.reasonForChange ?? 'required',
           search: state.config.features?.search ?? false

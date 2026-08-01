@@ -22,6 +22,77 @@
         @click="togglePageProperties">
         <w-tooltip anchor="center left" self="center right">Page Properties</w-tooltip>
       </w-btn>
+    </template>
+    <!--
+      Between the two halves of the authoring group on purpose: it sits under the Edit button for
+      somebody who has one, and at the top of the rail for a reviewer who may not edit at all -- which
+      is why it is outside that group rather than in it.
+
+      Only for whoever reviews this page: the server answers `canReview` from the approval rules and
+      the reviewer's own permissions, so nothing here has to know how that is decided.
+    -->
+    <w-btn
+      class="h-12"
+      v-if="state.canReview"
+      flat
+      :color="editorStore.isActive ? `white` : `deep-orange-9`"
+      aria-label="Pending Edit Suggestions">
+      <!--
+        The badge is a sibling of the icon, not a child of it: WIcon renders a bare `<svg>` and no
+        slot, so anything written inside it is dropped -- and an HTML badge could not live inside an
+        SVG in any case. It floats against the button, which is the positioned box here.
+      -->
+      <w-icon name="la:inbox" />
+      <!--
+        The same expression as the button's own colour, so the badge cannot drift from the icon it
+        sits on: `deep-orange-9` on the resting rail, and inverted in the editor, where the rail is
+        already that orange and an orange badge would disappear into it.
+      -->
+      <w-badge
+        v-if="pendingCount > 0"
+        :color="editorStore.isActive ? `white` : `deep-orange-9`"
+        :text-color="editorStore.isActive ? `deep-orange-9` : `white`"
+        rounded
+        floating>
+        <strong>{{ pendingCount }}</strong>
+      </w-badge>
+      <w-tooltip anchor="center left" self="center right">
+        {{ t('inbox.pendingReview') }}
+      </w-tooltip>
+      <w-menu
+        class="translucent-menu"
+        anchor="top left"
+        self="top right"
+        auto-close
+        transition-show="jump-left">
+        <w-list padding style="min-width: 320px">
+          <w-item v-if="pendingCount < 1">
+            <w-item-section>
+              <w-item-label caption>{{ t('inbox.reviewNone') }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-item
+            v-for="submission of state.submissions"
+            :key="submission.id"
+            clickable
+            @click="reviewSubmission(submission)">
+            <w-item-section class="items-center" avatar>
+              <w-icon class="text-deep-orange-9" name="la:file-alt" size="sm" />
+            </w-item-section>
+            <w-item-section>
+              <w-item-label>
+                {{ submission.author.name || t('inbox.reviewUnknownAuthor') }}
+              </w-item-label>
+              <w-item-label caption>{{ humanizeDate(submission.createdAt) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side v-if="submission.isStale">
+              <w-badge color="warning" rounded>{{ t('inbox.reviewStale') }}</w-badge>
+            </w-item-section>
+          </w-item>
+        </w-list>
+      </w-menu>
+    </w-btn>
+    <template v-if="userStore.can(`edit:pages`)">
       <w-btn
         class="h-12"
         v-if="flagsStore.experimental"
@@ -40,17 +111,17 @@
         color="white"
         :text-color="hasPendingAssets ? `white` : `deep-orange-3`"
         aria-label="Pending Asset Uploads">
-        <w-icon name="mdi:image-sync-outline">
-          <w-badge
-            class="page-actions-pending-badge"
-            v-if="hasPendingAssets"
-            color="white"
-            text-color="orange-9"
-            rounded
-            floating>
-            <strong>{{ editorStore.pendingAssets.length * 1 }}</strong>
-          </w-badge>
-        </w-icon>
+        <!-- Outside the icon for the same reason as the review badge above -->
+        <w-icon name="mdi:image-sync-outline" />
+        <w-badge
+          class="page-actions-pending-badge"
+          v-if="hasPendingAssets"
+          color="white"
+          text-color="orange-9"
+          rounded
+          floating>
+          <strong>{{ editorStore.pendingAssets.length * 1 }}</strong>
+        </w-badge>
         <w-tooltip anchor="center left" self="center right">Pending Asset Uploads</w-tooltip>
         <w-menu ref="menuPendingAssets" anchor="top left" self="top right" :offset="[10, 0]">
           <w-card style="width: 450px">
@@ -88,8 +159,13 @@
       </w-btn>
       <w-separator class="my-2" inset />
     </template>
+    <!--
+      `read:history` is the permission that exists to say who may see what a page used to contain, so
+      the button follows it rather than page read access. The API asks the same question.
+    -->
     <w-btn
       class="h-12"
+      v-if="userStore.can(`read:history`)"
       flat
       icon="la:history"
       :color="editorStore.isActive ? `white` : `grey`"
@@ -115,6 +191,11 @@
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Page Actions">
         <w-tooltip anchor="center left" self="center right">Page Actions</w-tooltip>
+        <!--
+          Literal colour classes, not WIcon's `color` prop: that builds `text-<name>` at runtime and
+          Tailwind only emits a utility it can see spelled out, so these three icons had been drawing
+          in the inherited text colour rather than the rail's orange.
+        -->
         <w-menu
           class="translucent-menu"
           anchor="top left"
@@ -124,19 +205,19 @@
           <w-list padding style="min-width: 225px">
             <w-item clickable disabled v-if="userStore.can(`manage:pages`)">
               <w-item-section class="items-center" avatar>
-                <w-icon color="deep-orange-9" name="la:atom" size="sm" />
+                <w-icon class="text-deep-orange-9" name="la:atom" size="sm" />
               </w-item-section>
               <w-item-section><w-item-label>Convert Page</w-item-label></w-item-section>
             </w-item>
             <w-item clickable v-if="userStore.can(`edit:pages`)" @click="rerenderPage">
               <w-item-section class="items-center" avatar>
-                <w-icon color="deep-orange-9" name="la:magic" size="sm" />
+                <w-icon class="text-deep-orange-9" name="la:magic" size="sm" />
               </w-item-section>
               <w-item-section><w-item-label>Rerender Page</w-item-label></w-item-section>
             </w-item>
             <w-item clickable disabled>
               <w-item-section class="items-center" avatar>
-                <w-icon color="deep-orange-9" name="la:sun" size="sm" />
+                <w-icon class="text-deep-orange-9" name="la:sun" size="sm" />
               </w-item-section>
               <w-item-section><w-item-label>View Backlinks</w-item-label></w-item-section>
             </w-item>
@@ -226,11 +307,71 @@ const { t } = useI18n()
 
 const menuPendingAssets = ref(null)
 
+// DATA
+
+const state = reactive({
+  /** Whether this user reviews this page at all, which is what shows the button. */
+  canReview: false,
+  /** What is waiting on it, oldest first. */
+  submissions: []
+})
+
 // COMPUTED
 
 const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
 
+const pendingCount = computed(() => state.submissions.length)
+
+// WATCHERS
+
+// -> Per page, so navigating between pages asks again rather than carrying the last one's answer
+watch(() => pageStore.id, loadSubmissions)
+
+// MOUNTED
+
+onMounted(loadSubmissions)
+
 // METHODS
+
+function humanizeDate(val) {
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+}
+
+/**
+ * What is waiting on this page, if this user is one of its reviewers.
+ *
+ * Quietly on failure: the rail is not where a reader finds out that a request went wrong, and a
+ * button that does not appear is the same outcome as not being a reviewer.
+ */
+async function loadSubmissions() {
+  state.canReview = false
+  state.submissions = []
+  if (!pageStore.id || !userStore.authenticated) {
+    return
+  }
+  try {
+    const resp = await API_CLIENT.get(
+      `sites/${siteStore.id}/pages/${pageStore.id}/submissions`
+    ).json()
+    state.canReview = resp?.canReview === true
+    state.submissions = resp?.submissions ?? []
+  } catch (err) {
+    console.warn(err)
+  }
+}
+
+/**
+ * Open one for review, remembering where it was opened from.
+ *
+ * `from=page` is what sends the reviewer back here when they are done rather than to the inbox queue
+ * they never came through.
+ */
+function reviewSubmission(submission) {
+  router.push({ path: `/_inbox/review/${submission.id}`, query: { from: 'page' } })
+}
 
 function togglePageProperties() {
   siteStore.$patch({

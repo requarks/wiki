@@ -86,9 +86,8 @@ class Sites {
               ratings: false,
               ratingsMode: 'off',
               comments: false,
-              contributions: false,
               profile: true,
-              reasonForChange: 'required',
+              reasonForChange: 'optional',
               search: true
             },
             logoUrl: '',
@@ -279,9 +278,8 @@ class Sites {
           ratings: false,
           ratingsMode: 'off',
           comments: false,
-          contributions: false,
           profile: true,
-          reasonForChange: 'required',
+          reasonForChange: 'optional',
           search: true
         },
         logoText: true,

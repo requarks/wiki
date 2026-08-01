@@ -172,14 +172,21 @@
               <w-item-section>
                 <w-item-label>{{ item.title }}</w-item-label>
                 <w-item-label v-if="item.description" caption>{{ item.description }}</w-item-label>
+                <w-item-label class="text-grey" caption>/{{ item.path }}</w-item-label>
                 <w-item-label class="text-highlight" v-if="item.highlight" caption>
                   <span v-html="item.highlight" />
                 </w-item-label>
               </w-item-section>
               <w-item-section side>
-                <div class="flex layout-search-itemtags">
+                <div class="text-caption text-right">{{ humanizeDate(item.updatedAt) }}</div>
+                <!--
+                  `layout-search-itemtags` was a class nothing defines -- a leftover the layout
+                  migration left behind -- so the row had no gap and the chips ran together.
+                -->
+                <div class="mt-1 flex flex-wrap items-center justify-end gap-1">
                   <w-chip
                     v-for="tag of item.tags"
+                    :key="`tag-` + tag"
                     square
                     color="secondary"
                     text-color="white"
@@ -187,10 +194,6 @@
                     size="sm"
                     >{{ tag }}</w-chip
                   >
-                </div>
-                <div class="flex">
-                  <div class="text-caption mr-2 text-grey">/{{ item.path }}</div>
-                  <div class="text-caption">{{ humanizeDate(item.updatedAt) }}</div>
                 </div>
               </w-item-section>
             </w-item>

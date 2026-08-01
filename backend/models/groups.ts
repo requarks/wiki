@@ -1,7 +1,9 @@
 import { v4 as uuid } from 'uuid'
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
+import { resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
+import type { FastifyRequest } from 'fastify'
 
 /** How a rule's `path` is compared against the page path. */
 export type GroupRuleMatch = 'START' | 'END' | 'REGEX' | 'TAG' | 'TAGALL' | 'EXACT'
@@ -95,9 +97,94 @@ const groupSelection = {
 }
 
 /**
+ * Who is asking, and what they hold outside the page rules.
+ *
+ * `permissions` is the group-wide list — `manage:system`, `access:admin` and the rest — which is a
+ * different thing from the page permissions the rules decide.
+ */
+export interface AccessActor {
+  groupIds: string[]
+  permissions: string[]
+}
+
+/**
+ * Every group's rules, by group id.
+ *
+ * Cached because a page permission is checked on every page read, and reading three rows out of the
+ * database to answer it would put a query in front of every request. Reloaded whenever a group
+ * changes, the same way the site configurations are.
+ */
+let rulesCache: Record<string, GroupRule[]> = {}
+
+/**
  * Groups model
  */
 class Groups {
+  /**
+   * Reload the page rules of every group into memory.
+   *
+   * Called at boot and after any change to a group. A group edit therefore takes effect on the next
+   * request rather than on the next login, which matters: rules are the whole of page access, and a
+   * revoked permission that waits for a logout is not revoked.
+   */
+  async reloadCache(): Promise<void> {
+    const rows = await WIKI.db
+      .select({ id: groupsTable.id, rules: groupsTable.rules })
+      .from(groupsTable)
+    rulesCache = {}
+    for (const row of rows) {
+      rulesCache[row.id] = (row.rules ?? []) as GroupRule[]
+    }
+    WIKI.logger.info(`Loaded page rules for ${rows.length} groups [ OK ]`)
+  }
+
+  /** The pooled rules of a set of groups, which is what a permission is decided against. */
+  rulesForGroups(groupIds: string[]): GroupRule[] {
+    return groupIds.flatMap((id) => rulesCache[id] ?? [])
+  }
+
+  /**
+   * Which groups a request speaks for.
+   *
+   * An anonymous request is not group-less: it is the guests group, whose rules are how a wiki says
+   * what the public may see. Treating it as no groups at all would deny everything, which is a
+   * different answer from the one the administrator configured.
+   */
+  groupIdsForRequest(req: FastifyRequest): string[] {
+    if (req.session?.authenticated && req.session.user?.id) {
+      return req.session.groups ?? []
+    }
+    return [WIKI.data.systemIds.guestsGroupId]
+  }
+
+  /** The actor a request speaks for: its groups, and the group-wide permissions it holds. */
+  actorForRequest(req: FastifyRequest): AccessActor {
+    return {
+      groupIds: this.groupIdsForRequest(req),
+      // -> An API key stands in for a session and carries its own permissions, as it does in the
+      //    route-level check
+      permissions: req.apiKey?.permissions ?? req.session?.permissions ?? []
+    }
+  }
+
+  /**
+   * Whether this caller may do this to this page.
+   *
+   * The one place page permissions are decided. Everything page-scoped asks this rather than reading
+   * the session's permission list, because that list says what a group was granted GLOBALLY and page
+   * permissions are not granted that way — see `helpers/pageRules.ts` for how a rule is chosen.
+   *
+   * @param permission A single page permission, e.g. `read:pages` or `read:history`
+   */
+  checkAccess(actor: AccessActor, permission: string, page: RulePageRef): boolean {
+    // -> Above the rules entirely: an administrator is not something a rule can lock out, and a
+    //    wiki whose only administrator had denied themselves would have nobody left to fix it
+    if (actor.permissions.includes('manage:system')) {
+      return true
+    }
+    const rule = resolvePageRule(this.rulesForGroups(actor.groupIds), permission, page)
+    return rule ? rule.mode !== 'DENY' : false
+  }
   async init(ids: SystemIds): Promise<void> {
     WIKI.logger.info('Inserting default groups...')
 
@@ -177,6 +264,7 @@ class Groups {
         isSystem: false
       })
       .returning({ id: groupsTable.id })
+    await this.reloadCache()
     return result[0].id
   }
 
@@ -222,6 +310,7 @@ class Groups {
       .update(groupsTable)
       .set({ ...patch, updatedAt: sql`now()` })
       .where(eq(groupsTable.id, id))
+    await this.reloadCache()
     return (result.rowCount ?? 0) > 0
   }
 
@@ -233,6 +322,7 @@ class Groups {
    */
   async deleteGroup(id: string): Promise<boolean> {
     const result = await WIKI.db.delete(groupsTable).where(eq(groupsTable.id, id))
+    await this.reloadCache()
     return (result.rowCount ?? 0) > 0
   }
 

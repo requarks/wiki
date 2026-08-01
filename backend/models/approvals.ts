@@ -18,10 +18,33 @@ export const approvalMatchModes = ['START', 'EXACT', 'END', 'REGEX', 'TAG', 'TAG
 export type ApprovalMatchMode = (typeof approvalMatchModes)[number]
 
 /** The part of a page a rule is matched against. */
-export interface ApprovalPageRef {
-  id: string
+/** What a rule is matched against: where the page is, and what it is tagged with. */
+export interface ApprovalPageMatch {
   path: string
   tags: string[]
+}
+
+export interface ApprovalPageRef extends ApprovalPageMatch {
+  id: string
+  /**
+   * The page's own switch, from its properties. A page with contributions turned off takes no
+   * suggestions whatever the rules say — which is how a single page is exempted without writing a
+   * rule around it.
+   */
+  allowContributions: boolean
+}
+
+/**
+ * Who is reviewing, as the rules see them.
+ *
+ * `reviewsAll` covers the two ways of being a reviewer without a rule naming your group: the
+ * `manage:system` permission, which sees everything everywhere, and `review:pages`, which is granted
+ * to review pages and would be worth nothing if it could not. Neither widens WHICH pages take
+ * suggestions -- a page still needs a rule -- only who may answer them.
+ */
+export interface ReviewerScope {
+  groupIds: string[]
+  reviewsAll?: boolean
 }
 
 /** An edit suggested against a page, as the author's own view of it. */
@@ -184,7 +207,10 @@ class Approvals {
         name: patch.name ?? '',
         isEnabled: patch.isEnabled ?? true,
         match: patch.match ?? 'START',
-        path: patch.path ?? '',
+        // -> Trimmed, so a pattern typed with a stray space still matches what it reads as -- and so
+        //    that a `START` path of nothing but spaces is the whole site rather than a rule that
+        //    quietly covers no page at all
+        path: (patch.path ?? '').trim(),
         submitterGroups: patch.submitterGroups ?? [],
         reviewerGroups: patch.reviewerGroups ?? []
       })
@@ -212,7 +238,8 @@ class Approvals {
       'reviewerGroups'
     ] as const) {
       if (patch[key] !== undefined) {
-        values[key] = patch[key]
+        // -> Trimmed for the same reason it is on create
+        values[key] = key === 'path' ? String(patch[key]).trim() : patch[key]
       }
     }
 
@@ -232,7 +259,7 @@ class Approvals {
    * throwing: the rule is already refused at the API, so this is only reached by one that was valid
    * when it was written and stopped being so.
    */
-  matchesPage(rule: ApprovalRule, page: ApprovalPageRef): boolean {
+  matchesPage(rule: ApprovalRule, page: ApprovalPageMatch): boolean {
     const pagePath = page.path.replace(/^\/+/, '')
     const rulePath = rule.path.replace(/^\/+/, '')
     switch (rule.match) {
@@ -277,6 +304,13 @@ class Approvals {
   /**
    * The enabled rule that lets these groups suggest an edit to this page, if there is one.
    *
+   * The page's own `allowContributions` is a veto rather than another condition to match: a rule says
+   * which pages MAY take suggestions, and turning the switch off on one page says that this one does
+   * not — no rule has to be rewritten, narrowed or excluded around it.
+   *
+   * Everything asking whether a page takes a suggestion asks this, which is why the check lives here
+   * rather than at either route.
+   *
    * @returns The first matching rule, or null when the page takes no suggestions from them
    */
   async findSubmitRule(
@@ -284,7 +318,7 @@ class Approvals {
     page: ApprovalPageRef,
     groupIds: string[]
   ): Promise<ApprovalRule | null> {
-    if (groupIds.length < 1) {
+    if (groupIds.length < 1 || !page.allowContributions) {
       return null
     }
     const rules = await this.getRules(siteId)
@@ -295,6 +329,31 @@ class Approvals {
           rule.submitterGroups.some((id) => groupIds.includes(id)) &&
           this.matchesPage(rule, page)
       ) ?? null
+    )
+  }
+
+  /**
+   * Whether this reviewer has any business reviewing this page at all.
+   *
+   * What decides whether the page view offers a review button, so it is about the page rather than
+   * about what happens to be waiting on it: a reviewer of a page with an empty queue is still its
+   * reviewer. A page no rule covers takes no suggestions, so nobody reviews it -- not even an
+   * administrator, who would only be offered a button that could never have anything behind it.
+   */
+  async canReviewPage(
+    siteId: string,
+    page: ApprovalPageMatch,
+    { groupIds, reviewsAll = false }: ReviewerScope
+  ): Promise<boolean> {
+    if (!reviewsAll && groupIds.length < 1) {
+      return false
+    }
+    const rules = await this.getRules(siteId)
+    return rules.some(
+      (rule) =>
+        rule.isEnabled &&
+        (reviewsAll || rule.reviewerGroups.some((id) => groupIds.includes(id))) &&
+        this.matchesPage(rule, page)
     )
   }
 
@@ -413,14 +472,14 @@ class Approvals {
    */
   async getReviewableSubmissions(
     siteId: string,
-    { groupIds, isAdmin = false }: { groupIds: string[]; isAdmin?: boolean }
+    { groupIds, reviewsAll = false, pageId }: ReviewerScope & { pageId?: string }
   ): Promise<ReviewableSubmission[]> {
-    if (!isAdmin && groupIds.length < 1) {
+    if (!reviewsAll && groupIds.length < 1) {
       return []
     }
     const rules = (await this.getRules(siteId)).filter(
       (rule) =>
-        rule.isEnabled && (isAdmin || rule.reviewerGroups.some((id) => groupIds.includes(id)))
+        rule.isEnabled && (reviewsAll || rule.reviewerGroups.some((id) => groupIds.includes(id)))
     )
     if (rules.length < 1) {
       return []
@@ -447,7 +506,11 @@ class Approvals {
       .from(submissionsTable)
       .innerJoin(pagesTable, eq(pagesTable.id, submissionsTable.pageId))
       .leftJoin(usersTable, eq(usersTable.id, submissionsTable.authorId))
-      .where(eq(submissionsTable.siteId, siteId))
+      .where(
+        pageId
+          ? and(eq(submissionsTable.siteId, siteId), eq(submissionsTable.pageId, pageId))
+          : eq(submissionsTable.siteId, siteId)
+      )
       .orderBy(asc(submissionsTable.createdAt))
 
     // -> Matched in memory rather than in SQL: a rule can be a regular expression or a set of tags,
@@ -455,7 +518,13 @@ class Approvals {
     return rows
       .filter((row: any) =>
         rules.some((rule) =>
-          this.matchesPage(rule, { id: row.pageId, path: row.pagePath, tags: row.pageTags ?? [] })
+          /*
+            No `allowContributions` here, deliberately: that switch governs whether a suggestion may
+            be MADE. One already sent stays in its reviewers' queue if the page is later closed to
+            contributions -- otherwise turning the switch off would silently strand work somebody had
+            submitted in good faith, with nobody able to accept or decline it.
+          */
+          this.matchesPage(rule, { path: row.pagePath, tags: row.pageTags ?? [] })
         )
       )
       .map((row: any) => this.toReviewable(row))
@@ -469,10 +538,10 @@ class Approvals {
   async getSubmissionForReview(
     siteId: string,
     submissionId: string,
-    { groupIds, isAdmin = false }: { groupIds: string[]; isAdmin?: boolean }
+    { groupIds, reviewsAll = false }: ReviewerScope
   ): Promise<ReviewableSubmissionDetail | null> {
     // -> Reuses the queue rather than re-deriving who may see what: one definition of reviewable
-    const reviewable = await this.getReviewableSubmissions(siteId, { groupIds, isAdmin })
+    const reviewable = await this.getReviewableSubmissions(siteId, { groupIds, reviewsAll })
     if (!reviewable.some((s) => s.id === submissionId)) {
       return null
     }

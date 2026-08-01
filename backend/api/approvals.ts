@@ -1,6 +1,6 @@
 import { CustomError } from '../helpers/common.ts'
-import { actorFrom, mayBypassPassword, unlockedFor } from './pages.ts'
-import type { ApprovalPageRef, ApprovalRulePatch } from '../models/approvals.ts'
+import { actorFrom, mayBypassPassword, mayOnPage, unlockedFor } from './pages.ts'
+import type { ApprovalPageRef, ApprovalRulePatch, ReviewerScope } from '../models/approvals.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
@@ -14,7 +14,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
  */
 async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: string) {
   const actor = actorFrom(req)
-  return WIKI.models.pages.getPage({
+  const page = await WIKI.models.pages.getPage({
     siteId,
     id: pageId,
     withContent: true,
@@ -22,16 +22,38 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
     unlocked: (id: string) => unlockedFor(req, id),
     withPassword: mayBypassPassword(req)
   })
+  /*
+    Reading the page comes first, for suggesting an edit to it and for reviewing one alike: neither is
+    something to be done to a page the caller may not see, and answering as though it were not there
+    is how every other page-scoped route treats that.
+  */
+  if (!page || !mayOnPage(req, 'read:pages', page)) {
+    return null
+  }
+  return page
 }
 
 /**
- * Who is reviewing, as the rules see them: the groups on their session, plus whether they hold
- * `manage:system` — which sees every queue, here as everywhere else.
+ * Who is reviewing, as the approval rules see them: the groups on their session, plus whether they
+ * review everything regardless of which groups a rule names.
+ *
+ * Two different kinds of rule meet here. An APPROVAL rule says which pages take suggestions and who
+ * reviews them; a group's PAGE rules say what a member may do to a page, `review:pages` among them.
+ * Holding that permission is the second way of being a reviewer, because reviewing is the entire
+ * content of it — a group granted it and named in no approval rule could otherwise review nothing.
+ *
+ * Page permissions are per page, so `reviewsAll` is answered for a page when there is one. Without
+ * one — the site-wide queue in the inbox — it is answered at the site root, which is the only thing
+ * a queue spanning every page could ask about; the per-page check then still applies to each entry
+ * through the approval rules that produced it.
  */
-function reviewerFor(req: FastifyRequest): { groupIds: string[]; isAdmin: boolean } {
+function reviewerFor(req: FastifyRequest, page?: { path: string; tags?: string[] }): ReviewerScope {
+  const actor = WIKI.models.groups.actorForRequest(req)
   return {
     groupIds: WIKI.models.approvals.getActorGroupIds(req),
-    isAdmin: Boolean(req.session?.permissions?.includes('manage:system'))
+    reviewsAll:
+      actor.permissions.includes('manage:system') ||
+      WIKI.models.groups.checkAccess(actor, 'review:pages', page ?? { path: '' })
   }
 }
 
@@ -59,7 +81,15 @@ function validateRule({
   if (!name || name.trim().length < 1) {
     return new CustomError('approvalRuleEmptyName', 'A rule name is required.')
   }
-  if (!path || path.trim().length < 1) {
+  /*
+    Empty is only meaningful for `START`, where it is every path and therefore the whole site -- which
+    is how a rule covers a site without naming a folder.
+
+    Every other mode still needs something. An empty `EXACT` matches no page at all; an empty `END` or
+    `REGEX` matches every one of them, but by accident of the operator rather than by intent, and a
+    rule whose reach nobody meant to write is exactly what this refuses.
+  */
+  if (match !== 'START' && (!path || path.trim().length < 1)) {
     return new CustomError(
       'approvalRuleEmptyPath',
       match === 'TAG' || match === 'TAGALL'
@@ -549,6 +579,71 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * PENDING SUBMISSIONS FOR A PAGE
+   */
+  app.get<{ Params: { siteId: string; pageId: string } }>(
+    '/sites/:siteId/pages/:pageId/submissions',
+    {
+      /*
+        No route-level `permissions`: those are page permissions, granted by a group's rules rather
+        than group-wide. `canReview` below is the real answer, and an ineligible caller gets `false`
+        rather than a refusal — the button simply does not appear.
+      */
+      schema: {
+        summary: "Edit suggestions waiting on a page, for that page's reviewers",
+        description:
+          'What the review button on a page view is drawn from. `canReview` says whether this caller reviews this page at all — an enabled rule covers it and either names one of their groups or they hold `review:pages` or `manage:system` — and is what decides whether the button is shown; `submissions` is what is waiting, oldest first, and is empty for everybody else.\n\nA reviewer with an empty queue still gets `canReview: true`: the button belongs to the page, not to whatever happens to be pending on it.',
+        tags: ['Approvals'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            pageId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'pageId']
+        },
+        response: {
+          200: {
+            description: 'Whether the caller reviews this page, and what is waiting on it',
+            type: 'object',
+            properties: {
+              canReview: { type: 'boolean' },
+              submissions: {
+                type: 'array',
+                items: { $ref: 'PageEditSubmission#' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      const page = await loadSuggestablePage(req, req.params.siteId, req.params.pageId)
+      if (!page) {
+        return reply.notFound('This page does not exist.')
+      }
+
+      const scope = reviewerFor(req, { path: page.path, tags: page.tags ?? [] })
+      const canReview = await WIKI.models.approvals.canReviewPage(
+        req.params.siteId,
+        { path: page.path, tags: page.tags ?? [] },
+        scope
+      )
+      if (!canReview) {
+        return { canReview: false, submissions: [] }
+      }
+      return {
+        canReview: true,
+        submissions: await WIKI.models.approvals.getReviewableSubmissions(req.params.siteId, {
+          ...scope,
+          pageId: req.params.pageId
+        })
+      }
+    }
+  )
+
+  /**
    * GET OWN SUGGESTION STATE FOR A PAGE
    *
    * Deliberately not permission-gated: whether somebody may suggest an edit is decided by the site's
@@ -616,7 +711,12 @@ async function routes(app: FastifyInstance) {
 
       const actor = actorFrom(req)
       const groupIds = WIKI.models.approvals.getActorGroupIds(req)
-      const pageRef: ApprovalPageRef = { id: page.id, path: page.path, tags: page.tags ?? [] }
+      const pageRef: ApprovalPageRef = {
+        id: page.id,
+        path: page.path,
+        tags: page.tags ?? [],
+        allowContributions: page.allowContributions
+      }
       const rule = await WIKI.models.approvals.findSubmitRule(req.params.siteId, pageRef, groupIds)
       if (!rule) {
         return { canSubmit: false, isGuest: !actor, submission: null }
@@ -691,7 +791,12 @@ async function routes(app: FastifyInstance) {
 
       const actor = actorFrom(req)
       const groupIds = WIKI.models.approvals.getActorGroupIds(req)
-      const pageRef: ApprovalPageRef = { id: page.id, path: page.path, tags: page.tags ?? [] }
+      const pageRef: ApprovalPageRef = {
+        id: page.id,
+        path: page.path,
+        tags: page.tags ?? [],
+        allowContributions: page.allowContributions
+      }
       const rule = await WIKI.models.approvals.findSubmitRule(req.params.siteId, pageRef, groupIds)
       if (!rule) {
         return reply.forbidden('This page does not accept edit suggestions from you.')

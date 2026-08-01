@@ -9,8 +9,13 @@
         <div class="text-body2">{{ t('common.page.suggestIdentifyHint') }}</div>
       </w-card-section>
       <w-form ref="guestForm" class="py-2" @submit="submit">
+        <!--
+          No `self-start` on these icons. A field's control carries a symmetric `my-2` -- room for the
+          floated label, matched underneath precisely so the box stays centred on the control -- so
+          letting both sections centre in the row is what lines the icon up with the field.
+        -->
         <w-item>
-          <blueprint-icon icon="contact" class="self-start" />
+          <blueprint-icon icon="contact" />
           <w-item-section>
             <w-input
               ref="iptName"
@@ -26,7 +31,7 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="envelope" class="self-start" />
+          <blueprint-icon icon="envelope" />
           <w-item-section>
             <w-input
               v-model="state.email"

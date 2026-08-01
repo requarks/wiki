@@ -150,6 +150,9 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/flags',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'System Flags',
         description:

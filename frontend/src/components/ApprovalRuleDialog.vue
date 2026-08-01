@@ -6,8 +6,14 @@
         <span>{{ isEdit ? t('admin.approval.editRule') : t('admin.approval.newRule') }}</span>
       </w-card-section>
       <w-form ref="ruleForm" class="py-2" @submit="save">
+        <!--
+          No `self-start` on these icons. A field's control carries a symmetric `my-2` -- room for the
+          floated label, matched underneath precisely so the box stays centred on the control -- so
+          letting both sections centre in the row is what lines the icon up with the field. Pinning
+          the icon to the top instead put it 6px above the control it belongs to.
+        -->
         <w-item>
-          <blueprint-icon icon="rename" class="self-start" />
+          <blueprint-icon icon="rename" />
           <w-item-section>
             <w-input
               ref="iptName"
@@ -23,7 +29,7 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="filtration" class="self-start" />
+          <blueprint-icon icon="filtration" />
           <w-item-section>
             <w-select
               v-model="state.match"
@@ -41,7 +47,7 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon :icon="isTagMatch ? `flag-filled` : `link`" class="self-start" />
+          <blueprint-icon :icon="isTagMatch ? `flag-filled` : `link`" />
           <w-item-section>
             <!--
               One field for both kinds of pattern: a tag mode takes a list of tags rather than a path,
@@ -56,13 +62,13 @@
               :rules="pathValidation"
               hide-bottom-space
               :label="isTagMatch ? t(`admin.approval.tags`) : t(`admin.approval.path`)"
-              :hint="isTagMatch ? t(`admin.approval.tagsHint`) : t(`admin.approval.pathHint`)"
+              :hint="pathHint"
               lazy-rules="ondemand" />
           </w-item-section>
         </w-item>
         <w-separator class="my-2" inset />
         <w-item>
-          <blueprint-icon icon="pen" class="self-start" />
+          <blueprint-icon icon="pen" />
           <w-item-section>
             <w-select
               v-model="state.submitterGroups"
@@ -83,7 +89,7 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="validation" class="self-start" />
+          <blueprint-icon icon="validation" />
           <w-item-section>
             <w-select
               v-model="state.reviewerGroups"
@@ -200,8 +206,19 @@ const matchOptions = computed(() => [
 
 const nameValidation = [(val) => (val ?? '').trim().length > 0 || t('admin.approval.nameRequired')]
 
+/** What the field is asking for, which is a different thing in each mode -- empty included. */
+const pathHint = computed(() => {
+  if (isTagMatch.value) {
+    return t('admin.approval.tagsHint')
+  }
+  return state.match === 'START' ? t('admin.approval.pathHintStart') : t('admin.approval.pathHint')
+})
+
 const pathValidation = [
+  // -> Empty is a real answer for `START`: every path starts with nothing, so the rule covers the
+  //    whole site. The server agrees, and refuses it for every other mode -- see `validateRule`.
   (val) =>
+    state.match === 'START' ||
     (val ?? '').trim().length > 0 ||
     (isTagMatch.value ? t('admin.approval.tagsRequired') : t('admin.approval.pathRequired')),
   // -> Caught here as well as by the server: a pattern that cannot compile is a rule that silently

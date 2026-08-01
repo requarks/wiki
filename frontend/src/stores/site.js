@@ -67,6 +67,15 @@ export const useSiteStore = defineStore('site', {
       reasonForChange: 'required',
       search: false
     },
+    /** How this site handles signing in. Set in the admin area's Login section. */
+    auth: {
+      /**
+       * Send a visitor who is not logged in straight to the login screen instead of showing them
+       * the unauthorized page. For a wiki that is closed to the public, that screen is a dead end
+       * with a login button on it, and this skips the step.
+       */
+      bypassUnauthorized: false
+    },
     editors: {
       asciidoc: false,
       markdown: false,
@@ -164,6 +173,10 @@ export const useSiteStore = defineStore('site', {
             features: {
               ...this.features,
               ...siteInfo.features
+            },
+            auth: {
+              ...this.auth,
+              ...siteInfo.auth
             },
             editors: {
               asciidoc: siteInfo.editors.asciidoc.isActive,

@@ -64,6 +64,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteIdorHostname: string }; Querystring: { strict?: boolean } }>(
     '/:siteIdorHostname',
     {
+      config: {
+        publicAccess: true
+      },
       schema: {
         summary: 'Get site info',
         tags: ['Sites'],

@@ -143,6 +143,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import * as monaco from 'monaco-editor'
 
@@ -160,6 +161,11 @@ import { useSiteStore } from '@/stores/site'
 
 const dark = useDark()
 
+// ROUTER
+
+const route = useRoute()
+const router = useRouter()
+
 // STORES
 
 const editorStore = useEditorStore()
@@ -176,6 +182,9 @@ useMeta({
 })
 
 // DATA
+
+/** The queue's own address, which is also this screen with nothing open. */
+const REVIEW_PATH = '/_inbox/review'
 
 const state = reactive({
   loading: 0,
@@ -197,6 +206,10 @@ let originalModel = null
 let modifiedModel = null
 
 // WATCHERS
+
+// -> The URL says which submission is open, so everything follows from it -- including arriving on
+//    one directly, which is what a link in a notification will do
+watch(() => route.params.submissionId, loadSubmission)
 
 // -> The container only exists once a submission is open, so the editor is built after that render
 watch(
@@ -250,11 +263,21 @@ async function load() {
   state.loading--
 }
 
-async function openSubmission(submission) {
+/**
+ * The submission the URL names, or none.
+ *
+ * Driven by the route rather than by the click that got here, so that a link straight to a review
+ * behaves exactly like picking it off the queue -- and so the back button walks out of one.
+ */
+async function loadSubmission(id) {
+  if (!id) {
+    state.selected = null
+    return
+  }
   state.loading++
   try {
     state.selected = await API_CLIENT.get(
-      `sites/${siteStore.id}/approvals/submissions/${submission.id}`
+      `sites/${siteStore.id}/approvals/submissions/${id}`
     ).json()
   } catch (err) {
     notify({
@@ -262,12 +285,36 @@ async function openSubmission(submission) {
       message: t('inbox.reviewLoadFailed'),
       caption: await apiMessage(err)
     })
+    /*
+      Reviewed by somebody else already, or never this reviewer's to see. Back to the queue, and with
+      `replace` so the dead address does not sit in the history for the back button to return to.
+    */
+    state.selected = null
+    router.replace(REVIEW_PATH)
   }
   state.loading--
 }
 
+function openSubmission(submission) {
+  router.push(`${REVIEW_PATH}/${submission.id}`)
+}
+
+/**
+ * Where leaving a review goes back to.
+ *
+ * The queue, unless the reviewer never came through it: `from=page` is set by the review button on a
+ * page view, and returning them to an inbox they did not open would strand them a section away from
+ * what they were reading.
+ */
+function backTarget() {
+  if (route.query.from === 'page' && state.selected?.page?.path !== undefined) {
+    return `/${state.selected.page.path}`
+  }
+  return REVIEW_PATH
+}
+
 function closeSubmission() {
-  state.selected = null
+  router.push(backTarget())
 }
 
 /**
@@ -363,8 +410,11 @@ function approveSubmission() {
         type: 'positive',
         message: t('inbox.reviewApproveSuccess')
       })
-      closeSubmission()
+      const target = backTarget()
+      // -> Refreshed before leaving, so the queue behind is right whether or not that is where this
+      //    goes; on the way to a page the reload is what the page's own review button will read
       await load()
+      router.push(target)
     } catch (err) {
       notify({
         type: 'negative',
@@ -396,8 +446,9 @@ function rejectSubmission() {
         type: 'positive',
         message: t('inbox.reviewDeclineSuccess')
       })
-      closeSubmission()
+      const target = backTarget()
       await load()
+      router.push(target)
     } catch (err) {
       notify({
         type: 'negative',
@@ -411,7 +462,11 @@ function rejectSubmission() {
 
 // MOUNTED
 
-onMounted(load)
+onMounted(() => {
+  load()
+  // -> Whatever the address arrived pointing at, which is nothing at all for the queue itself
+  loadSubmission(route.params.submissionId)
+})
 
 onBeforeUnmount(disposeEditor)
 </script>

@@ -1,6 +1,10 @@
 <template>
-  <div class="gap-1">
-    <template v-if="pageStore.tags && pageStore.tags.length > 0">
+  <div>
+    <!--
+      The gap was on the outer element, which is a plain block and has nothing to space: the chips ran
+      into each other. Its own wrapping flex row, so the field below still starts on a line of its own.
+    -->
+    <div class="flex flex-wrap items-center gap-1" v-if="pageStore.tags?.length > 0">
       <w-chip
         square
         color="secondary"
@@ -8,13 +12,14 @@
         dense
         :clickable="!props.edit"
         :removable="props.edit"
+        @click="searchTag(tag)"
         @remove="removeTag(tag)"
         v-for="tag of pageStore.tags"
         :key="`tag-` + tag">
         <w-icon class="mr-1" name="la:hashtag" size="14px" />
-        <span class="text-caption">{{tag}}</span>
+        <span class="text-caption">{{ tag }}</span>
       </w-chip>
-    </template>
+    </div>
     <!--
       Entry only: no `use-chips`, because the selection is already shown as the chips above and having
       it in the field as well said the same thing twice. `create` is what lets a tag that does not
@@ -42,6 +47,7 @@
 <script setup>
 import { reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import { notify } from '@/composables/notify'
 
@@ -58,6 +64,9 @@ const props = defineProps({
   }
 })
 
+// ROUTER
+
+const router = useRouter()
 
 // STORES
 
@@ -143,6 +152,20 @@ function createTag(val) {
     }
   }
   pageStore.tags = nextSelection
+}
+
+/**
+ * Search the site for everything carrying this tag.
+ *
+ * As a `#tag` token in the query rather than as a parameter of its own, because that is how the search
+ * page states a tag filter: it reads them back out of `q` to fill its own tag selector, so arriving
+ * this way leaves the reader on a search they can widen or narrow from there.
+ *
+ * Only reachable in view mode -- WChip emits `click` only while `clickable`, which the editing chips
+ * are not, their control being the remove button instead.
+ */
+function searchTag(tag) {
+  router.push({ path: '/_search', query: { q: `#${tag}` } })
 }
 
 function removeTag(tag) {

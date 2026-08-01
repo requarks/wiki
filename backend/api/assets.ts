@@ -1,4 +1,6 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+
+import { decodeTreePath } from '../helpers/common.ts'
 
 /** Extensions a browser may render inline. Everything else is sent as a download. */
 const INLINE_EXTS = new Set(['png', 'apng', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'])
@@ -21,6 +23,24 @@ const assetIdParam = {
 /**
  * Assets API Routes
  */
+/**
+ * Whether the caller holds an asset permission on an asset, judged on where it sits.
+ *
+ * Assets live in the same tree as pages and are addressed by the same rules — a rule over a branch
+ * covers the files in it as well as the pages, which is why the asset permissions are offered
+ * alongside the page ones in the group editor.
+ */
+function mayOnAsset(
+  req: FastifyRequest,
+  permission: string,
+  asset: { folderPath?: string | null; fileName: string }
+): boolean {
+  const folder = asset.folderPath ?? ''
+  return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, {
+    path: folder ? `${folder}/${asset.fileName}` : asset.fileName
+  })
+}
+
 async function routes(app: FastifyInstance) {
   // -> An upload is the raw file rather than a multipart form: one file per request, with the name and
   //    the destination in the query string. The catch-all only claims content types nothing else
@@ -46,9 +66,10 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/assets',
     {
-      config: {
-        permissions: ['write:assets', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
       schema: {
         summary: 'Upload an asset',
         description: `The body is the file itself, not a multipart form — send the bytes with their \`Content-Type\`. At most ${Math.round((WIKI.config.security?.uploadMaxFileSize ?? 10485760) / 1024 / 1024)} MB. The file name is sanitized, so the stored name in the response may differ from the one sent; the type served back later comes from that name's extension rather than from the request. Images get a thumbnail when the Sharp extension is installed.`,
@@ -113,6 +134,16 @@ async function routes(app: FastifyInstance) {
         return reply.badRequest('No file was sent.')
       }
 
+      const folder = req.query.folderId
+        ? await WIKI.models.tree.getFolderById(req.query.folderId)
+        : null
+      const folderPath = folder ? (decodeTreePath(folder.folderPath ?? '') ?? '') : ''
+      const destination = folder ? [folderPath, folder.fileName].filter(Boolean).join('/') : ''
+      if (
+        !mayOnAsset(req, 'write:assets', { folderPath: destination, fileName: req.query.fileName })
+      ) {
+        return reply.forbidden('You are not allowed to upload a file here.')
+      }
       const asset = await WIKI.models.assets.upload({
         siteId: req.params.siteId,
         locale: req.query.locale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en',
@@ -137,9 +168,10 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; assetId: string } }>(
     '/sites/:siteId/assets/:assetId',
     {
-      config: {
-        permissions: ['read:assets', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
       schema: {
         summary: 'Get a single asset',
         description: 'Metadata only. `/content` serves the file itself.',
@@ -152,7 +184,8 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const asset = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
-      if (!asset) {
+      // -> Not readable is answered as not there, so the endpoint cannot be used to probe for files
+      if (!asset || !mayOnAsset(req, 'read:assets', asset)) {
         return reply.notFound('This asset does not exist.')
       }
       return asset
@@ -165,9 +198,10 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; assetId: string } }>(
     '/sites/:siteId/assets/:assetId/content',
     {
-      config: {
-        permissions: ['read:assets', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
       schema: {
         summary: 'Download an asset',
         description:
@@ -191,7 +225,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const asset = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
-      if (!asset) {
+      if (!asset || !mayOnAsset(req, 'read:assets', asset)) {
         return reply.notFound('This asset does not exist.')
       }
       const content = await WIKI.models.assets.getContent(req.params.assetId)
@@ -218,9 +252,10 @@ async function routes(app: FastifyInstance) {
   app.patch<{ Params: { siteId: string; assetId: string }; Body: { fileName: string } }>(
     '/sites/:siteId/assets/:assetId',
     {
-      config: {
-        permissions: ['manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
       schema: {
         summary: 'Rename an asset',
         description:
@@ -257,6 +292,13 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      const existing = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
+      if (!existing) {
+        return reply.notFound('This asset does not exist.')
+      }
+      if (!mayOnAsset(req, 'manage:assets', existing)) {
+        return reply.forbidden('You are not allowed to rename this file.')
+      }
       const asset = await WIKI.models.assets.renameAsset(
         req.params.siteId,
         req.params.assetId,
@@ -279,9 +321,10 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; assetId: string } }>(
     '/sites/:siteId/assets/:assetId',
     {
-      config: {
-        permissions: ['manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
       schema: {
         summary: 'Delete an asset',
         tags: ['Assets'],
@@ -294,6 +337,13 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      const doomed = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
+      if (!doomed) {
+        return reply.notFound('This asset does not exist.')
+      }
+      if (!mayOnAsset(req, 'manage:assets', doomed)) {
+        return reply.forbidden('You are not allowed to delete this file.')
+      }
       if (!(await WIKI.models.assets.deleteAsset(req.params.siteId, req.params.assetId))) {
         return reply.notFound('This asset does not exist.')
       }

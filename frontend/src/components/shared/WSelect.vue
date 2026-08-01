@@ -82,7 +82,7 @@
         The selection as chips rather than a comma-joined string. Each carries its own remove
         affordance, so a value can be dropped without reopening the list.
       -->
-      <span v-if="useChips && hasSelection" class="flex min-w-0 flex-wrap items-center gap-1">
+      <span v-if="showsChips" class="flex min-w-0 flex-wrap items-center gap-1">
         <w-chip
           v-for="(v, i) of selectedValues"
           :key="i"
@@ -115,7 +115,7 @@
         :aria-activedescendant="isOpen && activeIndex >= 0 ? optionId(activeIndex) : undefined"
         :disabled="isDisabled"
         :readonly="readonly"
-        :placeholder="useChips && hasSelection ? '' : placeholder"
+        :placeholder="showsChips ? '' : placeholder"
         class="w-unstyled min-w-8 flex-1 bg-transparent pt-0.5 outline-none placeholder:text-black/40 dark:placeholder:text-white/40"
         @focus="readonly || open(0)"
         @keydown="onKeydown" />
@@ -126,8 +126,12 @@
         <!--
           `selected` lets a caller summarise the selection instead of listing it -- e.g. "3 groups
           selected" rather than three comma-joined names.
+
+          Empty once the chips above are drawing the selection: the comma-joined text is what chips
+          REPLACE, and rendering both said the same thing twice, side by side. The element stays for
+          the layout -- it is what holds the row open and pushes the dropdown arrow to the end.
         -->
-        <slot name="selected">{{ displayText }}</slot>
+        <slot name="selected">{{ showsChips ? '' : displayText }}</slot>
       </span>
       <w-spinner v-if="loading" size="1em" class="shrink-0" />
       <w-icon
@@ -473,6 +477,9 @@ const selectedValues = computed(() => {
 })
 
 const hasSelection = computed(() => selectedValues.value.length > 0)
+
+/** Whether the selection is being drawn as chips, which is a different thing from being able to. */
+const showsChips = computed(() => props.useChips && hasSelection.value)
 
 const displayText = computed(() => {
   if (props.displayValue !== null) {

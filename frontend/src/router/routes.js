@@ -37,7 +37,12 @@ const routes = [
       { path: '', redirect: '/_inbox/messages' },
       { path: 'messages', component: () => import('@/pages/InboxMessages.vue') },
       { path: 'watching', component: () => import('@/pages/InboxWatching.vue') },
-      { path: 'review', component: () => import('@/pages/InboxReview.vue') }
+      /*
+        The submission being reviewed is in the URL, so a review can be linked to -- which is what a
+        notification about one will have to do. Optional, since the same screen without it is the
+        queue.
+      */
+      { path: 'review/:submissionId?', component: () => import('@/pages/InboxReview.vue') }
     ]
   },
   {

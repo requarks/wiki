@@ -2,9 +2,9 @@
   <div class="errorpage">
     <div class="errorpage-bg" />
     <div class="errorpage-content">
-      <div class="errorpage-code">{{error.code}}</div>
-      <div class="errorpage-title">{{error.title}}</div>
-      <div class="errorpage-hint">{{error.hint}}</div>
+      <div class="errorpage-code">{{ error.code }}</div>
+      <div class="errorpage-title">{{ error.title }}</div>
+      <div class="errorpage-hint">{{ error.hint }}</div>
       <div class="errorpage-actions">
         <w-btn
           v-if="error.showHomeBtn"
@@ -28,10 +28,13 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
+
+import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 const actions = {
   unauthorized: {
@@ -53,6 +56,12 @@ const actions = {
 // ROUTER
 
 const route = useRoute()
+const router = useRouter()
+
+// STORES
+
+const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -62,6 +71,26 @@ const { t } = useI18n()
 
 useMeta({
   title: t('common.error.title')
+})
+
+// MOUNTED
+
+/*
+  A site can choose to skip this screen entirely for a visitor who is not logged in: with
+  `bypassUnauthorized` on, being refused a page sends them to sign in rather than to a page whose only
+  purpose is to offer them a login button.
+
+  Only when nobody is logged in. Somebody who IS signed in and still refused has nothing to gain from
+  the login screen, and sending them there would bounce them straight back.
+*/
+onMounted(() => {
+  if (
+    route.params.action === 'unauthorized' &&
+    siteStore.auth.bypassUnauthorized &&
+    !userStore.authenticated
+  ) {
+    router.replace('/login')
+  }
 })
 
 // COMPUTED

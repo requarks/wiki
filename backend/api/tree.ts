@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy } from '../models/tree.ts'
 import { decodeTreePath } from '../helpers/common.ts'
 
@@ -77,6 +77,52 @@ const folderIdParam = {
  * pages and assets. Folders are the only kind created here — a page or an asset gets its tree entry
  * from whatever created it.
  */
+/**
+ * The entries of a tree listing this caller may see, and the folders leading to them.
+ *
+ * Filtered here rather than in the query for the same reason as everywhere else: a page rule can be a
+ * regular expression or a set of tags, so which rule decides an entry is only knowable per entry.
+ *
+ * A folder is judged on its own path, so a DENY over a branch hides the branch itself rather than
+ * leaving an empty folder to walk into. The consequence worth knowing is the other way round: a
+ * folder stays listed when the rules deny everything inside it but say nothing about the folder, and
+ * a reader opening it finds it empty. Hiding those would mean resolving every descendant of every
+ * folder on every listing, which is not worth what it costs.
+ */
+function visibleTreeItems<T extends { type?: string; folderPath?: string; fileName?: string }>(
+  req: FastifyRequest,
+  items: T[]
+): T[] {
+  const actor = WIKI.models.groups.actorForRequest(req)
+  return items.filter((item) => {
+    const path = item.folderPath ? `${item.folderPath}/${item.fileName}` : (item.fileName ?? '')
+    const permission = item.type === 'asset' ? 'read:assets' : 'read:pages'
+    return WIKI.models.groups.checkAccess(actor, permission, {
+      path,
+      tags: (item as any).tags ?? []
+    })
+  })
+}
+
+/** A folder's own slash-separated path, which is what a rule over that branch addresses. */
+function folderPathOf(folder: { folderPath?: string | null; fileName: string }): string {
+  const parent = decodeTreePath(folder.folderPath ?? '') ?? ''
+  return parent ? `${parent}/${folder.fileName}` : folder.fileName
+}
+
+/**
+ * Whether the caller holds a page permission over a folder, judged on the folder's own path.
+ *
+ * A folder is not a page and has no permissions of its own, so what governs it is what governs the
+ * branch it opens: a rule denying `read:pages` under `geography` hides the folder as well as the
+ * pages in it, and only somebody who may reorganise pages there may rename or remove it.
+ */
+function mayOnFolder(req: FastifyRequest, permission: string, path: string): boolean {
+  return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, {
+    path
+  })
+}
+
 async function routes(app: FastifyInstance) {
   /**
    * BROWSE THE TREE
@@ -84,9 +130,11 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: TreeQuery }>(
     '/sites/:siteId/tree',
     {
-      config: {
-        permissions: ['read:pages', 'read:assets', 'manage:pages', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: page permissions come from a group's RULES, and every entry is
+        filtered against them below — a caller allowed nowhere gets an empty listing rather than a
+        refusal, which is the same thing the tree would look like if the pages were not there.
+      */
       schema: {
         summary: 'Browse the tree',
         description:
@@ -168,7 +216,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req) => {
       const q = req.query
-      return WIKI.models.tree.getTree({
+      const items = await WIKI.models.tree.getTree({
         siteId: req.params.siteId,
         parentId: q.parentId,
         parentPath: q.parentPath,
@@ -183,6 +231,7 @@ async function routes(app: FastifyInstance) {
         includeAncestors: q.includeAncestors,
         includeRootFolders: q.includeRootFolders
       })
+      return visibleTreeItems(req, items)
     }
   )
 
@@ -258,7 +307,18 @@ async function routes(app: FastifyInstance) {
       if (!level) {
         return reply.notFound('This folder does not exist.')
       }
-      return level
+      /*
+        A browse row carries a whole path rather than a folder/name pair, and stands for a page, a
+        folder, or both at once. Judged on that path either way: for the page it IS the page, and for
+        a folder it is the branch, which is what a rule over the branch is talking about.
+      */
+      const actor = WIKI.models.groups.actorForRequest(req)
+      return {
+        ...level,
+        items: level.items.filter((item) =>
+          WIKI.models.groups.checkAccess(actor, 'read:pages', { path: item.path })
+        )
+      }
     }
   )
 
@@ -340,7 +400,7 @@ async function routes(app: FastifyInstance) {
       if (!WIKI.sites[req.params.siteId]) {
         return reply.notFound('This site does not exist.')
       }
-      return WIKI.models.tree.listPages({
+      const pages = await WIKI.models.tree.listPages({
         siteId: req.params.siteId,
         path: req.query.path,
         locale: req.query.locale ?? defaultLocale(req.params.siteId),
@@ -351,6 +411,15 @@ async function routes(app: FastifyInstance) {
         depth: req.query.depth,
         publicOnly: !req.session?.authenticated
       })
+      // -> An index block is drawn inside a page, but it lists other pages: each one still has to be
+      //    the reader's to see
+      const actor = WIKI.models.groups.actorForRequest(req)
+      return pages.filter((page) =>
+        WIKI.models.groups.checkAccess(actor, 'read:pages', {
+          path: page.path,
+          locale: req.query.locale ?? defaultLocale(req.params.siteId)
+        })
+      )
     }
   )
 
@@ -360,9 +429,7 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; folderId: string } }>(
     '/sites/:siteId/tree/folders/:folderId',
     {
-      config: {
-        permissions: ['read:pages', 'read:assets', 'manage:pages', 'manage:assets']
-      },
+      // -> Checked against the folder's own path below, not against the group-wide list
       schema: {
         summary: 'Get a single folder',
         tags: ['Tree'],
@@ -375,6 +442,11 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const folder = await WIKI.models.tree.getFolderById(req.params.folderId)
       if (!folder || folder.siteId !== req.params.siteId) {
+        return reply.notFound('This folder does not exist.')
+      }
+      const folderPath = folderPathOf(folder)
+      // -> Not visible is the same as not there, so it answers as the id had matched nothing
+      if (!mayOnFolder(req, 'read:pages', folderPath)) {
         return reply.notFound('This folder does not exist.')
       }
       return {
@@ -391,9 +463,10 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string }; Body: FolderBody }>(
     '/sites/:siteId/tree/folders',
     {
-      config: {
-        permissions: ['write:pages', 'write:assets', 'manage:pages', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions come
+        from a group's RULES. Checked against the folder's own path below.
+      */
       schema: {
         summary: 'Create a folder',
         description:
@@ -443,7 +516,20 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async (req) => {
+    async (req, reply) => {
+      /*
+        Against where the folder is going. `parentPath` is the slash-separated path when given; with
+        `parentId` the parent has to be looked up, and a missing one is left to the model to report.
+      */
+      let parentPath = req.body.parentPath ?? ''
+      if (req.body.parentId) {
+        const parent = await WIKI.models.tree.getFolderById(req.body.parentId)
+        parentPath = parent ? folderPathOf(parent) : parentPath
+      }
+      const target = [parentPath, req.body.pathName].filter(Boolean).join('/')
+      if (!mayOnFolder(req, 'manage:pages', target)) {
+        return reply.forbidden('You are not allowed to create a folder here.')
+      }
       const folder = await WIKI.models.tree.createFolder({
         siteId: req.params.siteId,
         locale: req.body.locale ?? defaultLocale(req.params.siteId),
@@ -470,9 +556,10 @@ async function routes(app: FastifyInstance) {
   app.patch<{ Params: { siteId: string; folderId: string }; Body: FolderBody }>(
     '/sites/:siteId/tree/folders/:folderId',
     {
-      config: {
-        permissions: ['manage:pages', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions come
+        from a group's RULES. Checked against the folder's own path below.
+      */
       schema: {
         summary: 'Rename a folder',
         description:
@@ -504,6 +591,9 @@ async function routes(app: FastifyInstance) {
       if (!existing || existing.siteId !== req.params.siteId) {
         return reply.notFound('This folder does not exist.')
       }
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing))) {
+        return reply.forbidden('You are not allowed to rename this folder.')
+      }
       const folder = await WIKI.models.tree.renameFolder({
         folderId: req.params.folderId,
         pathName: req.body.pathName,
@@ -527,9 +617,10 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; folderId: string } }>(
     '/sites/:siteId/tree/folders/:folderId',
     {
-      config: {
-        permissions: ['manage:pages', 'manage:assets']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions come
+        from a group's RULES. Checked against the folder's own path below.
+      */
       schema: {
         summary: 'Delete a folder',
         description:
@@ -547,6 +638,9 @@ async function routes(app: FastifyInstance) {
       const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
       if (!existing || existing.siteId !== req.params.siteId) {
         return reply.notFound('This folder does not exist.')
+      }
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing))) {
+        return reply.forbidden('You are not allowed to delete this folder.')
       }
       const removed = await WIKI.models.tree.deleteFolder(req.params.folderId)
       await WIKI.models.assets.deleteOrphaned(removed.assets)

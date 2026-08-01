@@ -63,5 +63,14 @@ declare module 'fastify' {
      * The outer array is OR-ed; a nested array is AND-ed. `manage:system` bypasses the check.
      */
     permissions?: (string | string[])[]
+    /**
+     * Whether this route genuinely serves everybody the same thing.
+     *
+     * Only affects the API documentation. A route with no `permissions` is not thereby public: most
+     * of them answer according to who is asking — the caller's session, their groups' page rules, or
+     * their own account — and the docs say so. This marks the few where a guest and an administrator
+     * really do get the same reply, so that the difference is stated rather than assumed.
+     */
+    publicAccess?: boolean
   }
 }

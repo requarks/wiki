@@ -78,9 +78,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           comments: {
             type: 'boolean'
           },
-          contributions: {
-            type: 'boolean'
-          },
           profile: {
             type: 'boolean'
           },

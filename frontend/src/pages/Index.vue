@@ -514,6 +514,10 @@ watch(
             message: 'This page does not exist (yet)!'
           })
         }
+      } else if (err.message === 'ERR_PAGE_UNAUTHORIZED') {
+        // -> `replace`, so the back button leaves the wiki the way it came rather than bouncing off
+        //    the same refusal again
+        router.replace('/_error/unauthorized')
       } else {
         notify({
           type: 'negative',

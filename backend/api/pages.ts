@@ -69,15 +69,25 @@ export function actorFrom(req: FastifyRequest): PageActor | null {
 const PASSWORD_BYPASS = ['write:pages', 'manage:pages', 'manage:system']
 
 /**
- * Every page permission a group can be granted, i.e. the whole set `manage:system` amounts to. Mirrors
- * the page rules offered in the group editor.
+ * Every page permission a rule can grant, i.e. the whole set `manage:system` amounts to. Mirrors the
+ * page rules offered in the group editor, and is what the interface asks about per path.
  */
 const PAGE_PERMISSIONS = [
   'read:pages',
   'write:pages',
   'review:pages',
   'manage:pages',
-  'delete:pages'
+  'delete:pages',
+  'write:styles',
+  'write:scripts',
+  'read:source',
+  'read:history',
+  'read:assets',
+  'write:assets',
+  'manage:assets',
+  'read:comments',
+  'write:comments',
+  'manage:comments'
 ]
 
 export function mayBypassPassword(req: FastifyRequest): boolean {
@@ -96,6 +106,21 @@ export function unlockedFor(req: FastifyRequest, pageId: string): boolean {
 }
 
 /**
+ * Whether this requester holds a page permission ON THIS PAGE.
+ *
+ * Page permissions are granted by a group's rules, not by the group-wide permission list, so this is
+ * a different question from the one the route-level `config.permissions` hook answers — and the only
+ * correct one for anything page-scoped. `helpers/pageRules.ts` sets out how a rule is chosen.
+ */
+export function mayOnPage(
+  req: FastifyRequest,
+  permission: string,
+  page: { path: string; locale?: string; tags?: string[] }
+): boolean {
+  return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, page)
+}
+
+/**
  * A page, as this requester is allowed to see it — or null when they are not allowed to see it at all.
  *
  * The gate for anything that hangs off a page but is not the page itself. An anonymous requester only
@@ -104,12 +129,17 @@ export function unlockedFor(req: FastifyRequest, pageId: string): boolean {
  */
 async function loadReadablePage(req: FastifyRequest, siteId: string, pageId: string) {
   const actor = actorFrom(req)
-  return WIKI.models.pages.getPage({
+  const page = await WIKI.models.pages.getPage({
     siteId,
     id: pageId,
     publicOnly: !actor,
     unlocked: (id: string) => unlockedFor(req, id)
   })
+  // -> Not readable is indistinguishable from not there, for anything hanging off the page
+  if (!page || !mayOnPage(req, 'read:pages', page)) {
+    return null
+  }
+  return page
 }
 
 /**
@@ -122,13 +152,14 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/pages',
     {
-      config: {
-        permissions: ['read:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: page permissions come from a group's RULES, and this would have
+        to filter per page against them. It has nothing to filter yet — see the description.
+      */
       schema: {
         summary: 'List all pages',
         description:
-          'Not implemented yet — always answers with an empty list. Browse the tree instead, which is what the file manager and the navigation use.',
+          'Not implemented yet — always answers with an empty list. Browse the tree instead, which is what the file manager and the navigation use, and which filters what it lists by the page rules.',
         tags: ['Pages'],
         params: siteIdParam,
         response: {
@@ -276,6 +307,8 @@ async function routes(app: FastifyInstance) {
         offset: req.query.offset,
         limit: req.query.limit,
         publicOnly: !actor,
+        // -> So that a page the caller could not open never shows up as a result
+        actor: WIKI.models.groups.actorForRequest(req),
         // -> An unpublished page is only of interest to someone who could have written it
         includeDrafts: ['write:pages', 'manage:pages', 'manage:system'].some((p) =>
           permissions.includes(p)
@@ -335,6 +368,9 @@ async function routes(app: FastifyInstance) {
       })
       if (!page) {
         return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'read:pages', page)) {
+        return reply.forbidden('You are not allowed to read this page.')
       }
       return {
         path: page.path,
@@ -409,6 +445,9 @@ async function routes(app: FastifyInstance) {
       })
       if (!page) {
         return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'read:pages', page)) {
+        return reply.forbidden('You are not allowed to read this page.')
       }
       return page
     }
@@ -500,9 +539,11 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string }; Body: PageInput }>(
     '/sites/:siteId/pages',
     {
-      config: {
-        permissions: ['write:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
       schema: {
         summary: 'Create a page',
         description:
@@ -533,6 +574,10 @@ async function routes(app: FastifyInstance) {
       if (!actor) {
         return reply.unauthorized('Saving a page requires a logged in user.')
       }
+      // -> Against where the page is going: there is no page to ask about yet
+      if (!mayOnPage(req, 'write:pages', { path: req.body.path, locale: req.body.locale })) {
+        return reply.forbidden('You are not allowed to create a page here.')
+      }
       const page = await WIKI.models.pages.createPage(req.params.siteId, req.body, actor)
       return {
         ok: true,
@@ -548,9 +593,11 @@ async function routes(app: FastifyInstance) {
   app.patch<{ Params: { siteId: string; pageId: string }; Body: Partial<PageInput> }>(
     '/sites/:siteId/pages/:pageId',
     {
-      config: {
-        permissions: ['write:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
       schema: {
         summary: 'Update a page',
         description:
@@ -575,6 +622,16 @@ async function routes(app: FastifyInstance) {
       const actor = actorFrom(req)
       if (!actor) {
         return reply.unauthorized('Saving a page requires a logged in user.')
+      }
+      const target = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        id: req.params.pageId
+      })
+      if (!target) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'write:pages', target)) {
+        return reply.forbidden('You are not allowed to edit this page.')
       }
       const page = await WIKI.models.pages.updatePage(
         req.params.siteId,
@@ -602,9 +659,11 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/path',
     {
-      config: {
-        permissions: ['manage:pages']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
       schema: {
         summary: 'Move a page to another path',
         description:
@@ -645,6 +704,16 @@ async function routes(app: FastifyInstance) {
       if (!actor) {
         return reply.unauthorized('Moving a page requires a logged in user.')
       }
+      const target = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        id: req.params.pageId
+      })
+      if (!target) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'manage:pages', target)) {
+        return reply.forbidden('You are not allowed to move this page.')
+      }
       const page = await WIKI.models.pages.movePage(
         req.params.siteId,
         req.params.pageId,
@@ -668,9 +737,11 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/render',
     {
-      config: {
-        permissions: ['write:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
       schema: {
         summary: 'Render a page again from its source',
         description:
@@ -695,6 +766,17 @@ async function routes(app: FastifyInstance) {
       if (!actor) {
         return reply.unauthorized('Rendering a page requires a logged in user.')
       }
+      const target = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        id: req.params.pageId
+      })
+      if (!target) {
+        return reply.notFound('This page does not exist.')
+      }
+      // -> Rewrites what the page shows, so it is an edit and takes the same permission as one
+      if (!mayOnPage(req, 'write:pages', target)) {
+        return reply.forbidden('You are not allowed to edit this page.')
+      }
       const page = await WIKI.models.pages.rerenderPage(req.params.siteId, req.params.pageId, actor)
       if (!page) {
         return reply.notFound('This page does not exist.')
@@ -713,9 +795,11 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId',
     {
-      config: {
-        permissions: ['delete:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
       schema: {
         summary: 'Delete a page',
         tags: ['Pages'],
@@ -732,6 +816,16 @@ async function routes(app: FastifyInstance) {
       if (!actor) {
         return reply.unauthorized('Deleting a page requires a logged in user.')
       }
+      const target = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        id: req.params.pageId
+      })
+      if (!target) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'delete:pages', target)) {
+        return reply.forbidden('You are not allowed to delete this page.')
+      }
       if (!(await WIKI.models.pages.deletePage(req.params.siteId, req.params.pageId, actor))) {
         return reply.notFound('This page does not exist.')
       }
@@ -745,10 +839,14 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/history',
     {
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and `read:history` is a
+        page permission granted by a rule. Checked against this page below instead.
+      */
       schema: {
         summary: "Get a page's version history",
         description:
-          'Every recorded version of the page, newest first — the first entry is the page as it stands now.\n\nGated on being able to read the page, no more: history is part of a page, so whoever may read the page may read what it used to say. That means an anonymous reader sees the history of a published page and nothing of a draft, and that a password-protected page answers only once the session has satisfied `POST …/unlock`.',
+          'Every recorded version of the page, newest first — the first entry is the page as it stands now.\n\nNeeds `read:history` ON THIS PAGE, granted by a group rule — the permission that says who may see what a page used to contain. Reading the page itself is required on top, so a page the caller could not open answers 404 and a password-protected one answers only once the session has satisfied `POST …/unlock`.',
         tags: ['Pages'],
         params: pageIdParam,
         response: {
@@ -765,6 +863,9 @@ async function routes(app: FastifyInstance) {
       if (!page) {
         return reply.notFound('This page does not exist.')
       }
+      if (!mayOnPage(req, 'read:history', page)) {
+        return reply.forbidden("You are not allowed to read this page's history.")
+      }
       if (page.isLocked) {
         return reply.forbidden('This page is password protected.')
       }
@@ -778,10 +879,11 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string; versionId: string } }>(
     '/sites/:siteId/pages/:pageId/history/:versionId',
     {
+      // -> Checked per page below, for the same reason as the history list above
       schema: {
         summary: 'Get a single version of a page',
         description:
-          'One version in full, source included — one side of a comparison. Readable by whoever may read the page, on the same terms as the history list.',
+          'One version in full, source included — one side of a comparison. Needs `read:history` and the ability to read the page, on the same terms as the history list.',
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -811,6 +913,9 @@ async function routes(app: FastifyInstance) {
       if (!page) {
         return reply.notFound('This page does not exist.')
       }
+      if (!mayOnPage(req, 'read:history', page)) {
+        return reply.forbidden("You are not allowed to read this page's history.")
+      }
       if (page.isLocked) {
         return reply.forbidden('This page is password protected.')
       }
@@ -832,9 +937,11 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; alias: string } }>(
     '/sites/:siteId/pages/alias/:alias',
     {
-      config: {
-        permissions: ['read:pages', 'manage:pages']
-      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
       schema: {
         summary: 'Resolve a page alias to its path',
         tags: ['Pages'],
@@ -870,6 +977,11 @@ async function routes(app: FastifyInstance) {
       if (!target) {
         return reply.notFound('No page uses this alias.')
       }
+      // -> Resolving an alias tells the caller a page exists and where it is, which is only theirs
+      //    to know if they may read it
+      if (!mayOnPage(req, 'read:pages', { path: target.path })) {
+        return reply.notFound('No page uses this alias.')
+      }
       return target
     }
   )
@@ -883,7 +995,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get page user permissions',
         description:
-          "The current user's page permissions, which are not yet scoped per path — every page in the site answers the same.",
+          "Which page permissions the caller holds AT THIS PATH, as their groups' rules decide. This is what the interface hides its controls by, so it answers the same question the endpoints themselves do rather than a broader one.\n\nAn administrator holds all of them. Everybody else gets whatever their rules grant, which for a path nobody wrote a rule for is nothing at all.",
         tags: ['Pages'],
         params: siteIdParam,
         body: {
@@ -912,21 +1024,26 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      const actor = actorFrom(req)
-      if (!actor) {
-        return []
-      }
       /*
-        An administrator holds all of them, and holds them here too. Filtering their permissions by
-        name the way the line below does would answer `manage:system` → nothing ending in `:pages` →
-        that an administrator has no rights over any page, which is the opposite of true.
+        Anonymous included: the guests group has rules of its own, and what the public may do is
+        exactly what they say. Answering an empty list for a reader without a session would hide
+        controls a wiki had deliberately opened to everyone.
       */
-      if (actor.permissions.includes('manage:system')) {
+      const accessActor = WIKI.models.groups.actorForRequest(req)
+      /*
+        An administrator holds all of them, and holds them here too. Deriving the list from their
+        permissions instead would answer `manage:system` → nothing ending in `:pages` → that an
+        administrator has no rights over any page, which is the opposite of true.
+      */
+      if (accessActor.permissions.includes('manage:system')) {
         return PAGE_PERMISSIONS
       }
-      // FIXME: per-path permission rules are not implemented — a group's page permissions apply to
-      // the whole site, so this returns what the user holds anywhere rather than here.
-      return actor.permissions.filter((p) => p.endsWith(':pages'))
+      // -> Resolved per permission against this path, since each one may be decided by a different
+      //    rule — a branch can be readable but not writable, and one page within it neither
+      const page = { path: req.body.path.replace(/^\/+/, '') }
+      return PAGE_PERMISSIONS.filter((permission) =>
+        WIKI.models.groups.checkAccess(accessActor, permission, page)
+      )
     }
   )
 }

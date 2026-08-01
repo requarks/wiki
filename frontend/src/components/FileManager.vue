@@ -456,6 +456,39 @@ const { t } = useI18n()
 
 // DATA
 
+/**
+ * Where the view options are remembered. The browser rather than the account, deliberately: how
+ * densely a list should be drawn is a property of the screen it is being read on, and the same person
+ * on a laptop and on a large monitor will not want the same answer.
+ */
+const VIEW_OPTIONS_KEY = 'wiki.fileman.viewOptions'
+
+/**
+ * The remembered view options, each taken only if it is still a value this component understands.
+ *
+ * Field by field rather than wholesale: the entry outlives the code that wrote it, and an option that
+ * has since changed shape -- or been hand-edited in devtools -- must not be able to put the file list
+ * into a state it has no way back out of.
+ */
+function storedViewOptions() {
+  let stored = null
+  try {
+    stored = JSON.parse(globalThis.localStorage?.getItem(VIEW_OPTIONS_KEY) ?? 'null')
+  } catch {
+    // -> Unreadable is the same as absent: the defaults below stand
+  }
+  if (!stored || typeof stored !== 'object') {
+    return {}
+  }
+  return {
+    ...(['title', 'path'].includes(stored.displayMode) ? { displayMode: stored.displayMode } : {}),
+    ...(typeof stored.isCompact === 'boolean' ? { isCompact: stored.isCompact } : {}),
+    ...(typeof stored.shouldShowFolders === 'boolean'
+      ? { shouldShowFolders: stored.shouldShowFolders }
+      : {})
+  }
+}
+
 const state = reactive({
   loading: 0,
   isFetching: false,
@@ -475,6 +508,28 @@ const state = reactive({
   fileList: [],
   fileListLoading: false
 })
+
+// -> Over the defaults just above, which is what the view falls back to on a first visit
+Object.assign(state, storedViewOptions())
+
+/*
+  Written on every change rather than when the overlay closes: the file manager is also opened from
+  the editor's insert flow, which can be dismissed in ways that never reach a teardown here.
+*/
+watch(
+  () => [state.displayMode, state.isCompact, state.shouldShowFolders],
+  ([displayMode, isCompact, shouldShowFolders]) => {
+    try {
+      globalThis.localStorage?.setItem(
+        VIEW_OPTIONS_KEY,
+        JSON.stringify({ displayMode, isCompact, shouldShowFolders })
+      )
+    } catch {
+      // -> Full, or storage denied. Not worth a word to the reader: the options still work, they
+      //    just will not be there next time.
+    }
+  }
+)
 
 const thumbStyle = {
   right: '2px',

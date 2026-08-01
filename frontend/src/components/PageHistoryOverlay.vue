@@ -11,7 +11,7 @@
       <span class="page-history-page">{{ pageStore.title }}</span>
       <w-space />
       <transition name="syncing">
-        <w-spinner class="mr-2" v-show="state.loading > 0" color="accent" size="24px" />
+        <w-spinner class="mr-4" v-show="state.loading > 0" color="accent" size="20px" />
       </transition>
       <!--
         How the two versions are laid against each other. Up here rather than over the diff, so the

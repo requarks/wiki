@@ -15,7 +15,9 @@
           :aria-label="t(`common.actions.refresh`)"
           icon="la:redo-alt"
           @click="refresh">
-          <w-tooltip anchor="center left" self="center right">{{ t(`common.actions.refresh`) }}</w-tooltip>
+          <w-tooltip anchor="center left" self="center right">{{
+            t(`common.actions.refresh`)
+          }}</w-tooltip>
         </w-btn>
         <w-btn
           push
@@ -105,7 +107,9 @@
                   <blueprint-icon icon="chevron-right" />
                   <w-item-section>
                     <w-item-label>{{ t(`admin.groups.redirectOnFirstLogin`) }}</w-item-label>
-                    <w-item-label caption>{{ t(`admin.groups.redirectOnFirstLoginHint`) }}</w-item-label>
+                    <w-item-label caption>{{
+                      t(`admin.groups.redirectOnFirstLoginHint`)
+                    }}</w-item-label>
                   </w-item-section>
                   <w-item-section>
                     <w-input
@@ -120,7 +124,9 @@
                   <blueprint-icon icon="exit" />
                   <w-item-section>
                     <w-item-label>{{ t(`admin.groups.redirectOnLogout`) }}</w-item-label>
-                    <w-item-label caption>{{ t(`admin.groups.redirectOnLogoutHint`) }}</w-item-label>
+                    <w-item-label caption>{{
+                      t(`admin.groups.redirectOnLogoutHint`)
+                    }}</w-item-label>
                   </w-item-section>
                   <w-item-section>
                     <w-input
@@ -139,7 +145,9 @@
                   <blueprint-icon icon="team" :hue-rotate="-45" />
                   <w-item-section>
                     <w-item-label>{{ t(`common.field.id`) }}</w-item-label>
-                    <w-item-label><strong>{{state.group.id}}</strong></w-item-label>
+                    <w-item-label
+                      ><strong>{{ state.group.id }}</strong></w-item-label
+                    >
                   </w-item-section>
                 </w-item>
                 <w-separator class="my-2" inset />
@@ -148,7 +156,7 @@
                   <w-item-section>
                     <w-item-label>{{ t(`common.field.createdOn`) }}</w-item-label>
                     <w-item-label>
-                      <strong>{{humanizeDate(state.group.createdAt)}}</strong>
+                      <strong>{{ humanizeDate(state.group.createdAt) }}</strong>
                     </w-item-label>
                   </w-item-section>
                 </w-item>
@@ -158,7 +166,7 @@
                   <w-item-section>
                     <w-item-label>{{ t(`common.field.lastUpdated`) }}</w-item-label>
                     <w-item-label>
-                      <strong>{{humanizeDate(state.group.updatedAt)}}</strong>
+                      <strong>{{ humanizeDate(state.group.updatedAt) }}</strong>
                     </w-item-label>
                   </w-item-section>
                 </w-item>
@@ -202,20 +210,26 @@
         </w-toolbar>
         <w-separator />
         <div class="p-4">
-          <w-banner v-if="!state.group.rules || state.group.rules.length < 1" rounded :class="dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`">{{ t('admin.groups.rulesNone') }}</w-banner>
+          <w-banner
+            v-if="!state.group.rules || state.group.rules.length < 1"
+            rounded
+            :class="dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`"
+            >{{ t('admin.groups.rulesNone') }}</w-banner
+          >
           <w-card class="shadow-1 pb-2" v-else>
             <w-card-section>
               <div class="admin-groups-rule" v-for="rule of state.group.rules" :key="rule.id">
                 <div class="admin-groups-rule-icon" :class="getRuleModeColor(rule.mode)">
                   <w-icon
-                    class="cursor-pointer"
                     :name="getRuleModeIcon(rule.mode)"
                     color="white"
                     @click="rule.mode = getNextRuleMode(rule.mode)" />
                 </div>
                 <div class="admin-groups-rule-name">
                   <div class="admin-groups-rule-name-text">
-                    <strong :class="getRuleModeColor(rule.mode)">{{ getRuleModeName(rule.mode) }}</strong>
+                    <strong :class="getRuleModeColor(rule.mode)">{{
+                      getRuleModeName(rule.mode)
+                    }}</strong>
                   </div>
                   <w-separator class="ml-2 mr-1" vertical />
                   <input type="text" v-model="rule.name" placeholder="Rule Name" />
@@ -270,7 +284,7 @@
                           <!-- ) {{opt.permission}} -->
                           <w-item-section>
                             <w-item-label>{{ opt.title }}</w-item-label>
-                            <w-item-label caption>{{opt.hint}}</w-item-label>
+                            <w-item-label caption>{{ opt.hint }}</w-item-label>
                           </w-item-section>
                         </w-item>
                       </template>
@@ -300,7 +314,11 @@
                         option-label="title"
                         multiple
                         behavior="dialog"
-                        :display-value="t(`admin.groups.selectedSites`, rule.sites.length, { count: rule.sites.length })">
+                        :display-value="
+                          t(`admin.groups.selectedSites`, rule.sites.length, {
+                            count: rule.sites.length
+                          })
+                        ">
                         <template #option="{ itemProps, itemEvents, opt, selected, toggleOption }">
                           <w-item v-bind="itemProps" v-on="itemEvents">
                             <w-item-section>
@@ -331,7 +349,18 @@
                         option-label="name"
                         multiple
                         behavior="dialog"
-                        :display-value="t(`admin.groups.selectedLocales`, { n: rule.locales.length > 0 ? rule.locales[0].toUpperCase() : rule.locales.length }, rule.locales.length)">
+                        :display-value="
+                          t(
+                            `admin.groups.selectedLocales`,
+                            {
+                              n:
+                                rule.locales.length > 0
+                                  ? rule.locales[0].toUpperCase()
+                                  : rule.locales.length
+                            },
+                            rule.locales.length
+                          )
+                        ">
                         <template #option="{ itemProps, opt, selected, toggleOption }">
                           <w-item v-bind="itemProps">
                             <w-item-section>
@@ -361,13 +390,13 @@
                         dense
                         :aria-label="t(`admin.groups.ruleMatch`)"
                         :options="[
-                        { label: t('admin.groups.ruleMatchStart'), value: 'START' },
-                        { label: t('admin.groups.ruleMatchEnd'), value: 'END' },
-                        { label: t('admin.groups.ruleMatchRegex'), value: 'REGEX' },
-                        { label: t('admin.groups.ruleMatchTag'), value: 'TAG' },
-                        { label: t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
-                        { label: t('admin.groups.ruleMatchExact'), value: 'EXACT' }
-                      ]" />
+                          { label: t('admin.groups.ruleMatchStart'), value: 'START' },
+                          { label: t('admin.groups.ruleMatchEnd'), value: 'END' },
+                          { label: t('admin.groups.ruleMatchRegex'), value: 'REGEX' },
+                          { label: t('admin.groups.ruleMatchTag'), value: 'TAG' },
+                          { label: t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
+                          { label: t('admin.groups.ruleMatchExact'), value: 'EXACT' }
+                        ]" />
                       <w-input
                         class="mt-2"
                         standout
@@ -407,7 +436,7 @@
                 </w-card-header>
                 <template v-for="(perm, idx) of permissions" :key="perm.permission">
                   <w-item tag="label">
-                    <w-item-section class="items-center" style="flex: 0 0 40px;">
+                    <w-item-section class="items-center" style="flex: 0 0 40px">
                       <w-icon name="la:comments" color="primary" size="sm" />
                     </w-item-section>
                     <w-item-section>
@@ -470,7 +499,12 @@
         </w-toolbar>
         <w-separator />
         <div class="p-4">
-          <w-banner v-if="!state.users || state.users.length < 1" rounded :class="dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`">{{ t('admin.groups.usersNone') }}</w-banner>
+          <w-banner
+            v-if="!state.users || state.users.length < 1"
+            rounded
+            :class="dark.isActive ? `bg-negative text-white` : `bg-grey-4 text-grey-9`"
+            >{{ t('admin.groups.usersNone') }}</w-banner
+          >
           <w-card class="shadow-1">
             <w-table
               :rows="state.users"
@@ -486,26 +520,22 @@
                 <w-td :props="props">
                   <div class="flex items-center">
                     <strong>{{ props.value }}</strong>
-                    <w-icon
-                      class="ml-2"
-                      v-if="props.row.isSystem"
-                      name="la:lock"
-                      color="pink" />
-                    <w-icon
-                      class="ml-2"
-                      v-if="!props.row.isActive"
-                      name="la:ban"
-                      color="pink" />
+                    <w-icon class="ml-2" v-if="props.row.isSystem" name="la:lock" color="pink" />
+                    <w-icon class="ml-2" v-if="!props.row.isActive" name="la:ban" color="pink" />
                   </div>
                 </w-td>
               </template>
               <template #body-cell-email="props">
-                <w-td :props="props"><em>{{ props.value }}</em></w-td>
+                <w-td :props="props"
+                  ><em>{{ props.value }}</em></w-td
+                >
               </template>
               <template #body-cell-date="props">
                 <w-td :props="props">
                   <i18n-t class="text-caption" keypath="admin.users.createdAt" tag="div">
-                    <template #date><strong>{{ humanizeDate(props.value) }}</strong></template>
+                    <template #date
+                      ><strong>{{ humanizeDate(props.value) }}</strong></template
+                    >
                   </i18n-t>
                   <i18n-t
                     class="text-caption"
@@ -539,7 +569,9 @@
                     color="accent"
                     :aria-label="t(`admin.groups.unassignUser`)"
                     @click="unassignUser(props.row)">
-                    <w-tooltip anchor="center left" self="center right">{{ t('admin.groups.unassignUser') }}</w-tooltip>
+                    <w-tooltip anchor="center left" self="center right">{{
+                      t('admin.groups.unassignUser')
+                    }}</w-tooltip>
                   </w-btn>
                 </w-td>
               </template>
@@ -1225,18 +1257,24 @@ onMounted(() => {
       display: block;
     }
 
+    /*
+      Sized and placed to the disc `::before` draws, with the glyph inset by the padding: an inline
+      <svg> scales its viewBox to whatever box it is given, so the old `width: 100%; height: 38px`
+      -- metrics for the icon FONT this replaced, where `font-size` did the sizing -- stretched the
+      mark across the whole circle.
+
+      The box stays the full 31px even though the glyph is 15px, so the click target is the disc a
+      reader is aiming at rather than the mark inside it.
+    */
     .w-icon {
       position: absolute;
-      top: 0;
+      top: 4px;
       left: 0;
-      right: 0;
-      font-size: 16px;
-      height: 38px;
-      line-height: 38px;
-      width: 100%;
-      align-items: center;
-      justify-content: center;
-      display: flex;
+      box-sizing: border-box;
+      width: 31px;
+      height: 31px;
+      padding: 8px;
+      cursor: pointer;
     }
   }
 
@@ -1244,6 +1282,13 @@ onMounted(() => {
     line-height: 12px;
     display: flex;
     flex-wrap: nowrap;
+    /*
+      On the text baseline, not stretched. An <input> stretched to the row's height centres its text
+      inside that height, while the mode name beside it sits at the top of its own box -- so the two
+      read as a few pixels apart even though both are 12px type. The separator between them is
+      unaffected: it carries its own `self-stretch`, which outranks this.
+    */
+    align-items: baseline;
     padding-top: 4px;
 
     &-text {
