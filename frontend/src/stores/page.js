@@ -538,7 +538,13 @@ export const usePageStore = defineStore('page', {
             'tags',
             'title',
             'tocDepth'
-          ])
+          ]),
+          /*
+            Not a page field: it describes the save rather than the page, and the server records it on
+            the history version this save produces. Collected by the reason-for-change dialog before
+            `pageSave` is called, and cleared below once it has gone up.
+          */
+          reasonForChange: editorStore.reasonForChange ?? ''
         }
 
         /*

@@ -33,6 +33,10 @@ const overlays = {
     loader: () => import('./NavEditOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  PageHistory: defineAsyncComponent({
+    loader: () => import('./PageHistoryOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   PageSource: defineAsyncComponent({
     loader: () => import('./PageSourceOverlay.vue'),
     loadingComponent: LoadingGeneric

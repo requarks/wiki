@@ -103,6 +103,11 @@ export interface PageInput {
   scriptJsLoad?: string
   scriptJsUnload?: string
   scriptCss?: string
+  /**
+   * Why this save is being made, as the editor's reason-for-change prompt collected it. Not a page
+   * field: it belongs to the version this save produces, and is recorded on the history row.
+   */
+  reasonForChange?: string
 }
 
 /** Who is saving, and what they are allowed to put in a page. */
@@ -410,7 +415,7 @@ class Pages {
         isBrowsable: input.isBrowsable ?? true,
         isSearchable: input.isSearchable ?? true,
         locale,
-        password: input.password ?? null,
+        password: input.password || null,
         path,
         publishState: input.publishState ?? 'published',
         publishStartDate: input.publishStartDate ? new Date(input.publishStartDate) : null,
@@ -450,7 +455,8 @@ class Pages {
       siteId,
       pageId: page.id,
       action: 'created',
-      authorId: actor.id
+      authorId: actor.id,
+      reason: input.reasonForChange
     })
 
     await WIKI.models.search.indexPage(page.id, locale)
@@ -581,7 +587,8 @@ class Pages {
       pageId: id,
       action: 'updated',
       authorId: actor.id,
-      changedFields
+      changedFields,
+      reason: patch.reasonForChange
     })
 
     if (treeTitle !== null || patch.tags !== undefined) {

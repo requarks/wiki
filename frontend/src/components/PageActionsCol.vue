@@ -94,7 +94,7 @@
       icon="la:history"
       :color="editorStore.isActive ? `white` : `grey`"
       aria-label="Page History"
-      @click="notImplemented">
+      @click="viewPageHistory">
       <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
     </w-btn>
     <w-btn
@@ -246,6 +246,10 @@ function togglePageData() {
   })
 }
 
+function viewPageHistory() {
+  siteStore.$patch({ overlay: 'PageHistory', overlayOpts: {} })
+}
+
 function viewPageSource() {
   siteStore.$patch({ overlay: 'PageSource', overlayOpts: {} })
 }
@@ -336,13 +340,6 @@ function removePendingAsset(item) {
   if (editorStore.pendingAssets.length < 1) {
     menuPendingAssets.value.hide()
   }
-}
-
-function notImplemented() {
-  notify({
-    type: 'negative',
-    message: 'Not implemented'
-  })
 }
 </script>
 

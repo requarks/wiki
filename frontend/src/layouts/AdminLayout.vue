@@ -601,8 +601,9 @@ onMounted(async () => {
       padding: 0;
     }
 
+    // -> The radius is WDialog's, and the panel clips to it there; this only adds the depth and the
+    //    title-bar strip an overlay wants on top of it
     > .w-dialog-panel {
-      border-radius: 6px;
       box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
 
       @at-root .body--light & {

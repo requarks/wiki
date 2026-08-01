@@ -1,3 +1,4 @@
+import { pageHistoryActions } from '../../models/pageHistory.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -119,6 +120,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       scriptCss: {
         type: 'string',
         description: 'Requires the `write:styles` permission. Ignored without it.'
+      },
+      reasonForChange: {
+        type: 'string',
+        maxLength: 255,
+        description:
+          "Why this save is being made, as the editor's reason-for-change prompt collected it. Not stored on the page: it is recorded on the history version this save produces."
       }
     }
   })
@@ -226,5 +233,91 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description: 'The stored HTML, already sanitised when the page was saved.'
       }
     }
+  })
+
+  /**
+   * PAGE HISTORY ENTRY - One version of a page, as the history timeline lists it
+   */
+  app.addSchema({
+    $id: 'PageHistoryEntry',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        format: 'uuid'
+      },
+      action: {
+        type: 'string',
+        enum: [...pageHistoryActions],
+        description: 'What happened to the page. `moved` is a change of path or title.'
+      },
+      changedFields: {
+        type: 'array',
+        description:
+          'Which page fields the change touched, named as the page stores them. Empty for a creation or a deletion, where the whole page is the change.',
+        items: {
+          type: 'string'
+        }
+      },
+      reason: {
+        type: 'string',
+        description:
+          "Why the change was made, in the author's words. Empty when the site does not ask for a reason — see the `reasonForChange` site feature — or asked and was not answered."
+      },
+      versionDate: {
+        type: 'string',
+        format: 'date-time',
+        description: 'RFC 3339 Date Time'
+      },
+      path: {
+        type: 'string',
+        description: 'Where the page was at the time, which is not necessarily where it is now.'
+      },
+      title: {
+        type: 'string'
+      },
+      author: {
+        type: 'object',
+        description: 'Who made the change. Null id and empty name once that account is deleted.',
+        properties: {
+          id: {
+            type: ['string', 'null'],
+            format: 'uuid'
+          },
+          name: {
+            type: 'string'
+          },
+          email: {
+            type: 'string'
+          }
+        }
+      }
+    }
+  })
+
+  /**
+   * PAGE HISTORY VERSION - The same, with the source it held: one side of a diff
+   */
+  app.addSchema({
+    $id: 'PageHistoryVersion',
+    type: 'object',
+    allOf: [
+      { $ref: 'PageHistoryEntry#' },
+      {
+        type: 'object',
+        properties: {
+          content: {
+            type: 'string',
+            description: 'The page source as of this version.'
+          },
+          meta: {
+            type: 'object',
+            additionalProperties: true,
+            description:
+              'The rest of the page as it stood: description, icon, tags, publish state and dates, relations, scripts, config, editor and content type.'
+          }
+        }
+      }
+    ]
   })
 }

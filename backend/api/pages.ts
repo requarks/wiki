@@ -96,6 +96,23 @@ export function unlockedFor(req: FastifyRequest, pageId: string): boolean {
 }
 
 /**
+ * A page, as this requester is allowed to see it — or null when they are not allowed to see it at all.
+ *
+ * The gate for anything that hangs off a page but is not the page itself. An anonymous requester only
+ * ever reaches a published page, and a password-protected one comes back with `isLocked` set until the
+ * session has satisfied the unlock, which the caller is expected to refuse on.
+ */
+async function loadReadablePage(req: FastifyRequest, siteId: string, pageId: string) {
+  const actor = actorFrom(req)
+  return WIKI.models.pages.getPage({
+    siteId,
+    id: pageId,
+    publicOnly: !actor,
+    unlocked: (id: string) => unlockedFor(req, id)
+  })
+}
+
+/**
  * Pages API Routes
  */
 async function routes(app: FastifyInstance) {
@@ -719,6 +736,93 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This page does not exist.')
       }
       return reply.code(204).send()
+    }
+  )
+
+  /**
+   * PAGE HISTORY
+   */
+  app.get<{ Params: { siteId: string; pageId: string } }>(
+    '/sites/:siteId/pages/:pageId/history',
+    {
+      schema: {
+        summary: "Get a page's version history",
+        description:
+          'Every recorded version of the page, newest first — the first entry is the page as it stands now.\n\nGated on being able to read the page, no more: history is part of a page, so whoever may read the page may read what it used to say. That means an anonymous reader sees the history of a published page and nothing of a draft, and that a password-protected page answers only once the session has satisfied `POST …/unlock`.',
+        tags: ['Pages'],
+        params: pageIdParam,
+        response: {
+          200: {
+            description: 'Versions of this page, newest first',
+            type: 'array',
+            items: { $ref: 'PageHistoryEntry#' }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const page = await loadReadablePage(req, req.params.siteId, req.params.pageId)
+      if (!page) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (page.isLocked) {
+        return reply.forbidden('This page is password protected.')
+      }
+      return WIKI.models.pageHistory.list(req.params.siteId, req.params.pageId)
+    }
+  )
+
+  /**
+   * PAGE HISTORY VERSION
+   */
+  app.get<{ Params: { siteId: string; pageId: string; versionId: string } }>(
+    '/sites/:siteId/pages/:pageId/history/:versionId',
+    {
+      schema: {
+        summary: 'Get a single version of a page',
+        description:
+          'One version in full, source included — one side of a comparison. Readable by whoever may read the page, on the same terms as the history list.',
+        tags: ['Pages'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            pageId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            versionId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId', 'pageId', 'versionId']
+        },
+        response: {
+          200: { $ref: 'PageHistoryVersion#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const page = await loadReadablePage(req, req.params.siteId, req.params.pageId)
+      if (!page) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (page.isLocked) {
+        return reply.forbidden('This page is password protected.')
+      }
+      const version = await WIKI.models.pageHistory.getVersion(
+        req.params.siteId,
+        req.params.pageId,
+        req.params.versionId
+      )
+      if (!version) {
+        return reply.notFound('This version does not exist.')
+      }
+      return version
     }
   )
 

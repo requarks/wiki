@@ -428,6 +428,11 @@ export const pageHistory = pgTable(
      * field added to a page does not have to be added here too.
      */
     meta: jsonb().notNull().default({}),
+    /**
+     * Why the change was made, in the author's words, as the editor's reason-for-change prompt
+     * collected it. Null when the site does not ask for one, or asks and is not answered.
+     */
+    reason: varchar({ length: 255 }),
     versionDate: timestamp().notNull().defaultNow(),
     // -> Null once the account is gone, rather than holding the account hostage: a history row is a
     //    record of what happened to the page, and requiring its author to exist for ever would mean

@@ -24,7 +24,7 @@
           <div
             role="dialog"
             aria-modal="true"
-            class="w-dialog-panel pointer-events-auto flex flex-col shadow-dialog"
+            class="w-dialog-panel pointer-events-auto flex flex-col overflow-auto shadow-dialog"
             :class="panelClasses"
             :style="panelStyle"
             @click.stop>
@@ -113,10 +113,11 @@ const transitionName = computed(() => TRANSITIONS[props.position] ?? TRANSITIONS
 const viewportClasses = computed(() => VIEWPORTS[props.position] ?? VIEWPORTS.standard)
 
 const panelClasses = computed(() => [
-  // -> `rounded`, not `rounded-none`: the panel no longer touches the window, see VIEWPORTS above
-  props.position === 'right' ? 'h-full rounded' : '',
-  props.position === 'bottom' ? 'rounded-b-none max-h-full rounded-t' : '',
-  props.position === 'standard' ? 'rounded max-h-full' : '',
+  // -> Rounded, not square: the panel no longer touches the window, see VIEWPORTS above. A panel
+  //    against the bottom edge keeps its own bottom corners square, since they sit on that edge.
+  props.position === 'right' ? 'h-full rounded-lg' : '',
+  props.position === 'bottom' ? 'rounded-b-none max-h-full rounded-t-lg' : '',
+  props.position === 'standard' ? 'rounded-lg max-h-full' : '',
   props.fullHeight && props.position === 'standard' ? 'h-full' : '',
   props.fullWidth ? 'w-full' : ''
 ])
@@ -186,6 +187,28 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/*
+  The panel clips what is put inside it, which is what actually rounds a dialog.
+
+  Every dialog fills its panel with something opaque -- a `WCard`, or a whole `WLayout` for the
+  full-screen overlays -- and those surfaces carry bands with backgrounds of their own: a header, a row
+  of actions. Left to paint themselves, they cover the panel's corners and the dialog reads as square,
+  which it did. Clipping here rounds all of them at once, however deeply the band is nested.
+
+  `auto` rather than `hidden`: both clip, but a dialog whose content outgrows the screen stays
+  reachable instead of being cut off. The viewport behind it scrolls too, so nothing is trapped.
+*/
+/*
+  The surface inside takes the panel's shape. Without this its own smaller radius shows through at the
+  corners as four notches of backdrop, since the panel itself has no background of its own.
+
+  Written flat rather than nested: nesting `> :deep(*)` inside the panel's own rule compiles to a
+  DESCENDANT selector, which matches the wrong elements entirely.
+*/
+.w-dialog-panel > :deep(*) {
+  border-radius: inherit;
+}
+
 .w-dialog-backdrop-enter-active,
 .w-dialog-backdrop-leave-active {
   transition: opacity 0.2s var(--ease-standard);

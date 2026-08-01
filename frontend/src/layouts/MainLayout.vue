@@ -291,8 +291,9 @@ body.body--dark {
       padding: 0;
     }
 
+    // -> The radius is WDialog's, and the panel clips to it there; this only adds the depth and the
+    //    title-bar strip an overlay wants on top of it
     > .w-dialog-panel {
-      border-radius: 6px;
       box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.3);
 
       @at-root .body--light & {

@@ -1,5 +1,10 @@
-import { eq } from 'drizzle-orm'
-import { pageHistory as pageHistoryTable, pages as pagesTable } from '../db/schema.ts'
+import { isEqual } from 'es-toolkit/predicate'
+import { and, desc, eq } from 'drizzle-orm'
+import {
+  pageHistory as pageHistoryTable,
+  pages as pagesTable,
+  users as usersTable
+} from '../db/schema.ts'
 
 /**
  * The kinds of change a history row records.
@@ -64,12 +69,38 @@ const NOT_REPORTED_AS_CHANGED = new Set([
   'isSearchableComputed'
 ])
 
+/** Who a version is attributed to. Null once that account is gone; the version stays. */
+export type PageHistoryAuthor = {
+  id: string | null
+  name: string
+  email: string
+}
+
+/** A version as a timeline shows it: what happened, when, and to whom — but not the source. */
+export type PageHistoryEntry = {
+  id: string
+  action: string
+  changedFields: string[]
+  /** Empty when the site does not ask for a reason, or asked and was not answered. */
+  reason: string
+  versionDate: Date
+  path: string
+  title: string
+  author: PageHistoryAuthor
+}
+
+/** A version in full, source included. */
+export type PageHistoryVersion = PageHistoryEntry & {
+  content: string
+  meta: Record<string, any>
+}
+
 /**
  * Page history model
  *
- * Records a version of a page every time one changes. Nothing reads it back yet — displaying the
- * history, comparing versions and restoring one are the next step — so this is deliberately only the
- * recording side.
+ * Records a version of a page every time one changes, and reads those versions back for the history
+ * view — which lists them and diffs any two against each other. Restoring one, and recovering a page
+ * that was deleted, are still to come.
  */
 class PageHistory {
   /**
@@ -86,6 +117,7 @@ class PageHistory {
    *                 point the version survives with no author rather than blocking the deletion.
    * @param changedFields Which fields the change touched. Empty for a creation or a deletion, where
    *                      the whole page is the change.
+   * @param reason Why, in the author's words, when the site asks for one.
    * @returns The version's ID, or null when nothing was recorded
    */
   async record({
@@ -93,13 +125,15 @@ class PageHistory {
     pageId,
     action,
     authorId,
-    changedFields = []
+    changedFields = [],
+    reason
   }: {
     siteId: string
     pageId: string
     action: PageHistoryAction
     authorId: string
     changedFields?: string[]
+    reason?: string | null
   }): Promise<string | null> {
     try {
       const rows = await WIKI.db.select().from(pagesTable).where(eq(pagesTable.id, pageId)).limit(1)
@@ -124,6 +158,8 @@ class PageHistory {
           authorId,
           action,
           changedFields,
+          // -> An unanswered optional prompt sends an empty string; a version simply has no reason
+          reason: reason?.trim() || null,
           locale: page.locale,
           path: page.path,
           title: page.title,
@@ -136,6 +172,107 @@ class PageHistory {
     } catch (err: any) {
       WIKI.logger.warn(`Failed to record page history for ${pageId}: ${err.message}`)
       return null
+    }
+  }
+
+  /**
+   * A page's versions, newest first — the order a timeline reads in.
+   *
+   * The newest row is the page as it stands: it was written after the change that produced the state
+   * the page is in now. No content here; a list of forty versions has no business carrying forty
+   * copies of the page.
+   */
+  async list(siteId: string, pageId: string): Promise<PageHistoryEntry[]> {
+    const rows = await WIKI.db
+      .select({
+        id: pageHistoryTable.id,
+        action: pageHistoryTable.action,
+        changedFields: pageHistoryTable.changedFields,
+        reason: pageHistoryTable.reason,
+        versionDate: pageHistoryTable.versionDate,
+        path: pageHistoryTable.path,
+        title: pageHistoryTable.title,
+        authorId: usersTable.id,
+        authorName: usersTable.name,
+        authorEmail: usersTable.email
+      })
+      .from(pageHistoryTable)
+      .leftJoin(usersTable, eq(usersTable.id, pageHistoryTable.authorId))
+      .where(and(eq(pageHistoryTable.siteId, siteId), eq(pageHistoryTable.pageId, pageId)))
+      .orderBy(desc(pageHistoryTable.versionDate), desc(pageHistoryTable.id))
+
+    return rows.map((row: any) => ({
+      id: row.id,
+      action: row.action,
+      changedFields: row.changedFields ?? [],
+      reason: row.reason ?? '',
+      versionDate: row.versionDate,
+      path: row.path,
+      title: row.title,
+      author: {
+        // -> Null once the account is gone: the version outlives it, see the column's own note
+        id: row.authorId ?? null,
+        name: row.authorName ?? '',
+        email: row.authorEmail ?? ''
+      }
+    }))
+  }
+
+  /**
+   * One version, with the source it held — the side of a diff.
+   *
+   * @returns The version, or null when this page has no such version
+   */
+  async getVersion(
+    siteId: string,
+    pageId: string,
+    versionId: string
+  ): Promise<PageHistoryVersion | null> {
+    const rows = await WIKI.db
+      .select({
+        id: pageHistoryTable.id,
+        action: pageHistoryTable.action,
+        changedFields: pageHistoryTable.changedFields,
+        reason: pageHistoryTable.reason,
+        versionDate: pageHistoryTable.versionDate,
+        path: pageHistoryTable.path,
+        title: pageHistoryTable.title,
+        content: pageHistoryTable.content,
+        meta: pageHistoryTable.meta,
+        authorId: usersTable.id,
+        authorName: usersTable.name,
+        authorEmail: usersTable.email
+      })
+      .from(pageHistoryTable)
+      .leftJoin(usersTable, eq(usersTable.id, pageHistoryTable.authorId))
+      .where(
+        and(
+          eq(pageHistoryTable.siteId, siteId),
+          eq(pageHistoryTable.pageId, pageId),
+          eq(pageHistoryTable.id, versionId)
+        )
+      )
+      .limit(1)
+
+    const row: any = rows[0]
+    if (!row) {
+      return null
+    }
+    return {
+      id: row.id,
+      action: row.action,
+      changedFields: row.changedFields ?? [],
+      reason: row.reason ?? '',
+      versionDate: row.versionDate,
+      path: row.path,
+      title: row.title,
+      content: row.content ?? '',
+      meta: (row.meta ?? {}) as Record<string, any>,
+      author: {
+        id: row.authorId ?? null,
+        name: row.authorName ?? '',
+        email: row.authorEmail ?? ''
+      }
     }
   }
 
@@ -158,9 +295,17 @@ class PageHistory {
       if (value === undefined || !(key in existing) || NOT_REPORTED_AS_CHANGED.has(key)) {
         continue
       }
-      // -> JSON rather than `===`: tags, relations and the config blobs are arrays and objects, and
-      //    comparing those by reference reports every save as a change to all of them
-      if (JSON.stringify(existing[key]) !== JSON.stringify(value)) {
+      /*
+        Deep rather than `===`: tags, relations and the config blobs are arrays and objects, and
+        comparing those by reference reports every save as a change to all of them.
+
+        Not `JSON.stringify` either, which was the same bug one level down. Postgres stores a `jsonb`
+        column with its keys in its own order — by length, then bytewise — so `config` came back as
+        `showToc, showTags, tocDepth, …` while `buildConfig` produces them in its own fixed order.
+        Two identical objects, two different strings, and `config` and `scripts` were therefore
+        reported as changed on every single save.
+      */
+      if (!isEqual(existing[key], value)) {
         changed.push(key)
       }
     }
