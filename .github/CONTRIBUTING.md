@@ -6,7 +6,7 @@ First, thank you for considering contributing to KV-Wiki!
 
 We welcome any type of contribution, not only code. You can help with
 - **QA**: file bug reports, the more details you can give the better (e.g. screenshots with the console open)
-- **Code**: take a look at the [open issues](https://github.com/Requarks/KV-Wiki/issues). Even if you can't write code, commenting on them, showing that you care about a given issue matters. It helps us triage them.
+- **Code**: take a look at the [open issues](https://github.com/Jcraft153/KV-Wiki/issues). Even if you can't write code, commenting on them, showing that you care about a given issue matters. It helps us triage them.
 
 
 ## Your First Contribution
@@ -30,7 +30,7 @@ Use GitHub issues to submit new feature ideas, use the feature request tag from 
 
 ## Questions
 
-If you have any questions, create an [issue](https://github.com/Requarks/KV-Wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
+If you have any questions, create an [issue](https://github.com/Jcraft153/KV-Wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
 
 
 ## Credits
