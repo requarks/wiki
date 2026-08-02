@@ -161,50 +161,56 @@ export const useSiteStore = defineStore('site', {
     async loadSite(hostname) {
       try {
         const siteInfo = await API_CLIENT.get(`sites/${hostname}`).json()
-        if (siteInfo) {
-          this.$patch({
-            id: siteInfo.id,
-            hostname: siteInfo.hostname,
-            title: siteInfo.title,
-            description: siteInfo.description,
-            logoText: siteInfo.logoText,
-            company: siteInfo.company,
-            contentLicense: siteInfo.contentLicense,
-            footerExtra: siteInfo.footerExtra,
-            features: {
-              ...this.features,
-              ...siteInfo.features
-            },
-            auth: {
-              ...this.auth,
-              ...siteInfo.auth
-            },
-            editors: {
-              asciidoc: siteInfo.editors.asciidoc.isActive,
-              markdown: siteInfo.editors.markdown.isActive,
-              wysiwyg: siteInfo.editors.wysiwyg.isActive
-            },
-            // -> Spread over the state defaults, as `features` and `theme` above do, so a key the
-            //    site config has never been saved with reads as its default rather than undefined
-            locales: {
-              ...this.locales,
-              ...siteInfo.locales,
-              active: sortBy(describeLocales(siteInfo.locales.active), ['nativeName', 'name'])
-            },
-            tags: [],
-            tagsLoaded: false,
-            theme: {
-              ...this.theme,
-              ...siteInfo.theme
-            }
-          })
-        } else {
+        if (!siteInfo) {
           throw new Error('Invalid Site')
         }
+        this.applySiteInfo(siteInfo)
       } catch (err) {
         console.warn(err.message)
         throw err
       }
+    },
+    /**
+     * Take in a site configuration that arrived with something else — `bootstrap` hands it over with
+     * the flags and the session, which is how an app load gets all three in one request.
+     */
+    applySiteInfo(siteInfo) {
+      this.$patch({
+        id: siteInfo.id,
+        hostname: siteInfo.hostname,
+        title: siteInfo.title,
+        description: siteInfo.description,
+        logoText: siteInfo.logoText,
+        company: siteInfo.company,
+        contentLicense: siteInfo.contentLicense,
+        footerExtra: siteInfo.footerExtra,
+        features: {
+          ...this.features,
+          ...siteInfo.features
+        },
+        auth: {
+          ...this.auth,
+          ...siteInfo.auth
+        },
+        editors: {
+          asciidoc: siteInfo.editors.asciidoc.isActive,
+          markdown: siteInfo.editors.markdown.isActive,
+          wysiwyg: siteInfo.editors.wysiwyg.isActive
+        },
+        // -> Spread over the state defaults, as `features` and `theme` above do, so a key the
+        //    site config has never been saved with reads as its default rather than undefined
+        locales: {
+          ...this.locales,
+          ...siteInfo.locales,
+          active: sortBy(describeLocales(siteInfo.locales.active), ['nativeName', 'name'])
+        },
+        tags: [],
+        tagsLoaded: false,
+        theme: {
+          ...this.theme,
+          ...siteInfo.theme
+        }
+      })
     },
     async fetchTags(forceRefresh = false) {
       if (this.tagsLoaded && !forceRefresh) {

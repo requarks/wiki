@@ -184,6 +184,31 @@ if (typeof siteConfig !== 'undefined') {
   applyTheme()
 }
 
+/**
+ * Everything the app has to know before it can draw: which site it is on, which system flags are set,
+ * and who is asking.
+ *
+ * The three have endpoints of their own, and are still asked separately where they change on their
+ * own — the admin area saves flags, a login changes who is asking. This is the load, where all three
+ * are wanted at once and none of them is known yet.
+ *
+ * A failure leaves the stores at their defaults and says so in the console, which is what the three
+ * calls did before: there is no interface yet to put an error in front of.
+ */
+async function loadBootstrap() {
+  try {
+    const data = await API_CLIENT.get('bootstrap', {
+      searchParams: { hostname: window.location.hostname },
+      cache: 'no-store'
+    }).json()
+    siteStore.applySiteInfo(data.site)
+    flagsStore.apply(data.flags)
+    userStore.applyProfile(data.user)
+  } catch (err) {
+    console.warn(`Could not load the site configuration: ${err.message}`)
+  }
+}
+
 // ROUTE GUARDS
 
 router.beforeEach(async (to, from) => {
@@ -194,16 +219,14 @@ router.beforeEach(async (to, from) => {
   //   userStore.loadToken()
   // }
 
-  // -> System Flags
-  if (!flagsStore.loaded) {
-    flagsStore.load()
-  }
-
-  // -> Site Info
-  if (!siteStore.id) {
-    console.info('No pre-cached site config. Loading site info...')
-    await siteStore.loadSite(window.location.hostname)
-    console.info(`Using Site ID ${siteStore.id}`)
+  /*
+    -> Site info, system flags and the session
+    One request for the three of them: none touches the database, so what they cost is the round trip,
+    and a full load paid it three times over before it could draw anything. Asked once — a guest is an
+    answer like any other, so this does not run again on the way to the next page.
+  */
+  if (!siteStore.id || !flagsStore.loaded || !userStore.profileLoaded) {
+    await loadBootstrap()
   }
 
   // -> Locale
@@ -215,14 +238,16 @@ router.beforeEach(async (to, from) => {
   }
   applyLocale(commonStore.desiredLocale)
 
-  // -> User Profile
-  if (!userStore.profileLoaded) {
-    console.info(`Refreshing user profile...`)
-    await userStore.refreshProfile()
+  /*
+    -> Page Permissions
+    Not fetched here any more: what this reader may do at a path comes back with the page itself, so
+    a page view is one request rather than two. What is left is the routes that are not a page —
+    dropping the last page's permissions on the way out of the page view, which takes no request at
+    all. A path with no page behind it has nothing to carry them, and asks in `pages/Index.vue`.
+  */
+  if (to.path.startsWith('/_')) {
+    userStore.$patch({ pagePermissions: [] })
   }
-
-  // -> Page Permissions
-  await userStore.fetchPagePermissions(to.path)
 })
 
 // GLOBAL EVENTS HANDLERS

@@ -49,6 +49,12 @@ export const usePageStore = defineStore('page', {
     locale: 'en',
     navigationId: null,
     navigationMode: 'inherit',
+    /**
+     * Whether the path in the URL has no page at all. Set by `pageNotFound`, which empties everything
+     * else here at the same time — so this being true means the store holds the *absence* of a page,
+     * not a page that failed to load with the previous one's title and body still in it.
+     */
+    notFound: false,
     password: '',
     path: '',
     publishEndDate: '',
@@ -78,7 +84,11 @@ export const usePageStore = defineStore('page', {
      */
     canSuggestEdits: false,
     /** Whether the reader already has a suggestion open on this page, which they would carry on with. */
-    hasOpenSuggestion: false
+    hasOpenSuggestion: false,
+    /** Whether this reader reviews this page, which is what shows the review button on it. */
+    canReview: false,
+    /** The suggestions waiting on this page, oldest first. Empty for everybody who is not its reviewer. */
+    pendingSubmissions: []
   }),
   getters: {
     breadcrumbs: (state) => {
@@ -110,14 +120,16 @@ export const usePageStore = defineStore('page', {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       /*
-        The lock belongs to the page being loaded, not to the one before it.
+        The lock, and the absence of a page, belong to the page being loaded rather than to the one
+        before it.
 
         Everything else in this store stays put until the reply arrives, deliberately -- blanking it
-        would flash an empty page on every navigation. `isLocked` cannot be treated that way: it is
-        read as "the page on screen is protected", and left standing it makes the NEXT page look
-        protected for as long as the request takes.
+        would flash an empty page on every navigation. These two cannot be treated that way: they are
+        read as "the page on screen is protected" and "there is no page on screen", and left standing
+        they make the NEXT page look protected, or missing, for as long as the request takes.
       */
       this.isLocked = false
+      this.notFound = false
       try {
         const pageData = await API_CLIENT.get(
           `sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`,
@@ -141,24 +153,13 @@ export const usePageStore = defineStore('page', {
           ),
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         })
+        this.applyViewerState(pageData.viewer)
         // Update editor state timestamps
         const curDate = Temporal.Now.instant()
         editorStore.$patch({
           lastChangeTimestamp: curDate,
           lastSaveTimestamp: curDate
         })
-
-        /*
-          Whether this reader may suggest edits, which is only a question for one who cannot make them
-          directly -- anybody who can edit the page just edits it. Not awaited: it decides whether one
-          button appears, and the page has no reason to wait for that.
-        */
-        const userStore = useUserStore()
-        if (userStore.can('edit:pages')) {
-          this.$patch({ canSuggestEdits: false, hasOpenSuggestion: false })
-        } else {
-          this.fetchSuggestState()
-        }
       } catch (err) {
         // -> A missing page is an ordinary outcome, not a failure: it is what puts a new instance in
         //    front of the welcome screen, and what offers to create the page anywhere else
@@ -203,6 +204,73 @@ export const usePageStore = defineStore('page', {
           pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
         ),
         tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+      })
+    },
+    /**
+     * PAGE - APPLY VIEWER STATE
+     *
+     * Takes in the `viewer` block the page came with: what this reader may do here, whether they may
+     * suggest an edit, and what they have to review on this page. The page view used to ask three
+     * further endpoints for exactly this, each of which loaded the page again to answer — so the one
+     * request now settles what the whole view draws.
+     *
+     * The page permissions go to the user store, which is where everything reads them from: they are
+     * the reader's, not the page's, and `userStore.can()` consults them for the path in front of them.
+     *
+     * @param viewer Absent from a page that came back from a save or an unlock, which changes none of
+     *               this — so nothing here is touched in that case.
+     */
+    applyViewerState(viewer) {
+      if (!viewer) {
+        return
+      }
+      const userStore = useUserStore()
+      userStore.$patch({ pagePermissions: viewer.permissions ?? [] })
+      this.$patch({
+        canSuggestEdits: viewer.canSuggestEdits === true,
+        hasOpenSuggestion: viewer.hasOpenSuggestion === true,
+        canReview: viewer.canReview === true,
+        pendingSubmissions: viewer.pendingSubmissions ?? []
+      })
+    },
+    /**
+     * PAGE - NOT FOUND
+     *
+     * Puts the store in front of a path that has no page, so that the view can offer to create one.
+     *
+     * A load that fails leaves the previous page standing — see `pageLoad`, where that is on purpose —
+     * and for a path with nothing behind it that means the reader is left reading the page they came
+     * from under a URL that is not its own. So everything the page view draws is emptied here, and
+     * `path` becomes the one that was asked for — the only thing about a page that does not exist that
+     * is actually known, and what the create button goes on to make a page at.
+     *
+     * @param {string} path The path that was requested, with or without its leading slash.
+     */
+    pageNotFound({ path }) {
+      this.$patch({
+        id: '',
+        path: (path ?? '').replace(/^\/+/, ''),
+        title: '',
+        description: '',
+        icon: DEFAULT_PAGE_ICON,
+        content: '',
+        contentLoaded: false,
+        render: '',
+        toc: [],
+        tags: [],
+        relations: [],
+        scriptJsLoad: '',
+        scriptJsUnload: '',
+        scriptCss: '',
+        createdAt: '',
+        updatedAt: '',
+        publishState: '',
+        isLocked: false,
+        canSuggestEdits: false,
+        hasOpenSuggestion: false,
+        canReview: false,
+        pendingSubmissions: [],
+        notFound: true
       })
     },
     /**
@@ -295,6 +363,8 @@ export const usePageStore = defineStore('page', {
         render: '',
         isBrowsable: true,
         isSearchable: true,
+        // -> The page being created is very often the one that was missing, and it is not missing now
+        notFound: false,
         mode: 'edit'
       })
     },
@@ -321,33 +391,6 @@ export const usePageStore = defineStore('page', {
       } catch (err) {
         console.warn(err)
         throw err
-      }
-    },
-    /**
-     * PAGE - SUGGESTION STATE
-     *
-     * Whether this page takes edit suggestions from whoever is reading it. Only worth asking for a
-     * reader who cannot edit the page outright — anyone who can just edits it — so the caller decides
-     * when to ask, and a page nobody may suggest against simply leaves the flags false.
-     */
-    async fetchSuggestState() {
-      const siteStore = useSiteStore()
-      if (!this.id) {
-        return
-      }
-      try {
-        const resp = await API_CLIENT.get(
-          `sites/${siteStore.id}/pages/${this.id}/suggestions/self`
-        ).json()
-        this.$patch({
-          canSuggestEdits: Boolean(resp?.canSubmit),
-          hasOpenSuggestion: Boolean(resp?.submission)
-        })
-      } catch (err) {
-        // -> Not being able to answer is not the same as being told no, but it comes to the same thing
-        //    on screen: no button. Worth a line in the console and nothing in the reader's way.
-        console.warn('Could not determine whether this page accepts edit suggestions.', err)
-        this.$patch({ canSuggestEdits: false, hasOpenSuggestion: false })
       }
     },
     /**

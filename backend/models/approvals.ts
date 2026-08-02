@@ -137,6 +137,19 @@ const ruleSelection = {
 }
 
 /**
+ * Every site's rules, by site id, in the order `getRules` promises.
+ *
+ * Cached for the reason the group rules are (`models/groups.ts`): whether a page takes suggestions
+ * and who reviews it are questions the page view asks about every page it draws, and answering them
+ * from the database would put two queries in front of every page read. Rules change from one admin
+ * screen, and the cache is reloaded there.
+ *
+ * A single instance's memory, like the group and site caches beside it: a rule changed on one node of
+ * a cluster reaches the others when they next reload.
+ */
+let rulesCache: Record<string, ApprovalRule[]> = {}
+
+/**
  * Approvals model
  *
  * Only the rules for now: which pages accept edit suggestions, from whom, and who reviews them. The
@@ -144,21 +157,40 @@ const ruleSelection = {
  */
 class Approvals {
   /**
+   * Reload every site's rules into memory.
+   *
+   * Called at boot and after any change to a rule, so that an administrator's edit takes effect on the
+   * next request — the same contract `models/groups.ts` gives page rules.
+   */
+  async reloadCache(): Promise<void> {
+    const rows = (await WIKI.db
+      .select({ ...ruleSelection, siteId: approvalRulesTable.siteId })
+      .from(approvalRulesTable)
+      .orderBy(
+        asc(sql`lower(${approvalRulesTable.name})`),
+        asc(approvalRulesTable.createdAt)
+      )) as (ApprovalRule & { siteId: string })[]
+    rulesCache = {}
+    for (const { siteId, ...rule } of rows) {
+      rulesCache[siteId] ??= []
+      rulesCache[siteId].push(rule as ApprovalRule)
+    }
+    WIKI.logger.info(`Loaded ${rows.length} approval rules [ OK ]`)
+  }
+
+  /**
    * Every rule configured for a site, by name.
    *
    * Order carries no meaning — a page is covered if any enabled rule matches it — so the list is
    * sorted for the reader: alphabetically, ignoring case, since `Zoo` sorting before `apple` is not
    * what alphabetical means to anyone. Two rules sharing a name keep a stable order by age.
+   *
+   * From `rulesCache`, so this costs nothing to ask; async because every caller awaits it and because
+   * where the rules come from is this model's business. The array is the cached one — read it, do not
+   * sort or splice it.
    */
   async getRules(siteId: string): Promise<ApprovalRule[]> {
-    return WIKI.db
-      .select(ruleSelection)
-      .from(approvalRulesTable)
-      .where(eq(approvalRulesTable.siteId, siteId))
-      .orderBy(
-        asc(sql`lower(${approvalRulesTable.name})`),
-        asc(approvalRulesTable.createdAt)
-      ) as Promise<ApprovalRule[]>
+    return rulesCache[siteId] ?? []
   }
 
   /**
@@ -215,6 +247,8 @@ class Approvals {
         reviewerGroups: patch.reviewerGroups ?? []
       })
       .returning(ruleSelection)
+    // -> Every rule read afterwards comes from the cache, so it has to know about this one
+    await this.reloadCache()
     return rows[0] as ApprovalRule
   }
 
@@ -248,6 +282,7 @@ class Approvals {
       .set(values)
       .where(and(eq(approvalRulesTable.siteId, siteId), eq(approvalRulesTable.id, id)))
       .returning(ruleSelection)
+    await this.reloadCache()
     return (rows[0] as ApprovalRule) ?? null
   }
 
@@ -355,6 +390,77 @@ class Approvals {
         (reviewsAll || rule.reviewerGroups.some((id) => groupIds.includes(id))) &&
         this.matchesPage(rule, page)
     )
+  }
+
+  /**
+   * Whether this request could review anything at all, i.e. it is a logged in user.
+   *
+   * Reads the session and nothing else, so a guest can be turned away before a single query is made on
+   * their behalf. A guest counts as a member of the guests group everywhere else, which is right for
+   * SUBMITTING — anonymous suggestions are a feature — but a review is an act with an author.
+   */
+  isReviewerSession(req: any): boolean {
+    return Boolean(req.session?.authenticated && req.session.user?.id)
+  }
+
+  /**
+   * Where this reader stands on this page: may they suggest an edit to it, and do they review it.
+   *
+   * Answered here, in one place, because it is answered on EVERY page view — the page route carries it
+   * back with the page rather than leaving the browser to ask two more questions about a page it has
+   * just been given. The cost is kept to what is actually needed: the rules are in memory, and neither
+   * of the two queries below is reached by a reader the rules say nothing about.
+   *
+   * @param req The request, for its session; both answers are about who is asking
+   */
+  async pageViewerState(
+    req: any,
+    siteId: string,
+    page: ApprovalPageRef
+  ): Promise<{
+    canSuggestEdits: boolean
+    hasOpenSuggestion: boolean
+    canReview: boolean
+    pendingSubmissions: ReviewableSubmission[]
+  }> {
+    const actorId = req.session?.authenticated ? (req.session.user?.id ?? null) : null
+    const groupIds = this.getActorGroupIds(req)
+
+    const submitRule = await this.findSubmitRule(siteId, page, groupIds)
+    /*
+      Only a logged in author can have one waiting: a guest suggestion is attributed to nobody, so
+      there is nothing to look up and nothing to carry on from. `getOwnSubmission` says the same, and
+      this keeps the query from being made at all.
+    */
+    const hasOpenSuggestion = Boolean(
+      submitRule && actorId && (await this.getOwnSubmission(page.id, actorId))
+    )
+
+    const reviewerScope = this.isReviewerSession(req)
+      ? {
+          groupIds,
+          reviewsAll:
+            (req.session?.permissions ?? []).includes('manage:system') ||
+            WIKI.models.groups.checkAccess(
+              WIKI.models.groups.actorForRequest(req),
+              'review:pages',
+              {
+                path: page.path,
+                tags: page.tags
+              }
+            )
+        }
+      : { groupIds: [], reviewsAll: false }
+    const canReview = await this.canReviewPage(siteId, page, reviewerScope)
+
+    return {
+      canSuggestEdits: Boolean(submitRule),
+      hasOpenSuggestion,
+      canReview,
+      pendingSubmissions: canReview
+        ? await this.getReviewableSubmissions(siteId, { ...reviewerScope, pageId: page.id })
+        : []
+    }
   }
 
   /**
@@ -685,6 +791,7 @@ class Approvals {
     const result = await WIKI.db
       .delete(approvalRulesTable)
       .where(and(eq(approvalRulesTable.siteId, siteId), eq(approvalRulesTable.id, id)))
+    await this.reloadCache()
     return (result.rowCount ?? 0) > 0
   }
 }

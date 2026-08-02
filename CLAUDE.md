@@ -278,6 +278,49 @@ These apply to **every workspace**, `frontend/` included — not just the backen
   mid-2026) and is awaited first in `main.js`. The polyfill is a lazy chunk (~21 kB gzipped) that
   browsers with native `Temporal` never download.
 
+### Permissions
+
+There are **two kinds of permission**, granted separately and checked in different places. Which
+kind a name belongs to decides how it may be enforced, so it is the first thing to establish about
+any permission you touch.
+
+**Global permissions** are held site-wide, bound to no path: `access:admin`, `manage:users`,
+`manage:groups`, `manage:navigation`, `manage:theme`, `manage:sites`, `manage:system`. That list is
+the whole of it — the one offered by the group editor (`GroupEditOverlay.vue`). They live on a
+group's `permissions` column, are flattened onto `req.session.permissions` at login
+(`models/users.ts` → `updateSession`), and are what the per-route `config.permissions` hook
+checks. `manage:system` bypasses every check everywhere.
+
+**Page rule permissions** are bound to paths, and to locales and sites: `read:pages`, `write:pages`,
+`review:pages`, `manage:pages`, `delete:pages`, `write:styles`, `write:scripts`, `read:source`,
+`read:history`, `read:assets`, `write:assets`, `manage:assets`, `read:comments`, `write:comments`,
+`manage:comments` (`PAGE_PERMISSIONS` in `api/pages.ts`). A group grants them through **rules**:
+each rule names some of them (`roles`) plus how it addresses pages (`match` + `path`, or tags) and
+what it does with them (`mode`: ALLOW / DENY / FORCEALLOW). Nothing is granted by default, and when
+several rules match, the most specific one wins — `helpers/pageRules.ts` documents the ordering.
+Ask `WIKI.models.groups.checkAccess(actor, permission, page)`, or `mayOnPage(req, permission, page)`
+in `api/pages.ts`.
+
+Consequences worth knowing:
+
+- **A page permission cannot be enforced by `config.permissions`.** That hook reads the group-wide
+  list only, so `permissions: ['write:pages']` refuses everybody. A route that turns on a page
+  permission declares no route permission and checks in the handler instead — say so with a
+  `No route-level permissions:` comment, as `api/pages.ts`, `api/assets.ts` and `api/blocks.ts` do.
+- **The two names are not interchangeable.** `manage:pages` does not imply `write:pages`: a rule
+  grants the exact strings in its `roles`.
+- **On the frontend**, `userStore.permissions` is the global list (from `users/whoami`) and
+  `userStore.pagePermissions` is what the session holds AT THE CURRENT PATH (from
+  `pages/userPermissions`, refreshed per route in `App.vue`). `userStore.can()` ORs the two and
+  treats `manage:system` as a wildcard, so it answers "may do this somewhere". Gate a control over
+  the page in front of the reader on `pagePermissions` — that is what the endpoint behind the
+  button will check.
+- **An anonymous request is the guests group**, not an absence of groups: that is how a wiki opens
+  reading, and suggesting edits, to the public. Deny guests explicitly where an account is genuinely
+  required (`reviewerFor` in `api/approvals.ts` is the worked example).
+- **Never invent a permission name.** Both lists above are closed; `can('browse:fileman')` and
+  friends matched nothing and silently hid the controls they guarded.
+
 ### Backend patterns
 
 - **The `WIKI` global.** Set up in `index.ts`, typed in `types/global.d.ts`, available everywhere
@@ -288,9 +331,10 @@ These apply to **every workspace**, `frontend/` included — not just the backen
 - **Routes** are Fastify plugins: `async function routes(app) { ... }` with a default export.
 - **Permissions** are declared per-route in `config.permissions`, and enforced by a single
   `preHandler` hook in `index.ts`. The array is OR-ed; a nested array is AND-ed
-  (`permissions: ['read:sites', ['manage:pages', 'write:pages']]`). `manage:system` bypasses every
+  (`permissions: ['read:sites', ['manage:users', 'manage:groups']]`). `manage:system` bypasses every
   check. `@fastify/swagger`'s `transform` folds these into the OpenAPI description automatically —
-  so declaring them is also how they get documented.
+  so declaring them is also how they get documented. Only **global** permissions belong here; see
+  [Permissions](#permissions) for the other kind and how they are checked.
 - **Every route needs a `schema`** with `summary`, `tags`, and response schemas. `hideUntagged` is on,
   so an untagged route is invisible in the API docs. Reuse `$ref` schemas from `api/schemas/`.
 - **Errors** via `@fastify/sensible` helpers (`reply.notFound()`, `reply.badRequest()`,

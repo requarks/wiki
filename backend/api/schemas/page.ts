@@ -202,7 +202,39 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       authorId: { type: 'string', format: 'uuid' },
       authorName: { type: 'string' },
       createdAt: { type: 'string', format: 'date-time' },
-      updatedAt: { type: 'string', format: 'date-time' }
+      updatedAt: { type: 'string', format: 'date-time' },
+      viewer: {
+        type: 'object',
+        description:
+          'Where the requester stands on this page: what they may do to it, whether they may suggest an edit, and whether they review it. Present when a page is fetched on its own — the page view draws its controls from this, rather than asking three further endpoints about a page it already has. Absent from a page returned by a save.',
+        properties: {
+          permissions: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'The page permissions held AT THIS PATH, as this reader’s groups’ rules decide. The same answer `pages/userPermissions` gives for the path.'
+          },
+          canSuggestEdits: {
+            type: 'boolean',
+            description:
+              'An enabled approval rule covers this page and names a group the requester is in, and the page allows contributions.'
+          },
+          hasOpenSuggestion: {
+            type: 'boolean',
+            description:
+              'The requester already has a suggestion waiting on this page, which they would carry on with rather than start again. Always false for a guest, whose suggestions are attributed to nobody.'
+          },
+          canReview: {
+            type: 'boolean',
+            description: 'The requester reviews this page. Always false without an account.'
+          },
+          pendingSubmissions: {
+            type: 'array',
+            items: { $ref: 'PageEditSubmission#' },
+            description: 'What is waiting on this page, oldest first. Empty unless `canReview`.'
+          }
+        }
+      }
     }
   })
 

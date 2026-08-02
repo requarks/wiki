@@ -46,8 +46,17 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
  * one — the site-wide queue in the inbox — it is answered at the site root, which is the only thing
  * a queue spanning every page could ask about; the per-page check then still applies to each entry
  * through the approval rules that produced it.
+ *
+ * Nobody reviews anything without an account. A guest is treated as a member of the guests group,
+ * which is right for SUBMITTING — anonymous suggestions are a feature — but a review is an act with
+ * an author: accepting one writes the page and records who accepted it. So a rule that named the
+ * guests group among its reviewers, or a page rule granting them `review:pages`, would otherwise hand
+ * the queue to the public. An empty scope reviews nothing, whatever the rules say.
  */
 function reviewerFor(req: FastifyRequest, page?: { path: string; tags?: string[] }): ReviewerScope {
+  if (!isReviewerSession(req)) {
+    return { groupIds: [], reviewsAll: false }
+  }
   const actor = WIKI.models.groups.actorForRequest(req)
   return {
     groupIds: WIKI.models.approvals.getActorGroupIds(req),
@@ -55,6 +64,11 @@ function reviewerFor(req: FastifyRequest, page?: { path: string; tags?: string[]
       actor.permissions.includes('manage:system') ||
       WIKI.models.groups.checkAccess(actor, 'review:pages', page ?? { path: '' })
   }
+}
+
+/** Shorthand for the model's own check; see `isReviewerSession` there for why reviewing needs one. */
+function isReviewerSession(req: FastifyRequest): boolean {
+  return WIKI.models.approvals.isReviewerSession(req)
 }
 
 /**
@@ -619,6 +633,14 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
+      /*
+        Answered before the page is even looked up. Every reader loading any page asks this, so the
+        one case that can be settled from the session alone is settled there: a guest reviews nothing,
+        and the wiki has no reason to read a page and a rule set to say so again on every page view.
+      */
+      if (!isReviewerSession(req)) {
+        return { canReview: false, submissions: [] }
+      }
       const page = await loadSuggestablePage(req, req.params.siteId, req.params.pageId)
       if (!page) {
         return reply.notFound('This page does not exist.')

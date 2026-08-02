@@ -142,6 +142,8 @@ async function postBoot() {
   await WIKI.models.sites.reloadCache()
   // -> Page access is decided from these on every request, so they are in memory from the start
   await WIKI.models.groups.reloadCache()
+  // -> Likewise: every page view asks whether the page takes suggestions and who reviews it
+  await WIKI.models.approvals.reloadCache()
 
   // -> Must follow the sites cache: every site gets a row per installed block
   await WIKI.models.blocks.refreshFromDisk()

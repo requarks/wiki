@@ -121,6 +121,35 @@ export function mayOnPage(
 }
 
 /**
+ * Every page permission this requester holds at a path.
+ *
+ * What the interface hides its controls by, and the reason it is a list rather than a question: each
+ * permission may be decided by a different rule — a branch can be readable but not writable, and one
+ * page within it neither — so they are resolved one at a time.
+ *
+ * Anonymous included: the guests group has rules of its own, and what the public may do is exactly
+ * what they say. Answering an empty list for a reader without a session would hide controls a wiki had
+ * deliberately opened to everyone.
+ */
+export function pagePermissionsFor(
+  req: FastifyRequest,
+  page: { path: string; locale?: string; tags?: string[] }
+): string[] {
+  const actor = WIKI.models.groups.actorForRequest(req)
+  /*
+    An administrator holds all of them, and holds them here too. Deriving the list from their
+    permissions instead would answer `manage:system` → nothing ending in `:pages` → that an
+    administrator has no rights over any page, which is the opposite of true.
+  */
+  if (actor.permissions.includes('manage:system')) {
+    return PAGE_PERMISSIONS
+  }
+  return PAGE_PERMISSIONS.filter((permission) =>
+    WIKI.models.groups.checkAccess(actor, permission, page)
+  )
+}
+
+/**
  * A page, as this requester is allowed to see it — or null when they are not allowed to see it at all.
  *
  * The gate for anything that hangs off a page but is not the page itself. An anonymous requester only
@@ -449,7 +478,26 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'read:pages', page)) {
         return reply.forbidden('You are not allowed to read this page.')
       }
-      return page
+      /*
+        The reader's own standing on this page, carried back with it.
+
+        Three questions the page view used to ask as three more requests — what may I do here, may I
+        suggest an edit, do I review this page — each of which had to load the page again to answer.
+        They are answered here from the page already in hand, against rules already in memory, which
+        is what makes a page view one request instead of four.
+      */
+      return {
+        ...page,
+        viewer: {
+          permissions: pagePermissionsFor(req, page),
+          ...(await WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
+            id: page.id,
+            path: page.path,
+            tags: page.tags ?? [],
+            allowContributions: page.allowContributions
+          }))
+        }
+      }
     }
   )
 
@@ -1034,26 +1082,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      /*
-        Anonymous included: the guests group has rules of its own, and what the public may do is
-        exactly what they say. Answering an empty list for a reader without a session would hide
-        controls a wiki had deliberately opened to everyone.
-      */
-      const accessActor = WIKI.models.groups.actorForRequest(req)
-      /*
-        An administrator holds all of them, and holds them here too. Deriving the list from their
-        permissions instead would answer `manage:system` → nothing ending in `:pages` → that an
-        administrator has no rights over any page, which is the opposite of true.
-      */
-      if (accessActor.permissions.includes('manage:system')) {
-        return PAGE_PERMISSIONS
-      }
-      // -> Resolved per permission against this path, since each one may be decided by a different
-      //    rule — a branch can be readable but not writable, and one page within it neither
-      const page = { path: req.body.path.replace(/^\/+/, '') }
-      return PAGE_PERMISSIONS.filter((permission) =>
-        WIKI.models.groups.checkAccess(accessActor, permission, page)
-      )
+      return pagePermissionsFor(req, { path: req.body.path.replace(/^\/+/, '') })
     }
   )
 }

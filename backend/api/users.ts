@@ -28,6 +28,30 @@ function sessionUserId(req: FastifyRequest): string | null {
 }
 
 /**
+ * Who is asking, as the interface needs to know it: the account on the session and the group-wide
+ * permissions it holds, or nothing at all for a guest.
+ *
+ * Exported because `bootstrap` answers the same question as part of the one call an app load makes,
+ * and two versions of "who is this" would be one too many.
+ */
+export function whoAmI(req: FastifyRequest): Record<string, any> {
+  if (!req.session?.authenticated) {
+    return { authenticated: false }
+  }
+  return {
+    authenticated: true,
+    ...req.session.user,
+    /*
+      The same list the route permission hook checks against — written onto the session at login from
+      the groups the user belongs to. Nothing is added for the interface's benefit: a control it shows
+      on a permission the session does not hold leads to a button that gets a 403 from the endpoint
+      behind it.
+    */
+    permissions: req.session.permissions ?? []
+  }
+}
+
+/**
  * Whether self-service profile editing is enabled on the site being browsed.
  *
  * It is a per-site feature: an instance whose user data comes from an external identity provider turns
@@ -120,22 +144,14 @@ async function routes(app: FastifyInstance) {
     {
       schema: {
         summary: 'Get currently logged in user info',
+        description:
+          'Includes the group-wide permissions of the session, which is what the interface hides its own controls by. Permissions ON A PAGE are a different question, answered by `pages/userPermissions`.\n\nThe app itself gets this from `bootstrap` on load, together with the site and the flags; this endpoint is what asks again once a login or a logout has changed the answer.',
         tags: ['Users']
       }
     },
     async (req, reply) => {
       reply.preventCache()
-      if (req.session?.authenticated) {
-        return {
-          authenticated: true,
-          ...req.session.user,
-          permissions: ['manage:system'] // TODO: pull actual permissions
-        }
-      } else {
-        return {
-          authenticated: false
-        }
-      }
+      return whoAmI(req)
     }
   )
 

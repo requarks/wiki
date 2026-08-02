@@ -30,8 +30,14 @@
           <w-tooltip>Create New Page</w-tooltip>
           <new-menu />
         </w-btn>
+        <!--
+          -> Whoever may put a file somewhere: `write:assets` outright, or `write:pages` for an author
+             whose rules cover the pages but not the assets beside them, since the editor sends them
+             here to insert an image. Every folder and every file is checked again by the endpoints
+             behind the manager, which answer per path, so this decides only whether the door is shown.
+        -->
         <w-btn
-          v-if="userStore.can(`browse:fileman`)"
+          v-if="userStore.can(`write:assets`) || userStore.can(`write:pages`)"
           class="ml-4"
           flat
           round

@@ -57,7 +57,7 @@
     <w-page-container>
       <w-page v-if="state.loading > 0">
         <div class="flex p-6 items-center">
-          <w-spinner color="primary" size="32px" :thickness="2" />
+          <w-spinner color="primary" size="32px" />
           <div class="text-caption text-primary pl-4">
             <strong>{{ t('admin.users.loading') }}</strong>
           </div>

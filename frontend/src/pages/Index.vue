@@ -5,7 +5,14 @@
     the shell instead and take the sidebars with it.
   -->
   <w-page class="flex flex-col h-full min-h-0">
-    <div class="page-breadcrumbs py-2 px-4 flex flex-wrap" v-if="!editorStore.isActive">
+    <!--
+      Both bars are about a page: where it sits and when it was last written to. A path with no page
+      has neither to report -- the trail would end on a crumb that leads nowhere and the bar would read
+      "Last modified on N/A" -- so the missing-page screen below is the whole column.
+    -->
+    <div
+      class="page-breadcrumbs py-2 px-4 flex flex-wrap"
+      v-if="!editorStore.isActive && !pageStore.notFound">
       <div class="min-w-0 flex-1">
         <w-breadcrumbs
           :items="breadcrumbs"
@@ -24,7 +31,7 @@
         </div>
       </div>
     </div>
-    <page-header />
+    <page-header v-if="!pageStore.notFound" />
     <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
     <div class="page-container flex min-h-0 flex-nowrap items-stretch" style="flex: 1 1 100%">
       <div
@@ -35,8 +42,8 @@
           The lock screen, in place of the article. There is nothing to hide here: the server sent no
           body at all, so this is the whole of what arrived for a protected page.
         -->
-        <div v-else-if="pageStore.isLocked" class="page-locked">
-          <w-icon class="page-locked-icon" name="la:lock" />
+        <div v-else-if="pageStore.isLocked" class="page-placeholder">
+          <w-icon class="page-placeholder-icon" name="la:lock" />
           <div class="text-h6">{{ t('common.page.locked') }}</div>
           <div class="text-body2 mt-1 opacity-60">{{ t('common.page.lockedHint') }}</div>
           <w-btn
@@ -47,6 +54,48 @@
             padding="xs lg"
             :label="t(`common.page.unlock`)"
             @click="promptUnlock" />
+        </div>
+        <!--
+          The same column for a path with no page behind it, which is a state of this view rather than
+          an error screen: the reader is still inside the wiki, at a URL that could hold a page, and
+          for anyone who may write one the answer to "this page does not exist" is the button that
+          creates it -- at this path, so that the link they followed leads somewhere afterwards.
+        -->
+        <div v-else-if="pageStore.notFound" class="page-placeholder">
+          <w-icon class="page-placeholder-icon" name="la:file-alt" />
+          <!-- -> "...yet" is an invitation, so it is for whoever can take it up; to a reader who
+               cannot write here the page simply does not exist -->
+          <div class="text-h6">
+            {{ canCreatePage ? t('common.newpage.title') : t('common.notfound.subtitle') }}
+          </div>
+          <div class="text-body2 mt-1 opacity-60" v-if="canCreatePage">
+            {{ t('common.newpage.subtitle') }}
+          </div>
+          <!--
+            The path itself, because the sentence above is about a page the reader cannot see and this
+            is the one thing that says WHICH page: the link they followed, and what the button is about
+            to create.
+          -->
+          <div class="text-caption font-robotomono mt-3 opacity-50">/{{ pageStore.path }}</div>
+          <w-btn
+            class="mt-6"
+            v-if="canCreatePage"
+            unelevated
+            icon="la:plus"
+            color="primary"
+            padding="xs lg"
+            :label="t(`common.newpage.create`)"
+            @click="createPage" />
+          <!-- -> Nothing to create for this reader, so the way out is the way they came -->
+          <w-btn
+            class="mt-6"
+            v-else
+            outline
+            icon="la:arrow-left"
+            color="primary"
+            padding="xs lg"
+            :label="t(`common.newpage.goback`)"
+            @click="goBack" />
         </div>
         <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
           <div class="page-container-body p-4">
@@ -207,7 +256,8 @@
           </div>
         </template>
       </div>
-      <page-actions-col />
+      <!-- -> Every action on it acts on a page: there is none here to edit, share, rate or delete -->
+      <page-actions-col v-if="!pageStore.notFound" />
     </div>
     <side-dialog />
   </w-page>
@@ -312,7 +362,9 @@ const showSidebar = computed(() => {
     pageStore.showSidebar &&
     siteStore.showSidebar &&
     siteStore.theme.tocPosition !== 'off' &&
-    !editorStore.isActive
+    !editorStore.isActive &&
+    // -> Contents, tags and a rating, all of a page that is not there
+    !pageStore.notFound
   )
 })
 /*
@@ -337,16 +389,29 @@ const showToc = computed(() => {
   go up with the rest of the page rather than through an endpoint of their own. So the test is the pair
   the PATCH route accepts: `write:pages` or `manage:pages`.
 
-  Read off `pagePermissions` rather than through `userStore.can()`, which would answer true for
-  everybody: `can()` also consults `userStore.permissions`, and `users/whoami` still fills that with a
-  hardcoded `['manage:system']` for every session -- a TODO in `api/users.ts`. `pagePermissions` comes
-  from `pages/userPermissions`, which reads what the session actually holds. Once whoami is fixed this
-  check needs no change: that route stays the authority on what a user may do to a page.
+  Read off `pagePermissions` rather than through `userStore.can()`, which asks a broader question: the
+  group-wide list from `whoami` says what a user may do somewhere, and the rules decide where. What
+  they may do HERE is what `pages/userPermissions` answers, and it is the same authority the PATCH
+  route itself consults.
 */
 const canEditPage = computed(() =>
   ['write:pages', 'manage:pages'].some((permission) =>
     userStore.pagePermissions.includes(permission)
   )
+)
+
+/*
+  Whether the missing-page screen offers to create the page. `write:pages` at THIS path, from the same
+  list as the tag button above: page rules are written against paths, not against pages, so they answer
+  for one that does not exist yet — and it is the check the create endpoint itself makes. The group-wide
+  list would say "may write pages somewhere", which is how a button ends up leading to a 403.
+
+  The editor is part of the answer: creating a page opens one, and markdown is the only editor this
+  view can mount. A site with it switched off has nothing to open, so the screen says the page is
+  missing and leaves it at that.
+*/
+const canCreatePage = computed(
+  () => userStore.pagePermissions.includes('write:pages') && siteStore.editors.markdown
 )
 
 const relationsLeft = computed(() => {
@@ -520,10 +585,15 @@ watch(
             siteStore.overlay = 'Welcome'
           }
         } else {
-          notify({
-            type: 'negative',
-            message: 'This page does not exist (yet)!'
-          })
+          // -> Not a notification over the page the reader came from: that page is still on screen
+          //    behind it, at a URL that is not its own. The view draws the missing page instead.
+          pageStore.pageNotFound({ path: newValue })
+          /*
+            The one place the page permissions have to be asked for on their own: everywhere else they
+            arrive with the page, and here there is no page to carry them — while the screen about to
+            be drawn offers to create one, which is a permission question.
+          */
+          await userStore.fetchPagePermissions(newValue)
         }
       } else if (err.message === 'ERR_PAGE_UNAUTHORIZED') {
         // -> `replace`, so the back button leaves the wiki the way it came rather than bouncing off
@@ -577,10 +647,40 @@ function onContentClick(ev) {
 function promptUnlock() {
   dialog({ component: PageUnlockDialog })
 }
+
+/**
+ * Opens the editor on the page that is not there, at the path that was asked for.
+ *
+ * The path comes from the store rather than from the route, because the route is where it goes: the
+ * editor moves to `/_create/markdown` and the path travels in the page itself, which is the same way
+ * every other New Page button works.
+ */
+async function createPage() {
+  loading.show()
+  await pageStore.pageCreate({ editor: 'markdown', path: pageStore.path })
+  loading.hide()
+}
+
+/**
+ * Back out of a path that has no page. `router.back()` alone lands on the wiki's own error screen for
+ * a reader who arrived at this URL directly, having nothing to go back to, so that case goes home.
+ */
+function goBack() {
+  if (window.history.state?.back) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 </script>
 
 <style lang="scss">
-.page-locked {
+/*
+  The column in place of the article: the lock screen, and the page that does not exist. Both are the
+  same shape -- a large faint icon, a sentence, and the one button that does something about it -- and
+  share the styling so they cannot drift apart.
+*/
+.page-placeholder {
   display: flex;
   height: 100%;
   flex-direction: column;
@@ -607,7 +707,7 @@ function promptUnlock() {
   Large and faint. It is the illustration on an otherwise empty column, not something to look at -- the
   sentence under it is what the reader is here to read.
 */
-.page-locked-icon {
+.page-placeholder-icon {
   margin-bottom: 24px;
   font-size: 96px;
   opacity: 0.12;

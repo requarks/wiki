@@ -12,7 +12,7 @@ const pad = (value) => String(value).padStart(2, '0')
  * The stored preference is one of a handful of explicit patterns, or an empty string meaning "whatever
  * this locale does" — which is the only case a formatter can be left to decide on its own.
  */
-function formatDatePart (zoned, dateFormat) {
+function formatDatePart(zoned, dateFormat) {
   switch (dateFormat) {
     case 'DD/MM/YYYY':
       return `${pad(zoned.day)}/${pad(zoned.month)}/${zoned.year}`
@@ -56,7 +56,7 @@ function toUserZone(date, timezone) {
  * Render the time part. `hourCycle` rather than `hour12: false`, which some locales render as 24:00
  * where they mean 00:00.
  */
-function formatTimePart (zoned, timeFormat) {
+function formatTimePart(zoned, timeFormat) {
   return zoned.toLocaleString(
     undefined,
     timeFormat === '24h'
@@ -85,39 +85,48 @@ export const useUserStore = defineStore('user', {
   actions: {
     async refreshProfile() {
       try {
-        const resp = await API_CLIENT.get('users/whoami', {
-          cache: 'no-store'
-        }).json()
-        if (!resp || !resp.authenticated) {
-          this.setToGuest()
-        } else {
-          this.$patch({
-            /*
-              Kept, rather than left at the guest id this store starts with. Nothing used to read it
-              while logged in, so nothing noticed -- but a live editing session identifies its
-              participants by it, and every one of them claiming the guest id makes a roomful of
-              people look like one person wearing the same colour.
-            */
-            id: resp.id,
-            name: resp.name || 'Unknown User',
-            email: resp.email,
-            hasAvatar: resp.hasAvatar ?? false,
-            location: resp.location || '',
-            jobTitle: resp.jobTitle || '',
-            pronouns: resp.pronouns || '',
-            timezone: resp.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || '',
-            dateFormat: resp.dateFormat || '',
-            timeFormat: resp.timeFormat || '12h',
-            appearance: resp.appearance || 'site',
-            cvd: resp.cvd || 'none',
-            permissions: resp.permissions || [],
-            authenticated: true,
-            profileLoaded: true
-          })
-        }
+        this.applyProfile(
+          await API_CLIENT.get('users/whoami', {
+            cache: 'no-store'
+          }).json()
+        )
       } catch (err) {
         console.warn(err)
       }
+    },
+    /**
+     * Take in a session that arrived with something else — `bootstrap` hands it over with the site and
+     * the flags, which is how an app load asks who is logged in without a request of its own. Asking
+     * again is what `refreshProfile` above is for, once a login or a logout has changed the answer.
+     */
+    applyProfile(resp) {
+      if (!resp?.authenticated) {
+        this.setToGuest()
+        return
+      }
+      this.$patch({
+        /*
+          Kept, rather than left at the guest id this store starts with. Nothing used to read it
+          while logged in, so nothing noticed -- but a live editing session identifies its
+          participants by it, and every one of them claiming the guest id makes a roomful of
+          people look like one person wearing the same colour.
+        */
+        id: resp.id,
+        name: resp.name || 'Unknown User',
+        email: resp.email,
+        hasAvatar: resp.hasAvatar ?? false,
+        location: resp.location || '',
+        jobTitle: resp.jobTitle || '',
+        pronouns: resp.pronouns || '',
+        timezone: resp.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+        dateFormat: resp.dateFormat || '',
+        timeFormat: resp.timeFormat || '12h',
+        appearance: resp.appearance || 'site',
+        cvd: resp.cvd || 'none',
+        permissions: resp.permissions || [],
+        authenticated: true,
+        profileLoaded: true
+      })
     },
     async logout() {
       const siteStore = useSiteStore()
@@ -145,11 +154,16 @@ export const useUserStore = defineStore('user', {
         appearance: 'site',
         cvd: 'none',
         permissions: [],
-        // -> Page permissions are only refetched on the next navigation, so leaving them would keep
-        //    edit buttons on screen for a user who is no longer logged in
+        // -> Page permissions arrive with the page, so leaving them would keep edit buttons on screen
+        //    for a user who is no longer logged in until they navigate
         pagePermissions: [],
         authenticated: false,
-        profileLoaded: false
+        /*
+          Loaded, not unknown: being a guest IS an answer, and this is where it is recorded — whether
+          it came back from `bootstrap` or from logging out. Left false, every navigation would ask
+          the server who this is all over again, and every reader of a public wiki is a guest.
+        */
+        profileLoaded: true
       })
     },
     getAccessibleColor(base, hexBase) {

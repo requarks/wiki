@@ -145,7 +145,7 @@
         into the pending state without an editor behind it, and hiding Edit there left no way back into
         the content at all. Ahead of the commit actions so those stay rightmost.
       -->
-      <template v-if="!editorStore.isActive && userStore.can(`edit:pages`)">
+      <template v-if="!editorStore.isActive && userStore.can(`write:pages`)">
         <w-btn
           class="acrylic-btn ml-4"
           flat

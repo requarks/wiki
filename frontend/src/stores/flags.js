@@ -14,18 +14,24 @@ export const useFlagsStore = defineStore('flags', {
     async load() {
       try {
         const systemFlags = await API_CLIENT.get('system/flags').json()
-        if (systemFlags) {
-          this.$patch({
-            ...systemFlags,
-            loaded: true
-          })
-        } else {
+        if (!systemFlags) {
           throw new Error('Could not fetch system flags.')
         }
+        this.apply(systemFlags)
       } catch (err) {
         console.warn(err.message)
         throw err
       }
+    },
+    /**
+     * Take in flags that arrived with something else — `bootstrap` hands them over with the site and
+     * the session, which is how an app load gets them without a request of its own.
+     */
+    apply(systemFlags) {
+      this.$patch({
+        ...systemFlags,
+        loaded: true
+      })
     }
   }
 })

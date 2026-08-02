@@ -266,7 +266,7 @@
           <div class="min-w-0 flex-1">
             <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
               <div class="fileman-loadinglist" v-if="state.fileListLoading">
-                <w-spinner class="mr-2" color="primary" size="64px" :thickness="1" />
+                <w-spinner class="mr-2" color="primary" size="64px" />
                 <span class="text-primary">Fetching folder contents...</span>
               </div>
               <div class="fileman-emptylist" v-else-if="files.length < 1">

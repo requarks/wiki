@@ -36,7 +36,13 @@
             </w-list>
           </w-menu>
         </w-btn>
+        <!--
+          -> Same test the admin area itself makes on arrival: this screen greets whoever may write the
+             first page, which on a wiki with an editors group is not necessarily somebody who may
+             administer it -- and the button would land them on the unauthorized screen.
+        -->
         <w-btn
+          v-if="userStore.can(`access:admin`)"
           push
           color="primary"
           :label="t(`welcome.admin`)"
@@ -59,13 +65,14 @@ import { useMeta } from '@/composables/meta'
 import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
-
+import { useUserStore } from '@/stores/user'
 
 // STORES
 
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 

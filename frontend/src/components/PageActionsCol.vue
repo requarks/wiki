@@ -12,7 +12,7 @@
   <div
     class="page-actions flex flex-col items-stretch order-last"
     :class="editorStore.isActive ? `is-editor` : ``">
-    <template v-if="userStore.can(`edit:pages`)">
+    <template v-if="userStore.can(`write:pages`)">
       <w-btn
         class="aspect-square"
         flat
@@ -29,11 +29,12 @@
       is why it is outside that group rather than in it.
 
       Only for whoever reviews this page: the server answers `canReview` from the approval rules and
-      the reviewer's own permissions, so nothing here has to know how that is decided.
+      the reviewer's own permissions -- with the page itself -- so nothing here has to know how that
+      is decided, or ask about it.
     -->
     <w-btn
       class="h-12"
-      v-if="state.canReview"
+      v-if="canReview"
       flat
       :color="editorStore.isActive ? `white` : `deep-orange-9`"
       aria-label="Pending Edit Suggestions">
@@ -72,7 +73,7 @@
             </w-item-section>
           </w-item>
           <w-item
-            v-for="submission of state.submissions"
+            v-for="submission of pageStore.pendingSubmissions"
             :key="submission.id"
             clickable
             @click="reviewSubmission(submission)">
@@ -92,7 +93,7 @@
         </w-list>
       </w-menu>
     </w-btn>
-    <template v-if="userStore.can(`edit:pages`)">
+    <template v-if="userStore.can(`write:pages`)">
       <w-btn
         class="h-12"
         v-if="flagsStore.experimental"
@@ -209,7 +210,7 @@
               </w-item-section>
               <w-item-section><w-item-label>Convert Page</w-item-label></w-item-section>
             </w-item>
-            <w-item clickable v-if="userStore.can(`edit:pages`)" @click="rerenderPage">
+            <w-item clickable v-if="userStore.can(`write:pages`)" @click="rerenderPage">
               <w-item-section class="items-center" avatar>
                 <w-icon class="text-deep-orange-9" name="la:magic" size="sm" />
               </w-item-section>
@@ -234,7 +235,7 @@
     <template v-if="!(editorStore.isActive && [`create`, `suggest`].includes(editorStore.mode))">
       <w-btn
         class="h-12"
-        v-if="userStore.can(`create:pages`)"
+        v-if="userStore.can(`write:pages`)"
         flat
         icon="la:copy"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
@@ -273,7 +274,7 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -309,27 +310,18 @@ const menuPendingAssets = ref(null)
 
 // DATA
 
-const state = reactive({
-  /** Whether this user reviews this page at all, which is what shows the button. */
-  canReview: false,
-  /** What is waiting on it, oldest first. */
-  submissions: []
-})
-
 // COMPUTED
 
 const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
 
-const pendingCount = computed(() => state.submissions.length)
+/*
+  Both from the page itself: the page route answers who reviews it and what is waiting on it, along
+  with everything else this rail is drawn from. The rail asked for them separately until it turned out
+  to be a third request about a page the view had already been given.
+*/
+const canReview = computed(() => pageStore.canReview)
 
-// WATCHERS
-
-// -> Per page, so navigating between pages asks again rather than carrying the last one's answer
-watch(() => pageStore.id, loadSubmissions)
-
-// MOUNTED
-
-onMounted(loadSubmissions)
+const pendingCount = computed(() => pageStore.pendingSubmissions.length)
 
 // METHODS
 
@@ -338,29 +330,6 @@ function humanizeDate(val) {
     dateStyle: 'medium',
     timeStyle: 'short'
   })
-}
-
-/**
- * What is waiting on this page, if this user is one of its reviewers.
- *
- * Quietly on failure: the rail is not where a reader finds out that a request went wrong, and a
- * button that does not appear is the same outcome as not being a reviewer.
- */
-async function loadSubmissions() {
-  state.canReview = false
-  state.submissions = []
-  if (!pageStore.id || !userStore.authenticated) {
-    return
-  }
-  try {
-    const resp = await API_CLIENT.get(
-      `sites/${siteStore.id}/pages/${pageStore.id}/submissions`
-    ).json()
-    state.canReview = resp?.canReview === true
-    state.submissions = resp?.submissions ?? []
-  } catch (err) {
-    console.warn(err)
-  }
 }
 
 /**
