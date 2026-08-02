@@ -2,6 +2,10 @@ import { CORS_MODES, parseCspDirectives } from '../helpers/security.ts'
 
 /** Fields stored in the `security` settings blob. */
 export const SECURITY_FIELDS = [
+  'authRateLimitBan',
+  'authRateLimitEnabled',
+  'authRateLimitMax',
+  'authRateLimitWindow',
   'corsConfig',
   'corsMode',
   'cspDirectives',
@@ -110,6 +114,20 @@ class Security {
 
     if (merged.enforceHsts && !(merged.hstsDuration > 0)) {
       return 'Enforcing HSTS needs a duration greater than zero.'
+    }
+
+    if (merged.authRateLimitEnabled) {
+      if (!(merged.authRateLimitMax > 0)) {
+        return 'The attempt limit must be greater than zero.'
+      }
+      for (const [field, label] of [
+        ['authRateLimitWindow', 'time window'],
+        ['authRateLimitBan', 'ban duration']
+      ] as const) {
+        if (!DURATION_PATTERN.test(`${merged[field] ?? ''}`.trim())) {
+          return `The ${label} must be a duration such as 30s, 15m, 2h or 1d.`
+        }
+      }
     }
 
     for (const [field, label] of [

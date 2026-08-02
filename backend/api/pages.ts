@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
 import { SEARCH_ORDER_BY, type SearchOrderBy } from '../models/search.ts'
 import { generatePathHash } from '../helpers/common.ts'
+import { limitAuthAttempts } from '../helpers/rateLimit.ts'
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
 function splitList(value?: string): string[] {
@@ -486,16 +487,23 @@ async function routes(app: FastifyInstance) {
         They are answered here from the page already in hand, against rules already in memory, which
         is what makes a page view one request instead of four.
       */
+      const actorId = actor?.id ?? null
+      const [approvalState, isWatching] = await Promise.all([
+        WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
+          id: page.id,
+          path: page.path,
+          tags: page.tags ?? [],
+          allowContributions: page.allowContributions
+        }),
+        // -> One indexed lookup on (pageId, userId), and none at all for a reader with no account
+        WIKI.models.pageWatching.isWatching(page.id, actorId)
+      ])
       return {
         ...page,
         viewer: {
           permissions: pagePermissionsFor(req, page),
-          ...(await WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
-            id: page.id,
-            path: page.path,
-            tags: page.tags ?? [],
-            allowContributions: page.allowContributions
-          }))
+          ...approvalState,
+          isWatching
         }
       }
     }
@@ -511,6 +519,8 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageIdOrHash/unlock',
     {
+      // -> A password endpoint like the ones in `api/authentication.ts`, and limited with them
+      onRequest: limitAuthAttempts,
       schema: {
         summary: 'Unlock a password-protected page',
         description:

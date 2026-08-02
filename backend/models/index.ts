@@ -13,7 +13,9 @@ import { locales } from './locales.ts'
 import { navigation } from './navigation.ts'
 import { pageHistory } from './pageHistory.ts'
 import { pages } from './pages.ts'
+import { pageWatching } from './pageWatching.ts'
 import { passkeys } from './passkeys.ts'
+import { rateLimits } from './rateLimits.ts'
 import { rendering } from './rendering.ts'
 import { search } from './search.ts'
 import { security } from './security.ts'
@@ -41,7 +43,9 @@ export default {
   navigation,
   pageHistory,
   pages,
+  pageWatching,
   passkeys,
+  rateLimits,
   rendering,
   search,
   security,

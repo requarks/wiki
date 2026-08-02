@@ -1,3 +1,4 @@
+import { limitAuthAttempts } from '../helpers/rateLimit.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -141,6 +142,8 @@ async function routes(app: FastifyInstance) {
       config: {
         publicAccess: true
       },
+      // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
       schema: {
         summary: 'Login',
         tags: ['Authentication'],
@@ -223,6 +226,8 @@ async function routes(app: FastifyInstance) {
       config: {
         publicAccess: true
       },
+      // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
       schema: {
         summary: 'Change Password From Login',
         tags: ['Authentication'],
@@ -317,6 +322,8 @@ async function routes(app: FastifyInstance) {
       config: {
         publicAccess: true
       },
+      // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
       schema: {
         summary: 'Submit a 2FA Security Code From Login',
         description:
@@ -405,6 +412,8 @@ async function routes(app: FastifyInstance) {
       config: {
         publicAccess: true
       },
+      // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
       schema: {
         summary: 'Get the options for logging in with a passkey',
         description:
@@ -467,6 +476,8 @@ async function routes(app: FastifyInstance) {
       config: {
         publicAccess: true
       },
+      // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
       schema: {
         summary: 'Login With a Passkey',
         description:

@@ -45,6 +45,7 @@ async function routes(app: FastifyInstance) {
   app.register(import('./tags.ts'))
   app.register(import('./tree.ts'))
   app.register(import('./users.ts'), { prefix: '/users' })
+  app.register(import('./watching.ts'))
 }
 
 export default routes

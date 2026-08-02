@@ -228,12 +228,43 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             type: 'boolean',
             description: 'The requester reviews this page. Always false without an account.'
           },
+          isWatching: {
+            type: 'boolean',
+            description:
+              'The requester has asked to be told about changes to this page. Always false without an account, since a watch belongs to one.'
+          },
           pendingSubmissions: {
             type: 'array',
             items: { $ref: 'PageEditSubmission#' },
             description: 'What is waiting on this page, oldest first. Empty unless `canReview`.'
           }
         }
+      }
+    }
+  })
+
+  /**
+   * WATCHED PAGE - A page somebody asked to be told about, as their inbox lists it
+   */
+  app.addSchema({
+    $id: 'WatchedPage',
+    type: 'object',
+    properties: {
+      pageId: { type: 'string', format: 'uuid' },
+      path: { type: 'string' },
+      locale: { type: 'string' },
+      title: { type: 'string' },
+      description: { type: ['string', 'null'] },
+      icon: { type: ['string', 'null'] },
+      updatedAt: {
+        type: 'string',
+        format: 'date-time',
+        description: 'When the page last changed, which is what watching it is about.'
+      },
+      watchedAt: {
+        type: 'string',
+        format: 'date-time',
+        description: 'When the caller started watching it.'
       }
     }
   })

@@ -80,27 +80,30 @@
           class="uppercase"
           color="negative"
           :label="t(`editor.props.draft`)" />
+        <!--
+          Watching a page is a state of it, so the button IS the state: filled and orange while the
+          page is watched, an outline in grey while it is not. Same orange as Edit, because both are
+          this reader's own hold on the page rather than decoration.
+
+          `mdi` rather than the `la` this row otherwise uses, because Line Awesome has no filled bell
+          to switch TO: its bell and its bell-solid carry an identical body in Iconify, so that pair
+          drew one drawing in two colours. (Names left unquoted on purpose — the icon bundler scans
+          this file for quoted references and would keep bundling an icon nothing draws.)
+        -->
         <w-btn
           class="ml-4"
+          :class="{ 'is-ringing': state.bellRinging }"
           v-if="userStore.authenticated"
           flat
           dense
-          icon="la:bell"
-          color="grey"
-          aria-label="Watch Page"
-          @click="notImplemented">
-          <w-tooltip>Watch Page</w-tooltip>
-        </w-btn>
-        <w-btn
-          class="ml-4"
-          v-if="userStore.authenticated"
-          flat
-          dense
-          icon="la:bookmark"
-          color="grey"
-          aria-label="Bookmark Page"
-          @click="notImplemented">
-          <w-tooltip>Bookmark Page</w-tooltip>
+          :icon="pageStore.isWatching ? `mdi:bell` : `mdi:bell-outline`"
+          :color="pageStore.isWatching ? `deep-orange-9` : `grey`"
+          :aria-label="pageStore.isWatching ? t(`common.page.unwatch`) : t(`common.page.watch`)"
+          :aria-pressed="pageStore.isWatching"
+          @click="toggleWatch">
+          <w-tooltip>
+            {{ pageStore.isWatching ? t('common.page.unwatch') : t('common.page.watch') }}
+          </w-tooltip>
         </w-btn>
         <w-btn
           class="ml-4"
@@ -112,6 +115,70 @@
           aria-label="Print"
           @click="printPage">
           <w-tooltip>Print</w-tooltip>
+        </w-btn>
+        <!--
+          Only for whoever reviews this page: the server answers `canReview` from the approval rules
+          and the reviewer's own permissions — with the page itself — so nothing here has to know how
+          that is decided, or ask about it.
+
+          An empty queue is grey and an empty tray, sitting with Print as one more thing available
+          rather than one more thing to do; something waiting fills the tray and turns it orange, the
+          colour this row uses for what belongs to the reader. The count is on the badge either way.
+        -->
+        <w-btn
+          class="ml-4"
+          v-if="pageStore.canReview"
+          flat
+          dense
+          :color="pendingCount > 0 ? `deep-orange-9` : `grey`"
+          :aria-label="t(`inbox.pendingReview`)">
+          <!--
+            The badge is a sibling of the icon, not a child of it: WIcon renders a bare `<svg>` and no
+            slot, so anything written inside it is dropped — and an HTML badge could not live inside an
+            SVG in any case. It floats against the button, which is the positioned box here.
+          -->
+          <w-icon :name="pendingCount > 0 ? `mdi:inbox-full` : `la:inbox`" />
+          <w-badge
+            v-if="pendingCount > 0"
+            color="deep-orange-9"
+            text-color="white"
+            rounded
+            floating>
+            <strong>{{ pendingCount }}</strong>
+          </w-badge>
+          <w-tooltip>{{ t('inbox.pendingReview') }}</w-tooltip>
+          <!--
+            Down from the button's right edge, like every other menu hanging off this row: the panel is
+            wider than the button and the button is near the right of the window, so aligning their
+            RIGHT edges is what keeps it on screen.
+          -->
+          <w-menu class="translucent-menu" anchor="bottom right" self="top right" auto-close>
+            <w-list padding style="min-width: 320px">
+              <w-item v-if="pendingCount < 1">
+                <w-item-section>
+                  <w-item-label caption>{{ t('inbox.reviewNone') }}</w-item-label>
+                </w-item-section>
+              </w-item>
+              <w-item
+                v-for="submission of pageStore.pendingSubmissions"
+                :key="submission.id"
+                clickable
+                @click="reviewSubmission(submission)">
+                <w-item-section class="items-center" avatar>
+                  <w-icon class="text-deep-orange-9" name="la:file-alt" size="sm" />
+                </w-item-section>
+                <w-item-section>
+                  <w-item-label>
+                    {{ submission.author.name || t('inbox.reviewUnknownAuthor') }}
+                  </w-item-label>
+                  <w-item-label caption>{{ humanizeDate(submission.createdAt) }}</w-item-label>
+                </w-item-section>
+                <w-item-section side v-if="submission.isStale">
+                  <w-badge color="warning" rounded>{{ t('inbox.reviewStale') }}</w-badge>
+                </w-item-section>
+              </w-item>
+            </w-list>
+          </w-menu>
         </w-btn>
       </template>
       <template v-if="editorStore.isActive">
@@ -264,6 +331,12 @@ import { useUserStore } from '@/stores/user'
 import CollabPresence from '@/components/CollabPresence.vue'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 
+/**
+ * How long the bell swings for, in milliseconds. Matches the `w-bell-ring` animation below — the class
+ * has to come off once it has played, or the next watch would not play it again.
+ */
+const BELL_RING_MS = 700
+
 // STORES
 
 const editorStore = useEditorStore()
@@ -294,6 +367,20 @@ const isSuggesting = computed(() => editorStore.isActive && editorStore.mode ===
  * Excludes suggest mode, where those are page properties the submitter has no say over.
  */
 const isEditing = computed(() => editorStore.isActive && !isSuggesting.value)
+
+/** How many suggestions are waiting on this page, which is what the review badge counts. */
+const pendingCount = computed(() => pageStore.pendingSubmissions.length)
+
+// DATA
+
+const state = reactive({
+  /**
+   * Whether the bell is mid-swing. Set for as long as the animation runs and cleared afterwards, so
+   * that watching a page again a minute later rings it again — a class left on plays once and never
+   * plays a second time.
+   */
+  bellRinging: false
+})
 
 // REFS
 
@@ -623,6 +710,49 @@ function printPage() {
   window.print()
 }
 
+function humanizeDate(val) {
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+}
+
+/**
+ * Open one suggestion for review, remembering where it was opened from.
+ *
+ * `from=page` is what sends the reviewer back here when they are done, rather than to the inbox queue
+ * they never came through.
+ */
+function reviewSubmission(submission) {
+  router.push({ path: `/_inbox/review/${submission.id}`, query: { from: 'page' } })
+}
+
+/**
+ * Watch the page, or stop watching it.
+ *
+ * The bell rings on the way IN only: a swing is the page announcing that it will now tell you about
+ * itself, and playing the same flourish for switching that off would say the opposite thing with the
+ * same gesture. The store moves before the request answers, so the icon flips under the pointer.
+ */
+async function toggleWatch() {
+  const watching = !pageStore.isWatching
+  if (watching) {
+    state.bellRinging = true
+    setTimeout(() => {
+      state.bellRinging = false
+    }, BELL_RING_MS)
+  }
+  try {
+    await pageStore.pageWatch(watching)
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t(watching ? 'common.page.watchFailed' : 'common.page.unwatchFailed'),
+      caption: err.message
+    })
+  }
+}
+
 function notImplemented() {
   notify({
     type: 'negative',
@@ -632,6 +762,52 @@ function notImplemented() {
 </script>
 
 <style scoped lang="scss">
+/*
+  The bell swinging as a page starts being watched.
+
+  On the icon inside the button rather than on the button itself, so the ripple, the hover tint and the
+  hit area all stay where they are while only the drawing moves. `transform-origin` at the top centre
+  is what makes it swing from its mounting instead of spinning about its middle.
+
+  `:deep`, because the icon is rendered by `WBtn` and a scoped rule would not reach into it.
+*/
+.is-ringing :deep(svg) {
+  animation: w-bell-ring 0.7s ease-in-out;
+  transform-origin: top center;
+}
+
+@keyframes w-bell-ring {
+  0% {
+    transform: rotate(0);
+  }
+  15% {
+    transform: rotate(18deg);
+  }
+  30% {
+    transform: rotate(-14deg);
+  }
+  45% {
+    transform: rotate(10deg);
+  }
+  60% {
+    transform: rotate(-7deg);
+  }
+  75% {
+    transform: rotate(4deg);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+
+/* -> A swinging bell says nothing the colour change does not; for a reader who asked for less motion
+   it is noise with a vestibular cost, so it simply does not swing. */
+@media (prefers-reduced-motion: reduce) {
+  .is-ringing :deep(svg) {
+    animation: none;
+  }
+}
+
 /*
   The two headings, while they are also the fields.
 

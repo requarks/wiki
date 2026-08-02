@@ -75,6 +75,27 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description: 'Stored, but there is no upload endpoint yet.'
       },
+      authRateLimitEnabled: {
+        type: 'boolean',
+        description:
+          'Whether the authentication endpoints — signing in, second factors, password changes from the login screen, passkey ceremonies and page unlocks — refuse a client that has attempted too often. Counted per client address, in the database, so the limit holds across instances.'
+      },
+      authRateLimitMax: {
+        type: 'integer',
+        minimum: 1,
+        description: 'Attempts allowed within the window. The one that exceeds it earns the ban.'
+      },
+      authRateLimitWindow: {
+        type: 'string',
+        maxLength: 16,
+        description: 'How long attempts are counted over, as a duration — e.g. `5m`, `2h`, `1d`.'
+      },
+      authRateLimitBan: {
+        type: 'string',
+        maxLength: 16,
+        description:
+          'How long a client is refused for once it goes over, as a duration — e.g. `15m`, `1h`. Attempts made while banned do not extend it.'
+      },
       authJwtAudience: {
         type: 'string',
         maxLength: 255,

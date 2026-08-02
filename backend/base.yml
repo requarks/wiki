@@ -72,6 +72,10 @@ defaults:
       forceAssetDownload: true
       disallowOpenRedirect: true
       enforceSameOriginReferrerPolicy: true
+      authRateLimitEnabled: true
+      authRateLimitMax: 10
+      authRateLimitWindow: '2m'
+      authRateLimitBan: '15m'
     flags:
       experimental: false
       authDebug: false

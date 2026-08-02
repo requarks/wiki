@@ -497,6 +497,68 @@ export const pageEditSubmissions = pgTable(
   ]
 )
 
+// PAGE WATCHING -----------------------
+/**
+ * A page somebody asked to be told about, one row per person per page.
+ *
+ * A row IS the watch: there is no `isEnabled` to turn off, because unwatching a page is not a state a
+ * page keeps — it is the absence of interest, and the row goes. Which is also why the whole table can
+ * be read as "everyone to notify about this page" when notifications are built on top of it.
+ *
+ * `siteId` is carried alongside `pageId` rather than reached through the page, since every query here
+ * is scoped to one site: the watch list belongs to an inbox, and an inbox belongs to a site.
+ */
+export const pageWatching = pgTable(
+  'pageWatching',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    createdAt: timestamp().notNull().defaultNow(),
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' })
+  },
+  (table) => [
+    // -> Covers the site scoping too, being the leading column: this is the inbox's own query
+    index('pageWatching_user_site_idx').on(table.userId, table.siteId),
+    // -> Watching a page twice is watching it once, so the second attempt is a no-op rather than a row
+    uniqueIndex('pageWatching_page_user_idx').on(table.pageId, table.userId)
+  ]
+)
+
+// RATE LIMITS -------------------------
+/**
+ * One counter per rate-limited client, and the ban it has earned itself.
+ *
+ * In the database rather than in each instance's memory because a limit every instance enforces on
+ * its own is a limit multiplied by however many are running — and because a ban has to hold when the
+ * next attempt lands on another one. Every read and write of a row happens in a single upserting
+ * statement (`models/rateLimits.ts`), which is what makes concurrent attempts count exactly once.
+ *
+ * Rows are self-correcting: an expired window or ban is reset by the next attempt on that key. They
+ * are only ever deleted to reclaim space — see the `purgeRateLimits` task.
+ */
+export const rateLimits = pgTable(
+  'rateLimits',
+  {
+    /** What is being limited and who by, e.g. `auth:203.0.113.4`. */
+    key: varchar({ length: 255 }).primaryKey(),
+    /** Attempts made inside the current window. */
+    hits: integer().notNull().default(0),
+    windowStartedAt: timestamp().notNull().defaultNow(),
+    /** When the ban lifts. Null for a client that has not earned one. */
+    bannedUntil: timestamp(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  // -> How the purge finds rows nothing has touched in a long while
+  (table) => [index('rateLimits_updatedAt_idx').on(table.updatedAt)]
+)
+
 // SETTINGS ----------------------------
 export const settings = pgTable('settings', {
   key: varchar({ length: 255 }).notNull().primaryKey(),

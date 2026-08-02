@@ -22,78 +22,6 @@
         @click="togglePageProperties">
         <w-tooltip anchor="center left" self="center right">Page Properties</w-tooltip>
       </w-btn>
-    </template>
-    <!--
-      Between the two halves of the authoring group on purpose: it sits under the Edit button for
-      somebody who has one, and at the top of the rail for a reviewer who may not edit at all -- which
-      is why it is outside that group rather than in it.
-
-      Only for whoever reviews this page: the server answers `canReview` from the approval rules and
-      the reviewer's own permissions -- with the page itself -- so nothing here has to know how that
-      is decided, or ask about it.
-    -->
-    <w-btn
-      class="h-12"
-      v-if="canReview"
-      flat
-      :color="editorStore.isActive ? `white` : `deep-orange-9`"
-      aria-label="Pending Edit Suggestions">
-      <!--
-        The badge is a sibling of the icon, not a child of it: WIcon renders a bare `<svg>` and no
-        slot, so anything written inside it is dropped -- and an HTML badge could not live inside an
-        SVG in any case. It floats against the button, which is the positioned box here.
-      -->
-      <w-icon name="la:inbox" />
-      <!--
-        The same expression as the button's own colour, so the badge cannot drift from the icon it
-        sits on: `deep-orange-9` on the resting rail, and inverted in the editor, where the rail is
-        already that orange and an orange badge would disappear into it.
-      -->
-      <w-badge
-        v-if="pendingCount > 0"
-        :color="editorStore.isActive ? `white` : `deep-orange-9`"
-        :text-color="editorStore.isActive ? `deep-orange-9` : `white`"
-        rounded
-        floating>
-        <strong>{{ pendingCount }}</strong>
-      </w-badge>
-      <w-tooltip anchor="center left" self="center right">
-        {{ t('inbox.pendingReview') }}
-      </w-tooltip>
-      <w-menu
-        class="translucent-menu"
-        anchor="top left"
-        self="top right"
-        auto-close
-        transition-show="jump-left">
-        <w-list padding style="min-width: 320px">
-          <w-item v-if="pendingCount < 1">
-            <w-item-section>
-              <w-item-label caption>{{ t('inbox.reviewNone') }}</w-item-label>
-            </w-item-section>
-          </w-item>
-          <w-item
-            v-for="submission of pageStore.pendingSubmissions"
-            :key="submission.id"
-            clickable
-            @click="reviewSubmission(submission)">
-            <w-item-section class="items-center" avatar>
-              <w-icon class="text-deep-orange-9" name="la:file-alt" size="sm" />
-            </w-item-section>
-            <w-item-section>
-              <w-item-label>
-                {{ submission.author.name || t('inbox.reviewUnknownAuthor') }}
-              </w-item-label>
-              <w-item-label caption>{{ humanizeDate(submission.createdAt) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side v-if="submission.isStale">
-              <w-badge color="warning" rounded>{{ t('inbox.reviewStale') }}</w-badge>
-            </w-item-section>
-          </w-item>
-        </w-list>
-      </w-menu>
-    </w-btn>
-    <template v-if="userStore.can(`write:pages`)">
       <w-btn
         class="h-12"
         v-if="flagsStore.experimental"
@@ -314,33 +242,7 @@ const menuPendingAssets = ref(null)
 
 const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
 
-/*
-  Both from the page itself: the page route answers who reviews it and what is waiting on it, along
-  with everything else this rail is drawn from. The rail asked for them separately until it turned out
-  to be a third request about a page the view had already been given.
-*/
-const canReview = computed(() => pageStore.canReview)
-
-const pendingCount = computed(() => pageStore.pendingSubmissions.length)
-
 // METHODS
-
-function humanizeDate(val) {
-  return Temporal.Instant.from(val).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  })
-}
-
-/**
- * Open one for review, remembering where it was opened from.
- *
- * `from=page` is what sends the reviewer back here when they are done rather than to the inbox queue
- * they never came through.
- */
-function reviewSubmission(submission) {
-  router.push({ path: `/_inbox/review/${submission.id}`, query: { from: 'page' } })
-}
 
 function togglePageProperties() {
   siteStore.$patch({

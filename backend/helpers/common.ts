@@ -11,6 +11,18 @@ export interface Deferred<T = void> {
   promise: Promise<T>
 }
 
+/** Seconds in each unit a duration setting may be written with. See `durationToSeconds`. */
+const DURATION_UNIT_SECONDS = {
+  s: 1,
+  m: 60,
+  h: 3600,
+  d: 86400,
+  w: 604800,
+  y: 31536000
+} as const
+
+type DurationUnit = keyof typeof DURATION_UNIT_SECONDS
+
 /* eslint-disable promise/param-names */
 export function createDeferred<T = void>(): Deferred<T> {
   let result: Promise<T> | undefined
@@ -118,6 +130,25 @@ export function generatePathHash(str: string, seed = 0): string {
   h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909)
 
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16)
+}
+
+/**
+ * How long a duration written the way the admin area writes them lasts, in seconds.
+ *
+ * `30s`, `15m`, `2h`, `7d`, `2w`, `1y` — one number and one unit, which is the form every duration
+ * setting takes (the JWT ones included) and the form `DURATION_PATTERN` in `models/security.ts`
+ * accepts. A year is 365 days and a month is not offered at all: these measure how long something
+ * lasts, not what date it lands on, so a calendar has no say in it.
+ *
+ * @param fallback Returned for anything unparseable, so one bad setting cannot turn a limit off
+ */
+export function durationToSeconds(value: unknown, fallback: number): number {
+  const match = /^(\d+)([smhdwy])$/.exec(String(value ?? '').trim())
+  if (!match) {
+    return fallback
+  }
+  const seconds = Number(match[1]) * DURATION_UNIT_SECONDS[match[2] as DurationUnit]
+  return seconds > 0 ? seconds : fallback
 }
 
 /**

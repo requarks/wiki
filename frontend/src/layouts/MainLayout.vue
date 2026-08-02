@@ -32,17 +32,6 @@
             {{ t('common.sidebar.browse') }}
           </w-tooltip>
         </w-btn>
-        <!-- -> Nothing to divide from Bookmarks when neither button above it renders -->
-        <w-separator v-if="siteStore.locales.showMenu || canBrowse" class="my-2" inset dark />
-        <w-btn
-          class="py-4"
-          flat
-          icon="la:bookmark"
-          color="white"
-          aria-label="Bookmarks"
-          @click="notImplemented">
-          <w-tooltip anchor="center right" self="center left">Bookmarks</w-tooltip>
-        </w-btn>
         <w-space />
         <w-btn
           v-if="canEditNav"
@@ -90,18 +79,15 @@
           </w-btn>
         </div>
         <nav-sidebar />
-        <w-bar v-if="userStore.authenticated" class="sidebar-footerbtns text-white" dense>
-          <template v-if="canEditNav">
-            <w-btn class="flex-1" icon="la:dharmachakra" label="Edit Nav" flat>
-              <w-menu ref="navEditMenu" anchor="top left" self="bottom left" :offset="[0, 10]">
-                <nav-edit-menu
-                  :menu-hide-handler="navEditMenu.hide"
-                  :update-position-handler="navEditMenu.updatePosition" />
-              </w-menu>
-            </w-btn>
-            <w-separator vertical />
-          </template>
-          <w-btn class="flex-1" icon="la:bookmark" label="Bookmarks" flat @click="notImplemented" />
+        <!-- -> Edit Nav is the whole bar now, so it is also what decides whether there is one -->
+        <w-bar v-if="canEditNav" class="sidebar-footerbtns text-white" dense>
+          <w-btn class="flex-1" icon="la:dharmachakra" label="Edit Nav" flat>
+            <w-menu ref="navEditMenu" anchor="top left" self="bottom left" :offset="[0, 10]">
+              <nav-edit-menu
+                :menu-hide-handler="navEditMenu.hide"
+                :update-position-handler="navEditMenu.updatePosition" />
+            </w-menu>
+          </w-btn>
         </w-bar>
       </template>
     </w-drawer>
@@ -131,7 +117,6 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
-import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 import { useI18n } from 'vue-i18n'
 
@@ -236,15 +221,6 @@ const showSidebarActions = computed(() => siteStore.locales.showMenu || canBrows
 const canEditNav = computed(() => {
   return userStore.authenticated && userStore.can('manage:navigation')
 })
-
-// METHODS
-
-function notImplemented() {
-  notify({
-    type: 'negative',
-    message: 'Not implemented'
-  })
-}
 </script>
 
 <style lang="scss">

@@ -47,6 +47,11 @@ class Jobs {
       //   type: 'system'
       // },
       {
+        task: 'purgeRateLimits',
+        cron: '10 * * * *',
+        type: 'system'
+      },
+      {
         task: 'updateLocales',
         cron: '0 0 * * *',
         type: 'system'

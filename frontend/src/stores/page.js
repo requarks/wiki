@@ -88,7 +88,12 @@ export const usePageStore = defineStore('page', {
     /** Whether this reader reviews this page, which is what shows the review button on it. */
     canReview: false,
     /** The suggestions waiting on this page, oldest first. Empty for everybody who is not its reviewer. */
-    pendingSubmissions: []
+    pendingSubmissions: [],
+    /**
+     * Whether this reader has asked to be told about changes to this page. Always false for a guest:
+     * a watch belongs to an account, which is what a notification would eventually be sent to.
+     */
+    isWatching: false
   }),
   getters: {
     breadcrumbs: (state) => {
@@ -207,6 +212,30 @@ export const usePageStore = defineStore('page', {
       })
     },
     /**
+     * PAGE - WATCH / UNWATCH
+     *
+     * Asks to be told about changes to this page, or stops asking.
+     *
+     * The store is moved first and put back if the server refuses. A bell that waits for a round trip
+     * before it rings is a bell that feels broken, and the request behind it either succeeds or is
+     * worth an error — there is no third outcome to leave the button guessing at.
+     *
+     * @throws Whatever the request failed with, for the caller to report.
+     */
+    async pageWatch(watching) {
+      const siteStore = useSiteStore()
+      const previous = this.isWatching
+      this.isWatching = watching
+      try {
+        const url = `sites/${siteStore.id}/pages/${this.id}/watch`
+        await (watching ? API_CLIENT.put(url) : API_CLIENT.delete(url))
+      } catch (err) {
+        this.isWatching = previous
+        console.warn(err)
+        throw err
+      }
+    },
+    /**
      * PAGE - APPLY VIEWER STATE
      *
      * Takes in the `viewer` block the page came with: what this reader may do here, whether they may
@@ -230,7 +259,8 @@ export const usePageStore = defineStore('page', {
         canSuggestEdits: viewer.canSuggestEdits === true,
         hasOpenSuggestion: viewer.hasOpenSuggestion === true,
         canReview: viewer.canReview === true,
-        pendingSubmissions: viewer.pendingSubmissions ?? []
+        pendingSubmissions: viewer.pendingSubmissions ?? [],
+        isWatching: viewer.isWatching === true
       })
     },
     /**
@@ -270,6 +300,7 @@ export const usePageStore = defineStore('page', {
         hasOpenSuggestion: false,
         canReview: false,
         pendingSubmissions: [],
+        isWatching: false,
         notFound: true
       })
     },
