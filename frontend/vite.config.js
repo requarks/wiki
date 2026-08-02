@@ -3,9 +3,118 @@ import vue from '@vitejs/plugin-vue'
 // -> A named import: js-yaml 5 ships ESM with no default export, so `import yaml from` throws
 import { load as loadYaml } from 'js-yaml'
 import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+
+const TWEMOJI_ROUTE = '/_assets/svg/twemoji'
+
+/**
+ * Fails the build unless every emoji a page can contain has an SVG in `svgDir`.
+ *
+ * The parser and the artwork are two dependencies of the same upstream release (see below), so they
+ * can drift apart on an upgrade with nothing to say so -- and what that looks like is a page with a
+ * broken image in it, or an emoji quietly left to whatever font the reader has. Both are cheap to
+ * rule out here: the renderer hands the emoji plugin's tokens to twemoji and nothing else -- a raw 🎉
+ * typed into a page stays a character -- so `markdown-it-emoji`'s shortcode map IS the vocabulary, and
+ * running the parser over it yields exactly the set of files a page can ask for.
+ *
+ * `@twemoji/api` is pinned a patch behind for this reason: 17.0.3 moved to `@twemoji/parser` 17.0.2,
+ * which stopped matching ✌️ ☝️ 🕵️ 🏋️ and six others at all, leaving them as text. This is the check
+ * that catches it.
+ */
+async function verifyTwemojiCoverage(svgDir) {
+  const [{ default: twemoji }, { default: shortcodes }] = await Promise.all([
+    import('@twemoji/api'),
+    import('markdown-it-emoji/lib/data/full.mjs')
+  ])
+  const unmatched = []
+  const missing = []
+  for (const [shortcode, emoji] of Object.entries(shortcodes)) {
+    const icons = []
+    twemoji.parse(emoji, {
+      callback(icon) {
+        if (icon) {
+          icons.push(icon)
+        }
+        // -> Nothing is being rendered here; the callback is only how the names are read back out
+        return false
+      }
+    })
+    if (icons.length === 0) {
+      unmatched.push(`:${shortcode}:`)
+      continue
+    }
+    for (const icon of icons) {
+      if (!fs.existsSync(path.join(svgDir, `${icon}.svg`))) {
+        missing.push(`:${shortcode}: (${icon}.svg)`)
+      }
+    }
+  }
+  const complaints = [
+    unmatched.length > 0 &&
+      `${unmatched.length} the parser no longer matches: ${unmatched.join(' ')}`,
+    missing.length > 0 && `${missing.length} with no SVG in ${svgDir}: ${missing.join(' ')}`
+  ].filter(Boolean)
+  if (complaints.length > 0) {
+    throw new Error(
+      `twemoji: ${complaints.join('; ')}. Check that '@twemoji/api' and the 'twemoji-assets' tarball in package.json still name the same upstream release.`
+    )
+  }
+}
+
+/**
+ * Makes the twemoji SVGs reachable at `/_assets/svg/twemoji/<codepoints>.svg`, which is the `src` the
+ * markdown renderer writes for every emoji (`src/renderers/markdown.js`).
+ *
+ * They are neither committed nor imported: the set is ~4000 files and 18 MB, every one of which a page
+ * may ask for and none of which is a build input -- nothing in the source names an individual icon, so
+ * Vite has no way to discover them. So they are copied into the build output alongside `public/_assets/`
+ * and read from `node_modules` on the fly in dev; under `public/` they would be 4000 files in git for a
+ * directory that is derived.
+ *
+ * `@twemoji/api` is the parser alone -- the artwork has never been published to npm, by Twitter or by
+ * the fork that maintains it now, and the one package that did (`@twemoji/svg`) stopped at Unicode 15.
+ * So `package.json` takes it from the upstream repository at a pinned tag, as a tarball dependency
+ * (`twemoji-assets`). npm records its integrity hash in the lockfile like any other dependency, so it
+ * is fetched once at install time and the build itself needs no network.
+ */
+function twemojiAssets() {
+  const svgDir = path.join(
+    path.dirname(createRequire(import.meta.url).resolve('twemoji-assets/package.json')),
+    'assets/svg'
+  )
+  let outDir = null
+
+  return {
+    name: 'wiki-twemoji-assets',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir)
+    },
+    configureServer(server) {
+      // -> connect strips the prefix, so `req.url` is just the file name here
+      server.middlewares.use(TWEMOJI_ROUTE, (req, res, next) => {
+        // -> Both a traversal guard and a cheap 404 for anything that is not one of these files
+        const name = path.basename(req.url.split('?')[0])
+        if (!/^[0-9a-f]+(-[0-9a-f]+)*\.svg$/.test(name)) {
+          next()
+          return
+        }
+        fs.promises.readFile(path.join(svgDir, name)).then((svg) => {
+          res.setHeader('Content-Type', 'image/svg+xml')
+          res.end(svg)
+        }, next)
+      })
+    },
+    // -> Not `emitFile`: 4000 assets through rollup for files that need no processing at all
+    async writeBundle() {
+      await verifyTwemojiCoverage(svgDir)
+      await fs.promises.cp(svgDir, path.join(outDir, TWEMOJI_ROUTE.slice(1)), { recursive: true })
+    }
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -59,6 +168,7 @@ export default defineConfig(({ mode }) => {
         }
       }),
       tailwindcss(),
+      twemojiAssets(),
       vueDevTools()
     ],
     css: {

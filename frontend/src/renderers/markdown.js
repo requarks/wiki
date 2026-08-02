@@ -14,7 +14,7 @@ import mdMdc from 'markdown-it-mdc'
 import mdUnderline from './modules/markdown-it-underline'
 import mdImsize from './modules/markdown-it-imsize'
 import mdGithubAlerts from './modules/github-alerts'
-import twemoji from 'twemoji'
+import twemoji from '@twemoji/api'
 
 import hljs from 'highlight.js'
 
@@ -198,6 +198,17 @@ export class MarkdownRenderer {
     // TWEMOJI
     // --------------------------------
 
+    /*
+      Drawn from this instance, never from a CDN: the callback replaces twemoji's default `base` +
+      size + extension entirely, so the `src` is the whole path and nothing upstream is contacted for
+      it. `vite.config.js` puts the SVGs at `/_assets/svg/twemoji/` — copied into the build output,
+      served out of `node_modules` in dev — so the two have to agree on this path.
+
+      The artwork comes from the same upstream project as this parser, at a pinned tag (see
+      `twemoji-assets` in `package.json`). They are separate dependencies, so the build checks that
+      every emoji a page can hold still resolves to a file — an emoji the parser knows and the asset
+      set does not is a broken image in a page.
+    */
     this.md.renderer.rules.emoji = (token, idx) => {
       return twemoji.parse(token[idx].content, {
         callback(icon, opts) {
