@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://static.requarks.io/logo/wikijs-full-darktheme.svg">
-  <img alt="Wiki.js" src="https://static.requarks.io/logo/wikijs-full.svg" width="600">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/Jcraft153/KV-Wiki/blob/primus/KV-WIKI.png">
+  <img alt="KV-Wiki" src="https://github.com/Jcraft153/KV-Wiki/blob/primus/KV-WIKI.png" width="600">
 </picture>
 
 [![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
