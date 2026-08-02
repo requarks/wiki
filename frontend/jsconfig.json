@@ -38,9 +38,6 @@
     "node_modules"
   ],
   "vueCompilerOptions": {
-    "target": 3,
-    "plugins": [
-      "@vue/language-plugin-pug"
-    ]
+    "target": 3
   }
 }

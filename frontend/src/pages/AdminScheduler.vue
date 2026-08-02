@@ -403,6 +403,8 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 
+import { humanizeDuration, relativeDate } from '@/helpers/datetime'
+
 import { useSiteStore } from '@/stores/site'
 
 // COMPOSABLES
@@ -617,30 +619,7 @@ watch(
 
 // METHODS
 
-/** Largest-first. `week` is deliberately absent, so output reads e.g. "21 days ago". */
-const RELATIVE_UNITS = [
-  ['year', 31536000],
-  ['month', 2592000],
-  ['day', 86400],
-  ['hour', 3600],
-  ['minute', 60],
-  ['second', 1]
-]
-const relativeTimeFormat = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
-
-/** Reads both ways: past for history, future for a job still waiting its turn. */
-function relativeDate(val) {
-  if (!val) {
-    return '---'
-  }
-  const seconds = Temporal.Instant.from(val).until(Temporal.Now.instant()).total('seconds')
-  for (const [unit, secondsPerUnit] of RELATIVE_UNITS) {
-    if (Math.abs(seconds) >= secondsPerUnit || unit === 'second') {
-      return relativeTimeFormat.format(-Math.round(seconds / secondsPerUnit), unit)
-    }
-  }
-}
-
+/** Absolute, and with seconds: for a job, the timing IS the thing being read. */
 function humanizeDate(val) {
   if (!val) {
     return '---'
@@ -654,29 +633,6 @@ function humanizeDate(val) {
     second: '2-digit',
     timeZoneName: 'short'
   })
-}
-
-/** Narrow, largest-first and skipping empty units — "1h 4m 32s", or "820ms" for a quick job. */
-const DURATION_UNITS = ['hour', 'minute', 'second', 'millisecond']
-const durationListFormat = new Intl.ListFormat(undefined, { style: 'narrow', type: 'unit' })
-
-function humanizeDuration(start, end) {
-  if (!start || !end) {
-    return '---'
-  }
-  const dur = Temporal.Instant.from(start).until(Temporal.Instant.from(end)).round({
-    largestUnit: 'hour',
-    smallestUnit: 'millisecond'
-  })
-  const parts = DURATION_UNITS.filter((unit) => dur[`${unit}s`] > 0).map((unit) =>
-    new Intl.NumberFormat(undefined, {
-      style: 'unit',
-      unit,
-      unitDisplay: 'narrow'
-    }).format(dur[`${unit}s`])
-  )
-  // -> A job that took under a millisecond still has to render as something
-  return parts.length > 0 ? durationListFormat.format(parts) : '0ms'
 }
 
 async function load() {

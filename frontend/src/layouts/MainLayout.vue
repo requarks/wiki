@@ -105,6 +105,12 @@
         </w-bar>
       </template>
     </w-drawer>
+    <!--
+      No `<w-footer>` here, unlike every other layout: this one only ever holds the page view, and
+      there the article column scrolls inside a shell that holds still, so a footer at this level
+      would be pinned to the window no matter which row it took. The page view puts it at the end of
+      that scrolling column instead -- see `pages/Index.vue`.
+    -->
     <w-page-container>
       <router-view />
       <!-- -> `.page-container-scrl` is the page view's article column, which is what scrolls -->
@@ -117,9 +123,6 @@
       </w-page-scroller>
     </w-page-container>
     <main-overlay-dialog />
-    <w-footer v-if="!editorStore.isActive">
-      <footer-nav />
-    </w-footer>
   </w-layout>
 </template>
 
@@ -141,7 +144,6 @@ import { useUserStore } from '@/stores/user'
 
 // COMPONENTS
 
-import FooterNav from '@/components/FooterNav.vue'
 import HeaderNav from '@/components/HeaderNav.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 import NavBrowseMenu from '@/components/NavBrowseMenu.vue'

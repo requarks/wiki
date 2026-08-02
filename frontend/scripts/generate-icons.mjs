@@ -34,7 +34,7 @@ const OUT = path.join(SRC, 'assets/icons.generated.js')
  * The skip is silent on purpose: `prefix:name` also describes every permission string in the frontend
  * (`write:pages`, `manage:system`), and those must not be mistaken for icons.
  */
-const SETS = ['mdi', 'la', 'tabler']
+const SETS = ['mdi', 'la']
 
 /**
  * A quoted string that is EXACTLY an Iconify reference. Requiring the whole literal to match is what
@@ -103,7 +103,9 @@ export function build() {
   const sets = Object.fromEntries(
     SETS.map((p) => [
       p,
-      JSON.parse(fs.readFileSync(path.join(ROOT, `node_modules/@iconify-json/${p}/icons.json`), 'utf8'))
+      JSON.parse(
+        fs.readFileSync(path.join(ROOT, `node_modules/@iconify-json/${p}/icons.json`), 'utf8')
+      )
     ])
   )
 
@@ -172,5 +174,7 @@ if (process.argv.includes('--check')) {
   fs.mkdirSync(path.dirname(OUT), { recursive: true })
   fs.writeFileSync(OUT, output)
   const bytes = Buffer.byteLength(output)
-  console.log(`wrote ${Object.keys(icons).length} icons to src/assets/icons.generated.js (${bytes.toLocaleString()} B)`)
+  console.log(
+    `wrote ${Object.keys(icons).length} icons to src/assets/icons.generated.js (${bytes.toLocaleString()} B)`
+  )
 }

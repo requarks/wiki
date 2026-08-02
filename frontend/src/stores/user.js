@@ -31,6 +31,28 @@ function formatDatePart (zoned, dateFormat) {
 }
 
 /**
+ * The moment as this user's clock shows it, whatever form the API sent it in.
+ *
+ * @param date A `Temporal.Instant`, a `Date`, or a string one can be parsed from.
+ * @param timezone This user's stored zone, which may be empty or no longer exist.
+ */
+function toUserZone(date, timezone) {
+  let instant = date
+  if (typeof date === 'string') {
+    instant = Temporal.Instant.from(date)
+  } else if (date instanceof Date) {
+    instant = date.toTemporalInstant()
+  }
+  // -> A preference set before the zone list changed, or none at all, falls back to this browser's
+  //    zone rather than throwing in the middle of a table
+  try {
+    return instant.toZonedDateTimeISO(timezone || Temporal.Now.timeZoneId())
+  } catch {
+    return instant.toZonedDateTimeISO(Temporal.Now.timeZoneId())
+  }
+}
+
+/**
  * Render the time part. `hourCycle` rather than `hour12: false`, which some locales render as 24:00
  * where they mean 00:00.
  */
@@ -60,20 +82,6 @@ export const useUserStore = defineStore('user', {
     authenticated: false,
     profileLoaded: false
   }),
-  getters: {
-    // -> Luxon format tokens, for the call sites that still format dates with luxon themselves. They
-    //    retire with the last of those; `formatDateTime()` no longer goes through them.
-    preferredDateFormat: (state) => {
-      if (!state.dateFormat) {
-        return 'D'
-      } else {
-        return state.dateFormat.replaceAll('Y', 'y').replaceAll('D', 'd')
-      }
-    },
-    preferredTimeFormat: (state) => {
-      return state.timeFormat === '24h' ? 'T' : 't'
-    }
-  },
   actions: {
     async refreshProfile() {
       try {
@@ -181,24 +189,23 @@ export const useUserStore = defineStore('user', {
       if (!date) {
         return ''
       }
-      let instant = date
-      if (typeof date === 'string') {
-        instant = Temporal.Instant.from(date)
-      } else if (date instanceof Date) {
-        instant = date.toTemporalInstant()
-      }
-      // -> A preference set before the zone list changed, or none at all, falls back to this browser's
-      //    zone rather than throwing in the middle of a table
-      let zoned
-      try {
-        zoned = instant.toZonedDateTimeISO(this.timezone || Temporal.Now.timeZoneId())
-      } catch {
-        zoned = instant.toZonedDateTimeISO(Temporal.Now.timeZoneId())
-      }
+      const zoned = toUserZone(date, this.timezone)
       return t('common.datetime', {
         date: formatDatePart(zoned, this.dateFormat),
         time: formatTimePart(zoned, this.timeFormat)
       })
+    },
+    /**
+     * Format the DATE alone, in this user's pattern and zone. For a line with no room for a time, or
+     * where the time says nothing worth reading -- the day an update was released, say.
+     *
+     * No `t`: with only one part there is no word order for a locale to have an opinion about.
+     */
+    formatDate(date) {
+      if (!date) {
+        return ''
+      }
+      return formatDatePart(toUserZone(date, this.timezone), this.dateFormat)
     }
   }
 })

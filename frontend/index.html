@@ -8,6 +8,15 @@
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
     <title>Wiki.js</title>
     <!--preload-links-->
+    <!--
+      The app's only webfont, and self-hosted: Roboto 300-900 as woff2, covering latin, latin-ext,
+      greek, cyrillic and vietnamese. Icon data is inlined at build time by scripts/generate-icons.mjs,
+      so there is no icon webfont to load.
+
+      Declared here rather than imported from a package, which is what `@quasar/extras/roboto-font`
+      used to do from main.js. Bundled CSS is linked after this, so those rules won -- leaving the app
+      on a latin-only woff copy of the same family while these files went unfetched.
+    -->
     <link href="/_assets/fonts/roboto/roboto.css" rel="stylesheet" />
     <style type="text/css">
       @keyframes initspinner {

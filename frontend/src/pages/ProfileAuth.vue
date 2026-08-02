@@ -45,11 +45,14 @@
                 <w-icon name="la:check" />
                 <span>{{ t('profile.authTfaBadge') }}</span>
               </w-badge>
+              <!--
+                Shaped like the Delete button on a passkey row -- same acrylic tint, drawn in the
+                brand blue instead of the negative red, which `acrylic-btn` picks up on its own since
+                it mixes its background out of `currentcolor`.
+              -->
               <w-btn
                 class="acrylic-btn"
                 flat
-                dense
-                round
                 icon="la:cog"
                 color="primary"
                 :aria-label="t(`profile.authActions`)">

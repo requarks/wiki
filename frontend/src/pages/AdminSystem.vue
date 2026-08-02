@@ -279,7 +279,6 @@ import { dialog } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
 
-import { cloneDeep } from 'lodash-es'
 import ClipboardJS from 'clipboard'
 import CheckUpdateDialog from '../components/CheckUpdateDialog.vue'
 

@@ -1,15 +1,13 @@
-<template lang="pug">
-.treeview
-  tree-level(
-    :depth='0'
-    :parent-id='null'
-  )
+<template>
+  <div class="treeview">
+    <tree-level :depth="0" :parent-id="null" />
+  </div>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, provide, reactive, toRef } from 'vue'
-import { findKey } from 'lodash-es'
+import { findKey } from 'es-toolkit/object'
 
 import TreeLevel from './TreeLevel.vue'
 

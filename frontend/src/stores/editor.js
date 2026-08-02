@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 
-import { clone } from 'lodash-es'
 import { v4 as uuid } from 'uuid'
 
 import { useSiteStore } from './site'

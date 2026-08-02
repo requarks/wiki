@@ -1,5 +1,5 @@
-<template lang="pug">
-.status-light(:class='cssClasses')
+<template>
+  <div class="status-light" :class="cssClasses" />
 </template>
 
 <script setup>

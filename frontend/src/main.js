@@ -10,10 +10,6 @@ import { initializeIconify } from './boot/iconify'
 import { initializeTemporal } from './boot/temporal'
 import { initializeHairlines } from './helpers/hairline'
 
-// Roboto only: icon data is inlined at build time by scripts/generate-icons.mjs,
-// so no icon webfont is loaded.
-import '@quasar/extras/roboto-font/roboto-font.css'
-
 import './css/tailwind.css'
 import './css/app.scss'
 

@@ -148,8 +148,8 @@ watch(
     border-radius: 7px;
     display: flex;
     align-items: stretch;
-    // -> The margin above, top and bottom, is what this subtracts: the card fills what is left
-    min-height: calc(100% - 32px);
+    // -> No height of its own: the scrolling page container grows this into what is left beside the
+    //    16px margins above, and lets its content take it past that. See `.layout-profile-card`.
 
     @at-root .body--light & {
       background-color: #fff;

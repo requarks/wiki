@@ -24,9 +24,14 @@ defineProps({
 
 <style scoped>
 /*
-  Fill the content cell. `min-height` rather than `height` so a page taller than the viewport still
+  Fill whatever holds this. `min-height` rather than `height` so a page taller than the viewport still
   grows, and on the page cell rather than the container so that a container holding something other
   than a page (the search screen's floating card) is left alone.
+
+  For a page sitting DIRECTLY in a `WPageContainer` the container overrides this and grows the page
+  with flex instead, because a percentage would also claim the height of a footer sharing that box.
+  This still does the work wherever a page is nested inside something else -- the profile and search
+  cards, say.
 */
 .w-page {
   min-height: 100%;

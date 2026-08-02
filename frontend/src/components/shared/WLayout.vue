@@ -18,6 +18,10 @@
  * `WPageContainer` and `WFooter` are siblings, exactly as before. Absent drawers collapse their
  * column to zero width, so nothing has to be conditional in the template.
  *
+ * The footer row is for a bar that has to stay put while the page scrolls behind it -- a status bar.
+ * The site footer belongs at the bottom of the CONTENT, so it goes inside the `WPageContainer`
+ * instead, which stacks it under the page and scrolls the two together; see `WFooter`.
+ *
  * `container` scopes the layout to its parent box (height 100%) instead of the viewport, which is
  * what the overlay and dialog layouts need.
  */

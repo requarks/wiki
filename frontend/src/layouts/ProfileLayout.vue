@@ -44,11 +44,11 @@
         </div>
         <router-view />
       </div>
+      <w-footer>
+        <footer-nav />
+      </w-footer>
     </w-page-container>
     <main-overlay-dialog />
-    <w-footer>
-      <footer-nav />
-    </w-footer>
   </w-layout>
 </template>
 
@@ -193,10 +193,17 @@ watch(
     border-radius: 7px;
     display: flex;
     align-items: stretch;
-    // -> Replaces the per-page `style-fn` that computed `height - 100 - offset` in JS: the 100px is
-    //    this element's own 50px top and bottom margins, and the offsets are now handled by the
-    //    layout grid rather than measured at runtime.
-    min-height: calc(100% - 100px);
+    /*
+      No height of its own. The card is a flex item of the scrolling page container, which grows it
+      into the height left over beside its 50px margins and lets it grow past that with its content --
+      so both the "short page, card fills the window" and "long page, card extends and scrolls" cases
+      fall out of the parent.
+
+      It used to say `min-height: calc(100% - 100px)`, subtracting those margins from the box by hand
+      (itself the successor to a per-page `style-fn` that computed `height - 100 - offset` in JS). That
+      is what a percentage cannot do once a footer shares the box: 100% is the WHOLE of it, footer
+      included, so the card claimed the footer's height too and its own content spilled out the bottom.
+    */
 
     /*
       A foreground to go with the background.

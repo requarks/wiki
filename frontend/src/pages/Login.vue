@@ -18,7 +18,6 @@ import { useMeta } from '@/composables/meta'
 
 import { useSiteStore } from '@/stores/site'
 
-import { find, has, head, reject, sortBy } from 'lodash-es'
 import Cookies from 'js-cookie'
 import AuthLoginPanel from '@/components/AuthLoginPanel.vue'
 
@@ -134,7 +133,7 @@ async function login() {
           strategy: this.selectedStrategy.key
         }
       })
-      if (has(resp, 'data.authentication.login')) {
+      if (resp?.data?.authentication?.login) {
         const respObj = resp?.data?.authentication?.login ?? {}
         if (respObj.responseResult.succeeded === true) {
           this.handleLoginResponse(respObj)
@@ -208,7 +207,7 @@ async function verifySecurityCode(setup = false) {
           setup
         }
       })
-      if (has(resp, 'data.authentication.loginTFA')) {
+      if (resp?.data?.authentication?.loginTFA) {
         const respObj = resp?.data?.authentication?.loginTFA ?? {}
         if (respObj.responseResult.succeeded === true) {
           this.handleLoginResponse(respObj)
@@ -269,7 +268,7 @@ async function changePassword() {
         newPassword: this.newPassword
       }
     })
-    if (has(resp, 'data.authentication.loginChangePassword')) {
+    if (resp?.data?.authentication?.loginChangePassword) {
       const respObj = resp?.data?.authentication?.loginChangePassword ?? {}
       if (respObj.responseResult.succeeded === true) {
         this.handleLoginResponse(respObj)
@@ -331,7 +330,7 @@ async function forgotPasswordSubmit() {
         email: this.username
       }
     })
-    if (has(resp, 'data.authentication.forgotPassword.responseResult')) {
+    if (resp?.data?.authentication?.forgotPassword?.responseResult) {
       const respObj = resp?.data?.authentication?.forgotPassword?.responseResult ?? {}
       if (respObj.succeeded === true) {
         this.$store.commit('showNotification', {

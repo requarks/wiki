@@ -98,7 +98,7 @@
                   keypath="admin.users.lastLoginAt"
                   tag="div">
                   <template #date>
-                    <strong>{{ humanizeDate(props.row.lastLoginAt) }}</strong>
+                    <strong>{{ relativeDate(props.row.lastLoginAt) }}</strong>
                   </template>
                 </i18n-t>
               </w-td>
@@ -152,6 +152,8 @@ import { dialog } from '@/composables/dialog'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
+
+import { relativeDate } from '@/helpers/datetime'
 
 import { debounce } from 'es-toolkit/function'
 import UserCreateDialog from '../components/UserCreateDialog.vue'
@@ -285,27 +287,6 @@ async function load({ page } = {}) {
 }
 
 /** Largest-first. `week` is deliberately absent, so output reads e.g. "21 days ago". */
-const RELATIVE_UNITS = [
-  ['year', 31536000],
-  ['month', 2592000],
-  ['day', 86400],
-  ['hour', 3600],
-  ['minute', 60],
-  ['second', 1]
-]
-const relativeTimeFormat = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
-
-function humanizeDate(val) {
-  if (!val) {
-    return '---'
-  }
-  const seconds = Temporal.Instant.from(val).until(Temporal.Now.instant()).total('seconds')
-  for (const [unit, secondsPerUnit] of RELATIVE_UNITS) {
-    if (Math.abs(seconds) >= secondsPerUnit || unit === 'second') {
-      return relativeTimeFormat.format(-Math.round(seconds / secondsPerUnit), unit)
-    }
-  }
-}
 function formattedDate(val) {
   return userStore.formatDateTime(t, val)
 }

@@ -417,11 +417,11 @@
     </w-drawer>
     <w-page-container class="admin-container">
       <router-view v-slot="{ Component }"><component :is="Component" /></router-view>
+      <w-footer><footer-nav generic /></w-footer>
     </w-page-container>
     <w-dialog class="admin-overlay" v-model="overlayIsShown" persistent full-width full-height>
       <component :is="overlays[adminStore.overlay]" />
     </w-dialog>
-    <w-footer><footer-nav generic /></w-footer>
   </w-layout>
 </template>
 
@@ -440,13 +440,24 @@ import { useUserStore } from '@/stores/user'
 
 import AccountMenu from '../components/AccountMenu.vue'
 import FooterNav from '@/components/FooterNav.vue'
+import LoadingGeneric from '@/components/LoadingGeneric.vue'
+// -> Each with a loading placeholder, as the overlays opened from the page view have: the dialog
+//    around them is already on screen while the chunk is fetched, so without one the panel is empty
+//    until it arrives and then fills in all at once
 const overlays = {
-  EditorMarkdownConfig: defineAsyncComponent(
-    () => import('../components/EditorMarkdownConfigOverlay.vue')
-  ),
-  GroupEditOverlay: defineAsyncComponent(() => import('../components/GroupEditOverlay.vue')),
-  // MailTemplateEditorOverlay: defineAsyncComponent(() => import('../components/MailTemplateEditorOverlay.vue')),
-  UserEditOverlay: defineAsyncComponent(() => import('../components/UserEditOverlay.vue'))
+  EditorMarkdownConfig: defineAsyncComponent({
+    loader: () => import('../components/EditorMarkdownConfigOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  GroupEditOverlay: defineAsyncComponent({
+    loader: () => import('../components/GroupEditOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  // MailTemplateEditorOverlay: defineAsyncComponent({ loader: () => import('../components/MailTemplateEditorOverlay.vue'), loadingComponent: LoadingGeneric }),
+  UserEditOverlay: defineAsyncComponent({
+    loader: () => import('../components/UserEditOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  })
 }
 
 // STORES

@@ -64,7 +64,6 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive } from 'vue'
-import { DateTime } from 'luxon'
 
 import { useUserStore } from '@/stores/user'
 
@@ -107,7 +106,7 @@ async function check() {
     if (resp?.current) {
       state.current = resp.current
       state.latest = resp.latest
-      state.latestDate = DateTime.fromISO(resp.latestDate).toFormat(userStore.preferredDateFormat)
+      state.latestDate = userStore.formatDate(resp.latestDate)
     } else {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }

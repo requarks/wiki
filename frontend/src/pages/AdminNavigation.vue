@@ -331,7 +331,7 @@ import { useMeta } from '@/composables/meta'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
-import { find, intersectionBy, pull, unionBy } from 'lodash-es'
+import { intersectionBy, pull, unionBy } from 'es-toolkit/array'
 import { v4 as uuid } from 'uuid'
 import draggable from 'vuedraggable'
 
@@ -381,19 +381,21 @@ const navTypes = computed(() => [
 ])
 
 const locales = computed(() => {
+  // -> `(l) => l.code` rather than the `'code'` shorthand lodash took: es-toolkit's `*By` helpers
+  //    want a mapper function, and a string reaches `uniqBy` as one and throws
   return intersectionBy(
     state.allLocales,
-    unionBy(siteLangs, [{ code: 'en' }, { code: siteConfig.lang }], 'code'),
-    'code'
+    unionBy(siteLangs, [{ code: 'en' }, { code: siteConfig.lang }], (l) => l.code),
+    (l) => l.code
   )
 })
 
 const currentTree = computed({
   get() {
-    return find(state.trees, ['locale', state.currentLang])?.items || []
+    return state.trees.find((tree) => tree.locale === state.currentLang)?.items || []
   },
   set(val) {
-    const tree = find(state.trees, ['locale', state.currentLang])
+    const tree = state.trees.find((t) => t.locale === state.currentLang)
     if (tree) {
       tree.items = val
     } else {
@@ -453,7 +455,7 @@ function addItem(kind) {
 }
 
 function deleteItem(item) {
-  state.currentTree = pull(state.currentTree, item)
+  state.currentTree = pull(state.currentTree, [item])
   state.current = {}
 }
 
@@ -473,7 +475,7 @@ function copyFromLocale() {
   state.copyFromLocaleDialogIsShown = false
   state.currentTree = [
     ...state.currentTree,
-    ...(find(state.trees, ['locale', state.copyFromLocaleCode])?.items || [])
+    ...(state.trees.find((tree) => tree.locale === state.copyFromLocaleCode)?.items || [])
   ]
 }
 

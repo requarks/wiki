@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-import { difference } from 'lodash-es'
+import { difference } from 'es-toolkit/array'
 
 export const useCommonStore = defineStore('common', {
   state: () => ({

@@ -49,7 +49,7 @@
             @click="promptUnlock" />
         </div>
         <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
-          <div class="p-4">
+          <div class="page-container-body p-4">
             <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
@@ -114,6 +114,16 @@
               </div>
             </template>
           </div>
+          <!--
+            Inside the scrolling column, and last: this is the bottom of the PAGE, so it is reached by
+            reading to the end of it rather than sitting over the article the whole way down.
+
+            The editor replaces this column wholesale, which is how it goes without a footer, and the
+            lock screen likewise -- a page that sent no body has no end to arrive at.
+          -->
+          <w-footer>
+            <footer-nav />
+          </w-footer>
         </w-scroll-area>
       </div>
       <div
@@ -233,6 +243,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
+import FooterNav from '@/components/FooterNav.vue'
 import LoadingGeneric from '@/components/LoadingGeneric.vue'
 import PageActionsCol from '@/components/PageActionsCol.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -656,6 +667,22 @@ function promptUnlock() {
     }
   }
 }
+/*
+  The article and the footer under it, stacked inside the one box that scrolls.
+
+  `flex: 1 0 auto` on the article is what keeps the footer at the BOTTOM of a short page instead of
+  leaving it hanging under two lines of content: the article takes the leftover height, and past that
+  grows with its own content and pushes the footer out of view until the reader gets there. It must
+  not shrink either, or a long article would be squeezed to make room rather than scrolling.
+*/
+.page-container-scrl {
+  display: flex;
+  flex-direction: column;
+}
+.page-container-body {
+  flex: 1 0 auto;
+}
+
 .page-container {
   @at-root .body--light & {
     border-top: 1px solid #fff;

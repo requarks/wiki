@@ -201,9 +201,9 @@
         </w-page>
         <w-inner-loading :showing="state.loading > 0" />
       </div>
+      <w-footer><footer-nav /></w-footer>
     </w-page-container>
     <main-overlay-dialog />
-    <w-footer><footer-nav /></w-footer>
   </w-layout>
 </template>
 
@@ -499,7 +499,15 @@ onUnmounted(() => {
     border-radius: 7px;
     display: flex;
     align-items: stretch;
-    height: 100%;
+    /*
+      No height of its own, as `.layout-profile-card` explains at length: the scrolling page container
+      grows this into the height left over beside its margins, and lets its content take it past that.
+
+      It used to say `height: 100%`, which overflowed the box by exactly its own margins on every
+      search however few results came back -- so the footer under it started 100px below the fold --
+      and, since a height is not a minimum, spilled a long result list out past the bottom edge of the
+      white card the results are supposed to sit on.
+    */
 
     /*
       A foreground to go with the background, as `.layout-profile-card` needs for the same reason:
@@ -595,17 +603,6 @@ body.body--dark {
   background-color: $dark-6;
 }
 
-.w-footer {
-  // FooterNav still renders a q-bar; this goes with it in a later phase.
-  .q-bar {
-    @at-root .body--light & {
-      background-color: $grey-3;
-      color: $grey-7;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-4;
-      color: rgba(255, 255, 255, 0.3);
-    }
-  }
-}
+// -> The `.w-footer .q-bar` rule that used to sit here never matched: FooterNav renders
+//    `.site-footer`, never a q-bar. Its colours live in FooterNav's own scoped style.
 </style>

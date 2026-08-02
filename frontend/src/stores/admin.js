@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
-import { clone, cloneDeep, sortBy } from 'lodash-es'
+import { sortBy } from 'es-toolkit/array'
+import { cloneDeep } from 'es-toolkit/object'
 import semverGte from 'semver/functions/gte'
 
 export const useAdminStore = defineStore('admin', {
@@ -44,16 +45,16 @@ export const useAdminStore = defineStore('admin', {
     },
     async fetchInfo() {
       const resp = await API_CLIENT.get('system/info').json()
-      this.info.groupsTotal = clone(resp?.groupsTotal ?? 0)
-      this.info.tagsTotal = clone(resp?.tagsTotal ?? 0)
-      this.info.usersTotal = clone(resp?.usersTotal ?? 0)
-      this.info.loginsPastDay = clone(resp?.loginsPastDay ?? 0)
-      this.info.currentVersion = clone(resp?.currentVersion ?? 'n/a')
-      this.info.latestVersion = clone(resp?.latestVersion ?? 'n/a')
-      this.info.isApiEnabled = clone(resp?.isApiEnabled ?? false)
-      this.info.isMetricsEnabled = clone(resp?.isMetricsEnabled ?? false)
-      this.info.isMailConfigured = clone(resp?.isMailConfigured ?? false)
-      this.info.isSchedulerHealthy = clone(resp?.isSchedulerHealthy ?? false)
+      this.info.groupsTotal = resp?.groupsTotal ?? 0
+      this.info.tagsTotal = resp?.tagsTotal ?? 0
+      this.info.usersTotal = resp?.usersTotal ?? 0
+      this.info.loginsPastDay = resp?.loginsPastDay ?? 0
+      this.info.currentVersion = resp?.currentVersion ?? 'n/a'
+      this.info.latestVersion = resp?.latestVersion ?? 'n/a'
+      this.info.isApiEnabled = resp?.isApiEnabled ?? false
+      this.info.isMetricsEnabled = resp?.isMetricsEnabled ?? false
+      this.info.isMailConfigured = resp?.isMailConfigured ?? false
+      this.info.isSchedulerHealthy = resp?.isSchedulerHealthy ?? false
     },
     async fetchSites() {
       this.sites = (await API_CLIENT.get('sites').json()) ?? []

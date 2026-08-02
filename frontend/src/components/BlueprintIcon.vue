@@ -29,10 +29,6 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  dark: {
-    type: Boolean,
-    default: false
-  },
   indicator: {
     type: String,
     default: null
@@ -51,7 +47,6 @@ const props = defineProps({
   }
 })
 
-
 // COMPOSABLES
 
 const dark = useDark()
@@ -62,10 +57,10 @@ const textMode = computed(() => {
   return props.text !== null
 })
 const avatarBgColor = computed(() => {
-  return dark.isActive || props.dark ? 'dark-4' : 'blue-1'
+  return dark.isActive ? 'dark-4' : 'blue-1'
 })
 const avatarTextColor = computed(() => {
-  return dark.isActive || props.dark ? 'white' : 'blue-7'
+  return dark.isActive ? 'white' : 'blue-7'
 })
 const indicatorDot = computed(() => {
   if (props.indicator === null) {

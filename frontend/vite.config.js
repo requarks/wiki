@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import yaml from 'js-yaml'
+// -> A named import: js-yaml 5 ships ESM with no default export, so `import yaml from` throws
+import { load as loadYaml } from 'js-yaml'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
@@ -10,7 +11,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig(({ mode }) => {
   const userConfig = mode === 'development' ? {
     dev: { port: 3001, hmrClientPort: 3001 },
-    ...yaml.load(fs.readFileSync(fileURLToPath(new URL('../config.yml', import.meta.url)), 'utf8'))
+    ...loadYaml(fs.readFileSync(fileURLToPath(new URL('../config.yml', import.meta.url)), 'utf8'))
   } : {}
 
   return {
@@ -35,14 +36,6 @@ export default defineConfig(({ mode }) => {
         }
       },
       target: 'es2022'
-    },
-    optimizeDeps: {
-      include: [
-        'prosemirror-state',
-        'prosemirror-transform',
-        'prosemirror-model',
-        'prosemirror-view'
-      ]
     },
     plugins: [
       vue({
@@ -76,7 +69,15 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url))
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        /*
+          markdown-it 15 dropped its `markdown-it/lib/*` subpath exports and put the parser internals
+          on the main export as static classes. `markdown-it-mdc` still imports the old path, so
+          without this the build fails to resolve it -- see the shim for the rest.
+        */
+        'markdown-it/lib/token.mjs': fileURLToPath(
+          new URL('./src/renderers/modules/markdown-it-token.js', import.meta.url)
+        )
       }
     },
     server: {

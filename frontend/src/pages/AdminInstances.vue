@@ -110,7 +110,7 @@ import { notify } from '@/composables/notify'
 
 import { useSiteStore } from '@/stores/site'
 
-import { DateTime, Duration, Interval } from 'luxon'
+import { humanizeDuration, relativeDate } from '@/helpers/datetime'
 
 // STORES
 
@@ -168,7 +168,7 @@ const instancesHeaders = [
     field: 'dbFirstSeen',
     name: 'firstseen',
     sortable: true,
-    format: (v) => DateTime.fromISO(v).toRelative()
+    format: relativeDate
   },
   {
     label: t('admin.instances.lastSeen'),
@@ -176,29 +176,28 @@ const instancesHeaders = [
     field: 'dbLastSeen',
     name: 'lastseen',
     sortable: true,
-    format: (v) => DateTime.fromISO(v).toRelative()
+    format: relativeDate
   }
 ]
 
 // METHODS
 
+/*
+  The fields luxon's `fff` expanded to, so the cell reads exactly as before -- long month, no seconds.
+  The scheduler spells out seconds in its own copy of this, because there a job's timing is the point.
+*/
 function humanizeDate(val) {
-  return DateTime.fromISO(val).toFormat('fff')
-}
-
-function humanizeDuration(start, end) {
-  const dur = Interval.fromDateTimes(DateTime.fromISO(start), DateTime.fromISO(end)).toDuration([
-    'hours',
-    'minutes',
-    'seconds',
-    'milliseconds'
-  ])
-  return Duration.fromObject({
-    ...(dur.hours > 0 && { hours: dur.hours }),
-    ...(dur.minutes > 0 && { minutes: dur.minutes }),
-    ...(dur.seconds > 0 && { seconds: dur.seconds }),
-    ...(dur.milliseconds > 0 && { milliseconds: dur.milliseconds })
-  }).toHuman({ unitDisplay: 'narrow', listStyle: 'short' })
+  if (!val) {
+    return '---'
+  }
+  return Temporal.Instant.from(val).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  })
 }
 
 async function load() {

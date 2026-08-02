@@ -82,9 +82,6 @@ import { useMeta } from '@/composables/meta'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
-import { cloneDeep, concat, filter, find, findIndex, reduce, reverse, sortBy } from 'lodash-es'
-import { DepGraph } from 'dependency-graph'
-
 // STORES
 
 const adminStore = useAdminStore()
