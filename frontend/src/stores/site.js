@@ -62,6 +62,7 @@ export const useSiteStore = defineStore('site', {
     overlayOpts: {},
     features: {
       browse: false,
+      collaborativeEditing: false,
       profile: false,
       ratingsMode: 'off',
       reasonForChange: 'required',

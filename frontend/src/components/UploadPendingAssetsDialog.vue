@@ -60,6 +60,13 @@ onMounted(async () => {
 
   await new Promise((resolve) => setTimeout(resolve, 500))
 
+  /*
+    What the editor has to rewrite, collected as it goes. The editor makes these replacements against
+    its own model rather than reloading the page's text, which is what keeps an upload from reading as
+    a rewrite of the whole document -- see `reloadEditorContent` in `EditorMarkdown.vue`.
+  */
+  const replacements = []
+
   try {
     for (const item of editorStore.pendingAssets) {
       state.current++
@@ -84,10 +91,11 @@ onMounted(async () => {
         ? `${resp.asset.folderPath}/${resp.asset.fileName}`
         : resp?.asset?.fileName
       pageStore.content = pageStore.content.replaceAll(item.blobUrl, `/${storedPath}`)
+      replacements.push({ from: item.blobUrl, to: `/${storedPath}` })
       URL.revokeObjectURL(item.blobUrl)
     }
     editorStore.pendingAssets = []
-    EVENT_BUS.emit('reloadEditorContent')
+    EVENT_BUS.emit('reloadEditorContent', { replacements })
     onDialogOK()
   } catch (err) {
     const apiMessage = await err.response

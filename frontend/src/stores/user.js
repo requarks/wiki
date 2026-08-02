@@ -92,6 +92,13 @@ export const useUserStore = defineStore('user', {
           this.setToGuest()
         } else {
           this.$patch({
+            /*
+              Kept, rather than left at the guest id this store starts with. Nothing used to read it
+              while logged in, so nothing noticed -- but a live editing session identifies its
+              participants by it, and every one of them claiming the guest id makes a roomful of
+              people look like one person wearing the same colour.
+            */
+            id: resp.id,
             name: resp.name || 'Unknown User',
             email: resp.email,
             hasAvatar: resp.hasAvatar ?? false,

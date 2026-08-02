@@ -83,6 +83,7 @@ class Sites {
             },
             features: {
               browse: true,
+              collaborativeEditing: true,
               ratings: false,
               ratingsMode: 'off',
               comments: false,
@@ -275,6 +276,7 @@ class Sites {
         },
         features: {
           browse: true,
+          collaborativeEditing: true,
           ratings: false,
           ratingsMode: 'off',
           comments: false,

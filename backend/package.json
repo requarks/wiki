@@ -47,6 +47,7 @@
     "@fastify/swagger": "9.7.0",
     "@fastify/swagger-ui": "6.0.0",
     "@fastify/view": "12.0.0",
+    "@fastify/websocket": "11.3.0",
     "@gquittet/graceful-server": "6.0.10",
     "@iconify/utils": "3.1.4",
     "@simplewebauthn/server": "13.3.2",
@@ -64,6 +65,7 @@
     "filesize": "11.0.17",
     "fs-extra": "11.3.5",
     "js-yaml": "4.2.0",
+    "lib0": "0.2.117",
     "mime": "4.1.0",
     "nanoid": "5.1.11",
     "node-cache": "5.1.2",
@@ -74,7 +76,9 @@
     "qrcode": "1.5.4",
     "sanitize-html": "2.17.6",
     "semver": "7.8.4",
-    "uuid": "14.0.0"
+    "uuid": "14.0.0",
+    "y-protocols": "1.0.7",
+    "yjs": "13.6.31"
   },
   "optionalDependencies": {
     "sharp": "0.35.3"
@@ -89,6 +93,7 @@
     "@types/qrcode": "1.5.6",
     "@types/sanitize-html": "2.16.1",
     "@types/semver": "7.7.1",
+    "@types/ws": "8.18.1",
     "drizzle-kit": "1.0.0-beta.15-859cf75",
     "nodemon": "3.1.14",
     "npm-check-updates": "22.2.3",

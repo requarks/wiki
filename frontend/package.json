@@ -61,6 +61,10 @@
     "vue-router": "5.2.0",
     "vue3-otp-input": "0.5.40",
     "vuedraggable": "4.1.0",
+    "y-monaco": "0.1.6",
+    "y-protocols": "1.0.7",
+    "y-websocket": "3.0.0",
+    "yjs": "13.6.31",
     "zxcvbn": "4.4.2"
   },
   "devDependencies": {

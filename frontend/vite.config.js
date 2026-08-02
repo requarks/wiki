@@ -9,10 +9,15 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const userConfig = mode === 'development' ? {
-    dev: { port: 3001, hmrClientPort: 3001 },
-    ...loadYaml(fs.readFileSync(fileURLToPath(new URL('../config.yml', import.meta.url)), 'utf8'))
-  } : {}
+  const userConfig =
+    mode === 'development'
+      ? {
+          dev: { port: 3001, hmrClientPort: 3001 },
+          ...loadYaml(
+            fs.readFileSync(fileURLToPath(new URL('../config.yml', import.meta.url)), 'utf8')
+          )
+        }
+      : {}
 
   return {
     build: {
@@ -32,7 +37,8 @@ export default defineConfig(({ mode }) => {
         output: {
           // -> The renderer keeps a fixed name because it is referenced from a static page served by
           //    the backend, which has no way to look up a hashed one
-          entryFileNames: chunk => chunk.name === 'renderer' ? '_assets/renderer.js' : '_assets/[name]-[hash].js'
+          entryFileNames: (chunk) =>
+            chunk.name === 'renderer' ? '_assets/renderer.js' : '_assets/[name]-[hash].js'
         }
       },
       target: 'es2022'
@@ -48,7 +54,7 @@ export default defineConfig(({ mode }) => {
           transformAssetUrls: { includeAbsolute: false },
           // -> `iconify-icon` is a custom element registered by its package, not a Vue component
           compilerOptions: {
-            isCustomElement: tag => tag === 'iconify-icon'
+            isCustomElement: (tag) => tag === 'iconify-icon'
           }
         }
       }),
@@ -75,6 +81,14 @@ export default defineConfig(({ mode }) => {
           on the main export as static classes. `markdown-it-mdc` still imports the old path, so
           without this the build fails to resolve it -- see the shim for the rest.
         */
+        /*
+          monaco-editor 0.56 declares `"./*.js": "./esm/vs/*.js"` in its exports map, so the full
+          `monaco-editor/esm/vs/...` path a dependency writes now resolves to `esm/vs/esm/vs/...` and
+          fails. y-monaco imports the API entry that way; this points it at the same file the app's
+          own `monaco-editor` import lands on, which matters beyond resolving at all -- two copies of
+          that module would give the binding a different `Range` class than the editor's.
+        */
+        'monaco-editor/esm/vs/editor/editor.api.js': 'monaco-editor/editor/editor.api.js',
         'markdown-it/lib/token.mjs': fileURLToPath(
           new URL('./src/renderers/modules/markdown-it-token.js', import.meta.url)
         )
@@ -86,15 +100,20 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: true,
       port: userConfig.dev?.port,
-      proxy: ['_api', '_blocks', '_icons', '_site', '_thumb', '_user'].reduce((result, key) => {
-        result[`/${key}`] = {
-          target: {
-            host: '127.0.0.1',
-            port: userConfig.port
+      proxy: ['_api', '_blocks', '_collab', '_icons', '_site', '_thumb', '_user'].reduce(
+        (result, key) => {
+          result[`/${key}`] = {
+            target: {
+              host: '127.0.0.1',
+              port: userConfig.port
+            },
+            // -> `_collab` is a websocket; the rest are unaffected by this being on
+            ws: true
           }
-        }
-        return result
-      }, {}),
+          return result
+        },
+        {}
+      ),
       hmr: {
         clientPort: userConfig.dev?.hmrClientPort
       }

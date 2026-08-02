@@ -642,6 +642,16 @@ async function routes(app: FastifyInstance) {
       if (!page) {
         return reply.notFound('This page does not exist.')
       }
+      /*
+        Anyone else editing this page right now is looking at the text that was just stored, so their
+        editor should stop calling it unsaved. Told through the collaboration room rather than answered
+        here, since they are on their own requests — and, quite possibly, on another instance.
+      */
+      WIKI.collab.pageSaved(page.id, {
+        versionDate: page.updatedAt.toTemporalInstant().toString({ smallestUnit: 'millisecond' }),
+        authorId: actor.id,
+        authorName: page.authorName ?? ''
+      })
       return {
         ok: true,
         message: 'Page updated successfully.',

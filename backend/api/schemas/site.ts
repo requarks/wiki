@@ -68,6 +68,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           browse: {
             type: 'boolean'
           },
+          collaborativeEditing: {
+            type: 'boolean'
+          },
           ratings: {
             type: 'boolean'
           },

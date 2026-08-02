@@ -115,6 +115,11 @@
         </w-btn>
       </template>
       <template v-if="editorStore.isActive">
+        <!--
+          Whoever else has this page open in an editor. Renders nothing when that is nobody, which is
+          also what it renders whenever there is no collaboration session at all.
+        -->
+        <collab-presence class="mr-2" />
         <w-btn
           class="ml-4 acrylic-btn"
           icon="la:question-circle"
@@ -256,6 +261,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
+import CollabPresence from '@/components/CollabPresence.vue'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 
 // STORES

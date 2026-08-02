@@ -171,6 +171,21 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item tag="label">
+            <blueprint-icon icon="user-typing-using-typewriter" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowCollaborativeEditing`) }}</w-item-label>
+              <w-item-label caption>
+                {{ t(`admin.general.allowCollaborativeEditingHint`) }}
+              </w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.collaborativeEditing"
+                :aria-label="t(`admin.general.allowCollaborativeEditing`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
             <blueprint-icon icon="discussion-forum" />
             <w-item-section>
               <w-item-label>{{ t(`admin.general.allowComments`) }}</w-item-label>

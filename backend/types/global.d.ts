@@ -49,6 +49,7 @@ declare global {
     /** Contents of `base.yml` — set by configSvc.init(), not by index.ts */
     data: any
 
+    collab: typeof import('../core/collab.ts').default
     configSvc: typeof import('../core/config.ts').default
     db: import('../core/db.ts').WikiDb
     dbManager: typeof import('../core/db.ts').default

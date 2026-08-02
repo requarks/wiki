@@ -284,9 +284,19 @@
 </template>
 
 <script setup>
-import { reactive, ref, shallowRef, nextTick, onMounted, watch, onBeforeUnmount } from 'vue'
+import {
+  computed,
+  reactive,
+  ref,
+  shallowRef,
+  nextTick,
+  onMounted,
+  watch,
+  onBeforeUnmount
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { blockMarkdown } from '@/helpers/blocks'
@@ -295,10 +305,12 @@ import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
 import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
 
+import { useCollabStore } from '@/stores/collab'
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import { enhanceRenderedContent } from '@/helpers/renderedContent'
 
@@ -309,14 +321,33 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 
 // STORES
 
+const collabStore = useCollabStore()
 const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
 const { t } = useI18n()
+
+// COMPUTED
+
+/**
+ * Whether this edit is shared with whoever else has the page open.
+ *
+ * Deliberately narrow. A page being created has no id to gather anyone around yet, and a suggestion is
+ * one person's private draft of a page they may not write to — the server refuses a room for it, and
+ * asking for one anyway would only produce a rejected socket on every keystroke of every suggestion.
+ */
+const collabEnabled = computed(
+  () =>
+    siteStore.features.collaborativeEditing &&
+    userStore.authenticated &&
+    editorStore.mode === 'edit' &&
+    Boolean(pageStore.id)
+)
 
 // STATE
 
@@ -840,8 +871,28 @@ function onEditorDrop(event) {
   insertFilesAsAssets([...event.dataTransfer.files])
 }
 
-function reloadEditorContent() {
-  editor.getModel().setValue(pageStore.content)
+/**
+ * Rewrite text that was already in the editor — the blob URLs of pending assets, once the upload has
+ * given them real paths.
+ *
+ * Done as targeted edits rather than by putting the whole page back with `setValue`. Replacing the
+ * model wholesale reads as "everything was deleted and everything was typed again", which throws away
+ * the undo history and the caret, and in a collaborative session would land on everyone else as
+ * exactly that — their own unsaved sentences deleted and retyped by someone who only uploaded an
+ * image.
+ */
+function reloadEditorContent({ replacements = [] } = {}) {
+  const model = editor.getModel()
+  const edits = []
+  for (const { from, to } of replacements) {
+    // -> Literal, case-sensitive, whole-string matching: these are URLs, not patterns
+    for (const match of model.findMatches(from, false, false, true, null, false)) {
+      edits.push({ range: match.range, text: to })
+    }
+  }
+  if (edits.length > 0) {
+    editor.executeEdits('assets', edits)
+  }
 }
 
 // MOUNTED
@@ -1022,6 +1073,56 @@ onMounted(async () => {
   monacoRef.value.addEventListener('dragover', onEditorDragOver)
   monacoRef.value.addEventListener('drop', onEditorDrop)
 
+  // -> Live collaboration
+
+  if (collabEnabled.value) {
+    /*
+      Read-only until the shared document has arrived, and only that first time.
+
+      The binding below starts by making the editor say what the document says, so anything typed
+      before it exists is about to be overwritten -- by an empty document, if the sync has not landed
+      yet. The session gives up after a few seconds (a proxy that does not forward websocket upgrades
+      is the usual reason) and the editor is released as an ordinary one, so this cannot strand an
+      author in a page they are unable to type in.
+    */
+    editor.updateOptions({ readOnly: true })
+    startCollabSession({ siteId: siteStore.id, pageId: pageStore.id })
+
+    watch(
+      () => collabStore.status,
+      (status) => {
+        if (status === 'connected') {
+          bindCollabEditor(editor)
+        }
+        if (status !== 'connecting') {
+          editor.updateOptions({ readOnly: false })
+        }
+        if (status === 'denied') {
+          notify({
+            type: 'warning',
+            message: t('editor.collab.notAllowed')
+          })
+        }
+      }
+    )
+
+    /*
+      Somebody else saved the page. The editor state has already been put back to "nothing pending" by
+      the session -- this is only so that the author is told why their Save button went quiet.
+    */
+    watch(
+      () => collabStore.lastSave,
+      (lastSave) => {
+        if (lastSave && lastSave.authorId !== userStore.id) {
+          notify({
+            type: 'positive',
+            message: t('editor.collab.savedBy', { name: lastSave.authorName })
+          })
+        }
+      }
+    )
+  }
+
   // -> Post init
 
   editor.focus()
@@ -1078,6 +1179,9 @@ onBeforeUnmount(() => {
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
   monacoRef.value?.removeEventListener('dragover', onEditorDragOver)
   monacoRef.value?.removeEventListener('drop', onEditorDrop)
+  // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
+  //    this author's avatar out of everyone else's header
+  stopCollabSession()
   if (editor) {
     editor.dispose()
   }
