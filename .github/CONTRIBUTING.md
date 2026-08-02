@@ -2,14 +2,12 @@
 
 ## Introduction
 
-First, thank you for considering contributing to Wiki.js! It's people like you that make the open source community such a great community! 😊
+First, thank you for considering contributing to KV-Wiki! 
 
 We welcome any type of contribution, not only code. You can help with
 - **QA**: file bug reports, the more details you can give the better (e.g. screenshots with the console open)
-- **Marketing**: writing blog posts, howto's, printing stickers, ...
-- **Community**: presenting the project at meetups, organizing a dedicated meetup for the local community, ...
-- **Code**: take a look at the [open issues](https://github.com/Requarks/wiki/issues). Even if you can't write code, commenting on them, showing that you care about a given issue matters. It helps us triage them.
-- **Money**: we welcome financial contributions in full transparency on our [open collective](https://opencollective.com/wikijs).
+- **Code**: take a look at the [open issues](https://github.com/Requarks/KV-Wiki/issues). Even if you can't write code, commenting on them, showing that you care about a given issue matters. It helps us triage them.
+
 
 ## Your First Contribution
 
@@ -26,50 +24,30 @@ It is also always helpful to have some context for your pull request. What was t
 
 ## Requesting new features / enhancements
 
-Use the feature request board to submit new ideas and vote on which ideas should be integrated first.
+Use the feature request tag to submit new ideas and vote on which ideas should be integrated first.
+Use GitHub issues to submit new feature ideas, use the feature request tag from the list.
 
-:triangular_flag_on_post: [https://js.wiki/feedback/](https://js.wiki/feedback/)
-
-*Do not use GitHub issues to submit new feature ideas, as it will closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
-
-## Financial contributions
-
-We also welcome financial contributions in full transparency on our [open collective](https://opencollective.com/wikijs).
-Anyone can file an expense. If the expense makes sense for the development of the community, it will be "merged" in the ledger of our open collective by the core contributors and the person who filed the expense will be reimbursed.
 
 ## Questions
 
-If you have any questions, create an [issue](https://github.com/Requarks/wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
-You can also reach us at <hello@wikijs.opencollective.com>.
+If you have any questions, create an [issue](https://github.com/Requarks/KV-Wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
+
 
 ## Credits
 
 ### Contributors
 
-Thank you to all the people who have already contributed to Wiki.js!
+Thank you to all the people who have already contributed to Wiki.js, the basis of this project!
 <a href="https://github.com/Requarks/wiki/graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
 
-
-### Backers
-
-Thank you to all our backers! [[Become a backer](https://opencollective.com/wikijs#backer)]
-
-<a href="https://opencollective.com/wikijs#backers" target="_blank"><img src="https://opencollective.com/wikijs/backers.svg?width=890"></a>
+KV Wiki has fork-specific contributions from:
+Jcraft153
 
 
-### Sponsors
+## AI Disclosure
 
-Thank you to all our sponsors! (please ask your company to also support this open source project by [becoming a sponsor](https://opencollective.com/wikijs#sponsor))
-
-<a href="https://opencollective.com/wikijs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/9/avatar.svg"></a>
+This project has been partially written using OpenAI's Codex running the 5.6 Sol and 5.6 Terra models.
+Some Github commits are written by Copilot.
+All changes are reviewed by Jcraft153 who accepts final responsibility for anything created by the AI models.
 
 <!-- This `CONTRIBUTING.md` is based on @nayafia's template https://github.com/nayafia/contributing-template -->
