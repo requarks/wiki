@@ -17,7 +17,7 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 > [!CAUTION]
 > **DO NOT CREATE A GITHUB ISSUE / DISCUSSION** to report a potential vulnerability / security problem. Instead, use the process below:
 
-Submit a Vulnerability Report by filling in the form on https://github.com/requarks/KV-Wiki/security/advisories/new
+Submit a Vulnerability Report by filling in the form on https://github.com/Jcraft153/KV-Wiki/security/advisories/new
 
 Include as much details as possible, such as:
 - The version(s) of KV-Wiki that are impacted
