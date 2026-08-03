@@ -44,6 +44,25 @@ declare module 'fastify' {
      */
     unlockedPages?: string[]
     /**
+     * The redirect login in progress, written when the browser is sent to an identity provider and
+     * read when it comes back. It is what ties the two halves together: an answer whose `state` is not
+     * the one this session sent is not this session's answer, and the PKCE verifier never leaves here.
+     *
+     * One at a time, deliberately — a second attempt replaces the first rather than leaving a set of
+     * open states to be matched against.
+     */
+    authFlow?: {
+      strategyId: string
+      siteId: string
+      state: string
+      nonce: string
+      codeVerifier: string
+      /** Where to send the browser once it is logged in. */
+      redirect: string
+      /** When this flow was started, as an ISO instant, so that a stale one can be refused. */
+      startedAt: string
+    }
+    /**
      * The WebAuthn challenge a passkey ceremony is waiting on, written by the routes in `api/users.ts`
      * (registration) and `api/authentication.ts` (login) and consumed by the verification that
      * follows.

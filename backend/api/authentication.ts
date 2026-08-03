@@ -1,5 +1,41 @@
+import { nanoid } from 'nanoid'
 import { limitAuthAttempts } from '../helpers/rateLimit.ts'
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+
+/**
+ * How long a redirect login may take before its callback is refused.
+ *
+ * Long enough for somebody to be asked for a password and a second factor at the provider, short
+ * enough that a `state` left lying around in a URL somewhere is no longer worth anything.
+ */
+const AUTH_FLOW_MINUTES = 15
+
+/**
+ * Where a provider sends the browser back, as an absolute URL.
+ *
+ * Built from the request rather than stored, so an instance reachable on more than one hostname keeps
+ * working — but it has to match what the administrator registered with the provider, which is why the
+ * admin area shows this exact shape on the strategy's page.
+ */
+function callbackUrl(req: FastifyRequest, strategyId: string): string {
+  return `${req.protocol}://${req.host}/_api/auth/${strategyId}/callback`
+}
+
+/**
+ * The login screen, carrying what went wrong.
+ *
+ * A redirect login fails at the provider or on the way back, where there is no request left to answer
+ * with an error — so the browser is sent to the login screen with a code it can put in front of the
+ * user, and `redirect` is preserved so that a successful second attempt still lands where the first
+ * one was going.
+ */
+function loginErrorUrl(redirect: string, code: string): string {
+  const params = new URLSearchParams({ error: code })
+  if (redirect && redirect !== '/') {
+    params.set('redirect', redirect)
+  }
+  return `/login?${params.toString()}`
+}
 
 /**
  * Authentication API Routes
@@ -534,6 +570,179 @@ async function routes(app: FastifyInstance) {
       } finally {
         // -> Spent either way: a rejected assertion does not get a second go at the same challenge
         req.session.passkeyLogin = undefined
+      }
+    }
+  )
+
+  /**
+   * START A REDIRECT LOGIN
+   */
+  app.get<{
+    Params: { strategyId: string }
+    Querystring: { siteId?: string; redirect?: string }
+  }>(
+    '/auth/:strategyId/authorize',
+    {
+      config: {
+        publicAccess: true
+      },
+      schema: {
+        summary: 'Start a login at an identity provider',
+        description:
+          'Answers with a redirect to the provider, for a strategy whose module signs users in there rather than through a form — OpenID Connect, Google, GitHub. The `state`, `nonce` and PKCE verifier that tie the answer back to this browser are generated here and kept on the session; the browser is never trusted with any of them.\n\nOpened by following the link, not by fetching it: what comes back is a page at the provider.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' }
+          },
+          required: ['strategyId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            redirect: {
+              type: 'string',
+              maxLength: 255,
+              description:
+                'Where to send the user once they are logged in. A path on this wiki; anything else is ignored.'
+            }
+          }
+        },
+        response: {
+          302: { description: 'Redirect to the identity provider', type: 'null' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const strategy = await WIKI.models.authentication.getStrategyById(req.params.strategyId)
+      const instance = WIKI.auth.strategies[req.params.strategyId] as any
+      if (!strategy?.isEnabled || typeof instance?.authorizationUrl !== 'function') {
+        return reply.notFound('There is no such login provider.')
+      }
+
+      const siteId = req.query.siteId ?? WIKI.sitesMappings[req.hostname] ?? ''
+      const flow = {
+        strategyId: strategy.id,
+        siteId,
+        state: nanoid(32),
+        nonce: nanoid(32),
+        codeVerifier: nanoid(64),
+        // -> Only a path on this wiki: an open redirect is how a login page is turned into a lure
+        redirect: (req.query.redirect ?? '').startsWith('/') ? req.query.redirect! : '/',
+        startedAt: Temporal.Now.instant().toString({ smallestUnit: 'millisecond' })
+      }
+      req.session.authFlow = flow
+
+      try {
+        const url = await instance.authorizationUrl({
+          redirectUri: callbackUrl(req, strategy.id),
+          state: flow.state,
+          nonce: flow.nonce,
+          codeVerifier: flow.codeVerifier
+        })
+        WIKI.models.flags.authDebug(
+          `Redirecting to ${strategy.module} provider for strategy ${strategy.id} from ${req.ip}`
+        )
+        return reply.redirect(url)
+      } catch (err: any) {
+        WIKI.logger.warn(`Could not start a login at ${strategy.module}: ${err.message}`)
+        return reply.redirect(loginErrorUrl(flow.redirect, err.message))
+      }
+    }
+  )
+
+  /**
+   * FINISH A REDIRECT LOGIN
+   */
+  app.get<{
+    Params: { strategyId: string }
+    Querystring: { code?: string; state?: string; error?: string; error_description?: string }
+  }>(
+    '/auth/:strategyId/callback',
+    {
+      config: {
+        publicAccess: true
+      },
+      // -> A callback is a password check by another name: whatever it carries decides who is logged in
+      onRequest: limitAuthAttempts,
+      schema: {
+        summary: 'Finish a login at an identity provider',
+        description:
+          "Where the provider sends the browser back. The answer is only accepted if it matches the flow this session started — same strategy, same `state`, and within the time a login takes — after which the module turns the code into an account and the session is established. Ends in a redirect either way: to where the login was heading, or to the login screen carrying an error code.\n\nThis is the URL an administrator registers with the provider; it is shown on the strategy's own page in the admin area.",
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' }
+          },
+          required: ['strategyId']
+        },
+        response: {
+          302: { description: 'Redirect back into the wiki', type: 'null' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const flow = req.session.authFlow
+      const redirect = flow?.redirect ?? '/'
+      /*
+        Everything about the answer is checked against the flow this session started. A callback that
+        arrives with no flow behind it, for another strategy, with a different `state`, or long after
+        the login began is not this session's login — and is refused without the code being spent.
+      */
+      if (
+        !flow ||
+        flow.strategyId !== req.params.strategyId ||
+        !req.query.state ||
+        req.query.state !== flow.state ||
+        Temporal.Instant.compare(
+          Temporal.Instant.from(flow.startedAt).add({ minutes: AUTH_FLOW_MINUTES }),
+          Temporal.Now.instant()
+        ) < 0
+      ) {
+        WIKI.models.flags.authDebug(
+          `Callback for strategy ${req.params.strategyId} from ${req.ip} did not match this session's login`
+        )
+        req.session.authFlow = undefined
+        return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_EXPIRED'))
+      }
+      // -> Spent, whatever happens next: one callback per login
+      req.session.authFlow = undefined
+
+      if (req.query.error) {
+        WIKI.models.flags.authDebug(
+          `Provider refused the login for strategy ${flow.strategyId}: ${req.query.error} ${req.query.error_description ?? ''}`
+        )
+        return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_FAILED'))
+      }
+
+      const strategy = await WIKI.models.authentication.getStrategyById(flow.strategyId)
+      const instance = WIKI.auth.strategies[flow.strategyId] as any
+      if (!strategy?.isEnabled || typeof instance?.profile !== 'function') {
+        return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_FAILED'))
+      }
+
+      try {
+        const profile = await instance.profile({
+          redirectUri: callbackUrl(req, strategy.id),
+          state: flow.state,
+          nonce: flow.nonce,
+          codeVerifier: flow.codeVerifier,
+          currentUrl: `${callbackUrl(req, strategy.id)}?${new URLSearchParams(req.query as Record<string, string>).toString()}`,
+          code: req.query.code
+        })
+        const result = await WIKI.models.users.loginWithProvider(
+          { siteId: flow.siteId, strategy, profile, ip: req.ip },
+          req
+        )
+        return reply.redirect(result.redirect || redirect)
+      } catch (err: any) {
+        WIKI.models.flags.authDebug(
+          `Login through ${strategy.module} strategy ${strategy.id} failed: ${err.message}`
+        )
+        return reply.redirect(loginErrorUrl(redirect, err.message))
       }
     }
   )

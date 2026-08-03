@@ -41,8 +41,14 @@
       </div>
     </div>
     <w-separator inset />
-    <div class="grid grid-cols-12 p-4 gap-4">
-      <div class="col-span-12 lg:col-auto">
+    <!--
+      The same shape the storage view uses for a list beside what it selects: the list is as wide as
+      it needs to be and the panel takes what is left, wrapping onto its own row when there is no room
+      for both. A 12-column grid cannot say that -- the list is 350px, not some number of twelfths --
+      which is how this ended up with the panel on `col-span-full`, i.e. underneath.
+    -->
+    <div class="flex flex-wrap p-4 gap-4">
+      <div class="flex-none">
         <w-card class="rounded bg-dark">
           <w-list style="min-width: 350px" padding dark>
             <w-item
@@ -57,6 +63,14 @@
                 <w-item-label>{{ str.displayName }}</w-item-label>
                 <w-item-label caption>{{ str.strategy.title }}</w-item-label>
               </w-item-section>
+              <!--
+                Its own section rather than sharing the light's: the light is `height: 100%` against
+                whatever contains it, and a wrapper sized to its own content is not the row.
+              -->
+              <w-item-section side v-if="str.isNew">
+                <!-- -> Nothing on the server answers to this one yet; Apply is what creates it -->
+                <w-badge color="warning" rounded>{{ t('admin.auth.unsaved') }}</w-badge>
+              </w-item-section>
               <w-item-section side>
                 <status-light
                   :color="str.isEnabled ? `positive` : `negative`"
@@ -65,15 +79,20 @@
             </w-item>
           </w-list>
         </w-card>
+        <!--
+          Always shown, rather than only with the experimental flag on: adding a strategy is what this
+          screen is for once a wiki has more than the built-in local one, and a button that is not
+          there cannot say that none of the installed modules is addable. The menu says it instead.
+        -->
         <w-btn
           class="mt-2 w-full"
           color="primary"
           icon="la:plus"
-          :label="t(`admin.auth.addStrategy`)"
-          v-if="flagsStore.experimental">
+          :label="t(`admin.auth.addStrategy`)">
           <w-menu auto-close fit max-width="300px">
             <w-list separator>
-              <!-- Only the local module ships with the wiki so far, and it is already configured -->
+              <!-- -> The local module is filtered out: it is already configured, and a second copy
+                   of it holds no credentials -->
               <w-item v-if="availableStrategies.length < 1">
                 <w-item-section>
                   <w-item-label caption>{{ t('admin.auth.noModulesToAdd') }}</w-item-label>
@@ -100,7 +119,8 @@
           </w-menu>
         </w-btn>
       </div>
-      <div class="col-span-full" v-if="state.strategy.id">
+      <!-- -> `min-w-0`, or a long value inside a field would push the panel wider than the row -->
+      <div class="min-w-0 flex-1" v-if="state.strategy.id">
         <w-card class="pb-2">
           <w-card-header>{{ t('admin.auth.info') }}</w-card-header>
           <w-item>
@@ -322,7 +342,21 @@
               <w-item-label caption>{{ strRef.hint }}</w-item-label>
             </w-item-section>
             <w-item-section>
-              <w-input outlined v-model="strRef.value" dense :aria-label="strRef.title" readonly />
+              <!--
+                These carry the strategy's ID, which the server assigns — so until Apply has created
+                it there is no URL to register with the provider, and showing one built from the
+                placeholder ID would be showing the wrong one.
+              -->
+              <w-item-label v-if="state.strategy.isNew" caption>
+                {{ t('admin.auth.refAfterSave') }}
+              </w-item-label>
+              <w-input
+                v-else
+                outlined
+                v-model="strRef.value"
+                dense
+                :aria-label="strRef.title"
+                readonly />
             </w-item-section>
           </w-item>
         </w-card>
@@ -331,8 +365,10 @@
         <!-- ----------------------- -->
         <w-card class="mt-4">
           <w-card-section class="text-center">
+            <!-- -> `mx-auto`: `text-center` on the section does nothing for a block-level image,
+                 which sat against the left edge of every card wider than its 300px cap -->
             <img
-              class="w-full object-contain rounded"
+              class="w-full mx-auto object-contain rounded"
               :src="state.strategy.strategy.logo"
               style="height: 100px; max-width: 300px" />
             <div class="text-subtitle2 mt-2">{{ state.strategy.strategy.title }}</div>
@@ -369,6 +405,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, watch } from 'vue'
+import { v4 as uuid } from 'uuid'
 
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
@@ -376,7 +413,6 @@ import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 import { dialog } from '@/composables/dialog'
 
-import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
 // COMPOSABLES
@@ -385,7 +421,6 @@ const dark = useDark()
 
 // STORES
 
-const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -593,13 +628,26 @@ async function save() {
 
   state.loading++
   const failures = []
+  /*
+    A strategy that has never been saved is created here, whole: the create endpoint takes the same
+    fields the update one does, so a new provider arrives with its configuration rather than existing
+    for a moment as an empty shell. Whichever ID the server assigns is what the reload below picks up.
+  */
   for (const str of state.activeStrategies) {
     try {
-      const resp = await API_CLIENT.put(`authentication/strategies/${str.id}`, {
-        json: payloadFor(str)
-      }).json()
+      const resp = str.isNew
+        ? await API_CLIENT.post('authentication/strategies', {
+            json: { module: str.module, ...payloadFor(str) }
+          }).json()
+        : await API_CLIENT.put(`authentication/strategies/${str.id}`, {
+            json: payloadFor(str)
+          }).json()
       if (!resp?.ok) {
         throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      if (str.isNew && resp.id) {
+        // -> So that the reload lands back on the strategy that was just created
+        state.selectedStrategy = resp.id
       }
     } catch (err) {
       failures.push({ name: str.displayName, message: await apiMessage(err) })
@@ -624,33 +672,51 @@ async function save() {
   await load()
 }
 
-async function addStrategy(mod) {
-  state.loading++
-  try {
-    const resp = await API_CLIENT.post('authentication/strategies', {
-      json: { module: mod.key, displayName: mod.title }
-    }).json()
-    if (!resp?.ok) {
-      throw new Error(resp?.message || 'An unexpected error occured.')
-    }
-    notify({
-      type: 'positive',
-      message: t('admin.auth.addSuccess', { strategy: mod.title })
-    })
-    state.selectedStrategy = resp.id
-  } catch (err) {
-    notify({
-      type: 'negative',
-      message: t('admin.auth.addFailed'),
-      caption: await apiMessage(err)
-    })
+/**
+ * Add a strategy to the list, without creating it.
+ *
+ * Nothing is sent: the new strategy is a row in this screen until Apply, like every edit made to the
+ * ones beside it. An administrator adding a provider has a client ID and a secret to paste in first,
+ * and a half-configured strategy that already exists on the server is one that can be saved by
+ * accident, reloaded into, or left behind by closing the tab.
+ *
+ * The ID is a local placeholder; the server assigns the real one when this is created.
+ */
+function addStrategy(mod) {
+  const strategy = {
+    id: `new:${uuid()}`,
+    isNew: true,
+    module: mod.key,
+    displayName: mod.title,
+    // -> Off until it has been configured and saved: an enabled strategy appears on login screens
+    isEnabled: false,
+    registration: false,
+    allowedEmailRegex: '',
+    autoEnrollGroups: [],
+    strategy: mod,
+    config: buildConfigEditor(mod.props, {})
   }
-  state.loading--
-  await load()
+  state.activeStrategies.push(strategy)
+  state.selectedStrategy = strategy.id
+  state.strategy = strategy
+  notify({
+    type: 'positive',
+    message: t('admin.auth.addPending', { strategy: mod.title })
+  })
 }
 
 function confirmDelete() {
   const strategy = state.strategy
+  /*
+    Nothing to confirm and nothing to delete for one that only ever existed here: it goes, and the
+    selection falls back to the first strategy the way it does after a reload.
+  */
+  if (strategy.isNew) {
+    state.activeStrategies = state.activeStrategies.filter((str) => str.id !== strategy.id)
+    state.selectedStrategy = state.activeStrategies[0]?.id
+    state.strategy = state.activeStrategies[0] ?? { strategy: {} }
+    return
+  }
   dialog({
     title: t('admin.auth.deleteStrategy'),
     message: t('admin.auth.deleteConfirm', { strategy: strategy.displayName }),

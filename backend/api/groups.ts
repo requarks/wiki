@@ -468,10 +468,15 @@ async function routes(app: FastifyInstance) {
       if (!user) {
         return reply.notFound('User does not exist.')
       }
-      // -> The guest account is the only system user, and it must stay in the guests group alone:
-      //    its permissions are what anonymous visitors get.
-      if (user.isSystem) {
-        return reply.conflict('Cannot assign a system user to a group.')
+      /*
+        The guests group and the guest account belong to each other and to nothing else — the group is
+        what anonymous visitors hold, and the account is who they are. `guestMembershipViolation` is
+        the one definition of that, shared with `setUserGroups`, which is what the user editor and
+        provider enrolment go through.
+      */
+      const violation = WIKI.models.groups.guestMembershipViolation(group.id, user)
+      if (violation) {
+        return reply.conflict(violation)
       }
 
       const assigned = await WIKI.models.groups.assignUserToGroup(group.id, req.params.userId)
@@ -531,7 +536,8 @@ async function routes(app: FastifyInstance) {
       }
 
       // -> Removing the guest account from the guests group would strip anonymous visitors of the
-      //    permissions that group carries, with no way to put it back
+      //    permissions that group carries, with no way to put it back. `unassignUserFromGroup`
+      //    refuses that pair as well; this answers it as a conflict rather than as a failure.
       const user = await WIKI.models.users.getById(req.params.userId)
       if (user?.isSystem) {
         return reply.conflict('Cannot unassign a system user from a group.')

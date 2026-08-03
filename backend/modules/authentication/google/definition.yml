@@ -1,0 +1,45 @@
+key: google
+title: Google
+description: Sign in with a Google account or a Google Workspace domain.
+author: requarks.io
+logo: https://static.requarks.io/logo/google.svg
+icon: /_assets/icons/ultraviolet-google.svg
+color: red-6
+vendor: 'Google LLC'
+website: 'https://developers.google.com/identity/openid-connect/openid-connect'
+isAvailable: true
+useForm: false
+usernameType: email
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: From the OAuth 2.0 Client ID created in the Google Cloud console.
+    icon: key
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: From the same OAuth 2.0 Client ID.
+    icon: password
+    sensitive: true
+    order: 2
+  hostedDomain:
+    type: String
+    title: Restrict to Workspace Domain
+    hint: (optional) A Workspace domain, e.g. example.com. Only accounts on it may sign in — checked here as well as asked for, since the parameter alone is a hint to Google rather than a guarantee.
+    icon: geography
+    order: 3
+  allowUnverifiedEmail:
+    type: Boolean
+    title: Accept Unverified Addresses
+    hint: Off by default. A Google account whose address is unverified proves nothing about the mailbox, and an account here is matched on the address.
+    icon: received
+    default: false
+    order: 4
+refs:
+  callbackUrl:
+    title: Authorized Redirect URI
+    hint: Add this to the OAuth client's authorized redirect URIs in the Google Cloud console.
+    icon: back
+    value: '{host}/_api/auth/{id}/callback'

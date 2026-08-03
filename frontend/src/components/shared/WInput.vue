@@ -92,6 +92,18 @@
         @keyup.enter="$emit('keyup:enter', $event)" />
 
       <!--
+        The mirror of the prefix above, and placed before the trailing controls rather than after
+        them: it belongs to the value -- the closing `/` of a regex, a unit after a number -- so it
+        has to sit against the text, not beyond the clear cross.
+      -->
+      <span
+        v-if="suffix"
+        aria-hidden="true"
+        class="shrink-0 pt-0.5 text-black/54 select-none dark:text-white/60">
+        {{ suffix }}
+      </span>
+
+      <!--
         `mr-1` on the button rather than more padding on the control: the padding is what every
         trailing control shares -- the clear cross, an `append` slot -- and this is about the eye,
         which reads cramped against the field's edge at the row's own 8px.
@@ -165,6 +177,11 @@ const props = defineProps({
   },
   /** Static text shown before the value. */
   prefix: {
+    type: String,
+    default: null
+  },
+  /** Static text shown after the value, e.g. the closing `/` of a pattern or a unit. */
+  suffix: {
     type: String,
     default: null
   },

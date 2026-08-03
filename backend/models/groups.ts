@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
 import { and, count, eq, ilike, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
+import { CustomError } from '../helpers/common.ts'
 import { resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
 import type { FastifyRequest } from 'fastify'
@@ -106,6 +107,25 @@ export interface AccessActor {
   groupIds: string[]
   permissions: string[]
 }
+
+/**
+ * The page permissions a rule on the GUESTS group may grant.
+ *
+ * Reading, and saying something in a comment. Everything else — writing or deleting a page, managing
+ * assets or comments, reviewing suggestions — is an action attributable to somebody, and the guests
+ * group is precisely the absence of a somebody.
+ *
+ * Mirrored in `GroupEditOverlay.vue`, which offers exactly these when the guests group is open. This
+ * copy is the one that decides.
+ */
+export const GUEST_ROLES = [
+  'read:pages',
+  'read:source',
+  'read:history',
+  'read:assets',
+  'read:comments',
+  'write:comments'
+]
 
 /**
  * Every group's rules, by group id.
@@ -308,10 +328,41 @@ class Groups {
   async updateGroup(id: string, patch: GroupPatch): Promise<boolean> {
     const result = await WIKI.db
       .update(groupsTable)
-      .set({ ...patch, updatedAt: sql`now()` })
+      .set({ ...this.clampGuestPatch(id, patch), updatedAt: sql`now()` })
       .where(eq(groupsTable.id, id))
     await this.reloadCache()
     return (result.rowCount ?? 0) > 0
+  }
+
+  /**
+   * Hold the guests group to what the public may be given.
+   *
+   * The guests group is every anonymous reader at once, so a rule on it is a rule about the open
+   * internet: writing a page, deleting one, reading its source history — none of those are things to
+   * hand out to nobody in particular, and several of them cannot be undone. So the set is fixed here,
+   * beside the rules themselves, rather than only in the admin screen that edits them: what a group
+   * may hold is not something a browser should be the only one deciding.
+   *
+   * Roles outside the set are dropped rather than refused. An administrator saving a group edited
+   * before this existed — or through the API — gets the group they asked for minus what may not be
+   * granted, instead of a form that cannot be saved and does not say which rule is at fault.
+   */
+  private clampGuestPatch(id: string, patch: GroupPatch): GroupPatch {
+    if (id !== WIKI.data.systemIds.guestsGroupId || !patch.rules) {
+      return patch
+    }
+    let dropped = 0
+    const rules = patch.rules.map((rule) => {
+      const roles = (rule.roles ?? []).filter((role) => GUEST_ROLES.includes(role))
+      dropped += (rule.roles ?? []).length - roles.length
+      return { ...rule, roles }
+    })
+    if (dropped > 0) {
+      WIKI.logger.warn(
+        `Dropped ${dropped} permission(s) from the guests group that may not be granted to it.`
+      )
+    }
+    return { ...patch, rules }
   }
 
   /**
@@ -331,7 +382,44 @@ class Groups {
    *
    * @returns False if the user was already a member
    */
+  /**
+   * Why this user may not be a member of this group, if they may not.
+   *
+   * The guests group and the guest account belong to each other and to nothing else:
+   *
+   *   - the group IS anonymous access, so a real user in it would be granted whatever the public is
+   *     granted regardless of their own groups, and would keep it after every other group was taken
+   *     away from them;
+   *   - the account IS the anonymous visitor, so putting it in another group hands that group's
+   *     permissions to everybody who never logged in.
+   *
+   * The pair is also why neither half can be taken apart: removing the account from the group would
+   * leave anonymous access resolving against nothing, with no way back through the interface.
+   *
+   * One definition, used by the routes that assign a single membership and by `setUserGroups`, which
+   * sets them all at once.
+   *
+   * @returns The reason, or null when the membership is fine
+   */
+  guestMembershipViolation(groupId: string, user: { isSystem?: boolean } | null): string | null {
+    const isGuestsGroup = groupId === WIKI.data.systemIds.guestsGroupId
+    // -> The guest account is the only system user; see the seeding in `models/users.ts`
+    if (user?.isSystem) {
+      return isGuestsGroup
+        ? null
+        : 'The guest account cannot be a member of any group other than the guests group.'
+    }
+    return isGuestsGroup
+      ? 'The guests group holds the guest account and nothing else — it is what anonymous visitors are.'
+      : null
+  }
+
   async assignUserToGroup(groupId: string, userId: string): Promise<boolean> {
+    const user = await WIKI.models.users.getById(userId)
+    const violation = this.guestMembershipViolation(groupId, user)
+    if (violation) {
+      throw new CustomError('groupMembershipForbidden', violation)
+    }
     const result = await WIKI.db
       .insert(userGroups)
       .values({ userId, groupId })
@@ -345,6 +433,20 @@ class Groups {
    * @returns False if the user was not a member
    */
   async unassignUserFromGroup(groupId: string, userId: string): Promise<boolean> {
+    /*
+      The one membership that cannot be taken apart: anonymous access resolves against the guests
+      group's rules, and the guest account is what resolves it. Removed, every anonymous visitor would
+      hold nothing at all — and nothing in the interface puts a system user back into a group.
+    */
+    if (groupId === WIKI.data.systemIds.guestsGroupId) {
+      const user = await WIKI.models.users.getById(userId)
+      if (user?.isSystem) {
+        throw new CustomError(
+          'groupMembershipForbidden',
+          'The guest account cannot be removed from the guests group.'
+        )
+      }
+    }
     const result = await WIKI.db
       .delete(userGroups)
       .where(and(eq(userGroups.groupId, groupId), eq(userGroups.userId, userId)))

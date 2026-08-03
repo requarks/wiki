@@ -1,0 +1,44 @@
+key: github
+title: GitHub
+description: Sign in with a GitHub account, on github.com or a GitHub Enterprise Server.
+author: requarks.io
+logo: https://static.requarks.io/logo/github.svg
+icon: /_assets/icons/ultraviolet-github.svg
+color: dark-4
+vendor: 'GitHub, Inc.'
+website: 'https://docs.github.com/en/apps/oauth-apps'
+isAvailable: true
+useForm: false
+usernameType: email
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: From the OAuth app registered under Developer settings.
+    icon: key
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: From the same OAuth app.
+    icon: password
+    sensitive: true
+    order: 2
+  enterpriseHost:
+    type: String
+    title: GitHub Enterprise Host
+    hint: (optional) Hostname of a GitHub Enterprise Server, e.g. github.example.com. Leave empty for github.com.
+    icon: server
+    order: 3
+  allowedOrganization:
+    type: String
+    title: Restrict to Organization
+    hint: (optional) Login name of a GitHub organization. Only its members may sign in — which needs the account to be a public member, or the OAuth app to be approved by the organization.
+    icon: user-groups
+    order: 4
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: Set this as the OAuth app's callback URL on GitHub.
+    icon: back
+    value: '{host}/_api/auth/{id}/callback'

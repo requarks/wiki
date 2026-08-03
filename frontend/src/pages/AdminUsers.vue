@@ -114,13 +114,24 @@
                   :color="dark.isActive ? `indigo-4` : `indigo`"
                   :label="t(`common.actions.edit`)"
                   no-caps />
+                <!--
+                  Disabled rather than hidden for your own account: the row is yours and the action
+                  exists, it is just not yours to take — deleting the account you are signed in as
+                  would end the session that was doing it. Another administrator can.
+                -->
                 <w-btn
                   class="acrylic-btn"
                   v-if="!props.row.isSystem"
                   flat
                   icon="la:trash"
                   color="negative"
-                  @click="deleteUser(props.row)" />
+                  :disable="props.row.id === userStore.id"
+                  :aria-label="t(`admin.users.delete`)"
+                  @click="deleteUser(props.row)">
+                  <w-tooltip v-if="props.row.id === userStore.id">
+                    {{ t('admin.users.deleteSelfForbidden') }}
+                  </w-tooltip>
+                </w-btn>
               </w-td>
             </template>
           </w-table>
@@ -157,6 +168,7 @@ import { relativeDate } from '@/helpers/datetime'
 
 import { debounce } from 'es-toolkit/function'
 import UserCreateDialog from '../components/UserCreateDialog.vue'
+import UserDeleteDialog from '../components/UserDeleteDialog.vue'
 import UserDefaultsMenu from '@/components/UserDefaultsMenu.vue'
 
 // COMPOSABLES
@@ -314,7 +326,7 @@ function createUser() {
 
 function deleteUser(usr) {
   dialog({
-    // component: UserDeleteDialog,
+    component: UserDeleteDialog,
     componentProps: {
       user: usr
     }

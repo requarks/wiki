@@ -246,7 +246,7 @@
                       map-options
                       dense
                       :aria-label="t(`admin.groups.ruleSites`)"
-                      :options="rules"
+                      :options="ruleOptions"
                       placeholder="Select permissions..."
                       option-value="permission"
                       option-label="title"
@@ -748,6 +748,19 @@ const permissions = [
   }
 ]
 
+/**
+ * The subset of `rules` below that the guests group may be granted. Mirrors `GUEST_ROLES` in
+ * `models/groups.ts`, which is the copy that decides — this one only shapes what is offered.
+ */
+const GUEST_ROLES = [
+  'read:pages',
+  'read:source',
+  'read:history',
+  'read:assets',
+  'read:comments',
+  'write:comments'
+]
+
 const rules = [
   {
     permission: 'read:pages',
@@ -887,6 +900,20 @@ const usersTotalPages = computed(() => {
 const isGuestGroup = computed(() => {
   return adminStore.overlayOpts.id === '10000000-0000-4000-8000-000000000001'
 })
+
+/**
+ * The permissions a rule may grant, which for the guests group is a short list.
+ *
+ * That group is every anonymous reader at once, so a rule on it is a rule about the open internet:
+ * reading, and saying something in a comment, are what the public may be given — writing a page or
+ * deleting one is an action attributable to somebody, and there is nobody here.
+ *
+ * Only what is OFFERED. The set is enforced in `models/groups.ts`, which is what makes it true for a
+ * group edited through the API as well; this keeps the screen from offering what would be dropped.
+ */
+const ruleOptions = computed(() =>
+  isGuestGroup.value ? rules.filter((rule) => GUEST_ROLES.includes(rule.permission)) : rules
+)
 
 // WATCHERS
 

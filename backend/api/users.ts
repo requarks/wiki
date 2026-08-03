@@ -1572,7 +1572,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Delete a user',
         description:
-          'System users cannot be deleted, nor can the last user of the root administrators group.',
+          'System users cannot be deleted, nor the account the caller is signed in as, nor the last user of the root administrators group. A user who has authored pages or assets cannot be deleted either — deactivate them, or reassign what they own.',
         tags: ['Users'],
         params: {
           type: 'object',
@@ -1596,8 +1596,18 @@ async function routes(app: FastifyInstance) {
       if (!user) {
         return reply.notFound('User does not exist.')
       }
+      // -> The guest account is the only system user, and anonymous access is resolved through it
       if (user.isSystem) {
         return reply.conflict('Cannot delete a system user.')
+      }
+
+      /*
+        Not your own account, whatever permissions you hold: the request would end the session making
+        it, and an administrator who did it by accident has nothing left to undo it with. Another
+        administrator can — which is also the answer to an account that has to go and cannot ask.
+      */
+      if (user.id === sessionUserId(req)) {
+        return reply.conflict('You cannot delete your own account. Another administrator can.')
       }
 
       // -> Emptying the root administrators group would lock everyone out of system management

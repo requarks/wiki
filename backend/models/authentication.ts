@@ -24,6 +24,44 @@ export interface AuthModule {
   refs?: Record<string, { title?: string; hint?: string; icon?: string; value: string }>
 }
 
+/**
+ * What a redirect-based module is handed to build its authorization URL.
+ *
+ * The framework owns these values rather than each module inventing them: they are generated once per
+ * login, kept on the session, and checked when the provider comes back — which is what makes the
+ * answer belong to the browser that started the flow. A module that has no use for `nonce` or
+ * `codeVerifier` (a plain OAuth2 provider) simply ignores them.
+ */
+export interface AuthFlow {
+  /** Where the provider sends the browser back. Registered with the provider by the administrator. */
+  redirectUri: string
+  state: string
+  nonce: string
+  /** PKCE verifier, whose challenge goes on the authorization request. */
+  codeVerifier: string
+}
+
+/** The same flow, once the provider has come back with an answer. */
+export interface AuthFlowCallback extends AuthFlow {
+  /** The callback URL as it arrived, query string included — what an OIDC library validates against. */
+  currentUrl: string
+  /** The authorization code, for a module that reads it directly rather than through a library. */
+  code?: string
+}
+
+/**
+ * Who signed in, as a module reports them.
+ *
+ * `id` is the provider's own identifier for the account and never changes; `email` is what the user is
+ * matched or created by here. A module must not return an address it has not established belongs to
+ * the person — an unverified one is how somebody signs in as somebody else.
+ */
+export interface ProviderProfile {
+  id: string
+  email: string
+  name: string
+}
+
 /** A configured instance of an authentication module. */
 export interface AuthStrategy {
   id: string

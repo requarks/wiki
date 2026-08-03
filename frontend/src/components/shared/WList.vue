@@ -55,6 +55,26 @@ const classes = computed(() => [
 
 <style scoped>
 /*
+  The foreground of a list that is dark whatever the app theme.
+
+  Text colour is part of "renders for a dark surface", not something each call site should have to
+  remember: an item label carries no colour of its own and inherits the document's, which in light
+  mode is black -- on a `bg-dark` card that is black on black. Only the admin sidebar was passing
+  `text-white` by hand, so every other dark list read as an empty panel until the theme was switched.
+
+  The dimmed labels are stated too. Their utilities are `text-black/54 dark:text-white/70`, and the
+  `dark:` half keys off the app theme, so in light mode a caption stayed the black one.
+*/
+.w-list--dark {
+  color: #fff;
+}
+
+.w-list--dark :deep(.w-item-label--caption),
+.w-list--dark :deep(.w-item-label--header) {
+  color: rgb(255 255 255 / 0.7);
+}
+
+/*
   Hover feedback for a list that is dark whatever the app theme.
 
   A row's own hover is a black tint, swapped for a white one by the `dark:` variant -- but that

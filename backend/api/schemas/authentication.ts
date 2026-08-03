@@ -160,13 +160,14 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       registration: {
         type: 'boolean',
-        description: 'Stored but not enforced: self-registration is not implemented yet.'
+        description:
+          'Whether an account is created for somebody signing in for the first time. Enforced for the providers that sign users in elsewhere (OpenID Connect, Google, GitHub); the local module has a registration flow of its own.'
       },
       allowedEmailRegex: {
         type: 'string',
         maxLength: 255,
         description:
-          'Must be a valid regular expression. Stored but not enforced, as it only applies to self-registration.'
+          'Must be a valid regular expression. Limits which addresses an account may be created for, and applies where registration does — a pattern that will not compile allows nobody.'
       },
       autoEnrollGroups: {
         type: 'array',

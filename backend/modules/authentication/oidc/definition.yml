@@ -1,0 +1,96 @@
+key: oidc
+title: Generic OpenID Connect / OAuth2
+description: OpenID Connect 1.0 is a simple identity layer on top of the OAuth 2.0 protocol.
+author: requarks.io
+logo: https://static.requarks.io/logo/oidc.svg
+icon: /_assets/icons/ultraviolet-openid.svg
+color: blue-grey-8
+vendor: 'OpenID Foundation'
+website: 'https://openid.net/connect/'
+isAvailable: true
+useForm: false
+usernameType: email
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID, as the provider issued it.
+    icon: key
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret, as the provider issued it.
+    icon: password
+    sensitive: true
+    order: 2
+  issuer:
+    type: String
+    title: Issuer
+    hint: The provider's issuer URL, e.g. https://id.example.com. Everything else is discovered from it.
+    icon: internet
+    order: 3
+  useDiscovery:
+    type: Boolean
+    title: Use Discovery
+    hint: Read the endpoints and signing keys from the issuer's /.well-known/openid-configuration. Turn off only for a provider that does not publish one, and fill in the endpoints below.
+    icon: rescan-document
+    default: true
+    order: 4
+  authorizationURL:
+    type: String
+    title: Authorization Endpoint URL
+    hint: Ignored while discovery is on.
+    icon: enter
+    order: 5
+  tokenURL:
+    type: String
+    title: Token Endpoint URL
+    hint: Ignored while discovery is on.
+    icon: exit
+    order: 6
+  userInfoURL:
+    type: String
+    title: User Info Endpoint URL
+    hint: Ignored while discovery is on. Optional even without it — the ID token alone can carry everything needed.
+    icon: contact
+    order: 7
+  jwksURL:
+    type: String
+    title: JSON Web Key Set URL
+    hint: Ignored while discovery is on. Where the keys that signed the ID token are published; without it the ID token cannot be verified and logins are refused.
+    icon: fingerprint-scan
+    order: 8
+  scopes:
+    type: String
+    title: Scopes
+    hint: Space-separated. `openid` is required; `email` is what an account is matched on here.
+    icon: rules
+    default: 'openid profile email'
+    order: 9
+  emailClaim:
+    type: String
+    title: Email Claim
+    hint: Which claim carries the email address.
+    icon: envelope
+    default: email
+    order: 10
+  displayNameClaim:
+    type: String
+    title: Display Name Claim
+    hint: Which claim carries the name to show. Falls back to the email address when the claim is absent.
+    icon: person
+    default: name
+    order: 11
+  logoutURL:
+    type: String
+    title: Logout URL
+    hint: (optional) Where to send a user after logging out, so that the session at the provider ends too.
+    icon: exit
+    order: 12
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: Register this as the redirect URI at the provider. It is the same for every provider.
+    icon: back
+    value: '{host}/_api/auth/{id}/callback'

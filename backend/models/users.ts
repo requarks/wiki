@@ -14,6 +14,7 @@ import { nanoid } from 'nanoid'
 import { flatten, uniq } from 'es-toolkit/array'
 import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
 import { buildTotpUri, generateTotpSecret, verifyTotpCode } from '../helpers/totp.ts'
+import type { AuthStrategy, ProviderProfile } from './authentication.ts'
 import type { SystemIds } from './types.ts'
 
 /** The essential user fields, mirroring the `UserCore` API schema. */
@@ -636,15 +637,37 @@ class Users {
    * Replace a user's group membership with exactly the given groups.
    *
    * Unknown group IDs are ignored rather than failing the whole update, so that a stale client does
-   * not block an otherwise valid save.
+   * not block an otherwise valid save. So is a membership that may not exist — see
+   * `groups.guestMembershipViolation`: this is the one call that sets every group at once, and it is
+   * reached from creating a user, editing one, and enrolling one that an identity provider has just
+   * sent. Dropping what may not be granted keeps all three honest without any of them having to know
+   * about the guests group.
    */
   async setUserGroups(userId: string, groupIds: string[]): Promise<void> {
+    const user = await this.getById(userId)
+    const allowed = groupIds.filter(
+      (groupId) => !WIKI.models.groups.guestMembershipViolation(groupId, user)
+    )
+    if (allowed.length !== groupIds.length) {
+      WIKI.logger.warn(
+        `Dropped ${groupIds.length - allowed.length} group assignment(s) for user ${userId} that may not be granted.`
+      )
+    }
+    /*
+      The guest account keeps the membership it was seeded with whatever was asked for: it is the one
+      user whose groups are not an administrator's to set, and an empty list would otherwise leave
+      anonymous access resolving against no rules at all.
+    */
+    if (user?.isSystem) {
+      return
+    }
+
     const wanted =
-      groupIds.length > 0
+      allowed.length > 0
         ? await WIKI.db
             .select({ id: groupsTable.id })
             .from(groupsTable)
-            .where(inArray(groupsTable.id, groupIds))
+            .where(inArray(groupsTable.id, allowed))
         : []
     const wantedIds = wanted.map((g: any) => g.id)
 
@@ -1098,6 +1121,113 @@ class Users {
       WIKI.models.flags.authDebug(`Login attempt using unknown strategy ${strategyId} from ${ip}`)
       throw new Error('Invalid Strategy ID')
     }
+  }
+
+  /**
+   * Log somebody in from what an identity provider said about them, creating the account if the
+   * strategy is set to accept new users.
+   *
+   * The email address is the identity: a provider's own `id` is recorded so that an address changing
+   * upstream does not orphan the account, but matching starts with the address because that is what
+   * an administrator invited, what a group rule was written against, and what every other strategy
+   * keys on. A module must therefore only ever report an address it has established belongs to the
+   * person — see `ProviderProfile`.
+   *
+   * Registration is refused rather than silently allowed: a wiki that has not opened its doors to a
+   * provider gets `ERR_REGISTRATION_DISABLED` for an unknown account, and one that has can still
+   * limit who by, with the strategy's email allow-list pattern.
+   *
+   * @throws `ERR_REGISTRATION_DISABLED`, `ERR_EMAIL_NOT_ALLOWED`, `ERR_INACTIVE_USER`
+   */
+  async loginWithProvider(
+    {
+      siteId,
+      strategy,
+      profile,
+      ip
+    }: {
+      siteId: string
+      strategy: AuthStrategy
+      profile: ProviderProfile
+      ip?: string
+    },
+    req: any
+  ): Promise<AfterLoginResult> {
+    const email = profile.email.toLowerCase().trim()
+    let user = await this.getByEmail(email)
+
+    if (!user) {
+      if (!strategy.registration) {
+        WIKI.models.flags.authDebug(
+          `Provider login for unknown address <${email}> refused: strategy ${strategy.id} does not accept new users`
+        )
+        throw new Error('ERR_REGISTRATION_DISABLED')
+      }
+      if (strategy.allowedEmailRegex) {
+        let allowed = false
+        try {
+          allowed = new RegExp(strategy.allowedEmailRegex).test(email)
+        } catch (err: any) {
+          // -> A pattern that will not compile allows nobody, rather than everybody
+          WIKI.logger.warn(
+            `Strategy ${strategy.id} has an invalid email pattern, refusing: ${err.message}`
+          )
+        }
+        if (!allowed) {
+          throw new Error('ERR_EMAIL_NOT_ALLOWED')
+        }
+      }
+      const userId = await this.createUser({
+        name: profile.name || email,
+        email,
+        // -> Nothing signs in with it: this account authenticates at the provider, and the local
+        //    strategy's own entry is what a password would live under
+        password: nanoid(32),
+        groups: strategy.autoEnrollGroups ?? [],
+        isVerified: true
+      })
+      user = await this.getById(userId)
+      WIKI.models.flags.authDebug(
+        `Created user ${userId} <${email}> from ${strategy.module} strategy ${strategy.id}`
+      )
+    }
+
+    if (!user) {
+      throw new Error('ERR_LOGIN_FAILED')
+    }
+    if (!user.isActive) {
+      throw new Error('ERR_INACTIVE_USER')
+    }
+
+    /*
+      The link between this account and the provider's, written on every login: it records which
+      account at the provider this is, and it is what tells the profile page that this user signs in
+      through this strategy.
+    */
+    const auth = (user.auth ?? {}) as Record<string, any>
+    auth[strategy.id] = {
+      ...auth[strategy.id],
+      id: profile.id,
+      email
+    }
+    user.auth = auth
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, user.id))
+
+    /*
+      Neither 2FA nor a password change is asked for: both are the local strategy's, and this user has
+      just proved who they are somewhere else — where whatever second factor that provider enforces has
+      already been satisfied.
+    */
+    return this.afterLoginChecks(
+      user,
+      strategy.id,
+      { ip, siteId },
+      { skipTFA: true, skipChangePwd: true },
+      req
+    )
   }
 
   async afterLoginChecks(

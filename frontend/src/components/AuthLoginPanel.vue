@@ -4,11 +4,11 @@
     <!-- LOGIN SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-if="state.screen === `login`">
-      <template v-if="state.strategies?.length > 1">
+      <template v-if="formStrategies.length > 1">
         <p>{{ t('auth.selectAuthProvider') }}</p>
         <div class="auth-strategies mb-4">
           <w-btn
-            v-for="str of state.strategies"
+            v-for="str of formStrategies"
             :label="str.activeStrategy.displayName"
             :icon="`img:` + str.activeStrategy.strategy.icon"
             push
@@ -81,6 +81,25 @@
           no-caps
           icon="la:key"
           @click="loginWithPasskey" />
+      </template>
+      <!--
+        The providers that sign a user in elsewhere. A link rather than a form submit, because what
+        follows is a page at the provider and not an answer to a request: pressing it hands the browser
+        over, and it comes back at the callback route with a session already established.
+      -->
+      <template v-if="redirectStrategies.length > 0">
+        <w-separator class="my-4" />
+        <w-btn
+          class="acrylic-btn w-full mb-2"
+          v-for="str of redirectStrategies"
+          :key="str.id"
+          flat
+          color="primary"
+          :label="t(`auth.actions.loginWith`, { provider: str.activeStrategy.displayName })"
+          no-caps
+          :icon="`img:` + str.activeStrategy.strategy.icon"
+          :href="authorizeUrl(str)"
+          type="a" />
       </template>
       <template v-if="selectedStrategy.activeStrategy?.strategy?.key === `local`">
         <w-separator class="my-4" />
@@ -391,6 +410,20 @@ const changePwdForm = ref(null)
 
 // COMPUTED
 
+/*
+  The two kinds of strategy this screen deals with, and they are drawn nothing alike: one is a username
+  and a password typed here, the other is a button that leaves for the provider. Splitting them is also
+  what stops a provider from being picked in the selector above the form, where it would then be asked
+  for a password it has no use for.
+*/
+const formStrategies = computed(() =>
+  state.strategies.filter((str) => str.activeStrategy?.strategy?.useForm !== false)
+)
+
+const redirectStrategies = computed(() =>
+  state.strategies.filter((str) => str.activeStrategy?.strategy?.useForm === false)
+)
+
 const selectedStrategy = computed(() => {
   return (
     (state.selectedStrategyId && state.strategies.find((s) => s.id === state.selectedStrategyId)) ||
@@ -516,7 +549,28 @@ async function fetchStrategies(showAll = false) {
       visibleOnly: !showAll
     }
   }).json()
-  state.selectedStrategyId = state.strategies[0].id
+  // -> The selection drives the form, so it has to be a strategy that has one
+  state.selectedStrategyId = formStrategies.value[0]?.id ?? null
+}
+
+/**
+ * Where a provider button goes: the backend builds the URL at the provider, because everything that
+ * ties the answer back to this browser — `state`, `nonce`, the PKCE verifier — is generated there and
+ * kept on the session.
+ */
+function authorizeUrl(str) {
+  const params = new URLSearchParams({ siteId: siteStore.id })
+  /*
+    The same cookie a form login reads on its way out: whatever sent the reader to the login screen
+    left where they were going in it. The provider flow cannot come back through the code above — it
+    lands on the callback route, which redirects — so the destination travels with the request and is
+    handed back by the callback instead.
+  */
+  const loginRedirect = Cookies.get('loginRedirect')
+  if (loginRedirect) {
+    params.set('redirect', loginRedirect)
+  }
+  return `/_api/auth/${str.id}/authorize?${params.toString()}`
 }
 
 async function handleLoginResponse(resp) {
@@ -848,5 +902,33 @@ async function finishSetupTFA() {
 
 onMounted(async () => {
   await fetchStrategies()
+  reportRedirectLoginError()
 })
+
+/**
+ * Say what went wrong on a login that happened somewhere else.
+ *
+ * A provider login fails at the callback route, which has a browser to redirect and no request to
+ * answer — so it puts the reason in the URL and this puts it in front of the reader. Taken out of the
+ * address bar afterwards, so that reloading the page does not report it a second time.
+ */
+function reportRedirectLoginError() {
+  const params = new URLSearchParams(window.location.search)
+  const code = params.get('error')
+  if (!code) {
+    return
+  }
+  notify({
+    type: 'negative',
+    message: t('auth.errors.loginError'),
+    caption: localizeError(code, t)
+  })
+  params.delete('error')
+  const query = params.toString()
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${window.location.pathname}${query ? `?${query}` : ''}`
+  )
+}
 </script>
