@@ -76,6 +76,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { copyToClipboard } from '@/helpers/clipboard'
 import { localizeError } from '@/helpers/localization'
 import { computed, onMounted, reactive } from 'vue'
@@ -121,19 +122,6 @@ const groupedSecret = computed(() => state.tfaSecret.replace(/.{4}(?=.)/g, '$& '
 
 // METHODS
 
-/**
- * The reason the API gave, out of a response ky threw on (anything above 400) or out of the error
- * itself when the request never got an answer. An `ERR_*` code is translated on the way out.
- */
-async function apiMessage(err) {
-  const message =
-    (await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)) ?? err.message
-  return localizeError(message, t)
-}
-
 async function copySecret() {
   try {
     // -> Without the display grouping: a space is harmless in most authenticator apps, but not all
@@ -169,7 +157,7 @@ async function load() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: await apiMessage(err)
+      message: apiErrorMessage(err)
     })
     onDialogCancel()
   }
@@ -202,7 +190,7 @@ async function save() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: await apiMessage(err)
+      message: apiErrorMessage(err)
     })
   }
   state.isLoading = false

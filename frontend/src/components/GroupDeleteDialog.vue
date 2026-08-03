@@ -42,6 +42,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -80,13 +81,9 @@ async function confirm() {
   } catch (err) {
     // -> ky throws for statuses above 400 (e.g. 409 for a system group), where the reason the API
     //    gave is in the response body rather than in the error message
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
 }

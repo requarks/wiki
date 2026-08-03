@@ -134,6 +134,7 @@ import { useDark } from '@/composables/dark'
 
 import { debounce } from 'es-toolkit/function'
 import { useClosePopup } from '@/composables/popup'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // I18N
 
@@ -206,18 +207,6 @@ watch(() => state.currentTab, focusCurrentTab)
 
 // METHODS
 
-/**
- * Read the API's own message off a failed request, since ky doesn't throw on 400
- */
-async function apiMessage(err) {
-  return (
-    err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null) ?? err.message
-  )
-}
-
 async function loadSets() {
   try {
     // -> Only enabled sets: a disabled one is not searchable, and its icons cannot be stored
@@ -227,7 +216,7 @@ async function loadSets() {
     notify({
       type: 'negative',
       message: t('iconPicker.setsFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
 }
@@ -252,7 +241,7 @@ async function search() {
     notify({
       type: 'negative',
       message: t('iconPicker.searchFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading = false
@@ -283,7 +272,7 @@ async function apply() {
     notify({
       type: 'warning',
       message: t('iconPicker.materializeFailed', { icon: value }),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
 }

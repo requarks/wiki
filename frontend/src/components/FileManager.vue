@@ -428,6 +428,7 @@ import { filesize } from 'filesize'
 import Fuse from 'fuse.js/basic'
 import NewMenu from './PageNewMenu.vue'
 import Tree from './TreeNav.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 import fileTypes from '@/helpers/fileTypes'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
@@ -689,18 +690,6 @@ function close() {
   siteStore.overlay = null
 }
 
-/**
- * The message an API failure should be reported with — the server's own if it sent one, since ky
- * throws before the caller ever sees the body.
- */
-async function apiErrorMessage(err, fallback) {
-  const message = await err.response
-    ?.json()
-    .then((b) => b?.message)
-    .catch(() => null)
-  return message || err.message || fallback
-}
-
 function formatDateTime(value) {
   if (!value) {
     return ''
@@ -835,7 +824,7 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
     notify({
       type: 'negative',
       message: 'Failed to load folder tree.',
-      caption: await apiErrorMessage(err, 'An unexpected error occured.')
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   if (parentId === state.currentFolderId) {
@@ -1051,7 +1040,7 @@ async function uploadNewFiles() {
         notify({
           type: 'negative',
           message: 'Failed to upload file.',
-          caption: await apiErrorMessage(err, 'An unexpected error occured.')
+          caption: apiErrorMessage(err, 'An unexpected error occured.')
         })
       }
       state.loading--
@@ -1160,7 +1149,7 @@ async function downloadItem(item) {
     notify({
       type: 'negative',
       message: 'Failed to download file.',
-      caption: await apiErrorMessage(err, 'An unexpected error occured.')
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
 }

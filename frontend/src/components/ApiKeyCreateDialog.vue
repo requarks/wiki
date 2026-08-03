@@ -114,6 +114,7 @@ import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import ApiKeyCopyDialog from './ApiKeyCopyDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // EMITS
 
@@ -223,13 +224,9 @@ async function create() {
       onDialogOK()
     })
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.loading--

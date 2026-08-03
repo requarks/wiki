@@ -52,6 +52,7 @@ import { notify } from '@/composables/notify'
 import { onMounted, reactive } from 'vue'
 
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -109,13 +110,9 @@ async function rename() {
     onDialogOK()
   } catch (err) {
     // -> ky throws above 400 — a name already taken in this folder answers 409
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -132,13 +129,9 @@ onMounted(async () => {
     }
     state.path = asset.fileName
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
     onDialogCancel()
   }

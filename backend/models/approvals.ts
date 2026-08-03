@@ -725,17 +725,24 @@ class Approvals {
       the same way the editor does on any other save, and it arrives with the approval.
 
       Falling back to the server-side renderer covers an API client that has no pipeline of its own.
-      That one needs the Puppeteer extension and says so if it is missing, which is the honest answer:
-      the alternative is quietly leaving a stale render on a page somebody just changed.
+      That one needs the Puppeteer extension and says so before the content is written if it is
+      missing, rather than leaving a stale render on a page somebody just changed with no prospect of
+      it being corrected.
     */
-    const config = WIKI.sites[siteId]?.config?.editors?.[page.editor]?.config ?? {}
-    const html =
-      render ??
-      (await WIKI.models.rendering.renderContent(content, {
-        editor: page.editor,
-        config
-      }))
-    await WIKI.models.pages.updatePage(siteId, page.id, { content, render: html }, actor)
+    if (!render) {
+      await WIKI.models.rendering.ensureCanRender(page.editor)
+    }
+    await WIKI.models.pages.updatePage(
+      siteId,
+      page.id,
+      { content, ...(render && { render }) },
+      actor
+    )
+    if (!render) {
+      // -> Briefly stale rather than wrong: the browser is a queue away, and a suggestion approved
+      //    while it is busy waits its turn instead of starting a second one
+      await WIKI.models.pages.queueRerender(siteId, page.id, actor)
+    }
 
     await WIKI.db.delete(submissionsTable).where(eq(submissionsTable.id, submissionId))
     WIKI.logger.debug(`Approved edit suggestion ${submissionId} onto page ${page.id}`)

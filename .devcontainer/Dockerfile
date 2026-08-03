@@ -24,6 +24,21 @@ RUN apt-get update && apt-get install -qy \
     unzip \
     wget
 
+# Chromium, for the Puppeteer extension. Rendering a page on the server means driving a headless
+# browser, and this is the copy Puppeteer is pointed at rather than one it downloads for itself:
+# the distro keeps it patched, and it exists for arm64 as well as amd64.
+#
+# Its own RUN, and without recommends, because Chromium recommends a desktop stack -- an X server, a
+# terminal emulator, usbmuxd -- that takes the package count from 61 to 177 and that nothing headless
+# ever touches. The apt lists from the install above are still around, so no second update is needed.
+RUN apt-get install -qy --no-install-recommends \
+    chromium \
+    fonts-liberation
+
+# Where Puppeteer looks for a browser, and that it must not fetch a second one on install
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # avoid million NPM install messages
 ENV npm_config_loglevel=warn
 # disable NPM funding messages

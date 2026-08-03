@@ -14,6 +14,20 @@ const AUTH_DEFAULTS: RateLimitPolicy = {
 }
 
 /**
+ * The limit on asking for a page to be rendered.
+ *
+ * Not configurable, unlike the authentication limit above: what this protects is the host rather than
+ * a secret, and no deployment has a reason to raise it. How many browsers run at once is settled by
+ * the render queue rather than here — this only keeps one client from filling that queue faster than
+ * anything could drain it. Ten in five minutes is far more than re-rendering a stale page takes.
+ */
+const RENDER_LIMIT: RateLimitPolicy = {
+  max: 10,
+  windowSeconds: 300,
+  banSeconds: 300
+}
+
+/**
  * The configured policy.
  *
  * Every field falls back on its own, so one unusable value leaves the rest of the limit standing
@@ -67,5 +81,37 @@ export async function limitAuthAttempts(req: FastifyRequest, reply: FastifyReply
   reply.header('Retry-After', String(verdict.retryAfter))
   return reply.tooManyRequests(
     `Too many attempts. Try again in ${Math.ceil(verdict.retryAfter / 60)} minute(s).`
+  )
+}
+
+/**
+ * Refuse a request to render a page once a client has made too many.
+ *
+ * Written as a per-route `preHandler` hook — `{ preHandler: limitRenders, schema: … }` — so that the
+ * route it guards says so where it is declared. It runs after the session is decoded, which is what
+ * lets it count per user rather than per address: the endpoint needs a session, and unlike a password
+ * guess the cost is the caller's own, so an office behind a single address should not share a limit the
+ * way password guessers are made to.
+ *
+ * `manage:system` is exempt, as it is everywhere. Re-rendering every page after a markdown config
+ * change is an operator's job, and a root admin who wants the server busy has easier ways.
+ */
+export async function limitRenders(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (req.session?.permissions?.includes('manage:system')) {
+    return
+  }
+  const verdict = await WIKI.models.rateLimits.consume(
+    `render:${req.session?.user?.id ?? req.ip}`,
+    RENDER_LIMIT
+  )
+  if (verdict.allowed) {
+    return
+  }
+  WIKI.logger.debug(
+    `Rate limit: refused ${req.method} ${req.url} from ${req.ip}, ${verdict.retryAfter}s left of its ban.`
+  )
+  reply.header('Retry-After', String(verdict.retryAfter))
+  return reply.tooManyRequests(
+    `Too many render requests. Try again in ${Math.ceil(verdict.retryAfter / 60)} minute(s).`
   )
 }

@@ -478,7 +478,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Approve an edit suggestion and write it to the page',
         description:
-          'Applies `content` when given — the reviewer may have adjusted the suggestion before accepting it — and what was submitted otherwise. Send `render` alongside it, as the editor does on any other save: the markdown pipeline lives in the client. Without it the server renders the page itself, which needs the Puppeteer extension. The page is re-indexed as it would be for any other edit, with the reviewer recorded as the author, and the suggestion is closed out.',
+          'Applies `content` when given — the reviewer may have adjusted the suggestion before accepting it — and what was submitted otherwise. Send `render` alongside it, as the editor does on any other save: the markdown pipeline lives in the client. Without it the server queues the page for rendering, which needs the Puppeteer extension and answers 503 without it; the page then serves its previous HTML until the queue reaches it. The page is re-indexed as it would be for any other edit, with the reviewer recorded as the author, and the suggestion is closed out.',
         tags: ['Approvals'],
         params: {
           type: 'object',

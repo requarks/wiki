@@ -167,6 +167,10 @@ async function postBoot() {
   //    handshake reads the per-site feature toggle from.
   await WIKI.collab.init()
   await WIKI.scheduler.start()
+
+  // -> A page queued for rendering when this instance went down is still queued, and nothing looks at
+  //    that table until somebody asks for another render. Costs one query when there is nothing to do.
+  await WIKI.scheduler.addJob({ task: 'renderPages', maxRetries: 0 })
 }
 
 // ----------------------------------------

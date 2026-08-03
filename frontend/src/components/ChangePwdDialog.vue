@@ -96,6 +96,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { localizeError } from '@/helpers/localization'
 import { computed, reactive, ref } from 'vue'
 
@@ -219,11 +220,7 @@ async function save() {
   } catch (err) {
     notify({
       type: 'negative',
-      message:
-        (await err.response
-          ?.json()
-          .then((b) => localizeError(b?.message, t))
-          .catch(() => null)) ?? err.message
+      message: localizeError(apiErrorMessage(err), t)
     })
   }
   state.isLoading = false

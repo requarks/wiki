@@ -208,6 +208,7 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -369,13 +370,9 @@ async function fetchHook(id) {
       lastErrorMessage: resp.lastErrorMessage ?? ''
     }
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
     onDialogHide()
   }
@@ -399,13 +396,9 @@ async function create() {
     })
     onDialogOK()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.isLoading = false
@@ -428,13 +421,9 @@ async function save() {
     })
     onDialogOK()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.isLoading = false

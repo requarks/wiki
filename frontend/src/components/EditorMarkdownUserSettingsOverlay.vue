@@ -100,6 +100,7 @@ import { notify } from '@/composables/notify'
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -167,14 +168,10 @@ async function save() {
     close()
   } catch (err) {
     // -> ky throws above 400, with the reason in the body
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: 'Failed to save Markdown editor settings.',
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--

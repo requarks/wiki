@@ -414,6 +414,7 @@ import { loading } from '@/composables/loading'
 import { dialog } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -609,18 +610,6 @@ function payloadFor(str) {
   }
 }
 
-/**
- * Read the API's own message off a failed request, since ky doesn't throw on 400
- */
-async function apiMessage(err) {
-  return (
-    err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null) ?? err.message
-  )
-}
-
 async function save() {
   if (state.loading > 0) {
     return
@@ -650,7 +639,7 @@ async function save() {
         state.selectedStrategy = resp.id
       }
     } catch (err) {
-      failures.push({ name: str.displayName, message: await apiMessage(err) })
+      failures.push({ name: str.displayName, message: apiErrorMessage(err) })
     }
   }
 
@@ -746,7 +735,7 @@ function confirmDelete() {
       notify({
         type: 'negative',
         message: t('admin.auth.deleteFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.loading--

@@ -156,6 +156,7 @@ import { confirm } from '@/composables/dialog'
 
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -226,16 +227,6 @@ watch(
 
 // METHODS
 
-/** The reason the API gave, out of a response ky threw on, or the error's own message. */
-async function apiMessage(err) {
-  return (
-    (await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)) ?? err.message
-  )
-}
-
 function humanizeDate(val) {
   return Temporal.Instant.from(val).toLocaleString(undefined, {
     dateStyle: 'medium',
@@ -257,7 +248,7 @@ async function load() {
     notify({
       type: 'negative',
       message: t('inbox.reviewLoadFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -283,7 +274,7 @@ async function loadSubmission(id) {
     notify({
       type: 'negative',
       message: t('inbox.reviewLoadFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
     /*
       Reviewed by somebody else already, or never this reviewer's to see. Back to the queue, and with
@@ -419,7 +410,7 @@ function approveSubmission() {
       notify({
         type: 'negative',
         message: t('inbox.reviewApproveFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.loading--
@@ -453,7 +444,7 @@ function rejectSubmission() {
       notify({
         type: 'negative',
         message: t('inbox.reviewDeclineFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.loading--

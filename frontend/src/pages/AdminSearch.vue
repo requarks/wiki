@@ -107,6 +107,7 @@ import { loading } from '@/composables/loading'
 import { useSiteStore } from '@/stores/site'
 
 import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -197,14 +198,10 @@ async function save() {
     })
     await load()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.search.saveFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -222,14 +219,10 @@ async function rebuild() {
       message: t('admin.search.rebuildInitSuccess')
     })
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.search.rebuildFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.rebuildLoading = false

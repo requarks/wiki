@@ -26,6 +26,7 @@ import { computed, onMounted, reactive } from 'vue'
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
 import { usePageStore } from '@/stores/page'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // EMITS
 
@@ -98,13 +99,9 @@ onMounted(async () => {
     EVENT_BUS.emit('reloadEditorContent', { replacements })
     onDialogOK()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
     onDialogCancel()
   }

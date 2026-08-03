@@ -4,7 +4,9 @@ LABEL maintainer="requarks.io"
 RUN apt-get update && apt-get install -qy --no-install-recommends \
     bash \
     build-essential \
+    chromium \
     curl \
+    fonts-liberation \
     git \
     gnupg \
     openssh-client \
@@ -27,8 +29,21 @@ USER node
 
 ENV NODE_ENV=production
 
+# The browser the Puppeteer extension drives, installed above rather than downloaded by Puppeteer: the
+# distro keeps it patched, it exists for arm64 as well as amd64, and the image does not carry two copies
+# of Chromium. `PUPPETEER_SKIP_DOWNLOAD` has to be set before the install below for that to hold.
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 WORKDIR /wiki/server
 RUN pnpm install --prod --frozen-lockfile
+
+# The Puppeteer extension, which server-side page rendering needs. Added here rather than declared in
+# `backend/package.json` because it is an optional extension: an installation that renders its pages in
+# the editor -- which is all of them, on any normal save -- has no use for a browser on the server, and
+# a source checkout should not have to fetch one to install the backend. Pinned like every other
+# dependency, so an image build is reproducible.
+RUN pnpm add puppeteer@25.4.0
 
 # Set extensions as installed
 RUN touch node_modules/sharp/wiki_installed.txt

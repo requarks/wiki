@@ -120,6 +120,7 @@ import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -183,14 +184,10 @@ async function install(ext) {
     await load()
   } catch (err) {
     // -> ky throws above 400 — an extension that must be installed by hand answers 409 saying so
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.extensions.installFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   loading.hide()

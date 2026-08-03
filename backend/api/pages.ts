@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
 import { SEARCH_ORDER_BY, type SearchOrderBy } from '../models/search.ts'
 import { generatePathHash } from '../helpers/common.ts'
-import { limitAuthAttempts } from '../helpers/rateLimit.ts'
+import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
 function splitList(value?: string): string[] {
@@ -810,20 +810,21 @@ async function routes(app: FastifyInstance) {
         granted by a group's RULES. Checked against the page in question below instead — which is
         also what lets a rule open one branch to somebody the group as a whole cannot write to.
       */
+      // -> Bounds how fast one client can fill the queue; see `helpers/rateLimit.ts`
+      preHandler: limitRenders,
       schema: {
-        summary: 'Render a page again from its source',
+        summary: 'Queue a page to be rendered again from its source',
         description:
-          'For when a stored render has gone stale and nobody has the page open to re-save it. The markdown pipeline lives in the frontend, so the server drives it in a headless browser and the result matches what the editor would produce — which means this needs the Puppeteer extension, and answers 503 without it.',
+          'For when a stored render has gone stale and nobody has the page open to re-save it. The markdown pipeline lives in the frontend, so the server drives it in a headless browser and the result matches what the editor would produce — which means this needs the Puppeteer extension, and answers 503 without it.\n\nAnswers 202: a browser is far too heavy to hold a request open for, so the page joins a queue that is drained one page at a time and its render is replaced when its turn comes. Asking twice for the same page is one render of whatever the content has become by then. Rate limited, to bound how fast the queue can be filled.',
         tags: ['Pages'],
         params: pageIdParam,
         response: {
-          200: {
-            description: 'Page rendered successfully',
+          202: {
+            description: 'Page queued for rendering',
             type: 'object',
             properties: {
               ok: { type: 'boolean' },
-              message: { type: 'string' },
-              page: { $ref: 'Page#' }
+              message: { type: 'string' }
             }
           }
         }
@@ -845,15 +846,18 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'write:pages', target)) {
         return reply.forbidden('You are not allowed to edit this page.')
       }
-      const page = await WIKI.models.pages.rerenderPage(req.params.siteId, req.params.pageId, actor)
-      if (!page) {
+      const queued = await WIKI.models.pages.queueRerender(
+        req.params.siteId,
+        req.params.pageId,
+        actor
+      )
+      if (!queued) {
         return reply.notFound('This page does not exist.')
       }
-      return {
+      return reply.code(202).send({
         ok: true,
-        message: 'Page rendered successfully.',
-        page
-      }
+        message: 'Page queued for rendering.'
+      })
     }
   )
 

@@ -117,6 +117,7 @@ import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
 import { pick } from 'es-toolkit/object'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -231,13 +232,9 @@ function deleteBlock(id) {
       await load()
     } catch (err) {
       // -> ky throws above 400 (e.g. 409 for a built-in block), with the reason in the body
-      const apiMessage = await err.response
-        ?.json()
-        .then((b) => b?.message)
-        .catch(() => null)
       notify({
         type: 'negative',
-        message: apiMessage || err.message
+        message: apiErrorMessage(err)
       })
     }
     state.loading--

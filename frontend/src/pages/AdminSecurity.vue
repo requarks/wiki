@@ -473,6 +473,7 @@ import { useSiteStore } from '@/stores/site'
 
 import { filesize } from 'filesize'
 import filesizeParser from 'filesize-parser'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -588,14 +589,10 @@ async function save() {
   } catch (err) {
     // -> ky throws above 400 — the server rejects combinations that would store a setting doing
     //    nothing, e.g. enforcing a CSP with no directives
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.security.saveFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--

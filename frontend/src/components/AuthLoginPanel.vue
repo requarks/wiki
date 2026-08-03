@@ -354,6 +354,7 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useDark } from '@/composables/dark'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { localizeError } from '@/helpers/localization'
 
 import { useSiteStore } from '@/stores/site'
@@ -499,20 +500,6 @@ const userPasswordVerifyValidation = [
 ]
 
 // METHODS
-
-/**
- * The reason the API gave, untranslated: the `ERR_*` code out of a response ky threw on (anything
- * above 400), or the error's own message when the request never got an answer. Kept as the raw code so
- * that callers can both display it and act on it.
- */
-async function apiError(err) {
-  return (
-    (await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)) ?? err.message
-  )
-}
 
 function switchTo(screen) {
   switch (screen) {
@@ -662,7 +649,7 @@ async function login() {
     loading.hide()
     notify({
       type: 'negative',
-      message: localizeError(await apiError(err), t)
+      message: localizeError(apiErrorMessage(err), t)
     })
   }
 }
@@ -702,7 +689,7 @@ async function loginWithPasskey() {
     }
     notify({
       type: 'negative',
-      message: localizeError(await apiError(err), t)
+      message: localizeError(apiErrorMessage(err), t)
     })
   }
 }
@@ -814,7 +801,7 @@ async function changePwd() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: localizeError(await apiError(err), t)
+      message: localizeError(apiErrorMessage(err), t)
     })
   }
 }
@@ -854,7 +841,7 @@ async function submitTFA(setup) {
  * no way forward.
  */
 async function handleTFAError(err) {
-  const code = await apiError(err)
+  const code = apiErrorMessage(err)
   loading.hide()
   notify({
     type: 'negative',

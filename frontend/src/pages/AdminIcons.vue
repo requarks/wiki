@@ -284,6 +284,7 @@ import { notify } from '@/composables/notify'
 import { dialog } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -333,18 +334,6 @@ const filteredAvailableSets = computed(() => {
 })
 
 // METHODS
-
-/**
- * Read the API's own message off a failed request, since ky doesn't throw on 400
- */
-async function apiMessage(err) {
-  return (
-    err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null) ?? err.message
-  )
-}
 
 function prettyBytes(bytes) {
   if (bytes < 1024) {
@@ -407,7 +396,7 @@ async function load() {
     notify({
       type: 'negative',
       message: t('admin.icons.loadFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -441,7 +430,7 @@ async function openAddSet() {
   try {
     state.availableSets = (await API_CLIENT.get('icons/available-sets').json()) ?? []
   } catch (err) {
-    state.availableError = await apiMessage(err)
+    state.availableError = apiErrorMessage(err)
   }
   state.loadingAvailable = false
 }
@@ -466,7 +455,7 @@ async function addSet(set) {
     notify({
       type: 'negative',
       message: t('admin.icons.addFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -490,7 +479,7 @@ async function setSetState(set, isEnabled) {
     notify({
       type: 'negative',
       message: t('admin.icons.saveFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -532,7 +521,7 @@ function confirmDeleteSet(set) {
       notify({
         type: 'negative',
         message: t('admin.icons.deleteFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.loading--
@@ -570,7 +559,7 @@ function purgeCache() {
       notify({
         type: 'negative',
         message: t('admin.icons.purgeCacheFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.loading--

@@ -225,6 +225,7 @@ import { difference } from 'es-toolkit/array'
 import HeaderNav from '@/components/HeaderNav.vue'
 import FooterNav from '@/components/FooterNav.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
 
@@ -403,11 +404,7 @@ async function performSearch() {
     notify({
       type: 'negative',
       message: t('search.failed'),
-      caption:
-        (await err.response
-          ?.json()
-          .then((b) => b?.message)
-          .catch(() => null)) || err.message
+      caption: apiErrorMessage(err)
     })
   } finally {
     state.loading--

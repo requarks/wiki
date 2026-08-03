@@ -531,6 +531,46 @@ export const pageWatching = pgTable(
   ]
 )
 
+// PAGE RENDER QUEUE -------------------
+/**
+ * A page waiting for the server to render it, one row per page.
+ *
+ * The markdown pipeline lives in the frontend, so rendering a page here means driving a headless
+ * browser — too heavy to hold a request open for, and ruinous to do several times at once. A row is a
+ * request for a render, and the `renderPages` task drains the table one page at a time through a
+ * single browser (`models/rendering.ts`).
+ *
+ * A row IS the request, so asking twice for the same page updates the row instead of adding a second:
+ * what gets rendered is the content as it stands when the browser reaches it, and rendering it twice
+ * would produce the same HTML. `createdAt` keeps its place in the queue across those repeats.
+ *
+ * The two permissions travel with the row because a render is sanitized against what the person who
+ * asked for it may embed, and by the time the job runs there is no session left to ask.
+ */
+export const pageRenderQueue = pgTable(
+  'pageRenderQueue',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /** `write:scripts` — whether this render may keep `<script>` and inline handlers. */
+    allowScripts: boolean().notNull().default(false),
+    /** `write:styles` — whether this render may keep `<style>` and inline `style` attributes. */
+    allowStyles: boolean().notNull().default(false),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+    pageId: uuid()
+      .notNull()
+      .unique()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id),
+    // -> Only ever logged, and a deleted account is no reason to drop a render somebody is waiting for
+    requestedById: uuid().references(() => users.id, { onDelete: 'set null' })
+  },
+  // -> How the drain picks what to render next
+  (table) => [index('pageRenderQueue_createdAt_idx').on(table.createdAt)]
+)
+
 // RATE LIMITS -------------------------
 /**
  * One counter per rate-limited client, and the ban it has earned itself.

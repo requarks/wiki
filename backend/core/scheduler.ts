@@ -5,6 +5,7 @@ import path from 'node:path'
 import { CronExpressionParser } from 'cron-parser'
 import { v4 as uuid } from 'uuid'
 import { createDeferred, type Deferred } from '../helpers/common.ts'
+import { createNotifier } from '../helpers/pubsub.ts'
 import { camelCase } from 'es-toolkit/string'
 import { remove } from 'es-toolkit/array'
 import {
@@ -18,6 +19,14 @@ import type { PoolClient } from 'pg'
 
 /** An in-process task, loaded from `tasks/simple/`. */
 export type SimpleTask = (payload?: any) => Promise<void> | void
+
+/**
+ * Sends the scheduler's cross-instance notifications, one at a time.
+ *
+ * Nothing here awaits a notification: a job being added or finishing should not wait on a round trip,
+ * and `processJob` runs concurrently with itself, so two notifications easily meet on the one client.
+ */
+const notifier = createNotifier(() => WIKI.scheduler.pubsubClient, 'scheduler')
 
 /** A pending `addJob({ promise: true })` caller, waiting on the `jobCompleted` event. */
 interface CompletionPromise {
@@ -88,7 +97,7 @@ export default {
 
     // -> Outbound events handling
 
-    this.pubsubClient!.query('LISTEN scheduler')
+    await this.pubsubClient!.query('LISTEN scheduler')
     this.pubsubClient!.on('notification', async (msg) => {
       if (msg.channel !== 'scheduler') {
         return
@@ -171,14 +180,14 @@ export default {
         createdBy: WIKI.INSTANCE_ID
       })
       if (notify) {
-        this.pubsubClient!.query(`SELECT pg_notify($1, $2)`, [
+        notifier.send(
           'scheduler',
           JSON.stringify({
             source: WIKI.INSTANCE_ID,
             event: 'newJob',
             id: jobId
           })
-        ])
+        )
       }
       return {
         id: jobId,
@@ -250,7 +259,7 @@ export default {
                 })
                 .where(eq(jobHistoryTable.id, job.id))
               WIKI.logger.info(`Completed job ${job.id}: ${job.task}`)
-              this.pubsubClient!.query(`SELECT pg_notify($1, $2)`, [
+              notifier.send(
                 'scheduler',
                 JSON.stringify({
                   source: WIKI.INSTANCE_ID,
@@ -258,7 +267,7 @@ export default {
                   state: 'success',
                   id: job.id
                 })
-              ])
+              )
             } catch (err: any) {
               WIKI.logger.warn(`Failed to complete job ${job.id}: ${job.task} [ FAILED ]`)
               WIKI.logger.warn(err)
@@ -271,7 +280,7 @@ export default {
                   lastErrorMessage: err.message
                 })
                 .where(eq(jobHistoryTable.id, job.id))
-              this.pubsubClient!.query(`SELECT pg_notify($1, $2)`, [
+              notifier.send(
                 'scheduler',
                 JSON.stringify({
                   source: WIKI.INSTANCE_ID,
@@ -280,7 +289,7 @@ export default {
                   id: job.id,
                   errorMessage: err.message
                 })
-              ])
+              )
               // -> Reschedule for retry
               if (job.retries < job.maxRetries) {
                 const backoffDelay = 2 ** job.retries * WIKI.config.scheduler.retryBackoff

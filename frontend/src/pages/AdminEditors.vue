@@ -142,6 +142,7 @@ const editors = reactive([
   {
     id: 'asciidoc',
     icon: 'asciidoc',
+    isDisabled: true,
     hasConfig: true,
     useRendering: true
   },
@@ -172,6 +173,7 @@ const editors = reactive([
   {
     id: 'wysiwyg',
     icon: 'google-presentation',
+    isDisabled: true,
     useRendering: true
   }
 ])

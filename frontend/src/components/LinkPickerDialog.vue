@@ -126,6 +126,7 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 
+import { apiErrorMessage } from '@/helpers/apiError'
 import fileTypes from '@/helpers/fileTypes'
 
 import Tree from '@/components/TreeNav.vue'
@@ -236,18 +237,6 @@ watch(
 // METHODS
 
 /**
- * The message an API failure should be reported with — the server's own if it sent one, since ky
- * throws before the caller ever sees the body.
- */
-async function apiErrorMessage(err, fallback) {
-  const message = await err.response
-    ?.json()
-    .then((b) => b?.message)
-    .catch(() => null)
-  return message || err.message || fallback
-}
-
-/**
  * Loads one folder into the tree, and — when that folder is the selected one — into the list beside it.
  *
  * `initLoad` also asks for the folders above the one being listed, so that opening on a page buried a
@@ -313,7 +302,7 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
     notify({
       type: 'negative',
       message: t('linkPicker.loadFailed'),
-      caption: await apiErrorMessage(err, 'An unexpected error occured.')
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   if (parentId) {

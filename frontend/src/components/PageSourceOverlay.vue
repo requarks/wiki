@@ -52,6 +52,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import { fileSave } from 'browser-fs-access'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -134,12 +135,7 @@ async function load() {
     state.contentType = pageData.contentType || pageData.editor || ''
   } catch (err) {
     const message =
-      err.response?.status === 404
-        ? t('pageSource.notFound')
-        : (await err.response
-            ?.json()
-            .then((b) => b?.message)
-            .catch(() => null)) || err.message
+      err.response?.status === 404 ? t('pageSource.notFound') : apiErrorMessage(err)
     state.notice = message
     notify({
       type: 'negative',

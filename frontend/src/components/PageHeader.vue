@@ -330,6 +330,7 @@ import { useUserStore } from '@/stores/user'
 
 import CollabPresence from '@/components/CollabPresence.vue'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 /**
  * How long the bell swings for, in milliseconds. Matches the `w-bell-ring` animation below — the class
@@ -696,11 +697,7 @@ async function submitSuggestionCommit(guest = {}) {
     notify({
       type: 'negative',
       message: t('common.page.suggestSubmitFailed'),
-      caption:
-        (await err.response
-          ?.json()
-          .then((b) => b?.message)
-          .catch(() => null)) ?? err.message
+      caption: apiErrorMessage(err)
     })
   }
   loading.hide()

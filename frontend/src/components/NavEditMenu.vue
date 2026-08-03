@@ -99,6 +99,7 @@ import { notify } from '@/composables/notify'
 
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -186,11 +187,7 @@ async function save() {
   } catch (err) {
     notify({
       type: 'negative',
-      message:
-        (await err.response
-          ?.json()
-          .then((b) => b?.message)
-          .catch(() => null)) || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.loading--

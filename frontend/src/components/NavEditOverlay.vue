@@ -454,6 +454,7 @@ import { v4 as uuid } from 'uuid'
 import { pick } from 'es-toolkit/object'
 import { Sortable } from 'sortablejs-vue3'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -579,18 +580,6 @@ function close() {
   siteStore.$patch({ overlay: '' })
 }
 
-/**
- * The message an API failure should be reported with — the server's own if it sent one, since ky
- * throws before the caller ever sees the body.
- */
-async function apiErrorMessage(err) {
-  const message = await err.response
-    ?.json()
-    .then((b) => b?.message)
-    .catch(() => null)
-  return message || err.message || 'An unexpected error occured.'
-}
-
 async function loadGroups() {
   state.loading++
   try {
@@ -601,7 +590,7 @@ async function loadGroups() {
     notify({
       type: 'warning',
       message: t('navEdit.groupsFailed'),
-      caption: await apiErrorMessage(err)
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   state.loading--
@@ -648,7 +637,7 @@ async function loadMenuItems() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: await apiErrorMessage(err)
+      message: apiErrorMessage(err, 'An unexpected error occured.')
     })
     close()
   }
@@ -722,7 +711,7 @@ async function save() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: await apiErrorMessage(err)
+      message: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   loading.hide()

@@ -77,8 +77,14 @@
         </w-card>
       </div>
       <div class="min-w-0 flex-1" v-if="state.target">
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-12">
+        <!--
+          The settings and the infobox beside them, the same shape as the list and this panel above:
+          the infobox is 300px wide and the settings take what is left, both dropping onto their own
+          row when there is no room. A 12-column grid could not say that -- `col-span-12` on the
+          settings took a whole row of it, which is what put the infobox underneath.
+        -->
+        <div class="flex flex-wrap gap-4">
+          <div class="min-w-0 flex-1">
             <!-- ----------------------- -->
             <!-- Setup -->
             <!-- ----------------------- -->
@@ -516,7 +522,7 @@
               </template>
             </w-card>
           </div>
-          <div class="col-span-12 lg:col-auto">
+          <div class="flex-none">
             <!-- ----------------------- -->
             <!-- Infobox -->
             <!-- ----------------------- -->
@@ -751,6 +757,7 @@ import { useSiteStore } from '@/stores/site'
 
 import * as VNG from 'v-network-graph'
 import GithubSetupInstallDialog from '../components/GithubSetupInstallDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -956,18 +963,6 @@ function inputTypeFor(cfg) {
   return cfg.type === 'number' ? 'number' : 'text'
 }
 
-/**
- * Read the API's own message off a failed request, since ky doesn't throw on 400
- */
-async function apiMessage(err) {
-  return (
-    err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null) ?? err.message
-  )
-}
-
 async function load() {
   state.loading++
   loading.show()
@@ -981,7 +976,7 @@ async function load() {
     notify({
       type: 'negative',
       message: t('admin.storage.loadFailed'),
-      caption: await apiMessage(err),
+      caption: apiErrorMessage(err),
       timeout: 20000
     })
   }
@@ -1057,7 +1052,7 @@ async function save({ silent = false } = {}) {
     notify({
       type: 'negative',
       message: t('admin.storage.saveFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   if (!silent) {
@@ -1113,7 +1108,7 @@ async function executeAction(act) {
       notify({
         type: 'negative',
         message: t('admin.storage.actionFailed', { action: act.label }),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.runningAction = false
@@ -1190,7 +1185,7 @@ async function setupDestroy() {
       notify({
         type: 'negative',
         message: t('admin.storage.githubSetupDestroyFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
   })
@@ -1321,7 +1316,7 @@ async function setupGitHubStep(step, code) {
     notify({
       type: 'negative',
       message: t('admin.storage.githubSetupFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
 }

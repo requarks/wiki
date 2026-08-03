@@ -5,6 +5,8 @@ import * as awarenessProtocol from 'y-protocols/awareness'
 import * as syncProtocol from 'y-protocols/sync'
 import * as Y from 'yjs'
 
+import { createNotifier } from '../helpers/pubsub.ts'
+
 import type { PoolClient } from 'pg'
 import type { WebSocket } from 'ws'
 
@@ -180,6 +182,14 @@ function buildSeed(page: {
   return update
 }
 
+/**
+ * Sends this instance's relay messages, one at a time.
+ *
+ * Every one of them starts in a Yjs handler that cannot wait for postgres, and a single edit can
+ * produce several — see `publish`.
+ */
+const notifier = createNotifier(() => WIKI.collab.listenClient, 'collaboration relay')
+
 export default {
   rooms: new Map<string, CollabRoom>(),
   listenClient: null as PoolClient | null,
@@ -250,6 +260,9 @@ export default {
     }
     this.rooms.clear()
     if (this.listenClient) {
+      // -> Whatever is still on its way out goes out first: releasing the client from under a
+      //    notification in flight would fail that one for no reason
+      await notifier.drained()
       this.listenClient.release(true)
       this.listenClient = null
     }
@@ -613,12 +626,15 @@ export default {
     }
   },
 
+  /**
+   * Send one envelope to the other instances, behind whatever is already going out.
+   *
+   * Never awaited — every caller is a Yjs handler reacting to an edit or a cursor moving, and a
+   * keystroke cannot wait for a round trip to postgres. `helpers/pubsub.ts` is what makes that safe on
+   * a single client, which a burst of updates or one chunked message would otherwise breach.
+   */
   publish(envelope: RelayEnvelope): void {
-    this.listenClient
-      ?.query('SELECT pg_notify($1, $2)', [NOTIFY_CHANNEL, JSON.stringify(envelope)])
-      .catch((err: any) => {
-        WIKI.logger.warn(`Failed to relay a collaboration message: ${err.message}`)
-      })
+    notifier.send(NOTIFY_CHANNEL, JSON.stringify(envelope))
   },
 
   receiveRelay(envelope: RelayEnvelope): void {

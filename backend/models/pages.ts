@@ -1,7 +1,7 @@
 import { and, eq, ne, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
 import { CustomError, generatePathHash, timingSafeCompare } from '../helpers/common.ts'
-import type { TocNode } from './rendering.ts'
+import type { RenderPermissions, TocNode } from './rendering.ts'
 
 /** What each editor produces, which is what the content column holds. */
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
@@ -739,39 +739,65 @@ class Pages {
   }
 
   /**
-   * Render a page again from its source, without going through an editor.
+   * Ask for a page to be rendered again from its source, without going through an editor.
    *
    * Needed when a stored render has gone stale — the markdown config changed, or the renderer itself
    * did — and there is nobody with the page open to re-save it. The rendering goes through the very
    * same frontend pipeline, driven in a headless browser, so the result is what the editor would have
-   * produced.
+   * produced; because that costs a browser it is queued rather than done here, one page at a time
+   * across the whole instance. See `models/rendering.ts`.
+   *
+   * What the render may carry is settled here, while there is still an actor to ask, and travels with
+   * the queued request.
+   *
+   * @returns False when there is no such page
+   * @throws `renderUnsupportedEditor` for a page the server cannot render, or
+   *         `renderPuppeteerMissing` when nothing here could drain the queue
    */
-  async rerenderPage(siteId: string, id: string, actor: PageActor): Promise<Page | null> {
-    const page = await this.getPage({ siteId, id, withContent: true })
+  async queueRerender(siteId: string, id: string, actor: PageActor): Promise<boolean> {
+    const page = await this.getPage({ siteId, id })
     if (!page) {
-      return null
+      return false
     }
+    await WIKI.models.rendering.ensureCanRender(page.editor)
 
-    const config = WIKI.sites[siteId]?.config?.editors?.[page.editor]?.config ?? {}
-    const html = await WIKI.models.rendering.renderContent(page.content ?? '', {
-      editor: page.editor,
-      config
+    await WIKI.models.rendering.queuePage({
+      siteId,
+      pageId: page.id,
+      permissions: {
+        scripts: hasPermission(actor, 'write:scripts'),
+        styles: hasPermission(actor, 'write:styles')
+      },
+      requestedById: actor.id
     })
-    // -> Post-processed like any other render: it came from a browser either way, and the author's
-    //    permissions are still what decides what a page may carry
-    const { render, toc, text } = WIKI.models.rendering.postProcess(html, {
-      scripts: hasPermission(actor, 'write:scripts'),
-      styles: hasPermission(actor, 'write:styles')
-    })
+    return true
+  }
 
-    await WIKI.db
+  /**
+   * Store HTML the renderer produced for a page, and re-index it.
+   *
+   * The counterpart to `queueRerender`: the drain calls this once the browser has been through the
+   * content. Post-processed like any other render — it came from a browser either way — against the
+   * permissions the person who asked for it had.
+   */
+  async storeRender(
+    siteId: string,
+    id: string,
+    html: string,
+    permissions: RenderPermissions
+  ): Promise<void> {
+    const { render, toc, text } = WIKI.models.rendering.postProcess(html, permissions)
+
+    const updated = await WIKI.db
       .update(pagesTable)
       .set({ render, toc, searchContent: text, updatedAt: sql`now()` })
-      .where(eq(pagesTable.id, id))
+      .where(and(eq(pagesTable.id, id), eq(pagesTable.siteId, siteId)))
+      .returning({ locale: pagesTable.locale })
 
-    await WIKI.models.search.indexPage(id, page.locale)
-
-    return this.getPage({ siteId, id })
+    // -> Nothing was updated when the page went while it sat in the queue
+    if (updated[0]) {
+      await WIKI.models.search.indexPage(id, updated[0].locale)
+    }
   }
 
   /**

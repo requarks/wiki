@@ -150,6 +150,7 @@ import { useSiteStore } from '@/stores/site'
 import { useFlagsStore } from '@/stores/flags'
 
 import { omit } from 'es-toolkit/object'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
@@ -217,14 +218,10 @@ async function save() {
     await load()
   } catch (err) {
     // -> ky doesn't throw on 400, so the API's own message is on the response
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.flags.saveFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--

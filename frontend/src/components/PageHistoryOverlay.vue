@@ -258,6 +258,7 @@ import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 /**
  * Everything that ever happened to a page, and the difference between any two moments of it.
@@ -365,16 +366,6 @@ watch(
 
 function close() {
   siteStore.$patch({ overlay: '' })
-}
-
-/** The reason the API gave, out of a response ky threw on, or the error's own message. */
-async function apiMessage(err) {
-  return (
-    (await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)) ?? err.message
-  )
 }
 
 function humanizeDate(val) {
@@ -486,7 +477,7 @@ async function withVersion(version) {
     notify({
       type: 'negative',
       message: t('history.loadFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
     return null
   } finally {
@@ -598,7 +589,7 @@ function restoreVersion(version) {
       notify({
         type: 'negative',
         message: t('history.restoreFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     } finally {
       state.loading--
@@ -658,7 +649,7 @@ function branchFrom(version) {
       notify({
         type: 'negative',
         message: t('history.branchFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     } finally {
       state.loading--
@@ -731,7 +722,7 @@ async function applyDiff() {
     notify({
       type: 'negative',
       message: t('history.loadFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   } finally {
     state.loading--
@@ -761,7 +752,7 @@ async function load() {
     state.bId = state.versions[0].id
     state.aId = state.versions[1]?.id ?? null
   } catch (err) {
-    const caption = await apiMessage(err)
+    const caption = apiErrorMessage(err)
     state.notice = caption
     notify({
       type: 'negative',

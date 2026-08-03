@@ -54,6 +54,7 @@ import { notify } from '@/composables/notify'
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -112,11 +113,7 @@ watch(
       notify({
         type: 'warning',
         message: t('editor.props.tagsFailed'),
-        caption:
-          (await err.response
-            ?.json()
-            .then((b) => b?.message)
-            .catch(() => null)) || err.message
+        caption: apiErrorMessage(err)
       })
     } finally {
       state.loading = false

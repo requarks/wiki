@@ -50,6 +50,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -99,13 +100,9 @@ async function confirm() {
       own. The reason is in the body, so the dialog stays open with it rather than closing on a
       failure it did not report.
     */
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.isDeleting = false

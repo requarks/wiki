@@ -137,6 +137,7 @@ import { computed, reactive, ref } from 'vue'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -274,11 +275,7 @@ async function save() {
   } catch (err) {
     notify({
       type: 'negative',
-      message:
-        (await err.response
-          ?.json()
-          .then((b) => b?.message)
-          .catch(() => null)) ?? err.message
+      message: apiErrorMessage(err)
     })
   }
   state.isLoading = false

@@ -157,6 +157,7 @@ import { useSiteStore } from '@/stores/site'
 
 import ApiKeyCreateDialog from '../components/ApiKeyCreateDialog.vue'
 import ApiKeyRevokeDialog from '../components/ApiKeyRevokeDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -273,14 +274,10 @@ async function globalSwitch() {
     })
     await load()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.api.toggleStateFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.isToggleLoading = false

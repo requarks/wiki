@@ -403,6 +403,7 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 
+import { apiErrorMessage } from '@/helpers/apiError'
 import { humanizeDuration, relativeDate } from '@/helpers/datetime'
 
 import { useSiteStore } from '@/stores/site'
@@ -676,14 +677,10 @@ async function runNow(entry) {
       message: t('admin.scheduler.runNowSuccess', { task: entry.task })
     })
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.scheduler.runNowFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -703,14 +700,10 @@ async function cancelJob(jobId) {
     await load()
   } catch (err) {
     // -> ky throws above 400 — a job picked up between the render and the click answers 404
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.scheduler.cancelJobFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -729,14 +722,10 @@ async function retryJob(jobId) {
     })
     await load()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.scheduler.retryJobFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--

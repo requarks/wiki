@@ -126,6 +126,7 @@ import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
 import ApprovalRuleDialog from '@/components/ApprovalRuleDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -159,16 +160,6 @@ const state = reactive({
 watch(() => adminStore.currentSiteId, load)
 
 // METHODS
-
-/** The reason the API gave, out of a response ky threw on, or the error's own message. */
-async function apiMessage(err) {
-  return (
-    (await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)) ?? err.message
-  )
-}
 
 function matchLabel(match) {
   return (
@@ -219,7 +210,7 @@ async function load() {
     notify({
       type: 'negative',
       message: t('admin.approval.loadFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -250,7 +241,7 @@ async function setEnabled(rule, isEnabled) {
     notify({
       type: 'negative',
       message: t('admin.approval.saveFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
     await load()
   }
@@ -304,7 +295,7 @@ function deleteRule(rule) {
       notify({
         type: 'negative',
         message: t('admin.approval.deleteFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     state.loading--

@@ -11,8 +11,18 @@ import semver from 'semver'
 import { relations } from '../db/relations.ts'
 import { flags } from '../models/flags.ts'
 import { createDeferred } from '../helpers/common.ts'
+import { createNotifier } from '../helpers/pubsub.ts'
 // import migrationSource from '../db/migrator-source.js'
 // const migrateFromLegacy = require('../db/legacy')
+
+/**
+ * Sends the event bus's cross-instance notifications, one at a time.
+ *
+ * Built here rather than on the object below because `notifyViaDB` is handed to Emittery as a bare
+ * listener and so has no `this` to reach it through. The client is read per send for the same reason
+ * it is elsewhere: it does not exist until `subscribeToNotifications`.
+ */
+const notifier = createNotifier(() => WIKI.dbManager.pubsubClient, 'event bus')
 
 /**
  * Postgres extensions the schema depends on, installed before the migrations run.
@@ -184,7 +194,7 @@ export default {
 
     // -> Outbound events handling
 
-    this.pubsubClient.query('LISTEN wiki')
+    await this.pubsubClient.query('LISTEN wiki')
     this.pubsubClient.on('notification', (msg) => {
       if (msg.channel !== 'wiki') {
         return
@@ -220,6 +230,9 @@ export default {
     if (this.pubsubClient) {
       WIKI.events.outbound.offAny(this.notifyViaDB as any)
       WIKI.events.inbound.clearListeners()
+      // -> Whatever the last events queued goes out before the client goes: releasing it from under a
+      //    notification in flight would fail that one for no reason
+      await notifier.drained()
       this.pubsubClient.release(true)
     }
   },
@@ -230,18 +243,14 @@ export default {
    * @param value Payload of the event
    */
   notifyViaDB({ name, data }: { name?: string; data?: unknown }): void {
-    try {
-      WIKI.dbManager.pubsubClient!.query(`SELECT pg_notify($1, $2)`, [
-        'wiki',
-        JSON.stringify({
-          source: WIKI.INSTANCE_ID,
-          event: name,
-          value: data ?? null
-        })
-      ])
-    } catch (err: any) {
-      WIKI.logger.warn(err)
-    }
+    notifier.send(
+      'wiki',
+      JSON.stringify({
+        source: WIKI.INSTANCE_ID,
+        event: name,
+        value: data ?? null
+      })
+    )
   },
   /**
    * Attempt initial connection

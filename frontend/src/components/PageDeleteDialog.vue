@@ -46,6 +46,7 @@ import { notify } from '@/composables/notify'
 import { reactive } from 'vue'
 
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -95,13 +96,9 @@ async function confirm() {
     onDialogOK()
   } catch (err) {
     // -> ky throws above 400 — a page deleted from another tab answers 404
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.isLoading = false

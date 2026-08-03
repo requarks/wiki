@@ -166,6 +166,7 @@ import { loading } from '@/composables/loading'
 import { confirm, dialog } from '@/composables/dialog'
 import { onMounted, reactive } from 'vue'
 import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/browser'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { localizeError } from '@/helpers/localization'
 
 import ChangePwdDialog from '@/components/ChangePwdDialog.vue'
@@ -192,19 +193,6 @@ const state = reactive({
 
 // METHODS
 
-/**
- * The reason the API gave, out of a response ky threw on (anything above 400) or out of the error
- * itself when the request never got an answer. An `ERR_*` code is translated on the way out.
- */
-async function apiMessage(err) {
-  const message =
-    (await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)) ?? err.message
-  return localizeError(message, t)
-}
-
 function humanizeDate(val) {
   return Temporal.Instant.from(val).toLocaleString(undefined, {
     dateStyle: 'medium',
@@ -222,7 +210,7 @@ async function fetchAuthMethods() {
     notify({
       type: 'negative',
       message: t('profile.authLoadingFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -260,7 +248,7 @@ function disableTfa(strategyId) {
       notify({
         type: 'negative',
         message: t('profile.authDisableTfaFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     await fetchAuthMethods()
@@ -306,7 +294,7 @@ async function setPasswordLogin(strategyId, isEnabled) {
       message: isEnabled
         ? t('profile.authEnablePasswordLoginFailed')
         : t('profile.authDisablePasswordLoginFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   await fetchAuthMethods()
@@ -386,7 +374,7 @@ async function setupPasskey() {
     notify({
       type: 'negative',
       message: t('profile.passkeysSetupFailed'),
-      caption: await apiMessage(err)
+      caption: apiErrorMessage(err)
     })
   }
   await fetchAuthMethods()
@@ -415,7 +403,7 @@ async function deactivatePasskey(pkey) {
       notify({
         type: 'negative',
         message: t('profile.passkeysDeactivateFailed'),
-        caption: await apiMessage(err)
+        caption: apiErrorMessage(err)
       })
     }
     await fetchAuthMethods()

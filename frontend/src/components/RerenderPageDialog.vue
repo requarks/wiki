@@ -15,7 +15,7 @@ import { onMounted } from 'vue'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
-import { usePageStore } from '@/stores/page'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { useSiteStore } from '@/stores/site'
 
 // PROPS
@@ -37,7 +37,6 @@ const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogCom
 
 // STORES
 
-const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -49,30 +48,20 @@ const { t } = useI18n()
 async function rerenderPage() {
   await new Promise((resolve) => setTimeout(resolve, 1000)) // allow for dialog to show
   try {
-    const resp = await API_CLIENT.post(`sites/${siteStore.id}/pages/${props.id}/render`).json()
-    // -> The page currently on screen is the one that was re-rendered, so show the new render rather
-    //    than leaving the stale one until the next navigation
-    if (resp?.page?.id === pageStore.id) {
-      pageStore.$patch({
-        render: resp.page.render,
-        toc: resp.page.toc
-      })
-    }
+    // -> Answers 202: rendering means a headless browser on the server, so the page joins a queue that
+    //    is drained one page at a time and there is no new render to show yet
+    await API_CLIENT.post(`sites/${siteStore.id}/pages/${props.id}/render`)
     notify({
       type: 'positive',
-      message: t('renderPageDialog.success')
+      message: t('renderPageDialog.queued')
     })
     onDialogOK()
   } catch (err) {
     // -> ky throws above 400 — without the Puppeteer extension the server answers 503, since it has
-    //    no way to run the renderer
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
+    //    no way to run the renderer, and saying so is the whole point of showing this
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
     onDialogCancel()
   }

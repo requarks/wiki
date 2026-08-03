@@ -606,6 +606,7 @@ import { useSiteStore } from '@/stores/site'
 import { v4 as uuid } from 'uuid'
 import { fileOpen, fileSave } from 'browser-fs-access'
 import UserSearchDialog from '@/components/UserSearchDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -1188,14 +1189,10 @@ function assignUser() {
         assigned++
       } catch (err) {
         // -> ky throws above 400, with the reason in the body
-        const apiMessage = await err.response
-          ?.json()
-          .then((b) => b?.message)
-          .catch(() => null)
         notify({
           type: 'negative',
           message: t('admin.groups.assignUserFailed', { userName: usr.name }),
-          caption: apiMessage || err.message
+          caption: apiErrorMessage(err)
         })
       }
     }
@@ -1229,13 +1226,9 @@ async function unassignUser(user) {
       await refreshUsers()
     } catch (err) {
       // -> ky throws above 400 (e.g. 409 for the last root admin), with the reason in the body
-      const apiMessage = await err.response
-        ?.json()
-        .then((b) => b?.message)
-        .catch(() => null)
       notify({
         type: 'negative',
-        message: apiMessage || err.message
+        message: apiErrorMessage(err)
       })
     }
     state.isLoadingUsers = false

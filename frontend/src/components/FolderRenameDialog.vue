@@ -69,6 +69,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import slugify from 'slugify'
 
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
 
@@ -163,13 +164,9 @@ async function rename() {
     onDialogOK()
   } catch (err) {
     // -> ky throws above 400 — a name already taken alongside this folder answers 409
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -190,13 +187,9 @@ onMounted(async () => {
     state.title = folder.title
     state.pathDirty = true
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
-      message: apiMessage || err.message
+      message: apiErrorMessage(err)
     })
     onDialogCancel()
   }

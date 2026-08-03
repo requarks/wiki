@@ -120,6 +120,7 @@ import { loading } from '@/composables/loading'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
 
@@ -195,14 +196,10 @@ async function globalSwitch() {
     })
     await load()
   } catch (err) {
-    const apiMessage = await err.response
-      ?.json()
-      .then((b) => b?.message)
-      .catch(() => null)
     notify({
       type: 'negative',
       message: t('admin.metrics.toggleStateFailed'),
-      caption: apiMessage || err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.isToggleLoading = false
