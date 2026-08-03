@@ -1,7 +1,7 @@
 FROM node:26
 LABEL maintainer="requarks.io"
 
-RUN apt-get update && apt-get install -qy --no-install-recommends \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -qy --no-install-recommends \
     bash \
     build-essential \
     chromium \

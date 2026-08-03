@@ -70,7 +70,7 @@ jobs:
         cp -R backend _dist/backend
         cp LICENSE _dist/LICENSE
         cp config.sample.yml _dist/config.sample.yml
-        cd _dist/server
+        cd _dist/backend
         npm ci --omit=dev
         cd -
         find ./_dist/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C ./_dist/ -T -
