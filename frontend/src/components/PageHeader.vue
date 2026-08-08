@@ -197,15 +197,6 @@
           type="a">
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
         </w-btn>
-        <w-btn
-          class="ml-2 acrylic-btn"
-          icon="la:cog"
-          flat
-          color="grey"
-          :aria-label="t(`editor.settings`)"
-          @click="openEditorSettings">
-          <w-tooltip>{{ t(`editor.settings`) }}</w-tooltip>
-        </w-btn>
       </template>
       <!--
         Not `v-else-if` on the block below: changes made from the page properties panel put the header
@@ -460,10 +451,6 @@ function onEditableBlur(field, event) {
     editorStore.lastChangeTimestamp = Temporal.Now.instant()
   }
   syncEditable(event.target, tidied)
-}
-
-function openEditorSettings() {
-  EVENT_BUS.emit('openEditorSettings')
 }
 
 async function discardChanges() {

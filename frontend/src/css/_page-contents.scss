@@ -76,6 +76,11 @@
 
   --content-mark: #fdf1a0;
 
+  /* The box behind the tick of a done task-list item; the tick itself is white in both themes */
+  --content-tick: #5b616b;
+  /* -> And the empty box of an item still to do, white whatever surface the content sits on */
+  --content-tick-empty: #fff;
+
   /* Admonition hues: the bar and the wash behind it, per severity */
   --content-info: #1867c0;
   --content-info-wash: rgba(24, 103, 192, 0.08);
@@ -152,6 +157,14 @@
     --content-surface-alt: rgba(255, 255, 255, 0.07);
 
     --content-mark: #6b5d13;
+
+    /*
+      Lighter than the light theme's, because the box has to be seen against a dark page -- but held
+      well below the white of the tick on it, which is what makes the tick readable.
+    */
+    --content-tick: rgba(255, 255, 255, 0.38);
+    /* -> A white box would be a lit square on a dark page; the empty one is just its outline */
+    --content-tick-empty: transparent;
 
     --content-info: #6ab0ff;
     --content-info-wash: rgba(106, 176, 255, 0.12);
@@ -588,16 +601,53 @@
   /*
     Laid out inline rather than as a flex row: a task item can contain a nested list, and as a flex
     child that list would sit BESIDE the text instead of under it.
+
+    Drawn here rather than left to the browser, and NOT with `accent-color`: the renderer marks these
+    inputs disabled, and a disabled checkbox ignores `accent-color` entirely -- Chrome paints it its
+    own washed-out grey, which is the pale tick this replaces. `appearance: none` is what gets the
+    box back under this stylesheet's control; the tick then has to be drawn too, since the one the
+    browser supplies goes with the appearance.
   */
   .task-list-item-checkbox {
+    /*
+      The prefixed form is for Safari before 15.4, which is the last engine that will not take the
+      unprefixed one -- and which without it draws its own rounded box UNDER these rules, so the
+      border and the fill land on a control that is still the platform's.
+    */
+    -webkit-appearance: none;
+    appearance: none;
+    /* -> So the box measures 1em in every engine rather than 1em plus whatever the UA pads it by */
+    box-sizing: border-box;
     width: 1em;
     height: 1em;
+    /* -> Firefox gives a checkbox 3px of its own margin, Chrome 3px 3px 3px 4px */
     margin: 0 0.5em 0 0;
-    accent-color: var(--color-primary);
+    padding: 0;
+    border: 1px solid var(--content-rule-strong);
+    border-radius: 3px;
+    /* -> White rather than the surface behind it, so the box reads as empty and not as unfilled */
+    background-color: var(--content-tick-empty);
     /* -> Disabled by the renderer, so it must not read as something to try to click */
     cursor: default;
+    /* -> Safari and Firefox both dim a disabled control; here it is a mark, not a dead input */
     opacity: 1;
     vertical-align: -0.1em;
+
+    /*
+      A done item: a filled box with the tick laid over it. White in both themes -- the dark theme
+      lightens the box rather than the tick, so this one mark works on either.
+    */
+    &:checked {
+      border-color: transparent;
+      background-color: var(--content-tick);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round' d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 0.8em 0.8em;
+      /* -> Print drops background fills, and a done item that prints as an empty box says the opposite */
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
   }
 
   /*
@@ -1089,6 +1139,18 @@
     border-radius: 4px;
     /* -> An image is a block when it is the whole paragraph, and inline when it sits in a sentence */
     vertical-align: middle;
+  }
+
+  /*
+    An image in a list item stays in the sentence. Tailwind's preflight declares `img { display:
+    block }`, so without this the image takes a line of its own and the item's own words go under it,
+    which reads as a broken item rather than as an illustrated one.
+
+    `align-left` / `align-right` / `align-center` still win on specificity, so an author who asks for
+    one of those in a list still gets it.
+  */
+  li img {
+    display: inline-block;
   }
 
   /* The alignment classes an author can attach through `markdown-it-attrs` */

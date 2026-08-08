@@ -169,6 +169,36 @@ export class MarkdownRenderer {
       return inlineSpan(state, silent)
     })
 
+    /*
+      MDC's inline props, `{.class}`, and `markdown-it-attrs` both claim `{`, and MDC gets there first
+      — it runs while the inline is being parsed, `markdown-it-attrs` in a core rule afterwards, so
+      whatever MDC takes is already gone by the time the braces would have become attributes.
+
+      That is what made `{.is-warning}` on the line under a blockquote do nothing at all: the braces
+      were eaten and the class never reached the element. The same collision crashed the render
+      outright — `Cannot read properties of undefined (reading 'tag')` out of MDC's own renderer —
+      when the braces opened an inline, since the props it parsed then had no node to attach to. In
+      the editor that reads as the preview freezing on the last good render, and a save then storing
+      that stale HTML.
+
+      The two are told apart by what comes before the brace, which is also what each one means by it:
+      MDC's props decorate the thing they are stuck to (`[text]{.cls}`, `![img](…){.cls}`), while a
+      brace opening a line, or standing off behind a space, is `markdown-it-attrs` addressing the
+      block as a whole. So MDC keeps every brace that abuts a preceding character and lets the rest
+      fall through to the core rule.
+    */
+    const propsRule = this.md.inline.ruler.__rules__.find(
+      (rule) => rule.name === 'mdc_inline_props'
+    )
+    const inlineProps = propsRule.fn
+    this.md.inline.ruler.at('mdc_inline_props', (state, silent) => {
+      const preceding = state.src[state.pos - 1]
+      if (preceding === undefined || /\s/.test(preceding)) {
+        return false
+      }
+      return inlineProps(state, silent)
+    })
+
     if (config.underline) {
       this.md.use(mdUnderline)
     }

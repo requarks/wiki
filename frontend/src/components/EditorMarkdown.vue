@@ -233,6 +233,19 @@
               t('editor.markup.keyboardKey')
             }}</w-tooltip>
           </w-btn>
+          <!-- -> The only way back once the preview is closed: its own toggle goes with it -->
+          <template v-if="!state.previewShown">
+            <w-space />
+            <w-btn
+              icon="mdi:view-split-vertical"
+              padding="xs sm"
+              flat
+              @click="state.previewShown = true">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.togglePreviewPane')
+              }}</w-tooltip>
+            </w-btn>
+          </template>
         </div>
         <!-- ------------------------------------------------------- -->
         <!-- MONACO EDITOR -->
@@ -857,10 +870,6 @@ function processContent(newContent) {
   })
 }
 
-function openEditorSettings() {
-  siteStore.$patch({ overlay: 'EditorMarkdownConfig' })
-}
-
 /**
  * Take files the author brought in — pasted or dropped — and write markdown for them at the cursor.
  *
@@ -1203,7 +1212,6 @@ onMounted(async () => {
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertTable', insertTableClb)
   EVENT_BUS.on('insertBlock', insertBlockClb)
-  EVENT_BUS.on('openEditorSettings', openEditorSettings)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
 
   // this.$root.$on('editorInsert', opts => {
@@ -1243,7 +1251,6 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('insertBlock', insertBlockClb)
-  EVENT_BUS.off('openEditorSettings', openEditorSettings)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
   monacoRef.value?.removeEventListener('dragover', onEditorDragOver)
@@ -1283,6 +1290,14 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     height: $editor-height;
     position: relative;
     border-right: 5px solid $primary;
+    /*
+      Monaco writes its measured width in pixels onto its own elements, so this item's automatic
+      min-width -- min-content, i.e. whatever Monaco last laid itself out at -- pins it to the full
+      width it took while the preview was closed. Bringing the preview back then leaves it the few
+      pixels the flex line has left over, and Monaco never re-measures because its container never
+      shrinks. Zero lets the basis decide instead.
+    */
+    min-width: 0;
   }
   &-editor {
     display: block;
@@ -1318,16 +1333,21 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     // @include until($tablet) {
     //   display: none;
     // }
+    /*
+      `-enter-from` is the Vue 3 name; as `-enter` it matched nothing, so the pane animated shut but
+      snapped open. The inner selector was stale in the same way -- the content class is
+      `-preview-content` -- which left the render reflowing for the length of the transition.
+    */
     &-enter-active,
     &-leave-active {
       transition: max-width 0.5s ease;
       max-width: 50vw;
-      .editor-code-preview-content {
+      .editor-markdown-preview-content {
         width: 50vw;
         overflow: hidden;
       }
     }
-    &-enter,
+    &-enter-from,
     &-leave-to {
       max-width: 0;
     }
@@ -1445,6 +1465,9 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     border-left: 60px solid color.adjust($primary, $lightness: -5%);
     color: #fff;
     height: 32px;
+    // -> Flex so the preview toggle can be pushed to the far right by `w-space`
+    display: flex;
+    align-items: center;
   }
   &-sidebar {
     background-color: $dark-4;
