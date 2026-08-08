@@ -392,10 +392,14 @@ class Pages {
     }
 
     const alias = await this.validateAlias(siteId, input.alias)
-    const { render, toc, text } = WIKI.models.rendering.postProcess(input.render ?? '', {
-      scripts: hasPermission(actor, 'write:scripts'),
-      styles: hasPermission(actor, 'write:styles')
-    })
+    const { render, toc, text } = await WIKI.models.rendering.postProcess(
+      siteId,
+      input.render ?? '',
+      {
+        scripts: hasPermission(actor, 'write:scripts'),
+        styles: hasPermission(actor, 'write:styles')
+      }
+    )
 
     const pathParts = path.split('/')
     const inserted = await WIKI.db
@@ -551,7 +555,7 @@ class Pages {
 
     // -> A render only means anything next to the content it came from, so the two move together
     if (patch.render !== undefined) {
-      const { render, toc, text } = WIKI.models.rendering.postProcess(patch.render, {
+      const { render, toc, text } = await WIKI.models.rendering.postProcess(siteId, patch.render, {
         scripts: hasPermission(actor, 'write:scripts'),
         styles: hasPermission(actor, 'write:styles')
       })
@@ -786,7 +790,7 @@ class Pages {
     html: string,
     permissions: RenderPermissions
   ): Promise<void> {
-    const { render, toc, text } = WIKI.models.rendering.postProcess(html, permissions)
+    const { render, toc, text } = await WIKI.models.rendering.postProcess(siteId, html, permissions)
 
     const updated = await WIKI.db
       .update(pagesTable)

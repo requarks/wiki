@@ -284,6 +284,25 @@ class Blocks {
   }
 
   /**
+   * The keys of the blocks a site has switched on.
+   *
+   * Read from the database on every call rather than kept in a cache like this model's definitions.
+   * What this answer gates is which blocks survive a page being saved, and a stale `false` silently
+   * strips an author's block out of their page — a wrong answer here destroys content rather than
+   * merely showing the wrong list. One indexed read of a handful of rows, on a path that has just
+   * sanitised a whole document, is not worth that risk.
+   *
+   * Child blocks never appear: they have no row of their own, and follow the block they sit in.
+   */
+  async getEnabledKeys(siteId: string): Promise<Set<string>> {
+    const rows = await WIKI.db
+      .select({ block: blocksTable.block })
+      .from(blocksTable)
+      .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.isEnabled, true)))
+    return new Set(rows.map((row) => row.block))
+  }
+
+  /**
    * Enable or disable blocks in bulk.
    *
    * @param states Block IDs with their desired state

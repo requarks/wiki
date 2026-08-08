@@ -284,17 +284,24 @@ class Rendering {
   /**
    * Clean up a render that came from a client, and pull out what is derived from it.
    *
+   * @param siteId Whose blocks decide which block elements may stay — see `blockAllowances`
    * @param html The HTML the editor produced
    * @param permissions What the author may embed. Anything not granted is stripped rather than
    *                    rejected: an author pasting a snippet with a tracking script should get their
    *                    page saved without it, not an error they cannot act on.
    */
-  postProcess(html: string, permissions: RenderPermissions): PostProcessResult {
-    const clean = this.sanitize(html ?? '', permissions)
+  async postProcess(
+    siteId: string,
+    html: string,
+    permissions: RenderPermissions
+  ): Promise<PostProcessResult> {
+    const enabledBlocks = await WIKI.models.blocks.getEnabledKeys(siteId)
+    const clean = this.sanitize(html ?? '', permissions, enabledBlocks)
 
     const $ = cheerio.load(clean, null, false)
 
     this.stripEditorArtifacts($)
+    this.unwrapOrphanedChildBlocks($)
     const toc = this.anchorHeadings($)
 
     return {
@@ -313,11 +320,27 @@ class Rendering {
    * each tag gets exactly the attributes its component declares as props, which is the same set the
    * editor's block picker offers. The markup is inert either way: what makes a block do anything is
    * the component fetched from `/_blocks` at view time.
+   *
+   * Installed is not sufficient: the block also has to be switched on for this site. Leaving the
+   * picker to decide that would only cover the authors who use it — the content is markdown, so
+   * `::block-diagram` is a thing anybody can type, and a block an administrator turned off would
+   * otherwise render for every reader of that page. Being stripped on the way in is also what makes
+   * turning a block off take effect on the pages that already embed it, since each is re-rendered
+   * through here.
+   *
+   * Child blocks are exempt, having no switch of their own: a tab is part of the tabs it sits in,
+   * and is gated by `unwrapOrphanedChildBlocks` once the parent's fate is known.
    */
-  private blockAllowances(): { tags: string[]; attributes: Record<string, string[]> } {
+  private blockAllowances(enabledBlocks: Set<string>): {
+    tags: string[]
+    attributes: Record<string, string[]>
+  } {
     const tags: string[] = []
     const attributes: Record<string, string[]> = {}
     for (const definition of WIKI.models.blocks.definitions) {
+      if (!definition.isChild && !enabledBlocks.has(definition.block)) {
+        continue
+      }
       const tag = `block-${definition.block}`
       tags.push(tag)
       attributes[tag] = (definition.props ?? []).map((prop) => prop.name)
@@ -326,10 +349,46 @@ class Rendering {
   }
 
   /**
+   * Unwrap child blocks that no longer sit inside a block.
+   *
+   * A child block is allowed through the sanitiser unconditionally, because whether it may stay is
+   * not a question about itself: it is part of its parent, and the parent is what an administrator
+   * switches on and off. By this point the answer is visible in the document — a parent that was
+   * disabled has already been dropped, leaving its children behind as orphans — so a child with no
+   * block above it is one whose parent was turned off, or one an author typed on its own.
+   *
+   * Unwrapped rather than deleted, which is what the sanitiser does to every other tag it refuses:
+   * the element goes, the content the author wrote inside it stays.
+   */
+  private unwrapOrphanedChildBlocks($: cheerio.CheerioAPI): void {
+    const definitions = WIKI.models.blocks.definitions
+    const childTags = definitions.filter((d) => d.isChild).map((d) => `block-${d.block}`)
+    if (childTags.length < 1) {
+      return
+    }
+    /*
+      Every non-child block, not merely the enabled ones: a disabled block is not in the document to
+      be matched, and naming the full set keeps this a question about nesting rather than a second
+      copy of the enabled-block rule that could disagree with the first.
+    */
+    const parentTags = definitions.filter((d) => !d.isChild).map((d) => `block-${d.block}`)
+    $(childTags.join(',')).each((_, el) => {
+      if (parentTags.length > 0 && $(el).parents(parentTags.join(',')).length > 0) {
+        return
+      }
+      $(el).replaceWith($(el).contents())
+    })
+  }
+
+  /**
    * Strip everything the author is not allowed to embed.
    */
-  private sanitize(html: string, permissions: RenderPermissions): string {
-    const blocks = this.blockAllowances()
+  private sanitize(
+    html: string,
+    permissions: RenderPermissions,
+    enabledBlocks: Set<string>
+  ): string {
+    const blocks = this.blockAllowances(enabledBlocks)
     const allowedTags = [...BASE_ALLOWED_TAGS, ...blocks.tags]
     const allowedAttributes: Record<string, string[]> = {
       ...BASE_ALLOWED_ATTRIBUTES,

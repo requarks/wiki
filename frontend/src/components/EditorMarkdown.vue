@@ -358,6 +358,19 @@ let pasteCaptureNode = null
 const monacoRef = ref(null)
 const editorPreviewContainerRef = ref(null)
 
+/**
+ * Blocks this site has switched off, as the tags they are written as.
+ *
+ * The preview fetches a component for every element it does not recognise, so a disabled block would
+ * draw here and then disappear the moment the page was saved — the server strips one that is not
+ * enabled out of the render. Naming them lets the preview leave the element undefined, which is what
+ * the saved page comes back as: the block gone, the content the author wrote inside it still there.
+ *
+ * Only what the site lists as off. A tag that is not in the list at all is a child block, which has no
+ * switch of its own, or an unknown one — this decides nothing about either.
+ */
+const disabledBlockTags = ref(new Set())
+
 /*
   Listed rather than built as `mdi:format-header-${lvl}`: a concatenated icon name is invisible to
   the build-time icon scan, so it would ship as six blank squares.
@@ -758,6 +771,53 @@ async function toggleMarkup({ start, end }) {
   editor.executeEdits('', edits)
 }
 
+/**
+ * Read which blocks this site has switched off, once, before the first preview is drawn.
+ *
+ * Order matters more than it looks: a component only has to be fetched once to be defined for the
+ * rest of the session, so a list that arrives after the first render is too late to keep a disabled
+ * block from drawing.
+ */
+async function loadDisabledBlocks() {
+  try {
+    const blocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
+    disabledBlockTags.value = new Set(
+      blocks.filter((block) => !block.isEnabled).map((block) => `block-${block.block}`)
+    )
+  } catch (err) {
+    /*
+      Left empty, which draws everything as it did before. The preview being too generous is the
+      better failure: the server strips a disabled block on save either way, so the cost is a preview
+      that flatters the page, against hiding blocks the site really does have.
+    */
+    console.warn(`Could not read which blocks this site has enabled: ${err.message}`)
+  }
+}
+
+/**
+ * Say why a block is sitting there doing nothing.
+ *
+ * A disabled block is left undefined, so it draws as its own contents and otherwise says nothing —
+ * which reads as a block that is broken rather than one that is switched off. The notice names the
+ * reason and what saving will do about it; what the author wrote stays underneath, because that is
+ * what the saved page keeps once the server has stripped the element.
+ *
+ * Written into the preview's DOM rather than into the render, which is deliberate: `pageStore.render`
+ * is what `pageSave` sends, and a notice added to it would be a notice saved into the page. The
+ * preview is rebuilt from that string on every keystroke, so this is re-applied each time and nothing
+ * has to be cleaned up — the same footing `enhanceRenderedContent` works on.
+ */
+function markDisabledBlock(el) {
+  if (el.dataset.blockDisabled !== undefined) {
+    return
+  }
+  el.dataset.blockDisabled = ''
+  const notice = document.createElement('p')
+  notice.className = 'block-disabled-notice'
+  notice.textContent = t('editor.blockNotEnabled')
+  el.prepend(notice)
+}
+
 function processContent(newContent) {
   /*
     A render that throws must not become a render that is empty.
@@ -784,7 +844,13 @@ function processContent(newContent) {
   })
   nextTick(() => {
     for (const block of editorPreviewContainerRef.value.querySelectorAll(':not(:defined)')) {
-      commonStore.loadBlocks([block.tagName.toLowerCase()])
+      const tag = block.tagName.toLowerCase()
+      // -> Left undefined on purpose, so the preview shows what saving is about to leave behind
+      if (disabledBlockTags.value.has(tag)) {
+        markDisabledBlock(block)
+        continue
+      }
+      commonStore.loadBlocks([tag])
     }
     // -> The render was just replaced, so the copy buttons went with it
     enhanceRenderedContent(editorPreviewContainerRef.value)
@@ -902,6 +968,9 @@ onMounted(async () => {
   editorStore.$patch({
     hideSideNav: true
   })
+
+  // -> Awaited here so it is settled well before the first preview render at the end of this hook
+  await loadDisabledBlocks()
 
   md = new MarkdownRenderer(editorStore.editors.markdown)
 
@@ -1295,6 +1364,47 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       }
       p.line {
         overflow-wrap: break-word;
+      }
+      /*
+        A block this site has switched off, marked by `markDisabledBlock`. Editor-only styling: the
+        server strips the element on save, so no reader ever meets one of these.
+
+        Built from the admonition palette `.page-contents` already declares -- the preview pane
+        carries that class, so both themes are covered by the tokens rather than by a rule here.
+      */
+      [data-block-disabled] {
+        display: block;
+        margin: 1rem 0;
+        padding: 0.75rem 1rem;
+        border-left: 4px solid var(--content-danger);
+        border-radius: 3px;
+        background-color: var(--content-danger-wash);
+        color: var(--content-ink-muted);
+      }
+      .block-disabled-notice {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0;
+        color: var(--content-danger);
+        font-size: 0.85rem;
+        font-weight: 600;
+
+        /* -> `mdi:alert`, drawn as a mask so it takes the colour above rather than one of its own */
+        &::before {
+          content: '';
+          flex: 0 0 auto;
+          width: 1.1rem;
+          height: 1.1rem;
+          background-color: currentColor;
+          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 14h-2V9h2m0 9h-2v-2h2M1 21h22L12 2z'/%3E%3C/svg%3E");
+          mask-repeat: no-repeat;
+          mask-size: contain;
+        }
+      }
+      /* -> Whatever the author wrote inside, which is what the saved page is left holding */
+      [data-block-disabled] > .block-disabled-notice + * {
+        margin-top: 0.5rem;
       }
       .tabset {
         background-color: $teal-7;
