@@ -52,7 +52,7 @@ export class BlockTabsElement extends LitElement {
     block: 'tabs',
     name: 'Tabs',
     description: 'Groups content into tabbed panels.',
-    icon: 'right-navigation-toolbar',
+    icon: 'resume-template',
     template: `::block-tab{label="First tab"}
 Content of the first tab.
 ::

@@ -4,8 +4,11 @@
       The positioning context for the panel below, and the width it matches. The toolbar cannot be
       it: the panel would then span the toolbar's padding as well, and with no positioned ancestor
       at all it stretched to the whole window.
+
+      Full toolbar height rather than just the field's, with the field centred inside it, so that
+      `top: 100%` on the panel lands on the bottom edge of the header instead of 12px above it.
     -->
-    <div class="header-search relative min-w-0 flex-1">
+    <div class="header-search relative flex h-full min-w-0 flex-1 flex-col justify-center">
       <div class="header-search-field" :class="{ 'is-focused': state.searchIsFocused }">
         <w-circular-progress
           v-if="siteStore.searchIsLoading && route.path !== `/_search`"
@@ -309,15 +312,19 @@ onBeforeUnmount(() => {
 /*
   Hangs off the field, matching its width -- `left: 0; right: 0` against the wrapper rather than a
   width of its own, so the two cannot drift apart.
+
+  The wrapper is the full height of the header, so `top: 100%` puts the panel flush against its
+  bottom edge; square top corners then read as a continuation of the header rather than a card
+  floating under it.
 */
 .searchpanel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: 100%;
   left: 0;
   right: 0;
   z-index: 10;
   background-color: rgba(0, 0, 0, 0.7);
-  border-radius: 12px;
+  border-radius: 0 0 12px 12px;
   color: #fff;
   padding: 0.5rem 1rem 1rem;
   backdrop-filter: blur(7px) saturate(180%);

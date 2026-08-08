@@ -13,7 +13,7 @@ export class BlockMediaPlayerElement extends LitElement {
     block: 'media-player',
     name: 'Media Player',
     description: 'Plays an audio or video file inline.',
-    icon: 'widescreen',
+    icon: 'video-playlist',
     props: [
       {
         name: 'src',

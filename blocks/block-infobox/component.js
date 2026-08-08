@@ -127,7 +127,7 @@ export class BlockInfoboxElement extends LitElement {
     block: 'infobox',
     name: 'Infobox',
     description: 'A summary box beside the text, filled in from a list of facts.',
-    icon: 'data-sheet',
+    icon: 'activity-feed',
     template: `\`\`\`yaml
 City: Montreal
 Country: Canada

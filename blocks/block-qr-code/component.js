@@ -15,7 +15,7 @@ export class BlockQrCodeElement extends LitElement {
     block: 'qr-code',
     name: 'QR Code',
     description: 'Shows a QR code for a link or a piece of text.',
-    icon: 'scan-stock',
+    icon: 'qr',
     props: [
       {
         name: 'value',

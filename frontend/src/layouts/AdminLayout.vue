@@ -160,7 +160,7 @@
               active-class="bg-primary text-white"
               v-if="userStore.can(`manage:sites`)">
               <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-rfid-tag.svg" />
+                <w-icon name="img:/_assets/icons/fluent-plugin.svg" />
               </w-item-section>
               <w-item-section>{{ t('admin.blocks.title') }}</w-item-section>
             </w-item>

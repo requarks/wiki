@@ -2,7 +2,7 @@
   <w-page class="admin-flags">
     <div class="flex flex-wrap p-4 items-center">
       <div class="flex-none">
-        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-rfid-tag.svg" />
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-plugin.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
         <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.blocks.title') }}</div>

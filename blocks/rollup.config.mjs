@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import summary from 'rollup-plugin-summary'
 import terser from '@rollup/plugin-terser'
 import resolve from '@rollup/plugin-node-resolve'
@@ -34,11 +37,34 @@ function literalToValue (node, blockDir) {
   }
 }
 
+const ASSET_MIME_TYPES = {
+  '.gif': 'image/gif',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.otf': 'font/otf',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.ttf': 'font/ttf',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2'
+}
+
 /**
- * Loads a `.css` import as a string.
+ * Loads a `.css` import as a string, with the files it points at inlined as data URIs.
  *
  * A block styles itself from inside its shadow root, which a `<link>` in the page cannot reach — so a
  * library's stylesheet has to be part of the component. Rollup has no notion of CSS on its own.
+ *
+ * The inlining is what makes that stylesheet's own assets — leaflet's control sprites, KaTeX's font
+ * files — arrive with it. A relative `url()` in a stylesheet resolves against the document, not
+ * against the file it was written in, so once the CSS is a string inside a bundle those paths point
+ * at whatever wiki page happens to be showing the block. There is nowhere to put the files that would
+ * fix that: a block is one file served from /_blocks and mounted at a path it does not know.
+ *
+ * A `@font-face` offering several formats is cut down to its woff2, when it has one. Otherwise the
+ * same face arrives three times over — woff2, woff and ttf are the same glyphs at ~1.5x, ~2x and ~4x
+ * the bytes — and every browser that can run a block reads woff2.
  */
 function cssAsString () {
   return {
@@ -47,7 +73,35 @@ function cssAsString () {
       if (!id.endsWith('.css')) {
         return null
       }
-      return { code: `export default ${JSON.stringify(code)}`, map: { mappings: '' } }
+      const baseDir = path.dirname(id)
+      // -> Before the inlining, while a `src` list is still short enough to read: a data URI holds
+      //    commas of its own, which is exactly what splits the list here.
+      const css = code
+        .replace(/src\s*:\s*([^;}]+)/g, (declaration, sources) => {
+          const parts = sources.split(/,(?![^(]*\))/)
+          const woff2 = parts.filter(part =>
+            /\.woff2\b|format\(\s*['"]?woff2['"]?\s*\)/.test(part)
+          )
+          return woff2.length > 0 && woff2.length < parts.length
+            ? `src:${woff2.join(',')}`
+            : declaration
+        })
+        .replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (reference, _quote, target) => {
+          // -> Anything already addressable is left alone, `url(#default#VML)` among them: leaflet
+          //    writes that one to turn on VML in IE, and it names no file at all.
+          if (/^(data:|https?:|\/\/|#|\/)/.test(target)) {
+            return reference
+          }
+          const assetPath = path.resolve(baseDir, target.split(/[?#]/)[0])
+          const mimeType = ASSET_MIME_TYPES[path.extname(assetPath).toLowerCase()]
+          if (!mimeType || !fs.existsSync(assetPath)) {
+            this.warn(`${id}: cannot inline ${target} — no such file, or not a known asset type.`)
+            return reference
+          }
+          this.addWatchFile(assetPath)
+          return `url("data:${mimeType};base64,${fs.readFileSync(assetPath).toString('base64')}")`
+        })
+      return { code: `export default ${JSON.stringify(css)}`, map: { mappings: '' } }
     }
   }
 }

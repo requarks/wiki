@@ -197,7 +197,7 @@
           </div>
         </template>
         <!-- Tags -->
-        <template v-if="pageStore.showTags">
+        <template v-if="showTags">
           <w-separator v-if="showToc" />
           <div
             class="p-4"
@@ -236,7 +236,7 @@
           </div>
         </template>
         <template v-if="siteStore.features.ratingsMode !== `off` && pageStore.allowRatings">
-          <w-separator v-if="showToc || pageStore.showTags" />
+          <w-separator v-if="showToc || showTags" />
           <!-- Rating -->
           <div class="p-4 flex items-center">
             <w-icon class="mr-2" name="la:star-half-alt" color="grey" />
@@ -383,6 +383,17 @@ const showToc = computed(() => {
       maxDepth: pageStore.tocDepth.max
     }).length > 0
   )
+})
+/*
+  Same question for the tags, and for the same reason: `showTags` is what the page ASKED for, and on a
+  page carrying none that left a "Tags" heading over an empty space.
+
+  Held open while the tag editor is in use, so that removing the last tag does not take the field being
+  typed into away with it. That only arises mid-edit -- with no tags to start from there is no edit
+  button to reach the mode through.
+*/
+const showTags = computed(() => {
+  return pageStore.showTags && (pageStore.tags?.length > 0 || state.tagEditMode)
 })
 /*
   Whether this user may save a change to the page, which is what editing the tags amounts to -- the tags

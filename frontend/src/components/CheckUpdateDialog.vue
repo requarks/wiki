@@ -10,7 +10,10 @@
       </w-card-section>
       <w-card-section>
         <div class="p-4 text-center">
-          <img src="/_assets/illustrations/undraw_going_up.svg" style="width: 150px" />
+          <img
+            src="/_assets/illustrations/undraw_going_up.svg"
+            class="mx-auto"
+            style="width: 150px" />
         </div>
         <template v-if="state.isLoading">
           <w-linear-progress indeterminate size="lg" rounded />

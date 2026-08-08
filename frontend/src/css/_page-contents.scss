@@ -124,6 +124,16 @@
   /* -> A pasted URL or a long identifier wraps rather than widening the whole column */
   overflow-wrap: break-word;
 
+  /*
+    Content never stacks above the app's own chrome. A block's internals are free to use whatever
+    z-indexes they need -- leaflet alone puts its panes at 400 and its controls at 800, and a shadow
+    root is not a stacking context, so those numbers land in whichever context the page provides.
+    Against the header's 20 the map won, and the search panel hanging off the header was drawn behind
+    it. Isolating here gives every block a ceiling of this element's own place in the page, whatever
+    it does inside.
+  */
+  isolation: isolate;
+
   @at-root .body--dark & {
     --content-ink: rgba(255, 255, 255, 0.87);
     --content-ink-muted: rgba(255, 255, 255, 0.62);
@@ -919,10 +929,11 @@
   }
 
   /*
-    Diagram sources -- a mermaid or plantuml fence, or a base64 `diagram` block -- reach the page as
-    code, and are drawn later or not at all. A quiet dashed panel says "this is a diagram that has not
-    been drawn" rather than pretending to be a code sample.
+    Diagram sources -- a mermaid, plantuml or kroki fence, or a base64 `diagram` block -- reach the
+    page as code, and are drawn later or not at all. A quiet dashed panel says "this is a diagram that
+    has not been drawn" rather than pretending to be a code sample.
   */
+  pre.codeblock-kroki,
   pre.codeblock-mermaid,
   pre.codeblock-plantuml,
   pre.diagram {

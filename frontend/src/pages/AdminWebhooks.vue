@@ -4,7 +4,7 @@
       <div class="flex-none">
         <img
           class="admin-icon animated fadeInLeft"
-          src="/_assets/icons/fluent-lightning-bolt.svg" />
+          src="/_assets/icons/fluent-lightning-bolt-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
         <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.webhooks.title') }}</div>

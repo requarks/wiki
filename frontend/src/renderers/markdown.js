@@ -72,12 +72,13 @@ export class MarkdownRenderer {
       highlight(str, lang) {
         if (lang === 'diagram') {
           return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
-        } else if (['mermaid', 'plantuml'].includes(lang)) {
+        } else if (['kroki', 'mermaid', 'plantuml'].includes(lang)) {
           /*
             Left as source, deliberately: a diagram is drawn by the block whose body it is —
-            `block-diagram` for mermaid, `block-plantuml` for the other — and each reads the text out
-            of this `pre`. A fence on its own outside a block keeps the panel the stylesheet gives it,
-            which says "a diagram nobody has drawn" rather than pretending to be a code sample.
+            `block-diagram` for mermaid, `block-plantuml` and `block-kroki` for the others — and each
+            reads the text out of this `pre`. A fence on its own outside a block keeps the panel the
+            stylesheet gives it, which says "a diagram nobody has drawn" rather than pretending to be
+            a code sample.
           */
           return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
         } else {
