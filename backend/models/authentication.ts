@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import { asc, eq } from 'drizzle-orm'
 import { parseModuleProps } from '../helpers/common.ts'
 import { authentication as authenticationTable, groups as groupsTable } from '../db/schema.ts'
@@ -386,7 +386,7 @@ class Authentication {
           path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'),
           'utf8'
         )
-        const defParsed = yaml.load(def) as Record<string, any>
+        const defParsed = load(def) as Record<string, any>
         if (!defParsed.isAvailable) {
           continue
         }

@@ -120,7 +120,11 @@ export default {
   plugins: [
     blocksManifest(),
     cssAsString(),
-    resolve(),
+    // -> `production` is stated rather than left to be inferred: since v16 the plugin picks the
+    //    `development` or `production` export condition off `process.env.NODE_ENV`, and this build
+    //    runs from a bare `npm run build` with no NODE_ENV set. Unstated, lit resolves to its
+    //    development entry and every block ships the dev-mode warnings and asserts.
+    resolve({ exportConditions: ['production'] }),
     // -> A block's own code is ESM, but a library it pulls in need not be: mermaid reaches for dayjs,
     //    which ships as UMD, and rollup has no notion of `module.exports` without this
     commonjs(),

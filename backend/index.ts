@@ -16,7 +16,6 @@ import fastifyCookie from '@fastify/cookie'
 import fastifyFavicon from 'fastify-favicon'
 import fastifyFormBody from '@fastify/formbody'
 import fastifyHelmet from '@fastify/helmet'
-import { Authenticator } from '@fastify/passport'
 import fastifySensible from '@fastify/sensible'
 import fastifySession from '@fastify/session'
 import fastifyStatic from '@fastify/static'
@@ -370,12 +369,6 @@ async function initHTTPServer() {
       }
     }
   })
-  const fastifyPassport = new Authenticator()
-  app.register(fastifyPassport.initialize())
-  app.register(fastifyPassport.secureSession())
-
-  // app.use(WIKI.auth.passport.initialize())
-  // app.use(WIKI.auth.authenticate)
 
   // ----------------------------------------
   // API Routes

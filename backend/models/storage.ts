@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import { and, eq, inArray } from 'drizzle-orm'
 import { parseModuleProps } from '../helpers/common.ts'
 import { sites as sitesTable, storage as storageTable } from '../db/schema.ts'
@@ -160,7 +160,7 @@ class Storage {
     try {
       for (const dir of await fs.readdir(storagePath)) {
         const raw = await fs.readFile(path.join(storagePath, dir, 'definition.yml'), 'utf8')
-        const parsed = yaml.load(raw) as Record<string, any>
+        const parsed = load(raw) as Record<string, any>
         // -> The directory name is the key, as it is for every other module type
         parsed.key = dir
         // -> Props carry a display `order`, applied once here so that every consumer — the admin

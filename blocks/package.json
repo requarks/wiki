@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "ncu": "ncu -i",
+    "ncu-u": "ncu -u"
   },
   "private": true,
   "author": "Nicolas Giard",
@@ -15,19 +17,20 @@
     "@mathjax/mathjax-newcm-font": "4.1.3",
     "@mathjax/src": "4.1.3",
     "asciinema-player": "3.17.0",
-    "js-yaml": "4.1.0",
+    "js-yaml": "5.2.3",
     "leaflet": "1.9.4",
-    "lit": "3.2.1",
-    "mermaid": "11.16.0",
+    "lit": "3.3.3",
+    "mermaid": "11.16.1",
     "pako": "3.0.1",
     "uqr": "0.1.3"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "29.0.3",
-    "@rollup/plugin-node-resolve": "15.3.0",
-    "@rollup/plugin-terser": "0.4.4",
-    "glob": "11.0.0",
-    "rollup": "4.24.0",
-    "rollup-plugin-summary": "2.0.1"
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-terser": "1.0.0",
+    "glob": "13.0.6",
+    "npm-check-updates": "23.0.2",
+    "rollup": "4.62.4",
+    "rollup-plugin-summary": "3.0.1"
   }
 }

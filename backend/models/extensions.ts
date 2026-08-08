@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 
@@ -126,7 +126,7 @@ class Extensions {
     try {
       for (const dir of await fs.readdir(extensionsPath)) {
         const raw = await fs.readFile(path.join(extensionsPath, dir, 'definition.yml'), 'utf8')
-        const parsed = yaml.load(raw) as ExtensionDefinition
+        const parsed = load(raw) as ExtensionDefinition
         // -> The directory name is the key, as it is for every other module type
         parsed.key = dir
         definitions.push(parsed)

@@ -4,7 +4,7 @@ import chalk from 'chalk'
 import cfgHelper from '../helpers/config.ts'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import { v4 as uuid } from 'uuid'
 
 /**
@@ -35,10 +35,10 @@ export default {
     let appdata: ConfigObject = {}
 
     try {
-      appconfig = yaml.load(
+      appconfig = load(
         cfgHelper.parseConfigValue(await fs.readFile(confPaths.config, 'utf8'))
       ) as ConfigObject
-      appdata = yaml.load(await fs.readFile(confPaths.data, 'utf8')) as ConfigObject
+      appdata = load(await fs.readFile(confPaths.data, 'utf8')) as ConfigObject
       if (!silent) {
         console.info(chalk.green.bold('OK'))
       }
