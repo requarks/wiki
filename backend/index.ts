@@ -610,6 +610,7 @@ async function initHTTPServer() {
 
   app.register(import('./api/index.ts'), { prefix: '/_api' })
   app.register(import('./controllers/collab.ts'), { prefix: '/_collab' })
+  app.register(import('./controllers/files.ts'), { prefix: '/_files' })
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })
   app.register(import('./controllers/icons.ts'), { prefix: '/_icons' })
   app.register(import('./controllers/render.ts'), { prefix: '/_render' })

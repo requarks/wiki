@@ -499,7 +499,11 @@ async function renderOf(version, content) {
   if (!editorStore.configIsLoaded) {
     await editorStore.fetchConfigs()
   }
-  return new MarkdownRenderer(editorStore.editors.markdown ?? {}).render(content)
+  // -> Rendered as the page it is a version of, so a relative image in it resolves the way it does
+  //    in the page view rather than against the site root
+  return new MarkdownRenderer(editorStore.editors.markdown ?? {}).render(content, {
+    pagePath: pageStore.path
+  })
 }
 
 async function viewSource(version) {

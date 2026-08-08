@@ -377,7 +377,9 @@ function reviewedContent() {
  */
 function renderReviewed(content) {
   const md = new MarkdownRenderer(editorStore.editors.markdown ?? {})
-  return md.render(content)
+  // -> The page the suggestion is against, so a relative image in it resolves against that page's
+  //    folder -- this HTML is what the page will be published with
+  return md.render(content, { pagePath: state.selected?.page?.path ?? '' })
 }
 
 function approveSubmission() {

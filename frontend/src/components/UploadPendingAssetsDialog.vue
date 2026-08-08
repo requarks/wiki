@@ -27,6 +27,7 @@ import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
 import { usePageStore } from '@/stores/page'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { assetPath } from '@/helpers/assets'
 
 // EMITS
 
@@ -88,11 +89,9 @@ onMounted(async () => {
       }
       // -> The stored name is not always the one asked for: a file already in the folder gets the
       //    next free `name-1.ext`, and the content has to point at what was actually stored
-      const storedPath = resp?.asset?.folderPath
-        ? `${resp.asset.folderPath}/${resp.asset.fileName}`
-        : resp?.asset?.fileName
-      pageStore.content = pageStore.content.replaceAll(item.blobUrl, `/${storedPath}`)
-      replacements.push({ from: item.blobUrl, to: `/${storedPath}` })
+      const storedPath = assetPath(resp?.asset?.folderPath, resp?.asset?.fileName)
+      pageStore.content = pageStore.content.replaceAll(item.blobUrl, storedPath)
+      replacements.push({ from: item.blobUrl, to: storedPath })
       URL.revokeObjectURL(item.blobUrl)
     }
     editorStore.pendingAssets = []

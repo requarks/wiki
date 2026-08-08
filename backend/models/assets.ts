@@ -1,12 +1,20 @@
 import path from 'node:path'
 import mime from 'mime'
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { assets as assetsTable, tree as treeTable } from '../db/schema.ts'
-import { CustomError, decodeTreePath } from '../helpers/common.ts'
+import { CustomError, decodeTreePath, encodeTreePath } from '../helpers/common.ts'
 import { makeImageThumbnail } from '../helpers/images.ts'
 
 /** How large the file manager renders a preview. Generated once, at upload time. */
 const THUMBNAIL_SIZE = { width: 320, height: 200 }
+
+/**
+ * Extensions a browser may render inline. Everything else is sent as a download.
+ *
+ * Read by both routes that hand out an asset's bytes — the API's `/content` and the public
+ * `/_files/` path — which have to agree on what a browser is allowed to open in place.
+ */
+export const INLINE_EXTS = new Set(['png', 'apng', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'])
 
 /** What an asset is, for the sake of grouping and filtering. Mirrors the `assetKind` schema enum. */
 export type AssetKind = 'document' | 'image' | 'other'
@@ -44,6 +52,14 @@ export interface Asset {
   hasPreview: boolean
   createdAt: Date
   updatedAt: Date
+}
+
+/**
+ * An asset found by its path, which is the one lookup that has to say which locale it landed on: the
+ * URL in a page carries none, and the permission rules may be written against one.
+ */
+export interface AssetAtPath extends Asset {
+  locale: string
 }
 
 /**
@@ -230,6 +246,65 @@ class Assets {
       folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
       hasPreview: Boolean(row.hasPreview)
     } as Asset
+  }
+
+  /**
+   * An asset's metadata, addressed the way a page's content addresses it: by its path within the
+   * site. Null if there is nothing there.
+   *
+   * The path lives on the tree row rather than on the asset — the two share an ID — so the lookup
+   * splits it into the folder and the file the way the tree stores them, the folder as an ltree.
+   * Both are lowercased, because that is what an upload stored them as.
+   *
+   * A path can exist once per locale and the URL carries none, so the site's primary locale wins
+   * where more than one has a file there. That is also the only one the file manager uploads into.
+   */
+  async getAssetByPath(siteId: string, filePath: string): Promise<AssetAtPath | null> {
+    const segments = filePath.split('/').filter(Boolean)
+    const fileName = segments.pop()?.toLowerCase()
+    if (!fileName) {
+      return null
+    }
+    const primaryLocale = WIKI.sites[siteId]?.config?.locales?.primary ?? 'en'
+
+    const results = await WIKI.db
+      .select({
+        id: assetsTable.id,
+        fileName: assetsTable.fileName,
+        fileExt: assetsTable.fileExt,
+        kind: assetsTable.kind,
+        mimeType: assetsTable.mimeType,
+        fileSize: assetsTable.fileSize,
+        createdAt: assetsTable.createdAt,
+        updatedAt: assetsTable.updatedAt,
+        folderPath: treeTable.folderPath,
+        locale: treeTable.locale,
+        title: treeTable.title,
+        hasPreview: sql<boolean>`${assetsTable.preview} IS NOT NULL`
+      })
+      .from(assetsTable)
+      .innerJoin(treeTable, eq(treeTable.id, assetsTable.id))
+      .where(
+        and(
+          eq(assetsTable.siteId, siteId),
+          eq(treeTable.type, 'asset'),
+          eq(treeTable.folderPath, encodeTreePath(segments.join('/'))),
+          eq(treeTable.fileName, fileName)
+        )
+      )
+      .orderBy(desc(sql`${treeTable.locale} = ${primaryLocale}`))
+      .limit(1)
+
+    const row = results[0]
+    if (!row) {
+      return null
+    }
+    return {
+      ...row,
+      fileSize: row.fileSize ?? 0,
+      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      hasPreview: Boolean(row.hasPreview)
+    } as AssetAtPath
   }
 
   /**

@@ -312,6 +312,7 @@ import { useI18n } from 'vue-i18n'
 import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -408,16 +409,27 @@ function insertAssets() {
   siteStore.openFileManager({ insertMode: true })
 }
 
+/**
+ * What the file manager handed back, as markdown at the cursor.
+ *
+ * Both kinds go in as paths from the site root: a file through `assetPath`, which is where the
+ * reasoning about that form lives, and a page the way the link picker writes one.
+ *
+ * An image goes in as one and anything else as a link -- a PDF picked from the file manager is a link
+ * to a PDF, not a broken picture -- which is the same distinction `insertFilesAsAssets` draws for a
+ * file that arrives by drop.
+ */
 function insertAssetClb(opts) {
-  const assetPath = opts.folderPath ? `${opts.folderPath}/${opts.fileName}` : opts.fileName
   let content = ''
   switch (opts.type) {
     case 'asset': {
-      content = `![${opts.title}](${assetPath})`
+      const isImage = opts.mimeType?.startsWith('image/')
+      content = `${isImage ? '!' : ''}[${opts.title}](${assetPath(opts.folderPath, opts.fileName)})`
       break
     }
     case 'page': {
-      content = `[${opts.title}](${assetPath})`
+      const pagePath = opts.folderPath ? `${opts.folderPath}/${opts.fileName}` : opts.fileName
+      content = `[${opts.title}](/${pagePath})`
       break
     }
   }
@@ -841,7 +853,9 @@ function processContent(newContent) {
   */
   let html
   try {
-    html = md.render(newContent)
+    // -> The page's own path, because a relative image in the source is relative to the folder it
+    //    sits in -- and it is being edited, so it is whatever the path field says right now
+    html = md.render(newContent, { pagePath: pageStore.path })
   } catch (err) {
     console.error(err)
     notify({

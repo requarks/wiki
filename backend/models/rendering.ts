@@ -67,8 +67,17 @@ export interface PostProcessResult {
  * closed by whoever asked for it rather than opened per page.
  */
 interface PageRenderer {
-  /** Markdown in, the editor's own HTML out — before `postProcess` gets to it. */
-  render(content: string, config: Record<string, any>): Promise<string>
+  /**
+   * Markdown in, the editor's own HTML out — before `postProcess` gets to it.
+   *
+   * `context` carries what the source cannot say about itself, currently the page's own path: a
+   * relative image in a page resolves against the folder it sits in, as it would in a repository.
+   */
+  render(
+    content: string,
+    config: Record<string, any>,
+    context: Record<string, any>
+  ): Promise<string>
   close(): Promise<void>
 }
 
@@ -726,7 +735,8 @@ class Rendering {
           }
           const html = await renderer.render(
             page.content ?? '',
-            WIKI.sites[entry.siteId]?.config?.editors?.[page.editor]?.config ?? {}
+            WIKI.sites[entry.siteId]?.config?.editors?.[page.editor]?.config ?? {},
+            { pagePath: page.path }
           )
           await WIKI.models.pages.storeRender(entry.siteId, page.id, html, {
             scripts: entry.allowScripts,
@@ -801,7 +811,11 @@ class Rendering {
       })
 
       return {
-        async render(content: string, config: Record<string, any>): Promise<string> {
+        async render(
+          content: string,
+          config: Record<string, any>,
+          context: Record<string, any>
+        ): Promise<string> {
           /*
             `page.evaluate` has no timeout of its own, and what it calls is a synchronous pass over
             content somebody else wrote: an input that sends one of the markdown plugins into
@@ -827,9 +841,11 @@ class Rendering {
             // -> This callback is serialized and runs in the browser, where `globalThis` is the window
             //    the renderer bundle attached itself to
             const render = page.evaluate(
-              (src: string, cfg: Record<string, any>) => (globalThis as any).__wikiRender(src, cfg),
+              (src: string, cfg: Record<string, any>, ctx: Record<string, any>) =>
+                (globalThis as any).__wikiRender(src, cfg, ctx),
               content,
-              config
+              config,
+              context
             )
             return await Promise.race([render, expiry])
           } finally {

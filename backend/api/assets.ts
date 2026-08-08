@@ -1,9 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 import { decodeTreePath } from '../helpers/common.ts'
-
-/** Extensions a browser may render inline. Everything else is sent as a download. */
-const INLINE_EXTS = new Set(['png', 'apng', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'])
+import { INLINE_EXTS } from '../models/assets.ts'
 
 const assetIdParam = {
   type: 'object',

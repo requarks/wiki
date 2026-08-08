@@ -1,6 +1,7 @@
 import { BUNDLED_ICONS } from '@/assets/icons.generated'
 
 import { copyToClipboard } from './clipboard'
+import { isServerPath } from './serverPaths'
 import { notify } from '@/composables/notify'
 
 /**
@@ -172,21 +173,6 @@ export function enhanceRenderedContent(root) {
 }
 
 /**
- * Paths the server owns rather than the router: assets, the API, block bundles, per-site files,
- * thumbnails and avatars. A link to one of these is a request for a file, not a page, and handing it
- * to the router would render the catch-all page view over the top of nothing.
- */
-const SERVER_PATHS = [
-  '/_assets/',
-  '/_api/',
-  '/_blocks/',
-  '/_icons/',
-  '/_site/',
-  '/_thumb/',
-  '/_user/'
-]
-
-/**
  * Where a link inside rendered content should take the reader, if the router should handle it.
  *
  * A page's HTML arrives through `v-html`, so every link in it is a plain anchor: left alone, the
@@ -219,7 +205,9 @@ export function routableHref({ href, target, download, rel } = {}, current) {
   if (url.origin !== current.origin || !/^https?:$/.test(url.protocol)) {
     return null
   }
-  if (SERVER_PATHS.some((prefix) => url.pathname.startsWith(prefix))) {
+  // -> A link to one of these is a request for a file, not a page, and handing it to the router would
+  //    render the catch-all page view over the top of nothing
+  if (isServerPath(url.pathname)) {
     return null
   }
   // -> Same page, different fragment: the browser scrolls and announces it, and the router would do

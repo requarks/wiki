@@ -17,11 +17,13 @@ import { MarkdownRenderer } from './markdown'
  * @param {string} content Markdown source
  * @param {object} config The site's markdown editor config, so the result matches what an author
  *                        would have produced in the editor
+ * @param {object} context What the source cannot say about itself: `pagePath`, which a relative image
+ *                         in it resolves against, exactly as the editor passes it
  * @returns {string} Rendered HTML, before the server's own post-processing
  */
-window.__wikiRender = function (content, config = {}) {
+window.__wikiRender = function (content, config = {}, context = {}) {
   const renderer = new MarkdownRenderer(config)
-  return renderer.render(content ?? '')
+  return renderer.render(content ?? '', context)
 }
 
 // -> Polled by the caller: a module script is deferred, so the page can be "loaded" before this ran

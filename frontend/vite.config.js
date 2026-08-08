@@ -210,7 +210,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: true,
       port: userConfig.dev?.port,
-      proxy: ['_api', '_blocks', '_collab', '_icons', '_site', '_thumb', '_user'].reduce(
+      proxy: ['_api', '_blocks', '_collab', '_files', '_icons', '_site', '_thumb', '_user'].reduce(
         (result, key) => {
           result[`/${key}`] = {
             target: {
