@@ -2,7 +2,8 @@ key: puppeteer
 title: Puppeteer
 description: >-
   Headless Chromium browser. Required to export pages as PDF and to render content elements on the
-  server, such as Mermaid or PlantUML diagrams.
+  server, such as Mermaid or PlantUML diagrams. Installing it downloads a Chromium build of a few
+  hundred megabytes, unless the server already provides one through PUPPETEER_EXECUTABLE_PATH.
 website: 'https://pptr.dev'
 detect:
   type: module
@@ -10,4 +11,10 @@ detect:
 architectures:
   - x64
   - arm64
-isInstallable: false
+# Not a declared dependency of the backend, unlike Sharp: a browser is worth a few hundred megabytes
+# only to an instance that renders pages on the server, so installing it is a decision rather than a
+# default. That makes this a real first install and not merely a repair.
+isInstallable: true
+# The version installed, here rather than in `package.json` for the reason above. The Docker image
+# reads this same line, so an image and a hand-installed instance agree on what Puppeteer is.
+installVersion: 25.4.0

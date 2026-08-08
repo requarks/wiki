@@ -143,6 +143,16 @@ const state = reactive({
   extensions: []
 })
 
+/**
+ * How long to give an install, in milliseconds.
+ *
+ * Stated because the client's own default is ten seconds, which no npm install finishes inside: the
+ * request would be abandoned here while npm carried on running on the server, reporting a failure for
+ * something that was about to succeed and leaving the administrator to install it twice. Matches the
+ * ceiling the server puts on the same work, Puppeteer's browser download being what sets it.
+ */
+const INSTALL_TIMEOUT = 20 * 60 * 1000
+
 // METHODS
 
 async function load() {
@@ -167,7 +177,9 @@ async function install(ext) {
     html: true
   })
   try {
-    const resp = await API_CLIENT.post(`system/extensions/${ext.key}/install`).json()
+    const resp = await API_CLIENT.post(`system/extensions/${ext.key}/install`, {
+      timeout: INSTALL_TIMEOUT
+    }).json()
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured')
     }

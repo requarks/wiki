@@ -509,7 +509,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Install or reinstall an extension',
         description:
-          'Only extensions flagged `isInstallable` can be installed from here — currently Sharp, which is an npm package. It already ships as an optional dependency, so this is mostly a repair: it refetches the package and the prebuilt binary for this OS and architecture, which is what to reach for when the native binary is missing or does not match the platform. Git and Pandoc come from the operating system and answer 409 pointing at the documentation. Runs npm and can take minutes.',
+          'Only extensions flagged `isInstallable` can be installed from here — the npm packages, which are Sharp and Puppeteer. For Sharp this is mostly a repair: it already ships as an optional dependency, and refetching it replaces a prebuilt binary that is missing or does not match this OS and architecture. Puppeteer is not shipped at all, so this is a first install, and it fetches a Chromium build of a few hundred megabytes unless the server points at one it already has through `PUPPETEER_EXECUTABLE_PATH`. Git and Pandoc come from the operating system and answer 409 pointing at the documentation. Runs npm and can take minutes — allow the request a correspondingly long timeout.',
         tags: ['System'],
         params: {
           type: 'object',

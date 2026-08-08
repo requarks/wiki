@@ -112,6 +112,7 @@
   "dev": true,
   "releaseDate": "2026-01-01T01:01:01.000Z",
   "allowScripts": {
-    "esbuild": false
+    "esbuild": false,
+    "puppeteer": true
   }
 }

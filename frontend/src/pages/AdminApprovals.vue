@@ -2,7 +2,7 @@
   <w-page>
     <div class="flex flex-wrap items-center p-4">
       <div class="flex-none">
-        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-inspection.svg" />
+        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-inspection-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
         <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.approval.title') }}</div>

@@ -132,7 +132,10 @@
           auto-close
           transition-show="jump-left">
           <w-list padding style="min-width: 225px">
-            <w-item clickable disabled v-if="userStore.can(`manage:pages`)">
+            <w-item
+              clickable
+              disabled
+              v-if="flagsStore.experimental && userStore.can(`manage:pages`)">
               <w-item-section class="items-center" avatar>
                 <w-icon class="text-deep-orange-9" name="la:atom" size="sm" />
               </w-item-section>
@@ -144,7 +147,7 @@
               </w-item-section>
               <w-item-section><w-item-label>Rerender Page</w-item-label></w-item-section>
             </w-item>
-            <w-item clickable disabled>
+            <w-item clickable disabled v-if="flagsStore.experimental">
               <w-item-section class="items-center" avatar>
                 <w-icon class="text-deep-orange-9" name="la:sun" size="sm" />
               </w-item-section>

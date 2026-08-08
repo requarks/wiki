@@ -41,9 +41,15 @@ RUN npm ci --omit=dev
 # The Puppeteer extension, which server-side page rendering needs. Added here rather than declared in
 # `backend/package.json` because it is an optional extension: an installation that renders its pages in
 # the editor -- which is all of them, on any normal save -- has no use for a browser on the server, and
-# a source checkout should not have to fetch one to install the backend. Pinned like every other
-# dependency, so an image build is reproducible.
-RUN npm install --no-save puppeteer@25.4.0
+# a source checkout should not have to fetch one to install the backend.
+#
+# The version is read from the extension definition, which is also what the admin area installs when an
+# operator adds Puppeteer to an instance by hand: one place to bump, and an image that cannot drift from
+# what a hand-installed instance gets. An empty read fails the build rather than quietly installing
+# whatever is newest.
+RUN PUPPETEER_VERSION="$(sed -n 's/^installVersion: *//p' modules/extensions/puppeteer/definition.yml)" && \
+    test -n "$PUPPETEER_VERSION" && \
+    npm install --no-save "puppeteer@${PUPPETEER_VERSION}"
 
 WORKDIR /wiki
 

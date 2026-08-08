@@ -7,8 +7,14 @@ import { promisify } from 'node:util'
 
 const execFileAsync = promisify(execFile)
 
-/** How long an install may run before it is given up on — fetching a native binary is not instant. */
-const installTimeout = 5 * 60 * 1000
+/**
+ * How long an install may run before it is given up on.
+ *
+ * Generous because of what the slowest one has to do: Puppeteer fetches a Chromium build of a few
+ * hundred megabytes, which on a thin connection is minutes of transfer before npm has anything to
+ * unpack. A ceiling rather than a wait — Sharp still finishes in seconds.
+ */
+const installTimeout = 20 * 60 * 1000
 
 /** How much npm output is kept when reporting a failure, taken from the end where the error is. */
 const installErrorLength = 800
@@ -33,6 +39,15 @@ export interface ExtensionDefinition {
   platforms?: string[]
   /** Whether the admin area can install it, as opposed to it being installed by hand. */
   isInstallable: boolean
+  /**
+   * The version `install()` asks npm for.
+   *
+   * For an extension that is not declared in `package.json` at all, which is the only place a version
+   * would otherwise be written down — without it npm resolves whatever is newest today, and two
+   * instances installed a month apart are running different software. An extension the manifest
+   * already declares leaves this out, since a second pin here could only disagree with the first.
+   */
+  installVersion?: string
 }
 
 /** An extension plus its state on this system, as exposed by the API. */
@@ -98,10 +113,11 @@ async function moduleExists(specifier: string): Promise<boolean> {
  * Puppeteer. Each lives in `modules/extensions/<key>/definition.yml`, which declares how to detect it,
  * what it is compatible with, and whether it can be installed from here.
  *
- * Most cannot: a Git or Pandoc binary comes from the system package manager, and the admin area links
- * out to the instructions. An extension detected as a `module` is an npm package, and `install()` can
- * (re)install that with npm — which for Sharp, shipped as an optional dependency, is how a native
- * binary that is missing or does not match the platform gets replaced.
+ * The `command` ones cannot be installed from here: a Git or Pandoc binary comes from the system
+ * package manager, and the admin area links out to the instructions instead. An extension detected as
+ * a `module` is an npm package, which `install()` can fetch — Sharp to replace a native binary that
+ * is missing or does not match the platform, Puppeteer because it is deliberately not shipped and has
+ * to come from somewhere.
  */
 class Extensions {
   /** Definitions read from disk, refreshed by `refreshFromDisk()`. */
@@ -201,16 +217,34 @@ class Extensions {
    * `isInstallable` and `isCompatible` first; this repeats the detection check afterwards, since npm
    * exiting zero and the module actually being there are not the same claim.
    *
-   * Reinstalling is the point as much as installing is. Sharp is a declared optional dependency, so an
-   * ordinary install already has it — what goes wrong is its *native* binary: an image built on one
-   * platform and run on another, or an install that skipped optional dependencies, leaves the JavaScript
-   * package in place and the binary for this OS and architecture missing. Hence the flags:
+   * The two installable extensions ask for different things, and the flags below serve both.
+   *
+   * Sharp is a declared optional dependency, so an ordinary install already has it — reinstalling is
+   * the point as much as installing is. What goes wrong is its *native* binary: an image built on one
+   * platform and run on another, or an install that skipped optional dependencies, leaves the
+   * JavaScript package in place and the binary for this OS and architecture missing.
+   *
+   * Puppeteer is not declared anywhere, so this is a genuine first install, and the bulk of it is the
+   * browser. Nothing has to be arranged for that: Puppeteer's own postinstall fetches one into its
+   * cache, which is the ordinary case and the one an install straight onto Linux takes. A server that
+   * already has a browser opts out with `PUPPETEER_SKIP_DOWNLOAD` and points at it with
+   * `PUPPETEER_EXECUTABLE_PATH` — what the Docker image does with the Chromium it takes from the
+   * distro. Neither is required, and neither is set here: npm inherits this process's environment, so
+   * an install from the admin area sees exactly what the operator set for the server and nothing else.
+   *
+   * Hence the flags:
    *
    * - `--no-save` because the manifest already declares the package, and an HTTP request has no
    *   business rewriting the manifests the release was built from.
    * - `--force` so npm refetches rather than deciding an already-present but unusable copy is fine.
    * - `--include=optional` because the per-platform binaries are themselves optional dependencies of
    *   the package, and omitting them is the usual cause of the failure being repaired here.
+   * - `--no-ignore-scripts` because the browser IS Puppeteer's postinstall. An operator who has set
+   *   `ignore-scripts` — a reasonable thing to harden an npm config with — would otherwise get the
+   *   package with no browser under it, npm exiting zero, and this model reporting it as installed:
+   *   the failure would surface much later, as a render that cannot start a browser. Which scripts
+   *   are trusted is still decided by the `allowScripts` policy in `package.json`, and a package
+   *   denied there is skipped whatever this flag says.
    *
    * @throws If the extension cannot be installed this way, if npm fails, or if the module is still
    *         missing afterwards
@@ -220,8 +254,13 @@ class Extensions {
       throw new Error(`${definition.title} is not an npm package, so it cannot be installed here.`)
     }
     const specifier = definition.detect.value
+    // -> What npm is asked for, which carries the pin; what is checked for afterwards is the package
+    //    name on its own, since that is what lands in `node_modules`
+    const request = definition.installVersion
+      ? `${specifier}@${definition.installVersion}`
+      : specifier
 
-    WIKI.logger.info(`Installing extension ${definition.key} (npm package ${specifier})...`)
+    WIKI.logger.info(`Installing extension ${definition.key} (npm package ${request})...`)
     try {
       const { stdout } = await execFileAsync(
         process.platform === 'win32' ? 'npm.cmd' : 'npm',
@@ -230,9 +269,10 @@ class Extensions {
           '--no-save',
           '--force',
           '--include=optional',
+          '--no-ignore-scripts',
           '--no-audit',
           '--no-fund',
-          specifier
+          request
         ],
         {
           cwd: WIKI.SERVERPATH,
@@ -250,7 +290,7 @@ class Extensions {
       WIKI.logger.warn(`Failed to install extension ${definition.key}:`)
       WIKI.logger.warn(detail || err)
       throw new Error(
-        `npm could not install ${specifier}: ${detail.slice(-installErrorLength) || 'no output'}`
+        `npm could not install ${request}: ${detail.slice(-installErrorLength) || 'no output'}`
       )
     }
 
