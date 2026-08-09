@@ -97,7 +97,10 @@
             </w-item-section>
             <w-item-section>{{ t('admin.sites.title') }}</w-item-section>
             <w-item-section side>
-              <w-badge color="dark-3" :label="adminStore.sites.length" />
+              <w-badge
+                color="dark-3"
+                :label="adminStore.sites.length"
+                :class="countBadgeClass(adminStore.sites.length)" />
             </w-item-section>
           </w-item>
           <template v-if="siteSectionShown">
@@ -253,25 +256,28 @@
             <w-item
               to="/_admin/groups"
               active-class="bg-primary text-white"
-              v-if="userStore.can(`manage:groups`)">
+              v-if="groupsAreVisible">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-people.svg" />
               </w-item-section>
               <w-item-section>{{ t('admin.groups.title') }}</w-item-section>
               <w-item-section side>
-                <w-badge color="dark-3" :label="adminStore.info.groupsTotal" />
+                <w-badge
+                  color="dark-3"
+                  :label="adminStore.info.groupsTotal"
+                  :class="countBadgeClass(adminStore.info.groupsTotal)" />
               </w-item-section>
             </w-item>
-            <w-item
-              to="/_admin/users"
-              active-class="bg-primary text-white"
-              v-if="userStore.can(`manage:users`)">
+            <w-item to="/_admin/users" active-class="bg-primary text-white" v-if="usersAreVisible">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-account.svg" />
               </w-item-section>
               <w-item-section>{{ t('admin.users.title') }}</w-item-section>
               <w-item-section side>
-                <w-badge color="dark-3" :label="adminStore.info.usersTotal" />
+                <w-badge
+                  color="dark-3"
+                  :label="adminStore.info.usersTotal"
+                  :class="countBadgeClass(adminStore.info.usersTotal)" />
               </w-item-section>
             </w-item>
           </template>
@@ -315,6 +321,12 @@
                 <w-icon name="img:/_assets/icons/fluent-network.svg" />
               </w-item-section>
               <w-item-section>{{ t('admin.instances.title') }}</w-item-section>
+              <w-item-section side>
+                <w-badge
+                  color="dark-3"
+                  :label="adminStore.info.instancesTotal"
+                  :class="countBadgeClass(adminStore.info.instancesTotal)" />
+              </w-item-section>
             </w-item>
             <w-item to="/_admin/mail" active-class="bg-primary text-white">
               <w-item-section avatar>
@@ -404,6 +416,12 @@
                 <w-icon name="img:/_assets/icons/fluent-lightning-bolt.svg" />
               </w-item-section>
               <w-item-section>{{ t('admin.webhooks.title') }}</w-item-section>
+              <w-item-section side>
+                <w-badge
+                  color="dark-3"
+                  :label="adminStore.info.webhooksTotal"
+                  :class="countBadgeClass(adminStore.info.webhooksTotal)" />
+              </w-item-section>
             </w-item>
             <w-item to="/_admin/flags" active-class="bg-primary text-white">
               <w-item-section avatar>
@@ -496,12 +514,35 @@ const siteSectionShown = computed(() => {
     userStore.can('manage:theme')
   )
 })
+/*
+  `read:*` grants the list and detail routes without the write ones (see `api/users.ts` /
+  `api/groups.ts`), so the nav entry has to open for it too -- otherwise the permission grants access
+  to pages nothing links to.
+*/
+const groupsAreVisible = computed(() => {
+  return userStore.can('read:groups') || userStore.can('manage:groups')
+})
+const usersAreVisible = computed(() => {
+  return userStore.can('read:users') || userStore.can('manage:users')
+})
 const usersSectionShown = computed(() => {
-  return userStore.can('manage:groups') || userStore.can('manage:users')
+  return groupsAreVisible.value || usersAreVisible.value
 })
 const overlayIsShown = computed(() => {
   return Boolean(adminStore.overlay)
 })
+
+// METHODS
+
+/*
+  The nav count badges carry a right border saying whether the thing they count exists at all --
+  red at zero, green otherwise -- so a section that is empty reads as such without opening it. The
+  colours are the status lights' own, so the two markers in the column say the same thing the same
+  way; see the `.count-badge` rules for where they come from.
+*/
+function countBadgeClass(count) {
+  return count > 0 ? 'count-badge count-badge--filled' : 'count-badge'
+}
 
 // WATCHERS
 
@@ -578,6 +619,38 @@ onMounted(async () => {
   //    WItemSection's scoped rule, which matches on specificity alone.
   .w-list .w-item-section--avatar {
     min-width: auto;
+  }
+
+  /*
+    Nav rows carry two kinds of trailing marker -- a status light and a count badge -- and they have
+    to read as one column. Both already end on the same right edge; what did not line up is the
+    height. StatusLight is `height: 100%`, so it takes whatever the row gives it (28px on these
+    dense rows), while a badge is sized by its own text at 16px, leaving the lights standing 6px
+    proud above and below every badge in the column.
+
+    Pinning them to the badge's band fixes that. It is scoped to the sidebar rather than changed in
+    StatusLight, because the full-height stripe is the point everywhere else it is used: the storage,
+    rendering and auth lists put one beside a two-line item, where it reads as an edge marker for the
+    whole row and has no badge to line up with.
+  */
+  .w-list .status-light {
+    height: 16px;
+  }
+
+  /*
+    `$negative` / `$positive` rather than the `--color-*` custom properties, because these have to
+    match the status lights beside them exactly and StatusLight styles itself from the SCSS
+    variables -- the custom properties resolve through `--q-*`, which is rewritten at runtime for
+    per-site theming and would drift away from the lights on any site that sets its own colours.
+  */
+  // -> 5px is StatusLight's own width, so the stripe on a badge and the light on the row below it
+  //    are the same bar of colour rather than two thicknesses of it
+  .count-badge {
+    border-right: 5px solid $negative;
+
+    &--filled {
+      border-right-color: $positive;
+    }
   }
 
   // -> The section headings between nav groups; the double shadow is the divider above them

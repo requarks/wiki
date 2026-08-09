@@ -5,11 +5,64 @@ import { isNil } from 'es-toolkit/predicate'
 import { gte, sql } from 'drizzle-orm'
 import {
   groups as groupsTable,
+  hooks as hooksTable,
   pages as pagesTable,
   tags as tagsTable,
   users as usersTable
 } from '../db/schema.ts'
 import type { FastifyInstance } from 'fastify'
+
+/**
+ * Every instance connected to this database, with how it is using the connection pool.
+ *
+ * There is no instance registry: an instance is only known by the connections it holds, which it
+ * labels `Wiki.js - <instance id>:<purpose>`. Two of those purposes hold a listener rather than
+ * doing query work, so they are counted apart.
+ *
+ * Shared by the list route and the dashboard count, so that the number on the dashboard is the
+ * number of rows the instances page shows.
+ */
+async function getInstances(): Promise<Record<string, any>[]> {
+  const instRaw = await WIKI.db.execute(
+    sql`SELECT usename, client_addr, application_name, backend_start, state_change FROM pg_stat_activity WHERE datname = ${WIKI.dbManager.dbName} AND application_name LIKE 'Wiki.js%'`
+  )
+  const insts: Record<string, any> = {}
+  for (const inst of instRaw.rows as any[]) {
+    const instId = inst.application_name.substring(10, 20)
+    const conType = [':MAIN', ':WORKER'].some((ct) => inst.application_name.endsWith(ct))
+      ? 'main'
+      : 'sub'
+    // -> `db.execute()` with a raw SQL template returns timestamps as postgres-format strings
+    //    (e.g. `2026-07-25 13:17:36.230177+00`) rather than Dates, which is what the previous
+    //    `DateTime.fromSQL()` call was for. Temporal.Instant.from parses that format as-is,
+    //    including the space separator and the hour-only `+00` offset. Rendered with
+    //    millisecond precision to match the timestamps produced elsewhere.
+    inst.backend_start = Temporal.Instant.from(inst.backend_start).toString({
+      smallestUnit: 'millisecond'
+    })
+    inst.state_change = Temporal.Instant.from(inst.state_change).toString({
+      smallestUnit: 'millisecond'
+    })
+    const curInst = insts[instId] ?? {
+      activeConnections: 0,
+      activeListeners: 0,
+      dbFirstSeen: inst.backend_start,
+      dbLastSeen: inst.state_change
+    }
+    insts[instId] = {
+      id: instId,
+      activeConnections:
+        conType === 'main' ? curInst.activeConnections + 1 : curInst.activeConnections,
+      activeListeners: conType === 'sub' ? curInst.activeListeners + 1 : curInst.activeListeners,
+      dbUser: inst.usename,
+      dbFirstSeen:
+        curInst.dbFirstSeen > inst.backend_start ? inst.backend_start : curInst.dbFirstSeen,
+      dbLastSeen: curInst.dbLastSeen < inst.state_change ? inst.state_change : curInst.dbLastSeen,
+      ip: inst.client_addr
+    }
+  }
+  return Object.values(insts)
+}
 
 /**
  * System API Routes
@@ -22,7 +75,7 @@ async function routes(app: FastifyInstance) {
     '/info',
     {
       config: {
-        permissions: ['read:dashboard']
+        permissions: ['access:admin']
       },
       schema: {
         summary: 'System Info',
@@ -32,6 +85,11 @@ async function routes(app: FastifyInstance) {
             description: 'System Info',
             type: 'object',
             properties: {
+              activeWorkers: {
+                type: 'number',
+                description:
+                  'Jobs running right now on every instance combined, one worker slot each.'
+              },
               configFile: {
                 type: 'string'
               },
@@ -52,6 +110,10 @@ async function routes(app: FastifyInstance) {
               },
               httpPort: {
                 type: 'number'
+              },
+              instancesTotal: {
+                type: 'number',
+                description: 'Instances currently connected to this database.'
               },
               isMailConfigured: {
                 type: 'boolean'
@@ -103,6 +165,9 @@ async function routes(app: FastifyInstance) {
               usersTotal: {
                 type: 'number'
               },
+              webhooksTotal: {
+                type: 'number'
+              },
               workingDirectory: {
                 type: 'string'
               }
@@ -113,6 +178,7 @@ async function routes(app: FastifyInstance) {
     },
     async () => {
       return {
+        activeWorkers: await WIKI.models.jobs.countActive(),
         configFile: path.join(process.cwd(), 'config.yml'),
         cpuCores: os.cpus().length,
         currentVersion: WIKI.version,
@@ -121,6 +187,7 @@ async function routes(app: FastifyInstance) {
         groupsTotal: await WIKI.db.$count(groupsTable),
         hostname: os.hostname(),
         httpPort: 0,
+        instancesTotal: (await getInstances()).length,
         isApiEnabled: WIKI.config.api.isEnabled === true,
         isMailConfigured: WIKI.config?.mail?.host?.length > 2,
         isMetricsEnabled: WIKI.config.metrics.isEnabled === true,
@@ -139,6 +206,7 @@ async function routes(app: FastifyInstance) {
         tagsTotal: await WIKI.db.$count(tagsTable),
         upgradeCapable: !isNil(process.env.UPGRADE_COMPANION),
         usersTotal: await WIKI.db.$count(usersTable),
+        webhooksTotal: await WIKI.db.$count(hooksTable),
         workingDirectory: process.cwd()
       }
     }
@@ -812,47 +880,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
-      const instRaw = await WIKI.db.execute(
-        sql`SELECT usename, client_addr, application_name, backend_start, state_change FROM pg_stat_activity WHERE datname = ${WIKI.dbManager.dbName} AND application_name LIKE 'Wiki.js%'`
-      )
-      const insts: Record<string, any> = {}
-      for (const inst of instRaw.rows as any[]) {
-        const instId = inst.application_name.substring(10, 20)
-        const conType = [':MAIN', ':WORKER'].some((ct) => inst.application_name.endsWith(ct))
-          ? 'main'
-          : 'sub'
-        // -> `db.execute()` with a raw SQL template returns timestamps as postgres-format strings
-        //    (e.g. `2026-07-25 13:17:36.230177+00`) rather than Dates, which is what the previous
-        //    `DateTime.fromSQL()` call was for. Temporal.Instant.from parses that format as-is,
-        //    including the space separator and the hour-only `+00` offset. Rendered with
-        //    millisecond precision to match the timestamps produced elsewhere.
-        inst.backend_start = Temporal.Instant.from(inst.backend_start).toString({
-          smallestUnit: 'millisecond'
-        })
-        inst.state_change = Temporal.Instant.from(inst.state_change).toString({
-          smallestUnit: 'millisecond'
-        })
-        const curInst = insts[instId] ?? {
-          activeConnections: 0,
-          activeListeners: 0,
-          dbFirstSeen: inst.backend_start,
-          dbLastSeen: inst.state_change
-        }
-        insts[instId] = {
-          id: instId,
-          activeConnections:
-            conType === 'main' ? curInst.activeConnections + 1 : curInst.activeConnections,
-          activeListeners:
-            conType === 'sub' ? curInst.activeListeners + 1 : curInst.activeListeners,
-          dbUser: inst.usename,
-          dbFirstSeen:
-            curInst.dbFirstSeen > inst.backend_start ? inst.backend_start : curInst.dbFirstSeen,
-          dbLastSeen:
-            curInst.dbLastSeen < inst.state_change ? inst.state_change : curInst.dbLastSeen,
-          ip: inst.client_addr
-        }
-      }
-      return Object.values(insts)
+      return getInstances()
     }
   )
 
@@ -863,7 +891,7 @@ async function routes(app: FastifyInstance) {
     '/checkForUpdate',
     {
       config: {
-        permissions: ['read:dashboard']
+        permissions: ['access:admin']
       },
       schema: {
         summary: 'Check for Updates',

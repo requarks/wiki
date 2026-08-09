@@ -10,10 +10,13 @@ export const useAdminStore = defineStore('admin', {
     info: {
       currentVersion: 'n/a',
       latestVersion: 'n/a',
+      activeWorkers: 0,
       groupsTotal: 0,
+      instancesTotal: 0,
       pagesTotal: 0,
       tagsTotal: 0,
       usersTotal: 0,
+      webhooksTotal: 0,
       loginsPastDay: 0,
       isApiEnabled: false,
       isMailConfigured: false,
@@ -26,16 +29,23 @@ export const useAdminStore = defineStore('admin', {
     locales: [{ code: 'en', name: 'English' }]
   }),
   getters: {
-    isVersionLatest: (state) => {
+    /**
+     * `pending` until `fetchInfo` has both versions -- neither `latest` nor `outdated` can be
+     * claimed before the server has answered.
+     */
+    versionStatus: (state) => {
       if (
         !state.info.currentVersion ||
         !state.info.latestVersion ||
         state.info.currentVersion === 'n/a' ||
         state.info.latestVersion === 'n/a'
       ) {
-        return false
+        return 'pending'
       }
-      return semverGte(state.info.currentVersion, state.info.latestVersion)
+      return semverGte(state.info.currentVersion, state.info.latestVersion) ? 'latest' : 'outdated'
+    },
+    isVersionLatest() {
+      return this.versionStatus === 'latest'
     }
   },
   actions: {
@@ -45,9 +55,12 @@ export const useAdminStore = defineStore('admin', {
     },
     async fetchInfo() {
       const resp = await API_CLIENT.get('system/info').json()
+      this.info.activeWorkers = resp?.activeWorkers ?? 0
       this.info.groupsTotal = resp?.groupsTotal ?? 0
+      this.info.instancesTotal = resp?.instancesTotal ?? 0
       this.info.tagsTotal = resp?.tagsTotal ?? 0
       this.info.usersTotal = resp?.usersTotal ?? 0
+      this.info.webhooksTotal = resp?.webhooksTotal ?? 0
       this.info.loginsPastDay = resp?.loginsPastDay ?? 0
       this.info.currentVersion = resp?.currentVersion ?? 'n/a'
       this.info.latestVersion = resp?.latestVersion ?? 'n/a'

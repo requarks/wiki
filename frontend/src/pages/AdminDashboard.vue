@@ -2,13 +2,37 @@
   <w-page class="admin-dashboard">
     <div class="flex flex-wrap p-4 items-center">
       <div class="flex-none">
-        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-apps-tab-animated.svg" />
+        <img
+          class="admin-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-apps-tab-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
         <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.dashboard.title') }}</div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.dashboard.subtitle') }}
         </div>
+      </div>
+      <div class="flex-none flex">
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:question-circle"
+          flat
+          color="grey"
+          :aria-label="t(`common.actions.viewDocs`)"
+          :href="siteStore.docsBase + `/admin`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          icon="la:redo-alt"
+          flat
+          color="secondary"
+          :loading="state.loading > 0"
+          :aria-label="t(`common.actions.refresh`)"
+          @click="load">
+          <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+        </w-btn>
       </div>
     </div>
     <div class="grid grid-cols-12 px-4 gap-2">
@@ -57,7 +81,7 @@
               :color="actionColor"
               icon="la:plus-circle"
               :label="t(`common.actions.new`)"
-              :disable="!userStore.can(`manage:users`)"
+              :disable="!userStore.can(`manage:groups`)"
               @click="newGroup" />
             <w-separator vertical />
             <w-btn
@@ -65,7 +89,7 @@
               :color="actionColor"
               icon="la:users"
               :label="t(`common.actions.manage`)"
-              :disable="!userStore.can(`manage:users`)"
+              :disable="!groupsAreVisible"
               to="/_admin/groups" />
           </w-card-actions>
         </w-card>
@@ -94,7 +118,7 @@
               :color="actionColor"
               icon="la:user-friends"
               :label="t(`common.actions.manage`)"
-              :disable="!userStore.can(`manage:users`)"
+              :disable="!usersAreVisible"
               to="/_admin/users" />
           </w-card-actions>
         </w-card>
@@ -137,27 +161,106 @@
           </w-card-actions>
         </w-card>
       </div>
-      <!-- .col-12.col-lg-9 -->
-      <!-- q-card -->
-      <!-- q-card-section --- -->
-      <div class="col-span-12">
-        <w-banner
-          class="bg-positive text-white"
-          :class="adminStore.isVersionLatest ? `bg-positive` : `bg-warning`"
-          inline-actions>
-          <w-icon name="la:check" class="mr-2" />
-          <span class="font-medium" v-if="adminStore.isVersionLatest"
-            >Your Wiki.js server is running the latest version!</span
-          >
-          <span class="font-medium" v-else
-            >A new version of Wiki.js is available. Please update to the latest version.</span
-          >
-          <template #action v-if="userStore.can(`manage:system`)">
-            <w-btn flat :label="t(`admin.system.checkForUpdates`)" @click="checkForUpdates" />
-            <w-separator class="mx-2" vertical dark />
-            <w-btn flat :label="t(`admin.system.title`)" to="/_admin/system" />
-          </template>
-        </w-banner>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img :src="versionCard.icon" />
+            <div>
+              <strong>Wiki.js version</strong>
+              <small :class="{ pending: versionCard.pending }"
+                >{{ versionCard.status }}
+                <i v-if="versionCard.version"
+                  >({{ versionCard.version
+                  }}<w-icon
+                    v-if="versionCard.latestVersion"
+                    name="mdi:arrow-right"
+                    class="mx-1 align-middle" />{{ versionCard.latestVersion }})</i
+                ></small
+              >
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:sync-alt"
+              :label="t(`admin.system.checkForUpdates`)"
+              :disable="!userStore.can(`manage:system`)"
+              @click="checkForUpdates" />
+            <w-separator vertical />
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:info-circle"
+              :label="t(`admin.system.title`)"
+              :disable="!userStore.can(`manage:system`)"
+              to="/_admin/system" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-bot.svg" />
+            <div>
+              <strong>{{ t('admin.dashboard.activeWorkers') }}</strong>
+              <span>{{ adminStore.info.activeWorkers }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:tasks"
+              :label="t(`admin.scheduler.title`)"
+              :disable="!userStore.can(`manage:system`)"
+              to="/_admin/scheduler" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-network.svg" />
+            <div>
+              <strong>{{ t('admin.instances.title') }}</strong>
+              <span>{{ adminStore.info.instancesTotal }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:server"
+              :label="t(`common.actions.view`)"
+              :disable="!userStore.can(`manage:system`)"
+              to="/_admin/instances" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-lightning-bolt.svg" />
+            <div>
+              <strong>{{ t('admin.webhooks.title') }}</strong>
+              <span>{{ adminStore.info.webhooksTotal }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:bolt"
+              :label="t(`common.actions.manage`)"
+              :disable="!userStore.can(`manage:system`)"
+              to="/_admin/webhooks" />
+          </w-card-actions>
+        </w-card>
       </div>
     </div>
   </w-page>
@@ -166,13 +269,15 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { dialog } from '@/composables/dialog'
 import { useDark } from '@/composables/dark'
+import { notify } from '@/composables/notify'
 
 import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import { useAdminStore } from '../stores/admin'
@@ -185,6 +290,7 @@ import GroupCreateDialog from '@/components/GroupCreateDialog.vue'
 
 const adminStore = useAdminStore()
 const flagsStore = useFlagsStore()
+const siteStore = useSiteStore()
 const userStore = useUserStore()
 
 // COMPOSABLES
@@ -198,6 +304,15 @@ const dark = useDark()
 */
 const actionColor = computed(() => (dark.isActive ? 'primary-light' : 'primary'))
 
+/*
+  Manage only opens the list, which `read:*` is enough for -- the same rule the nav entries in
+  `AdminLayout` use. Creating one is what needs `manage:*`.
+*/
+const groupsAreVisible = computed(
+  () => userStore.can('read:groups') || userStore.can('manage:groups')
+)
+const usersAreVisible = computed(() => userStore.can('read:users') || userStore.can('manage:users'))
+
 // ROUTER
 
 const router = useRouter()
@@ -206,6 +321,43 @@ const router = useRouter()
 
 const { t } = useI18n()
 
+// DATA
+
+const state = reactive({
+  loading: 0
+})
+
+// COMPUTED
+
+const versionCard = computed(() => {
+  switch (adminStore.versionStatus) {
+    case 'latest':
+      return {
+        icon: '/_assets/icons/fluent-done.svg',
+        status: t('admin.dashboard.versionUpToDate'),
+        version: adminStore.info.currentVersion,
+        latestVersion: null,
+        pending: false
+      }
+    case 'outdated':
+      return {
+        icon: '/_assets/icons/fluent-double-up.svg',
+        status: t('admin.dashboard.versionUpdateAvailable'),
+        version: adminStore.info.currentVersion,
+        latestVersion: adminStore.info.latestVersion,
+        pending: false
+      }
+    default:
+      return {
+        icon: '/_assets/icons/fluent-refresh.svg',
+        status: t('admin.dashboard.versionChecking'),
+        version: null,
+        latestVersion: null,
+        pending: true
+      }
+  }
+})
+
 // META
 
 useMeta({
@@ -213,6 +365,25 @@ useMeta({
 })
 
 // METHODS
+
+/*
+  Every card reads from the admin store, which `AdminLayout` fills once on mount -- `fetchInfo` for
+  the counters on `info`, `fetchSites` for the sites card, which counts the list itself. Refreshing
+  the dashboard is therefore both of them, not a call of its own.
+*/
+async function load() {
+  state.loading++
+  try {
+    await Promise.all([adminStore.fetchInfo(), adminStore.fetchSites()])
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: 'Failed to refresh the dashboard.',
+      caption: err.message
+    })
+  }
+  state.loading--
+}
 
 function newSite() {
   dialog({
@@ -279,6 +450,18 @@ function checkForUpdates() {
       i {
         font-size: 1rem;
         font-style: normal;
+      }
+
+      /*
+        Amber itself (#ffc107) is picked to read on the dark surface; on the white card it lands
+        around 1.7:1, so the light theme takes the darker end of the ramp instead.
+      */
+      &.pending {
+        color: var(--color-amber-9);
+
+        @at-root .body--dark & {
+          color: var(--color-amber);
+        }
       }
     }
   }

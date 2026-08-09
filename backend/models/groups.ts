@@ -6,6 +6,9 @@ import { resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
 import type { FastifyRequest } from 'fastify'
 
+/** The permission that bypasses every check, and the one the guards below exist to protect. */
+export const SYSTEM_PERMISSION = 'manage:system'
+
 /** How a rule's `path` is compared against the page path. */
 export type GroupRuleMatch = 'START' | 'END' | 'REGEX' | 'TAG' | 'TAGALL' | 'EXACT'
 
@@ -520,6 +523,44 @@ class Groups {
       and(eq(userGroups.groupId, groupId), eq(userGroups.userId, userId))
     )
     return total > 0
+  }
+
+  /**
+   * Whether the caller itself holds `manage:system`.
+   *
+   * `manage:system` is the permission that bypasses every route check, so a `manage:users` /
+   * `manage:groups` holder who could hand it out — or take it away, or edit the account of somebody
+   * who has it — would hold it in all but name. The guards built on this answer say so in their own
+   * words rather than as a bare 403, because "you may manage users, but not THIS user" is not
+   * something the caller can work out from a generic refusal.
+   */
+  holdsSystemPermission(req: FastifyRequest): boolean {
+    return this.actorForRequest(req).permissions.includes(SYSTEM_PERMISSION)
+  }
+
+  /** The ids of every group carrying `manage:system`. */
+  async systemGroupIds(): Promise<string[]> {
+    const rows = await WIKI.db
+      .select({ id: groupsTable.id, permissions: groupsTable.permissions })
+      .from(groupsTable)
+    return rows
+      .filter((row) => ((row.permissions ?? []) as string[]).includes(SYSTEM_PERMISSION))
+      .map((row) => row.id)
+  }
+
+  /**
+   * Whether a user is protected by `manage:system` — i.e. belongs to any group carrying it.
+   *
+   * Membership rather than the session's own list, because the question is asked ABOUT somebody who
+   * is not the caller and may not be logged in at all.
+   */
+  async userHoldsSystemPermission(userId: string): Promise<boolean> {
+    const rows = await WIKI.db
+      .select({ permissions: groupsTable.permissions })
+      .from(userGroups)
+      .innerJoin(groupsTable, eq(groupsTable.id, userGroups.groupId))
+      .where(eq(userGroups.userId, userId))
+    return rows.some((row) => ((row.permissions ?? []) as string[]).includes(SYSTEM_PERMISSION))
   }
 }
 

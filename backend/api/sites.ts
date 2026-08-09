@@ -36,7 +36,7 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['read:sites', 'read:dashboard']
+        permissions: ['read:sites', 'access:admin']
       },
       schema: {
         summary: 'List all sites',

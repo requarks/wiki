@@ -29,6 +29,7 @@
           icon="la:times"
           @click="close" />
         <w-btn
+          v-if="canManage"
           push
           color="positive"
           text-color="white"
@@ -350,6 +351,7 @@
                       flat
                       icon="la:arrow-circle-right"
                       color="primary"
+                      v-if="canManage"
                       @click="changePassword"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
@@ -422,6 +424,7 @@
                       flat
                       icon="la:arrow-circle-right"
                       color="primary"
+                      v-if="canManage"
                       @click="invalidateTFA"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
@@ -472,6 +475,7 @@
                         flat
                         icon="la:times"
                         color="accent"
+                        v-if="canManage"
                         @click="unassignGroup(grp.id)"
                         :aria-label="t(`admin.users.unassignGroup`)">
                         <w-tooltip anchor="center left" self="center right">{{
@@ -507,6 +511,7 @@
                       icon="la:plus"
                       :label="t(`admin.users.assignGroup`)"
                       color="primary"
+                      v-if="canManage"
                       @click="assignGroup" />
                   </w-item-section>
                 </w-item>
@@ -564,6 +569,7 @@
                       flat
                       icon="la:arrow-circle-right"
                       color="primary"
+                      v-if="canManage"
                       @click="sendWelcomeEmail"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
@@ -594,6 +600,7 @@
                       flat
                       icon="la:arrow-circle-right"
                       color="primary"
+                      v-if="canManage"
                       @click="toggleVerified"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
@@ -620,6 +627,7 @@
                       flat
                       icon="la:arrow-circle-right"
                       color="primary"
+                      v-if="canManage"
                       @click="toggleBan"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
@@ -638,6 +646,7 @@
                       flat
                       icon="la:arrow-circle-right"
                       color="negative"
+                      v-if="canManage"
                       @click="deleteUser"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
@@ -664,6 +673,8 @@ import { notify } from '@/composables/notify'
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
 import { useUserStore } from '@/stores/user'
+
+import { apiErrorMessage } from '@/helpers/apiError'
 
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
 import UtilCodeEditor from './UtilCodeEditor.vue'
@@ -714,6 +725,13 @@ const sections = [
 const timezones = Intl.supportedValuesOf('timeZone')
 
 // COMPUTED
+
+/*
+  `read:users` opens this overlay read-only: every write below needs `manage:users` (see
+  `api/users.ts`), so the actions that perform one are hidden rather than left to fail at the API.
+  The fields stay as they are -- without Save there is nowhere for a typed change to go.
+*/
+const canManage = computed(() => userStore.can('manage:users'))
 
 const metadata = computed({
   get() {
@@ -869,9 +887,10 @@ async function save(patch, { silent, keepOpen } = { silent: false, keepOpen: fal
       close()
     }
   } catch (err) {
+    // -> ky throws above 400 with the reason in the body, which is where the server explains itself
     notify({
       type: 'negative',
-      message: err.message
+      message: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   loading.hide()

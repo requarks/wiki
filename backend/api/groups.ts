@@ -1,6 +1,35 @@
 import { CustomError } from '../helpers/common.ts'
-import type { FastifyInstance } from 'fastify'
-import type { GroupPatch, GroupRule } from '../models/groups.ts'
+import { SYSTEM_PERMISSION } from '../models/groups.ts'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { GroupPatch, GroupRule, GroupWithUserCount } from '../models/groups.ts'
+
+/**
+ * Refuse a `manage:groups` holder any change to who is in a group that carries `manage:system`.
+ *
+ * Membership of such a group IS the permission: adding somebody hands them the root of the instance,
+ * and removing somebody takes it away from a real administrator. Deleting the group does both at
+ * once, so it asks the same question.
+ *
+ * @param action What the caller was trying to do, as the message reads it back to them
+ * @returns The refusal to throw, or null when the caller may proceed
+ */
+function systemGroupGuard(
+  req: FastifyRequest,
+  group: GroupWithUserCount,
+  action = 'change who belongs to the group'
+): CustomError | null {
+  if (!group.permissions.includes(SYSTEM_PERMISSION)) {
+    return null
+  }
+  if (WIKI.models.groups.holdsSystemPermission(req)) {
+    return null
+  }
+  return new CustomError(
+    'groupMembershipSystemProtected',
+    `This group has the ${SYSTEM_PERMISSION} permission. Only a user who holds it can ${action}.`,
+    403
+  )
+}
 
 interface GroupUpdateBody {
   name?: string
@@ -271,6 +300,22 @@ async function routes(app: FastifyInstance) {
         }
       }
 
+      /*
+        A `manage:groups` holder may edit a group that carries `manage:system` -- name, rules,
+        redirects, every other permission -- but may not turn that one permission on or off. Granting
+        it is handing over the instance; revoking it is locking the real administrators out.
+      */
+      if (patch.permissions && !WIKI.models.groups.holdsSystemPermission(req)) {
+        const held = group.permissions.includes(SYSTEM_PERMISSION)
+        if (held !== patch.permissions.includes(SYSTEM_PERMISSION)) {
+          throw new CustomError(
+            'groupUpdateSystemPermission',
+            `Only a user who holds the ${SYSTEM_PERMISSION} permission can grant or revoke it. Every other change to this group is allowed.`,
+            403
+          )
+        }
+      }
+
       // -> Rule IDs must be unique within the group, as they address the rule client-side
       if (patch.rules) {
         const ruleIds = patch.rules.map((r) => r.id)
@@ -330,6 +375,12 @@ async function routes(app: FastifyInstance) {
       }
       if (group.isSystem) {
         return reply.conflict('Cannot delete a system group.')
+      }
+
+      // -> Deleting the group removes every member from it, so it is the membership guard's question
+      const systemGroupRefusal = systemGroupGuard(req, group, 'delete the group')
+      if (systemGroupRefusal) {
+        throw systemGroupRefusal
       }
 
       try {
@@ -468,6 +519,12 @@ async function routes(app: FastifyInstance) {
       if (!user) {
         return reply.notFound('User does not exist.')
       }
+
+      const systemGroupRefusal = systemGroupGuard(req, group)
+      if (systemGroupRefusal) {
+        throw systemGroupRefusal
+      }
+
       /*
         The guests group and the guest account belong to each other and to nothing else — the group is
         what anonymous visitors hold, and the account is who they are. `guestMembershipViolation` is
@@ -533,6 +590,11 @@ async function routes(app: FastifyInstance) {
       }
       if (!(await WIKI.models.groups.isUserInGroup(group.id, req.params.userId))) {
         return reply.notFound('User is not assigned to this group.')
+      }
+
+      const systemGroupRefusal = systemGroupGuard(req, group)
+      if (systemGroupRefusal) {
+        throw systemGroupRefusal
       }
 
       // -> Removing the guest account from the guests group would strip anonymous visitors of the

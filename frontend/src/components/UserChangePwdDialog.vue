@@ -79,6 +79,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { computed, reactive, ref } from 'vue'
 
 // PROPS
@@ -193,9 +194,10 @@ async function save() {
       mustChangePassword: state.userMustChangePassword
     })
   } catch (err) {
+    // -> ky throws above 400 with the reason in the body, which is where the server explains itself
     notify({
       type: 'negative',
-      message: err.message
+      message: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   state.isLoading = false

@@ -97,6 +97,20 @@ class Jobs {
   }
 
   /**
+   * How many jobs are running right now, across every instance.
+   *
+   * A job occupies exactly one worker slot from the moment it is claimed — `core/scheduler.ts`
+   * moves it into the history as `active` and bumps `activeWorkers` in the same step — so this is
+   * the cluster-wide equivalent of that per-instance counter.
+   *
+   * An instance that dies mid-job leaves its row saying `active` until `reapStaleJobs` picks it up,
+   * which counts here in the meantime, exactly as it still shows under the scheduler's active tab.
+   */
+  async countActive(): Promise<number> {
+    return WIKI.db.$count(jobHistoryTable, eq(jobHistoryTable.state, 'active'))
+  }
+
+  /**
    * The cron schedule: which tasks run automatically and how often
    */
   async getSchedule() {

@@ -52,6 +52,29 @@ export function whoAmI(req: FastifyRequest): Record<string, any> {
 }
 
 /**
+ * Refuse a `manage:users` holder any change to a user who is protected by `manage:system`.
+ *
+ * `manage:users` is deliberately short of the root: an administrator who can rename, re-group, reset
+ * the password of, or delete a `manage:system` account can take the instance over through it. Only
+ * somebody who already holds `manage:system` may touch one.
+ *
+ * @returns The refusal to throw, or null when the caller may proceed
+ */
+async function systemUserGuard(req: FastifyRequest, userId: string): Promise<CustomError | null> {
+  if (WIKI.models.groups.holdsSystemPermission(req)) {
+    return null
+  }
+  if (!(await WIKI.models.groups.userHoldsSystemPermission(userId))) {
+    return null
+  }
+  return new CustomError(
+    'userSystemProtected',
+    'This user belongs to a group with the manage:system permission. Only a user who holds manage:system can modify them.',
+    403
+  )
+}
+
+/**
  * Whether self-service profile editing is enabled on the site being browsed.
  *
  * It is a per-site feature: an instance whose user data comes from an external identity provider turns
@@ -1416,6 +1439,11 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('User does not exist.')
       }
 
+      const systemUserRefusal = await systemUserGuard(req, user.id)
+      if (systemUserRefusal) {
+        throw systemUserRefusal
+      }
+
       // -> Collect only the fields actually provided
       const patch: UserPatch = {}
       for (const key of ['name', 'email', 'isActive', 'isVerified', 'meta', 'prefs'] as const) {
@@ -1454,6 +1482,24 @@ async function routes(app: FastifyInstance) {
             current.length === requested.length && current.every((id) => requested.includes(id))
           if (!unchanged) {
             return reply.conflict('Cannot change the group membership of a system user.')
+          }
+        }
+
+        /*
+          Handing somebody `manage:system` by putting them in a group that carries it. Only ADDING is
+          checked: a user already in such a group is protected by `systemUserGuard` above, which has
+          refused this request before it gets here.
+        */
+        if (!WIKI.models.groups.holdsSystemPermission(req)) {
+          const current = await WIKI.models.users.getUserGroupIds(req.params.userId)
+          const systemGroupIds = await WIKI.models.groups.systemGroupIds()
+          const added = req.body.groups.filter((id) => !current.includes(id))
+          if (added.some((id) => systemGroupIds.includes(id))) {
+            throw new CustomError(
+              'groupMembershipSystemProtected',
+              'Only a user who holds the manage:system permission can add a user to a group that has it.',
+              403
+            )
           }
         }
 
@@ -1548,6 +1594,11 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      const systemUserRefusal = await systemUserGuard(req, req.params.userId)
+      if (systemUserRefusal) {
+        throw systemUserRefusal
+      }
+
       const updated = await WIKI.models.users.setUserPassword({
         id: req.params.userId,
         newPassword: req.body.newPassword,
@@ -1596,6 +1647,12 @@ async function routes(app: FastifyInstance) {
       if (!user) {
         return reply.notFound('User does not exist.')
       }
+
+      const systemUserRefusal = await systemUserGuard(req, user.id)
+      if (systemUserRefusal) {
+        throw systemUserRefusal
+      }
+
       // -> The guest account is the only system user, and anonymous access is resolved through it
       if (user.isSystem) {
         return reply.conflict('Cannot delete a system user.')

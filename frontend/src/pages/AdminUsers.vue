@@ -41,6 +41,7 @@
         </w-btn>
         <w-btn
           class="mr-2"
+          v-if="canManage"
           icon="la:user-cog"
           unelevated
           color="secondary"
@@ -49,6 +50,7 @@
           <user-defaults-menu />
         </w-btn>
         <w-btn
+          v-if="canManage"
           unelevated
           icon="la:plus"
           :label="t(`admin.users.create`)"
@@ -110,9 +112,9 @@
                   v-if="!props.row.isSystem"
                   flat
                   :to="`/_admin/users/` + props.row.id"
-                  icon="la:pen"
+                  :icon="canManage ? `la:pen` : `la:eye`"
                   :color="dark.isActive ? `indigo-4` : `indigo`"
-                  :label="t(`common.actions.edit`)"
+                  :label="canManage ? t(`common.actions.edit`) : t(`common.actions.view`)"
                   no-caps />
                 <!--
                   Disabled rather than hidden for your own account: the row is yours and the action
@@ -121,7 +123,7 @@
                 -->
                 <w-btn
                   class="acrylic-btn"
-                  v-if="!props.row.isSystem"
+                  v-if="!props.row.isSystem && canManage"
                   flat
                   icon="la:trash"
                   color="negative"
@@ -151,7 +153,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useDark } from '@/composables/dark'
@@ -195,6 +197,14 @@ const { t } = useI18n()
 useMeta({
   title: t('admin.users.title')
 })
+
+// COMPUTED
+
+/*
+  `read:users` reaches this page too (see the nav in `AdminLayout`), and everything that writes needs
+  `manage:users` -- so the controls behind it are hidden rather than left to fail at the API.
+*/
+const canManage = computed(() => userStore.can('manage:users'))
 
 // DATA
 

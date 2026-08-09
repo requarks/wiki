@@ -33,6 +33,7 @@
           :label="t(`common.actions.save`)"
           icon="la:check"
           :loading="state.isLoading"
+          v-if="canManage"
           @click="save" />
       </w-btn-group>
     </w-header>
@@ -205,10 +206,17 @@
             flat
             color="indigo"
             icon="la:file-import"
+            v-if="canManage"
             @click="importRules">
             <w-tooltip>{{ t('admin.groups.importRules') }}</w-tooltip>
           </w-btn>
-          <w-btn unelevated color="primary" icon="la:plus" label="New Rule" @click="newRule" />
+          <w-btn
+            v-if="canManage"
+            unelevated
+            color="primary"
+            icon="la:plus"
+            label="New Rule"
+            @click="newRule" />
         </w-toolbar>
         <w-separator />
         <div class="p-4">
@@ -298,6 +306,7 @@
                       color="negative"
                       padding="sm sm"
                       size="md"
+                      v-if="canManage"
                       @click="deleteRule(rule.id)" />
                   </w-card-section>
                   <w-card-section horizontal>
@@ -439,7 +448,7 @@
                 <template v-for="(perm, idx) of permissions" :key="perm.permission">
                   <w-item tag="label">
                     <w-item-section class="items-center" style="flex: 0 0 40px">
-                      <w-icon name="la:comments" color="primary" size="sm" />
+                      <w-icon name="la:snowflake" color="primary" size="sm" />
                     </w-item-section>
                     <w-item-section>
                       <w-item-label>{{ perm.permission }}</w-item-label>
@@ -452,6 +461,7 @@
                         color="primary"
                         checked-icon="la:check"
                         unchecked-icon="la:times"
+                        :disable="isSystemPermissionLocked(perm.permission)"
                         :aria-label="t(`admin.general.allowComments`)" />
                     </w-item-section>
                   </w-item>
@@ -497,6 +507,7 @@
             icon="la:user-plus"
             :label="t(`admin.groups.assignUser`)"
             color="primary"
+            v-if="canManage"
             @click="assignUser" />
         </w-toolbar>
         <w-separator />
@@ -565,7 +576,7 @@
                   <!-- refuses to change it either way -->
                   <w-btn
                     class="acrylic-btn"
-                    v-if="!props.row.isSystem"
+                    v-if="!props.row.isSystem && canManage"
                     flat
                     icon="la:user-minus"
                     color="accent"
@@ -604,6 +615,7 @@ import { notify } from '@/composables/notify'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import { v4 as uuid } from 'uuid'
 import { fileOpen, fileSave } from 'browser-fs-access'
@@ -618,6 +630,7 @@ const dark = useDark()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -708,8 +721,22 @@ const permissions = [
     disabled: false
   },
   {
+    permission: 'read:users',
+    hint: 'Can view users, but not create or modify them.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
     permission: 'manage:users',
-    hint: 'Can create / manage users (but not users with administrative permissions)',
+    hint: 'Can create / manage users (but not users with manage:system permissions)',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'read:groups',
+    hint: 'Can view groups and their permissions, but not create or modify them.',
     warning: false,
     restrictedForSystem: true,
     disabled: false
@@ -893,6 +920,23 @@ const groupNameValidation = [(val) => /^[^<>"]+$/.test(val) || t('admin.groups.n
 
 // COMPUTED
 
+/*
+  `read:groups` opens this overlay read-only: saving a group, and assigning a user to one, need
+  `manage:groups` / `write:groups` (see `api/groups.ts`), so the actions that perform one are hidden
+  rather than left to fail at the API. Exporting rules stays -- it only reads what is on screen.
+*/
+const canManage = computed(() => userStore.can('manage:groups'))
+
+/*
+  `manage:system` is the one permission a `manage:groups` holder may not move: granting it hands over
+  the instance, revoking it locks the real administrators out. `api/groups.ts` refuses the change
+  either way, so the toggle is held rather than left to fail on save -- every OTHER permission on such
+  a group stays editable, which is why this is per-permission and not a read-only group.
+*/
+function isSystemPermissionLocked(permission) {
+  return permission === 'manage:system' && !userStore.can('manage:system')
+}
+
 const usersTotalPages = computed(() => {
   if (state.usersTotal < 1) {
     return 0
@@ -1049,9 +1093,10 @@ async function save() {
       message: t('admin.groups.saveSuccess')
     })
   } catch (err) {
+    // -> ky throws above 400 with the reason in the body, which is where the server explains itself
     notify({
       type: 'negative',
-      message: err.message
+      message: apiErrorMessage(err, 'An unexpected error occured.')
     })
   }
   state.isLoading = false

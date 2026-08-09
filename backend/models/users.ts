@@ -1360,7 +1360,15 @@ class Users {
     )
 
     // -> Only once the login has actually succeeded: an attempt stopped by 2FA or a forced password
-    //    change is not a login yet
+    //    change is not a login yet.
+    //    Every login path -- local, provider, passkey, and the 2FA / password-change continuations --
+    //    ends up here, so this is the one place the stamp belongs. `updatedAt` is deliberately left
+    //    alone: signing in is not an edit of the account.
+    await WIKI.db
+      .update(usersTable)
+      .set({ lastLoginAt: sql`now()` })
+      .where(eq(usersTable.id, user.id))
+
     await WIKI.models.hooks.emit('user:login', {
       userId: user.id,
       strategyId,

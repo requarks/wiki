@@ -40,6 +40,7 @@
           <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
         </w-btn>
         <w-btn
+          v-if="canManage"
           unelevated
           icon="la:plus"
           :label="t(`admin.groups.create`)"
@@ -88,12 +89,13 @@
                   class="acrylic-btn mr-2"
                   flat
                   :to="`/_admin/groups/` + props.row.id"
-                  icon="la:pen"
+                  :icon="canManage ? `la:pen` : `la:eye`"
                   :color="dark.isActive ? `indigo-4` : `indigo`"
-                  :label="t(`common.actions.edit`)"
+                  :label="canManage ? t(`common.actions.edit`) : t(`common.actions.view`)"
                   no-caps />
                 <w-btn
                   class="acrylic-btn"
+                  v-if="canManage"
                   flat
                   icon="la:trash"
                   :color="props.row.isSystem ? `grey` : `negative`"
@@ -110,7 +112,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onBeforeUnmount, onMounted, reactive, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useDark } from '@/composables/dark'
@@ -121,6 +123,7 @@ import { dialog } from '@/composables/dialog'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import GroupCreateDialog from '../components/GroupCreateDialog.vue'
 import GroupDeleteDialog from '../components/GroupDeleteDialog.vue'
@@ -133,6 +136,7 @@ const dark = useDark()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -148,6 +152,14 @@ const { t } = useI18n()
 useMeta({
   title: t('admin.groups.title')
 })
+
+// COMPUTED
+
+/*
+  `read:groups` reaches this page too (see the nav in `AdminLayout`), and everything that writes needs
+  `manage:groups` -- so the controls behind it are hidden rather than left to fail at the API.
+*/
+const canManage = computed(() => userStore.can('manage:groups'))
 
 // DATA
 
