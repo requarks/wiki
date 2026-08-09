@@ -40,6 +40,7 @@ export const EMITTED_EVENTS: HookEvent[] = [
   'page:rename',
   'page:delete',
   'asset:upload',
+  'asset:edit',
   'asset:rename',
   'asset:delete',
   'user:join',

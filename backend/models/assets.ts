@@ -44,6 +44,24 @@ export const INLINE_EXTS = new Set(['png', 'apng', 'jpg', 'jpeg', 'gif', 'bmp', 
 /** What an asset is, for the sake of grouping and filtering. Mirrors the `assetKind` schema enum. */
 export type AssetKind = 'document' | 'image' | 'other'
 
+/**
+ * What an upload does about a file already sitting at the name it wants, per the site's
+ * `uploads.conflictBehavior` setting.
+ *
+ * - `overwrite` replaces the file where it is: same ID, same path, so every page pointing at it now
+ *   shows the new contents. This is the default, and the one that makes re-uploading a corrected file
+ *   do what the uploader meant.
+ * - `reject` refuses the upload and says what is in the way, for a wiki where a file's contents are
+ *   expected to be stable once published.
+ * - `new` keeps both, the arrival taking the next free `name-1.ext`.
+ *
+ * Whichever is chosen, only an *asset* can be replaced: a page or a folder already holding the name
+ * is reported rather than written over.
+ */
+export type UploadConflictBehavior = 'overwrite' | 'reject' | 'new'
+
+const UPLOAD_CONFLICT_BEHAVIORS = new Set<UploadConflictBehavior>(['overwrite', 'reject', 'new'])
+
 /** Extensions that count as a document rather than "other". */
 const DOCUMENT_EXTS = new Set([
   'csv',
@@ -93,6 +111,9 @@ export interface AssetAtPath extends Asset {
  * Any directory part is dropped — the folder comes from the request, never from the name — and what
  * is left is lowercased down to the characters that survive a URL untouched, which is the same bar
  * folder path names are held to.
+ *
+ * Applied to every upload, with nothing to turn it off: a stored name is a URL, and a path is looked
+ * up lowercased, so a name that skipped this would be one the site could not serve back.
  */
 export function sanitizeFileName(input: string): string {
   const base = path.basename(input.trim().replaceAll('\\', '/'))
@@ -166,7 +187,22 @@ class Assets {
   sweeping = false
 
   /**
+   * What this site does about an upload landing on a name that is taken.
+   *
+   * Read per upload rather than held anywhere, so that changing it in the admin area applies to the
+   * next file rather than to the next restart. Anything unrecognized is treated as the default.
+   */
+  conflictBehaviorFor(siteId: string): UploadConflictBehavior {
+    const configured = WIKI.sites[siteId]?.config?.uploads?.conflictBehavior
+    return UPLOAD_CONFLICT_BEHAVIORS.has(configured) ? configured : 'overwrite'
+  }
+
+  /**
    * Store an uploaded file.
+   *
+   * A file already at this name is settled per the site's conflict behavior — see
+   * `UploadConflictBehavior`. An overwrite returns the existing asset's ID, so a caller that means to
+   * link to what it just uploaded must read the returned name and ID rather than assume its own.
    *
    * @param folderId UUID of the folder to upload into. The site root when absent.
    * @param fileName What to call it. Sanitized, so what comes back may differ from what went in.
@@ -203,6 +239,50 @@ class Assets {
       kind === 'image'
         ? await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height)
         : null
+
+    // -> What is already at this name, if anything, and what the site says to do about it. Asked
+    //    before any row is touched, since two of the three answers write nothing new at all.
+    const behavior = this.conflictBehaviorFor(siteId)
+    const occupant =
+      behavior === 'new'
+        ? null
+        : await WIKI.models.tree.getEntryAt({
+            siteId,
+            locale,
+            parentId: folderId,
+            fileName: safeName
+          })
+    if (occupant) {
+      if (occupant.type !== 'asset') {
+        // -> Neither replacing nor renaming is what an administrator asked for here: a page or a
+        //    folder owns this name, and only its owner can give it up
+        throw new CustomError(
+          'assetNameTakenByEntry',
+          `A ${occupant.type} with this name already exists here.`,
+          409
+        )
+      }
+      if (behavior === 'reject') {
+        throw new CustomError(
+          'assetAlreadyExists',
+          'A file with this name already exists here.',
+          409
+        )
+      }
+      return this.replace({
+        id: occupant.id,
+        siteId,
+        folderPath: decodeTreePath(occupant.folderPath ?? '') ?? '',
+        fileName: occupant.fileName,
+        title: occupant.title,
+        fileExt,
+        kind,
+        mimeType: resolvedMime,
+        data,
+        preview,
+        authorId
+      })
+    }
 
     // -> The tree row goes in first: it owns the name, and it is what settles a collision with
     //    something already in the folder before any bytes are written. What comes back is the name
@@ -262,6 +342,98 @@ class Assets {
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt
     }
+  }
+
+  /**
+   * Replace an existing asset's contents in place, for an upload that landed on it under the
+   * `overwrite` conflict behavior.
+   *
+   * The asset keeps its ID, its name and its place in the tree, so every page and every link already
+   * pointing at the file goes on working and now resolves to the new bytes. What changes is what the
+   * file *is* — its contents, size, type and thumbnail — plus who put them there.
+   *
+   * The name it keeps is the stored one, which is why the extension and type are the incoming file's:
+   * the two only differ when a browser sent `Photo.PNG` for what is stored as `photo.png`, and the
+   * sanitized name is what both agree on.
+   */
+  private async replace({
+    id,
+    siteId,
+    folderPath,
+    fileName,
+    title,
+    fileExt,
+    kind,
+    mimeType,
+    data,
+    preview,
+    authorId
+  }: {
+    id: string
+    siteId: string
+    folderPath: string
+    fileName: string
+    title: string
+    fileExt: string
+    kind: AssetKind
+    mimeType: string
+    data: Buffer
+    preview: Buffer | null
+    authorId: string
+  }): Promise<Asset> {
+    await WIKI.db
+      .update(assetsTable)
+      .set({
+        fileExt,
+        kind,
+        mimeType,
+        fileSize: data.length,
+        data,
+        preview,
+        authorId,
+        updatedAt: sql`now()`
+      })
+      .where(eq(assetsTable.id, id))
+    // -> The tree carries its own copy of these, and it is what a folder listing reads
+    await WIKI.db
+      .update(treeTable)
+      .set({ meta: { fileSize: data.length, fileExt, mimeType }, updatedAt: sql`now()` })
+      .where(eq(treeTable.id, id))
+
+    // -> The path resolves to the same asset as before, but to different metadata: the ETag is the
+    //    modification time, so a reader holding the old file has to be told to fetch it again. The
+    //    cached bytes are keyed by that same time and are unreachable from here on, but are dropped
+    //    rather than left for the sweep, since the file they hold is gone for good.
+    this.forgetPath(siteId, folderPath, fileName)
+    await this.dropCachedContent([id])
+
+    WIKI.models.hooks.emit('asset:edit', {
+      id,
+      fileName,
+      folderPath,
+      siteId,
+      authorId,
+      metadata: { fileSize: data.length, mimeType, kind }
+    })
+
+    const updated = await this.getAsset(siteId, id)
+    // -> Only if the row vanished between the update and the read, which means someone deleted the
+    //    file mid-upload. Answering with what was written beats failing a request that did land.
+    return (
+      updated ?? {
+        id,
+        fileName,
+        fileExt,
+        kind,
+        mimeType,
+        fileSize: data.length,
+        folderPath,
+        title,
+        hasPreview: Boolean(preview),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    )
   }
 
   /**

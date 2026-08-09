@@ -299,7 +299,26 @@
                   v-model="state.current.target"
                   dense
                   hide-bottom-space
-                  :aria-label="t(`navEdit.target`)" />
+                  :aria-label="t(`navEdit.target`)">
+                  <template #append>
+                    <!--
+                      Beside the field rather than in place of it: a path someone knows is quicker
+                      typed than browsed to, and an external URL has nothing to browse. Same shape as
+                      the icon picker's button one row up, for the same reason -- both open a chooser
+                      for the field they sit in.
+                    -->
+                    <w-btn
+                      flat
+                      dense
+                      round
+                      icon="la:folder-open"
+                      color="primary"
+                      :aria-label="t(`common.actions.browse`)"
+                      @click="browseTarget">
+                      <w-tooltip>{{ t('common.actions.browse') }}</w-tooltip>
+                    </w-btn>
+                  </template>
+                </w-input>
               </w-item-section>
             </w-item>
             <w-separator class="my-2" inset />
@@ -442,8 +461,9 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
+import { dialog } from '@/composables/dialog'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 
@@ -531,6 +551,30 @@ const barStyle = {
 function setItem(item) {
   state.selected = item.id
   state.current = item
+}
+
+/**
+ * Picks the link's target: a page of this wiki, or any URL.
+ *
+ * The same dialog the markdown editor's Insert Link opens, with both of its tabs — a navigation link
+ * goes to either, and which one it is is the reader's question rather than this panel's. It opens on
+ * whatever the field already holds, so coming back to a link that exists starts from that link.
+ *
+ * Its "open in a new tab" offer is turned off: this panel asks that one row down and stores the
+ * answer, so a second control for it could only disagree with the toggle that is actually saved.
+ */
+function browseTarget() {
+  dialog({
+    component: defineAsyncComponent(() => import('./LinkPickerDialog.vue')),
+    componentProps: {
+      title: t('navEdit.target'),
+      okLabel: t('common.actions.select'),
+      initialHref: state.current.target,
+      newTabOption: false
+    }
+  }).onOk(({ href }) => {
+    state.current.target = href
+  })
 }
 
 function addItem(type) {

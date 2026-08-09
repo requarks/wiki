@@ -115,6 +115,16 @@ export const usePageStore = defineStore('page', {
     },
     isHome: (state) => {
       return ['', 'home'].includes(state.path)
+    },
+    /**
+     * Where to send someone who is leaving the editor on this page.
+     *
+     * Its own path, except for a redirection, which is held on arrival: whoever just wrote down where
+     * this page sends people is the one person who does not want to be sent there. `?redirect=no` is
+     * what holds it — see `PageRedirect.vue` — and the screen it lands on offers to follow it.
+     */
+    editorExitPath: (state) => {
+      return `/${state.path}${state.editor === 'redirect' ? '?redirect=no' : ''}`
     }
   },
   actions: {
@@ -381,6 +391,12 @@ export const usePageStore = defineStore('page', {
         id: 0,
         locale: locale || this.locale,
         path: newPath,
+        /*
+          The editor is a field of the page being written, not just of the editor holding it: anything
+          asking what KIND of page is on screen reads it here. Left unset, the store kept the last
+          page's answer -- so opening a new page from a redirection said it was one too.
+        */
+        editor,
         title: title ?? '',
         description: description ?? '',
         icon: DEFAULT_PAGE_ICON,
@@ -393,7 +409,13 @@ export const usePageStore = defineStore('page', {
         contentLoaded: true,
         render: '',
         isBrowsable: true,
-        isSearchable: true,
+        /*
+          A redirection is browsable like any other page and findable in none: a search result for one
+          would stand in front of the page the reader actually wanted. The server settles this either
+          way -- see `createPage` in `models/pages.ts` -- so this is the store agreeing with it rather
+          than deciding it.
+        */
+        isSearchable: editor !== 'redirect',
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
         mode: 'edit'
@@ -689,7 +711,13 @@ export const usePageStore = defineStore('page', {
 
         if (editorStore.mode === 'create') {
           editorStore.$patch({ mode: 'edit' })
-          this.router.replace(`/${this.path}`)
+          /*
+            Awaited, because the caller closes the editor the moment this resolves. An unawaited
+            navigation leaves one render of the page view at the route the EDITOR was on -- which for
+            a redirection is a page that reads its own query to decide whether to follow itself, sees
+            the editor's route, and takes its author to the target they just typed in.
+          */
+          await this.router.replace(this.editorExitPath)
         }
 
         // Update editor state timestamps
@@ -707,7 +735,8 @@ export const usePageStore = defineStore('page', {
     async cancelPageEdit() {
       const editorStore = useEditorStore()
       await this.pageLoad({ id: editorStore.originPageId ? editorStore.originPageId : this.id })
-      this.router.replace(`/${this.path}`)
+      // -> Awaited for the same reason as in `pageSave`: the editor closes when this resolves
+      await this.router.replace(this.editorExitPath)
     },
     generateToc() {}
   }

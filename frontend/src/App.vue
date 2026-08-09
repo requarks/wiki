@@ -13,6 +13,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { setCssVar } from '@/helpers/cssVars'
+import { stripPageExtension } from '@/helpers/pagePaths'
 import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
 
@@ -227,6 +228,21 @@ router.beforeEach(async (to, from) => {
   */
   if (!siteStore.id || !flagsStore.loaded || !userStore.profileLoaded) {
     await loadBootstrap()
+  }
+
+  /*
+    -> Page extensions
+    A path ending in one of the extensions the site's content is written in addresses the page
+    underneath it, so `/foo/bar.md` is `/foo/bar`. The server redirects a request that reaches it, but
+    a link inside a page is followed by the router alone -- which is what this is for. Below the
+    bootstrap above, since that is where the site's extensions come from. A `/_` route is the app
+    itself rather than a page, and is left alone as it is by the server.
+  */
+  const withoutExtension = to.path.startsWith('/_')
+    ? null
+    : stripPageExtension(to.path, siteStore.pageExtensions)
+  if (withoutExtension) {
+    return { path: withoutExtension, query: to.query, hash: to.hash, replace: true }
   }
 
   // -> Locale

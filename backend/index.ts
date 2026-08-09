@@ -34,9 +34,29 @@ import configSvc from './core/config.ts'
 import dbManager from './core/db.ts'
 import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
+import { stripPageExtension } from './helpers/common.ts'
 import { corsOrigin, parseCspDirectives } from './helpers/security.ts'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
+
+/**
+ * Files a browser or a crawler asks for at the root by convention, rather than because the wiki has a
+ * page there. Kept out of the page URL rules below — `txt` is a page extension on a default site, and
+ * answering `/robots.txt` with a redirect to `/robots` would be answering the wrong question.
+ */
+const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
+
+/**
+ * Whether a URL addresses the page tree rather than the server itself.
+ *
+ * Everything the server mounts sits under a leading-underscore segment — `/_api`, `/_assets`,
+ * `/_files`, and the rest registered in `initHTTPServer` — which is what makes the distinction a
+ * prefix test rather than a list to keep in step with the routes.
+ */
+function isPageUrl(urlPath: string): boolean {
+  const firstSegment = urlPath.split('/')[1] ?? ''
+  return !firstSegment.startsWith('_') && !RESERVED_ROOT_FILES.has(firstSegment.toLowerCase())
+}
 
 if (!semver.satisfies(process.version, '>=26')) {
   console.error('ERROR: Node.js 26.x or later required!')
@@ -545,11 +565,34 @@ async function initHTTPServer() {
 
   app.addHook('onRequest', (req, reply, done) => {
     const [urlPath, urlQuery] = req.raw.url!.split('?')
-    if (urlPath!.length > 1 && urlPath!.endsWith('/')) {
-      const newPath = urlPath!.slice(0, -1)
-      reply.redirect(urlQuery ? `${newPath}?${urlQuery}` : newPath, 301)
+    const withQuery = (newPath: string) => (urlQuery ? `${newPath}?${urlQuery}` : newPath)
+
+    const trimmed = urlPath!.length > 1 && urlPath!.endsWith('/') ? urlPath!.slice(0, -1) : urlPath!
+
+    if (isPageUrl(trimmed)) {
+      // -> Straight off the site caches rather than through the model: this runs on every request, and
+      //    both lookups are the ones `getSiteByHostname` would do, minus its optional reload
+      const siteId = WIKI.sitesMappings[req.hostname] || WIKI.sitesMappings['*']
+      const withoutExtension = stripPageExtension(
+        trimmed,
+        WIKI.sites[siteId]?.config?.pageExtensions
+      )
+      if (withoutExtension) {
+        // -> Answers a trailing slash as well, rather than sending the client back for a second
+        //    round trip to be told about the extension.
+        //
+        //    Not a 301: which extensions resolve this way is a setting, and a browser that cached a
+        //    permanent redirect would go on applying it after an administrator had changed it
+        reply.redirect(withQuery(withoutExtension), 302)
+        return
+      }
+    }
+
+    if (trimmed !== urlPath) {
+      reply.redirect(withQuery(trimmed), 301)
       return
     }
+
     done()
   })
 

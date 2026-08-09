@@ -2,7 +2,7 @@ import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
 import { SEARCH_ORDER_BY, type SearchOrderBy } from '../models/search.ts'
-import { generatePathHash } from '../helpers/common.ts'
+import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
@@ -386,8 +386,9 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const actor = actorFrom(req)
-      // -> The stored path: no wrapping slashes, lowercase, and the site root is the `home` page
-      const path = req.query.path.trim().replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase()
+      // -> The stored form of whatever the including page wrote, since that is what it is looked up
+      //    by. The site root is the `home` page.
+      const path = normalizePagePath(req.query.path)
       const page = await WIKI.models.pages.getPage({
         siteId: req.params.siteId,
         hash: generatePathHash(path || 'home'),

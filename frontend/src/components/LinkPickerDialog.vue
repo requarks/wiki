@@ -340,6 +340,12 @@ function selectItem(item) {
 function submit() {
   onDialogOK({
     href: href.value,
+    /*
+      Which tab answered, so a caller that stores the two kinds differently does not have to work it
+      out from the string afterwards. It cannot be worked out reliably: `/help` is a page of this wiki
+      and a perfectly good relative URL elsewhere. This is the choice somebody made.
+    */
+    kind: state.currentTab,
     // -> Only ever true for a URL: a page of this wiki opens in the tab the reader is already in
     openInNewTab: state.currentTab === 'url' && props.newTabOption && state.openInNewTab,
     title: state.currentTab === 'page' ? state.pageTitle : ''

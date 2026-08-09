@@ -29,11 +29,13 @@
           <blueprint-icon icon="api" />
           <w-item-section class="pr-2">New API Documentation</w-item-section>
         </w-item>
-        <w-item clickable @click="create(`redirect`)">
-          <blueprint-icon icon="advance" />
-          <w-item-section class="pr-2">New Redirection</w-item-section>
-        </w-item>
       </template>
+      <!-- -> Not an editor the site can turn off, because it authors nothing: a redirection is a page
+              with a target instead of a body -->
+      <w-item clickable @click="create(`redirect`)">
+        <blueprint-icon icon="advance" />
+        <w-item-section class="pr-2">New Redirection</w-item-section>
+      </w-item>
       <template v-if="props.hideAssetBtn === false">
         <w-separator class="my-2" inset />
         <w-item clickable @click="openFileManager">
@@ -83,7 +85,6 @@ const props = defineProps({
 
 const emit = defineEmits(['newFolder', 'newPage'])
 
-
 // STORES
 
 const editorStore = useEditorStore()
@@ -97,18 +98,18 @@ const { t } = useI18n()
 
 // METHODS
 
-async function create (editor) {
+async function create(editor) {
   loading.show()
   emit('newPage')
   await pageStore.pageCreate({ editor, basePath: props.basePath })
   loading.hide()
 }
 
-function openFileManager () {
+function openFileManager() {
   siteStore.openFileManager()
 }
 
-function newFolder () {
+function newFolder() {
   emit('newFolder')
 }
 </script>

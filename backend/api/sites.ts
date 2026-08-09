@@ -1,6 +1,12 @@
 import { validate as uuidValidate } from 'uuid'
 import { CustomError } from '../helpers/common.ts'
+import { detectImageMime, detectSvg, imageMimeTypes, svgMimeType } from '../helpers/images.ts'
+import { siteAssetKinds } from '../models/sites.ts'
+import type { SiteAssetKind } from '../models/sites.ts'
 import type { FastifyInstance } from 'fastify'
+
+/** How large one of a site's own images may be uploaded, before it is re-encoded. */
+const imageUploadLimit = 10 * 1024 * 1024
 
 /**
  * Site properties stored in the `config` JSONB column rather than as their own table column.
@@ -13,7 +19,6 @@ const SITE_CONFIG_KEYS = [
   'contentLicense',
   'footerExtra',
   'pageExtensions',
-  'pageCasing',
   'logoText',
   'sitemap',
   'discoverable',
@@ -32,6 +37,17 @@ const SITE_CONFIG_KEYS = [
  * Sites API Routes
  */
 async function routes(app: FastifyInstance) {
+  // -> An image upload is the raw file rather than a multipart form: one file, no fields, and no
+  //    dependency to add. Registered inside this plugin, so every other route keeps rejecting an
+  //    image body outright.
+  app.addContentTypeParser(
+    [...imageMimeTypes, svgMimeType],
+    { parseAs: 'buffer', bodyLimit: imageUploadLimit },
+    (req, body, done) => {
+      done(null, body)
+    }
+  )
+
   app.get(
     '/',
     {
@@ -247,7 +263,6 @@ async function routes(app: FastifyInstance) {
       contentLicense?: string
       footerExtra?: string
       pageExtensions?: string[]
-      pageCasing?: boolean
       logoText?: boolean
       sitemap?: boolean
       discoverable?: boolean
@@ -320,9 +335,6 @@ async function routes(app: FastifyInstance) {
                 type: 'string',
                 pattern: '^[a-z0-9]+$'
               }
-            },
-            pageCasing: {
-              type: 'boolean'
             },
             logoText: {
               type: 'boolean'
@@ -471,6 +483,139 @@ async function routes(app: FastifyInstance) {
       } catch (err: any) {
         WIKI.logger.warn(err)
         return reply.internalServerError()
+      }
+    }
+  )
+
+  /**
+   * UPLOAD SITE IMAGE
+   */
+  app.put<{ Params: { siteId: string; kind: SiteAssetKind } }>(
+    '/:siteId/images/:kind',
+    {
+      config: {
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: "Replace one of a site's images",
+        description: `The body is the raw image, not a multipart form — send the file itself with its \`Content-Type\`. At most ${imageUploadLimit / 1024 / 1024} MB, and it must really be one of the accepted formats: the bytes are checked, not the declared type.\n\nA raster upload is re-encoded to the size and format the image is served at — 512x512 WebP for a logo, 180x180 PNG for a favicon, 1920x1080 WebP for a login background — when the Sharp extension is installed, and stored as uploaded when it is not. An SVG is always stored as uploaded.\n\nServed afterwards from \`/_site/<siteId>/<kind>\`, which falls back to the built-in default until something is uploaded.`,
+        tags: ['Sites'],
+        consumes: [...imageMimeTypes, svgMimeType],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            kind: {
+              type: 'string',
+              description: 'Which of the site images to replace.',
+              enum: [...siteAssetKinds]
+            }
+          },
+          required: ['siteId', 'kind']
+        },
+        response: {
+          200: {
+            description: 'Image uploaded successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (!site) {
+        return reply.notFound('Site does not exist.')
+      }
+
+      const data = req.body
+      if (!Buffer.isBuffer(data) || data.length < 1) {
+        throw new CustomError('siteImageEmpty', 'No image was sent.')
+      }
+      // -> The declared content type got the request this far; what the bytes actually are is what
+      //    decides, since they are what gets stored and served back
+      if (!detectImageMime(data) && !detectSvg(data)) {
+        throw new CustomError(
+          'siteImageInvalidImage',
+          'Not an SVG, PNG, JPEG, WebP or GIF image, whatever the request said it was.'
+        )
+      }
+
+      await WIKI.models.sites.setAsset(req.params.siteId, req.params.kind, data)
+
+      return {
+        ok: true,
+        message: 'Image uploaded successfully.'
+      }
+    }
+  )
+
+  /**
+   * CLEAR SITE IMAGE
+   */
+  app.delete<{ Params: { siteId: string; kind: SiteAssetKind } }>(
+    '/:siteId/images/:kind',
+    {
+      config: {
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: "Remove one of a site's images",
+        description:
+          'Leaves the built-in default to be served in its place again. Succeeds even if there was no image to remove.',
+        tags: ['Sites'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            kind: {
+              type: 'string',
+              description: 'Which of the site images to remove.',
+              enum: [...siteAssetKinds]
+            }
+          },
+          required: ['siteId', 'kind']
+        },
+        response: {
+          200: {
+            description: 'Image cleared successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (!site) {
+        return reply.notFound('Site does not exist.')
+      }
+
+      await WIKI.models.sites.clearAsset(req.params.siteId, req.params.kind)
+
+      return {
+        ok: true,
+        message: 'Image cleared successfully.'
       }
     }
   )

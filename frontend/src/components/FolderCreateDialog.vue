@@ -70,6 +70,7 @@ import slugify from 'slugify'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { normalizePagePath } from '@/helpers/pagePaths'
 
 // PROPS
 
@@ -141,6 +142,8 @@ watch(
 async function create() {
   state.loading++
   try {
+    // -> The name is a segment of every page path under the folder, and is corrected the way one is
+    state.path = normalizePagePath(state.path)
     const isFormValid = await newFolderForm.value.validate(true)
     if (!isFormValid) {
       throw new Error(t('fileman.createFolderInvalidData'))

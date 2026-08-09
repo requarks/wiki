@@ -56,11 +56,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       editor: {
         type: 'string',
         maxLength: 255,
-        description: 'Which editor authored the content, e.g. `markdown`.'
+        description:
+          'Which editor authored the content, e.g. `markdown`. `redirect` is a page with no body at all: it sends its reader elsewhere, is never searchable, and its content is the JSON below rather than a document.'
       },
       content: {
         type: 'string',
-        description: 'The source, in whatever the editor writes.'
+        description:
+          'The source, in whatever the editor writes. For a `redirect` page, `{ "kind": "page" | "url", "target": string, "showInterstitial": boolean }` — a page target is a rooted path within this wiki, a URL target a complete http(s) address.'
       },
       render: {
         type: 'string',
@@ -179,7 +181,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       render: { type: 'string' },
       content: {
         type: 'string',
-        description: 'Only present when the request asked for it.'
+        description:
+          'Only present when the request asked for it — except on a redirection, whose content is where it sends its reader rather than a body, and comes back either way.'
       },
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },

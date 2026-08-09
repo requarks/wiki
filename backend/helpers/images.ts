@@ -11,6 +11,25 @@ export const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/g
 export type ImageMimeType = (typeof imageMimeTypes)[number]
 
 /**
+ * SVG, which is markup rather than an image format and so is handled apart from the raster ones
+ * everywhere: it is recognized by reading it, it cannot be resized or re-encoded, and serving one
+ * back means serving a document a browser will happily execute scripts from.
+ */
+export const svgMimeType = 'image/svg+xml'
+
+/**
+ * Recognize SVG markup.
+ *
+ * There is no magic number to match: an SVG may open with a byte order mark, an XML declaration, a
+ * doctype or comments before the root element ever appears. So the start of the file is read as text
+ * and the root element looked for — enough to tell an SVG from a file claiming to be one, which is
+ * all this decides.
+ */
+export function detectSvg(data: Buffer): boolean {
+  return /<svg[\s>]/i.test(data.subarray(0, 1024).toString('utf8'))
+}
+
+/**
  * Recognize an image from its leading bytes.
  *
  * The declared `Content-Type` of an upload is whatever the client felt like sending, so the stored
@@ -73,6 +92,63 @@ export async function resizeImageToSquareJpeg(data: Buffer, size: number): Promi
     //    from the admin area cannot help this process.
     WIKI.models.extensions.noteLoadFailure(specifier)
     WIKI.logger.warn(`Could not resize an image with Sharp: ${err.message}`)
+    return null
+  }
+}
+
+/** How an uploaded image is brought down to the size and format it will be served at. */
+export type ImageNormalization = {
+  width: number
+  height: number
+  /**
+   * `cover` crops to the target aspect ratio, for an image whose frame is fixed — a favicon, a
+   * background. `inside` fits within the box instead, for one whose own proportions matter, such as
+   * a logo that may be any shape.
+   */
+  fit: 'cover' | 'inside'
+  /** `webp` for anything displayed by the app itself; `png` where the widest support is worth the
+   * bytes, as it is for a favicon. Both keep transparency, which a logo usually depends on. */
+  format: 'webp' | 'png'
+}
+
+/**
+ * Re-encode an image to the given size and format, using the Sharp extension.
+ *
+ * Never enlarges: upscaling a small upload would cost bytes to look worse. So the result is at most
+ * the requested size, and an image already smaller than the box is only re-encoded.
+ *
+ * @returns The re-encoded image, or null if Sharp is not usable on this system
+ */
+export async function normalizeImage(
+  data: Buffer,
+  { width, height, fit, format }: ImageNormalization
+): Promise<Buffer | null> {
+  const definition = WIKI.models.extensions.getDefinition('sharp')
+  if (!definition || !(await WIKI.models.extensions.isInstalled(definition))) {
+    return null
+  }
+  const specifier = 'sharp'
+  // -> Loading Sharp and running it are kept apart, as they are for a thumbnail: the upload may simply
+  //    be an image Sharp cannot read, which must not be recorded as Sharp itself being broken
+  let sharp: any
+  try {
+    ;({ default: sharp } = await import(specifier))
+  } catch (err: any) {
+    WIKI.models.extensions.noteLoadFailure(specifier)
+    WIKI.logger.warn(`Could not load Sharp to re-encode an image: ${err.message}`)
+    return null
+  }
+  try {
+    const resized = sharp(data).resize(width, height, {
+      fit,
+      position: 'centre',
+      withoutEnlargement: true
+    })
+    return await (
+      format === 'png' ? resized.png({ compressionLevel: 9 }) : resized.webp({ quality: 80 })
+    ).toBuffer()
+  } catch (err: any) {
+    WIKI.logger.warn(`Could not re-encode an uploaded image: ${err.message}`)
     return null
   }
 }

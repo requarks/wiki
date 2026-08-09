@@ -97,6 +97,13 @@
             :label="t(`common.newpage.goback`)"
             @click="goBack" />
         </div>
+        <!--
+          A redirection, which is a page with nowhere to read: it takes the reader on rather than
+          showing them anything. Ahead of the article because there is no article -- see
+          `PageRedirect.vue` -- and behind the two screens above because a page that is locked, or
+          that is not there at all, has no target to have been given yet.
+        -->
+        <page-redirect v-else-if="pageStore.editor === `redirect`" />
         <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
           <div class="page-container-body p-4">
             <!--
@@ -297,6 +304,7 @@ import FooterNav from '@/components/FooterNav.vue'
 import LoadingGeneric from '@/components/LoadingGeneric.vue'
 import PageActionsCol from '@/components/PageActionsCol.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageRedirect from '@/components/PageRedirect.vue'
 import PageTags from '@/components/PageTags.vue'
 import PageToc from '@/components/PageToc.vue'
 import PageUnlockDialog from '@/components/PageUnlockDialog.vue'
@@ -305,6 +313,10 @@ import SideDialog from '@/components/SideDialog.vue'
 const editorComponents = {
   markdown: defineAsyncComponent({
     loader: () => import('../components/EditorMarkdown.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  redirect: defineAsyncComponent({
+    loader: () => import('../components/EditorRedirect.vue'),
     loadingComponent: LoadingGeneric
   })
   // wysiwyg: defineAsyncComponent({
@@ -364,7 +376,9 @@ const showSidebar = computed(() => {
     siteStore.theme.tocPosition !== 'off' &&
     !editorStore.isActive &&
     // -> Contents, tags and a rating, all of a page that is not there
-    !pageStore.notFound
+    !pageStore.notFound &&
+    // -> Nor of one nobody stays on: a redirection has no headings to list and is gone in a moment
+    pageStore.editor !== 'redirect'
   )
 })
 /*
@@ -567,8 +581,18 @@ watch(
     try {
       await pageStore.pageLoad({ path: newValue })
       if (editorStore.isActive) {
+        /*
+          Walking away from the editor closes it, and `mode` describes the editor that was open — so
+          it has to go back with it. Left on `create`, it goes on claiming a page is being written
+          long after the reader has moved on to reading one, and everything that asks gets the wrong
+          answer: `pageSave` POSTs a new page instead of patching the one on screen, the header
+          offers Create Page where Save Changes belongs, and Discard throws away a property edit as
+          though it were an abandoned draft — putting the welcome screen over a wiki that has a home
+          page.
+        */
         editorStore.$patch({
-          isActive: false
+          isActive: false,
+          mode: 'edit'
         })
       }
       // -> Load Blocks. `?.` because a locked page draws its lock screen in place of the article, so
@@ -687,9 +711,10 @@ function goBack() {
 
 <style lang="scss">
 /*
-  The column in place of the article: the lock screen, and the page that does not exist. Both are the
-  same shape -- a large faint icon, a sentence, and the one button that does something about it -- and
-  share the styling so they cannot drift apart.
+  The column in place of the article: the lock screen, the page that does not exist, and the
+  redirection on its way somewhere else. All three are the same shape -- a large faint icon, a
+  sentence, and the one button that does something about it -- and share the styling so they cannot
+  drift apart. `PageRedirect.vue` draws its own screens with these classes for that reason.
 */
 .page-placeholder {
   display: flex;

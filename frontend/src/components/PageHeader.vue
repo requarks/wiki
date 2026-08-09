@@ -89,11 +89,14 @@
           to switch TO: its bell and its bell-solid carry an identical body in Iconify, so that pair
           drew one drawing in two colours. (Names left unquoted on purpose — the icon bundler scans
           this file for quoted references and would keep bundling an icon nothing draws.)
+
+          Not offered on a redirection: a watch is an offer to be told when a page's content changes,
+          and nobody is reading this one — they are passing through it.
         -->
         <w-btn
           class="ml-4"
           :class="{ 'is-ringing': state.bellRinging }"
-          v-if="userStore.authenticated"
+          v-if="userStore.authenticated && !isRedirect"
           flat
           dense
           :icon="pageStore.isWatching ? `mdi:bell` : `mdi:bell-outline`"
@@ -124,10 +127,13 @@
           An empty queue is grey and an empty tray, sitting with Print as one more thing available
           rather than one more thing to do; something waiting fills the tray and turns it orange, the
           colour this row uses for what belongs to the reader. The count is on the badge either way.
+
+          A redirection takes no suggestions -- see the button below -- so there is never a queue on
+          one to review.
         -->
         <w-btn
           class="ml-4"
-          v-if="pageStore.canReview"
+          v-if="pageStore.canReview && !isRedirect"
           flat
           dense
           :color="pendingCount > 0 ? `deep-orange-9` : `grey`"
@@ -218,8 +224,14 @@
         For a reader who may read the page but not change it, and whose groups an approval rule lets
         suggest edits to it. Same place and same shape as Edit, because it is the same intent -- what
         differs is where the result goes.
+
+        Never on a redirection. A suggestion is a rewrite of a page's text put in front of a reviewer,
+        and a redirection has no text -- what it has is a target, which is a decision about where a
+        path leads rather than a contribution to read. The server still answers `canSuggestEdits` from
+        the approval rules, which are written against paths and know nothing about editors; this is
+        the one place that asks for it.
       -->
-      <template v-else-if="!editorStore.isActive && pageStore.canSuggestEdits">
+      <template v-else-if="!editorStore.isActive && pageStore.canSuggestEdits && !isRedirect">
         <w-btn
           class="acrylic-btn ml-4"
           flat
@@ -363,6 +375,17 @@ const isEditing = computed(() => editorStore.isActive && !isSuggesting.value)
 /** How many suggestions are waiting on this page, which is what the review badge counts. */
 const pendingCount = computed(() => pageStore.pendingSubmissions.length)
 
+/**
+ * Whether this is a redirection — one being read, edited or created alike, since `pageCreate` puts the
+ * editor on the page store as well.
+ *
+ * What it takes out of this row is everything addressed to a READER of the page: watching it,
+ * suggesting a change to it, and reviewing the suggestions. Nobody stays on a redirection long enough
+ * for any of those to mean anything. The title, the icon and Edit stay, because those belong to
+ * whoever maintains it.
+ */
+const isRedirect = computed(() => pageStore.editor === 'redirect')
+
 // DATA
 
 const state = reactive({
@@ -454,8 +477,15 @@ function onEditableBlur(field, event) {
 }
 
 async function discardChanges() {
-  // From create mode
-  if (editorStore.mode === 'create') {
+  /*
+    Abandoning a page that is being written, which is a different thing from reverting an edit: there
+    is nothing stored to go back to, so the editor closes and the reader is put back on the site.
+
+    `isActive` is part of the test, not just the mode. This button also appears with no editor open at
+    all -- the properties panel writes straight to the page store, and this is how those changes are
+    dropped -- and that is an edit to a page that exists, however the editor was last used.
+  */
+  if (editorStore.isActive && editorStore.mode === 'create') {
     editorStore.$patch({
       isActive: false,
       editor: ''
@@ -475,13 +505,18 @@ async function discardChanges() {
 
   loading.show()
   try {
+    /*
+      The page is put back, and only then does the editor close. The other order draws the page view
+      for a moment at the route the editor was on, which a redirection reads as "nobody is holding
+      me" and acts on -- taking the author to its target instead of back to the page they discarded.
+    */
+    await pageStore.cancelPageEdit()
     editorStore.$patch({
       isActive: false,
       editor: '',
       // -> Back to the ordinary meaning of the editor, or the next thing opened would inherit this one
       mode: 'edit'
     })
-    await pageStore.cancelPageEdit()
     if (hadPendingChanges) {
       notify({
         type: 'positive',
@@ -492,6 +527,9 @@ async function discardChanges() {
       })
     }
   } catch (err) {
+    // -> The editor closes either way: the reader asked to leave it, and a page that would not
+    //    reload is not a reason to keep them in it
+    editorStore.$patch({ isActive: false, editor: '', mode: 'edit' })
     notify({
       type: 'negative',
       message: 'Failed to reload page state.'
@@ -528,6 +566,18 @@ async function saveChangesCommit(closeAfter = false) {
       message: 'Page saved successfully.'
     })
     if (closeAfter) {
+      /*
+        The editor closes onto the page, and for a redirection that page would take the author
+        straight to the target they just chose. `editorExitPath` holds it instead — a change of query
+        on the route already showing, so nothing is loaded again. Every other page is left alone,
+        down to the fragment it was opened at.
+
+        Before the editor closes, and awaited: the page view drawn at the editor's route would read
+        the query as it stands and follow the redirection out from under this.
+      */
+      if (pageStore.editor === 'redirect' && route.fullPath !== pageStore.editorExitPath) {
+        await router.replace(pageStore.editorExitPath)
+      }
       editorStore.$patch({
         isActive: false,
         editor: ''

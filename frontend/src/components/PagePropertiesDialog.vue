@@ -35,9 +35,7 @@
       :bar-style="siteStore.scrollStyle.bar"
       style="height: calc(100% - 50px)">
       <w-card-section id="refCardInfo">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:info-circle" size="xs" /> {{ t('editor.props.info') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.info') }}</div>
         <w-form class="gap-2">
           <w-input
             ref="iptTitle"
@@ -85,9 +83,7 @@
         </w-form>
       </w-card-section>
       <w-card-section class="alt-card" id="refCardPublishState">
-        <div class="text-overline pb-1 items-center flex">
-          <w-icon class="mr-2" name="la:power-off" size="xs" /> {{ t('editor.props.publishState') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.publishState') }}</div>
         <w-form class="gap-4">
           <div>
             <w-btn-toggle
@@ -117,9 +113,7 @@
         </w-form>
       </w-card-section>
       <w-card-section id="refCardRelations">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:sun" size="xs" /> {{ t('editor.props.relations') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.relations') }}</div>
         <w-list
           class="rounded mb-2 bg-white dark:bg-black/20"
           v-if="pageStore.relations.length > 0"
@@ -158,9 +152,7 @@
         </w-btn>
       </w-card-section>
       <w-card-section class="alt-card" id="refCardScripts">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:code" size="xs" /> {{ t('editor.props.scripts') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.scripts') }}</div>
         <w-btn
           class="w-full"
           :label="t(`editor.props.jsLoad`)"
@@ -193,9 +185,7 @@
         </w-btn>
       </w-card-section>
       <w-card-section class="pb-6" id="refCardSidebar">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:ruler-vertical" size="xs" /> {{ t('editor.props.sidebar') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.sidebar') }}</div>
         <w-form class="gap-4 pt-2">
           <div>
             <w-toggle
@@ -245,9 +235,7 @@
         </w-form>
       </w-card-section>
       <w-card-section class="alt-card pb-6" id="refCardSocial">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:comments" size="xs" /> {{ t('editor.props.social') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.social') }}</div>
         <w-form class="gap-4 pt-2">
           <div>
             <w-toggle
@@ -279,15 +267,11 @@
         </w-form>
       </w-card-section>
       <w-card-section class="pb-6" id="refCardTags">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:tags" size="xs" /> {{ t('editor.props.tags') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.tags') }}</div>
         <page-tags edit />
       </w-card-section>
       <w-card-section class="alt-card pb-6" id="refCardVisibility">
-        <div class="text-overline items-center flex">
-          <w-icon class="mr-2" name="la:eye" size="xs" /> {{ t('editor.props.visibility') }}
-        </div>
+        <div class="w-section-header">{{ t('editor.props.visibility') }}</div>
         <w-form class="gap-4 pt-2">
           <div>
             <w-toggle
@@ -487,6 +471,23 @@ onMounted(() => {
   > .w-scroll-area {
     border-bottom-left-radius: inherit;
     border-bottom-right-radius: inherit;
+  }
+
+  /*
+    The section headings, in the treatment the profile pages use.
+
+    `.w-section-header` carries its own 16px inset and expects to sit in a column that has none --
+    inside a `w-card-section` it would be indented twice, and its wash would stop short of the panel
+    on both sides. So the section's padding is cancelled around it: the band then spans the panel and
+    its text lines up with the fields beneath it, exactly as on a profile page. The top padding is
+    given back so the heading sits where the section's own padding had it.
+
+    The tinted `alt-card` sections keep their stripe: the heading is inside the section, so the wash
+    is drawn over whichever surface that section has.
+  */
+  .w-section-header {
+    margin: -16px -16px 10px;
+    padding-top: 16px;
   }
 }
 </style>

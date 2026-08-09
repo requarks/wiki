@@ -155,6 +155,7 @@ import Tree from '@/components/TreeNav.vue'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { normalizePagePath } from '@/helpers/pagePaths'
 
 // PROPS
 
@@ -287,6 +288,9 @@ async function save() {
     })
     return
   }
+  // -> A path is a URL: casing and spaces are corrected rather than refused, the way the server does
+  //    it, and the field is left showing what will actually be saved
+  state.path = normalizePagePath(state.path)
   if (!/^[a-z0-9-]+$/.test(state.path)) {
     notify({
       type: 'negative',

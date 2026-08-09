@@ -6,7 +6,7 @@
       <p class="text-grey-7">Login to continue</p>
       <auth-login-panel />
     </div>
-    <div class="auth-bg" aria-hidden="true"><img :src="`/_site/current/loginbg`" alt="" /></div>
+    <div class="auth-bg" aria-hidden="true"><img :src="`/_site/current/loginBg`" alt="" /></div>
   </div>
 </template>
 

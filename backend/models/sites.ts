@@ -2,11 +2,38 @@ import { mergeWith, toMerged } from 'es-toolkit/object'
 import { keyBy } from 'es-toolkit/array'
 import {
   blocks as blocksTable,
+  siteAssets as siteAssetsTable,
   sites as sitesTable,
   storage as storageTable
 } from '../db/schema.ts'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
+import { detectImageMime, detectSvg, normalizeImage, svgMimeType } from '../helpers/images.ts'
+import type { ImageNormalization } from '../helpers/images.ts'
 import type { SystemIds } from './types.ts'
+
+/**
+ * The images a site can have uploaded for it. Each name is also the flag in the site's
+ * `config.assets` saying whether there is one — which is what the cached site config is asked before
+ * the bytes are ever looked up — and the name the image is addressed by, both to upload it and to
+ * serve it.
+ */
+export const siteAssetKinds = ['logo', 'favicon', 'loginBg'] as const
+
+export type SiteAssetKind = (typeof siteAssetKinds)[number]
+
+/**
+ * The size and format each image is stored at, i.e. what a browser is eventually handed. Every one
+ * is far smaller than what an administrator is likely to upload: these are a header logo, a tab icon
+ * and a login backdrop, not artwork to be kept at its original resolution.
+ */
+const SITE_ASSET_NORMALIZATION: Record<SiteAssetKind, ImageNormalization> = {
+  // -> A logo is whatever shape its owner made it, so it is fitted rather than cropped
+  logo: { width: 512, height: 512, fit: 'inside', format: 'webp' },
+  // -> PNG rather than WebP: a favicon is read by whatever the browser's tab strip, bookmark list and
+  //    home screen are made of, some of it much older than the page itself
+  favicon: { width: 180, height: 180, fit: 'cover', format: 'png' },
+  loginBg: { width: 1920, height: 1080, fit: 'cover', format: 'webp' }
+}
 
 /**
  * Sites model
@@ -73,7 +100,6 @@ class Sites {
             contentLicense: '',
             footerExtra: '',
             pageExtensions: ['md', 'html', 'txt'],
-            pageCasing: true,
             discoverable: false,
             defaults: {
               tocDepth: {
@@ -116,9 +142,7 @@ class Sites {
             },
             assets: {
               logo: false,
-              logoExt: 'svg',
               favicon: false,
-              faviconExt: 'svg',
               loginBg: false
             },
             theme: {
@@ -163,8 +187,7 @@ class Sites {
               }
             },
             uploads: {
-              conflictBehavior: 'overwrite',
-              normalizeFilename: true
+              conflictBehavior: 'overwrite'
             }
           },
           config
@@ -232,12 +255,75 @@ class Sites {
     return true
   }
 
+  /**
+   * The bytes of an image uploaded for a site, if there is one.
+   *
+   * What was stored depends on what the upload could be normalized to — Sharp is an optional
+   * extension, and an SVG is never re-encoded at all — so the type is read back off the bytes rather
+   * than assumed.
+   */
+  async getAsset(
+    siteId: string,
+    kind: SiteAssetKind
+  ): Promise<{ data: Buffer; mime: string } | null> {
+    const rows = await WIKI.db
+      .select({ data: siteAssetsTable.data })
+      .from(siteAssetsTable)
+      .where(and(eq(siteAssetsTable.siteId, siteId), eq(siteAssetsTable.kind, kind)))
+      .limit(1)
+    const data = rows[0]?.data
+    if (!data) {
+      return null
+    }
+    const mime =
+      detectImageMime(data) ?? (detectSvg(data) ? svgMimeType : 'application/octet-stream')
+    return { data, mime }
+  }
+
+  /**
+   * Replace one of a site's images.
+   *
+   * A raster upload is brought down to the size and format it will be served at, per
+   * `SITE_ASSET_NORMALIZATION` — there is no reason to hand every visitor the multi-megabyte
+   * original of an image displayed 34 pixels tall. That needs the Sharp extension, so without it the
+   * uploaded bytes are stored as they came in, which is what the admin area's "requires Sharp"
+   * indicator is warning about. An SVG is stored as it came in either way: it is markup, it already
+   * scales to any size, and rasterizing it would throw away the only reason to use one.
+   *
+   * @param data The uploaded image, already known to be one of the supported formats
+   */
+  async setAsset(siteId: string, kind: SiteAssetKind, data: Buffer): Promise<void> {
+    const normalized = detectSvg(data)
+      ? data
+      : ((await normalizeImage(data, SITE_ASSET_NORMALIZATION[kind])) ?? data)
+    await WIKI.db
+      .insert(siteAssetsTable)
+      .values({ siteId, kind, data: normalized })
+      .onConflictDoUpdate({
+        target: [siteAssetsTable.siteId, siteAssetsTable.kind],
+        set: { data: normalized }
+      })
+    // -> Serving reads this flag off the cached site config before it looks for any bytes
+    await WIKI.models.sites.updateSite(siteId, { config: { assets: { [kind]: true } } })
+  }
+
+  /**
+   * Remove one of a site's images, leaving the built-in default to be served again.
+   */
+  async clearAsset(siteId: string, kind: SiteAssetKind): Promise<void> {
+    await WIKI.db
+      .delete(siteAssetsTable)
+      .where(and(eq(siteAssetsTable.siteId, siteId), eq(siteAssetsTable.kind, kind)))
+    await WIKI.models.sites.updateSite(siteId, { config: { assets: { [kind]: false } } })
+  }
+
   async deleteSite(id: string): Promise<boolean> {
-    // -> Block and storage rows are registration metadata derived from disk, and their FK has no
-    //    cascade, so they would otherwise block the delete. Content tables (pages, assets, ...)
-    //    deliberately still do — see the conflict handling in the route.
+    // -> Block, storage and uploaded image rows belong to the site rather than to its content, and
+    //    their FK has no cascade, so they would otherwise block the delete. Content tables (pages,
+    //    assets, ...) deliberately still do — see the conflict handling in the route.
     await WIKI.db.delete(blocksTable).where(eq(blocksTable.siteId, id))
     await WIKI.db.delete(storageTable).where(eq(storageTable.siteId, id))
+    await WIKI.db.delete(siteAssetsTable).where(eq(siteAssetsTable.siteId, id))
 
     const deletedResult = await WIKI.db.delete(sitesTable).where(eq(sitesTable.id, id))
     if ((deletedResult.rowCount ?? 0) < 1) {
@@ -266,7 +352,6 @@ class Sites {
         contentLicense: '',
         footerExtra: '',
         pageExtensions: ['md', 'html', 'txt'],
-        pageCasing: true,
         discoverable: false,
         defaults: {
           tocDepth: {
@@ -307,9 +392,7 @@ class Sites {
         },
         assets: {
           logo: false,
-          logoExt: 'svg',
           favicon: false,
-          faviconExt: 'svg',
           loginBg: false
         },
         editors: {
@@ -354,8 +437,7 @@ class Sites {
           contentFont: 'roboto'
         },
         uploads: {
-          conflictBehavior: 'overwrite',
-          normalizeFilename: true
+          conflictBehavior: 'overwrite'
         }
       }
     })

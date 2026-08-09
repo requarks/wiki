@@ -87,8 +87,10 @@ onMounted(async () => {
       if (resp?.ok === false) {
         throw new Error(resp.message || 'An unexpected error occured.')
       }
-      // -> The stored name is not always the one asked for: a file already in the folder gets the
-      //    next free `name-1.ext`, and the content has to point at what was actually stored
+      // -> The stored name is not always the one asked for: what happens to a file already in the
+      //    folder is the site's upload conflict behavior to decide — it may be replaced, or the
+      //    arrival may take the next free `name-1.ext` — so the content has to point at what the
+      //    server says it stored
       const storedPath = assetPath(resp?.asset?.folderPath, resp?.asset?.fileName)
       pageStore.content = pageStore.content.replaceAll(item.blobUrl, storedPath)
       replacements.push({ from: item.blobUrl, to: storedPath })

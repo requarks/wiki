@@ -7,10 +7,9 @@
     <w-card-section>
       <!--
         `self-start` on every button: WForm stacks with `flex-col`, so a button left to its own devices
-        stretches to the full width of the dialog. The section titles pull the item below them up, since
-        the form's `gap-4` belongs between sections rather than between a title and its own content.
+        stretches to the full width of the dialog.
       -->
-      <div class="text-overline -mb-3">{{ t('editor.pageRel.position') }}</div>
+      <div class="w-section-header">{{ t('editor.pageRel.position') }}</div>
       <w-form class="gap-4 pt-4">
         <div>
           <w-btn-toggle
@@ -25,7 +24,7 @@
               { label: t('editor.pageRel.right'), value: 'right' }
             ]" />
         </div>
-        <div class="text-overline -mb-3">{{ t('editor.pageRel.button') }}</div>
+        <div class="w-section-header">{{ t('editor.pageRel.button') }}</div>
         <!-- One item, so the two fields are only ever as far apart as their own margins -->
         <div class="flex flex-col">
           <w-input
@@ -41,15 +40,22 @@
             :label="t(`editor.pageRel.caption`)"
             v-model="state.caption" />
         </div>
+        <!--
+          `-mt-2` so this sits the same distance below the field above it as the two fields sit from
+          each other. An outlined field carries `my-2` around its control, so the form's `gap-4`
+          lands 8px further down than the 16px those margins put between two stacked fields. Applies
+          whichever field is last: the caption is hidden for a centred relation, and the label above
+          it is spaced the same way.
+        -->
         <w-btn
-          class="self-start rounded"
+          class="self-start rounded -mt-2"
           :label="t(`editor.pageRel.selectIcon`)"
           color="primary"
           outline>
           <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
           <w-menu content-class="shadow-7"><icon-picker-dialog v-model="state.icon" /></w-menu>
         </w-btn>
-        <div class="text-overline -mb-3">{{ t('editor.pageRel.target') }}</div>
+        <div class="w-section-header">{{ t('editor.pageRel.target') }}</div>
         <div class="flex flex-nowrap items-center gap-3">
           <w-btn
             class="flex-none rounded"
@@ -62,7 +68,7 @@
             {{ state.target || '—' }}
           </div>
         </div>
-        <div class="text-overline -mb-3">{{ t('editor.pageRel.preview') }}</div>
+        <div class="w-section-header">{{ t('editor.pageRel.preview') }}</div>
         <w-btn
           v-if="state.pos === `left`"
           class="self-start"
@@ -293,3 +299,27 @@ onMounted(() => {
   })
 })
 </script>
+
+<style lang="scss">
+/*
+  The section headings, in the treatment the profile pages and the page properties panel use.
+
+  `.w-section-header` carries its own 16px inset and expects a column that has none, so the card
+  section's padding is cancelled around it -- the band then spans the dialog and its text lines up
+  with the fields under it. Its bottom margin goes too: three of these are items in the form's
+  `flex-col gap-4`, so the 16px gap is already the space beneath them, and the heading's own margin
+  would add to it rather than replace it. That gap is also what clears the two rules trailing below
+  the heading, which is what the `-mb-3` these replaces was fighting.
+*/
+.page-relation-dialog {
+  .w-section-header {
+    margin: 0 -16px;
+  }
+
+  /* -> The first one is also the top of the section, so it takes that padding as well */
+  > .w-card-section > .w-section-header:first-child {
+    margin-top: -16px;
+    padding-top: 16px;
+  }
+}
+</style>

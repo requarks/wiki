@@ -83,6 +83,54 @@ export function encodeTreePath(str?: string | null): string {
 }
 
 /**
+ * Reduce a page path to the single form it is stored, addressed and looked up under.
+ *
+ * A path is a URL, and a URL that differs only in casing or in how a space was encoded is the same
+ * page as far as anyone reading the wiki is concerned — so there is one spelling, and everything
+ * that takes a path from a human or from page content passes it through here first. Wrapping slashes
+ * go, runs of whitespace become a single hyphen, and what is left is lowercased.
+ *
+ * What it does not do is decide whether the result is *allowed*: the characters a path may contain
+ * are the page model's rule to enforce, on the normalized form.
+ */
+export function normalizePagePath(input?: string | null): string {
+  return (input ?? '')
+    .trim()
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .replaceAll(/\s+/g, '-')
+    .toLowerCase()
+}
+
+/**
+ * Drop a site's page extension from the end of a URL path.
+ *
+ * A wiki's pages are addressed without one — `/foo/bar`, not `/foo/bar.md` — but the file the page
+ * was written as keeps turning up in links: an export, a repository mirror, a migration from a system
+ * that served files. So a site lists the extensions its content is written in, and a path ending in
+ * one of them means the page underneath it.
+ *
+ * Only the last segment is considered, and only when there is a name in front of the dot: `/.md` and
+ * `/docs.md/thing` address nothing.
+ *
+ * @param extensions Lowercase, without the dot, as the site config stores them
+ * @returns The path without the extension, or null if it does not end in one of them
+ */
+export function stripPageExtension(urlPath: string, extensions?: string[] | null): string | null {
+  if (!extensions || extensions.length < 1) {
+    return null
+  }
+  const dot = urlPath.lastIndexOf('.')
+  if (dot < 1 || urlPath[dot - 1] === '/' || urlPath.lastIndexOf('/') > dot) {
+    return null
+  }
+  if (!extensions.includes(urlPath.slice(dot + 1).toLowerCase())) {
+    return null
+  }
+  return urlPath.slice(0, dot)
+}
+
+/**
  * Generate SHA-1 Hash of a string
  *
  * @param str String to hash

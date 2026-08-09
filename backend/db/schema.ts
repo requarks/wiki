@@ -627,6 +627,23 @@ export const sites = pgTable('sites', {
   createdAt: timestamp().notNull().defaultNow()
 })
 
+// -> The images an administrator uploads for a site — its logo, favicon and login background — one row
+//    per kind. Held in the database rather than under `dataPath`, which is a cache: an instance that
+//    comes back with an empty data directory must still look like itself. Whether a kind has been
+//    uploaded at all is mirrored in the site's `config.assets`, so serving a site that has uploaded
+//    nothing costs no query here.
+export const siteAssets = pgTable(
+  'siteAssets',
+  {
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id),
+    kind: varchar({ length: 255 }).notNull(),
+    data: bytea().notNull()
+  },
+  (table) => [primaryKey({ columns: [table.siteId, table.kind] })]
+)
+
 // STORAGE -----------------------------
 export const storage = pgTable(
   'storage',

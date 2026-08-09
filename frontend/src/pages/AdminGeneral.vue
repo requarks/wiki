@@ -310,13 +310,22 @@
                   <w-item-label caption>{{ t(`admin.general.logoUplHint`) }}</w-item-label>
                 </w-item-section>
                 <w-item-section class="flex-none">
-                  <w-btn
-                    label="Upload"
-                    unelevated
-                    icon="la:upload"
-                    color="primary"
-                    text-color="white"
-                    @click="uploadLogo" />
+                  <div class="flex gap-2">
+                    <w-btn
+                      :label="t(`common.actions.upload`)"
+                      unelevated
+                      icon="la:upload"
+                      color="primary"
+                      text-color="white"
+                      @click="uploadLogo" />
+                    <w-btn
+                      :label="t(`common.actions.clear`)"
+                      outline
+                      icon="la:times"
+                      color="primary"
+                      :disable="!state.hasLogo"
+                      @click="clearLogo" />
+                  </div>
                 </w-item-section>
               </div>
               <w-toolbar class="bg-header mt-4 rounded text-white" style="height: 64px">
@@ -365,13 +374,22 @@
                   <w-item-label caption>{{ t(`admin.general.faviconHint`) }}</w-item-label>
                 </w-item-section>
                 <w-item-section class="flex-none">
-                  <w-btn
-                    label="Upload"
-                    unelevated
-                    icon="la:upload"
-                    color="primary"
-                    text-color="white"
-                    @click="uploadFavicon" />
+                  <div class="flex gap-2">
+                    <w-btn
+                      :label="t(`common.actions.upload`)"
+                      unelevated
+                      icon="la:upload"
+                      color="primary"
+                      text-color="white"
+                      @click="uploadFavicon" />
+                    <w-btn
+                      :label="t(`common.actions.clear`)"
+                      outline
+                      icon="la:times"
+                      color="primary"
+                      :disable="!state.hasFavicon"
+                      @click="clearFavicon" />
+                  </div>
                 </w-item-section>
               </div>
               <div class="admin-general-favicontabs mt-4">
@@ -441,21 +459,6 @@
                 :aria-label="t(`admin.general.uploadConflictBehavior`)" />
             </w-item-section>
           </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon icon="rename" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.uploadNormalizeFilename`) }}</w-item-label>
-              <w-item-label caption>{{
-                t(`admin.general.uploadNormalizeFilenameHint`)
-              }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.uploads.normalizeFilename"
-                :aria-label="t(`admin.general.uploadNormalizeFilename`)" />
-            </w-item-section>
-          </w-item>
         </w-card>
         <!-- ----------------------- -->
         <!-- URL Handling -->
@@ -474,19 +477,6 @@
                 v-model="state.config.pageExtensions"
                 dense
                 :aria-label="t(`admin.general.pageExtensions`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon icon="lowercase" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.pageCasing`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.pageCasingHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.pageCasing"
-                :aria-label="t(`admin.general.pageCasing`)" />
             </w-item-section>
           </w-item>
         </w-card>
@@ -548,6 +538,13 @@ import { loading } from '@/composables/loading'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
+import {
+  clearSiteImage,
+  isAcceptedSiteImage,
+  pickSiteImage,
+  uploadSiteImage
+} from '@/helpers/siteImages'
+
 import { toMerged } from 'es-toolkit/object'
 
 // STORES
@@ -580,7 +577,6 @@ function defaultConfig() {
     contentLicense: '',
     footerExtra: '',
     pageExtensions: '',
-    pageCasing: false,
     logoText: false,
     ratings: {
       index: false,
@@ -614,6 +610,10 @@ function defaultConfig() {
 const state = reactive({
   loading: 0,
   assetTimestamp: new Date().toISOString(),
+  // -> Whether this site has a logo / favicon of its own, i.e. whether there is anything to clear.
+  //    The previews always render: without one they show the default that is served instead.
+  hasLogo: false,
+  hasFavicon: false,
   config: defaultConfig()
 })
 
@@ -668,6 +668,8 @@ async function load() {
     ...resp,
     pageExtensions: resp.pageExtensions.join(',')
   })
+  state.hasLogo = resp?.assets?.logo ?? false
+  state.hasFavicon = resp?.assets?.favicon ?? false
   loading.hide()
   state.loading--
 }
@@ -694,12 +696,10 @@ async function save() {
         contentLicense: state.config.contentLicense ?? '',
         footerExtra: state.config.footerExtra ?? '',
         pageExtensions: parsePageExtensions(state.config.pageExtensions),
-        pageCasing: state.config.pageCasing ?? false,
         logoText: state.config.logoText ?? false,
         sitemap: state.config.sitemap ?? false,
         uploads: {
-          conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite',
-          normalizeFilename: state.config.uploads?.normalizeFilename ?? false
+          conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite'
         },
         robots: {
           index: state.config.robots?.index ?? false,
@@ -746,115 +746,107 @@ async function save() {
 }
 
 async function uploadLogo() {
-  const input = document.createElement('input')
-  input.type = 'file'
-
-  input.onchange = async (e) => {
-    state.loading++
-    try {
-      const resp = await APOLLO_CLIENT.mutate({
-        context: {
-          uploadMode: true
-        },
-        mutation: `
-          mutation uploadLogo (
-            $id: UUID!
-            $image: Upload!
-          ) {
-            uploadSiteLogo (
-              id: $id
-              image: $image
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          id: adminStore.currentSiteId,
-          image: e.target.files[0]
-        }
-      })
-      if (resp?.data?.uploadSiteLogo?.operation?.succeeded) {
-        notify({
-          type: 'positive',
-          message: t('admin.general.logoUploadSuccess')
-        })
-        state.assetTimestamp = new Date().toISOString()
-      } else {
-        throw new Error(
-          resp?.data?.uploadSiteLogo?.operation?.message || 'An unexpected error occured.'
-        )
-      }
-    } catch (err) {
-      notify({
-        type: 'negative',
-        message: 'Failed to upload site logo.',
-        caption: err.message
-      })
-    }
-    state.loading--
+  const file = await pickSiteImage()
+  if (!file) {
+    return
   }
+  if (!isAcceptedSiteImage(file)) {
+    notify({
+      type: 'negative',
+      message: t('admin.general.logoUploadFailed'),
+      caption: t('admin.general.imageUploadInvalidType')
+    })
+    return
+  }
+  state.loading++
+  try {
+    await uploadSiteImage(adminStore.currentSiteId, 'logo', file)
+    notify({
+      type: 'positive',
+      message: t('admin.general.logoUploadSuccess')
+    })
+    state.hasLogo = true
+    state.assetTimestamp = new Date().toISOString()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.general.logoUploadFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
+}
 
-  input.click()
+async function clearLogo() {
+  state.loading++
+  try {
+    await clearSiteImage(adminStore.currentSiteId, 'logo')
+    notify({
+      type: 'positive',
+      message: t('admin.general.logoClearSuccess')
+    })
+    state.hasLogo = false
+    state.assetTimestamp = new Date().toISOString()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.general.logoClearFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
 }
 
 async function uploadFavicon() {
-  const input = document.createElement('input')
-  input.type = 'file'
-
-  input.onchange = async (e) => {
-    state.loading++
-    try {
-      const resp = await APOLLO_CLIENT.mutate({
-        context: {
-          uploadMode: true
-        },
-        mutation: `
-          mutation uploadFavicon (
-            $id: UUID!
-            $image: Upload!
-          ) {
-            uploadSiteFavicon (
-              id: $id
-              image: $image
-            ) {
-              operation {
-                succeeded
-                message
-              }
-            }
-          }
-        `,
-        variables: {
-          id: adminStore.currentSiteId,
-          image: e.target.files[0]
-        }
-      })
-      if (resp?.data?.uploadSiteFavicon?.operation?.succeeded) {
-        notify({
-          type: 'positive',
-          message: t('admin.general.faviconUploadSuccess')
-        })
-        state.assetTimestamp = new Date().toISOString()
-      } else {
-        throw new Error(
-          resp?.data?.uploadSiteFavicon?.operation?.message || 'An unexpected error occured.'
-        )
-      }
-    } catch (err) {
-      notify({
-        type: 'negative',
-        message: 'Failed to upload site favicon.',
-        caption: err.message
-      })
-    }
-    state.loading--
+  const file = await pickSiteImage()
+  if (!file) {
+    return
   }
+  if (!isAcceptedSiteImage(file)) {
+    notify({
+      type: 'negative',
+      message: t('admin.general.faviconUploadFailed'),
+      caption: t('admin.general.imageUploadInvalidType')
+    })
+    return
+  }
+  state.loading++
+  try {
+    await uploadSiteImage(adminStore.currentSiteId, 'favicon', file)
+    notify({
+      type: 'positive',
+      message: t('admin.general.faviconUploadSuccess')
+    })
+    state.hasFavicon = true
+    state.assetTimestamp = new Date().toISOString()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.general.faviconUploadFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
+}
 
-  input.click()
+async function clearFavicon() {
+  state.loading++
+  try {
+    await clearSiteImage(adminStore.currentSiteId, 'favicon')
+    notify({
+      type: 'positive',
+      message: t('admin.general.faviconClearSuccess')
+    })
+    state.hasFavicon = false
+    state.assetTimestamp = new Date().toISOString()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.general.faviconClearFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
 }
 
 // MOUNTED

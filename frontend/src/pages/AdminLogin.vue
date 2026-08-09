@@ -2,7 +2,9 @@
   <w-page class="admin-login">
     <div class="flex flex-wrap p-4 items-center">
       <div class="flex-none">
-        <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-bunch-of-keys-animated.svg" />
+        <img
+          class="admin-icon animated fadeInLeft"
+          src="/_assets/icons/fluent-bunch-of-keys-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
         <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.login.title') }}</div>
@@ -50,21 +52,40 @@
           <w-card-header>{{ t('admin.login.experience') }}</w-card-header>
           <w-item>
             <blueprint-icon
+              class="self-start"
               icon="full-image"
               indicator
               :indicator-text="t(`admin.extensions.requiresSharp`)" />
             <w-item-section>
-              <w-item-label>{{ t(`admin.login.background`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.login.backgroundHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section class="flex-none">
-              <w-btn
-                label="Upload"
-                unelevated
-                icon="la:upload"
-                color="primary"
-                text-color="white"
-                @click="uploadBg" />
+              <div class="flex">
+                <w-item-section>
+                  <w-item-label>{{ t(`admin.login.background`) }}</w-item-label>
+                  <w-item-label caption>{{ t(`admin.login.backgroundHint`) }}</w-item-label>
+                </w-item-section>
+                <w-item-section class="flex-none">
+                  <div class="flex gap-2">
+                    <w-btn
+                      :label="t(`common.actions.upload`)"
+                      unelevated
+                      icon="la:upload"
+                      color="primary"
+                      text-color="white"
+                      @click="uploadBg" />
+                    <w-btn
+                      :label="t(`common.actions.clear`)"
+                      outline
+                      icon="la:times"
+                      color="primary"
+                      :disable="!state.hasBg"
+                      @click="clearBg" />
+                  </div>
+                </w-item-section>
+              </div>
+              <img
+                v-if="adminStore.currentSiteId"
+                class="admin-login-bg mt-4"
+                :src="`/_site/` + adminStore.currentSiteId + `/loginBg?` + state.assetTimestamp"
+                :alt="t(`admin.login.background`)" />
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
@@ -221,6 +242,13 @@ import { loading } from '@/composables/loading'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
+import {
+  clearSiteImage,
+  isAcceptedSiteImage,
+  pickSiteImage,
+  uploadSiteImage
+} from '@/helpers/siteImages'
+
 import { toMerged } from 'es-toolkit/object'
 import { Sortable } from 'sortablejs-vue3'
 
@@ -260,7 +288,11 @@ const state = reactive({
   invalidCharsRegex: /^[^<>"]+$/,
   loading: 0,
   config: defaultConfig(),
-  providers: []
+  providers: [],
+  // -> Whether this site has a background of its own, i.e. whether there is anything to clear. The
+  //    preview always renders: without one it shows the default the login page falls back to.
+  hasBg: false,
+  assetTimestamp: new Date().toISOString()
 })
 
 const sortableOptions = {
@@ -291,6 +323,7 @@ async function load() {
     ])
     state.config = toMerged(defaultConfig(), site?.auth ?? {})
     state.providers = providers ?? []
+    state.hasBg = site?.assets?.loginBg ?? false
   } catch (err) {
     notify({
       type: 'negative',
@@ -347,13 +380,56 @@ function updateAuthPosition(ev) {
   state.providers.splice(ev.newIndex, 0, item)
 }
 
-function uploadBg() {
-  // TODO: needs a multipart upload endpoint for site assets, which does not exist yet — the same
-  // blocker as the logo and favicon uploads in the general view.
-  notify({
-    type: 'warning',
-    message: t('admin.login.bgUploadUnavailable')
-  })
+async function uploadBg() {
+  const file = await pickSiteImage()
+  if (!file) {
+    return
+  }
+  if (!isAcceptedSiteImage(file)) {
+    notify({
+      type: 'negative',
+      message: t('admin.login.bgUploadFailed'),
+      caption: t('admin.login.bgUploadInvalidType')
+    })
+    return
+  }
+  state.loading++
+  try {
+    await uploadSiteImage(adminStore.currentSiteId, 'loginBg', file)
+    notify({
+      type: 'positive',
+      message: t('admin.login.bgUploadSuccess')
+    })
+    state.hasBg = true
+    state.assetTimestamp = new Date().toISOString()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.login.bgUploadFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
+}
+
+async function clearBg() {
+  state.loading++
+  try {
+    await clearSiteImage(adminStore.currentSiteId, 'loginBg')
+    notify({
+      type: 'positive',
+      message: t('admin.login.bgClearSuccess')
+    })
+    state.hasBg = false
+    state.assetTimestamp = new Date().toISOString()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.login.bgClearFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
 }
 
 // MOUNTED
@@ -366,6 +442,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+.admin-login-bg {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
 .admin-login-providers {
   .w-item {
     border-radius: 5px;

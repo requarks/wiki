@@ -51,6 +51,12 @@ export const useSiteStore = defineStore('site', {
     title: '',
     description: '',
     logoText: true,
+    /**
+     * The extensions this site's content is written in, lowercase and without the dot. A path ending
+     * in one of them addresses the page underneath it — `/foo/bar.md` is `/foo/bar` — which the
+     * router acts on for links inside pages and the server acts on for requests that reach it.
+     */
+    pageExtensions: [],
     search: '',
     searchLastQuery: '',
     searchIsLoading: false,
@@ -181,6 +187,7 @@ export const useSiteStore = defineStore('site', {
         title: siteInfo.title,
         description: siteInfo.description,
         logoText: siteInfo.logoText,
+        pageExtensions: siteInfo.pageExtensions ?? [],
         company: siteInfo.company,
         contentLicense: siteInfo.contentLicense,
         footerExtra: siteInfo.footerExtra,

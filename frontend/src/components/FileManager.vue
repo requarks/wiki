@@ -317,7 +317,12 @@
                           </w-item-section>
                           <w-item-section>{{ t(`common.actions.edit`) }}</w-item-section>
                         </w-item>
-                        <w-item clickable v-if="item.type === `page`" @click="rerenderPage(item)">
+                        <!-- -> Nothing to render on a redirection: it has a target where a page has
+                                content, and the endpoint behind this refuses any editor but markdown -->
+                        <w-item
+                          clickable
+                          v-if="item.type === `page` && item.pageType !== `redirect`"
+                          @click="rerenderPage(item)">
                           <w-item-section side>
                             <w-icon name="la:magic" color="orange" />
                           </w-item-section>

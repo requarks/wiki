@@ -40,9 +40,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           type: 'string'
         }
       },
-      pageCasing: {
-        type: 'boolean'
-      },
       discoverable: {
         type: 'boolean'
       },
@@ -98,10 +95,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         properties: {
           conflictBehavior: {
             type: 'string',
+            description:
+              'What an upload does about a file already at the name it wants: replace it in place, refuse the upload, or store the arrival as the next free `name-1.ext`.',
             enum: ['overwrite', 'reject', 'new']
-          },
-          normalizeFilename: {
-            type: 'boolean'
           }
         }
       },
@@ -196,18 +192,14 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       assets: {
         type: 'object',
+        description:
+          'Which images have been uploaded for this site. The images themselves are served from `/_site/<siteId>/<logo|favicon|loginBg>`, which falls back to the built-in default wherever the flag is false.',
         properties: {
           logo: {
             type: 'boolean'
           },
-          logoExt: {
-            type: 'string'
-          },
           favicon: {
             type: 'boolean'
-          },
-          faviconExt: {
-            type: 'string'
           },
           loginBg: {
             type: 'boolean'

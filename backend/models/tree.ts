@@ -6,7 +6,8 @@ import {
   decodeTreePath,
   encodeTreePath,
   generateHash,
-  generatePathHash
+  generatePathHash,
+  normalizePagePath
 } from '../helpers/common.ts'
 
 /** What a tree entry can be. Mirrors the `treeType` enum in the schema. */
@@ -576,6 +577,56 @@ class Tree {
   }
 
   /**
+   * Whatever already sits at a name inside a folder, or null if the name is free.
+   *
+   * The question an upload has to ask before it writes anything, since what is there decides whether
+   * the file replaces it, is refused, or takes the next free name. A folder that does not exist holds
+   * nothing, so an unresolvable destination answers null rather than raising: the caller is about to
+   * create it.
+   *
+   * @param parentId UUID of the folder to look in. Takes precedence over `parentPath`; the site root
+   *                 when both are absent.
+   */
+  async getEntryAt({
+    siteId,
+    locale,
+    parentId,
+    parentPath,
+    fileName
+  }: {
+    siteId: string
+    locale: string
+    parentId?: string | null
+    parentPath?: string | null
+    fileName: string
+  }): Promise<TreeRow | null> {
+    let path = ''
+    if (parentId || parentPath) {
+      let folder: TreeRow
+      try {
+        folder = await this.getFolder({ id: parentId, path: parentPath, locale, siteId })
+      } catch {
+        return null
+      }
+      path = childPathOf(folder)
+    }
+
+    const results = await WIKI.db
+      .select()
+      .from(treeTable)
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, locale),
+          eq(treeTable.folderPath, path),
+          eq(treeTable.fileName, fileName)
+        )
+      )
+      .limit(1)
+    return (results[0] as TreeRow) ?? null
+  }
+
+  /**
    * Resolve a folder, either by ID or by path.
    *
    * @param createIfMissing Create the folder, and any ancestor it needs, when the path has none. Only
@@ -637,7 +688,8 @@ class Tree {
    *
    * @param parentId UUID of the folder to create it in. Takes precedence over `parentPath`.
    * @param parentPath Slash-separated path of the folder to create it in. The root when both are absent.
-   * @param pathName The folder's own path segment, lowercase and URL friendly.
+   * @param pathName The folder's own path segment. Normalized the way a page path is, so what the
+   *                 folder ends up called may differ from what was asked for.
    */
   async createFolder({
     parentId,
@@ -654,7 +706,10 @@ class Tree {
     locale: string
     siteId: string
   }): Promise<TreeRow> {
-    if (!rePathName.test(pathName)) {
+    // -> A folder name is a segment of every page path under it, so it is normalized the same way a
+    //    page path is before it is held to what a segment may contain
+    const name = normalizePagePath(pathName)
+    if (!rePathName.test(name)) {
       throw new CustomError(
         'treeInvalidPath',
         'A folder path name may only contain lowercase alphanumeric and hyphen characters.'
@@ -685,7 +740,7 @@ class Tree {
           eq(treeTable.siteId, siteId),
           eq(treeTable.locale, effectiveLocale),
           eq(treeTable.folderPath, path),
-          eq(treeTable.fileName, pathName),
+          eq(treeTable.fileName, name),
           eq(treeTable.type, 'folder')
         )
       )
@@ -753,12 +808,12 @@ class Tree {
       }
     }
 
-    const fullPath = path ? `${decodeTreePath(path)}/${pathName}` : pathName
+    const fullPath = path ? `${decodeTreePath(path)}/${name}` : name
     const inserted = await WIKI.db
       .insert(treeTable)
       .values({
         folderPath: path,
-        fileName: pathName,
+        fileName: name,
         type: 'folder',
         title,
         hash: generateHash(fullPath),
@@ -777,8 +832,8 @@ class Tree {
   /**
    * Rename a folder, moving everything under it along with it.
    *
-   * @param pathName The new path segment. Unchanged from the current one when only the title differs,
-   *                 which leaves every descendant's path untouched.
+   * @param pathName The new path segment, normalized as on the way in. Unchanged from the current
+   *                 one when only the title differs, which leaves every descendant's path untouched.
    */
   async renameFolder({
     folderId,
@@ -793,7 +848,10 @@ class Tree {
     if (!folder) {
       throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
     }
-    if (!rePathName.test(pathName)) {
+    // -> Normalized as it is on the way in, since this renames the segment every page path under the
+    //    folder is built from
+    const name = normalizePagePath(pathName)
+    if (!rePathName.test(name)) {
       throw new CustomError(
         'treeInvalidPath',
         'A folder path name may only contain lowercase alphanumeric and hyphen characters.'
@@ -803,7 +861,7 @@ class Tree {
       throw new CustomError('treeInvalidTitle', 'The folder title contains invalid characters.')
     }
 
-    if (pathName === folder.fileName) {
+    if (name === folder.fileName) {
       const updated = await WIKI.db
         .update(treeTable)
         .set({ title, updatedAt: sql`now()` })
@@ -821,7 +879,7 @@ class Tree {
           eq(treeTable.siteId, folder.siteId),
           eq(treeTable.locale, folder.locale),
           eq(treeTable.folderPath, folder.folderPath ?? ''),
-          eq(treeTable.fileName, pathName),
+          eq(treeTable.fileName, name),
           eq(treeTable.type, 'folder')
         )
       )
@@ -835,7 +893,7 @@ class Tree {
     }
 
     const oldPath = childPathOf(folder)
-    const newPath = folder.folderPath ? `${folder.folderPath}.${pathName}` : pathName
+    const newPath = folder.folderPath ? `${folder.folderPath}.${name}` : name
 
     WIKI.logger.debug(`Renaming folder ${folder.id} from ${oldPath} to ${newPath}...`)
 
@@ -854,12 +912,10 @@ class Tree {
         and(eq(treeTable.siteId, folder.siteId), sql`${treeTable.folderPath} <@ ${oldPath}::ltree`)
       )
 
-    const fullPath = folder.folderPath
-      ? `${decodeTreePath(folder.folderPath)}/${pathName}`
-      : pathName
+    const fullPath = folder.folderPath ? `${decodeTreePath(folder.folderPath)}/${name}` : name
     const updated = await WIKI.db
       .update(treeTable)
-      .set({ fileName: pathName, title, hash: generateHash(fullPath), updatedAt: sql`now()` })
+      .set({ fileName: name, title, hash: generateHash(fullPath), updatedAt: sql`now()` })
       .where(eq(treeTable.id, folder.id))
       .returning()
 
@@ -1058,8 +1114,10 @@ class Tree {
       siteId,
       tags,
       meta,
-      // -> Uploading a file already in the folder takes the next free `name-1.ext`, rather than
-      //    failing on something the uploader did not choose and cannot see
+      // -> Whatever the site's upload conflict behavior is, a name that is taken by the time the row
+      //    is written takes the next free `name-1.ext`: the assets model settled the collisions it
+      //    could see, and a file that appeared since must not fail on something the uploader did not
+      //    choose and cannot see
       onConflict: 'suffix'
     })
   }

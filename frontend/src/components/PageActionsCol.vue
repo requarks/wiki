@@ -13,11 +13,17 @@
     class="page-actions flex flex-col items-stretch order-last"
     :class="editorStore.isActive ? `is-editor` : ``">
     <template v-if="userStore.can(`write:pages`)">
+      <!--
+        Off for a redirection: the panel is contents, tags, ratings, comments and scripts, all of them
+        about a page somebody reads. Disabled rather than hidden, because it is the rail's primary
+        action and the square it occupies is what the rest of the buttons are arranged under.
+      -->
       <w-btn
         class="aspect-square"
         flat
         icon="la:pen-nib"
         :color="editorStore.isActive ? `white` : `deep-orange-9`"
+        :disable="isRedirect"
         aria-label="Page Properties"
         @click="togglePageProperties">
         <w-tooltip anchor="center left" self="center right">Page Properties</w-tooltip>
@@ -33,9 +39,10 @@
         disable>
         <w-tooltip anchor="center left" self="center right">Page Data</w-tooltip>
       </w-btn>
+      <!-- -> Nothing can be pasted or dropped onto a redirection: it is a form, not a document -->
       <w-btn
         class="h-12"
-        v-if="editorStore.isActive"
+        v-if="editorStore.isActive && !isRedirect"
         flat
         color="white"
         :text-color="hasPendingAssets ? `white` : `deep-orange-3`"
@@ -86,32 +93,40 @@
           </w-card>
         </w-menu>
       </w-btn>
-      <w-separator class="my-2" inset />
+      <!-- -> Nothing follows it on a redirection, and a rule with nothing under it is just a line -->
+      <w-separator class="my-2" v-if="!isRedirect" inset />
     </template>
     <!--
-      `read:history` is the permission that exists to say who may see what a page used to contain, so
-      the button follows it rather than page read access. The API asks the same question.
+      The three below are all about a page's TEXT: what it used to say, what it says in source, and
+      the things that can be done to that text. A redirection has none — its content is a target, the
+      form above is the whole of it, and there is no render for any of these to be about.
     -->
-    <w-btn
-      class="h-12"
-      v-if="userStore.can(`read:history`)"
-      flat
-      icon="la:history"
-      :color="editorStore.isActive ? `white` : `grey`"
-      aria-label="Page History"
-      @click="viewPageHistory">
-      <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
-    </w-btn>
-    <w-btn
-      class="h-12"
-      flat
-      icon="la:code"
-      :color="editorStore.isActive ? `white` : `grey`"
-      aria-label="Page Source"
-      @click="viewPageSource">
-      <w-tooltip anchor="center left" self="center right">Page Source</w-tooltip>
-    </w-btn>
-    <template v-if="!(editorStore.isActive && editorStore.mode === `create`)">
+    <template v-if="!isRedirect">
+      <!--
+        `read:history` is the permission that exists to say who may see what a page used to contain, so
+        the button follows it rather than page read access. The API asks the same question.
+      -->
+      <w-btn
+        class="h-12"
+        v-if="userStore.can(`read:history`)"
+        flat
+        icon="la:history"
+        :color="editorStore.isActive ? `white` : `grey`"
+        aria-label="Page History"
+        @click="viewPageHistory">
+        <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
+      </w-btn>
+      <w-btn
+        class="h-12"
+        flat
+        icon="la:code"
+        :color="editorStore.isActive ? `white` : `grey`"
+        aria-label="Page Source"
+        @click="viewPageSource">
+        <w-tooltip anchor="center left" self="center right">Page Source</w-tooltip>
+      </w-btn>
+    </template>
+    <template v-if="!isRedirect && !(editorStore.isActive && editorStore.mode === `create`)">
       <w-separator class="my-2" inset />
       <w-btn
         class="h-12"
@@ -244,6 +259,15 @@ const menuPendingAssets = ref(null)
 // COMPUTED
 
 const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
+
+/**
+ * Whether the page this rail is for is a redirection — one being read, edited or created alike, since
+ * `pageCreate` puts the editor on the page store as well.
+ *
+ * A redirection has no text, so most of this rail is about something that is not there: see the
+ * individual buttons for what each one loses.
+ */
+const isRedirect = computed(() => pageStore.editor === 'redirect')
 
 // METHODS
 

@@ -1,6 +1,11 @@
 import { and, eq, inArray, ne, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
-import { CustomError, generatePathHash, timingSafeCompare } from '../helpers/common.ts'
+import {
+  CustomError,
+  generatePathHash,
+  normalizePagePath,
+  timingSafeCompare
+} from '../helpers/common.ts'
 import type { RenderPermissions, TocNode } from './rendering.ts'
 import type { DeletedEntry } from './tree.ts'
 
@@ -8,8 +13,19 @@ import type { DeletedEntry } from './tree.ts'
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
   markdown: 'markdown',
   asciidoc: 'asciidoc',
-  wysiwyg: 'html'
+  wysiwyg: 'html',
+  redirect: 'redirect'
 }
+
+/**
+ * The editor whose pages send their reader somewhere else.
+ *
+ * A redirection is an ordinary page — it has a path, a title, an icon and a place in the tree, and is
+ * browsable like any other — with nothing to read: no body, no render, and therefore nothing for the
+ * search index to hold. What an author fills in is where it points, and that is what its content
+ * column carries. See `normalizeRedirectContent`.
+ */
+const REDIRECT_EDITOR = 'redirect'
 
 /** A page path is what ends up in a URL, so it is held to what reads and routes cleanly. */
 const rePagePath = /^[a-zA-Z0-9-_/]*$/
@@ -55,6 +71,10 @@ export interface Page {
   tags: string[]
   toc: TocNode[]
   render: string
+  /**
+   * The source. Present when the request asked for it, and always for a redirection — see `toPage`,
+   * and `RedirectContent` for what a redirection's holds.
+   */
   content?: string
   allowComments: boolean
   allowContributions: boolean
@@ -122,10 +142,13 @@ function hasPermission(actor: PageActor, permission: string): boolean {
 }
 
 /**
- * Strip a path down to the form that gets stored: no wrapping slashes, lowercase.
+ * Normalize a path to the form that gets stored, and refuse it if what is left is not addressable.
+ *
+ * Casing and spaces are corrected rather than rejected — `My Page` is a path someone meant, and it
+ * means `my-page`. Anything else outside the allowed characters is not something to guess at.
  */
 function normalizePath(input: string): string {
-  const path = (input ?? '').trim().replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase()
+  const path = normalizePagePath(input)
   if (!rePagePath.test(path)) {
     throw new CustomError(
       'pageInvalidPath',
@@ -133,6 +156,66 @@ function normalizePath(input: string): string {
     )
   }
   return path
+}
+
+/**
+ * Where a redirection points, as its content column holds it.
+ *
+ * `kind` is stored rather than sniffed off the target, because it is the question the author actually
+ * answered: a page of this wiki, or somewhere else. The two are not reliably told apart afterwards —
+ * `/help` is a page here and a perfectly good relative URL elsewhere — and the editor has to open on
+ * the choice that was made rather than on a guess about it.
+ */
+export interface RedirectContent {
+  kind: 'page' | 'url'
+  /** A rooted path within this wiki, or an absolute `http(s)` URL. */
+  target: string
+  /** Whether the reader is told where they are going before being taken there. */
+  showInterstitial: boolean
+}
+
+/**
+ * Read a redirection's target back out of what the editor sent, and refuse anything that would not
+ * send a reader anywhere.
+ *
+ * Re-serialized rather than stored as it arrived, so that the column holds one canonical spelling: a
+ * save that changes nothing then reports no change, and the history rows say what they mean.
+ *
+ * A URL target is held to `http`/`https` deliberately. This value ends up in a `location` assignment,
+ * so any other scheme is either useless (`mailto:` in a redirect that nobody chose to follow) or an
+ * invitation (`javascript:`) — and a redirection is followed without the reader clicking anything.
+ */
+function normalizeRedirectContent(content: string | undefined): string {
+  let parsed: any
+  try {
+    parsed = JSON.parse(content ?? '')
+  } catch {
+    throw new CustomError('pageRedirectInvalid', 'A redirection needs a target.')
+  }
+  const kind = parsed?.kind === 'url' ? 'url' : 'page'
+  const target = typeof parsed?.target === 'string' ? parsed.target.trim() : ''
+  if (target.length < 1) {
+    throw new CustomError('pageRedirectMissingTarget', 'A redirection needs a target.')
+  }
+  if (kind === 'url') {
+    if (!/^https?:\/\/\S/i.test(target)) {
+      throw new CustomError(
+        'pageRedirectInvalidUrl',
+        'A redirection to a URL must be a complete http:// or https:// address.'
+      )
+    }
+  } else if (!target.startsWith('/') || target.startsWith('//')) {
+    throw new CustomError(
+      'pageRedirectInvalidPath',
+      'A redirection to a page of this wiki must be a path starting with a slash.'
+    )
+  }
+  const redirect: RedirectContent = {
+    kind,
+    target,
+    showInterstitial: parsed?.showInterstitial === true
+  }
+  return JSON.stringify(redirect)
 }
 
 /**
@@ -156,6 +239,11 @@ class Pages {
    *               looking at the lock screen is told what page they are being asked for a password to.
    * @param withPassword Include the page's own password. Only for a requester who may edit the page,
    *                     which is the one that has to be able to read it back and save it again.
+   * @param withContent Include the source. A redirection's comes back either way: its content is not
+   *                    a body somebody wrote, it is where the page sends its reader — which every
+   *                    reader is about to be shown by being taken there. Withholding it would leave
+   *                    the page view unable to do the one thing the page is for, and the page view
+   *                    does not ask for content.
    */
   private toPage(
     row: any,
@@ -189,7 +277,9 @@ class Pages {
       tags: row.tags ?? [],
       toc: locked ? [] : (row.toc ?? []),
       render: locked ? '' : (row.render ?? ''),
-      ...(withContent && !locked ? { content: row.content ?? '' } : {}),
+      ...((withContent || row.editor === REDIRECT_EDITOR) && !locked
+        ? { content: row.content ?? '' }
+        : {}),
       allowComments: config.allowComments ?? true,
       allowContributions: config.allowContributions ?? true,
       allowRatings: config.allowRatings ?? true,
@@ -375,10 +465,14 @@ class Pages {
     if (title.length < 1) {
       throw new CustomError('pageTitleMissing', 'A page needs a title.')
     }
-    if (!input.content || input.content.trim().length < 1) {
+    const editor = input.editor || 'markdown'
+    const isRedirect = editor === REDIRECT_EDITOR
+    // -> A redirection has no body to be empty: what it holds instead is where it points, and that has
+    //    its own rules about being filled in
+    const content = isRedirect ? normalizeRedirectContent(input.content) : input.content
+    if (!isRedirect && (!content || content.trim().length < 1)) {
       throw new CustomError('pageEmptyContent', 'A page cannot be empty.')
     }
-    const editor = input.editor || 'markdown'
 
     const hash = generatePathHash(path)
     const duplicate = await WIKI.db
@@ -411,14 +505,16 @@ class Pages {
         creatorId: actor.id,
         ownerId: actor.id,
         config: this.buildConfig(input, siteId),
-        content: input.content,
+        content,
         contentType: EDITOR_CONTENT_TYPES[editor] ?? 'text',
         description: input.description ?? '',
         editor,
         hash,
         icon: input.icon ?? '',
         isBrowsable: input.isBrowsable ?? true,
-        isSearchable: input.isSearchable ?? true,
+        // -> A redirection has nothing to find: a result for it would be a result whose page is a
+        //    doorway to the page the reader actually wanted, which is the one search should offer
+        isSearchable: isRedirect ? false : (input.isSearchable ?? true),
         locale,
         password: input.password || null,
         path,
@@ -498,6 +594,9 @@ class Pages {
 
     const values: Record<string, any> = { updatedAt: sql`now()` }
     let treeTitle: string | null = null
+    // -> Which editor authored a page is not something a save may change, so the row is the authority
+    //    on whether this is a redirection
+    const isRedirect = existing.editor === REDIRECT_EDITOR
 
     if (patch.title !== undefined) {
       const title = patch.title.trim()
@@ -517,7 +616,7 @@ class Pages {
       values.alias = await this.validateAlias(siteId, patch.alias, id)
     }
     if (patch.content !== undefined) {
-      values.content = patch.content
+      values.content = isRedirect ? normalizeRedirectContent(patch.content) : patch.content
     }
     if (patch.publishState !== undefined) {
       if (
@@ -542,7 +641,8 @@ class Pages {
       values.isBrowsable = patch.isBrowsable
     }
     if (patch.isSearchable !== undefined) {
-      values.isSearchable = patch.isSearchable
+      // -> Never for a redirection; see the same call in `createPage`
+      values.isSearchable = isRedirect ? false : patch.isSearchable
     }
     if (patch.password !== undefined) {
       values.password = patch.password || null
