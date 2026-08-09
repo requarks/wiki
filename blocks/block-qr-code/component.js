@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit'
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 import { renderSVG } from 'uqr'
+import { DarkMode } from '../shared/theme.js'
 
 /**
  * Block QR Code
@@ -61,7 +62,7 @@ export class BlockQrCodeElement extends LitElement {
         */
         background-color: #fff;
       }
-      :host-context(body.body--dark) .qr {
+      :host([dark]) .qr {
         border-color: rgba(255, 255, 255, 0.15);
       }
 
@@ -123,6 +124,8 @@ export class BlockQrCodeElement extends LitElement {
     this.caption = ''
     this._svg = ''
     this._error = ''
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

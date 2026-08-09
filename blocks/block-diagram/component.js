@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit'
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 import mermaid from 'mermaid'
+import { DarkMode } from '../shared/theme.js'
 
 /**
  * A number for the next drawing, so every one of them gets an id of its own.
@@ -124,7 +125,7 @@ flowchart LR
         color: #424242;
         font-size: 0.8em;
       }
-      :host-context(body.body--dark) .caption {
+      :host([dark]) .caption {
         color: rgba(255, 255, 255, 0.7);
       }
 
@@ -171,7 +172,19 @@ flowchart LR
     this.align = 'left'
     this._svg = ''
     this._error = ''
-    this._themeWatcher = null
+    /*
+      Two jobs at once: `dark` on this element is what the caption colour keys off, and the callback
+      is what redraws the diagram itself, since mermaid picks its colours as it draws and writes them
+      into the SVG. Only `auto` has anything to follow -- a diagram asked for a theme by name keeps
+      it either way -- and only once there is a source to draw, which `firstUpdated` reads.
+    */
+    this._darkMode = new DarkMode(this, {
+      onChange: () => {
+        if (this.theme === 'auto' && this._source) {
+          this._draw()
+        }
+      }
+    })
     /** The drawing being waited on, so a stale one cannot land after a newer one. */
     this._drawing = 0
     /** The source, and whether it came out of a fence. Both read from the body once, on first render. */
@@ -182,15 +195,15 @@ flowchart LR
   /**
    * The theme to draw in.
    *
-   * `auto` reads the class the app puts on the body, which is the same thing every block's CSS keys
-   * its dark mode off — a diagram cannot do it in CSS, because mermaid picks its colours while it
-   * draws and writes them into the SVG.
+   * `auto` follows the app, which every other block does in CSS off the `dark` attribute the same
+   * controller sets — a diagram cannot, because mermaid picks its colours while it draws and writes
+   * them into the SVG.
    */
   _theme() {
     if (this.theme && this.theme !== 'auto') {
       return this.theme
     }
-    return document.body.classList.contains('body--dark') ? 'dark' : 'default'
+    return this._darkMode.isDark ? 'dark' : 'default'
   }
 
   /**
@@ -251,18 +264,6 @@ flowchart LR
       return
     }
     this._draw()
-
-    // -> Only `auto` has anything to follow; a diagram asked for a theme by name keeps it either way
-    if (this.theme === 'auto') {
-      this._themeWatcher = new MutationObserver(() => this._draw())
-      this._themeWatcher.observe(document.body, { attributeFilter: ['class'] })
-    }
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback()
-    this._themeWatcher?.disconnect()
-    this._themeWatcher = null
   }
 
   render() {

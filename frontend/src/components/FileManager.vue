@@ -1420,12 +1420,19 @@ onBeforeUnmount(() => {
     }
   }
 
+  /*
+    Each pane states its own ink alongside its fill. Nothing above these sets a text color for dark
+    mode -- the app has no global `body--dark { color }` rule, and the panes are not `w-card`s, which
+    is where that pairing normally lives -- so anything that just inherits (the folder tree's labels,
+    a file's title, the size in the right-hand column) came out black on the dark fill.
+  */
   &-left {
     @at-root .body--light & {
       background-color: $blue-grey-1;
     }
     @at-root .body--dark & {
       background-color: $dark-4;
+      color: #fff;
     }
   }
 
@@ -1435,6 +1442,7 @@ onBeforeUnmount(() => {
     }
     @at-root .body--dark & {
       background-color: $dark-6;
+      color: #fff;
     }
   }
 
@@ -1444,6 +1452,7 @@ onBeforeUnmount(() => {
     }
     @at-root .body--dark & {
       background-color: $dark-5;
+      color: #fff;
     }
   }
 

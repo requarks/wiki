@@ -11,6 +11,7 @@ import katexCss from 'katex/dist/katex.min.css'
   the same thing in both blocks.
 */
 import 'katex/contrib/mhchem'
+import { DarkMode } from '../shared/theme.js'
 
 /*
   KaTeX's stylesheet, split in two.
@@ -119,7 +120,7 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
           font-size: 0.8em;
           text-align: center;
         }
-        :host-context(body.body--dark) .caption {
+        :host([dark]) .caption {
           color: rgba(255, 255, 255, 0.7);
         }
 
@@ -160,6 +161,8 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     this.align = 'center'
     this._markup = ''
     this._error = ''
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

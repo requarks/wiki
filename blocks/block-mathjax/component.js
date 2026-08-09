@@ -48,6 +48,8 @@ import '@mathjax/src/js/input/tex/unicode/UnicodeConfiguration.js'
 import '@mathjax/src/js/input/tex/upgreek/UpgreekConfiguration.js'
 import '@mathjax/src/js/input/tex/verb/VerbConfiguration.js'
 
+import { DarkMode } from '../shared/theme.js'
+
 const PACKAGES = [
   'base',
   'action',
@@ -204,7 +206,7 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
         font-size: 0.8em;
         text-align: center;
       }
-      :host-context(body.body--dark) .caption {
+      :host([dark]) .caption {
         color: rgba(255, 255, 255, 0.7);
       }
 
@@ -244,6 +246,8 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     this.align = 'center'
     this._svg = ''
     this._error = ''
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

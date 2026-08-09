@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit'
 import { deflate } from 'pako'
+import { DarkMode } from '../shared/theme.js'
 
 /** The default server, which is the one Kroki runs for everybody. */
 const DEFAULT_SERVER = 'https://kroki.io'
@@ -203,7 +204,7 @@ digraph G {
         /* -> A diagram wider than the column scrolls rather than shrinking to illegibility */
         overflow-x: auto;
       }
-      :host-context(body.body--dark) .sheet {
+      :host([dark]) .sheet {
         border-color: rgba(255, 255, 255, 0.15);
       }
 
@@ -234,7 +235,7 @@ digraph G {
         color: #424242;
         font-size: 0.8em;
       }
-      :host-context(body.body--dark) .caption {
+      :host([dark]) .caption {
         color: rgba(255, 255, 255, 0.7);
       }
 
@@ -297,6 +298,8 @@ digraph G {
     this._src = ''
     this._unsized = false
     this._error = ''
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

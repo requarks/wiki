@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit'
+import { DarkMode } from '../shared/theme.js'
 
 /**
  * Block Countdown
@@ -71,7 +72,7 @@ export class BlockCountdownElement extends LitElement {
         text-align: center;
         background-image: linear-gradient(to bottom, #fff, #fafafa);
       }
-      :host-context(body.body--dark) .countdown {
+      :host([dark]) .countdown {
         border-color: rgba(255, 255, 255, 0.15);
         background-image: linear-gradient(to bottom, #161b22, #0d1117);
       }
@@ -95,7 +96,7 @@ export class BlockCountdownElement extends LitElement {
         border-radius: 5px;
         background-color: rgba(0, 0, 0, 0.04);
       }
-      :host-context(body.body--dark) .segment {
+      :host([dark]) .segment {
         background-color: rgba(255, 255, 255, 0.06);
       }
 
@@ -175,6 +176,8 @@ export class BlockCountdownElement extends LitElement {
     this._error = ''
     this._target = null
     this._timer = null
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

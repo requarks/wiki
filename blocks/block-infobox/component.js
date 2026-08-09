@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit'
 import { load as parseYaml } from 'js-yaml'
+import { DarkMode } from '../shared/theme.js'
 
 /**
  * Yes and no, drawn rather than spelled out.
@@ -367,7 +368,7 @@ Website: https://montreal.ca
         --infobox-head-top: #f7f8fa;
         --infobox-rule: #e3e5e8;
       }
-      :host-context(body.body--dark) {
+      :host([dark]) {
         --infobox-border: rgba(255, 255, 255, 0.15);
         --infobox-bg: #161b22;
         --infobox-head: #1e232a;
@@ -410,6 +411,8 @@ Website: https://montreal.ca
     this.imageCaption = ''
     this._entries = []
     this._error = ''
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

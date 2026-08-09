@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit'
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
+import { DarkMode } from '../shared/theme.js'
 
 /**
  * Asked of a block that might be hiding the element the event was dispatched on.
@@ -84,7 +85,7 @@ Content of the second tab.
           0 1px 3px rgb(0 0 0 / 0.1),
           0 1px 2px rgb(0 0 0 / 0.06);
       }
-      :host-context(body.body--dark) .tabs {
+      :host([dark]) .tabs {
         box-shadow:
           0 1px 3px rgb(0 0 0 / 0.5),
           0 1px 2px rgb(0 0 0 / 0.35);
@@ -129,7 +130,7 @@ Content of the second tab.
         background-color: rgb(255 255 255 / 0.5);
         color: var(--tabs-active-fg);
       }
-      :host-context(body.body--dark) .tab:hover:not(.is-active) {
+      :host([dark]) .tab:hover:not(.is-active) {
         background-color: rgb(255 255 255 / 0.05);
       }
       .tab:focus-visible {
@@ -169,7 +170,7 @@ Content of the second tab.
         --tabs-active-fg: var(--q-primary, #1976d2);
         --tabs-panel-bg: #fff;
       }
-      :host-context(body.body--dark) {
+      :host([dark]) {
         --tabs-border: rgba(255, 255, 255, 0.15);
         --tabs-strip-bg: linear-gradient(to bottom, #1b212a, #12161d);
         --tabs-inactive-fg: rgba(255, 255, 255, 0.7);
@@ -191,6 +192,8 @@ Content of the second tab.
     this._active = 0
     // -> Bound once, so that removing the listener later takes the same function that was added
     this._onReveal = this._onReveal.bind(this)
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

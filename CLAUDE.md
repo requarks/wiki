@@ -121,9 +121,20 @@ Vite's `dynamicImportVarsOptions`. A block pulling in a heavy library is fine �
 until its tag turns up in a page — and a library that still ships CommonJS works too, since the
 rollup config runs `@rollup/plugin-commonjs` after `resolve()`.
 
-Blocks style themselves with `:host` / `:host-context(body.body--dark)` for dark mode and read the
-theme colors via CSS custom properties (`var(--q-primary)` — the `--q-` prefix is historical; the
-properties are declared in `css/tailwind.css` and rewritten at runtime for per-site theming).
+Blocks style themselves off `:host` and read the theme colors via CSS custom properties
+(`var(--q-primary)` — the `--q-` prefix is historical; the properties are declared in
+`css/tailwind.css` and rewritten at runtime for per-site theming).
+
+**Dark mode goes through `blocks/shared/theme.js`, never `:host-context()`.** The app's source of
+truth is the `body--dark` class on `<body>`, which CSS in a shadow root cannot see; `:host-context()`
+is the selector for exactly that and is what every block used to use, but only Chromium ever shipped
+it — MDN has it deprecated, Firefox and Safari never implemented it, and there it silently never
+matches, so the block stayed light on a dark page. Instead construct a `DarkMode` controller
+(`this._darkMode = new DarkMode(this)`) in the block's constructor and write `:host([dark])`; the
+controller keeps that attribute in step, sharing one MutationObserver across every block on the page.
+A block that must *act* on the change rather than restyle for it passes `onChange`, or reads
+`.isDark` — `block-diagram` redraws mermaid in its own dark theme, `block-map` resolves a per-block
+`theme` prop that can pin a map light on a dark page.
 
 ## Commands
 

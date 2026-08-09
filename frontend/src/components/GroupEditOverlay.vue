@@ -179,7 +179,9 @@
       <!-- RULES -->
       <!-- ----------------------------------------------------------------------- -->
       <w-page v-else-if="route.params.section === `rules`">
-        <w-toolbar class="pl-4" :class="dark.isActive ? `bg-dark-3` : `bg-white`">
+        <w-toolbar
+          class="pl-4"
+          :class="dark.isActive ? `bg-dark-3 text-white` : `bg-white text-dark`">
           <div class="text-subtitle1">{{ t('admin.groups.rules') }}</div>
           <w-space />
           <w-btn
@@ -464,7 +466,7 @@
       <!-- USERS -->
       <!-- ----------------------------------------------------------------------- -->
       <w-page v-else-if="route.params.section === `users`">
-        <w-toolbar :class="dark.isActive ? `bg-dark-3` : `bg-white`">
+        <w-toolbar :class="dark.isActive ? `bg-dark-3 text-white` : `bg-white text-dark`">
           <div class="text-subtitle1">{{ t('admin.groups.users') }}</div>
           <w-space />
           <w-btn
@@ -556,7 +558,7 @@
                     flat
                     :to="`/_admin/users/` + props.row.id"
                     icon="la:pen"
-                    color="indigo"
+                    :color="dark.isActive ? `indigo-4` : `indigo`"
                     :label="t(`common.actions.edit`)"
                     no-caps />
                   <!-- Hidden for system users: the guest account's membership is fixed, and the API -->

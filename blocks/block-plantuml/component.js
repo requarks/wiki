@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit'
 import { deflateRaw } from 'pako'
+import { DarkMode } from '../shared/theme.js'
 
 /** The default server, which is the one PlantUML runs for everybody. */
 const DEFAULT_SERVER = 'https://www.plantuml.com/plantuml'
@@ -138,7 +139,7 @@ Bob --> Alice : hi
         /* -> A diagram wider than the column scrolls rather than shrinking to illegibility */
         overflow-x: auto;
       }
-      :host-context(body.body--dark) .sheet {
+      :host([dark]) .sheet {
         border-color: rgba(255, 255, 255, 0.15);
       }
 
@@ -153,7 +154,7 @@ Bob --> Alice : hi
         color: #424242;
         font-size: 0.8em;
       }
-      :host-context(body.body--dark) .caption {
+      :host([dark]) .caption {
         color: rgba(255, 255, 255, 0.7);
       }
 
@@ -207,6 +208,8 @@ Bob --> Alice : hi
     this.align = 'left'
     this._src = ''
     this._error = ''
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

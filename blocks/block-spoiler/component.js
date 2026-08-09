@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit'
+import { DarkMode } from '../shared/theme.js'
 
 /** A crossed-out eye, drawn rather than fetched: it is the same picture on every spoiler there is. */
 const EYE_OFF_SVG = html`
@@ -110,7 +111,7 @@ export class BlockSpoilerElement extends LitElement {
         --spoiler-fg: #424242;
         --spoiler-hover: rgba(0, 0, 0, 0.04);
       }
-      :host-context(body.body--dark) {
+      :host([dark]) {
         --spoiler-border: rgba(255, 255, 255, 0.15);
         --spoiler-bg: #161b22;
         --spoiler-fg: rgba(255, 255, 255, 0.75);
@@ -143,6 +144,8 @@ export class BlockSpoilerElement extends LitElement {
     this.label = 'Spoiler'
     this.hint = 'Click to show content'
     this._covered = true
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   /**

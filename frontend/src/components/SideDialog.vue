@@ -106,6 +106,23 @@ const state = reactive({
   }
 
   /*
+    The rail below hangs outside the panel, so the panel holding it must not clip.
+
+    `WDialog` puts `overflow: auto` on `.w-dialog-panel` -- that is what rounds a centred dialog whose
+    inner bands would otherwise paint over its corners, and it keeps oversized content reachable. The
+    rail's containing block is the card INSIDE that panel, so the clip catches it and it disappeared
+    outright the moment that overflow arrived.
+
+    Lifted only for the panel that actually carries a rail, rather than for every side panel: the
+    other one (`PageDataDialog`) still leans on the panel both to round it and to scroll a card wider
+    than the panel is. Nothing is given up here -- `PagePropertiesDialog` rounds its own toolbar and
+    scroll area, and that scroll area is what its body scrolls in.
+  */
+  .w-dialog-panel:has(> .page-properties-dialog) {
+    overflow: visible;
+  }
+
+  /*
     The quick-jump rail, which sits outside the panel's left edge.
 
     Two things kept it off screen. It was `position: fixed` at a hard-coded `right: 486px`, a number

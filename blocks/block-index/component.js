@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit'
+import { DarkMode } from '../shared/theme.js'
 
 /**
  * Block Index
@@ -118,7 +119,7 @@ export class BlockIndexElement extends LitElement {
         align-items: stretch;
         justify-content: stretch;
       }
-      :host-context(body.body--dark) li {
+      :host([dark]) li {
         background-color: #222;
         background-image: linear-gradient(to bottom,#161b22, #0d1117);
         border-right: 1px solid rgba(0,0,0,.5);
@@ -132,7 +133,7 @@ export class BlockIndexElement extends LitElement {
         border-left-color: var(--q-primary);
         cursor: pointer;
       }
-      :host-context(body.body--dark) li:hover {
+      :host([dark]) li:hover {
         background-image: linear-gradient(to bottom,#1e232a, #161b22);
         border-left-color: var(--q-primary);
       }
@@ -162,10 +163,10 @@ export class BlockIndexElement extends LitElement {
       li a > svg path {
         fill: rgba(0,0,0,.2);
       }
-      :host-context(body.body--dark) li a > svg path {
+      :host([dark]) li a > svg path {
         fill: rgba(255,255,255,.2);
       }
-      li:hover a > svg path, :host-context(body.body--dark) li:hover a > svg path {
+      li:hover a > svg path, :host([dark]) li:hover a > svg path {
         fill: color-mix(in srgb, currentColor 50%, transparent);
       }
 
@@ -240,6 +241,8 @@ export class BlockIndexElement extends LitElement {
     this.orderByDirection = 'asc'
     this.depth = 0
     this.noResultMsg = 'No pages matching your query.'
+    // -> Puts `dark` on this element for the styles above to key off
+    this._darkMode = new DarkMode(this)
   }
 
   async connectedCallback() {
