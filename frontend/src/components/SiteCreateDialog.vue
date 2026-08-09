@@ -5,6 +5,11 @@
         <w-icon name="img:/_assets/icons/fluent-plus-plus.svg" size="sm" class="mr-2" />
         <span>{{ t(`admin.sites.new`) }}</span>
       </w-card-section>
+      <!--
+        Neither icon is `self-start`: both fields pass `hide-bottom-space`, which suppresses the hint
+        line, so each row is the field alone and a centred icon is what lines up with it. See the note in
+        `ApiKeyCreateDialog`.
+      -->
       <w-form ref="createSiteForm" class="py-2">
         <w-item>
           <blueprint-icon icon="home" />
@@ -21,7 +26,7 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="dns" class="self-start" />
+          <blueprint-icon icon="dns" />
           <w-item-section>
             <w-input
               v-model="state.siteHostname"

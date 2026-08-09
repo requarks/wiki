@@ -262,6 +262,47 @@
           </w-card-actions>
         </w-card>
       </div>
+      <div class="col-span-12 lg:col-span-6">
+        <w-card>
+          <w-card-section class="admin-dashboard-panel">
+            <img src="/_assets/icons/fluent-key-2.svg" />
+            <strong>{{ t('admin.dashboard.lastLogins') }}</strong>
+          </w-card-section>
+          <w-separator />
+          <w-list separator>
+            <!--
+              Rows link only where the user list is reachable, the same condition the Users card puts on
+              its Manage button: the panel itself is `access:admin`, and reading one account is
+              `read:users`, so for a reader without it a link would land on a refusal.
+            -->
+            <w-item
+              v-for="lastLogin of state.lastLogins"
+              :key="lastLogin.id"
+              :clickable="usersAreVisible"
+              :to="usersAreVisible ? `/_admin/users/` + lastLogin.id : null">
+              <w-item-section side>
+                <w-icon name="la:user" :color="actionColor" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ lastLogin.name }}</w-item-label>
+                <w-item-label caption>{{ lastLogin.email }}</w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <div class="text-caption">{{ relativeDate(lastLogin.lastLoginAt) }}</div>
+                <!-- -> The exact moment, in the reader's own pattern and zone, behind the rough one -->
+                <w-tooltip anchor="center left" self="center right">
+                  {{ userStore.formatDateTime(t, lastLogin.lastLoginAt) }}
+                </w-tooltip>
+              </w-item-section>
+            </w-item>
+            <w-item v-if="state.lastLogins.length < 1">
+              <w-item-section>
+                <w-item-label caption>{{ t('admin.dashboard.lastLoginsNone') }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </div>
     </div>
   </w-page>
 </template>
@@ -269,12 +310,13 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { computed, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { dialog } from '@/composables/dialog'
 import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
+import { relativeDate } from '@/helpers/datetime'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
@@ -324,7 +366,8 @@ const { t } = useI18n()
 // DATA
 
 const state = reactive({
-  loading: 0
+  loading: 0,
+  lastLogins: []
 })
 
 // COMPUTED
@@ -367,14 +410,31 @@ useMeta({
 // METHODS
 
 /*
-  Every card reads from the admin store, which `AdminLayout` fills once on mount -- `fetchInfo` for
-  the counters on `info`, `fetchSites` for the sites card, which counts the list itself. Refreshing
-  the dashboard is therefore both of them, not a call of its own.
+  The counter cards read from the admin store, which `AdminLayout` fills once on mount -- `fetchInfo`
+  for the counters on `info`, `fetchSites` for the sites card, which counts the list itself.
+
+  The logins panel is fetched here instead, and kept on this page's own state: nothing else shows it,
+  and the store is filled by the layout that every admin screen mounts, so putting it there would ask
+  for these rows on every one of them.
 */
+// -> Reports its own failure rather than throwing on: one panel that could not be filled is not the
+//    whole dashboard failing to refresh
+async function loadLastLogins() {
+  try {
+    state.lastLogins = await API_CLIENT.get('users/recent-logins').json()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: 'Failed to load the last logins.',
+      caption: err.message
+    })
+  }
+}
+
 async function load() {
   state.loading++
   try {
-    await Promise.all([adminStore.fetchInfo(), adminStore.fetchSites()])
+    await Promise.all([adminStore.fetchInfo(), adminStore.fetchSites(), loadLastLogins()])
   } catch (err) {
     notify({
       type: 'negative',
@@ -384,6 +444,9 @@ async function load() {
   }
   state.loading--
 }
+
+// -> The store is already filled by the layout; this is the one thing on the page that has to ask
+onMounted(loadLastLogins)
 
 function newSite() {
   dialog({
@@ -415,6 +478,26 @@ function checkForUpdates() {
 
 <style lang="scss">
 .admin-dashboard {
+  /*
+    Header of a card that holds a list rather than a figure: the same wording weight as `-card` above,
+    at the smaller icon a title line can carry -- 64px is sized for a card whose whole content is one
+    number.
+  */
+  &-panel {
+    display: flex;
+    align-items: center;
+
+    img {
+      width: 32px;
+      margin-right: 12px;
+    }
+
+    strong {
+      font-size: 1.1rem;
+      font-weight: 300;
+    }
+  }
+
   &-card {
     display: flex;
     align-items: center;

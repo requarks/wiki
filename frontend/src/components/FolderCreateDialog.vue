@@ -5,6 +5,11 @@
         <w-icon name="img:/_assets/icons/fluent-plus-plus.svg" size="sm" class="mr-2" />
         <span>{{ t(`fileman.folderCreate`) }}</span>
       </w-card-section>
+      <!--
+        Neither icon is `self-start`: both fields pass `hide-bottom-space`, which suppresses the hint
+        line, so each row is the field alone and a centred icon is what lines up with it. See the note in
+        `ApiKeyCreateDialog`.
+      -->
       <w-form ref="newFolderForm" class="py-2" @submit="create">
         <w-item>
           <blueprint-icon icon="folder" />
@@ -23,7 +28,7 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="file-submodule" class="self-start" />
+          <blueprint-icon icon="file-submodule" />
           <w-item-section>
             <w-input
               v-model="state.path"

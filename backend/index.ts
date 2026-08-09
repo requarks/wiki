@@ -456,6 +456,18 @@ async function initHTTPServer() {
   })
   app.register(fastifySwaggerUi, {
     routePrefix: '/_api',
+    /*
+      Swagger UI's own sorters, applied in the browser: tags down the page, and the operations inside
+      each tag by path. Neither is on by default — the order is otherwise the order the routes were
+      registered in, which is meaningful to `api/index.ts` and arbitrary to anyone reading the docs.
+
+      `operationsSorter: 'alpha'` sorts on the path, not the summary, so the several methods of one
+      path stay together and keep their registration order relative to each other.
+    */
+    uiConfig: {
+      tagsSorter: 'alpha',
+      operationsSorter: 'alpha'
+    },
     // -> Left empty so the plugin inlines neither its own logo nor one of ours; the stylesheet below
     //    is what puts the site's logo in the topbar
     logo: {} as any,

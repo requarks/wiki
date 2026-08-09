@@ -20,7 +20,13 @@ const navigationItem = {
 
 /** Whether the requester may see and edit a menu whole, rather than only the parts meant for them. */
 function canManageNavigation(req: FastifyRequest): boolean {
-  const permissions = req.session?.authenticated ? (req.session.permissions ?? []) : []
+  // -> Same identity resolution as the route permission hook, so a key that may save a menu may also
+  //    read it whole
+  const permissions = req.apiKey
+    ? req.apiKey.permissions
+    : req.session?.authenticated
+      ? (req.session.permissions ?? [])
+      : []
   return permissions.includes('manage:navigation') || permissions.includes('manage:system')
 }
 

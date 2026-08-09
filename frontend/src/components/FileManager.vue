@@ -6,8 +6,11 @@
         <span>{{ t(`fileman.title`) }}</span>
       </w-toolbar>
       <w-toolbar dark>
+        <!-- -> Same gate the sidebar's locale button uses in `MainLayout`: with the site's locale menu
+             off, switching locale is not something a reader is offered anywhere -->
         <w-btn
-          class="mr-2 acrylic-btn"
+          v-if="siteStore.locales.showMenu"
+          class="fileman-locale mr-2 acrylic-btn"
           flat
           color="white"
           :label="commonStore.locale"
@@ -46,25 +49,38 @@
           </button>
         </div>
       </w-toolbar>
+      <!--
+        The same chrome the editing overlays close themselves with -- see `NavEditOverlay`: a flat round
+        help button, then the pushed group. One button in the group here, since there is nothing to save;
+        `push` goes on the buttons, which is where `WBtn` reads it, not on the group.
+
+        -> No right margin on the last control: the toolbar's own 12px is already close to the 9-10px the
+           header leaves above and below.
+      -->
       <w-toolbar dark>
         <w-space />
-        <!--
-          -> No right margin needed: the toolbar's own 12px is already close to the 9-10px the header
-             leaves above and below. What made the button look pushed into the corner was the broken
-             search field inflating the header to 61px, which stretched those two gaps to 14/15.
-        -->
         <w-btn
+          class="mr-2"
           flat
-          dense
-          no-caps
-          color="red-3"
-          :aria-label="t(`common.actions.close`)"
-          icon="la:times"
-          @click="close">
-          <w-tooltip anchor="bottom middle" self="top middle">{{
-            t(`common.actions.close`)
-          }}</w-tooltip>
+          rounded
+          color="white"
+          :aria-label="t(`common.actions.viewDocs`)"
+          icon="la:question-circle"
+          :href="siteStore.docsBase + `/editor/file-manager`"
+          target="_blank">
+          <!-- -> `WTooltip` already defaults to below-the-trigger, which is where a header wants it -->
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
         </w-btn>
+        <w-btn-group>
+          <w-btn
+            push
+            color="white"
+            text-color="grey-7"
+            :label="t(`common.actions.close`)"
+            :aria-label="t(`common.actions.close`)"
+            icon="la:times"
+            @click="close" />
+        </w-btn-group>
       </w-toolbar>
     </w-header>
     <w-drawer class="fileman-left" :model-value="true" :width="350">
@@ -615,7 +631,8 @@ const files = computed(() => {
           break
         }
         case 'page': {
-          f.icon = fileTypes.page.icon
+          // -> A redirection has a target where a page has content, so it reads as its own kind of row
+          f.icon = f.pageType === 'redirect' ? fileTypes.redirect.icon : fileTypes.page.icon
           f.caption = t(`fileman.${f.pageType}PageType`)
           break
         }
@@ -1360,10 +1377,29 @@ onBeforeUnmount(() => {
 <style lang="scss">
 .fileman {
   /*
-    The search pill, mirroring `.header-search-field` in HeaderSearch: 40px tall, dark fill on the
+    The locale button is cut to the same 7px as the search field and Close, where `WBtn`'s flat variant
+    is 3px. Unlayered, because an SFC style block is not a Tailwind layer -- which is what lets it beat
+    the `rounded-[3px]` utility the component carries, the same way `.w-btn.acrylic-btn` in `_base.scss`
+    beats its hover utility. Specificity alone would not do it: both selectors are one class.
+  */
+  &-locale {
+    border-radius: 7px;
+  }
+
+  /*
+    The search field, following `.header-search-field` in HeaderSearch: 40px tall, dark fill on the
     dark header, inverting to white ink-on-white in use. Stated here rather than borrowing that
-    component's class, so a change to the site header cannot silently restyle this overlay -- but the
-    metrics are deliberately the same, because it is the same control in a different place.
+    component's class, so a change to the site header cannot silently restyle this overlay -- and the
+    two have since parted company on both of the things that tie a control to its surroundings.
+
+    The FILL: HeaderSearch sits on the site header, which is black, so its neutral `#212121` reads as
+    a lift out of it. This header is `.card-header` -- `$dark-3` graded towards `$dark-5`, all of them
+    blue-tinted -- and a neutral grey on a blue-grey ground reads as a different, muddier colour
+    rather than a raised surface. One step up the same ramp, `$dark-2`, is the lift without the clash.
+
+    The CORNERS: 7px, which is `WBtn`'s `push` radius, so the field and the Close button at the other
+    end of the header are cut to the same shape. A full pill next to a 7px button read as two
+    unrelated controls that happened to share a row.
   */
   &-search {
     display: flex;
@@ -1373,8 +1409,8 @@ onBeforeUnmount(() => {
     gap: 8px;
     height: 40px;
     padding: 0 8px 0 12px;
-    border-radius: 9999px;
-    background-color: #212121;
+    border-radius: 7px;
+    background-color: $dark-2;
     color: rgba(255, 255, 255, 0.85);
     transition:
       background-color 0.25s var(--ease-standard),

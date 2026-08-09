@@ -9,7 +9,7 @@ import {
   users as usersTable,
   userKeys
 } from '../db/schema.ts'
-import { and, count, eq, ilike, inArray, notExists, or, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNotNull, notExists, or, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { flatten, uniq } from 'es-toolkit/array'
 import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
@@ -35,6 +35,14 @@ export interface UserCore {
 export interface UserPage {
   total: number
   users: UserCore[]
+}
+
+/** A user and when they last signed in — all `getRecentLogins()` discloses. */
+export interface RecentLogin {
+  id: string
+  name: string
+  email: string
+  lastLoginAt: Date | null
 }
 
 /**
@@ -233,6 +241,34 @@ class Users {
   async getById(id: string) {
     const res = await WIKI.db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1)
     return res?.[0] ?? null
+  }
+
+  /**
+   * Fetch the users who logged in most recently, most recent first.
+   *
+   * Identity and the moment only — this answers a dashboard panel readable by anyone in the admin area,
+   * which is a tier below the `read:users` that the user list itself needs, so it deliberately carries
+   * none of the account state `getUsers()` selects.
+   *
+   * An account that has never logged in has no place in the answer rather than trailing the end of it,
+   * hence the `isNotNull`. System accounts are excluded because the guest is one: nothing signs in as
+   * it, and a `lastLoginAt` on it would be an artefact rather than a visit.
+   *
+   * @param limit How many to return
+   * @returns The most recent logins, newest first
+   */
+  async getRecentLogins({ limit = 10 }: { limit?: number } = {}): Promise<RecentLogin[]> {
+    return WIKI.db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        lastLoginAt: usersTable.lastLoginAt
+      })
+      .from(usersTable)
+      .where(and(isNotNull(usersTable.lastLoginAt), eq(usersTable.isSystem, false)))
+      .orderBy(desc(usersTable.lastLoginAt))
+      .limit(limit)
   }
 
   /**

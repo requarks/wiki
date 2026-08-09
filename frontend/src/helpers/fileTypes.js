@@ -125,6 +125,11 @@ export default {
   rar: {
     icon: 'img:/_assets/icons/color-rar.svg'
   },
+  // -> Not a file extension, like `folder` and `page`: the type of a page that redirects instead of
+  //    holding content of its own
+  redirect: {
+    icon: 'img:/_assets/icons/color-send-file.svg'
+  },
   svg: {
     icon: 'img:/_assets/icons/color-image-file.svg'
   },

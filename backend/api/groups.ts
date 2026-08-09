@@ -51,10 +51,16 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['read:groups', 'manage:groups']
+        // -> `manage:navigation` is here because a menu item can be limited to groups, so the
+        //    navigation editor has to be able to name them. It is safe to grant on this route and this
+        //    route only: the listing is `GroupCore`, which carries no permissions, no rules and no
+        //    members — reading one group in full, or its members, keeps needing `manage:groups`.
+        permissions: ['read:groups', 'manage:groups', 'manage:navigation']
       },
       schema: {
         summary: 'List all groups',
+        description:
+          'Every group by id and name, with its member count. Nothing about what a group may do or who is in it — that is `GET /groups/{groupId}`.',
         tags: ['Groups'],
         response: {
           200: {

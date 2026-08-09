@@ -162,6 +162,56 @@ async function routes(app: FastifyInstance) {
     }
   )
 
+  /**
+   * RECENT LOGINS
+   */
+  app.get<{ Querystring: { limit?: number } }>(
+    '/recent-logins',
+    {
+      config: {
+        // -> `access:admin`, not `read:users`: this answers a panel on the admin dashboard, which
+        //    everyone who can open the admin area sees, and it is the same permission `system/info`
+        //    fills the rest of that dashboard with. It is why the answer is identity plus a timestamp
+        //    and nothing else -- the user list, and every account flag on it, still needs `read:users`.
+        permissions: ['access:admin']
+      },
+      schema: {
+        summary: 'List the most recent logins',
+        description:
+          'Who signed in last, most recent first. Accounts that have never logged in are left out rather than trailing the list, as are system accounts — nothing signs in as the guest.',
+        tags: ['Users'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 }
+          }
+        },
+        response: {
+          200: {
+            description: 'The most recent logins, newest first',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                lastLoginAt: {
+                  type: 'string',
+                  format: 'date-time',
+                  description: 'RFC 3339 Date Time'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      return WIKI.models.users.getRecentLogins({ limit: req.query.limit ?? 10 })
+    }
+  )
+
   app.get(
     '/whoami',
     {

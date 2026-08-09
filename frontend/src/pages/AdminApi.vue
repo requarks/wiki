@@ -35,6 +35,17 @@
           target="_blank">
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
         </w-btn>
+        <!-- -> A real href, not a router link: the Swagger UI at `/_api` is served by the backend and is
+             not part of this SPA. Labelled rather than tooltipped, so the visible text is already the
+             accessible name and there is no `aria-label` -->
+        <w-btn
+          class="acrylic-btn mr-2"
+          icon="la:book"
+          flat
+          color="grey"
+          :label="t(`admin.api.docsButton`)"
+          href="/_api"
+          target="_blank" />
         <w-btn
           class="acrylic-btn mr-2"
           icon="la:redo-alt"

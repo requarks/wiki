@@ -15,8 +15,9 @@
         :aria-label="t(`common.actions.viewDocs`)"
         icon="la:question-circle"
         :href="siteStore.docsBase + `/admin/editors/markdown`"
-        target="_blank"
-        type="a" />
+        target="_blank">
+        <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+      </w-btn>
       <w-btn-group push>
         <w-btn
           push
