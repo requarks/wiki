@@ -292,7 +292,7 @@ function duplicatePage() {
     }
   }).onOk((newPageOpts) => {
     pageStore.pageDuplicate({
-      sourecePageId: pageStore.id,
+      sourcePageId: pageStore.id,
       path: newPageOpts.path,
       title: newPageOpts.title
     })

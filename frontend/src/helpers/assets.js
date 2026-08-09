@@ -20,3 +20,22 @@
 export function assetPath(folderPath, fileName) {
   return folderPath ? `/${folderPath}/${fileName}` : `/${fileName}`
 }
+
+/** Where uploaded files are served from — `backend/controllers/files.ts`. */
+export const FILES_PREFIX = '/_files/'
+
+/**
+ * Where an uploaded file actually loads from.
+ *
+ * The other half of the pair: `assetPath` is what a page's source stores and this is what it resolves
+ * to, so anything handing a file straight to a browser -- a link to copy, an `<img>` built outside the
+ * renderer -- uses this one. Writing it into a page instead would nail the content to the shape this
+ * server happens to serve files under.
+ *
+ * @param {string} folderPath Folder the asset sits in, slash-separated, empty at the site root.
+ * @param {string} fileName The asset's stored file name.
+ * @returns {string} A root-relative URL, e.g. `/_files/media/photo.png`.
+ */
+export function assetUrl(folderPath, fileName) {
+  return `${FILES_PREFIX}${folderPath ? `${folderPath}/${fileName}` : fileName}`
+}

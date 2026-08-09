@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy } from '../models/tree.ts'
 import { decodeTreePath } from '../helpers/common.ts'
+import { actorFrom } from './pages.ts'
 
 interface TreeQuery {
   parentId?: string
@@ -624,7 +625,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Delete a folder',
         description:
-          'Everything under the folder goes with it, assets included. Pages are not implemented yet, so their tree entries are removed but nothing else is.',
+          'Everything under the folder goes with it, pages and assets included. Each deleted page is recorded in its history first, so the branch can be recovered from there.',
         tags: ['Tree'],
         params: folderIdParam,
         response: {
@@ -635,6 +636,12 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      // -> As deleting a single page does: every page going with the folder is recorded against
+      //    whoever deleted it, so there has to be somebody to record
+      const actor = actorFrom(req)
+      if (!actor) {
+        return reply.unauthorized('Deleting a folder requires a logged in user.')
+      }
       const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
       if (!existing || existing.siteId !== req.params.siteId) {
         return reply.notFound('This folder does not exist.')
@@ -643,7 +650,10 @@ async function routes(app: FastifyInstance) {
         return reply.forbidden('You are not allowed to delete this folder.')
       }
       const removed = await WIKI.models.tree.deleteFolder(req.params.folderId)
-      await WIKI.models.assets.deleteOrphaned(removed.assets)
+      // -> The tree entries are gone; these are the rows behind them, which is where a page and an
+      //    asset actually live
+      await WIKI.models.pages.deleteOrphaned(req.params.siteId, removed.pages, actor)
+      await WIKI.models.assets.deleteOrphaned(req.params.siteId, removed.assets)
       return reply.code(204).send()
     }
   )

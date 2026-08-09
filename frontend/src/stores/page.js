@@ -402,11 +402,11 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - DUPLICATE
      */
-    async pageDuplicate({ sourecePageId, title, path }) {
+    async pageDuplicate({ sourcePageId, title, path }) {
       const siteStore = useSiteStore()
       try {
         const pageData = await API_CLIENT.get(
-          `sites/${siteStore.id}/pages/${sourecePageId ?? this.id}`,
+          `sites/${siteStore.id}/pages/${sourcePageId ?? this.id}`,
           { searchParams: { withContent: true } }
         ).json()
         if (!pageData?.id) {
@@ -565,7 +565,11 @@ export const usePageStore = defineStore('page', {
           }
         }).json()
       )
-      this.router.replace(`/${path}`)
+      // -> Following the page only makes sense when it is the one being viewed. Moved from the file
+      //    manager, it is some other page, and the reader is still on theirs.
+      if (id === this.id) {
+        this.router.replace(`/${path}`)
+      }
     },
     /**
      * PAGE - Rename

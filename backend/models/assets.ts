@@ -1,12 +1,37 @@
+import fs from 'node:fs/promises'
 import path from 'node:path'
 import mime from 'mime'
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { assets as assetsTable, tree as treeTable } from '../db/schema.ts'
 import { CustomError, decodeTreePath, encodeTreePath } from '../helpers/common.ts'
 import { makeImageThumbnail } from '../helpers/images.ts'
+import type { Readable } from 'node:stream'
+import type { DeletedEntry } from './tree.ts'
 
 /** How large the file manager renders a preview. Generated once, at upload time. */
 const THUMBNAIL_SIZE = { width: 320, height: 200 }
+
+/**
+ * How long a path resolution is trusted before it is looked up again.
+ *
+ * The backstop rather than the mechanism: the mutations that move an asset drop the entries they
+ * affect, but only on the instance that ran them, and a second instance has no way to hear about it —
+ * so every entry expires on its own as well. Short enough that a rename made elsewhere shows up
+ * quickly, long enough that a busy page's images resolve once rather than once per request.
+ */
+const PATH_CACHE_TTL_MS = 60_000
+
+/** How many path resolutions to hold per instance. Each is one row of metadata, so this is small. */
+const PATH_CACHE_MAX = 5000
+
+/** Ceiling for the disk cache when nothing is configured. */
+const DEFAULT_CACHE_MAX_SIZE = 512 * 1024 * 1024
+
+/** Sweep once this much of the ceiling has been written since the last one. */
+const SWEEP_TRIGGER_RATIO = 0.25
+
+/** How far under the ceiling a sweep trims, so that the next write does not trigger another. */
+const SWEEP_TARGET_RATIO = 0.8
 
 /**
  * Extensions a browser may render inline. Everything else is sent as a download.
@@ -82,6 +107,16 @@ export function sanitizeFileName(input: string): string {
 }
 
 /**
+ * The form a file path is cached under.
+ *
+ * Matches what the lookup does with it — empty segments dropped, lowercased — so that the spellings
+ * of a path that reach the same asset share one cache entry instead of each getting their own.
+ */
+function normalizePath(filePath: string): string {
+  return filePath.split('/').filter(Boolean).join('/').toLowerCase()
+}
+
+/**
  * The extension, lowercase and without its dot. Empty when the name has none.
  */
 function extensionOf(fileName: string): string {
@@ -109,9 +144,27 @@ function kindOf(mimeType: string, fileExt: string): AssetKind {
  * in the site live in the matching `tree` row, which shares its ID. Both are written together — an
  * asset with no tree row would be unreachable, and a tree row with no asset would be a broken link.
  *
- * Storage targets are not implemented yet, so the database is the only copy.
+ * Storage targets are not implemented yet, so the database is the only copy — but not the one that
+ * answers a request for a file. Serving goes through two caches, because `/_files/` is hit by every
+ * image on every page view and neither half of that lookup needs the database twice:
+ *
+ * 1. **memory**, holding path → metadata for `PATH_CACHE_TTL_MS`, which is what decides the ETag and
+ *    answers the conditional requests a browser sends once its own copy goes stale
+ * 2. **disk**, under `<dataPath>/cache/files`, holding the bytes, streamed straight to the response
+ *
+ * Only the database is permanent; both caches are derived and can be deleted at any point, which is
+ * also what makes a cold instance correct rather than empty-handed.
  */
 class Assets {
+  /** Path resolutions, keyed `siteId:path`. Insertion-ordered, so the oldest entry is evictable. */
+  pathCache = new Map<string, { asset: AssetAtPath; cachedAt: number }>()
+
+  /** Bytes written to the disk cache since the last sweep, for `SWEEP_TRIGGER_RATIO`. */
+  writtenSinceSweep = 0
+
+  /** Whether a sweep is running, so that a burst of writes queues no more than one. */
+  sweeping = false
+
   /**
    * Store an uploaded file.
    *
@@ -342,6 +395,242 @@ class Assets {
     return results[0]?.preview ?? null
   }
 
+  // == SERVING CACHE ==================
+
+  /**
+   * An asset addressed by path, answered from memory where it can be.
+   *
+   * What `/_files/` resolves every request through: the metadata decides whether the caller may read
+   * the file and what its ETag is, both of which are needed before any bytes are worth fetching.
+   */
+  async resolveAssetPath(siteId: string, filePath: string): Promise<AssetAtPath | null> {
+    const key = `${siteId}:${normalizePath(filePath)}`
+    const cached = this.pathCache.get(key)
+    if (cached && Date.now() - cached.cachedAt < PATH_CACHE_TTL_MS) {
+      return cached.asset
+    }
+
+    const asset = await this.getAssetByPath(siteId, filePath)
+    if (!asset) {
+      // -> A path with nothing at it is not remembered as empty: a file uploaded there has no way to
+      //    find the entry and clear it, and it would answer 404 for as long as the entry lived
+      this.pathCache.delete(key)
+      return null
+    }
+    if (this.pathCache.size >= PATH_CACHE_MAX) {
+      const oldest = this.pathCache.keys().next().value
+      if (oldest) {
+        this.pathCache.delete(oldest)
+      }
+    }
+    this.pathCache.set(key, { asset, cachedAt: Date.now() })
+    return asset
+  }
+
+  /**
+   * Forget what sits at a path, for a change that moved one asset
+   */
+  forgetPath(siteId: string, folderPath: string, fileName: string): void {
+    this.pathCache.delete(
+      `${siteId}:${normalizePath(folderPath ? `${folderPath}/${fileName}` : fileName)}`
+    )
+  }
+
+  /**
+   * Forget every path resolution, for a change that moved assets in bulk — a folder renamed or
+   * deleted, where the paths that changed are no longer enumerable from what is left in the tree.
+   */
+  forgetAllPaths(): void {
+    this.pathCache.clear()
+  }
+
+  /**
+   * An asset's bytes, ready to be sent — from the disk cache, or from the database and into it.
+   *
+   * @returns A stream when the cache holds the file, the buffer when it had to be read, and null when
+   *   there is no such asset, i.e. when a cached path resolution has outlived the row behind it
+   */
+  async readContent(asset: {
+    id: string
+    updatedAt: Date
+  }): Promise<{ body: Readable | Buffer; size: number } | null> {
+    const cached = await this.readContentCache(asset)
+    if (cached) {
+      return cached
+    }
+
+    const content = await this.getContent(asset.id)
+    if (!content) {
+      return null
+    }
+    await this.writeContentCache(asset, content.data)
+    return { body: content.data, size: content.data.length }
+  }
+
+  /**
+   * Where an asset's bytes sit in the disk cache.
+   *
+   * Named for the ID and the modification time together, which is what makes an entry immutable:
+   * anything that changes a file changes the name it would be cached under, so a stale entry is never
+   * read, only left behind for the sweep. Sharded by the first byte of the ID, to keep a wiki's worth
+   * of files out of a single directory.
+   */
+  contentCachePath(asset: { id: string; updatedAt: Date }): string {
+    return path.join(
+      this.cachePath,
+      asset.id.slice(0, 2),
+      `${asset.id}-${asset.updatedAt.getTime()}.bin`
+    )
+  }
+
+  /**
+   * Open an asset's cached bytes.
+   *
+   * The file is opened before it is streamed rather than as it is streamed, so that a sweep removing
+   * it midway through a response cannot truncate what is being sent: the handle keeps the bytes
+   * readable until the stream closes it, whatever happens to the directory entry.
+   *
+   * @returns Null when this instance has not cached the file, which is the normal state of a fresh
+   *   container and the state of every entry after a change to the file
+   */
+  async readContentCache(asset: {
+    id: string
+    updatedAt: Date
+  }): Promise<{ body: Readable; size: number } | null> {
+    let handle
+    try {
+      handle = await fs.open(this.contentCachePath(asset), 'r')
+    } catch {
+      return null
+    }
+    try {
+      const { size } = await handle.stat()
+      return { body: handle.createReadStream({ autoClose: true }), size }
+    } catch {
+      await handle.close().catch(() => {})
+      return null
+    }
+  }
+
+  /**
+   * Write an asset's bytes to the disk cache, best effort.
+   *
+   * A full or read-only disk must not stop a file from being served, hence the swallowed error — the
+   * database answers every request the cache cannot. The file is written under a temporary name and
+   * renamed, so a concurrent reader sees either nothing or the whole thing.
+   */
+  async writeContentCache(asset: { id: string; updatedAt: Date }, data: Buffer): Promise<void> {
+    // -> A file larger than the whole cache would be evicted by the sweep it triggers
+    if (this.cacheMaxSize < 1 || data.length > this.cacheMaxSize) {
+      return
+    }
+    const filePath = this.contentCachePath(asset)
+    const tempPath = `${filePath}.${process.pid}.tmp`
+    try {
+      await fs.mkdir(path.dirname(filePath), { recursive: true })
+      await fs.writeFile(tempPath, data)
+      await fs.rename(tempPath, filePath)
+    } catch (err: any) {
+      WIKI.logger.warn(`Could not write ${filePath} to the file cache [ SKIPPED ]`)
+      WIKI.logger.warn(err.message)
+      await fs.rm(tempPath, { force: true }).catch(() => {})
+      return
+    }
+
+    this.writtenSinceSweep += data.length
+    if (this.writtenSinceSweep >= this.cacheMaxSize * SWEEP_TRIGGER_RATIO) {
+      // -> Nothing waits on this: the request that filled the cache is not the one that should pay
+      //    for measuring it
+      void this.sweepCache()
+    }
+  }
+
+  /**
+   * Drop whatever the disk cache holds for these assets.
+   *
+   * Every entry an asset has, not just its current one — a file renamed twice leaves two behind, and
+   * the point of this is to reclaim the space rather than to correct an answer, which the naming
+   * already does.
+   */
+  async dropCachedContent(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      const shard = path.join(this.cachePath, id.slice(0, 2))
+      try {
+        const entries = await fs.readdir(shard)
+        await Promise.all(
+          entries
+            .filter((name) => name.startsWith(`${id}-`))
+            .map((name) => fs.rm(path.join(shard, name), { force: true }))
+        )
+      } catch {
+        // -> Nothing cached for it on this instance, which is not worth reporting
+      }
+    }
+  }
+
+  /**
+   * Trim the disk cache back under its ceiling, oldest entry first.
+   *
+   * Oldest by when it was written rather than when it was last read: keeping a true LRU would mean
+   * touching a file on every hit, which puts a write back on the path this cache exists to keep
+   * writes off. An entry evicted while still in demand is refilled by the next request for it.
+   */
+  async sweepCache(): Promise<void> {
+    if (this.sweeping) {
+      return
+    }
+    this.sweeping = true
+    this.writtenSinceSweep = 0
+    try {
+      const files: { path: string; size: number; writtenAt: number }[] = []
+      let total = 0
+      const entries = await fs.readdir(this.cachePath, { recursive: true, withFileTypes: true })
+      for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.endsWith('.bin')) {
+          continue
+        }
+        const filePath = path.join(entry.parentPath, entry.name)
+        const stat = await fs.stat(filePath).catch(() => null)
+        if (!stat) {
+          continue
+        }
+        files.push({ path: filePath, size: stat.size, writtenAt: stat.mtimeMs })
+        total += stat.size
+      }
+      if (total <= this.cacheMaxSize) {
+        return
+      }
+
+      files.sort((a, b) => a.writtenAt - b.writtenAt)
+      const target = this.cacheMaxSize * SWEEP_TARGET_RATIO
+      let removed = 0
+      for (const file of files) {
+        if (total <= target) {
+          break
+        }
+        await fs.rm(file.path, { force: true })
+        total -= file.size
+        removed++
+      }
+      WIKI.logger.debug(`Trimmed ${removed} file(s) from the file cache [ OK ]`)
+    } catch (err: any) {
+      WIKI.logger.warn('Could not sweep the file cache [ SKIPPED ]')
+      WIKI.logger.warn(err.message)
+    } finally {
+      this.sweeping = false
+    }
+  }
+
+  /** Where the disk cache lives. Derived data — deleting it costs a refill and nothing else. */
+  get cachePath(): string {
+    return path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'cache/files')
+  }
+
+  /** How large the disk cache may grow, in bytes. Zero turns it off. */
+  get cacheMaxSize(): number {
+    return WIKI.config.files?.cacheMaxSize ?? DEFAULT_CACHE_MAX_SIZE
+  }
+
   /**
    * Rename an asset, in both of the rows that describe it.
    *
@@ -379,6 +668,12 @@ class Assets {
       .set({ meta: { fileSize: asset.fileSize, fileExt, mimeType: resolvedMime } })
       .where(eq(treeTable.id, id))
 
+    // -> Both ends of the move: the name it left, and the name it took, which something else may have
+    //    been resolved at before it was freed up
+    this.forgetPath(siteId, asset.folderPath, asset.fileName)
+    this.forgetPath(siteId, asset.folderPath, safeName)
+    await this.dropCachedContent([id])
+
     WIKI.models.hooks.emit('asset:rename', {
       id,
       fileName: safeName,
@@ -403,6 +698,9 @@ class Assets {
     await WIKI.db.delete(assetsTable).where(eq(assetsTable.id, id))
     await WIKI.models.tree.deleteEntry(id)
 
+    this.forgetPath(siteId, asset.folderPath, asset.fileName)
+    await this.dropCachedContent([id])
+
     WIKI.models.hooks.emit('asset:delete', {
       id,
       fileName: asset.fileName,
@@ -416,11 +714,27 @@ class Assets {
   /**
    * Delete the assets left behind by a folder deletion, which removed their tree entries already.
    */
-  async deleteOrphaned(ids: string[]): Promise<void> {
-    if (ids.length < 1) {
+  async deleteOrphaned(siteId: string, entries: DeletedEntry[]): Promise<void> {
+    if (entries.length < 1) {
       return
     }
+    const ids = entries.map((entry) => entry.id)
     await WIKI.db.delete(assetsTable).where(inArray(assetsTable.id, ids))
+
+    // -> Which paths they sat at is no longer knowable from the tree: those rows went with the folder
+    this.forgetAllPaths()
+    await this.dropCachedContent(ids)
+
+    // -> One per file, as deleting them one at a time would have sent: a subscriber mirroring the
+    //    wiki has to hear about each file, not about the folder it happened to sit in
+    for (const entry of entries) {
+      await WIKI.models.hooks.emit('asset:delete', {
+        id: entry.id,
+        fileName: entry.fileName,
+        folderPath: entry.folderPath,
+        siteId
+      })
+    }
   }
 }
 

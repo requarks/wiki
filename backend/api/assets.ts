@@ -226,7 +226,10 @@ async function routes(app: FastifyInstance) {
       if (!asset || !mayOnAsset(req, 'read:assets', asset)) {
         return reply.notFound('This asset does not exist.')
       }
-      const content = await WIKI.models.assets.getContent(req.params.assetId)
+      // -> Through the same local disk cache `/_files/` serves from, since this is the download
+      //    button in the file manager rather than an administrative route: anyone who may read a
+      //    file may press it
+      const content = await WIKI.models.assets.readContent(asset)
       if (!content) {
         return reply.notFound('This asset has no content.')
       }
@@ -240,7 +243,9 @@ async function routes(app: FastifyInstance) {
       // -> The bytes came from a user, so the browser must take the type at its word rather than
       //    looking for something more interesting in them
       reply.header('X-Content-Type-Options', 'nosniff')
-      return reply.type(content.mimeType).send(content.data)
+      // -> Set by hand because the body may be a stream, which Fastify would otherwise send chunked
+      reply.header('Content-Length', content.size)
+      return reply.type(asset.mimeType).send(content.body)
     }
   )
 

@@ -21,6 +21,15 @@ const WIKI = {
     }
 
     WIKI.db = await dbManager.init(true)
+    /*
+      Only the settings model, which is what `loadFromDb` reads through — not the whole registry.
+      A worker thread pays the import cost of everything it pulls in, and importing all of them
+      brings cheerio, sanitize-html, bcrypt and the rest into a thread that wanted one `select`.
+      A task that needs another model imports that model itself.
+    */
+    WIKI.models = {
+      settings: (await import('./models/settings.ts')).settings
+    } as WikiGlobal['models']
 
     try {
       await WIKI.configSvc.loadFromDb()

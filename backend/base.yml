@@ -31,6 +31,11 @@ defaults:
       # Iconify API the wiki fetches icons from the first time they are used. Point this at a
       # self-hosted Iconify API to keep icon lookups inside your network.
       apiUrl: 'https://api.iconify.design'
+    files:
+      # How much of <dataPath>/cache/files the served copies of uploaded files may take up, in bytes.
+      # Trimmed back oldest-first once it is exceeded. Set to 0 to serve every request from the
+      # database instead.
+      cacheMaxSize: 536870912
     scheduler:
       workers: 3
       pollingCheck: 5
@@ -38,6 +43,14 @@ defaults:
       maxRetries: 2
       retryBackoff: 60
       historyExpiration: 90000
+      # How long, in seconds, a job running in a worker thread may take before the scheduler stops
+      # waiting for it and counts it as failed. A safety net rather than a schedule: a worker thread
+      # that dies mid-task never answers at all, and without a ceiling the scheduler waits forever.
+      taskTimeout: 300
+      # How long, in seconds, a job may sit marked as running before it is assumed that whatever was
+      # running it is gone, and it is requeued. Deliberately generous: it has to outlast the longest
+      # job the instance legitimately runs, since the alternative is starting a second copy of one.
+      staleJobTimeout: 3600
     # DB defaults
     api:
       isEnabled: false

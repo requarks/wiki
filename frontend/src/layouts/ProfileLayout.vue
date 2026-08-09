@@ -22,15 +22,17 @@
                 </w-item-section>
               </w-item>
             </template>
-            <w-separator inset spaced="sm" />
-            <w-item clickable :to="`/_user/` + userStore.id">
-              <w-item-section side>
-                <w-icon name="la:id-card" />
-              </w-item-section>
-              <w-item-section>
-                <w-item-label>{{ t('profile.viewPublicProfile') }}</w-item-label>
-              </w-item-section>
-            </w-item>
+            <template v-if="flagsStore.experimental">
+              <w-separator inset spaced="sm" />
+              <w-item clickable :to="`/_user/` + userStore.id">
+                <w-item-section side>
+                  <w-icon name="la:id-card" />
+                </w-item-section>
+                <w-item-section>
+                  <w-item-label>{{ t('profile.viewPublicProfile') }}</w-item-label>
+                </w-item-section>
+              </w-item>
+            </template>
             <w-separator inset spaced="sm" />
             <w-item clickable @click="userStore.logout()">
               <w-item-section side>

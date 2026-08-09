@@ -355,24 +355,37 @@
                           </w-item-section>
                           <w-item-section>{{ t(`common.actions.download`) }}</w-item-section>
                         </w-item>
-                        <w-item clickable>
+                        <w-item clickable @click="duplicateItem(item)">
                           <w-item-section side>
                             <w-icon name="la:copy" color="teal" />
                           </w-item-section>
                           <w-item-section>Duplicate...</w-item-section>
                         </w-item>
-                        <w-item clickable @click="renameItem(item)">
+                        <!--
+                          One entry for a page: its name and its place are picked in the same dialog
+                          the page view's own action rail opens, so offering them as two actions
+                          would be offering two ways into one form.
+                        -->
+                        <w-item clickable v-if="item.type === `page`" @click="renameMovePage(item)">
                           <w-item-section side>
-                            <w-icon name="la:redo" color="teal" />
+                            <w-icon name="la:share" color="teal" />
                           </w-item-section>
-                          <w-item-section>Rename...</w-item-section>
+                          <w-item-section>Rename / Move Page...</w-item-section>
                         </w-item>
-                        <w-item clickable>
-                          <w-item-section side>
-                            <w-icon name="la:arrow-right" color="teal" />
-                          </w-item-section>
-                          <w-item-section>Move to...</w-item-section>
-                        </w-item>
+                        <template v-else>
+                          <w-item clickable @click="renameItem(item)">
+                            <w-item-section side>
+                              <w-icon name="la:redo" color="teal" />
+                            </w-item-section>
+                            <w-item-section>Rename...</w-item-section>
+                          </w-item>
+                          <w-item clickable>
+                            <w-item-section side>
+                              <w-icon name="la:arrow-right" color="teal" />
+                            </w-item-section>
+                            <w-item-section>Move to...</w-item-section>
+                          </w-item>
+                        </template>
                         <w-item clickable @click="delItem(item)">
                           <w-item-section side>
                             <w-icon name="la:trash-alt" color="negative" />
@@ -429,6 +442,7 @@ import Fuse from 'fuse.js/basic'
 import NewMenu from './PageNewMenu.vue'
 import Tree from './TreeNav.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { assetUrl } from '@/helpers/assets'
 import fileTypes from '@/helpers/fileTypes'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
@@ -936,6 +950,87 @@ function rerenderPage(item) {
   })
 }
 
+/**
+ * Copy a page, through the same dialog the page view's action rail opens.
+ *
+ * The copy is not written here: what comes back is where it should go, and the store opens the editor
+ * on an unsaved page holding the source's content -- so the author lands in the same place they would
+ * have from the page itself, and nothing exists until they save it.
+ */
+function duplicatePage(item) {
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/TreeBrowserDialog.vue')),
+    componentProps: {
+      mode: 'duplicatePage',
+      itemId: item.id,
+      itemTitle: item.title,
+      folderPath: item.folderPath,
+      itemFileName: item.fileName
+    }
+  }).onOk(async (opts) => {
+    try {
+      await pageStore.pageDuplicate({
+        sourcePageId: item.id,
+        path: opts.path,
+        title: opts.title
+      })
+      // -> The editor is now underneath this overlay, as it is after opening a page to edit
+      close()
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: 'Failed to duplicate page.',
+        caption: apiErrorMessage(err, 'An unexpected error occured.')
+      })
+    }
+  })
+}
+
+/**
+ * Rename a page, move it, or both.
+ *
+ * One action rather than two, through the same dialog the page view's action rail opens: what it
+ * hands back is a title and the full path the page should sit at, and only the path decides which of
+ * the two endpoints that is -- a page whose title changed in place was never moved.
+ */
+function renameMovePage(item) {
+  const currentPath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/TreeBrowserDialog.vue')),
+    componentProps: {
+      mode: 'renamePage',
+      itemId: item.id,
+      itemTitle: item.title,
+      folderPath: item.folderPath,
+      itemFileName: item.fileName
+    }
+  }).onOk(async (opts) => {
+    try {
+      if (opts.path === currentPath) {
+        await pageStore.pageRename({ id: item.id, title: opts.title })
+        notify({
+          type: 'positive',
+          message: 'Page renamed successfully.'
+        })
+      } else {
+        await pageStore.pageMove({ id: item.id, path: opts.path, title: opts.title })
+        notify({
+          type: 'positive',
+          message: 'Page moved successfully.'
+        })
+      }
+      // -> Reload current view
+      await loadTree({ parentId: state.currentFolderId })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: 'Failed to rename or move page.',
+        caption: apiErrorMessage(err, 'An unexpected error occured.')
+      })
+    }
+  })
+}
+
 function delPage(pageId, pageName) {
   dialog({
     component: defineAsyncComponent(() => import('@/components/PageDeleteDialog.vue')),
@@ -1106,8 +1201,11 @@ async function copyItemURL(item) {
         break
       }
       case 'asset': {
-        const assetPath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
-        await navigator.clipboard.writeText(`${window.location.origin}/${assetPath}`)
+        // -> Under `/_files/`, which is where a file is served from: the page tree it is listed
+        //    alongside in here is not a place a browser can fetch it from
+        await navigator.clipboard.writeText(
+          `${window.location.origin}${assetUrl(item.folderPath, item.fileName)}`
+        )
         break
       }
       default: {
@@ -1161,11 +1259,24 @@ function renameItem(item) {
       break
     }
     case 'page': {
-      // TODO: Rename page
+      renameMovePage(item)
       break
     }
     case 'asset': {
       renameAsset(item.id)
+      break
+    }
+  }
+}
+
+/**
+ * Duplicating a folder or an asset has no endpoint behind it yet, so those two keep the inert entry
+ * they already had rather than being offered something that would fail.
+ */
+function duplicateItem(item) {
+  switch (item.type) {
+    case 'page': {
+      duplicatePage(item)
       break
     }
   }

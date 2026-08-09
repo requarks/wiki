@@ -6,8 +6,8 @@ import { desc, eq, sql } from 'drizzle-orm'
 /**
  * The events a webhook can subscribe to, as offered by the admin area.
  *
- * Not all of them have emit points today — pages and comments are not implemented yet, so subscribing
- * to those stores a subscription that nothing triggers.
+ * Not all of them have emit points today — comments are not implemented yet, so subscribing to those
+ * stores a subscription that nothing triggers.
  */
 export const HOOK_EVENTS = [
   'page:create',
@@ -31,10 +31,14 @@ export type HookEvent = (typeof HOOK_EVENTS)[number]
 /**
  * The events something in the server actually emits today.
  *
- * Kept as an explicit list rather than inferred from the prefix, since the page and comment events
- * have no emit point yet. Add an event here when you add its `emit()` call.
+ * Kept as an explicit list rather than inferred from the prefix, since the comment events have no
+ * emit point yet. Add an event here when you add its `emit()` call.
  */
 export const EMITTED_EVENTS: HookEvent[] = [
+  'page:create',
+  'page:edit',
+  'page:rename',
+  'page:delete',
   'asset:upload',
   'asset:rename',
   'asset:delete',
@@ -245,7 +249,10 @@ class Hooks {
         }
         const added = await WIKI.scheduler.addJob({
           task: 'dispatchWebhook',
-          payload: { hookId: hook.id, event, data: payload }
+          // -> The instance travels with the job because the delivery does not happen here: it runs
+          //    in a worker thread, whose `INSTANCE_ID` names the thread rather than the wiki, and
+          //    what a subscriber wants to know is which instance the event came from
+          payload: { hookId: hook.id, event, data: payload, instance: WIKI.INSTANCE_ID }
         })
         if (added?.id) {
           queued++
@@ -261,16 +268,22 @@ class Hooks {
   /**
    * Deliver one event to one webhook, recording the outcome on the webhook.
    *
-   * Called by the `dispatchWebhook` task. Throws on failure so that the scheduler retries it.
+   * Called by the `dispatchWebhook` task, which runs in a worker thread — so everything it needs
+   * comes from the job or the database, and `instance` in particular is the one that queued the
+   * delivery rather than whatever thread is making it.
+   *
+   * Throws on failure so that the scheduler retries it.
    */
   async deliver({
     hookId,
     event,
-    data
+    data,
+    instance
   }: {
     hookId: string
     event: string
     data: Record<string, any>
+    instance: string
   }): Promise<void> {
     const hook = await this.getHookById(hookId)
     if (!hook) {
@@ -282,7 +295,7 @@ class Hooks {
     const body = JSON.stringify({
       event,
       sentAt: Temporal.Now.instant().toString({ smallestUnit: 'millisecond' }),
-      instance: WIKI.INSTANCE_ID,
+      instance,
       data
     })
 

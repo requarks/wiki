@@ -24,6 +24,10 @@ const FILE_CACHE = 'private, max-age=600, must-revalidate'
  * Public in the sense that `_site` and `_thumb` are — no session is required — but not unguarded:
  * assets are addressed by the same rules as the pages they sit among, so every request is judged
  * against `read:assets` for the path it asked for.
+ *
+ * Every image on every page comes through here, so neither half of the lookup normally reaches the
+ * database: the path resolves out of memory and the bytes stream off the local disk cache. See the
+ * assets model for what that caches and when it lets go of it.
  */
 async function routes(app: FastifyInstance) {
   app.get<{ Params: { '*': string } }>('/*', async (req, reply) => {
@@ -32,7 +36,7 @@ async function routes(app: FastifyInstance) {
       return reply.notFound('Site not found')
     }
 
-    const asset = await WIKI.models.assets.getAssetByPath(site.id, req.params['*'] ?? '')
+    const asset = await WIKI.models.assets.resolveAssetPath(site.id, req.params['*'] ?? '')
     // -> Not readable is answered as not there, so the URL cannot be used to probe for files
     if (
       !asset ||
@@ -58,8 +62,10 @@ async function routes(app: FastifyInstance) {
       return reply.code(304).send()
     }
 
-    const content = await WIKI.models.assets.getContent(asset.id)
+    const content = await WIKI.models.assets.readContent(asset)
     if (!content) {
+      // -> The path resolved to a row that is no longer there, so the resolution was a stale one
+      WIKI.models.assets.forgetPath(site.id, asset.folderPath, asset.fileName)
       return reply.notFound('File not found')
     }
 
@@ -69,7 +75,10 @@ async function routes(app: FastifyInstance) {
         `attachment; filename="${encodeURIComponent(asset.fileName)}"`
       )
     }
-    return reply.type(content.mimeType).send(content.data)
+    // -> Set by hand because the body may be a stream, which Fastify would otherwise send chunked —
+    //    and a download with no length is a download with no progress bar
+    reply.header('Content-Length', content.size)
+    return reply.type(asset.mimeType).send(content.body)
   })
 }
 

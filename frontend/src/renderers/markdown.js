@@ -23,6 +23,7 @@ import { escape } from 'es-toolkit/string'
 // -> Relative, like this file's other in-repo imports: it is also the entry point of the headless
 //    renderer bundle, which is built on its own
 import { isServerPath } from '../helpers/serverPaths'
+import { FILES_PREFIX } from '../helpers/assets'
 
 const quoteStyles = {
   chinese: '””‘’',
@@ -64,9 +65,6 @@ function isExternalHref(href) {
     return false
   }
 }
-
-/** Where uploaded files are served from — `backend/controllers/files.ts`. */
-const FILES_PREFIX = '/_files/'
 
 /**
  * Where an image in a page should actually load from.

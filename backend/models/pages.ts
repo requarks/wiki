@@ -1,7 +1,8 @@
-import { and, eq, ne, sql } from 'drizzle-orm'
+import { and, eq, inArray, ne, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
 import { CustomError, generatePathHash, timingSafeCompare } from '../helpers/common.ts'
 import type { RenderPermissions, TocNode } from './rendering.ts'
+import type { DeletedEntry } from './tree.ts'
 
 /** What each editor produces, which is what the content column holds. */
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
@@ -740,6 +741,51 @@ class Pages {
       authorId: actor.id
     })
     return true
+  }
+
+  /**
+   * Delete the pages left behind by a folder deletion, which removed their tree entries already.
+   *
+   * Not optional tidying: a page is served from its own row, found by the hash of its path, and the
+   * tree is only consulted for where it sits in the site. A page whose tree entry went with the
+   * folder is therefore still live at its URL while being invisible to everything that lists the
+   * wiki -- including the file manager somebody would have to use to delete it.
+   *
+   * Each one is recorded as deleted first, exactly as deleting a single page does. `pageHistory`
+   * carries no foreign key back to `pages` precisely so that it outlives the row, which is what makes
+   * a folder deleted by mistake recoverable.
+   */
+  async deleteOrphaned(siteId: string, entries: DeletedEntry[], actor: PageActor): Promise<void> {
+    if (entries.length < 1) {
+      return
+    }
+    for (const entry of entries) {
+      await WIKI.models.pageHistory.record({
+        siteId,
+        pageId: entry.id,
+        action: 'deleted',
+        authorId: actor.id
+      })
+    }
+    await WIKI.db.delete(pagesTable).where(
+      inArray(
+        pagesTable.id,
+        entries.map((entry) => entry.id)
+      )
+    )
+
+    // -> One per page, as deleting them one at a time would have sent: a subscriber mirroring the
+    //    wiki has to hear about each page, not about the folder it happened to sit in
+    for (const entry of entries) {
+      await WIKI.models.hooks.emit('page:delete', {
+        id: entry.id,
+        path: entry.folderPath ? `${entry.folderPath}/${entry.fileName}` : entry.fileName,
+        locale: entry.locale,
+        siteId,
+        authorId: actor.id
+      })
+    }
+    WIKI.logger.debug(`Deleted ${entries.length} page(s) that went with a deleted folder.`)
   }
 
   /**

@@ -1,7 +1,13 @@
 import { and, asc, desc, eq, exists, inArray, ne, or, sql, type SQL } from 'drizzle-orm'
 import { alias, type PgColumn } from 'drizzle-orm/pg-core'
 import { pages as pagesTable, tree as treeTable } from '../db/schema.ts'
-import { CustomError, decodeTreePath, encodeTreePath, generateHash } from '../helpers/common.ts'
+import {
+  CustomError,
+  decodeTreePath,
+  encodeTreePath,
+  generateHash,
+  generatePathHash
+} from '../helpers/common.ts'
 
 /** What a tree entry can be. Mirrors the `treeType` enum in the schema. */
 export type TreeItemType = 'folder' | 'page' | 'asset'
@@ -81,6 +87,20 @@ export interface ListedPage {
   description: string
   /** The page's icon, as an Iconify reference. Empty when it has none. */
   icon: string
+}
+
+/**
+ * An entry that went with a deleted folder, and where it used to sit.
+ *
+ * What the caller needs to finish the job: the row behind it to delete, and enough to say what was
+ * deleted once nothing in the database records that any more.
+ */
+export interface DeletedEntry {
+  id: string
+  /** Slash-separated, without the file name. Empty at the site root. */
+  folderPath: string
+  fileName: string
+  locale: string
 }
 
 /** A raw `tree` row, as the model passes it around internally. */
@@ -695,12 +715,11 @@ class Tree {
             eq(treeTable.locale, effectiveLocale),
             eq(treeTable.type, 'folder'),
             or(
-              ...expected.map(
-                (ancestor) =>
-                  and(
-                    eq(treeTable.folderPath, ancestor.folderPath),
-                    eq(treeTable.fileName, ancestor.fileName)
-                  )!
+              ...expected.map((ancestor) =>
+                and(
+                  eq(treeTable.folderPath, ancestor.folderPath),
+                  eq(treeTable.fileName, ancestor.fileName)
+                )!
               )
             )
           )
@@ -844,29 +863,44 @@ class Tree {
       .where(eq(treeTable.id, folder.id))
       .returning()
 
-    await this.refreshHashes(folder.siteId, newPath)
+    await this.refreshDescendantPaths(folder.siteId, newPath)
+
+    // -> Every asset under it is served from a different path now, and nothing about the assets
+    //    themselves changed for the file cache to notice
+    WIKI.models.assets.forgetAllPaths()
 
     WIKI.logger.debug(`Renamed folder ${folder.id} successfully.`)
     return updated[0] as TreeRow
   }
 
   /**
-   * Recompute the path hash of everything at or below a folder.
+   * Rewrite where everything at or below a folder now sits.
    *
-   * The hash is how an entry is found by its path, so moving a branch without redoing them would
-   * leave every page and asset under it unreachable by URL. It is a SHA-1 of the full path, which
-   * postgres has no function for, so each row is rewritten from here.
+   * Two rows carry a path and both have to be redone. The tree's own `hash` is how an entry is found
+   * by its path, so leaving it would make every page and asset under the folder unreachable by URL.
+   * A page then keeps a second copy of its path on `pages` -- the `path` itself and the `hash` a
+   * reader's request is actually resolved through -- so leaving that would move the page in the tree
+   * while still serving it from where it used to be, and nothing at all from where it now is.
+   *
+   * An asset has no path of its own: its tree row is the only thing that places it, and moving that
+   * row is the whole job.
+   *
+   * The two hashes are not the same function and neither exists in postgres, so each row is rewritten
+   * from here. What is deliberately not touched is `updatedAt`: the folder moved, the pages under it
+   * did not change, and marking a few hundred of them as freshly edited would say otherwise.
    */
-  private async refreshHashes(siteId: string, path: string): Promise<void> {
+  private async refreshDescendantPaths(siteId: string, path: string): Promise<void> {
     const rows = await WIKI.db
       .select({
         id: treeTable.id,
+        type: treeTable.type,
         folderPath: treeTable.folderPath,
         fileName: treeTable.fileName
       })
       .from(treeTable)
       .where(and(eq(treeTable.siteId, siteId), sql`${treeTable.folderPath} <@ ${path}::ltree`))
 
+    let pageCount = 0
     for (const row of rows) {
       const folderPath = decodeTreePath(row.folderPath ?? '')
       const fullPath = folderPath ? `${folderPath}/${row.fileName}` : row.fileName
@@ -874,18 +908,29 @@ class Tree {
         .update(treeTable)
         .set({ hash: generateHash(fullPath) })
         .where(eq(treeTable.id, row.id))
+      if (row.type === 'page') {
+        await WIKI.db
+          .update(pagesTable)
+          .set({ path: fullPath, hash: generatePathHash(fullPath) })
+          .where(eq(pagesTable.id, row.id))
+        pageCount++
+      }
     }
     if (rows.length > 0) {
-      WIKI.logger.debug(`Refreshed the path hash of ${rows.length} moved entrie(s).`)
+      WIKI.logger.debug(
+        `Refreshed the path of ${rows.length} moved entrie(s), ${pageCount} of them page(s).`
+      )
     }
   }
 
   /**
    * Delete a folder and everything under it.
    *
-   * @returns The IDs of the deleted pages and assets, for the caller to clean up after
+   * @returns The deleted pages and assets, for the caller to clean up after. Where each one sat comes
+   *          back with it: the tree row is the only record of that, and it is gone by then — but what
+   *          was deleted is exactly what a webhook subscriber is owed.
    */
-  async deleteFolder(folderId: string): Promise<{ pages: string[]; assets: string[] }> {
+  async deleteFolder(folderId: string): Promise<{ pages: DeletedEntry[]; assets: DeletedEntry[] }> {
     const folder = await this.getFolderById(folderId)
     if (!folder) {
       throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
@@ -900,7 +945,13 @@ class Tree {
       .where(
         and(eq(treeTable.siteId, folder.siteId), sql`${treeTable.folderPath} <@ ${path}::ltree`)
       )
-      .returning({ id: treeTable.id, type: treeTable.type })
+      .returning({
+        id: treeTable.id,
+        type: treeTable.type,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        locale: treeTable.locale
+      })
 
     await WIKI.db.delete(treeTable).where(eq(treeTable.id, folder.id))
 
@@ -911,9 +962,15 @@ class Tree {
 
     WIKI.logger.debug(`Deleted folder ${folder.id} and ${deleted.length} descendant(s).`)
 
+    const asEntry = (row: (typeof deleted)[number]): DeletedEntry => ({
+      id: row.id,
+      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      fileName: row.fileName,
+      locale: row.locale
+    })
     return {
-      pages: deleted.filter((n) => n.type === 'page').map((n) => n.id),
-      assets: deleted.filter((n) => n.type === 'asset').map((n) => n.id)
+      pages: deleted.filter((n) => n.type === 'page').map(asEntry),
+      assets: deleted.filter((n) => n.type === 'asset').map(asEntry)
     }
   }
 
