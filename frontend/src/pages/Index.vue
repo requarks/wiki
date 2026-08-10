@@ -126,7 +126,8 @@
                     no-caps
                     color="primary"
                     v-for="rel of relationsLeft"
-                    :key="`rel-id-` + rel.id">
+                    :key="`rel-id-` + rel.id"
+                    v-bind="relationLink(rel)">
                     <w-icon :name="rel.icon" />
                     <div class="flex flex-col text-left pl-4">
                       <div class="text-body2">
@@ -143,7 +144,8 @@
                       flat
                       no-caps
                       v-for="rel of relationsCenter"
-                      :key="`rel-id-` + rel.id">
+                      :key="`rel-id-` + rel.id"
+                      v-bind="relationLink(rel)">
                       <w-icon class="mr-2" :name="rel.icon" />
                       <span>{{ rel.label }}</span>
                     </w-btn>
@@ -157,7 +159,8 @@
                     no-caps
                     color="primary"
                     v-for="rel of relationsRight"
-                    :key="`rel-id-` + rel.id">
+                    :key="`rel-id-` + rel.id"
+                    v-bind="relationLink(rel)">
                     <div class="flex flex-col text-left pr-4">
                       <div class="text-body2">
                         <strong>{{ rel.label }}</strong>
@@ -655,6 +658,43 @@ watch(
  * which ones are ours; anything it declines is left to the browser, including a click asking for a
  * new tab.
  */
+/**
+ * What a relation button links to, as props for `WBtn`.
+ *
+ * The buttons were rendered with neither, so a relation was decoration: it drew its label and caption
+ * and swallowed the click. A target is stored as `PageRelationDialog` leaves it — a rooted path within
+ * this wiki (`/guides/upgrading`) or a complete external address — so the two cases are told apart the
+ * same way an in-content link is, by `routableHref`, and the router takes the ones that are ours
+ * rather than reloading the app to reach them.
+ *
+ * Nothing at all for a relation with no target: the dialog only requires a label, and an `<a>` with an
+ * empty href reloads the current page.
+ *
+ * @param rel A page relation
+ * @returns `{ to }` for a page in this wiki, `{ href }` for an ordinary web address, `{}` for neither
+ */
+function relationLink(rel) {
+  const target = rel.target?.trim()
+  if (!target) {
+    return {}
+  }
+  let url
+  try {
+    // -> Resolved against this origin, because a stored page target is a path rather than a URL and
+    //    `routableHref` compares origins
+    url = new URL(target, window.location.origin)
+  } catch {
+    return {}
+  }
+  const routed = routableHref({ href: url.toString() }, window.location)
+  if (routed) {
+    return { to: routed }
+  }
+  // -> An ordinary web link or nothing: a target is author-supplied, and `javascript:` in an href is
+  //    script this page would run on click
+  return /^https?:$/.test(url.protocol) ? { href: url.toString() } : {}
+}
+
 function onContentClick(ev) {
   if (
     ev.defaultPrevented ||
