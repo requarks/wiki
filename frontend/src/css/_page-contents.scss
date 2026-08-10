@@ -1260,14 +1260,18 @@
     }
   }
 
-  /* -> Where a footnote link has just landed, so the reader can see which one they were sent to */
-  .footnote-item:target,
-  h1:target,
-  h2:target,
-  h3:target,
-  h4:target,
-  h5:target,
-  h6:target {
+  /*
+    Where a footnote link has just landed, so the reader can see which one they were sent to: one item
+    among a list of near-identical ones, where arriving says nothing about which is which.
+
+    Keyed off the class `helpers/anchors.js` leaves on it rather than `:target`, which stopped matching
+    once an in-content fragment link began updating the URL with `router.push` -- a pushed hash sets no
+    target element. Keep the name in step with `LANDED_CLASS` there.
+
+    Headings are deliberately not styled: a heading is what the reader asked for and it announces itself
+    by sitting at the top of the column, so the wash only added noise to every jump to a section.
+  */
+  .footnote-item.is-anchor-landed {
     /* Drawn outside the box so it cannot shift the text it highlights */
     box-shadow: 0 0 0 0.4em var(--content-mark);
     background-color: var(--content-mark);

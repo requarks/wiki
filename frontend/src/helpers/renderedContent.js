@@ -184,8 +184,7 @@ export function enhanceRenderedContent(root) {
  *   - another origin, or a scheme that is not http(s) — `mailto:`, `tel:`, a download link
  *   - anything asking for a new context: `target`, `download`, `rel="external"`
  *   - a path the server owns rather than the router
- *   - a bare fragment on the page already open, which the browser scrolls to and which fires the
- *     `hashchange` the page view already listens for
+ *   - a fragment on the page already open, which is `sameDocumentHash`'s business instead
  *
  * @param {object} link The anchor's own properties: `href` is the resolved absolute URL.
  * @param {Location|{origin: string, pathname: string}} current Where the reader is now.
@@ -210,11 +209,43 @@ export function routableHref({ href, target, download, rel } = {}, current) {
   if (isServerPath(url.pathname)) {
     return null
   }
-  // -> Same page, different fragment: the browser scrolls and announces it, and the router would do
-  //    neither
+  // -> Same page, different fragment: nothing to route to, and `sameDocumentHash` handles the scroll
   if (url.pathname === current.pathname && url.hash) {
     return null
   }
 
   return `${url.pathname}${url.search}${url.hash}`
+}
+
+/**
+ * The fragment of a link that points at a heading on the page already open, if that is what it is.
+ *
+ * The counterpart to `routableHref`, which declines these: there is no page to load, only a place on
+ * this one to travel to. Left to the browser it is an instant jump, where every other way of reaching
+ * a heading in this app animates — the contents list does, and so does arriving with a `#heading` in
+ * the URL.
+ *
+ * Declined on the same grounds as a routable link, so a fragment link asking for a new tab, or
+ * carrying `download` / `rel="external"`, is still the browser's to handle.
+ *
+ * @param {object} link The anchor's own properties: `href` is the resolved absolute URL.
+ * @param {Location|{origin: string, pathname: string}} current Where the reader is now.
+ * @returns {string|null} The `#fragment` to travel to, or null when this is not such a link.
+ */
+export function sameDocumentHash({ href, target, download, rel } = {}, current) {
+  if (!href || (target && target !== '_self') || download || /\bexternal\b/.test(rel ?? '')) {
+    return null
+  }
+
+  let url
+  try {
+    url = new URL(href)
+  } catch {
+    return null
+  }
+  if (url.origin !== current.origin || !url.hash || url.pathname !== current.pathname) {
+    return null
+  }
+
+  return url.hash
 }

@@ -156,8 +156,18 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
-  titleTemplate: (title) => `${title} - ${siteStore.title}`
+/*
+  A getter that READS the site title, so `watchEffect` has something to track: the site config is
+  fetched, so a template closing over `siteStore.title` and registered once would keep whatever the
+  store held at mount. The page title alone no longer forces a recompute either, now that a page with
+  no title of its own -- the welcome screen, a path with no page -- has to fall back to the site name
+  rather than leaving the tab reading " - Site".
+*/
+useMeta(() => {
+  const siteTitle = siteStore.title
+  return {
+    titleTemplate: (title) => (title ? `${title} - ${siteTitle}` : siteTitle)
+  }
 })
 
 // REFS

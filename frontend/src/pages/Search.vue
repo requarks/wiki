@@ -249,8 +249,22 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
-  titleTemplate: (title) => `${title} - ${t('profile.title')} - Wiki.js`
+/*
+  Both halves, because `/_search` is mounted on its own with no layout above it to supply either. Only
+  the template was registered, and a template with no title leaves `document.title` alone: the tab read
+  whatever was there already, which on a fresh load is the shell's own `Wiki.js`.
+
+  The name is this page's own, where the template said `profile.title` and announced a page of search
+  results as somebody's profile. Nothing sits between it and the site name, so nothing is inserted there.
+
+  A getter for the site title, as everywhere else -- see the note in `MainLayout`.
+*/
+useMeta(() => {
+  const siteTitle = siteStore.title
+  return {
+    title: t('search.results'),
+    titleTemplate: (title) => `${title} - ${siteTitle}`
+  }
 })
 
 // DATA

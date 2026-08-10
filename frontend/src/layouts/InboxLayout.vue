@@ -36,6 +36,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
 
+import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import HeaderNav from '@/components/HeaderNav.vue'
@@ -51,6 +52,7 @@ import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 
 // STORES
 
+const siteStore = useSiteStore()
 const userStore = useUserStore()
 
 // ROUTER
@@ -64,8 +66,13 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
-  titleTemplate: (title) => `${title} - ${t('inbox.title')} - Wiki.js`
+// -> The site's own name rather than the literal `Wiki.js`, as the page view does. A getter, so the
+//    template is recomputed when the site config arrives -- see the note in `MainLayout`.
+useMeta(() => {
+  const siteTitle = siteStore.title
+  return {
+    titleTemplate: (title) => `${title} - ${t('inbox.title')} - ${siteTitle}`
+  }
 })
 
 // DATA

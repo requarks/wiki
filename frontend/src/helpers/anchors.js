@@ -29,7 +29,26 @@ const SETTLE_MS = 1200
 /** How far the heading may sit from where it was aimed before it is worth correcting, in pixels. */
 const DRIFT_TOLERANCE = 4
 
+/**
+ * Left on whatever a fragment link landed on, for content styling to mark — a footnote does, since it
+ * is one item among a list of near-identical ones and being sent to it says nothing about which.
+ *
+ * `:target` used to do this and cannot any more: an in-content fragment link is followed with
+ * `router.push`, and a pushed hash does not set the document's target element. Doing it here instead
+ * covers arriving with a `#fragment` in the URL by the same path, which `:target` handled differently
+ * from a click. Styled in `_page-contents.scss` — the two have to be kept in step.
+ */
+export const LANDED_CLASS = 'is-anchor-landed'
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/** Mark where the reader has just been sent, and only there — the way `:target` behaved. */
+function markLanded(el) {
+  for (const previous of document.querySelectorAll(`.${LANDED_CLASS}`)) {
+    previous.classList.remove(LANDED_CLASS)
+  }
+  el.classList.add(LANDED_CLASS)
+}
 
 /** The heading a `#slug` refers to, or null. */
 export function anchorTarget(hash) {
@@ -137,6 +156,7 @@ export function scrollToAnchor(hash, { smooth = false } = {}) {
   if (!isVisible(target)) {
     return false
   }
+  markLanded(target)
   scrollTo(target, smooth)
   return true
 }
@@ -171,6 +191,7 @@ export async function scrollToAnchorWhenReady(hash, { timeout = 5000 } = {}) {
   if (!target || !isVisible(target)) {
     return
   }
+  markLanded(target)
 
   const scroller = scrollerOf(target)
   await whenStill(target, scroller, deadline)

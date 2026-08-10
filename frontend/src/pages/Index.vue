@@ -104,7 +104,7 @@
           that is not there at all, has no target to have been given yet.
         -->
         <page-redirect v-else-if="pageStore.editor === `redirect`" />
-        <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
+        <w-scroll-area class="page-container-scrl" ref="pageScroller" v-else style="height: 100%">
           <div class="page-container-body p-4">
             <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
@@ -292,8 +292,8 @@ import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { scrollToAnchorWhenReady } from '@/helpers/anchors'
-import { enhanceRenderedContent, routableHref } from '@/helpers/renderedContent'
+import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
+import { enhanceRenderedContent, routableHref, sameDocumentHash } from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
 
 import { useCommonStore } from '@/stores/common'
@@ -352,9 +352,15 @@ const dark = useDark()
 
 // META
 
-useMeta({
+/*
+  A getter, not a plain object: the page's title is not known when this runs. The view is mounted for
+  the path, and the title arrives with the page a moment later -- read once, it was always the empty
+  string, so the tab showed nothing but the site name the template appends. It has to keep up with
+  every navigation after that too, since the view is reused rather than remounted.
+*/
+useMeta(() => ({
   title: pageStore.title
-})
+}))
 
 // DATA
 
@@ -369,6 +375,8 @@ const state = reactive({
   currentRating: 3
 })
 const pageContents = ref(null)
+/** The article column, which is what scrolls -- see `scrollPageToTop`. */
+const pageScroller = ref(null)
 
 // COMPUTED
 
@@ -581,6 +589,7 @@ watch(
     }
 
     // -> Load Page
+    scrollPageToTop()
     try {
       await pageStore.pageLoad({ path: newValue })
       if (editorStore.isActive) {
@@ -659,6 +668,22 @@ watch(
  * new tab.
  */
 /**
+ * Back to the top of the article on arriving at another page.
+ *
+ * The article column scrolls, not the window -- the shell around it holds still -- so the router's own
+ * `scrollBehavior` has nothing to do: it scrolls the document, which never moved. Left alone, a reader
+ * following a link from halfway down one page arrives halfway down the next.
+ *
+ * Called before the content is swapped rather than after, so the jump happens on the page being left
+ * instead of showing the new one at the old offset for a frame. A `#heading` in the URL still wins:
+ * `scrollToAnchorWhenReady` runs once the render has settled, and travelling to it from the top is
+ * what it is written to do.
+ */
+function scrollPageToTop() {
+  pageScroller.value?.$el?.scrollTo({ top: 0, left: 0 })
+}
+
+/**
  * What a relation button links to, as props for `WBtn`.
  *
  * The buttons were rendered with neither, so a relation was decoration: it drew its label and caption
@@ -708,6 +733,25 @@ function onContentClick(ev) {
   }
   const anchor = ev.target?.closest?.('a[href]')
   if (!anchor) {
+    return
+  }
+  /*
+    A heading on this same page: travelled to rather than jumped at, which is how the contents list
+    and an arriving `#heading` already reach one. Through the helper, so a heading inside a closed tab
+    is revealed first, and only claimed once it says it found somewhere to go -- a fragment naming
+    nothing in the render is left to the browser, as it was.
+
+    The URL still follows, so the address bar can be copied and Back returns to the section before.
+    `router.push` rather than assigning `location.hash`, which would jump the page as well -- and since
+    a pushed hash sets no target element, marking where the reader landed is the helper's job (see
+    `LANDED_CLASS`) rather than `:target`'s.
+  */
+  const hash = sameDocumentHash(anchor, window.location)
+  if (hash) {
+    if (scrollToAnchor(hash, { smooth: true })) {
+      ev.preventDefault()
+      router.push({ path: route.path, query: route.query, hash })
+    }
     return
   }
   const target = routableHref(anchor, window.location)

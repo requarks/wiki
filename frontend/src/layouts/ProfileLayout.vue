@@ -86,8 +86,13 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
-  titleTemplate: (title) => `${title} - ${t('profile.title')} - Wiki.js`
+// -> The site's own name rather than the literal `Wiki.js`, as the page view does. A getter, so the
+//    template is recomputed when the site config arrives -- see the note in `MainLayout`.
+useMeta(() => {
+  const siteTitle = siteStore.title
+  return {
+    titleTemplate: (title) => `${title} - ${t('profile.title')} - ${siteTitle}`
+  }
 })
 
 // DATA
