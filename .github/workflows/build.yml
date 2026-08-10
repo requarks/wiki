@@ -57,7 +57,8 @@ jobs:
         context: .
         file: dev/build/Dockerfile
         push: true
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64
+        # platforms: linux/amd64,linux/arm64
         tags: |
           ghcr.io/requarks/wiki:3.0.0-alpha
           ghcr.io/requarks/wiki:${{ env.REL_VERSION }}

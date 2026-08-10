@@ -26,7 +26,9 @@ defaults:
     logFormat: default
     offline: false
     dataPath: ./data
-    bodyParserLimit: 5mb
+    # In BYTES. Fastify's `bodyLimit` takes an integer and refuses anything else at boot, unlike the
+    # 2.x body parser this default was written for, which took '5mb'.
+    bodyParserLimit: 5242880
     icons:
       # Iconify API the wiki fetches icons from the first time they are used. Point this at a
       # self-hosted Iconify API to keep icon lookups inside your network.
