@@ -1,1 +1,0 @@
-ALTER TABLE "pageHistory" ADD COLUMN "reason" varchar(255);

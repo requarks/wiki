@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "383dbfe0-4388-4913-9e70-74fa6651e483",
+  "id": "c4277c08-bb67-491e-9169-97038b9a50da",
   "prevIds": [
-    "65dd9b6a-600a-4b92-9d12-bab4daddae6d"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -204,6 +204,12 @@
     {
       "isRlsEnabled": false,
       "name": "settings",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "siteAssets",
       "entityType": "tables",
       "schema": "public"
     },
@@ -3136,6 +3142,45 @@
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "siteId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "siteAssets"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "kind",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "siteAssets"
+    },
+    {
+      "type": "bytea",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "data",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "siteAssets"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
       "default": "gen_random_uuid()",
       "generated": null,
       "identity": null,
@@ -5236,6 +5281,23 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
+      "name": "siteAssets_siteId_sites_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "siteAssets"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "siteId"
+      ],
+      "schemaTo": "public",
+      "tableTo": "sites",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
       "name": "storage_siteId_sites_id_fkey",
       "entityType": "fks",
       "schema": "public",
@@ -5336,6 +5398,17 @@
       "entityType": "pks",
       "schema": "public",
       "table": "icons"
+    },
+    {
+      "columns": [
+        "siteId",
+        "kind"
+      ],
+      "nameExplicit": false,
+      "name": "siteAssets_pkey",
+      "entityType": "pks",
+      "schema": "public",
+      "table": "siteAssets"
     },
     {
       "columns": [

@@ -211,9 +211,29 @@ CREATE TABLE "pageHistory" (
 	"title" varchar(255) NOT NULL,
 	"content" text,
 	"meta" jsonb DEFAULT '{}' NOT NULL,
+	"reason" varchar(255),
 	"versionDate" timestamp DEFAULT now() NOT NULL,
 	"authorId" uuid,
 	"siteId" uuid NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "pageRenderQueue" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"allowScripts" boolean DEFAULT false NOT NULL,
+	"allowStyles" boolean DEFAULT false NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL,
+	"pageId" uuid NOT NULL UNIQUE,
+	"siteId" uuid NOT NULL,
+	"requestedById" uuid
+);
+--> statement-breakpoint
+CREATE TABLE "pageWatching" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"pageId" uuid NOT NULL,
+	"siteId" uuid NOT NULL,
+	"userId" uuid NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "pages" (
@@ -254,6 +274,14 @@ CREATE TABLE "pages" (
 	"siteId" uuid NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "rateLimits" (
+	"key" varchar(255) PRIMARY KEY,
+	"hits" integer DEFAULT 0 NOT NULL,
+	"windowStartedAt" timestamp DEFAULT now() NOT NULL,
+	"bannedUntil" timestamp,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "sessions" (
 	"id" varchar(255) PRIMARY KEY,
 	"userId" uuid,
@@ -265,6 +293,13 @@ CREATE TABLE "sessions" (
 CREATE TABLE "settings" (
 	"key" varchar(255) PRIMARY KEY,
 	"value" jsonb DEFAULT '{}' NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "siteAssets" (
+	"siteId" uuid,
+	"kind" varchar(255),
+	"data" bytea NOT NULL,
+	CONSTRAINT "siteAssets_pkey" PRIMARY KEY("siteId","kind")
 );
 --> statement-breakpoint
 CREATE TABLE "sites" (
@@ -363,6 +398,9 @@ CREATE UNIQUE INDEX "pageEditSubmissions_page_author_idx" ON "pageEditSubmission
 CREATE INDEX "pageHistory_pageId_idx" ON "pageHistory" ("pageId","versionDate");--> statement-breakpoint
 CREATE INDEX "pageHistory_siteId_idx" ON "pageHistory" ("siteId","locale","path","versionDate");--> statement-breakpoint
 CREATE INDEX "pageHistory_authorId_idx" ON "pageHistory" ("authorId");--> statement-breakpoint
+CREATE INDEX "pageRenderQueue_createdAt_idx" ON "pageRenderQueue" ("createdAt");--> statement-breakpoint
+CREATE INDEX "pageWatching_user_site_idx" ON "pageWatching" ("userId","siteId");--> statement-breakpoint
+CREATE UNIQUE INDEX "pageWatching_page_user_idx" ON "pageWatching" ("pageId","userId");--> statement-breakpoint
 CREATE INDEX "pages_authorId_idx" ON "pages" ("authorId");--> statement-breakpoint
 CREATE INDEX "pages_creatorId_idx" ON "pages" ("creatorId");--> statement-breakpoint
 CREATE INDEX "pages_ownerId_idx" ON "pages" ("ownerId");--> statement-breakpoint
@@ -370,6 +408,7 @@ CREATE INDEX "pages_siteId_idx" ON "pages" ("siteId");--> statement-breakpoint
 CREATE INDEX "pages_ts_idx" ON "pages" USING gin ("ts");--> statement-breakpoint
 CREATE INDEX "pages_tags_idx" ON "pages" USING gin ("tags");--> statement-breakpoint
 CREATE INDEX "pages_isSearchableComputed_idx" ON "pages" ("isSearchableComputed");--> statement-breakpoint
+CREATE INDEX "rateLimits_updatedAt_idx" ON "rateLimits" ("updatedAt");--> statement-breakpoint
 CREATE INDEX "sessions_userId_idx" ON "sessions" ("userId");--> statement-breakpoint
 CREATE UNIQUE INDEX "storage_composite_idx" ON "storage" ("siteId","module");--> statement-breakpoint
 CREATE INDEX "tags_siteId_idx" ON "tags" ("siteId");--> statement-breakpoint
@@ -400,11 +439,18 @@ ALTER TABLE "pageEditSubmissions" ADD CONSTRAINT "pageEditSubmissions_siteId_sit
 ALTER TABLE "pageEditSubmissions" ADD CONSTRAINT "pageEditSubmissions_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pageHistory" ADD CONSTRAINT "pageHistory_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "pageHistory" ADD CONSTRAINT "pageHistory_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "pageRenderQueue" ADD CONSTRAINT "pageRenderQueue_pageId_pages_id_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "pageRenderQueue" ADD CONSTRAINT "pageRenderQueue_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "pageRenderQueue" ADD CONSTRAINT "pageRenderQueue_requestedById_users_id_fkey" FOREIGN KEY ("requestedById") REFERENCES "users"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "pageWatching" ADD CONSTRAINT "pageWatching_pageId_pages_id_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "pageWatching" ADD CONSTRAINT "pageWatching_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
+ALTER TABLE "pageWatching" ADD CONSTRAINT "pageWatching_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_authorId_users_id_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_creatorId_users_id_fkey" FOREIGN KEY ("creatorId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_ownerId_users_id_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id");--> statement-breakpoint
 ALTER TABLE "pages" ADD CONSTRAINT "pages_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id");--> statement-breakpoint
+ALTER TABLE "siteAssets" ADD CONSTRAINT "siteAssets_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "storage" ADD CONSTRAINT "storage_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "tags" ADD CONSTRAINT "tags_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
 ALTER TABLE "tree" ADD CONSTRAINT "tree_siteId_sites_id_fkey" FOREIGN KEY ("siteId") REFERENCES "sites"("id");--> statement-breakpoint
