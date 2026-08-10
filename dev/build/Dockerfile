@@ -58,4 +58,4 @@ VOLUME ["/wiki/data/content"]
 EXPOSE 3000
 EXPOSE 3443
 
-CMD ["node", "server"]
+CMD ["node", "backend"]
