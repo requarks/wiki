@@ -4,6 +4,7 @@
 // ===========================================
 
 import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import semver from 'semver'
 import { customAlphabet } from 'nanoid'
@@ -21,11 +22,9 @@ import fastifySession from '@fastify/session'
 import fastifyStatic from '@fastify/static'
 import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUi from '@fastify/swagger-ui'
-import fastifyView from '@fastify/view'
 import fastifyWebsocket from '@fastify/websocket'
 import gracefulServer from '@gquittet/graceful-server'
 import ajvFormats from 'ajv-formats'
-import pug from 'pug'
 import Emittery from 'emittery'
 import NodeCache from 'node-cache'
 
@@ -45,6 +44,28 @@ const nanoid = customAlphabet('1234567890abcdef', 10)
  * answering `/robots.txt` with a redirect to `/robots` would be answering the wrong question.
  */
 const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
+
+/**
+ * First path segments the SERVER itself answers — every prefix registered in `initHTTPServer`.
+ *
+ * Spelled out rather than tested with `isPageUrl`, because a leading underscore does not mean the
+ * server: the frontend router owns `/_admin`, `/_profile`, `/_inbox`, `/_search`, `/_create`, `/_edit`
+ * and `/_error` too, and those have to reach the app shell like any page path. The distinction the
+ * shell needs is "does something here serve this", which is this list, and it has to be kept in step
+ * with the registrations below.
+ */
+const SERVER_ROUTE_SEGMENTS = new Set([
+  '_api',
+  '_assets',
+  '_blocks',
+  '_collab',
+  '_files',
+  '_icons',
+  '_render',
+  '_site',
+  '_thumb',
+  '_user'
+])
 
 /**
  * Whether a URL addresses the page tree rather than the server itself.
@@ -608,33 +629,9 @@ async function initHTTPServer() {
     done()
   })
 
-  // ----------------------------------------
-  // View Engine Setup
-  // ----------------------------------------
-
-  app.register(fastifyView, {
-    engine: {
-      pug
-    }
-  })
   app.register(fastifyFormBody, {
     bodyLimit: 1048576 // 1mb
   })
-
-  // ----------------------------------------
-  // View accessible data
-  // ----------------------------------------
-
-  // app.locals.analyticsCode = {}
-  // app.locals.basedir = WIKI.ROOTPATH
-  // app.locals.config = WIKI.config
-  // app.locals.pageMeta = {
-  //   title: '',
-  //   description: WIKI.config.description,
-  //   image: '',
-  //   url: '/'
-  // }
-  // app.locals.devMode = WIKI.devMode
 
   // ----------------------------------------
   // Routing
@@ -671,6 +668,50 @@ async function initHTTPServer() {
   app.register(import('./controllers/render.ts'), { prefix: '/_render' })
   app.register(import('./controllers/thumb.ts'), { prefix: '/_thumb' })
   app.register(import('./controllers/user.ts'), { prefix: '/_user' })
+
+  // ----------------------------------------
+  // App Shell
+  // ----------------------------------------
+
+  const appShellPath = path.join(WIKI.ROOTPATH, 'assets/index.html')
+
+  /*
+    The compiled SPA, for every path no route above claimed.
+
+    It has to be the fallback rather than a route of its own: a wiki page lives at any path a user cares
+    to give it, and the frontend's router -- not this server -- is what resolves one. Which is also why
+    the only paths held back are the segments the server itself mounts, so a mistyped `/_api/...` still
+    answers as the API rather than handing back a page of HTML, and the root files a crawler asks for by
+    convention, which are absent here rather than being the app.
+
+    `no-store`: the bundles this pulls in are hashed and immutable under `/_assets`, but the document
+    naming them must never be held, or a rebuilt frontend would keep booting the previous one. Read per
+    request for the same reason -- `npm run build` while the server is up should be enough.
+  */
+  app.setNotFoundHandler(async (req, reply) => {
+    const urlPath = req.raw.url!.split('?')[0]!
+    const firstSegment = urlPath.split('/')[1] ?? ''
+    const isSystemPath = SERVER_ROUTE_SEGMENTS.has(firstSegment)
+    const isReservedRootFile = RESERVED_ROOT_FILES.has(firstSegment.toLowerCase())
+    // -> HEAD as well as GET: it has to answer what GET would, or a monitor pointed at the wiki reads a
+    //    404 for a page the browser beside it loads. Node drops the body for HEAD on its own.
+    const isReadRequest = req.method === 'GET' || req.method === 'HEAD'
+    if (!isReadRequest || isSystemPath || isReservedRootFile) {
+      return reply.notFound()
+    }
+    try {
+      const shell = await readFile(appShellPath, 'utf8')
+      return reply.header('Cache-Control', 'no-store').type('text/html; charset=utf-8').send(shell)
+    } catch (err: any) {
+      // -> Nothing to serve means the frontend was never built, which is a setup step rather than a
+      //    fault of this request: say which one, since a bare 500 sends people looking in the server
+      WIKI.logger.error(`Cannot serve the app shell from ${appShellPath}: ${err.message}`)
+      return reply
+        .code(503)
+        .type('text/plain; charset=utf-8')
+        .send('The frontend has not been built yet. Run `npm run build` in frontend/.\n')
+    }
+  })
 
   // ----------------------------------------
   // Error handling
