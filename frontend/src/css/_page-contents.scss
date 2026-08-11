@@ -21,8 +21,8 @@
   `block-plantuml` -- and a block styles itself inside its own shadow root, which nothing here reaches.
 
   The measurements follow what the documentation platforms have converged on -- 16px body text, headings
-  at 600 with far more space above than below, ruled h1/h2, tinted code and table headers, a left-ruled
-  quote -- because those conventions are what makes a long page scannable, not because any one of them
+  at 600 with far more space above than below, ruled h1/h2, tinted code, a table headed by a dark bar
+  in a panel of its own, a left-ruled quote -- because those conventions are what makes a long page scannable, not because any one of them
   is copied.
 
   Colours go through custom properties declared on the root block, for three reasons: dark mode is
@@ -69,10 +69,49 @@
   /*
     Two surfaces. `code` is the panel behind a code block -- opaque, because the preview pane sits on
     grey and a translucent tint would disappear into it -- and `alt` is the wash behind an inline code
-    span or a table header, translucent so it works on either.
+    span or a row header inside a table body, translucent so it works on either. The head of a table is
+    no longer one of them; see `--content-table-head` below.
   */
   --content-surface-code: #f4f6f8;
   --content-surface-alt: rgba(0, 0, 0, 0.04);
+
+  /*
+    The head of a table, drawn as a title bar: the graded near-black the app's own dialog headers use
+    (`.card-header` in `_base.scss`), so a table reads as a panel with a bar on top rather than as a
+    grid with tinted text in its first row. Literal values, because this file takes no SCSS palette.
+
+    The near end of the grade -- the one the radial starts from, at bottom right -- is a step up the
+    app's dark ramp from what `.card-header` starts at: `$dark-2` here against its `$dark-3`. Against a
+    white page the whole bar reads darker than it measures, and at `$dark-3` the grade had nowhere to go
+    but flat. On a dark page it does not need the help, so the dark block puts `$dark-3` back.
+
+    The far end and the ink are the same in both themes, because a bar this dark is already the chrome
+    it is meant to be on either.
+  */
+  --content-table-head: #292f39;
+  --content-table-head-grade: #0d1117;
+  /*
+    Dimmed rather than pure white: the head labels the columns, and at full strength white on
+    near-black it reads louder than the content it introduces.
+  */
+  --content-table-head-ink: rgba(255, 255, 255, 0.82);
+  /* -> The grid lines INSIDE the bar, which `--content-rule` cannot draw: a 12%-black hairline is
+        invisible on near-black */
+  --content-table-head-rule: rgba(255, 255, 255, 0.12);
+  /*
+    The body's two row colours. The plain row is tinted too, faintly: on the white article column an
+    untinted row IS the page, and a table whose rows are half page and half band reads as stripes drawn
+    on the article rather than as a panel of its own. Washes rather than fixed greys, so the pair holds
+    together on the editor's grey preview pane as well as on a white page.
+  */
+  --content-table-row: rgba(0, 0, 0, 0.03);
+  --content-table-row-alt: rgba(0, 0, 0, 0.06);
+  /*
+    And a shadow under the whole thing, so the panel sits ON the page rather than being drawn into it.
+    Two layers: a tight one that reads as the edge lifting, and a wide soft one that reads as the drop.
+    Kept faint -- a table is content, not a dialog, and it appears as often as every few paragraphs.
+  */
+  --content-table-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 3px 10px rgba(0, 0, 0, 0.05);
 
   --content-mark: #fdf1a0;
 
@@ -155,6 +194,22 @@
     /* Matches the app's own `dark-4` panel, so code sits a step above the page rather than below it */
     --content-surface-code: #161b22;
     --content-surface-alt: rgba(255, 255, 255, 0.07);
+
+    /*
+      The head keeps its colours -- see the light block -- but the shadow under the table cannot: a 5%
+      black drop is invisible on a dark page. Deepened, and no wider, so it still reads as the panel
+      being lifted rather than as a glow around it.
+    */
+    --content-table-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.32);
+
+    /* -> Lifted off the page rather than sunk into it, which is the same intent as the light theme's
+          pair: the dark page is already darker than anything a row could be tinted towards */
+    --content-table-row: rgba(255, 255, 255, 0.02);
+    --content-table-row-alt: rgba(255, 255, 255, 0.055);
+
+    /* -> Back to `.card-header`'s own near end: on a dark page the bar reads as dark as it measures,
+          and the extra step the light theme needs would leave the head sitting above the page */
+    --content-table-head: #1e232a;
 
     --content-mark: #6b5d13;
 
@@ -1087,23 +1142,62 @@
     `display: block` is what makes that possible -- a table box cannot scroll -- and the rows and cells
     still lay out as a table inside it through anonymous table boxes. `width: max-content` keeps the
     table its natural width up to the column's, so a narrow table does not stretch.
+
+    That block box is also what lets the table round its corners at all: `border-radius` is defined to
+    have no effect on a table with collapsed borders, but this is a block that HAPPENS to contain a
+    table, so the radius applies to it -- and the scrolling already makes it a clipping box, so the
+    head's fill and the last row are cut to the arc with nothing else to arrange.
   */
   table {
     display: block;
     width: max-content;
     max-width: 100%;
     margin: 1.5em 0;
+    /* -> The perimeter, so the corners can be round; the cells draw only the grid inside it */
+    border: 1px solid var(--content-rule);
+    border-radius: 8px;
     border-collapse: collapse;
+    box-shadow: var(--content-table-shadow);
     font-size: 0.9375em;
     overflow-x: auto;
   }
 
+  /*
+    Interior rules only. A cell border all the way round would double the table's own at the perimeter,
+    and at the corners it would be a straight line cut off by the radius -- a notch rather than a curve.
+  */
   th,
   td {
     padding: 0.5em 0.8em;
-    border: 1px solid var(--content-rule);
+    border-right: 1px solid var(--content-rule);
+    border-bottom: 1px solid var(--content-rule);
     text-align: left;
     vertical-align: top;
+  }
+
+  tr > :last-child {
+    border-right: 0;
+  }
+
+  /* -> `tbody:last-child`, because a MultiMarkdown table can have several: only the bottom of the last
+        one is the bottom of the table, and the others need their rule to keep the grid closed */
+  tbody:last-child tr:last-child > * {
+    border-bottom: 0;
+  }
+
+  /*
+    A multi-line cell holds block content -- its text arrives wrapped in a paragraph, and may be a list
+    or a fence -- and the outer margins of that content are the cell's padding's business, exactly as
+    they are the container's at the top level. Without this a multi-line row stands 1.15em taller than
+    the single-line rows around it.
+  */
+  th > :first-child,
+  td > :first-child {
+    margin-top: 0;
+  }
+  th > :last-child,
+  td > :last-child {
+    margin-bottom: 0;
   }
 
   th {
@@ -1111,15 +1205,82 @@
     font-weight: 600;
   }
 
-  /* Banding, faint enough to guide the eye across a wide row without striping the page */
-  tbody tr:nth-child(even) > td {
-    background-color: rgba(0, 0, 0, 0.02);
+  /*
+    The head as a title bar. The gradient goes on the row group, not on each cell: `at bottom right` of
+    a cell is a wash per column, which reads as banding across the head instead of one bar under the
+    heading. Cells then have to give up the `th` wash above, or they would tint over it.
+
+    Only `thead` -- a row header inside the body (author HTML; markdown has no syntax for one) keeps
+    the plain wash, since a dark bar down the side of a table is a different thing altogether.
+  */
+  thead {
+    background-color: var(--content-table-head);
+    background-image: radial-gradient(
+      at bottom right,
+      var(--content-table-head),
+      var(--content-table-head-grade)
+    );
   }
 
-  @at-root .body--dark & {
-    tbody tr:nth-child(even) > td {
-      background-color: rgba(255, 255, 255, 0.03);
-    }
+  thead th {
+    border-right-color: var(--content-table-head-rule);
+    border-bottom-color: var(--content-table-head-rule);
+    background-color: transparent;
+    color: var(--content-table-head-ink);
+  }
+
+  /*
+    Banding: BOTH row colours are stated, so the table is a tinted panel with a band in it rather than
+    a white page with every other row tinted. On a white article column an untinted row was the page
+    itself, which left the table's own extent to the border alone.
+
+    Faint enough that the band still guides the eye across a wide row without striping the page, and
+    the two are a step apart rather than a contrast -- the head is what the eye lands on.
+  */
+  tbody > tr > td {
+    background-color: var(--content-table-row);
+  }
+
+  tbody > tr:nth-child(even) > td {
+    background-color: var(--content-table-row-alt);
+  }
+
+  /*
+    `{.table-leading-col}`, written on the line under a table -- which is where `markdown-it-attrs` reads
+    a block's attributes from -- for a table whose first column says what its row IS rather than holding
+    one of its values: a setting name, a key, a term. It is set in the head's own weight, so the column
+    reads as the label for its row that it is.
+
+    Inline code comes with it and needs no rule of its own: `code` declares no weight, so a `` `key` ``
+    in that column inherits this one -- which matters, because a label like that is usually written as
+    code in the first place.
+  */
+  table.table-leading-col > tbody > tr > :first-child {
+    font-weight: 600;
+  }
+
+  /*
+    `{.table-code-nohighlight}`, attached the same way, for a table where nearly every cell holds inline
+    code -- a table of settings, of keys, of tag names. The wash is there to pick a code span out of a
+    sentence; a column of them is not a sentence, and forty chips in a grid read as noise over the row
+    colours rather than as emphasis. The monospace face is what says "code" there.
+
+    The padding goes with the wash, as it does inside a heading: it exists to keep the tint off the
+    glyphs, and left behind on its own it is a gap in the middle of a phrase with nothing to explain it.
+  */
+  table.table-code-nohighlight code {
+    padding: 0;
+    background: none;
+  }
+
+  /*
+    `{.table-vertical-middle}`, again on the line under the table. Cells top-align by default, which is
+    what a row of prose wants -- the first lines of each cell line up and the row reads across. A row of
+    single lines next to one tall cell does not: an image, a `^^` rowspan or one long wrapped sentence
+    leaves the short cells hanging at the top of the row with the gap under them.
+  */
+  table.table-vertical-middle > tbody > tr > * {
+    vertical-align: middle;
   }
 
   caption {
@@ -1293,6 +1454,19 @@
     --content-ink-muted: #333;
     --content-surface-code: #fff;
     --content-surface-alt: #fff;
+    /*
+      Which goes double for a table's head: a solid near-black bar is the most ink anything in content
+      asks for, and on paper it buys nothing -- the bold text and the rules already say "head". Its
+      lines go back to the hairline every other cell prints, and the shadow goes entirely.
+    */
+    --content-table-head: #fff;
+    --content-table-head-grade: #fff;
+    --content-table-head-ink: #000;
+    --content-table-head-rule: var(--content-rule);
+    --content-table-shadow: none;
+    /* -> And the banding, which on paper is grey ink over every other row for no gain */
+    --content-table-row: transparent;
+    --content-table-row-alt: transparent;
 
     font-size: 11pt;
     line-height: 1.55;

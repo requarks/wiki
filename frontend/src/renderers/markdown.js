@@ -284,7 +284,26 @@ export class MarkdownRenderer {
       this.md.use(mdUnderline)
     }
 
-    if (config.mdmultiTable) {
+    /*
+      MultiMarkdown tables: multi-line cells, `^^` rowspans, and a table with no header row.
+
+      `multimdTable` is the name the setting has everywhere else -- `base.yml`, `models/sites.ts`, the
+      editor's config overlay -- and this read it as `mdmultiTable`, so the plugin was never installed
+      and none of those three features has ever worked.
+
+      The shim is what makes fixing that safe. `markdown-it-multimd-table` merges its options with
+      `md.utils.assign`, which markdown-it dropped in 14; on 15 the `use()` call throws
+      `md.utils.assign is not a function`, out of the CONSTRUCTOR -- so with the name corrected and
+      nothing else, every render in the app would have died instead. 4.2.3 is the last release of the
+      plugin (Aug 2023) and there is no fixed version to move to.
+
+      `md.utils` is one object shared by every markdown-it instance, so this restores the helper
+      process-wide rather than for this renderer. That is as narrow as it can be made and it is benign:
+      the removed helper WAS this, minus a guard against non-object sources that the one call site
+      cannot hit.
+    */
+    if (config.multimdTable) {
+      this.md.utils.assign ??= Object.assign
       this.md.use(mdMultiTable, { multiline: true, rowspan: true, headerless: true })
     }
 

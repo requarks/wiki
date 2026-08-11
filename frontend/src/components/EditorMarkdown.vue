@@ -314,6 +314,7 @@ import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
+import { findEditableTables } from '@/helpers/markdownTable'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
@@ -369,6 +370,8 @@ let editor
 let md
 /** Where the paste listener ended up, so it can be taken off the same node. See the note in onMounted. */
 let pasteCaptureNode = null
+/** The "Edit Table" lens provider, which is registered against the language rather than this editor. */
+let tableLensProvider = null
 const monacoRef = ref(null)
 const editorPreviewContainerRef = ref(null)
 
@@ -532,20 +535,66 @@ function insertBlockClb(markdown) {
 
 function insertTable() {
   siteStore.$patch({
-    overlay: 'TableEditor'
+    overlay: 'TableEditor',
+    overlayOpts: {}
   })
 }
 
 /**
- * The table the overlay built, at the cursor.
+ * The same overlay, over a table already in the page — what the "Edit Table" lens above one does.
  *
- * Kept on its own line: a table only parses as one when its first row starts a line, so inserting into
- * the middle of a sentence has to break out of it. The blank line after is what separates it from
- * whatever the cursor was sitting in front of.
+ * The lens carries only the line it was drawn on, and the table is looked up again here rather than
+ * taken from the lens: a lens is provided once and then moves with the text, so its argument is a line
+ * number from whenever the document last settled. Reading the table back out of the model at the moment
+ * of the click is what keeps the range and the source it hands over describing the same thing.
  */
-function insertTableClb(markdown) {
+function editTable(line) {
+  const tables = findEditableTables(editor.getModel().getValue())
+  const table = tables.find((entry) => entry.startLine <= line && line <= entry.endLine)
+  if (!table) {
+    return
+  }
+  siteStore.$patch({
+    overlay: 'TableEditor',
+    overlayOpts: {
+      source: table.source,
+      startLine: table.startLine,
+      endLine: table.endLine
+    }
+  })
+}
+
+/**
+ * The table the overlay built: over the lines it was read from, or at the cursor when it is a new one.
+ *
+ * A new table is kept on its own line — a table only parses as one when its first row starts a line, so
+ * inserting into the middle of a sentence has to break out of it, and the blank line after is what
+ * separates it from whatever the cursor was sitting in front of.
+ *
+ * An edited one replaces exactly the lines it occupied, so nothing around it moves and one undo takes
+ * the whole table back. The cursor lands at the top of it rather than staying wherever it was, which may
+ * be inside the text that was just replaced.
+ */
+function insertTableClb({ markdown, replace = null }) {
+  const model = editor.getModel()
+  if (replace) {
+    editor.executeEdits('table', [
+      {
+        range: new Range(
+          replace.startLine,
+          1,
+          replace.endLine,
+          model.getLineMaxColumn(replace.endLine)
+        ),
+        text: markdown
+      }
+    ])
+    editor.setPosition(new Position(replace.startLine, 1))
+    editor.focus()
+    return
+  }
   const position = editor.getPosition()
-  const line = editor.getModel().getLineContent(position.lineNumber)
+  const line = model.getLineContent(position.lineNumber)
   const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n\n' : ''
   const after = line.slice(position.column - 1).trim().length > 0 ? '\n\n' : '\n'
   insertAtCursor({ content: `${before}${markdown}${after}` })
@@ -1037,6 +1086,36 @@ onMounted(async () => {
   // TODO: For debugging, remove at some point...
   window.edInstance = editor
 
+  /*
+    "Edit Table" over every table in the page, which opens the table editor on that table.
+
+    A code lens rather than a context-menu action: the offer has to be visible to be found, and a table
+    in markdown source is exactly the thing an author does not want to edit by hand. It appears only over
+    the tables the overlay can actually hold -- `findEditableTables` says which -- because offering it
+    over a table with a multi-line cell or a rowspan would be offering to flatten it.
+
+    The command is registered on this editor rather than globally (`monaco.editor.registerCommand`),
+    which is what gives `editor.addCommand` an id to hand the lens. The PROVIDER is per-language and
+    process-wide, so it has to be disposed with the component or a second visit to the editor would draw
+    every lens twice.
+  */
+  const editTableCommand = editor.addCommand(0, (_accessor, line) => editTable(line))
+  tableLensProvider = monaco.languages.registerCodeLensProvider('markdown', {
+    provideCodeLenses(model) {
+      return {
+        lenses: findEditableTables(model.getValue()).map((table) => ({
+          range: new Range(table.startLine, 1, table.startLine, 1),
+          command: {
+            id: editTableCommand,
+            title: t('editor.markup.editTable'),
+            arguments: [table.startLine]
+          }
+        })),
+        dispose() {}
+      }
+    }
+  })
+
   // -> Define Formatting Actions
   editor.addAction({
     contextMenuGroupId: 'markdown.extension.editing',
@@ -1269,6 +1348,8 @@ onBeforeUnmount(() => {
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
   monacoRef.value?.removeEventListener('dragover', onEditorDragOver)
   monacoRef.value?.removeEventListener('drop', onEditorDrop)
+  // -> Registered against the markdown language, not this editor, so nothing else takes it down
+  tableLensProvider?.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
   //    this author's avatar out of everyone else's header
   stopCollabSession()

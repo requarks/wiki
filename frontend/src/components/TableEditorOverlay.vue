@@ -1,5 +1,5 @@
 <template>
-  <w-layout view="hHh lpR fFf" container>
+  <w-layout class="table-editor" view="hHh lpR fFf" container>
     <w-header class="card-header px-4 py-2">
       <w-icon name="img:/_assets/icons/color-data-grid.svg" left size="md" />
       <span>{{ t(`editor.tableEditor.title`) }}</span>
@@ -23,21 +23,37 @@
           :aria-label="t(`common.actions.cancel`)"
           icon="la:times"
           @click="close" />
+        <!-- -> "Update" when the overlay was opened over a table that is already in the page: the
+                button says what pressing it does, and what it does is replace that one -->
         <w-btn
           push
           color="positive"
           text-color="white"
-          :label="t(`common.actions.insert`)"
-          :aria-label="t(`common.actions.insert`)"
+          :label="t(submitLabel)"
+          :aria-label="t(submitLabel)"
           icon="la:check"
           @click="insert" />
       </w-btn-group>
     </w-header>
     <w-page-container>
       <w-page class="p-4">
-        <div class="flex flex-wrap items-center gap-2">
+        <!--
+          A tinted strip rather than a colour of its own: the overlay's panel is a gradient
+          ($grey-3 -> $grey-4, $dark-4 -> $dark-3), so a fixed background would be a step apart from it
+          at one end of that gradient and level with it at the other. A translucent black -- white in
+          dark mode -- is a step darker than whatever it happens to sit on.
+
+          Bled out of the page's padding on three sides so it meets the header and both edges, which is
+          what makes it read as a toolbar under the title bar rather than as a panel floating in the
+          page; `px-4` then puts its contents back on the page's own inset.
+        -->
+        <div
+          class="-mx-4 -mt-4 flex flex-wrap items-center gap-2 bg-black/5 px-4 py-2 dark:bg-white/5">
+          <!-- -> `flat` + `acrylic-btn`, the pairing the admin toolbars use: the frosted wash is the
+                  button's own colour at 10%, so it sits in the strip rather than being drawn on it -->
           <w-btn
-            outline
+            class="acrylic-btn"
+            flat
             no-caps
             icon="la:plus"
             color="primary"
@@ -45,7 +61,8 @@
             :label="t(`editor.tableEditor.addRow`)"
             @click="addRow" />
           <w-btn
-            outline
+            class="acrylic-btn"
+            flat
             no-caps
             icon="la:plus"
             color="primary"
@@ -142,18 +159,50 @@
             </tbody>
           </table>
         </div>
-        <!-- -> The markdown itself, because that is what gets inserted and it is worth seeing before
-                it lands in the page -->
-        <div class="text-overline mt-6">{{ t('editor.tableEditor.markdown') }}</div>
-        <pre class="table-editor-output mt-2">{{ markdown }}</pre>
+        <!--
+          The markdown itself, because that is what gets inserted and it is worth seeing before it lands
+          in the page. Headed the way the block picker heads its own markdown.
+
+          The heading IS the flex row, rather than a heading beside a control: `w-section-header` draws
+          its wash and its hairline across its own width, so a heading sized to its text would trail a
+          band a third of the way across the panel.
+
+          `-mx-4` gives back the page's own padding, so that band reaches the panel's edges instead of
+          stopping short of them — and the class's own 16px leaves the heading text at the same inset
+          the rest of the page keeps.
+        -->
+        <div class="w-section-header -mx-4 mt-6 flex flex-wrap items-center justify-between gap-2">
+          <span>{{ t('editor.tableEditor.markdown') }}</span>
+          <!-- -> Sits with the output rather than with the editing tools: it changes nothing about the
+                  table, only how the syntax below is written. Body colour and weight rather than the
+                  band's, since it is a control standing in the heading, not part of it. -->
+          <w-checkbox
+            v-model="state.compact"
+            class="font-normal text-grey-9 dark:text-white"
+            :label="t('editor.tableEditor.compact')" />
+        </div>
+        <!--
+          Drawn as the page will draw it: `page-contents` is the content stylesheet, so the preview is
+          a code block, not a panel of its own invention — one that follows the site's own code surface,
+          in both themes, without this file restating any of it.
+
+          `mt-4` rather than the heading's own 10px, because the faint band the heading trails below
+          itself reaches 13px down and the block's background would paint over it. The `pre` is the only
+          child, which is what gives up the block margins content puts around a code block.
+        -->
+        <div class="page-contents mt-4">
+          <pre>{{ markdown }}</pre>
+        </div>
       </w-page>
     </w-page-container>
   </w-layout>
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, onBeforeUnmount, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+import { ALIGNMENTS, buildTable, parseTable } from '@/helpers/markdownTable'
 
 import { useSiteStore } from '@/stores/site'
 
@@ -165,6 +214,10 @@ import { useSiteStore } from '@/stores/site'
  * replaces (`tabulator-tables`) is a sortable, filterable, virtually-rendered spreadsheet whose model
  * has no place to put that alignment. Every editing gesture here is a `splice`.
  *
+ * Opened over a table that is already in the page — from the "Edit Table" lens in the markdown editor,
+ * which passes its source and the lines it occupies — the same grid edits that table instead, and the
+ * result goes back over those lines rather than in at the cursor.
+ *
  * The editor receives the result over the event bus, the same way the File Manager hands back an asset.
  */
 
@@ -175,9 +228,6 @@ const siteStore = useSiteStore()
 // I18N
 
 const { t } = useI18n()
-
-/** Cycled through by the per-column button, in this order. */
-const ALIGNMENTS = ['left', 'center', 'right']
 
 const ALIGN_ICONS = {
   left: 'mdi:format-align-left',
@@ -193,66 +243,51 @@ const ALIGN_LABELS = {
   right: 'editor.tableEditor.alignRight'
 }
 
-/** Narrowest a delimiter cell can be and still show its colons: `:-:`. */
-const MIN_WIDTH = 3
-
 // DATA
 
 /*
   `rows[0]` is the header. Keeping it in the same array as the body is what makes a column operation one
   splice per row instead of two code paths that have to agree.
+
+  A starter table when there is nothing to edit; the table that was there when there is. `replace` holds
+  the lines it came from, and is what turns this from an insert into an update -- see `insert`.
 */
-const state = reactive({
-  align: ['left', 'left', 'left'],
-  rows: [
-    ['Column 1', 'Column 2', 'Column 3'],
-    ['', '', ''],
-    ['', '', '']
-  ]
-})
+const editing = siteStore.overlayOpts?.source
+  ? {
+      ...parseTable(siteStore.overlayOpts.source),
+      replace: {
+        startLine: siteStore.overlayOpts.startLine,
+        endLine: siteStore.overlayOpts.endLine
+      }
+    }
+  : null
+
+const state = reactive(
+  editing ?? {
+    align: ['left', 'left', 'left'],
+    compact: true,
+    rows: [
+      ['Column 1', 'Column 2', 'Column 3'],
+      ['', '', ''],
+      ['', '', '']
+    ],
+    replace: null
+  }
+)
 
 // COMPUTED
 
 const bodyRows = computed(() => state.rows.slice(1))
 
-/**
- * The table as markdown.
- *
- * Cells are padded to the width of their column: it costs nothing and it is the difference between a
- * source someone can read and a wall of pipes. A cell's own `|` is escaped, and a newline — which only
- * a paste can produce — becomes a space, because there is no way to write either into a table row.
- */
-const markdown = computed(() => {
-  const widths = state.align.map((_, colIndex) =>
-    Math.max(MIN_WIDTH, ...state.rows.map((row) => escapeCell(row[colIndex]).length))
-  )
-  const line = (cells) => `| ${cells.map((cell, i) => cell.padEnd(widths[i])).join(' | ')} |`
-  const delimiters = state.align.map((align, i) => {
-    const dashes = '-'.repeat(widths[i] - (align === 'center' ? 2 : 1))
-    switch (align) {
-      case 'center': {
-        return `:${dashes}:`
-      }
-      case 'right': {
-        return `${dashes}:`
-      }
-      default: {
-        return `:${dashes}`
-      }
-    }
-  })
-  return [
-    line(state.rows[0].map(escapeCell)),
-    line(delimiters),
-    ...bodyRows.value.map((row) => line(row.map(escapeCell)))
-  ].join('\n')
-})
+/* -> Written by `helpers/markdownTable`, which is also what read the table being edited: the two
+      directions have to agree, or reopening a table would reformat it */
+const markdown = computed(() => buildTable(state, { compact: state.compact }))
+
+const submitLabel = computed(() =>
+  state.replace ? 'common.actions.update' : 'common.actions.insert'
+)
 
 // METHODS
-
-function escapeCell(value) {
-  return (value ?? '').replaceAll('|', '\\|').replaceAll(/\s+/g, ' ').trim()
-}
 
 function cycleAlign(colIndex) {
   const next = (ALIGNMENTS.indexOf(state.align[colIndex]) + 1) % ALIGNMENTS.length
@@ -318,18 +353,42 @@ function onCellPaste(rowIndex, colIndex, event) {
   })
 }
 
+/*
+  The result, and where it goes: over the lines the table came from, or in at the cursor when it came
+  from nowhere. The editor is the one holding the document, so it does the placing -- this only says
+  which of the two it is.
+*/
 function insert() {
-  EVENT_BUS.emit('insertTable', markdown.value)
+  EVENT_BUS.emit('insertTable', { markdown: markdown.value, replace: state.replace })
   close()
 }
 
 function close() {
   siteStore.$patch({ overlay: '' })
 }
+
+// -> Cleared here rather than in `close`, so it goes whichever way the overlay was left: a table left
+//    behind in the options would be edited again the next time the toolbar button opens this
+onBeforeUnmount(() => {
+  siteStore.overlayOpts = {}
+})
 </script>
 
 <style lang="scss">
 .table-editor {
+  /*
+    Nothing here sits on a `w-card`, and that is where the app's dark text colour comes from -- so the
+    overlay has to state its own or everything that merely inherits `color` stays black on the dark
+    panel: the cell inputs (`color: inherit`, deliberately, so they follow the surface), the `Markdown`
+    heading and the Compact checkbox's label. Same reason `BlockPickerOverlay` states it.
+  */
+  @at-root .body--light & {
+    color: $grey-9;
+  }
+  @at-root .body--dark & {
+    color: #fff;
+  }
+
   &-grid {
     overflow-x: auto;
 
@@ -383,24 +442,6 @@ function close() {
     /* -> The header row is what a reader sees in bold, so it reads that way here too */
     &--head {
       font-weight: 600;
-    }
-  }
-
-  &-output {
-    padding: 12px;
-    border-radius: 4px;
-    font-family: 'Roboto Mono', Consolas, 'Liberation Mono', Courier, monospace;
-    font-size: 13px;
-    line-height: 1.5;
-    overflow-x: auto;
-
-    @at-root .body--light & {
-      background-color: $grey-2;
-      color: $grey-9;
-    }
-    @at-root .body--dark & {
-      background-color: $dark-4;
-      color: #fff;
     }
   }
 }
