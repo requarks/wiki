@@ -1,7 +1,12 @@
 <template>
   <div class="w-expansion-item">
+    <!--
+      `select-none`, as `WBtn` carries it: this row's whole job is to be pressed, and pressing it twice
+      quickly -- opening a group, seeing it is the wrong one, closing it again -- is a double click, which
+      otherwise leaves the label text selected behind the group that just shut.
+    -->
     <w-item
-      class="w-expansion-item__header"
+      class="w-expansion-item__header select-none"
       :dense="dense"
       clickable
       :aria-expanded="String(isOpen)"

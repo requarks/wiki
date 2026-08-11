@@ -93,73 +93,96 @@ watch(
     margin-bottom: 10px;
   }
 
+  /*
+    A first item that is a link -- on its own or as a group with children -- needs the space a first
+    header brings with it. A dense row's padding is 2px, so its label started hard against the rule under
+    the site header; a header's own `p-4` already stands it 16px clear, which is why this is only for the
+    two link shapes and not for every first child.
+  */
+  &-list > .w-item:first-child,
+  &-list > .w-expansion-item:first-child {
+    margin-top: 10px;
+  }
+
   .w-list {
     .w-separator + .w-item-label {
       padding-top: 10px;
+    }
+
+    /* -> Full white, like the icons and labels this sidebar sets by hand: the chevron is what says the
+       row opens, so it is not the secondary content a trailing section is dimmed for. Set on the icon
+       rather than on its section, which is what makes it beat the inherited dimmed colour. */
+    .w-expansion-item__arrow {
+      color: #fff;
     }
 
     .w-item-section--avatar {
       min-width: auto;
     }
 
-    .q-expansion-item > .q-expansion-item__container {
-      > .w-item {
-        &::before {
-          content: '';
-          display: block;
-          position: absolute;
-          bottom: 0;
-          left: 0px;
-          width: 10px;
-          height: 10px;
-          border-style: solid;
-          border-color: transparent transparent rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.25);
-          transition: all 0.4s ease;
-        }
-      }
+    /*
+      An open group's children, marked the way `NavEditOverlay` marks a nested nav item: a 10px rule down
+      the side of the run, with an elbow at each end turning it out of the row above and closing it under
+      the last child. The same three pieces and the same 10px, so the two views of one navigation tree
+      look like the same tree.
 
+      The rules this replaces addressed `.q-expansion-item__container` and `.q-expansion-item--expanded`,
+      which is markup `WExpansionItem` has never emitted -- it renders `__header` and `__content` and
+      keeps its state in `aria-expanded`. So none of them matched, and an open group had no line at all.
+
+      No expanded/collapsed state needed here: the content is `v-show`n, so when the group is closed this
+      box is `display: none` and takes its border and both elbows with it.
+    */
+    .w-expansion-item__content {
+      position: relative;
+      border-left: 10px solid rgba(255, 255, 255, 0.25);
+      /*
+        And a step DOWN from the sidebar rather than up, which is the one place this parts company with
+        `NavEditOverlay`: there the nested rows lift off a near-black panel, here they sit in a coloured
+        one, and a lighter wash on a mid-tone blue reads as a highlight -- as if the whole group were
+        selected.
+
+        A translucent black, not a colour: the sidebar's own is the site's to choose (`--q-sidebar`,
+        rewritten at runtime for per-site theming), so anything fixed would be right for the default blue
+        and wrong for every other site.
+
+        `padding-box` keeps that wash off the border area. The rule there is 25% white, and with the
+        default `border-box` clip the darkened wash behind it would leave the rule a different colour
+        along the children than at the two elbows, which have nothing behind them.
+      */
+      background-color: rgb(0 0 0 / 0.12);
+      background-clip: padding-box;
+
+      /*
+        Each elbow is one 10px box showing two of its borders: the mitre between them is the angle. Set
+        10px outside the content on the appropriate side, so the vertical stroke lines up with the rule
+        and continues it. `left: -10px` is the rule's own left edge -- an absolute offset here is
+        measured from the padding box, which starts where the border ends.
+      */
+      &::before,
       &::after {
         content: '';
         display: block;
         position: absolute;
-        bottom: -20px;
-        left: 0;
+        left: -10px;
         width: 10px;
         height: 10px;
         border-style: solid;
-        border-color: rgba(255, 255, 255, 0.25) transparent transparent rgba(255, 255, 255, 0.25);
-        transition: all 0.4s ease;
-      }
-    }
-
-    .q-expansion-item--collapsed > .q-expansion-item__container {
-      > .w-item {
-        &::before {
-          border-width: 0 0 0 0;
-        }
       }
 
+      /* -> Out of the parent row: the rule's top end, turning right into the row above it */
+      &::before {
+        top: -10px;
+        border-width: 0 10px 10px 0;
+        border-color: transparent transparent rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.25);
+      }
+
+      /* -> And closed under the last child, turning right again */
       &::after {
-        bottom: 0px;
-        border-width: 0 0 0 0;
-      }
-    }
-
-    .q-expansion-item--expanded > .q-expansion-item__container {
-      > .w-item {
-        &::before {
-          border-width: 0 10px 10px 0;
-        }
-      }
-
-      &::after {
-        bottom: -20px;
+        top: 100%;
         border-width: 10px 10px 10px 0;
+        border-color: rgba(255, 255, 255, 0.25) transparent transparent rgba(255, 255, 255, 0.25);
       }
-    }
-
-    .q-expansion-item__content {
-      border-left: 10px solid rgba(255, 255, 255, 0.25);
     }
   }
 

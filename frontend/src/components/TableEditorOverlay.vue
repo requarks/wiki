@@ -49,11 +49,10 @@
         -->
         <div
           class="-mx-4 -mt-4 flex flex-wrap items-center gap-2 bg-black/5 px-4 py-2 dark:bg-white/5">
-          <!-- -> `flat` + `acrylic-btn`, the pairing the admin toolbars use: the frosted wash is the
-                  button's own colour at 10%, so it sits in the strip rather than being drawn on it -->
+          <!-- -> `push`, like the overlay's own header buttons and the Styling menu at the far end of
+                  this strip: solid, with the ledge that collapses under the press -->
           <w-btn
-            class="acrylic-btn"
-            flat
+            push
             no-caps
             icon="la:plus"
             color="primary"
@@ -61,14 +60,64 @@
             :label="t(`editor.tableEditor.addRow`)"
             @click="addRow" />
           <w-btn
-            class="acrylic-btn"
-            flat
+            push
             no-caps
             icon="la:plus"
             color="primary"
             padding="xs sm"
             :label="t(`editor.tableEditor.addColumn`)"
             @click="addColumn" />
+          <!--
+            Three groups in one strip, ruled apart: what the table holds, what its markdown looks like,
+            and what the page does with it. A rule rather than more space -- at this density the gap that
+            would read as a break is wide enough to look like a missing control.
+
+            The two options here both change the markdown under the grid as they are ticked, which is the
+            only feedback either of them has. Headerless comes first, since it changes the grid as well.
+
+            Margins on all three sides, past the row's own gap: a checkbox sitting at the bare gap from a
+            rule reads as attached to it, and two of them that close together read as one control with two
+            boxes. The pair ends up breathing inside its group rather than filling it.
+          -->
+          <w-separator vertical />
+          <w-checkbox
+            v-model="state.headerless"
+            class="ml-2"
+            :label="t('editor.tableEditor.headerless')" />
+          <w-checkbox
+            v-model="state.compact"
+            class="mx-2"
+            :label="t('editor.tableEditor.compact')" />
+          <!--
+            The classes the content stylesheet gives a table, which go under it as a `markdown-it-attrs`
+            line — see `css/_page-contents.scss`, where each of the three is defined. Last in the strip
+            and in its own colour: the only control here that opens something rather than doing something.
+
+            A menu of checkboxes rather than a `w-select`: these are not one choice from a list, they are
+            three independent switches, and a select would read as "pick a style" and then have to explain
+            why two are ticked. `WCheckbox` binds a value within an array, which is exactly this shape, and
+            `WMenu` does not close on a click inside itself, so all three can be set in one visit.
+          -->
+          <w-separator vertical />
+          <w-btn
+            push
+            no-caps
+            icon="mdi:palette"
+            color="secondary"
+            padding="xs sm"
+            :label="t(`editor.tableEditor.styling`)">
+            <w-icon name="mdi:menu-down" />
+            <w-menu anchor="bottom left" self="top left" :offset="[0, 4]">
+              <div class="flex flex-col gap-3 p-4">
+                <w-checkbox
+                  v-for="option of STYLE_CLASSES"
+                  :key="option.value"
+                  v-model="state.classes"
+                  :val="option.value"
+                  :label="t(option.label)" />
+              </div>
+            </w-menu>
+          </w-btn>
           <w-space />
           <div class="text-caption text-black/60 dark:text-white/70">
             {{ t('editor.tableEditor.pasteHint') }}
@@ -117,12 +166,15 @@
                 <!-- -> Matches the row-tools column below, so the grid stays square -->
                 <th class="table-editor-rowtools" />
               </tr>
-              <tr>
+              <!-- -> Gone entirely when the table is headerless, rather than emptied: `rows[0]` is a
+                      body row in that case, and it is shown as one below -->
+              <tr v-if="!state.headerless">
                 <th v-for="(_, colIndex) of state.rows[0]" :key="`head-${colIndex}`">
                   <input
                     v-model="state.rows[0][colIndex]"
                     class="table-editor-cell table-editor-cell--head"
                     type="text"
+                    :style="{ textAlign: state.align[colIndex] }"
                     :aria-label="t(`editor.tableEditor.headerCell`, { column: colIndex + 1 })"
                     @paste="onCellPaste(0, colIndex, $event)" />
                 </th>
@@ -132,14 +184,17 @@
             <tbody>
               <tr v-for="(row, rowIndex) of bodyRows" :key="`row-${rowIndex}`">
                 <td v-for="(_, colIndex) of row" :key="`cell-${rowIndex}-${colIndex}`">
+                  <!-- -> Set the way the column is set: the alignment is the one thing about a table
+                          the syntax can carry, so the grid may as well show it rather than describe it -->
                   <input
-                    v-model="state.rows[rowIndex + 1][colIndex]"
+                    v-model="state.rows[rowIndex + rowOffset][colIndex]"
                     class="table-editor-cell"
                     type="text"
+                    :style="{ textAlign: state.align[colIndex] }"
                     :aria-label="
                       t(`editor.tableEditor.bodyCell`, { row: rowIndex + 1, column: colIndex + 1 })
                     "
-                    @paste="onCellPaste(rowIndex + 1, colIndex, $event)" />
+                    @paste="onCellPaste(rowIndex + rowOffset, colIndex, $event)" />
                 </td>
                 <td class="table-editor-rowtools">
                   <w-btn
@@ -151,7 +206,7 @@
                     icon="la:times"
                     :disabled="bodyRows.length < 2"
                     :aria-label="t(`editor.tableEditor.removeRow`)"
-                    @click="removeRow(rowIndex + 1)">
+                    @click="removeRow(rowIndex + rowOffset)">
                     <w-tooltip>{{ t('editor.tableEditor.removeRow') }}</w-tooltip>
                   </w-btn>
                 </td>
@@ -163,24 +218,11 @@
           The markdown itself, because that is what gets inserted and it is worth seeing before it lands
           in the page. Headed the way the block picker heads its own markdown.
 
-          The heading IS the flex row, rather than a heading beside a control: `w-section-header` draws
-          its wash and its hairline across its own width, so a heading sized to its text would trail a
-          band a third of the way across the panel.
-
-          `-mx-4` gives back the page's own padding, so that band reaches the panel's edges instead of
-          stopping short of them — and the class's own 16px leaves the heading text at the same inset
-          the rest of the page keeps.
+          `-mx-4` gives back the page's own padding, so the band `w-section-header` trails reaches the
+          panel's edges instead of stopping short of them — and the class's own 16px leaves the heading
+          text at the same inset the rest of the page keeps.
         -->
-        <div class="w-section-header -mx-4 mt-6 flex flex-wrap items-center justify-between gap-2">
-          <span>{{ t('editor.tableEditor.markdown') }}</span>
-          <!-- -> Sits with the output rather than with the editing tools: it changes nothing about the
-                  table, only how the syntax below is written. Body colour and weight rather than the
-                  band's, since it is a control standing in the heading, not part of it. -->
-          <w-checkbox
-            v-model="state.compact"
-            class="font-normal text-grey-9 dark:text-white"
-            :label="t('editor.tableEditor.compact')" />
-        </div>
+        <div class="w-section-header -mx-4 mt-6">{{ t('editor.tableEditor.markdown') }}</div>
         <!--
           Drawn as the page will draw it: `page-contents` is the content stylesheet, so the preview is
           a code block, not a panel of its own invention — one that follows the site's own code surface,
@@ -235,6 +277,20 @@ const ALIGN_ICONS = {
   right: 'mdi:format-align-right'
 }
 
+/*
+  The classes the Styling menu offers, and what each one does to a table. Every one of them is defined in
+  `css/_page-contents.scss` -- this list is the UI for those rules, so a class added there needs a line
+  here to be reachable, and a line here naming a class that is not there does nothing at all.
+
+  A class an author wrote by hand that is not in this list is left alone rather than stripped: it stays in
+  `state.classes` and goes back out with the table, it simply has no box of its own to tick.
+*/
+const STYLE_CLASSES = [
+  { value: 'table-vertical-middle', label: 'editor.tableEditor.styleVerticalMiddle' },
+  { value: 'table-leading-col', label: 'editor.tableEditor.styleLeadingCol' },
+  { value: 'table-code-nohighlight', label: 'editor.tableEditor.styleCodeNoHighlight' }
+]
+
 /* -> Spelled out rather than built from the value: a key assembled at runtime is invisible to the
       translation tooling, the same way a concatenated icon name is invisible to the icon scanner. */
 const ALIGN_LABELS = {
@@ -246,8 +302,10 @@ const ALIGN_LABELS = {
 // DATA
 
 /*
-  `rows[0]` is the header. Keeping it in the same array as the body is what makes a column operation one
-  splice per row instead of two code paths that have to agree.
+  `rows[0]` is the header, unless `headerless` is set -- in which case it is simply the first row, and
+  every row is a body row. Keeping the header in the same array as the body is what makes a column
+  operation one splice per row instead of two code paths that have to agree, and it is also what makes
+  the Headerless tick reversible: nothing is thrown away, the first row just stops being a heading.
 
   A starter table when there is nothing to edit; the table that was there when there is. `replace` holds
   the lines it came from, and is what turns this from an insert into an update -- see `insert`.
@@ -266,6 +324,9 @@ const state = reactive(
   editing ?? {
     align: ['left', 'left', 'left'],
     compact: true,
+    headerless: false,
+    classes: [],
+    otherAttrs: [],
     rows: [
       ['Column 1', 'Column 2', 'Column 3'],
       ['', '', ''],
@@ -277,7 +338,10 @@ const state = reactive(
 
 // COMPUTED
 
-const bodyRows = computed(() => state.rows.slice(1))
+/** Where the body starts in `rows`: after the header, or at the top when there is none. */
+const rowOffset = computed(() => (state.headerless ? 0 : 1))
+
+const bodyRows = computed(() => state.rows.slice(rowOffset.value))
 
 /* -> Written by `helpers/markdownTable`, which is also what read the table being edited: the two
       directions have to agree, or reopening a table would reformat it */

@@ -70,7 +70,14 @@ const classes = computed(() => [
 }
 
 .w-list--dark :deep(.w-item-label--caption),
-.w-list--dark :deep(.w-item-label--header) {
+.w-list--dark :deep(.w-item-label--header),
+/*
+  And a trailing section, for the same reason and with the same fix. `WItemSection` dims a `side`
+  section with `text-black/54 dark:text-white/70`, so on a dark list in LIGHT mode -- the nav sidebar
+  on a light page -- whatever it holds came out black on the sidebar's colour. An avatar section keeps
+  full contrast there and keeps it here.
+*/
+.w-list--dark :deep(.w-item-section--side:not(.w-item-section--avatar)) {
   color: rgb(255 255 255 / 0.7);
 }
 
