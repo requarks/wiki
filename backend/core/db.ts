@@ -2,6 +2,7 @@ import { isPlainObject } from 'es-toolkit/predicate'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { setTimeout } from 'node:timers/promises'
+import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool, type PoolClient, type PoolConfig } from 'pg'
@@ -13,7 +14,6 @@ import { flags } from '../models/flags.ts'
 import { createDeferred } from '../helpers/common.ts'
 import { createNotifier } from '../helpers/pubsub.ts'
 // import migrationSource from '../db/migrator-source.js'
-// const migrateFromLegacy = require('../db/legacy')
 
 /**
  * Sends the event bus's cross-instance notifications, one at a time.
@@ -33,6 +33,17 @@ const notifier = createNotifier(() => WIKI.dbManager.pubsubClient, 'event bus')
  * this runs on, so nothing needs it any more.
  */
 const REQUIRED_EXTENSIONS = ['ltree', 'pg_trgm']
+
+/**
+ * Tables whose presence means the database belongs to a Wiki.js 2.x installation.
+ *
+ * `knex_migrations` is the 2.x migration ledger — 3.x tracks its own in `migrations`, via Drizzle —
+ * and `searchEngines` is a 2.x-only table, kept as a second signal for a database whose migration
+ * ledger somebody has dropped or renamed. Either one is enough: 3.x creates neither, so seeing one
+ * cannot be a 3.x database. The names are the exact identifiers 2.x created, `searchEngines`
+ * included, so they are compared case-sensitively against `information_schema`.
+ */
+const LEGACY_TABLES = ['knex_migrations', 'searchEngines']
 
 /**
  * Query logger, consulted by Drizzle on every query.
@@ -73,7 +84,6 @@ export default {
   config: null as PoolConfig | null,
   dbName: null as string | null | undefined,
   VERSION: null as string | null,
-  LEGACY: false,
   onReady: createDeferred(),
   connectAttempts: 0,
   /**
@@ -277,9 +287,33 @@ export default {
     }
   },
   /**
+   * Refuse to run against a Wiki.js 2.x database.
+   *
+   * Checked before anything is created or migrated, because there is no upgrade path: the 3.x
+   * migrations would run over the 2.x tables they know nothing about and leave a database that is
+   * neither version. Exits rather than throws — a 2.x database is not something a retry or a later
+   * boot phase can recover from, and the operator has to point the config at a fresh one.
+   */
+  async checkForLegacyInstall(db: WikiDb): Promise<void> {
+    const res = await db.execute(sql`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = ${WIKI.config.db.schema} AND table_name IN ${LEGACY_TABLES}
+      LIMIT 1
+    `)
+    if (res.rows.length > 0) {
+      WIKI.logger.error('ERROR: UPGRADING FROM A 2.x INSTALLATION IS NOT YET SUPPORTED. Exiting...')
+      WIKI.logger.error(
+        `Found the Wiki.js 2.x table "${res.rows[0].table_name}" in schema "${WIKI.config.db.schema}".`
+      )
+      process.exit(1)
+    }
+  },
+  /**
    * Migrate DB Schemas
    */
   async syncSchemas(db: WikiDb) {
+    await this.checkForLegacyInstall(db)
+
     WIKI.logger.info('Ensuring DB schema exists...')
     await db.execute(`CREATE SCHEMA IF NOT EXISTS ${WIKI.config.db.schema}`)
 
