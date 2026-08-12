@@ -400,6 +400,45 @@ export class MarkdownRenderer {
     this.md.renderer.rules.paragraph_open = injectLineNumbers
     this.md.renderer.rules.heading_open = injectLineNumbers
     this.md.renderer.rules.blockquote_open = injectLineNumbers
+
+    // --------------------------------
+    // Where the tabsets are, for the editor's preview
+    // --------------------------------
+
+    /*
+      Every tabset in the document, in order, as the source line range of each of its panels.
+
+      This is for the editor: a `block-tabs` in the preview keeps which panel is open in its own state,
+      and the preview is rebuilt from scratch on every keystroke — so without this, writing inside the
+      second panel of a tabset threw the author back to the first one, and no amount of preserving state
+      across the rebuild would say WHICH panel they are working in.
+
+      Read from the token stream rather than by scanning the source for `::block-tab`, so it is the
+      parser's opinion of where each panel begins and ends, and it cannot drift from the markup the same
+      parse produced. Only line numbers are kept: everything else about a panel is already in the render.
+    */
+    this.tabsMap = []
+    this.md.core.ruler.push('collect_tabsets', (state) => {
+      this.tabsMap = []
+      // -> A stack, because a tabset may sit inside another one; a panel belongs to the innermost
+      const open = []
+      for (const token of state.tokens) {
+        if (token.tag === 'block-tabs' && token.type === 'mdc_block_open') {
+          const tabset = []
+          this.tabsMap.push(tabset)
+          open.push(tabset)
+        } else if (token.tag === 'block-tabs' && token.type === 'mdc_block_close') {
+          open.pop()
+        } else if (
+          token.tag === 'block-tab' &&
+          token.type === 'mdc_block_open' &&
+          token.map &&
+          open.length > 0
+        ) {
+          open.at(-1).push(token.map)
+        }
+      }
+    })
   }
 
   /**
@@ -416,5 +455,32 @@ export class MarkdownRenderer {
 
   getClosestPreviewLine(line) {
     return this.linesMap.findLast((n) => n <= line)
+  }
+
+  /**
+   * Which tabset panel a source line is inside, as the pair of indices that finds it in the render.
+   *
+   * The innermost panel wins, so a tabset within a tabset answers for its own lines: the map is built
+   * outermost-first, and a later match is therefore a deeper one.
+   *
+   * @param {number} line A 1-based editor line, as Monaco counts them.
+   * @returns {{tabset: number, tab: number}|null} Indices among the document's tabsets and that
+   *          tabset's panels, or null when the line is not inside one.
+   */
+  getTabAtLine(line) {
+    let found = null
+    for (const [tabset, tabs] of this.tabsMap.entries()) {
+      for (const [tab, map] of tabs.entries()) {
+        /*
+          `map` is 0-based and ends one past the panel's last line of content, which is exactly the line
+          its `::` sits on -- so the end is inclusive here, and a caret resting on the marker that closes
+          a panel still counts as being in it.
+        */
+        if (line - 1 >= map[0] && line - 1 <= map[1]) {
+          found = { tabset, tab }
+        }
+      }
+    }
+    return found
   }
 }

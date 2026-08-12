@@ -366,7 +366,7 @@ async function initHTTPServer() {
     prefix: '/_blocks/',
     root: path.join(WIKI.ROOTPATH, 'blocks/compiled'),
     index: false,
-    maxAge: '7d'
+    maxAge: '1h'
   })
 
   // ----------------------------------------

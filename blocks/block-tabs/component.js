@@ -182,14 +182,21 @@ Content of the second tab.
   static get properties() {
     return {
       _tabs: { state: true },
-      _active: { state: true }
+      /*
+        Which panel is open, zero-based. A property rather than internal state because two things
+        outside this block have a use for it: an author can open a block on something other than its
+        first panel (`<block-tabs active="1">`), and the markdown editor reads it off one element and
+        writes it onto the next, because every keystroke rebuilds the preview and with it this block --
+        which otherwise snapped back to the first tab while an author was typing in the second.
+      */
+      active: { type: Number }
     }
   }
 
   constructor() {
     super()
     this._tabs = []
-    this._active = 0
+    this.active = 0
     // -> Bound once, so that removing the listener later takes the same function that was added
     this._onReveal = this._onReveal.bind(this)
     // -> Puts `dark` on this element for the styles above to key off
@@ -254,7 +261,7 @@ Content of the second tab.
 
   _showActive() {
     this._tabs.forEach(({ panel }, index) => {
-      panel.style.display = index === this._active ? 'block' : 'none'
+      panel.style.display = index === this.active ? 'block' : 'none'
     })
   }
 
@@ -265,9 +272,12 @@ Content of the second tab.
     }
   }
 
+  /*
+    -> Setting the property is the whole of it: `updated` is what shows the panel, so a tab opened from
+       the strip and one opened by whoever set `active` from outside travel the same path
+  */
   _select(index) {
-    this._active = index
-    this._showActive()
+    this.active = index
   }
 
   /**
@@ -278,7 +288,7 @@ Content of the second tab.
    */
   _reveal(node) {
     const index = this._tabs.findIndex(({ panel }) => panel.contains(node))
-    if (index >= 0 && index !== this._active) {
+    if (index >= 0 && index !== this.active) {
       this._select(index)
     }
     return index >= 0
@@ -307,12 +317,20 @@ Content of the second tab.
       return
     }
     event.preventDefault()
-    const next = (this._active + step + this._tabs.length) % this._tabs.length
+    const next = (this.active + step + this._tabs.length) % this._tabs.length
     this._select(next)
     this.renderRoot.querySelectorAll('.tab')[next]?.focus()
   }
 
-  updated() {
+  /*
+    -> The panels live in the light DOM, so `render()` never touches them: which one is showing has to
+       be applied by hand, here, where it covers a click on the strip, an arrow key, a `block-reveal`
+       and an `active` set from outside alike
+  */
+  updated(changed) {
+    if (changed.has('active')) {
+      this._showActive()
+    }
     this._applyScrollMargin()
   }
 
@@ -344,9 +362,9 @@ Content of the second tab.
               <button
                 type="button"
                 role="tab"
-                class="tab ${index === this._active ? 'is-active' : ''}"
-                aria-selected="${index === this._active}"
-                tabindex="${index === this._active ? 0 : -1}"
+                class="tab ${index === this.active ? 'is-active' : ''}"
+                aria-selected="${index === this.active}"
+                tabindex="${index === this.active ? 0 : -1}"
                 @click="${() => this._select(index)}">
                 ${tab.svg ? unsafeSVG(tab.svg) : null}${tab.label}
               </button>

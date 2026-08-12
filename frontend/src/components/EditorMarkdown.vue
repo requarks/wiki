@@ -401,6 +401,23 @@ const HEADER_ICONS = [
   'mdi:format-header-6'
 ]
 
+/*
+  How the preview follows the caret: the line being edited goes to the TOP of the pane.
+
+  `start` rather than `nearest`, which was tried and is wrong here -- `nearest` leaves a line alone as
+  long as it is visible anywhere, so a line sitting on the last row of the pane stays there, with what is
+  being written pinned to the bottom edge and nothing after it in view.
+
+  Asking for the top on every caret move costs nothing when the caret stays put: the element is already
+  there, so the browser computes the same offset and there is no movement. What used to make this thrash
+  was the pane losing its scroll position to the re-render -- see `processContent` -- and animating up
+  from the top of the document each time, not the alignment asked for here.
+
+  `inline: 'nearest'` only so that a wide block -- a table, a diagram -- is never scrolled sideways as a
+  side effect of following the caret down the page.
+*/
+const SYNC_SCROLL = { behavior: 'smooth', block: 'start', inline: 'nearest' }
+
 const state = reactive({
   previewShown: true,
   previewScrollSync: true
@@ -892,6 +909,32 @@ function markDisabledBlock(el) {
   el.prepend(notice)
 }
 
+/**
+ * Open the tabset panel the caret is in.
+ *
+ * Which is the useful answer, and a different question from "which panel was open before": an author
+ * writing inside the second panel of a tabset is telling us plainly which one they are looking at. The
+ * source line is matched against the panel ranges of the same parse that built the preview -- see
+ * `getTabAtLine` -- and the panel is opened through the block's own `active` property.
+ *
+ * Silent about everything it does not find: a caret outside every tabset leaves them all as they were,
+ * and so does a render that has not landed yet.
+ */
+function syncPreviewTabs() {
+  const container = editorPreviewContainerRef.value
+  if (!container) {
+    return
+  }
+  const at = md.getTabAtLine(editor.getPosition().lineNumber)
+  if (!at) {
+    return
+  }
+  const tabset = container.querySelectorAll('block-tabs')[at.tabset]
+  if (tabset) {
+    tabset.active = at.tab
+  }
+}
+
 function processContent(newContent) {
   /*
     A render that throws must not become a render that is empty.
@@ -915,21 +958,77 @@ function processContent(newContent) {
     return
   }
 
+  const container = editorPreviewContainerRef.value
+  /*
+    Two things about the preview have to survive the patch, because `v-html` does not patch anything --
+    it throws every child away and builds them again, on every keystroke.
+
+    Where the reader had scrolled to is the first. An emptied box has nowhere to be scrolled to, so its
+    `scrollTop` is clamped to zero; the cursor handler then animated back down from the top of the
+    document to the line being typed, over and over, which is what made the preview appear to fly about
+    while typing in a long page.
+
+    Which tab is open is the second. A block is a custom element with state of its own, and a rebuilt one
+    starts again from its defaults -- so typing in the second panel of a tabset kept throwing the author
+    back to the first. Carried across by position: the source order of the blocks is what survives an
+    edit, not the elements. See `active` in `blocks/block-tabs`.
+  */
+  const scrollTop = container?.scrollTop ?? 0
+  const openTabs = [...(container?.querySelectorAll('block-tabs') ?? [])].map(
+    (el) => el.active ?? 0
+  )
+
   pageStore.$patch({
     render: html
   })
-  nextTick(() => {
-    for (const block of editorPreviewContainerRef.value.querySelectorAll(':not(:defined)')) {
+  nextTick(async () => {
+    // -> With the preview pane closed there is no DOM to attend to. The render is stored either way, so
+    //    the store still holds what a save would send
+    if (!container) {
+      return
+    }
+    const tabsets = [...container.querySelectorAll('block-tabs')]
+    for (const [index, el] of tabsets.entries()) {
+      // -> Left alone when it is the default anyway, so nothing is set on a block that never had a state
+      if (openTabs[index]) {
+        el.active = openTabs[index]
+      }
+    }
+    // -> After the carry-across, so that the tabset being written in wins over what it had open before
+    syncPreviewTabs()
+    /*
+      The panels have to be settled BEFORE the position goes back, and that means waiting for them: a
+      block applies its open panel on its own update, a microtask later.
+
+      Restoring first is restoring against a layout that is about to change, and the change is the height
+      of a whole panel. With a rebuilt tabset showing its first panel, a position inside a taller one is
+      past the end of a shorter document, so the browser clamps it -- and then scroll anchoring hands back
+      a different position again as the real panel opens. Measured at 800px of drift on a short-first,
+      tall-second tabset, which the caret sync then animated back from on every keystroke.
+    */
+    await Promise.all(tabsets.map((el) => el.updateComplete ?? Promise.resolve()))
+    container.scrollTop = scrollTop
+    const pendingTags = new Set()
+    for (const block of container.querySelectorAll(':not(:defined)')) {
       const tag = block.tagName.toLowerCase()
       // -> Left undefined on purpose, so the preview shows what saving is about to leave behind
       if (disabledBlockTags.value.has(tag)) {
         markDisabledBlock(block)
         continue
       }
-      commonStore.loadBlocks([tag])
+      pendingTags.add(tag)
+    }
+    if (pendingTags.size > 0) {
+      /*
+        Asked again once the definitions land. A block that has not been upgraded yet is a plain unknown
+        element: setting `active` on it puts a value somewhere Lit will pick up, but nothing has read the
+        panels or hidden any of them, so the tab the author is in is only actually opened here -- on the
+        first render of a page whose blocks are being fetched for the first time.
+      */
+      commonStore.loadBlocks([...pendingTags]).then(syncPreviewTabs)
     }
     // -> The render was just replaced, so the copy buttons went with it
-    enhanceRenderedContent(editorPreviewContainerRef.value)
+    enhanceRenderedContent(container)
   })
 }
 
@@ -1198,6 +1297,8 @@ onMounted(async () => {
       if (!state.previewScrollSync || !state.previewShown) {
         return
       }
+      // -> Moving the caret into another panel opens it, the same as typing in one does
+      syncPreviewTabs()
       const currentLine = editor.getPosition().lineNumber
       if (currentLine < 3) {
         editorPreviewContainerRef.value.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1206,9 +1307,7 @@ onMounted(async () => {
           `[data-line='${currentLine}']`
         )
         if (exactEl) {
-          exactEl.scrollIntoView({
-            behavior: 'smooth'
-          })
+          exactEl.scrollIntoView(SYNC_SCROLL)
         } else {
           const closestLine = md.getClosestPreviewLine(currentLine)
           if (closestLine) {
@@ -1216,9 +1315,7 @@ onMounted(async () => {
               `[data-line='${closestLine}']`
             )
             if (closestEl) {
-              closestEl.scrollIntoView({
-                behavior: 'smooth'
-              })
+              closestEl.scrollIntoView(SYNC_SCROLL)
             }
           }
         }
