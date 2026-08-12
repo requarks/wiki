@@ -6,20 +6,20 @@
         class="rounded"
         v-if="isEditing"
         padding="none"
-        size="64px"
+        :size="iconSize"
         color="primary"
         flat
         :aria-label="t(`editor.props.icon`)"
-        style="min-height: 64px">
-        <!-- -> 64px, the size the icon has when the page is merely being read; see the branch below -->
-        <w-icon :name="pageStore.icon" size="64px" />
+        :style="{ minHeight: iconSize }">
+        <!-- -> The same size the icon has when the page is merely being read; see the branch below -->
+        <w-icon :name="pageStore.icon" :size="iconSize" />
         <!-- -> Not `v-model`: writing the store is only half of what picking an icon means here, and
                 the other half is telling the editor the page changed. See `setIcon`. -->
         <w-menu content-class="shadow-7">
           <icon-picker-dialog :model-value="pageStore.icon" @update:model-value="setIcon" />
         </w-menu>
       </w-btn>
-      <w-icon class="rounded" v-else :name="pageStore.icon" size="64px" color="primary" />
+      <w-icon class="rounded" v-else :name="pageStore.icon" :size="iconSize" color="primary" />
     </div>
     <!-- PAGE HEADER -->
     <!--
@@ -72,7 +72,14 @@
       </div>
     </div>
     <!-- PAGE ACTIONS -->
-    <div class="flex-none p-4 flex items-center justify-end">
+    <!--
+      `has-editor-actions` is what keeps this row on a phone, where it is otherwise hidden: what it
+      holds while a page is being read is a handful of icons for a wide screen, but while a page is
+      being WRITTEN it holds the only way to save or to get back out. See the stylesheet.
+    -->
+    <div
+      class="page-header-actions flex-none p-4 flex items-center justify-end"
+      :class="{ 'has-editor-actions': hasEditorActions }">
       <template v-if="!editorStore.isActive">
         <!--
           Whoever is looking at a draft can already see it, so the badge is not gated on being logged
@@ -328,6 +335,7 @@ import { useI18n } from 'vue-i18n'
 import { dialog } from '@/composables/dialog'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
+import { useMinWidth } from '@/composables/screen'
 
 import { useEditorStore } from '@/stores/editor'
 import { useFlagsStore } from '@/stores/flags'
@@ -363,6 +371,29 @@ const route = useRoute()
 const { t } = useI18n()
 
 // COMPUTED
+
+/**
+ * At or above the `sm` breakpoint (`css/tailwind.css`), which is this app's phone boundary — below it
+ * the header is compacted, since a 64px icon and a 34px title over a row of icons is most of a phone
+ * screen before the page has said anything.
+ */
+const isAtLeastSm = useMinWidth(600)
+const isPhoneViewport = computed(() => !isAtLeastSm.value)
+
+/**
+ * The page icon, halved on a phone.
+ *
+ * Bound rather than left to a media query: `WIcon` renders `size` as an inline `font-size`, which no
+ * stylesheet can outrank without `!important`.
+ */
+const iconSize = computed(() => (isPhoneViewport.value ? '32px' : '64px'))
+
+/**
+ * Whether this row holds an editor's own controls — Save, Discard, Submit — rather than only the
+ * actions offered to a reader. Those must survive the phone layout: the properties panel puts the
+ * header into the pending state with no editor open, so `isActive` alone is not the question.
+ */
+const hasEditorActions = computed(() => editorStore.isActive || editorStore.hasPendingChanges)
 
 /**
  * Suggesting an edit rather than making one: the editor is open on a submission, and everything about
@@ -813,6 +844,32 @@ function notImplemented() {
 </script>
 
 <style scoped lang="scss">
+/*
+  The phone layout of this row.
+
+  The title comes down from `text-h4`, which is a 34px display size written for a header the width of a
+  desktop window: at 390px a title of any length wrapped, and the description under it was pushed out of
+  the 95px bar. 24px is the same step `text-h5` takes, chosen as a value rather than as that class so the
+  size lives beside the breakpoint that asks for it.
+
+  And the actions go, all of them -- Watch, Print, the review queue, Edit -- because they are icons
+  squeezed against the right edge of a row that has no room for the title as it is. Nothing is lost that
+  is not reachable elsewhere: Print is the browser's own menu, and a page is edited on a machine with a
+  keyboard. An editor already open keeps its controls, or there would be no way to save or leave it.
+
+  Unlayered scoped rules, so they beat the `text-h4` utility without needing `!important`.
+*/
+@media (max-width: $breakpoint-xs-max) {
+  .page-header-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .page-header-actions:not(.has-editor-actions) {
+    display: none;
+  }
+}
+
 /*
   The bell swinging as a page starts being watched.
 

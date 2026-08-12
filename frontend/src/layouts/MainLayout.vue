@@ -5,8 +5,7 @@
     </w-header>
     <w-drawer
       class="bg-sidebar"
-      :model-value="isSidebarShown"
-      :show-if-above="siteStore.theme.sidebarPosition !== `off`"
+      v-model="isSidebarOpen"
       :width="sidebarWidth"
       :side="siteStore.theme.sidebarPosition === `right` ? `right` : `left`">
       <div v-if="isSidebarMini" class="sidebar-mini flex flex-col items-stretch">
@@ -92,6 +91,31 @@
       </template>
     </w-drawer>
     <!--
+      The way back to the sidebar on a narrow viewport, where it overlays the page instead of taking a
+      column of its own: closed to start with, so it is not sitting over the article on arrival, and
+      nothing else on that screen opens it -- the header is full of page actions and has no room for a
+      menu button.
+
+      Bottom LEFT whichever side the sidebar is on, because the opposite corner belongs to
+      scroll-to-top: on a narrow viewport that button is in the corner too (`scrollerAnchorX` is null),
+      so one that followed the sidebar to the right would land on top of it.
+
+      The position goes on a wrapper rather than on the button, as `WPageScroller` does it: `WBtn` is
+      `relative` from its own class list, and Tailwind emits `relative` after `fixed`, so a `fixed`
+      alongside it loses.
+    -->
+    <transition name="sidebar-open-btn">
+      <div v-if="showSidebarBtn" class="fixed bottom-4 left-4 z-30">
+        <w-btn
+          icon="la:bars"
+          color="primary"
+          round
+          size="md"
+          :aria-label="t(`common.sidebar.mainMenu`)"
+          @click="openSidebar" />
+      </div>
+    </transition>
+    <!--
       No `<w-footer>` here, unlike every other layout: this one only ever holds the page view, and
       there the article column scrolls inside a shell that holds still, so a footer at this level
       would be pinned to the window no matter which row it took. The page view puts it at the end of
@@ -175,14 +199,55 @@ useMeta(() => {
 const navEditMenu = ref(null)
 const navEditMenuMini = ref(null)
 
+// DATA
+
+/**
+ * Whether the reader has opened the overlaying sidebar. Only consulted on a narrow viewport, where
+ * the drawer is the only thing over the page and closing it is a state of its own; on a wide one the
+ * sidebar is a column that is simply there.
+ */
+const isNarrowSidebarOpen = ref(false)
+
 // COMPUTED
 
-const isSidebarShown = computed(() => {
+/**
+ * Where the drawer stops overlaying the page and takes its own column. Matches `WDrawer`'s own
+ * breakpoint — below it there is no seam to straddle, because the sidebar is not beside anything.
+ */
+const isWideViewport = useMinWidth(1024)
+
+/** Whether this site, page and mode have a sidebar at all — before asking whether it is open. */
+const isSidebarAvailable = computed(() => {
   return (
     siteStore.showSideNav &&
     !siteStore.sideNavIsDisabled &&
     !(editorStore.isActive && editorStore.hideSideNav)
   )
+})
+
+/**
+ * Whether the sidebar is on screen: always on a wide viewport, where it has a column of its own, and
+ * only once asked for on a narrow one, where it overlays the page.
+ *
+ * It used to be `isSidebarAvailable` on its own, bound one-way — so on a phone the sidebar came up
+ * over the article on every page load and there was no way to put it away: the drawer asks to be
+ * closed when its scrim is tapped, and with no listener for that the request went nowhere.
+ */
+const isSidebarOpen = computed({
+  get: () => isSidebarAvailable.value && (isWideViewport.value || isNarrowSidebarOpen.value),
+  // -> Only ever reached from the scrim, which exists only while overlaying
+  set: (val) => {
+    isNarrowSidebarOpen.value = val
+  }
+})
+
+/*
+  Shown only where the sidebar is something to open: a narrow viewport, on a site and a page that have
+  one. Not while it is already open -- the scrim is what closes it, and the button would be behind the
+  panel in any case.
+*/
+const showSidebarBtn = computed(() => {
+  return isSidebarAvailable.value && !isWideViewport.value && !isNarrowSidebarOpen.value
 })
 
 const isSidebarMini = computed(() => {
@@ -195,12 +260,6 @@ const SIDEBAR_WIDTH_MINI = 56
 
 const sidebarWidth = computed(() => (isSidebarMini.value ? SIDEBAR_WIDTH_MINI : SIDEBAR_WIDTH))
 
-/**
- * Where the drawer stops overlaying the page and takes its own column. Matches `WDrawer`'s own
- * breakpoint — below it there is no seam to straddle, because the sidebar is not beside anything.
- */
-const isWideViewport = useMinWidth(1024)
-
 /*
   The scroll-to-top button straddles the seam between the sidebar and the content, half over each, so
   its centre is the sidebar's inner edge — which is the sidebar's width on the left, or the same
@@ -211,7 +270,9 @@ const isWideViewport = useMinWidth(1024)
   the full width.
 */
 const scrollerAnchorX = computed(() => {
-  if (!isWideViewport.value || !isSidebarShown.value || siteStore.theme.sidebarPosition === 'off') {
+  // -> No separate test for `sidebarPosition === 'off'`: that IS `sideNavIsDisabled`, which
+  //    `isSidebarAvailable` already asks
+  if (!isWideViewport.value || !isSidebarAvailable.value) {
     return null
   }
   return siteStore.theme.sidebarPosition === 'right'
@@ -231,6 +292,25 @@ const showSidebarActions = computed(() => siteStore.locales.showMenu || canBrows
 const canEditNav = computed(() => {
   return userStore.authenticated && userStore.can('manage:navigation')
 })
+
+// WATCHERS
+
+/*
+  Following a link out of the overlaying sidebar puts it away, since what the reader asked for is
+  behind it. On a wide viewport there is nothing to close and the flag is not consulted anyway.
+*/
+watch(
+  () => route.path,
+  () => {
+    isNarrowSidebarOpen.value = false
+  }
+)
+
+// METHODS
+
+function openSidebar() {
+  isNarrowSidebarOpen.value = true
+}
 </script>
 
 <style lang="scss">
@@ -248,6 +328,26 @@ const canEditNav = computed(() => {
 
 .sidebar-mini {
   height: 100%;
+}
+
+/*
+  The menu button fades as the sidebar it opens slides, rather than blinking out from under the panel
+  the instant it is tapped. Same duration and easing as the drawer's own slide.
+*/
+.sidebar-open-btn-enter-active,
+.sidebar-open-btn-leave-active {
+  transition: opacity 0.2s var(--ease-standard);
+}
+.sidebar-open-btn-enter-from,
+.sidebar-open-btn-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-open-btn-enter-active,
+  .sidebar-open-btn-leave-active {
+    transition-duration: 0.01ms;
+  }
 }
 
 /*

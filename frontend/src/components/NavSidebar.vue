@@ -333,8 +333,24 @@ watch(
     The other way round this does not arise: with the sidebar on the left the notch is on the right edge,
     and only the left of a child row is indented.
   */
-  &--flipped .w-list .w-expansion-item__content .w-item.router-link-exact-active::after {
-    left: -10px;
+  /*
+    No notch at all once the drawer overlays the page instead of taking a column beside it.
+
+    The mark is not drawn ON the sidebar -- it is a piece of the sidebar MISSING, painted in the colour
+    of whatever is on the other side of that edge, which is the page. Overlaying, there is nothing on
+    the other side to show through: the panel floats over the article with a scrim behind it, so the
+    notch stops being an absence and becomes what it is made of -- a white arrow on a coloured panel,
+    pointing at the middle of a page it is covering. Which is also why hiding it is a matter of the
+    layout rather than of the screen being a phone: the same arrow is just as wrong on a tablet.
+
+    `content: none` rather than `display: none`, so the box is never generated. Stated after both
+    `--flipped` rules and at their specificity, so it takes the notch away whichever edge it was cut
+    from -- and 1023.98px is `WDrawer`'s own 1024px overlay breakpoint, which the two have to agree on.
+  */
+  @media (max-width: $breakpoint-sm-max) {
+    .w-list .w-item.router-link-exact-active::after {
+      content: none;
+    }
   }
 
   &-header {

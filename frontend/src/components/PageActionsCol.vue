@@ -401,6 +401,20 @@ function removePendingAsset(item) {
 .page-actions {
   flex: 0 0 56px;
 
+  /*
+    Gone on a phone while a page is being read: the rail is a column of icon buttons whose labels only
+    ever appear in a tooltip, which a touch screen has no way to show -- so it reads as six unexplained
+    glyphs down the edge of an already narrow article.
+
+    Not while the editor is open (`is-editor`), where the rail holds the properties panel and the pending
+    asset queue, and taking it away would leave an author with no way to reach either.
+  */
+  @media (max-width: $breakpoint-xs-max) {
+    &:not(.is-editor) {
+      display: none;
+    }
+  }
+
   @at-root .body--light & {
     background-color: $grey-3;
   }

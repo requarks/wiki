@@ -21,7 +21,12 @@
           <template #separator><w-icon name="la:angle-right" /></template>
         </w-breadcrumbs>
       </div>
-      <div class="flex-none flex items-center justify-end">
+      <!--
+        Off on a phone: on a 390px screen the date takes a whole line of its own under the trail, which
+        is a lot of room for something a reader is not here for -- and the trail itself is how they get
+        back out, so that is what the bar keeps.
+      -->
+      <div class="flex-none items-center justify-end hidden sm:flex">
         <template v-if="!pageStore.publishState === `draft`">
           <div class="text-caption text-accent"><strong>Unpublished</strong></div>
           <w-separator class="mx-2" vertical />
@@ -935,6 +940,16 @@ function goBack() {
 
 .page-sidebar {
   flex: 0 0 300px;
+
+  /*
+    Gone on a phone rather than narrowed: this column is a fixed 300px, so on a 390px screen it took
+    three quarters of the width and left the article a strip a few characters wide. There is no width to
+    share here, and the contents list, the tags and the rating are all things beside the page rather than
+    the page itself.
+  */
+  @media (max-width: $breakpoint-xs-max) {
+    display: none;
+  }
 
   @at-root .body--light & {
     background-color: $grey-2;

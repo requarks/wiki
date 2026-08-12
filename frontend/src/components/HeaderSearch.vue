@@ -1,5 +1,11 @@
 <template>
-  <w-toolbar style="height: 64px;" v-if="siteStore.features.search">
+  <!--
+    `row` is the phone form: the field is not squeezed between the site title and the header's
+    buttons but has a row of the whole width to itself, opened from a search button. Slightly
+    shorter than the header proper, so the two read as a bar and a drawer under it rather than as
+    two headers.
+  -->
+  <w-toolbar :style="{ height: row ? `52px` : `64px` }" v-if="siteStore.features.search">
     <!--
       The positioning context for the panel below, and the width it matches. The toolbar cannot be
       it: the panel would then span the toolbar's padding as well, and with no positioned ancestor
@@ -9,7 +15,9 @@
       `top: 100%` on the panel lands on the bottom edge of the header instead of 12px above it.
     -->
     <div class="header-search relative flex h-full min-w-0 flex-1 flex-col justify-center">
-      <div class="header-search-field" :class="{ 'is-focused': state.searchIsFocused }">
+      <div
+        class="header-search-field"
+        :class="{ 'is-focused': state.searchIsFocused, 'header-search-field--row': row }">
         <w-circular-progress
           v-if="siteStore.searchIsLoading && route.path !== `/_search`"
           class="header-search-lead"
@@ -49,16 +57,24 @@
         <!--
           The shortcut hint doubles as the focus affordance, so it gives way to whatever the field
           has to say once it is in use.
+
+          Never in `row` form: that is the phone field, opened by a button, and a keyboard shortcut is
+          not something the device it exists for can offer. The focus test moves onto the branch below,
+          which the chain used to get for free from this one.
         -->
         <span
-          v-if="!state.searchIsFocused"
+          v-if="!row && !state.searchIsFocused"
           class="header-search-kbd"
           aria-hidden="true"
           @click="searchField.focus()">
           Ctrl+K
         </span>
         <span
-          v-else-if="siteStore.search && siteStore.search !== siteStore.searchLastQuery"
+          v-else-if="
+            state.searchIsFocused &&
+            siteStore.search &&
+            siteStore.search !== siteStore.searchLastQuery
+          "
           class="header-search-kbd">
           Press Enter
         </span>
@@ -87,10 +103,18 @@
           </div>
         </template>
         <div class="searchpanel-header">Search Operators</div>
-        <div class="searchpanel-tip"><code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".</div>
-        <div class="searchpanel-tip"><code>bana*</code> for to match any term starting with "bana" (e.g. banana).</div>
-        <div class="searchpanel-tip"><code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".</div>
-        <div class="searchpanel-tip"><code>"foo bar"</code> to match exactly the phrase "foo bar".</div>
+        <div class="searchpanel-tip">
+          <code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".
+        </div>
+        <div class="searchpanel-tip">
+          <code>bana*</code> for to match any term starting with "bana" (e.g. banana).
+        </div>
+        <div class="searchpanel-tip">
+          <code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".
+        </div>
+        <div class="searchpanel-tip">
+          <code>"foo bar"</code> to match exactly the phrase "foo bar".
+        </div>
       </div>
     </div>
   </w-toolbar>
@@ -105,6 +129,18 @@ import { useSiteStore } from '@/stores/site'
 
 import { orderBy } from 'es-toolkit/array'
 
+// PROPS
+
+const props = defineProps({
+  /**
+   * Render as a row of its own rather than inline in the header bar. What the phone header opens;
+   * see `HeaderNav`.
+   */
+  row: {
+    type: Boolean,
+    default: false
+  }
+})
 
 // STORES
 
@@ -190,6 +226,18 @@ function checkSearchFocus(ev) {
   }
 }
 
+/**
+ * Put the caret in the field.
+ *
+ * Exposed because in `row` form the field is not focused by being mounted: focusing it is what draws
+ * the panel below it, and a panel appearing mid-slide is layout and a `backdrop-filter` blur landing
+ * in the middle of an animation. `HeaderNav` owns that transition, so it calls this when the slide has
+ * finished -- see its `@after-enter`.
+ */
+function focus() {
+  searchField.value?.focus()
+}
+
 function clearSearch() {
   siteStore.search = ''
   searchField.value.focus()
@@ -217,6 +265,8 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', handleKeyPress)
   }
 })
+
+defineExpose({ focus })
 </script>
 
 <style lang="scss">
@@ -243,9 +293,25 @@ onBeforeUnmount(() => {
   }
 
   /*
+    In `row` form, a wash of black over whatever is behind rather than a grey of its own.
+
+    The row is the site's sidebar colour (see `HeaderNav`), which is the site's to choose -- so a fixed
+    grey is a slab of a foreign colour sitting on it, right for one theme and wrong for the rest. A
+    translucent black darkens whatever it is given and reads as a well sunk into the row on any of them.
+
+    The inline form keeps its grey: it sits on the HEADER, which is black by default, and a translucent
+    black on black is no field at all.
+  */
+  &-field--row {
+    background-color: rgb(0 0 0 / 0.25);
+  }
+
+  /*
     In use, the field inverts: white fill, dark ink. Driven by a class rather than `:focus-within`
     so it stays inverted while the panel below is being used -- clicking a tag in there moves focus
     out of the input, and the field flickering back to dark mid-interaction reads as a glitch.
+
+    Two classes, so this outranks the `--row` wash above whichever order they end up in.
   */
   &-field.is-focused {
     background-color: #fff;
