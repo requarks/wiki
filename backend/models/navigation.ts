@@ -18,6 +18,8 @@ export interface NavigationItem {
   icon?: string
   target?: string
   openInNewWindow?: boolean
+  /** A link with children only: whether the sidebar shows its submenu already open. */
+  expandByDefault?: boolean
   visibilityGroups?: string[]
   children?: NavigationItem[]
 }

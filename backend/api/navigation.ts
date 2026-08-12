@@ -10,6 +10,11 @@ const navigationItem = {
     icon: { type: 'string' },
     target: { type: 'string' },
     openInNewWindow: { type: 'boolean' },
+    expandByDefault: {
+      type: 'boolean',
+      description:
+        'Whether a link holding children is shown expanded on load. Meaningless on any other item.'
+    },
     visibilityGroups: {
       type: 'array',
       items: { type: 'string' },

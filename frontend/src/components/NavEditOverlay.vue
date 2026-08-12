@@ -288,56 +288,81 @@
               </w-item-section>
             </w-item>
             <w-separator class="my-2" inset />
-            <w-item>
-              <blueprint-icon icon="link" />
-              <w-item-section>
-                <w-item-label>{{ t(`navEdit.target`) }}</w-item-label>
-                <w-item-label caption>{{ t(`navEdit.targetHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section>
-                <w-input
-                  outlined
-                  v-model="state.current.target"
-                  dense
-                  hide-bottom-space
-                  :aria-label="t(`navEdit.target`)">
-                  <template #append>
-                    <!--
-                      Beside the field rather than in place of it: a path someone knows is quicker
-                      typed than browsed to, and an external URL has nothing to browse. Same shape as
-                      the icon picker's button one row up, for the same reason -- both open a chooser
-                      for the field they sit in.
-                    -->
-                    <w-btn
-                      flat
-                      dense
-                      round
-                      icon="la:folder-open"
-                      color="primary"
-                      :aria-label="t(`common.actions.browse`)"
-                      @click="browseTarget">
-                      <w-tooltip>{{ t('common.actions.browse') }}</w-tooltip>
-                    </w-btn>
-                  </template>
-                </w-input>
-              </w-item-section>
-            </w-item>
-            <w-separator class="my-2" inset />
-            <w-item tag="label">
-              <blueprint-icon icon="external-link" />
-              <w-item-section>
-                <w-item-label>{{ t(`navEdit.openInNewWindow`) }}</w-item-label>
-                <w-item-label caption>{{ t(`navEdit.openInNewWindowHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section avatar>
-                <w-toggle
-                  v-model="state.current.openInNewWindow"
-                  color="primary"
-                  checked-icon="la:check"
-                  unchecked-icon="la:times"
-                  :aria-label="t(`navEdit.openInNewWindow`)" />
-              </w-item-section>
-            </w-item>
+            <!--
+              A parent is a row that opens a submenu rather than a row that goes anywhere: the sidebar
+              renders it as an expansion item and never reads its target, so both fields below are
+              hidden rather than shown doing nothing. Hidden, not cleared -- unnesting the last child
+              turns the row back into an ordinary link, and it comes back with the address it had.
+            -->
+            <template v-if="currentIsParent">
+              <w-item tag="label">
+                <blueprint-icon icon="chevron-right" />
+                <w-item-section>
+                  <w-item-label>{{ t(`navEdit.expandByDefault`) }}</w-item-label>
+                  <w-item-label caption>{{ t(`navEdit.expandByDefaultHint`) }}</w-item-label>
+                </w-item-section>
+                <w-item-section avatar>
+                  <w-toggle
+                    v-model="state.current.expandByDefault"
+                    color="primary"
+                    checked-icon="la:check"
+                    unchecked-icon="la:times"
+                    :aria-label="t(`navEdit.expandByDefault`)" />
+                </w-item-section>
+              </w-item>
+            </template>
+            <template v-else>
+              <w-item>
+                <blueprint-icon icon="link" />
+                <w-item-section>
+                  <w-item-label>{{ t(`navEdit.target`) }}</w-item-label>
+                  <w-item-label caption>{{ t(`navEdit.targetHint`) }}</w-item-label>
+                </w-item-section>
+                <w-item-section>
+                  <w-input
+                    outlined
+                    v-model="state.current.target"
+                    dense
+                    hide-bottom-space
+                    :aria-label="t(`navEdit.target`)">
+                    <template #append>
+                      <!--
+                        Beside the field rather than in place of it: a path someone knows is quicker
+                        typed than browsed to, and an external URL has nothing to browse. Same shape as
+                        the icon picker's button one row up, for the same reason -- both open a chooser
+                        for the field they sit in.
+                      -->
+                      <w-btn
+                        flat
+                        dense
+                        round
+                        icon="la:folder-open"
+                        color="primary"
+                        :aria-label="t(`common.actions.browse`)"
+                        @click="browseTarget">
+                        <w-tooltip>{{ t('common.actions.browse') }}</w-tooltip>
+                      </w-btn>
+                    </template>
+                  </w-input>
+                </w-item-section>
+              </w-item>
+              <w-separator class="my-2" inset />
+              <w-item tag="label">
+                <blueprint-icon icon="external-link" />
+                <w-item-section>
+                  <w-item-label>{{ t(`navEdit.openInNewWindow`) }}</w-item-label>
+                  <w-item-label caption>{{ t(`navEdit.openInNewWindowHint`) }}</w-item-label>
+                </w-item-section>
+                <w-item-section avatar>
+                  <w-toggle
+                    v-model="state.current.openInNewWindow"
+                    color="primary"
+                    checked-icon="la:check"
+                    unchecked-icon="la:times"
+                    :aria-label="t(`navEdit.openInNewWindow`)" />
+                </w-item-section>
+              </w-item>
+            </template>
             <w-separator class="my-2" inset />
             <w-item>
               <blueprint-icon icon="user-groups" />
@@ -497,6 +522,7 @@ const state = reactive({
     icon: '',
     target: '/',
     openInNewWindow: false,
+    expandByDefault: false,
     visibilityGroups: [],
     visibilityLimited: false,
     isNested: false
@@ -533,6 +559,23 @@ const visibilityOptions = [
  * the server creates on the first save.
  */
 const navId = computed(() => (pageStore.isHome ? pageStore.navigationId : pageStore.id))
+
+/**
+ * Whether the link being edited is a parent — one the sidebar draws as a submenu.
+ *
+ * Parenthood is not a property of the item: this list is flat, and `isNested` says an item belongs to
+ * whatever link comes before it, so what makes a link a parent is the item that FOLLOWS it. Which is why
+ * this is asked of the list rather than read off `state.current`, and why it answers again the moment a
+ * child is nested, unnested or dragged away.
+ */
+const currentIsParent = computed(() => {
+  const item = state.current
+  if (item?.type !== 'link' || item.isNested) {
+    return false
+  }
+  const idx = state.items.findIndex((it) => it.id === item.id)
+  return idx >= 0 && Boolean(state.items[idx + 1]?.isNested)
+})
 
 const thumbStyle = {
   right: '2px',
@@ -595,6 +638,7 @@ function addItem(type) {
       newItem.icon = DEFAULT_LINK_ICON
       newItem.target = '/'
       newItem.openInNewWindow = false
+      newItem.expandByDefault = false
       newItem.isNested = false
       break
     }
@@ -659,6 +703,7 @@ async function loadMenuItems() {
           'icon',
           'target',
           'openInNewWindow',
+          'expandByDefault',
           'visibilityGroups'
         ]),
         visibilityLimited: item.visibilityGroups?.length > 0
@@ -702,7 +747,9 @@ function cleanMenuItem(item, isNested = false) {
       return {
         ...pick(item, ['id', 'type', 'label', 'icon', 'target', 'openInNewWindow']),
         visibilityGroups: item.visibilityLimited ? item.visibilityGroups : [],
-        ...(!isNested && { children: [] })
+        // -> Only a top-level link can hold children, so only one of those can be a parent — a nested
+        //    item carrying an expand flag would be a setting nothing ever reads
+        ...(!isNested && { children: [], expandByDefault: Boolean(item.expandByDefault) })
       }
     }
     case 'separator': {

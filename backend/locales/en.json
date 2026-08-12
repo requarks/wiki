@@ -2161,6 +2161,8 @@
   "navEdit.clearItems": "Clear All Items",
   "navEdit.editMenuItems": "Edit Menu Items",
   "navEdit.emptyMenuText": "Click the Add button to add your first menu item.",
+  "navEdit.expandByDefault": "Expand by Default",
+  "navEdit.expandByDefaultHint": "Whether the submenu is already expanded when the page loads.",
   "navEdit.groupsFailed": "Failed to load the list of groups. Per-group visibility cannot be changed.",
   "navEdit.header": "Header",
   "navEdit.icon": "Icon",

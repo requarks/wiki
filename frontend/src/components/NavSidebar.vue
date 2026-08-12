@@ -15,12 +15,13 @@
           >{{ item.label }}</w-item-label
         >
         <!-- -> Open from the start when the page being read is one of its children, so a reader arriving
-                by URL sees where they are in the tree. Not `v-model`: after that first render the group
-                is the reader's to open and close, and a bound value would fight them -->
+                by URL sees where they are in the tree -- or when the menu says this group opens that way
+                whatever is being read. Not `v-model`: after that first render the group is the reader's
+                to open and close, and a bound value would fight them -->
         <w-expansion-item
           v-else-if="item.type === `link` && item.children?.length > 0"
           dense
-          :default-opened="containsCurrent(item)">
+          :default-opened="item.expandByDefault || containsCurrent(item)">
           <!-- The icon goes through a header slot rather than the `icon` prop, so that an Iconify -->
           <!-- reference is drawn by w-icon like everywhere else -->
           <template #header>
