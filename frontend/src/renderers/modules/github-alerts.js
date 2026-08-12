@@ -22,26 +22,32 @@ const KINDS = new Map([
 ])
 
 /**
- * The marker, which has to be the whole of the blockquote's first line.
+ * The marker, and whatever the author wrote after it on the same line.
  *
- * Anything after it on that line means the author wrote a blockquote that happens to open with
- * brackets, which is what GitHub decides too — and the line is then left exactly as it was typed.
+ * That remainder is the admonition's title: `> [!NOTE] Read this first` is headed "Read this first"
+ * rather than "Note". A deliberate step past GitHub, which renders those words as the first line of the
+ * quote instead — and the step every other implementation of these takes, because a marker's own label
+ * says only what kind of aside it is, never what this one is about.
+ *
+ * Left off, the kind's own label stands in, exactly as before. What is captured is raw markdown and is
+ * parsed as such (see `titleTokens`), so a title may hold a link or a `code` span like any other line.
  */
-const MARKER = /^\[!([a-z]+)\][ \t]*(?:\n|$)/i
+const MARKER = /^\[!([a-z]+)\][ \t]*([^\n]*)(?:\n|$)/i
 
 /**
- * The label, as three tokens: a paragraph carrying a class, its inline content, and the close.
+ * The title, as three tokens: a paragraph carrying a class, its inline content, and the close.
  *
  * The inline token is left with nothing but `content`; the core `inline` rule runs after this one and
- * is what turns that into children, the same as for every other paragraph on the page.
+ * is what turns that into children, the same as for every other paragraph on the page — which is also
+ * what lets an author's own title carry markdown, and what keeps it escaped if it carries anything else.
  */
-function labelTokens(state, label) {
+function titleTokens(state, title) {
   const open = new state.Token('paragraph_open', 'p', 1)
   open.attrSet('class', 'alert-title')
   open.block = true
 
   const inline = new state.Token('inline', '', 0)
-  inline.content = label
+  inline.content = title
   inline.children = []
 
   const close = new state.Token('paragraph_close', 'p', -1)
@@ -79,13 +85,16 @@ export default (md) => {
       //    top of that is what the stylesheet is written to expect
       tokens[i].attrJoin('class', kind.className)
 
+      // -> A title of nothing but spaces is no title: the kind says what it is instead
+      const title = marker[2].trim() || kind.label
+
       const rest = tokens[i + 2].content.slice(marker[0].length)
       if (rest) {
         tokens[i + 2].content = rest
-        tokens.splice(i + 1, 0, ...labelTokens(state, kind.label))
+        tokens.splice(i + 1, 0, ...titleTokens(state, title))
       } else {
-        // -> The marker was the whole paragraph, so the label takes its place rather than joining it
-        tokens.splice(i + 1, 3, ...labelTokens(state, kind.label))
+        // -> The marker line was the whole paragraph, so the title takes its place rather than joining it
+        tokens.splice(i + 1, 3, ...titleTokens(state, title))
       }
     }
   })

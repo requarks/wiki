@@ -100,6 +100,11 @@ async function routes(app: FastifyInstance) {
                     registration: {
                       type: 'boolean'
                     },
+                    allowForgotPassword: {
+                      type: 'boolean',
+                      description:
+                        'Whether this strategy offers a password reset from the login screen. False for a strategy whose module has no such setting.'
+                    },
                     strategy: {
                       type: 'object',
                       properties: {
@@ -136,7 +141,14 @@ async function routes(app: FastifyInstance) {
       if (!site) {
         return reply.badRequest('Invalid Site ID')
       }
-      const activeStrategies = await WIKI.models.authentication.getStrategies({ enabledOnly: true })
+      /*
+        `getActiveStrategies` rather than the raw rows: it completes each config from the module's
+        declared defaults, so a prop added to a module after a strategy was configured reads as its
+        default here instead of as a missing key.
+      */
+      const activeStrategies = (await WIKI.models.authentication.getActiveStrategies()).filter(
+        (str: any) => str.isEnabled
+      )
       // -> A site created before it had strategies configured has no list at all
       const configuredStrategies = site.config.authStrategies ?? []
       const siteStrategies = activeStrategies
@@ -150,6 +162,14 @@ async function routes(app: FastifyInstance) {
             activeStrategy: {
               displayName: str.displayName,
               registration: str.registration,
+              /*
+                Named explicitly, like every other field here: this endpoint is public and a strategy's
+                config is where an OAuth client secret lives, so nothing may reach it by spreading.
+
+                A module that declares no such prop reads as false, which is correct rather than a
+                default -- a strategy with no password of its own has no password to reset.
+              */
+              allowForgotPassword: str.config?.allowForgotPassword === true,
               strategy: {
                 key: authModule?.key ?? str.module,
                 title: authModule?.title ?? str.module,

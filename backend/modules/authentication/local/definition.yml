@@ -23,3 +23,9 @@ props:
     hint: Send a verification email to the user with a validation link when registering (if registration is enabled).
     icon: received
     default: true
+  allowForgotPassword:
+    type: Boolean
+    title: Allow Forgot Password
+    hint: Users who have forgotten their password can request a reset link by email from the login screen. Turn this off where passwords are handed out rather than chosen.
+    icon: password-reset
+    default: true

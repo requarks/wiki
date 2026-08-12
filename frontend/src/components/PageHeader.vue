@@ -13,7 +13,11 @@
         style="min-height: 64px">
         <!-- -> 64px, the size the icon has when the page is merely being read; see the branch below -->
         <w-icon :name="pageStore.icon" size="64px" />
-        <w-menu content-class="shadow-7"><icon-picker-dialog v-model="pageStore.icon" /></w-menu>
+        <!-- -> Not `v-model`: writing the store is only half of what picking an icon means here, and
+                the other half is telling the editor the page changed. See `setIcon`. -->
+        <w-menu content-class="shadow-7">
+          <icon-picker-dialog :model-value="pageStore.icon" @update:model-value="setIcon" />
+        </w-menu>
       </w-btn>
       <w-icon class="rounded" v-else :name="pageStore.icon" size="64px" color="primary" />
     </div>
@@ -449,6 +453,19 @@ async function seedEditables() {
   await nextTick()
   syncEditable(titleEl.value, pageStore.title)
   syncEditable(descriptionEl.value, pageStore.description)
+}
+
+/**
+ * The icon picked from the header.
+ *
+ * The same two steps the title and the description take below, and for the same reason: an icon is part
+ * of the page, so changing it has to leave the editor holding an unsaved change. Bound through the event
+ * rather than `v-model` because that wrote the store and nothing else -- Save Changes stayed disabled
+ * until something else was edited, and closing the editor threw the new icon away without a word.
+ */
+function setIcon(icon) {
+  pageStore.icon = icon
+  editorStore.lastChangeTimestamp = Temporal.Now.instant()
 }
 
 function onEditableInput(field, event) {

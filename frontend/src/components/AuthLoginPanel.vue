@@ -112,8 +112,11 @@
           no-caps
           icon="la:user-plus"
           @click="switchTo(`register`)" />
+        <!-- -> Off where the strategy says so: a wiki that hands passwords out rather than letting
+                them be chosen has nothing for this to do -->
         <w-btn
           class="acrylic-btn w-full"
+          v-if="selectedStrategy.activeStrategy.allowForgotPassword"
           flat
           color="primary"
           :label="t(`auth.forgotPasswordLink`)"

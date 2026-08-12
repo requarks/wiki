@@ -765,7 +765,20 @@
       &::before {
         content: '';
         position: absolute;
-        top: 1em;
+        /*
+          Centred on the CAP BAND of the first line, not on the line box that holds it.
+
+          A line box is ascent plus descent, and a title like "Note" or "Caution" inks only the part
+          between the cap line and the baseline -- so an icon centred on the line came out a pixel high,
+          and at this size that reads as its bottom edge running flush with the baseline while its top
+          towers over the capitals. Which is why the warning triangle looked right and nothing else did:
+          its mass is all at the base, so a bottom-flush box still reads as balanced.
+
+          `0.9em` is the padding above the first line, `0.79em` the middle of the cap band within it
+          (half-leading plus ascent, less half the cap height, for the app's Roboto at 1.6 line-height),
+          and `0.625em` half the icon.
+        */
+        top: calc(0.9em + 0.79em - 0.625em);
         left: 1.1em;
         width: 1.25em;
         height: 1.25em;

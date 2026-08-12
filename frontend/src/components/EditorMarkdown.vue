@@ -121,7 +121,7 @@
               t('editor.markup.superscript')
             }}</w-tooltip>
           </w-btn>
-          <w-btn icon="mdi:alpha-t-box-outline" padding="xs sm" flat>
+          <w-btn icon="mdi:format-quote-close" padding="xs sm" flat>
             <w-tooltip anchor="top middle" self="bottom middle">{{
               t('editor.markup.blockquoteAdmonitions')
             }}</w-tooltip>
