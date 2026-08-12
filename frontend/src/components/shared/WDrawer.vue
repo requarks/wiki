@@ -78,6 +78,18 @@ const props = defineProps({
     default: false
   },
   /**
+   * Width in px below which the drawer overlays the page instead of taking a column of its own.
+   *
+   * 1024 is the `md` breakpoint and what every drawer used before this was a prop; the site sidebar asks
+   * for 1100, because it is 255px wide beside an article that also gives up a contents column — see
+   * `MainLayout`. Read once, at setup: a caller states this as a constant, not something that changes
+   * under a mounted drawer.
+   */
+  overlayBelow: {
+    type: Number,
+    default: 1024
+  },
+  /**
    * Light foreground, for a panel that is dark in both themes.
    *
    * The drawer this replaces coloured its own content when marked dark, and the admin overlays are
@@ -96,11 +108,8 @@ const props = defineProps({
 
 defineEmits(['update:modelValue'])
 
-/**
- * Where a drawer stops overlaying and takes its own column. 1024px is the `md` breakpoint, which is
- * where the previous implementation switched too.
- */
-const isWide = useMinWidth(1024)
+/** Where this drawer stops overlaying and takes its own column. See `overlayBelow`. */
+const isWide = useMinWidth(props.overlayBelow)
 
 const isOverlay = computed(() => !isWide.value)
 

@@ -37,7 +37,7 @@
       and left at the top it sat above the middle of the icon beside it. A page that has one is taller
       than everything else in the row, so there is nothing to centre and this changes nothing.
     -->
-    <div class="min-w-0 flex-1 flex flex-col justify-center p-4">
+    <div class="min-w-0 flex-1 flex flex-col justify-center p-2 sm:p-4">
       <div class="text-h4 page-header-title">
         <span
           v-if="isEditing"
@@ -849,8 +849,13 @@ function notImplemented() {
 
   The title comes down from `text-h4`, which is a 34px display size written for a header the width of a
   desktop window: at 390px a title of any length wrapped, and the description under it was pushed out of
-  the 95px bar. 24px is the same step `text-h5` takes, chosen as a value rather than as that class so the
-  size lives beside the breakpoint that asks for it.
+  the bar. 24px is the same step `text-h5` takes, chosen as a value rather than as that class so the size
+  lives beside the breakpoint that asks for it.
+
+  The text column's padding halves with it, which is most of what brings the bar's own height down --
+  `pages/Index.vue` takes the fixed 95px off on the same breakpoint, so what is left of it is this
+  column. Horizontal too, and deliberately: at 8px the title lines up with the article underneath, which
+  now pads by the same amount.
 
   And the actions go, all of them -- Watch, Print, the review queue, Edit -- because they are icons
   squeezed against the right edge of a row that has no room for the title as it is. Nothing is lost that

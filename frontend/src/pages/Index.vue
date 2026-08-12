@@ -10,8 +10,10 @@
       has neither to report -- the trail would end on a crumb that leads nowhere and the bar would read
       "Last modified on N/A" -- so the missing-page screen below is the whole column.
     -->
+    <!-- -> `py-1` on a phone: with the date gone the bar holds one line of small type, and 8px above and
+            below it made a strip nearly as tall as the crumbs themselves -->
     <div
-      class="page-breadcrumbs py-2 px-4 flex flex-wrap"
+      class="page-breadcrumbs py-1 px-4 sm:py-2 flex flex-wrap"
       v-if="!editorStore.isActive && !pageStore.notFound">
       <div class="min-w-0 flex-1">
         <w-breadcrumbs
@@ -110,7 +112,9 @@
         -->
         <page-redirect v-else-if="pageStore.editor === `redirect`" />
         <w-scroll-area class="page-container-scrl" ref="pageScroller" v-else style="height: 100%">
-          <div class="page-container-body p-4">
+          <!-- -> Half the padding on a phone, where 16px a side is 8% of the window spent on margin;
+                  the stylesheet has `--content-bleed` to match -->
+          <div class="page-container-body p-2 sm:p-4">
             <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
@@ -190,10 +194,29 @@
           </w-footer>
         </w-scroll-area>
       </div>
+      <!--
+        The scrim behind the contents panel while it is overlaying the article, which is also how it is
+        dismissed without picking a heading. Same treatment as the nav drawer's: see `WDrawer`.
+      -->
+      <transition name="page-sidebar-scrim">
+        <div v-if="tocPanelIsOpen" class="page-sidebar-scrim" @click="closeTocPanel" />
+      </transition>
+      <!--
+        The contents column. Below 750px it stops being a column and becomes a panel that slides in from
+        the right over the article -- see the stylesheet -- so it stays mounted at every width and it is
+        `is-open` that decides whether it is on screen.
+
+        The click handler closes it on the way out: any anchor inside it is something that takes the reader
+        somewhere (a heading, a tag), and a panel left over the place they were going would have to be
+        dismissed by hand. A `<button>` in here -- the tag editor's, the rating -- is not that, which is
+        why the test is `closest('a')` rather than any click at all.
+      -->
       <div
         class="page-sidebar"
         v-if="showSidebar"
-        :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`">
+        :class="{ 'is-open': tocPanelIsOpen }"
+        :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`"
+        @click="onSidebarClick">
         <template v-if="showToc">
           <!-- TOC -->
           <div class="p-4 flex items-center">
@@ -274,6 +297,28 @@
       <!-- -> Every action on it acts on a page: there is none here to edit, share, rate or delete -->
       <page-actions-col v-if="!pageStore.notFound" />
     </div>
+    <!--
+      What opens that panel, in the bottom-right corner -- the corner `MainLayout` gives to scroll-to-top,
+      which stands down below 750px so that this can have it. Same position and the same `.corner-btn`
+      shape (declared in `MainLayout`, which is always mounted above this view), so the two read as one
+      button that changes what it does rather than as two buttons fighting for a corner.
+
+      Not gated on having scrolled, as scroll-to-top is: the contents are how a reader decides where to go
+      in a long page, and that is most useful before they have gone anywhere.
+    -->
+    <transition name="toc-open-btn">
+      <div v-if="showTocPanelBtn" class="fixed bottom-0 right-0 z-30">
+        <w-btn
+          class="corner-btn corner-btn--right"
+          icon="mdi:file-tree"
+          color="primary"
+          round
+          size="md"
+          :aria-label="t(`common.page.contents`)"
+          :aria-expanded="tocPanelIsOpen"
+          @click="openTocPanel" />
+      </div>
+    </transition>
     <side-dialog />
   </w-page>
 </template>
@@ -295,6 +340,7 @@ import { useI18n } from 'vue-i18n'
 import { useDark } from '@/composables/dark'
 import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
+import { useMinWidth } from '@/composables/screen'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
@@ -377,6 +423,11 @@ const state = reactive({
   showTagsEditBtn: false,
   tagEditMode: false,
   tocSelected: null,
+  /**
+   * Whether the contents panel has been slid open. Only consulted below 750px, where the contents are a
+   * panel over the article rather than a column beside it.
+   */
+  tocPanelOpen: false,
   currentRating: 3
 })
 const pageContents = ref(null)
@@ -384,6 +435,25 @@ const pageContents = ref(null)
 const pageScroller = ref(null)
 
 // COMPUTED
+
+/**
+ * Below 750px, where the contents stop being a column beside the article and become a panel over it.
+ *
+ * This view's own threshold: at 200px (see `$toc-narrow-max`) the column still costs a third of a 600px
+ * window, and an article is what the reader came for. `MainLayout` has to agree with it — that is where
+ * scroll-to-top gives up this corner — and so does `$toc-overlay-max` in the stylesheet below.
+ */
+const isAtLeast750 = useMinWidth(750)
+const tocIsPanel = computed(() => !isAtLeast750.value)
+
+/** Whether the contents panel is on screen. Never true while the contents are a column. */
+const tocPanelIsOpen = computed(() => tocIsPanel.value && showSidebar.value && state.tocPanelOpen)
+
+/*
+  The opener: only where the contents are a panel, only on a page that has one to show, and not while it is
+  already open -- the scrim is what closes it then, and the button would be behind the panel in any case.
+*/
+const showTocPanelBtn = computed(() => tocIsPanel.value && showSidebar.value && !state.tocPanelOpen)
 
 const showSidebar = computed(() => {
   return (
@@ -593,7 +663,8 @@ watch(
       return
     }
 
-    // -> Load Page
+    // -> Load Page. The contents panel belongs to the page being left, so it goes with it
+    state.tocPanelOpen = false
     scrollPageToTop()
     try {
       await pageStore.pageLoad({ path: newValue })
@@ -767,6 +838,27 @@ function onContentClick(ev) {
   router.push(target)
 }
 
+function openTocPanel() {
+  state.tocPanelOpen = true
+}
+
+function closeTocPanel() {
+  state.tocPanelOpen = false
+}
+
+/**
+ * Close the contents panel once the reader has picked something out of it.
+ *
+ * Delegated rather than bound per row: `PageToc` emits only `update:selected`, which does not fire again
+ * when the heading already showing is picked a second time — so a click is the thing to listen for, not the
+ * selection changing. Any anchor counts, which is what also covers a tag.
+ */
+function onSidebarClick(ev) {
+  if (tocPanelIsOpen.value && ev.target?.closest?.('a')) {
+    closeTocPanel()
+  }
+}
+
 /** Asks for the page's password. Opened on arrival, and again from the lock screen's own button. */
 function promptUnlock() {
   dialog({ component: PageUnlockDialog })
@@ -799,6 +891,20 @@ function goBack() {
 </script>
 
 <style lang="scss">
+/*
+  Where the contents column stops being able to afford 300px. This view's own threshold, not one of the
+  app's -- `_palette.scss` is for the breakpoints the whole app shares, and this one is a function of this
+  page's two sidebars. Stated as a `max` value just under 1400px, the way the shared ones are.
+*/
+$toc-narrow-max: 1399.98px;
+
+/*
+  ...and where it stops being a column at all and becomes a panel over the article. The same boundary as
+  the 750px `useMinWidth` above, which decides whether the opener is rendered, and as the one `MainLayout`
+  uses to stand scroll-to-top down from this corner. All three have to agree.
+*/
+$toc-overlay-max: 749.98px;
+
 /*
   The column in place of the article: the lock screen, the page that does not exist, and the
   redirection on its way somewhere else. All three are the same shape -- a large faint icon, a
@@ -856,9 +962,34 @@ function goBack() {
     border-bottom: 1px solid $dark-3;
     color: var(--color-white);
   }
+
+  /*
+    A point off the trail on a phone, on the bar rather than on the crumbs: `WBreadcrumbs` sets no size
+    of its own and its icons are 125% of whatever it inherits, so one declaration here takes the text and
+    the icons down together and keeps the two in proportion.
+
+    13px is where it stops. The trail is how a reader gets back out, and it is already the smallest type
+    on the screen -- what is wanted is a bar that gives way to the page under it, not one nobody can read.
+  */
+  @media (max-width: $breakpoint-xs-max) {
+    font-size: 0.8125rem;
+  }
 }
 .page-header {
   height: 95px;
+
+  /*
+    Sized by its contents on a phone instead, which comes out around 70px: the 95px is pitched for a 64px
+    icon beside 34px display type, and holding it under the halved icon and title of the phone layout left
+    a band of empty gradient under the description.
+
+    `auto` rather than a smaller fixed height, because a fixed one is what the desktop bar can only just
+    afford: a title long enough to wrap has nowhere to go in it. Here the bar grows by a line instead, and
+    a page with no description gets a bar shorter still.
+  */
+  @media (max-width: $breakpoint-xs-max) {
+    height: auto;
+  }
 
   @at-root .body--light & {
     background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%);
@@ -906,6 +1037,25 @@ function goBack() {
 }
 .page-container-body {
   flex: 1 0 auto;
+
+  /*
+    The other half of the padding change in the template above.
+
+    `--content-bleed` is how far the rule under an h1 reaches BACK through the padding of whatever holds
+    the content, so that it starts at the sidebar rather than at the text -- so it is a statement about
+    this surface's padding, and left at 1rem against 0.5rem of it the rule overhung the column by 8px.
+    `_page-contents.scss` declares the property expecting exactly this: a surface that pads differently
+    overrides the one property rather than the rule.
+
+    On the `.page-contents` element rather than here, because that is where the default is declared and a
+    custom property set on the parent would simply be shadowed by it. The editor's preview pane carries
+    the class itself and still pads 1rem, so it keeps the default.
+  */
+  @media (max-width: $breakpoint-xs-max) {
+    .page-contents {
+      --content-bleed: 0.5rem;
+    }
+  }
 }
 
 .page-container {
@@ -942,13 +1092,48 @@ function goBack() {
   flex: 0 0 300px;
 
   /*
-    Gone on a phone rather than narrowed: this column is a fixed 300px, so on a 390px screen it took
-    three quarters of the width and left the article a strip a few characters wide. There is no width to
-    share here, and the contents list, the tags and the rating are all things beside the page rather than
-    the page itself.
+    Narrower once the window is: 300px is pitched for a wide desktop, where it is a tenth of the width, and
+    by 1200px it is a quarter of what is left after the nav sidebar. 200px still holds a heading of a few
+    words per line -- the contents list wraps rather than truncating (see `PageToc`) -- and hands the
+    article the other 100px.
+
+    1400px is this view's own threshold rather than one of the app's `--breakpoint-*`: it is where THIS
+    column starts crowding the article, which depends on its own width and the nav's.
   */
-  @media (max-width: $breakpoint-xs-max) {
-    display: none;
+  @media (max-width: $toc-narrow-max) {
+    flex: 0 0 200px;
+  }
+
+  /*
+    And below 750px it stops being a column at all: even at 200px it is a third of a 600px window, and an
+    article is what the reader came for. It becomes a panel the width of the wide column, parked off the
+    right edge and slid in when asked for -- the same shape as the nav drawer on a narrow screen, and for
+    the same reason, so the two behave alike from opposite sides.
+
+    `position: fixed` is what takes it out of the row, so the article gets the whole width whether the
+    panel is open or not; the reader is never made to choose between the two, only to look at one at a
+    time. `transform` is what animates, being the one property that moves a box without laying anything
+    out again -- and the panel is out of flow, so there is nothing behind it to reflow anyway.
+
+    Right regardless of `tocPosition`: the opener is in the bottom-RIGHT corner, and a panel arriving from
+    the far side of the screen from the button that summoned it reads as something else appearing.
+  */
+  @media (max-width: $toc-overlay-max) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    /* -> The wide column's width, capped so it cannot take the whole of a small screen */
+    width: 300px;
+    max-width: 85vw;
+    transform: translateX(100%);
+    transition: transform 0.2s var(--ease-standard);
+    box-shadow: -2px 0 12px rgb(0 0 0 / 0.3);
+
+    &.is-open {
+      transform: none;
+    }
   }
 
   @at-root .body--light & {
@@ -980,5 +1165,40 @@ function goBack() {
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgb(102 102 102 / 0.5) transparent;
+}
+
+/*
+  Behind the panel, and under it: the same tint and the same z-index as the nav drawer's scrim, one step
+  below the panel it dims. The opener is at z-30 as well and is not rendered while the panel is open, so
+  the two never overlap.
+*/
+.page-sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background-color: rgb(0 0 0 / 0.4);
+}
+
+.page-sidebar-scrim-enter-active,
+.page-sidebar-scrim-leave-active,
+.toc-open-btn-enter-active,
+.toc-open-btn-leave-active {
+  transition: opacity 0.2s var(--ease-standard);
+}
+.page-sidebar-scrim-enter-from,
+.page-sidebar-scrim-leave-to,
+.toc-open-btn-enter-from,
+.toc-open-btn-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-sidebar,
+  .page-sidebar-scrim-enter-active,
+  .page-sidebar-scrim-leave-active,
+  .toc-open-btn-enter-active,
+  .toc-open-btn-leave-active {
+    transition-duration: 0.01ms;
+  }
 }
 </style>

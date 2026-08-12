@@ -31,6 +31,13 @@
   re-themed site follows.
 */
 
+/*
+  The Sass breakpoint variables, loaded explicitly. `vite.config.js` injects this module into every SFC
+  through `additionalData`, but that reaches only the files Vite itself hands to Sass -- a partial pulled
+  in by `@use` from `app.scss` is resolved by Sass, and arrives without it.
+*/
+@use 'palette' as *;
+
 .page-contents {
   /* -- Palette ----------------------------------------------------------------- */
 
@@ -319,6 +326,18 @@
     color: var(--content-h1);
     font-size: 2em;
     letter-spacing: -0.015em;
+
+    /*
+      A step down on a phone, where 32px of display type is a fifth of the column's width and a long
+      title wraps to three lines before the article has started.
+
+      28px rather than further: it has to stay clearly above the 1.5em (24px) of the h2 under it, or the
+      two top levels stop reading as two -- and only this level moves, so the rest of the ramp descends
+      from a shorter first step rather than being redrawn.
+    */
+    @media (max-width: $breakpoint-xs-max) {
+      font-size: 1.75em;
+    }
   }
 
   h2 {
@@ -329,6 +348,19 @@
     margin-top: 1.4em;
     font-size: 1.5em;
     letter-spacing: -0.01em;
+
+    /*
+      Down with the h1 on a phone, and by the same proportion, so the two top levels keep the distance
+      between them: 28px over 22px reads as a title over its sections, where 28 over 24 had them almost
+      level.
+
+      It closes to within 2px of the h3 below, which is further than the ramp would otherwise allow --
+      but a section heading is the one level that is also RULED, and a grey rule fading out across the
+      column separates it from a plain heading far more than two points of type ever did.
+    */
+    @media (max-width: $breakpoint-xs-max) {
+      font-size: 1.375em;
+    }
   }
 
   /*

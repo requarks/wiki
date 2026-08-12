@@ -14,31 +14,33 @@
       </w-toolbar>
       <!-- -> Inline between the title and the actions only where there is room for all three; on a
               phone the field gets a row of its own at the bottom of this header instead -->
-      <header-search v-if="!isPhoneViewport" />
+      <header-search v-if="!isSearchCollapsed" />
       <w-toolbar style="height: 64px">
         <w-space />
         <transition name="syncing">
           <w-spinner v-show="commonStore.routerLoading" size="20px" class="text-accent" />
         </transition>
         <!--
-          The phone form of everything to the right of the spinner: the search field's opener, and one
-          button for the rest. Five icon buttons whose meaning is only in a tooltip is not something a
-          touch screen can offer, and they do not fit beside the site title in any case.
+          The two halves of the right-hand group collapse at different widths, so they are separate tests
+          rather than one phone/desktop switch: the field is the first thing that stops fitting beside the
+          site title, and the five buttons hold out for another 300px.
         -->
-        <template v-if="isPhoneViewport">
-          <w-btn
-            v-if="siteStore.features.search"
-            class="ml-4"
-            flat
-            round
-            dense
-            :icon="searchRowIsOpen ? `la:times` : `la:search`"
-            color="white"
-            :aria-label="searchRowIsOpen ? t(`common.actions.close`) : t(`common.header.search`)"
-            :aria-expanded="searchRowIsOpen"
-            @click="toggleSearchRow" />
-          <header-actions-menu />
-        </template>
+        <w-btn
+          v-if="isSearchCollapsed && siteStore.features.search"
+          class="ml-4"
+          flat
+          round
+          dense
+          :icon="searchRowIsOpen ? `la:times` : `la:search`"
+          color="white"
+          :aria-label="searchRowIsOpen ? t(`common.actions.close`) : t(`common.header.search`)"
+          :aria-expanded="searchRowIsOpen"
+          @click="toggleSearchRow" />
+        <!--
+          One button for the five. Icon buttons whose meaning is only in a tooltip are not something a
+          touch screen can offer at all, and by 900px they are also crowding the site title.
+        -->
+        <header-actions-menu v-if="isActionsCollapsed" />
         <template v-else>
           <w-btn
             v-if="userStore.can(`write:pages`)"
@@ -122,7 +124,7 @@
       `backdrop-filter` blur into the middle of the animation -- which is what made it stutter.
     -->
     <transition name="header-search-row" @after-enter="searchRow?.focus()">
-      <div v-if="isPhoneViewport && searchRowIsOpen" class="header-search-row">
+      <div v-if="isSearchCollapsed && searchRowIsOpen" class="header-search-row">
         <header-search ref="searchRow" row />
       </div>
     </transition>
@@ -179,11 +181,22 @@ const searchRowIsOpen = ref(false)
 // COMPUTED
 
 /**
- * Below the `sm` breakpoint (`css/tailwind.css`), which is this app's phone boundary — where the
- * search field and the five action buttons stop fitting alongside the site title.
+ * Below the `sm` breakpoint (`css/tailwind.css`), where the search field gives up its place between the
+ * site title and the actions and becomes a button that opens a row of its own.
  */
 const isAtLeastSm = useMinWidth(600)
-const isPhoneViewport = computed(() => !isAtLeastSm.value)
+const isSearchCollapsed = computed(() => !isAtLeastSm.value)
+
+/**
+ * Below 900px, where the five action buttons become the one overflow menu.
+ *
+ * A separate question from the search field above, and a wider one: the field is what stops fitting
+ * first, while the buttons are 5 × 40px that only start crowding the title around here. The same 900 the
+ * profile and search cards collapse their sidebars at, which is coincidence rather than a shared cause —
+ * it is simply where a window stops being a desktop one.
+ */
+const isAtLeast900 = useMinWidth(900)
+const isActionsCollapsed = computed(() => !isAtLeast900.value)
 
 // WATCHERS
 
@@ -211,12 +224,12 @@ onBeforeUnmount(() => {
 // METHODS
 
 /*
-  Ctrl+K at phone width, where the field is not mounted and so cannot claim the shortcut itself: this
+  Ctrl+K below 600px, where the field is not mounted and so cannot claim the shortcut itself: this
   opens the row, and `HeaderSearch` focuses on mount. Above the breakpoint, and while the row is
   already down, the field's own handler is the one that answers -- see `HeaderSearch.handleKeyPress`.
 */
 function onKeydown(ev) {
-  if (!isPhoneViewport.value || searchRowIsOpen.value || !siteStore.features.search) {
+  if (!isSearchCollapsed.value || searchRowIsOpen.value || !siteStore.features.search) {
     return
   }
   if (ev.ctrlKey && ev.key === 'k' && !siteStore.overlayIsShown) {

@@ -164,6 +164,50 @@ body::-webkit-scrollbar-thumb {
   }
 }
 
+// A button that sits IN a corner of the viewport rather than floating near it: square on the two edges
+// it is flush against, and still fully round on the one corner that faces the page.
+//
+// `round` stays on the button, because that is what gives it its 3em square box and drops its padding --
+// only the radius is restated here. Unlayered (this file is plain CSS, not a Tailwind layer), which is
+// what lets it beat the `rounded-full` utility WBtn emits without `!important`.
+//
+// `50%` rather than a fixed radius: at half the box the curve runs from the middle of one edge to the
+// middle of the next, so the corner is as round as the disc it was -- which is the point. A fixed value
+// would have to be re-picked whenever the button's `size` changed.
+//
+// Here rather than in a layout, because three screens draw one: the site sidebar's opener and
+// scroll-to-top in `MainLayout`, the contents panel's opener in `pages/Index.vue`, and the admin
+// sidebar's opener in `AdminLayout` -- which is in a different layout tree and would otherwise see none
+// of it. Which corner is the one facing the page depends on which corner the button is in, so the side is
+// a modifier, stated after the base rule so each wins for its own corner.
+.corner-btn {
+  border-radius: 0;
+}
+.corner-btn--left {
+  border-top-right-radius: 50%;
+}
+.corner-btn--right {
+  border-top-left-radius: 50%;
+}
+
+// The fade a corner button gives way with as the panel it opens slides over it. Same duration and easing
+// as `WDrawer`'s own slide, so the two read as one movement.
+.corner-btn-enter-active,
+.corner-btn-leave-active {
+  transition: opacity 0.2s var(--ease-standard);
+}
+.corner-btn-enter-from,
+.corner-btn-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .corner-btn-enter-active,
+  .corner-btn-leave-active {
+    transition-duration: 0.01ms;
+  }
+}
+
 // ------------------------------------------------------------------
 // ICONS
 // ------------------------------------------------------------------

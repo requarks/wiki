@@ -1,11 +1,17 @@
 <template>
   <w-layout class="fileman" view="hHh lpR lFr" container>
+    <!--
+      Three toolbars in one flex row, which below ~700px is more than fits: the row overflowed and took the
+      last of them -- the one holding Close -- off the side of the screen, so on a phone the overlay could
+      be opened and not shut. They wrap onto two lines instead below 900px; see the stylesheet, which is
+      also why each of the three carries a name.
+    -->
     <w-header class="card-header">
-      <w-toolbar dark>
+      <w-toolbar class="fileman-hdr-title" dark>
         <w-icon name="img:/_assets/icons/fluent-folder.svg" left size="md" />
         <span>{{ t(`fileman.title`) }}</span>
       </w-toolbar>
-      <w-toolbar dark>
+      <w-toolbar class="fileman-hdr-search" dark>
         <!-- -> Same gate the sidebar's locale button uses in `MainLayout`: with the site's locale menu
              off, switching locale is not something a reader is offered anywhere -->
         <w-btn
@@ -57,7 +63,7 @@
         -> No right margin on the last control: the toolbar's own 12px is already close to the 9-10px the
            header leaves above and below.
       -->
-      <w-toolbar dark>
+      <w-toolbar class="fileman-hdr-actions" dark>
         <w-space />
         <w-btn
           class="mr-2"
@@ -83,7 +89,16 @@
         </w-btn-group>
       </w-toolbar>
     </w-header>
-    <w-drawer class="fileman-left" :model-value="true" :width="350">
+    <!--
+      The folder tree. Beside the list where there is room for both, and a panel over it where there is
+      not -- which is what `WDrawer` does on its own below 1024px, except that this was bound `:model-value
+      ="true"`: one-way, and permanently open. Overlaying, that put 350px of tree across a 390px screen
+      with no way to put it away, since the drawer asks to be closed when its scrim is tapped and nothing
+      was listening. `treeDrawerOpen` is that listener, and above the breakpoint it answers true always.
+
+      Narrower while it overlays, so there is a comfortable width of scrim left to tap on.
+    -->
+    <w-drawer class="fileman-left" v-model="treeDrawerOpen" :width="isTreeOverlay ? 300 : 350">
       <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
         <!--
           -> No side padding: the tree's rows run the full width of the drawer, so a hovered or
@@ -103,7 +118,7 @@
         </div>
       </w-scroll-area>
     </w-drawer>
-    <w-drawer class="fileman-right" :model-value="screen.gt.md" :width="350" side="right">
+    <w-drawer class="fileman-right" :model-value="detailsPaneShown" :width="350" side="right">
       <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
         <div class="p-4">
           <template v-if="currentFileDetails">
@@ -136,7 +151,18 @@
       </w-scroll-area>
     </w-drawer>
     <w-page-container>
-      <w-page class="fileman-center column">
+      <!--
+        Tapping this pane puts the tree panel away, which is the "tap outside to dismiss" the drawer's own
+        scrim would normally provide. It cannot here: `WDrawer` teleports that scrim to <body> at z-30, and
+        this whole view is inside a dialog which paints above it -- so the scrim is invisible, and a tap
+        beside the panel lands on this pane instead. Rather than raise the z-index of a scrim shared with
+        the site's nav drawer, the pane takes the tap it is already receiving.
+
+        On the pane rather than on the list inside it, because the list is only as tall as its rows: below
+        the last file the tap reaches this element and nothing else. The handler steps aside for the
+        toolbar, which holds the button that OPENS the tree.
+      -->
+      <w-page class="fileman-center column" @click="dismissTreeOverlay">
         <!-- TOOLBAR ----------------------------------------------------- -->
         <w-toolbar class="fileman-toolbar">
           <template v-if="state.isUploading">
@@ -157,6 +183,25 @@
               v-if="state.uploadPercentage < 100" />
           </template>
           <template v-else>
+            <!--
+              What opens the tree while it is a panel: nothing else does, and the tree is how a reader
+              gets to another folder. First in the toolbar rather than in the pushed group, because it is
+              about where they are rather than about what to do here.
+            -->
+            <w-btn
+              v-if="isTreeOverlay"
+              class="mr-2"
+              flat
+              dense
+              no-caps
+              color="grey"
+              :aria-label="t(`common.sidebar.browse`)"
+              icon="mdi:file-tree"
+              @click="state.treeOpen = true">
+              <w-tooltip anchor="bottom middle" self="top middle">{{
+                t(`common.sidebar.browse`)
+              }}</w-tooltip>
+            </w-btn>
             <w-space />
             <w-btn
               class="mr-2"
@@ -276,6 +321,23 @@
               :aria-label="t(`common.actions.upload`)"
               icon="la:cloud-upload-alt"
               @click="uploadFile" />
+            <!--
+              Insert lives in the details pane, which is a 350px column with no overlay form -- so below
+              1440px the editor's insert flow could be opened and never completed: the file list offers it
+              only through a right-click menu, which is not a gesture a touch screen has. Here it is the
+              same call on the same selection, in the one place that is always on screen.
+            -->
+            <w-btn
+              v-if="insertMode && !detailsPaneShown && state.currentFileId"
+              class="ml-2"
+              flat
+              dense
+              no-caps
+              color="primary"
+              :label="t(`common.actions.insert`)"
+              :aria-label="t(`common.actions.insert`)"
+              icon="la:plus-circle"
+              @click="insertItem()" />
           </template>
         </w-toolbar>
         <div class="flex flex-wrap" style="flex: 1 1 100%">
@@ -451,7 +513,7 @@ import { useRouter } from 'vue-router'
 
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
-import { useScreen } from '@/composables/screen'
+import { useMinWidth, useScreen } from '@/composables/screen'
 import { useDark } from '@/composables/dark'
 
 import { useCommonStore } from '@/stores/common'
@@ -533,6 +595,12 @@ const state = reactive({
   searchIsFocused: false,
   currentFolderId: null,
   currentFileId: null,
+  /**
+   * Whether the folder tree has been opened. Only consulted while it overlays the list — beside it, it
+   * is simply there. Deliberately NOT one of the remembered view options: those describe how a list is
+   * drawn, and this is a panel that is open at the moment.
+   */
+  treeOpen: false,
   treeNodes: {},
   treeRoots: [],
   displayMode: 'title',
@@ -589,6 +657,34 @@ const treeComp = ref(null)
 // COMPUTED
 
 const insertMode = computed(() => siteStore.overlayOpts?.insertMode ?? false)
+
+/**
+ * Whether the folder tree is a panel over the list rather than a column beside it.
+ *
+ * 1024 is `WDrawer`'s own default `overlayBelow`, which is what actually decides how the drawer draws
+ * itself — this is the same question asked from the outside, so that the toolbar knows whether to offer a
+ * way in. The two have to agree.
+ */
+const isAtLeastMd = useMinWidth(1024)
+const isTreeOverlay = computed(() => !isAtLeastMd.value)
+
+/**
+ * Whether the details pane is beside the list. It is a 350px column with no overlay form, so below 1440px
+ * there is simply no room for it -- which is also why the Insert button it holds needs a second home; see
+ * the toolbar.
+ */
+const detailsPaneShown = computed(() => screen.gt.md)
+
+/**
+ * The tree drawer's open state: always open where it has a column of its own, and the reader's to decide
+ * where it overlays. The setter is what the drawer's scrim reaches when it is tapped.
+ */
+const treeDrawerOpen = computed({
+  get: () => !isTreeOverlay.value || state.treeOpen,
+  set: (val) => {
+    state.treeOpen = val
+  }
+})
 
 const folderPath = computed(() => {
   if (!state.currentFolderId) {
@@ -716,11 +812,34 @@ const currentFileDetails = computed(() => {
 watch(
   () => state.currentFolderId,
   async (newValue) => {
+    /*
+      Picking a folder is what the tree is open FOR, so it closes behind the choice -- the contents of that
+      folder are in the list underneath, which the panel is covering. Only while it overlays; beside the
+      list it is a column and there is nothing to close.
+    */
+    state.treeOpen = false
     await loadTree({ parentId: newValue })
   }
 )
 
 // METHODS
+
+/**
+ * Put the folder tree away when the list behind it is tapped.
+ *
+ * A no-op unless the tree is actually overlaying and open, so an ordinary click on a file — which is what
+ * this handler mostly receives — costs nothing and behaves as it always did.
+ */
+function dismissTreeOverlay(ev) {
+  if (!isTreeOverlay.value || !state.treeOpen) {
+    return
+  }
+  // -> The toolbar's own button is what opened it; closing here would undo that on the way back up
+  if (ev?.target?.closest?.('.fileman-toolbar')) {
+    return
+  }
+  state.treeOpen = false
+}
 
 function close() {
   siteStore.overlay = null
@@ -1375,7 +1494,51 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
+/*
+  Where the overlay's header stops fitting on one line. Its own threshold: the three toolbars want roughly
+  700px between them, and this leaves a margin over that. Not one of the app's shared breakpoints, though
+  it is the same 900 the site header collapses its actions at -- both are simply where a window stops
+  having room for a row of chrome.
+*/
+$fileman-hdr-wrap-max: 899.98px;
+
 .fileman {
+  /*
+    THE HEADER ON A NARROW SCREEN
+    =============================
+
+    `.card-header` is a flex row, and its three toolbars are each `w-full`, so with wrapping turned on they
+    would take a line each -- three lines of chrome above a file list. Two is enough:
+
+      line 1   the title, with the help and Close group pushed to its end
+      line 2   the locale button and the search field
+
+    The title and the actions give up `w-full` to share the first line; the search toolbar keeps it and is
+    ordered last, which is what puts it on the second. Close is what this is for -- off the end of the row
+    it was unreachable, and it is the only way out of the overlay.
+  */
+  @media (max-width: $fileman-hdr-wrap-max) {
+    > .card-header {
+      flex-wrap: wrap;
+    }
+
+    &-hdr-title {
+      width: auto;
+      flex: 1 1 auto;
+      /* -> "File Manager" wrapped to two lines rather than letting the row grow */
+      white-space: nowrap;
+    }
+
+    &-hdr-actions {
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    &-hdr-search {
+      order: 1;
+    }
+  }
+
   /*
     The locale button is cut to the same 7px as the search field and Close, where `WBtn`'s flat variant
     is 3px. Unlayered, because an SFC style block is not a Tailwind layer -- which is what lets it beat

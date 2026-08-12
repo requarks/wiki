@@ -1,8 +1,17 @@
 <template>
   <w-page class="py-4">
     <div class="w-section-header">{{ t('profile.avatar') }}</div>
-    <div class="mt-10 flex flex-wrap gap-6">
-      <div class="flex-1 text-center">
+    <!--
+      -> `min-w-*` on both columns is what lets `flex-wrap` actually wrap them: `flex-1` is
+         `flex: 1 1 0%`, and an item whose basis is zero never overflows its line, so on a narrow screen
+         the two just squeezed instead -- the 180px avatar spilling off the left edge and the upload
+         column's text off the right. With a floor on each, two of them no longer fit side by side in a
+         column this narrow and the second takes its own line.
+    -->
+    <!-- -> `px-4` only while stacked: beside the avatar this column has the card's width around it, but
+            on its own line it starts at the very edge of the screen -->
+    <div class="mt-10 flex flex-wrap gap-6 px-4 sm:px-0">
+      <div class="min-w-60 flex-1 text-center">
         <w-avatar
           class="profile-avatar-circ"
           size="180px"
@@ -13,7 +22,7 @@
           <w-icon v-else name="la:user" />
         </w-avatar>
       </div>
-      <div v-if="canEdit" class="flex-1 self-center">
+      <div v-if="canEdit" class="min-w-60 flex-1 self-center">
         <div class="text-body1">{{ t('profile.avatarUploadTitle') }}</div>
         <div class="text-caption">{{ t('profile.avatarUploadHint') }}</div>
         <div class="mt-4">
@@ -35,7 +44,7 @@
             @click="clearImage" />
         </div>
       </div>
-      <div v-else class="flex-1 self-center">
+      <div v-else class="min-w-60 flex-1 self-center">
         <div class="text-caption text-negative">{{ t('profile.avatarUploadDisabled') }}</div>
       </div>
     </div>

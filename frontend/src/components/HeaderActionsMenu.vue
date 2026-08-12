@@ -124,8 +124,8 @@ import PageNewMenu from '@/components/PageNewMenu.vue'
  * The phone header's overflow menu: one button standing in for every action the bar shows as its own
  * icon on a wide screen -- New Page, File Manager, Inbox, Administration, and the account.
  *
- * Rendered only below the `sm` breakpoint; see `HeaderNav`. The rows repeat the permission tests the
- * buttons they replace make, rather than being handed a list, so the two cannot drift apart.
+ * Rendered only below 900px; see `HeaderNav`. The rows repeat the permission tests the buttons they
+ * replace make, rather than being handed a list, so the two cannot drift apart.
  */
 
 // STORES

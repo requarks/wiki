@@ -5,7 +5,27 @@
     </w-header>
     <w-page-container class="layout-profile">
       <div class="layout-profile-card">
-        <div class="layout-profile-sd">
+        <!--
+          Below 900px the section list is a disclosure rather than a column beside the content: even shrunk
+          to its own labels it is ~240px, and on a phone the fixed 300px of it left the content overflowing
+          the card and clipped at the edge of the screen. Closed to start with, and it names the section
+          being read -- so the bar that opens the nav is also what says where in the profile the reader is.
+        -->
+        <w-btn
+          v-if="isNavCollapsed"
+          class="layout-profile-navbtn"
+          flat
+          no-caps
+          :icon="currentSection.icon"
+          :label="currentSection.label"
+          :aria-expanded="state.navOpen"
+          @click="toggleNav">
+          <w-icon
+            class="layout-profile-navchevron"
+            :class="{ 'is-open': state.navOpen }"
+            name="mdi:chevron-down" />
+        </w-btn>
+        <div class="layout-profile-sd" v-show="!isNavCollapsed || state.navOpen">
           <w-list>
             <template v-for="navItem of sidenav" :key="navItem.key">
               <w-item
@@ -56,10 +76,11 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
+import { useMinWidth } from '@/composables/screen'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
@@ -138,11 +159,45 @@ const sidenav = [
   }
 ]
 
+const state = reactive({
+  /** Whether the section list is open. Only consulted below 900px, where it is a disclosure. */
+  navOpen: false
+})
+
+// COMPUTED
+
+/**
+ * Below 900px, where the nav stops being a column beside the content and becomes a disclosure above it.
+ *
+ * This layout's own breakpoint rather than one of the app's: it is the width at which a nav column shrunk
+ * to its own labels (~240px, see the stylesheet) is still more than the content can spare. The stylesheet
+ * has to agree with it — `$nav-collapse-max` is the same boundary from the other side.
+ */
+const isAtLeast900 = useMinWidth(900)
+const isNavCollapsed = computed(() => !isAtLeast900.value)
+
+/**
+ * The section being read, which is what the collapsed nav bar is labelled with.
+ *
+ * Falls back to the profile's own name for a path the list does not cover — the public profile, or a
+ * `/_profile` with no section — so the bar always says something.
+ */
+const currentSection = computed(() => {
+  return (
+    sidenav.find((item) => route.path === `/_profile/${item.key}`) ?? {
+      label: t('profile.title'),
+      icon: 'la:user-circle'
+    }
+  )
+})
+
 // WATCHERS
 
 watch(
   () => route.path,
   async (newValue) => {
+    // -> Picking a section is what the open list is for, so arriving at one puts it away again
+    state.navOpen = false
     if (!newValue.startsWith('/_profile')) {
       return
     }
@@ -152,9 +207,26 @@ watch(
   },
   { immediate: true }
 )
+
+// METHODS
+
+function toggleNav() {
+  state.navOpen = !state.navOpen
+}
 </script>
 
 <style lang="scss">
+/*
+  Where this card's two desktop assumptions give out. Both are its own, not the app's -- see the comment
+  on the media queries at the bottom of this block. Stated as `max` values, just under the width the next
+  layout up starts at, the way `_palette.scss` states the shared ones.
+
+  `$nav-collapse-max` has to agree with the 900px `useMinWidth` above it, which is what decides whether
+  the disclosure button is rendered at all.
+*/
+$nav-collapse-max: 899.98px;
+$nav-shrink-max: 1199.98px;
+
 .layout-profile {
   @at-root .body--light & {
     background-color: $grey-3;
@@ -331,6 +403,157 @@ watch(
       top: -2px;
       left: 0;
       z-index: 0;
+    }
+  }
+
+  /*
+    THREE NARROWER LAYOUTS
+    ======================
+
+    This card is a sheet floating in a tinted page -- 90% of the width, 50px of gutter all round -- with a
+    300px nav column down its left side. Both of those are pitched for a desktop window, and they give out
+    at three different widths, so the card gives them up one at a time rather than all at once:
+
+      below 1200px   the nav column stops being 300px wide and shrinks to its own labels, and the card's
+                     gutters halve -- both of which hand the content back the width it is running out of
+      below 900px    the nav column goes altogether and becomes a disclosure above the content, because
+                     even shrunk to its labels it is ~240px that the content needs more; the settings rows
+                     are still two columns here, which is the point of taking the nav out rather than
+                     stacking them
+      below 600px    the card stops being a sheet and becomes the screen, and the rows stack
+
+    Ordered narrowest-last, so each block overrides the one above it where the two speak about the same
+    property. `$nav-*-max` are this layout's own -- deliberately not in `_palette.scss`, which is for
+    breakpoints the whole app shares: these two describe when THIS card runs out of room, which is a
+    function of its own nav column and of nothing else.
+  */
+
+  /* --- Below 1200px: the nav gives up its fixed width, the card gives up half its gutters ----------- */
+  @media (max-width: $nav-shrink-max) {
+    /*
+      Halved from `90% / 50px`. Deliberately not bracketed to the 900-1200 band: below 900 the gutters
+      would otherwise JUMP back to the wider pair as the window narrows, which is the one thing a reader
+      resizing a window would actually notice.
+    */
+    &-card {
+      width: 95%;
+      margin: 25px auto;
+    }
+
+    /* -> `auto` basis: the column is as wide as its longest label needs, instead of 300px regardless */
+    &-sd {
+      flex: 0 0 auto;
+    }
+  }
+
+  /* --- Below 900px: the nav is a disclosure above the content ------------------------------------- */
+  @media (max-width: $nav-collapse-max) {
+    &-card {
+      flex-direction: column;
+    }
+
+    /*
+      The disclosure's bar. Full width, with the chevron pushed to the far end from the label, and the
+      card's own top corners -- it is the top of the card now, so it is what has to be rounded to it.
+    */
+    &-navbtn {
+      justify-content: space-between;
+      border-radius: 7px 7px 0 0;
+
+      @at-root .body--light & {
+        background-color: $grey-1;
+        border-bottom: 1px solid $grey-3;
+      }
+      @at-root .body--dark & {
+        background-color: $dark-4;
+        border-bottom: 1px solid $dark-2;
+      }
+    }
+
+    /* -> The button's whole content is one flex row, so the chevron needs pushing to the end of it */
+    &-navbtn > span {
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    &-navchevron {
+      transition: transform 0.2s var(--ease-standard);
+
+      &.is-open {
+        transform: rotate(180deg);
+      }
+    }
+
+    /*
+      The nav, no longer a column at all: the width of the card, with the seam that divided the two columns
+      moving from its right edge to its bottom one. Per theme, because that is where the rules being
+      replaced are declared -- at three classes each, which a plain override here would lose to.
+    */
+    &-sd {
+      flex: none;
+      width: 100%;
+      border-radius: 0;
+
+      @at-root .body--light & {
+        border-right: 0;
+        border-bottom: 1px solid $grey-3;
+        box-shadow: none;
+      }
+      @at-root .body--dark & {
+        border-right: 0;
+        border-bottom: 1px solid rgba(#fff, 0.12);
+        box-shadow: none;
+      }
+    }
+
+    /* -> The seam is the nav's bottom border now, and a left one would draw down the content's own edge */
+    .w-page {
+      @at-root .body--light & {
+        border-left: 0;
+      }
+      @at-root .body--dark & {
+        border-left: 0;
+      }
+    }
+  }
+
+  /* --- Below 600px: the card is the screen, and a settings row stacks ----------------------------- */
+  @media (max-width: $breakpoint-xs-max) {
+    &-card {
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* -> Nothing left to round: the card's own corners are square here */
+    &-navbtn {
+      border-radius: 0;
+    }
+
+    /*
+      A settings row stacks: its label and its field are two MAIN sections, which share the row's width
+      equally -- 175px each on this screen, too narrow for either. The field takes a line of its own under
+      the label it belongs to, full width, and the 8px gutter between two columns becomes the gap between
+      two lines.
+
+      Scoped to `.w-page`, the content column: the nav's own rows are a side section and a main one, which
+      have no reason to wrap and would only be loosened by this.
+    */
+    .w-page .w-item {
+      flex-wrap: wrap;
+    }
+
+    /*
+      `flex-basis`, not `width`: the section carries Tailwind's `flex-1`, which is `flex: 1 1 0%` -- and a
+      flex item is sized by its basis, so a width of 100% was simply ignored and the two sections went on
+      sharing the line. 100% is wider than the row can fit beside anything, which is what pushes it onto a
+      line of its own.
+    */
+    .w-page .w-item-section--main + .w-item-section--main {
+      flex: 1 0 100%;
+      margin-top: 0.5rem;
+      margin-left: 0;
     }
   }
 }

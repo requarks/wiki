@@ -158,6 +158,22 @@ Content of the second tab.
         background-color: var(--tabs-panel-bg);
       }
 
+      /*
+        Tighter on a phone. The panel sits inside an article that pads by 8px there, so 20px of its own
+        put the text 28px in from the edge of the screen -- a third of the indent a 390px column can
+        afford, spent twice over on the same margin.
+
+        599.98px is the app's own phone breakpoint -- --breakpoint-sm is 600px in css/tailwind.css. A
+        block cannot read the app's Sass variables, so the value is written out, as block-infobox does
+        with its own. (No backticks in here: this whole stylesheet is a template literal, and one ends
+        it mid-rule.)
+      */
+      @media (max-width: 599.98px) {
+        .panel {
+          padding: 12px;
+        }
+      }
+
       /* -> The panel owns the spacing, so the content inside it does not add its own at the edges */
       ::slotted(block-tab) {
         margin-bottom: 0;

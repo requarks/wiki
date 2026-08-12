@@ -398,8 +398,35 @@ function removePendingAsset(item) {
 </script>
 
 <style lang="scss">
+/*
+  Just under the width at which the site's nav sidebar stops taking a column of its own -- the number
+  `MainLayout` hands its drawer as `overlayBelow`, and the same one `NavSidebar` states for its own use.
+  Below it the corner button lands in this rail; see the padding rule.
+*/
+$sidebar-overlay-max: 1099.98px;
+
+/** One row of this rail, which is what the bottom group has to clear. Matches the buttons' `h-12`. */
+$action-btn-height: 3rem;
+
 .page-actions {
   flex: 0 0 56px;
+
+  /*
+    Room at the foot of the rail for the button in the corner of the window -- scroll-to-top, or the
+    contents panel's opener below 750px (`MainLayout` and `pages/Index.vue` respectively). While the nav
+    sidebar has a column of its own that button is a disc straddling the sidebar's inner edge, nowhere
+    near this rail; once the sidebar overlays instead, the button is flush in the bottom-right corner,
+    which is exactly where this rail ends -- and it was landing on top of Delete Page. A tap at the middle
+    of that button's box reached the corner button instead, so the last action in the rail was the one
+    action a reader could not take.
+
+    Padding on the rail rather than a margin on the last button: what is last here depends on the reader's
+    permissions and on whether the editor is open, and the space is owed to whichever of them it turns out
+    to be. The rail scrolls its own overflow, so this is inside what scrolls and cannot be scrolled behind.
+  */
+  @media (max-width: $sidebar-overlay-max) {
+    padding-bottom: $action-btn-height;
+  }
 
   /*
     Gone on a phone while a page is being read: the rail is a column of icon buttons whose labels only

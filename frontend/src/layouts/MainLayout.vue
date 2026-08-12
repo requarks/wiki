@@ -7,6 +7,7 @@
       class="bg-sidebar"
       v-model="isSidebarOpen"
       :width="sidebarWidth"
+      :overlay-below="SIDEBAR_OVERLAY_BELOW"
       :side="siteStore.theme.sidebarPosition === `right` ? `right` : `left`">
       <div v-if="isSidebarMini" class="sidebar-mini flex flex-col items-stretch">
         <w-btn
@@ -33,7 +34,7 @@
         </w-btn>
         <w-space />
         <w-btn
-          v-if="canEditNav"
+          v-if="showEditNav"
           class="py-1"
           flat
           icon="la:dharmachakra"
@@ -79,7 +80,7 @@
         </div>
         <nav-sidebar />
         <!-- -> Edit Nav is the whole bar now, so it is also what decides whether there is one -->
-        <w-bar v-if="canEditNav" class="sidebar-footerbtns text-white" dense>
+        <w-bar v-if="showEditNav" class="sidebar-footerbtns text-white" dense>
           <w-btn class="flex-1" icon="la:dharmachakra" label="Edit Nav" flat>
             <w-menu ref="navEditMenu" anchor="top left" self="bottom left" :offset="[0, 10]">
               <nav-edit-menu
@@ -103,10 +104,15 @@
       The position goes on a wrapper rather than on the button, as `WPageScroller` does it: `WBtn` is
       `relative` from its own class list, and Tailwind emits `relative` after `fixed`, so a `fixed`
       alongside it loses.
+
+      Hard into the corner, with the corner facing the page rounded and the other three square -- see
+      `.corner-btn`. No margin, so the button is not a disc hovering near the edge of a small screen but
+      a piece of the screen's own corner, and every pixel of it is inside the viewport.
     -->
-    <transition name="sidebar-open-btn">
-      <div v-if="showSidebarBtn" class="fixed bottom-4 left-4 z-30">
+    <transition name="corner-btn">
+      <div v-if="showSidebarBtn" class="fixed bottom-0 left-0 z-30">
         <w-btn
+          class="corner-btn corner-btn--left"
           icon="la:bars"
           color="primary"
           round
@@ -123,13 +129,30 @@
     -->
     <w-page-container>
       <router-view />
-      <!-- -> `.page-container-scrl` is the page view's article column, which is what scrolls -->
+      <!--
+        -> `.page-container-scrl` is the page view's article column, which is what scrolls
+
+        The mirror of the sidebar button in the opposite corner while the layout is in its narrow mode:
+        flush to the edge, and rounded on the top LEFT, since this is the corner it is tucked into from
+        the other side. It keeps the floating disc on a wide screen, where it has a seam to straddle
+        rather than a corner to sit in.
+
+        And it stands down below 750px, where the page view's contents panel takes this corner for its own
+        opener -- one button per corner, and there the contents are the more useful of the two. See
+        `showTocPanelBtn` in `pages/Index.vue`, which is what fills the gap.
+      -->
       <w-page-scroller
+        v-if="isAtLeastTocPanelWidth"
         :scroll-offset="150"
-        :offset="[15, 15]"
+        :offset="scrollerOffset"
         :anchor-x="scrollerAnchorX"
         target=".page-container-scrl">
-        <w-btn icon="la:arrow-up" color="primary" round size="md" />
+        <w-btn
+          :class="isWideViewport ? `` : `corner-btn corner-btn--right`"
+          icon="la:arrow-up"
+          color="primary"
+          round
+          size="md" />
       </w-page-scroller>
     </w-page-container>
     <main-overlay-dialog />
@@ -211,10 +234,38 @@ const isNarrowSidebarOpen = ref(false)
 // COMPUTED
 
 /**
- * Where the drawer stops overlaying the page and takes its own column. Matches `WDrawer`'s own
- * breakpoint — below it there is no seam to straddle, because the sidebar is not beside anything.
+ * Where this sidebar stops overlaying the page and takes its own column of its own.
+ *
+ * 1100 rather than `WDrawer`'s default of 1024: this sidebar is 255px, and the page beside it gives up a
+ * contents column of its own before this point — so by ~1050px the article is the narrowest of the three
+ * things sharing the window. Passed INTO the drawer rather than changed there, so the admin area's drawer
+ * keeps the 1024 it was written against.
+ *
+ * `NavSidebar` has to agree with it too: the dent marking the current page is only meaningful while the
+ * sidebar is beside the content. See `$sidebar-overlay-max` there.
  */
-const isWideViewport = useMinWidth(1024)
+const SIDEBAR_OVERLAY_BELOW = 1100
+
+/**
+ * The same boundary as a reactive flag, for everything in this layout that has to know which mode the
+ * drawer is in — the scroll-to-top button's anchor and shape, and whether the sidebar needs an opener.
+ */
+const isWideViewport = useMinWidth(SIDEBAR_OVERLAY_BELOW)
+
+/**
+ * The phone boundary — the `sm` breakpoint from `css/tailwind.css`, and a different question from the one
+ * above: that one is about the LAYOUT (has the drawer got a column of its own), this one is about the
+ * DEVICE (is there a pointer, and room for an authoring control). See `showEditNav`.
+ */
+const isAtLeastSm = useMinWidth(600)
+
+/**
+ * At or above 750px, which is where scroll-to-top keeps the bottom-right corner: below it the page view
+ * turns its contents column into a panel and puts the opener there instead. The page view owns that
+ * threshold (`$toc-overlay-max` and the 750px `useMinWidth` in `pages/Index.vue`); this is the same number
+ * from the side that has to get out of the way.
+ */
+const isAtLeastTocPanelWidth = useMinWidth(750)
 
 /** Whether this site, page and mode have a sidebar at all — before asking whether it is open. */
 const isSidebarAvailable = computed(() => {
@@ -280,6 +331,13 @@ const scrollerAnchorX = computed(() => {
     : `${sidebarWidth.value}px`
 })
 
+/*
+  And no gap at all from the corner once it is in one: `[15, 15]` is the clearance a disc needs to read as
+  floating over the page, which is what it does on a wide screen. Squared into the corner there is nothing
+  to clear -- the button IS the corner.
+*/
+const scrollerOffset = computed(() => (isWideViewport.value ? [15, 15] : [0, 0]))
+
 // -> The "Allow Browsing" site feature (admin/general): with it off the tree browser is not something
 //    a reader can reach, so the button that opens it does not render
 const canBrowse = computed(() => siteStore.features.browse)
@@ -287,10 +345,20 @@ const canBrowse = computed(() => siteStore.features.browse)
 // -> The action bar holds only the locale menu and Browse; with both off it would be an empty strip
 const showSidebarActions = computed(() => siteStore.locales.showMenu || canBrowse.value)
 
-// -> Saving from this menu needs manage:navigation, so offering it to anyone else only produces a
-//    permission error once they press Save
-const canEditNav = computed(() => {
-  return userStore.authenticated && userStore.can('manage:navigation')
+/*
+  Whether to offer Edit Nav, in either of the two places the sidebar has for it -- the footer bar of the
+  full panel, and the small cog at the bottom of the icon rail. Two questions:
+
+  Saving from that menu needs `manage:navigation`, so offering it to anyone else only produces a
+  permission error once they press Save.
+
+  And not on a phone, whatever the permission: rearranging a navigation tree is drag-and-drop work in a
+  full-screen overlay, and the sidebar it hangs off is itself a panel the reader has just opened over the
+  page. Same call as the page header's authoring actions, at the same breakpoint -- an editing control
+  that needs a pointer is not offered on a screen that has none.
+*/
+const showEditNav = computed(() => {
+  return userStore.authenticated && userStore.can('manage:navigation') && isAtLeastSm.value
 })
 
 // WATCHERS
@@ -328,26 +396,6 @@ function openSidebar() {
 
 .sidebar-mini {
   height: 100%;
-}
-
-/*
-  The menu button fades as the sidebar it opens slides, rather than blinking out from under the panel
-  the instant it is tapped. Same duration and easing as the drawer's own slide.
-*/
-.sidebar-open-btn-enter-active,
-.sidebar-open-btn-leave-active {
-  transition: opacity 0.2s var(--ease-standard);
-}
-.sidebar-open-btn-enter-from,
-.sidebar-open-btn-leave-to {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sidebar-open-btn-enter-active,
-  .sidebar-open-btn-leave-active {
-    transition-duration: 0.01ms;
-  }
 }
 
 /*

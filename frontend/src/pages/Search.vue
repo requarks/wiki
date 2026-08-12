@@ -14,7 +14,28 @@
             t('common.actions.goback')
           }}</w-tooltip>
         </w-btn>
-        <div class="layout-search-sd">
+        <!--
+          Below 900px the sort and filter panel is a disclosure rather than a column: 300px of it beside a
+          390px screen left the results a 210px strip, and being a column of form fields it cannot be
+          narrowed to its content the way the profile's nav can. Closed to start with, because what a reader
+          arriving here wants is the results -- refining them is the second thing, and one tap away.
+
+          The chevron turns rather than being swapped for a second icon, so the two states are one drawing.
+        -->
+        <w-btn
+          v-if="isFiltersCollapsed"
+          class="layout-search-filterbtn"
+          flat
+          no-caps
+          :label="t(`search.filters`)"
+          :aria-expanded="state.filtersOpen"
+          @click="toggleFilters">
+          <w-icon
+            class="layout-search-filterchevron"
+            :class="{ 'is-open': state.filtersOpen }"
+            name="mdi:chevron-down" />
+        </w-btn>
+        <div class="layout-search-sd" v-show="!isFiltersCollapsed || state.filtersOpen">
           <div class="section-header">{{ t('search.sortBy') }}</div>
           <w-list dense padding>
             <w-item
@@ -214,6 +235,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
+import { useMinWidth } from '@/composables/screen'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
@@ -271,6 +293,8 @@ useMeta(() => {
 
 const state = reactive({
   loading: 0,
+  /** Whether the sort/filter panel is open. Only consulted below 900px, where it is a disclosure. */
+  filtersOpen: false,
   params: {
     filterPath: '',
     filterLocale: [],
@@ -283,6 +307,18 @@ const state = reactive({
   results: [],
   total: 0
 })
+
+/**
+ * Below 900px, where the filter panel stops being a column beside the results and becomes a disclosure
+ * above them.
+ *
+ * This layout's own breakpoint rather than one of the app's, and the same one `ProfileLayout` uses for its
+ * nav: the two screens are the same shape -- a card with a 300px sidebar -- so they run out of room at the
+ * same width. The stylesheet has to agree with it; `$filters-collapse-max` is the same boundary from the
+ * other side.
+ */
+const isAtLeast900 = useMinWidth(900)
+const isFiltersCollapsed = computed(() => !isAtLeast900.value)
 
 const orderByOptions = computed(() => {
   return [
@@ -334,6 +370,10 @@ watch(() => state.params, debounce(performSearch, 500), { deep: true })
 
 function humanizeDate(val) {
   return userStore.formatDateTime(t, val)
+}
+
+function toggleFilters() {
+  state.filtersOpen = !state.filtersOpen
 }
 
 function setOrderBy(val) {
@@ -460,6 +500,17 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
+/*
+  Where this card's two desktop assumptions give out -- the same two widths `layouts/ProfileLayout.vue`
+  declares, because the two screens are the same shape and run out of room together. Deliberately not in
+  `_palette.scss`, which is for breakpoints the whole app shares; these describe one kind of card. Change
+  them in one file and the other wants the same change.
+
+  `$filters-collapse-max` has to agree with the 900px `useMinWidth` above it.
+*/
+$filters-collapse-max: 899.98px;
+$card-gutter-max: 1199.98px;
+
 .layout-search {
   @at-root .body--light & {
     background-color: $grey-3;
@@ -606,6 +657,188 @@ onUnmounted(() => {
   &-itemtags {
     .w-chip:last-child {
       margin-right: 0;
+    }
+  }
+
+  /*
+    THREE NARROWER LAYOUTS
+    ======================
+
+    Same shape and same thresholds as `layouts/ProfileLayout.vue`, which is the app's other card-beside-a-
+    sidebar screen: a sheet floating in a tinted page -- 90% of the width, 50px of gutter all round -- with
+    a 300px sidebar down its left side. Both give out as the window narrows, so the card gives them up one
+    at a time:
+
+      below 1200px   the card's gutters halve, handing the results the width they are running out of. The
+                     sidebar keeps its 300px, unlike the profile's nav: that one is a list of labels and
+                     can be as narrow as they are, where this is a column of form fields
+      below 900px    the sidebar goes altogether and becomes a disclosure above the results
+      below 600px    the card stops being a sheet and becomes the screen, and a result row stacks
+
+    Ordered narrowest-last, so each block overrides the one above it where the two speak about the same
+    property. `$filters-collapse-max` is the stylesheet's half of the 900px `useMinWidth` above, which is
+    what decides whether the disclosure button is rendered at all.
+  */
+
+  /* --- Below 1200px: the card gives up half its gutters ------------------------------------------- */
+  @media (max-width: $card-gutter-max) {
+    /*
+      Halved from `90% / 50px`. Not bracketed to a band: below 900 the gutters would otherwise jump back to
+      the wider pair as the window narrowed, which is the one thing a reader resizing a window notices.
+    */
+    &-card {
+      width: 95%;
+      margin: 25px auto;
+    }
+
+    /*
+      And the back button goes with them. It is positioned into the gutter beside the card (`left: -50px`),
+      so it needs 50px of gutter to sit in -- which a 2.5% gutter is not at any width this rule covers, and
+      was not at 90% either much below 1000px: the circle was already being clipped by the left edge of the
+      window. Hidden rather than moved, because the header above still has the search field that brought
+      the reader here, and the browser still has its own Back.
+    */
+    &-back {
+      display: none;
+    }
+  }
+
+  /* --- Below 900px: the sidebar is a disclosure above the results --------------------------------- */
+  @media (max-width: $filters-collapse-max) {
+    &-card {
+      flex-direction: column;
+    }
+
+    /*
+      The disclosure's bar. Full width, so it reads as a strip of the card rather than as a button sitting
+      on it -- `space-between` is what puts the chevron at the far end from the label, where a disclosure's
+      marker belongs -- and it takes the card's own top corners, being the top of the card now.
+    */
+    &-filterbtn {
+      justify-content: space-between;
+      border-radius: 7px 7px 0 0;
+
+      @at-root .body--light & {
+        background-color: $grey-1;
+        border-bottom: 1px solid $grey-3;
+      }
+      @at-root .body--dark & {
+        background-color: $dark-4;
+        border-bottom: 1px solid $dark-2;
+      }
+    }
+
+    /* -> The whole content of the button is one flex row, so the chevron needs pushing to the end of it */
+    &-filterbtn > span {
+      flex: 1;
+      justify-content: space-between;
+    }
+
+    &-filterchevron {
+      transition: transform 0.2s var(--ease-standard);
+
+      &.is-open {
+        transform: rotate(180deg);
+      }
+    }
+
+    /*
+      The panel, no longer a 300px column: the full width of the card, and the seam that divided the two
+      columns moves from its right edge to its bottom one. Both stated per theme, because that is where
+      the rules they replace are declared -- at three classes each, which a plain override here would
+      lose to.
+    */
+    &-sd {
+      flex: none;
+      width: 100%;
+      border-radius: 0;
+
+      @at-root .body--light & {
+        border-right: 0;
+        border-bottom: 1px solid $grey-3;
+        box-shadow: none;
+      }
+      @at-root .body--dark & {
+        border-right: 0;
+        border-bottom: 1px solid rgba(#fff, 0.12);
+        box-shadow: none;
+      }
+    }
+
+    /* -> The seam is the panel's bottom border now, and a left one would draw down the card's own edge */
+    .w-page {
+      @at-root .body--light & {
+        border-left: 0;
+      }
+      @at-root .body--dark & {
+        border-left: 0;
+      }
+
+      /*
+        The results header is the top-right corner of the card no longer -- the disclosure bar above it is
+        the whole top edge, and rounds both corners itself.
+      */
+      .section-header:first-child {
+        border-top-right-radius: 0;
+      }
+    }
+  }
+
+  /* --- Below 600px: the card is the screen, and a result row stacks -------------------------------- */
+  @media (max-width: $breakpoint-xs-max) {
+    &-card {
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* -> Nothing left to round: the card's own corners are square here */
+    &-filterbtn {
+      border-radius: 0;
+    }
+
+    /*
+      A result stacks instead of reserving a column for its date and tags. That column is `shrink-0`, so
+      beside it a title had whatever was left -- and what was left of 390px, after an avatar and a date,
+      was a few words. Wrapped onto its own line the row reads as a card: icon and title, the path and the
+      matched text under it, then when it was touched and what it is tagged with.
+    */
+    .w-page .w-list .w-item {
+      flex-wrap: wrap;
+    }
+
+    /*
+      And the icon goes to the top of the row rather than the middle of it. The section centres its
+      content, which is right for a row two lines tall and leaves the icon stranded halfway down one that
+      is now six.
+    */
+    .w-page .w-list .w-item-section--avatar {
+      justify-content: flex-start;
+    }
+
+    .w-page .w-list .w-item-section--side:not(.w-item-section--avatar) {
+      width: 100%;
+      align-items: flex-start;
+      margin-top: 0.25rem;
+      /*
+        Lined up under the title rather than under the icon: 56px is the avatar column's own width
+        (`min-width` on `.w-item-section--avatar` in `WItemSection`), and it replaces the 16px this
+        section carries as a TRAILING one -- which is a gutter between two columns, and there is only one
+        column now.
+      */
+      padding-left: 56px;
+
+      /*
+        Both were written for a right-hand column and are Tailwind utilities, so they are layered -- these
+        unlayered rules outrank them without `!important`.
+      */
+      .text-right {
+        text-align: left;
+      }
+      .justify-end {
+        justify-content: flex-start;
+      }
     }
   }
 }

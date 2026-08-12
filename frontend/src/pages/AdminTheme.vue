@@ -44,7 +44,7 @@
     </div>
     <w-separator inset />
     <div class="grid grid-cols-12 p-4 gap-4">
-      <div class="col-span-6">
+      <div class="col-span-12 lg:col-span-6">
         <!-- ----------------------- -->
         <!-- Theme Options -->
         <!-- ----------------------- -->
@@ -213,7 +213,7 @@
           </w-item>
         </w-card>
       </div>
-      <div class="col-span-6">
+      <div class="col-span-12 lg:col-span-6">
         <!-- ----------------------- -->
         <!-- Fonts -->
         <!-- ----------------------- -->

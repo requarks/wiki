@@ -312,6 +312,7 @@ import { useI18n } from 'vue-i18n'
 import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { useMinWidth } from '@/composables/screen'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
 import { findEditableTables } from '@/helpers/markdownTable'
@@ -418,8 +419,21 @@ const HEADER_ICONS = [
 */
 const SYNC_SCROLL = { behavior: 'smooth', block: 'start', inline: 'nearest' }
 
+/**
+ * Whether the window is wide enough to open the preview beside the source.
+ *
+ * 1024 is the app's `md` breakpoint (`css/tailwind.css`). Below it the two panes are half a small window
+ * each, and the source is the one being typed into — so the preview starts closed and is opened when
+ * wanted, from the toolbar button that takes its place.
+ */
+const isAtLeastMd = useMinWidth(1024)
+
 const state = reactive({
-  previewShown: true,
+  /*
+    Read once, as a DEFAULT rather than a binding: past this first value the pane is the author's to open
+    and close, and a bound one would slam it shut the moment a window was dragged narrower mid-edit.
+  */
+  previewShown: isAtLeastMd.value,
   previewScrollSync: true
 })
 

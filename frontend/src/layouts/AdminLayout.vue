@@ -66,7 +66,7 @@
         </w-toolbar>
       </div>
     </w-header>
-    <w-drawer class="admin-sidebar" v-model="leftDrawerOpen" show-if-above bordered>
+    <w-drawer class="admin-sidebar" v-model="leftDrawerOpen" bordered>
       <w-scroll-area class="admin-nav">
         <w-list class="text-white pb-6" padding dense dark>
           <w-item class="mb-2">
@@ -433,6 +433,28 @@
         </w-list>
       </w-scroll-area>
     </w-drawer>
+    <!--
+      The way back to the sidebar once it overlays the page instead of taking a column of its own, exactly
+      as `MainLayout` offers one: nothing else in the admin area opens it, and the header is a row of site
+      and account controls with no room for a menu button.
+
+      The position goes on a wrapper rather than on the button, as `WPageScroller` does it: `WBtn` is
+      `relative` from its own class list, and Tailwind emits `relative` after `fixed`, so a `fixed`
+      alongside it loses. `.corner-btn` is in `css/_base.scss`, since this layout never loads MainLayout's
+      stylesheet.
+    -->
+    <transition name="corner-btn">
+      <div v-if="showSidebarBtn" class="fixed bottom-0 left-0 z-30">
+        <w-btn
+          class="corner-btn corner-btn--left"
+          icon="la:bars"
+          color="primary"
+          round
+          size="md"
+          :aria-label="t(`admin.adminArea`)"
+          @click="narrowSidebarOpen = true" />
+      </div>
+    </transition>
     <w-page-container class="admin-container">
       <router-view v-slot="{ Component }"><component :is="Component" /></router-view>
       <w-footer><footer-nav generic /></w-footer>
@@ -449,6 +471,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useMeta } from '@/composables/meta'
+import { useMinWidth } from '@/composables/screen'
 
 import { useAdminStore } from '@/stores/admin'
 import { useCommonStore } from '@/stores/common'
@@ -508,9 +531,42 @@ useMeta(() => {
 
 // DATA
 
-const leftDrawerOpen = ref(true)
+/**
+ * Whether the reader has opened the overlaying sidebar. Only consulted below the breakpoint, where the
+ * drawer is a panel over the page; above it the sidebar is a column that is simply there.
+ */
+const narrowSidebarOpen = ref(false)
 
 // COMPUTED
+
+/**
+ * Where the drawer stops overlaying the page and takes its own column — `WDrawer`'s own default, which
+ * this layout leaves alone (unlike the site sidebar, which asks for 1100).
+ */
+const isWideViewport = useMinWidth(1024)
+
+/**
+ * Whether the sidebar is on screen: always on a wide viewport, and only once asked for on a narrow one.
+ *
+ * It used to be `ref(true)` plus `show-if-above`, which had two consequences. On a narrow window the
+ * sidebar arrived open, over the page. And closing it there — the scrim is the only way — set the model to
+ * false, which is what `WDrawer` takes as its cue to stop applying `showIfAbove` for good: widening the
+ * window afterwards brought back neither the column nor any way to ask for it. Expressing the whole state
+ * here means the answer is recomputed from the width every time rather than latched once.
+ */
+const leftDrawerOpen = computed({
+  get: () => isWideViewport.value || narrowSidebarOpen.value,
+  // -> Only ever reached from the scrim, which exists only while overlaying
+  set: (val) => {
+    narrowSidebarOpen.value = val
+  }
+})
+
+/*
+  Shown only where the sidebar is something to open, and not while it is already open — the scrim is what
+  closes it then, and the button would be behind the panel in any case.
+*/
+const showSidebarBtn = computed(() => !isWideViewport.value && !narrowSidebarOpen.value)
 
 const siteSectionShown = computed(() => {
   return (
@@ -554,6 +610,11 @@ function countBadgeClass(count) {
 watch(
   () => route.path,
   async (newValue) => {
+    /*
+      Following a link out of the overlaying sidebar puts it away, since the section it leads to is behind
+      it. On a wide viewport there is nothing to close and the flag is not consulted anyway.
+    */
+    narrowSidebarOpen.value = false
     if (!newValue.startsWith('/_admin')) {
       return
     }

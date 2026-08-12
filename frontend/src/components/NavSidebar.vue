@@ -164,6 +164,13 @@ watch(
 </script>
 
 <style lang="scss">
+/*
+  Just under the width `MainLayout` gives this sidebar's drawer as `overlayBelow` (1100), which is where it
+  stops being a column beside the content and starts overlaying it. Not one of the app's shared breakpoints
+  -- it belongs to this sidebar -- so it is stated here and cross-referenced there.
+*/
+$sidebar-overlay-max: 1099.98px;
+
 .sidebar-nav {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   /* -> Fills whatever the drawer's flex column has left over, rather than subtracting the action bar
@@ -345,9 +352,10 @@ watch(
 
     `content: none` rather than `display: none`, so the box is never generated. Stated after both
     `--flipped` rules and at their specificity, so it takes the notch away whichever edge it was cut
-    from -- and 1023.98px is `WDrawer`'s own 1024px overlay breakpoint, which the two have to agree on.
+    from -- and `$sidebar-overlay-max` is the width MainLayout hands the drawer as `overlayBelow`, which
+    the two have to agree on.
   */
-  @media (max-width: $breakpoint-sm-max) {
+  @media (max-width: $sidebar-overlay-max) {
     .w-list .w-item.router-link-exact-active::after {
       content: none;
     }

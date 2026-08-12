@@ -280,7 +280,7 @@ onBeforeUnmount(() => {
     font-size: inherit;
     font-weight: inherit;
     text-decoration: none;
-    /* Long headings wrap rather than being cut off; the sidebar is only 300px wide */
+    /* Long headings wrap rather than being cut off; the sidebar is 300px wide, 200px under 1400px */
     overflow-wrap: break-word;
     transition:
       color 0.2s var(--ease-standard),

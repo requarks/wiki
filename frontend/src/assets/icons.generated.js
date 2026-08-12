@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  263 icons.
+  264 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-double-right": {"body":"<path fill=\"currentColor\" d=\"M9.094 4.781L7.688 6.22l9.78 9.78l-9.78 9.781l1.406 1.438L20.313 16zm7 0L14.687 6.22L24.47 16l-9.782 9.781l1.407 1.438L27.312 16z\"/>","width":32,"height":32},
@@ -189,6 +189,7 @@ export const BUNDLED_ICONS = {
   "mdi:eye-off-outline": {"body":"<path fill=\"currentColor\" d=\"M2 5.27L3.28 4L20 20.72L18.73 22l-3.08-3.08c-1.15.38-2.37.58-3.65.58c-5 0-9.27-3.11-11-7.5c.69-1.76 1.79-3.31 3.19-4.54zM12 9a3 3 0 0 1 3 3a3 3 0 0 1-.17 1L11 9.17A3 3 0 0 1 12 9m0-4.5c5 0 9.27 3.11 11 7.5a11.8 11.8 0 0 1-4 5.19l-1.42-1.43A9.86 9.86 0 0 0 20.82 12A9.82 9.82 0 0 0 12 6.5c-1.09 0-2.16.18-3.16.5L7.3 5.47c1.44-.62 3.03-.97 4.7-.97M3.18 12A9.82 9.82 0 0 0 12 17.5c.69 0 1.37-.07 2-.21L11.72 15A3.064 3.064 0 0 1 9 12.28L5.6 8.87c-.99.85-1.82 1.91-2.42 3.13\"/>","width":24,"height":24},
   "mdi:file-document-outline": {"body":"<path fill=\"currentColor\" d=\"M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 2h7v5h5v11H6zm2 8v2h8v-2zm0 4v2h5v-2z\"/>","width":24,"height":24},
   "mdi:file-search-outline": {"body":"<path fill=\"currentColor\" d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7c-.41-.25-.8-.56-1.14-.9c-.33-.33-.61-.7-.86-1.1H6V4h7v5h5v1.18c.71.16 1.39.43 2 .82V8zm6.31 16.9c1.33-2.11.69-4.9-1.4-6.22c-2.11-1.33-4.91-.68-6.22 1.4c-1.34 2.11-.69 4.89 1.4 6.22c1.46.93 3.32.93 4.79.02L22 23.39L23.39 22zm-3.81.1a2.5 2.5 0 0 1-2.5-2.5a2.5 2.5 0 0 1 2.5-2.5a2.5 2.5 0 0 1 2.5 2.5a2.5 2.5 0 0 1-2.5 2.5\"/>","width":24,"height":24},
+  "mdi:file-tree": {"body":"<path fill=\"currentColor\" d=\"M3 3h6v4H3zm12 7h6v4h-6zm0 7h6v4h-6zm-2-4H7v5h6v2H5V9h2v2h6z\"/>","width":24,"height":24},
   "mdi:flag-outline": {"body":"<path fill=\"currentColor\" d=\"m12.36 6l.4 2H18v6h-3.36l-.4-2H7V6zM14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6\"/>","width":24,"height":24},
   "mdi:food-apple-outline": {"body":"<path fill=\"currentColor\" d=\"M20 10a5.27 5.27 0 0 0-7-2V3h-2v5a5.27 5.27 0 0 0-7 2c-2 3 3 12 5 12s2-1 3-1s1 1 3 1s7-9 5-12m-1.75 3.38c-.62 2.47-1.84 4.74-3.55 6.62c-.2 0-.43-.1-.6-.25a3.34 3.34 0 0 0-4.2 0c-.17.15-.4.25-.6.25a15.3 15.3 0 0 1-3.55-6.61c-.25-.73-.3-1.52-.09-2.27A3.37 3.37 0 0 1 8.5 9.4c.56.01 1.11.14 1.61.39l.89.45h2l.89-.45c.5-.25 1.05-.38 1.61-.39c1.18.03 2.26.68 2.84 1.71c.21.75.16 1.54-.09 2.27M11 5C5.38 8.07 4.11 3.78 4.11 3.78S6.77.19 11 5\"/>","width":24,"height":24},
   "mdi:format-align-center": {"body":"<path fill=\"currentColor\" d=\"M3 3h18v2H3zm4 4h10v2H7zm-4 4h18v2H3zm4 4h10v2H7zm-4 4h18v2H3z\"/>","width":24,"height":24},
