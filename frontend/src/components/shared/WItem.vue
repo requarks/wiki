@@ -34,6 +34,19 @@ const props = defineProps({
     type: [String, Object],
     default: null
   },
+  /**
+   * Renders as a plain `<a>`; implies `clickable`. For an address this app does not route -- another
+   * site, a `mailto:` -- which `to` cannot carry: the router would try to match it as a path.
+   */
+  href: {
+    type: String,
+    default: null
+  },
+  /** `_blank` and the rest, for an `href` row. `rel` follows from it. */
+  target: {
+    type: String,
+    default: null
+  },
   /** Applied when `to` matches the current route. */
   activeClass: {
     type: String,
@@ -66,9 +79,12 @@ const emit = defineEmits(['click'])
 
 const isDisabled = computed(() => props.disabled)
 
-const isInteractive = computed(() => (props.clickable || Boolean(props.to)) && !isDisabled.value)
+const isInteractive = computed(
+  () => (props.clickable || Boolean(props.to || props.href)) && !isDisabled.value
+)
 
-const isAnchor = computed(() => Boolean(props.to) && !isDisabled.value)
+// -> Either kind of link renders an <a>, which is what needs no tab stop or `role` of its own
+const isAnchor = computed(() => Boolean(props.to || props.href) && !isDisabled.value)
 
 /*
   Whether the row should look clickable.
@@ -87,11 +103,31 @@ const showsAffordance = computed(
 )
 
 // -> A disabled link must stop being a link, or the browser will still navigate on click
-const tagName = computed(() => (isAnchor.value ? 'router-link' : props.tag))
+const tagName = computed(() => {
+  if (!isAnchor.value) {
+    return props.tag
+  }
+  return props.to ? 'router-link' : 'a'
+})
 
-const linkAttrs = computed(() =>
-  isAnchor.value ? { to: props.to, activeClass: props.activeClass ?? undefined } : {}
-)
+const linkAttrs = computed(() => {
+  if (!isAnchor.value) {
+    return {}
+  }
+  /*
+    `target` goes with `href` only, as it does on `WBtn`: a row that opens somewhere else is not the
+    router's to swap in, so a caller wanting a new tab asks for a plain link and gets one.
+  */
+  if (props.to) {
+    return { to: props.to, activeClass: props.activeClass ?? undefined }
+  }
+  return {
+    href: props.href,
+    target: props.target ?? undefined,
+    // -> Never let a new tab keep a handle on this window
+    rel: props.target === '_blank' ? 'noopener noreferrer' : undefined
+  }
+})
 
 const classes = computed(() => [
   /*

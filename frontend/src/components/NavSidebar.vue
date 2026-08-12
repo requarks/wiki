@@ -1,9 +1,26 @@
 <template>
-  <w-scroll-area class="sidebar-nav" :thumb-style="thumbStyle" :bar-style="barStyle">
+  <!-- -> The dent marking the current page is cut out of the edge FACING the content, which is the
+          right one only while the sidebar is on the left; see the stylesheet -->
+  <w-scroll-area
+    class="sidebar-nav"
+    :class="siteStore.theme.sidebarPosition === `right` ? `sidebar-nav--flipped` : ``"
+    :thumb-style="thumbStyle"
+    :bar-style="barStyle">
     <w-list class="sidebar-nav-list" clickable dense dark>
       <template v-for="item of siteStore.nav.items" :key="item.id">
-        <w-item-label class="sidebar-nav-header text-caption text-wordbreak-all" v-if="item.type === `header`" header>{{ item.label }}</w-item-label>
-        <w-expansion-item v-else-if="item.type === `link` && item.children?.length > 0" dense>
+        <w-item-label
+          class="sidebar-nav-header text-caption text-wordbreak-all"
+          v-if="item.type === `header`"
+          header
+          >{{ item.label }}</w-item-label
+        >
+        <!-- -> Open from the start when the page being read is one of its children, so a reader arriving
+                by URL sees where they are in the tree. Not `v-model`: after that first render the group
+                is the reader's to open and close, and a bound value would fight them -->
+        <w-expansion-item
+          v-else-if="item.type === `link` && item.children?.length > 0"
+          dense
+          :default-opened="containsCurrent(item)">
           <!-- The icon goes through a header slot rather than the `icon` prop, so that an Iconify -->
           <!-- reference is drawn by w-icon like everywhere else -->
           <template #header>
@@ -11,13 +28,18 @@
             <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
           </template>
           <w-list clickable dense dark>
-            <w-item v-for="itemChild of item.children" :to="itemChild.target" :key="itemChild.id">
+            <w-item
+              v-for="itemChild of item.children"
+              v-bind="destination(itemChild)"
+              :key="itemChild.id">
               <w-item-section side><w-icon :name="itemChild.icon" color="white" /></w-item-section>
-              <w-item-section class="text-wordbreak-all text-white">{{ itemChild.label }}</w-item-section>
+              <w-item-section class="text-wordbreak-all text-white">{{
+                itemChild.label
+              }}</w-item-section>
             </w-item>
           </w-list>
         </w-expansion-item>
-        <w-item v-else-if="item.type === `link`" :to="item.target">
+        <w-item v-else-if="item.type === `link`" v-bind="destination(item)">
           <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
           <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
         </w-item>
@@ -32,9 +54,10 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { routableHref } from '@/helpers/renderedContent'
+
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
-
 
 // STORES
 
@@ -63,6 +86,68 @@ const barStyle = {
   backgroundColor: '#000',
   width: '9px',
   opacity: 0.1
+}
+
+// METHODS
+
+/**
+ * Where a nav item points, as the props that take a reader there.
+ *
+ * An administrator types this address by hand and it can be anything: a path in this wiki, a URL on
+ * another site, a `mailto:`. Only the first of those is the router's, and handing it the others is what
+ * made an external link land on "This page does not exist yet" -- vue-router matched
+ * `https://example.com/x` as a PATH, found nothing, and fell through to the catch-all page view.
+ *
+ * The question is the one `routableHref` already answers for the links inside a rendered page, so it is
+ * the same function that answers it here rather than a second opinion that can drift from it. Which also
+ * settles two cases beyond the reported one: an item pointing into `/_files/` now downloads the file
+ * instead of 404ing, and one pointing at `#a-heading` on this page jumps to it.
+ *
+ * `openInNewWindow`, set per link in the navigation editor, is fed into the same question rather than
+ * added on afterwards: a link asking for a new tab is one `routableHref` declines whatever it points at,
+ * on the grounds that a new context is the browser's to open and not the router's to swap in. So such an
+ * item goes out as a plain anchor -- which loads this app fresh in the new tab, which is what a new tab
+ * does in any case.
+ *
+ * Mind the two meanings of "target" in here: a nav item's is the address to go to, an anchor's is the
+ * window to open it in.
+ */
+function destination(item) {
+  const address = item.target ?? '/'
+  const target = item.openInNewWindow ? '_blank' : undefined
+  let routable = null
+  try {
+    routable = routableHref(
+      { href: new URL(address, globalThis.location.href).href, target },
+      globalThis.location
+    )
+  } catch {
+    // -> Not a URL at all: nothing to route to, so it goes out as the author wrote it
+  }
+  return routable ? { to: routable } : { href: address, target }
+}
+
+/**
+ * Whether a nav item points at the page being read.
+ *
+ * Only a routed item can be: an address that leaves the wiki is never where the reader already is, and
+ * one that opens in a new tab is not asking to be here either. Asked of the router rather than compared
+ * as strings, so a trailing slash, an escape or a redirect is settled the same way the router settles it
+ * when the reader actually clicks.
+ *
+ * This is only used to decide which groups open on arrival. The dent itself is drawn off
+ * `router-link-exact-active`, the class `RouterLink` puts on the row it has taken the reader to -- the
+ * same question, answered by the same router, but kept up to date by the link itself as the reader moves
+ * around rather than recomputed here.
+ */
+function isCurrent(item) {
+  const { to } = destination(item)
+  return Boolean(to) && router.resolve(to).path === route.path
+}
+
+/** ...and whether one of a group's children is, which is what opens the group. */
+function containsCurrent(item) {
+  return (item.children ?? []).some((child) => isCurrent(child))
 }
 
 // WATCHERS
@@ -118,6 +203,42 @@ watch(
 
     .w-item-section--avatar {
       min-width: auto;
+    }
+
+    /*
+      The row holding the page being read, marked by a notch bitten out of the sidebar's inner edge.
+
+      Painted in the colour of what is on the other side of that edge -- the page itself, which is the
+      body's own background, since nothing between here and the article column paints one. So it is not a
+      marker drawn ON the sidebar but a piece of the sidebar missing, with the content showing through.
+
+      `router-link-exact-active` is `RouterLink`'s own, so the mark follows the reader without this
+      component tracking anything: a row rendered as a plain `<a>` -- an address that leaves the wiki or
+      opens in a new tab -- never carries it, which is right, because a reader is never already there.
+    */
+    .w-item.router-link-exact-active {
+      position: relative;
+
+      /*
+        A triangle out of one border: the right border is the only one with a colour, and the left has no
+        width, so the shape tapers to a point on the left. Flush to the edge and centred on the row.
+      */
+      &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 0;
+        height: 0;
+        transform: translateY(-50%);
+        border-style: solid;
+        border-width: 7px 7px 7px 0;
+        border-color: transparent #fff transparent transparent;
+
+        @at-root .body--dark & {
+          border-color: transparent $dark-6 transparent transparent;
+        }
+      }
     }
 
     /*
@@ -184,6 +305,36 @@ watch(
         border-color: rgba(255, 255, 255, 0.25) transparent transparent rgba(255, 255, 255, 0.25);
       }
     }
+  }
+
+  /*
+    A site can put this sidebar on the right instead, which puts the page on the other side of it: the
+    notch has to be bitten out of the left edge then, and point the other way, or it is a white arrow at
+    the window's edge pointing at nothing.
+
+    Same specificity as the rule it overrides and stated after it, so the sides swap cleanly.
+  */
+  &--flipped .w-list .w-item.router-link-exact-active::after {
+    right: auto;
+    left: 0;
+    border-width: 7px 0 7px 7px;
+    border-color: transparent transparent transparent #fff;
+
+    @at-root .body--dark & {
+      border-color: transparent transparent transparent $dark-6;
+    }
+  }
+
+  /*
+    A child row starts 10px in, past the rule that marks the group -- and on this side that is the edge
+    the notch is cut from, so it would be bitten out of the middle of the sidebar with a strip of colour
+    still outside it. Pushed back out to where the sidebar itself ends.
+
+    The other way round this does not arise: with the sidebar on the left the notch is on the right edge,
+    and only the left of a child row is indented.
+  */
+  &--flipped .w-list .w-expansion-item__content .w-item.router-link-exact-active::after {
+    left: -10px;
   }
 
   &-header {

@@ -126,7 +126,12 @@
         <w-tooltip anchor="center left" self="center right">Page Source</w-tooltip>
       </w-btn>
     </template>
-    <template v-if="!isRedirect && !(editorStore.isActive && editorStore.mode === `create`)">
+    <!-- -> `hasPageActions` takes the rule with it: a separator over a button that opens nothing is a
+            line drawn for its own sake -->
+    <template
+      v-if="
+        hasPageActions && !isRedirect && !(editorStore.isActive && editorStore.mode === `create`)
+      ">
       <w-separator class="my-2" inset />
       <w-btn
         class="h-12"
@@ -268,6 +273,16 @@ const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
  * individual buttons for what each one loses.
  */
 const isRedirect = computed(() => pageStore.editor === 'redirect')
+
+/**
+ * Whether the "..." menu has anything to show.
+ *
+ * Every entry in it is behind something: Rerender Page behind `write:pages`, Convert Page and View
+ * Backlinks behind the experimental flag (the first behind `manage:pages` as well). So those two tests
+ * cover the whole menu -- and with neither of them true it opened an empty panel, which is what a guest
+ * got on every page. Keep this in step with the entries themselves.
+ */
+const hasPageActions = computed(() => flagsStore.experimental || userStore.can('write:pages'))
 
 // METHODS
 
