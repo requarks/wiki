@@ -99,6 +99,53 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * GET THE MENU A PAGE INHERITS
+   */
+  app.get<{ Params: { siteId: string; pageId: string } }>(
+    '/sites/:siteId/navigation/pages/:pageId/inherited',
+    {
+      config: {
+        permissions: ['manage:navigation']
+      },
+      schema: {
+        summary: 'Get the menu a page inherits',
+        description:
+          "The id of the menu this page falls back to while it inherits: the nearest ancestor that overrides one, or the site-wide menu when no ancestor does.\n\nWhat the navigation editor asks so that a page which inherits can edit the sidebar it shows without being opened on the ancestor that owns it. Null when the nearest ancestor hides the sidebar, which leaves nothing to inherit — and nothing to edit. Not the same question as the page's own `navigationId`, which is what the CURRENT mode resolved to.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            pageId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'pageId']
+        },
+        response: {
+          200: {
+            description: 'The inherited menu',
+            type: 'object',
+            properties: {
+              navigationId: {
+                type: ['string', 'null'],
+                description:
+                  'The menu this page inherits. Null when the sidebar above it is hidden.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      return {
+        navigationId: await WIKI.models.navigation.inheritedNavId(
+          req.params.siteId,
+          req.params.pageId
+        )
+      }
+    }
+  )
+
+  /**
    * UPDATE NAVIGATION
    */
   app.put<{
@@ -113,7 +160,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Set how a page resolves its navigation',
         description:
-          "Records the mode on the tree entry and repoints every descendant that still inherits, stopping at any that overrides or hides in between.\n\nSending `items` stores them as this entry's menu as well — for the home page that is the site-wide menu, which is what every other page inherits. Leaving `items` out changes only the mode.",
+          'Records the mode on the tree entry and repoints every descendant that still inherits, stopping at any that overrides or hides in between.\n\nSending `items` stores them as the menu the mode resolves to, and leaving them out changes only the mode. With `inherit` that menu belongs to an ancestor — the same one `navigation/pages/{pageId}/inherited` names — so editing a menu from a page that inherits it edits it where it lives, for every page using it; for the home page that is the site-wide menu, which is what every other page inherits by default. Refused when the mode is `inherit` and the sidebar above the page is hidden, since then there is no menu to store items in.',
         tags: ['Navigation'],
         params: {
           type: 'object',

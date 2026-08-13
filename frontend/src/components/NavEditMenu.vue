@@ -128,6 +128,17 @@ const { t } = useI18n()
 
 const state = reactive({
   mode: 'inherit',
+  /**
+   * The menu this page inherits, resolved on open for any page that is not the root — see the
+   * `inherited` endpoint.
+   *
+   * Asked of the server rather than read off `pageStore.navigationId`, which only answers this while
+   * the SAVED mode is `inherit`: on a page that currently overrides, picking Inherit here has to point
+   * at the ancestor's menu, and the ancestor holding it is not something the page knows.
+   *
+   * Null means nothing to inherit: the sidebar above this page is hidden.
+   */
+  inheritedNavId: null,
   loading: 0
 })
 
@@ -138,8 +149,9 @@ const isRoot = computed(() => {
 })
 
 const canEditMenuItems = computed(() => {
+  // -> Inheriting edits the menu this page shows where it lives, which needs there to be one
   if (!isRoot.value && state.mode === 'inherit') {
-    return false
+    return Boolean(state.inheritedNavId)
   }
   return ['inherit', 'override', 'overrideExact'].includes(state.mode)
 })
@@ -157,8 +169,39 @@ watch(
 
 // METHODS
 
+/**
+ * Resolves the menu this page inherits, so that Inherit can offer to edit it.
+ *
+ * Quiet on failure: the mode itself is what this menu is for and can still be set, so a resolution
+ * that did not come back only leaves the Edit Menu Items button out.
+ */
+async function loadInheritedNav() {
+  // -> Deliberately outside `state.loading`, which is what the Save button spins on: this runs as the
+  //    menu opens, and a spinner there would read as a save in flight
+  try {
+    const resp = await API_CLIENT.get(
+      `sites/${siteStore.id}/navigation/pages/${pageStore.id}/inherited`
+    ).json()
+    state.inheritedNavId = resp?.navigationId ?? null
+    // -> A row appearing under the list makes the menu taller than the popup it was measured for
+    nextTick(() => {
+      props.updatePositionHandler()
+    })
+  } catch (err) {
+    console.warn(`Could not resolve the inherited navigation menu: ${apiErrorMessage(err)}`)
+  }
+}
+
 function startEditing() {
-  siteStore.$patch({ overlay: 'NavEdit', overlayOpts: { mode: state.mode } })
+  siteStore.$patch({
+    overlay: 'NavEdit',
+    overlayOpts: {
+      mode: state.mode,
+      // -> A menu this page does not own: only Inherit edits one, and only away from the root, where
+      //    inheriting and owning are the same menu. See NavEditOverlay's `navId`.
+      ...(!isRoot.value && state.mode === 'inherit' && { navId: state.inheritedNavId })
+    }
+  })
   props.menuHideHandler()
 }
 
@@ -197,5 +240,8 @@ async function save() {
 
 onMounted(() => {
   state.mode = pageStore.navigationMode
+  if (!isRoot.value) {
+    loadInheritedNav()
+  }
 })
 </script>

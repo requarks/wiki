@@ -108,6 +108,20 @@ class Navigation {
     await WIKI.db.delete(navigationTable).where(inArray(navigationTable.id, ids))
   }
 
+  /** The tree entry a navigation change is addressed to. */
+  private async getEntry(siteId: string, pageId: string) {
+    const entries = await WIKI.db
+      .select()
+      .from(treeTable)
+      .where(and(eq(treeTable.id, pageId), eq(treeTable.siteId, siteId)))
+      .limit(1)
+    const entry = entries[0]
+    if (!entry) {
+      throw new CustomError('navInvalidPage', 'This page does not exist.', 404)
+    }
+    return entry
+  }
+
   /**
    * The menu a tree entry falls back to: the nearest ancestor that overrides or hides, or the
    * site-wide menu when nothing above it does either.
@@ -133,13 +147,28 @@ class Navigation {
   }
 
   /**
+   * The menu a page inherits — the one its sidebar shows while its own mode is `inherit`.
+   *
+   * `navigationId` on the entry already answers this for a page that IS inheriting, but only for one:
+   * the navigation editor asks before anything is saved, so that a page can edit the menu it shows
+   * without being opened on the ancestor that owns it, and so that it can tell there is one to edit.
+   *
+   * Null when the nearest ancestor hides the sidebar, which leaves nothing to inherit.
+   */
+  async inheritedNavId(siteId: string, pageId: string): Promise<string | null> {
+    const entry = await this.getEntry(siteId, pageId)
+    return this.ancestorNavId(siteId, entry.folderPath ?? '')
+  }
+
+  /**
    * Set how a page decides its sidebar, and optionally the menu itself.
    *
    * Two things move here. The entry records its own mode and the menu it resolves to, and — when the
    * change alters what descendants inherit — every entry below it that is still on `inherit` is
    * repointed, stopping at any that overrides or hides in between.
    *
-   * @param items When given, the menu stored against this entry, replacing whatever was there
+   * @param items When given, the menu the mode resolves to, replacing whatever was there — this
+   *              entry's own, or the one it inherits when the mode is `inherit`
    */
   async updateNavigation({
     siteId,
@@ -152,15 +181,7 @@ class Navigation {
     mode: NavigationMode
     items?: NavigationItem[]
   }): Promise<UpdateNavigationResult> {
-    const entries = await WIKI.db
-      .select()
-      .from(treeTable)
-      .where(and(eq(treeTable.id, pageId), eq(treeTable.siteId, siteId)))
-      .limit(1)
-    const entry = entries[0]
-    if (!entry) {
-      throw new CustomError('navInvalidPage', 'This page does not exist.', 404)
-    }
+    const entry = await this.getEntry(siteId, pageId)
 
     // -> Whatever this change resolves to, `inherit` ultimately falls back to the site menu, and a
     //    site created before that row existed does not have one yet
@@ -173,14 +194,29 @@ class Navigation {
     const ownNavId = isSiteRoot ? siteId : entry.id
     const fullPath = folderPath ? `${folderPath}.${entry.fileName}` : entry.fileName
 
+    const ancestorId = await this.ancestorNavId(siteId, folderPath)
+
     if (items) {
+      /*
+        Which menu the items belong to is the mode's answer, not the entry's: a page that inherits
+        shows a menu belonging to an ancestor, so editing the sidebar from that page edits THAT menu
+        rather than starting one of its own that nothing would point at. For the root home page the two
+        are the same id — the site-wide menu is what it inherits and what it owns.
+      */
+      const targetNavId = mode === 'inherit' ? ancestorId : ownNavId
+      if (!targetNavId) {
+        throw new CustomError(
+          'navNoInheritedMenu',
+          'This page inherits a hidden sidebar, so there is no menu to save items to.',
+          400
+        )
+      }
       await WIKI.db
         .insert(navigationTable)
-        .values({ id: ownNavId, siteId, items })
+        .values({ id: targetNavId, siteId, items })
         .onConflictDoUpdate({ target: navigationTable.id, set: { items } })
     }
 
-    const ancestorId = await this.ancestorNavId(siteId, folderPath)
     // -> A mode that stops applying below this entry hands its descendants back to the ancestor
     const wasCascading = ['override', 'hide'].includes(entry.navigationMode)
 
