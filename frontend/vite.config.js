@@ -210,20 +210,27 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: true,
       port: userConfig.dev?.port,
-      proxy: ['_api', '_blocks', '_collab', '_files', '_icons', '_site', '_thumb', '_user'].reduce(
-        (result, key) => {
-          result[`/${key}`] = {
-            target: {
-              host: '127.0.0.1',
-              port: userConfig.port
-            },
-            // -> `_collab` is a websocket; the rest are unaffected by this being on
-            ws: true
-          }
-          return result
-        },
-        {}
-      ),
+      proxy: [
+        '_api',
+        '_blocks',
+        '_collab',
+        '_files',
+        '_icons',
+        '_site',
+        '_terminal',
+        '_thumb',
+        '_user'
+      ].reduce((result, key) => {
+        result[`/${key}`] = {
+          target: {
+            host: '127.0.0.1',
+            port: userConfig.port
+          },
+          // -> `_collab` and `_terminal` are websockets; the rest are unaffected by this being on
+          ws: true
+        }
+        return result
+      }, {}),
       hmr: {
         clientPort: userConfig.dev?.hmrClientPort
       }

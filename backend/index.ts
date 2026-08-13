@@ -63,6 +63,7 @@ const SERVER_ROUTE_SEGMENTS = new Set([
   '_icons',
   '_render',
   '_site',
+  '_terminal',
   '_thumb',
   '_user'
 ])
@@ -273,9 +274,10 @@ async function initHTTPServer() {
   app.register(fastifySensible)
   app.register(fastifyCompress, { global: true })
   /*
-    Websocket upgrades, for live collaborative editing (`controllers/collab.ts`). Registered on the
-    root instance because the upgrade handler is installed on the HTTP server itself, and before the
-    routes below because a route declaring `websocket: true` needs it already there.
+    Websocket upgrades, for live collaborative editing (`controllers/collab.ts`) and the admin
+    terminal's log stream (`controllers/terminal.ts`). Registered on the root instance because the
+    upgrade handler is installed on the HTTP server itself, and before the routes below because a
+    route declaring `websocket: true` needs it already there.
 
     `maxPayload` bounds a single frame: these carry keystrokes and cursor positions, and the largest
     legitimate one is a client handing over a document it edited while offline.
@@ -666,6 +668,7 @@ async function initHTTPServer() {
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })
   app.register(import('./controllers/icons.ts'), { prefix: '/_icons' })
   app.register(import('./controllers/render.ts'), { prefix: '/_render' })
+  app.register(import('./controllers/terminal.ts'), { prefix: '/_terminal' })
   app.register(import('./controllers/thumb.ts'), { prefix: '/_thumb' })
   app.register(import('./controllers/user.ts'), { prefix: '/_user' })
 

@@ -66,7 +66,7 @@ import { useMeta } from '@/composables/meta'
 
 import { useSiteStore } from '@/stores/site'
 
-import { io } from 'socket.io-client'
+import { FitAddon } from '@xterm/addon-fit'
 import { Terminal } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 
@@ -94,6 +94,8 @@ const state = reactive({
 
 let socket = null
 let term = null
+let fitAddon = null
+let resizeObserver = null
 
 // REFS
 
@@ -103,64 +105,90 @@ const termDiv = ref(null)
 
 function clearTerminal() {
   term.clear()
-  term.focus()
 }
 
 function connect() {
+  if (socket) {
+    return
+  }
   state.connecting = true
-  socket.connect()
+  term.writeln(`> ${t('admin.terminal.connecting')}`)
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  socket = new WebSocket(`${protocol}//${window.location.host}/_terminal/logs`)
+
+  // -> Whether the stream ever started is what tells a session that was refused or never reached the
+  //    server apart from one that ran and ended, and only `close` is guaranteed to fire
+  let opened = false
+
+  socket.addEventListener('open', () => {
+    opened = true
+    state.connected = true
+    state.connecting = false
+    term.writeln(`> ${t('admin.terminal.connected')}`)
+  })
+
+  socket.addEventListener('message', (ev) => {
+    term.writeln(ev.data)
+  })
+
+  socket.addEventListener('close', (ev) => {
+    socket = null
+    state.connected = false
+    state.connecting = false
+    /*
+      Codes in the 4000 range are the server's own (see `controllers/terminal.ts`) and mean the
+      session was refused rather than dropped, so the reason is worth printing — reconnecting with the
+      same session would be refused just as fast. Anything else that closes without ever having opened
+      never reached the server, and a browser will not say why.
+    */
+    if (ev.code >= 4000) {
+      term.writeln(`!> ${t('admin.terminal.connectError')} ${ev.reason}`)
+    } else if (opened) {
+      term.writeln(`> ${t('admin.terminal.disconnected')}`)
+    } else {
+      term.writeln(`!> ${t('admin.terminal.connectError')}`)
+    }
+  })
 }
 
 function disconnect() {
-  socket.disconnect()
+  socket?.close()
 }
 
 // MOUNTED
 
 onMounted(() => {
   term = new Terminal({
-    cursorBlink: true,
-    cols: 128
+    cursorBlink: false,
+    // -> Nothing is sent back to the server: this is a log view, not a shell
+    disableStdin: true,
+    convertEol: true,
+    scrollback: 5000,
+    fontSize: 13
   })
+  fitAddon = new FitAddon()
+  term.loadAddon(fitAddon)
   term.open(termDiv.value)
-  term.writeln(`> ${t('admin.terminal.connecting')}`)
-  state.connecting = true
+  fitAddon.fit()
 
-  // socket = io(window.location.host, {
-  socket = io(window.location.host, {
-    path: '/_ws/',
-    auth: {
-      token: 'TEST' // TODO: Use active token
-    },
-    autoConnect: false
+  // -> The terminal sizes itself in whole rows and columns, so it has to be told when the box it sits
+  //    in changes — the admin drawer collapsing counts, not just the window
+  resizeObserver = new ResizeObserver(() => {
+    fitAddon.fit()
   })
-  socket.on('connect', () => {
-    term.writeln(`> ${t('admin.terminal.connected')}`)
-    state.connected = true
-    state.connecting = false
-    socket.emit('server:logs')
-  })
-  socket.on('disconnect', () => {
-    term.writeln(`> ${t('admin.terminal.disconnected')}`)
-    state.connected = false
-  })
-  socket.on('connect_error', (err) => {
-    console.warn(err)
-    term.writeln(`!> ${t('admin.terminal.connectError')} ${err.message}`)
-  })
-  socket.on('server:log', (msg) => {
-    term.writeln(msg)
-    term.focus()
-  })
-  socket.connect()
+  resizeObserver.observe(termDiv.value)
+
+  connect()
 })
 
 // BEFORE UNMOUNT
 
 onBeforeUnmount(() => {
-  if (socket?.connected) {
-    socket.disconnect()
-  }
+  resizeObserver?.disconnect()
+  socket?.close()
+  socket = null
+  term?.dispose()
 })
 </script>
 
@@ -168,6 +196,10 @@ onBeforeUnmount(() => {
 .admin-terminal {
   &-term {
     width: 100%;
+    /* -> The terminal fits itself to this box, so the box has to have a height of its own: sized off
+          the viewport, it can't grow with its own output and set the resize observer off in a loop */
+    height: calc(100vh - 260px);
+    min-height: 240px;
     background-color: #000;
     border-radius: 5px;
     overflow: hidden;

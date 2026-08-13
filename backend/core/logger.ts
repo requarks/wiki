@@ -5,6 +5,12 @@ export type LogLevel = 'error' | 'warn' | 'info' | 'debug'
 export type IgnoredLogLevel = 'verbose' | 'silly'
 export type LogFn = (...args: unknown[]) => void
 
+/**
+ * Formatted lines kept in memory, replayed to an admin terminal the moment it connects
+ * (`controllers/terminal.ts`). Enough to see how the instance got to where it is, not a log file.
+ */
+const BACKLOG_SIZE = 100
+
 const LEVELS: LogLevel[] = ['error', 'warn', 'info', 'debug']
 const LEVELSIGNORED: IgnoredLogLevel[] = ['verbose', 'silly']
 const LEVELCOLORS: Record<LogLevel, 'red' | 'yellow' | 'green' | 'cyan'> = {
@@ -18,6 +24,7 @@ class Logger extends EventEmitter {
   // -> Assigned dynamically in init(). `declare` keeps these type-only so that no class field is
   //    emitted, leaving the runtime shape of the instance untouched.
   declare ws: EventEmitter
+  declare backlog: () => string[]
   declare error: LogFn
   declare warn: LogFn
   declare info: LogFn
@@ -32,8 +39,13 @@ export default {
     const primaryLogger = new Logger()
 
     let ignoreNextLevels = false
+    const backlog: string[] = []
 
     primaryLogger.ws = new EventEmitter()
+    // -> One listener per connected admin terminal, so the default cap of 10 is a leak warning rather
+    //    than a limit worth respecting
+    primaryLogger.ws.setMaxListeners(0)
+    primaryLogger.backlog = () => [...backlog]
 
     LEVELS.forEach((lvl) => {
       primaryLogger[lvl] = (...args: unknown[]) => {
@@ -58,6 +70,11 @@ export default {
           }
 
           console.log(formatted)
+
+          backlog.push(formatted)
+          if (backlog.length > BACKLOG_SIZE) {
+            backlog.shift()
+          }
           primaryLogger.ws.emit('log', formatted)
         })
       }

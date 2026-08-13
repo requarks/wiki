@@ -78,7 +78,10 @@
           </w-item-section>
           <w-item-section>{{ t('common.header.admin') }}</w-item-section>
         </w-item>
-        <w-separator class="my-2" />
+        <!-- -> Only once there is something above it to divide from the account rows below: a guest whose
+                rules grant nothing but reading has none of the four, and the menu opened on a rule with
+                blank space over it and Login alone underneath -->
+        <w-separator v-if="hasActionRows" class="my-2" />
         <!--
           The account rows, flattened into this list rather than opened as a second submenu: they are two
           plain actions, and the panel they live in on a wide screen is 300px of card -- wider than this
@@ -145,6 +148,21 @@ const menu = ref(null)
 
 const canUseFileManager = computed(
   () => userStore.can('write:assets') || userStore.can('write:pages')
+)
+
+/**
+ * Whether any row is shown above the account group, which is what decides the rule between the two.
+ *
+ * Restates the test each of those four rows makes rather than a shorter equivalent — `canUseFileManager`
+ * already implies the New Page row's permission today, but a row added or a test changed up there would
+ * otherwise leave this behind, and the failure is silent.
+ */
+const hasActionRows = computed(
+  () =>
+    userStore.can('write:pages') ||
+    canUseFileManager.value ||
+    userStore.authenticated ||
+    userStore.can('access:admin')
 )
 
 // METHODS
