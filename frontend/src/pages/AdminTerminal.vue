@@ -12,7 +12,14 @@
           {{ t('admin.terminal.subtitle') }}
         </div>
       </div>
-      <div class="flex-none flex">
+      <div class="flex-none flex items-center">
+        <div v-if="state.connected" class="mr-4 text-right leading-tight">
+          <div class="text-xs text-grey">{{ t('admin.terminal.instance') }}</div>
+          <div class="flex items-center justify-end gap-1.5 font-mono text-sm">
+            <status-light class="admin-terminal-dot" color="positive" pulse />
+            {{ state.instance }}
+          </div>
+        </div>
         <w-btn
           class="acrylic-btn mr-2"
           v-if="!state.connected || state.connecting"
@@ -89,7 +96,9 @@ useMeta({
 const state = reactive({
   displayMode: 'logs',
   connected: false,
-  connecting: false
+  connecting: false,
+  /** Which instance is on the other end of the socket, from its handshake frame. */
+  instance: null
 })
 
 let socket = null
@@ -120,6 +129,7 @@ function connect() {
   // -> Whether the stream ever started is what tells a session that was refused or never reached the
   //    server apart from one that ran and ended, and only `close` is guaranteed to fire
   let opened = false
+  let handshake = false
 
   socket.addEventListener('open', () => {
     opened = true
@@ -129,6 +139,15 @@ function connect() {
   })
 
   socket.addEventListener('message', (ev) => {
+    /*
+      The server's first frame is the handshake and says which instance answered; everything after it
+      is a log line to be printed verbatim. See `controllers/terminal.ts`.
+    */
+    if (!handshake) {
+      handshake = true
+      state.instance = JSON.parse(ev.data).instance
+      return
+    }
     term.writeln(ev.data)
   })
 
@@ -136,6 +155,7 @@ function connect() {
     socket = null
     state.connected = false
     state.connecting = false
+    state.instance = null
     /*
       Codes in the 4000 range are the server's own (see `controllers/terminal.ts`) and mean the
       session was refused rather than dropped, so the reason is worth printing — reconnecting with the
@@ -194,6 +214,14 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 .admin-terminal {
+  /* -> `status-light` is a bar sized by whatever it sits in; here it wants to be a dot */
+  &-dot {
+    width: 6px;
+    height: 6px;
+    min-height: 6px;
+    flex: none;
+  }
+
   &-term {
     width: 100%;
     /* -> The terminal fits itself to this box, so the box has to have a height of its own: sized off
