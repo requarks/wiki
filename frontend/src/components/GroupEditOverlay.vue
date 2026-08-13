@@ -191,7 +191,7 @@
             flat
             color="grey"
             type="a"
-            :href="siteStore.docsBase + `/admin/groups#rules`"
+            :href="siteStore.docsBase + `/admin/permissions#rules`"
             target="_blank" />
           <w-btn
             class="acrylic-btn mr-2"
@@ -441,7 +441,7 @@
                       flat
                       color="grey"
                       type="a"
-                      :href="siteStore.docsBase + `/admin/groups#permissions`"
+                      :href="siteStore.docsBase + `/admin/permissions#system-permissions`"
                       target="_blank" />
                   </template>
                 </w-card-header>

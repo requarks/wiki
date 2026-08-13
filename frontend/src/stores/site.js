@@ -119,7 +119,7 @@ export const useSiteStore = defineStore('site', {
     },
     sideDialogShown: false,
     sideDialogComponent: '',
-    docsBase: 'https://beta.js.wiki/docs',
+    docsBase: 'https://docs.js.wiki',
     nav: {
       currentId: null,
       items: []

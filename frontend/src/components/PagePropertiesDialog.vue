@@ -24,7 +24,7 @@
         rounded
         color="white"
         icon="la:question-circle"
-        :href="siteStore.docsBase + `/editor/properties`"
+        :href="siteStore.docsBase + `/guide/page-properties`"
         target="_blank"
         type="a" />
       <w-btn icon="la:times" dense flat @click="siteStore.sideDialogShown = false" />

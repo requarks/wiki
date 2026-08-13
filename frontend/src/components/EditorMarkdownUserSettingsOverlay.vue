@@ -11,7 +11,7 @@
         color="white"
         :aria-label="t(`common.actions.refresh`)"
         icon="la:question-circle"
-        :href="siteStore.docsBase + `/editor/markdown`"
+        :href="siteStore.docsBase + `/guide/editors/markdown`"
         target="_blank"
         type="a" />
       <w-btn-group push>

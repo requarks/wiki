@@ -11,7 +11,7 @@
         color="white"
         :aria-label="t(`common.actions.viewDocs`)"
         icon="la:question-circle"
-        :href="siteStore.docsBase + `/editor/markdown`"
+        :href="siteStore.docsBase + `/guide/table-editor`"
         target="_blank"
         type="a" />
       <w-btn-group push>

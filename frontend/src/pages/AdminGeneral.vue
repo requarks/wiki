@@ -17,7 +17,7 @@
           flat
           color="grey"
           :aria-label="t(`common.actions.viewDocs`)"
-          :href="siteStore.docsBase + `/admin/sites#general`"
+          :href="siteStore.docsBase + `/admin/general`"
           target="_blank">
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
         </w-btn>

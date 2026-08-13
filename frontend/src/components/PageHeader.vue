@@ -209,7 +209,7 @@
           icon="la:question-circle"
           flat
           color="grey"
-          :href="siteStore.docsBase + `/editor/${editorStore.editor}`"
+          :href="siteStore.docsBase + `/guide/editors/${editorStore.editor}`"
           target="_blank"
           type="a">
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>

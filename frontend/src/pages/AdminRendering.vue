@@ -20,7 +20,7 @@
           icon="la:question-circle"
           flat
           color="grey"
-          :href="siteStore.docsBase + `/system/rendering`"
+          :href="siteStore.docsBase + `/admin/rendering`"
           target="_blank" />
         <w-btn
           class="mr-2 acrylic-btn"

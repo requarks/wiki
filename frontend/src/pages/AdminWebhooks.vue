@@ -19,7 +19,7 @@
           flat
           color="grey"
           :aria-label="t(`common.actions.viewDocs`)"
-          :href="siteStore.docsBase + `/system/webhooks`"
+          :href="siteStore.docsBase + `/admin/webhooks`"
           target="_blank">
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
         </w-btn>

@@ -72,7 +72,7 @@
           color="white"
           :aria-label="t(`common.actions.viewDocs`)"
           icon="la:question-circle"
-          :href="siteStore.docsBase + `/editor/file-manager`"
+          :href="siteStore.docsBase + `/guide/file-manager`"
           target="_blank">
           <!-- -> `WTooltip` already defaults to below-the-trigger, which is where a header wants it -->
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>

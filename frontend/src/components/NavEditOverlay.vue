@@ -14,7 +14,7 @@
         color="white"
         :aria-label="t(`common.actions.viewDocs`)"
         icon="la:question-circle"
-        :href="siteStore.docsBase + `/admin/editors/markdown`"
+        :href="siteStore.docsBase + `/guide/navigation`"
         target="_blank">
         <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
       </w-btn>
