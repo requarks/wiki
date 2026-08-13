@@ -732,8 +732,11 @@ class Tree {
       effectiveLocale = parent.locale
     }
 
+    // -> A page here is not in the way: a folder alongside it is how `/guide` gets to be both a page
+    //    and the way into `/guide/…`. An asset is, since it is served at that URL itself — the same
+    //    rule `resolveName` applies coming the other way.
     const existing = await WIKI.db
-      .select({ id: treeTable.id })
+      .select({ type: treeTable.type })
       .from(treeTable)
       .where(
         and(
@@ -741,14 +744,16 @@ class Tree {
           eq(treeTable.locale, effectiveLocale),
           eq(treeTable.folderPath, path),
           eq(treeTable.fileName, name),
-          eq(treeTable.type, 'folder')
+          ne(treeTable.type, 'page')
         )
       )
       .limit(1)
     if (existing.length > 0) {
       throw new CustomError(
         'treeFolderDuplicate',
-        'A folder with this path name already exists.',
+        existing[0].type === 'folder'
+          ? 'A folder with this path name already exists.'
+          : 'A file with this path name already exists here.',
         409
       )
     }
@@ -870,8 +875,9 @@ class Tree {
       return updated[0] as TreeRow
     }
 
+    // -> As on the way in: a page may share the name, an asset may not
     const existing = await WIKI.db
-      .select({ id: treeTable.id })
+      .select({ type: treeTable.type })
       .from(treeTable)
       .where(
         and(
@@ -880,14 +886,16 @@ class Tree {
           eq(treeTable.locale, folder.locale),
           eq(treeTable.folderPath, folder.folderPath ?? ''),
           eq(treeTable.fileName, name),
-          eq(treeTable.type, 'folder')
+          ne(treeTable.type, 'page')
         )
       )
       .limit(1)
     if (existing.length > 0) {
       throw new CustomError(
         'treeFolderDuplicate',
-        'A folder with this path name already exists.',
+        existing[0].type === 'folder'
+          ? 'A folder with this path name already exists.'
+          : 'A file with this path name already exists here.',
         409
       )
     }
@@ -1150,7 +1158,9 @@ class Tree {
             eq(treeTable.siteId, entry.siteId),
             eq(treeTable.locale, entry.locale),
             eq(treeTable.folderPath, entry.folderPath ?? ''),
-            eq(treeTable.fileName, fileName)
+            eq(treeTable.fileName, fileName),
+            // -> A page may take the name of the folder holding the pages below it; see `resolveName`
+            ...(entry.type === 'page' ? [ne(treeTable.type, 'folder')] : [])
           )
         )
         .limit(1)
@@ -1233,7 +1243,7 @@ class Tree {
         : null
     const path = folder ? childPathOf(folder) : ''
 
-    const name = await this.resolveName({ siteId, locale, path, fileName, onConflict })
+    const name = await this.resolveName({ siteId, locale, path, type, fileName, onConflict })
     const fullPath = path ? `${decodeTreePath(path)}/${name}` : name
 
     WIKI.logger.debug(`Adding ${type} ${fullPath} to tree...`)
@@ -1268,17 +1278,26 @@ class Tree {
    * Two entries with the same name in the same folder would share a path, and therefore a hash — the
    * second one would shadow the first everywhere it is looked up by URL. An upload takes the next free
    * `name-1.ext`, the way a file manager is expected to; anything else says so instead.
+   *
+   * A page is the exception: a page and the folder of the pages below it are *meant* to share a name,
+   * which is what `/guide` being both a page and the way into `/guide/…` is. Nothing shadows anything
+   * there, because the two are never looked up the same way — a folder is only ever resolved as a
+   * folder (`getFolder` asks for the type), and the page is found in `pages` by its own path hash.
+   * An asset stays held to the whole folder, since it is served at that URL like a page would be and
+   * `assets.upload` refuses the mirror image of this for the same reason.
    */
   private async resolveName({
     siteId,
     locale,
     path,
+    type,
     fileName,
     onConflict
   }: {
     siteId: string
     locale: string
     path: string
+    type: Exclude<TreeItemType, 'folder'>
     fileName: string
     onConflict: 'error' | 'suffix'
   }): Promise<string> {
@@ -1292,7 +1311,8 @@ class Tree {
               eq(treeTable.siteId, siteId),
               eq(treeTable.locale, locale),
               eq(treeTable.folderPath, path),
-              eq(treeTable.fileName, name)
+              eq(treeTable.fileName, name),
+              ...(type === 'page' ? [ne(treeTable.type, 'folder')] : [])
             )
           )
           .limit(1)
