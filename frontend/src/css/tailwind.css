@@ -38,6 +38,20 @@
 @source '../**/*.{vue,js}';
 
 /*
+  Utilities a page author can reach for that no template here writes.
+
+  A rendered page is injected into `.page-contents` as markup, and the classes on it come from what
+  someone typed into the editor -- through `markdown-it-attrs` or raw HTML -- which is not a source
+  file and can never be scanned. `@source inline()` emits these whether or not anything references
+  them, which is what makes them dependable for content: the alternative is a class that works only
+  for as long as some unrelated component happens to still use it.
+
+  Kept to the elevation ramp deliberately. Every utility emitted here is in the build for every
+  visitor of every site, so this list earns its weight by being short.
+*/
+@source inline('shadow-{2xs,xs,sm,md,lg,xl,2xl}');
+
+/*
   Dark mode is driven by the `body--dark` class on <body>, which is what the app has always toggled
   (Quasar's `$q.dark.set()` writes it). Keying Tailwind's `dark:` variant off the same class means
   Tailwind and Quasar stay in lockstep for as long as both are installed, and nothing has to change
