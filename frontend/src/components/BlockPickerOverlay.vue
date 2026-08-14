@@ -88,45 +88,10 @@
               </div>
               <template v-else>
                 <div class="w-section-header">{{ state.selected.name }}</div>
-                <!--
-                  A block with nothing to fill in is not a broken form: it is inserted as it stands. A
-                  custom block reports no props at all, since only the compiled manifest carries them.
-                -->
-                <div
-                  v-if="state.selected.props.length < 1"
-                  class="text-caption mt-4 px-4 text-black/60 dark:text-white/70">
-                  {{ t('editor.blockPicker.noProps') }}
-                </div>
-                <w-form v-else class="gap-4 px-4 pt-4">
-                  <template v-for="prop of state.selected.props" :key="prop.name">
-                    <w-select
-                      v-if="prop.type === `select`"
-                      v-model="state.values[prop.name]"
-                      :options="prop.options ?? []"
-                      outlined
-                      dense
-                      options-dense
-                      :label="prop.label ?? prop.name"
-                      :aria-label="prop.label ?? prop.name"
-                      :required="prop.required"
-                      :hint="prop.hint" />
-                    <w-toggle
-                      v-else-if="prop.type === `boolean`"
-                      v-model="state.values[prop.name]"
-                      dense
-                      :label="prop.label ?? prop.name" />
-                    <w-input
-                      v-else
-                      v-model="state.values[prop.name]"
-                      outlined
-                      dense
-                      :type="prop.type === `number` ? `number` : `text`"
-                      :label="prop.label ?? prop.name"
-                      :aria-label="prop.label ?? prop.name"
-                      :required="prop.required"
-                      :hint="prop.hint" />
-                  </template>
-                </w-form>
+                <block-props-form
+                  class="px-4 pt-4"
+                  :fields="state.selected.props"
+                  :values="state.values" />
                 <!-- -> The markup itself, since that is what lands in the page -->
                 <div class="w-section-header mt-6">{{ t('editor.blockPicker.markdown') }}</div>
                 <!-- The same 16px all round, so it sits inside the panel the way the fields do -->
@@ -145,7 +110,9 @@ import { computed, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { notify } from '@/composables/notify'
-import { blockMarkdown } from '@/helpers/blocks'
+import { blockMarkdown, blockPropsFilled } from '@/helpers/blocks'
+
+import BlockPropsForm from '@/components/BlockPropsForm.vue'
 
 import { useSiteStore } from '@/stores/site'
 
@@ -186,15 +153,10 @@ const blocks = computed(() => state.blocks.filter((block) => block.isEnabled))
 
 const markdown = computed(() => (state.selected ? blockMarkdown(state.selected, state.values) : ''))
 
-const canInsert = computed(() => {
-  if (!state.selected) {
-    return false
-  }
-  // -> A required prop with nothing in it would insert a block that cannot draw anything
-  return state.selected.props
-    .filter((prop) => prop.required)
-    .every((prop) => String(state.values[prop.name] ?? '').length > 0)
-})
+// -> A required prop with nothing in it would insert a block that cannot draw anything
+const canInsert = computed(
+  () => Boolean(state.selected) && blockPropsFilled(state.selected, state.values)
+)
 
 // METHODS
 

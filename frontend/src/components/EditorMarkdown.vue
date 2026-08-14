@@ -309,6 +309,7 @@
 <script setup>
 import {
   computed,
+  defineAsyncComponent,
   reactive,
   ref,
   shallowRef,
@@ -325,6 +326,7 @@ import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
+import { blockOpeningLine, blockValues, findBlocks } from '@/helpers/markdownBlocks'
 import { findEditableTables } from '@/helpers/markdownTable'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -384,6 +386,15 @@ let md
 let pasteCaptureNode = null
 /** The "Edit Table" lens provider, which is registered against the language rather than this editor. */
 let tableLensProvider = null
+/** The "Edit Block Parameters" lens provider, registered the same way. */
+let blockLensProvider = null
+/**
+ * The blocks this site has, as the API describes them — their props included.
+ *
+ * Read once with the list of disabled ones, since it is the same request. What the lens needs from it
+ * is the props: a block whose definition is not here is one this editor cannot offer a form for.
+ */
+let siteBlocks = []
 const monacoRef = ref(null)
 const editorPreviewContainerRef = ref(null)
 
@@ -615,6 +626,49 @@ function editTable(line) {
       startLine: table.startLine,
       endLine: table.endLine
     }
+  })
+}
+
+/** The block as this site describes it, or undefined for one it does not list. */
+function blockDefinition(name) {
+  return siteBlocks.find((block) => block.block === name)
+}
+
+/**
+ * The parameters dialog, over a block already in the page — what the lens above one opens.
+ *
+ * The block is looked up again here rather than taken from the lens, for the reason `editTable` gives:
+ * a lens is provided once and then moves with the text, so the line it carries is from whenever the
+ * document last settled. The name it was drawn for is carried along and has to match too — where a
+ * table spans lines and can be found by containment, a block's opening line is a single line, and an
+ * edit above it would otherwise put a form for one block over another.
+ */
+function editBlock(line, name) {
+  const found = findBlocks(editor.getModel().getValue()).find(
+    (entry) => entry.line === line && entry.block === name
+  )
+  const definition = found && blockDefinition(found.block)
+  if (!definition) {
+    return
+  }
+  dialog({
+    component: defineAsyncComponent(() => import('./BlockParamsDialog.vue')),
+    componentProps: { definition, values: blockValues(found, definition) }
+  }).onOk((values) => {
+    /*
+      The opening line and nothing else, so the body between the fences is left exactly as it was —
+      which for a tabset is every tab in it. One undo takes the whole change back, and the caret lands
+      on the line that moved rather than wherever it was before the dialog opened.
+    */
+    const model = editor.getModel()
+    editor.executeEdits('block', [
+      {
+        range: new Range(found.line, 1, found.line, model.getLineMaxColumn(found.line)),
+        text: blockOpeningLine(found, definition, values)
+      }
+    ])
+    editor.setPosition(new Position(found.line, 1))
+    editor.focus()
   })
 }
 
@@ -900,23 +954,25 @@ async function toggleMarkup({ start, end }) {
 }
 
 /**
- * Read which blocks this site has switched off, once, before the first preview is drawn.
+ * Read the blocks this site has, once, before the first preview is drawn.
  *
  * Order matters more than it looks: a component only has to be fetched once to be defined for the
  * rest of the session, so a list that arrives after the first render is too late to keep a disabled
- * block from drawing.
+ * block from drawing. The lens over a block wants the same list a moment later, and asking twice for
+ * it would be asking the same question twice.
  */
-async function loadDisabledBlocks() {
+async function loadSiteBlocks() {
   try {
-    const blocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
+    siteBlocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
     disabledBlockTags.value = new Set(
-      blocks.filter((block) => !block.isEnabled).map((block) => `block-${block.block}`)
+      siteBlocks.filter((block) => !block.isEnabled).map((block) => `block-${block.block}`)
     )
   } catch (err) {
     /*
       Left empty, which draws everything as it did before. The preview being too generous is the
       better failure: the server strips a disabled block on save either way, so the cost is a preview
-      that flatters the page, against hiding blocks the site really does have.
+      that flatters the page, against hiding blocks the site really does have. The lens is the other
+      way round — with no definitions to build a form from, it simply does not appear.
     */
     console.warn(`Could not read which blocks this site has enabled: ${err.message}`)
   }
@@ -1178,7 +1234,7 @@ onMounted(async () => {
   })
 
   // -> Awaited here so it is settled well before the first preview render at the end of this hook
-  await loadDisabledBlocks()
+  await loadSiteBlocks()
 
   md = new MarkdownRenderer(editorStore.editors.markdown)
 
@@ -1247,6 +1303,34 @@ onMounted(async () => {
             arguments: [table.startLine]
           }
         })),
+        dispose() {}
+      }
+    }
+  })
+
+  /*
+    "Edit Block Parameters" over every block in the page, for the same reason the table has one: what
+    a block was given is a list of quoted attributes on one line, which is a poor thing to edit by
+    hand and an easy thing to offer a form for.
+
+    It appears only over a block this editor holds a definition for and that has something to fill in.
+    A child block -- a `::block-tab` inside a tabset -- is one it never does: those are left out of
+    the list the API answers with, having no switch of their own to be listed against.
+  */
+  const editBlockCommand = editor.addCommand(0, (_accessor, line, block) => editBlock(line, block))
+  blockLensProvider = monaco.languages.registerCodeLensProvider('markdown', {
+    provideCodeLenses(model) {
+      return {
+        lenses: findBlocks(model.getValue())
+          .filter((found) => blockDefinition(found.block)?.props?.length > 0)
+          .map((found) => ({
+            range: new Range(found.line, 1, found.line, 1),
+            command: {
+              id: editBlockCommand,
+              title: t('editor.markup.editBlock'),
+              arguments: [found.line, found.block]
+            }
+          })),
         dispose() {}
       }
     }
@@ -1484,6 +1568,7 @@ onBeforeUnmount(() => {
   monacoRef.value?.removeEventListener('drop', onEditorDrop)
   // -> Registered against the markdown language, not this editor, so nothing else takes it down
   tableLensProvider?.dispose()
+  blockLensProvider?.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
   //    this author's avatar out of everyone else's header
   stopCollabSession()
