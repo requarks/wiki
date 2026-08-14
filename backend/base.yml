@@ -67,9 +67,6 @@ defaults:
       enforce2FA: false
       hideLocal: false
       loginBgUrl: ''
-      audience: 'urn:wiki.js'
-      tokenExpiration: '30m'
-      tokenRenewal: '14d'
       secret: 'abcdef1234567890abcdef1234567890abcdef'
     security:
       corsMode: 'OFF'

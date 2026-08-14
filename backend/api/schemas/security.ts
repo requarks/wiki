@@ -95,22 +95,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         maxLength: 16,
         description:
           'How long a client is refused for once it goes over, as a duration — e.g. `15m`, `1h`. Attempts made while banned do not extend it.'
-      },
-      authJwtAudience: {
-        type: 'string',
-        maxLength: 255,
-        description:
-          'Audience claim of issued tokens. Changing it invalidates every API key already issued.'
-      },
-      authJwtExpiration: {
-        type: 'string',
-        maxLength: 16,
-        description: 'Duration, e.g. `30m`.'
-      },
-      authJwtRenewablePeriod: {
-        type: 'string',
-        maxLength: 16,
-        description: 'Duration, e.g. `14d`.'
       }
     }
   })

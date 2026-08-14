@@ -750,7 +750,7 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { dialog } from '@/composables/dialog'
+import { confirm, dialog } from '@/composables/dialog'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -1117,20 +1117,13 @@ async function executeAction(act) {
 
   // -> An action that declares a warning destroys something, so it is never run on a single click
   if (act.warn) {
-    dialog({
+    confirm({
       title: act.label,
       message: act.warn,
       persistent: true,
-      ok: {
-        label: t('common.actions.proceed'),
-        color: 'negative',
-        unelevated: true
-      },
-      cancel: {
-        label: t('common.actions.cancel'),
-        color: 'grey',
-        flat: true
-      }
+      cancel: true,
+      color: 'negative',
+      okLabel: t('common.actions.proceed')
     }).onOk(run)
   } else {
     await run()
@@ -1154,7 +1147,7 @@ async function handleSetupCallback() {
 }
 
 async function setupDestroy() {
-  dialog({
+  confirm({
     title: t('admin.storage.destroyConfirm'),
     message: t('admin.storage.destroyConfirmInfo'),
     cancel: true,

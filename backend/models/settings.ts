@@ -1,5 +1,5 @@
 import { settings as settingsTable } from '../db/schema.ts'
-import { pem2jwk } from 'pem-jwk'
+import { generateSigningCertificates } from './apiKeys.ts'
 import crypto from 'node:crypto'
 import type { SystemIds } from './types.ts'
 
@@ -41,20 +41,7 @@ class Settings {
    */
   async init(ids: SystemIds): Promise<void> {
     WIKI.logger.info('Generating certificates...')
-    const secret = crypto.randomBytes(32).toString('hex')
-    const certs = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 2048,
-      publicKeyEncoding: {
-        type: 'pkcs1',
-        format: 'pem'
-      },
-      privateKeyEncoding: {
-        type: 'pkcs1',
-        format: 'pem',
-        cipher: 'aes-256-cbc',
-        passphrase: secret
-      }
-    })
+    const certs = generateSigningCertificates()
 
     WIKI.logger.info('Inserting default settings...')
     await WIKI.db.insert(settingsTable).values([
@@ -67,15 +54,14 @@ class Settings {
       {
         key: 'auth',
         value: {
-          audience: 'urn:wiki.js',
-          tokenExpiration: '30m',
-          tokenRenewal: '14d',
-          certs: {
-            jwk: pem2jwk(certs.publicKey),
-            public: certs.publicKey,
-            private: certs.privateKey
-          },
-          secret,
+          // -> The installation keypair, carrying its own passphrase. Its one job is signing API
+          //    keys (`models/apiKeys.ts`).
+          certs,
+          // -> What @fastify/session signs its cookies with, and nothing else. Separate from the
+          //    keypair's passphrase so that either can be rotated without disturbing the other —
+          //    the two utilities that do so are `POST /system/certificates` and
+          //    `POST /system/sessions/invalidate`.
+          secret: crypto.randomBytes(32).toString('hex'),
           rootAdminGroupId: ids.groupAdminId,
           rootAdminUserId: ids.userAdminId,
           guestUserId: ids.userGuestId
@@ -152,10 +138,6 @@ class Settings {
           forceAssetDownload: true,
           hstsDuration: 0,
           trustProxy: false,
-          // NOTE: the JWT audience, expiration and renewal period are deliberately absent here.
-          //       They used to be duplicated under 2.x names (`authJwt*`) that nothing read, so the
-          //       admin area edited values with no effect. They live in the `auth` settings above,
-          //       which is what the server uses; the security view maps onto those.
           uploadMaxFileSize: 10485760,
           uploadMaxFiles: 20,
           uploadScanSVG: true

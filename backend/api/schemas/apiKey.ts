@@ -36,6 +36,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       isRevoked: {
         type: 'boolean'
       },
+      isInvalidated: {
+        type: 'boolean',
+        description:
+          "Issued before the signing certificates were last regenerated, so its signature no longer verifies. Not a state anybody set — it is the key's age against the keypair's, and unlike revocation it applies to every key at once."
+      },
       createdAt: {
         type: 'string',
         format: 'date-time',

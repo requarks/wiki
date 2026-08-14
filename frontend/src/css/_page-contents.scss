@@ -1390,16 +1390,35 @@
 
   /*
     An Iconify icon, drawn into the page as an `<svg>` when it was saved -- see `inlineIcons` in
-    `models/rendering.ts`. Sized and coloured by the markup itself (`1em`, `currentColor`), so all it
-    needs from here is to be part of the line: Preflight makes every `svg` a block, which would put
-    an icon written mid-sentence on a line of its own.
+    `models/rendering.ts`. Coloured by the markup itself (`currentColor`), so what it needs from here
+    is to be part of the line -- Preflight makes every `svg` a block, which would put an icon written
+    mid-sentence on a line of its own -- and to be big enough to read beside the text it sits in.
 
-    An `<iconify-icon>` that has not been through that yet -- a page saved before this, or an icon
-    whose set could not be resolved at the time -- carries the same rule from its own `:host`, so the
-    two sit identically and the editor's preview matches the page.
+    1.4em rather than the 1em Iconify draws at: an icon is read as a glyph, and a glyph the same
+    nominal size as the type around it looks smaller than it, because a letter fills a fraction of
+    its em box while an icon fills the whole one.
+
+    An author who asked for a size gets it: `inlineIcons` writes that one as an inline style, which
+    outranks this.
   */
   svg.icon {
     display: inline-block;
+    width: 1.4em;
+    height: 1.4em;
+  }
+
+  /*
+    The same icon before it has been inlined: what the editor's preview draws, what a page saved
+    before this carries, and what is left where a set could not be resolved at save time.
+
+    Sized through `font-size` rather than through `width`, which is the one difference between the
+    two: the element draws its own `<svg width="1em">` inside a shadow root nothing here can reach,
+    so growing the host box would leave a 1em glyph centred in a 1.4em one. Scaling what that `em`
+    measures against grows the drawing. An explicit `width` on the element is in pixels and is
+    untouched by this, exactly as the inline style above leaves the inlined form alone.
+  */
+  iconify-icon {
+    font-size: 1.4em;
   }
 
   /* Twemoji, which the renderer swaps in for `:shortcodes:` */

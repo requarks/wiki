@@ -793,6 +793,22 @@ class Assets {
     }
   }
 
+  /**
+   * Drop both serving caches of this instance.
+   *
+   * Nothing is lost: the metadata is read back from the database on the next request for a path, and
+   * the bytes on the next request for a file. What it costs is the refill — every image on the next
+   * page view goes to the database once — which is the price of being certain nothing stale is being
+   * served.
+   */
+  async purgeCache(): Promise<void> {
+    this.pathCache.clear()
+    this.writtenSinceSweep = 0
+    await fs.rm(this.cachePath, { recursive: true, force: true })
+    await fs.mkdir(this.cachePath, { recursive: true })
+    WIKI.logger.info('Purged the file cache [ OK ]')
+  }
+
   /** Where the disk cache lives. Derived data — deleting it costs a refill and nothing else. */
   get cachePath(): string {
     return path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'cache/files')

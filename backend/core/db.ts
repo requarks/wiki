@@ -13,6 +13,7 @@ import { relations } from '../db/relations.ts'
 import { flags } from '../models/flags.ts'
 import { createDeferred } from '../helpers/common.ts'
 import { createNotifier } from '../helpers/pubsub.ts'
+import maintenance from './maintenance.ts'
 // import migrationSource from '../db/migrator-source.js'
 
 /**
@@ -219,16 +220,15 @@ export default {
         }
       } catch {}
     })
-    // FIXME: pre-existing bug — Emittery's `onAny` calls the listener as `(eventName, eventData)`,
-    // but `notifyViaDB` destructures a single `{ name, data }` object (the eventemitter2 signature
-    // it was written against). Both end up undefined, so HA event propagation publishes an empty
-    // event. Preserved as-is to keep the TypeScript migration behavior-neutral.
+    // -> Cast because `onAny` types the event as every pair the map allows plus Emittery's own meta
+    //    events, and this listener is written to the one shape they have in common
     WIKI.events.outbound.onAny(this.notifyViaDB as any)
 
     // -> Listen to inbound events
 
     // WIKI.auth.subscribeToEvents()
     WIKI.configSvc.subscribeToEvents()
+    maintenance.subscribeToEvents()
     // WIKI.db.pages.subscribeToEvents()
 
     WIKI.logger.info('Event Listener initialized successfully: [ OK ]')
@@ -249,8 +249,11 @@ export default {
   /**
    * Publish event via database NOTIFY
    *
-   * @param event Event fired
-   * @param value Payload of the event
+   * Takes one `{ name, data }` object, which is what Emittery hands an `onAny` listener — not the
+   * `(eventName, eventData)` pair `on` listeners used to get before 2.x. `data` is absent, rather
+   * than undefined, for an event emitted without a payload.
+   *
+   * @param event Event fired, and its payload
    */
   notifyViaDB({ name, data }: { name?: string; data?: unknown }): void {
     notifier.send(

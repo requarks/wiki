@@ -142,7 +142,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Revoke an API key',
         description:
-          'Permanent: the key stays listed as revoked and stops authenticating on the next request. Keys are never deleted, so the record of what existed is kept.',
+          'Permanent: the key stays listed as revoked and stops authenticating on the next request. Revoking never deletes, so the record of what existed is kept — `POST /system/api-keys/purge` is what discards those rows, when an administrator asks for it.',
         tags: ['API Keys'],
         params: {
           type: 'object',

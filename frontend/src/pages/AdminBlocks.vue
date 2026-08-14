@@ -110,7 +110,7 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { dialog } from '@/composables/dialog'
+import { confirm } from '@/composables/dialog'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
@@ -213,7 +213,7 @@ function addBlock() {
 
 function deleteBlock(id) {
   const block = state.blocks.find((bl) => bl.id === id)
-  dialog({
+  confirm({
     title: t('admin.blocks.delete'),
     message: t('admin.blocks.deleteConfirm', { blockName: block?.name ?? '' }),
     cancel: true,

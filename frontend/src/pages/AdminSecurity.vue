@@ -406,56 +406,6 @@
             </w-item>
           </template>
         </w-card>
-        <!-- ----------------------- -->
-        <!-- JWT -->
-        <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4">
-          <w-card-header>{{ t('admin.security.jwt') }}</w-card-header>
-          <w-item>
-            <blueprint-icon icon="ticket" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.security.jwtAudience`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.security.jwtAudienceHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section style="flex: 0 0 250px">
-              <w-input
-                outlined
-                v-model="state.config.authJwtAudience"
-                dense
-                :aria-label="t(`admin.security.jwtAudience`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item>
-            <blueprint-icon icon="expired" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.security.tokenExpiration`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.security.tokenExpirationHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section style="flex: 0 0 140px">
-              <w-input
-                outlined
-                v-model="state.config.authJwtExpiration"
-                dense
-                :aria-label="t(`admin.security.tokenExpiration`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item>
-            <blueprint-icon icon="future" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.security.tokenRenewalPeriod`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.security.tokenRenewalPeriodHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section style="flex: 0 0 140px">
-              <w-input
-                outlined
-                v-model="state.config.authJwtRenewablePeriod"
-                dense
-                :aria-label="t(`admin.security.tokenRenewalPeriod`)" />
-            </w-item-section>
-          </w-item>
-        </w-card>
       </div>
     </div>
   </w-page>
@@ -510,9 +460,6 @@ const state = reactive({
     authRateLimitMax: 10,
     authRateLimitWindow: '5m',
     authRateLimitBan: '15m',
-    authJwtAudience: 'urn:wiki.js',
-    authJwtExpiration: '30m',
-    authJwtRenewablePeriod: '14d',
     uploadMaxFileSize: 0,
     uploadMaxFiles: 0,
     uploadScanSVG: false

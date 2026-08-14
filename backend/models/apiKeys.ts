@@ -1,8 +1,69 @@
 import crypto from 'node:crypto'
 import { apiKeys as apiKeysTable, groups as groupsTable } from '../db/schema.ts'
-import { desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm'
 import { flatten, uniq } from 'es-toolkit/array'
 import { epochSeconds, signJwt, verifyJwt } from '../helpers/jwt.ts'
+
+/**
+ * The `aud` claim every key carries, and the one value `verify()` accepts.
+ *
+ * Fixed rather than configurable: the wiki is both the issuer and the only audience of these tokens,
+ * so there is nothing for an operator to point it at. It was a setting until the admin area's JWT
+ * section went — a section whose other two fields nothing read — and all changing it ever did was
+ * invalidate every key already issued.
+ */
+const TOKEN_AUDIENCE = 'urn:wiki.js'
+
+/** An API key signing keypair, with the passphrase its private half is encrypted under. */
+export interface SigningCertificates {
+  /** Protects the private key at rest. Belongs to the keypair, and is rotated with it. */
+  passphrase: string
+  /**
+   * When this keypair came into being, as an RFC 3339 instant.
+   *
+   * Kept because it is the only thing that can explain a key which is neither revoked nor expired
+   * and still does not work: a key issued before this moment was signed by a keypair that no longer
+   * exists. See {@link ApiKeys.getKeys}.
+   */
+  generatedAt: string
+  public: string
+  private: string
+}
+
+/**
+ * A fresh signing keypair.
+ *
+ * Called twice: once at install, to seed `auth.certs` (`models/settings.ts`), and again whenever an
+ * administrator invalidates the certificates. Both go through here so that a rotated keypair is
+ * generated exactly like the original one.
+ *
+ * The passphrase is generated with the keypair rather than taken from anywhere else. It used to be
+ * `auth.secret` — the same value @fastify/session signs cookies with — which tied two unrelated
+ * secrets together: rotating the session secret would have left the private key undecryptable, and
+ * replacing the keypair meant logging everybody out.
+ */
+export function generateSigningCertificates(): SigningCertificates {
+  const passphrase = crypto.randomBytes(32).toString('hex')
+  const pair = crypto.generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: {
+      type: 'pkcs1',
+      format: 'pem'
+    },
+    privateKeyEncoding: {
+      type: 'pkcs1',
+      format: 'pem',
+      cipher: 'aes-256-cbc',
+      passphrase
+    }
+  })
+  return {
+    passphrase,
+    generatedAt: Temporal.Now.instant().toString({ smallestUnit: 'millisecond' }),
+    public: pair.publicKey,
+    private: pair.privateKey
+  }
+}
 
 /** The lifetimes the admin area offers, as durations the API accepts. */
 export const KEY_EXPIRATIONS = {
@@ -25,6 +86,16 @@ export interface ApiKey {
   isRevoked: boolean
   createdAt: Date
   updatedAt: Date
+}
+
+/**
+ * A key as the admin area lists it: the row, plus whether the certificates have moved on without it.
+ *
+ * `isInvalidated` is not stored anywhere. It is the row's age compared against the keypair's, which
+ * is the whole of what makes a key stop working when the certificates are regenerated.
+ */
+export interface ApiKeyListEntry extends ApiKey {
+  isInvalidated: boolean
 }
 
 /** What a verified key grants, resolved from its groups at request time. */
@@ -62,19 +133,66 @@ class ApiKeys {
   private privateKey(): crypto.KeyObject {
     return crypto.createPrivateKey({
       key: WIKI.config.auth.certs.private,
-      passphrase: WIKI.config.auth.secret
+      passphrase: WIKI.config.auth.certs.passphrase
     })
   }
 
   /**
-   * Every key, newest first. Revoked and expired keys are kept: the admin list shows their state.
+   * Replace the signing keypair and its passphrase, invalidating every key ever issued.
+   *
+   * A key is only a signature over its claims, so this is what takes back keys that have escaped:
+   * the rows stay, and every token signed by the old key stops verifying on the next request. The
+   * rows are not marked revoked — revocation is a decision an administrator made about one key, and
+   * saying that about all of them would lose the distinction. Minting a key from the same row is not
+   * possible either, so the count returned is what an administrator has to reissue.
+   *
+   * Session cookies are untouched: they are signed with `auth.secret`, which this does not go near.
+   *
+   * @returns How many keys were still usable and no longer are, or null if the settings failed to save
    */
-  async getKeys(): Promise<ApiKey[]> {
+  async regenerateCertificates(): Promise<number | null> {
+    const previousAuth = WIKI.config.auth
+    const usable = await WIKI.db.$count(
+      apiKeysTable,
+      and(eq(apiKeysTable.isRevoked, false), gt(apiKeysTable.expiration, sql`now()`))
+    )
+
+    WIKI.config.auth = { ...previousAuth, certs: generateSigningCertificates() }
+    // -> Propagates as `reloadConfig`, which is how the other instances pick up the new public key
+    //    rather than going on trusting tokens this one has just disowned
+    if (!(await WIKI.configSvc.saveToDb(['auth']))) {
+      WIKI.config.auth = previousAuth
+      return null
+    }
+
+    WIKI.logger.info(`Regenerated the API key certificates, invalidating ${usable} key(s) [ OK ]`)
+    return usable
+  }
+
+  /**
+   * Every key, newest first. Revoked and expired keys are kept: the admin list shows their state.
+   *
+   * Each one is marked against the age of the signing keypair. A key issued before the certificates
+   * were last regenerated was signed by a keypair that is gone, so it fails verification on its
+   * signature and there is nothing about the row itself to explain why — which is exactly the state
+   * an administrator needs pointed out, and the one thing distinguishing it from a key somebody
+   * chose to revoke.
+   */
+  async getKeys(): Promise<ApiKeyListEntry[]> {
     const results = await WIKI.db
       .select(keySelection)
       .from(apiKeysTable)
       .orderBy(desc(apiKeysTable.createdAt))
-    return results as ApiKey[]
+    const generatedAt = Temporal.Instant.from(WIKI.config.auth.certs.generatedAt)
+    return (results as ApiKey[]).map((key) => ({
+      ...key,
+      isInvalidated: Temporal.Instant.compare(key.createdAt.toTemporalInstant(), generatedAt) < 0
+    }))
+  }
+
+  /** When the keypair keys are signed with came into being. */
+  certificatesGeneratedAt(): string {
+    return WIKI.config.auth.certs.generatedAt
   }
 
   /**
@@ -98,12 +216,9 @@ class ApiKeys {
 
     const key = signJwt(
       {
-        // -> `api` marks the token as a key rather than a user token, so the two can never be
-        //    confused should user tokens ever be signed with the same keypair
-        api: 1,
         id,
         grp: groups,
-        aud: WIKI.config.auth.audience,
+        aud: TOKEN_AUDIENCE,
         iat: epochSeconds(),
         exp: epochSeconds(expiresAt)
       },
@@ -148,6 +263,27 @@ class ApiKeys {
   }
 
   /**
+   * Delete every revoked key.
+   *
+   * Housekeeping, not a security measure: a revoked key already authenticates nothing, and this only
+   * takes its row out of the admin list. What it costs is the record that the key ever existed, which
+   * is why nothing does it automatically.
+   *
+   * Invalidated keys are left alone. One of those is still a key somebody issued and has not decided
+   * anything about — it stopped working because the certificates moved, and the row is what tells its
+   * owner they have to reissue it. A key that is both revoked and invalidated goes: revoking is the
+   * decision, and this deletes what was decided about.
+   *
+   * @returns How many keys were deleted
+   */
+  async purgeRevoked(): Promise<number> {
+    const result = await WIKI.db.delete(apiKeysTable).where(eq(apiKeysTable.isRevoked, true))
+    const purged = result.rowCount ?? 0
+    WIKI.logger.info(`Purged ${purged} revoked API key(s) [ OK ]`)
+    return purged
+  }
+
+  /**
    * The union of the permissions held by the given groups.
    *
    * A group that no longer exists simply contributes nothing, so deleting a group narrows the keys
@@ -177,13 +313,15 @@ class ApiKeys {
     let claims
     try {
       claims = verifyJwt(token, WIKI.config.auth.certs.public, {
-        audience: WIKI.config.auth.audience
+        audience: TOKEN_AUDIENCE
       })
     } catch (err: any) {
       throw new ApiKeyError(err.message)
     }
 
-    if (claims.api !== 1 || typeof claims.id !== 'string') {
+    // -> A token this keypair signed but which names no key. There is nothing else it could be —
+    //    logins are sessions, and this keypair signs nothing but API keys.
+    if (typeof claims.id !== 'string') {
       throw new ApiKeyError('Token is not an API key.')
     }
 

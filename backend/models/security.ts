@@ -23,27 +23,15 @@ export const SECURITY_FIELDS = [
   'uploadScanSVG'
 ] as const
 
-/**
- * The JWT fields the admin area shows, mapped onto the `auth` settings they really live in.
- *
- * The `security` blob used to carry copies of these under the 2.x names, which nothing read — so the
- * view was editing values with no effect. These are the keys the running server uses.
- */
-export const AUTH_FIELD_MAP = {
-  authJwtAudience: 'audience',
-  authJwtExpiration: 'tokenExpiration',
-  authJwtRenewablePeriod: 'tokenRenewal'
-} as const
-
 /** A duration as the admin area writes it: `30m`, `14d`, `1y`. */
 const DURATION_PATTERN = /^\d+[smhdwy]$/
 
 /**
  * Security model
  *
- * One flat surface for the admin area's security view, even though the values are stored in two
- * settings blobs. Most of them are read when the HTTP server starts — see the `Security` section of
- * `index.ts` — so saving them here takes effect on the next restart.
+ * The admin area's security view, which is exactly the `security` settings blob. Most of it is read
+ * when the HTTP server starts — see the `Security` section of `index.ts` — so saving here takes
+ * effect on the next restart.
  */
 class Security {
   /**
@@ -55,9 +43,6 @@ class Security {
     for (const field of SECURITY_FIELDS) {
       config[field] = security[field]
     }
-    for (const [field, authKey] of Object.entries(AUTH_FIELD_MAP)) {
-      config[field] = WIKI.config.auth?.[authKey]
-    }
     return config
   }
 
@@ -66,7 +51,7 @@ class Security {
    */
   pickFields(body: Record<string, any>): Record<string, any> {
     const patch: Record<string, any> = {}
-    for (const field of [...SECURITY_FIELDS, ...Object.keys(AUTH_FIELD_MAP)]) {
+    for (const field of SECURITY_FIELDS) {
       if (body[field] !== undefined) {
         patch[field] = body[field]
       }
@@ -130,57 +115,20 @@ class Security {
       }
     }
 
-    for (const [field, label] of [
-      ['authJwtExpiration', 'token expiration'],
-      ['authJwtRenewablePeriod', 'token renewal period']
-    ] as const) {
-      if (!DURATION_PATTERN.test(merged[field] ?? '')) {
-        return `The ${label} must be a duration such as 30m, 12h or 14d.`
-      }
-    }
-    if (!merged.authJwtAudience || `${merged.authJwtAudience}`.trim().length < 1) {
-      return 'The JWT audience cannot be empty.'
-    }
-
     return null
   }
 
   /**
-   * Save a validated patch, splitting it across the two settings blobs it belongs to.
-   *
-   * Both are written in one go and rolled back together, so a failure cannot leave the JWT settings
-   * updated while the rest is not.
+   * Save a validated patch.
    *
    * @returns Whether the settings were saved
    */
   async updateConfig(patch: Record<string, any>): Promise<boolean> {
     const previousSecurity = WIKI.config.security
-    const previousAuth = WIKI.config.auth
-    const keys: string[] = []
+    WIKI.config.security = { ...previousSecurity, ...patch }
 
-    const securityPatch: Record<string, any> = {}
-    const authPatch: Record<string, any> = {}
-    for (const [field, value] of Object.entries(patch)) {
-      const authKey = AUTH_FIELD_MAP[field as keyof typeof AUTH_FIELD_MAP]
-      if (authKey) {
-        authPatch[authKey] = typeof value === 'string' ? value.trim() : value
-      } else {
-        securityPatch[field] = value
-      }
-    }
-
-    if (Object.keys(securityPatch).length > 0) {
-      WIKI.config.security = { ...previousSecurity, ...securityPatch }
-      keys.push('security')
-    }
-    if (Object.keys(authPatch).length > 0) {
-      WIKI.config.auth = { ...previousAuth, ...authPatch }
-      keys.push('auth')
-    }
-
-    if (!(await WIKI.configSvc.saveToDb(keys))) {
+    if (!(await WIKI.configSvc.saveToDb(['security']))) {
       WIKI.config.security = previousSecurity
-      WIKI.config.auth = previousAuth
       return false
     }
     return true

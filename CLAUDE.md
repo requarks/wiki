@@ -85,7 +85,7 @@ initializers → mount. There is no UI framework: `src/components/shared/` is th
 (every component is `W*`, used in templates as `<w-btn>`, `<w-input>`, …), registered globally by
 `boot/components.js` and styled with Tailwind.
 
-- `src/boot/` — one-time app initializers: `api.js` (creates the `ky` client with JWT refresh, exposed
+- `src/boot/` — one-time app initializers: `api.js` (creates the `ky` client, exposed
   as the `API_CLIENT` global), `components.js` (global components), `eventbus.js` (`EVENT_BUS` global,
   mitt), `externals.js`, `i18n.js`, `iconify.js` (points Iconify at this instance's `/_icons`),
   `monaco.js`, `temporal.js` (conditionally polyfills `Temporal`, awaited before anything else in
@@ -376,7 +376,7 @@ Consequences worth knowing:
   differ. Add a prop there rather than reaching around it.
 - HTTP calls go through the `ky` client, reachable as the `API_CLIENT` global (declared in the oxlint
   config, so no import needed) — e.g. `await API_CLIENT.get('sites').json()`. It handles the `/_api`
-  prefix and JWT refresh.
+  prefix; authentication is the session cookie, sent with every request.
 - Cross-component messaging uses the `EVENT_BUS` global (mitt).
 - State lives in Pinia option stores. For utilities and dates use `es-toolkit` and `Temporal` — see
   [Utilities and dates](#utilities-and-dates); the `lodash-es` and `luxon` still present in older

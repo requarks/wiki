@@ -296,6 +296,18 @@ const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel', 'ftp']
 const EDITOR_ARTIFACT_ATTRIBUTES = ['data-line']
 
 /**
+ * An icon dimension as a CSS length, or nothing when it is not one.
+ *
+ * Iconify reads a bare `32` as pixels and CSS does not, so the unit has to be spelled out. Anything
+ * that is not a plain length is refused rather than passed along: this ends up inside a `style`,
+ * where a value carrying a `;` would be a second declaration riding in on the first.
+ */
+function cssLength(value: string): string {
+  const match = /^(\d+(?:\.\d+)?)(px|em|rem|%)?$/.exec(value.trim())
+  return match ? `${match[1]}${match[2] ?? 'px'}` : ''
+}
+
+/**
  * Turn a heading into an anchor fragment.
  *
  * Kept deliberately plain — lowercase, words joined by hyphens — because these end up in URLs that
@@ -639,8 +651,27 @@ class Rendering {
       shortcodes become are styled there for the same reason.
     */
     svg.attr('class', ['icon', authorClass].filter(Boolean).join(' '))
-    // -> Ours first so that an author who set `vertical-align` themselves still wins
-    const styles = [inline === undefined ? '' : 'vertical-align:-0.125em', style ?? '']
+    /*
+      The size goes into the style as well as into the attributes, and only when it was asked for.
+      `.page-contents` sizes an icon to 1.4em by default — an icon reads small beside text at the 1em
+      Iconify draws at — and a CSS width outranks the `width` attribute, so an author who wrote
+      `width="32"` would otherwise be overruled by the default they were overriding.
+
+      Both axes, read back off the drawing rather than from what was asked for: an author who gave
+      only `width` had the other worked out for them from the icon's ratio, and pinning theirs alone
+      would leave the stylesheet supplying a height that does not go with it.
+    */
+    const sized: string[] = []
+    if (width || height) {
+      for (const axis of ['width', 'height'] as const) {
+        const length = cssLength(svg.attr(axis) ?? '')
+        if (length) {
+          sized.push(`${axis}:${length}`)
+        }
+      }
+    }
+    // -> Ours first so that an author who set any of these themselves still wins
+    const styles = [...sized, inline === undefined ? '' : 'vertical-align:-0.125em', style ?? '']
       .filter(Boolean)
       .join(';')
     if (styles) {

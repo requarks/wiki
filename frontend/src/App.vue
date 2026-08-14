@@ -215,11 +215,6 @@ async function loadBootstrap() {
 router.beforeEach(async (to, from) => {
   commonStore.routerLoading = true
 
-  // -> Init Auth Token
-  // if (userStore.token && !userStore.authenticated) {
-  //   userStore.loadToken()
-  // }
-
   /*
     -> Site info, system flags and the session
     One request for the three of them: none touches the database, so what they cost is the round trip,

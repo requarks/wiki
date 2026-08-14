@@ -26,7 +26,7 @@ app.use(store)
 app.use(router)
 
 initializeHairlines()
-initializeApi(store)
+initializeApi()
 initializeComponents(app)
 initializeEventBus()
 initializeIconify()

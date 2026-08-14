@@ -411,7 +411,7 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { dialog } from '@/composables/dialog'
+import { confirm } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
@@ -706,20 +706,13 @@ function confirmDelete() {
     state.strategy = state.activeStrategies[0] ?? { strategy: {} }
     return
   }
-  dialog({
+  confirm({
     title: t('admin.auth.deleteStrategy'),
     message: t('admin.auth.deleteConfirm', { strategy: strategy.displayName }),
     persistent: true,
-    ok: {
-      label: t('common.actions.delete'),
-      color: 'negative',
-      unelevated: true
-    },
-    cancel: {
-      label: t('common.actions.cancel'),
-      color: 'grey',
-      flat: true
-    }
+    cancel: true,
+    color: 'negative',
+    okLabel: t('common.actions.delete')
   }).onOk(async () => {
     state.loading++
     try {

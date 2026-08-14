@@ -57,6 +57,7 @@
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
+                disabled
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -72,6 +73,7 @@
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
+                @click="flushCache"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -87,15 +89,16 @@
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
+                disabled
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
           <w-item>
             <blueprint-icon icon="matches" :hue-rotate="45" />
             <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.invalidAuthCertificates`) }}</w-item-label>
+              <w-item-label>{{ t(`admin.utilities.invalidApiCertificates`) }}</w-item-label>
               <w-item-label caption>{{
-                t(`admin.utilities.invalidAuthCertificatesHint`)
+                t(`admin.utilities.invalidApiCertificatesHint`)
               }}</w-item-label>
             </w-item-section>
             <w-item-section side>
@@ -104,6 +107,25 @@
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
+                @click="invalidateApiCertificates"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="key" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.invalidSessionSecret`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`admin.utilities.invalidSessionSecretHint`)
+              }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="invalidateSessionSecret"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -131,6 +153,23 @@
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
+                @click="purgeHistory"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="trash" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.purgeRevokedKeys`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.purgeRevokedKeysHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="purgeRevokedKeys"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -146,6 +185,7 @@
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
+                disabled
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -162,6 +202,8 @@ import { useI18n } from 'vue-i18n'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
+import { confirm } from '@/composables/dialog'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 import { useSiteStore } from '@/stores/site'
 
@@ -198,35 +240,223 @@ const purgeHistoryTimeframes = computed(() => [
 
 // METHODS
 
-async function disconnectWS() {
-  loading.show()
-  try {
-    const resp = await APOLLO_CLIENT.mutate({
-      mutation: `
-        mutation disconnectWS {
-          disconnectWS {
-            operation {
-              succeeded
-              message
-            }
-          }
-        }
-      `,
-      fetchPolicy: 'network-only'
-    })
-    if (resp?.data?.disconnectWS?.operation?.succeeded) {
+/**
+ * Close every websocket the wiki holds — the editors of anyone collaborating on a page, and any open
+ * admin terminal. Confirmed first because it interrupts people who are working: their clients
+ * reconnect on their own, but an editor is briefly cut off from the others in its room.
+ *
+ * Both this and {@link flushCache} reach every instance: the one answering the request acts on itself
+ * and publishes the same instruction to the others. `count` in the response is therefore only what
+ * this one closed, which is why it is not reported.
+ */
+function disconnectWS() {
+  confirm({
+    title: t('admin.utilities.disconnectWS'),
+    message: t('admin.utilities.disconnectWSConfirm'),
+    cancel: true,
+    color: 'negative',
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/websockets/disconnect').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
       notify({
         type: 'positive',
         message: t('admin.utilities.disconnectWSSuccess')
       })
-    } else {
-      throw new Error(resp?.data?.disconnectWS?.operation?.succeeded)
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.disconnectWSFailed'),
+        caption: apiErrorMessage(err)
+      })
     }
+    loading.hide()
+  })
+}
+
+/**
+ * Replace the keypair API keys are signed with, taking back every key ever issued.
+ *
+ * Nobody is logged out by this — session cookies are signed with a secret of their own, which is the
+ * point of the two being separate — but every integration holding a key stops working until it is
+ * given a new one, so the confirmation says how many are affected rather than asking blind.
+ */
+function invalidateApiCertificates() {
+  confirm({
+    title: t('admin.utilities.invalidApiCertificates'),
+    message: t('admin.utilities.invalidApiCertificatesConfirm'),
+    caption: t('admin.utilities.invalidApiCertificatesConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/certificates').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      const count = resp.invalidatedKeys ?? 0
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.invalidApiCertificatesSuccess', count, { count })
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.invalidApiCertificatesFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    loading.hide()
+  })
+}
+
+/**
+ * Rotate the secret session cookies are signed with, and end every session.
+ *
+ * Including this one: the admin who clicks it is logged out with everybody else, which the
+ * confirmation says outright. Nothing is notified afterwards for that reason — the router lands on
+ * the login screen while the notification would still be on its way.
+ */
+function invalidateSessionSecret() {
+  confirm({
+    title: t('admin.utilities.invalidSessionSecret'),
+    message: t('admin.utilities.invalidSessionSecretConfirm'),
+    caption: t('admin.utilities.invalidSessionSecretConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/sessions/invalidate').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      // -> This session is one of the ones just ended, so there is nowhere to go but back to the
+      //    login screen. A full load rather than a route push: every store is holding the state of
+      //    somebody who is no longer signed in.
+      window.location.assign('/login')
+    } catch (err) {
+      loading.hide()
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.invalidSessionSecretFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+  })
+}
+
+/**
+ * Delete every page version older than the selected timeframe, on every site.
+ *
+ * Confirmed, and named in the confirmation: pages keep what they say now, but a version thrown away
+ * here is gone for good — and the versions of a page somebody deleted are all that is left of it.
+ */
+function purgeHistory() {
+  const timeframe = purgeHistoryTimeframes.value.find(
+    (tf) => tf.value === state.purgeHistoryTimeframe
+  )
+  confirm({
+    title: t('admin.utilities.purgeHistory'),
+    message: t('admin.utilities.purgeHistoryConfirm', { timeframe: timeframe?.label ?? '' }),
+    caption: t('admin.utilities.purgeHistoryConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/history/purge', {
+        json: { olderThan: state.purgeHistoryTimeframe }
+      }).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      const count = resp.count ?? 0
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.purgeHistorySuccess', count, { count })
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.purgeHistoryFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    loading.hide()
+  })
+}
+
+/**
+ * Delete the rows of keys somebody revoked.
+ *
+ * Confirmed, but not coloured as a destruction: nothing loses access here, since a revoked key
+ * already had none. What goes is the record that it existed.
+ */
+function purgeRevokedKeys() {
+  confirm({
+    title: t('admin.utilities.purgeRevokedKeys'),
+    message: t('admin.utilities.purgeRevokedKeysConfirm'),
+    caption: t('admin.utilities.purgeRevokedKeysConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/api-keys/purge').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      const count = resp.count ?? 0
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.purgeRevokedKeysSuccess', count, { count })
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.purgeRevokedKeysFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    loading.hide()
+  })
+}
+
+/**
+ * Throw away everything the wiki has cached off the database — files, icons, and the site, group and
+ * locale state read on every request. Not confirmed: nothing is lost and nothing stops working, the
+ * next request simply pays for the refill.
+ */
+async function flushCache() {
+  loading.show()
+  try {
+    const resp = await API_CLIENT.post('system/cache/flush').json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    notify({
+      type: 'positive',
+      message: t('admin.utilities.flushCacheSuccess')
+    })
   } catch (err) {
     notify({
       type: 'negative',
-      message: 'Failed to disconnect WS connections.',
-      caption: err.message
+      message: t('admin.utilities.flushCacheFailed'),
+      caption: apiErrorMessage(err)
     })
   }
   loading.hide()

@@ -1,5 +1,5 @@
 import { isEqual } from 'es-toolkit/predicate'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, lt, sql } from 'drizzle-orm'
 import {
   pageHistory as pageHistoryTable,
   pages as pagesTable,
@@ -16,6 +16,26 @@ import {
 export const pageHistoryActions = ['created', 'updated', 'moved', 'deleted'] as const
 
 export type PageHistoryAction = (typeof pageHistoryActions)[number]
+
+/**
+ * How far back the admin area's purge can be told to keep, and the interval each answer means.
+ *
+ * The values are postgres intervals rather than a duration computed here, so that the cutoff is
+ * measured against the same clock the rows were written by: `versionDate` takes the column default,
+ * which is `now()`, and a timestamp column carries no offset to reconcile a date computed in this
+ * process against. It also gets the calendar arithmetic for free — a month is a month, whichever one
+ * it lands in.
+ */
+export const purgeTimeframes = {
+  '24h': '24 hours',
+  '1m': '1 month',
+  '3m': '3 months',
+  '6m': '6 months',
+  '1y': '1 year',
+  '2y': '2 years'
+} as const
+
+export type PurgeTimeframe = keyof typeof purgeTimeframes
 
 /**
  * The page fields a version carries beyond the ones with columns of their own.
@@ -274,6 +294,34 @@ class PageHistory {
         email: row.authorEmail ?? ''
       }
     }
+  }
+
+  /**
+   * Drop every version older than a timeframe, across every site.
+   *
+   * Content versioning is the only thing this touches: a page's own row holds what it says now, so
+   * purging changes nothing anybody reads — it shortens timelines and takes away what a page can be
+   * rolled back to. A page whose every version is older than the cutoff keeps the page and loses its
+   * history entirely, which includes the `created` row saying when it appeared.
+   *
+   * What it does not spare is a page that no longer exists. Its versions outlive it deliberately (see
+   * `db/schema.ts`), and they are all that is left of it — so purging past the day it was deleted is
+   * what finally discards it. Reclaiming that space is the point of this; there is nothing to undo it
+   * with.
+   *
+   * @param olderThan How far back to keep, as one of {@link purgeTimeframes}
+   * @returns How many versions were dropped
+   */
+  async purge(olderThan: PurgeTimeframe): Promise<number> {
+    const interval = purgeTimeframes[olderThan]
+    const result = await WIKI.db
+      .delete(pageHistoryTable)
+      // -> The interval is bound as a parameter and cast, rather than interpolated: the value is off
+      //    a closed list, but a raw fragment built from a request is a habit worth not having
+      .where(lt(pageHistoryTable.versionDate, sql`now() - ${interval}::interval`))
+    const purged = result.rowCount ?? 0
+    WIKI.logger.info(`Purged ${purged} page version(s) older than ${interval} [ OK ]`)
+    return purged
   }
 
   /**

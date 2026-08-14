@@ -1,51 +1,20 @@
 import ky from 'ky'
 
-import { useUserStore } from '@/stores/user'
-
-export function initializeApi(store) {
-  const userStore = useUserStore(store)
-
-  let refreshPromise = null
-  let fetching = false
-
+/**
+ * The HTTP client every call to the API goes through, exposed as the `API_CLIENT` global.
+ *
+ * Nothing is attached to a request beyond the session cookie: authentication is the `wikiSession`
+ * cookie the server sets, sent because of `credentials`. There used to be a `beforeRequest` hook here
+ * that refreshed a JWT and set an `Authorization` header — a leftover from when 3.x authenticated
+ * with tokens. The user store it read has had no token since sessions replaced them, so the hook only
+ * ever set an empty header. API keys still use bearer tokens, but those belong to callers outside
+ * this app.
+ */
+export function initializeApi() {
   const client = ky.create({
     prefix: '/_api',
     credentials: 'same-origin',
-    throwHttpErrors: (statusNumber) => statusNumber > 400, // Don't throw for 400
-    hooks: {
-      beforeRequest: [
-        async ({ request }) => {
-          // -> Guest
-          if (!userStore.token) {
-            request.headers.set('Authorization', '')
-            return
-          }
-
-          // -> Refresh Token
-          if (!userStore.isTokenValid({ minutes: 1 })) {
-            if (!fetching) {
-              refreshPromise = new Promise((resolve, reject) => {
-                ;(async () => {
-                  fetching = true
-                  try {
-                    await userStore.refreshToken()
-                    resolve()
-                  } catch (err) {
-                    reject(err)
-                  }
-                  fetching = false
-                })()
-              })
-            } else {
-              // -> Another request is already executing, wait for it to complete
-              await refreshPromise
-            }
-          }
-
-          request.headers.set('Authorization', userStore.token ? `Bearer ${userStore.token}` : '')
-        }
-      ]
-    }
+    throwHttpErrors: (statusNumber) => statusNumber > 400 // Don't throw for 400
   })
 
   if (import.meta.env.SSR) {

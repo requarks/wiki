@@ -113,22 +113,23 @@
                   }}</span>
                 </w-item-label>
               </w-item-section>
-              <!-- Revoked wins over expired: it is the state an operator acted on -->
-              <w-item-section
-                v-if="key.isRevoked || isExpired(key)"
-                side
-                style="flex-direction: row; align-items: center">
-                <w-icon
-                  class="mr-2"
-                  color="negative"
-                  size="xs"
-                  name="la:exclamation-triangle" />
-                <div class="text-caption text-negative">
-                  {{ key.isRevoked ? t('admin.api.revoked') : t('admin.api.expired') }}
+              <!--
+                One state, in the order they explain the key best: revoked is what an operator did
+                to this key, invalidated is what happened to every key at once, expired is the key
+                simply running its course.
+              -->
+              <w-item-section v-if="keyState(key)" side>
+                <div class="flex items-center">
+                  <w-icon class="mr-2" color="negative" size="xs" name="la:exclamation-triangle" />
+                  <div class="text-caption text-negative">
+                    {{ t(`admin.api.${keyState(key)}`) }}
+                  </div>
                 </div>
-                <w-tooltip anchor="center left" self="center right">{{
-                  key.isRevoked ? t('admin.api.revokedHint') : t('admin.api.expiredHint')
-                }}</w-tooltip>
+                <!-- -> In the row rather than in a tooltip: it is the explanation of the state right
+                     above it, and a tooltip here opened over the admin sidebar -->
+                <div class="text-caption text-grey mt-1 text-right" style="max-width: 340px">
+                  {{ stateHint(key) }}
+                </div>
               </w-item-section>
               <w-separator class="ml-4" vertical />
               <w-item-section side style="flex-direction: row; align-items: center">
@@ -196,7 +197,9 @@ const state = reactive({
   loading: 0,
   isToggleLoading: false,
   keys: [],
-  groups: []
+  groups: [],
+  /** When the signing keypair was generated — what an invalidated key is invalidated by. */
+  certificatesGeneratedAt: null
 })
 
 // METHODS
@@ -222,8 +225,37 @@ function isExpired(key) {
   )
 }
 
+/**
+ * Why a key does not work, or null when it does.
+ *
+ * A key can be in more than one of these at once — revoked *and* long expired, say — so they are
+ * ordered by how much each explains: what somebody did to this one key, then what the certificates
+ * did to all of them, then time running out. `isInvalidated` comes from the server, which is the
+ * side holding the date the keypair was generated.
+ */
+function keyState(key) {
+  if (key.isRevoked) {
+    return 'revoked'
+  }
+  if (key.isInvalidated) {
+    return 'invalidated'
+  }
+  return isExpired(key) ? 'expired' : null
+}
+
+/** The sentence under a key's state: what it means, and what to do about it. */
+function stateHint(key) {
+  const status = keyState(key)
+  if (!status) {
+    return ''
+  }
+  return status === 'invalidated'
+    ? t('admin.api.invalidatedHint', { date: humanizeDate(state.certificatesGeneratedAt) })
+    : t(`admin.api.${status}Hint`)
+}
+
 function isUsable(key) {
-  return !key.isRevoked && !isExpired(key)
+  return keyState(key) === null
 }
 
 /** Group names rather than IDs, falling back to the ID for a group that has since been deleted. */
@@ -237,15 +269,18 @@ async function load() {
   state.loading++
   loading.show()
   try {
-    // -> Groups are fetched alongside the keys so the list can name the permissions each key carries
-    const [keys, apiState, groups] = await Promise.all([
+    // -> Groups are fetched alongside the keys so the list can name the permissions each key carries,
+    //    and the certificate date so an invalidated key can say what invalidated it
+    const [keys, apiState, groups, certs] = await Promise.all([
       API_CLIENT.get('api-keys').json(),
       API_CLIENT.get('system/api').json(),
-      API_CLIENT.get('groups').json()
+      API_CLIENT.get('groups').json(),
+      API_CLIENT.get('system/certificates').json()
     ])
     state.keys = keys ?? []
     state.groups = groups ?? []
     state.enabled = apiState?.isEnabled === true
+    state.certificatesGeneratedAt = certs?.generatedAt ?? null
     // -> Keeps the status light in the admin sidebar in step without another round trip
     adminStore.info.isApiEnabled = state.enabled
   } catch (err) {

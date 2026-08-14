@@ -281,7 +281,7 @@ import { computed, onMounted, reactive } from 'vue'
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
-import { dialog } from '@/composables/dialog'
+import { confirm } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
@@ -487,20 +487,13 @@ async function setSetState(set, isEnabled) {
 }
 
 function confirmDeleteSet(set) {
-  dialog({
+  confirm({
     title: t('admin.icons.deleteSet'),
     message: t('admin.icons.deleteSetConfirm', { set: set.name, count: set.iconCount }),
     persistent: true,
-    ok: {
-      label: t('common.actions.delete'),
-      color: 'negative',
-      unelevated: true
-    },
-    cancel: {
-      label: t('common.actions.cancel'),
-      color: 'grey',
-      flat: true
-    }
+    cancel: true,
+    color: 'negative',
+    okLabel: t('common.actions.delete')
   }).onOk(async () => {
     state.loading++
     try {
@@ -530,20 +523,13 @@ function confirmDeleteSet(set) {
 }
 
 function purgeCache() {
-  dialog({
+  confirm({
     title: t('admin.icons.purgeCache'),
     message: t('admin.icons.purgeCacheConfirm'),
     persistent: true,
-    ok: {
-      label: t('admin.icons.purgeCache'),
-      color: 'negative',
-      unelevated: true
-    },
-    cancel: {
-      label: t('common.actions.cancel'),
-      color: 'grey',
-      flat: true
-    }
+    cancel: true,
+    color: 'negative',
+    okLabel: t('admin.icons.purgeCache')
   }).onOk(async () => {
     state.loading++
     try {
