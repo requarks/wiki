@@ -9,7 +9,6 @@ export const SECURITY_FIELDS = [
   'corsConfig',
   'corsMode',
   'cspDirectives',
-  'disallowFloc',
   'disallowIframe',
   'disallowOpenRedirect',
   'enforceCsp',

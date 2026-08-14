@@ -335,15 +335,6 @@ async function initHTTPServer() {
     methods: ['GET', 'HEAD', 'POST', 'OPTIONS']
   })
 
-  if (security.disallowFloc) {
-    // -> Helmet dropped its FLoC helper once the proposal was withdrawn, but opting out still costs
-    //    one header and the setting exists
-    app.addHook('onSend', (req, reply, payload, done) => {
-      reply.header('Permissions-Policy', 'interest-cohort=()')
-      done(null, payload)
-    })
-  }
-
   // ----------------------------------------
   // Public Assets
   // ----------------------------------------

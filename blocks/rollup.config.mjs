@@ -152,27 +152,97 @@ function blocksManifest () {
   }
 }
 
+const IGNORED_DIRS = [
+  'dist/**',
+  'node_modules/**'
+]
+
+/**
+ * Copies the runtime data files a block's library fetches for itself into `compiled/<block>/`.
+ *
+ * Some libraries deliberately keep part of themselves out of the bundle. pdf.js ships its character
+ * maps, its fallback fonts, its colour profile and the wasm that decodes JPEG 2000 and JBIG2 images
+ * as files it asks for only once a document turns out to need one — several megabytes that would
+ * otherwise be carried into every page showing a PDF, to be read by hardly any of them. They still
+ * have to be somewhere the browser can ask for them, and for a block that means beside it in
+ * /_blocks, since a block knows no other path it can reach.
+ *
+ * `assets.json` beside a component lists them: a directory to copy — a package subpath, or one
+ * starting with `./` for a directory of the block's own — mapped to the name it should have under
+ * `compiled/<block>/`. Everything below it is copied, so a block declares four directories rather
+ * than two hundred files.
+ */
+function blockAssets () {
+  return {
+    name: 'block-assets',
+    buildStart () {
+      for (const listPath of glob.sync('@(block-*)/assets.json', { ignore: IGNORED_DIRS })) {
+        const blockDir = listPath.split('/')[0]
+        this.addWatchFile(listPath)
+        const list = JSON.parse(fs.readFileSync(listPath, 'utf8'))
+        for (const [source, destination] of Object.entries(list)) {
+          const from = source.startsWith('.')
+            ? path.resolve(blockDir, source)
+            : path.resolve('node_modules', source)
+          if (!fs.existsSync(from)) {
+            // -> A package that moved its data files between versions, most likely. Silence here
+            //    would be a block that loads and then quietly cannot read half the documents it is
+            //    given, so the build stops instead.
+            this.error(`${listPath}: "${source}" does not exist — nothing to copy from.`)
+          }
+          for (const entry of fs.readdirSync(from, { recursive: true, withFileTypes: true })) {
+            if (!entry.isFile()) {
+              continue
+            }
+            const filePath = path.join(entry.parentPath, entry.name)
+            this.emitFile({
+              type: 'asset',
+              fileName: path.posix.join(
+                blockDir,
+                destination,
+                path.relative(from, filePath).split(path.sep).join('/')
+              ),
+              source: fs.readFileSync(filePath)
+            })
+          }
+        }
+      }
+    }
+  }
+}
+
 export default {
-  input: Object.fromEntries(
-    glob.sync('@(block-*)/component.js', {
-      ignore: [
-        'dist/**',
-        'node_modules/**'
-      ]
-    }).map(file => {
+  input: Object.fromEntries([
+    ...glob.sync('@(block-*)/component.js', { ignore: IGNORED_DIRS }).map(file => {
       const fileParts = file.split('/')
       return [
         fileParts[0],
         file
       ]
+    }),
+    /*
+      A `worker.js` beside a component is a second entry point, compiled to `<block>.worker.js`.
+
+      A web worker is loaded by URL rather than imported, so its code cannot be part of the bundle
+      that starts it -- it has to be a file of its own, sitting in /_blocks where the block can point
+      at it with `new URL('<block>.worker.js', import.meta.url)`. See `block-pdf`, which runs pdf.js's
+      parser off the page's thread.
+    */
+    ...glob.sync('@(block-*)/worker.js', { ignore: IGNORED_DIRS }).map(file => {
+      const fileParts = file.split('/')
+      return [
+        `${fileParts[0]}.worker`,
+        file
+      ]
     })
-  ),
+  ]),
   output: {
     dir: 'compiled',
     format: 'es'
   },
   plugins: [
     blocksManifest(),
+    blockAssets(),
     cssAsString(),
     // -> `production` is stated rather than left to be inferred: since v16 the plugin picks the
     //    `development` or `production` export condition off `process.env.NODE_ENV`, and this build

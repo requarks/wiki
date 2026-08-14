@@ -1,0 +1,6 @@
+{
+  "pdfjs-dist/cmaps": "cmaps",
+  "pdfjs-dist/standard_fonts": "standard_fonts",
+  "pdfjs-dist/wasm": "wasm",
+  "pdfjs-dist/iccs": "iccs"
+}

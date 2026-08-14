@@ -37,10 +37,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         minimum: 0,
         description: 'Seconds. Must be greater than zero when HSTS is enforced.'
       },
-      disallowFloc: {
-        type: 'boolean',
-        description: 'Sends `Permissions-Policy: interest-cohort=()`.'
-      },
       disallowIframe: {
         type: 'boolean',
         description: '`X-Frame-Options: DENY` when on, `SAMEORIGIN` when off.'

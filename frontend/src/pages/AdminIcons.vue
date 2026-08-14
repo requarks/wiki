@@ -12,7 +12,17 @@
           {{ t('admin.icons.subtitle') }}
         </div>
       </div>
-      <div class="flex-none">
+      <div class="flex-none flex">
+        <w-btn
+          class="acrylic-btn mr-2"
+          flat
+          icon="la:broom"
+          color="purple"
+          :label="t(`admin.icons.purgeCache`)"
+          @click="purgeCache">
+          <w-tooltip>{{ t('admin.icons.purgeCacheHint') }}</w-tooltip>
+        </w-btn>
+        <w-separator class="mr-2" vertical />
         <w-btn
           class="acrylic-btn mr-2"
           icon="la:question-circle"
@@ -60,21 +70,6 @@
           >
           <w-list separator>
             <w-item v-for="set of state.sets" :key="set.prefix">
-              <w-item-section side>
-                <div class="admin-icons-samples">
-                  <w-icon
-                    class="admin-icons-sample"
-                    v-for="sample of sampleRefs(set)"
-                    :key="sample"
-                    :name="sample"
-                    size="24px" />
-                  <w-icon
-                    v-if="sampleRefs(set).length < 1"
-                    name="la:icons"
-                    size="24px"
-                    color="grey" />
-                </div>
-              </w-item-section>
               <w-item-section>
                 <w-item-label>
                   <strong>{{ set.name }}</strong>
@@ -165,35 +160,6 @@
               </w-item-section>
             </w-item>
           </w-list>
-          <w-separator />
-          <w-card-actions class="px-4">
-            <w-btn
-              class="acrylic-btn"
-              flat
-              no-caps
-              icon="la:broom"
-              color="negative"
-              :label="t(`admin.icons.purgeCache`)"
-              @click="purgeCache">
-              <w-tooltip>{{ t('admin.icons.purgeCacheHint') }}</w-tooltip>
-            </w-btn>
-          </w-card-actions>
-        </w-card>
-        <!-- ----------------------- -->
-        <!-- How it works -->
-        <!-- ----------------------- -->
-        <w-card class="rounded mt-4" style="width: 350px">
-          <w-card-header>
-            {{ t('admin.icons.howItWorks') }}
-            <template #hint>{{ t('admin.icons.howItWorksHint') }}</template>
-          </w-card-header>
-          <w-separator class="mb-2" inset />
-          <w-item>
-            <w-item-section>
-              <w-item-label class="text-grey">{{ t('admin.icons.upstream') }}</w-item-label>
-              <w-item-label class="text-caption">{{ t('admin.icons.upstreamHint') }}</w-item-label>
-            </w-item-section>
-          </w-item>
         </w-card>
       </div>
     </div>
@@ -343,13 +309,6 @@ function prettyBytes(bytes) {
     return `${(bytes / 1024).toFixed(1)} kB`
   }
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-/**
- * A few icons of the set to show next to it, from the samples upstream publishes
- */
-function sampleRefs(set) {
-  return (set.info?.samples ?? []).slice(0, 3).map((sample) => `${set.prefix}:${sample}`)
 }
 
 /**

@@ -129,7 +129,6 @@ class Settings {
           corsConfig: '',
           corsMode: 'OFF',
           cspDirectives: '',
-          disallowFloc: true,
           disallowIframe: true,
           disallowOpenRedirect: true,
           enforceCsp: false,

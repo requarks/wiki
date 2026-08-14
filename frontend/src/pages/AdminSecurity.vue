@@ -65,19 +65,6 @@
             </w-item-section>
           </w-item>
           <w-item tag="label">
-            <blueprint-icon icon="rfid-signal" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.security.disallowFloc`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.security.disallowFlocHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.disallowFloc"
-                :aria-label="t(`admin.security.disallowFloc`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
             <blueprint-icon icon="maximize-window" />
             <w-item-section>
               <w-item-label>{{ t(`admin.security.disallowIframe`) }}</w-item-label>
@@ -447,7 +434,6 @@ const state = reactive({
     corsConfig: '',
     corsMode: 'OFF',
     cspDirectives: '',
-    disallowFloc: false,
     disallowIframe: false,
     disallowOpenRedirect: false,
     enforceCsp: false,
