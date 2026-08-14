@@ -16,9 +16,12 @@ export class BlockIndexElement extends LitElement {
    * runtime, this one describes it to a person — so a property meant to be authored belongs in both.
    * It is also what survives being saved: the renderer strips any attribute a block does not declare.
    *
-   * A `boolean` prop must default to false. MDC writes attributes as strings and Lit reads any
-   * attribute that is present as true, so `showThing="false"` would come out true — the picker leaves
-   * a prop out entirely when it still holds its default, which is what keeps false meaning false.
+   * A `boolean` prop must default to false, unless the block reads the attribute itself. MDC writes
+   * attributes as strings and Lit reads any attribute that is present as true, so `showThing="false"`
+   * would come out true — the picker leaves a prop out entirely when it still holds its default,
+   * which is what keeps false meaning false. A block declaring the converter `block-asciinema` and
+   * `block-youtube` share is free of that, and so free to default a prop to true: `false` written out
+   * is then read back as false, which is the only case the stock converter gets wrong.
    */
   static definition = {
     block: 'index',
