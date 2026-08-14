@@ -50,6 +50,16 @@
             t('editor.markup.insertEmoji')
           }}</w-tooltip>
         </w-btn>
+        <!-- -> Icons only: what goes in is a `:mdi:home:` shortcode, and the picker's other tab hands
+                back an `img:` URL, which is not something that syntax can say -->
+        <w-btn icon="mdi:seed-plus-outline" padding="sm sm" flat>
+          <w-menu anchor="top right" self="top left" content-class="shadow-7">
+            <icon-picker-dialog no-image @update:model-value="insertIcon" />
+          </w-menu>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertIcon')
+          }}</w-tooltip>
+        </w-btn>
         <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertHorizontalBar')
@@ -319,6 +329,7 @@ import { findEditableTables } from '@/helpers/markdownTable'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
+import IconPickerDialog from '@/components/IconPickerDialog.vue'
 import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
 
 import { useCollabStore } from '@/stores/collab'
@@ -513,6 +524,18 @@ function insertCodeBlock(language) {
  */
 function insertEmoji(shortcode) {
   insertAtCursor({ content: `:${shortcode}:` })
+}
+
+/**
+ * The picked icon, as the shortcode that draws it — `mdi:home` in, `:mdi:home:` out.
+ *
+ * The same delimiters an emoji uses, and the same insertion: the two are one syntax as far as the
+ * source is concerned, told apart by the colon inside the reference. See `renderers/markdown.js`.
+ */
+function insertIcon(reference) {
+  if (reference) {
+    insertAtCursor({ content: `:${reference}:` })
+  }
 }
 
 function insertBlock() {

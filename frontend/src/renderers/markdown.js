@@ -142,6 +142,69 @@ function rewriteHtmlImages(html, pagePath) {
   })
 }
 
+/**
+ * An `<iconify-icon>` written the way a Vue component is, `<iconify-icon icon="mdi:home" />`.
+ *
+ * The lookahead rather than a `\b`: a hyphen ends a word, so a boundary alone also matches the start
+ * of `<iconify-icon-something />` and would close it with the wrong tag.
+ */
+const SELF_CLOSED_ICON = /<iconify-icon(?![\w-])([^>]*?)\s*\/>/gi
+
+/**
+ * Give a self-closed icon the closing tag it actually needs.
+ *
+ * `/>` closes nothing in HTML outside the void elements, so the parser hands the icon the rest of the
+ * paragraph as children -- and `iconify-icon` draws a shadow root with no slot in it, so that text
+ * lands on the page invisible. The form is the one anybody writes, having seen it in every framework
+ * for twenty years, and it is unambiguous about what was meant: an icon has no content.
+ *
+ * Done here, over the author's own HTML, rather than over the finished render, so that a `<iconify-icon
+ * />` shown INSIDE a code block stays exactly as it was written -- that text is escaped by the time it
+ * is rendered and is not raw HTML at all. `models/rendering.ts` lifts out anything that got nested
+ * anyway, since a render can also arrive from something that is not this renderer.
+ */
+function closeIconTags(html) {
+  return html.replace(SELF_CLOSED_ICON, '<iconify-icon$1></iconify-icon>')
+}
+
+/**
+ * An icon written the way an emoji is: `:mdi:arrow-vertical-lock:`.
+ *
+ * The inner colon is what tells the two apart, and it is a reliable tell in both directions: an
+ * Iconify reference is always `prefix:name` and an emoji shortcode never holds a colon. So the two
+ * syntaxes can share the delimiter without either having to know about the other -- `:smile:` has
+ * nothing here to match, and this rule runs while the inline is tokenized, well before the emoji
+ * plugin's core rule ever looks at the text.
+ *
+ * Sticky rather than anchored, so it is matched at the cursor without slicing the source at every
+ * colon in the document.
+ *
+ * The prefix must begin with a letter, which every Iconify set does. Without that, `10:30:45:` in a
+ * line of prose is an icon reference as far as this is concerned.
+ */
+const ICON_SHORTCODE = /:([a-z][a-z\d]*(?:-[a-z\d]+)*):([a-z\d]+(?:[-.][a-z\d]+)*):/y
+
+/** The inline rule behind it. `state.pos` is at a `:` for any of this to be worth trying. */
+function iconShortcode(state, silent) {
+  if (state.src.charCodeAt(state.pos) !== 0x3a /* : */) {
+    return false
+  }
+  ICON_SHORTCODE.lastIndex = state.pos
+  const match = ICON_SHORTCODE.exec(state.src)
+  // -> `posMax` is the end of what is being tokenized, which inside a link label is not the end of
+  //    the line: a match that runs past it belongs to the text after, not to this
+  if (!match || state.pos + match[0].length > state.posMax) {
+    return false
+  }
+  if (!silent) {
+    const token = state.push('iconify_icon', 'iconify-icon', 0)
+    token.markup = match[0]
+    token.content = `${match[1]}:${match[2]}`
+  }
+  state.pos += match[0].length
+  return true
+}
+
 export class MarkdownRenderer {
   constructor(config = {}) {
     this.md = new MarkdownIt({
@@ -280,6 +343,18 @@ export class MarkdownRenderer {
       return inlineProps(state, silent)
     })
 
+    /*
+      Icons written as shortcodes, `:mdi:home:`.
+
+      Registered ahead of every other inline rule so that the whole reference is claimed in one go.
+      Nothing else wants it -- MDC's inline component syntax, the only other rule that would take a
+      colon, is off above -- but the alternative is the emoji plugin's core rule, which runs over the
+      TEXT of a token that by then has already been split around the colons.
+    */
+    this.md.inline.ruler.before('text', 'iconify_icon', iconShortcode)
+    this.md.renderer.rules.iconify_icon = (tokens, idx) =>
+      `<iconify-icon icon="${tokens[idx].content}"></iconify-icon>`
+
     if (config.underline) {
       this.md.use(mdUnderline)
     }
@@ -351,12 +426,15 @@ export class MarkdownRenderer {
     /*
       And the same for an `<img>` the author wrote as HTML, which never becomes a token to hold an
       attribute -- so it is the rendered text that is rewritten, after whatever rule produced it.
+      Raw HTML is also where a self-closed `<iconify-icon />` turns up, and it is fixed in the same
+      pass for the same reason: this is the only point at which the author's own markup is still
+      distinguishable from the markup the renderer produced.
     */
     const passthrough = (tokens, idx) => tokens[idx].content
     for (const rule of ['html_block', 'html_inline']) {
       const renderHtml = this.md.renderer.rules[rule] ?? passthrough
       this.md.renderer.rules[rule] = (tokens, idx, options, env, slf) =>
-        rewriteHtmlImages(renderHtml(tokens, idx, options, env, slf), env?.pagePath)
+        closeIconTags(rewriteHtmlImages(renderHtml(tokens, idx, options, env, slf), env?.pagePath))
     }
 
     // --------------------------------

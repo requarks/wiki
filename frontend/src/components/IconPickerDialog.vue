@@ -4,7 +4,7 @@
          it sits ON the card rather than spanning it edge to edge -->
     <w-tabs class="m-2" v-model="state.currentTab" no-caps inline-label>
       <w-tab name="icon" icon="la:icons" :label="t(`iconPicker.icons`)" />
-      <w-tab name="image" icon="la:image" :label="t(`iconPicker.image`)" />
+      <w-tab v-if="!props.noImage" name="image" icon="la:image" :label="t(`iconPicker.image`)" />
     </w-tabs>
     <w-separator />
     <w-tab-panels v-model="state.currentTab">
@@ -69,7 +69,7 @@
       <!-- ----------------------- -->
       <!-- An image file -->
       <!-- ----------------------- -->
-      <w-tab-panel class="p-3" name="image">
+      <w-tab-panel v-if="!props.noImage" class="p-3" name="image">
         <!-- -> `text-grey` (#9e9e9e) is too faint to read at caption size; the app's secondary-text
              pair holds up on both the light panel and the dark one -->
         <div class="text-caption text-black/60 dark:text-white/70">
@@ -148,6 +148,17 @@ const props = defineProps({
   modelValue: {
     type: String,
     default: ''
+  },
+  /**
+   * Offer icons only, leaving out the tab that points at an image file.
+   *
+   * For the callers whose value is not a `WIcon` reference and has no `img:` form to fall back on --
+   * the markdown editor writes an `:mdi:home:` shortcode, which is an Iconify reference and nothing
+   * else.
+   */
+  noImage: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -299,7 +310,7 @@ async function focusCurrentTab() {
 
 onMounted(async () => {
   // -> An image reference opens on the image tab, an Iconify one on the search tab
-  if (props.modelValue?.startsWith(IMAGE_PREFIX)) {
+  if (!props.noImage && props.modelValue?.startsWith(IMAGE_PREFIX)) {
     state.currentTab = 'image'
     state.image = props.modelValue.slice(IMAGE_PREFIX.length)
   } else if (ICONIFY_REF.test(props.modelValue ?? '')) {

@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { and, count, eq, inArray } from 'drizzle-orm'
-import { getIconData, iconToHTML, iconToSVG } from '@iconify/utils'
+import { getIconData, iconToHTML, iconToSVG, replaceIDs } from '@iconify/utils'
 import { icons as iconsTable, iconSets as iconSetsTable } from '../db/schema.ts'
+import type { IconifyIconCustomisations } from '@iconify/utils'
 import type { IconifyIcon, IconifyInfo, IconifyJSON } from '@iconify/types'
 
 /** An icon set as stored, plus how many of its icons the wiki holds. */
@@ -586,6 +587,22 @@ class Icons {
       height: `${icon.height ?? 16}`
     })
     return iconToHTML(rendered.body, rendered.attributes)
+  }
+
+  /**
+   * Turn resolved icon data into SVG markup to be drawn INTO a document.
+   *
+   * Sized in `em` — Iconify's default when neither dimension is given — so the icon follows the text
+   * it sits in, and painted in `currentColor` by the body itself, so it follows that text's colour.
+   *
+   * `replaceIDs` is what makes it safe to have more than one on a page: an icon that masks or
+   * gradients refers to its own `<defs>` by id, those ids come from the set rather than from this
+   * document, and two icons carrying the same one would each draw with whichever won. A standalone
+   * file has no such problem, which is why `renderSvg` does not do this.
+   */
+  renderInlineSvg(icon: IconifyIcon, customisations: IconifyIconCustomisations = {}): string {
+    const rendered = iconToSVG(icon, customisations)
+    return iconToHTML(replaceIDs(rendered.body), rendered.attributes)
   }
 
   // == CACHE ==========================

@@ -1388,6 +1388,20 @@
     font-size: 0.875em;
   }
 
+  /*
+    An Iconify icon, drawn into the page as an `<svg>` when it was saved -- see `inlineIcons` in
+    `models/rendering.ts`. Sized and coloured by the markup itself (`1em`, `currentColor`), so all it
+    needs from here is to be part of the line: Preflight makes every `svg` a block, which would put
+    an icon written mid-sentence on a line of its own.
+
+    An `<iconify-icon>` that has not been through that yet -- a page saved before this, or an icon
+    whose set could not be resolved at the time -- carries the same rule from its own `:host`, so the
+    two sit identically and the editor's preview matches the page.
+  */
+  svg.icon {
+    display: inline-block;
+  }
+
   /* Twemoji, which the renderer swaps in for `:shortcodes:` */
   img.emoji {
     display: inline-block;

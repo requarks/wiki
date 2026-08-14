@@ -1,8 +1,11 @@
 import * as cheerio from 'cheerio'
 import sanitizeHtml from 'sanitize-html'
 import { eq, inArray, sql } from 'drizzle-orm'
+import { flipFromString, rotateFromString } from '@iconify/utils'
 import { jobs as jobsTable, pageRenderQueue as renderQueueTable } from '../db/schema.ts'
 import { CustomError } from '../helpers/common.ts'
+import type { IconifyIcon } from '@iconify/types'
+import type { IconifyIconCustomisations } from '@iconify/utils'
 
 /**
  * Rendering model
@@ -19,6 +22,9 @@ import { CustomError } from '../helpers/common.ts'
  *  - **Normalizing.** The editor leaves scaffolding in its output (line markers for preview scroll
  *    sync) that has no business being stored, and headings arrive without the anchors a table of
  *    contents needs.
+ *  - **Resolving.** An icon is a reference when it is written and a picture when it is read, and this
+ *    is where it stops being the former — drawn into the page once, at save time, rather than fetched
+ *    by every reader's browser on every view.
  *  - **Extracting.** The table of contents and the plain text the search index is built from are both
  *    derived from the final HTML, once it is settled.
  *
@@ -105,6 +111,21 @@ const BASE_ALLOWED_TAGS = [
   'details',
   'figcaption',
   'figure',
+  /*
+    The Iconify element, so a page can carry an icon the way the interface does.
+
+    The only custom element allowed here that is not a block, and it is allowed unconditionally
+    because there is nothing to gate: it is inert markup like the rest of this list, and what draws
+    it is already on every page — `boot/iconify.js` defines the element and points it at this
+    instance's `/_icons`, so an icon in content resolves against the wiki's own store and reaches no
+    third party. A block is gated because an administrator installs and enables it; nobody installs
+    this one.
+
+    Note it is not self-closing, whatever the author writes: the parser gives `<iconify-icon … />`
+    the rest of the paragraph as children, and the element's shadow root has no slot to show them
+    with. `</iconify-icon>` belongs on the end of every one.
+  */
+  'iconify-icon',
   'img',
   'ins',
   'kbd',
@@ -218,6 +239,11 @@ const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   '*': ['id', 'class', 'style', 'title', 'dir', 'lang', 'aria-*', 'role', 'data-*'],
   a: ['href', 'name', 'target', 'rel', 'download'],
   audio: ['controls', 'loop', 'muted', 'preload', 'src'],
+  // -> Everything the element reads except `mode`, which picks how it paints (mask/background) and
+  //    only matters to an author working around a specific icon set's colouring. Size and colour are
+  //    inherited from the surrounding text by default, which is what an icon in a sentence wants;
+  //    `inline` shifts it onto the text baseline, `width`/`height` override the 1em box.
+  'iconify-icon': ['icon', 'inline', 'width', 'height', 'rotate', 'flip'],
   img: ['src', 'srcset', 'alt', 'width', 'height', 'loading', 'decoding'],
   input: ['type', 'checked', 'disabled'],
   ol: ['start', 'reversed', 'type'],
@@ -311,6 +337,8 @@ class Rendering {
 
     this.stripEditorArtifacts($)
     this.unwrapOrphanedChildBlocks($)
+    this.liftIconChildren($)
+    await this.inlineIcons($)
     const toc = this.anchorHeadings($)
 
     return {
@@ -469,6 +497,161 @@ class Rendering {
         $(el).removeAttr('class')
       }
     })
+  }
+
+  /**
+   * Move anything nested inside an `<iconify-icon>` back out, after it.
+   *
+   * `<iconify-icon icon="…" />` is what an author reaches for, and it is not a self-closing tag: the
+   * parser hands the element the rest of the paragraph as children, and the element paints a shadow
+   * root with no slot in it — so that text is in the document, counted as content, and invisible on
+   * the page. Nothing legitimately goes inside an icon, so lifting the children out is the only
+   * reading of that markup that keeps what was written.
+   *
+   * Document order means a nested pair unpicks itself: the outer icon's children include the inner
+   * one, which is then reached in its own turn with whatever it swallowed.
+   */
+  private liftIconChildren($: cheerio.CheerioAPI): void {
+    $('iconify-icon').each((_, el) => {
+      const icon = $(el)
+      const swallowed = icon.contents()
+      if (swallowed.length > 0) {
+        icon.after(swallowed)
+      }
+    })
+  }
+
+  /**
+   * Draw every `<iconify-icon>` into the page as the `<svg>` it stands for.
+   *
+   * The element is a reference: opening a page that carries one costs a request to `/_icons` per icon
+   * set, for every reader, before the icon appears. Resolving it here spends that once, on the person
+   * saving the page, and what gets stored is a picture — the page then draws its icons with no second
+   * request at all, and goes on drawing them if the set is later deleted or the instance goes offline.
+   *
+   * An icon that does not resolve is left as the element it was. That is the honest fallback rather
+   * than a hole in the page: the set may be one an administrator is about to add, or upstream may be
+   * briefly unreachable, and the element still resolves at view time in either case. It also means
+   * this is safe to run over a render that has already been through it — there is nothing left to do.
+   *
+   * The resolve itself is the same call `/_icons` serves readers from, so this inherits its rules
+   * whole: a disabled set is not filled from upstream, an unknown name is not asked about twice, and
+   * the upstream budget applies. What is stored is therefore never more than a reader could have got.
+   */
+  private async inlineIcons($: cheerio.CheerioAPI): Promise<void> {
+    const elements = $('iconify-icon').toArray()
+    if (elements.length < 1) {
+      return
+    }
+
+    const referenceOf = (element: cheerio.Cheerio<any>) =>
+      (element.attr('icon') ?? '').trim().toLowerCase()
+
+    /*
+      Gathered per set before anything is resolved, because `resolveIcons` takes a list: a page built
+      out of twenty icons of one set is one query and at most one upstream request, not twenty.
+    */
+    const wanted = new Map<string, Set<string>>()
+    for (const el of elements) {
+      const parsed = WIKI.models.icons.parseRef(referenceOf($(el)))
+      if (parsed) {
+        wanted.set(parsed.prefix, (wanted.get(parsed.prefix) ?? new Set()).add(parsed.name))
+      }
+    }
+
+    const resolved = new Map<string, IconifyIcon>()
+    for (const [prefix, names] of wanted) {
+      const found = await WIKI.models.icons.resolveIcons(prefix, [...names])
+      for (const [name, icon] of Object.entries(found.icons)) {
+        resolved.set(`${prefix}:${name}`, icon)
+      }
+    }
+
+    for (const el of elements) {
+      const element = $(el)
+      const icon = resolved.get(referenceOf(element))
+      if (icon) {
+        element.replaceWith(this.iconSvg($, element, icon))
+      }
+    }
+  }
+
+  /**
+   * The `<svg>` that stands in for one `<iconify-icon>`, carrying over what the author put on it.
+   *
+   * `icon`, `width`, `height`, `rotate` and `flip` are spent on the drawing itself — parsed by
+   * Iconify's own parsers, so `flip="horizontal"` and `rotate="90deg"` mean here exactly what they
+   * mean to the element. Everything else the author wrote is theirs and rides along: a class, a style,
+   * an id to link to.
+   *
+   * `inline` becomes the baseline nudge the element applies through its host style, since a shadow
+   * root's `:host` rule is the one thing about it that cannot survive being drawn into the page.
+   *
+   * The attributes are set through cheerio rather than built into the markup: they are author input,
+   * and this is the difference between a value that gets escaped on the way out and one that closes
+   * the tag it was written into.
+   */
+  private iconSvg(
+    $: cheerio.CheerioAPI,
+    element: cheerio.Cheerio<any>,
+    icon: IconifyIcon
+  ): cheerio.Cheerio<any> {
+    const customisations: IconifyIconCustomisations = {}
+    const width = element.attr('width')
+    const height = element.attr('height')
+    const rotate = element.attr('rotate')
+    const flip = element.attr('flip')
+    if (width) {
+      customisations.width = width
+    }
+    if (height) {
+      customisations.height = height
+    }
+    if (rotate) {
+      customisations.rotate = rotateFromString(rotate)
+    }
+    if (flip) {
+      flipFromString(customisations, flip)
+    }
+
+    const svg = $(WIKI.models.icons.renderInlineSvg(icon, customisations))
+
+    const {
+      icon: _icon,
+      width: _w,
+      height: _h,
+      rotate: _r,
+      flip: _f,
+      inline,
+      style,
+      class: authorClass,
+      ...carried
+    } = element.attr() ?? {}
+    for (const [name, value] of Object.entries(carried)) {
+      svg.attr(name, value)
+    }
+    /*
+      `icon` is the hook `_page-contents.scss` styles it by, and it is not decorative: Tailwind's
+      Preflight makes every `svg` a block, so an icon left to itself takes a line of its own instead
+      of sitting in the sentence it was written in. The element it replaces has no such problem — it
+      declares `display: inline-block` on its own `:host` — which is exactly why this only shows up
+      once the page is saved, with the editor's preview looking right. The twemoji images the emoji
+      shortcodes become are styled there for the same reason.
+    */
+    svg.attr('class', ['icon', authorClass].filter(Boolean).join(' '))
+    // -> Ours first so that an author who set `vertical-align` themselves still wins
+    const styles = [inline === undefined ? '' : 'vertical-align:-0.125em', style ?? '']
+      .filter(Boolean)
+      .join(';')
+    if (styles) {
+      svg.attr('style', styles)
+    }
+    // -> An icon is decoration unless the author gave it a name, in which case it is theirs to describe
+    if (!('role' in carried) && !('title' in carried) && !('aria-label' in carried)) {
+      svg.attr('aria-hidden', 'true')
+    }
+
+    return svg
   }
 
   /**
