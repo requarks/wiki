@@ -1,5 +1,29 @@
 import { LitElement, html, css } from 'lit'
+import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
+import { fetchIcon, iconImageUrl } from '../shared/icons.js'
 import { DarkMode } from '../shared/theme.js'
+
+/**
+ * An attribute that means "off" when it says so.
+ *
+ * MDC writes every prop with a value, and Lit's own Boolean converter reads any string at all as
+ * true — `showIcons="false"` included. The picker never writes that one, since it leaves a prop out
+ * while it holds its default, but a page written by hand can say it and means it.
+ */
+const boolean = {
+  converter: {
+    fromAttribute: (value) => value !== null && value !== 'false',
+    toAttribute: (value) => (value ? 'true' : null)
+  }
+}
+
+/**
+ * What to draw for a page carrying no icon of its own.
+ *
+ * The same one the app gives a new page (`DEFAULT_PAGE_ICON` in the page store), so that a listing
+ * mixing pages made in the editor with pages made through the API still lines up down the left.
+ */
+const DEFAULT_PAGE_ICON = 'mdi:file-document-outline'
 
 /**
  * Block Index
@@ -68,6 +92,14 @@ export class BlockIndexElement extends LitElement {
         label: 'Depth',
         hint: 'How many folders below the path to include. 0 is the folder itself.',
         default: 0
+      },
+      {
+        name: 'showIcons',
+        type: 'boolean',
+        label: 'Show Icons',
+        hint: "Draw each page's icon to the left of its title.",
+        // -> Stated, so that a toggle switched on and then off again writes nothing into the page
+        default: false
       },
       {
         name: 'noResultMsg',
@@ -140,22 +172,59 @@ export class BlockIndexElement extends LitElement {
         background-image: linear-gradient(to bottom,#1e232a, #161b22);
         border-left-color: var(--q-primary);
       }
+      /*
+        -> The row runs across rather than down, so an icon can sit beside the writing rather than
+           above it. The title and its description stack inside .text, which is the column the
+           anchor itself used to be.
+      */
       li a {
         display: flex;
         color: var(--q-primary);
-        padding: 1rem;
+        /* -> Vertical only: the horizontal inset is what the arrow's own offset is set against */
+        padding: 0.75rem 1rem;
         text-decoration: none;
         flex: 1;
-        flex-direction: column;
-        justify-content: center;
+        flex-direction: row;
+        align-items: center;
+        gap: 14px;
         position: relative;
       }
-      li a > span {
+      .text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        /* -> The row less the icon. min-width is what lets a long title wrap inside the card
+              rather than pushing the row wider than it. */
+        flex: 1;
+        min-width: 0;
+      }
+      .text span {
         display: block;
         color: #666;
         font-size: .8em;
         font-weight: normal;
         pointer-events: none;
+      }
+
+      /*
+        The page's own icon. Sized in em so it keeps its place beside writing at whatever size the
+        article is set in, and left to take the anchor's colour: an Iconify SVG paints with
+        currentColor, which is the whole reason it is inlined rather than pointed at with an an <img>.
+      */
+      /*
+        -> The width is on the slot as well as on the drawing, so a row whose icon could not be had
+           keeps its place in the column rather than sliding its writing left of every other row's.
+      */
+      .icon {
+        display: flex;
+        align-items: center;
+        flex: none;
+        width: 1.75em;
+      }
+      .icon svg,
+      .icon img {
+        width: 1.75em;
+        height: 1.75em;
       }
       li a > svg {
         width: 32px;
@@ -227,6 +296,12 @@ export class BlockIndexElement extends LitElement {
        */
       noResultMsg: { type: String },
 
+      /**
+       * Whether each page's icon is drawn beside its title
+       * @type {boolean}
+       */
+      showIcons: boolean,
+
       // Internal Properties
       _loading: { state: true },
       _pages: { state: true }
@@ -244,6 +319,7 @@ export class BlockIndexElement extends LitElement {
     this.orderByDirection = 'asc'
     this.depth = 0
     this.noResultMsg = 'No pages matching your query.'
+    this.showIcons = false
     // -> Puts `dark` on this element for the styles above to key off
     this._darkMode = new DarkMode(this)
   }
@@ -265,10 +341,43 @@ export class BlockIndexElement extends LitElement {
         }
       }).json()
       this._pages = pages.map((p) => ({ ...p, href: `/${p.path}` }))
+      if (this.showIcons) {
+        await this._loadIcons()
+      }
     } catch (err) {
       console.warn(err)
     }
     this._loading = false
+  }
+
+  /**
+   * Fetch the icons the listing is about to draw.
+   *
+   * All of them at once rather than one after another, since the shared cache collapses the repeats:
+   * a listing of pages that never had an icon chosen for them is one request for the default, however
+   * many rows there are. An `img:` icon is a file to point at and needs nothing fetched.
+   *
+   * Failures are already an empty string, so a row whose icon could not be had is a row without one.
+   */
+  async _loadIcons() {
+    await Promise.all(
+      this._pages.map(async (page) => {
+        const reference = page.icon || DEFAULT_PAGE_ICON
+        if (!iconImageUrl(reference)) {
+          page.svg = await fetchIcon(reference)
+        }
+      })
+    )
+    // -> The pages were mutated rather than replaced, which Lit has no way of noticing on its own
+    this.requestUpdate()
+  }
+
+  /** One page's icon: an inlined SVG, or an `<img>` for a reference that names a file. */
+  _icon(page) {
+    const image = iconImageUrl(page.icon || DEFAULT_PAGE_ICON)
+    return html`<span class="icon">
+      ${image ? html`<img src="${image}" alt="" />` : page.svg ? unsafeSVG(page.svg) : null}
+    </span>`
   }
 
   render() {
@@ -279,7 +388,10 @@ export class BlockIndexElement extends LitElement {
               (p) =>
                 html`<li>
                   <a href="${p.href}" @click="${this._navigate}">
-                    ${p.title} ${p.description ? html`<span>${p.description}</span>` : null}
+                    ${this.showIcons ? this._icon(p) : null}
+                    <div class="text">
+                      ${p.title} ${p.description ? html`<span>${p.description}</span>` : null}
+                    </div>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 48 48"
@@ -296,9 +408,15 @@ export class BlockIndexElement extends LitElement {
       : html` <div class="no-links">${this.noResultMsg}</div> `
   }
 
+  /*
+    -> `currentTarget` is the anchor the handler is bound to; `target` is whatever was clicked, which
+       is the anchor only for a click that landed on the title. The rest of the row got there by
+       being marked `pointer-events: none`, one declaration at a time -- an icon is one more thing
+       inside the anchor, and asking the element it was bound to is what makes that unnecessary.
+  */
   _navigate(e) {
     e.preventDefault()
-    WIKI_ROUTER.push(e.target.getAttribute('href'))
+    WIKI_ROUTER.push(e.currentTarget.getAttribute('href'))
   }
 
   // createRenderRoot() {

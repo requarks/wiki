@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit'
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
+import { fetchIcon } from '../shared/icons.js'
 import { DarkMode } from '../shared/theme.js'
 
 /**
@@ -10,31 +11,6 @@ import { DarkMode } from '../shared/theme.js'
  * answers it or ignores it, and neither side has to know about the other.
  */
 const REVEAL_EVENT = 'block-reveal'
-
-/** Icons already fetched, by `prefix:name`, so a page of tabs asks for each one once. */
-const iconCache = new Map()
-
-/**
- * Fetch an icon as inline SVG.
- *
- * Inline rather than an `<img>` so the drawing takes the colour of the tab it sits in — Iconify's
- * SVGs paint with `currentColor`, which an image cannot see. The instance serves them from its own
- * `/_icons`, cached hard, so this is a local request.
- */
-async function fetchIcon(reference) {
-  if (iconCache.has(reference)) {
-    return iconCache.get(reference)
-  }
-  const [prefix, name] = reference.split(':')
-  if (!prefix || !name) {
-    return ''
-  }
-  const promise = fetch(`/_icons/${encodeURIComponent(prefix)}/${encodeURIComponent(name)}.svg`)
-    .then((resp) => (resp.ok ? resp.text() : ''))
-    .catch(() => '')
-  iconCache.set(reference, promise)
-  return promise
-}
 
 /**
  * Block Tabs
