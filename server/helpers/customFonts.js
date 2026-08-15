@@ -65,47 +65,15 @@ module.exports = {
     return `${_.uniq(normalized.map(font => font.family)).join(', ')}, sans-serif`
   },
 
-  getApplySelectors () {
-    return [
-      '.v-main .contents',
-      '.v-main .page-header-block .headline',
-      '.v-main .page-header-block .caption',
-      '.v-main .page-col-sd .overline',
-      '.v-main .page-col-sd .v-list-item__title',
-      '.v-main .page-col-sd .v-chip__content',
-      '.v-main .page-col-sd .v-chip__content span',
-      '.v-main .page-col-sd .body-2',
-      '.v-main .page-col-sd .caption',
-      '.v-main .page-col-sd .page-author-card-name',
-      '.v-main .page-col-sd .page-author-card-date',
-      '.v-main #arrow-boxes',
-      '.v-main #arrow-boxes .circle',
-      '.v-main #arrow-boxes .arrow-left',
-      '.v-main #arrow-boxes .arrow-right',
-      '.v-main .related-posts .post-card',
-      '.v-main .related-posts .post-card h3',
-      '.v-main .related-posts .post-card p'
-    ]
-  },
-
   generateApplyCSS (fonts) {
     const stack = this.getFontStack(fonts)
     if (!stack) {
       return ''
     }
 
-    const selectors = this.getApplySelectors()
-    const importantSelectors = selectors.filter(selector => selector !== '.v-main .contents')
-
-    return [
-      '.v-main .contents {',
-      `  font-family: ${stack};`,
-      '}',
-      '',
-      `${importantSelectors.join(',\n')} {`,
-      `  font-family: ${stack} !important;`,
-      '}'
-    ].join('\n')
+    return `.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts) *:not(.v-icon) {
+  font-family: ${stack} !important;
+}`
   },
 
   generateFaceCSS (fonts) {
