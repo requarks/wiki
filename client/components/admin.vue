@@ -1,6 +1,6 @@
 <template lang='pug'>
   v-app.admin
-    nav-header(hide-search)
+    nav-header
     nav-mobile-drawer-host
       template(slot='mid')
         v-spacer
