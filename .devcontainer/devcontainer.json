@@ -1,6 +1,6 @@
-// Prerequisites: start the shared DB first —
-//   cd dev/examples && docker compose up -d db
-// See dev/README.md for the full local Docker workflow.
+// How to get remote container development working with VSCode:
+// 1. Install "Remote Development" extension pack (ms-vscode-remote.vscode-remote-extensionpack)
+// 2. Select "Remote Containers - Reopen in container"
 
 {
   "name": "Wiki.js",
