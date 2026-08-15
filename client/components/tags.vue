@@ -19,25 +19,26 @@
       vue-scroll(:ops='scrollStyle')
         nav-drawer-content-tags
     v-main.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
-      v-toolbar(color='primary', dark, flat, height='58')
+      v-toolbar.tags-selection-toolbar(color='primary', dark, flat, height='58', :class='{ "tags-selection-toolbar--active": hasSelection }')
         template(v-if='hasSelection')
-          v-chip.mr-3.primary--text(
-            v-for='tag of tagsSelected'
-            :key='`tagSelected-` + tag.tag'
-            color='white'
-            close
-            @click:close='toggleTag(tag.tag)'
-            ) {{tag.title}}
-          v-btn.animated.fadeIn.ml-1(
-            v-if='$vuetify.breakpoint.mdAndUp'
-            small
-            outlined
-            color='blue lighten-4'
-            rounded
-            @click='selection = []'
-            )
-            v-icon(left) mdi-close
-            span {{$t('tags:clearSelection')}}
+          .tags-selection-chips
+            v-chip.mr-3.primary--text(
+              v-for='tag of tagsSelected'
+              :key='`tagSelected-` + tag.tag'
+              color='white'
+              close
+              @click:close='toggleTag(tag.tag)'
+              ) {{tag.title}}
+            v-btn.animated.fadeIn.ml-1(
+              v-if='$vuetify.breakpoint.mdAndUp'
+              small
+              outlined
+              color='blue lighten-4'
+              rounded
+              @click='selection = []'
+              )
+              v-icon(left) mdi-close
+              span {{$t('tags:clearSelection')}}
         template(v-else)
           v-icon.mr-3.animated.fadeInRight mdi-arrow-left
           .overline.animated.fadeInRight {{$t('tags:selectOneMoreTags')}}
@@ -391,6 +392,33 @@ export default {
 
   body.has-mobile-bottom-nav .tags .v-main {
     padding-bottom: 56px !important;
+  }
+
+  .tags-selection-toolbar--active {
+    .v-toolbar__content {
+      overflow: visible;
+    }
+
+    .tags-selection-chips {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .v-chip {
+        flex-shrink: 0;
+      }
+    }
   }
 }
 
