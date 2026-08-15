@@ -21,7 +21,6 @@
     v-main.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
       v-toolbar(color='primary', dark, flat, height='58')
         template(v-if='hasSelection')
-          .overline.mr-3.animated.fadeInLeft {{$t('tags:currentSelection')}}
           v-chip.mr-3.primary--text(
             v-for='tag of tagsSelected'
             :key='`tagSelected-` + tag.tag'
@@ -73,7 +72,6 @@
             height='40'
             style='max-width: 170px;'
           )
-        v-divider.mx-3(v-if='showLocaleFilter', vertical)
         template(v-if='showOrderByFilter')
           v-divider.mx-3(vertical)
           .overline {{$t('tags:orderBy')}}
