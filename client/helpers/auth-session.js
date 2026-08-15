@@ -81,18 +81,18 @@ export function sanitizeEffectivePermissions (permissions, authenticated) {
 
   return {
     comments: {
-      read: permissions.comments?.read ?? false,
+      read: (permissions.comments && permissions.comments.read) || false,
       write: false,
       manage: false
     },
     history: {
-      read: permissions.history?.read ?? false
+      read: (permissions.history && permissions.history.read) || false
     },
     source: {
-      read: permissions.source?.read ?? false
+      read: (permissions.source && permissions.source.read) || false
     },
     pages: {
-      read: permissions.pages?.read ?? false,
+      read: (permissions.pages && permissions.pages.read) || false,
       write: false,
       manage: false,
       delete: false,

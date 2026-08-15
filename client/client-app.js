@@ -247,7 +247,7 @@ let bootstrap = () => {
   // Dispatch boot ready
   // ----------------------------------
 
-  window.boot.notify('vue')
+  boot.notify('vue')
 }
 
-window.boot.onDOMReady(bootstrap)
+boot.onDOMReady(bootstrap)
