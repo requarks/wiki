@@ -11,6 +11,20 @@ const FILES_PREFIX = '/_files/'
  */
 const ABSOLUTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|\/_)/i
 
+/**
+ * An attribute that means "off" when it says so.
+ *
+ * MDC writes every prop with a value, and Lit's own Boolean converter reads any string at all as
+ * true — `unlockAspectRatio="false"` included. The picker never writes that one, since it leaves a
+ * prop out while it holds its default, but a page written by hand can say it and means it.
+ */
+const boolean = {
+  converter: {
+    fromAttribute: (value) => value !== null && value !== 'false',
+    toAttribute: (value) => (value ? 'true' : null)
+  }
+}
+
 /** Icons, as the path of a 24x24 MDI glyph. */
 const ICONS = {
   previous: 'M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z',
@@ -106,6 +120,14 @@ export class BlockGalleryElement extends LitElement {
         options: ['cover', 'contain'],
         hint: 'Whether a thumbnail is cropped to fill its tile, or shown whole inside it.',
         default: 'cover'
+      },
+      {
+        name: 'unlockAspectRatio',
+        type: 'boolean',
+        label: 'Unlock Aspect Ratio',
+        hint: 'Let each tile take the shape of its image, instead of holding every one square.',
+        // -> Stated, so that a toggle switched on and then off again writes nothing into the page
+        default: false
       }
     ],
     template: `https://example.com/photo-1.jpg
@@ -153,6 +175,24 @@ https://example.com/photo-2.jpg`
       .tile:focus-visible {
         outline: 2px solid var(--q-primary, #1976d2);
         outline-offset: 2px;
+      }
+
+      /*
+        A gallery whose tiles take the shape of their images rather than being held square.
+
+        Dropping the ratio is not enough on its own: a grid item stretches to the height of its row,
+        which hands the image back a definite height to be cropped to -- the tallest photo of the row
+        deciding the shape of the rest, which is the thing being unlocked. So the row lets go of them
+        as well, and the image is left to its own height.
+      */
+      .gallery.is-unlocked {
+        align-items: start;
+      }
+      .gallery.is-unlocked .tile {
+        aspect-ratio: auto;
+      }
+      .gallery.is-unlocked .tile img {
+        height: auto;
       }
 
       .tile img {
@@ -331,6 +371,12 @@ https://example.com/photo-2.jpg`
        */
       fit: { type: String },
 
+      /**
+       * Whether a tile takes the shape of its image rather than being held square
+       * @type {boolean}
+       */
+      unlockAspectRatio: boolean,
+
       // Internal Properties
       _images: { state: true },
       /** Which image the lightbox is showing, or -1 while it is closed. */
@@ -342,6 +388,7 @@ https://example.com/photo-2.jpg`
     super()
     this.thumbnailSize = 180
     this.fit = 'cover'
+    this.unlockAspectRatio = false
     this._images = []
     this._index = -1
     // -> Puts `dark` on this element for the styles above to key off
@@ -563,13 +610,13 @@ https://example.com/photo-2.jpg`
     ].join('; ')
 
     return html`
-      <div class="gallery" style=${style}>
+      <div class="gallery ${this.unlockAspectRatio ? 'is-unlocked' : ''}" style=${style}>
         ${this._images.map(
           (address, index) => html`
             <button
               class="tile"
               type="button"
-              title=${labelFor(address)}
+              title="Enlarge Image"
               aria-label="View ${labelFor(address)} full size"
               @click=${() => this._show(index)}>
               <img src=${address} alt=${labelFor(address)} loading="lazy" decoding="async" />
