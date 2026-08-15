@@ -26,6 +26,7 @@ import Cookies from 'js-cookie'
 
 import boot from './modules/boot'
 import localization from './modules/localization'
+import installAuthNavGuard from './modules/auth-nav-guard'
 
 // ====================================
 // Load Helpers
@@ -44,6 +45,7 @@ window.Hammer = Hammer
 moment.locale(siteConfig.lang)
 
 store.commit('user/REFRESH_AUTH')
+installAuthNavGuard()
 
 // ====================================
 // Initialize Apollo Client (GraphQL)

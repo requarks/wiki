@@ -1,0 +1,172 @@
+import Cookies from 'js-cookie'
+
+const GUEST_EFFECTIVE_PERMISSIONS = {
+  comments: {
+    read: false,
+    write: false,
+    manage: false
+  },
+  history: {
+    read: false
+  },
+  source: {
+    read: false
+  },
+  pages: {
+    read: false,
+    write: false,
+    manage: false,
+    delete: false,
+    script: false,
+    style: false
+  },
+  system: {
+    manage: false
+  }
+}
+
+export function parseJwtPayload (jwtToken) {
+  if (!jwtToken || typeof jwtToken !== 'string') {
+    return null
+  }
+
+  try {
+    const parts = jwtToken.split('.')
+    if (parts.length < 2) {
+      return null
+    }
+
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4)
+    return JSON.parse(atob(padded))
+  } catch (err) {
+    return null
+  }
+}
+
+export function getAuthSession () {
+  const jwtCookie = Cookies.get('jwt')
+  const jwtData = parseJwtPayload(jwtCookie)
+
+  if (!jwtData) {
+    return { authenticated: false, jwtData: null, expired: false }
+  }
+
+  if (jwtData.exp && jwtData.exp * 1000 <= Date.now()) {
+    return { authenticated: false, jwtData: null, expired: true }
+  }
+
+  return { authenticated: true, jwtData, expired: false }
+}
+
+export function applyAuthDocumentClass (authenticated) {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const root = document.documentElement
+  root.classList.remove('wiki-auth-guest', 'wiki-auth-authenticated')
+  root.classList.add(authenticated ? 'wiki-auth-authenticated' : 'wiki-auth-guest')
+  window.__wikiAuth = { authenticated: !!authenticated }
+}
+
+export function getGuestEffectivePermissions () {
+  return JSON.parse(JSON.stringify(GUEST_EFFECTIVE_PERMISSIONS))
+}
+
+export function sanitizeEffectivePermissions (permissions, authenticated) {
+  if (authenticated || !permissions) {
+    return permissions
+  }
+
+  return {
+    comments: {
+      read: permissions.comments?.read ?? false,
+      write: false,
+      manage: false
+    },
+    history: {
+      read: permissions.history?.read ?? false
+    },
+    source: {
+      read: permissions.source?.read ?? false
+    },
+    pages: {
+      read: permissions.pages?.read ?? false,
+      write: false,
+      manage: false,
+      delete: false,
+      script: false,
+      style: false
+    },
+    system: {
+      manage: false
+    }
+  }
+}
+
+export function decodeEffectivePermissions (encodedPermissions, authenticated) {
+  if (!encodedPermissions) {
+    return null
+  }
+
+  try {
+    const permissions = JSON.parse(Buffer.from(encodedPermissions, 'base64').toString())
+    return sanitizeEffectivePermissions(permissions, authenticated)
+  } catch (err) {
+    return authenticated ? null : getGuestEffectivePermissions()
+  }
+}
+
+export function installAuthNavGuard () {
+  if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') {
+    return
+  }
+
+  const applyGuard = () => {
+    const authenticated = getAuthSession().authenticated
+    applyAuthDocumentClass(authenticated)
+
+    document.querySelectorAll('[data-auth-required]').forEach((el) => {
+      if (authenticated) {
+        el.classList.remove('wiki-auth-blocked')
+        el.removeAttribute('aria-disabled')
+      } else {
+        el.classList.add('wiki-auth-blocked')
+        el.setAttribute('aria-disabled', 'true')
+      }
+    })
+  }
+
+  let scheduled = false
+  const scheduleGuard = () => {
+    if (scheduled) {
+      return
+    }
+    scheduled = true
+    window.requestAnimationFrame(() => {
+      scheduled = false
+      applyGuard()
+    })
+  }
+
+  applyGuard()
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyGuard)
+  }
+
+  const observer = new MutationObserver(scheduleGuard)
+  const startObserver = () => {
+    if (!document.body) {
+      return
+    }
+    observer.observe(document.body, { childList: true, subtree: true })
+  }
+
+  if (document.body) {
+    startObserver()
+  } else {
+    document.addEventListener('DOMContentLoaded', startObserver)
+  }
+}

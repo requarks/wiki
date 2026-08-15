@@ -10,13 +10,13 @@
           v-icon(color='white') mdi-home
 
       .nav-bottom-bar__item(v-if='showAdminSettings')
-        v-btn.nav-bottom-bar__btn(icon, @click='goToAdminSettings', :aria-label='$t(`common:header.admin`)')
+        v-btn.nav-bottom-bar__btn(icon, data-auth-required, @click='goToAdminSettings', :aria-label='$t(`common:header.admin`)')
           v-icon(color='white') mdi-cog
 
       .nav-bottom-bar__item
         v-menu(v-if='!isAdminArea && hasAnyPagePermissions && wikiPath && mode === `view`', offset-y, top, transition='slide-y-transition')
           template(v-slot:activator='{ on, attrs }')
-            v-btn.nav-bottom-bar__btn(icon, v-bind='attrs', v-on='on', :aria-label='$t(`common:header.pageActions`)')
+            v-btn.nav-bottom-bar__btn(icon, data-auth-required, v-bind='attrs', v-on='on', :aria-label='$t(`common:header.pageActions`)')
               v-icon(color='white') mdi-file-document-edit-outline
           v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
             .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
@@ -52,9 +52,9 @@
           v-icon.nav-bottom-bar__icon--disabled mdi-file-document-edit-outline
 
       .nav-bottom-bar__item
-        v-btn.nav-bottom-bar__btn(v-if='isAdminArea', icon, @click='goToAdminPages', :aria-label='$t(`admin:pages.title`)')
+        v-btn.nav-bottom-bar__btn(v-if='isAdminArea && isAuthenticated', icon, data-auth-required, @click='goToAdminPages', :aria-label='$t(`admin:pages.title`)')
           v-icon(color='white') mdi-file-document-multiple-outline
-        v-btn.nav-bottom-bar__btn(v-else-if='hasNewPagePermission && mode !== `edit`', icon, @click='pageNew', :aria-label='$t(`common:header.newPage`)')
+        v-btn.nav-bottom-bar__btn(v-else-if='hasNewPagePermission && mode !== `edit`', icon, data-auth-required, @click='pageNew', :aria-label='$t(`common:header.newPage`)')
           v-icon(color='white') mdi-plus-box-outline
         v-btn.nav-bottom-bar__btn(v-else, icon, disabled)
           v-icon.nav-bottom-bar__icon--disabled mdi-plus-box-outline
@@ -116,8 +116,12 @@ export default {
     mode: get('page/mode'),
     pageTitle: get('page/title'),
     pageDescription: get('page/description'),
+    isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
     effectivePermissions () {
+      if (!this.isAuthenticated) {
+        return []
+      }
       if (Array.isArray(this.permissions) && this.permissions.length > 0) {
         return this.permissions
       }
@@ -131,12 +135,18 @@ export default {
       }
     },
     hasAdminAccess () {
+      if (!this.isAuthenticated) {
+        return false
+      }
       return _.intersection(this.effectivePermissions, ADMIN_ACCESS_PERMISSIONS).length > 0
     },
     showAdminSettings () {
-      return this.isAdminArea || this.hasAdminAccess
+      return this.isAuthenticated && (this.isAdminArea || this.hasAdminAccess)
     },
     hasNewPagePermission () {
+      if (!this.isAuthenticated) {
+        return false
+      }
       return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
@@ -146,6 +156,9 @@ export default {
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
+      if (!this.isAuthenticated) {
+        return false
+      }
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
@@ -166,6 +179,13 @@ export default {
     }
   },
   methods: {
+    requireAuth () {
+      if (!this.isAuthenticated) {
+        window.location.assign('/login')
+        return false
+      }
+      return true
+    },
     onAdminPageContext (ctx) {
       this.adminPageContext = ctx
     },
@@ -173,6 +193,7 @@ export default {
       window.history.back()
     },
     goToAdminPages () {
+      if (!this.requireAuth()) { return }
       if (this.$router) {
         this.$router.push('/pages').catch(() => {})
       } else {
@@ -204,33 +225,43 @@ export default {
       window.location.assign(siteLangs.length > 0 ? `/${locale}/home` : '/')
     },
     goToAdminSettings () {
+      if (!this.requireAuth()) { return }
       window.location.assign('/a')
     },
     pageNew () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageNew')
     },
     pageView () {
+      if (!this.requireAuth()) { return }
       window.location.assign(`/${this.locale}/${this.wikiPath}`)
     },
     pageEdit () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageEdit')
     },
     pageHistory () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageHistory')
     },
     pageSource () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageSource')
     },
     pageConvert () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageConvert')
     },
     pageDuplicate () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageDuplicate')
     },
     pageMove () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageMove')
     },
     pageDelete () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageDelete')
     },
     openSocialPop (url) {

@@ -63,6 +63,7 @@ import { get, sync } from 'vuex-pathify'
 import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
+import { decodeEffectivePermissions } from '../helpers/auth-session'
 
 import editorStore from '../store/editor'
 
@@ -233,7 +234,10 @@ export default {
     this.checkoutDateActive = this.checkoutDate
 
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      const permissions = decodeEffectivePermissions(this.effectivePermissions, this.$store.get('user/authenticated'))
+      if (permissions) {
+        this.$store.set('page/effectivePermissions', permissions)
+      }
     }
   },
   mounted() {
