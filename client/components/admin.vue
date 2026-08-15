@@ -5,7 +5,20 @@
         v-spacer
         .overline.grey--text {{$t('admin:adminArea')}}
         v-spacer
-    v-navigation-drawer.pb-0.admin-sidebar(v-model='adminDrawerShown', app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
+    v-navigation-drawer.pb-0.admin-sidebar(
+      v-model='adminDrawerShown'
+      :app='$vuetify.breakpoint.mdAndUp'
+      fixed
+      :clipped='$vuetify.breakpoint.mdAndUp'
+      :right='$vuetify.rtl'
+      :permanent='$vuetify.breakpoint.mdAndUp'
+      :temporary='$vuetify.breakpoint.smAndDown'
+      :width='adminDrawerWidth'
+      overlay-color='black'
+      :overlay-opacity='0.55'
+      mobile-breakpoint='600'
+      :class='adminDrawerClass'
+      )
       vue-scroll(:ops='scrollStyle')
         v-list.radius-0(dense, nav)
           v-list-item(to='/dashboard', color='primary')
@@ -182,7 +195,8 @@ export default {
   i18nOptions: { namespaces: 'admin' },
   data() {
     return {
-      adminDrawerShown: true,
+      adminDrawerShown: false,
+      winWidth: 0,
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -208,13 +222,50 @@ export default {
   },
   computed: {
     info: sync('admin/info'),
-    permissions: get('user/permissions')
+    permissions: get('user/permissions'),
+    adminDrawerWidth () {
+      return this.$vuetify.breakpoint.smAndDown ? Math.min(Math.round(window.innerWidth * 0.88), 320) : 300
+    },
+    adminDrawerClass () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return this.$vuetify.theme.dark ? 'admin-sidebar-mobile grey darken-3' : 'admin-sidebar-mobile white'
+      }
+      return this.$vuetify.theme.dark ? 'grey darken-4' : ''
+    }
+  },
+  watch: {
+    '$route' () {
+      this.closeAdminDrawer()
+    }
   },
   router,
   created() {
     this.$store.commit('page/SET_MODE', 'admin')
   },
+  mounted () {
+    this.handleAdminDrawerVisibility()
+    window.addEventListener('resize', _.debounce(() => {
+      this.handleAdminDrawerVisibility()
+    }, 500))
+    this.$root.$on('openNavDrawer', () => {
+      this.adminDrawerShown = true
+    })
+  },
   methods: {
+    closeAdminDrawer () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        this.adminDrawerShown = false
+      }
+    },
+    handleAdminDrawerVisibility () {
+      if (window.innerWidth === this.winWidth) { return }
+      this.winWidth = window.innerWidth
+      if (this.$vuetify.breakpoint.mdAndUp) {
+        this.adminDrawerShown = true
+      } else {
+        this.adminDrawerShown = false
+      }
+    },
     hasPermission(prm) {
       if (_.isArray(prm)) {
         return _.some(prm, p => {
@@ -273,6 +324,21 @@ export default {
 
   .v-list-group > .v-list-item {
     padding-left: 0;
+  }
+}
+
+.admin-sidebar-mobile {
+  top: 64px !important;
+  bottom: 56px !important;
+  height: auto !important;
+  max-height: none !important;
+  z-index: 110 !important;
+  padding-top: 0;
+}
+
+@media #{map-get($display-breakpoints, 'sm-and-down')} {
+  .admin .v-overlay--active {
+    z-index: 105 !important;
   }
 }
 

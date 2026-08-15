@@ -1,7 +1,20 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').tags
     nav-header
-    v-navigation-drawer.pb-0.elevation-1(app, fixed, clipped, :right='$vuetify.rtl', permanent, width='300')
+    v-navigation-drawer.pb-0.elevation-1.tags-sidebar(
+      v-model='tagsDrawerShown'
+      :app='$vuetify.breakpoint.mdAndUp'
+      fixed
+      :clipped='$vuetify.breakpoint.mdAndUp'
+      :right='$vuetify.rtl'
+      :permanent='$vuetify.breakpoint.mdAndUp'
+      :temporary='$vuetify.breakpoint.smAndDown'
+      :width='tagsDrawerWidth'
+      overlay-color='black'
+      :overlay-opacity='0.55'
+      mobile-breakpoint='600'
+      :class='tagsDrawerClass'
+      )
       vue-scroll(:ops='scrollStyle')
         v-list(dense, nav)
           v-list-item(href='/')
@@ -169,6 +182,8 @@ export default {
   i18nOptions: { namespaces: 'tags' },
   data() {
     return {
+      tagsDrawerShown: false,
+      winWidth: 0,
       tags: [],
       selection: [],
       innerSearch: '',
@@ -210,6 +225,15 @@ export default {
     }
   },
   computed: {
+    tagsDrawerWidth () {
+      return this.$vuetify.breakpoint.smAndDown ? Math.min(Math.round(window.innerWidth * 0.88), 320) : 300
+    },
+    tagsDrawerClass () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return this.$vuetify.theme.dark ? 'tags-sidebar-mobile grey darken-3' : 'tags-sidebar-mobile white'
+      }
+      return ''
+    },
     tagsGrouped () {
       return _.groupBy(this.tags, t => t.title.charAt(0).toUpperCase())
     },
@@ -227,6 +251,9 @@ export default {
     }
   },
   watch: {
+    '$route' () {
+      this.closeTagsDrawer()
+    },
     locale (newValue, oldValue) {
       this.rebuildURL()
     },
@@ -245,6 +272,14 @@ export default {
     this.selection = _.compact(decodeURI(this.$route.path).split('/'))
   },
   mounted () {
+    this.handleTagsDrawerVisibility()
+    this._resizeHandler = _.debounce(() => {
+      this.handleTagsDrawerVisibility()
+    }, 500)
+    window.addEventListener('resize', this._resizeHandler)
+    this.$root.$on('openNavDrawer', () => {
+      this.tagsDrawerShown = true
+    })
     this.locales = _.concat(
       [{name: this.$t('tags:localeAny'), code: 'any'}],
       (siteLangs.length > 0 ? siteLangs : [])
@@ -266,7 +301,26 @@ export default {
       this.pagination.sortDesc = [this.orderByDirection === 1]
     }
   },
+  beforeDestroy () {
+    if (this._resizeHandler) {
+      window.removeEventListener('resize', this._resizeHandler)
+    }
+  },
   methods: {
+    closeTagsDrawer () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        this.tagsDrawerShown = false
+      }
+    },
+    handleTagsDrawerVisibility () {
+      if (window.innerWidth === this.winWidth) { return }
+      this.winWidth = window.innerWidth
+      if (this.$vuetify.breakpoint.mdAndUp) {
+        this.tagsDrawerShown = true
+      } else {
+        this.tagsDrawerShown = false
+      }
+    },
     toggleTag (tag) {
       if (_.includes(this.selection, tag)) {
         this.selection = _.without(this.selection, tag)
@@ -329,6 +383,19 @@ export default {
 </script>
 
 <style lang='scss'>
+.tags-sidebar-mobile {
+  top: 64px !important;
+  bottom: 56px !important;
+  height: auto !important;
+  z-index: 110 !important;
+}
+
+@media #{map-get($display-breakpoints, 'sm-and-down')} {
+  .tags .v-overlay--active {
+    z-index: 105 !important;
+  }
+}
+
 .tags-search {
   .v-input__control {
     min-height: initial !important;

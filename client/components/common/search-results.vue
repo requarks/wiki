@@ -181,10 +181,6 @@ export default {
   text-align: center;
   animation: searchResultsReveal .6s ease;
 
-  @media #{map-get($display-breakpoints, 'sm-and-down')} {
-    top: 112px;
-  }
-
   &-container {
     margin: 12px auto;
     width: 90vw;
