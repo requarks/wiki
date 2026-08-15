@@ -26,6 +26,19 @@ html(lang=siteConfig.lang)
           background-color: #0D47A1 !important;
         }
       }
+      html.wiki-auth-guest [data-auth-required],
+      html.wiki-auth-guest .wiki-auth-blocked {
+        pointer-events: none !important;
+        cursor: default !important;
+      }
+      html.wiki-auth-guest [data-auth-required] .v-icon,
+      html.wiki-auth-guest .wiki-auth-blocked .v-icon {
+        color: rgba(255, 255, 255, 0.38) !important;
+      }
+      html.wiki-auth-guest [data-auth-required].v-btn--disabled .v-icon,
+      html.wiki-auth-guest .wiki-auth-blocked.v-btn--disabled .v-icon {
+        color: rgba(255, 255, 255, 0.38) !important;
+      }
     meta(name='msapplication-TileColor', content='#1976d2')
     meta(name='msapplication-TileImage', content='/_assets/favicons/mstile-150x150.png')
 
@@ -52,6 +65,35 @@ html(lang=siteConfig.lang)
     script.
       var siteConfig = !{JSON.stringify(siteConfig)}
       var siteLangs = !{JSON.stringify(langs)}
+    script.
+      (function () {
+        function parseJwtPayload(jwtToken) {
+          if (!jwtToken || typeof jwtToken !== 'string') { return null }
+          try {
+            var parts = jwtToken.split('.')
+            if (parts.length < 2) { return null }
+            var payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+            while (payload.length % 4) { payload += '=' }
+            return JSON.parse(atob(payload))
+          } catch (err) {
+            return null
+          }
+        }
+        function readJwtCookie() {
+          var match = document.cookie.match(/(?:^|;\s*)jwt=([^;]*)/)
+          return match ? decodeURIComponent(match[1]) : null
+        }
+        function isAuthenticated() {
+          var jwtData = parseJwtPayload(readJwtCookie())
+          if (!jwtData) { return false }
+          if (jwtData.exp && jwtData.exp * 1000 <= Date.now()) { return false }
+          return true
+        }
+        var authenticated = isAuthenticated()
+        var root = document.documentElement
+        root.classList.add(authenticated ? 'wiki-auth-authenticated' : 'wiki-auth-guest')
+        window.__wikiAuth = { authenticated: authenticated }
+      })()
 
     //- Dev Mode Warning
     if devMode

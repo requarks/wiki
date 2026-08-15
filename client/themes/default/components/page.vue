@@ -197,7 +197,8 @@
                   :class='tocPosition === `right` ? `is-right` : ``'
                   )
                   v-btn(
-                    v-if='editShortcutsObj.editMenuBtn'
+                    v-if='editShortcutsObj.editMenuBtn && isAuthenticated && hasWritePagesPermission'
+                    data-auth-required
                     @click='pageEdit'
                     depressed
                     small
@@ -239,6 +240,7 @@
                       fab
                       color='primary'
                       v-model='pageEditFab'
+                      data-auth-required
                       @click='pageEdit'
                       v-on='onEditActivator'
                       :disabled='!hasWritePagesPermission'
@@ -362,6 +364,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
+import { decodeEffectivePermissions } from '../../../helpers/auth-session'
 
 /* global siteLangs, siteConfig */
 
@@ -609,6 +612,9 @@ export default {
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
+      if (!this.isAuthenticated) {
+        return false
+      }
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
@@ -645,7 +651,10 @@ export default {
     this.$store.set('page/editor', this.editor)
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      const permissions = decodeEffectivePermissions(this.effectivePermissions, this.$store.get('user/authenticated'))
+      if (permissions) {
+        this.$store.set('page/effectivePermissions', permissions)
+      }
     }
     if (this.editShortcuts) {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
@@ -703,6 +712,13 @@ export default {
     })
   },
   methods: {
+    requireAuth () {
+      if (!this.isAuthenticated) {
+        window.location.assign('/login')
+        return false
+      }
+      return true
+    },
     getHomeLocale () {
       const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
       if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
@@ -735,24 +751,31 @@ export default {
       }
     },
     pageEdit () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageEdit')
     },
     pageHistory () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageHistory')
     },
     pageSource () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageSource')
     },
     pageConvert () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageConvert')
     },
     pageDuplicate () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageDuplicate')
     },
     pageMove () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageMove')
     },
     pageDelete () {
+      if (!this.requireAuth()) { return }
       this.$root.$emit('pageDelete')
     },
     goToComments (focusNewComment = false) {

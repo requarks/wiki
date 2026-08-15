@@ -120,6 +120,7 @@
                       template(v-slot:activator='{ on: tooltip }')
                         v-btn(
                           icon
+                          data-auth-required
                           v-bind='attrs'
                           v-on='{ ...menu, ...tooltip }'
                           :class='$vuetify.rtl ? `ml-3` : ``'
@@ -164,7 +165,7 @@
               template(v-if='hasNewPagePermission && path && mode !== `edit`')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, height='64', v-on='on', @click='pageNew', :aria-label='$t(`common:header.newPage`)')
+                    v-btn(icon, tile, height='64', data-auth-required, v-on='on', @click='pageNew', :aria-label='$t(`common:header.newPage`)')
                       v-icon(color='white') mdi-text-box-plus-outline
                   span {{$t('common:header.newPage')}}
                 v-divider(vertical)
@@ -174,7 +175,7 @@
               template(v-if='isAuthenticated && isAdmin && mode !== `admin`')
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, height='64', v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
+                    v-btn(icon, tile, height='64', data-auth-required, v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
                       v-icon(color='white') mdi-cog
                   span {{$t('common:header.admin')}}
                 v-divider(vertical)
@@ -324,6 +325,9 @@ export default {
       return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
     },
     hasNewPagePermission () {
+      if (!this.isAuthenticated) {
+        return false
+      }
       return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
@@ -333,6 +337,9 @@ export default {
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
+      if (!this.isAuthenticated) {
+        return false
+      }
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
@@ -386,6 +393,13 @@ export default {
     })
   },
   methods: {
+    requireAuth () {
+      if (!this.isAuthenticated) {
+        window.location.assign('/login')
+        return false
+      }
+      return true
+    },
     syncMobileViewport () {
       this.mobileViewport = window.innerWidth < 960
     },
@@ -418,6 +432,7 @@ export default {
       this.$root.$emit('searchMove', dir)
     },
     pageNew () {
+      if (!this.requireAuth()) { return }
       this.newPageModal = true
     },
     pageNewCreate ({ path, locale }) {
@@ -427,15 +442,19 @@ export default {
       window.location.assign(`/${this.locale}/${this.path}`)
     },
     pageEdit () {
+      if (!this.requireAuth()) { return }
       window.location.assign(`/e/${this.locale}/${this.path}`)
     },
     pageHistory () {
+      if (!this.requireAuth()) { return }
       window.location.assign(`/h/${this.locale}/${this.path}`)
     },
     pageSource () {
+      if (!this.requireAuth()) { return }
       window.location.assign(`/s/${this.locale}/${this.path}`)
     },
     pageDuplicate () {
+      if (!this.requireAuth()) { return }
       const pathParts = this.path.split('/')
       this.duplicateOpts = {
         locale: this.locale,
@@ -447,9 +466,11 @@ export default {
       window.location.assign(`/e/${locale}/${path}?from=${this.$store.get('page/id')}`)
     },
     pageConvert () {
+      if (!this.requireAuth()) { return }
       this.convertPageModal = true
     },
     pageMove () {
+      if (!this.requireAuth()) { return }
       this.movePageModal = true
     },
     async pageMoveRename ({ path, locale }) {
@@ -474,6 +495,7 @@ export default {
       }
     },
     pageDelete () {
+      if (!this.requireAuth()) { return }
       this.deletePageModal = true
     },
     assets () {

@@ -29,6 +29,8 @@
 </template>
 
 <script>
+import { decodeEffectivePermissions } from '../helpers/auth-session'
+
 export default {
   components: {
   },
@@ -69,7 +71,10 @@ export default {
     this.$store.commit('page/SET_MODE', 'source')
 
     if (this.effectivePermissions) {
-      this.$store.set('page/effectivePermissions', JSON.parse(Buffer.from(this.effectivePermissions, 'base64').toString()))
+      const permissions = decodeEffectivePermissions(this.effectivePermissions, this.$store.get('user/authenticated'))
+      if (permissions) {
+        this.$store.set('page/effectivePermissions', permissions)
+      }
     }
   },
   methods: {
