@@ -195,7 +195,7 @@ let bootstrap = () => {
   // ====================================
 
   window.addEventListener('beforeunload', () => {
-    store.dispatch('startLoading')
+    store.commit('loadingStart', 'page-navigate')
   })
 
   const apolloProvider = new VueApollo({

@@ -80,7 +80,7 @@ defaults:
     features:
       featurePageRatings: true
       featurePageComments: true
-      featurePageNavigation: false
+      featurePageNavigation: true
       featurePersonalWikis: true
     security:
       securityOpenRedirect: true

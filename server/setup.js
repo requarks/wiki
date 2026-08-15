@@ -132,7 +132,8 @@ module.exports = () => {
         iconset: 'mdi',
         injectCSS: '',
         injectHead: '',
-        injectBody: ''
+        injectBody: '',
+        customFonts: []
       })
       _.set(WIKI.config, 'title', 'Wiki.js')
 

@@ -42,42 +42,7 @@
             .caption.red--text {{$t('common:page.unpublished')}}
             status-indicator.ml-3(negative, pulse)
         v-divider
-      v-container.grey.pa-0(fluid, :class='$vuetify.theme.dark ? `darken-4-l3` : `lighten-4`')
-        v-row.page-header-section(no-gutters, align-content='center', style='height: 90px;')
-          v-col.page-col-content.is-page-header(
-            :offset-xl='tocPosition === `left` ? 2 : 0'
-            :offset-lg='tocPosition === `left` ? 3 : 0'
-            :xl='tocPosition === `right` ? 10 : false'
-            :lg='tocPosition === `right` ? 9 : false'
-            style='margin-top: auto; margin-bottom: auto;'
-            :class='$vuetify.rtl ? `pr-4` : `pl-4`'
-            )
-            .page-header-headings
-              .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
-              .caption.grey--text.text--darken-1 {{description}}
-            .page-edit-shortcuts(
-              v-if='editShortcutsObj.editMenuBar'
-              :class='tocPosition === `right` ? `is-right` : ``'
-              )
-              v-btn(
-                v-if='editShortcutsObj.editMenuBtn'
-                @click='pageEdit'
-                depressed
-                small
-                )
-                v-icon.mr-2(small) mdi-pencil
-                span.text-none {{$t(`common:actions.edit`)}}
-              v-btn(
-                v-if='editShortcutsObj.editMenuExternalBtn'
-                :href='editMenuExternalUrl'
-                target='_blank'
-                depressed
-                small
-                )
-                v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
-                span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
-      v-divider
-      v-container.pl-5.pt-4(fluid, grid-list-xl)
+      v-container.pl-5(fluid, grid-list-xl, :class='path === `home` ? `pt-4` : ``')
         v-layout(row)
           v-flex.page-col-sd(
             v-if='tocPosition !== `off` && $vuetify.breakpoint.lgAndUp'
@@ -221,6 +186,40 @@
             :order-xs1='tocPosition === `right`'
             :order-xs2='tocPosition !== `right`'
             )
+            .page-header-block(v-if='path !== `home`')
+              .page-header-section.is-page-header-title(
+                :class='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-4`'
+                )
+                .page-header-headings
+                  .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
+                .page-edit-shortcuts(
+                  v-if='editShortcutsObj.editMenuBar'
+                  :class='tocPosition === `right` ? `is-right` : ``'
+                  )
+                  v-btn(
+                    v-if='editShortcutsObj.editMenuBtn'
+                    @click='pageEdit'
+                    depressed
+                    small
+                    )
+                    v-icon.mr-2(small) mdi-pencil
+                    span.text-none {{$t(`common:actions.edit`)}}
+                  v-btn(
+                    v-if='editShortcutsObj.editMenuExternalBtn'
+                    :href='editMenuExternalUrl'
+                    target='_blank'
+                    depressed
+                    small
+                    )
+                    v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
+                    span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
+              .page-header-section.is-page-header-subtitle(
+                v-if='description'
+                :class='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-4`'
+                )
+                .page-header-subheading
+                  .caption.grey--text.text--darken-1 {{description}}
+            v-divider(v-if='path !== `home`')
             v-tooltip(:right='$vuetify.rtl', :left='!$vuetify.rtl', v-if='hasAnyPagePermissions && editShortcutsObj.editFab')
               template(v-slot:activator='{ on: onEditActivator }')
                 v-speed-dial(
@@ -321,8 +320,9 @@
               span {{$t('common:page.editPage')}}
             v-alert.mb-5(v-if='!isPublished', color='red', outlined, icon='mdi-minus-circle', dense)
               .caption {{$t('common:page.unpublishedWarning')}}
-            .contents(ref='container')
+            .contents.pt-4(ref='container')
               slot(name='contents')
+            v-divider.my-3(v-if='pageNavigationData && !printView')
             page-navigation(v-if='pageNavigationData && !printView', :nav='pageNavigationData')
             .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
               .comments-header
@@ -783,7 +783,6 @@ export default {
 }
 
 .page-col-sd {
-  margin-top: -90px;
   align-self: flex-start;
   position: sticky;
   top: 64px;
@@ -796,18 +795,31 @@ export default {
   display: none;
 }
 
-.page-header-section {
+.page-header-block {
   position: relative;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
+}
 
-  > .is-page-header {
-    position: relative;
-  }
+.page-header-section.is-page-header-title {
+  position: relative;
+  min-height: 70px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   .page-header-headings {
-    min-height: 52px;
     display: flex;
+    align-items: center;
     justify-content: center;
-    flex-direction: column;
+    text-align: center;
+    width: 100%;
+
+    .headline {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 0;
+    }
   }
 
   .page-edit-shortcuts {
@@ -842,6 +854,33 @@ export default {
         border-top-right-radius: 5px;
         border-bottom-right-radius: 5px;
       }
+    }
+  }
+}
+
+.page-header-section.is-page-header-subtitle {
+  min-height: 36px;
+  padding: 6px 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+  @at-root .theme--dark & {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .page-header-subheading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+
+    .caption {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 0;
     }
   }
 }

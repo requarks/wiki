@@ -1,6 +1,6 @@
 key: page_navigation
 title: Page Navigation
-description: Arrow-box prev/next navigation for pages tagged with a from: series tag.
+description: 'Arrow-box prev/next navigation for pages tagged with a from: series tag.'
 author: sunninoor.com
 logo: https://static.requarks.io/logo/wikijs-butterfly.svg
 website: https://wiki.js.org
@@ -22,3 +22,15 @@ props:
     title: Related topics button label
     default: 'আরও'
     order: 3
+  showRelatedCards:
+    type: Boolean
+    title: Show related post cards
+    default: true
+    hint: 'Display up to 3 upcoming pages from the series below the arrow navigation.'
+    order: 4
+  relatedImageBaseUrl:
+    type: String
+    title: Related card image base URL
+    default: 'https://sunninoor.com/images/related/'
+    hint: 'Images are loaded as {baseUrl}{0-39}.jpeg based on page path.'
+    order: 5

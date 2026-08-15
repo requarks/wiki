@@ -1,4 +1,5 @@
 const graphHelper = require('../../helpers/graph')
+const customFonts = require('../../helpers/customFonts')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 
@@ -27,7 +28,8 @@ module.exports = {
         tocPosition: WIKI.config.theming.tocPosition || 'left',
         injectCSS: new CleanCSS({ format: 'beautify' }).minify(WIKI.config.theming.injectCSS).styles,
         injectHead: WIKI.config.theming.injectHead,
-        injectBody: WIKI.config.theming.injectBody
+        injectBody: WIKI.config.theming.injectBody,
+        customFonts: customFonts.normalizeFonts(WIKI.config.theming.customFonts)
       }
     }
   },
@@ -40,6 +42,11 @@ module.exports = {
           }).minify(args.injectCSS).styles
         }
 
+        const normalizedFonts = args.customFonts !== undefined
+          ? customFonts.normalizeFonts(args.customFonts)
+          : customFonts.normalizeFonts(WIKI.config.theming.customFonts || [])
+        await customFonts.cleanupOrphans(normalizedFonts)
+
         WIKI.config.theming = {
           ...WIKI.config.theming,
           theme: args.theme,
@@ -48,7 +55,8 @@ module.exports = {
           tocPosition: args.tocPosition || 'left',
           injectCSS: args.injectCSS || '',
           injectHead: args.injectHead || '',
-          injectBody: args.injectBody || ''
+          injectBody: args.injectBody || '',
+          customFonts: normalizedFonts
         }
 
         await WIKI.configSvc.saveToDb(['theming'])

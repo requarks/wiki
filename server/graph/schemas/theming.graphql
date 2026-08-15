@@ -32,6 +32,7 @@ type ThemingMutation {
     injectCSS: String
     injectHead: String
     injectBody: String
+    customFonts: [CustomFontInput]
   ): DefaultResponse @auth(requires: ["manage:theme", "manage:system"])
 }
 
@@ -47,6 +48,27 @@ type ThemingConfig {
   injectCSS: String
   injectHead: String
   injectBody: String
+  customFonts: [CustomFont]
+}
+
+type CustomFont {
+  id: String!
+  family: String!
+  filename: String!
+  format: String!
+  weight: Int!
+  style: String!
+  unicodeRange: String
+}
+
+input CustomFontInput {
+  id: String!
+  family: String!
+  filename: String!
+  format: String!
+  weight: Int!
+  style: String!
+  unicodeRange: String
 }
 
 type ThemingTheme {

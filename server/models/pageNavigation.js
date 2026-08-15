@@ -60,7 +60,7 @@ module.exports = class PageNavigation extends Model {
         if (!_.some(dbProviders, ['key', provider.key])) {
           newProviders.push({
             key: provider.key,
-            isEnabled: false,
+            isEnabled: true,
             config: _.transform(provider.props, (result, value, key) => {
               _.set(result, key, value.default)
               return result

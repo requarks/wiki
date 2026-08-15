@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const pageHelper = require('../helpers/page')
+const customFonts = require('../helpers/customFonts')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
@@ -133,7 +134,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
 
   const injectCode = {
-    css: WIKI.config.theming.injectCSS,
+    css: customFonts.buildInjectCSS(WIKI.config.theming),
     head: WIKI.config.theming.injectHead,
     body: WIKI.config.theming.injectBody
   }
@@ -491,7 +492,7 @@ router.get('/*', async (req, res, next) => {
 
         // -> Build theme code injection
         const injectCode = {
-          css: WIKI.config.theming.injectCSS,
+          css: customFonts.buildInjectCSS(WIKI.config.theming),
           head: WIKI.config.theming.injectHead,
           body: WIKI.config.theming.injectBody
         }

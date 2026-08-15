@@ -86,6 +86,7 @@ module.exports = {
     await WIKI.models.pageNavigation.initModule()
     await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
+    await require('../helpers/customFonts').ensureFontsDir()
     WIKI.scheduler.start()
 
     await WIKI.models.subscribeToNotifications()
