@@ -1,11 +1,11 @@
 <template lang='pug'>
   v-app.admin
     nav-header
-    nav-mobile-drawer-host
       template(slot='mid')
         v-spacer
         .overline.grey--text {{$t('admin:adminArea')}}
         v-spacer
+    nav-mobile-drawer-host
     v-navigation-drawer.pb-0.admin-sidebar(
       v-if='$vuetify.breakpoint.mdAndUp'
       v-model='adminDrawerShown'

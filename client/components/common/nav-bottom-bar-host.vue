@@ -19,9 +19,11 @@ export default {
   },
   computed: {
     printView: get('site/printView'),
+    mode: get('page/mode'),
     visible () {
       if (!this.mobileViewport) { return false }
       if (this.printView) { return false }
+      if (this.mode === 'edit') { return false }
       const root = document.getElementById('root')
       if (root && root.classList.contains('is-fullscreen')) { return false }
       return true

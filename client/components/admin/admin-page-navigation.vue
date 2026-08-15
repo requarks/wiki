@@ -68,8 +68,12 @@
                   :class='cfg.value.hint ? "mb-2" : ""'
                   )
             v-alert.mt-4(outlined, type='info', dense, icon='mdi-information-outline')
-              | Pages need a tag like <code>from:Series Name</code> to show navigation.
-              | Also enable <strong>Page Navigation</strong> under Admin → General → Features.
+              div The <strong>সূচী</strong> button, <strong>prev/next arrows</strong>, and <strong>postal cards</strong> appear only when either rule matches:
+              ul.mt-2.mb-0
+                li A tag starting with the configured <strong>from:</strong> prefix (series pages).
+                li The configured <strong>download</strong> tag plus a parent tag with the <strong>up:</strong> prefix (e.g. download + up:কিতাব).
+              div.mt-2 The <strong>আরও</strong> button is configured separately (not yet implemented here).
+              div.mt-2 Use <code>nav:off</code> on a page to hide all of the above. Also enable <strong>Page Navigation</strong> under Admin → General → Features.
 </template>
 
 <script>

@@ -1,8 +1,17 @@
 <template lang='pug'>
   div
     v-app-bar.nav-header(:color='navBarColor', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat)
-      //- Mobile: top bar (menu | search | chat)
-      v-toolbar.nav-header-mobile(v-if='mobileViewport', :color='navBarColor', dark, flat)
+      //- Mobile editor: title + save/page/close (upstream keeps actions slot on small screens)
+      v-toolbar.nav-header-mobile-editor(v-if='mobileViewport && isEditorHeader', :color='navBarColor', dark, flat)
+        .nav-header-mobile-editor__mid
+          slot(name='mid')
+        .nav-header-mobile-editor__actions
+          .navHeaderLoading.nav-header-mobile-editor__loading(v-show='isLoading')
+            v-progress-circular(indeterminate, color='white', :size='18', :width='2')
+          slot(name='actions')
+
+      //- Mobile view: menu | search | chat
+      v-toolbar.nav-header-mobile(v-else-if='mobileViewport', :color='navBarColor', dark, flat)
         v-btn.nav-header-mobile__menu(icon, @click='openMobileNav', :aria-label='$t(`common:sidebar.mainMenu`)')
           v-icon(color='white') mdi-menu
         v-text-field.nav-header-mobile__search(
@@ -81,12 +90,6 @@
                 v-progress-circular(indeterminate, color='white', :size='22', :width='2' v-show='isLoading')
 
               slot(name='actions')
-
-              v-tooltip(bottom)
-                template(v-slot:activator='{ on }')
-                  v-btn(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
-                    v-icon(color='white') mdi-tag-multiple
-                span {{$t('common:header.browseTags')}}
 
               template(v-if='mode === `view` && locales.length > 0')
                 v-menu(offset-y, bottom, transition='slide-y-transition', max-height='320px', min-width='210px', left)
@@ -348,6 +351,9 @@ export default {
     },
     showMobileChat () {
       return siteConfig.mobileHeaderChatEnabled === true
+    },
+    isEditorHeader () {
+      return this.dense || this.mode === 'edit'
     }
   },
   created () {
@@ -713,6 +719,64 @@ $nav-bar-color: #192b85;
 }
 .navHeaderLoading { // To avoid search bar jumping
   width: 22px;
+}
+
+.nav-header-mobile-editor {
+  width: 100%;
+  padding: 0;
+
+  .v-toolbar__content {
+    padding: 0 8px !important;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  &__mid {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    .editor-title-input {
+      width: 100%;
+      padding-top: 0;
+
+      .v-input__control {
+        min-height: 36px !important;
+      }
+
+      .v-input__slot {
+        background-color: #fff !important;
+        min-height: 36px !important;
+        margin-bottom: 0;
+      }
+
+      input {
+        color: $nav-bar-color !important;
+        caret-color: $nav-bar-color;
+        text-align: center;
+      }
+    }
+  }
+
+  &__actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+
+    .v-btn {
+      display: inline-flex !important;
+      visibility: visible !important;
+      flex-shrink: 0;
+    }
+  }
+
+  &__loading {
+    width: 18px;
+    margin-right: 4px;
+  }
 }
 
 .nav-header-mobile {

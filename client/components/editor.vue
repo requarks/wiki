@@ -1,16 +1,17 @@
 <template lang="pug">
   v-app.editor(:dark='$vuetify.theme.dark')
     nav-header(dense)
-    nav-mobile-drawer-host
       template(slot='mid')
         v-text-field.editor-title-input(
-          dark
           solo
           flat
+          light
           v-model='currentPageTitle'
           hide-details
-          background-color='black'
+          background-color='white'
+          color='#192b85'
           dense
+          rounded
           full-width
         )
       template(slot='actions')
@@ -44,7 +45,8 @@
           )
           v-icon(color='red', :left='$vuetify.breakpoint.lgAndUp') mdi-close
           span.white--text(v-if='$vuetify.breakpoint.lgAndUp') {{ $t('common:actions.close') }}
-        v-divider.ml-3(vertical)
+        v-divider.ml-3(v-if='$vuetify.breakpoint.lgAndUp', vertical)
+    nav-mobile-drawer-host
     v-main
       component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')
@@ -594,8 +596,16 @@ export default {
       background-color: mc('grey', '900');
     }
 
-    &-title-input input {
-      text-align: center;
+    &-title-input {
+      .v-input__slot {
+        background-color: #fff !important;
+      }
+
+      input {
+        color: #192b85 !important;
+        caret-color: #192b85;
+        text-align: center;
+      }
     }
   }
 

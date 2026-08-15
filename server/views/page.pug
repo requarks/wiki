@@ -1,10 +1,6 @@
 extends master.pug
 
 block head
-  if injectCode.css
-    style(type='text/css')!= injectCode.css
-  if injectCode.head
-    != injectCode.head
   if config.features.featurePageComments
     != comments.head
 
@@ -32,6 +28,7 @@ block body
       edit-shortcuts=Buffer.from(JSON.stringify(config.editShortcuts)).toString('base64')
       filename=pageFilename
       page-navigation=pageNavigation ? Buffer.from(JSON.stringify(pageNavigation)).toString('base64') : ''
+      page-embed=pageEmbed ? Buffer.from(JSON.stringify(pageEmbed)).toString('base64') : ''
       )
       template(slot='contents')
         div!= page.render

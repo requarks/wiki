@@ -71,9 +71,14 @@ module.exports = {
       return ''
     }
 
-    return `.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts) *:not(.v-icon) {
+    const applyRule = (selector) => `${selector} *:not(.v-icon) {
   font-family: ${stack} !important;
 }`
+
+    return [
+      applyRule('.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts)'),
+      applyRule('.v-application .v-navigation-drawer')
+    ].join('\n\n')
   },
 
   generateFaceCSS (fonts) {
