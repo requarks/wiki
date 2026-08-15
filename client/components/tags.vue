@@ -28,8 +28,7 @@
             close
             @click:close='toggleTag(tag.tag)'
             ) {{tag.title}}
-          v-spacer
-          v-btn.animated.fadeIn(
+          v-btn.animated.fadeIn.ml-1(
             small
             outlined
             color='blue lighten-4'
