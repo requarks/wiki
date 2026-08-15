@@ -324,12 +324,24 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents.pt-4(ref='container')
               slot(name='contents')
-            v-divider.my-3(v-if='pageNavigationData && !printView')
+            page-embed(v-if='pageEmbedData && !printView', :embed='pageEmbedData')
+            v-divider.my-3(v-if='(pageEmbedData || pageNavigationData) && !printView')
             page-navigation(v-if='pageNavigationData && !printView', :nav='pageNavigationData')
-            .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
+            page-telegram-comments(
+              v-if='telegramCommentsConfig && !printView'
+              id='discussion'
+              :website-id='telegramCommentsConfig.websiteId'
+              :limit='telegramCommentsConfig.limit'
+              :page-url='telegramCommentsConfig.pageUrl'
+              :page-title='telegramCommentsConfig.pageTitle'
+            )
+            .comments-container(
+              v-if='commentsEnabled && commentsPerms.read && !printView'
+              :id='telegramCommentsConfig ? undefined : "discussion"'
+            )
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
-                span {{$t('common:comments.title')}}
+                span {{$t('common:comments.sdTitle')}}
               .comments-main
                 slot(name='comments')
     nav-footer
@@ -494,6 +506,10 @@ export default {
     pageNavigation: {
       type: String,
       default: ''
+    },
+    pageEmbed: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -635,6 +651,23 @@ export default {
       } catch (err) {
         return null
       }
+    },
+    pageEmbedData () {
+      if (!this.pageEmbed) {
+        return null
+      }
+      try {
+        return JSON.parse(Buffer.from(this.pageEmbed, 'base64').toString())
+      } catch (err) {
+        return null
+      }
+    },
+    telegramCommentsConfig () {
+      const telegram = _.get(this.pageEmbedData, 'telegram', null)
+      if (!telegram || !telegram.websiteId) {
+        return null
+      }
+      return telegram
     }
   },
   created() {

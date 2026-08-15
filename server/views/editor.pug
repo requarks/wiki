@@ -1,9 +1,5 @@
 extends master.pug
 
-block head
-  if injectCode.css
-    style(type='text/css')!= injectCode.css
-
 block body
   #root
     editor(
