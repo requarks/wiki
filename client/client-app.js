@@ -55,6 +55,14 @@ const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'w
 const graphQLLink = ApolloLink.from([
   new ErrorLink(({ graphQLErrors, networkError }) => {
     if (graphQLErrors) {
+      const isLocaleTranslationError = graphQLErrors.every(({ message, path }) => {
+        return (message === 'Invalid locale or namespace' || message === 'Invalid locale or namespace.') &&
+          Array.isArray(path) && path.includes('translations')
+      })
+      if (isLocaleTranslationError) {
+        return
+      }
+
       let isAuthError = false
       graphQLErrors.map(({ message, locations, path }) => {
         if (message === `Forbidden`) {
@@ -159,6 +167,9 @@ Vue.component('History', () => import(/* webpackChunkName: "history" */ './compo
 Vue.component('Loader', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/loader.vue'))
 Vue.component('Login', () => import(/* webpackPrefetch: true, webpackChunkName: "login" */ './components/login.vue'))
 Vue.component('NavHeader', () => import(/* webpackMode: "eager" */ './components/common/nav-header.vue'))
+Vue.component('NavBottomBar', () => import(/* webpackMode: "eager" */ './components/common/nav-bottom-bar.vue'))
+Vue.component('NavBottomBarHost', () => import(/* webpackMode: "eager" */ './components/common/nav-bottom-bar-host.vue'))
+Vue.component('NavMobileDrawerHost', () => import(/* webpackMode: "eager" */ './components/common/nav-mobile-drawer-host.vue'))
 Vue.component('NewPage', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
 Vue.component('Notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
 Vue.component('NotFound', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))

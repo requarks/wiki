@@ -1,6 +1,7 @@
 <template lang="pug">
   v-app.editor(:dark='$vuetify.theme.dark')
     nav-header(dense)
+    nav-mobile-drawer-host
       template(slot='mid')
         v-text-field.editor-title-input(
           dark

@@ -1,26 +1,22 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').profile
     nav-header
-    v-navigation-drawer.pb-0(v-model='profileDrawerShown', app, fixed, clipped, left, permanent)
-      v-list(dense, nav)
-        v-list-item(to='/profile', color='primary')
-          v-list-item-action: v-icon mdi-face-profile
-          v-list-item-content
-            v-list-item-title {{$t('profile:title')}}
-        //- v-list-item(to='/preferences', disabled)
-        //-   v-list-item-action: v-icon(color='grey lighten-1') mdi-cog-outline
-        //-   v-list-item-content
-        //-     v-list-item-title Preferences
-        //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
-        v-list-item(to='/pages', color='primary')
-          v-list-item-action: v-icon mdi-file-document-outline
-          v-list-item-content
-            v-list-item-title {{$t('profile:pages.title')}}
-        //- v-list-item(to='/comments', disabled)
-        //-   v-list-item-action: v-icon(color='grey lighten-1') mdi-message-reply-text
-        //-   v-list-item-content
-        //-     v-list-item-title {{$t('profile:comments.title')}}
-        //-     v-list-item-subtitle.caption.grey--text.text--lighten-1 Coming soon
+    nav-mobile-drawer-host
+    v-navigation-drawer.pb-0.profile-sidebar(
+      v-if='$vuetify.breakpoint.mdAndUp'
+      v-model='profileDrawerShown'
+      :app='true'
+      fixed
+      :clipped='true'
+      :dark='profileDrawerDark'
+      :right='$vuetify.rtl'
+      permanent
+      width='256'
+      overlay-color='black'
+      :overlay-opacity='0.55'
+      :class='profileDrawerClass'
+      )
+      nav-drawer-content-profile
 
     v-content(:class='$vuetify.theme.dark ? "grey darken-4" : "grey lighten-5"')
       transition(name='profile-router')
@@ -58,9 +54,20 @@ router.afterEach((to, from) => {
 
 export default {
   i18nOptions: { namespaces: 'profile' },
+  components: {
+    NavDrawerContentProfile: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-profile.vue')
+  },
   data() {
     return {
       profileDrawerShown: true
+    }
+  },
+  computed: {
+    profileDrawerClass () {
+      return ''
+    },
+    profileDrawerDark () {
+      return this.$vuetify.theme.dark
     }
   },
   router,
@@ -93,6 +100,10 @@ export default {
   &-title {
     margin-left: 1rem;
   }
+}
+
+.profile-sidebar-mobile {
+  padding-top: 0;
 }
 
 </style>

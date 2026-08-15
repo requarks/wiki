@@ -1,6 +1,7 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').history
     nav-header
+    nav-mobile-drawer-host
     v-content
       v-toolbar(color='primary', dark)
         .subheading Viewing history of #[strong /{{path}}]
@@ -137,6 +138,8 @@ import gql from 'graphql-tag'
 
 export default {
   i18nOptions: { namespaces: 'history' },
+  components: {
+  },
   props: {
     pageId: {
       type: Number,

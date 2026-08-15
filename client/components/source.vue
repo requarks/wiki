@@ -1,6 +1,7 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').source
     nav-header
+    nav-mobile-drawer-host
     v-content
       v-toolbar(color='primary', dark)
         i18next.subheading(v-if='versionId > 0', path='common:page.viewingSourceVersion', tag='div')
@@ -29,6 +30,8 @@
 
 <script>
 export default {
+  components: {
+  },
   props: {
     pageId: {
       type: Number,

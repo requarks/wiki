@@ -1,35 +1,29 @@
 <template lang="pug">
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(v-if='!printView')
+    nav-mobile-drawer-host(v-if='!printView')
     v-navigation-drawer(
-      v-if='navMode !== `NONE` && !printView'
-      :class='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`'
-      dark
-      app
-      clipped
-      mobile-breakpoint='600'
-      :temporary='$vuetify.breakpoint.smAndDown'
+      v-if='navMode !== `NONE` && !printView && $vuetify.breakpoint.mdAndUp'
+      :class='navDrawerClass'
+      :dark='navDrawerDark'
+      :app='true'
+      :clipped='true'
+      permanent
       v-model='navShown'
       :right='$vuetify.rtl'
+      width='256'
+      overlay-color='black'
+      :overlay-opacity='0.55'
       )
       vue-scroll(:ops='scrollStyle')
-        nav-sidebar(:color='$vuetify.theme.dark ? `grey darken-4-d4` : `primary`', :items='sidebarDecoded', :nav-mode='navMode')
+        nav-sidebar(
+          :color='navSidebarColor'
+          :dark='navSidebarDark'
+          :items='sidebarDecoded'
+          :nav-mode='navMode'
+          )
 
-    v-fab-transition(v-if='navMode !== `NONE`')
-      v-btn(
-        fab
-        color='primary'
-        fixed
-        bottom
-        :right='$vuetify.rtl'
-        :left='!$vuetify.rtl'
-        small
-        @click='navShown = !navShown'
-        v-if='$vuetify.breakpoint.mdAndDown'
-        v-show='!navShown'
-        )
-        v-icon mdi-menu
-
+    //- Mobile nav opens from profile icon in header (LinkedIn-style)
     v-main(ref='content')
       template(v-if='path !== `home`')
         v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
@@ -238,6 +232,7 @@
                   :right='!$vuetify.rtl'
                   :left='$vuetify.rtl'
                   fixed
+                  :style='mobileFabBottomOffset'
                   dark
                   )
                   template(v-slot:activator)
@@ -342,7 +337,7 @@
         v-if='upBtnShown'
         fab
         fixed
-        bottom
+        :bottom='true'
         :right='$vuetify.rtl'
         :left='!$vuetify.rtl'
         small
@@ -350,7 +345,7 @@
         @click='$vuetify.goTo(0, scrollOpts)'
         color='primary'
         dark
-        :style='upBtnPosition'
+        :style='[upBtnPosition, mobileFabBottomOffset]'
         :aria-label='$t(`common:actions.returnToTop`)'
         )
         v-icon mdi-arrow-up
@@ -367,7 +362,7 @@ import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
 
-/* global siteLangs */
+/* global siteLangs, siteConfig */
 
 Vue.component('Tabset', Tabset)
 
@@ -528,6 +523,44 @@ export default {
   },
   computed: {
     isAuthenticated: get('user/authenticated'),
+    permissions: get('user/permissions'),
+    isAdmin () {
+      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
+    },
+    showMobileBottomNav () {
+      return this.$vuetify.breakpoint.smAndDown
+    },
+    navDrawerWidth () {
+      return this.$vuetify.breakpoint.smAndDown ? Math.min(Math.round(window.innerWidth * 0.88), 320) : 256
+    },
+    navDrawerClass () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return this.$vuetify.theme.dark ? 'nav-drawer-mobile blue darken-4' : 'nav-drawer-mobile primary'
+      }
+      return this.$vuetify.theme.dark ? 'grey darken-4-d4' : 'primary'
+    },
+    navDrawerDark () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return true
+      }
+      return true
+    },
+    navSidebarColor () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return this.$vuetify.theme.dark ? 'blue darken-4' : 'primary'
+      }
+      return this.$vuetify.theme.dark ? 'grey darken-4-d4' : 'primary'
+    },
+    navSidebarDark () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return true
+      }
+      return true
+    },
+    mobileFabBottomOffset () {
+      if (!this.showMobileBottomNav) { return {} }
+      return { bottom: '72px' }
+    },
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/effectivePermissions@comments'),
     editShortcutsObj: get('page/editShortcuts'),
@@ -604,17 +637,20 @@ export default {
     }
 
     this.$store.set('page/mode', 'view')
+    this.$store.set('page/sidebar', this.sidebarDecoded)
+    this.$store.set('page/navMode', this.navMode)
   },
   mounted () {
     if (this.$vuetify.theme.dark) {
       this.scrollStyle.bar.background = '#424242'
     }
 
+    this.$root.$on('goToComments', () => {
+      this.goToComments()
+    })
+
     // -> Check side navigation visibility
-    this.handleSideNavVisibility()
-    window.addEventListener('resize', _.debounce(() => {
-      this.handleSideNavVisibility()
-    }, 500))
+    this.navShown = true
 
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
@@ -652,12 +688,19 @@ export default {
     })
   },
   methods: {
-    goHome () {
-      if (this.locales && this.locales.length > 0) {
-        window.location.assign(`/${this.locale}/home`)
-      } else {
-        window.location.assign('/')
+    getHomeLocale () {
+      const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
+      if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
+        return urlSegment
       }
+      if (this.locale && siteLangs.some(lc => lc.code === this.locale)) {
+        return this.locale
+      }
+      return siteConfig.lang
+    },
+    goHome () {
+      const locale = this.getHomeLocale()
+      window.location.assign(siteLangs.length > 0 ? `/${locale}/home` : '/')
     },
     toggleNavigation () {
       this.navOpen = !this.navOpen
@@ -696,15 +739,6 @@ export default {
     },
     pageDelete () {
       this.$root.$emit('pageDelete')
-    },
-    handleSideNavVisibility () {
-      if (window.innerWidth === this.winWidth) { return }
-      this.winWidth = window.innerWidth
-      if (this.$vuetify.breakpoint.mdAndUp) {
-        this.navShown = true
-      } else {
-        this.navShown = false
-      }
     },
     goToComments (focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)
@@ -795,6 +829,10 @@ export default {
       }
     }
   }
+}
+
+.nav-drawer-mobile {
+  padding-top: 0;
 }
 
 </style>

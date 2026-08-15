@@ -81,6 +81,13 @@
               @click='login'
               :loading='isLoading'
               ) {{ $t('auth:actions.login') }}
+            v-btn.mt-2.text-none(
+              width='100%'
+              large
+              depressed
+              color='white'
+              @click='goHome'
+              ) {{ $t('auth:startBrowsingInstead', 'Start Browsing as Guest') }}
             .text-center.mt-5
               v-btn.text-none(
                 text
@@ -248,7 +255,7 @@
 </template>
 
 <script>
-/* global siteConfig */
+/* global siteConfig, siteLangs */
 
 // <span>Photo by <a href="https://unsplash.com/@isaacquesada?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Isaac Quesada</a> on <a href="/t/textures-patterns?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a></span>
 
@@ -349,6 +356,9 @@ export default {
     }
   },
   methods: {
+    goHome () {
+      window.location.assign(siteLangs.length > 0 ? `/${siteConfig.lang}/home` : '/')
+    },
     /**
      * LOGIN
      */

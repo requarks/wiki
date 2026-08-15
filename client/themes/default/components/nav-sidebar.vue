@@ -1,6 +1,6 @@
 <template lang="pug">
   div
-    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
+    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='mixedNavHeaderClass')
       v-btn(
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
@@ -36,6 +36,7 @@
           :href='item.t'
           :target='item.y === `externalblank` ? `_blank` : `_self`'
           :rel='item.y === `externalblank` ? `noopener` : ``'
+          @click='onNavigate'
           )
           v-list-item-avatar(size='24', tile)
             v-icon(v-if='item.c.match(/fa[a-z] fa-/)', size='19') {{ item.c }}
@@ -51,7 +52,7 @@
             v-icon(small) mdi-folder-open
           v-list-item-title {{ item.title }}
         v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
+        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path', @click='onNavigate')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ currentParent.title }}
@@ -61,7 +62,7 @@
           v-list-item-avatar(size='24')
             v-icon mdi-folder
           v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
+        v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path', @click='onNavigate')
           v-list-item-avatar(size='24')
             v-icon mdi-text-box
           v-list-item-title {{ item.title }}
@@ -72,7 +73,7 @@ import _ from 'lodash'
 import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
 
-/* global siteLangs */
+/* global siteLangs, siteConfig */
 
 export default {
   props: {
@@ -107,7 +108,13 @@ export default {
   },
   computed: {
     path: get('page/path'),
-    locale: get('page/locale')
+    locale: get('page/locale'),
+    mixedNavHeaderClass () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return this.$vuetify.theme.dark ? 'blue darken-4' : 'blue darken-2'
+      }
+      return this.$vuetify.theme.dark ? 'grey darken-5' : 'blue darken-3'
+    }
   },
   methods: {
     switchMode (mode) {
@@ -217,8 +224,22 @@ export default {
       this.currentItems = _.filter(items, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
+    onNavigate () {
+      this.$emit('navigate')
+    },
+    getHomeLocale () {
+      const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
+      if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
+        return urlSegment
+      }
+      if (this.locale && siteLangs.some(lc => lc.code === this.locale)) {
+        return this.locale
+      }
+      return siteConfig.lang
+    },
     goHome () {
-      window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
+      const locale = this.getHomeLocale()
+      window.location.assign(siteLangs.length > 0 ? `/${locale}/home` : '/')
     }
   },
   mounted () {

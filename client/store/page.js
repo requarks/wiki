@@ -50,7 +50,9 @@ const state = {
     editMenuExternalName: '',
     editMenuExternalIcon: '',
     editMenuExternalUrl: ''
-  }
+  },
+  sidebar: [],
+  navMode: 'NONE'
 }
 
 export default {
