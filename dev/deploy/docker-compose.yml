@@ -1,0 +1,61 @@
+# Production Wiki.js stack (DigitalOcean / sunninoor.com)
+# Deploy with: dev/deploy/deploy-wiki.sh [image-tag]
+# Rollback with: dev/deploy/rollback-wiki.sh
+
+version: "3.8"
+
+services:
+  db:
+    container_name: db
+    image: postgres:11
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: wiki
+      POSTGRES_PASSWORD_FILE: /etc/wiki/.db-secret
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro
+    networks:
+      - wikinet
+
+  wiki:
+    container_name: wiki
+    image: ${WIKI_IMAGE:-ghcr.io/kayesh/wiki:latest}
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wiki
+      DB_NAME: wiki
+      DB_PASS_FILE: /etc/wiki/.db-secret
+      SSL_ACTIVE: "0"
+      LETSENCRYPT_DOMAIN: sunninoor.com
+      LETSENCRYPT_EMAIL: kayesh.parvez@gmail.com
+      UPGRADE_COMPANION: "0"
+    ports:
+      - "3000:3000"
+    volumes:
+      - /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro
+      - wiki-data:/wiki/data/content
+      - wiki-assets:/wiki/assets
+      - wiki-server:/wiki/server
+    networks:
+      - wikinet
+
+volumes:
+  db-data:
+    external: true
+    name: pgdata
+  wiki-data:
+    external: true
+    name: wiki-data
+  wiki-assets:
+  wiki-server:
+
+networks:
+  wikinet:
+    driver: bridge

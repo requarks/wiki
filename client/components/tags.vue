@@ -19,24 +19,31 @@
       vue-scroll(:ops='scrollStyle')
         nav-drawer-content-tags
     v-main.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
-      v-toolbar(color='primary', dark, flat, height='58')
+      v-toolbar.tags-selection-toolbar(color='primary', dark, flat, height='58', :class='{ "tags-selection-toolbar--active": hasSelection }')
         template(v-if='hasSelection')
-          v-chip.mr-3.primary--text(
-            v-for='tag of tagsSelected'
-            :key='`tagSelected-` + tag.tag'
-            color='white'
-            close
-            @click:close='toggleTag(tag.tag)'
-            ) {{tag.title}}
-          v-btn.animated.fadeIn.ml-1(
-            small
-            outlined
-            color='blue lighten-4'
-            rounded
-            @click='selection = []'
-            )
-            v-icon(left) mdi-close
-            span {{$t('tags:clearSelection')}}
+          .tags-selection-scroll-wrap(:class='tagsScrollFadeClass')
+            .tags-selection-scroll(
+              ref='tagsSelectionScroll'
+              @scroll='updateTagsScrollFades'
+              )
+              .tags-selection-chips
+                v-chip.mr-3.primary--text(
+                  v-for='tag of tagsSelected'
+                  :key='`tagSelected-` + tag.tag'
+                  color='white'
+                  close
+                  @click:close='toggleTag(tag.tag)'
+                  ) {{tag.title}}
+                v-btn.animated.fadeIn.ml-1(
+                  v-if='$vuetify.breakpoint.mdAndUp'
+                  small
+                  outlined
+                  color='blue lighten-4'
+                  rounded
+                  @click='selection = []'
+                  )
+                  v-icon(left) mdi-close
+                  span {{$t('tags:clearSelection')}}
         template(v-else)
           v-icon.mr-3.animated.fadeInRight mdi-arrow-left
           .overline.animated.fadeInRight {{$t('tags:selectOneMoreTags')}}
@@ -191,6 +198,8 @@ export default {
       pages: [],
       pageTotal: 0,
       isLoading: true,
+      tagsScrollFadeLeft: false,
+      tagsScrollFadeRight: false,
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -236,6 +245,12 @@ export default {
     tagsSelected () {
       return this.tags.filter(t => this.selection.includes(t.tag))
     },
+    tagsScrollFadeClass () {
+      return {
+        'tags-selection-scroll-wrap--fade-left': this.tagsScrollFadeLeft,
+        'tags-selection-scroll-wrap--fade-right': this.tagsScrollFadeRight
+      }
+    },
     orderByItems () {
       return [
         { text: this.$t('tags:orderByField.creationDate'), value: 'createdAt' },
@@ -260,6 +275,12 @@ export default {
     orderByDirection (newValue, oldValue) {
       this.rebuildURL()
       this.pagination.sortDesc = [newValue === 1]
+    },
+    tagsSelected () {
+      this.scheduleTagsScrollFadeUpdate()
+    },
+    selection () {
+      this.scheduleTagsScrollFadeUpdate()
     }
   },
   router,
@@ -288,6 +309,11 @@ export default {
       this.orderByDirection = this.$route.query.dir === 'asc' ? 0 : 1
       this.pagination.sortDesc = [this.orderByDirection === 1]
     }
+    this.scheduleTagsScrollFadeUpdate()
+    window.addEventListener('resize', this.updateTagsScrollFades, { passive: true })
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.updateTagsScrollFades)
   },
   methods: {
     toggleTag (tag) {
@@ -316,6 +342,29 @@ export default {
     },
     goTo (page) {
       window.location.assign(`/${page.locale}/${page.path}`)
+    },
+    scheduleTagsScrollFadeUpdate () {
+      this.$nextTick(() => {
+        this.updateTagsScrollFades()
+      })
+    },
+    updateTagsScrollFades () {
+      const el = this.$refs.tagsSelectionScroll
+      if (!el || !this.$vuetify.breakpoint.smAndDown) {
+        this.tagsScrollFadeLeft = false
+        this.tagsScrollFadeRight = false
+        return
+      }
+
+      const maxScroll = el.scrollWidth - el.clientWidth
+      if (maxScroll <= 1) {
+        this.tagsScrollFadeLeft = false
+        this.tagsScrollFadeRight = false
+        return
+      }
+
+      this.tagsScrollFadeLeft = el.scrollLeft > 4
+      this.tagsScrollFadeRight = el.scrollLeft < maxScroll - 4
     }
   },
   apollo: {
@@ -390,6 +439,88 @@ export default {
 
   body.has-mobile-bottom-nav .tags .v-main {
     padding-bottom: 56px !important;
+  }
+
+  .tags-selection-toolbar--active {
+    .v-toolbar__content {
+      flex-wrap: nowrap !important;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .tags-selection-scroll-wrap {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 0;
+      width: 100%;
+      overflow: hidden;
+
+      &::before,
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 28px;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      &::before {
+        left: 0;
+        background: linear-gradient(to right, mc('theme', 'primary') 0%, rgba(mc('theme', 'primary'), 0) 100%);
+      }
+
+      &::after {
+        right: 0;
+        background: linear-gradient(to left, mc('theme', 'primary') 0%, rgba(mc('theme', 'primary'), 0) 100%);
+      }
+
+      &.tags-selection-scroll-wrap--fade-left::before {
+        opacity: 1;
+      }
+
+      &.tags-selection-scroll-wrap--fade-right::after {
+        opacity: 1;
+      }
+    }
+
+    .tags-selection-scroll {
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .tags-selection-chips {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap !important;
+      align-items: center;
+      flex: 0 0 auto;
+      width: max-content;
+      max-width: none;
+    }
+
+    .v-chip {
+      flex: 0 0 auto;
+      max-width: none;
+      white-space: nowrap;
+
+      .v-chip__content {
+        white-space: nowrap;
+      }
+    }
   }
 }
 

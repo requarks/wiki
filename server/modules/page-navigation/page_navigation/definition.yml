@@ -1,6 +1,6 @@
 key: page_navigation
 title: Page Navigation
-description: 'Arrow-box prev/next navigation for pages tagged with a from: series tag.'
+description: 'Arrow-box prev/next navigation for tagged page series and download pages.'
 author: sunninoor.com
 logo: https://static.requarks.io/logo/wikijs-butterfly.svg
 website: https://wiki.js.org
@@ -8,29 +8,53 @@ isAvailable: true
 props:
   fromTagPrefix:
     type: String
-    title: Series tag prefix
+    title: Series tag prefix (from:)
     default: 'from:'
-    hint: 'Pages with a tag starting with this prefix are grouped into a navigable series.'
+    hint: 'Show navigation when a page has a tag starting with this prefix (e.g. from:Series Name).'
     order: 1
+  downloadSeriesTag:
+    type: String
+    title: Download series tag
+    default: 'download'
+    hint: 'Show navigation when this tag is present together with an up: parent tag.'
+    order: 2
+  upTagPrefix:
+    type: String
+    title: Parent tag prefix (up:)
+    default: 'up:'
+    hint: 'Required with the download tag (e.g. up:কিতাব).'
+    order: 3
+  disableNavTag:
+    type: String
+    title: Disable navigation tag
+    default: 'nav:off'
+    hint: 'Pages with this exact tag never show navigation.'
+    order: 4
   indexLabel:
     type: String
-    title: Index button label
+    title: Index button label (সূচী)
     default: 'সূচী'
-    order: 2
-  relatedLabel:
-    type: String
-    title: Related topics button label
-    default: 'আরও'
-    order: 3
+    order: 5
   showRelatedCards:
     type: Boolean
-    title: Show related post cards
+    title: Show postal cards
     default: true
-    hint: 'Display up to 3 upcoming pages from the series below the arrow navigation.'
-    order: 4
+    hint: 'Display up to 3 upcoming pages from the same series below the arrow navigation.'
+    order: 6
   relatedImageBaseUrl:
     type: String
-    title: Related card image base URL
+    title: Postal card image base URL
     default: 'https://sunninoor.com/images/related/'
     hint: 'Images are loaded as {baseUrl}{0-39}.jpeg based on page path.'
-    order: 5
+    order: 7
+  commentsAppWebsiteId:
+    type: String
+    title: Telegram Comments.app website ID
+    default: '-stRQcQh'
+    hint: 'Loaded below embed pages (iframe / Drive link). Leave empty to disable.'
+    order: 8
+  commentsAppLimit:
+    type: Number
+    title: Telegram comments limit
+    default: 5
+    order: 9

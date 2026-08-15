@@ -345,11 +345,15 @@ export default {
       }).join('\n')
 
       const stack = `${[...new Set(normalized.map(font => font.family))].join(', ')}, sans-serif`
-      const applyRule = `.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts) *:not(.v-icon) {
+      const applyRule = (selector) => `${selector} *:not(.v-icon) {
   font-family: ${stack} !important;
 }`
+      const applyRules = [
+        applyRule('.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts)'),
+        applyRule('.v-application .v-navigation-drawer')
+      ].join('\n\n')
 
-      return `${faceRules}\n\n${applyRule}`
+      return `${faceRules}\n\n${applyRules}`
     },
     openFontDialog () {
       this.fontForm = {

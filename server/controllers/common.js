@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const pageHelper = require('../helpers/page')
 const customFonts = require('../helpers/customFonts')
+const pageEmbedHelper = require('../helpers/pageEmbed')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
@@ -10,6 +11,12 @@ const qs = require('querystring')
 /* global WIKI */
 
 const tmplCreateRegex = /^[0-9]+(,[0-9]+)?$/
+
+const buildInjectCode = () => ({
+  css: customFonts.buildInjectCSS(WIKI.config.theming),
+  head: WIKI.config.theming.injectHead || '',
+  body: WIKI.config.theming.injectBody || ''
+})
 
 /**
  * Robots.txt
@@ -52,6 +59,7 @@ router.get(['/a', '/a/*'], (req, res, next) => {
     return res.status(403).render('unauthorized', { action: 'view' })
   }
 
+  res.locals.injectCode = buildInjectCode()
   _.set(res.locals, 'pageMeta.title', 'Admin')
   res.render('admin')
 })
@@ -133,11 +141,7 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
   // -> Effective Permissions
   const effectivePermissions = WIKI.auth.getEffectivePermissions(req, pageArgs)
 
-  const injectCode = {
-    css: customFonts.buildInjectCSS(WIKI.config.theming),
-    head: WIKI.config.theming.injectHead,
-    body: WIKI.config.theming.injectBody
-  }
+  const injectCode = buildInjectCode()
 
   if (page) {
     // -> EDIT MODE
@@ -275,7 +279,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
     _.set(res.locals, 'pageMeta.title', page.title)
     _.set(res.locals, 'pageMeta.description', page.description)
 
-    res.render('history', { page, effectivePermissions })
+    res.render('history', { page, effectivePermissions, injectCode: buildInjectCode() })
   } else {
     res.redirect(`/${pageArgs.path}`)
   }
@@ -323,6 +327,7 @@ router.get(['/p', '/p/*'], (req, res, next) => {
     return res.status(403).render('unauthorized', { action: 'view' })
   }
 
+  res.locals.injectCode = buildInjectCode()
   _.set(res.locals, 'pageMeta.title', 'User Profile')
   res.render('profile')
 })
@@ -333,6 +338,7 @@ router.get(['/p', '/p/*'], (req, res, next) => {
 router.get(['/s', '/s/*'], async (req, res, next) => {
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
+  const injectCode = buildInjectCode()
 
   const page = await WIKI.models.pages.getPageFromDb({
     path: pageArgs.path,
@@ -375,13 +381,14 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
           ...page,
           ...pageVersion
         },
-        effectivePermissions
+        effectivePermissions,
+        injectCode
       })
     } else {
       _.set(res.locals, 'pageMeta.title', page.title)
       _.set(res.locals, 'pageMeta.description', page.description)
 
-      res.render('source', { page, effectivePermissions })
+      res.render('source', { page, effectivePermissions, injectCode })
     }
   } else {
     res.redirect(`/${pageArgs.path}`)
@@ -392,6 +399,7 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
  * Tags
  */
 router.get(['/t', '/t/*'], (req, res, next) => {
+  res.locals.injectCode = buildInjectCode()
   _.set(res.locals, 'pageMeta.title', 'Tags')
   res.render('tags')
 })
@@ -491,11 +499,7 @@ router.get('/*', async (req, res, next) => {
         }))
 
         // -> Build theme code injection
-        const injectCode = {
-          css: customFonts.buildInjectCSS(WIKI.config.theming),
-          head: WIKI.config.theming.injectHead,
-          body: WIKI.config.theming.injectBody
-        }
+        const injectCode = buildInjectCode()
 
         // Handle missing extra field
         page.extra = page.extra || { css: '', js: '' }
@@ -551,16 +555,34 @@ router.get('/*', async (req, res, next) => {
 
           // -> Page navigation (server-side, no client GraphQL)
           let pageNavigation = null
-          if (WIKI.config.features.featurePageNavigation && WIKI.data.pageNavigation?.isEnabled && WIKI.data.pageNavigation?.resolve) {
+          const pageNavigationConfig = WIKI.data.pageNavigation?.config || {}
+          const pageNavigationEnabled = WIKI.config.features.featurePageNavigation &&
+            WIKI.data.pageNavigation?.isEnabled &&
+            WIKI.data.pageNavigation?.resolve
+          if (pageNavigationEnabled) {
+            if (WIKI.data.pageNavigation.css) {
+              injectCode.css = `${injectCode.css}\n${WIKI.data.pageNavigation.css}`
+            }
             try {
-              pageNavigation = await WIKI.data.pageNavigation.resolve(page, WIKI.data.pageNavigation.config)
+              pageNavigation = await WIKI.data.pageNavigation.resolve(page, pageNavigationConfig)
             } catch (err) {
               WIKI.logger.warn('Page navigation resolve failed: ', err)
             }
-            if (pageNavigation && WIKI.data.pageNavigation.css) {
-              injectCode.css = `${injectCode.css}\n${WIKI.data.pageNavigation.css}`
-            }
           }
+
+          const siteHost = (WIKI.config.host || '').replace(/\/$/, '')
+          const pageCanonicalUrl = WIKI.config.lang.namespacing
+            ? `${siteHost}/${page.localeCode}/${page.path}`
+            : `${siteHost}/${page.path}`
+
+          // -> Embedded reader metadata (tags or legacy hidden-data block)
+          const pageEmbedResult = pageEmbedHelper.resolve(page, page.render, {
+            telegramWebsiteId: pageNavigationConfig.commentsAppWebsiteId || '',
+            telegramLimit: pageNavigationConfig.commentsAppLimit || 5,
+            pageUrl: pageCanonicalUrl,
+            pageTitle: page.title
+          })
+          page.render = pageEmbedResult.html
 
           // -> Render view
           res.render('page', {
@@ -570,7 +592,8 @@ router.get('/*', async (req, res, next) => {
             comments: commentTmpl,
             effectivePermissions,
             pageFilename,
-            pageNavigation
+            pageNavigation,
+            pageEmbed: pageEmbedResult.embed
           })
         }
       } else if (pageArgs.path === 'home') {
