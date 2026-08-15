@@ -323,6 +323,7 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents(ref='container')
               slot(name='contents')
+            page-navigation(v-if='pageNavigationData && !printView', :nav='pageNavigationData')
             .comments-container#discussion(v-if='commentsEnabled && commentsPerms.read && !printView')
               .comments-header
                 v-icon.mr-2(dark) mdi-comment-text-outline
@@ -486,6 +487,10 @@ export default {
     filename: {
       type: String,
       default: ''
+    },
+    pageNavigation: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -613,6 +618,16 @@ export default {
         return this.editShortcutsObj.editMenuExternalUrl.replace('{filename}', this.filename)
       } else {
         return ''
+      }
+    },
+    pageNavigationData () {
+      if (!this.pageNavigation) {
+        return null
+      }
+      try {
+        return JSON.parse(Buffer.from(this.pageNavigation, 'base64').toString())
+      } catch (err) {
+        return null
       }
     }
   },

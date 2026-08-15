@@ -72,6 +72,7 @@ module.exports = {
     await WIKI.models.analytics.refreshProvidersFromDisk()
     await WIKI.models.authentication.refreshStrategiesFromDisk()
     await WIKI.models.commentProviders.refreshProvidersFromDisk()
+    await WIKI.models.pageNavigation.refreshProvidersFromDisk()
     await WIKI.models.editors.refreshEditorsFromDisk()
     await WIKI.models.loggers.refreshLoggersFromDisk()
     await WIKI.models.renderers.refreshRenderersFromDisk()
@@ -82,6 +83,7 @@ module.exports = {
 
     await WIKI.auth.activateStrategies()
     await WIKI.models.commentProviders.initProvider()
+    await WIKI.models.pageNavigation.initModule()
     await WIKI.models.searchEngines.initEngine()
     await WIKI.models.storage.initTargets()
     WIKI.scheduler.start()

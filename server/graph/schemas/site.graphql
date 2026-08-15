@@ -51,6 +51,7 @@ type SiteMutation {
     editMenuExternalUrl: String
     featurePageRatings: Boolean
     featurePageComments: Boolean
+    featurePageNavigation: Boolean
     featurePersonalWikis: Boolean
     securityOpenRedirect: Boolean
     securityIframe: Boolean
@@ -101,6 +102,7 @@ type SiteConfig {
   editMenuExternalUrl: String
   featurePageRatings: Boolean
   featurePageComments: Boolean
+  featurePageNavigation: Boolean
   featurePersonalWikis: Boolean
   securityOpenRedirect: Boolean
   securityIframe: Boolean

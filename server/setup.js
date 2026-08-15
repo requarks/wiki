@@ -85,6 +85,7 @@ module.exports = () => {
       _.set(WIKI.config, 'features', {
         featurePageRatings: true,
         featurePageComments: true,
+        featurePageNavigation: false,
         featurePersonalWikis: true
       })
       _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')

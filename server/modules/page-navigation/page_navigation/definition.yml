@@ -1,0 +1,24 @@
+key: page_navigation
+title: Page Navigation
+description: Arrow-box prev/next navigation for pages tagged with a from: series tag.
+author: sunninoor.com
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://wiki.js.org
+isAvailable: true
+props:
+  fromTagPrefix:
+    type: String
+    title: Series tag prefix
+    default: 'from:'
+    hint: 'Pages with a tag starting with this prefix are grouped into a navigable series.'
+    order: 1
+  indexLabel:
+    type: String
+    title: Index button label
+    default: 'সূচী'
+    order: 2
+  relatedLabel:
+    type: String
+    title: Related topics button label
+    default: 'আরও'
+    order: 3
