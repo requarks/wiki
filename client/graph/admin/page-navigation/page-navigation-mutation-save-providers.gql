@@ -1,0 +1,12 @@
+mutation($providers: [PageNavigationProviderInput]!) {
+  pageNavigation {
+    updateProviders(providers: $providers) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

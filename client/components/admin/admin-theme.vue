@@ -65,6 +65,33 @@
                     persistent-hint
                     hint='Select whether the table of contents is shown on the left, right or not at all.'
                     )
+
+              v-card.mt-3.animated.fadeInUp.wait-p2s
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 Custom Fonts
+                v-card-text
+                  .caption.grey--text.mb-3 Upload font files (.ttf, .otf, .woff, .woff2). @font-face rules are generated automatically and injected on every page.
+                  v-data-table(
+                    :headers='fontHeaders'
+                    :items='config.customFonts'
+                    hide-default-footer
+                    :items-per-page='100'
+                    no-data-text='No custom fonts uploaded yet.'
+                    )
+                    template(v-slot:item.actions='{ item }')
+                      v-btn(icon, small, @click='removeFont(item)')
+                        v-icon.red--text mdi-delete
+                  v-btn.mt-3(color='primary', depressed, @click='openFontDialog')
+                    v-icon(left) mdi-upload
+                    span Add Font
+                  v-textarea.is-monospaced.mt-4(
+                    :value='generatedFontCSS'
+                    label='Generated @font-face CSS'
+                    outlined
+                    readonly
+                    auto-grow
+                    rows='3'
+                    )
             v-flex(lg6 xs12)
               //- v-card.animated.fadeInUp.wait-p2s
               //-   v-toolbar(color='teal', dark, dense, flat)
@@ -126,10 +153,65 @@
                     :hint='$t(`admin:theme.bodyHtmlInjectionHint`)'
                     auto-grow
                     )
+    v-dialog(v-model='fontDialog', max-width='600', persistent)
+      v-card
+        v-card-title Add Custom Font
+        v-card-text
+          v-file-input(
+            v-model='fontUploadFile'
+            label='Font file'
+            accept='.ttf,.otf,.woff,.woff2'
+            prepend-icon='mdi-file-font'
+            show-size
+            outlined
+            )
+          v-text-field(
+            v-model='fontForm.family'
+            label='Font family name (CSS)'
+            hint='e.g. solaimanlipi — letters, numbers, underscore, hyphen only'
+            persistent-hint
+            outlined
+            )
+          v-text-field(
+            v-model.number='fontForm.weight'
+            label='Font weight'
+            type='number'
+            outlined
+            )
+          v-select(
+            v-model='fontForm.style'
+            :items='fontStyles'
+            label='Font style'
+            outlined
+            )
+          v-textarea.is-monospaced(
+            v-model='fontForm.unicodeRange'
+            label='Unicode range (optional)'
+            hint='Comma-separated ranges, e.g. U+0980-09FF or U+0600-06FF,U+0750-077F,U+08A0-08FF'
+            persistent-hint
+            outlined
+            auto-grow
+            rows='2'
+            )
+          .caption.grey--text.mt-2.mb-1 Quick presets:
+          v-chip.mr-1.mb-1(
+            v-for='preset in unicodeRangePresets'
+            :key='preset.label'
+            small
+            label
+            color='primary'
+            outlined
+            @click='fontForm.unicodeRange = preset.value'
+            ) {{ preset.label }}
+        v-card-actions
+          v-spacer
+          v-btn(text, @click='closeFontDialog') Cancel
+          v-btn(color='primary', depressed, :loading='fontUploading', @click='uploadFont') Upload
 </template>
 
 <script>
 import _ from 'lodash'
+import Cookies from 'js-cookie'
 import { sync } from 'vuex-pathify'
 
 import themeConfigQuery from 'gql/admin/theme/theme-query-config.gql'
@@ -139,6 +221,20 @@ export default {
   data() {
     return {
       loading: false,
+      fontDialog: false,
+      fontUploading: false,
+      fontUploadFile: null,
+      fontForm: {
+        family: '',
+        weight: 400,
+        style: 'normal',
+        unicodeRange: ''
+      },
+      fontStyles: ['normal', 'italic', 'oblique'],
+      unicodeRangePresets: [
+        { label: 'Bengali', value: 'U+0980-09FF' },
+        { label: 'Arabic script', value: 'U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+10E60-10E7F' }
+      ],
       themes: [
         { text: 'Default', author: 'requarks.io', value: 'default', isInstalled: true, installDate: '', updatedAt: '' }
       ],
@@ -154,7 +250,8 @@ export default {
         tocPosition: 'left',
         injectCSS: '',
         injectHead: '',
-        injectBody: ''
+        injectBody: '',
+        customFonts: []
       },
       darkModeInitial: false
     }
@@ -188,6 +285,19 @@ export default {
         { text: 'Right', value: 'right' },
         { text: 'Hidden', value: 'off' }
       ]
+    },
+    fontHeaders () {
+      return [
+        { text: 'Family', value: 'family' },
+        { text: 'File', value: 'filename' },
+        { text: 'Weight', value: 'weight', width: 90 },
+        { text: 'Style', value: 'style', width: 90 },
+        { text: 'Unicode Range', value: 'unicodeRange' },
+        { text: '', value: 'actions', sortable: false, width: 60, align: 'right' }
+      ]
+    },
+    generatedFontCSS () {
+      return this.buildFontCSS(this.config.customFonts || [])
     }
   },
   watch: {
@@ -203,6 +313,131 @@ export default {
     this.$vuetify.theme.dark = this.darkModeInitial
   },
   methods: {
+    normalizeUnicodeRange (value) {
+      if (!value || !String(value).trim()) {
+        return ''
+      }
+      return String(value)
+        .split(',')
+        .map(part => part.trim().toUpperCase())
+        .filter(Boolean)
+        .join(',')
+    },
+    buildFontCSS (fonts) {
+      const normalized = (fonts || []).filter(font => font && font.family && font.filename && font.format)
+      if (normalized.length < 1) {
+        return ''
+      }
+
+      const faceRules = normalized.map(font => {
+        const lines = [
+          '@font-face {',
+          `  font-family: ${font.family};`,
+          `  src: url('/_custom/fonts/${encodeURIComponent(font.filename)}') format('${font.format}');`,
+          `  font-weight: ${font.weight || 400};`,
+          `  font-style: ${font.style || 'normal'};`
+        ]
+        if (font.unicodeRange) {
+          lines.push(`  unicode-range: ${font.unicodeRange};`)
+        }
+        lines.push('}')
+        return lines.join('\n')
+      }).join('\n')
+
+      const stack = `${[...new Set(normalized.map(font => font.family))].join(', ')}, sans-serif`
+      const applyRule = `.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts) *:not(.v-icon) {
+  font-family: ${stack} !important;
+}`
+
+      return `${faceRules}\n\n${applyRule}`
+    },
+    openFontDialog () {
+      this.fontForm = {
+        family: '',
+        weight: 400,
+        style: 'normal',
+        unicodeRange: ''
+      }
+      this.fontUploadFile = null
+      this.fontDialog = true
+    },
+    closeFontDialog () {
+      this.fontDialog = false
+      this.fontUploadFile = null
+    },
+    async uploadFont () {
+      if (!this.fontUploadFile) {
+        this.$store.commit('showNotification', {
+          message: 'Choose a font file to upload.',
+          style: 'red',
+          icon: 'alert'
+        })
+        return
+      }
+      if (!this.fontForm.family || !/^[a-zA-Z0-9_-]+$/.test(this.fontForm.family)) {
+        this.$store.commit('showNotification', {
+          message: 'Enter a valid font family name (letters, numbers, underscore, hyphen only).',
+          style: 'red',
+          icon: 'alert'
+        })
+        return
+      }
+
+      this.fontUploading = true
+      try {
+        const formData = new FormData()
+        formData.append('fontUpload', this.fontUploadFile)
+        formData.append('fontMetadata', JSON.stringify({
+          family: this.fontForm.family,
+          weight: this.fontForm.weight || 400,
+          style: this.fontForm.style || 'normal',
+          unicodeRange: this.normalizeUnicodeRange(this.fontForm.unicodeRange)
+        }))
+
+        const jwtToken = Cookies.get('jwt')
+        const resp = await fetch('/u/fonts', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${jwtToken}`
+          },
+          body: formData
+        })
+        const result = await resp.json()
+        if (!resp.ok || !result.succeeded) {
+          throw new Error(result.message || 'Font upload failed.')
+        }
+
+        if (!this.config.customFonts) {
+          this.$set(this.config, 'customFonts', [])
+        }
+        this.config.customFonts.push(result.font)
+        this.closeFontDialog()
+        this.$store.commit('showNotification', {
+          message: 'Font uploaded. Click Apply to save changes.',
+          style: 'success',
+          icon: 'check'
+        })
+      } catch (err) {
+        this.$store.commit('showNotification', {
+          message: err.message,
+          style: 'red',
+          icon: 'alert'
+        })
+      }
+      this.fontUploading = false
+    },
+    async removeFont (font) {
+      if (!confirm(`Remove font "${font.family}"?`)) {
+        return
+      }
+
+      this.config.customFonts = this.config.customFonts.filter(item => item.id !== font.id)
+      this.$store.commit('showNotification', {
+        message: 'Font removed. Click Apply to save changes.',
+        style: 'success',
+        icon: 'check'
+      })
+    },
     async save () {
       this.loading = true
       this.$store.commit(`loadingStart`, 'admin-theme-save')
@@ -216,7 +451,8 @@ export default {
             tocPosition: this.config.tocPosition,
             injectCSS: this.config.injectCSS,
             injectHead: this.config.injectHead,
-            injectBody: this.config.injectBody
+            injectBody: this.config.injectBody,
+            customFonts: this.config.customFonts || []
           }
         })
         const resp = _.get(respRaw, 'data.theming.setConfig.responseResult', {})
@@ -241,7 +477,10 @@ export default {
     config: {
       query: themeConfigQuery,
       fetchPolicy: 'network-only',
-      update: (data) => data.theming.config,
+      update: (data) => ({
+        ...data.theming.config,
+        customFonts: data.theming.config.customFonts || []
+      }),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-theme-refresh')
       }

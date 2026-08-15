@@ -1,8 +1,8 @@
 <template lang='pug'>
   div
-    v-app-bar.nav-header(color='primary', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat)
+    v-app-bar.nav-header(:color='navBarColor', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat)
       //- Mobile: top bar (menu | search | chat)
-      v-toolbar.nav-header-mobile(v-if='mobileViewport', :color='mobileHeaderColor', dark, flat)
+      v-toolbar.nav-header-mobile(v-if='mobileViewport', :color='navBarColor', dark, flat)
         v-btn.nav-header-mobile__menu(icon, @click='openMobileNav', :aria-label='$t(`common:sidebar.mainMenu`)')
           v-icon(color='white') mdi-menu
         v-text-field.nav-header-mobile__search(
@@ -10,7 +10,7 @@
           v-model='search'
           clearable
           background-color='white'
-          color='primary'
+          :color='navBarColor'
           light
           :label='$t(`common:header.search`)'
           single-line
@@ -40,13 +40,13 @@
       template(v-else)
         v-layout(row)
           v-flex(md4)
-            v-toolbar.nav-header-inner(color='primary', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
+            v-toolbar.nav-header-inner(:color='navBarColor', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
               v-avatar(tile, size='34', @click='goHome')
                 v-img.org-logo(:src='logoUrl')
               v-toolbar-title.mx-3
                 span.subheading {{title}}
           v-flex(md4)
-            v-toolbar.nav-header-inner(color='primary', dark, flat)
+            v-toolbar.nav-header-inner(:color='navBarColor', dark, flat)
               slot(name='mid')
                 .nav-header-desktop__center
                   transition(name='navHeaderSearch', v-if='searchIsShown')
@@ -55,7 +55,7 @@
                       v-if='searchIsShown',
                       v-model='search',
                       background-color='white'
-                      color='primary'
+                      :color='navBarColor'
                       light
                       :label='$t(`common:header.search`)',
                       single-line,
@@ -75,7 +75,7 @@
                       autocomplete='off'
                     )
           v-flex(md4)
-            v-toolbar.nav-header-inner.pr-4(color='primary', dark, flat)
+            v-toolbar.nav-header-inner.pr-4(:color='navBarColor', dark, flat)
               v-spacer
               .navHeaderLoading.mr-3
                 v-progress-circular(indeterminate, color='white', :size='22', :width='2' v-show='isLoading')
@@ -246,6 +246,8 @@ import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 
 /* global siteConfig, siteLangs */
 
+const NAV_BAR_COLOR = '#192b85'
+
 export default {
   components: {
     PageDelete: () => import('./page-delete.vue'),
@@ -281,6 +283,9 @@ export default {
     }
   },
   computed: {
+    navBarColor () {
+      return NAV_BAR_COLOR
+    },
     search: sync('site/search'),
     searchIsFocused: sync('site/searchIsFocused'),
     searchIsLoading: sync('site/searchIsLoading'),
@@ -332,7 +337,7 @@ export default {
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
     mobileHeaderColor () {
-      return this.$vuetify.theme.dark ? 'blue darken-4' : 'primary'
+      return NAV_BAR_COLOR
     },
     showMobileChat () {
       return siteConfig.mobileHeaderChatEnabled === true
@@ -511,6 +516,8 @@ export default {
 
 <style lang='scss'>
 
+$nav-bar-color: #192b85;
+
 %nav-header-search-field {
   .v-input__slot {
     background-color: #fff !important;
@@ -518,16 +525,16 @@ export default {
   }
 
   input {
-    color: mc('theme', 'primary') !important;
+    color: $nav-bar-color !important;
   }
 
   .v-label {
-    color: rgba(mc('theme', 'primary'), 0.6) !important;
+    color: rgba($nav-bar-color, 0.6) !important;
   }
 
   .v-input__prepend-inner .v-icon,
   .v-input__append-inner .v-icon {
-    color: mc('theme', 'primary') !important;
+    color: $nav-bar-color !important;
   }
 }
 
@@ -635,7 +642,7 @@ export default {
   @media #{map-get($display-breakpoints, 'sm-and-down')} {
     &.v-app-bar,
     .nav-header-mobile.v-toolbar {
-      background-color: mc('theme', 'primary') !important;
+      background-color: $nav-bar-color !important;
       transition: none !important;
     }
 
@@ -648,7 +655,7 @@ export default {
   @media #{map-get($display-breakpoints, 'md-and-up')} {
     &.v-app-bar,
     .nav-header-inner.v-toolbar {
-      background-color: mc('theme', 'primary') !important;
+      background-color: $nav-bar-color !important;
     }
   }
 }
@@ -657,14 +664,14 @@ export default {
   @media #{map-get($display-breakpoints, 'sm-and-down')} {
     .nav-header.v-app-bar,
     .nav-header .nav-header-mobile.v-toolbar {
-      background-color: mc('blue', '900') !important;
+      background-color: $nav-bar-color !important;
     }
   }
 
   @media #{map-get($display-breakpoints, 'md-and-up')} {
     .nav-header.v-app-bar,
     .nav-header .nav-header-inner.v-toolbar {
-      background-color: mc('blue', '900') !important;
+      background-color: $nav-bar-color !important;
     }
   }
 }

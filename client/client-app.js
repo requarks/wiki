@@ -174,6 +174,7 @@ Vue.component('NewPage', () => import(/* webpackChunkName: "new-page" */ './comp
 Vue.component('Notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
 Vue.component('NotFound', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
 Vue.component('PageSelector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
+Vue.component('PageNavigation', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-navigation.vue'))
 Vue.component('PageSource', () => import(/* webpackChunkName: "source" */ './components/source.vue'))
 Vue.component('Profile', () => import(/* webpackChunkName: "profile" */ './components/profile.vue'))
 Vue.component('Register', () => import(/* webpackChunkName: "register" */ './components/register.vue'))
@@ -194,7 +195,7 @@ let bootstrap = () => {
   // ====================================
 
   window.addEventListener('beforeunload', () => {
-    store.dispatch('startLoading')
+    store.commit('loadingStart', 'page-navigate')
   })
 
   const apolloProvider = new VueApollo({

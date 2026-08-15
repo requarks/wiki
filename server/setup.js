@@ -85,6 +85,7 @@ module.exports = () => {
       _.set(WIKI.config, 'features', {
         featurePageRatings: true,
         featurePageComments: true,
+        featurePageNavigation: false,
         featurePersonalWikis: true
       })
       _.set(WIKI.config, 'graphEndpoint', 'https://graph.requarks.io')
@@ -131,7 +132,8 @@ module.exports = () => {
         iconset: 'mdi',
         injectCSS: '',
         injectHead: '',
-        injectBody: ''
+        injectBody: '',
+        customFonts: []
       })
       _.set(WIKI.config, 'title', 'Wiki.js')
 

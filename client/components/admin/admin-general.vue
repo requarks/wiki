@@ -162,6 +162,16 @@
                     hint='Allow users to leave comments on pages.'
                     )
 
+                  v-divider.mt-3
+                  v-switch.mt-0(
+                    inset
+                    label='Page Navigation'
+                    color='indigo'
+                    v-model='config.featurePageNavigation'
+                    persistent-hint
+                    hint='Show arrow-box prev/next navigation on pages tagged with a from: series tag.'
+                    )
+
                   //- v-divider.mt-3
                   //- v-switch(
                   //-   inset
@@ -294,6 +304,7 @@ export default {
         featureAnalytics: false,
         featurePageRatings: false,
         featurePageComments: false,
+        featurePageNavigation: false,
         featurePersonalWikis: false,
         featureTinyPNG: false,
         pageExtensions: '',
@@ -362,6 +373,7 @@ export default {
               $pageExtensions: String
               $featurePageRatings: Boolean
               $featurePageComments: Boolean
+              $featurePageNavigation: Boolean
               $featurePersonalWikis: Boolean
               $editFab: Boolean
               $editMenuBar: Boolean
@@ -386,6 +398,7 @@ export default {
                   pageExtensions: $pageExtensions
                   featurePageRatings: $featurePageRatings
                   featurePageComments: $featurePageComments
+                  featurePageNavigation: $featurePageNavigation
                   featurePersonalWikis: $featurePersonalWikis
                   editFab: $editFab
                   editMenuBar: $editMenuBar
@@ -419,6 +432,7 @@ export default {
             pageExtensions: _.get(this.config, 'pageExtensions', ''),
             featurePageRatings: _.get(this.config, 'featurePageRatings', false),
             featurePageComments: _.get(this.config, 'featurePageComments', false),
+            featurePageNavigation: _.get(this.config, 'featurePageNavigation', false),
             featurePersonalWikis: _.get(this.config, 'featurePersonalWikis', false),
             editFab: _.get(this.config, 'editFab', false),
             editMenuBar: _.get(this.config, 'editMenuBar', false),
@@ -481,6 +495,7 @@ export default {
               pageExtensions
               featurePageRatings
               featurePageComments
+              featurePageNavigation
               featurePersonalWikis
               editFab
               editMenuBar
