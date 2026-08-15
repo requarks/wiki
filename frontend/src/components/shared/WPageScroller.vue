@@ -1,9 +1,10 @@
 <template>
-  <transition name="w-page-scroller">
+  <transition :name="anchorX ? `w-page-scroller-slide` : `w-page-scroller-fade`">
     <div
       v-if="visible"
-      class="w-page-scroller fixed z-40"
-      :style="anchorStyle"
+      class="w-page-scroller fixed bottom-0 z-40"
+      :class="anchorX ? `w-page-scroller--anchored` : `right-0`"
+      :style="anchorX ? { left: anchorX } : null"
       @click="scrollToTop">
       <slot />
     </div>
@@ -11,15 +12,16 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
- * Floating "back to top" affordance that appears once the page has been scrolled past
- * `scrollOffset`, and smooth-scrolls to the top when clicked.
+ * "Back to top" affordance that appears once the page has been scrolled past `scrollOffset`, and
+ * smooth-scrolls to the top when clicked.
  *
- * Sits in the bottom-right corner unless `anchorX` puts it somewhere else horizontally. Scrolling
- * uses the platform's own smooth behaviour rather than the hand-rolled easing the previous component
- * shipped, and honours `prefers-reduced-motion` for free.
+ * Always flush against the bottom of the viewport, in one of two places: the bottom-right corner, or
+ * with its right edge at `anchorX` — which is how it tucks into the bottom of the nav sidebar's
+ * column. Scrolling uses the platform's own smooth behaviour rather than the hand-rolled easing the
+ * previous component shipped, and honours `prefers-reduced-motion` for free.
  */
 const props = defineProps({
   /** Show once the window has scrolled this many pixels. */
@@ -27,14 +29,9 @@ const props = defineProps({
     type: Number,
     default: 1000
   },
-  /** `[x, y]` distance from the viewport corner, in px. `x` is unused when `anchorX` is set. */
-  offset: {
-    type: Array,
-    default: () => [18, 18]
-  },
   /**
-   * Any CSS length, which becomes the x of the button's CENTRE measured from the left of the
-   * viewport — so it can straddle an edge rather than clear it. Null keeps it in the corner.
+   * Any CSS length, which becomes the x of the button's RIGHT EDGE measured from the left of the
+   * viewport — so it ends where a column beside it does. Null keeps it in the corner.
    */
   anchorX: {
     type: String,
@@ -55,14 +52,6 @@ const props = defineProps({
 })
 
 const visible = ref(false)
-
-const anchorStyle = computed(() => {
-  const bottom = `${props.offset[1]}px`
-  // -> `translateX(-50%)` is what makes `anchorX` a centre rather than a left edge
-  return props.anchorX
-    ? { bottom, left: props.anchorX, transform: 'translateX(-50%)' }
-    : { bottom, right: `${props.offset[0]}px` }
-})
 
 /** The scrolling element, or null when it is the window. */
 function scroller() {
@@ -89,18 +78,45 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll, { capture: 
 </script>
 
 <style scoped>
-.w-page-scroller-enter-active,
-.w-page-scroller-leave-active {
+/*
+  `anchorX` is where the button ENDS, so it is shifted left by its own width -- which is the one
+  measurement only the button itself knows, and the reason this is a transform rather than arithmetic
+  on the anchor. Restated in the slide below, since a transform is one property and the two movements
+  share it.
+*/
+.w-page-scroller--anchored {
+  transform: translateX(-100%);
+}
+
+/*
+  Anchored, it comes and goes by the edge it sits on: out of the bottom of the viewport and back down
+  into it, which is a movement the corner it is tucked into can explain. The button is flush against
+  that edge, so there is nothing for it to slide behind and no gap to cross.
+*/
+.w-page-scroller-slide-enter-active,
+.w-page-scroller-slide-leave-active {
+  transition: transform 0.2s var(--ease-standard);
+}
+.w-page-scroller-slide-enter-from,
+.w-page-scroller-slide-leave-to {
+  transform: translateX(-100%) translateY(100%);
+}
+
+/* In the corner it still fades, which is how every other corner button gives way -- see `.corner-btn` */
+.w-page-scroller-fade-enter-active,
+.w-page-scroller-fade-leave-active {
   transition: opacity 0.2s var(--ease-standard);
 }
-.w-page-scroller-enter-from,
-.w-page-scroller-leave-to {
+.w-page-scroller-fade-enter-from,
+.w-page-scroller-fade-leave-to {
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .w-page-scroller-enter-active,
-  .w-page-scroller-leave-active {
+  .w-page-scroller-slide-enter-active,
+  .w-page-scroller-slide-leave-active,
+  .w-page-scroller-fade-enter-active,
+  .w-page-scroller-fade-leave-active {
     transition-duration: 0.01ms;
   }
 }

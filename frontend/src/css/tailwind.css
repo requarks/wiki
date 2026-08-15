@@ -106,6 +106,14 @@
   --color-primary-light: color-mix(in srgb, var(--color-primary) 60%, white);
 
   /*
+    And the sidebar's colour a shade lighter, for the one control that sits INSIDE that column and has
+    to read as a button against it rather than as a second accent beside it: scroll-to-top, tucked into
+    the bottom of the sidebar in `MainLayout`. Mixed, for the reason above -- a themed sidebar takes its
+    lighter shade with it.
+  */
+  --color-sidebar-light: color-mix(in srgb, var(--color-sidebar) 88%, white);
+
+  /*
     Restated here rather than inherited from Tailwind's default theme: the defaults live in a
     prunable block, and components resolve `var(--color-white)` at runtime where the scanner cannot
     prove the variable is needed.

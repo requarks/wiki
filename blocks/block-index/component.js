@@ -94,6 +94,14 @@ export class BlockIndexElement extends LitElement {
         default: 0
       },
       {
+        name: 'columns',
+        type: 'select',
+        label: 'Columns',
+        options: ['1', '2', '3'],
+        hint: 'Most columns to lay the pages out in. Narrower screens use fewer.',
+        default: '2'
+      },
+      {
         name: 'showIcons',
         type: 'boolean',
         label: 'Show Icons',
@@ -134,9 +142,31 @@ export class BlockIndexElement extends LitElement {
         grid-template-columns: repeat(1, minmax(0, 1fr));
         gap: 0.5rem;
       }
+
+      /*
+        The columns prop is a ceiling, not a count: the listing starts at one column and widens with
+        the window, stopping at whatever the author asked for. A phone gets one column whichever value
+        it carries, which is the whole reason the choice cannot simply be the number of columns -- a
+        three-column listing on a 400px screen is three unreadable slivers.
+
+        The second column arrives at the app's md breakpoint (--breakpoint-md in
+        frontend/src/css/tailwind.css), which is the width the listing has always widened at. The
+        third waits for 1600px, which is a width of this block's own rather than one of the shared
+        ones: at lg (1440) a third of the article column, minus the sidebar beside it, leaves a title
+        and its description with nowhere to go but two lines each.
+
+        Matched off the host's attribute rather than read from a custom property, because the ceiling
+        has to be applied per breakpoint -- and clamping one is math inside repeat(), which is not
+        something an engine can be relied on to take.
+      */
       @media (min-width: 1024px) {
-        ul {
+        :host(:not([columns='1'])) ul {
           grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (min-width: 1600px) {
+        :host([columns='3']) ul {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
 
@@ -297,6 +327,17 @@ export class BlockIndexElement extends LitElement {
       noResultMsg: { type: String },
 
       /**
+       * Most columns to lay the pages out in (1, 2, 3)
+       *
+       * Declared for the sake of the pair -- an authored prop belongs in both lists -- and because
+       * Lit would otherwise not know the attribute at all. Nothing in `render()` reads it: the layout
+       * is the styles' business, and they match `:host([columns])` on the page's own attribute.
+       *
+       * @type {string}
+       */
+      columns: { type: String },
+
+      /**
        * Whether each page's icon is drawn beside its title
        * @type {boolean}
        */
@@ -319,6 +360,7 @@ export class BlockIndexElement extends LitElement {
     this.orderByDirection = 'asc'
     this.depth = 0
     this.noResultMsg = 'No pages matching your query.'
+    this.columns = '2'
     this.showIcons = false
     // -> Puts `dark` on this element for the styles above to key off
     this._darkMode = new DarkMode(this)

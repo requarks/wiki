@@ -81,7 +81,7 @@ const props = defineProps({
    * Width in px below which the drawer overlays the page instead of taking a column of its own.
    *
    * 1024 is the `md` breakpoint and what every drawer used before this was a prop; the site sidebar asks
-   * for 1100, because it is 255px wide beside an article that also gives up a contents column — see
+   * for 1200, because it is 255px wide beside an article that also gives up a contents column — see
    * `MainLayout`. Read once, at setup: a caller states this as a constant, not something that changes
    * under a mounted drawer.
    */

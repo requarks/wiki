@@ -403,7 +403,7 @@ function removePendingAsset(item) {
   `MainLayout` hands its drawer as `overlayBelow`, and the same one `NavSidebar` states for its own use.
   Below it the corner button lands in this rail; see the padding rule.
 */
-$sidebar-overlay-max: 1099.98px;
+$sidebar-overlay-max: 1199.98px;
 
 /** One row of this rail, which is what the bottom group has to clear. Matches the buttons' `h-12`. */
 $action-btn-height: 3rem;

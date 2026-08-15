@@ -166,11 +166,11 @@ watch(
 
 <style lang="scss">
 /*
-  Just under the width `MainLayout` gives this sidebar's drawer as `overlayBelow` (1100), which is where it
+  Just under the width `MainLayout` gives this sidebar's drawer as `overlayBelow` (1200), which is where it
   stops being a column beside the content and starts overlaying it. Not one of the app's shared breakpoints
   -- it belongs to this sidebar -- so it is stated here and cross-referenced there.
 */
-$sidebar-overlay-max: 1099.98px;
+$sidebar-overlay-max: 1199.98px;
 
 .sidebar-nav {
   border-top: 1px solid rgba(255, 255, 255, 0.15);

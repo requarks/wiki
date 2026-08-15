@@ -541,7 +541,7 @@ const narrowSidebarOpen = ref(false)
 
 /**
  * Where the drawer stops overlaying the page and takes its own column — `WDrawer`'s own default, which
- * this layout leaves alone (unlike the site sidebar, which asks for 1100).
+ * this layout leaves alone (unlike the site sidebar, which asks for 1200).
  */
 const isWideViewport = useMinWidth(1024)
 
@@ -745,8 +745,15 @@ onMounted(async () => {
     backdrop-filter: blur(5px) saturate(180%);
   }
   > .w-dialog-viewport {
-    padding: 24px 64px;
+    // -> Equal margins all round until 1600px, where the sides can afford to be wider. Same rule and
+    //    same reasoning as `.main-overlay` in `MainLayout`, which the admin overlays match.
+    padding: 24px;
 
+    @media (min-width: 1600px) {
+      padding: 24px 64px;
+    }
+
+    // -> Last of the three, so it still wins on a phone: all three have the same specificity
     @media (max-width: 1023.98px) {
       padding: 0;
     }

@@ -134,8 +134,13 @@
 
         The mirror of the sidebar button in the opposite corner while the layout is in its narrow mode:
         flush to the edge, and rounded on the top LEFT, since this is the corner it is tucked into from
-        the other side. It keeps the floating disc on a wide screen, where it has a seam to straddle
-        rather than a corner to sit in.
+        the other side.
+
+        On a wide screen it is the same button in a corner of its own -- the bottom of the sidebar's
+        column, ending where that column ends (`scrollerAnchorX`). Flush there too, so it is unelevated:
+        a shadow is what a disc floating over the page needs, and this one is not floating over anything.
+        And it is filled in the sidebar's own colour a shade lighter (`--color-sidebar-light`), since
+        there it is part of that column rather than an accent laid over the page.
 
         And it stands down below 750px, where the page view's contents panel takes this corner for its own
         opener -- one button per corner, and there the contents are the more useful of the two. See
@@ -144,15 +149,15 @@
       <w-page-scroller
         v-if="isAtLeastTocPanelWidth"
         :scroll-offset="150"
-        :offset="scrollerOffset"
         :anchor-x="scrollerAnchorX"
         target=".page-container-scrl">
         <w-btn
-          :class="isWideViewport ? `` : `corner-btn corner-btn--right`"
+          class="corner-btn corner-btn--right"
           icon="la:arrow-up"
-          color="primary"
+          :color="scrollerAnchorX ? `sidebar-light` : `primary`"
           round
-          size="md" />
+          size="md"
+          :unelevated="Boolean(scrollerAnchorX)" />
       </w-page-scroller>
     </w-page-container>
     <main-overlay-dialog />
@@ -236,15 +241,15 @@ const isNarrowSidebarOpen = ref(false)
 /**
  * Where this sidebar stops overlaying the page and takes its own column of its own.
  *
- * 1100 rather than `WDrawer`'s default of 1024: this sidebar is 255px, and the page beside it gives up a
- * contents column of its own before this point — so by ~1050px the article is the narrowest of the three
+ * 1200 rather than `WDrawer`'s default of 1024: this sidebar is 255px, and the page beside it gives up a
+ * contents column of its own before this point — so by ~1150px the article is the narrowest of the three
  * things sharing the window. Passed INTO the drawer rather than changed there, so the admin area's drawer
  * keeps the 1024 it was written against.
  *
  * `NavSidebar` has to agree with it too: the dent marking the current page is only meaningful while the
  * sidebar is beside the content. See `$sidebar-overlay-max` there.
  */
-const SIDEBAR_OVERLAY_BELOW = 1100
+const SIDEBAR_OVERLAY_BELOW = 1200
 
 /**
  * The same boundary as a reactive flag, for everything in this layout that has to know which mode the
@@ -312,13 +317,13 @@ const SIDEBAR_WIDTH_MINI = 56
 const sidebarWidth = computed(() => (isSidebarMini.value ? SIDEBAR_WIDTH_MINI : SIDEBAR_WIDTH))
 
 /*
-  The scroll-to-top button straddles the seam between the sidebar and the content, half over each, so
-  its centre is the sidebar's inner edge — which is the sidebar's width on the left, or the same
-  distance in from the right when the site puts its sidebar there.
+  The scroll-to-top button ENDS where the sidebar's column does, tucked into the bottom of it: the
+  sidebar's own width on the left, or the window's right edge when the site puts its sidebar there,
+  since that is the side that column ends on.
 
-  Null puts it back in the corner, for every case where there is no seam: a narrow viewport (the
-  drawer overlays the page), a site with no sidebar, and the editor, which closes the sidebar to take
-  the full width.
+  Null puts it back in the corner, for every case where there is no sidebar beside it: a narrow
+  viewport (the drawer overlays the page), a site with no sidebar, and the editor, which closes the
+  sidebar to take the full width. That is the corner button, and it is left exactly as it was.
 */
 const scrollerAnchorX = computed(() => {
   // -> No separate test for `sidebarPosition === 'off'`: that IS `sideNavIsDisabled`, which
@@ -326,17 +331,8 @@ const scrollerAnchorX = computed(() => {
   if (!isWideViewport.value || !isSidebarAvailable.value) {
     return null
   }
-  return siteStore.theme.sidebarPosition === 'right'
-    ? `calc(100% - ${sidebarWidth.value}px)`
-    : `${sidebarWidth.value}px`
+  return siteStore.theme.sidebarPosition === 'right' ? '100%' : `${sidebarWidth.value}px`
 })
-
-/*
-  And no gap at all from the corner once it is in one: `[15, 15]` is the clearance a disc needs to read as
-  floating over the page, which is what it does on a wide screen. Squared into the corner there is nothing
-  to clear -- the button IS the corner.
-*/
-const scrollerOffset = computed(() => (isWideViewport.value ? [15, 15] : [0, 0]))
 
 // -> The "Allow Browsing" site feature (admin/general): with it off the tree browser is not something
 //    a reader can reach, so the button that opens it does not render
@@ -421,8 +417,24 @@ body.body--dark {
     backdrop-filter: blur(5px) saturate(180%);
   }
   > .w-dialog-viewport {
-    padding: 24px 64px;
+    /*
+      Equal margins all round, until there is width to spare for more.
 
+      64px down each side is pitched for a wide desktop; on a 1280 or 1440 window it is an eighth of
+      the screen taken off a panel that is a file listing or a table, and the overlay ends up narrower
+      than the page it was opened from. Below 1600 the sides come in to match the 24px above and below,
+      which is the clearance that says "over the page" -- more than that is decoration.
+
+      1600 is this rule's own number, not one of the app's `--breakpoint-*`: it is where an overlay is
+      wide enough that 128px of it can go to margins without the content noticing.
+    */
+    padding: 24px;
+
+    @media (min-width: 1600px) {
+      padding: 24px 64px;
+    }
+
+    // -> Last of the three, so it still wins on a phone: all three have the same specificity
     @media (max-width: $breakpoint-sm-max) {
       padding: 0;
     }

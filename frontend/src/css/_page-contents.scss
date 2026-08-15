@@ -122,6 +122,30 @@
 
   --content-mark: #fdf1a0;
 
+  /*
+    The rows of a `{.links-list}`: the wash each one sits on, and the tint it takes under the pointer.
+    Washes rather than fixed greys, for the same reason the table's rows are ones -- the editor's
+    preview pane sits on grey, where a fixed near-white row would read as a lit strip.
+
+    The hover tint is mixed from the site's colour, so it answers the bar that appears beside it rather
+    than being a blue that happens to sit near one.
+  */
+  --content-links-row: rgba(0, 0, 0, 0.045);
+  --content-links-row-hover: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  /*
+    And the light down the top of a row, over whichever of the two it is carrying. A separate layer
+    rather than a two-stop wash, because the wash is the half that changes: a gradient cannot be
+    transitioned to another gradient, so a row built out of one would jump to its hover colour while
+    everything else on the page fades.
+  */
+  --content-links-sheen: rgba(255, 255, 255, 0.8);
+  /*
+    And the drop under it, so a row sits ON the page rather than being a tint drawn into it. One tight
+    layer where the table has two: these come five and ten at a time down a page, and the wide soft
+    half of a table's shadow repeated that often reads as a smudge behind the whole list.
+  */
+  --content-links-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+
   /* The box behind the tick of a done task-list item; the tick itself is white in both themes */
   --content-tick: #5b616b;
   /* -> And the empty box of an item still to do, white whatever surface the content sits on */
@@ -219,6 +243,14 @@
     --content-table-head: #1e232a;
 
     --content-mark: #6b5d13;
+
+    /* -> Lifted off the dark page, and mixed from the lighter blue for the same reason links are */
+    --content-links-row: rgba(255, 255, 255, 0.05);
+    --content-links-row-hover: color-mix(in srgb, var(--color-primary-light) 14%, transparent);
+    /* -> Barely there: on a dark page the same light that reads as a rounded top edge reads as a bar */
+    --content-links-sheen: rgba(255, 255, 255, 0.045);
+    /* -> Deepened, and no wider, for the reason the table's is: a 7% black drop is invisible here */
+    --content-links-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 
     /*
       Lighter than the light theme's, because the box has to be seen against a dark page -- but held
@@ -743,6 +775,117 @@
   */
   .task-list-item > .task-list-item-checkbox + span {
     display: none;
+  }
+
+  /*
+    A LIST OF LINKS, from `{.links-list}` on a bulleted list -- carried over from 2.x, where it is what
+    the guide pages are built out of:
+
+        - [The Basics *New to Wiki.js? Learn how to use it and create your first page.*](/guide/intro)
+        - [Using Editors *Learn how to use the various editors.*](/editors)
+        {.links-list}
+
+    Each item becomes a row rather than a bullet: the title in the link's colour, the emphasis after it
+    read as a description and set upright in the body colour, with a rule between the two. The class
+    reaches the list through `markdown-it-attrs`, which is why nothing in the renderer knows about this.
+
+    Bulleted lists only. `{.links-list}` sticks to an ordered list just as readily, and there it would
+    be a numbered list of links with its numbers taken away -- which is a list the author asked for and
+    would no longer be looking at.
+  */
+  ul.links-list {
+    margin: 1.5em 0;
+    padding-left: 0;
+    list-style: none;
+
+    > li {
+      margin-top: 4px;
+      border-radius: 4px;
+      /*
+        The bar down the left, grey at rest and the link's colour under the pointer -- so what hovering
+        does is colour something already there rather than add a bar and shunt the words sideways.
+      */
+      border-left: 3px solid var(--content-rule);
+      background-color: var(--content-links-row);
+      /* -> The light down the top of the row; see `--content-links-sheen` */
+      background-image: linear-gradient(to bottom, var(--content-links-sheen), transparent 65%);
+      box-shadow: var(--content-links-shadow);
+      transition:
+        background-color 0.15s var(--ease-standard),
+        border-color 0.15s var(--ease-standard);
+
+      &:hover,
+      &:focus-within {
+        border-left-color: var(--content-link);
+        background-color: var(--content-links-row-hover);
+      }
+    }
+
+    /*
+      The padding is the link's, so the whole row is the target rather than just the words in it. A
+      loose list -- one written with blank lines between its items -- wraps each item in a paragraph
+      first, which is why the link is reached through both shapes.
+    */
+    > li > a,
+    > li > p > a {
+      display: block;
+      padding: 0.6em 0.9em;
+      font-weight: 600;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration: none;
+      }
+    }
+
+    /* -> An item still being typed, with no link in it yet, is a row all the same */
+    > li:not(:has(> a, > p > a)) {
+      padding: 0.6em 0.9em;
+      color: var(--content-ink-muted);
+    }
+
+    /*
+      The description. Upright and in the body colour: it is a second voice in the row, not emphasis
+      within the title -- and italic at this length is what makes the difference between a caption and
+      a line of small print.
+    */
+    em {
+      margin-left: 0.5em;
+      padding-left: 0.75em;
+      border-left: 1px solid var(--content-rule);
+      color: var(--content-ink-muted);
+      font-style: normal;
+      font-weight: 400;
+    }
+
+    /*
+      On a phone the two halves stack. The rule between them goes with the arrangement it was drawn
+      for: down the left of a wrapped description it would read as a quote inside the row.
+    */
+    @media (max-width: $breakpoint-xs-max) {
+      em {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: 0;
+        font-size: 0.9375em;
+      }
+
+      /*
+        -> A line break rather than a block, so that what follows the description on the row -- the
+           marker on an external link is the one thing that does -- stays on its last line instead of
+           dropping to one of its own.
+      */
+      em::before {
+        content: '\a';
+        white-space: pre;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ul.links-list > li {
+      transition-duration: 0.01ms;
+    }
   }
 
   // ---------------------------------------------------------------------------
