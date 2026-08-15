@@ -1,23 +1,22 @@
 <template lang='pug'>
   div
-    v-app-bar.nav-header(color='black', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat)
-      //- Mobile: LinkedIn-style top bar (profile | search | chat)
-      v-toolbar.nav-header-mobile(v-if='$vuetify.breakpoint.smAndDown', color='black', dark, flat)
-        v-btn.nav-header-mobile__profile(icon, @click='openMobileNav', :aria-label='$t(`common:header.account`)')
-          v-icon(v-if='!isAuthenticated || picture.kind === `initials`', color='grey lighten-1') mdi-account-circle
-          v-avatar(v-else-if='picture.kind === `image`', :size='32')
-            v-img(:src='picture.url')
+    v-app-bar.nav-header(color='primary', dark, app, :clipped-left='!$vuetify.rtl', :clipped-right='$vuetify.rtl', fixed, flat)
+      //- Mobile: top bar (menu | search | chat)
+      v-toolbar.nav-header-mobile(v-if='mobileViewport', :color='mobileHeaderColor', dark, flat)
+        v-btn.nav-header-mobile__menu(icon, @click='openMobileNav', :aria-label='$t(`common:sidebar.mainMenu`)')
+          v-icon(color='white') mdi-menu
         v-text-field.nav-header-mobile__search(
-          v-if='!hideSearch'
           ref='searchFieldMobile'
           v-model='search'
           clearable
-          background-color='grey darken-4'
-          color='white'
+          background-color='white'
+          color='primary'
+          light
           :label='$t(`common:header.search`)'
           single-line
           solo
           flat
+          rounded
           dense
           hide-details
           prepend-inner-icon='mdi-magnify'
@@ -31,60 +30,63 @@
           autocomplete='off'
         )
 
-        v-btn.nav-header-mobile__chat(icon, @click='chatClick', :aria-label='$t(`common:comments.title`)')
-          v-icon(color='grey lighten-1') mdi-message-text-outline
+        v-btn.nav-header-mobile__chat(v-if='showMobileChat', icon, @click='chatClick', :aria-label='$t(`common:comments.title`)')
+          v-icon(color='white') mdi-message-text-outline
 
         .navHeaderLoading.nav-header-mobile__loading(v-show='isLoading')
-          v-progress-circular(indeterminate, color='blue', :size='18', :width='2')
+          v-progress-circular(indeterminate, color='white', :size='18', :width='2')
 
       //- Desktop layout
       template(v-else)
         v-layout(row)
-          v-flex(xs5, md4)
-            v-toolbar.nav-header-inner(color='black', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
+          v-flex(md4)
+            v-toolbar.nav-header-inner(color='primary', dark, flat, :class='$vuetify.rtl ? `pr-3` : `pl-3`')
               v-avatar(tile, size='34', @click='goHome')
                 v-img.org-logo(:src='logoUrl')
               v-toolbar-title.mx-3
                 span.subheading {{title}}
-          v-flex(md4, v-if='$vuetify.breakpoint.mdAndUp')
-            v-toolbar.nav-header-inner(color='black', dark, flat)
+          v-flex(md4)
+            v-toolbar.nav-header-inner(color='primary', dark, flat)
               slot(name='mid')
-                transition(name='navHeaderSearch', v-if='searchIsShown')
-                  v-text-field(
-                    ref='searchField',
-                    v-if='searchIsShown && $vuetify.breakpoint.mdAndUp',
-                    v-model='search',
-                    color='white',
-                    :label='$t(`common:header.search`)',
-                    single-line,
-                    solo
-                    flat
-                    rounded
-                    hide-details,
-                    prepend-inner-icon='mdi-magnify',
-                    :loading='searchIsLoading',
-                    @keyup.enter='searchEnter'
-                    @keyup.esc='searchClose'
-                    @focus='searchFocus'
-                    @blur='searchBlur'
-                    @keyup.down='searchMove(`down`)'
-                    @keyup.up='searchMove(`up`)'
-                    autocomplete='off'
-                  )
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn.ml-2.mr-0(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
-                      v-icon(color='grey') mdi-tag-multiple
-                  span {{$t('common:header.browseTags')}}
-          v-flex(xs7, md4)
-            v-toolbar.nav-header-inner.pr-4(color='black', dark, flat)
+                .nav-header-desktop__center
+                  transition(name='navHeaderSearch', v-if='searchIsShown')
+                    v-text-field.nav-header-desktop__search(
+                      ref='searchField',
+                      v-if='searchIsShown',
+                      v-model='search',
+                      background-color='white'
+                      color='primary'
+                      light
+                      :label='$t(`common:header.search`)',
+                      single-line,
+                      solo
+                      flat
+                      rounded
+                      dense
+                      hide-details,
+                      prepend-inner-icon='mdi-magnify',
+                      :loading='searchIsLoading',
+                      @keyup.enter='searchEnter'
+                      @keyup.esc='searchClose'
+                      @focus='searchFocus'
+                      @blur='searchBlur'
+                      @keyup.down='searchMove(`down`)'
+                      @keyup.up='searchMove(`up`)'
+                      autocomplete='off'
+                    )
+          v-flex(md4)
+            v-toolbar.nav-header-inner.pr-4(color='primary', dark, flat)
               v-spacer
               .navHeaderLoading.mr-3
                 v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
 
               slot(name='actions')
 
-              //- LANGUAGES
+              v-tooltip(bottom)
+                template(v-slot:activator='{ on }')
+                  v-btn(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
+                    v-icon(color='grey lighten-1') mdi-tag-multiple
+                span {{$t('common:header.browseTags')}}
 
               template(v-if='mode === `view` && locales.length > 0')
                 v-menu(offset-y, bottom, transition='slide-y-transition', max-height='320px', min-width='210px', left)
@@ -100,7 +102,7 @@
                           height='64'
                           :aria-label='$t(`common:header.language`)'
                           )
-                          v-icon(color='grey') mdi-web
+                          v-icon(color='grey lighten-1') mdi-web
                       span {{$t('common:header.language')}}
                   v-list(nav)
                     template(v-for='(lc, idx) of locales')
@@ -169,15 +171,12 @@
 
               //- ADMIN
 
-              template(v-if='isAuthenticated && isAdmin')
-                v-tooltip(bottom, v-if='mode !== `admin`')
+              template(v-if='isAuthenticated && isAdmin && mode !== `admin`')
+                v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, height='64', v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
                       v-icon(color='grey') mdi-cog
                   span {{$t('common:header.admin')}}
-                v-btn(v-else, text, tile, height='64', href='/', :aria-label='$t(`common:actions.exit`)')
-                  v-icon(left, color='grey') mdi-exit-to-app
-                  span {{$t('common:actions.exit')}}
                 v-divider(vertical)
 
               //- ACCOUNT
@@ -235,7 +234,8 @@
           .overline DEVELOPMENT VERSION
           .overline This code base is NOT for production use!
 
-    nav-bottom-bar(v-if='isAuthenticated && isAdmin && $vuetify.breakpoint.smAndDown')
+    nav-bottom-bar-host
+
 </template>
 
 <script>
@@ -249,8 +249,7 @@ import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 export default {
   components: {
     PageDelete: () => import('./page-delete.vue'),
-    PageConvert: () => import('./page-convert.vue'),
-    NavBottomBar: () => import(/* webpackMode: "eager" */ './nav-bottom-bar.vue')
+    PageConvert: () => import('./page-convert.vue')
   },
   props: {
     dense: {
@@ -272,12 +271,13 @@ export default {
       convertPageModal: false,
       deletePageModal: false,
       locales: siteLangs,
-      isDevMode: false,
+      isDevMode: siteConfig.devMode === true,
       duplicateOpts: {
         locale: 'en',
         path: 'new-page',
         modal: false
-      }
+      },
+      mobileViewport: typeof window !== 'undefined' ? window.innerWidth < 960 : true
     }
   },
   computed: {
@@ -331,16 +331,11 @@ export default {
       return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
         this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
     },
-    showMobileAdminNav () {
-      return this.isAuthenticated && this.isAdmin && this.$vuetify.breakpoint.smAndDown
-    }
-  },
-  watch: {
-    showMobileAdminNav: {
-      immediate: true,
-      handler (val) {
-        document.body.classList.toggle('has-mobile-admin-nav', val)
-      }
+    mobileHeaderColor () {
+      return this.$vuetify.theme.dark ? 'blue darken-4' : 'primary'
+    },
+    showMobileChat () {
+      return siteConfig.mobileHeaderChatEnabled === true
     }
   },
   created () {
@@ -349,9 +344,17 @@ export default {
     }
   },
   beforeDestroy () {
-    document.body.classList.remove('has-mobile-admin-nav')
+    if (this._onViewportResize) {
+      window.removeEventListener('resize', this._onViewportResize)
+    }
   },
   mounted () {
+    this.syncMobileViewport()
+    this._onViewportResize = _.debounce(() => {
+      this.syncMobileViewport()
+    }, 100)
+    window.addEventListener('resize', this._onViewportResize)
+
     this.$root.$on('pageNew', () => {
       this.pageNew()
     })
@@ -376,9 +379,11 @@ export default {
     this.$root.$on('pageDelete', () => {
       this.pageDelete()
     })
-    this.isDevMode = siteConfig.devMode === true
   },
   methods: {
+    syncMobileViewport () {
+      this.mobileViewport = window.innerWidth < 960
+    },
     searchFocus () {
       this.searchIsFocused = true
     },
@@ -486,18 +491,45 @@ export default {
     logout () {
       window.location.assign('/logout')
     },
-    goHome () {
-      if (this.locales && this.locales.length > 0) {
-        window.location.assign(`/${this.locale}/home`)
-      } else {
-        window.location.assign('/')
+    getHomeLocale () {
+      const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
+      if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
+        return urlSegment
       }
+      if (this.locale && siteLangs.some(lc => lc.code === this.locale)) {
+        return this.locale
+      }
+      return siteConfig.lang
+    },
+    goHome () {
+      const locale = this.getHomeLocale()
+      window.location.assign(siteLangs.length > 0 ? `/${locale}/home` : '/')
     }
   }
 }
 </script>
 
 <style lang='scss'>
+
+%nav-header-search-field {
+  .v-input__slot {
+    background-color: #fff !important;
+    border-radius: 28px !important;
+  }
+
+  input {
+    color: mc('theme', 'primary') !important;
+  }
+
+  .v-label {
+    color: rgba(mc('theme', 'primary'), 0.6) !important;
+  }
+
+  .v-input__prepend-inner .v-icon,
+  .v-input__append-inner .v-icon {
+    color: mc('theme', 'primary') !important;
+  }
+}
 
 .nav-header {
   //z-index: 1000;
@@ -521,6 +553,32 @@ export default {
   &-inner {
     .v-toolbar__content {
       padding: 0;
+    }
+  }
+
+  &-desktop {
+    &__center {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    &__search {
+      @extend %nav-header-search-field;
+
+      width: 100%;
+      max-width: 420px;
+    }
+  }
+
+  @media #{map-get($display-breakpoints, 'md-and-up')} {
+    > .v-toolbar__content > .layout {
+      width: 100%;
+      margin: 0;
+    }
+
+    .nav-header-inner .v-toolbar__content {
+      width: 100%;
     }
   }
 
@@ -557,12 +615,52 @@ export default {
     border-radius: 5px;
     display: flex;
 
+    @media #{map-get($display-breakpoints, 'sm-and-down')} {
+      display: none;
+    }
+
     .v-icon {
       margin-right: 15px;
     }
 
     .overline:nth-child(2) {
       text-transform: none;
+    }
+  }
+
+  @media #{map-get($display-breakpoints, 'sm-and-down')} {
+    &.v-app-bar,
+    .nav-header-mobile.v-toolbar {
+      background-color: mc('theme', 'primary') !important;
+      transition: none !important;
+    }
+
+    > .v-toolbar__content {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+  }
+
+  @media #{map-get($display-breakpoints, 'md-and-up')} {
+    &.v-app-bar,
+    .nav-header-inner.v-toolbar {
+      background-color: mc('theme', 'primary') !important;
+    }
+  }
+}
+
+.theme--dark {
+  @media #{map-get($display-breakpoints, 'sm-and-down')} {
+    .nav-header.v-app-bar,
+    .nav-header .nav-header-mobile.v-toolbar {
+      background-color: mc('blue', '900') !important;
+    }
+  }
+
+  @media #{map-get($display-breakpoints, 'md-and-up')} {
+    .nav-header.v-app-bar,
+    .nav-header .nav-header-inner.v-toolbar {
+      background-color: mc('blue', '900') !important;
     }
   }
 }
@@ -586,24 +684,29 @@ export default {
 
 .nav-header-mobile {
   width: 100%;
-  padding: 0 4px;
+  padding: 0;
 
   .v-toolbar__content {
-    padding: 0 8px;
+    padding: 0 8px !important;
     width: 100%;
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
+    gap: 8px;
   }
 
-  &__profile {
+  &__menu {
     flex-shrink: 0;
+    margin: 0;
   }
 
   &__search {
+    @extend %nav-header-search-field;
+
     flex: 1;
-    margin: 0 8px;
+    margin: 0;
     max-width: none;
+    padding-top: 0;
 
     .v-input__control {
       min-height: 36px !important;
@@ -617,6 +720,7 @@ export default {
 
   &__chat {
     flex-shrink: 0;
+    margin: 0;
   }
 
   &__loading {
@@ -628,20 +732,6 @@ export default {
       right: auto;
       left: 52px;
     }
-  }
-}
-
-body.has-mobile-admin-nav {
-  .v-main {
-    padding-bottom: 56px !important;
-  }
-
-  .v-footer {
-    margin-bottom: 56px;
-  }
-
-  .nav-bottom-bar {
-    z-index: 220 !important;
   }
 }
 

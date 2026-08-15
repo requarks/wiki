@@ -1,46 +1,26 @@
 <template lang="pug">
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(v-if='!printView')
+    nav-mobile-drawer-host(v-if='!printView')
     v-navigation-drawer(
-      v-if='navMode !== `NONE` && !printView'
+      v-if='navMode !== `NONE` && !printView && $vuetify.breakpoint.mdAndUp'
       :class='navDrawerClass'
       :dark='navDrawerDark'
-      :app='$vuetify.breakpoint.mdAndUp'
-      :clipped='$vuetify.breakpoint.mdAndUp'
-      mobile-breakpoint='600'
-      :temporary='$vuetify.breakpoint.smAndDown'
+      :app='true'
+      :clipped='true'
+      permanent
       v-model='navShown'
       :right='$vuetify.rtl'
-      :width='navDrawerWidth'
+      width='256'
       overlay-color='black'
       :overlay-opacity='0.55'
       )
-      .nav-drawer-mobile-header(v-if='$vuetify.breakpoint.smAndDown')
-        .nav-drawer-mobile-header__profile(v-if='isAuthenticated')
-          v-avatar.mr-3(size='48', :color='userPicture.kind === `initials` ? `blue` : ``')
-            span.white--text.subheading(v-if='userPicture.kind === `initials`') {{ userPicture.initials }}
-            v-img(v-else-if='userPicture.kind === `image`', :src='userPicture.url')
-          div
-            .subtitle-1.font-weight-medium {{ userName }}
-            .caption.grey--text.text--darken-1 {{ userEmail }}
-        v-list.nav-drawer-mobile-header__links(dense)
-          v-list-item(v-if='isAuthenticated', href='/p', @click='closeNavDrawer')
-            v-list-item-icon: v-icon(color='blue-grey') mdi-face-profile
-            v-list-item-title {{$t('common:header.profile')}}
-          v-list-item(v-if='isAuthenticated', @click='logout')
-            v-list-item-icon: v-icon(color='red') mdi-logout
-            v-list-item-title.red--text {{$t('common:header.logout')}}
-          v-list-item(v-else, href='/login')
-            v-list-item-icon: v-icon(color='blue-grey') mdi-login
-            v-list-item-title {{$t('common:header.login')}}
-        v-divider
       vue-scroll(:ops='scrollStyle')
         nav-sidebar(
           :color='navSidebarColor'
           :dark='navSidebarDark'
           :items='sidebarDecoded'
           :nav-mode='navMode'
-          @navigate='closeNavDrawer'
           )
 
     //- Mobile nav opens from profile icon in header (LinkedIn-style)
@@ -382,7 +362,7 @@ import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
 
-/* global siteLangs */
+/* global siteLangs, siteConfig */
 
 Vue.component('Tabset', Tabset)
 
@@ -543,60 +523,42 @@ export default {
   },
   computed: {
     isAuthenticated: get('user/authenticated'),
-    userName: get('user/name'),
-    userEmail: get('user/email'),
-    userPictureUrl: get('user/pictureUrl'),
     permissions: get('user/permissions'),
     isAdmin () {
       return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
     },
-    showMobileAdminNav () {
-      return this.isAuthenticated && this.isAdmin && this.$vuetify.breakpoint.smAndDown
-    },
-    userPicture () {
-      if (this.userPictureUrl && this.userPictureUrl.length > 1) {
-        return {
-          kind: 'image',
-          url: (this.userPictureUrl === 'internal') ? `/_userav/${this.$store.get('user/id')}` : this.userPictureUrl
-        }
-      } else {
-        const nameParts = (this.userName || '').toUpperCase().split(' ')
-        let initials = _.head(nameParts).charAt(0) || '?'
-        if (nameParts.length > 1) {
-          initials += _.last(nameParts).charAt(0)
-        }
-        return { kind: 'initials', initials }
-      }
+    showMobileBottomNav () {
+      return this.$vuetify.breakpoint.smAndDown
     },
     navDrawerWidth () {
       return this.$vuetify.breakpoint.smAndDown ? Math.min(Math.round(window.innerWidth * 0.88), 320) : 256
     },
     navDrawerClass () {
       if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark ? 'nav-drawer-mobile grey darken-3' : 'nav-drawer-mobile white'
+        return this.$vuetify.theme.dark ? 'nav-drawer-mobile blue darken-4' : 'nav-drawer-mobile primary'
       }
       return this.$vuetify.theme.dark ? 'grey darken-4-d4' : 'primary'
     },
     navDrawerDark () {
       if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark
+        return true
       }
       return true
     },
     navSidebarColor () {
       if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark ? 'grey darken-3' : 'white'
+        return this.$vuetify.theme.dark ? 'blue darken-4' : 'primary'
       }
       return this.$vuetify.theme.dark ? 'grey darken-4-d4' : 'primary'
     },
     navSidebarDark () {
       if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark
+        return true
       }
       return true
     },
     mobileFabBottomOffset () {
-      if (!this.showMobileAdminNav) { return {} }
+      if (!this.showMobileBottomNav) { return {} }
       return { bottom: '72px' }
     },
     commentsCount: get('page/commentsCount'),
@@ -675,6 +637,8 @@ export default {
     }
 
     this.$store.set('page/mode', 'view')
+    this.$store.set('page/sidebar', this.sidebarDecoded)
+    this.$store.set('page/navMode', this.navMode)
   },
   mounted () {
     if (this.$vuetify.theme.dark) {
@@ -684,15 +648,9 @@ export default {
     this.$root.$on('goToComments', () => {
       this.goToComments()
     })
-    this.$root.$on('openNavDrawer', () => {
-      this.navShown = true
-    })
 
     // -> Check side navigation visibility
-    this.handleSideNavVisibility()
-    window.addEventListener('resize', _.debounce(() => {
-      this.handleSideNavVisibility()
-    }, 500))
+    this.navShown = true
 
     // -> Highlight Code Blocks
     Prism.highlightAllUnder(this.$refs.container)
@@ -730,20 +688,19 @@ export default {
     })
   },
   methods: {
-    closeNavDrawer () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        this.navShown = false
+    getHomeLocale () {
+      const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
+      if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
+        return urlSegment
       }
-    },
-    logout () {
-      window.location.assign('/logout')
+      if (this.locale && siteLangs.some(lc => lc.code === this.locale)) {
+        return this.locale
+      }
+      return siteConfig.lang
     },
     goHome () {
-      if (this.locales && this.locales.length > 0) {
-        window.location.assign(`/${this.locale}/home`)
-      } else {
-        window.location.assign('/')
-      }
+      const locale = this.getHomeLocale()
+      window.location.assign(siteLangs.length > 0 ? `/${locale}/home` : '/')
     },
     toggleNavigation () {
       this.navOpen = !this.navOpen
@@ -782,15 +739,6 @@ export default {
     },
     pageDelete () {
       this.$root.$emit('pageDelete')
-    },
-    handleSideNavVisibility () {
-      if (window.innerWidth === this.winWidth) { return }
-      this.winWidth = window.innerWidth
-      if (this.$vuetify.breakpoint.mdAndUp) {
-        this.navShown = true
-      } else {
-        this.navShown = false
-      }
     },
     goToComments (focusNewComment = false) {
       this.$vuetify.goTo('#discussion', this.scrollOpts)
@@ -884,30 +832,7 @@ export default {
 }
 
 .nav-drawer-mobile {
-  top: 64px !important;
-  bottom: 56px !important;
-  height: auto !important;
-  z-index: 110 !important;
-
-  .nav-drawer-mobile-header {
-    padding: 16px 16px 8px;
-
-    &__profile {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    &__links .v-list-item__icon {
-      margin-right: 16px;
-    }
-  }
-}
-
-@media #{map-get($display-breakpoints, 'sm-and-down')} {
-  .v-overlay--active {
-    z-index: 105 !important;
-  }
+  padding-top: 0;
 }
 
 </style>

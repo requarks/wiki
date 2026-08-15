@@ -5,6 +5,27 @@ html(lang=siteConfig.lang)
     meta(charset='UTF-8')
     meta(name='viewport', content='user-scalable=yes, width=device-width, initial-scale=1, maximum-scale=5')
     meta(name='theme-color', content='#1976d2')
+    style.
+      @media (max-width: 959.99px) {
+        .v-app-bar.nav-header,
+        .nav-header .nav-header-mobile.v-toolbar {
+          background-color: #1976D2 !important;
+        }
+        .theme--dark .v-app-bar.nav-header,
+        .theme--dark .nav-header .nav-header-mobile.v-toolbar {
+          background-color: #0D47A1 !important;
+        }
+      }
+      @media (min-width: 960px) {
+        .v-app-bar.nav-header,
+        .nav-header .nav-header-inner.v-toolbar {
+          background-color: #1976D2 !important;
+        }
+        .theme--dark .v-app-bar.nav-header,
+        .theme--dark .nav-header .nav-header-inner.v-toolbar {
+          background-color: #0D47A1 !important;
+        }
+      }
     meta(name='msapplication-TileColor', content='#1976d2')
     meta(name='msapplication-TileImage', content='/_assets/favicons/mstile-150x150.png')
 

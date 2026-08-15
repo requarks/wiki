@@ -1,36 +1,26 @@
 <template lang='pug'>
   v-app(:dark='$vuetify.theme.dark').tags
     nav-header
+    nav-mobile-drawer-host
     v-navigation-drawer.pb-0.elevation-1.tags-sidebar(
+      v-if='$vuetify.breakpoint.mdAndUp'
       v-model='tagsDrawerShown'
-      :app='$vuetify.breakpoint.mdAndUp'
+      :app='true'
       fixed
-      :clipped='$vuetify.breakpoint.mdAndUp'
+      :clipped='true'
+      :dark='tagsDrawerDark'
       :right='$vuetify.rtl'
-      :permanent='$vuetify.breakpoint.mdAndUp'
-      :temporary='$vuetify.breakpoint.smAndDown'
-      :width='tagsDrawerWidth'
+      permanent
+      width='300'
       overlay-color='black'
       :overlay-opacity='0.55'
-      mobile-breakpoint='600'
       :class='tagsDrawerClass'
       )
       vue-scroll(:ops='scrollStyle')
-        v-list(dense, nav)
-          v-list-item(href='/')
-            v-list-item-icon: v-icon mdi-home
-            v-list-item-title {{$t('common:header.home')}}
-          template(v-for='(tags, groupName) in tagsGrouped')
-            v-divider.my-2
-            v-subheader.pl-4(:key='`tagGroup-` + groupName') {{groupName}}
-            v-list-item(v-for='tag of tags', @click='toggleTag(tag.tag)', :key='`tag-` + tag.tag')
-              v-list-item-icon
-                v-icon(v-if='isSelected(tag.tag)', color='primary') mdi-checkbox-intermediate
-                v-icon(v-else) mdi-checkbox-blank-outline
-              v-list-item-title {{tag.title}}
-    v-content.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
+        nav-drawer-content-tags
+    v-main.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
       v-toolbar(color='primary', dark, flat, height='58')
-        template(v-if='selection.length > 0')
+        template(v-if='hasSelection')
           .overline.mr-3.animated.fadeInLeft {{$t('tags:currentSelection')}}
           v-chip.mr-3.primary--text(
             v-for='tag of tagsSelected'
@@ -66,7 +56,7 @@
           append-icon='mdi-arrow-right'
           clearable
         )
-        template(v-if='locales.length > 1')
+        template(v-if='showLocaleFilter')
           v-divider.mx-3(vertical)
           .overline {{$t('tags:locale')}}
           v-select.ml-2(
@@ -83,25 +73,27 @@
             height='40'
             style='max-width: 170px;'
           )
-        v-divider.mx-3(vertical)
-        .overline {{$t('tags:orderBy')}}
-        v-select.ml-2(
-          :items='orderByItems'
-          v-model='orderBy'
-          :background-color='$vuetify.theme.dark ? `grey darken-3` : `white`'
-          hide-details
-          :label='$t(`tags:orderBy`)'
-          rounded
-          single-line
-          dense
-          height='40'
-          style='max-width: 250px;'
-        )
-        v-btn-toggle.ml-2(v-model='orderByDirection', rounded, mandatory)
-          v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-up
-          v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-down
+        v-divider.mx-3(v-if='showLocaleFilter', vertical)
+        template(v-if='showOrderByFilter')
+          v-divider.mx-3(vertical)
+          .overline {{$t('tags:orderBy')}}
+          v-select.ml-2(
+            :items='orderByItems'
+            v-model='orderBy'
+            :background-color='$vuetify.theme.dark ? `grey darken-3` : `white`'
+            hide-details
+            :label='$t(`tags:orderBy`)'
+            rounded
+            single-line
+            dense
+            height='40'
+            style='max-width: 250px;'
+          )
+          v-btn-toggle.ml-2(v-model='orderByDirection', rounded, mandatory)
+            v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-up
+            v-btn(text, height='40'): v-icon(size='20') mdi-chevron-double-down
       v-divider
-      .text-center.pt-10(v-if='selection.length < 1')
+      .text-center.pt-10(v-if='!hasSelection')
         img(src='/_assets/svg/icon-price-tag.svg')
         .subtitle-2.grey--text {{$t('tags:selectOneMoreTagsHint')}}
       .px-5.py-2(v-else)
@@ -166,7 +158,6 @@
 
 <script>
 import VueRouter from 'vue-router'
-import _ from 'lodash'
 
 import tagsQuery from 'gql/common/common-pages-query-tags.gql'
 import pagesQuery from 'gql/common/common-pages-query-list.gql'
@@ -180,10 +171,12 @@ const router = new VueRouter({
 
 export default {
   i18nOptions: { namespaces: 'tags' },
+  components: {
+    NavDrawerContentTags: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-tags.vue')
+  },
   data() {
     return {
-      tagsDrawerShown: false,
-      winWidth: 0,
+      tagsDrawerShown: true,
       tags: [],
       selection: [],
       innerSearch: '',
@@ -225,20 +218,26 @@ export default {
     }
   },
   computed: {
+    hasSelection () {
+      return Array.isArray(this.selection) && this.selection.length > 0
+    },
     tagsDrawerWidth () {
-      return this.$vuetify.breakpoint.smAndDown ? Math.min(Math.round(window.innerWidth * 0.88), 320) : 300
+      return 300
     },
     tagsDrawerClass () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark ? 'tags-sidebar-mobile grey darken-3' : 'tags-sidebar-mobile white'
-      }
       return ''
     },
-    tagsGrouped () {
-      return _.groupBy(this.tags, t => t.title.charAt(0).toUpperCase())
+    tagsDrawerDark () {
+      return this.$vuetify.theme.dark
+    },
+    showLocaleFilter () {
+      return this.locales.length > 1 && this.$vuetify.breakpoint.mdAndUp
+    },
+    showOrderByFilter () {
+      return this.$vuetify.breakpoint.mdAndUp
     },
     tagsSelected () {
-      return _.filter(this.tags, t => _.includes(this.selection, t.tag))
+      return this.tags.filter(t => this.selection.includes(t.tag))
     },
     orderByItems () {
       return [
@@ -252,7 +251,7 @@ export default {
   },
   watch: {
     '$route' () {
-      this.closeTagsDrawer()
+      this.selection = decodeURI(this.$route.path).split('/').filter(Boolean)
     },
     locale (newValue, oldValue) {
       this.rebuildURL()
@@ -269,21 +268,13 @@ export default {
   router,
   created () {
     this.$store.commit('page/SET_MODE', 'tags')
-    this.selection = _.compact(decodeURI(this.$route.path).split('/'))
+    this.selection = decodeURI(this.$route.path).split('/').filter(Boolean)
   },
   mounted () {
-    this.handleTagsDrawerVisibility()
-    this._resizeHandler = _.debounce(() => {
-      this.handleTagsDrawerVisibility()
-    }, 500)
-    window.addEventListener('resize', this._resizeHandler)
-    this.$root.$on('openNavDrawer', () => {
-      this.tagsDrawerShown = true
-    })
-    this.locales = _.concat(
-      [{name: this.$t('tags:localeAny'), code: 'any'}],
-      (siteLangs.length > 0 ? siteLangs : [])
-    )
+    this.locales = [
+      { name: this.$t('tags:localeAny'), code: 'any' },
+      ...(siteLangs.length > 0 ? siteLangs : [])
+    ]
     if (this.$route.query.lang) {
       this.locale = this.$route.query.lang
     }
@@ -301,51 +292,30 @@ export default {
       this.pagination.sortDesc = [this.orderByDirection === 1]
     }
   },
-  beforeDestroy () {
-    if (this._resizeHandler) {
-      window.removeEventListener('resize', this._resizeHandler)
-    }
-  },
   methods: {
-    closeTagsDrawer () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        this.tagsDrawerShown = false
-      }
-    },
-    handleTagsDrawerVisibility () {
-      if (window.innerWidth === this.winWidth) { return }
-      this.winWidth = window.innerWidth
-      if (this.$vuetify.breakpoint.mdAndUp) {
-        this.tagsDrawerShown = true
-      } else {
-        this.tagsDrawerShown = false
-      }
-    },
     toggleTag (tag) {
-      if (_.includes(this.selection, tag)) {
-        this.selection = _.without(this.selection, tag)
+      if (this.selection.includes(tag)) {
+        this.selection = this.selection.filter(t => t !== tag)
       } else {
         this.selection.push(tag)
       }
       this.rebuildURL()
     },
-    isSelected (tag) {
-      return _.includes(this.selection, tag)
-    },
     rebuildURL () {
-      let urlObj = {
-        path: '/' + this.selection.join('/')
+      const query = {}
+      if (this.locale !== 'any') {
+        query.lang = this.locale
       }
-      if (this.locale !== `any`) {
-        _.set(urlObj, 'query.lang', this.locale)
-      }
-      if (this.orderBy !== `TITLE`) {
-        _.set(urlObj, 'query.sort', this.orderBy.toLowerCase())
+      if (this.orderBy !== 'TITLE') {
+        query.sort = this.orderBy.toLowerCase()
       }
       if (this.orderByDirection !== 0) {
-        _.set(urlObj, 'query.dir', this.orderByDirection === 0 ? `asc` : `desc`)
+        query.dir = this.orderByDirection === 0 ? 'asc' : 'desc'
       }
-      this.$router.push(urlObj)
+      this.$router.push({
+        path: '/' + this.selection.join('/'),
+        query
+      })
     },
     goTo (page) {
       window.location.assign(`/${page.locale}/${page.path}`)
@@ -355,7 +325,7 @@ export default {
     tags: {
       query: tagsQuery,
       fetchPolicy: 'cache-and-network',
-      update: (data) => _.cloneDeep(data.pages.tags),
+      update: (data) => JSON.parse(JSON.stringify(data.pages.tags)),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'tags-refresh')
       }
@@ -363,7 +333,7 @@ export default {
     pages: {
       query: pagesQuery,
       fetchPolicy: 'cache-and-network',
-      update: (data) => _.cloneDeep(data.pages.list),
+      update: (data) => JSON.parse(JSON.stringify(data.pages.list)),
       watchLoading (isLoading) {
         this.isLoading = isLoading
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'pages-refresh')
@@ -384,15 +354,45 @@ export default {
 
 <style lang='scss'>
 .tags-sidebar-mobile {
-  top: 64px !important;
-  bottom: 56px !important;
-  height: auto !important;
-  z-index: 110 !important;
+  padding-top: 0;
+
+  &.primary {
+    background-color: mc('theme', 'primary') !important;
+  }
+
+  &.blue.darken-4 {
+    background-color: mc('blue', '900') !important;
+  }
+
+  .v-divider {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .v-list-item__title,
+  .v-list-item__content,
+  .v-subheader {
+    color: #fff !important;
+  }
+
+  .v-list-item__icon .v-icon {
+    color: #fff !important;
+  }
+
+  .v-list-item--active {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+  }
 }
 
 @media #{map-get($display-breakpoints, 'sm-and-down')} {
-  .tags .v-overlay--active {
-    z-index: 105 !important;
+  .tags,
+  .tags .v-main,
+  .tags .v-main__wrap {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  body.has-mobile-bottom-nav .tags .v-main {
+    padding-bottom: 56px !important;
   }
 }
 

@@ -29,23 +29,38 @@ export default {
               parse: (data) => data,
               ajax: (url, opts, cb, data) => {
                 let langParams = url.split('/')
-                graphQL.query({
-                  query: localeQuery,
-                  variables: {
-                    locale: langParams[0],
-                    namespace: langParams[1]
-                  }
-                }).then(resp => {
+                const locale = langParams[0]
+                const namespace = langParams[1]
+
+                if (!locale || !namespace || namespace.includes(':')) {
+                  return cb({}, { status: '200' })
+                }
+
+                const fetchNs = (nsLocale) => {
+                  return graphQL.query({
+                    query: localeQuery,
+                    variables: {
+                      locale: nsLocale,
+                      namespace
+                    }
+                  })
+                }
+
+                const applyTranslations = (resp) => {
                   let ns = {}
                   if (_.get(resp, 'data.localization.translations', []).length > 0) {
                     resp.data.localization.translations.forEach(entry => {
                       _.set(ns, entry.key, entry.value)
                     })
                   }
-                  return cb(ns, {status: '200'})
-                }).catch(err => {
-                  console.error(err)
-                  return cb(null, {status: '404'})
+                  return cb(ns, { status: '200' })
+                }
+
+                fetchNs(locale).then(applyTranslations).catch(() => {
+                  if (locale !== 'en') {
+                    return fetchNs('en').then(applyTranslations).catch(() => cb({}, { status: '200' }))
+                  }
+                  return cb({}, { status: '200' })
                 })
               }
             }
@@ -55,7 +70,7 @@ export default {
         lng: siteConfig.lang,
         load: 'currentOnly',
         lowerCaseLng: true,
-        fallbackLng: siteConfig.lang,
+        fallbackLng: 'en',
         ns: ['common', 'auth']
       })
     return new VueI18Next(i18next)

@@ -1,6 +1,6 @@
 <template lang="pug">
   div
-    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='$vuetify.theme.dark ? `grey darken-5` : `blue darken-3`')
+    .pa-3.d-flex(v-if='navMode === `MIXED`', :class='mixedNavHeaderClass')
       v-btn(
         depressed
         :color='$vuetify.theme.dark ? `grey darken-4` : `blue darken-2`'
@@ -73,7 +73,7 @@ import _ from 'lodash'
 import gql from 'graphql-tag'
 import { get } from 'vuex-pathify'
 
-/* global siteLangs */
+/* global siteLangs, siteConfig */
 
 export default {
   props: {
@@ -108,7 +108,13 @@ export default {
   },
   computed: {
     path: get('page/path'),
-    locale: get('page/locale')
+    locale: get('page/locale'),
+    mixedNavHeaderClass () {
+      if (this.$vuetify.breakpoint.smAndDown) {
+        return this.$vuetify.theme.dark ? 'blue darken-4' : 'blue darken-2'
+      }
+      return this.$vuetify.theme.dark ? 'grey darken-5' : 'blue darken-3'
+    }
   },
   methods: {
     switchMode (mode) {
@@ -221,8 +227,19 @@ export default {
     onNavigate () {
       this.$emit('navigate')
     },
+    getHomeLocale () {
+      const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
+      if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
+        return urlSegment
+      }
+      if (this.locale && siteLangs.some(lc => lc.code === this.locale)) {
+        return this.locale
+      }
+      return siteConfig.lang
+    },
     goHome () {
-      window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
+      const locale = this.getHomeLocale()
+      window.location.assign(siteLangs.length > 0 ? `/${locale}/home` : '/')
     }
   },
   mounted () {

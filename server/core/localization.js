@@ -44,17 +44,24 @@ module.exports = {
    * @param {String} namespace Namespace
    */
   async getByNamespace(locale, namespace) {
-    if (this.engine.hasResourceBundle(locale, namespace)) {
-      let data = this.engine.getResourceBundle(locale, namespace)
+    if (!locale || !namespace) {
+      return []
+    }
+
+    const extract = (loc) => {
+      if (!this.engine.hasResourceBundle(loc, namespace)) {
+        return null
+      }
+      const data = this.engine.getResourceBundle(loc, namespace)
       return _.map(dotize.convert(data), (value, key) => {
         return {
           key,
           value
         }
       })
-    } else {
-      throw new Error('Invalid locale or namespace')
     }
+
+    return extract(locale) || (locale !== 'en' ? extract('en') : null) || []
   },
   /**
    * Load entries from the DB for a single locale

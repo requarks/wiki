@@ -26,7 +26,7 @@
             v-spacer
             v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
               v-icon mdi-help-box
-          div(style='height:400px;')
+          div.page-selector-panel
             vue-scroll(:ops='scrollStyle')
               v-treeview(
                 :key='`pageTree-` + treeViewCacheId'
@@ -49,7 +49,7 @@
             //- v-spacer
             //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
             //- v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
-          div(v-if='currentPages.length > 0', style='height:400px;')
+          div.page-selector-panel(v-if='currentPages.length > 0')
             vue-scroll(:ops='scrollStyle')
               v-list.py-0(dense)
                 v-list-item-group(
@@ -323,6 +323,36 @@ export default {
   }
   .v-treeview-node__content {
     cursor: pointer;
+  }
+
+  .page-selector-panel {
+    height: 400px;
+  }
+
+  @media #{map-get($display-breakpoints, 'sm-and-down')} {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 24px);
+    overflow: hidden;
+
+    > .dialog-header {
+      flex: 0 0 auto;
+    }
+
+    > .d-flex {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    > .v-card__actions,
+    > div:last-child {
+      flex: 0 0 auto;
+    }
+
+    .page-selector-panel {
+      height: min(280px, 42vh);
+    }
   }
 }
 

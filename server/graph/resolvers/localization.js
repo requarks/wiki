@@ -33,7 +33,12 @@ module.exports = {
       }
     },
     translations (obj, args, context, info) {
-      return WIKI.lang.getByNamespace(args.locale, args.namespace)
+      try {
+        return WIKI.lang.getByNamespace(args.locale, args.namespace)
+      } catch (err) {
+        WIKI.logger.warn(err)
+        return []
+      }
     }
   },
   LocalizationMutation: {
