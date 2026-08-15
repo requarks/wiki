@@ -29,6 +29,7 @@
             @click:close='toggleTag(tag.tag)'
             ) {{tag.title}}
           v-btn.animated.fadeIn.ml-1(
+            v-if='$vuetify.breakpoint.mdAndUp'
             small
             outlined
             color='blue lighten-4'
