@@ -78,14 +78,14 @@
             v-toolbar.nav-header-inner.pr-4(color='primary', dark, flat)
               v-spacer
               .navHeaderLoading.mr-3
-                v-progress-circular(indeterminate, color='blue', :size='22', :width='2' v-show='isLoading')
+                v-progress-circular(indeterminate, color='white', :size='22', :width='2' v-show='isLoading')
 
               slot(name='actions')
 
               v-tooltip(bottom)
                 template(v-slot:activator='{ on }')
                   v-btn(icon, v-on='on', href='/t', :aria-label='$t(`common:header.browseTags`)')
-                    v-icon(color='grey lighten-1') mdi-tag-multiple
+                    v-icon(color='white') mdi-tag-multiple
                 span {{$t('common:header.browseTags')}}
 
               template(v-if='mode === `view` && locales.length > 0')
@@ -102,7 +102,7 @@
                           height='64'
                           :aria-label='$t(`common:header.language`)'
                           )
-                          v-icon(color='grey lighten-1') mdi-web
+                          v-icon(color='white') mdi-web
                       span {{$t('common:header.language')}}
                   v-list(nav)
                     template(v-for='(lc, idx) of locales')
@@ -127,7 +127,7 @@
                           height='64'
                           :aria-label='$t(`common:header.pageActions`)'
                           )
-                          v-icon(color='grey') mdi-file-document-edit-outline
+                          v-icon(color='white') mdi-file-document-edit-outline
                       span {{$t('common:header.pageActions')}}
                   v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
                     .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
@@ -165,7 +165,7 @@
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, height='64', v-on='on', @click='pageNew', :aria-label='$t(`common:header.newPage`)')
-                      v-icon(color='grey') mdi-text-box-plus-outline
+                      v-icon(color='white') mdi-text-box-plus-outline
                   span {{$t('common:header.newPage')}}
                 v-divider(vertical)
 
@@ -175,7 +175,7 @@
                 v-tooltip(bottom)
                   template(v-slot:activator='{ on }')
                     v-btn(icon, tile, height='64', v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
-                      v-icon(color='grey') mdi-cog
+                      v-icon(color='white') mdi-cog
                   span {{$t('common:header.admin')}}
                 v-divider(vertical)
 
@@ -194,7 +194,7 @@
                         height='64'
                         :aria-label='$t(`common:header.account`)'
                         )
-                        v-icon(v-if='picture.kind === `initials`', color='grey') mdi-account-circle
+                        v-icon(v-if='picture.kind === `initials`', color='white') mdi-account-circle
                         v-avatar(v-else-if='picture.kind === `image`', :size='34')
                           v-img(:src='picture.url')
                     span {{$t('common:header.account')}}
@@ -218,8 +218,8 @@
 
               v-tooltip(v-else, left)
                 template(v-slot:activator='{ on }')
-                  v-btn(icon, v-on='on', color='grey darken-3', href='/login', :aria-label='$t(`common:header.login`)')
-                    v-icon(color='grey') mdi-account-circle
+                  v-btn(icon, v-on='on', href='/login', :aria-label='$t(`common:header.login`)')
+                    v-icon(color='white') mdi-account-circle
                 span {{$t('common:header.login')}}
 
       page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
@@ -579,6 +579,10 @@ export default {
 
     .nav-header-inner .v-toolbar__content {
       width: 100%;
+    }
+
+    .nav-header-inner .subheading {
+      color: #fff !important;
     }
   }
 

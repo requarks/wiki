@@ -87,7 +87,7 @@
               depressed
               color='white'
               @click='goHome'
-              ) {{ $t('auth:startBrowsingInstead') }}
+              ) {{ $t('auth:startBrowsingInstead', 'Start Browsing as Guest') }}
             .text-center.mt-5
               v-btn.text-none(
                 text
