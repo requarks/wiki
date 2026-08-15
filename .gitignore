@@ -47,3 +47,8 @@ test-results/
 
 # Localization Resources
 /server/locales/**/*.yml
+
+# Local development overrides (personal — do not commit)
+package-lock.json
+dev/README.md
+dev/containers/docker-compose.local.yml
