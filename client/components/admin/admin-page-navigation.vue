@@ -102,7 +102,15 @@
                     :hint='cfg.value.hint ? cfg.value.hint : ""'
                     persistent-hint
                     )
-            v-alert.mt-4(v-if='provider.key === "page_navigation"', outlined, type='info', dense, icon='mdi-information-outline')
+            v-alert.mt-4(v-if='provider.key === "side_nav"', outlined, type='info', dense, icon='mdi-information-outline')
+              div <strong>Side navigation grouping</strong> applies to the custom sidebar menu (Admin → Navigation).
+              ul.mt-2.mb-0
+                li Set <strong>Parent menu icon match</strong> to the icon text used on expandable sections (default <code>mdi-flower</code>).
+                li Place child links immediately after each parent in the navigation list.
+                li Set <strong>Child menu icon match</strong> on those child links (default <code>mdi-chevron-right</code>).
+                li Parent rows expand/collapse on click; child rows keep the configured left indent.
+              div.mt-2 Works on desktop sidebar and mobile drawer. Enable <strong>Page Customization</strong> under Admin → General → Features.
+            v-alert.mt-4(v-else-if='provider.key === "page_navigation"', outlined, type='info', dense, icon='mdi-information-outline')
               div The <strong>সূচী</strong> button and <strong>prev/next arrows</strong> appear when the page group regex matches:
               ul.mt-2.mb-0
                 li Use <code>|</code> for alternates (default <code>^from:.+|^download$|^up:কিতাব$</code>).
@@ -216,7 +224,7 @@ export default {
           value: JSON.parse(cfg.value)
         })), [t => t.value.order, t => t.key])
       })).sort((a, b) => {
-        const order = { page_navigation: 1, related_pages: 2, iframe_embed: 3, telegram_comments: 4 }
+        const order = { side_nav: 0, page_navigation: 1, related_pages: 2, iframe_embed: 3, telegram_comments: 4 }
         return (order[a.key] || 100) - (order[b.key] || 100)
       }),
       watchLoading (isLoading) {

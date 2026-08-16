@@ -32,6 +32,7 @@ block body
       page-telegram-comments=pageTelegramComments ? Buffer.from(JSON.stringify(pageTelegramComments)).toString('base64') : ''
       page-iframe-settings=pageIframeSettings ? Buffer.from(JSON.stringify(pageIframeSettings)).toString('base64') : ''
       page-embed=pageEmbed ? Buffer.from(JSON.stringify(pageEmbed)).toString('base64') : ''
+      side-nav-settings=sideNavSettings ? Buffer.from(JSON.stringify(sideNavSettings)).toString('base64') : ''
       )
       template(slot='contents')
         != page.render

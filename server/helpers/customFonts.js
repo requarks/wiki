@@ -71,8 +71,14 @@ module.exports = {
       return ''
     }
 
+    const iconStack = `'Material Design Icons', sans-serif`
     const applyRule = (selector) => `${selector} *:not(.v-icon) {
   font-family: ${stack} !important;
+}
+
+${selector} .v-icon {
+  font-family: ${iconStack} !important;
+  line-height: 1;
 }`
 
     return [

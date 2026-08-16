@@ -1,0 +1,26 @@
+key: side_nav
+title: Side Navigation
+description: 'Expand/collapse grouping for custom sidebar menu items detected by icon.'
+author: sunninoor.com
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://wiki.js.org
+isAvailable: true
+props:
+  parentIconMatch:
+    type: String
+    title: Parent menu icon match
+    default: 'mdi-flower'
+    hint: 'Navigation link icons containing this text are treated as expandable parent items (e.g. mdi-flower or mdi mdi-flower).'
+    order: 1
+  childIconMatch:
+    type: String
+    title: Child menu icon match
+    default: 'mdi-chevron-right'
+    hint: 'Consecutive link icons containing this text after a parent become collapsible child items (e.g. mdi-chevron-right).'
+    order: 2
+  childIndentPx:
+    type: Number
+    title: Child item indent (px)
+    default: 36
+    hint: 'Left padding applied to child menu rows when expanded (0–120).'
+    order: 3
