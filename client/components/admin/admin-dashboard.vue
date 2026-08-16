@@ -52,27 +52,29 @@
             .subtitle-1 Wiki.js {{info.currentVersion}}
             .body-2(v-if='isLatestVersion') {{$t('admin:dashboard.versionLatest')}}
             .body-2(v-else) {{$t('admin:dashboard.versionNew', { version: info.latestVersion })}}
-      v-flex(xs12, xl6)
+      v-flex.admin-dashboard-recent-pages(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p2s
           v-toolbar(:color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`', dense, flat)
             v-spacer
             .overline {{$t('admin:dashboard.recentPages')}}
             v-spacer
-          v-data-table.pb-2(
-            :items='recentPages'
-            :headers='recentPagesHeaders'
-            :loading='recentPagesLoading'
-            hide-default-footer
-            hide-default-header
-            )
-            template(slot='item', slot-scope='props')
-              tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
-                td
-                  .body-2: strong {{ props.item.title }}
-                td.admin-pages-path
-                  v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
-                  span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
-                td.text-right.caption(width='250') {{ props.item.updatedAt | moment('calendar') }}
+          .admin-dashboard-table-wrap
+            v-data-table.admin-dashboard-table.pb-2(
+              :items='recentPages'
+              :headers='recentPagesHeaders'
+              :loading='recentPagesLoading'
+              hide-default-footer
+              hide-default-header
+              )
+              template(slot='item', slot-scope='props')
+                tr.is-clickable(:active='props.selected', @click='$router.push(`/pages/` + props.item.id)')
+                  td.admin-dashboard-table__title
+                    .body-2: strong {{ props.item.title }}
+                  td.admin-pages-path
+                    .admin-pages-path__content
+                      v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
+                      span.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
+                  td.text-right.caption.admin-dashboard-table__updated {{ props.item.updatedAt | moment('calendar') }}
       v-flex(xs12, xl6)
         v-card.radius-7.animated.fadeInUp.wait-p4s
           v-toolbar(:color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-5`', dense, flat)
@@ -250,6 +252,50 @@ export default {
   @at-root .v-application--is-rtl & {
     left: 0;
     right: initial;
+  }
+}
+
+.admin-dashboard-recent-pages {
+  min-width: 0;
+  max-width: 100%;
+
+  > .v-card {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+.admin-dashboard-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  width: 100%;
+}
+
+.admin-dashboard-table {
+  width: 100%;
+
+  .v-data-table__wrapper {
+    overflow: visible;
+  }
+
+  table {
+    width: max-content !important;
+    min-width: 100%;
+  }
+
+  &__title {
+    min-width: 160px;
+  }
+
+  .admin-pages-path {
+    min-width: 200px;
+  }
+
+  &__updated {
+    min-width: 140px;
+    white-space: nowrap;
   }
 }
 

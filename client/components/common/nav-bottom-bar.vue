@@ -200,11 +200,34 @@ export default {
       window.location.assign('/a/pages')
     },
     getPageContentText () {
-      const contentsEl = document.querySelector('.v-main .contents')
-      if (!contentsEl) {
-        return ''
+      const parts = []
+
+      const headerEl = document.querySelector('.v-main .page-header-block')
+      if (headerEl) {
+        const headerText = (headerEl.innerText || headerEl.textContent || '').trim()
+        if (headerText) {
+          parts.push(headerText)
+        }
+      } else {
+        const title = (this.pageTitle || '').trim()
+        const subtitle = (this.pageDescription || '').trim()
+        if (title) {
+          parts.push(title)
+        }
+        if (subtitle) {
+          parts.push(subtitle)
+        }
       }
-      return (contentsEl.innerText || contentsEl.textContent || '').trim()
+
+      const contentsEl = document.querySelector('.v-main .contents')
+      if (contentsEl) {
+        const bodyText = (contentsEl.innerText || contentsEl.textContent || '').trim()
+        if (bodyText) {
+          parts.push(bodyText)
+        }
+      }
+
+      return parts.join('\n\n')
     },
     async copyTextToClipboard (text, successMessage) {
       if (!text) {

@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-list.radius-0(dense, nav)
+  v-list.radius-0(dense, nav, dark)
     v-list-item(to='/dashboard', color='primary', @click='onNavigate')
       v-list-item-avatar(size='24', tile): v-icon mdi-view-dashboard-variant
       v-list-item-title {{ $t('admin:dashboard.title') }}

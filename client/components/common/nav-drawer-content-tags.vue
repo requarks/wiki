@@ -1,15 +1,15 @@
 <template lang='pug'>
-  v-list(dense, nav, :dark='drawerDark')
+  v-list(dense, nav, dark)
     v-list-item(href='/', @click='onNavigate')
-      v-list-item-icon: v-icon(:color='drawerDark ? `white` : undefined') mdi-home
+      v-list-item-icon: v-icon(color='white') mdi-home
       v-list-item-title {{$t('common:header.home')}}
     template(v-for='(groupTags, groupName) in tagsGrouped')
       v-divider.my-2
       v-subheader.pl-4(:key='`tagGroup-` + groupName') {{groupName}}
       v-list-item(v-for='tag of groupTags', @click='toggleTag(tag.tag)', :key='`tag-` + tag.tag')
         v-list-item-icon
-          v-icon(v-if='isSelected(tag.tag)', :color='drawerDark ? `white` : `primary`') mdi-checkbox-intermediate
-          v-icon(v-else, :color='drawerDark ? `white` : undefined') mdi-checkbox-blank-outline
+          v-icon(v-if='isSelected(tag.tag)', color='white') mdi-checkbox-intermediate
+          v-icon(v-else, color='white') mdi-checkbox-blank-outline
         v-list-item-title {{tag.title}}
 </template>
 
@@ -25,9 +25,6 @@ export default {
     }
   },
   computed: {
-    drawerDark () {
-      return this.$vuetify.breakpoint.smAndDown || this.$vuetify.theme.dark
-    },
     tagsGrouped () {
       const grouped = {}
       for (const tag of this.tags) {
