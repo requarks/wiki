@@ -6,6 +6,7 @@ const BruteKnex = require('../helpers/brute-knex')
 const router = express.Router()
 const _ = require('lodash')
 const commonHelper = require('../helpers/common')
+const logoutRedirect = require('../helpers/logoutRedirect')
 
 const bruteforce = new ExpressBrute(new BruteKnex({
   createTable: true,
@@ -127,9 +128,15 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
  * Logout
  */
 router.get('/logout', async (req, res) => {
-  const redirURL = await WIKI.models.users.logout({ req, res })
+  const providerRedirect = await WIKI.models.users.logout({ req, res })
   req.logout()
   res.clearCookie('jwt')
+
+  if (providerRedirect && providerRedirect !== '/' && !providerRedirect.startsWith('/')) {
+    return res.redirect(providerRedirect)
+  }
+
+  const redirURL = await logoutRedirect.resolvePostLogoutRedirect(req.query.redirect)
   res.redirect(redirURL)
 })
 

@@ -363,7 +363,7 @@ import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
-import { decodeEffectivePermissions } from '../../../helpers/auth-session'
+import { registerEmbeddedPermissions, syncPageEffectivePermissionsToStore } from '../../../helpers/auth-session'
 
 /* global siteLangs, siteConfig */
 
@@ -707,10 +707,8 @@ export default {
     this.$store.set('page/editor', this.editor)
     this.$store.set('page/updatedAt', this.updatedAt)
     if (this.effectivePermissions) {
-      const permissions = decodeEffectivePermissions(this.effectivePermissions, this.$store.get('user/authenticated'))
-      if (permissions) {
-        this.$store.set('page/effectivePermissions', permissions)
-      }
+      registerEmbeddedPermissions(this.effectivePermissions)
+      syncPageEffectivePermissionsToStore(this.$store)
     }
     if (this.editShortcuts) {
       this.$store.set('page/editShortcuts', JSON.parse(Buffer.from(this.editShortcuts, 'base64').toString()))
