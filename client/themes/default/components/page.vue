@@ -306,11 +306,6 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents.pt-4(ref='container')
               slot(name='contents')
-            page-embed(
-              v-if='pageEmbedData && !printView'
-              :embed='pageEmbedData'
-              :iframe-settings='pageIframeSettingsData'
-            )
             v-divider.my-3(v-if='(pageEmbedData || pageNavigationData || relatedPagesData) && !printView')
             page-navigation(v-if='pageNavigationData && !printView', :nav='pageNavigationData')
             page-related-pages(v-if='relatedPagesData && !printView', :related='relatedPagesData')
@@ -546,7 +541,8 @@ export default {
           }
         }
       },
-      winWidth: 0
+      winWidth: 0,
+      pageEmbedVm: null
     }
   },
   computed: {
@@ -769,9 +765,41 @@ export default {
       })
 
       window.boot.notify('page-ready')
+      this.mountPageEmbed()
     })
   },
+  beforeDestroy () {
+    this.destroyPageEmbed()
+  },
   methods: {
+    mountPageEmbed () {
+      this.destroyPageEmbed()
+      if (this.printView || !this.pageEmbedData || !this.$refs.container) {
+        return
+      }
+
+      const host = this.$refs.container.querySelector('.page-embed-host')
+      if (!host) {
+        return
+      }
+
+      this.pageEmbedVm = new Vue({
+        parent: this,
+        render: (h) => h('page-embed', {
+          props: {
+            embed: this.pageEmbedData,
+            iframeSettings: this.pageIframeSettingsData
+          }
+        })
+      })
+      this.pageEmbedVm.$mount(host)
+    },
+    destroyPageEmbed () {
+      if (this.pageEmbedVm) {
+        this.pageEmbedVm.$destroy()
+        this.pageEmbedVm = null
+      }
+    },
     requireAuth () {
       if (!this.isAuthenticated) {
         window.location.assign('/login')

@@ -294,9 +294,31 @@ export default {
         `https://api.whatsapp.com/send?text=${encodeURIComponent(this.shareTitle)}%0D%0A${encodeURIComponent(this.shareUrl)}`
       )
     },
+    isMobileShareDevice () {
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    },
+    facebookAppId () {
+      return _.get(siteConfig, 'facebookAppId', '') || ''
+    },
     shareMessenger () {
+      const link = encodeURIComponent(this.shareUrl)
+      const appId = this.facebookAppId()
+      const appIdQuery = appId ? `&app_id=${encodeURIComponent(appId)}` : ''
+
+      // Send Dialog popups are unsupported on mobile; open the native Messenger app instead.
+      if (this.isMobileShareDevice()) {
+        window.location.assign(`fb-messenger://share/?link=${link}${appIdQuery}`)
+        return
+      }
+
+      const redirectUri = encodeURIComponent(`${window.location.origin}/`)
+      if (!appId) {
+        this.openSocialPop(`https://www.facebook.com/dialog/send?link=${link}&redirect_uri=${redirectUri}`)
+        return
+      }
+
       this.openSocialPop(
-        `https://www.facebook.com/dialog/send?link=${encodeURIComponent(this.shareUrl)}&redirect_uri=${encodeURIComponent(this.shareUrl)}`
+        `https://www.facebook.com/dialog/send?app_id=${encodeURIComponent(appId)}&link=${link}&redirect_uri=${redirectUri}`
       )
     }
   }

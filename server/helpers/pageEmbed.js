@@ -1,4 +1,7 @@
+const cheerio = require('cheerio')
 const _ = require('lodash')
+
+const PAGE_EMBED_HOST_HTML = '<div class="page-embed-host"></div>'
 
 const HIDDEN_DATA_TAG_RE = /<div\s+class=["']hidden-data["'][^>]*>/i
 const HIDDEN_DATA_BLOCK_RE = /<div\s+class=["']hidden-data["'][^>]*>[\s\S]*?<\/div>/gi
@@ -105,6 +108,26 @@ function mergeEmbed (tagEmbed, htmlEmbed) {
   }, v => !_.isEmpty(v))
 }
 
+function injectEmbedHost (html) {
+  if (!html || !html.trim()) {
+    return PAGE_EMBED_HOST_HTML
+  }
+
+  const $ = cheerio.load(`<wrapper>${html}</wrapper>`, { decodeEntities: false })
+  const $wrapper = $('wrapper')
+  let $target = $wrapper.children().last()
+
+  const $fontDivs = $wrapper.find('div[style*="font-family"]')
+  if ($fontDivs.length > 0) {
+    $target = $fontDivs.last()
+  } else if ($target.length < 1) {
+    $target = $wrapper
+  }
+
+  $target.append(PAGE_EMBED_HOST_HTML)
+  return $wrapper.html()
+}
+
 module.exports = {
   parseFromTags,
   parseFromHtml,
@@ -123,7 +146,7 @@ module.exports = {
     const hasReaderEmbed = !_.isEmpty(embed)
 
     return {
-      html: renderParsed.html,
+      html: hasReaderEmbed ? injectEmbedHost(renderParsed.html) : renderParsed.html,
       embed: hasReaderEmbed ? embed : null
     }
   }
